@@ -1,0 +1,1020 @@
+/* src/assets/css/profile.css - COSMIC SPACE REDESIGN */
+
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   ========================================================================== */
+:root {
+  /* Cosmic Color Palette */
+  --cosmic-dark: rgba(5, 5, 20, 0.9);
+  --cosmic-darker: rgba(2, 2, 10, 0.95);
+  --cosmic-card: rgba(10, 10, 30, 0.85);
+  --cosmic-card-hover: rgba(15, 15, 45, 0.9);
+  --cosmic-input: rgba(0, 0, 0, 0.6);
+  --cosmic-input-focus: rgba(20, 20, 50, 0.8);
+  
+  /* Cosmic Accent Colors */
+  --cosmic-cyan: #4ECDC4;
+  --cosmic-cyan-glow: rgba(78, 205, 196, 0.4);
+  --cosmic-purple: #8A2BE2;
+  --cosmic-purple-glow: rgba(138, 43, 226, 0.4);
+  --cosmic-blue: #4285F4;
+  --cosmic-blue-glow: rgba(66, 133, 244, 0.3);
+  --cosmic-white: #ffffff;
+  --cosmic-light: #e0e0e0;
+  --cosmic-gray: #a0a0c0;
+  
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-muted: #a0a0c0;
+  
+  /* Effects */
+  --glass-blur: blur(12px) saturate(180%);
+  --glass-blur-mobile: blur(8px) saturate(160%);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-glow: all 0.5s ease;
+  
+  /* Shadows & Glows */
+  --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
+  --shadow-cosmic-cyan: 0 0 25px rgba(78, 205, 196, 0.4);
+  --shadow-cosmic-purple: 0 0 25px rgba(138, 43, 226, 0.4);
+  --shadow-inner: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+  
+  /* Spacing */
+  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+  --space-sm: clamp(0.5rem, 1vw, 1rem);
+  --space-md: clamp(1rem, 2vw, 1.5rem);
+  --space-lg: clamp(1.5rem, 3vw, 2.5rem);
+  --space-xl: clamp(2rem, 4vw, 3.5rem);
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* Font Sizes - Responsive */
+  --font-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --font-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --font-md: clamp(1rem, 3vw, 1.125rem);
+  --font-lg: clamp(1.25rem, 4vw, 1.5rem);
+  --font-xl: clamp(1.5rem, 5vw, 2rem);
+  --font-xxl: clamp(2rem, 6vw, 2.5rem);
+}
+
+/* ==========================================================================
+   ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+@keyframes cosmic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(66, 133, 244, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(66, 133, 244, 0.6);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(66, 133, 244, 0.3);
+  }
+  50% {
+    border-color: rgba(78, 205, 196, 0.4);
+    box-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   BASE STYLES - COSMIC SPACE THEME
+   ========================================================================== */
+.profile-page {
+  min-height: 100vh;
+  background: transparent !important; /* Let the galaxy background shine through */
+  padding: var(--space-lg);
+  position: relative;
+  z-index: 1;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Add subtle cosmic overlay to enhance text readability */
+.profile-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 20, 0.3) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.profile-container {
+  max-width: min(1200px, 90vw);
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ==========================================================================
+   PROFILE HEADER - COSMIC TYPOGRAPHY
+   ========================================================================== */
+.profile-header {
+  margin-bottom: var(--space-xl);
+  text-align: center;
+  position: relative;
+}
+
+.profile-header::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cosmic-cyan), transparent);
+  border-radius: 2px;
+}
+
+.profile-title {
+  font-size: var(--font-xxl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  text-shadow: 
+    0 0 20px rgba(78, 205, 196, 0.3),
+    var(--text-shadow);
+  letter-spacing: 0.5px;
+}
+
+.profile-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-md);
+  text-shadow: var(--text-shadow);
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   PROFILE CONTENT LAYOUT
+   ========================================================================== */
+.profile-content {
+  display: grid;
+  grid-template-columns: minmax(300px, 350px) 1fr;
+  gap: var(--space-lg);
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* ==========================================================================
+   COSMIC CARDS - GLASS MORPHISM EFFECT
+   ========================================================================== */
+.profile-card {
+  background: var(--cosmic-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    var(--shadow-outer),
+    var(--shadow-cosmic),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  margin-bottom: var(--space-lg);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle cosmic border animation */
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--cosmic-cyan), 
+    var(--cosmic-purple), 
+    transparent);
+  opacity: 0.5;
+}
+
+.profile-card:hover {
+  background: var(--cosmic-card-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 
+    var(--shadow-outer),
+    0 0 30px rgba(78, 205, 196, 0.2),
+    var(--shadow-cosmic-cyan);
+}
+
+.profile-card:last-child {
+  margin-bottom: 0;
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-card-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.profile-card-title .icon {
+  width: 24px;
+  height: 24px;
+  color: var(--cosmic-cyan);
+  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
+}
+
+/* ==========================================================================
+   AVATAR & USER INFO SECTION
+   ========================================================================== */
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+/* Cosmic avatar border */
+.avatar-container img {
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 0 20px rgba(78, 205, 196, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.avatar-container img:hover {
+  border-color: var(--cosmic-cyan);
+  box-shadow: 
+    0 0 30px var(--cosmic-cyan-glow),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.avatar-info {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.avatar-info-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.avatar-info-text .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--cosmic-cyan);
+}
+
+/* ==========================================================================
+   COSMIC PROGRESS BAR
+   ========================================================================== */
+.upload-progress {
+  margin-top: var(--space-md);
+}
+
+.profile-progress-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--cosmic-purple), 
+    var(--cosmic-cyan), 
+    var(--cosmic-blue));
+  background-size: 200% 100%;
+  transition: width 0.4s ease;
+  animation: shimmer 2s infinite linear;
+}
+
+.profile-progress-text {
+  text-align: center;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  text-shadow: var(--text-shadow);
+}
+
+/* ==========================================================================
+   ACCOUNT STATS - COSMIC STYLE
+   ========================================================================== */
+.account-stats {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.profile-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.profile-stat-item:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  padding-left: var(--space-sm);
+}
+
+.profile-stat-item:last-child {
+  border-bottom: none;
+}
+
+.profile-stat-label {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.profile-stat-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-md);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.profile-stat-value .verified {
+  color: var(--cosmic-cyan);
+  text-shadow: 0 0 10px var(--cosmic-cyan-glow);
+}
+
+.profile-stat-value .unverified {
+  color: #ff6b6b;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+}
+
+/* ==========================================================================
+   FORM ELEMENTS - COSMIC INPUTS
+   ========================================================================== */
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.profile-form-group {
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.profile-form-group label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+  text-shadow: var(--text-shadow);
+}
+
+.profile-form-group input,
+.profile-form-group select,
+.profile-form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--cosmic-input);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-inner);
+  backdrop-filter: blur(4px);
+}
+
+.profile-form-group input::placeholder,
+.profile-form-group textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.profile-form-group input:focus,
+.profile-form-group select:focus,
+.profile-form-group textarea:focus {
+  outline: none;
+  background: var(--cosmic-input-focus);
+  border-color: var(--cosmic-cyan);
+  box-shadow: 
+    0 0 20px var(--cosmic-cyan-glow),
+    var(--shadow-inner);
+}
+
+.profile-form-group input.error,
+.profile-form-group select.error {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+.availability-message {
+  margin-top: var(--space-xs);
+  font-size: var(--font-xs);
+  padding-left: 4px;
+}
+
+.availability-message .available {
+  color: var(--cosmic-cyan);
+  text-shadow: 0 0 8px var(--cosmic-cyan-glow);
+}
+
+.availability-message .unavailable {
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+}
+
+/* ==========================================================================
+   VERIFIED BADGE - COSMIC STYLE
+   ========================================================================== */
+.profile-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(78, 205, 196, 0.15);
+  color: var(--cosmic-cyan);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: var(--font-xs);
+  margin-left: var(--space-sm);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.profile-verified-badge .icon {
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 0 4px var(--cosmic-cyan));
+}
+
+/* ==========================================================================
+   COSMIC BUTTONS
+   ========================================================================== */
+.profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-btn {
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  text-shadow: var(--text-shadow);
+}
+
+.profile-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent);
+  transition: 0.5s;
+}
+
+.profile-btn:hover::before {
+  left: 100%;
+}
+
+.profile-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.profile-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.profile-btn-primary {
+  background: linear-gradient(135deg, 
+    rgba(66, 133, 244, 0.8), 
+    rgba(138, 43, 226, 0.8));
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-cosmic);
+}
+
+.profile-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, 
+    rgba(66, 133, 244, 0.9), 
+    rgba(138, 43, 226, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 
+    var(--shadow-cosmic),
+    0 0 30px rgba(66, 133, 244, 0.4);
+  animation: pulse-glow 2s infinite;
+}
+
+.profile-btn-danger {
+  background: linear-gradient(135deg, 
+    rgba(255, 107, 107, 0.8), 
+    rgba(220, 38, 38, 0.8));
+  color: white;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.profile-btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, 
+    rgba(255, 107, 107, 0.9), 
+    rgba(220, 38, 38, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(255, 107, 107, 0.4);
+}
+
+.profile-edit-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-smooth);
+  backdrop-filter: blur(4px);
+}
+
+.profile-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.profile-edit-btn .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--cosmic-cyan);
+}
+
+/* ==========================================================================
+   PROFILE DETAILS SECTION
+   ========================================================================== */
+.profile-details {
+  margin-top: var(--space-sm);
+}
+
+.profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.profile-detail-item {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.profile-detail-item:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  padding-left: var(--space-sm);
+}
+
+.profile-detail-item:last-child {
+  border-bottom: none;
+}
+
+.profile-detail-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-shadow: var(--text-shadow);
+}
+
+.profile-detail-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-md);
+}
+
+.profile-detail-value.small {
+  font-size: var(--font-xs);
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+  color: var(--cosmic-gray);
+}
+
+/* ==========================================================================
+   DANGER ZONE - COSMIC STYLE
+   ========================================================================== */
+.danger-zone {
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.05);
+  animation: border-glow 3s infinite;
+}
+
+.danger-zone .profile-card-title {
+  color: #ff6b6b;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.danger-warning {
+  color: #ffb8b8;
+  margin-bottom: var(--space-md);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  text-shadow: var(--text-shadow);
+}
+
+.profile-error-message {
+  color: #ff6b6b;
+  font-size: var(--font-xs);
+  margin-top: var(--space-xs);
+  text-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+}
+
+/* ==========================================================================
+   COSMIC SPINNER - THEMED FOR GALAXY BACKGROUND
+   ========================================================================== */
+.profile-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: var(--cosmic-cyan);
+  border-right-color: var(--cosmic-purple);
+  border-radius: 50%;
+  animation: cosmic-spin 1s linear infinite;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+}
+
+/* ==========================================================================
+   COSMIC MODAL
+   ========================================================================== */
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--space-lg);
+  backdrop-filter: blur(5px);
+}
+
+.profile-modal {
+  background: var(--cosmic-darker);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  max-width: min(500px, 90vw);
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(78, 205, 196, 0.2),
+    var(--shadow-cosmic);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.profile-modal-title {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  text-shadow: var(--text-shadow);
+}
+
+.profile-modal-text {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+  line-height: 1.6;
+  text-shadow: var(--text-shadow);
+}
+
+.profile-modal-form {
+  margin-bottom: var(--space-lg);
+}
+
+.profile-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+/* ==========================================================================
+   CUSTOM SCROLLBAR - COSMIC THEME
+   ========================================================================== */
+.profile-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.profile-page::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.profile-page::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(78, 205, 196, 0.5),
+    rgba(138, 43, 226, 0.5)
+  );
+  border-radius: 5px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.profile-page::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(78, 205, 196, 0.7),
+    rgba(138, 43, 226, 0.7)
+  );
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN - ALL SCREEN SIZES
+   ========================================================================== */
+
+/* Mobile (< 640px) */
+@media (max-width: 640px) {
+  .profile-page {
+    padding: var(--space-md);
+    backdrop-filter: var(--glass-blur-mobile);
+  }
+  
+  .profile-card {
+    backdrop-filter: var(--glass-blur-mobile);
+    -webkit-backdrop-filter: var(--glass-blur-mobile);
+  }
+  
+  .profile-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-form-actions {
+    flex-direction: column;
+  }
+  
+  .profile-btn {
+    width: 100%;
+    min-height: 44px; /* Mobile touch target */
+  }
+  
+  .profile-modal {
+    padding: var(--space-lg);
+  }
+  
+  .profile-modal-actions {
+    flex-direction: column;
+  }
+  
+  .profile-modal-actions .profile-btn {
+    width: 100%;
+  }
+}
+
+/* Tablet (640px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .profile-content {
+    grid-template-columns: minmax(280px, 320px) 1fr;
+    gap: var(--space-md);
+  }
+  
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Laptop (1024px - 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .profile-content {
+    grid-template-columns: 320px 1fr;
+    gap: var(--space-lg);
+  }
+}
+
+/* Desktop (1440px - 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+  .profile-content {
+    grid-template-columns: 350px 1fr;
+    gap: var(--space-xl);
+  }
+  
+  .profile-container {
+    max-width: 1400px;
+  }
+}
+
+/* TV/4K (> 1920px) */
+@media (min-width: 1921px) {
+  .profile-content {
+    grid-template-columns: 400px 1fr;
+    gap: var(--space-xl);
+  }
+  
+  .profile-container {
+    max-width: 1600px;
+  }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY & REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .profile-btn:hover,
+  .profile-card:hover {
+    transform: none;
+  }
+}
+
+/* Focus indicators for accessibility */
+.profile-btn:focus-visible,
+.profile-form-group input:focus-visible,
+.profile-form-group select:focus-visible {
+  outline: 2px solid var(--cosmic-cyan);
+  outline-offset: 2px;
+  box-shadow: 0 0 20px var(--cosmic-cyan-glow);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .profile-card {
+    background: rgba(5, 5, 20, 0.95);
+    border: 2px solid var(--cosmic-cyan);
+  }
+  
+  .profile-btn {
+    border: 2px solid currentColor;
+  }
+  
+  .profile-form-group input,
+  .profile-form-group select {
+    border: 2px solid var(--text-secondary);
+  }
+}
+
+/* Dark mode enforcement (already dark by default) */
+@media (prefers-color-scheme: light) {
+  /* Override any light mode preferences - we want cosmic dark theme */
+  .profile-page {
+    color-scheme: dark;
+  }
+}
+
+/* ==========================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================================================== */
+.profile-card,
+.profile-btn,
+.avatar-container img {
+  will-change: transform, box-shadow;
+  contain: layout style paint;
+}
+
+/* Hardware acceleration for smooth animations */
+.profile-card:hover,
+.profile-btn:hover {
+  transform: translateZ(0);
+}
+
+/* Optimize blur effects for mobile */
+@media (max-width: 640px) {
+  .profile-card,
+  .profile-modal {
+    backdrop-filter: var(--glass-blur-mobile);
+    -webkit-backdrop-filter: var(--glass-blur-mobile);
+  }
+}
+
+/* Print styles */
+@media print {
+  .profile-page {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .profile-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  .profile-btn {
+    display: none !important;
+  }
+}

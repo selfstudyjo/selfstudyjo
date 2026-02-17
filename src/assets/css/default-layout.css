@@ -1,0 +1,63 @@
+.default-layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden; /* Prevent scrollbars from space animation */
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+  position: relative;
+  z-index: 1; /* Ensure content is above background */
+  background: rgba(10, 10, 30, 0.7); /* Semi-transparent overlay */
+  backdrop-filter: blur(2px); /* Slight blur for depth */
+}
+
+.main-content.with-sidenav {
+  margin-left: 260px;
+}
+
+@media (max-width: 768px) {
+  .main-content.with-sidenav {
+    margin-left: 0;
+    padding: 15px;
+    margin-top: 60px;
+  }
+}
+
+/* ChatBox positioning */
+.chat-box-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .chat-box-container {
+    bottom: 10px;
+    right: 10px;
+  }
+}
+
+/* Space Background Container */
+.space-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  perspective: 1000px;
+  overflow: hidden;
+  background: linear-gradient(to bottom, 
+    #000428 0%, 
+    #000b2e 15%, 
+    #00113a 30%, 
+    #001848 50%, 
+    #000f35 70%, 
+    #000428 100%);
+}

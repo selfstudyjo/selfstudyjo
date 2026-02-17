@@ -1,0 +1,605 @@
+/* ============================================
+ V erify Email - Galaxy Space Theme                        *
+ Cosmic glass-morphism, fully transparent base,
+dark floating card with glowing accents.
+Mobile-first, fully responsive, WCAG accessible.
+============================================ */
+
+/* ---------- CSS Custom Properties (Cosmic Palette) ---------- */
+.verify-container {
+    /* Dark space backgrounds - highly transparent */
+    --space-bg-darkest: rgba(5, 5, 20, 0.9);
+    --space-bg-dark: rgba(10, 10, 30, 0.85);
+    --space-bg-medium: rgba(15, 15, 40, 0.8);
+    --space-bg-light: rgba(20, 20, 50, 0.7);
+    --space-bg-input: rgba(0, 0, 0, 0.6);
+    --space-bg-card: rgba(8, 8, 25, 0.8);
+    --space-bg-card-hover: rgba(12, 12, 35, 0.9);
+
+    /* Text colors - light with cosmic glow */
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-accent: #4ECDC4;        /* cosmic cyan */
+    --text-accent-alt: #8A2BE2;    /* nebula purple */
+    --text-muted: rgba(255, 255, 255, 0.7);
+    --text-placeholder: rgba(255, 255, 255, 0.5);
+    --text-error: #ffb3b3;         /* soft red glow */
+    --text-success: #9ae6b4;       /* soft green glow */
+
+    /* Glow effects - planet & star colors */
+    --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.5);
+    --glow-purple: 0 0 25px rgba(138, 43, 226, 0.5);
+    --glow-blue: 0 0 25px rgba(66, 133, 244, 0.4);
+    --glow-white: 0 0 15px rgba(255, 255, 255, 0.3);
+    --glow-red: 0 0 15px rgba(255, 100, 100, 0.4);
+    --glow-green: 0 0 15px rgba(72, 187, 120, 0.4);
+
+    /* Borders & shadows */
+    --border-glass: 1px solid rgba(255, 255, 255, 0.12);
+    --border-glow: 1px solid rgba(78, 205, 196, 0.4);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 30px rgba(78, 205, 196, 0.2);
+    --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(78, 205, 196, 0.3),
+    0 0 40px rgba(78, 205, 196, 0.3);
+
+    /* Typography - fluid clamp() scales */
+    --font-size-xs: clamp(12px, 3vw, 14px);
+    --font-size-sm: clamp(14px, 3.5vw, 16px);
+    --font-size-base: clamp(16px, 4vw, 18px);
+    --font-size-lg: clamp(18px, 5vw, 24px);
+    --font-size-xl: clamp(24px, 6vw, 32px);
+    --font-size-2xl: clamp(32px, 7vw, 48px);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+
+    /* Borders radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+
+    /* Transitions */
+    --transition-speed: 0.3s;
+    --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Main Container (Fully Transparent) ---------- */
+.verify-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    position: relative;
+    overflow: hidden;
+
+    /* Completely transparent – galaxy background shines through */
+    background: transparent;
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---------- Cosmic Glass Card ---------- */
+.verify-card {
+    background: var(--space-bg-card);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: var(--border-glass);
+    border-radius: var(--radius-xl);
+    padding: clamp(32px, 6vw, 48px) clamp(24px, 5vw, 40px);
+    width: 100%;
+    max-width: 500px;
+    box-shadow: var(--shadow-card);
+    z-index: 2;
+    animation: slideUp 0.6s var(--transition-ease);
+    text-align: center;
+    transition: all var(--transition-speed) ease;
+}
+
+.verify-card:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(78, 205, 196, 0.3);
+}
+
+/* ---------- Header with Cosmic Glow ---------- */
+.verify-header {
+    margin-bottom: var(--space-xl);
+}
+
+.verify-icon {
+    margin: 0 auto var(--space-lg);
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
+}
+
+.verify-icon svg {
+    width: 32px;
+    height: 32px;
+    filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.6));
+}
+
+.verify-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    text-shadow: 0 0 15px rgba(78, 205, 196, 0.6), 0 0 30px rgba(138, 43, 226, 0.4);
+    letter-spacing: 1px;
+}
+
+.verify-header p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- OTP Inputs (Cosmic Style) ---------- */
+.verify-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.otp-inputs {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0;
+    flex-wrap: wrap;
+}
+
+.otp-inputs input {
+    width: clamp(48px, 10vw, 64px);
+    height: clamp(56px, 12vw, 72px);
+    background: var(--space-bg-input);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    font-size: clamp(24px, 6vw, 32px);
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+    transition: all var(--transition-speed) var(--transition-ease);
+    backdrop-filter: blur(4px);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.otp-inputs input:focus {
+    outline: none;
+    border-color: var(--text-accent);
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2),
+    inset 0 0 10px rgba(0, 0, 0, 0.3),
+    0 0 25px rgba(78, 205, 196, 0.5);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.otp-inputs input.error {
+    border-color: rgba(255, 100, 100, 0.6);
+    animation: shake 0.5s var(--transition-ease);
+    box-shadow: 0 0 20px rgba(255, 100, 100, 0.4);
+}
+
+/* Placeholder styling */
+.otp-inputs input::placeholder {
+    color: var(--text-placeholder);
+    font-size: var(--font-size-sm);
+    font-weight: normal;
+}
+
+/* ---------- Verification Info ---------- */
+.verification-info {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin: var(--space-sm) 0;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.verification-info .expired {
+    color: #ffb3b3;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
+}
+
+/* ---------- Buttons (Space Command Style) ---------- */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+}
+
+.btn {
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-speed) var(--transition-ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    backdrop-filter: blur(8px);
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
+    color: var(--text-primary);
+    box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
+    border-color: rgba(78, 205, 196, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(145deg, rgba(78, 205, 196, 0.35), rgba(138, 43, 226, 0.35));
+    border-color: var(--text-accent);
+    box-shadow: 0 0 35px rgba(78, 205, 196, 0.6);
+    transform: translateY(-3px);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 40px rgba(78, 205, 196, 0.8);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(60%);
+}
+
+.btn-secondary {
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(20, 20, 50, 0.6);
+    border-color: var(--text-accent-alt);
+    color: var(--text-primary);
+    box-shadow: 0 0 25px rgba(138, 43, 226, 0.5);
+    transform: translateY(-3px);
+}
+
+.btn-secondary:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(60%);
+}
+
+/* ---------- Alternative Actions ---------- */
+.alternative {
+    margin-top: var(--space-lg);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.alternative .link {
+    background: none;
+    border: none;
+    color: var(--text-accent);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+    text-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
+}
+
+.alternative .link:hover {
+    text-decoration: underline;
+    filter: brightness(1.2);
+    text-shadow: 0 0 12px rgba(78, 205, 196, 0.7);
+}
+
+/* ---------- Cosmic Alerts ---------- */
+.alert {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    animation: fadeIn 0.3s var(--transition-ease);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.alert-error {
+    background: rgba(197, 48, 48, 0.15);
+    color: #ffb3b3;
+    border-left: 5px solid #ff6b6b;
+    box-shadow: 0 0 20px rgba(255, 80, 80, 0.2);
+}
+
+.alert-success {
+    background: rgba(72, 187, 120, 0.15);
+    color: #9ae6b4;
+    border-left: 5px solid #48bb78;
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.2);
+}
+
+/* ---------- Background Shapes (Cosmic Nebulae) ---------- */
+.verify-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.background-shapes {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.shape {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(78, 205, 196, 0.05), rgba(138, 43, 226, 0.02));
+    filter: blur(40px);
+    animation: float 20s infinite alternate var(--transition-ease);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shape-1 {
+    width: 400px;
+    height: 400px;
+    top: -200px;
+    right: -200px;
+    background: radial-gradient(circle at 70% 30%, rgba(78, 205, 196, 0.15), rgba(138, 43, 226, 0.1), transparent 70%);
+    animation-delay: 0s;
+}
+
+.shape-2 {
+    width: 350px;
+    height: 350px;
+    bottom: -150px;
+    left: -150px;
+    background: radial-gradient(circle at 30% 70%, rgba(66, 133, 244, 0.12), rgba(138, 43, 226, 0.08), transparent 70%);
+    animation-delay: 2s;
+}
+
+.shape-3 {
+    width: 250px;
+    height: 250px;
+    bottom: -80px;
+    right: 10%;
+    background: radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.1), rgba(255, 255, 255, 0.05), transparent 70%);
+    animation-delay: 4s;
+}
+
+/* Subtle floating animation for background shapes */
+@keyframes float {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(30px, -30px) scale(1.1);
+        opacity: 0.9;
+    }
+}
+
+/* ---------- Animations ---------- */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ---------- Custom Scrollbar (Cosmic) ---------- */
+.verify-container ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.verify-container ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.verify-container ::-webkit-scrollbar-thumb {
+    background: rgba(78, 205, 196, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.verify-container ::-webkit-scrollbar-thumb:hover {
+    background: rgba(78, 205, 196, 0.6);
+    box-shadow: 0 0 12px rgba(78, 205, 196, 0.8);
+}
+
+/* ---------- Responsive Breakpoints ---------- */
+/* Mobile First – base styles already mobile-friendly */
+
+/* Small devices (≥480px) */
+@media (min-width: 480px) {
+    .verify-card {
+        padding: var(--space-xl) var(--space-lg);
+    }
+    .otp-inputs {
+        gap: var(--space-md);
+    }
+}
+
+/* Tablet (≥640px) */
+@media (min-width: 640px) {
+    .verify-container {
+        padding: var(--space-lg);
+    }
+    .verify-card {
+        max-width: 550px;
+    }
+    .otp-inputs input {
+        width: 64px;
+        height: 72px;
+        font-size: 32px;
+    }
+    .btn {
+        padding: var(--space-lg);
+    }
+}
+
+/* Laptop (≥1024px) */
+@media (min-width: 1024px) {
+    .verify-card {
+        max-width: 600px;
+        padding: 56px 48px;
+    }
+    .verify-icon {
+        width: 96px;
+        height: 96px;
+    }
+    .verify-icon svg {
+        width: 40px;
+        height: 40px;
+    }
+    .shape-1 {
+        width: 500px;
+        height: 500px;
+    }
+    .shape-2 {
+        width: 450px;
+        height: 450px;
+    }
+}
+
+/* Desktop (≥1440px) */
+@media (min-width: 1440px) {
+    .verify-card {
+        max-width: 650px;
+        padding: 64px 56px;
+    }
+    .verify-header h1 {
+        font-size: 48px;
+    }
+    .shape-1 {
+        width: 600px;
+        height: 600px;
+    }
+    .shape-2 {
+        width: 550px;
+        height: 550px;
+    }
+    .shape-3 {
+        width: 350px;
+        height: 350px;
+    }
+}
+
+/* TV/4K (≥1920px) */
+@media (min-width: 1920px) {
+    .verify-container {
+        padding: var(--space-2xl);
+    }
+    .verify-card {
+        max-width: 750px;
+        padding: 80px 72px;
+    }
+    .verify-header h1 {
+        font-size: 64px;
+    }
+    .verify-header p {
+        font-size: 20px;
+    }
+    .otp-inputs input {
+        width: 80px;
+        height: 90px;
+        font-size: 40px;
+    }
+}
+
+/* ---------- Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .verify-card,
+    .btn,
+    .shape,
+    .otp-inputs input,
+    .alert {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+    .shape {
+        animation: none;
+    }
+}
+
+/* ---------- High Contrast Mode ---------- */
+@media (prefers-contrast: high) {
+    .verify-container {
+        --text-primary: white;
+        --text-secondary: white;
+        --border-glass: 2px solid white;
+        --space-bg-card: rgba(0, 0, 0, 0.95);
+    }
+    .btn,
+    .otp-inputs input,
+    .alert {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ---------- Ensure all text is readable ---------- */
+h1, p, span, a, button, label, input, .alert {
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Placeholder styling for better visibility ---------- */
+::placeholder {
+    color: var(--text-placeholder);
+    opacity: 0.8;
+}
+
+/* ---------- Focus indicators (WCAG) ---------- */
+:focus-visible {
+    outline: 3px solid var(--text-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.4);
+}
+
+/* ---------- End of Verify Email Cosmic Theme ---------- */

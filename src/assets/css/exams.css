@@ -1,0 +1,1582 @@
+/* ============================================
+   COSMIC SPACE GALAXY THEME - EXAMS PAGE
+   COMPLETE REDESIGN FOR 3D GALAXY BACKGROUND
+   ============================================ */
+
+/* CSS Variables for Space Theme */
+:root {
+  /* Color Scheme - ALWAYS LIGHT TEXT */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0ff;
+  --color-text-tertiary: #b0b0ff;
+  --color-text-accent: #4ECDC4;
+  --color-text-accent-alt: #8A2BE2;
+  
+  /* Backgrounds - DARK with TRANSPARENCY (5-15% opacity) */
+  --color-bg-primary: rgba(5, 5, 20, 0.85);
+  --color-bg-secondary: rgba(10, 10, 30, 0.8);
+  --color-bg-tertiary: rgba(15, 15, 40, 0.9);
+  --color-bg-glass: rgba(10, 10, 30, 0.75);
+  --color-bg-card: rgba(5, 5, 20, 0.9);
+  
+  /* Glass Effects */
+  --glass-blur: blur(15px);
+  --glass-saturate: saturate(180%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+  
+  /* Glow Effects */
+  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
+  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
+  --glow-blue: 0 0 20px rgba(66, 133, 244, 0.4);
+  --glow-white: 0 0 15px rgba(255, 255, 255, 0.3);
+  
+  /* Shadows */
+  --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.6);
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* Font Sizes - Responsive */
+  --font-xs: clamp(12px, 1vw, 14px);
+  --font-sm: clamp(14px, 1.5vw, 16px);
+  --font-md: clamp(16px, 2vw, 18px);
+  --font-lg: clamp(20px, 2.5vw, 24px);
+  --font-xl: clamp(24px, 3vw, 32px);
+  --font-xxl: clamp(32px, 4vw, 48px);
+}
+
+/* ============================================
+   BASE RESET - ENSURING ALL TEXT IS LIGHT
+   ============================================ */
+
+/* Force ALL text elements to be light colored */
+* {
+  color: var(--color-text-primary) !important;
+}
+
+/* Specific text color overrides - ALL LIGHT */
+body,
+h1, h2, h3, h4, h5, h6,
+p, span, div,
+label, input, textarea, select,
+button, a,
+.exams-page,
+.page-header,
+.page-title,
+.page-subtitle,
+.loading-container,
+.error-container,
+.empty-container,
+.exam-card,
+.exam-title,
+.exam-course,
+.detail-label,
+.detail-value,
+.score-label,
+.score-value,
+.appointment-label,
+.appointment-date,
+.btn-view,
+.btn-schedule,
+.btn-start,
+.btn-reschedule,
+.btn-cancel-appointment,
+.retry-btn,
+.btn-secondary,
+.btn-primary,
+.modal-content,
+.modal-header h3,
+.instructions-content,
+.video-link-container p,
+.option-details h5,
+.option-details p,
+.result-label,
+.result-value,
+.modal-body,
+.exam-detail-section h4,
+.detail-item,
+.management-option {
+  color: var(--color-text-primary) !important;
+}
+
+/* Text shadows for readability against galaxy background */
+.exam-title,
+.exam-course,
+.detail-label,
+.detail-value,
+.score-label,
+.score-value,
+.appointment-label,
+.appointment-date,
+.modal-header h3,
+.exam-detail-section h4,
+.option-details h5,
+.result-label,
+.result-value,
+.page-title,
+.page-subtitle,
+.error-container h3,
+.empty-container h3,
+.error-container p,
+.empty-container p {
+  text-shadow: 
+    0 0 10px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Secondary text - slightly lighter/cyan */
+.page-subtitle,
+.exam-course,
+.detail-label,
+.appointment-label,
+.score-label,
+.result-label,
+.instructions-content,
+.video-link-container p,
+.option-details p {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Accent text - cosmic colors */
+.status-passed,
+.score-value.passed,
+.result-value.passed {
+  color: #4ade80 !important;
+  text-shadow: 0 0 15px rgba(74, 222, 128, 0.7) !important;
+}
+
+.status-failed,
+.score-value.failed,
+.result-value.failed {
+  color: #f87171 !important;
+  text-shadow: 0 0 15px rgba(248, 113, 113, 0.7) !important;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+body {
+  background: transparent !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Cosmic background overlay for readability without blocking galaxy */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 5, 15, 0.1) 0%,  /* Very transparent - 10% opacity */
+    rgba(10, 10, 25, 0.08) 100%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ============================================
+   EXAMS PAGE LAYOUT
+   ============================================ */
+
+.exams-page {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+/* Page Header - FIXED: No white background, transparent dark glass */
+.page-header {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-card);
+  backdrop-filter: var(--glass-blur) var(--glass-saturate);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cosmic border effect for page header */
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(78, 205, 196, 0.2),
+    rgba(138, 43, 226, 0.2)
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.page-title {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+  letter-spacing: 0.5px;
+}
+
+.page-subtitle {
+  font-size: var(--font-md);
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* ============================================
+   LOADING, ERROR & EMPTY STATES
+   ============================================ */
+
+.loading-container,
+.error-container,
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  background: var(--color-bg-card);
+  backdrop-filter: var(--glass-blur) var(--glass-saturate);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-lg) 0;
+  box-shadow: var(--shadow-deep);
+}
+
+/* Galaxy Spinner - Transparent and Light */
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-text-accent);
+  border-right-color: var(--color-text-accent-alt);
+  border-radius: 50%;
+  animation: cosmic-spin 2s linear infinite;
+  position: relative;
+  box-shadow: 
+    0 0 20px rgba(78, 205, 196, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.loading-spinner::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: cosmic-spin 3s linear infinite reverse;
+}
+
+@keyframes cosmic-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon,
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-accent) !important;
+  text-shadow: var(--glow-cyan);
+}
+
+.error-container h3,
+.empty-container h3 {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.error-container p,
+.empty-container p {
+  color: var(--color-text-secondary) !important;
+  margin-bottom: var(--spacing-lg);
+  max-width: 400px;
+  font-size: var(--font-md);
+}
+
+.retry-btn {
+  padding: 12px 28px;
+  background: linear-gradient(
+    135deg, 
+    rgba(30, 30, 60, 0.9) 0%, 
+    rgba(50, 50, 90, 0.9) 100%
+  );
+  color: var(--color-text-primary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  min-width: 140px;
+}
+
+.retry-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--glow-cyan);
+  border-color: var(--color-text-accent);
+  background: linear-gradient(
+    135deg, 
+    rgba(40, 40, 70, 0.9) 0%, 
+    rgba(60, 60, 100, 0.9) 100%
+  );
+}
+
+/* ============================================
+   EXAMS GRID & CARDS
+   ============================================ */
+
+.exams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.exam-card {
+  background: var(--color-bg-card);
+  backdrop-filter: var(--glass-blur) var(--glass-saturate);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+  will-change: transform, box-shadow;
+}
+
+/* Cosmic border effect for cards */
+.exam-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(78, 205, 196, 0.2),
+    rgba(138, 43, 226, 0.2)
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.exam-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    var(--shadow-floating),
+    var(--glow-cyan);
+}
+
+.exam-card:hover::before {
+  opacity: 1;
+}
+
+/* Exam Header - FIXED: Dark transparent background */
+.exam-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  background: transparent !important; /* Fix: No white background */
+  padding: 0;
+  border-radius: 0;
+}
+
+.exam-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(
+    135deg, 
+    rgba(66, 133, 244, 0.3) 0%, 
+    rgba(138, 43, 226, 0.3) 100%
+  );
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--color-text-primary) !important;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+.exam-title-section {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important; /* Fix: No white background */
+}
+
+.exam-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
+}
+
+.exam-course {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary) !important;
+  font-weight: 500;
+}
+
+/* Status Badges - Cosmic Colors */
+.exam-status {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 100px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1) !important; /* Light transparent background */
+}
+
+.status-passed {
+  background: linear-gradient(
+    135deg, 
+    rgba(72, 187, 120, 0.3) 0%, 
+    rgba(56, 161, 105, 0.3) 100%
+  ) !important;
+  border-color: rgba(72, 187, 120, 0.3) !important;
+}
+
+.status-failed {
+  background: linear-gradient(
+    135deg, 
+    rgba(252, 129, 129, 0.3) 0%, 
+    rgba(245, 101, 101, 0.3) 100%
+  ) !important;
+  border-color: rgba(245, 101, 101, 0.3) !important;
+}
+
+.status-scheduled {
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.3) 0%, 
+    rgba(221, 107, 32, 0.3) 100%
+  ) !important;
+  border-color: rgba(237, 137, 54, 0.3) !important;
+}
+
+.status-completed {
+  background: linear-gradient(
+    135deg, 
+    rgba(160, 174, 192, 0.3) 0%, 
+    rgba(113, 128, 150, 0.3) 100%
+  ) !important;
+  border-color: rgba(160, 174, 192, 0.3) !important;
+}
+
+.status-cancelled {
+  background: linear-gradient(
+    135deg, 
+    rgba(254, 215, 215, 0.3) 0%, 
+    rgba(252, 129, 129, 0.3) 100%
+  ) !important;
+  border-color: rgba(252, 129, 129, 0.3) !important;
+}
+
+.status-not-taken {
+  background: linear-gradient(
+    135deg, 
+    rgba(226, 232, 240, 0.3) 0%, 
+    rgba(203, 213, 224, 0.3) 100%
+  ) !important;
+  border-color: rgba(226, 232, 240, 0.3) !important;
+}
+
+/* Exam Details */
+.exam-details {
+  margin-bottom: var(--spacing-lg);
+  background: transparent !important;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent !important;
+}
+
+.detail-label {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary) !important;
+  font-weight: 500;
+  background: transparent !important;
+}
+
+.detail-value {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text-primary) !important;
+  text-align: right;
+  max-width: 60%;
+  background: transparent !important;
+}
+
+.truncated {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Score Display */
+.score-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+}
+
+.score-label {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary) !important;
+  font-weight: 500;
+  background: transparent !important;
+}
+
+.score-value {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: transparent !important;
+}
+
+.score-value.passed {
+  color: #4ade80 !important;
+}
+
+.score-value.failed {
+  color: #f87171 !important;
+}
+
+/* Appointment Info */
+.appointment-info {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+}
+
+.appointment-label {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 6px;
+  font-weight: 500;
+  background: transparent !important;
+}
+
+.appointment-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent !important;
+}
+
+.appointment-date {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text-primary) !important;
+  background: transparent !important;
+}
+
+.appointment-status {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 100px;
+  text-align: center;
+}
+
+.appointment-status.scheduled {
+  background: rgba(237, 137, 54, 0.3) !important;
+  border-color: rgba(237, 137, 54, 0.4) !important;
+}
+
+.appointment-status.in-progress {
+  background: rgba(66, 153, 225, 0.3) !important;
+  border-color: rgba(66, 153, 225, 0.4) !important;
+}
+
+.appointment-status.completed {
+  background: rgba(72, 187, 120, 0.3) !important;
+  border-color: rgba(72, 187, 120, 0.4) !important;
+}
+
+.appointment-status.cancelled {
+  background: rgba(245, 101, 101, 0.3) !important;
+  border-color: rgba(245, 101, 101, 0.4) !important;
+}
+
+/* Reschedule & Cancel Notices */
+.reschedule-notice,
+.cancel-notice {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+  background: transparent !important;
+}
+
+.btn-reschedule,
+.btn-cancel-appointment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 44px;
+}
+
+.btn-reschedule {
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.3) 0%, 
+    rgba(221, 107, 32, 0.3) 100%
+  );
+}
+
+.btn-reschedule:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.5) 0%, 
+    rgba(221, 107, 32, 0.5) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px rgba(237, 137, 54, 0.4);
+  border-color: rgba(237, 137, 54, 0.5);
+}
+
+.btn-cancel-appointment {
+  background: linear-gradient(
+    135deg, 
+    rgba(245, 101, 101, 0.3) 0%, 
+    rgba(229, 62, 62, 0.3) 100%
+  );
+}
+
+.btn-cancel-appointment:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(245, 101, 101, 0.5) 0%, 
+    rgba(229, 62, 62, 0.5) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px rgba(245, 101, 101, 0.4);
+  border-color: rgba(245, 101, 101, 0.5);
+}
+
+/* Exam Actions */
+.exam-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+}
+
+.exam-actions button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  min-height: 44px;
+}
+
+.btn-view {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-view:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+  box-shadow: var(--glow-white);
+}
+
+.btn-schedule {
+  background: linear-gradient(
+    135deg, 
+    rgba(66, 133, 244, 0.4) 0%, 
+    rgba(138, 43, 226, 0.4) 100%
+  );
+  border: 1px solid rgba(138, 43, 226, 0.3);
+}
+
+.btn-schedule:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(66, 133, 244, 0.6) 0%, 
+    rgba(138, 43, 226, 0.6) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: var(--glow-purple);
+}
+
+.btn-scheduled {
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.4) 0%, 
+    rgba(221, 107, 32, 0.4) 100%
+  );
+  border: 1px solid rgba(237, 137, 54, 0.3);
+}
+
+.btn-scheduled:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.6) 0%, 
+    rgba(221, 107, 32, 0.6) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
+}
+
+.btn-start {
+  background: linear-gradient(
+    135deg, 
+    rgba(72, 187, 120, 0.4) 0%, 
+    rgba(56, 161, 105, 0.4) 100%
+  );
+  border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.btn-start:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(72, 187, 120, 0.6) 0%, 
+    rgba(56, 161, 105, 0.6) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(72, 187, 120, 0.4);
+}
+
+.btn-completed {
+  background: linear-gradient(
+    135deg, 
+    rgba(160, 174, 192, 0.4) 0%, 
+    rgba(113, 128, 150, 0.4) 100%
+  );
+  border: 1px solid rgba(160, 174, 192, 0.3);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-completed:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.appointment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  width: 100%;
+  background: transparent !important;
+}
+
+/* ============================================
+   MODAL STYLES - COSMIC GLASS
+   ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: cosmic-fade-in 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.modal-content {
+  background: var(--color-bg-card);
+  backdrop-filter: var(--glass-blur) var(--glass-saturate);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: cosmic-slide-up 0.4s ease;
+  box-shadow: 
+    var(--shadow-floating),
+    var(--glow-cyan);
+  position: relative;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(78, 205, 196, 0.3),
+    rgba(138, 43, 226, 0.3)
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  background: rgba(10, 10, 30, 0.8);
+  backdrop-filter: blur(15px);
+  z-index: 10;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.modal-header h3 {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  color: var(--color-text-primary) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.modal-close:hover {
+  background: rgba(245, 101, 101, 0.3);
+  border-color: rgba(245, 101, 101, 0.5);
+  transform: rotate(90deg);
+  box-shadow: 0 0 20px rgba(245, 101, 101, 0.5);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+  background: transparent !important;
+}
+
+.exam-detail-section {
+  margin-bottom: var(--spacing-xl);
+  background: transparent !important;
+}
+
+.exam-detail-section h4 {
+  font-size: var(--font-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detail-label {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text-primary) !important;
+}
+
+.instructions-content {
+  background: rgba(0, 0, 0, 0.25);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  line-height: 1.7;
+  color: var(--color-text-secondary) !important;
+  white-space: pre-wrap;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Video Container */
+.video-container {
+  margin-top: var(--spacing-md);
+  background: transparent !important;
+}
+
+.video-embed-wrapper {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.video-embed-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
+.video-embed-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-link-container {
+  padding: var(--spacing-lg);
+  background: rgba(237, 137, 54, 0.15);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(237, 137, 54, 0.3);
+  text-align: center;
+}
+
+.video-link-container p {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary) !important;
+  font-size: var(--font-sm);
+}
+
+.video-external-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 14px 28px;
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.4) 0%, 
+    rgba(221, 107, 32, 0.4) 100%
+  );
+  color: #ffffff !important;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(237, 137, 54, 0.3);
+  backdrop-filter: blur(5px);
+  min-width: 200px;
+}
+
+.video-external-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
+  background: linear-gradient(
+    135deg, 
+    rgba(237, 137, 54, 0.6) 0%, 
+    rgba(221, 107, 32, 0.6) 100%
+  );
+}
+
+/* Appointment Management */
+.appointment-management {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  background: transparent !important;
+}
+
+.management-option {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.management-option:hover {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(8px);
+}
+
+.option-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  color: var(--color-text-accent) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.option-details {
+  flex: 1;
+  background: transparent !important;
+}
+
+.option-details h5 {
+  font-size: var(--font-md);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+}
+
+.option-details p {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary) !important;
+  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+}
+
+.management-option .btn-reschedule,
+.management-option .btn-cancel-appointment {
+  width: auto;
+  display: inline-flex;
+  min-width: 160px;
+  max-width: 200px;
+}
+
+.results-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  background: transparent !important;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.result-label {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.result-value {
+  font-size: var(--font-lg);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.result-value.passed {
+  color: #4ade80 !important;
+}
+
+.result-value.failed {
+  color: #f87171 !important;
+}
+
+.modal-footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  background: rgba(10, 10, 30, 0.8);
+  backdrop-filter: blur(15px);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.btn-secondary {
+  padding: 14px 28px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  min-width: 120px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+  box-shadow: var(--glow-white);
+}
+
+.btn-primary {
+  padding: 14px 28px;
+  background: linear-gradient(
+    135deg, 
+    rgba(66, 133, 244, 0.4) 0%, 
+    rgba(138, 43, 226, 0.4) 100%
+  );
+  color: #ffffff !important;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  min-width: 120px;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(
+    135deg, 
+    rgba(66, 133, 244, 0.6) 0%, 
+    rgba(138, 43, 226, 0.6) 100%
+  );
+  transform: translateY(-3px);
+  box-shadow: var(--glow-purple);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes cosmic-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cosmic-slide-up {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cosmic-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Mobile (< 640px) */
+@media (max-width: 640px) {
+  :root {
+    --glass-blur: blur(8px);
+  }
+  
+  .exams-page {
+    padding: var(--spacing-sm);
+  }
+  
+  .page-header {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .page-title {
+    font-size: var(--font-lg);
+  }
+  
+  .page-subtitle {
+    font-size: var(--font-sm);
+  }
+  
+  .exams-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .exam-card {
+    padding: var(--spacing-md);
+  }
+  
+  .exam-actions {
+    flex-direction: column;
+  }
+  
+  .detail-grid,
+  .results-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+  }
+  
+  .appointment-management {
+    flex-direction: column;
+  }
+  
+  .management-option {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .option-icon {
+    align-self: center;
+  }
+  
+  .video-embed-container {
+    height: 200px;
+  }
+  
+  /* Reduce blur for mobile performance */
+  .exam-card,
+  .modal-content,
+  .loading-container,
+  .error-container,
+  .empty-container,
+  .page-header {
+    backdrop-filter: blur(8px) saturate(160%);
+  }
+  
+  .exam-status,
+  .appointment-status {
+    min-width: 80px;
+    padding: 6px 12px;
+    font-size: 10px;
+  }
+}
+
+/* Tablet (640px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .results-section {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .modal-content {
+    max-width: 90%;
+  }
+}
+
+/* Laptop (1024px - 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .exams-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  
+  .modal-content {
+    max-width: 800px;
+  }
+}
+
+/* Desktop (1440px - 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+  .exams-page {
+    max-width: 1600px;
+    padding: var(--spacing-xl);
+  }
+  
+  .exams-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: var(--spacing-xl);
+  }
+  
+  .exam-card {
+    padding: var(--spacing-xl);
+  }
+  
+  .modal-content {
+    max-width: 900px;
+  }
+}
+
+/* TV/4K (> 1920px) */
+@media (min-width: 1921px) {
+  .exams-page {
+    max-width: 2000px;
+    padding: var(--spacing-xl) 5%;
+  }
+  
+  .exams-grid {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 32px;
+  }
+  
+  .exam-card {
+    padding: 32px;
+    border-radius: 24px;
+  }
+  
+  .modal-content {
+    max-width: 1000px;
+  }
+  
+  :root {
+    --font-xs: clamp(14px, 0.8vw, 16px);
+    --font-sm: clamp(16px, 1vw, 18px);
+    --font-md: clamp(18px, 1.2vw, 22px);
+    --font-lg: clamp(22px, 1.5vw, 28px);
+    --font-xl: clamp(28px, 2vw, 36px);
+    --font-xxl: clamp(36px, 2.5vw, 48px);
+  }
+}
+
+/* Small Mobile Adjustments */
+@media (max-width: 480px) {
+  .exam-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .exam-status {
+    align-self: flex-start;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  
+  .detail-value {
+    text-align: left;
+    max-width: 100%;
+  }
+  
+  .score-display,
+  .appointment-details {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .btn-reschedule,
+  .btn-cancel-appointment,
+  .exam-actions button {
+    padding: 14px 16px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================ */
+
+/* Focus indicators */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+a:focus,
+.modal-close:focus {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.3);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border: 3px solid var(--color-text-accent);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #ffffff;
+    --color-bg-card: rgba(0, 0, 0, 0.9);
+  }
+  
+  .exam-card,
+  .modal-content,
+  .loading-container,
+  .error-container,
+  .empty-container,
+  .page-header {
+    border: 2px solid #ffffff;
+  }
+  
+  .exam-card::before,
+  .modal-content::before,
+  .page-header::before {
+    display: none;
+  }
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 180, 0.7);
+  box-shadow: 0 0 15px rgba(78, 205, 196, 0.4);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.3);
+}

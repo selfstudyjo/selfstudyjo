@@ -1,0 +1,826 @@
+/* src/assets/css/register.css */
+/* 
+  COSMIC SPACE THEME - REGISTER COMPONENT
+  Designed for Vue.js application with 3D galaxy background
+  Theme: Dark glass-morphism with cosmic glow effects
+*/
+
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ========================================================================== */
+:root {
+  /* Cosmic Color Palette */
+  --cosmic-dark: rgba(5, 5, 20, 0.9);
+  --cosmic-darker: rgba(2, 2, 10, 0.95);
+  --cosmic-card: rgba(10, 10, 30, 0.92);
+  --cosmic-card-light: rgba(20, 20, 50, 0.95);
+  --cosmic-card-hover: rgba(30, 30, 60, 0.95);
+  
+  /* Accent Colors */
+  --cosmic-cyan: #4ECDC4;
+  --cosmic-purple: #8A2BE2;
+  --cosmic-blue: #4285F4;
+  --cosmic-nebula: rgba(138, 43, 226, 0.3);
+  --cosmic-star: #FFFFFF;
+  
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
+  --text-tertiary: #B0B0B0;
+  --text-accent: #4ECDC4;
+  --text-input: #FFFFFF;
+  
+  /* Border & Glow Effects */
+  --border-subtle: rgba(255, 255, 255, 0.15);
+  --border-glow: rgba(255, 255, 255, 0.25);
+  --glow-cyan: rgba(78, 205, 196, 0.4);
+  --glow-purple: rgba(138, 43, 226, 0.4);
+  --glow-blue: rgba(66, 133, 244, 0.4);
+  
+  /* Glass Effects */
+  --glass-blur: blur(15px) saturate(180%);
+  --glass-blur-mobile: blur(8px) saturate(150%);
+  
+  /* Shadows */
+  --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
+  --shadow-glow: 0 0 30px rgba(78, 205, 196, 0.2);
+  --shadow-deep: 0 10px 40px rgba(0, 0, 0, 0.5);
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
+}
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+@keyframes cosmicFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  33% {
+    transform: translateY(-5px) translateX(3px);
+  }
+  66% {
+    transform: translateY(3px) translateX(-3px);
+  }
+}
+
+@keyframes cosmicGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(78, 205, 196, 0.3),
+      0 0 40px rgba(78, 205, 196, 0.1),
+      0 0 60px rgba(78, 205, 196, 0.05);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(78, 205, 196, 0.5),
+      0 0 60px rgba(78, 205, 196, 0.2),
+      0 0 90px rgba(78, 205, 196, 0.1);
+  }
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  50% {
+    border-color: rgba(78, 205, 196, 0.6);
+  }
+}
+
+@keyframes slideUpCosmic {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cosmicSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   MAIN CONTAINER - SEE THROUGH SPACESHIP WINDOW
+   ========================================================================== */
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  position: relative;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.register-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 20% 50%,
+    rgba(10, 10, 40, 0.15) 0%,
+    rgba(5, 5, 20, 0.08) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==========================================================================
+   REGISTER CARD - FIXED HEIGHT WITH CONSISTENT BACKGROUND
+   ========================================================================== */
+.register-card {
+  background: var(--cosmic-card);
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  max-width: 520px;
+  min-height: auto;
+  box-shadow: 
+    var(--shadow-deep),
+    0 0 0 1px var(--border-subtle),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  z-index: 100;
+  position: relative;
+  animation: slideUpCosmic 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  max-height: 85vh;
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure form background matches card */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  flex: 1;
+  background: transparent;
+}
+
+.register-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.register-card::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.register-card::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.register-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 150, 0.7);
+}
+
+.register-card:hover {
+  border-color: var(--border-glow);
+  box-shadow: 
+    var(--shadow-deep),
+    0 0 40px rgba(78, 205, 196, 0.15),
+    0 0 0 1px rgba(78, 205, 196, 0.3);
+}
+
+/* ==========================================================================
+   HEADER SECTION
+   ========================================================================== */
+.register-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  position: relative;
+}
+
+.register-header::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cosmic-cyan),
+    transparent
+  );
+  border-radius: 1px;
+}
+
+.register-header h1 {
+  font-size: clamp(28px, 5vw, 36px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  text-shadow: 
+    0 0 20px rgba(78, 205, 196, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--text-primary) 0%,
+    var(--text-accent) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.register-header p {
+  color: var(--text-secondary);
+  font-size: clamp(14px, 2.5vw, 16px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   FORM LAYOUT
+   ========================================================================== */
+.register-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+/* ==========================================================================
+   FORM CONTROLS - FIXED TEXT COLOR
+   ========================================================================== */
+.register-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: relative;
+  background: transparent;
+}
+
+.register-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.5px;
+}
+
+.register-form-group input,
+.register-select-input {
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  transition: all var(--transition-normal);
+  color: var(--text-input) !important; /* Force light text */
+  width: 100%;
+  backdrop-filter: blur(5px);
+}
+
+.register-form-group input::placeholder,
+.register-select-input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+/* Ensure text remains light in all states */
+.register-form-group input:not(:placeholder-shown),
+.register-select-input:not(:placeholder-shown) {
+  color: var(--text-input) !important;
+}
+
+/* Focus States */
+.register-form-group input:focus,
+.register-select-input:focus {
+  outline: none;
+  border-color: var(--cosmic-cyan);
+  box-shadow: 
+    0 0 0 3px rgba(78, 205, 196, 0.2),
+    0 0 20px rgba(78, 205, 196, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text-input) !important;
+  animation: borderGlow 2s infinite;
+}
+
+/* Validation States */
+.register-form-group input.error {
+  border-color: #ff6b6b;
+  box-shadow: 
+    0 0 0 3px rgba(255, 107, 107, 0.2),
+    0 0 15px rgba(255, 107, 107, 0.3);
+  color: var(--text-input) !important;
+}
+
+.register-form-group input.valid {
+  border-color: #51cf66;
+  box-shadow: 
+    0 0 0 3px rgba(81, 207, 102, 0.2),
+    0 0 15px rgba(81, 207, 102, 0.3);
+  color: var(--text-input) !important;
+}
+
+/* ==========================================================================
+   VALIDATION INDICATORS
+   ========================================================================== */
+.register-input-with-validation {
+  position: relative;
+  background: transparent;
+}
+
+.register-validation-status {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-accent);
+  font-size: 18px;
+}
+
+.register-validation-status .register-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--cosmic-cyan);
+  border-radius: 50%;
+  animation: cosmicSpin 1s linear infinite;
+}
+
+/* ==========================================================================
+   PASSWORD FIELD SPECIAL STYLES
+   ========================================================================== */
+.register-password-input {
+  position: relative;
+  background: transparent;
+}
+
+.register-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+  backdrop-filter: blur(5px);
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.register-password-toggle:hover {
+  color: var(--text-accent);
+}
+
+/* Password Strength Indicator */
+.register-password-strength {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  background: transparent;
+}
+
+.register-strength-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+.register-strength-bar::before {
+  content: '';
+  display: block;
+  height: 100%;
+  width: var(--strength, 0%);
+  transition: width var(--transition-normal);
+  border-radius: 2px;
+}
+
+.register-strength-bar.weak::before {
+  background: linear-gradient(90deg, #ff6b6b, #ff8787);
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.register-strength-bar.medium::before {
+  background: linear-gradient(90deg, #ffd43b, #ffde67);
+  box-shadow: 0 0 10px rgba(255, 212, 59, 0.5);
+}
+
+.register-strength-bar.strong::before {
+  background: linear-gradient(90deg, #51cf66, #69db7c);
+  box-shadow: 0 0 10px rgba(81, 207, 102, 0.5);
+}
+
+.register-strength-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  min-width: 50px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
+   ERROR MESSAGES
+   ========================================================================== */
+.register-error-message {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+}
+
+/* ==========================================================================
+   TERMS & CONDITIONS
+   ========================================================================== */
+.register-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.register-terms input[type="checkbox"] {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cosmic-cyan);
+  filter: drop-shadow(0 0 5px rgba(78, 205, 196, 0.5));
+}
+
+.register-terms label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.register-terms .register-link {
+  color: var(--text-accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.register-terms .register-link:hover {
+  text-decoration: underline;
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+.register-btn {
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 1px;
+  background: transparent;
+}
+
+.register-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.register-btn:hover::before {
+  opacity: 1;
+}
+
+.register-btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--cosmic-blue) 0%,
+    var(--cosmic-purple) 50%,
+    var(--cosmic-cyan) 100%
+  );
+  color: var(--text-primary);
+  box-shadow: 
+    0 4px 15px rgba(66, 133, 244, 0.3),
+    0 0 20px rgba(138, 43, 226, 0.2);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.register-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(66, 133, 244, 0.4),
+    0 0 30px rgba(138, 43, 226, 0.3),
+    0 0 40px rgba(78, 205, 196, 0.2);
+  animation: cosmicGlow 2s infinite;
+}
+
+.register-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  transition: transform 100ms ease;
+}
+
+.register-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* ==========================================================================
+   FOOTER & LINKS
+   ========================================================================== */
+.register-footer {
+  text-align: center;
+  margin-top: var(--space-lg);
+  color: var(--text-tertiary);
+  font-size: 14px;
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+}
+
+.register-footer .register-link {
+  color: var(--text-accent);
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 4px;
+  transition: all var(--transition-fast);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.register-footer .register-link:hover {
+  text-decoration: underline;
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+}
+
+/* ==========================================================================
+   ALERTS & NOTIFICATIONS
+   ========================================================================== */
+.register-alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: slideUpCosmic 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid;
+  background: transparent;
+}
+
+.alert-error {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+  box-shadow: 
+    0 0 20px rgba(255, 107, 107, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.register-alert-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.register-alert-close:hover {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Mobile: < 640px */
+@media (max-width: 640px) {
+  .register-container {
+    padding: var(--space-sm);
+  }
+  
+  .register-card {
+    padding: var(--space-lg) var(--space-md);
+    backdrop-filter: var(--glass-blur-mobile);
+    margin: var(--space-sm);
+    max-height: 90vh;
+    min-height: auto;
+  }
+  
+  .register-header h1 {
+    font-size: clamp(24px, 8vw, 28px);
+  }
+  
+  .register-form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  
+  .register-btn {
+    padding: 14px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+  
+  .register-terms {
+    padding: var(--space-sm);
+  }
+}
+
+/* Tablet: 640px - 1024px */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .register-card {
+    max-width: 480px;
+    padding: var(--space-lg);
+  }
+  
+  .register-header h1 {
+    font-size: clamp(28px, 4vw, 32px);
+  }
+  
+  .register-form-group label {
+    font-size: 15px;
+  }
+}
+
+/* Laptop: 1024px - 1440px */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .register-card {
+    max-width: 500px;
+  }
+  
+  .register-header h1 {
+    font-size: 34px;
+  }
+}
+
+/* Desktop: 1440px - 1920px */
+@media (min-width: 1440px) {
+  .register-card {
+    max-width: 560px;
+    padding: var(--space-xl) var(--space-xl);
+  }
+  
+  .register-header h1 {
+    font-size: 36px;
+  }
+  
+  .register-form-group label {
+    font-size: 16px;
+  }
+  
+  .register-form-group input,
+  .register-select-input {
+    padding: 16px 18px;
+    font-size: 17px;
+  }
+}
+
+/* TV/4K: > 1920px */
+@media (min-width: 1920px) {
+  .register-card {
+    max-width: 600px;
+    padding: 48px 40px;
+    border-radius: 28px;
+  }
+  
+  .register-header h1 {
+    font-size: 42px;
+  }
+  
+  .register-header p {
+    font-size: 18px;
+  }
+  
+  .register-form-group label {
+    font-size: 18px;
+  }
+  
+  .register-form-group input,
+  .register-select-input {
+    padding: 18px 20px;
+    font-size: 18px;
+  }
+  
+  .register-btn {
+    padding: 20px;
+    font-size: 18px;
+    border-radius: 18px;
+  }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY & REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .register-card,
+  .register-btn,
+  .register-form-group input,
+  .register-select-input {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .register-card {
+    animation: slideUpCosmic 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .register-card {
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid white;
+  }
+  
+  .register-form-group input,
+  .register-select-input {
+    border: 2px solid white;
+    background: black;
+    color: white !important;
+  }
+  
+  .register-btn-primary {
+    background: linear-gradient(135deg, #0000FF 0%, #800080 100%);
+  }
+  
+  .register-header h1 {
+    color: white;
+    -webkit-text-fill-color: white;
+    text-shadow: 0 0 5px black;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cosmic-card: rgba(15, 15, 35, 0.92);
+    --cosmic-card-light: rgba(25, 25, 55, 0.95);
+  }
+}

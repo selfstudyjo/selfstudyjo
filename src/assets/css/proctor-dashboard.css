@@ -1,0 +1,1112 @@
+/* src/assets/css/proctor-dashboard.css - COSMIC SPACE PROCTOR DASHBOARD */
+
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   ========================================================================== */
+:root {
+  /* Cosmic Color Palette */
+  --cosmic-dark: rgba(5, 5, 20, 0.9);
+  --cosmic-darker: rgba(2, 2, 10, 0.95);
+  --cosmic-card: rgba(15, 15, 40, 0.85);
+  --cosmic-card-hover: rgba(20, 20, 60, 0.9);
+  --cosmic-input: rgba(0, 0, 0, 0.5);
+  --cosmic-input-focus: rgba(20, 20, 50, 0.8);
+  
+  /* Cosmic Accent Colors */
+  --cosmic-cyan: #4ECDC4;
+  --cosmic-cyan-glow: rgba(78, 205, 196, 0.4);
+  --cosmic-purple: #8A2BE2;
+  --cosmic-purple-glow: rgba(138, 43, 226, 0.4);
+  --cosmic-blue: #4285F4;
+  --cosmic-blue-glow: rgba(66, 133, 244, 0.3);
+  --cosmic-white: #ffffff;
+  --cosmic-light: #e0e0e0;
+  --cosmic-gray: #a0a0c0;
+  
+  /* Status Colors */
+  --status-success: #4ECDC4;
+  --status-success-glow: rgba(78, 205, 196, 0.3);
+  --status-error: #ff6b6b;
+  --status-error-glow: rgba(255, 107, 107, 0.3);
+  --status-warning: #FFD166;
+  --status-warning-glow: rgba(255, 209, 102, 0.3);
+  --status-info: #4285F4;
+  --status-info-glow: rgba(66, 133, 244, 0.3);
+  --status-default: #8A2BE2;
+  --status-default-glow: rgba(138, 43, 226, 0.3);
+  
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-muted: #a0a0c0;
+  
+  /* Effects */
+  --glass-blur: blur(12px) saturate(180%);
+  --glass-blur-mobile: blur(8px) saturate(160%);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-glow: all 0.5s ease;
+  
+  /* Shadows & Glows */
+  --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
+  --shadow-cosmic-cyan: 0 0 25px rgba(78, 205, 196, 0.4);
+  --shadow-cosmic-purple: 0 0 25px rgba(138, 43, 226, 0.4);
+  --shadow-inner: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+  
+  /* Spacing */
+  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+  --space-sm: clamp(0.5rem, 1vw, 1rem);
+  --space-md: clamp(1rem, 2vw, 1.5rem);
+  --space-lg: clamp(1.5rem, 3vw, 2.5rem);
+  --space-xl: clamp(2rem, 4vw, 3.5rem);
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* Font Sizes */
+  --font-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --font-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --font-md: clamp(1rem, 3vw, 1.125rem);
+  --font-lg: clamp(1.25rem, 4vw, 1.5rem);
+  --font-xl: clamp(1.5rem, 5vw, 2rem);
+  --font-xxl: clamp(2rem, 6vw, 2.5rem);
+}
+
+/* ==========================================================================
+   ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+@keyframes cosmic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--cosmic-blue-glow);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--cosmic-blue-glow);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(66, 133, 244, 0.3);
+  }
+  50% {
+    border-color: var(--cosmic-cyan);
+    box-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   BASE STYLES - COSMIC PROCTOR DASHBOARD
+   ========================================================================== */
+.proctor-dashboard {
+  padding: var(--space-lg);
+  max-width: min(1200px, 95vw);
+  margin: 0 auto;
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Cosmic overlay for readability */
+.proctor-dashboard::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 20, 0.3) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ==========================================================================
+   DASHBOARD HEADER - COSMIC STYLE
+   ========================================================================== */
+.dashboard-header {
+  margin-bottom: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--cosmic-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-outer), var(--shadow-cosmic);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
+  overflow: hidden;
+  animation: slide-in 0.5s ease-out;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    var(--cosmic-purple),
+    var(--cosmic-cyan),
+    var(--cosmic-blue));
+  opacity: 0.7;
+}
+
+.dashboard-header h1 {
+  font-size: var(--font-xxl);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+  background: linear-gradient(135deg, 
+    var(--cosmic-cyan) 0%, 
+    var(--cosmic-purple) 50%, 
+    var(--cosmic-blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 
+    0 0 20px rgba(78, 205, 196, 0.3),
+    var(--text-shadow);
+  letter-spacing: 0.5px;
+}
+
+.proctor-info {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  text-shadow: var(--text-shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.proctor-info i {
+  color: var(--cosmic-cyan);
+  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
+}
+
+/* ==========================================================================
+   DASHBOARD CONTENT - COSMIC GLASS EFFECT
+   ========================================================================== */
+.dashboard-content {
+  background: var(--cosmic-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-outer), var(--shadow-cosmic);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+}
+
+/* ==========================================================================
+   LOADING STATE - COSMIC SPINNER
+   ========================================================================== */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--text-secondary);
+  text-align: center;
+  animation: slide-in 0.3s ease-out;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid transparent;
+  border-top-color: var(--cosmic-cyan);
+  border-right-color: var(--cosmic-purple);
+  border-bottom-color: var(--cosmic-blue);
+  border-radius: 50%;
+  animation: cosmic-spin 1s linear infinite;
+  margin-bottom: var(--space-md);
+  box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+}
+
+.loading-state h3 {
+  font-size: var(--font-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.loading-state p {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  text-shadow: var(--text-shadow);
+}
+
+/* ==========================================================================
+   ERROR STATE - COSMIC STYLE
+   ========================================================================== */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+  background: var(--cosmic-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  animation: slide-in 0.3s ease-out;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: var(--space-md);
+  color: var(--status-error);
+  filter: drop-shadow(0 0 20px var(--status-error-glow));
+}
+
+.error-state h3 {
+  font-size: var(--font-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.error-state p {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+  text-shadow: var(--text-shadow);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   RETRY BUTTON - COSMIC STYLE
+   ========================================================================== */
+.retry-btn {
+  background: linear-gradient(135deg, 
+    rgba(78, 205, 196, 0.9), 
+    rgba(66, 133, 244, 0.9));
+  color: var(--text-primary);
+  border: none;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  text-shadow: var(--text-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.retry-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent);
+  transition: 0.5s;
+}
+
+.retry-btn:hover {
+  background: linear-gradient(135deg, 
+    rgba(78, 205, 196, 1), 
+    rgba(66, 133, 244, 1));
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(66, 133, 244, 0.4),
+    0 0 30px rgba(66, 133, 244, 0.3);
+}
+
+.retry-btn:hover::before {
+  left: 100%;
+}
+
+.retry-btn:active {
+  transform: translateY(-1px);
+}
+
+.retry-btn i {
+  font-size: 20px;
+}
+
+/* ==========================================================================
+   EMPTY STATE - COSMIC STYLE
+   ========================================================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+  background: var(--cosmic-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  animation: slide-in 0.3s ease-out;
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: var(--space-md);
+  color: var(--cosmic-gray);
+  opacity: 0.6;
+  filter: drop-shadow(0 0 20px rgba(160, 160, 192, 0.2));
+}
+
+.empty-state h3 {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.empty-state p {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  text-shadow: var(--text-shadow);
+  max-width: 500px;
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+/* ==========================================================================
+   APPOINTMENTS HEADER - COSMIC STYLE
+   ========================================================================== */
+.appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.appointments-header h2 {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: var(--text-shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.appointments-header h2 i {
+  color: var(--cosmic-cyan);
+  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
+}
+
+/* ==========================================================================
+   STATS - COSMIC STYLE
+   ========================================================================== */
+.stats {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 120px;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(78, 205, 196, 0.1), 
+    rgba(138, 43, 226, 0.1));
+  opacity: 0;
+  transition: var(--transition-smooth);
+}
+
+.stat-item:hover::before {
+  opacity: 1;
+}
+
+.stat-label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+  text-shadow: var(--text-shadow);
+  z-index: 1;
+}
+
+.stat-value {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--cosmic-cyan);
+  text-shadow: 
+    0 0 10px rgba(78, 205, 196, 0.5),
+    var(--text-shadow);
+  z-index: 1;
+}
+
+/* ==========================================================================
+   APPOINTMENTS LIST - COSMIC STYLE
+   ========================================================================== */
+.appointments-list {
+  display: grid;
+  gap: var(--space-md);
+}
+
+/* ==========================================================================
+   APPOINTMENT CARD - COSMIC GLASS CARD
+   ========================================================================== */
+.appointment-card {
+  background: rgba(20, 20, 40, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  animation: slide-in 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.appointment-card:hover {
+  background: rgba(25, 25, 50, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    0 0 25px rgba(78, 205, 196, 0.2);
+}
+
+.appointment-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    var(--cosmic-purple),
+    var(--cosmic-cyan),
+    var(--cosmic-blue));
+  opacity: 0.5;
+}
+
+/* Staggered animation for cards */
+.appointment-card:nth-child(1) { animation-delay: 0.1s; }
+.appointment-card:nth-child(2) { animation-delay: 0.2s; }
+.appointment-card:nth-child(3) { animation-delay: 0.3s; }
+.appointment-card:nth-child(4) { animation-delay: 0.4s; }
+.appointment-card:nth-child(5) { animation-delay: 0.5s; }
+
+/* ==========================================================================
+   APPOINTMENT HEADER - COSMIC STYLE
+   ========================================================================== */
+.appointment-header {
+  margin-bottom: var(--space-md);
+}
+
+.appointment-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-sm);
+}
+
+.appointment-title h3 {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-shadow: var(--text-shadow);
+  flex: 1;
+}
+
+/* ==========================================================================
+   STATUS BADGES - COSMIC GLOWING STYLE
+   ========================================================================== */
+.status-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  border: 1px solid;
+  text-shadow: var(--text-shadow);
+  animation: status-pulse 3s infinite ease-in-out;
+}
+
+.status-scheduled {
+  background: rgba(78, 205, 196, 0.15);
+  color: var(--cosmic-cyan);
+  border-color: rgba(78, 205, 196, 0.3);
+  box-shadow: 0 0 15px var(--status-success-glow);
+}
+
+.status-in-progress {
+  background: rgba(255, 209, 102, 0.15);
+  color: var(--status-warning);
+  border-color: rgba(255, 209, 102, 0.3);
+  box-shadow: 0 0 15px var(--status-warning-glow);
+  animation: status-pulse 2s infinite ease-in-out;
+}
+
+.status-completed {
+  background: rgba(66, 133, 244, 0.15);
+  color: var(--status-info);
+  border-color: rgba(66, 133, 244, 0.3);
+  box-shadow: 0 0 15px var(--status-info-glow);
+}
+
+.status-cancelled {
+  background: rgba(160, 160, 192, 0.15);
+  color: var(--cosmic-gray);
+  border-color: rgba(160, 160, 192, 0.3);
+  box-shadow: 0 0 15px rgba(160, 160, 192, 0.2);
+}
+
+.status-expired {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--status-error);
+  border-color: rgba(255, 107, 107, 0.3);
+  box-shadow: 0 0 15px var(--status-error-glow);
+}
+
+.status-pending {
+  background: rgba(255, 209, 102, 0.2);
+  color: var(--status-warning);
+  border-color: rgba(255, 209, 102, 0.4);
+  box-shadow: 0 0 15px var(--status-warning-glow);
+  animation: status-pulse 1.5s infinite ease-in-out;
+}
+
+.status-default {
+  background: rgba(138, 43, 226, 0.15);
+  color: var(--cosmic-purple);
+  border-color: rgba(138, 43, 226, 0.3);
+  box-shadow: 0 0 15px var(--status-default-glow);
+}
+
+/* ==========================================================================
+   APPOINTMENT META - COSMIC STYLE
+   ========================================================================== */
+.appointment-meta {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  text-shadow: var(--text-shadow);
+}
+
+.meta-icon {
+  font-size: 16px;
+  color: var(--cosmic-cyan);
+  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
+}
+
+/* ==========================================================================
+   APPOINTMENT DETAILS - COSMIC STYLE
+   ========================================================================== */
+.appointment-details {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slide-in 0.3s ease-out;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-shadow: var(--text-shadow);
+}
+
+.detail-value {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-shadow: var(--text-shadow);
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.detail-value.code {
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  color: var(--cosmic-cyan);
+  text-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   APPOINTMENT ACTIONS - COSMIC STYLE
+   ========================================================================== */
+.appointment-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   VIEW BUTTON - COSMIC STYLE
+   ========================================================================== */
+.view-btn {
+  background: linear-gradient(135deg, 
+    rgba(66, 133, 244, 0.9), 
+    rgba(138, 43, 226, 0.9));
+  color: var(--text-primary);
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  text-shadow: var(--text-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.view-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent);
+  transition: 0.5s;
+}
+
+.view-btn:hover {
+  background: linear-gradient(135deg, 
+    rgba(66, 133, 244, 1), 
+    rgba(138, 43, 226, 1));
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(66, 133, 244, 0.4),
+    0 0 30px rgba(66, 133, 244, 0.3);
+  animation: pulse-glow 2s infinite;
+}
+
+.view-btn:hover::before {
+  left: 100%;
+}
+
+.view-btn:active {
+  transform: translateY(-1px);
+}
+
+.view-btn i {
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   ROOM LINKS - COSMIC STYLE
+   ========================================================================== */
+.room-links {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.room-link {
+  background: linear-gradient(135deg, 
+    rgba(78, 205, 196, 0.9), 
+    rgba(72, 187, 120, 0.9));
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  text-shadow: var(--text-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.room-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent);
+  transition: 0.5s;
+}
+
+.room-link:hover {
+  background: linear-gradient(135deg, 
+    rgba(78, 205, 196, 1), 
+    rgba(72, 187, 120, 1));
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(78, 205, 196, 0.4),
+    0 0 30px rgba(78, 205, 196, 0.3);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.room-link:hover::before {
+  left: 100%;
+}
+
+.room-link:active {
+  transform: translateY(-1px);
+}
+
+.room-link i {
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Mobile (< 640px) */
+@media (max-width: 640px) {
+  .proctor-dashboard {
+    padding: var(--space-md);
+  }
+  
+  .dashboard-content,
+  .dashboard-header,
+  .appointment-card,
+  .error-state,
+  .empty-state {
+    backdrop-filter: var(--glass-blur-mobile);
+    -webkit-backdrop-filter: var(--glass-blur-mobile);
+  }
+  
+  .appointments-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+  
+  .stats {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+    flex: 1;
+  }
+  
+  .appointment-meta {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  .appointment-actions {
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: stretch;
+  }
+  
+  .room-links {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+  
+  .detail-value {
+    text-align: left;
+    max-width: 100%;
+  }
+}
+
+/* Tablet (640px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .stats {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+  
+  .stat-item {
+    min-width: calc(33.333% - var(--space-md));
+    flex: 1;
+  }
+}
+
+/* Desktop (1024px - 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .proctor-dashboard {
+    max-width: min(1100px, 95vw);
+  }
+}
+
+/* Desktop (1440px - 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+  .proctor-dashboard {
+    max-width: min(1400px, 95vw);
+  }
+}
+
+/* TV/4K (> 1920px) */
+@media (min-width: 1921px) {
+  .proctor-dashboard {
+    max-width: min(1600px, 95vw);
+  }
+  
+  .appointments-list {
+    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+    gap: var(--space-lg);
+  }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .appointment-card:hover,
+  .stat-item:hover,
+  .retry-btn:hover,
+  .view-btn:hover,
+  .room-link:hover {
+    transform: none;
+  }
+  
+  .status-badge {
+    animation: none;
+  }
+}
+
+/* Focus indicators */
+.view-btn:focus-visible,
+.retry-btn:focus-visible,
+.room-link:focus-visible {
+  outline: 2px solid var(--cosmic-cyan);
+  outline-offset: 2px;
+  box-shadow: 0 0 20px var(--cosmic-cyan-glow);
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .dashboard-content,
+  .dashboard-header,
+  .appointment-card {
+    border: 2px solid var(--cosmic-cyan);
+    background: rgba(5, 5, 20, 0.95);
+  }
+  
+  .status-badge {
+    border: 2px solid currentColor;
+  }
+  
+  .view-btn,
+  .retry-btn,
+  .room-link {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Dark mode enforcement */
+@media (prefers-color-scheme: light) {
+  .proctor-dashboard {
+    color-scheme: dark;
+  }
+}
+
+/* ==========================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================================================== */
+.appointment-card,
+.stat-item,
+.view-btn,
+.room-link {
+  contain: layout style paint;
+}
+
+.appointment-card:hover,
+.stat-item:hover,
+.view-btn:hover,
+.room-link:hover {
+  transform: translateZ(0);
+}
+
+/* ==========================================================================
+   SCROLLBAR STYLING - COSMIC THEME
+   ========================================================================== */
+.proctor-dashboard::-webkit-scrollbar {
+  width: 10px;
+}
+
+.proctor-dashboard::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.proctor-dashboard::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(78, 205, 196, 0.5),
+    rgba(138, 43, 226, 0.5)
+  );
+  border-radius: 5px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.proctor-dashboard::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(78, 205, 196, 0.7),
+    rgba(138, 43, 226, 0.7)
+  );
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
+}

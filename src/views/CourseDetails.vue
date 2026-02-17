@@ -1,0 +1,919 @@
+<template>
+  <div class="course-details-page">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading course details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 class="error-title">Unable to load course</h3>
+      <p class="error-message">{{ error }}</p>
+      <button class="retry-btn" @click="fetchCourseData">
+        Try Again
+      </button>
+      <router-link to="/courses" class="back-btn">
+        Back to Courses
+      </router-link>
+    </div>
+
+    <!-- Course Content -->
+    <div v-else-if="course" class="course-content">
+      <!-- Course Header -->
+      <div class="course-header">
+        <div class="breadcrumb">
+          <router-link to="/courses" class="breadcrumb-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back to Courses
+          </router-link>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">{{ course.title }}</span>
+        </div>
+
+        <div class="course-hero">
+          <div class="course-image-container">
+            <!-- Generated Image (shown when no real image or when real image fails to load) -->
+            <div
+              class="course-image-generated"
+              :style="{ background: getCourseColor(course.title) }"
+              :class="{ 'visible': !hasValidImage || imageLoadError }"
+            >
+              <span class="course-initials">{{ getCourseInitials(course.title) }}</span>
+              <div class="image-overlay-generated"></div>
+            </div>
+
+            <!-- Real Course Image (shown if available and valid) -->
+            <img
+              v-if="hasValidImage"
+              :src="course.image_url"
+              :alt="course.title"
+              class="course-image"
+              @error="handleImageError"
+              @load="handleImageLoad"
+              :class="{ 'visible': !imageLoadError, 'loading': imageLoading }"
+            >
+
+            <div class="image-overlay"></div>
+          </div>
+
+          <div class="course-info">
+            <div class="course-meta">
+              <span class="course-badge">Course</span>
+              <span class="course-date">
+                Added {{ formatDate(course.date_added) }}
+              </span>
+            </div>
+
+            <h1 class="course-title">{{ course.title }}</h1>
+
+            <div class="course-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <div class="stat-content">
+                  <span class="stat-number">{{ lessons.length }}</span>
+                  <span class="stat-label">Lessons</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <div class="stat-content">
+                  <span class="stat-number">{{ comments.length }}</span>
+                  <span class="stat-label">Comments</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Sidebar Tabs for Mobile -->
+        <div class="mobile-tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            class="mobile-tab"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
+          >
+            <span class="tab-icon">{{ tab.icon }}</span>
+            <span class="tab-label">{{ tab.label }}</span>
+          </button>
+        </div>
+
+        <div class="content-grid">
+          <!-- Left Column - Lessons & Comments -->
+          <div class="left-column">
+            <!-- Lessons Section -->
+            <section class="section lessons-section" :class="{ active: activeTab === 'lessons' }">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  Lessons
+                </h2>
+                <span class="section-count">{{ lessons.length }}</span>
+              </div>
+
+              <div class="lessons-list">
+                <div v-if="lessons.length === 0" class="empty-lessons">
+                  <p>No lessons available for this course yet.</p>
+                </div>
+
+                <div
+                  v-for="lesson in lessons"
+                  :key="lesson.external_lesson_id"
+                  class="lesson-card"
+                >
+                  <div class="lesson-info">
+                    <div class="lesson-header">
+                      <h3 class="lesson-title">{{ lesson.title }}</h3>
+                      <div class="lesson-badges">
+                        <!-- Quiz Badge - Only show if lesson has quiz -->
+                        <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 22h16"></path>
+                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                          </svg>
+                          <span>Take Quiz</span>
+                        </div>
+
+                        <!-- Homework Badge -->
+                        <div v-if="lesson.hasHomework" class="lesson-badge homework-badge" @click="navigateToHomework(lesson)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          <span>Homework ({{ lesson.homeworkCount }})</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p class="lesson-date">
+                      Added {{ formatDate(lesson.date_added) }}
+                    </p>
+
+                    <div class="lesson-links">
+                      <a
+                        v-if="lesson.reading_url"
+                        :href="lesson.reading_url"
+                        target="_blank"
+                        class="lesson-link"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        Reading Material
+                      </a>
+
+                      <a
+                        v-if="lesson.source_code_url"
+                        :href="lesson.source_code_url"
+                        target="_blank"
+                        class="lesson-link"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="16 18 22 12 16 6"></polyline>
+                          <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        Source Code
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Comments Section -->
+            <section class="section comments-section" :class="{ active: activeTab === 'comments' }">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  Comments
+                </h2>
+                <span class="section-count">{{ comments.length }}</span>
+              </div>
+
+              <!-- Add Comment Form -->
+              <div class="add-comment-form">
+                <div class="form-header">
+                  <h3 class="form-title">Add a Comment</h3>
+                  <p class="form-subtitle" v-if="!authStore.user">
+                    Please <router-link to="/login">login</router-link> to comment
+                  </p>
+                </div>
+                <form v-if="authStore.user" @submit.prevent="submitComment">
+                  <div class="form-group">
+                    <div class="mention-input-container">
+                      <textarea
+                        v-model="newComment"
+                        ref="commentTextarea"
+                        placeholder="Share your thoughts about this course... Use @ to mention users"
+                        class="comment-input"
+                        rows="4"
+                        :disabled="submittingComment"
+                        required
+                        @input="handleMentionInput"
+                        @keydown="handleMentionKeydown"
+                      ></textarea>
+
+                      <!-- Mention Dropdown -->
+                      <div
+                        v-if="showMentionDropdown && filteredUsernames.length > 0"
+                        class="mention-dropdown"
+                        :style="{ top: mentionDropdownTop + 'px', left: mentionDropdownLeft + 'px' }"
+                      >
+                        <div
+                          v-for="(username, index) in filteredUsernames"
+                          :key="username"
+                          class="mention-option"
+                          :class="{ 'selected': selectedMentionIndex === index }"
+                          @click="selectMention(username)"
+                          @mouseenter="selectedMentionIndex = index"
+                        >
+                          <div class="mention-avatar" :style="{ background: getUserColor(username) }">
+                            {{ getUserInitials(username) }}
+                          </div>
+                          <span class="mention-username">{{ username }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="commentError" class="error-message">
+                      {{ commentError }}
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button
+                      type="submit"
+                      class="submit-btn"
+                      :disabled="!newComment.trim() || submittingComment"
+                    >
+                      <span v-if="submittingComment" class="btn-loading"></span>
+                      <span v-else>Post Comment</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Comments List -->
+              <div class="comments-list">
+                <div v-if="comments.length === 0" class="empty-comments">
+                  <p>No comments yet. Be the first to share your thoughts!</p>
+                </div>
+
+                <div
+                  v-for="comment in comments"
+                  :key="comment.external_comment_id"
+                  class="comment-card"
+                >
+                  <div class="comment-header">
+                    <div class="user-info">
+                      <!-- User Profile Image or Initials -->
+                      <div class="user-avatar-container">
+                        <img
+                          v-if="comment.user_profile?.image_url && isImageUrlValid(comment.user_profile.image_url)"
+                          :src="comment.user_profile.image_url"
+                          :alt="comment.user_profile.username || 'User'"
+                          class="user-avatar-image"
+                          @error="handleAvatarError(comment.user_id)"
+                        />
+                        <div
+                          v-else
+                          class="user-avatar-generated"
+                          :style="{ background: getUserColor(comment.user_profile?.username || comment.user_id) }"
+                        >
+                          {{ getUserInitials(comment.user_profile?.username || comment.user_id) }}
+                        </div>
+                      </div>
+
+                      <div class="user-details">
+                        <div class="user-name-row">
+                          <span class="user-name">{{ comment.user_profile?.username || getUserDisplayName(comment.user_id) }}</span>
+                          <span v-if="comment.user_profile?.first_name || comment.user_profile?.last_name" class="user-full-name">
+                            ({{ comment.user_profile?.first_name || '' }} {{ comment.user_profile?.last_name || '' }})
+                          </span>
+                        </div>
+                        <span class="comment-date">{{ formatDate(comment.date_added) }}</span>
+                      </div>
+                    </div>
+
+                    <div v-if="comment.user_id === authStore.user?.id || comment.user_id === authStore.user?.username" class="comment-actions">
+                      <button
+                        class="action-btn delete-btn"
+                        @click="deleteComment(comment.external_comment_id)"
+                        :disabled="deletingCommentId === comment.external_comment_id"
+                      >
+                        <span v-if="deletingCommentId === comment.external_comment_id" class="btn-loading"></span>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="comment-content">
+                    <p v-html="parseMentions(comment.content)"></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right Column - Course Description -->
+          <div class="right-column">
+            <section class="section description-section">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                  Course Description
+                </h2>
+              </div>
+
+              <div class="description-content">
+                <p>{{ course.description || 'No description available.' }}</p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { courseService, type Course, type Lesson, type Comment } from '@/services/course.service';
+import { quizService, type Quiz } from '@/services/quiz.service';
+import { userService, type UserProfile } from '@/services/user.service';
+import { notificationService } from '@/services/notification.service';
+import { useAuthStore } from '@/store/auth';
+import { serviceRegistry } from '@/services/config';
+import { getCourseInitials, getCourseColor, shouldUseGeneratedImage } from '@/utils/courseImage';
+
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+
+// State
+const course = ref<Course | null>(null);
+const lessons = ref<(Lesson & {
+  hasQuiz: boolean;
+  quiz?: Quiz;
+  hasHomework: boolean;
+  homeworkCount: number;
+})[]>([]);
+const comments = ref<(Comment & { user_profile?: UserProfile })[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const activeTab = ref('lessons');
+const newComment = ref('');
+const submittingComment = ref(false);
+const commentError = ref<string | null>(null);
+const deletingCommentId = ref<string | null>(null);
+const isUserRegistered = ref(false);
+const imageLoadError = ref(false);
+const imageLoading = ref(false);
+
+// Mention functionality
+const allUsernames = ref<string[]>([]);
+const filteredUsernames = ref<string[]>([]);
+const showMentionDropdown = ref(false);
+const selectedMentionIndex = ref(0);
+const mentionDropdownTop = ref(0);
+const mentionDropdownLeft = ref(0);
+const mentionSearch = ref('');
+const commentTextarea = ref<HTMLTextAreaElement | null>(null);
+
+// Computed
+const tabs = computed(() => [
+  { id: 'lessons', label: 'Lessons', icon: '📚' },
+  { id: 'comments', label: 'Comments', icon: '💬' },
+]);
+
+const hasValidImage = computed(() => {
+  if (!course.value?.image_url) return false;
+  const shouldUseGenerated = shouldUseGeneratedImage(course.value.image_url);
+  return !shouldUseGenerated;
+});
+
+// Methods
+const fetchCourseData = async () => {
+  const courseId = route.params.id as string;
+  if (!courseId) {
+    error.value = 'Invalid course ID';
+    return;
+  }
+
+  loading.value = true;
+  error.value = null;
+  imageLoadError.value = false;
+  imageLoading.value = false;
+
+  try {
+    // Clear cache for fresh replicas
+    serviceRegistry.clearCache();
+
+    // Fetch course details
+    course.value = await courseService.getCourse(courseId);
+
+    // Fetch lessons
+    const fetchedLessons = await courseService.getCourseLessons(courseId);
+
+    // For each lesson, check for quizzes and homeworks
+    lessons.value = [];
+    for (const lesson of fetchedLessons) {
+      // Check for quiz - use the quiz service to get quiz by lesson ID
+      let hasQuiz = false;
+      let quiz: Quiz | undefined;
+
+      try {
+        quiz = await quizService.getQuizByLessonId(lesson.external_lesson_id);
+        hasQuiz = !!quiz;
+        console.log(`Lesson ${lesson.external_lesson_id} has quiz:`, hasQuiz, quiz?.title);
+      } catch (err) {
+        console.warn(`Failed to check quiz for lesson ${lesson.external_lesson_id}:`, err);
+        hasQuiz = false;
+      }
+
+      // Check for homeworks
+      let hasHomework = false;
+      let homeworkCount = 0;
+
+      try {
+        const homeworks = await courseService.getLessonHomeworks(lesson.external_lesson_id);
+        hasHomework = homeworks.length > 0;
+        homeworkCount = homeworks.length;
+      } catch (err) {
+        console.warn(`Failed to check homeworks for lesson ${lesson.external_lesson_id}:`, err);
+        hasHomework = false;
+      }
+
+      lessons.value.push({
+        ...lesson,
+        hasQuiz,
+        quiz,
+        hasHomework,
+        homeworkCount
+      });
+    }
+
+    // Fetch comments
+    const fetchedComments = await courseService.getCourseComments(courseId);
+
+    // Fetch user profiles for each comment
+    comments.value = [];
+    for (const comment of fetchedComments) {
+      try {
+        // Try to get user profile by user_id (which might be UUID or username)
+        let userProfile: UserProfile | undefined;
+
+        // First try to see if user_id is a UUID
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(comment.user_id)) {
+          // It's a UUID, get user profile by ID
+          userProfile = await userService.getUserProfile(comment.user_id);
+        } else {
+          // It might be a username, try to get by username
+          try {
+            userProfile = await userService.getUserProfileByUsername(comment.user_id);
+          } catch (err) {
+            console.warn(`Could not find user by username ${comment.user_id}:`, err);
+          }
+        }
+
+        comments.value.push({ ...comment, user_profile: userProfile });
+      } catch (err) {
+        console.warn(`Failed to fetch user profile for comment ${comment.external_comment_id}:`, err);
+        comments.value.push(comment); // Add comment without user profile
+      }
+    }
+
+    // Check if user is registered for this course
+    if (authStore.user?.id) {
+      isUserRegistered.value = await courseService.isUserRegisteredForCourse(authStore.user.id, courseId);
+    }
+
+    // Fetch all usernames for mentions
+    await fetchAllUsernames();
+  } catch (err: any) {
+    console.error('Error fetching course data:', err);
+    error.value = err.message || 'Failed to load course details. Please try again.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchAllUsernames = async () => {
+  try {
+    allUsernames.value = await userService.getAllUsernames();
+    console.log('Fetched usernames:', allUsernames.value.length);
+  } catch (err) {
+    console.error('Failed to fetch usernames for mentions:', err);
+    // Don't throw, just use empty array
+    allUsernames.value = [];
+  }
+};
+
+const handleImageError = (event: Event) => {
+  console.log('Real image failed to load, showing generated image');
+  imageLoadError.value = true;
+  imageLoading.value = false;
+};
+
+const handleImageLoad = (event: Event) => {
+  console.log('Real image loaded successfully');
+  imageLoadError.value = false;
+  imageLoading.value = false;
+};
+
+const handleAvatarError = (userId: string) => {
+  console.log(`Avatar image failed to load for user ${userId}`);
+};
+
+const isImageUrlValid = (url: string): boolean => {
+  if (!url) return false;
+
+  // Check for common placeholder patterns
+  const placeholderPatterns = [
+    'default.jpg',
+    'placeholder',
+    'missing.png',
+    'no-image',
+    'default-profile',
+    'anonymous',
+    'null',
+    'undefined'
+  ];
+
+  return !placeholderPatterns.some(pattern =>
+    url.toLowerCase().includes(pattern.toLowerCase())
+  );
+};
+
+const handleMentionInput = (event: Event) => {
+  const textarea = event.target as HTMLTextAreaElement;
+  const value = textarea.value;
+  const cursorPosition = textarea.selectionStart;
+
+  // Find the last @ symbol before cursor
+  const textBeforeCursor = value.substring(0, cursorPosition);
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+  if (lastAtIndex >= 0) {
+    const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+    const wordMatch = textAfterAt.match(/^(\w+)/);
+
+    if (wordMatch) {
+      mentionSearch.value = wordMatch[1].toLowerCase();
+      filteredUsernames.value = allUsernames.value.filter(username =>
+        username.toLowerCase().includes(mentionSearch.value) &&
+        username !== authStore.user?.username
+      );
+
+      if (filteredUsernames.value.length > 0) {
+        showMentionDropdown.value = true;
+        selectedMentionIndex.value = 0;
+
+        // Position dropdown near cursor
+        const textareaRect = textarea.getBoundingClientRect();
+        const textareaStyles = window.getComputedStyle(textarea);
+        const lineHeight = parseInt(textareaStyles.lineHeight);
+        const paddingTop = parseInt(textareaStyles.paddingTop);
+        const paddingLeft = parseInt(textareaStyles.paddingLeft);
+
+        // Calculate line number
+        const lines = textBeforeCursor.substring(0, lastAtIndex).split('\n');
+        const lineNumber = lines.length;
+
+        mentionDropdownTop.value = (lineNumber * lineHeight) + paddingTop + lineHeight;
+        mentionDropdownLeft.value = paddingLeft;
+      } else {
+        showMentionDropdown.value = false;
+      }
+    } else {
+      showMentionDropdown.value = false;
+    }
+  } else {
+    showMentionDropdown.value = false;
+  }
+};
+
+const handleMentionKeydown = (event: KeyboardEvent) => {
+  if (!showMentionDropdown.value) return;
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      selectedMentionIndex.value = Math.min(
+        selectedMentionIndex.value + 1,
+        filteredUsernames.value.length - 1
+      );
+      break;
+
+    case 'ArrowUp':
+      event.preventDefault();
+      selectedMentionIndex.value = Math.max(selectedMentionIndex.value - 1, 0);
+      break;
+
+    case 'Enter':
+    case 'Tab':
+      if (showMentionDropdown.value && filteredUsernames.value.length > 0) {
+        event.preventDefault();
+        selectMention(filteredUsernames.value[selectedMentionIndex.value]);
+      }
+      break;
+
+    case 'Escape':
+      showMentionDropdown.value = false;
+      break;
+  }
+};
+
+const selectMention = (username: string) => {
+  const textarea = commentTextarea.value;
+  if (!textarea) return;
+
+  const value = textarea.value;
+  const cursorPosition = textarea.selectionStart;
+  const textBeforeCursor = value.substring(0, cursorPosition);
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+  if (lastAtIndex >= 0) {
+    const textAfterCursor = value.substring(cursorPosition);
+    const wordAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+    const wordMatch = wordAfterAt.match(/^(\w+)/);
+
+    if (wordMatch) {
+      const newText = textBeforeCursor.substring(0, lastAtIndex) +
+                     `@${username} ` +
+                     textAfterCursor;
+
+      newComment.value = newText;
+      showMentionDropdown.value = false;
+
+      // Set cursor position after inserted mention
+      nextTick(() => {
+        const newCursorPosition = lastAtIndex + username.length + 2; // +2 for @ and space
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+      });
+    }
+  }
+};
+
+const parseMentions = (text: string) => {
+  if (!text) return '';
+
+  // Replace @mentions with highlighted text
+  return text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+};
+
+const extractMentions = (text: string): string[] => {
+  if (!text) return [];
+
+  const mentions = text.match(/@(\w+)/g);
+  if (!mentions) return [];
+
+  // Remove @ symbol and return unique usernames
+  return [...new Set(mentions.map(m => m.substring(1)))];
+};
+
+const createMentionNotifications = async (commentContent: string, commentId: string) => {
+  const mentions = extractMentions(commentContent);
+
+  if (mentions.length === 0 || !authStore.user?.username || !course.value) return;
+
+  for (const username of mentions) {
+    try {
+      // Skip if user mentions themselves
+      if (username === authStore.user.username) continue;
+
+      console.log(`Creating notification for ${username}...`);
+
+      // Clear cache before creating notification
+      serviceRegistry.clearCache();
+
+      // Create notification for mentioned user
+      await notificationService.createNotification({
+        title: 'You were mentioned in a comment',
+        message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}"`,
+        notification_type: 'personal',
+        sender: authStore.user.username,
+        recipient: username,
+        course_url: `${window.location.origin}/course/${course.value.external_course_id}`,
+        comment_id: commentId
+      });
+
+      console.log(`Notification created for ${username}`);
+    } catch (err) {
+      console.error(`Failed to create notification for ${username}:`, err);
+      // Don't fail the whole comment submission if notification fails
+    }
+  }
+};
+
+const submitComment = async () => {
+  if (!newComment.value.trim() || !course.value || !authStore.user?.id) return;
+
+  submittingComment.value = true;
+  commentError.value = null;
+
+  try {
+    // Clear service registry cache to get fresh replicas
+    serviceRegistry.clearCache();
+
+    // Use the user's username if available, otherwise use user_id
+    const userId = authStore.user.username || authStore.user.id;
+
+    const commentData = {
+      external_comment_id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      content: newComment.value.trim(),
+      user_id: userId,
+      course: course.value.external_course_id,
+    };
+
+    console.log('Submitting comment with data:', commentData);
+    const newCommentObj = await courseService.createComment(commentData);
+
+    // Try to fetch user profile for the new comment
+    let userProfile: UserProfile | undefined;
+    try {
+      if (authStore.user.username) {
+        userProfile = await userService.getUserProfileByUsername(authStore.user.username);
+      } else {
+        userProfile = await userService.getUserProfile(authStore.user.id);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch user profile for new comment:', err);
+    }
+
+    comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
+    newComment.value = '';
+
+    // Create notifications for mentioned users
+    await createMentionNotifications(commentData.content, newCommentObj.external_comment_id);
+
+    // Show success message
+    alert('Comment added successfully!');
+  } catch (err: any) {
+    console.error('Error submitting comment:', err);
+    commentError.value = err.message || 'Failed to submit comment. Please try again.';
+    alert('Failed to submit comment. Please check console for details.');
+  } finally {
+    submittingComment.value = false;
+  }
+};
+
+const deleteComment = async (commentId: string) => {
+  if (!confirm('Are you sure you want to delete this comment?')) return;
+
+  deletingCommentId.value = commentId;
+
+  try {
+    // Clear cache before deleting
+    serviceRegistry.clearCache();
+    await courseService.deleteComment(commentId);
+    comments.value = comments.value.filter(comment => comment.external_comment_id !== commentId);
+    alert('Comment deleted successfully!');
+  } catch (err: any) {
+    console.error('Error deleting comment:', err);
+    alert('Failed to delete comment. Please try again.');
+  } finally {
+    deletingCommentId.value = null;
+  }
+};
+
+const navigateToQuiz = (lesson: any) => {
+  if (!lesson.hasQuiz) {
+    alert('No quiz available for this lesson');
+    return;
+  }
+
+  router.push({
+    path: '/take-quiz',
+    query: {
+      quizId: lesson.quiz.external_id,
+      lessonId: lesson.external_lesson_id,
+      courseId: course.value?.external_course_id
+    },
+    state: { quiz: lesson.quiz }  // <-- pass the pre‑fetched quiz object
+  });
+};
+
+const navigateToHomework = (lesson: any) => {
+  if (!lesson.hasHomework) {
+    alert('No homework available for this lesson');
+    return;
+  }
+
+  router.push({
+    path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework`
+  });
+};
+
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'Recently';
+
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+  } catch {
+    return 'Recently';
+  }
+};
+
+const getUserInitials = (userId: string) => {
+  if (!userId) return 'U';
+
+  // If it's a username, use first two characters
+  if (!userId.includes('-')) { // Not a UUID
+    return userId.substring(0, 2).toUpperCase();
+  }
+
+  // For UUIDs or other formats, use first char
+  return userId.charAt(0).toUpperCase();
+};
+
+const getUserDisplayName = (userId: string) => {
+  if (!userId) return 'User';
+  if (userId === authStore.user?.id || userId === authStore.user?.username) return 'You';
+
+  // If it's a UUID, just show "User"
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(userId)) {
+    return 'User';
+  }
+
+  return userId;
+};
+
+const getUserColor = (userId: string) => {
+  const colors = [
+    '#667eea', '#764ba2', '#f56565', '#ed8936', '#48bb78',
+    '#38b2ac', '#4299e1', '#9f7aea', '#ed64a6', '#f6ad55'
+  ];
+
+  const index = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  return colors[index];
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchCourseData();
+});
+
+// Close mention dropdown when clicking outside
+document.addEventListener('click', (event) => {
+  if (showMentionDropdown.value && commentTextarea.value &&
+      !commentTextarea.value.contains(event.target as Node)) {
+    showMentionDropdown.value = false;
+  }
+});
+</script>
+
+<style scoped src="@/assets/css/course-details.css"></style>

@@ -1,0 +1,214 @@
+export interface ServiceConfig {
+    name: string;
+    appId: number;
+    replicas: string[];
+}
+
+export interface AppReplica {
+    replica_url: string;
+    [key: string]: any;
+}
+
+export interface AppDetails {
+    id: number;
+    name: string;
+    replicas: AppReplica[];
+}
+
+class ServiceRegistry {
+    private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN || 'Token Not Found!';
+    private registryDomains = [
+        import.meta.env.VITE_API_BASE_REGISTRY,
+        import.meta.env.VITE_REGISTRY_ALT,
+    ].filter(Boolean);
+
+    private cache = new Map<string, { data: string[]; timestamp: number }>();
+    private CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    private getHeaders() {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+
+        if (this.AUTH_TOKEN && this.AUTH_TOKEN !== 'Token Not Found!') {
+            headers['Authorization'] = `Token ${this.AUTH_TOKEN}`;
+        } else {
+            console.error('AUTH_TOKEN is not set or invalid in environment variables');
+        }
+
+        return headers;
+    }
+
+    async getServiceReplicas(appId: number, serviceName: string): Promise<string[]> {
+        const cacheKey = `service_${appId}`;
+        const cached = this.cache.get(cacheKey);
+
+        if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+            console.log(`Using cached replicas for ${serviceName}`);
+            return cached.data;
+        }
+
+        // Try each registry domain until we get a successful response
+        for (const registryDomain of this.registryDomains) {
+            try {
+                const url = `${registryDomain}/apps/${appId}/`;
+                console.log(`Fetching ${serviceName} replicas from: ${url}`);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(url, {
+                    headers: this.getHeaders(),
+                                             mode: 'cors',
+                                             credentials: 'omit',
+                                             signal: controller.signal
+                } as RequestInit);
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data: AppDetails = await response.json();
+                    const replicas = data.replicas
+                    .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
+                    .filter(url => url && url.startsWith('http'));
+
+                    console.log(`Found ${replicas.length} replicas for ${serviceName}:`, replicas);
+
+                    // Cache the result
+                    this.cache.set(cacheKey, {
+                        data: replicas,
+                        timestamp: Date.now(),
+                    });
+
+                    return replicas;
+                } else {
+                    console.warn(`Failed to fetch from ${registryDomain}: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                console.warn(`Failed to fetch from ${registryDomain}:`, error);
+                continue;
+            }
+        }
+
+        console.warn(`All registry domains failed for ${serviceName}, using empty list`);
+        return [];
+    }
+
+    async getRandomProctorReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_PROCTOR_APP_ID || '21'),
+                                                       'proctor'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomRunbookReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_RUNBOOK_APP_ID || '17'),
+                                                       'runbook'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    getRandomReplica(replicas: string[]): string | null {
+        if (!replicas || replicas.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * replicas.length);
+        return replicas[randomIndex];
+    }
+
+    async getRandomAuthReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_AUTH_APP_ID || '15'),
+                                                       'auth'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomUserProfileReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_USERPROFILE_APP_ID || '13'),
+                                                       'userprofile'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomOtpReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_OTP_APP_ID || '14'),
+                                                       'otp'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomCertificateReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_CERTIFICATE_APP_ID || '24'),
+                                                       'certificate'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomCourseReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_COURSE_APP_ID || '19'),
+                                                       'course'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomMediaReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_MEDIA_APP_ID || '18'),
+                                                       'media'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomChatReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_CHAT_APP_ID || '9'),
+                                                       'chat'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomNotificationReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_NOTIFICATION_APP_ID || '16'),
+                                                       'notification'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomExamReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_EXAM_APP_ID || '20'),
+                                                       'exam'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    clearCache() {
+        this.cache.clear();
+    }
+
+
+    async getRandomSubscriptionReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_SUBSCRIPTIONS_APP_ID || '22'),
+                                                       'subscription'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    async getRandomPaymentReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_PAYMENT_APP_ID || '23'),
+                                                       'payment'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+}
+
+export const serviceRegistry = new ServiceRegistry();
