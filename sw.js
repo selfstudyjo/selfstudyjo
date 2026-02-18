@@ -12,14 +12,16 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
+    const path = url.pathname;
 
-    // Intercept requests to the media domains via the proxy paths
-    if (url.pathname.startsWith('/media1/') || url.pathname.startsWith('/media2/')) {
+    // Intercept requests to the proxy paths
+    if (path.startsWith('/media1/') || path.startsWith('/media2/')) {
         event.respondWith(
             fetch(event.request)
             .then(response => {
+                // If the response is OK (status 200-299), return it
                 if (response.ok) return response;
-                // For any non-OK status, return the transparent fallback
+                // Otherwise (403, 404, etc.) return the fallback
                 return new Response(
                     FALLBACK_IMAGE,
                     { headers: { 'Content-Type': 'image/png' } }

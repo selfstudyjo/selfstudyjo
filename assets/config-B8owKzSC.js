@@ -1,0 +1,1 @@
+import{t as e}from"./index-DLwbQp-7.js";export{e as serviceRegistry};
