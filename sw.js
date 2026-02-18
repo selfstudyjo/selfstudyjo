@@ -2,11 +2,11 @@
 const FALLBACK_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 self.addEventListener('install', event => {
-    self.skipWaiting(); // Activate immediately
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(clients.claim()); // Take control of all clients
+    event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', event => {
@@ -22,7 +22,7 @@ self.addEventListener('fetch', event => {
             fetch(event.request)
             .then(response => {
                 if (response.ok) return response;
-                // For any non-OK response (403,404,etc), return fallback
+                // For non-OK responses, return fallback
                 return new Response(FALLBACK_IMAGE, { headers: { 'Content-Type': 'image/png' } });
             })
             .catch(() => new Response(FALLBACK_IMAGE, { headers: { 'Content-Type': 'image/png' } }))
