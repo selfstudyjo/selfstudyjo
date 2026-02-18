@@ -26,6 +26,31 @@ let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
 
+// List of known bad image URLs that always fail
+const BAD_IMAGE_PATTERNS = [
+  '239.jpg',
+  'logo.png',
+  'f33967512.png',
+  'a0b1c023-9bad-4332-b66f-c3893e1fadaf.png',
+  'f34082296.png',
+  '015-isle_of_man.png',
+  '017-lesotho.png',
+  'f34082288.png',
+  'Flask.jpg',
+  'f38023920.png',
+  'AWS_Training.jpg',
+  'Docker.jpg',
+  'Python_Track_3D_Game_Development_with_Kivy.jpg',
+  'Virtualization.jpg',
+  'Kubernetes.jpg',
+  'Python_Web_Scraping.jpg'
+];
+
+// Check if the URL contains any of the bad patterns
+function isKnownBadUrl(url: string): boolean {
+  return BAD_IMAGE_PATTERNS.some(pattern => url.includes(pattern));
+}
+
 // Transform URL for development proxy
 function getEffectiveUrl(url: string): string {
   if (!url) return url
@@ -43,7 +68,6 @@ function getEffectiveUrl(url: string): string {
   return url
 }
 
-// Simple hash function for unique colors
 function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -74,7 +98,6 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Stars
   ctx.fillStyle = 'white'
   const seed = hashString(displayName)
   for (let i = 0; i < 50; i++) {
@@ -86,7 +109,6 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
     ctx.fill()
   }
 
-  // Course name
   ctx.font = 'Bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -107,6 +129,12 @@ function isFallbackImage(texture: THREE.Texture): boolean {
 function loadImageTexture(url: string): Promise<THREE.Texture> {
   const finalUrl = getEffectiveUrl(url)
 
+  // If it's a known bad URL, skip loading and immediately return generated texture
+  if (!import.meta.env.DEV && isKnownBadUrl(url)) {
+    console.log(`Skipping known bad image: ${url}`);
+    return Promise.resolve(generateNameTexture(props.courseName));
+  }
+
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
     loader.crossOrigin = 'anonymous'
@@ -120,10 +148,7 @@ function loadImageTexture(url: string): Promise<THREE.Texture> {
         }
       },
       undefined,
-      () => {
-        // On error, use generated texture
-        resolve(generateNameTexture(props.courseName))
-      }
+      () => resolve(generateNameTexture(props.courseName))
     )
   })
 }
