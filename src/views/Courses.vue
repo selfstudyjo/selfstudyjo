@@ -100,25 +100,13 @@
         @click="navigateToCourse(course.external_course_id)"
       >
         <div class="course-image-container">
-          <!-- Generated Image Background (always visible) -->
-          <div
-            class="course-image-generated"
-            :style="{ background: getCourseColor(course.title) }"
-          >
-            <span class="course-initials">{{ getCourseInitials(course.title) }}</span>
-            <div class="course-image-overlay"></div>
-          </div>
-
-          <!-- Real Course Image (if available) -->
-          <img
-            v-if="isValidImageUrl(course.image_url)"
-            :src="course.image_url"
-            :alt="course.title"
-            class="course-image"
-            @error="handleImageError"
-            @load="handleImageLoad"
-          >
-
+          <!-- 3D Planet -->
+          <Planet
+            :imageUrl="course.image_url"
+            :courseName="course.title"
+            :width="300"
+            :height="200"
+          />
           <div class="course-overlay"></div>
         </div>
         <div class="course-content">
@@ -208,17 +196,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { courseService, type Course, type CourseFilters } from '@/services/course.service';
 import { useAuthStore } from '@/store/auth';
-import { getCourseInitials, getCourseColor, isValidImageUrl } from '@/utils/courseImage';
+import Planet from '@/components/Planet.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 // State
-const allCourses = ref<Course[]>([]); // Store all courses
+const allCourses = ref<Course[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref('');
@@ -227,9 +215,9 @@ const currentPage = ref(1);
 const pageSize = ref(6);
 const searchTimeout = ref<NodeJS.Timeout | null>(null);
 const debounceDelay = 500;
-const useClientSidePagination = ref(false); // Flag for client-side pagination
+const useClientSidePagination = ref(false);
 
-// Computed properties for client-side operations
+// Computed properties
 const filteredCourses = computed(() => {
   console.log('🔄 [Computed] Filtering courses...');
   console.log('Total courses:', allCourses.value.length);
@@ -304,7 +292,6 @@ const fetchCourses = async () => {
   try {
     console.log('📡 [fetchCourses] Attempting server-side pagination...');
 
-    // First try server-side pagination
     const filters: CourseFilters = {
       page: currentPage.value,
       page_size: pageSize.value,
@@ -331,7 +318,6 @@ const fetchCourses = async () => {
       useClientSidePagination.value = false;
       allCourses.value = response.results;
     } else {
-      // If server returns all courses (no pagination support)
       console.log('⚠️ [fetchCourses] Server-side pagination not supported, using client-side');
       useClientSidePagination.value = true;
 
@@ -350,7 +336,6 @@ const fetchCourses = async () => {
     useClientSidePagination.value = true;
 
     try {
-      // Try to get all courses without filters
       const allResponse = await courseService.getCourses({});
       allCourses.value = allResponse.results || [];
       console.log('✅ [fetchCourses] Loaded all courses for client-side:', allCourses.value.length);
@@ -381,7 +366,6 @@ const performSearch = () => {
 
   if (useClientSidePagination.value) {
     console.log('🔄 [performSearch] Using client-side search');
-    // Client-side search is handled by computed properties
   } else {
     console.log('🔄 [performSearch] Using server-side search');
     fetchCourses();
@@ -401,7 +385,6 @@ const handleSortChange = () => {
 
   if (useClientSidePagination.value) {
     console.log('🔄 [handleSortChange] Using client-side sorting');
-    // Client-side sorting is handled by computed properties
   } else {
     console.log('🔄 [handleSortChange] Using server-side sorting');
     fetchCourses();
@@ -447,34 +430,6 @@ const formatDate = (dateString?: string) => {
   }
 };
 
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  console.log('Image failed to load:', img.src);
-  img.style.display = 'none';
-
-  const container = img.closest('.course-image-container');
-  if (container) {
-    const generatedDiv = container.querySelector('.course-image-generated') as HTMLElement;
-    if (generatedDiv) {
-      generatedDiv.style.display = 'flex';
-    }
-  }
-};
-
-const handleImageLoad = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  console.log('Image loaded successfully:', img.src);
-  img.style.opacity = '1';
-
-  const container = img.closest('.course-image-container');
-  if (container) {
-    const generatedDiv = container.querySelector('.course-image-generated') as HTMLElement;
-    if (generatedDiv) {
-      generatedDiv.style.display = 'none';
-    }
-  }
-};
-
 // Watchers
 watch(() => currentPage.value, () => {
   console.log('📄 [Watch] Page changed to:', currentPage.value);
@@ -495,8 +450,6 @@ onMounted(() => {
   fetchCourses();
 });
 
-// Cleanup
-import { onUnmounted } from 'vue';
 onUnmounted(() => {
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);

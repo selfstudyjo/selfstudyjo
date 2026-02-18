@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
-                            base: '/',  // 👈 now always root – works for custom domain and local dev
+                            base: '/',
                             resolve: {
                               alias: {
                                 '@': path.resolve(__dirname, './src'),
@@ -12,6 +12,18 @@ export default defineConfig({
                             },
                             server: {
                               port: 3000,
-                            host: true
-                            }
+                            host: true,
+                            proxy: {
+                              '/media1': {
+                                target: 'https://selfstudymedia1.pythonanywhere.com',
+                            changeOrigin: true,
+                            rewrite: (path) => path.replace(/^\/media1/, ''),
+                              },
+                            '/media2': {
+                              target: 'https://selfstudymedia2.pythonanywhere.com',
+                            changeOrigin: true,
+                            rewrite: (path) => path.replace(/^\/media2/, ''),
+                            },
+                            },
+                            },
 })

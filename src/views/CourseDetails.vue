@@ -42,27 +42,13 @@
 
         <div class="course-hero">
           <div class="course-image-container">
-            <!-- Generated Image (shown when no real image or when real image fails to load) -->
-            <div
-              class="course-image-generated"
-              :style="{ background: getCourseColor(course.title) }"
-              :class="{ 'visible': !hasValidImage || imageLoadError }"
-            >
-              <span class="course-initials">{{ getCourseInitials(course.title) }}</span>
-              <div class="image-overlay-generated"></div>
-            </div>
-
-            <!-- Real Course Image (shown if available and valid) -->
-            <img
-              v-if="hasValidImage"
-              :src="course.image_url"
-              :alt="course.title"
-              class="course-image"
-              @error="handleImageError"
-              @load="handleImageLoad"
-              :class="{ 'visible': !imageLoadError, 'loading': imageLoading }"
-            >
-
+            <!-- 3D Planet -->
+            <Planet
+              :imageUrl="course.image_url"
+              :courseName="course.title"
+              :width="600"
+              :height="400"
+            />
             <div class="image-overlay"></div>
           </div>
 
@@ -148,7 +134,7 @@
                     <div class="lesson-header">
                       <h3 class="lesson-title">{{ lesson.title }}</h3>
                       <div class="lesson-badges">
-                        <!-- Quiz Badge - Only show if lesson has quiz -->
+                        <!-- Quiz Badge -->
                         <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
@@ -257,7 +243,7 @@
                           v-for="(username, index) in filteredUsernames"
                           :key="username"
                           class="mention-option"
-                          :class="{ 'selected': selectedMentionIndex === index }"
+                          :class="{ selected: selectedMentionIndex === index }"
                           @click="selectMention(username)"
                           @mouseenter="selectedMentionIndex = index"
                         >
@@ -384,7 +370,7 @@ import { userService, type UserProfile } from '@/services/user.service';
 import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 import { serviceRegistry } from '@/services/config';
-import { getCourseInitials, getCourseColor, shouldUseGeneratedImage } from '@/utils/courseImage';
+import Planet from '@/components/Planet.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -407,8 +393,6 @@ const submittingComment = ref(false);
 const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
 const isUserRegistered = ref(false);
-const imageLoadError = ref(false);
-const imageLoading = ref(false);
 
 // Mention functionality
 const allUsernames = ref<string[]>([]);
@@ -426,12 +410,6 @@ const tabs = computed(() => [
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
 
-const hasValidImage = computed(() => {
-  if (!course.value?.image_url) return false;
-  const shouldUseGenerated = shouldUseGeneratedImage(course.value.image_url);
-  return !shouldUseGenerated;
-});
-
 // Methods
 const fetchCourseData = async () => {
   const courseId = route.params.id as string;
@@ -442,8 +420,6 @@ const fetchCourseData = async () => {
 
   loading.value = true;
   error.value = null;
-  imageLoadError.value = false;
-  imageLoading.value = false;
 
   try {
     // Clear cache for fresh replicas
@@ -548,18 +524,6 @@ const fetchAllUsernames = async () => {
     // Don't throw, just use empty array
     allUsernames.value = [];
   }
-};
-
-const handleImageError = (event: Event) => {
-  console.log('Real image failed to load, showing generated image');
-  imageLoadError.value = true;
-  imageLoading.value = false;
-};
-
-const handleImageLoad = (event: Event) => {
-  console.log('Real image loaded successfully');
-  imageLoadError.value = false;
-  imageLoading.value = false;
 };
 
 const handleAvatarError = (userId: string) => {
@@ -832,7 +796,7 @@ const navigateToQuiz = (lesson: any) => {
       lessonId: lesson.external_lesson_id,
       courseId: course.value?.external_course_id
     },
-    state: { quiz: lesson.quiz }  // <-- pass the pre‑fetched quiz object
+    state: { quiz: lesson.quiz }
   });
 };
 
