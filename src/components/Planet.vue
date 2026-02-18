@@ -26,7 +26,26 @@ let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
 
-// Helper: unique color based on course name
+// Transform URL for development proxy
+function getEffectiveUrl(url: string): string {
+  if (!url) return url
+  if (import.meta.env.DEV) {
+    // If it's already a proxy path, leave it
+    if (url.startsWith('/media1/') || url.startsWith('/media2/')) return url
+    // Convert absolute media URLs to proxy paths
+    const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
+    const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
+    if (media1Pattern.test(url)) {
+      return url.replace(media1Pattern, '/media1')
+    }
+    if (media2Pattern.test(url)) {
+      return url.replace(media2Pattern, '/media2')
+    }
+  }
+  return url
+}
+
+// Simple hash function for unique colors
 function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -88,17 +107,7 @@ function isFallbackImage(texture: THREE.Texture): boolean {
 }
 
 function loadImageTexture(url: string): Promise<THREE.Texture> {
-  // In development, use the proxy URL if needed (optional)
-  let finalUrl = url
-  if (import.meta.env.DEV) {
-    const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
-    const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
-    if (media1Pattern.test(url)) {
-      finalUrl = url.replace(media1Pattern, '/media1')
-    } else if (media2Pattern.test(url)) {
-      finalUrl = url.replace(media2Pattern, '/media2')
-    }
-  }
+  const finalUrl = getEffectiveUrl(url)
 
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()

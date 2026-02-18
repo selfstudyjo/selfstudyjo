@@ -4,13 +4,15 @@ import App from './App.vue'
 import router from './router'
 import './style.css'
 
-// Register service worker immediately (works on localhost and HTTPS)
+// Register service worker immediately
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('Service Worker registered with scope:', reg.scope);
-    }).catch(err => {
-        console.warn('Service Worker registration failed:', err);
-    });
+        console.log('Service Worker registered');
+        // If page isn't controlled, reload to activate
+        if (!navigator.serviceWorker.controller) {
+            window.location.reload();
+        }
+    }).catch(err => console.warn('SW registration failed:', err));
 }
 
 const app = createApp(App)
