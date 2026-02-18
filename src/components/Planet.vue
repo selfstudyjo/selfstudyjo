@@ -26,7 +26,7 @@ let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
 
-// Simple hash function to get a number from a string
+// Helper: unique color based on course name
 function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -36,13 +36,10 @@ function hashString(str: string): number {
   return Math.abs(hash)
 }
 
-// Generate a unique hue (0-360) based on course name
 function getHueFromName(name: string): number {
-  if (!name) return 0
-  return hashString(name) % 360
+  return name ? hashString(name) % 360 : 0
 }
 
-// Generate a canvas texture with course name and a unique gradient
 function generateNameTexture(name: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
@@ -50,18 +47,17 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')!
 
   const displayName = name || 'Course'
-
   const hue = getHueFromName(displayName)
   const color1 = `hsl(${hue}, 80%, 60%)`
   const color2 = `hsl(${(hue + 40) % 360}, 80%, 40%)`
+
   const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
   gradient.addColorStop(0, color1)
   gradient.addColorStop(1, color2)
-
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Deterministic stars
+  // Stars
   ctx.fillStyle = 'white'
   const seed = hashString(displayName)
   for (let i = 0; i < 50; i++) {
@@ -86,20 +82,29 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   return new THREE.CanvasTexture(canvas)
 }
 
-// Check if a loaded texture is the fallback 1x1 transparent image
 function isFallbackImage(texture: THREE.Texture): boolean {
   const img = texture.image as HTMLImageElement
-  if (!img) return false
-  return img.width === 1 && img.height === 1
+  return img?.width === 1 && img?.height === 1
 }
 
-// Load image texture, fallback to generated texture on error or if fallback detected
 function loadImageTexture(url: string): Promise<THREE.Texture> {
+  // In development, use the proxy URL if needed (optional)
+  let finalUrl = url
+  if (import.meta.env.DEV) {
+    const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
+    const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
+    if (media1Pattern.test(url)) {
+      finalUrl = url.replace(media1Pattern, '/media1')
+    } else if (media2Pattern.test(url)) {
+      finalUrl = url.replace(media2Pattern, '/media2')
+    }
+  }
+
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
     loader.crossOrigin = 'anonymous'
     loader.load(
-      url,
+      finalUrl,
       (texture) => {
         if (isFallbackImage(texture)) {
           resolve(generateNameTexture(props.courseName))
@@ -108,7 +113,7 @@ function loadImageTexture(url: string): Promise<THREE.Texture> {
         }
       },
       undefined,
-      () => resolve(generateNameTexture(props.courseName))
+      () => resolve(generateNameTexture(props.courseName)) // Always fallback on error
     )
   })
 }
@@ -177,21 +182,9 @@ function cleanup() {
   }
 }
 
-onMounted(() => {
-  initPlanet()
-})
-
-onUnmounted(() => {
-  cleanup()
-})
-
-watch(
-  () => [props.imageUrl, props.courseName],
-  () => {
-    cleanup()
-    initPlanet()
-  }
-)
+onMounted(() => initPlanet())
+onUnmounted(() => cleanup())
+watch(() => [props.imageUrl, props.courseName], () => { cleanup(); initPlanet() })
 </script>
 
 <style scoped>
