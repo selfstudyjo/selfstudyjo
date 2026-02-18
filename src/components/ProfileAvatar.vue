@@ -1,7 +1,11 @@
 <template>
-  <div class="profile-avatar" :class="{ 'has-image': imageUrl }">
-    <div v-if="imageUrl" class="avatar-image">
-      <img :src="imageUrl" :alt="altText" @error="handleImageError" />
+  <div class="profile-avatar" :class="{ 'has-image': effectiveImageUrl }">
+    <div v-if="effectiveImageUrl && !useFallback" class="avatar-image">
+      <img
+        :src="effectiveImageUrl"
+        :alt="altText"
+        @error="handleImageError"
+      />
     </div>
     <div v-else class="avatar-initials" :style="avatarStyle">
       {{ initials }}
@@ -28,7 +32,7 @@
 
     <!-- Remove button (only if has image and editable) -->
     <button
-      v-if="imageUrl && editable"
+      v-if="effectiveImageUrl && editable && !useFallback"
       @click="handleRemoveImage"
       class="remove-btn"
       type="button"
@@ -42,6 +46,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 interface Props {
   imageUrl?: string;
@@ -71,7 +76,7 @@ const emit = defineEmits<{
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
-const imageError = ref(false);
+const useFallback = ref(false);
 
 const initials = computed(() => {
   if (props.firstName && props.lastName) {
@@ -97,10 +102,20 @@ const altText = computed(() => {
   return 'Profile picture';
 });
 
+// Apply proxy to the original image URL
+const proxiedImageUrl = computed(() => getProxiedImageUrl(props.imageUrl));
+
+// Determine which URL to use (proxied or fallback initials)
+const effectiveImageUrl = computed(() => {
+  if (useFallback.value) {
+    return generateInitialsImage(initials.value, 200);
+  }
+  return proxiedImageUrl.value;
+});
+
 const avatarStyle = computed(() => {
   const styles: Record<string, string> = {};
 
-  // Size classes
   const sizeMap = {
     sm: '32px',
     md: '48px',
@@ -115,11 +130,9 @@ const avatarStyle = computed(() => {
                     props.size === 'lg' ? '24px' : '32px';
   styles.lineHeight = styles.height;
 
-  // Colors
   if (props.backgroundColor) {
     styles.backgroundColor = props.backgroundColor;
   }
-
   if (props.textColor) {
     styles.color = props.textColor;
   }
@@ -127,22 +140,9 @@ const avatarStyle = computed(() => {
   return styles;
 });
 
-const displayedImageUrl = computed(() => {
-  if (!props.imageUrl || imageError.value) return '';
-
-  // Check if it's already a full URL
-  if (props.imageUrl.startsWith('http')) {
-    return props.imageUrl;
-  }
-
-  // For relative paths, we might need to prepend base URL
-  // This would depend on your setup
-  return props.imageUrl;
-});
-
 const handleImageError = () => {
-  console.error('Failed to load profile image:', props.imageUrl);
-  imageError.value = true;
+  console.warn('Profile image failed to load, using fallback initials:', props.imageUrl);
+  useFallback.value = true;
 };
 
 const triggerFileInput = () => {
@@ -155,36 +155,54 @@ const handleFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files && input.files[0]) {
     const file = input.files[0];
-
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Image size should be less than 5MB');
       return;
     }
-
     emit('image-upload', file);
-
     // Reset input
     if (fileInput.value) {
       fileInput.value.value = '';
     }
+    // Reset fallback state in case new image is uploaded
+    useFallback.value = false;
   }
 };
 
 const handleRemoveImage = () => {
   if (confirm('Are you sure you want to remove your profile picture?')) {
     emit('image-remove');
+    useFallback.value = false;
   }
 };
 
+function generateInitialsImage(initials: string, size: number): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  const hue = (initials.charCodeAt(0) * 10) % 360;
+  const color = `hsl(${hue}, 70%, 60%)`;
+
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.fillStyle = 'white';
+  ctx.font = `bold ${size * 0.4}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(initials, size / 2, size / 2);
+
+  return canvas.toDataURL('image/png');
+}
+
 onMounted(() => {
-  imageError.value = false;
+  useFallback.value = false;
 });
 </script>
 

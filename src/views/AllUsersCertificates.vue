@@ -92,10 +92,11 @@
                 <div class="user-cell">
                   <div class="user-avatar-small">
                     <img
-                      v-if="getUserProfile(certificate.user_id)?.image_url"
-                      :src="getUserProfile(certificate.user_id)?.image_url"
+                      v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
+                      :src="getProxiedAvatarUrl(certificate.user_id)"
                       alt="User Avatar"
                       class="avatar-image-small"
+                      @error="handleAvatarError(certificate.user_id)"
                     />
                     <div v-else class="avatar-fallback-small">
                       {{ getUserInitials(certificate.user_id) }}
@@ -192,10 +193,11 @@
                 <div class="user-cell">
                   <div class="user-avatar-small">
                     <img
-                      v-if="getUserProfile(certificate.user_id)?.image_url"
-                      :src="getUserProfile(certificate.user_id)?.image_url"
+                      v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
+                      :src="getProxiedAvatarUrl(certificate.user_id)"
                       alt="User Avatar"
                       class="avatar-image-small"
+                      @error="handleAvatarError(certificate.user_id)"
                     />
                     <div v-else class="avatar-fallback-small">
                       {{ getUserInitials(certificate.user_id) }}
@@ -262,12 +264,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { certificateService } from '@/services/certificate.service';
 import { userService } from '@/services/user.service';
 import { courseService } from '@/services/course.service';
 import { examService } from '@/services/exam.service';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 const router = useRouter();
 
@@ -285,6 +288,9 @@ const courseCertificates = ref<any[]>([]);
 const userProfiles = ref<Map<string, any>>(new Map());
 const coursesMap = ref<Map<string, string>>(new Map());
 const examsMap = ref<Map<string, string>>(new Map());
+
+// Track avatar load errors per user
+const avatarErrors = reactive<Record<string, boolean>>({});
 
 const filteredExamCertificates = computed(() => {
   let filtered = examCertificates.value;
@@ -367,6 +373,15 @@ const totalPages = computed(() => {
     : courseCertificates.value.length;
   return Math.ceil(totalItems / itemsPerPage);
 });
+
+const getProxiedAvatarUrl = (userId: string) => {
+  const profile = getUserProfile(userId);
+  return profile?.image_url ? getProxiedImageUrl(profile.image_url) : '';
+};
+
+const handleAvatarError = (userId: string) => {
+  avatarErrors[userId] = true;
+};
 
 const fetchAllCertificates = async () => {
   try {

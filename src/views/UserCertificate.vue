@@ -63,10 +63,11 @@
               <div class="user-info">
                 <div class="user-avatar">
                   <img
-                    v-if="userProfile?.image_url"
-                    :src="userProfile.image_url"
+                    v-if="userProfile?.image_url && !avatarError"
+                    :src="proxiedAvatarUrl"
                     alt="User avatar"
                     class="avatar-image"
+                    @error="avatarError = true"
                   />
                   <div v-else class="avatar-fallback">
                     {{ userInitials }}
@@ -184,6 +185,7 @@ import { certificateService } from '@/services/certificate.service';
 import { userService } from '@/services/user.service';
 import { courseService } from '@/services/course.service';
 import { examService } from '@/services/exam.service';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 // import the cosmic CSS – make sure the path is correct
 import '@/assets/css/user-certificate.css';
@@ -199,6 +201,7 @@ const certificateDetails = ref<any>({});
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastSuccess = ref(false);
+const avatarError = ref(false);
 
 const certificateId = computed(() => route.params.certificateId as string);
 const certificateType = computed(() => route.query.type as 'course' | 'exam' || 'course');
@@ -207,6 +210,11 @@ const userInitials = computed(() => {
   if (!userProfile.value) return 'U';
   const name = userProfile.value.username || '';
   return name.charAt(0).toUpperCase();
+});
+
+const proxiedAvatarUrl = computed(() => {
+  if (!userProfile.value?.image_url) return '';
+  return getProxiedImageUrl(userProfile.value.image_url);
 });
 
 const statusClass = computed(() => {

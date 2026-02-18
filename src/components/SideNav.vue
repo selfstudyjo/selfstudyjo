@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <!-- Mobile Toggle Button (only visible on mobile) -->
-    <button 
-      v-if="isMobile && !sidebarVisible" 
-      class="mobile-toggle" 
+    <button
+      v-if="isMobile && !sidebarVisible"
+      class="mobile-toggle"
       @click="openSidebar"
       aria-label="Open navigation menu"
     >
@@ -19,11 +19,11 @@
           <div class="logo-icon">🎓</div>
           <span class="logo-text">Self Study JO</span>
         </div>
-        
+
         <!-- Toggle Button - Always visible -->
-        <button 
-          class="sidebar-toggle" 
-          @click="toggleSidebar" 
+        <button
+          class="sidebar-toggle"
+          @click="toggleSidebar"
           :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -96,21 +96,22 @@
         <template v-if="isAuthenticated">
           <div class="user-profile" @click="goToProfile">
             <div class="avatar">
-              <!-- Profile Image directly from authStore.user -->
-              <img 
-                v-if="authStore.user?.image_url" 
-                :src="authStore.user.image_url" 
+              <!-- Profile Image with proxy and error fallback -->
+              <img
+                v-if="proxiedImageUrl && !avatarError"
+                :src="proxiedImageUrl"
                 :alt="username"
                 class="profile-image"
+                @error="avatarError = true"
               />
               <span v-else>{{ userInitials }}</span>
             </div>
             <div v-if="!isCollapsed" class="user-info">
               <p class="username">{{ username }}</p>
               <p class="email">{{ userEmail }}</p>
-              <div 
-                class="notification-summary" 
-                @click.stop="goToNotifications" 
+              <div
+                class="notification-summary"
+                @click.stop="goToNotifications"
                 v-if="displayCount > 0"
                 :aria-label="`${displayCount} unread notifications`"
               >
@@ -119,7 +120,7 @@
               </div>
             </div>
           </div>
-          
+
           <button class="logout-btn" @click="handleLogout">
             <div class="logout-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -132,8 +133,8 @@
 
         <!-- Login Button (only when NOT authenticated) -->
         <template v-else>
-          <router-link 
-            to="/login" 
+          <router-link
+            to="/login"
             class="login-btn"
             @click="closeSidebarOnMobile"
           >
@@ -149,9 +150,9 @@
     </aside>
 
     <!-- Overlay for mobile when sidebar is open -->
-    <div 
-      v-if="isMobile && sidebarVisible" 
-      class="sidebar-overlay" 
+    <div
+      v-if="isMobile && sidebarVisible"
+      class="sidebar-overlay"
       @click="closeSidebar"
     ></div>
 
@@ -166,9 +167,9 @@ import { ref, computed, h, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
-// Removed unused imports: mediaService, userService
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
-// Icons (simplified versions) - unchanged
+// Icons (simplified versions)
 const DashboardIcon = {
   name: 'DashboardIcon',
   render() {
@@ -385,25 +386,26 @@ const notificationStore = useNotificationStore();
 const isCollapsed = ref(false);
 const isMobile = ref(false);
 const sidebarVisible = ref(false);
+const avatarError = ref(false);
 let pollInterval: number | null = null;
 
 // Initialize auth on component mount
 onMounted(() => {
   checkIfMobile();
   window.addEventListener('resize', checkIfMobile);
-  
+
   // Initialize auth store if needed
   if (!authStore.isAuthenticated && authStore.token) {
     authStore.checkAuth().catch(err => {
       console.log('Initial auth check failed:', err);
     });
   }
-  
+
   // Initialize notifications if authenticated
   if (authStore.isAuthenticated) {
     initializeNotifications();
   }
-  
+
   // Handle click outside on mobile
   document.addEventListener('click', handleClickOutside);
 });
@@ -438,7 +440,7 @@ const publicNavItems = computed(() => {
     { to: '/plans', text: 'Plans', icon: PlansIcon },
     { to: '/all-certificates', text: 'All Certificates', icon: AllCertificatesIcon },
   ];
-  
+
   return items;
 });
 
@@ -496,7 +498,7 @@ function handleClickOutside(event: MouseEvent) {
   if (isMobile.value && sidebarVisible.value) {
     const sidebar = document.querySelector('.sidebar');
     const target = event.target as HTMLElement;
-    
+
     if (sidebar && !sidebar.contains(target) && !target.closest('.mobile-toggle')) {
       closeSidebar();
     }
@@ -519,6 +521,11 @@ const userInitials = computed(() => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+});
+
+const proxiedImageUrl = computed(() => {
+  if (!authStore.user?.image_url) return '';
+  return getProxiedImageUrl(authStore.user.image_url);
 });
 
 const displayCount = computed(() => {
@@ -607,6 +614,11 @@ watch(() => route.path, () => {
       notificationStore.fetchNotificationCount(username.value);
     }, 1000);
   }
+});
+
+// Reset avatar error when user changes
+watch(() => authStore.user, () => {
+  avatarError.value = false;
 });
 </script>
 
