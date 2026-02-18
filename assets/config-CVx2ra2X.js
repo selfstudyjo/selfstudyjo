@@ -1,1 +1,0 @@
-import{t as e}from"./index-bndvWfdb.js";export{e as serviceRegistry};
