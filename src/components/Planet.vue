@@ -27,8 +27,9 @@ let sphere: THREE.Mesh
 let animationFrame: number
 
 // Convert absolute media URLs to local proxy URLs only in development
-function getProxiedUrl(url: string): string {
+function getEffectiveUrl(url: string): string {
   if (!url) return url
+  // In development, use the Vite proxy
   if (import.meta.env.DEV) {
     const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
@@ -39,6 +40,7 @@ function getProxiedUrl(url: string): string {
       return url.replace(media2Pattern, '/media2')
     }
   }
+  // In production, use the original URL – the service worker will intercept it
   return url
 }
 
@@ -104,13 +106,13 @@ function isFallbackImage(texture: THREE.Texture): boolean {
 }
 
 function loadImageTexture(url: string): Promise<THREE.Texture> {
-  const proxiedUrl = getProxiedUrl(url)
+  const effectiveUrl = getEffectiveUrl(url)
 
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
     loader.crossOrigin = 'anonymous'
     loader.load(
-      proxiedUrl,
+      effectiveUrl,
       (texture) => {
         if (isFallbackImage(texture)) {
           resolve(generateNameTexture(props.courseName))
