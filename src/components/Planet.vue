@@ -30,9 +30,7 @@ let animationFrame: number
 function getEffectiveUrl(url: string): string {
   if (!url) return url
   if (import.meta.env.DEV) {
-    // If it's already a proxy path, leave it
     if (url.startsWith('/media1/') || url.startsWith('/media2/')) return url
-    // Convert absolute media URLs to proxy paths
     const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
     if (media1Pattern.test(url)) {
@@ -122,7 +120,10 @@ function loadImageTexture(url: string): Promise<THREE.Texture> {
         }
       },
       undefined,
-      () => resolve(generateNameTexture(props.courseName)) // Always fallback on error
+      () => {
+        // On error, use generated texture
+        resolve(generateNameTexture(props.courseName))
+      }
     )
   })
 }

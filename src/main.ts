@@ -4,7 +4,7 @@ import App from './App.vue'
 import router from './router'
 import './style.css'
 
-// Register service worker after page load
+// Register service worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(err => {
