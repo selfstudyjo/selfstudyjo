@@ -26,7 +26,7 @@ let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
 
-// Convert absolute media URLs to local proxy URLs (development only)
+// Convert absolute media URLs to local proxy URLs only in development
 function getProxiedUrl(url: string): string {
   if (!url) return url
   if (import.meta.env.DEV) {
