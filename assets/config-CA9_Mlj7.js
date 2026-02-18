@@ -1,0 +1,1 @@
+import{t as e}from"./index-BaLX-D0Y.js";export{e as serviceRegistry};
