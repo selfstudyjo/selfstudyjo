@@ -54,6 +54,18 @@ export interface LabError {
 class LabService {
     private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
 
+    // Helper to ensure URL uses HTTPS
+    private ensureHttps(url: string): string {
+        if (!url) return url;
+        if (url.startsWith('https://')) return url;
+            if (url.startsWith('http://')) {
+                const httpsUrl = url.replace(/^http:/, 'https:');
+                console.log(`🔒 Lab URL converted to HTTPS: ${url} -> ${httpsUrl}`);
+                return httpsUrl;
+            }
+            return url;
+    }
+
     /**
      * Get or create a student record in the lab backend
      */
@@ -92,11 +104,13 @@ class LabService {
      * Run SQL query
      */
     async runSQL(username: string, labUrl: string, query: string): Promise<SQLResult> {
+        // Ensure labUrl is HTTPS
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
             console.log('🚀 Running SQL query:', { username, query: query.substring(0, 100) + '...' });
 
             const response = await apiService.post<SQLResult>(
-                labUrl,
+                secureLabUrl,
                 `/api/run-sql/${username}/`,
                 { query }
             );
@@ -127,11 +141,12 @@ class LabService {
      * Run Linux command
      */
     async runLinuxCommand(username: string, labUrl: string, command: string): Promise<CommandResult> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
             console.log('🚀 Running Linux command:', { username, command });
 
             const response = await apiService.post<CommandResult>(
-                labUrl,
+                secureLabUrl,
                 `/api/run-command/${username}/`,
                 { command }
             );
@@ -162,11 +177,12 @@ class LabService {
      * Kill running process
      */
     async killProcess(username: string, labUrl: string): Promise<CommandResult> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
             console.log('🛑 Killing process for:', username);
 
             const response = await apiService.post<CommandResult>(
-                labUrl,
+                secureLabUrl,
                 `/api/kill-process/${username}/`,
                 {}
             );
@@ -184,11 +200,12 @@ class LabService {
      * Run Python code
      */
     async runPythonCode(username: string, labUrl: string, code: string): Promise<PythonResult> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
             console.log('🚀 Running Python code:', { username, codeLength: code.length });
 
             const response = await apiService.post<PythonResult>(
-                labUrl,
+                secureLabUrl,
                 `/api/run-python/${username}/`,
                 { code }
             );
@@ -219,13 +236,9 @@ class LabService {
      * Get all students (admin function)
      */
     async getAllStudents(labUrl: string): Promise<Student[]> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
             // COMMENTED OUT - DON'T MAKE THIS REQUEST
-            // const response = await apiService.get<any>(labUrl, '/api/students/');
-            // if (Array.isArray(response)) {
-            //     return response;
-            // }
-            
             console.log('⚠️ Skipping getAllStudents to avoid CORS errors');
             return [];
         } catch (error) {
@@ -238,14 +251,8 @@ class LabService {
      * Get student count
      */
     async getStudentCount(labUrl: string): Promise<number> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            // COMMENTED OUT - DON'T MAKE THIS REQUEST
-            // const response = await apiService.get<{ student_count: number }>(
-            //     labUrl,
-            //     '/api/student-count/'
-            // );
-            // return response.student_count || 0;
-            
             console.log('⚠️ Skipping getStudentCount to avoid CORS errors');
             return 0;
         } catch (error) {
@@ -258,11 +265,8 @@ class LabService {
      * Check lab health
      */
     async checkLabHealth(labUrl: string): Promise<boolean> {
+        const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            // COMMENTED OUT - DON'T MAKE THIS REQUEST
-            // await apiService.get(labUrl, '/api/student-count/');
-            // return true;
-            
             console.log('⚠️ Skipping lab health check to avoid CORS errors');
             return true;
         } catch (error) {

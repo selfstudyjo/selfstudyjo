@@ -39,6 +39,20 @@ class ServiceRegistry {
         return headers;
     }
 
+    // Ensure URL uses HTTPS (especially for pythonanywhere.com)
+    private ensureHttps(url: string): string {
+        if (!url) return url;
+        // If it's already HTTPS, return as is
+        if (url.startsWith('https://')) return url;
+            // Replace http with https for any domain (safer)
+            if (url.startsWith('http://')) {
+                const httpsUrl = url.replace(/^http:/, 'https:');
+                console.log(`🔒 Converted HTTP to HTTPS: ${url} -> ${httpsUrl}`);
+                return httpsUrl;
+            }
+            return url;
+    }
+
     async getServiceReplicas(appId: number, serviceName: string): Promise<string[]> {
         const cacheKey = `service_${appId}`;
         const cached = this.cache.get(cacheKey);
@@ -51,7 +65,9 @@ class ServiceRegistry {
         // Try each registry domain until we get a successful response
         for (const registryDomain of this.registryDomains) {
             try {
-                const url = `${registryDomain}/apps/${appId}/`;
+                // Ensure registry domain is HTTPS
+                const secureRegistryDomain = this.ensureHttps(registryDomain);
+                const url = `${secureRegistryDomain}/apps/${appId}/`;
                 console.log(`Fetching ${serviceName} replicas from: ${url}`);
 
                 const controller = new AbortController();
@@ -70,7 +86,8 @@ class ServiceRegistry {
                     const data: AppDetails = await response.json();
                     const replicas = data.replicas
                     .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
-                    .filter(url => url && url.startsWith('https'));
+                    .filter(url => url && url.startsWith('http')) // accept both http and https initially
+                    .map(url => this.ensureHttps(url)); // force HTTPS
 
                     console.log(`Found ${replicas.length} replicas for ${serviceName}:`, replicas);
 
@@ -192,7 +209,6 @@ class ServiceRegistry {
         this.cache.clear();
     }
 
-
     async getRandomSubscriptionReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_SUBSCRIPTIONS_APP_ID || '22'),
@@ -208,7 +224,6 @@ class ServiceRegistry {
         );
         return this.getRandomReplica(replicas);
     }
-
 }
 
 export const serviceRegistry = new ServiceRegistry();

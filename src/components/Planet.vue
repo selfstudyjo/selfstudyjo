@@ -28,14 +28,25 @@ let animationFrame: number
 let fallbackTimer: ReturnType<typeof setTimeout>
 
 // Convert absolute media URLs to local proxy URLs (development only)
+// In production, force HTTPS for known domains
 function getEffectiveUrl(url: string): string {
   if (!url) return url
+
+  // In development, use proxy
   if (import.meta.env.DEV) {
     const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
     if (media1Pattern.test(url)) return url.replace(media1Pattern, '/media1')
     if (media2Pattern.test(url)) return url.replace(media2Pattern, '/media2')
   }
+
+  // In production, ensure HTTPS for pythonanywhere.com domains
+  if (url.startsWith('http://')) {
+    const httpsUrl = url.replace(/^http:/, 'https:')
+    console.log(`🔒 Planet image URL converted to HTTPS: ${url} -> ${httpsUrl}`)
+    return httpsUrl
+  }
+
   return url
 }
 
@@ -103,18 +114,23 @@ function loadImageTexture(url: string): Promise<THREE.Texture> {
   const finalUrl = getEffectiveUrl(url)
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
-    loader.crossOrigin = 'anonymous'
+    loader.crossOrigin = 'anonymous' // Request CORS access
     loader.load(
       finalUrl,
       (texture) => {
+        // If the image is a fallback (1x1), generate a named texture instead
         if (isFallbackImage(texture)) {
+          console.warn(`Image at ${finalUrl} is a 1x1 fallback, using generated texture`)
           resolve(generateNameTexture(props.courseName))
         } else {
           resolve(texture)
         }
       },
       undefined,
-      () => resolve(generateNameTexture(props.courseName))
+      (error) => {
+        console.warn(`Failed to load image from ${finalUrl}, using generated texture`, error)
+        resolve(generateNameTexture(props.courseName))
+      }
     )
   })
 }
@@ -126,6 +142,7 @@ async function initPlanet() {
   // Safety timeout: if texture loading takes >3 seconds, force generated texture
   fallbackTimer = setTimeout(() => {
     if (sphere) {
+      console.log('Fallback timer triggered, using generated texture')
       const generated = generateNameTexture(props.courseName)
       sphere.material.map = generated
       sphere.material.needsUpdate = true

@@ -208,7 +208,7 @@
         </div>
       </div>
 
-      <!-- Linux Tab - COMPLETELY REVISED TERMINAL -->
+      <!-- Linux Tab -->
       <div v-else-if="activeTab === 'linux'" class="tab-content">
         <div class="linux-container">
           <div class="terminal-wrapper">
@@ -433,7 +433,18 @@ const commandInput = ref<HTMLInputElement | null>(null);
 
 // User info
 const username = computed(() => authStore.user?.username || '');
-const labUrl = computed(() => authStore.user?.lab_url || '');
+
+// Ensure lab URL is HTTPS
+const labUrl = computed(() => {
+  const url = authStore.user?.lab_url || '';
+  if (!url) return '';
+  if (url.startsWith('https://')) return url;
+  if (url.startsWith('http://')) {
+    return url.replace(/^http:/, 'https:');
+  }
+  return url;
+});
+
 const labUrlDisplay = computed(() => {
   if (!labUrl.value) return 'Not connected';
   try {
@@ -443,6 +454,7 @@ const labUrlDisplay = computed(() => {
     return labUrl.value;
   }
 });
+
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const studentRecord = ref<Student | null>(null);
 
