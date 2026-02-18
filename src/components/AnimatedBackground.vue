@@ -4,24 +4,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import '@/assets/js/three.min.js'
-
-declare global {
-  interface Window {
-    THREE: any
-  }
-}
-const THREE = window.THREE
+import * as THREE from 'three'
 
 const container = ref<HTMLElement | null>(null)
 
-let scene: any, camera: any, renderer: any, clock: any
-let planets: Array<{ mesh: any; group: any; speed: number; radius: number; angle: number; height: number; initialZ: number; rotSpeed: number }> = []
-let stars: any, galaxy: any
-let nebulaMeshes: any[] = []
+let scene: THREE.Scene
+let camera: THREE.PerspectiveCamera
+let renderer: THREE.WebGLRenderer
+let clock: THREE.Clock
+let planets: Array<{ mesh: THREE.Mesh; group: THREE.Group; speed: number; radius: number; angle: number; height: number; initialZ: number; rotSpeed: number }> = []
+let stars: THREE.Points
+let galaxy: THREE.Points
+let nebulaMeshes: THREE.Mesh[] = []
 
 // --- Helper: create a soft circular texture for stars and nebulae sprites ---
-function createSoftTexture(color: string = 'white') {
+function createSoftTexture(color: string = 'white'): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 64
   canvas.height = 64
@@ -39,7 +36,7 @@ function createSoftTexture(color: string = 'white') {
 }
 
 // --- Helper: create a planet texture with name and surface detail ---
-function createPlanetTexture(name: string, baseColor: string) {
+function createPlanetTexture(name: string, baseColor: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 1024
   canvas.height = 1024
@@ -56,9 +53,9 @@ function createPlanetTexture(name: string, baseColor: string) {
 
   // Random craters / noise
   for (let i = 0; i < 500; i++) {
-    ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.3})`
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.3})`
     ctx.beginPath()
-    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*30+5, 0, Math.PI*2)
+    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 30 + 5, 0, Math.PI * 2)
     ctx.fill()
   }
 
@@ -68,25 +65,25 @@ function createPlanetTexture(name: string, baseColor: string) {
   ctx.textBaseline = 'middle'
   ctx.strokeStyle = 'white'
   ctx.lineWidth = 8
-  ctx.strokeText(name, canvas.width/2, canvas.height/2)
+  ctx.strokeText(name, canvas.width / 2, canvas.height / 2)
   ctx.fillStyle = 'white'
-  ctx.fillText(name, canvas.width/2, canvas.height/2)
+  ctx.fillText(name, canvas.width / 2, canvas.height / 2)
 
   return new THREE.CanvasTexture(canvas)
 }
 
-function lightenColor(color: string, percent: number) {
+function lightenColor(color: string, percent: number): string {
   const num = parseInt(color.slice(1), 16)
   const r = Math.min(255, (num >> 16) + percent)
-  const g = Math.min(255, ((num >> 8) & 0x00FF) + percent)
-  const b = Math.min(255, (num & 0x0000FF) + percent)
+  const g = Math.min(255, ((num >> 8) & 0x00ff) + percent)
+  const b = Math.min(255, (num & 0x0000ff) + percent)
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
 }
-function darkenColor(color: string, percent: number) {
+function darkenColor(color: string, percent: number): string {
   const num = parseInt(color.slice(1), 16)
   const r = Math.max(0, (num >> 16) - percent)
-  const g = Math.max(0, ((num >> 8) & 0x00FF) - percent)
-  const b = Math.max(0, (num & 0x0000FF) - percent)
+  const g = Math.max(0, ((num >> 8) & 0x00ff) - percent)
+  const b = Math.max(0, (num & 0x0000ff) - percent)
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
 }
 
@@ -149,15 +146,15 @@ function createStars() {
     const r = 200 + Math.random() * 400
     const theta = Math.random() * Math.PI * 2
     const phi = Math.acos(2 * Math.random() - 1)
-    positions[i*3] = r * Math.sin(phi) * Math.cos(theta)
-    positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta)
-    positions[i*3+2] = r * Math.cos(phi) - 300
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+    positions[i * 3 + 2] = r * Math.cos(phi) - 300
 
     // Random color temperature
     const tint = Math.random() * 0.5 + 0.5
-    colors[i*3] = tint * (0.8 + 0.4 * Math.random())
-    colors[i*3+1] = tint * (0.7 + 0.4 * Math.random())
-    colors[i*3+2] = 1.0
+    colors[i * 3] = tint * (0.8 + 0.4 * Math.random())
+    colors[i * 3 + 1] = tint * (0.7 + 0.4 * Math.random())
+    colors[i * 3 + 2] = 1.0
   }
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
@@ -188,15 +185,19 @@ function createGalaxy() {
     const x = Math.cos(angle) * radius + Math.sin(angle) * spiral
     const y = (Math.random() - 0.5) * 20
     const z = Math.sin(angle) * radius - Math.cos(angle) * spiral
-    positions[i*3] = x
-    positions[i*3+1] = y
-    positions[i*3+2] = z - 400
+    positions[i * 3] = x
+    positions[i * 3 + 1] = y
+    positions[i * 3 + 2] = z - 400
 
     // Core warmer, arms cooler
     if (radius < 90) {
-      colors[i*3] = 1.0; colors[i*3+1] = 0.8; colors[i*3+2] = 0.6
+      colors[i * 3] = 1.0
+      colors[i * 3 + 1] = 0.8
+      colors[i * 3 + 2] = 0.6
     } else {
-      colors[i*3] = 0.6; colors[i*3+1] = 0.8; colors[i*3+2] = 1.0
+      colors[i * 3] = 0.6
+      colors[i * 3 + 1] = 0.8
+      colors[i * 3 + 2] = 1.0
     }
   }
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))

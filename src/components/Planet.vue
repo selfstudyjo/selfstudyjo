@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import * as THREE from 'three'
 
 const props = defineProps<{
   imageUrl?: string
@@ -19,17 +20,16 @@ const props = defineProps<{
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 
-let scene: any
-let camera: any
-let renderer: any
-let sphere: any
+let scene: THREE.Scene
+let camera: THREE.PerspectiveCamera
+let renderer: THREE.WebGLRenderer
+let sphere: THREE.Mesh
 let animationFrame: number
 
 // Convert absolute media URLs to local proxy URLs (development only)
 function getProxiedUrl(url: string): string {
   if (!url) return url
   if (import.meta.env.DEV) {
-    // Match both http:// and https:// versions of the media domains
     const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
     if (media1Pattern.test(url)) {
@@ -42,7 +42,6 @@ function getProxiedUrl(url: string): string {
   return url
 }
 
-// Simple hash function to get a number from a string
 function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -52,15 +51,12 @@ function hashString(str: string): number {
   return Math.abs(hash)
 }
 
-// Generate a unique hue (0-360) based on course name
 function getHueFromName(name: string): number {
   if (!name) return 0
   return hashString(name) % 360
 }
 
-// Generate a canvas texture with course name and a unique gradient
-function generateNameTexture(name: string): any {
-  const THREE = window.THREE
+function generateNameTexture(name: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
   canvas.height = 512
@@ -78,7 +74,6 @@ function generateNameTexture(name: string): any {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Deterministic stars
   ctx.fillStyle = 'white'
   const seed = hashString(displayName)
   for (let i = 0; i < 50; i++) {
@@ -90,7 +85,6 @@ function generateNameTexture(name: string): any {
     ctx.fill()
   }
 
-  // Course name
   ctx.font = 'Bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -103,16 +97,13 @@ function generateNameTexture(name: string): any {
   return new THREE.CanvasTexture(canvas)
 }
 
-// Check if a loaded texture is the fallback 1x1 transparent image
-function isFallbackImage(texture: any): boolean {
-  const img = texture.image
+function isFallbackImage(texture: THREE.Texture): boolean {
+  const img = texture.image as HTMLImageElement
   if (!img) return false
   return img.width === 1 && img.height === 1
 }
 
-// Load image texture, fallback to generated texture on error or if fallback detected
-function loadImageTexture(url: string): Promise<any> {
-  const THREE = window.THREE
+function loadImageTexture(url: string): Promise<THREE.Texture> {
   const proxiedUrl = getProxiedUrl(url)
 
   return new Promise((resolve) => {
@@ -135,7 +126,6 @@ function loadImageTexture(url: string): Promise<any> {
 
 async function initPlanet() {
   if (!canvas.value) return
-  const THREE = window.THREE
   const { width, height } = props
 
   scene = new THREE.Scene()
@@ -159,7 +149,6 @@ async function initPlanet() {
 
   const geometry = new THREE.SphereGeometry(1, 64, 64)
 
-  // If no imageUrl, use generated texture immediately (no attempt to load)
   const texture = props.imageUrl
     ? await loadImageTexture(props.imageUrl)
     : generateNameTexture(props.courseName)
