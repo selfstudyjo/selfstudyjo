@@ -6,14 +6,18 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(clients.claim()); // Take control of all pages
+    event.waitUntil(clients.claim()); // Take control of all clients
 });
 
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
     // Intercept requests to media domains (production) and proxy paths (development)
-    if (url.hostname.includes('selfstudymedia') || url.pathname.startsWith('/media1/') || url.pathname.startsWith('/media2/')) {
+    if (
+        url.hostname.includes('selfstudymedia') ||
+        url.pathname.startsWith('/media1/') ||
+        url.pathname.startsWith('/media2/')
+    ) {
         event.respondWith(
             fetch(event.request)
             .then(response => {
