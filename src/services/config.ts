@@ -70,7 +70,7 @@ class ServiceRegistry {
                     const data: AppDetails = await response.json();
                     const replicas = data.replicas
                     .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
-                    .filter(url => url && url.startsWith('http'));
+                    .filter(url => url && url.startsWith('https'));
 
                     console.log(`Found ${replicas.length} replicas for ${serviceName}:`, replicas);
 
