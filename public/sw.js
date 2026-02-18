@@ -20,21 +20,21 @@ self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     const hostname = url.hostname;
 
-    // Check if the request is to one of our media domains
+    // Intercept requests to any of our media domains
     if (MEDIA_DOMAINS.includes(hostname)) {
         event.respondWith(
             fetch(event.request)
             .then(response => {
-                // If the response is OK, return it
+                // If the response is OK (200-299), return it
                 if (response.ok) return response;
-                // Otherwise, return the transparent fallback
+                // Otherwise (403, 404, etc.) return the fallback
                 return new Response(
                     FALLBACK_IMAGE,
                     { headers: { 'Content-Type': 'image/png' } }
                 );
             })
             .catch(() => {
-                // Network error – return fallback
+                // Network error (including CORS) – return fallback
                 return new Response(
                     FALLBACK_IMAGE,
                     { headers: { 'Content-Type': 'image/png' } }

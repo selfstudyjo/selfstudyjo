@@ -26,24 +26,7 @@ let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
 
-// Convert absolute media URLs to local proxy URLs only in development
-function getEffectiveUrl(url: string): string {
-  if (!url) return url
-  // In development, use the Vite proxy
-  if (import.meta.env.DEV) {
-    const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
-    const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
-    if (media1Pattern.test(url)) {
-      return url.replace(media1Pattern, '/media1')
-    }
-    if (media2Pattern.test(url)) {
-      return url.replace(media2Pattern, '/media2')
-    }
-  }
-  // In production, use the original URL – the service worker will intercept it
-  return url
-}
-
+// Simple hash function to get a number from a string
 function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -53,11 +36,13 @@ function hashString(str: string): number {
   return Math.abs(hash)
 }
 
+// Generate a unique hue (0-360) based on course name
 function getHueFromName(name: string): number {
   if (!name) return 0
   return hashString(name) % 360
 }
 
+// Generate a canvas texture with course name and a unique gradient
 function generateNameTexture(name: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
@@ -76,6 +61,7 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+  // Deterministic stars
   ctx.fillStyle = 'white'
   const seed = hashString(displayName)
   for (let i = 0; i < 50; i++) {
@@ -87,6 +73,7 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
     ctx.fill()
   }
 
+  // Course name
   ctx.font = 'Bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -99,20 +86,20 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   return new THREE.CanvasTexture(canvas)
 }
 
+// Check if a loaded texture is the fallback 1x1 transparent image
 function isFallbackImage(texture: THREE.Texture): boolean {
   const img = texture.image as HTMLImageElement
   if (!img) return false
   return img.width === 1 && img.height === 1
 }
 
+// Load image texture, fallback to generated texture on error or if fallback detected
 function loadImageTexture(url: string): Promise<THREE.Texture> {
-  const effectiveUrl = getEffectiveUrl(url)
-
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
     loader.crossOrigin = 'anonymous'
     loader.load(
-      effectiveUrl,
+      url,
       (texture) => {
         if (isFallbackImage(texture)) {
           resolve(generateNameTexture(props.courseName))
