@@ -25,62 +25,31 @@ let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let sphere: THREE.Mesh
 let animationFrame: number
+let fallbackTimer: ReturnType<typeof setTimeout>
 
-// List of known bad image URLs that always fail
-const BAD_IMAGE_PATTERNS = [
-  '239.jpg',
-  'logo.png',
-  'f33967512.png',
-  'a0b1c023-9bad-4332-b66f-c3893e1fadaf.png',
-  'f34082296.png',
-  '015-isle_of_man.png',
-  '017-lesotho.png',
-  'f34082288.png',
-  'Flask.jpg',
-  'f38023920.png',
-  'AWS_Training.jpg',
-  'Docker.jpg',
-  'Python_Track_3D_Game_Development_with_Kivy.jpg',
-  'Virtualization.jpg',
-  'Kubernetes.jpg',
-  'Python_Web_Scraping.jpg'
-];
-
-// Check if the URL contains any of the bad patterns
-function isKnownBadUrl(url: string): boolean {
-  return BAD_IMAGE_PATTERNS.some(pattern => url.includes(pattern));
-}
-
-// Transform URL for development proxy
+// Convert absolute media URLs to local proxy URLs (development only)
 function getEffectiveUrl(url: string): string {
   if (!url) return url
   if (import.meta.env.DEV) {
-    if (url.startsWith('/media1/') || url.startsWith('/media2/')) return url
     const media1Pattern = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
-    if (media1Pattern.test(url)) {
-      return url.replace(media1Pattern, '/media1')
-    }
-    if (media2Pattern.test(url)) {
-      return url.replace(media2Pattern, '/media2')
-    }
+    if (media1Pattern.test(url)) return url.replace(media1Pattern, '/media1')
+    if (media2Pattern.test(url)) return url.replace(media2Pattern, '/media2')
   }
   return url
 }
 
+// Unique color based on course name
 function hashString(str: string): number {
   let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i)
-    hash |= 0
-  }
+  for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i), hash |= 0
   return Math.abs(hash)
 }
-
 function getHueFromName(name: string): number {
   return name ? hashString(name) % 360 : 0
 }
 
+// Generate a textured canvas with course name
 function generateNameTexture(name: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
@@ -98,6 +67,7 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+  // Stars
   ctx.fillStyle = 'white'
   const seed = hashString(displayName)
   for (let i = 0; i < 50; i++) {
@@ -109,6 +79,7 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
     ctx.fill()
   }
 
+  // Course name
   ctx.font = 'Bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -121,20 +92,15 @@ function generateNameTexture(name: string): THREE.CanvasTexture {
   return new THREE.CanvasTexture(canvas)
 }
 
+// Check if loaded texture is the 1x1 fallback
 function isFallbackImage(texture: THREE.Texture): boolean {
   const img = texture.image as HTMLImageElement
   return img?.width === 1 && img?.height === 1
 }
 
+// Load texture with fallback
 function loadImageTexture(url: string): Promise<THREE.Texture> {
   const finalUrl = getEffectiveUrl(url)
-
-  // If it's a known bad URL, skip loading and immediately return generated texture
-  if (!import.meta.env.DEV && isKnownBadUrl(url)) {
-    console.log(`Skipping known bad image: ${url}`);
-    return Promise.resolve(generateNameTexture(props.courseName));
-  }
-
   return new Promise((resolve) => {
     const loader = new THREE.TextureLoader()
     loader.crossOrigin = 'anonymous'
@@ -156,6 +122,15 @@ function loadImageTexture(url: string): Promise<THREE.Texture> {
 async function initPlanet() {
   if (!canvas.value) return
   const { width, height } = props
+
+  // Safety timeout: if texture loading takes >3 seconds, force generated texture
+  fallbackTimer = setTimeout(() => {
+    if (sphere) {
+      const generated = generateNameTexture(props.courseName)
+      sphere.material.map = generated
+      sphere.material.needsUpdate = true
+    }
+  }, 3000)
 
   scene = new THREE.Scene()
   scene.background = null
@@ -182,6 +157,8 @@ async function initPlanet() {
     ? await loadImageTexture(props.imageUrl)
     : generateNameTexture(props.courseName)
 
+  clearTimeout(fallbackTimer) // cancel safety timeout
+
   const material = new THREE.MeshStandardMaterial({
     map: texture,
     roughness: 0.4,
@@ -200,6 +177,7 @@ async function initPlanet() {
 }
 
 function cleanup() {
+  clearTimeout(fallbackTimer)
   if (animationFrame) cancelAnimationFrame(animationFrame)
   if (renderer) {
     renderer.dispose()
@@ -209,8 +187,7 @@ function cleanup() {
     scene.traverse((obj: any) => {
       if (obj.geometry) obj.geometry.dispose()
       if (obj.material) {
-        if (Array.isArray(obj.material))
-          obj.material.forEach((m: any) => m.dispose())
+        if (Array.isArray(obj.material)) obj.material.forEach((m: any) => m.dispose())
         else obj.material.dispose()
       }
     })
