@@ -24,7 +24,8 @@ self.addEventListener('fetch', event => {
     if (
         url.hostname.includes('selfstudymedia') ||
         url.pathname.startsWith('/media1/') ||
-        url.pathname.startsWith('/media2/')
+        url.pathname.startsWith('/media2/') ||
+        url.pathname.startsWith('/secure-media/')
     ) {
         // Clone the request to add headers
         const requestInit = {
