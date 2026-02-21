@@ -1,26 +1,23 @@
+import { getSecureMediaUrl } from './mediaUtils';
+
 /**
- * Converts an absolute media URL to a relative proxy URL in development,
- * otherwise returns the original URL for production with a cache-busting parameter.
+ * Returns a proxied (or secure) image URL suitable for the current environment.
+ * In development, it may use a Vite proxy; in production, it rewrites to the secure endpoint.
+ * Falls back to the original URL if no transformation is needed.
  */
-export function getProxiedImageUrl(url: string): string {
-    if (!url) return '';
+export function getProxiedImageUrl(originalUrl: string): string {
+    if (!originalUrl) return originalUrl;
 
-    // In development, use the Vite proxy to avoid CORS
-    if (import.meta.env.DEV) {
-        const mediaDomains = {
-            'selfstudymedia1.pythonanywhere.com': '/media1',
-            'selfstudymedia2.pythonanywhere.com': '/media2',
-        };
-        for (const [domain, proxyPath] of Object.entries(mediaDomains)) {
-            if (url.includes(domain)) {
-                return url.replace(`https://${domain}`, proxyPath);
-            }
-        }
-        return url;
-    }
+    // In development, you might want to use a proxy path if needed.
+    // For now, we reuse the same logic as getSecureMediaUrl, which handles both.
+    return getSecureMediaUrl(originalUrl);
+}
 
-    // In production, add a cache-busting query parameter
-    const cacheBuster = `_cb=${Date.now()}`;
+/**
+ * Adds a cache-busting query parameter to an image URL.
+ */
+export function addCacheBuster(url: string): string {
+    if (!url) return url;
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${cacheBuster}`;
+    return `${url}${separator}_cb=${Date.now()}`;
 }

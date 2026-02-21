@@ -289,7 +289,7 @@
                       <div class="user-avatar-container">
                         <img
                           v-if="comment.user_profile?.image_url && isImageUrlValid(comment.user_profile.image_url)"
-                          :src="comment.user_profile.image_url"
+                          :src="getSecureMediaUrl(comment.user_profile.image_url)"
                           :alt="comment.user_profile.username || 'User'"
                           class="user-avatar-image"
                           @error="handleAvatarError(comment.user_id)"
@@ -371,6 +371,7 @@ import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 import { serviceRegistry } from '@/services/config';
 import Planet from '@/components/Planet.vue';
+import { getSecureMediaUrl } from '@/utils/mediaUtils';
 
 const route = useRoute();
 const router = useRouter();

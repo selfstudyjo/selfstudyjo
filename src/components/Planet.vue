@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
+import { getSecureMediaUrl } from '@/utils/mediaUtils'
 
 const props = defineProps<{
   imageUrl?: string
@@ -28,7 +29,7 @@ let animationFrame: number
 let fallbackTimer: ReturnType<typeof setTimeout>
 
 // Convert absolute media URLs to local proxy URLs (development only)
-// In production, force HTTPS for known domains
+// In production, use secure endpoint
 function getEffectiveUrl(url: string): string {
   if (!url) return url
 
@@ -38,16 +39,11 @@ function getEffectiveUrl(url: string): string {
     const media2Pattern = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
     if (media1Pattern.test(url)) return url.replace(media1Pattern, '/media1')
     if (media2Pattern.test(url)) return url.replace(media2Pattern, '/media2')
+    return url
   }
 
-  // In production, ensure HTTPS for pythonanywhere.com domains
-  if (url.startsWith('http://')) {
-    const httpsUrl = url.replace(/^http:/, 'https:')
-    console.log(`🔒 Planet image URL converted to HTTPS: ${url} -> ${httpsUrl}`)
-    return httpsUrl
-  }
-
-  return url
+  // In production, rewrite to secure-media endpoint
+  return getSecureMediaUrl(url)
 }
 
 // Unique color based on course name
