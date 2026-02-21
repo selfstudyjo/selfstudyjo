@@ -27,6 +27,14 @@ self.addEventListener('fetch', event => {
         url.pathname.startsWith('/media2/') ||
         url.pathname.startsWith('/secure-media/')
     ) {
+        // Rewrite /media/... to /secure-media/... (catches any missed transformations)
+        let requestUrl = event.request.url;
+        if (url.pathname.startsWith('/media/')) {
+            const newPath = url.pathname.replace('/media/', '/secure-media/');
+            requestUrl = `${url.origin}${newPath}${url.search}`;
+            console.log(`SW rewriting: ${event.request.url} -> ${requestUrl}`);
+        }
+
         // Clone the request to add headers
         const requestInit = {
             method: event.request.method,
@@ -36,13 +44,13 @@ self.addEventListener('fetch', event => {
                       cache: event.request.cache
         };
 
-        // Add Authorization header if token exists
+        // Add Authorization header if token exists (only for non-GET? We'll keep it for all, but server now allows GET without token)
         if (authToken && authToken !== 'Token Not Found!' && authToken !== 'your-actual-auth-token-here') {
             requestInit.headers.set('Authorization', `Token ${authToken}`);
         }
 
-        // Create new request with added headers
-        const newRequest = new Request(event.request.url, requestInit);
+        // Create new request with added headers (and possibly new URL)
+        const newRequest = new Request(requestUrl, requestInit);
 
         event.respondWith(
             fetch(newRequest)
