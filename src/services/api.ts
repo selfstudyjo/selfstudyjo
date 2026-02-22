@@ -53,8 +53,6 @@ export class ApiService {
         if (token && token !== 'Token Not Found!' && token !== 'your-actual-auth-token-here') {
             headers['Authorization'] = `Token ${token}`;
         } else {
-            console.error('❌ VITE_AUTH_TOKEN is missing or invalid!');
-            console.error('Current token:', token);
             throw new Error('Authentication token is required but missing or invalid. Check your .env file.');
         }
 
@@ -66,9 +64,6 @@ export class ApiService {
     }
 
     private async handleResponse<T>(response: Response): Promise<T> {
-        console.log(`Response status: ${response.status} ${response.statusText}`);
-        console.log(`Response URL: ${response.url}`);
-
         const contentType = response.headers.get('content-type');
         let responseData: any;
 
@@ -76,9 +71,7 @@ export class ApiService {
         if (contentType && contentType.includes('application/json')) {
             try {
                 responseData = await response.json();
-                console.log('Response data:', responseData);
             } catch (error) {
-                console.error('Failed to parse JSON response:', error);
                 throw new ApiError('Invalid JSON response', 500);
             }
         } else {
@@ -107,17 +100,6 @@ export class ApiService {
         }
 
         if (!response.ok) {
-            console.error('❌ Error response data:', JSON.stringify(responseData, null, 2));
-
-            if (response.status === 400) {
-                console.error('400 Bad Request details:', {
-                    url: response.url,
-                    status: response.status,
-                    data: responseData,
-                    headers: Object.fromEntries(response.headers.entries())
-                });
-            }
-
             throw new ApiError(
                 responseData.error || responseData.message || responseData.detail ||
                 (typeof responseData === 'string' ? responseData : `HTTP ${response.status}: ${response.statusText}`),
@@ -137,14 +119,6 @@ export class ApiService {
         headers: Record<string, string> = {}
     ): Promise<T> {
         const url = `${baseUrl}${endpoint}`;
-        console.log(`🚀 API ${method}: ${url}`);
-
-        if (data) {
-            console.log('Request data:', {
-                ...(data instanceof FormData ? { formData: 'FormData object' } : data),
-                        password: data.password ? '[HIDDEN]' : undefined
-            });
-        }
 
         // Get base headers
         const baseHeaders = this.getHeaders();
@@ -170,7 +144,6 @@ export class ApiService {
             });
 
             const urlWithParams = `${url}?${params.toString()}`;
-            console.log(`🚀 API DELETE with query params: ${urlWithParams}`);
 
             const options: RequestInit = {
                 method: 'DELETE',
@@ -289,7 +262,6 @@ export class ApiService {
             const data = await response.json();
             return data.ip;
         } catch (error) {
-            console.error('Failed to get IP:', error);
             // Fallback: Generate a random session ID
             return `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
@@ -300,7 +272,6 @@ export class ApiService {
         try {
             return await serviceRegistry.getRandomChatReplica();
         } catch (error) {
-            console.error('Failed to get chat service URL:', error);
             return null;
         }
     }
@@ -330,7 +301,6 @@ export class ApiService {
                 return newRoom;
             }
         } catch (error) {
-            console.error('Failed to get/create chat room:', error);
             return null;
         }
     }
@@ -347,7 +317,6 @@ export class ApiService {
                 }
             );
         } catch (error) {
-            console.error('Failed to send chat message:', error);
             return null;
         }
     }
@@ -360,7 +329,6 @@ export class ApiService {
                 `/api/all-chat-messages/${roomId}/`
             );
         } catch (error) {
-            console.error('Failed to get chat messages:', error);
             return [];
         }
     }
@@ -375,7 +343,6 @@ export class ApiService {
             );
             return true;
         } catch (error) {
-            console.warn('Failed to mark admin messages as seen:', error);
             return false;
         }
     }
@@ -392,7 +359,7 @@ export class ApiService {
                 const messages = await this.getChatMessages(chatServiceUrl, roomId);
                 callback(messages);
             } catch (error) {
-                console.error('Chat polling error:', error);
+                // ignore polling errors
             }
         }, interval);
     }
@@ -421,7 +388,6 @@ export async function createChatSession(): Promise<{
         const room = await apiService.getChatRoom(userIP);
         return { userIP, room, chatServiceUrl };
     } catch (error) {
-        console.error('Failed to create chat session:', error);
         return { userIP: '', room: null, chatServiceUrl: null };
     }
 }

@@ -153,11 +153,8 @@ const loadAppointments = async () => {
     error.value = null;
 
     try {
-        console.log('📅 Loading appointments for proctor:', proctorData.value.external_id);
         appointments.value = await examService.getExamAppointmentsByProctor(proctorData.value.external_id);
-        console.log('✅ Appointments loaded:', appointments.value.length);
     } catch (err: any) {
-        console.error('❌ Failed to load appointments:', err);
         error.value = err.message || 'Failed to load appointments';
     } finally {
         loading.value = false;

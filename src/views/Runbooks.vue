@@ -96,7 +96,6 @@ const fetchRunbooks = async () => {
     runbooks.value = fetchedRunbooks;
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load runbooks';
-    console.error(err);
   } finally {
     loading.value = false;
   }
@@ -122,11 +121,9 @@ const clearSearch = () => {
 };
 
 const goToRunbookDetails = async (id: number) => {
-  console.log('Navigating to runbook details with id:', id);
   try {
     // Test if we can fetch the runbook first
-    const runbook = await runbookService.getRunbookById(id);
-    console.log('Runbook found:', runbook);
+    await runbookService.getRunbookById(id);
 
     // Navigate to runbook details page
     router.push({
@@ -134,8 +131,7 @@ const goToRunbookDetails = async (id: number) => {
       params: { id: String(id) }
     });
   } catch (error) {
-    console.error('Error fetching runbook or navigating:', error);
-    // If there's an error, show a message but still try to navigate
+    // If there's an error, still try to navigate
     router.push({
       name: 'RunbookDetails',
       params: { id: String(id) }

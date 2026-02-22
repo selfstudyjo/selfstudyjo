@@ -86,16 +86,13 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Checking if user is proctor:', userId);
             const response = await apiService.post<ProctorCheckResponse>(
                 baseUrl,
                 '/check-proctor/',
                 { user_id: userId }
             );
-            console.log('✅ [ProctorService] Proctor check response:', response);
             return response;
         } catch (error: any) {
-            console.error('❌ [ProctorService] Failed to check proctor status:', error);
             return {
                 is_proctor: false,
                 proctor: undefined,
@@ -138,11 +135,9 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Fetching proctors:', `${baseUrl}/proctors/`);
             const response = await apiService.get<any>(baseUrl, '/proctors/');
             return normalizePaginatedResponse<ExamProctor>(response).results;
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to fetch proctors:', error);
             throw error;
         }
     }
@@ -155,10 +150,8 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Fetching proctor:', `${baseUrl}/proctors/${proctorId}/`);
             return await apiService.get<ExamProctor>(baseUrl, `/proctors/${proctorId}/`);
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to fetch proctor:', error);
             throw error;
         }
     }
@@ -179,19 +172,15 @@ class ProctorService {
             }
 
             const endpoint = `/available-days/?${params.toString()}`;
-            console.log('🔍 [ProctorService] Fetching proctor availability:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const days = normalizePaginatedResponse<AvailableDay>(response).results;
-
-            console.log('📅 Raw days from API:', days);
 
             // Get hours for each day with proper filtering
             const enrichedDays = await Promise.all(
                 days.map(async (day) => {
                     try {
                         const hours = await this.getAvailableHoursForDay(day.id);
-                        console.log(`📅 Day ${day.day} has ${hours.length} hours:`, hours);
                         return {
                             ...day,
                             available_hours: hours.filter(hour => {
@@ -206,22 +195,17 @@ class ProctorService {
                                 // Allow slots that are at least 1 hour in the future
                                 const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-                                const isValid = isHourAvailable && hourStartTime >= oneHourFromNow;
-                                console.log(`⏰ Hour ${hour.start_time}-${hour.end_time} for ${day.day}: available=${isHourAvailable}, future=${hourStartTime >= oneHourFromNow}, valid=${isValid}`);
-                                return isValid;
+                                return isHourAvailable && hourStartTime >= oneHourFromNow;
                             })
                         };
                     } catch (error) {
-                        console.warn(`⚠️ Could not fetch hours for day ${day.id}:`, error);
                         return { ...day, available_hours: [] };
                     }
                 })
             );
 
-            console.log('✅ Enriched days:', enrichedDays);
             return enrichedDays;
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to fetch proctor availability:', error);
             throw error;
         }
     }
@@ -243,13 +227,11 @@ class ProctorService {
             params.append('date_to', formattedDate); // Same date for both to get only one day
 
             const endpoint = `/available-days/?${params.toString()}`;
-            console.log('🔍 [ProctorService] Fetching proctor availability for specific date:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const days = normalizePaginatedResponse<AvailableDay>(response).results;
 
             if (days.length === 0) {
-                console.log('📅 No availability data found for date:', formattedDate);
                 return null;
             }
 
@@ -261,11 +243,8 @@ class ProctorService {
             });
 
             if (!matchingDay) {
-                console.log('📅 No matching day found for date:', formattedDate);
                 return null;
             }
-
-            console.log('📅 Found matching day:', matchingDay);
 
             // Get hours for the specific day
             try {
@@ -283,20 +262,15 @@ class ProctorService {
                         // Allow slots that are at least 1 hour in the future
                         const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-                        const isValid = isHourAvailable && hourStartTime >= oneHourFromNow;
-                        console.log(`⏰ Filtering hour ${hour.start_time}-${hour.end_time}: available=${isHourAvailable}, future=${hourStartTime >= oneHourFromNow}, valid=${isValid}`);
-                        return isValid;
+                        return isHourAvailable && hourStartTime >= oneHourFromNow;
                     })
                 };
 
-                console.log('✅ Enriched day with hours:', enrichedDay);
                 return enrichedDay;
             } catch (error) {
-                console.warn(`⚠️ Could not fetch hours for day ${matchingDay.id}:`, error);
                 return { ...matchingDay, available_hours: [] };
             }
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to fetch proctor availability for date:', error);
             throw error;
         }
     }
@@ -310,20 +284,13 @@ class ProctorService {
 
         try {
             const endpoint = `/available-hours/?day_id=${dayId}`;
-            console.log('🔍 [ProctorService] Fetching available hours for day:', dayId);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const hours = normalizePaginatedResponse<AvailableHour>(response).results;
 
-            console.log(`📅 Raw hours for day ${dayId}:`, hours);
-
             // Only return available hours
-            const availableHours = hours.filter(hour => hour.is_available);
-            console.log(`✅ Available hours for day ${dayId}:`, availableHours);
-
-            return availableHours;
+            return hours.filter(hour => hour.is_available);
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to fetch available hours:', error);
             throw error;
         }
     }
@@ -338,11 +305,9 @@ class ProctorService {
         try {
             const formattedDate = this.formatDate(date);
             const endpoint = `/find-available-proctors/?date=${formattedDate}&time=${time}`;
-            console.log('🔍 [ProctorService] Finding available proctors:', `${baseUrl}${endpoint}`);
             const response = await apiService.get<any>(baseUrl, endpoint);
             return normalizePaginatedResponse<ExamProctor>(response).results;
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to find available proctors:', error);
             throw error;
         }
     }
@@ -355,8 +320,6 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Updating availability:', request);
-
             // Remove undefined values
             const cleanRequest: any = {};
             if (request.day_id !== undefined) cleanRequest.day_id = request.day_id;
@@ -372,7 +335,6 @@ class ProctorService {
                 cleanRequest
             );
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to update availability:', error);
             throw error;
         }
     }
@@ -385,8 +347,6 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Updating hour availability:', { hourId, isAvailable });
-
             // Use PATCH to update just the is_available field
             return await apiService.patch<AvailableHour>(
                 baseUrl,
@@ -394,7 +354,6 @@ class ProctorService {
                 { is_available: isAvailable }
             );
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to update hour availability:', error);
             throw error;
         }
     }
@@ -408,14 +367,12 @@ class ProctorService {
 
         try {
             const endpoint = `/available-hours/?sync_id=${syncId}`;
-            console.log('🔍 [ProctorService] Finding hour by sync_id:', syncId);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const hours = normalizePaginatedResponse<AvailableHour>(response).results;
 
             return hours.length > 0 ? hours[0] : null;
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to find hour by sync_id:', error);
             return null;
         }
     }
@@ -428,13 +385,11 @@ class ProctorService {
         }
 
         try {
-            console.log('🔍 [ProctorService] Getting hour by ID:', hourId);
             return await apiService.get<AvailableHour>(
                 baseUrl,
                 `/available-hours/${hourId}/`
             );
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to get hour by ID:', error);
             throw error;
         }
     }
@@ -451,12 +406,10 @@ class ProctorService {
             syncIds.forEach(id => params.append('sync_id', id));
 
             const endpoint = `/available-hours/?${params.toString()}`;
-            console.log('🔍 [ProctorService] Getting hours by sync IDs:', syncIds);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             return normalizePaginatedResponse<AvailableHour>(response).results;
         } catch (error) {
-            console.error('❌ [ProctorService] Failed to get hours by sync IDs:', error);
             throw error;
         }
     }

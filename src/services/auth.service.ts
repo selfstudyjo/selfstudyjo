@@ -69,21 +69,11 @@ class AuthService {
         }
 
         try {
-            console.log('Attempting login with credentials:', {
-                ...credentials,
-                password: '[HIDDEN]'
-            });
-
             const response = await apiService.post<LoginResponse>(
                 baseUrl,
                 '/api/login/',
                 credentials
             );
-
-            console.log('Login response received:', {
-                ...response,
-                token: response.token ? `${response.token.substring(0, 8)}...` : 'No token'
-            });
 
             if (response.token) {
                 this.setToken(response.token);
@@ -98,8 +88,6 @@ class AuthService {
 
             return response;
         } catch (error: any) {
-            console.error('Login failed:', error);
-
             // Provide user-friendly error messages
             if (error.status === 401) {
                 throw new Error('Invalid username or password. Please check your credentials.');
@@ -136,7 +124,6 @@ class AuthService {
             this.clearAuth();
             return response;
         } catch (error) {
-            console.error('Logout API call failed:', error);
             this.clearAuth(); // Clear local auth even if server logout fails
             return { message: 'Logged out locally' };
         }
@@ -160,7 +147,6 @@ class AuthService {
                 data
             );
         } catch (error) {
-            console.error('Token verification failed:', error);
             throw error;
         }
     }
@@ -173,9 +159,8 @@ class AuthService {
 
         // First try the simple verify-token endpoint
         try {
-            console.log('Trying simple verify-token endpoint');
             const verification = await this.verifyToken(token);
-            
+
             // Map to TokenValidationResponse format
             const is_valid = verification.valid;
             return {
@@ -202,20 +187,14 @@ class AuthService {
                 }
             };
         } catch (error) {
-            console.warn('Simple verify-token failed, trying external endpoints:', error);
-            
             // If simple verify fails, try the external endpoints
             try {
-                console.log('Trying external validate endpoint via GET');
                 return await apiService.get<TokenValidationResponse>(
                     baseUrl,
                     `/api/external/tokens/validate/?token=${token}&check_expiry=true&check_active=true`
                 );
             } catch (getError: any) {
-                console.warn('GET validation failed, trying POST:', getError);
-                
                 try {
-                    console.log('Trying external validate endpoint via POST');
                     return await apiService.post<TokenValidationResponse>(
                         baseUrl,
                         '/api/external/tokens/validate/',
@@ -226,7 +205,6 @@ class AuthService {
                         }
                     );
                 } catch (postError: any) {
-                    console.warn('All validation methods failed, using local validation');
                     throw new Error('Token validation failed on all endpoints');
                 }
             }
@@ -246,7 +224,6 @@ class AuthService {
             const expiresAt = new Date(user.expiresAt);
             const now = new Date();
             if (now >= expiresAt) {
-                console.log('Token expired locally, clearing auth');
                 this.clearAuth();
                 return false;
             }
@@ -257,35 +234,30 @@ class AuthService {
         if (lastVerification) {
             const lastVerificationTime = parseInt(lastVerification, 10);
             if (Date.now() - lastVerificationTime < this.verificationInterval) {
-                console.log('Using cached token verification');
                 return true;
             }
         }
 
         try {
-            console.log('Validating token with server...');
             const validation = await this.validateToken(token);
 
             // Update last verification time
             localStorage.setItem(this.lastVerificationKey, Date.now().toString());
 
-            console.log('Token validation result:', validation.is_valid);
             return validation.is_valid && validation.validation_details.errors.length === 0;
         } catch (error) {
-            console.warn('Token validation failed, using local validation as fallback:', error);
-            
             // Fallback to local validation
             if (user.expiresAt) {
                 const expiresAt = new Date(user.expiresAt);
                 const now = new Date();
                 const isValid = expiresAt > now;
-                
+
                 if (!isValid) {
                     this.clearAuth();
                 }
                 return isValid;
             }
-            
+
             return false;
         }
     }
@@ -298,7 +270,6 @@ class AuthService {
             }
             return authenticated;
         } catch (error) {
-            console.error('Auth check failed:', error);
             this.clearAuth();
             return false;
         }

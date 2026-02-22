@@ -32,8 +32,6 @@ class ServiceRegistry {
 
         if (this.AUTH_TOKEN && this.AUTH_TOKEN !== 'Token Not Found!') {
             headers['Authorization'] = `Token ${this.AUTH_TOKEN}`;
-        } else {
-            console.error('AUTH_TOKEN is not set or invalid in environment variables');
         }
 
         return headers;
@@ -47,7 +45,6 @@ class ServiceRegistry {
             // Replace http with https for any domain (safer)
             if (url.startsWith('http://')) {
                 const httpsUrl = url.replace(/^http:/, 'https:');
-                console.log(`🔒 Converted HTTP to HTTPS: ${url} -> ${httpsUrl}`);
                 return httpsUrl;
             }
             return url;
@@ -58,7 +55,6 @@ class ServiceRegistry {
         const cached = this.cache.get(cacheKey);
 
         if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-            console.log(`Using cached replicas for ${serviceName}`);
             return cached.data;
         }
 
@@ -68,7 +64,6 @@ class ServiceRegistry {
                 // Ensure registry domain is HTTPS
                 const secureRegistryDomain = this.ensureHttps(registryDomain);
                 const url = `${secureRegistryDomain}/apps/${appId}/`;
-                console.log(`Fetching ${serviceName} replicas from: ${url}`);
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -89,8 +84,6 @@ class ServiceRegistry {
                     .filter(url => url && url.startsWith('http')) // accept both http and https initially
                     .map(url => this.ensureHttps(url)); // force HTTPS
 
-                    console.log(`Found ${replicas.length} replicas for ${serviceName}:`, replicas);
-
                     // Cache the result
                     this.cache.set(cacheKey, {
                         data: replicas,
@@ -98,16 +91,12 @@ class ServiceRegistry {
                     });
 
                     return replicas;
-                } else {
-                    console.warn(`Failed to fetch from ${registryDomain}: ${response.status} ${response.statusText}`);
                 }
             } catch (error) {
-                console.warn(`Failed to fetch from ${registryDomain}:`, error);
                 continue;
             }
         }
 
-        console.warn(`All registry domains failed for ${serviceName}, using empty list`);
         return [];
     }
 

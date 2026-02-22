@@ -15,7 +15,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SET_AUTH_TOKEN') {
         authToken = event.data.token;
-        console.log('Service worker received auth token');
     }
 });
 
@@ -32,7 +31,6 @@ self.addEventListener('fetch', event => {
         if (url.pathname.startsWith('/media/')) {
             const newPath = url.pathname.replace('/media/', '/secure-media/');
             requestUrl = `${url.origin}${newPath}${url.search}`;
-            console.log(`SW rewriting: ${event.request.url} -> ${requestUrl}`);
         }
 
         // Clone the request to add headers

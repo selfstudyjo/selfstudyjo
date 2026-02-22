@@ -442,9 +442,7 @@ const fetchCourseData = async () => {
       try {
         quiz = await quizService.getQuizByLessonId(lesson.external_lesson_id);
         hasQuiz = !!quiz;
-        console.log(`Lesson ${lesson.external_lesson_id} has quiz:`, hasQuiz, quiz?.title);
       } catch (err) {
-        console.warn(`Failed to check quiz for lesson ${lesson.external_lesson_id}:`, err);
         hasQuiz = false;
       }
 
@@ -457,7 +455,6 @@ const fetchCourseData = async () => {
         hasHomework = homeworks.length > 0;
         homeworkCount = homeworks.length;
       } catch (err) {
-        console.warn(`Failed to check homeworks for lesson ${lesson.external_lesson_id}:`, err);
         hasHomework = false;
       }
 
@@ -490,13 +487,12 @@ const fetchCourseData = async () => {
           try {
             userProfile = await userService.getUserProfileByUsername(comment.user_id);
           } catch (err) {
-            console.warn(`Could not find user by username ${comment.user_id}:`, err);
+            // ignore
           }
         }
 
         comments.value.push({ ...comment, user_profile: userProfile });
       } catch (err) {
-        console.warn(`Failed to fetch user profile for comment ${comment.external_comment_id}:`, err);
         comments.value.push(comment); // Add comment without user profile
       }
     }
@@ -509,7 +505,6 @@ const fetchCourseData = async () => {
     // Fetch all usernames for mentions
     await fetchAllUsernames();
   } catch (err: any) {
-    console.error('Error fetching course data:', err);
     error.value = err.message || 'Failed to load course details. Please try again.';
   } finally {
     loading.value = false;
@@ -519,16 +514,14 @@ const fetchCourseData = async () => {
 const fetchAllUsernames = async () => {
   try {
     allUsernames.value = await userService.getAllUsernames();
-    console.log('Fetched usernames:', allUsernames.value.length);
   } catch (err) {
-    console.error('Failed to fetch usernames for mentions:', err);
     // Don't throw, just use empty array
     allUsernames.value = [];
   }
 };
 
 const handleAvatarError = (userId: string) => {
-  console.log(`Avatar image failed to load for user ${userId}`);
+  // ignore
 };
 
 const isImageUrlValid = (url: string): boolean => {
@@ -689,8 +682,6 @@ const createMentionNotifications = async (commentContent: string, commentId: str
       // Skip if user mentions themselves
       if (username === authStore.user.username) continue;
 
-      console.log(`Creating notification for ${username}...`);
-
       // Clear cache before creating notification
       serviceRegistry.clearCache();
 
@@ -704,10 +695,7 @@ const createMentionNotifications = async (commentContent: string, commentId: str
         course_url: `${window.location.origin}/course/${course.value.external_course_id}`,
         comment_id: commentId
       });
-
-      console.log(`Notification created for ${username}`);
     } catch (err) {
-      console.error(`Failed to create notification for ${username}:`, err);
       // Don't fail the whole comment submission if notification fails
     }
   }
@@ -733,7 +721,6 @@ const submitComment = async () => {
       course: course.value.external_course_id,
     };
 
-    console.log('Submitting comment with data:', commentData);
     const newCommentObj = await courseService.createComment(commentData);
 
     // Try to fetch user profile for the new comment
@@ -745,7 +732,7 @@ const submitComment = async () => {
         userProfile = await userService.getUserProfile(authStore.user.id);
       }
     } catch (err) {
-      console.warn('Failed to fetch user profile for new comment:', err);
+      // ignore
     }
 
     comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
@@ -757,7 +744,6 @@ const submitComment = async () => {
     // Show success message
     alert('Comment added successfully!');
   } catch (err: any) {
-    console.error('Error submitting comment:', err);
     commentError.value = err.message || 'Failed to submit comment. Please try again.';
     alert('Failed to submit comment. Please check console for details.');
   } finally {
@@ -777,7 +763,6 @@ const deleteComment = async (commentId: string) => {
     comments.value = comments.value.filter(comment => comment.external_comment_id !== commentId);
     alert('Comment deleted successfully!');
   } catch (err: any) {
-    console.error('Error deleting comment:', err);
     alert('Failed to delete comment. Please try again.');
   } finally {
     deletingCommentId.value = null;

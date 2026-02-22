@@ -37,10 +37,8 @@ export class RunbookService {
                 throw new Error('No runbook replicas available');
             }
             const randomIndex = Math.floor(Math.random() * replicas.length);
-            console.log('Selected runbook replica:', replicas[randomIndex]);
             return replicas[randomIndex];
         } catch (error) {
-            console.error('Error getting runbook replica:', error);
             throw error;
         }
     }
@@ -48,25 +46,19 @@ export class RunbookService {
     async getAllRunbooks(): Promise<Runbook[]> {
         try {
             const baseUrl = await this.getRandomReplica();
-            console.log('Fetching all runbooks from:', baseUrl);
             const response = await apiService.get<any>(baseUrl, '/runbooks/');
 
             // Handle different response formats
             if (Array.isArray(response)) {
-                console.log('Found', response.length, 'runbooks');
                 return response;
             } else if (response && response.results && Array.isArray(response.results)) {
-                console.log('Found', response.results.length, 'runbooks in results');
                 return response.results;
             } else if (response && Array.isArray(response)) {
-                console.log('Found', response.length, 'runbooks in array');
                 return response;
             } else {
-                console.warn('Unexpected response format:', response);
                 return [];
             }
         } catch (error) {
-            console.error('Error fetching runbooks:', error);
             throw error;
         }
     }
@@ -74,12 +66,9 @@ export class RunbookService {
     async getRunbookById(id: number): Promise<Runbook> {
         try {
             const baseUrl = await this.getRandomReplica();
-            console.log(`Fetching runbook ${id} from:`, baseUrl);
             const response = await apiService.get<Runbook>(baseUrl, `/runbooks/${id}/`);
-            console.log(`Runbook ${id} fetched successfully:`, response.title);
             return response;
         } catch (error) {
-            console.error(`Error fetching runbook ${id}:`, error);
             throw error;
         }
     }
@@ -90,7 +79,6 @@ export class RunbookService {
             const response = await apiService.get<Runbook>(baseUrl, `/runbooks/by_title/?title=${encodeURIComponent(title)}`);
             return response;
         } catch (error) {
-            console.error(`Error fetching runbook by title "${title}":`, error);
             throw error;
         }
     }
@@ -109,7 +97,6 @@ export class RunbookService {
                 return [];
             }
         } catch (error) {
-            console.error(`Error searching runbooks for "${query}":`, error);
             throw error;
         }
     }
@@ -141,14 +128,12 @@ export class RunbookService {
                     sections: sectionsArray.sort((a, b) => a.position - b.position)
                 };
             } catch (sectionError) {
-                console.warn(`Could not fetch sections for runbook ${id}:`, sectionError);
                 return {
                     ...runbook,
                     sections: []
                 };
             }
         } catch (error) {
-            console.error(`Error fetching runbook ${id} with sections:`, error);
             throw error;
         }
     }

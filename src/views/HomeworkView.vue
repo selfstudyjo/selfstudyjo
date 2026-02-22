@@ -325,7 +325,6 @@ const fetchHomeworkData = async () => {
 
     // Fetch homework - get the first homework for this lesson
     const homeworks = await courseService.getLessonHomeworks(lessonId);
-    console.log('Fetched homeworks:', homeworks);
 
     if (homeworks.length === 0) {
       throw new Error('No homeworks found for this lesson');
@@ -334,10 +333,6 @@ const fetchHomeworkData = async () => {
     // Use the first homework
     homework.value = homeworks[0];
 
-    console.log('Selected homework:', homework.value);
-    console.log('Homework ID:', homework.value.id);
-    console.log('Homework external ID:', homework.value.external_homework_id);
-
     // Fetch user's submission if logged in
     const userId = authStore.user?.id;
     if (userId && homework.value) {
@@ -345,18 +340,14 @@ const fetchHomeworkData = async () => {
         const submissions = await courseService.getUserSubmissions(userId, homework.value.external_homework_id);
         if (submissions.length > 0) {
           submission.value = submissions[0];
-          console.log('Found existing submission:', submission.value);
           // Pre-fill form with existing submission
           submissionForm.value = {
             submitted_homework_url: submission.value.submitted_homework_url,
             description: submission.value.description || '',
           };
-        } else {
-          console.log('No existing submission found for this homework');
         }
       } catch (err) {
-        console.warn('Failed to fetch submissions:', err);
-        // Don't show error for submission fetch failures
+        // ignore
       }
     }
 
@@ -366,7 +357,6 @@ const fetchHomeworkData = async () => {
     }
 
   } catch (err: any) {
-    console.error('Error fetching homework data:', err);
     error.value = err.message || 'Failed to load homework. Please try again.';
   } finally {
     loading.value = false;
@@ -383,12 +373,8 @@ const submitHomework = async () => {
   submitError.value = null;
 
   try {
-    console.log('Homework object:', homework.value);
-    console.log('User ID:', authStore.user.id);
-
     // Generate a proper UUID for new submissions
     const externalId = submission.value?.external_submitted_homework_id || generateUUID();
-    console.log('Generated external ID:', externalId);
 
     // Prepare submission data
     const submissionData: any = {
@@ -407,9 +393,7 @@ const submitHomework = async () => {
         try {
           const homeworkDetail = await courseService.getHomeworkByExternalId(homework.value.external_homework_id);
           homeworkId = homeworkDetail.id;
-          console.log('Fetched homework internal ID:', homeworkId);
         } catch (fetchError) {
-          console.warn('Could not fetch homework details:', fetchError);
           // Fallback to using external ID
           submissionData.homework_external_id = homework.value.external_homework_id;
         }
@@ -418,10 +402,7 @@ const submitHomework = async () => {
       // Add the homework ID if we have it
       if (homeworkId) {
         submissionData.homework = homeworkId;
-        console.log('Using internal homework ID for update:', homeworkId);
       }
-
-      console.log('Update submission data:', submissionData);
 
       // Update existing submission
       const updated = await courseService.updateHomeworkSubmission(
@@ -429,27 +410,20 @@ const submitHomework = async () => {
         submissionData
       );
       submission.value = updated;
-      console.log('Update response:', updated);
     } else {
       // For create, use external ID
       submissionData.homework_external_id = homework.value.external_homework_id;
-      console.log('Create submission data:', submissionData);
 
       // Create new submission
-      console.log('Creating new submission...');
       const newSubmission = await courseService.submitHomework(submissionData);
       submission.value = newSubmission;
-      console.log('Submission created:', newSubmission);
     }
 
     showSubmissionForm.value = false;
     alert(submission.value ? 'Submission updated successfully!' : 'Homework submitted successfully!');
   } catch (err: any) {
-    console.error('Error submitting homework:', err);
-
     // More detailed error message
     if (err.data) {
-      console.error('Error data:', err.data);
       if (err.data.homework) {
         submitError.value = `Homework field error: ${Array.isArray(err.data.homework) ? err.data.homework[0] : err.data.homework}`;
       } else if (err.data.detail) {

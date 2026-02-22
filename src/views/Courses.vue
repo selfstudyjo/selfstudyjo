@@ -219,11 +219,6 @@ const useClientSidePagination = ref(false);
 
 // Computed properties
 const filteredCourses = computed(() => {
-  console.log('🔄 [Computed] Filtering courses...');
-  console.log('Total courses:', allCourses.value.length);
-  console.log('Search query:', searchQuery.value);
-  console.log('Sort by:', sortBy.value);
-
   let courses = [...allCourses.value];
 
   // Apply search filter
@@ -246,22 +241,17 @@ const filteredCourses = computed(() => {
     courses.sort((a, b) => new Date(b.date_added || '').getTime() - new Date(a.date_added || '').getTime());
   }
 
-  console.log('Filtered courses count:', courses.length);
   return courses;
 });
 
 const totalPages = computed(() => {
-  const pages = Math.ceil(filteredCourses.value.length / pageSize.value);
-  console.log('📄 Total pages:', pages);
-  return pages;
+  return Math.ceil(filteredCourses.value.length / pageSize.value);
 });
 
 const displayedCourses = computed(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;
   const endIndex = startIndex + pageSize.value;
-  const courses = filteredCourses.value.slice(startIndex, endIndex);
-  console.log('📋 Displaying courses', currentPage.value, ':', courses.length);
-  return courses;
+  return filteredCourses.value.slice(startIndex, endIndex);
 });
 
 const visiblePages = computed(() => {
@@ -285,13 +275,10 @@ const showEllipsis = computed(() => totalPages.value > visiblePages.value.length
 
 // Methods
 const fetchCourses = async () => {
-  console.log('🚀 [fetchCourses] Starting...');
   loading.value = true;
   error.value = null;
 
   try {
-    console.log('📡 [fetchCourses] Attempting server-side pagination...');
-
     const filters: CourseFilters = {
       page: currentPage.value,
       page_size: pageSize.value,
@@ -302,51 +289,33 @@ const fetchCourses = async () => {
       filters.search = searchQuery.value.trim();
     }
 
-    console.log('📋 [fetchCourses] Server filters:', filters);
     const response = await courseService.getCourses(filters);
-
-    console.log('✅ [fetchCourses] Server response:', {
-      count: response.count,
-      results: response.results.length,
-      next: response.next,
-      previous: response.previous
-    });
 
     // If server returns paginated results
     if (response.count !== undefined && response.results) {
-      console.log('✅ [fetchCourses] Server-side pagination working');
       useClientSidePagination.value = false;
       allCourses.value = response.results;
     } else {
-      console.log('⚠️ [fetchCourses] Server-side pagination not supported, using client-side');
       useClientSidePagination.value = true;
 
       // Fetch all courses without pagination
       const allResponse = await courseService.getCourses({});
       allCourses.value = allResponse.results || [];
-
-      console.log('📦 [fetchCourses] Loaded all courses:', allCourses.value.length);
     }
 
   } catch (err: any) {
-    console.error('❌ [fetchCourses] Error:', err);
-
     // Fallback: Load all courses and use client-side pagination
-    console.log('🔄 [fetchCourses] Falling back to client-side pagination...');
     useClientSidePagination.value = true;
 
     try {
       const allResponse = await courseService.getCourses({});
       allCourses.value = allResponse.results || [];
-      console.log('✅ [fetchCourses] Loaded all courses for client-side:', allCourses.value.length);
     } catch (fallbackError) {
-      console.error('❌ [fetchCourses] Fallback also failed:', fallbackError);
       error.value = err.message || 'Failed to load courses. Please try again.';
       allCourses.value = [];
     }
   } finally {
     loading.value = false;
-    console.log('🏁 [fetchCourses] Finished');
   }
 };
 
@@ -361,38 +330,28 @@ const handleSearchInput = () => {
 };
 
 const performSearch = () => {
-  console.log('🔍 [performSearch] Searching for:', searchQuery.value);
   currentPage.value = 1;
 
-  if (useClientSidePagination.value) {
-    console.log('🔄 [performSearch] Using client-side search');
-  } else {
-    console.log('🔄 [performSearch] Using server-side search');
+  if (!useClientSidePagination.value) {
     fetchCourses();
   }
 };
 
 const clearSearch = () => {
-  console.log('🗑️ [clearSearch] Clearing search');
   searchQuery.value = '';
   currentPage.value = 1;
   fetchCourses();
 };
 
 const handleSortChange = () => {
-  console.log('📊 [handleSortChange] Sorting by:', sortBy.value);
   currentPage.value = 1;
 
-  if (useClientSidePagination.value) {
-    console.log('🔄 [handleSortChange] Using client-side sorting');
-  } else {
-    console.log('🔄 [handleSortChange] Using server-side sorting');
+  if (!useClientSidePagination.value) {
     fetchCourses();
   }
 };
 
 const goToPage = (page: number) => {
-  console.log('📖 [goToPage] Going to page:', page);
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -432,21 +391,17 @@ const formatDate = (dateString?: string) => {
 
 // Watchers
 watch(() => currentPage.value, () => {
-  console.log('📄 [Watch] Page changed to:', currentPage.value);
-
   if (!useClientSidePagination.value) {
-    console.log('🔄 [Watch] Fetching from server for page:', currentPage.value);
     fetchCourses();
   }
 });
 
 watch(() => sortBy.value, () => {
-  console.log('📊 [Watch] Sort changed to:', sortBy.value);
+  // No action needed, sorting handled by computed
 });
 
 // Lifecycle
 onMounted(() => {
-  console.log('🏁 [onMounted] Courses component mounted');
   fetchCourses();
 });
 

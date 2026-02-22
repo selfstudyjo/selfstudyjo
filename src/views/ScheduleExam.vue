@@ -641,7 +641,6 @@ const bookingInProgress = ref(false);
 const cancelling = ref(false);
 const showSuccessModal = ref(false);
 const showCancelModal = ref(false);
-const debugInfo = ref<any>(null);
 
 // Data
 const availableExams = ref<Exam[]>([]);
@@ -873,7 +872,6 @@ onMounted(async () => {
       }
     }
   } catch (err) {
-    console.error('Failed to initialize:', err);
     error.value = 'Failed to load data';
   } finally {
     loading.value = false;
@@ -885,7 +883,6 @@ async function loadExams() {
   try {
     availableExams.value = await examService.getExams();
   } catch (err: any) {
-    console.error('Failed to load exams:', err);
     error.value = err.message || 'Failed to load exams';
   }
 }
@@ -896,7 +893,7 @@ async function loadUserAppointments() {
   try {
     userAppointments.value = await examService.getExamAppointments(userId.value);
   } catch (err) {
-    console.error('Failed to load user appointments:', err);
+    // ignore
   }
 }
 
@@ -906,7 +903,7 @@ async function loadUserExamResults() {
   try {
     userExamResults.value = await examService.getUserExamResults(userId.value);
   } catch (err) {
-    console.error('Failed to load user exam results:', err);
+    // ignore
   }
 }
 
@@ -915,7 +912,7 @@ async function loadSelectedExam(examId: string) {
     const exam = await examService.getExam(examId);
     selectedExam.value = exam;
   } catch (err) {
-    console.error('Failed to load selected exam:', err);
+    // ignore
   }
 }
 
@@ -932,7 +929,7 @@ async function loadExistingAppointment() {
         try {
           selectedProctor.value = await proctorService.getProctor(existingAppointment.value.proctor_id);
         } catch (err) {
-          console.warn('Failed to load proctor:', err);
+          // ignore
         }
       }
 
@@ -940,7 +937,6 @@ async function loadExistingAppointment() {
       currentStep.value = 1;
     }
   } catch (err: any) {
-    console.error('Failed to load existing appointment:', err);
     error.value = err.message || 'Failed to load appointment details';
   }
 }
@@ -952,7 +948,6 @@ async function loadProctors() {
   try {
     proctors.value = await proctorService.getProctors();
   } catch (err: any) {
-    console.error('Failed to load proctors:', err);
     error.value = err.message || 'Failed to load proctors';
   } finally {
     loading.value = false;
@@ -964,23 +959,14 @@ async function loadProctorAvailability() {
 
   loading.value = true;
   error.value = null;
-  debugInfo.value = null;
 
   try {
-    console.log('📅 Loading availability for date:', selectedDate.value);
-
     const availability = await proctorService.getProctorAvailabilityForDate(
       selectedProctor.value.external_id,
       selectedDate.value
     );
 
     proctorAvailability.value = availability ? [availability] : [];
-
-    debugInfo.value = {
-      selectedDate: selectedDate.value,
-      foundDay: availability ? availability.day : 'No day found',
-      slotCount: availability && availability.available_hours ? availability.available_hours.length : 0
-    };
 
     if (availability && availability.available_hours && availability.available_hours.length > 0) {
       availableTimeSlots.value = availability.available_hours
@@ -991,14 +977,10 @@ async function loadProctorAvailability() {
           is_available: hour.is_available,
           rawHour: hour
         }));
-
-      console.log('✅ Available time slots for', selectedDate.value, ':', availableTimeSlots.value);
     } else {
       availableTimeSlots.value = [];
-      console.log('📅 No available hours found for', selectedDate.value);
     }
   } catch (err: any) {
-    console.error('Failed to load proctor availability:', err);
     error.value = err.message || 'Failed to load available time slots';
   } finally {
     loading.value = false;
@@ -1165,7 +1147,6 @@ async function confirmBooking() {
     bookingInProgress.value = false;
     showSuccessModal.value = true;
   } catch (err: any) {
-    console.error('Failed to confirm booking:', err);
     error.value = err.message || `Failed to ${isReschedule.value ? 'reschedule' : 'schedule'} exam`;
     bookingInProgress.value = false;
   }
@@ -1179,7 +1160,6 @@ async function handleReschedule(appointmentDateTime: Date) {
     hour_sync_id: selectedTimeSlot.value.id,
     is_available: false
   });
-  console.log('✅ New time slot marked as unavailable');
 
   // 2. Create new appointment
   const newAppointmentData = {
@@ -1196,15 +1176,11 @@ async function handleReschedule(appointmentDateTime: Date) {
     proctor_external_id: selectedProctor.value?.external_id
   };
 
-  console.log('🆕 Creating new appointment with data:', newAppointmentData);
-
   const newAppointment = await examService.createExamAppointment(newAppointmentData);
-  console.log('✅ New appointment created:', newAppointment.external_id);
 
   // 3. Cancel the old appointment
   try {
     await examService.cancelExamAppointment(existingAppointment.value.external_id);
-    console.log('✅ Old appointment cancelled');
 
     // 4. Free up the old time slot
     if (existingAppointment.value.proctor_id) {
@@ -1228,15 +1204,13 @@ async function handleReschedule(appointmentDateTime: Date) {
               hour_sync_id: oldHour.sync_id,
               is_available: true
             });
-            console.log('✅ Old time slot marked as available');
           }
         }
       } catch (err) {
-        console.warn('⚠️ Could not free old time slot:', err);
+        // ignore
       }
     }
   } catch (err) {
-    console.warn('⚠️ Could not cancel old appointment:', err);
     // Continue even if we can't cancel the old appointment
   }
 }
@@ -1263,7 +1237,6 @@ async function handleNewBooking(appointmentDateTime: Date) {
     proctor_external_id: selectedProctor.value?.external_id
   };
 
-  console.log('📅 Creating new appointment with data:', appointmentData);
   await examService.createExamAppointment(appointmentData);
 }
 
@@ -1306,7 +1279,7 @@ async function confirmCancel() {
           }
         }
       } catch (err) {
-        console.warn('⚠️ Could not free time slot:', err);
+        // ignore
       }
     }
 
@@ -1317,7 +1290,6 @@ async function confirmCancel() {
       router.push('/exams');
     }, 1500);
   } catch (err: any) {
-    console.error('Failed to cancel appointment:', err);
     error.value = err.message || 'Failed to cancel appointment';
   } finally {
     cancelling.value = false;

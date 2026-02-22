@@ -58,18 +58,11 @@ class CertificateService {
 
         try {
             const endpoint = `/user-certificates/${userId}/`;
-            console.log('🔍 [CertificateService] Fetching user certificates:', `${baseUrl}${endpoint}`);
-
             const response = await apiService.get<UserCertificates>(baseUrl, endpoint);
-            console.log('✅ [CertificateService] User certificates response:', response);
-
             return response;
         } catch (error: any) {
-            console.error('❌ [CertificateService] Failed to fetch user certificates:', error);
-
             // Fallback: Try to fetch course and exam certificates separately
             try {
-                console.log('🔄 [CertificateService] Trying fallback method...');
                 const [courseCerts, examCerts] = await Promise.all([
                     this.getCourseCertificates({ user_id: userId }),
                                                                    this.getExamCertificates({ user_id: userId })
@@ -80,7 +73,6 @@ class CertificateService {
                     exam_certificates: examCerts
                 };
             } catch (fallbackError) {
-                console.error('❌ [CertificateService] Fallback also failed:', fallbackError);
                 throw error;
             }
         }
@@ -95,11 +87,8 @@ class CertificateService {
 
         try {
             const endpoint = `/course-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Fetching course certificate:', `${baseUrl}${endpoint}`);
-
             return await apiService.get<CourseCertificate>(baseUrl, endpoint);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to fetch course certificate:', error);
             throw error;
         }
     }
@@ -113,11 +102,8 @@ class CertificateService {
 
         try {
             const endpoint = `/exam-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Fetching exam certificate:', `${baseUrl}${endpoint}`);
-
             return await apiService.get<ExamCertificate>(baseUrl, endpoint);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to fetch exam certificate:', error);
             throw error;
         }
     }
@@ -139,12 +125,9 @@ class CertificateService {
             const query = params.toString();
             const endpoint = query ? `/course-certificates/?${query}` : '/course-certificates/';
 
-            console.log('🔍 [CertificateService] Fetching course certificates:', `${baseUrl}${endpoint}`);
-
             const response = await apiService.get<any>(baseUrl, endpoint);
             return normalizePaginatedResponse<CourseCertificate>(response).results;
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to fetch course certificates:', error);
             throw error;
         }
     }
@@ -167,12 +150,9 @@ class CertificateService {
             const query = params.toString();
             const endpoint = query ? `/exam-certificates/?${query}` : '/exam-certificates/';
 
-            console.log('🔍 [CertificateService] Fetching exam certificates:', `${baseUrl}${endpoint}`);
-
             const response = await apiService.get<any>(baseUrl, endpoint);
             return normalizePaginatedResponse<ExamCertificate>(response).results;
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to fetch exam certificates:', error);
             throw error;
         }
     }
@@ -189,11 +169,8 @@ class CertificateService {
             ? `/course-certificates/validate/?certificate_id=${certificateId}`
             : `/exam-certificates/validate/?certificate_id=${certificateId}`;
 
-            console.log('🔍 [CertificateService] Validating certificate:', `${baseUrl}${endpoint}`);
-
             return await apiService.get<any>(baseUrl, endpoint);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to validate certificate:', error);
             throw error;
         }
     }
@@ -206,10 +183,8 @@ class CertificateService {
         }
 
         try {
-            console.log('🔍 [CertificateService] Creating course certificate:', certificateData);
             return await apiService.post<CourseCertificate>(baseUrl, '/course-certificates/', certificateData);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to create course certificate:', error);
             throw error;
         }
     }
@@ -222,10 +197,8 @@ class CertificateService {
         }
 
         try {
-            console.log('🔍 [CertificateService] Creating exam certificate:', certificateData);
             return await apiService.post<ExamCertificate>(baseUrl, '/exam-certificates/', certificateData);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to create exam certificate:', error);
             throw error;
         }
     }
@@ -239,11 +212,8 @@ class CertificateService {
 
         try {
             const endpoint = `/course-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Updating course certificate:', `${baseUrl}${endpoint}`);
-
             return await apiService.put<CourseCertificate>(baseUrl, endpoint, updateData);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to update course certificate:', error);
             throw error;
         }
     }
@@ -257,11 +227,8 @@ class CertificateService {
 
         try {
             const endpoint = `/exam-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Updating exam certificate:', `${baseUrl}${endpoint}`);
-
             return await apiService.put<ExamCertificate>(baseUrl, endpoint, updateData);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to update exam certificate:', error);
             throw error;
         }
     }
@@ -275,11 +242,8 @@ class CertificateService {
 
         try {
             const endpoint = `/course-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Deleting course certificate:', `${baseUrl}${endpoint}`);
-
             await apiService.delete(baseUrl, endpoint);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to delete course certificate:', error);
             throw error;
         }
     }
@@ -293,11 +257,8 @@ class CertificateService {
 
         try {
             const endpoint = `/exam-certificates/${certificateId}/`;
-            console.log('🔍 [CertificateService] Deleting exam certificate:', `${baseUrl}${endpoint}`);
-
             await apiService.delete(baseUrl, endpoint);
         } catch (error) {
-            console.error('❌ [CertificateService] Failed to delete exam certificate:', error);
             throw error;
         }
     }

@@ -103,21 +103,10 @@ class CourseService {
             const query = params.toString();
             const endpoint = query ? `/courses/?${query}` : '/courses/';
 
-            console.log('🔍 [CourseService] Fetching courses from:', `${baseUrl}${endpoint}`);
-            console.log('📋 [CourseService] Filters:', filters);
-
             const response = await apiService.get<any>(baseUrl, endpoint);
-
-            console.log('✅ [CourseService] Response received:', {
-                count: response.count,
-                resultsLength: response.results?.length,
-                next: response.next,
-                previous: response.previous
-            });
 
             return normalizePaginatedResponse<Course>(response);
         } catch (error) {
-            console.error('❌ [CourseService] Failed to fetch courses:', error);
             throw error;
         }
     }
@@ -131,7 +120,6 @@ class CourseService {
         try {
             return await apiService.get<Course>(baseUrl, `/courses/${courseId}/`);
         } catch (error) {
-            console.error('Failed to fetch course:', error);
             throw error;
         }
     }
@@ -151,7 +139,6 @@ class CourseService {
             if (!course) throw new Error(`Course with ID ${courseId} not found`);
             return course;
         } catch (error) {
-            console.error('Failed to fetch course by ID:', error);
             throw error;
         }
     }
@@ -167,7 +154,6 @@ class CourseService {
             const response = await apiService.get<any>(baseUrl, `/lessons/?course_id=${courseId}`);
             return normalizePaginatedResponse<Lesson>(response).results;
         } catch (error) {
-            console.error('Failed to fetch course lessons:', error);
             throw error;
         }
     }
@@ -181,7 +167,6 @@ class CourseService {
         try {
             return await apiService.get<Lesson>(baseUrl, `/lessons/${lessonId}/`);
         } catch (error) {
-            console.error('Failed to fetch lesson:', error);
             throw error;
         }
     }
@@ -197,7 +182,6 @@ class CourseService {
             const response = await apiService.get<any>(baseUrl, `/comments/?course_id=${courseId}`);
             return normalizePaginatedResponse<Comment>(response).results;
         } catch (error) {
-            console.error('Failed to fetch course comments:', error);
             throw error;
         }
     }
@@ -209,8 +193,6 @@ class CourseService {
         }
 
         try {
-            console.log('Creating comment with data:', commentData);
-
             // Clear cache for fresh replica
             const serviceRegistry = await import('./config').then(m => m.serviceRegistry);
             serviceRegistry.clearCache();
@@ -223,26 +205,19 @@ class CourseService {
                 course_external_id: commentData.course, // Pass the external course ID
             };
 
-            console.log('Sending comment payload:', commentPayload);
-
             // Try to post to comments endpoint
             try {
                 const response = await apiService.post<Comment>(baseUrl, '/comments/', commentPayload);
-                console.log('Comment created successfully:', response);
                 return response;
             } catch (error: any) {
                 // If that fails, try the sync endpoint
                 if (error.status === 404 || error.status === 400) {
-                    console.log('Trying alternative endpoint...');
                     const response = await apiService.post<Comment>(baseUrl, '/api/sync/comments/', commentPayload);
-                    console.log('Comment created via sync endpoint:', response);
                     return response;
                 }
                 throw error;
             }
         } catch (error: any) {
-            console.error('Failed to create comment:', error);
-            console.error('Error details:', error.data || error.message);
             throw error;
         }
     }
@@ -256,7 +231,6 @@ class CourseService {
         try {
             return await apiService.put<Comment>(baseUrl, `/comments/${commentId}/`, commentData);
         } catch (error) {
-            console.error('Failed to update comment:', error);
             throw error;
         }
     }
@@ -273,21 +247,16 @@ class CourseService {
             serviceRegistry.clearCache();
 
             await apiService.delete(baseUrl, `/comments/${commentId}/`);
-            console.log(`Comment ${commentId} deleted successfully`);
         } catch (error: any) {
-            console.error('Failed to delete comment:', error);
-
             // If that fails, try alternative endpoint
             if (error.status === 404) {
                 try {
                     await apiService.delete(baseUrl, `/api/sync/comments/${commentId}/`);
-                    console.log(`Comment ${commentId} deleted via sync endpoint`);
                     return;
                 } catch (syncError) {
-                    console.error('Failed to delete comment via sync endpoint:', syncError);
+                    // ignore and rethrow original
                 }
             }
-
             throw error;
         }
     }
@@ -303,7 +272,6 @@ class CourseService {
             const response = await apiService.get<any>(baseUrl, `/homeworks/?lesson_id=${lessonId}`);
             return normalizePaginatedResponse<Homework>(response).results;
         } catch (error) {
-            console.error('Failed to fetch lesson homeworks:', error);
             throw error;
         }
     }
@@ -317,7 +285,6 @@ class CourseService {
         try {
             return await apiService.get<Homework>(baseUrl, `/homeworks/${homeworkId}/`);
         } catch (error) {
-            console.error('Failed to fetch homework:', error);
             throw error;
         }
     }
@@ -331,7 +298,6 @@ class CourseService {
         try {
             return await apiService.get<Homework>(baseUrl, `/homeworks/${externalHomeworkId}/`);
         } catch (error) {
-            console.error('Failed to fetch homework by external ID:', error);
             throw error;
         }
     }
@@ -344,9 +310,6 @@ class CourseService {
         }
 
         try {
-            console.log('Submitting homework to:', baseUrl);
-            console.log('Submission data:', submissionData);
-
             // For proper sync, use the homework's external ID
             const homeworkExternalId = submissionData.homework_external_id || submissionData.homework as string;
 
@@ -363,13 +326,9 @@ class CourseService {
                 payload.homework_external_id = homeworkExternalId;
             }
 
-            console.log('Sending payload for sync:', payload);
-
             // Use the submitted-homeworks endpoint for proper sync handling
             return await apiService.post<SubmittedHomework>(baseUrl, '/submitted-homeworks/', payload);
         } catch (error: any) {
-            console.error('Failed to submit homework:', error);
-            console.error('Error details:', error.data || error.message);
             throw error;
         }
     }
@@ -389,7 +348,6 @@ class CourseService {
             if (!homework) throw new Error(`Homework with ID ${homeworkId} not found`);
             return homework;
         } catch (error) {
-            console.error('Failed to fetch homework by ID:', error);
             throw error;
         }
     }
@@ -401,9 +359,6 @@ class CourseService {
         }
 
         try {
-            console.log('Updating submission ID:', submissionId);
-            console.log('Update data:', submissionData);
-
             // For updates, we need to structure the data properly based on what the backend expects
             const updatePayload: any = {
                 external_submitted_homework_id: submissionData.external_submitted_homework_id,
@@ -432,10 +387,8 @@ class CourseService {
                 updatePayload.homework_external_id = submissionData.homework_external_id;
             }
 
-            console.log('Sending update payload:', updatePayload);
             return await apiService.put<SubmittedHomework>(baseUrl, `/submitted-homeworks/${submissionId}/`, updatePayload);
         } catch (error) {
-            console.error('Failed to update homework submission:', error);
             throw error;
         }
     }
@@ -451,7 +404,6 @@ class CourseService {
             const response = await apiService.get<any>(baseUrl, `/submitted-homeworks/${query}`);
             return normalizePaginatedResponse<SubmittedHomework>(response).results;
         } catch (error) {
-            console.error('Failed to fetch user submissions:', error);
             throw error;
         }
     }
@@ -461,7 +413,6 @@ class CourseService {
             const submissions = await this.getUserSubmissions(userId, homeworkExternalId);
             return submissions.length > 0 ? submissions[0] : null;
         } catch (error) {
-            console.error('Failed to fetch user submission for homework:', error);
             return null;
         }
     }
@@ -477,7 +428,6 @@ class CourseService {
             const response = await apiService.get<any>(baseUrl, `/registrations/?user_id=${userId}`);
             return normalizePaginatedResponse<CourseRegistration>(response).results;
         } catch (error) {
-            console.error('Failed to fetch user registrations:', error);
             throw error;
         }
     }
@@ -492,7 +442,6 @@ class CourseService {
             const registrations = await this.getUserRegistrations(userId);
             return registrations.some(reg => reg.course_external_id === courseId || reg.course === courseId);
         } catch (error) {
-            console.error('Failed to check registration:', error);
             return false;
         }
     }
@@ -512,7 +461,6 @@ class CourseService {
 
             return await apiService.post<CourseRegistration>(baseUrl, '/register-user/', registrationData);
         } catch (error) {
-            console.error('Failed to register user for course:', error);
             throw error;
         }
     }

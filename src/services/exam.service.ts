@@ -91,7 +91,6 @@ class ExamService {
                 course_name: course.title || course.name || exam.course_id
             };
         } catch (error) {
-            console.warn('⚠️ Could not fetch course name, using ID:', exam.course_id);
             return {
                 ...exam,
                 course_name: exam.course_id
@@ -108,7 +107,6 @@ class ExamService {
                 enrichedAppointment.exam_title = exam.title;
             }
         } catch (error) {
-            console.warn('⚠️ Could not fetch exam title for appointment:', appointment.external_id);
             enrichedAppointment.exam_title = appointment.exam;
         }
 
@@ -118,7 +116,6 @@ class ExamService {
                 enrichedAppointment.proctor_name = proctor.username;
             }
         } catch (error) {
-            console.warn('⚠️ Could not fetch proctor name for appointment:', appointment.external_id);
             enrichedAppointment.proctor_name = appointment.proctor_id;
         }
 
@@ -132,12 +129,9 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Fetching exam:', `${baseUrl}/exams/${examId}/`);
             const exam = await apiService.get<Exam>(baseUrl, `/exams/${examId}/`);
             return await this.enrichExamWithCourseName(exam);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch exam:', error);
-
             // Try to sync the exam from another replica
             await this.syncExamToReplica(examId, baseUrl);
 
@@ -149,8 +143,6 @@ class ExamService {
 
     private async syncExamToReplica(examId: string, targetReplicaUrl: string): Promise<void> {
         try {
-            console.log(`🔄 Syncing exam ${examId} to replica ${targetReplicaUrl}`);
-
             // Get exam from another replica first
             const otherReplicas = await this.getExamReplicas();
             const otherReplica = otherReplicas.find(url => url !== targetReplicaUrl);
@@ -175,9 +167,7 @@ class ExamService {
 
             // Sync to target replica
             await apiService.post(targetReplicaUrl, `/sync/exams/`, syncData);
-            console.log(`✅ Exam ${examId} synced to ${targetReplicaUrl}`);
         } catch (error) {
-            console.error(`❌ Failed to sync exam ${examId}:`, error);
             throw error;
         }
     }
@@ -201,8 +191,6 @@ class ExamService {
             const query = params.toString();
             const endpoint = query ? `/exams/?${query}` : '/exams/';
 
-            console.log('🔍 [ExamService] Fetching exams:', `${baseUrl}${endpoint}`);
-
             const response = await apiService.get<any>(baseUrl, endpoint);
             const exams = normalizePaginatedResponse<Exam>(response).results;
 
@@ -212,7 +200,6 @@ class ExamService {
 
             return enrichedExams;
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch exams:', error);
             throw new Error(error.message || 'Failed to fetch exams');
         }
     }
@@ -225,13 +212,11 @@ class ExamService {
 
         try {
             const endpoint = `/exam-questions/?exam=${examId}`;
-            console.log('🔍 [ExamService] Fetching exam questions:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const questions = normalizePaginatedResponse<ExamQuestion>(response).results;
 
             if (questions.length === 0) {
-                console.warn('⚠️ No questions found for exam:', examId);
                 return [];
             }
 
@@ -240,12 +225,10 @@ class ExamService {
                 questions.map(async (question) => {
                     try {
                         if (!question.external_id || question.external_id.trim() === '') {
-                            console.warn('⚠️ Question has invalid external_id:', question);
                             return { ...question, answers: [] };
                         }
 
                         const answers = await this.getQuestionAnswers(question.external_id);
-                        console.log(`Fetched ${answers.length} answers for question ${question.external_id}`);
 
                         // Filter answers to ensure they belong to this question
                         const filteredAnswers = answers.filter(a =>
@@ -257,7 +240,6 @@ class ExamService {
                             answers: filteredAnswers
                         };
                     } catch (error) {
-                        console.warn('⚠️ Could not fetch answers for question:', question.external_id, error);
                         return {
                             ...question,
                             answers: []
@@ -268,7 +250,6 @@ class ExamService {
 
             return questionsWithAnswers;
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch exam questions:', error);
             if (error.status === 404) {
                 return [];
             }
@@ -284,7 +265,6 @@ class ExamService {
 
         try {
             const endpoint = `/exam-answers/?exam_question=${questionId}`;
-            console.log('🔍 [ExamService] Fetching answers for question:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const answers = normalizePaginatedResponse<ExamAnswer>(response).results;
@@ -292,7 +272,6 @@ class ExamService {
             // Double-check that answers belong to this question
             return answers.filter(a => a.exam_question === questionId);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch answers:', error);
             return [];
         }
     }
@@ -309,7 +288,6 @@ class ExamService {
             if (examId) params.append('exam_id', examId);
 
             const endpoint = `/user-exam-results/?${params.toString()}`;
-            console.log('🔍 [ExamService] Fetching user exam results:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const results = normalizePaginatedResponse<UserExamResult>(response).results;
@@ -323,7 +301,6 @@ class ExamService {
                             exam_title: exam.title
                         };
                     } catch (error) {
-                        console.warn('⚠️ Could not fetch exam title for result:', result.external_id);
                         return result;
                     }
                 })
@@ -331,7 +308,6 @@ class ExamService {
 
             return enrichedResults;
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch user exam results:', error);
             if (error.status === 404) {
                 return [];
             }
@@ -351,7 +327,6 @@ class ExamService {
             params.append('exam_id', examId);
 
             const endpoint = `/user-exam-results/?${params.toString()}`;
-            console.log('🔍 [ExamService] Fetching user exam results for specific exam:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const results = normalizePaginatedResponse<UserExamResult>(response).results;
@@ -361,11 +336,9 @@ class ExamService {
             new Date(b.date_taken).getTime() - new Date(a.date_taken).getTime()
             );
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch user exam results for exam:', error);
             return [];
         }
     }
-
 
     async submitExam(resultData: Partial<UserExamResult>): Promise<UserExamResult> {
         const baseUrl = await this.getRandomExamReplica();
@@ -374,16 +347,12 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Submitting exam:', resultData);
-
             // Make sure the data is properly formatted
             const formattedData = {
                 ...resultData,
                 // Ensure exam is a string (external_id)
                 exam: resultData.exam,
             };
-
-            console.log('📤 [ExamService] Formatted data for submission:', formattedData);
 
             const result = await apiService.post<UserExamResult>(baseUrl, '/submit-exam/', formattedData);
 
@@ -392,23 +361,19 @@ class ExamService {
                     const exam = await this.getExam(result.exam);
                     result.exam_title = exam.title;
                 } catch (error) {
-                    console.warn('⚠️ Could not enrich exam result:', error);
+                    // ignore
                 }
             }
 
             return result;
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to submit exam:', error);
-
             // Try the sync endpoint as fallback
-            console.log('🔄 Trying sync endpoint as fallback...');
             try {
                 const syncResult = await apiService.post<any>(
                     baseUrl,
                     `/sync/user-exam-results/`,
                     resultData
                 );
-                console.log('✅ Exam submitted via sync endpoint');
 
                 // We need to get the actual result data
                 const results = await this.getUserExamResults(resultData.user_id!, resultData.exam!);
@@ -417,12 +382,10 @@ class ExamService {
                 }
                 throw new Error('Failed to retrieve submitted exam result');
             } catch (syncError: any) {
-                console.error('❌ Sync endpoint also failed:', syncError);
                 throw new Error(error.message || 'Failed to submit exam');
             }
         }
     }
-
 
     async getExamAppointments(userId?: string, examId?: string): Promise<ExamAppointment[]> {
         const baseUrl = await this.getRandomExamReplica();
@@ -438,8 +401,6 @@ class ExamService {
             const query = params.toString();
             const endpoint = query ? `/exam-appointments/?${query}` : '/exam-appointments/';
 
-            console.log('🔍 [ExamService] Fetching exam appointments:', `${baseUrl}${endpoint}`);
-
             const response = await apiService.get<any>(baseUrl, endpoint);
             const appointments = normalizePaginatedResponse<ExamAppointment>(response).results;
 
@@ -452,7 +413,6 @@ class ExamService {
             new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
             );
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch exam appointments:', error);
             if (error.status === 404) {
                 return [];
             }
@@ -467,19 +427,15 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Fetching appointment by ID:', `${baseUrl}/exam-appointments/${appointmentId}/`);
             const appointment = await apiService.get<ExamAppointment>(
                 baseUrl,
                 `/exam-appointments/${appointmentId}/`
             );
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch appointment:', error);
             throw new Error(error.message || 'Failed to fetch appointment');
         }
     }
-
-
 
     async createExamAppointment(appointmentData: Partial<ExamAppointment>): Promise<ExamAppointment> {
         const baseUrl = await this.getRandomExamReplica();
@@ -488,18 +444,13 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Creating exam appointment:', appointmentData);
-
             // Ensure exam field is properly formatted as external_id string
             const cleanData = { ...appointmentData };
 
             // Make sure we're using external_id for exam field, not numeric ID
             if (cleanData.exam && typeof cleanData.exam !== 'string') {
-                console.warn('⚠️ Exam field is not a string, converting:', cleanData.exam);
                 cleanData.exam = cleanData.exam.toString();
             }
-
-            console.log('📤 Sending appointment data:', cleanData);
 
             const appointment = await apiService.post<ExamAppointment>(
                 baseUrl,
@@ -509,13 +460,6 @@ class ExamService {
 
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to create exam appointment:', error);
-
-            // More detailed error logging
-            if (error.data?.exam) {
-                console.error('📝 Exam validation error:', error.data.exam);
-            }
-
             throw new Error(error.message || 'Failed to create exam appointment');
         }
     }
@@ -527,7 +471,6 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Updating exam appointment:', { appointmentId, updateData });
             const appointment = await apiService.patch<ExamAppointment>(
                 baseUrl,
                 `/exam-appointments/${appointmentId}/`,
@@ -536,7 +479,6 @@ class ExamService {
 
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to update exam appointment:', error);
             throw new Error(error.message || 'Failed to update exam appointment');
         }
     }
@@ -548,7 +490,6 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Updating appointment status:', { appointmentId, status, canStart });
             const appointment = await apiService.patch<ExamAppointment>(
                 baseUrl,
                 `/exam-appointments/${appointmentId}/`,
@@ -557,7 +498,6 @@ class ExamService {
 
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to update appointment status:', error);
             throw new Error(error.message || 'Failed to update appointment status');
         }
     }
@@ -569,7 +509,6 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Cancelling exam appointment:', appointmentId);
             const appointment = await apiService.patch<ExamAppointment>(
                 baseUrl,
                 `/exam-appointments/${appointmentId}/`,
@@ -578,7 +517,6 @@ class ExamService {
 
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to cancel exam appointment:', error);
             throw new Error(error.message || 'Failed to cancel exam appointment');
         }
     }
@@ -590,7 +528,6 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Submitting exam appointment:', appointmentData);
             const appointment = await apiService.post<ExamAppointment>(
                 baseUrl,
                 '/exam-appointments/',
@@ -599,7 +536,6 @@ class ExamService {
 
             return await this.enrichAppointment(appointment);
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to submit exam appointment:', error);
             throw new Error(error.message || 'Failed to submit exam appointment');
         }
     }
@@ -615,8 +551,6 @@ class ExamService {
         }
 
         try {
-            console.log('🔍 [ExamService] Rescheduling exam appointment:', { oldAppointmentId, newAppointmentData });
-
             // First, cancel the old appointment
             const oldAppointment = await this.cancelExamAppointment(oldAppointmentId);
 
@@ -632,11 +566,9 @@ class ExamService {
                 newAppointment
             };
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to reschedule exam appointment:', error);
             throw new Error(error.message || 'Failed to reschedule exam appointment');
         }
     }
-
 
     async getExamAppointmentsByProctor(proctorId: string): Promise<ExamAppointment[]> {
         const baseUrl = await this.getRandomExamReplica();
@@ -649,7 +581,6 @@ class ExamService {
             params.append('proctor_id', proctorId);
 
             const endpoint = `/exam-appointments/?${params.toString()}`;
-            console.log('🔍 [ExamService] Fetching exam appointments by proctor:', `${baseUrl}${endpoint}`);
 
             const response = await apiService.get<any>(baseUrl, endpoint);
             const appointments = normalizePaginatedResponse<ExamAppointment>(response).results;
@@ -663,14 +594,12 @@ class ExamService {
             new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
             );
         } catch (error: any) {
-            console.error('❌ [ExamService] Failed to fetch exam appointments by proctor:', error);
             if (error.status === 404) {
                 return [];
             }
             throw new Error(error.message || 'Failed to fetch exam appointments by proctor');
         }
     }
-
 }
 
 export const examService = new ExamService();

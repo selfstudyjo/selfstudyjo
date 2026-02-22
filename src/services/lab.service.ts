@@ -60,7 +60,6 @@ class LabService {
         if (url.startsWith('https://')) return url;
             if (url.startsWith('http://')) {
                 const httpsUrl = url.replace(/^http:/, 'https:');
-                console.log(`🔒 Lab URL converted to HTTPS: ${url} -> ${httpsUrl}`);
                 return httpsUrl;
             }
             return url;
@@ -71,11 +70,8 @@ class LabService {
      */
     async getOrCreateStudent(username: string, labUrl: string): Promise<Student | null> {
         try {
-            console.log('🔍 Getting/creating student for:', username, 'at:', labUrl);
-
             // COMMENTED OUT - DON'T TRY TO GET/CREATE STUDENT, JUST RETURN NULL
             // This causes CORS errors and we don't need it
-            console.log('✅ Returning null - labs work without student record');
             return null;
 
         } catch (error: any) {
@@ -107,20 +103,15 @@ class LabService {
         // Ensure labUrl is HTTPS
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('🚀 Running SQL query:', { username, query: query.substring(0, 100) + '...' });
-
             const response = await apiService.post<SQLResult>(
                 secureLabUrl,
                 `/api/run-sql/${username}/`,
                 { query }
             );
 
-            console.log('✅ SQL query completed:', response);
             return response;
 
         } catch (error: any) {
-            console.error('❌ SQL query failed:', error);
-
             // Handle specific errors
             let errorMessage = 'SQL execution failed';
             if (error.status === 403) {
@@ -143,20 +134,15 @@ class LabService {
     async runLinuxCommand(username: string, labUrl: string, command: string): Promise<CommandResult> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('🚀 Running Linux command:', { username, command });
-
             const response = await apiService.post<CommandResult>(
                 secureLabUrl,
                 `/api/run-command/${username}/`,
                 { command }
             );
 
-            console.log('✅ Linux command completed:', response);
             return response;
 
         } catch (error: any) {
-            console.error('❌ Linux command failed:', error);
-
             // Handle specific errors
             let errorMessage = 'Command execution failed';
             if (error.status === 403) {
@@ -179,19 +165,15 @@ class LabService {
     async killProcess(username: string, labUrl: string): Promise<CommandResult> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('🛑 Killing process for:', username);
-
             const response = await apiService.post<CommandResult>(
                 secureLabUrl,
                 `/api/kill-process/${username}/`,
                 {}
             );
 
-            console.log('✅ Process killed');
             return response;
 
         } catch (error: any) {
-            console.error('❌ Failed to kill process:', error);
             return { output: '', error: error.message || 'Failed to kill process' };
         }
     }
@@ -202,20 +184,15 @@ class LabService {
     async runPythonCode(username: string, labUrl: string, code: string): Promise<PythonResult> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('🚀 Running Python code:', { username, codeLength: code.length });
-
             const response = await apiService.post<PythonResult>(
                 secureLabUrl,
                 `/api/run-python/${username}/`,
                 { code }
             );
 
-            console.log('✅ Python code executed');
             return response;
 
         } catch (error: any) {
-            console.error('❌ Python execution failed:', error);
-
             // Handle specific errors
             let errorMessage = 'Python execution failed';
             if (error.status === 403) {
@@ -239,7 +216,6 @@ class LabService {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
             // COMMENTED OUT - DON'T MAKE THIS REQUEST
-            console.log('⚠️ Skipping getAllStudents to avoid CORS errors');
             return [];
         } catch (error) {
             // Don't log anything
@@ -253,10 +229,8 @@ class LabService {
     async getStudentCount(labUrl: string): Promise<number> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('⚠️ Skipping getStudentCount to avoid CORS errors');
             return 0;
         } catch (error) {
-            // Don't log anything
             return 0;
         }
     }
@@ -267,10 +241,8 @@ class LabService {
     async checkLabHealth(labUrl: string): Promise<boolean> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            console.log('⚠️ Skipping lab health check to avoid CORS errors');
             return true;
         } catch (error) {
-            // Don't log anything
             return false;
         }
     }

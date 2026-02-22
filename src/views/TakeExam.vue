@@ -459,13 +459,12 @@ async function loadExam() {
           await loadExistingExamResult(examId, appointmentId);
         }
       } catch (err) {
-        console.warn('Could not load appointment:', err);
+        // ignore
       }
     }
 
     // Load questions for this exam
     const examQuestions = await examService.getExamQuestions(examId);
-    console.log('Loaded questions:', examQuestions);
 
     // Filter out invalid questions
     questions.value = examQuestions.filter(q => q && q.external_id && q.external_id.trim() !== '');
@@ -479,7 +478,6 @@ async function loadExam() {
       startTimer();
     }
   } catch (err: any) {
-    console.error('Load exam error:', err);
     error.value = err.message || 'Failed to load exam';
   } finally {
     loading.value = false;
@@ -488,8 +486,6 @@ async function loadExam() {
 
 async function updateAppointmentToInProgress(appointmentId: string) {
   try {
-    console.log('🔍 [TakeExam] Updating appointment to In Progress:', appointmentId);
-
     const updatedAppointment = await examService.updateExamAppointment(appointmentId, {
       appointment_status: 'In Progress',
       can_start: true,
@@ -498,9 +494,7 @@ async function updateAppointmentToInProgress(appointmentId: string) {
     });
 
     appointment.value = updatedAppointment;
-    console.log('✅ [TakeExam] Appointment updated to In Progress');
   } catch (err: any) {
-    console.error('❌ [TakeExam] Failed to update appointment status:', err);
     throw err;
   }
 }
@@ -538,7 +532,7 @@ async function loadExistingExamResult(examId: string, appointmentId: string) {
       stopTimer();
     }
   } catch (err) {
-    console.warn('Check submission error:', err);
+    // ignore
   }
 }
 
@@ -644,7 +638,6 @@ async function submitExam() {
   try {
     await submitExamResults();
   } catch (err: any) {
-    console.error('Submit exam error:', err);
     error.value = err.message || 'Failed to submit exam';
     submitting.value = false;
   }
@@ -676,12 +669,6 @@ async function submitExamResults() {
     };
   });
 
-  console.log('📤 Preparing exam submission:', {
-    resultExternalId,
-    userExamAnswersCount: userExamAnswers.length,
-    userExamAnswers: userExamAnswers
-  });
-
   // Submit result
   const resultData = {
     external_id: resultExternalId,
@@ -697,13 +684,9 @@ async function submitExamResults() {
     user_answers: userExamAnswers
   };
 
-  console.log('📤 Submitting exam result data:', resultData);
-
   try {
     examResult.value = await examService.submitExam(resultData);
-    console.log('✅ Exam submitted successfully:', examResult.value);
   } catch (error: any) {
-    console.error('❌ Failed to submit exam:', error);
     // Try alternative approach if the first one fails
     await submitExamAlternativeApproach(resultExternalId, userExamAnswers, score, passingScore);
   }
@@ -721,10 +704,8 @@ async function submitExamResults() {
 
       const updatedAppointment = await examService.updateExamAppointment(appointmentId, updateData);
       appointment.value = updatedAppointment;
-
-      console.log(`✅ [TakeExam] Appointment updated to: ${status}`);
     } catch (err) {
-      console.warn('Update appointment error:', err);
+      // ignore
     }
   }
 
@@ -733,6 +714,12 @@ async function submitExamResults() {
   showResultsModal.value = true;
   showCorrectAnswers.value = true;
   stopTimer();
+}
+
+// Alternative approach if submitExam fails (called from submitExamResults)
+async function submitExamAlternativeApproach(resultExternalId: string, userExamAnswers: any[], score: number, passingScore: number) {
+  // Try a different method or re-throw error
+  throw new Error('Submission failed');
 }
 
 function toggleCorrectAnswers() {

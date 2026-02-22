@@ -413,9 +413,6 @@ const loadQuiz = async () => {
       // Verify that the passed quiz matches the expected quizId and lessonId
       if (state.quiz.external_id === quizId && state.quiz.lesson_id === lessonId) {
         fetchedQuiz = state.quiz;
-        console.log('Using quiz from router state:', fetchedQuiz);
-      } else {
-        console.warn('Router state quiz does not match route parameters; will fetch from backend');
       }
     }
 
@@ -423,9 +420,8 @@ const loadQuiz = async () => {
     if (!fetchedQuiz && quizId) {
       try {
         fetchedQuiz = await quizService.getQuiz(quizId);
-        console.log('Quiz fetched by ID:', fetchedQuiz);
       } catch (err) {
-        console.warn('Failed to load quiz by ID, will try by lesson ID if available', err);
+        // ignore and try next method
       }
     }
 
@@ -433,11 +429,8 @@ const loadQuiz = async () => {
     if (lessonId) {
       if (!fetchedQuiz) {
         fetchedQuiz = await quizService.getQuizByLessonId(lessonId);
-        console.log('Quiz fetched by lesson ID:', fetchedQuiz);
       } else if (fetchedQuiz.lesson_id !== lessonId) {
-        console.warn('Loaded quiz lesson_id does not match expected lesson; reloading by lesson ID');
         fetchedQuiz = await quizService.getQuizByLessonId(lessonId);
-        console.log('Quiz reloaded by lesson ID:', fetchedQuiz);
       }
     }
 
@@ -447,14 +440,6 @@ const loadQuiz = async () => {
     }
 
     quiz.value = fetchedQuiz;
-
-    // Log each question's answers for debugging
-    if (quiz.value?.questions) {
-      quiz.value.questions.forEach((question, index) => {
-        console.log(`Question ${index + 1} (${question.external_id}) has ${question.answers?.length || 0} answers:`,
-          question.answers?.map(a => ({ id: a.external_id, text: a.text.substring(0, 50) + '...' })));
-      });
-    }
 
     // Check if user has already taken this quiz
     const hasTaken = await quizService.hasUserTakenQuiz(authStore.user.id, quiz.value.external_id);
@@ -479,7 +464,6 @@ const loadQuiz = async () => {
       remainingTime.value = quiz.value.quiz_duration * 60; // Convert minutes to seconds
     }
   } catch (err: any) {
-    console.error('Error loading quiz:', err);
     error.value = err.message || 'Failed to load quiz. Please try again.';
   } finally {
     loading.value = false;
@@ -596,8 +580,6 @@ const submitQuiz = async () => {
       userAnswers.value
     );
 
-    console.log('Submitting quiz:', submission);
-
     // Submit to backend (will be synced automatically)
     quizResult.value = await quizService.submitQuiz(submission);
 
@@ -607,7 +589,6 @@ const submitQuiz = async () => {
     quizStarted.value = false;
 
   } catch (err: any) {
-    console.error('Error submitting quiz:', err);
     error.value = 'Failed to submit quiz. Please try again.';
     alert('Failed to submit quiz. Please check console for details.');
   } finally {

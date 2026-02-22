@@ -424,7 +424,6 @@ const loadAppointmentDetails = async () => {
     error.value = null;
 
     try {
-        console.log('📋 Loading appointment details:', appointmentId.value);
         appointment.value = await examService.getAppointmentById(appointmentId.value);
 
         // Set form values
@@ -435,10 +434,7 @@ const loadAppointmentDetails = async () => {
         roomUrl2.value = appointment.value.room_url_2 || '';
         originalRoomUrl1.value = appointment.value.room_url_1 || '';
         originalRoomUrl2.value = appointment.value.room_url_2 || '';
-
-        console.log('✅ Appointment loaded:', appointment.value);
     } catch (err: any) {
-        console.error('❌ Failed to load appointment:', err);
         error.value = err.message || 'Failed to load appointment details';
     } finally {
         loading.value = false;
@@ -457,8 +453,6 @@ const saveRoomUrls = async () => {
     savingRooms.value = true;
 
     try {
-        console.log('💾 Saving room URLs:', { roomUrl1: roomUrl1.value, roomUrl2: roomUrl2.value });
-
         const updates: any = {};
         if (roomUrl1.value !== originalRoomUrl1.value) {
             updates.room_url_1 = roomUrl1.value || null;
@@ -484,7 +478,6 @@ const saveRoomUrls = async () => {
 
         isEditingRooms.value = false;
     } catch (err: any) {
-        console.error('❌ Failed to save room URLs:', err);
         error.value = err.message || 'Failed to save room URLs';
         showNotification('Failed to save room URLs', 'error');
     } finally {
@@ -527,7 +520,6 @@ const updateCanStart = async () => {
     updating.value = true;
 
     try {
-        console.log('🔄 Updating can_start to:', canStart.value);
         const updated = await examService.updateExamAppointment(
             appointment.value.external_id,
             { can_start: canStart.value }
@@ -538,7 +530,6 @@ const updateCanStart = async () => {
 
         showNotification('Exam control updated successfully!', 'success');
     } catch (err: any) {
-        console.error('❌ Failed to update can_start:', err);
         error.value = err.message || 'Failed to update exam control';
         // Revert the change
         canStart.value = originalCanStart.value;
@@ -555,7 +546,6 @@ const updateStatus = async (status: string) => {
     updating.value = true;
 
     try {
-        console.log('🔄 Updating status to:', status);
         const updated = await examService.updateAppointmentStatus(
             appointment.value.external_id,
             status,
@@ -565,7 +555,6 @@ const updateStatus = async (status: string) => {
         appointment.value = updated;
         showNotification(`Status updated to ${status}`, 'success');
     } catch (err: any) {
-        console.error('❌ Failed to update status:', err);
         error.value = err.message || 'Failed to update status';
         showNotification('Failed to update status', 'error');
     } finally {
@@ -592,8 +581,6 @@ const saveAllChanges = async () => {
         if (roomUrl2.value !== originalRoomUrl2.value) {
             updates.room_url_2 = roomUrl2.value || null;
         }
-
-        console.log('💾 Saving all changes:', updates);
 
         if (Object.keys(updates).length > 0) {
             const updated = await examService.updateExamAppointment(
@@ -624,7 +611,6 @@ const saveAllChanges = async () => {
             showNotification('No changes to save', 'info');
         }
     } catch (err: any) {
-        console.error('❌ Failed to save changes:', err);
         error.value = err.message || 'Failed to save changes';
         showNotification('Failed to save changes', 'error');
     } finally {
@@ -690,8 +676,7 @@ const copyToClipboard = (text: string) => {
         .then(() => {
             showNotification('Link copied to clipboard!', 'success');
         })
-        .catch(err => {
-            console.error('Failed to copy:', err);
+        .catch(() => {
             showNotification('Failed to copy link', 'error');
         });
 };
