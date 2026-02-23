@@ -65,6 +65,13 @@
   color: var(--color-text-primary) !important;
 }
 
+/* RESPONSIVE FIX: Universal box-sizing for consistent sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Specific text color overrides - ALL LIGHT */
 body,
 h1, h2, h3, h4, h5, h6,
@@ -108,6 +115,17 @@ button, a,
 .detail-item,
 .management-option {
   color: var(--color-text-primary) !important;
+}
+
+/* RESPONSIVE FIX: Prevent unwanted word breaking across all text elements */
+h1, h2, h3, h4, h5, h6, p, span, div, a, button, label,
+.exam-title, .exam-course, .detail-label, .detail-value,
+.score-label, .score-value, .appointment-label, .appointment-date,
+.modal-header h3, .option-details h5, .result-label, .result-value,
+.card-title, .card-subtitle, .card-count {
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* Text shadows for readability against galaxy background */
@@ -219,6 +237,7 @@ body::before {
   box-shadow: var(--shadow-deep);
   position: relative;
   overflow: hidden;
+  isolation: isolate; /* RESPONSIVE FIX: Prevent z-index bleed */
 }
 
 /* Cosmic border effect for page header */
@@ -371,7 +390,8 @@ body::before {
 
 .exams-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  /* RESPONSIVE FIX: Allow cards to shrink below 350px on very small screens */
+  grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
 }
@@ -387,6 +407,7 @@ body::before {
   overflow: hidden;
   box-shadow: var(--shadow-deep);
   will-change: transform, box-shadow;
+  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
 }
 
 /* Cosmic border effect for cards */
@@ -432,9 +453,12 @@ body::before {
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-  background: transparent !important; /* Fix: No white background */
+  background: transparent !important;
   padding: 0;
   border-radius: 0;
+  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-sm);
 }
 
 .exam-icon {
@@ -451,24 +475,25 @@ body::before {
   justify-content: center;
   font-size: 24px;
   color: var(--color-text-primary) !important;
-  flex-shrink: 0;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(5px);
 }
 
 .exam-title-section {
-  flex: 1;
+  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing with minimum basis */
   min-width: 0;
-  background: transparent !important; /* Fix: No white background */
+  background: transparent !important;
 }
 
 .exam-title {
   font-size: var(--font-lg);
   font-weight: 600;
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* RESPONSIVE FIX: Remove nowrap/ellipsis to allow natural wrapping */
+  /* white-space: nowrap; */
+  overflow: visible;
+  text-overflow: clip;
   letter-spacing: 0.3px;
 }
 
@@ -491,7 +516,8 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.1);
   min-width: 100px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.1) !important; /* Light transparent background */
+  background: rgba(255, 255, 255, 0.1) !important;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent badge from shrinking */
 }
 
 .status-passed {
@@ -865,6 +891,32 @@ body::before {
 }
 
 /* ============================================
+   CARD HEADER RESPONSIVE FIXES (for any .card-header component)
+   ============================================ */
+/* RESPONSIVE FIX: Ensure card header elements never overlap */
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  /* preserve existing background, colors from other styles */
+}
+
+.card-header > .card-title {
+  flex: 1 1 auto;
+  min-width: min(200px, 100%);
+}
+
+.card-header > .card-count {
+  flex: 0 0 auto;
+  margin-left: auto; /* push to right if needed */
+}
+
+.card-header > .card-subtitle {
+  flex: 1 1 100%; /* force to next line if needed */
+}
+
+/* ============================================
    MODAL STYLES - COSMIC GLASS
    ============================================ */
 
@@ -898,6 +950,7 @@ body::before {
     var(--shadow-floating),
     var(--glow-cyan);
   position: relative;
+  isolation: isolate; /* RESPONSIVE FIX: stacking context */
 }
 
 .modal-content::before {
@@ -1042,10 +1095,15 @@ body::before {
 .video-embed-container {
   position: relative;
   width: 100%;
-  height: 300px;
+  /* RESPONSIVE FIX: Replace fixed height with aspect-ratio for fluid scaling */
+  aspect-ratio: 16 / 9;
+  /* height: 300px; */ /* Removed fixed height */
 }
 
 .video-embed-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   border: none;
@@ -1353,7 +1411,7 @@ body::before {
   }
   
   .video-embed-container {
-    height: 200px;
+    /* aspect-ratio already handles height */
   }
   
   /* Reduce blur for mobile performance */

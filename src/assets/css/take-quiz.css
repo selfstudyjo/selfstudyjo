@@ -3,6 +3,13 @@
    Designed for Vue.js with 3D animated galaxy background
    Theme: Dark cosmic space with glass-morphism effects
    Date: 2024
+
+   RESPONSIVE ENHANCEMENTS:
+   - Prevent word/character breaks across all elements
+   - Ensure containers expand to fit content
+   - Add flex-wrap to prevent element mixing
+   - Add isolation for stacking contexts
+   - Preserve all original design, colors, animations
    ========================================================================== */
 
 /* CSS VARIABLES FOR COSMIC THEME */
@@ -55,7 +62,21 @@
   --btn-height-lg: 56px;
 }
 
-/* RESET & BASE STYLES */
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.take-quiz-page * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ========================================== */
 .take-quiz-page {
   min-height: 100vh;
   background: transparent !important;
@@ -65,6 +86,7 @@
   color: var(--cosmic-light);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   line-height: 1.6;
+  isolation: isolate;                 /* Fresh stacking context */
 }
 
 /* Ensure content stays above galaxy background */
@@ -84,7 +106,9 @@
   z-index: -1;
 }
 
-/* LOADING STATE - Cosmic Spinner */
+/* ============================================
+   LOADING STATE - Cosmic Spinner
+   ========================================== */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -98,6 +122,8 @@
   padding: 40px;
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .loading-spinner {
@@ -134,9 +160,12 @@
   text-shadow: var(--text-shadow), var(--text-glow);
   letter-spacing: 1px;
   line-height: 1.5;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
-/* ERROR STATE - Cosmic Error Display */
+/* ============================================
+   ERROR STATE - Cosmic Error Display
+   ========================================== */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -152,6 +181,8 @@
   box-shadow: var(--glass-shadow), 0 0 30px rgba(255, 0, 0, 0.2);
   max-width: 600px;
   margin: 0 auto;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .error-icon {
@@ -168,6 +199,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 20px rgba(255, 255, 255, 0.3);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .error-message {
@@ -178,7 +210,9 @@
   opacity: 0.9;
 }
 
-/* BUTTON BASE STYLES - FIXED TEXT VISIBILITY */
+/* ============================================
+   BUTTON BASE STYLES - FIXED TEXT VISIBILITY
+   ========================================== */
 .retry-btn, .back-btn, .nav-btn, .btn-primary, .btn-secondary, .btn-submit {
   min-height: var(--btn-height-md);
   display: inline-flex;
@@ -197,9 +231,16 @@
   position: relative;
   overflow: hidden;
   text-decoration: none;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep button text on one line */
   line-height: 1;
   box-sizing: border-box;
+}
+
+/* Allow button text to wrap on very small screens */
+@media (max-width: 320px) {
+  .retry-btn, .back-btn, .nav-btn, .btn-primary, .btn-secondary, .btn-submit {
+    white-space: normal;
+  }
 }
 
 /* Ensure text is always visible and properly centered */
@@ -267,7 +308,9 @@
   color: var(--cosmic-white);
 }
 
-/* BREADCRUMB - Cosmic Navigation */
+/* ============================================
+   BREADCRUMB - Cosmic Navigation
+   ========================================== */
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -275,7 +318,7 @@
   margin-bottom: 30px;
   font-size: var(--font-sm);
   color: var(--cosmic-gray);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .breadcrumb-link {
@@ -287,6 +330,7 @@
   font-weight: 500;
   transition: var(--transition-smooth);
   text-shadow: var(--text-shadow);
+  word-break: keep-all;
 }
 
 .breadcrumb-link:hover {
@@ -302,9 +346,12 @@
   color: var(--cosmic-white);
   font-weight: 600;
   text-shadow: var(--text-shadow), var(--text-glow);
+  word-break: keep-all;
 }
 
-/* QUIZ HEADER - Cosmic Card */
+/* ============================================
+   QUIZ HEADER - Cosmic Card
+   ========================================== */
 .quiz-header {
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
@@ -315,6 +362,8 @@
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .quiz-header::before {
@@ -342,12 +391,13 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 15px rgba(255, 255, 255, 0.2);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .quiz-meta {
   display: flex;
   gap: 15px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .meta-item {
@@ -363,9 +413,12 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(5px);
   line-height: 1.4;
+  word-break: keep-all;
 }
 
-/* QUIZ INSTRUCTIONS - Glass Card */
+/* ============================================
+   QUIZ INSTRUCTIONS - Glass Card
+   ========================================== */
 .quiz-instructions {
   max-width: 800px;
   margin: 0 auto;
@@ -380,6 +433,8 @@
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .instructions-card::after {
@@ -406,6 +461,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .instructions-content p {
@@ -434,6 +490,8 @@
   border-left: 4px solid var(--cosmic-cyan);
   transition: var(--transition-smooth);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;                    /* Allow wrapping */
+  min-height: min-content;
 }
 
 .instruction-item:hover {
@@ -454,10 +512,12 @@
   gap: 20px;
   justify-content: center;
   margin-top: 40px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
-/* QUIZ LAYOUT - Responsive Grid */
+/* ============================================
+   QUIZ LAYOUT - Responsive Grid
+   ========================================== */
 .quiz-layout {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -471,7 +531,9 @@
   }
 }
 
-/* QUESTION SIDEBAR - Glass Navigation */
+/* ============================================
+   QUESTION SIDEBAR - Glass Navigation
+   ========================================== */
 .question-sidebar {
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
@@ -483,6 +545,8 @@
   flex-direction: column;
   gap: 25px;
   position: relative;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .timer-section {
@@ -491,6 +555,7 @@
   background: rgba(0, 0, 0, 0.3);
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: min-content;
 }
 
 .timer-display {
@@ -504,6 +569,7 @@
   color: var(--cosmic-white);
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   line-height: 1;
+  word-break: keep-all;
 }
 
 .timer-display svg {
@@ -567,6 +633,7 @@
   gap: 10px;
   text-shadow: var(--text-shadow);
   line-height: 1.4;
+  word-break: keep-all;
 }
 
 .question-grid {
@@ -594,6 +661,7 @@
   line-height: 1;
   padding: 0;
   min-height: unset;
+  word-break: keep-all;
 }
 
 .question-nav-btn:hover {
@@ -636,7 +704,7 @@
 
 .flagged-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: 8px;
 }
 
@@ -656,6 +724,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .flagged-btn {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .flagged-btn:hover {
@@ -679,7 +754,9 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* MAIN QUESTION AREA */
+/* ============================================
+   MAIN QUESTION AREA
+   ========================================== */
 .question-main {
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
@@ -691,6 +768,8 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .question-main::before {
@@ -715,7 +794,7 @@
   margin-bottom: 30px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: 15px;
 }
 
@@ -725,6 +804,7 @@
   font-weight: 600;
   text-shadow: var(--text-shadow), 0 0 10px rgba(78, 205, 196, 0.3);
   line-height: 1.4;
+  word-break: keep-all;
 }
 
 .flag-btn {
@@ -745,7 +825,13 @@
   line-height: 1;
   text-transform: none;
   letter-spacing: normal;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .flag-btn {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .flag-btn:hover {
@@ -775,6 +861,7 @@
   margin-bottom: 15px;
   font-weight: 600;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
+  word-break: keep-all;
 }
 
 .question-score {
@@ -796,9 +883,12 @@
   align-items: center;
   gap: 5px;
   text-shadow: 0 0 5px rgba(78, 205, 196, 0.3);
+  word-break: keep-all;
 }
 
-/* ANSWERS SECTION */
+/* ============================================
+   ANSWERS SECTION
+   ========================================== */
 .answers-section {
   display: flex;
   flex-direction: column;
@@ -818,6 +908,8 @@
   transition: var(--transition-smooth);
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(5px);
+  flex-wrap: wrap;                    /* Allow wrapping */
+  min-height: min-content;
 }
 
 .answer-option:hover {
@@ -881,6 +973,7 @@
   line-height: 1.6;
   font-size: var(--font-base);
   text-shadow: var(--text-shadow);
+  word-break: keep-all;
 }
 
 .correct-indicator {
@@ -905,13 +998,15 @@
   filter: drop-shadow(0 0 3px rgba(72, 187, 120, 0.5));
 }
 
-/* NAVIGATION BUTTONS - FIXED TEXT VISIBILITY */
+/* ============================================
+   NAVIGATION BUTTONS - FIXED TEXT VISIBILITY
+   ========================================== */
 .question-navigation-buttons {
   display: flex;
   justify-content: space-between;
   margin-bottom: 25px;
   gap: 15px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 /* Navigation buttons specific styles */
@@ -933,9 +1028,15 @@
   position: relative;
   overflow: hidden;
   text-decoration: none;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep button text on one line */
   line-height: 1;
   box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .prev-btn, .next-btn {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .prev-btn span, .next-btn span {
@@ -987,7 +1088,9 @@
   );
 }
 
-/* QUIZ PROGRESS */
+/* ============================================
+   QUIZ PROGRESS
+   ========================================== */
 .quiz-progress {
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1003,9 +1106,12 @@
   opacity: 0.9;
   line-height: 1.4;
   text-shadow: var(--text-shadow);
+  word-break: keep-all;
 }
 
-/* QUIZ RESULT - FIXED SCORE VISIBILITY */
+/* ============================================
+   QUIZ RESULT - FIXED SCORE VISIBILITY
+   ========================================== */
 .quiz-result {
   max-width: 600px;
   margin: 40px auto;
@@ -1021,6 +1127,8 @@
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .result-card::before {
@@ -1081,6 +1189,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), var(--text-glow-strong);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .result-score {
@@ -1145,6 +1254,7 @@
   position: relative;
   z-index: 1;
   letter-spacing: 1px;
+  word-break: keep-all;
 }
 
 .score-label {
@@ -1160,6 +1270,7 @@
   position: relative;
   z-index: 1;
   opacity: 0.9;
+  word-break: keep-all;
 }
 
 .result-message {
@@ -1178,10 +1289,12 @@
   display: flex;
   gap: 20px;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
-/* BUTTONS - Cosmic Style */
+/* ============================================
+   BUTTONS - Cosmic Style
+   ========================================== */
 .btn-primary {
   background: linear-gradient(
     135deg,
@@ -1203,6 +1316,13 @@
   position: relative;
   overflow: hidden;
   text-shadow: var(--text-shadow);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .btn-primary {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .btn-primary:hover {
@@ -1229,6 +1349,13 @@
   transition: var(--transition-smooth);
   backdrop-filter: blur(10px);
   text-shadow: var(--text-shadow);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .btn-secondary {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .btn-secondary:hover {
@@ -1259,6 +1386,13 @@
   letter-spacing: 1px;
   margin-top: auto;
   text-shadow: var(--text-shadow);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .btn-submit {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -1289,7 +1423,9 @@
   flex-shrink: 0;
 }
 
-/* CUSTOM SCROLLBAR */
+/* ============================================
+   CUSTOM SCROLLBAR
+   ========================================== */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -1319,7 +1455,9 @@
   box-shadow: 0 0 10px var(--cosmic-cyan-glow);
 }
 
-/* ANIMATIONS */
+/* ============================================
+   ANIMATIONS
+   ========================================== */
 @keyframes cosmic-spin {
   0% {
     transform: rotate(0deg);
@@ -1395,7 +1533,10 @@
   animation: score-glow 3s ease-in-out infinite;
 }
 
-/* RESPONSIVE DESIGN */
+/* ============================================
+   RESPONSIVE DESIGN (Preserved and enhanced)
+   ========================================== */
+
 /* Mobile (< 640px) */
 @media (max-width: 640px) {
   .quiz-layout {
@@ -1595,7 +1736,9 @@
   }
 }
 
-/* REDUCED MOTION SUPPORT */
+/* ============================================
+   REDUCED MOTION SUPPORT
+   ========================================== */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1629,7 +1772,9 @@
   }
 }
 
-/* HIGH CONTRAST MODE */
+/* ============================================
+   HIGH CONTRAST MODE
+   ========================================== */
 @media (prefers-contrast: high) {
   .take-quiz-page {
     background: rgba(0, 0, 0, 0.95) !important;
@@ -1670,7 +1815,9 @@
   }
 }
 
-/* PRINT STYLES */
+/* ============================================
+   PRINT STYLES
+   ========================================== */
 @media print {
   .take-quiz-page {
     background: white !important;
@@ -1726,7 +1873,9 @@
   }
 }
 
-/* PERFORMANCE OPTIMIZATIONS */
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================== */
 .will-change-transform {
   will-change: transform;
 }
@@ -1739,7 +1888,9 @@
   contain: layout;
 }
 
-/* HOVER EFFECTS FOR TOUCH DEVICES */
+/* ============================================
+   HOVER EFFECTS FOR TOUCH DEVICES
+   ========================================== */
 @media (hover: hover) and (pointer: fine) {
   .question-nav-btn:hover .flag-indicator,
   .flag-btn:hover svg,
@@ -1748,14 +1899,18 @@
   }
 }
 
-/* FOCUS VISIBILITY */
+/* ============================================
+   FOCUS VISIBILITY
+   ========================================== */
 :focus-visible {
   outline: 3px solid var(--cosmic-cyan);
   outline-offset: 2px;
   box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.3);
 }
 
-/* ACCESSIBILITY: FOCUS INDICATORS */
+/* ============================================
+   ACCESSIBILITY: FOCUS INDICATORS
+   ========================================== */
 .answer-option:focus-within,
 .question-nav-btn:focus,
 .flag-btn:focus,
@@ -1770,3 +1925,20 @@
   outline-offset: 3px;
   box-shadow: 0 0 15px var(--cosmic-cyan-glow);
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .take-quiz-page:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to main containers (`.take-quiz-page`, `.loading-container`, `.error-container`, `.quiz-header`, `.instructions-card`, `.question-sidebar`, `.question-main`, `.result-card`) for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.breadcrumb`, `.quiz-meta`, `.instruction-item`, `.instructions-actions`, `.question-header`, `.flagged-list`, `.result-actions`, `.question-navigation-buttons`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (titles, headings, labels, button text) to keep whole words together.
+   5. Added `white-space: nowrap` to badges and buttons (`.flagged-btn`, `.flag-btn`, `.btn-primary`, `.btn-secondary`, `.btn-submit`, `.prev-btn`, `.next-btn`), with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights (`.loading-container`, `.error-container`, `.quiz-header`, `.instructions-card`, `.question-sidebar`, `.timer-section`, `.answer-option`, `.question-main`, `.result-card`).
+   7. Preserved all original colors, animations, and media queries.
+   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  

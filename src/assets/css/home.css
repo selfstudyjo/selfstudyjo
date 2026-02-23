@@ -56,6 +56,13 @@
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
+
+  /* Fluid typography base values */
+  --font-base: clamp(1rem, 1vw + 0.5rem, 1.2rem);
+  --font-sm: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
+  --font-md: clamp(0.875rem, 1.5vw + 0.25rem, 1rem);
+  --font-lg: clamp(1.25rem, 2vw + 0.5rem, 2rem);
+  --font-xl: clamp(1.5rem, 3vw + 0.5rem, 2.5rem);
 }
 
 /* FORCE ALL TEXT TO BE PURE WHITE - NO EXCEPTIONS */
@@ -132,11 +139,15 @@
 .home-container {
   min-height: 100vh;
   background: transparent !important;
-  padding: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.5rem); /* Fluid padding */
   animation: fadeIn 0.5s ease-out;
   position: relative;
   z-index: 1;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  /* Prevent any hidden overflow */
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 @keyframes fadeIn {
@@ -161,8 +172,8 @@
 /* Welcome Header - BRIGHT WHITE TEXT */
 .welcome-header {
   border-radius: var(--radius-xl);
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: clamp(1.5rem, 4vw, 2rem); /* Fluid padding */
+  margin-bottom: clamp(1rem, 3vw, 2rem); /* Fluid margin */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -173,6 +184,9 @@
   overflow: hidden;
   border: 1px solid rgba(0, 191, 255, 0.3);
   box-shadow: var(--shadow-glow);
+  /* Ensure it doesn't overflow */
+  width: 100%;
+  max-width: 100%;
 }
 
 .welcome-header::before {
@@ -186,8 +200,17 @@
   pointer-events: none;
 }
 
+.header-content {
+  /* Allow text to wrap naturally, but prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  min-width: 0; /* Allow shrinking */
+  flex: 1 1 auto;
+}
+
 .header-content h1 {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 5vw, 2rem); /* Fluid heading */
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: 0.5rem;
@@ -196,7 +219,7 @@
 }
 
 .header-content .subtitle {
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 2vw, 1rem); /* Fluid subtitle */
   font-weight: 500;
   position: relative;
   z-index: 1;
@@ -205,7 +228,7 @@
 .stats-badge {
   background: rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-lg);
-  padding: 1rem 1.5rem;
+  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem); /* Fluid padding */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -213,17 +236,18 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   z-index: 1;
-  min-width: 120px;
+  min-width: min(120px, 30vw); /* Allow shrinking on small screens */
+  white-space: nowrap; /* Keep badge text in one line */
 }
 
 .badge-count {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 5vw, 2rem); /* Fluid count */
   font-weight: 700;
   line-height: 1;
 }
 
 .badge-label {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid label */
   font-weight: 500;
   margin-top: 0.25rem;
 }
@@ -231,9 +255,11 @@
 /* Main Grid */
 .main-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr)); /* Allow columns to shrink below content */
+  gap: clamp(1rem, 2vw, 1.5rem); /* Fluid gap */
+  margin-top: clamp(1rem, 2vw, 1.5rem);
+  width: 100%;
+  max-width: 100%;
 }
 
 .dashboard-card {
@@ -245,6 +271,8 @@
   background: var(--bg-card);
   backdrop-filter: blur(15px);
   border: 1px solid var(--border-color);
+  /* Ensure card doesn't overflow */
+  min-width: 0; /* Allow grid item to shrink */
 }
 
 .dashboard-card:hover {
@@ -263,21 +291,26 @@
 
 /* Card Header - WHITE TEXT */
 .card-header {
-  padding: 1.5rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem); /* Fluid padding */
   border-bottom: 1px solid var(--border-color);
   background: rgba(10, 10, 30, 0.6);
+  /* Ensure clear separation between title row and subtitle */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Add gap between title and subtitle */
 }
 
 .card-title {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  align-items: flex-start; /* Align items to top to prevent vertical misalignment when wrapping */
+  gap: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid gap */
+  flex-wrap: wrap; /* Allow items to wrap on narrow screens to avoid overlap */
+  min-width: 0; /* Allow shrinking */
 }
 
 .title-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: clamp(2rem, 5vw, 2.5rem); /* Fluid icon size */
+  height: clamp(2rem, 5vw, 2.5rem);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -285,6 +318,7 @@
   flex-shrink: 0;
 }
 
+/* Icon backgrounds remain same, but size fluid */
 .course-icon {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.8) 0%, rgba(124, 58, 237, 0.8) 100%);
 }
@@ -306,25 +340,34 @@
 }
 
 .card-title h2 {
-  font-size: 1.25rem;
+  font-size: clamp(1rem, 2.5vw, 1.25rem); /* Fluid heading */
   font-weight: 600;
   flex: 1;
+  min-width: min(150px, 30vw); /* Ensure heading has enough space before wrapping */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  line-height: 1.4;
 }
 
 .card-count {
   background: rgba(255, 255, 255, 0.1);
   padding: 0.25rem 0.75rem;
   border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* Fluid font */
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap; /* Keep count in one line */
+  align-self: center; /* Center vertically within flex row */
 }
 
 .card-status {
   padding: 0.25rem 0.75rem;
   border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* Fluid font */
   font-weight: 600;
+  white-space: nowrap; /* Keep status text in one line */
+  align-self: center; /* Center vertically */
 }
 
 .card-status.active {
@@ -333,14 +376,20 @@
 }
 
 .card-subtitle {
-  font-size: 0.875rem;
-  margin: 0;
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* Fluid font */
+  margin: 0; /* Remove default margin */
   font-weight: 500;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  /* Ensure subtitle is on its own line with spacing */
+  margin-top: 0.25rem;
+  line-height: 1.5;
 }
 
 /* Card Content */
 .dashboard-card > div:not(.card-header) {
-  padding: 1.5rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem); /* Fluid padding */
   background: var(--bg-card);
 }
 
@@ -348,18 +397,19 @@
 .courses-list, .quiz-results, .homeworks-list, .subscription-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(0.75rem, 2vw, 1rem); /* Fluid gap */
 }
 
 .course-item, .quiz-item, .homework-item {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
+  gap: clamp(0.5rem, 1.5vw, 1rem); /* Fluid gap */
+  padding: clamp(0.75rem, 2vw, 1rem); /* Fluid padding */
   border-radius: var(--radius-md);
   background: rgba(25, 25, 60, 0.6);
   transition: all var(--transition-fast);
   border: 1px solid transparent;
+  min-width: 0; /* Allow shrinking */
 }
 
 .course-item:hover, .quiz-item:hover, .homework-item:hover {
@@ -370,8 +420,8 @@
 }
 
 .course-icon, .homework-icon {
-  width: 2rem;
-  height: 2rem;
+  width: clamp(1.5rem, 4vw, 2rem); /* Fluid icon */
+  height: clamp(1.5rem, 4vw, 2rem);
   border-radius: var(--radius-sm);
   background: rgba(0, 191, 255, 0.1);
   display: flex;
@@ -382,14 +432,14 @@
 }
 
 .quiz-score {
-  width: 3rem;
-  height: 3rem;
+  width: clamp(2.5rem, 6vw, 3rem); /* Fluid score box */
+  height: clamp(2.5rem, 6vw, 3rem);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid font */
   flex-shrink: 0;
   border: 1px solid;
 }
@@ -413,36 +463,44 @@
 
 .course-info, .quiz-info, .homework-info {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Allow text to shrink and wrap */
 }
 
 .course-title, .quiz-title, .homework-title {
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 2vw, 1rem); /* Fluid title */
   font-weight: 600;
   margin-bottom: 0.25rem;
   line-height: 1.4;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .course-date, .quiz-date, .homework-description {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* Fluid date */
   margin-bottom: 0.5rem;
   font-weight: 500;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .course-date {
-  font-size: 0.75rem;
+  font-size: clamp(0.7rem, 1.5vw, 0.75rem); /* Smaller fluid */
 }
 
 .quiz-meta, .homework-meta {
   display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
+  gap: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid gap */
+  font-size: clamp(0.7rem, 1.5vw, 0.75rem); /* Fluid font */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .quiz-status {
   padding: 0.125rem 0.5rem;
   border-radius: var(--radius-sm);
   font-weight: 600;
+  white-space: nowrap; /* Keep status in one line */
 }
 
 .quiz-status.passed {
@@ -456,50 +514,59 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 500;
+  white-space: nowrap; /* Keep these in one line if possible */
 }
 
 .homework-description {
-  font-size: 0.8125rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.8125rem); /* Fluid description */
   line-height: 1.5;
   margin-bottom: 0.5rem;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* Certificates Grid - WHITE TEXT */
 .certificates-grid {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(1rem, 3vw, 1.5rem); /* Fluid gap */
 }
 
 .certificate-section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid gap */
+  min-width: 0;
 }
 
 .section-title {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid title */
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .certificate-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: clamp(0.25rem, 1vw, 0.5rem); /* Fluid gap */
 }
 
 .certificate-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid gap */
+  padding: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid padding */
   border-radius: var(--radius-md);
   background: rgba(25, 25, 60, 0.6);
   transition: all var(--transition-fast);
   border: 1px solid transparent;
+  min-width: 0; /* Allow shrinking */
 }
 
 .certificate-item:hover {
@@ -509,8 +576,8 @@
 }
 
 .certificate-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: clamp(1.25rem, 3vw, 1.5rem); /* Fluid icon */
+  height: clamp(1.25rem, 3vw, 1.5rem);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -531,20 +598,24 @@
 
 .certificate-info {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Allow text to shrink */
 }
 
 .certificate-title {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid title */
   font-weight: 600;
   margin-bottom: 0.125rem;
   line-height: 1.4;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .certificate-meta {
   display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
+  gap: clamp(0.5rem, 1.5vw, 0.75rem); /* Fluid gap */
+  font-size: clamp(0.7rem, 1.5vw, 0.75rem); /* Fluid font */
+  flex-wrap: wrap; /* Allow wrapping */
   font-weight: 500;
 }
 
@@ -552,8 +623,9 @@
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
   font-weight: 600;
-  font-size: 0.6875rem;
+  font-size: clamp(0.6rem, 1.2vw, 0.6875rem); /* Fluid tiny */
   border: 1px solid;
+  white-space: nowrap; /* Keep status in one line */
 }
 
 .certificate-status.valid {
@@ -567,27 +639,31 @@
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
   font-weight: 600;
+  white-space: nowrap; /* Keep hours in one line */
 }
 
 /* Subscription Details - WHITE TEXT */
 .subscription-details {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: clamp(1rem, 3vw, 1.25rem); /* Fluid gap */
 }
 
 .subscription-plan {
   text-align: center;
-  padding: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.25rem); /* Fluid padding */
   border-radius: var(--radius-lg);
   background: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .plan-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 4vw, 1.5rem); /* Fluid title */
   font-weight: 700;
   margin-bottom: 0.5rem;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .plan-price {
@@ -595,53 +671,64 @@
   align-items: baseline;
   justify-content: center;
   gap: 0.25rem;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .price-amount {
-  font-size: 2.25rem;
+  font-size: clamp(1.75rem, 6vw, 2.25rem); /* Fluid amount */
   font-weight: 800;
   background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: nowrap; /* Keep amount in one line */
 }
 
 .price-period {
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 2vw, 1rem); /* Fluid period */
   font-weight: 500;
+  white-space: nowrap; /* Keep period in one line */
 }
 
 .subscription-features {
   background: rgba(25, 25, 60, 0.6);
   border-radius: var(--radius-lg);
-  padding: 1rem;
+  padding: clamp(0.75rem, 2vw, 1rem); /* Fluid padding */
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .features-title {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid title */
   font-weight: 600;
   margin-bottom: 0.75rem;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .features-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: clamp(0.25rem, 1vw, 0.5rem); /* Fluid gap */
 }
 
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: clamp(0.25rem, 1vw, 0.5rem); /* Fluid gap */
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid font */
   font-weight: 500;
+  min-width: 0; /* Allow shrinking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .subscription-meta {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: clamp(1rem, 4vw, 2rem); /* Fluid gap */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .meta-item {
@@ -649,16 +736,21 @@
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .meta-label {
-  font-size: 0.75rem;
+  font-size: clamp(0.7rem, 1.5vw, 0.75rem); /* Fluid label */
   font-weight: 500;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .meta-value {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid value */
   font-weight: 600;
+  white-space: nowrap; /* Keep value in one line */
 }
 
 /* Empty States - WHITE TEXT */
@@ -667,29 +759,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.5rem;
+  padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 3vw, 1.5rem); /* Fluid padding */
   text-align: center;
+  min-width: 0;
 }
 
 .empty-state.small {
-  padding: 1.25rem;
+  padding: clamp(0.75rem, 2vw, 1.25rem); /* Fluid padding */
 }
 
 .empty-text {
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid text */
   margin-bottom: 1rem;
   font-weight: 500;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .empty-action {
   background: var(--primary-gradient);
   padding: 0.5rem 1rem;
   border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem); /* Fluid action */
   font-weight: 600;
   text-decoration: none;
   transition: all var(--transition-fast);
   border: 1px solid rgba(0, 191, 255, 0.3);
+  white-space: nowrap; /* Keep button text in one line */
 }
 
 .empty-action:hover {
@@ -725,12 +822,12 @@
   100% { background-position: -200% 0; }
 }
 
-/* Responsive Design */
+/* Responsive Design - Enhanced with fluid values and additional safeguards */
 @media (max-width: 1024px) {
   .welcome-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1.5rem;
+    gap: clamp(1rem, 3vw, 1.5rem); /* Fluid gap */
   }
   
   .stats-badge {
@@ -738,22 +835,22 @@
   }
   
   .main-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Already set, but ensure no overflow */
   }
 }
 
 @media (max-width: 768px) {
   .home-container {
-    padding: 1rem;
+    padding: clamp(0.75rem, 2vw, 1rem); /* Fluid padding */
   }
   
   .welcome-header {
-    padding: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 1.5rem); /* Fluid padding */
     border-radius: var(--radius-lg);
   }
   
   .header-content h1 {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 5vw, 1.5rem); /* Adjust fluid range */
   }
   
   .dashboard-card {
@@ -761,11 +858,11 @@
   }
   
   .card-header {
-    padding: 1rem;
+    padding: clamp(0.75rem, 2vw, 1rem); /* Fluid padding */
   }
   
   .dashboard-card > div:not(.card-header) {
-    padding: 1rem;
+    padding: clamp(0.75rem, 2vw, 1rem); /* Fluid padding */
   }
 }
 
@@ -789,7 +886,7 @@
   }
   
   .price-amount {
-    font-size: 1.75rem;
+    font-size: clamp(1.5rem, 6vw, 1.75rem); /* Adjust fluid range */
   }
   
   .subscription-meta {

@@ -3,6 +3,13 @@
    Designed for Vue.js with 3D animated galaxy background
    Theme: Dark cosmic space with glass-morphism effects
    Date: 2024
+
+   RESPONSIVE ENHANCEMENTS:
+   - Prevent word/character breaks across all elements
+   - Ensure containers expand to fit content
+   - Add flex-wrap to prevent element mixing in headers and cards
+   - Add isolation for stacking contexts
+   - Preserve all original design, colors, animations
    ========================================================================== */
 
 /* CSS VARIABLES FOR COSMIC THEME */
@@ -69,6 +76,18 @@
   --cert-exam-glow: rgba(14, 165, 233, 0.3);
 }
 
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.user-certificates * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
 /* ANIMATIONS */
 @keyframes cosmic-spin {
   0% { transform: rotate(0deg); }
@@ -111,6 +130,8 @@
   position: relative;
   z-index: 1;
   min-height: 80vh;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 /* HEADER SECTION */
@@ -125,6 +146,8 @@
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .header::before {
@@ -178,6 +201,7 @@
   letter-spacing: 1px;
   position: relative;
   z-index: 1;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
 .header p {
@@ -204,6 +228,8 @@
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
   margin: 20px 0;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .loading-spinner {
@@ -255,6 +281,8 @@
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), 0 0 30px rgba(255, 0, 0, 0.2);
   margin: 20px 0;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .error-icon {
@@ -271,6 +299,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 15px rgba(255, 107, 107, 0.3);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .error-container p {
@@ -307,6 +336,13 @@
   backdrop-filter: blur(10px);
   text-shadow: var(--text-shadow);
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+  .retry-btn {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .retry-btn:hover {
@@ -334,6 +370,8 @@
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
   margin: 20px 0;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .empty-icon {
@@ -351,6 +389,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 .empty-state p {
@@ -376,6 +415,7 @@
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
 }
 
 .section-header::after {
@@ -395,6 +435,7 @@
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 10px rgba(78, 205, 196, 0.2);
   margin: 0;
+  word-break: keep-all;
 }
 
 .badge {
@@ -413,6 +454,13 @@
   border: 1px solid rgba(72, 187, 120, 0.3);
   backdrop-filter: blur(5px);
   box-shadow: 0 0 10px rgba(72, 187, 120, 0.2);
+  white-space: nowrap;                 /* Keep badge on one line */
+}
+
+@media (max-width: 480px) {
+  .badge {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 /* CERTIFICATES GRID */
@@ -449,6 +497,8 @@
   position: relative;
   overflow: hidden;
   animation: certificate-glow 4s ease-in-out infinite;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .certificate-card:hover {
@@ -498,6 +548,7 @@
   margin-bottom: 20px;
   position: relative;
   z-index: 1;
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
 }
 
 .certificate-icon {
@@ -560,6 +611,7 @@
 
 .certificate-info {
   flex: 1;
+  min-width: 0;                       /* Allow text to shrink */
 }
 
 .certificate-info h3 {
@@ -569,6 +621,7 @@
   line-height: 1.4;
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
+  word-break: keep-all;
 }
 
 .certificate-id {
@@ -578,6 +631,7 @@
   text-shadow: 0 0 5px var(--cosmic-cyan-glow);
   letter-spacing: 1px;
   font-weight: 500;
+  word-break: break-all;              /* Allow long IDs to break */
 }
 
 /* Certificate details */
@@ -596,6 +650,8 @@
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
+  gap: var(--space-xs);
 }
 
 .detail-item:last-child {
@@ -611,6 +667,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  word-break: keep-all;
 }
 
 .value {
@@ -619,6 +676,8 @@
   font-weight: 600;
   text-shadow: var(--text-shadow);
   text-align: right;
+  word-break: normal;                 /* Already protected */
+  overflow-wrap: break-word;
 }
 
 /* Status badge */
@@ -635,6 +694,13 @@
   backdrop-filter: blur(5px);
   border: 1px solid;
   text-shadow: var(--text-shadow);
+  white-space: nowrap;                 /* Keep badge on one line */
+}
+
+@media (max-width: 480px) {
+  .status-badge {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .status-badge::before {
@@ -677,6 +743,8 @@
   z-index: 1;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;                    /* Allow wrapping */
+  gap: var(--space-sm);
 }
 
 .view-btn {
@@ -703,6 +771,13 @@
   backdrop-filter: blur(10px);
   text-shadow: var(--text-shadow);
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .view-btn {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .view-btn:hover {
@@ -716,7 +791,7 @@
   color: var(--cosmic-white);
 }
 
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE DESIGN (Preserved and enhanced) */
 /* Mobile (< 640px) */
 @media (max-width: 640px) {
   .user-certificates {
@@ -962,3 +1037,21 @@
     background: #ccc !important;
   }
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .user-certificates:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to main containers (`.user-certificates`, `.header`, `.loading-container`, `.error-container`, `.empty-state`, `.certificate-card`) for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.section-header`, `.certificate-header`, `.detail-item`, `.certificate-actions`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (headings, titles, labels) to keep whole words together.
+   5. Added `white-space: nowrap` to badges and buttons (`.badge`, `.status-badge`, `.view-btn`, `.retry-btn`), with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Added `min-width: 0` to `.certificate-info` to allow text shrinking within flex.
+   8. Preserved all original colors, animations, and media queries.
+   9. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  

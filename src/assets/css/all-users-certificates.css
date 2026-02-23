@@ -3,6 +3,7 @@
    Designed for Vue.js with 3D animated galaxy background
    Theme: Dark cosmic space with glass-morphism effects
    Date: 2024
+   FULLY RESPONSIVE VERSION
    ========================================================================== */
 
 /* CSS VARIABLES FOR COSMIC THEME */
@@ -40,7 +41,7 @@
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-glow: all 0.5s ease;
   
-  /* Responsive Font Sizes */
+  /* Responsive Font Sizes (already fluid) */
   --font-xs: clamp(12px, 3vw, 14px);
   --font-sm: clamp(14px, 3.5vw, 16px);
   --font-base: clamp(15px, 4vw, 17px);
@@ -49,7 +50,7 @@
   --font-2xl: clamp(24px, 6vw, 32px);
   --font-3xl: clamp(28px, 7vw, 40px);
   
-  /* Button Sizes */
+  /* Button Sizes (still fixed for accessibility, but can be fluid if needed) */
   --btn-height-sm: 44px;
   --btn-height-md: 50px;
   --btn-height-lg: 56px;
@@ -63,7 +64,7 @@
   --status-expired-glow: rgba(156, 163, 175, 0.3);
 }
 
-/* ANIMATIONS */
+/* ANIMATIONS (unchanged) */
 @keyframes cosmic-spin {
   0% { transform: rotate(0deg); }
   25% { border-top-color: var(--cosmic-cyan); }
@@ -104,23 +105,26 @@
 
 /* BASE CONTAINER */
 .all-certificates {
-  padding: clamp(20px, 4vw, 32px);
-  max-width: 1800px;
+  padding: clamp(20px, 4vw, 32px); /* Fluid padding */
+  max-width: min(1800px, 100%); /* Fluid max width */
   margin: 0 auto;
   background: transparent;
   position: relative;
   z-index: 1;
   min-height: 80vh;
+  /* Prevent horizontal overflow */
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* HEADER SECTION */
 .all-certificates .header {
-  margin-bottom: clamp(24px, 5vw, 40px);
+  margin-bottom: clamp(24px, 5vw, 40px); /* Fluid margin */
   text-align: center;
-  padding: clamp(24px, 5vw, 40px);
+  padding: clamp(24px, 5vw, 40px); /* Fluid padding */
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 24px;
+  border-radius: clamp(20px, 4vw, 24px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
@@ -162,7 +166,7 @@
 }
 
 .all-certificates .header h1 {
-  font-size: var(--font-3xl);
+  font-size: var(--font-3xl); /* Already fluid */
   background: linear-gradient(
     135deg,
     var(--cosmic-white) 0%,
@@ -172,31 +176,39 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 16px;
+  margin-bottom: clamp(12px, 3vw, 16px); /* Fluid margin */
   font-weight: 800;
   text-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
   letter-spacing: 1px;
   position: relative;
   z-index: 1;
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .header p {
   color: var(--cosmic-light);
-  font-size: var(--font-lg);
-  max-width: 600px;
+  font-size: var(--font-lg); /* Already fluid */
+  max-width: min(600px, 90vw); /* Fluid max width */
   margin: 0 auto;
   line-height: 1.6;
   text-shadow: var(--text-shadow);
   opacity: 0.9;
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* TABS CONTAINER */
 .all-certificates .tabs-container {
-  margin-bottom: clamp(24px, 5vw, 32px);
-  padding: 20px;
+  margin-bottom: clamp(24px, 5vw, 32px); /* Fluid margin */
+  padding: clamp(16px, 3vw, 20px); /* Fluid padding */
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 20px;
+  border-radius: clamp(16px, 3vw, 20px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
   position: relative;
@@ -205,28 +217,38 @@
 
 .all-certificates .tabs {
   display: flex;
-  gap: 12px;
+  gap: clamp(8px, 2vw, 12px); /* Fluid gap */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 16px;
-  flex-wrap: wrap;
+  padding-bottom: clamp(12px, 2.5vw, 16px); /* Fluid padding */
+  flex-wrap: wrap; /* Allow tabs to wrap on narrow screens */
 }
 
 .all-certificates .tab {
   position: relative;
-  padding: 12px 24px;
+  padding: clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px); /* Fluid padding */
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  font-size: var(--font-base);
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
+  font-size: var(--font-base); /* Already fluid */
   font-weight: 600;
   color: var(--cosmic-light);
   cursor: pointer;
   transition: var(--transition-smooth);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(4px, 1vw, 8px); /* Fluid gap */
   backdrop-filter: blur(5px);
   letter-spacing: 1px;
+  /* Prevent text from breaking */
+  white-space: nowrap;
+}
+
+/* Allow tabs to wrap on very small screens - already handled by flex-wrap */
+@media (max-width: 480px) {
+  .all-certificates .tab {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .all-certificates .tab:hover {
@@ -260,15 +282,16 @@
 }
 
 .all-certificates .tab-badge {
-  padding: 4px 10px;
+  padding: 4px clamp(6px, 1.5vw, 10px); /* Fluid padding */
   background: rgba(255, 255, 255, 0.1);
   color: var(--cosmic-white);
-  border-radius: 12px;
-  font-size: var(--font-xs);
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
+  font-size: var(--font-xs); /* Already fluid */
   font-weight: 700;
-  min-width: 24px;
+  min-width: clamp(20px, 5vw, 24px); /* Fluid min width */
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
 }
 
 .all-certificates .tab.active .tab-badge {
@@ -283,13 +306,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: clamp(24px, 5vw, 32px);
-  gap: 20px;
-  flex-wrap: wrap;
-  padding: 20px;
+  margin-bottom: clamp(24px, 5vw, 32px); /* Fluid margin */
+  gap: clamp(16px, 3vw, 20px); /* Fluid gap */
+  flex-wrap: wrap; /* Allow wrapping */
+  padding: clamp(16px, 3vw, 20px); /* Fluid padding */
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 20px;
+  border-radius: clamp(16px, 3vw, 20px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
@@ -297,21 +320,23 @@
 .all-certificates .search-box {
   position: relative;
   flex: 1;
-  min-width: 300px;
+  min-width: min(300px, 100%); /* Fluid min width */
 }
 
 .all-certificates .search-input {
   width: 100%;
-  padding: 0 20px 0 50px;
+  padding: 0 clamp(16px, 3vw, 20px) 0 clamp(40px, 8vw, 50px); /* Fluid padding */
   min-height: var(--btn-height-md);
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  font-size: var(--font-base);
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
+  font-size: var(--font-base); /* Already fluid */
   color: var(--cosmic-white);
   transition: var(--transition-smooth);
   backdrop-filter: blur(5px);
   text-shadow: var(--text-shadow);
+  /* Ensure text doesn't overflow */
+  box-sizing: border-box;
 }
 
 .all-certificates .search-input:focus {
@@ -325,31 +350,35 @@
 .all-certificates .search-input::placeholder {
   color: var(--cosmic-gray);
   opacity: 0.7;
+  font-size: var(--font-base);
 }
 
 .all-certificates .search-icon {
   position: absolute;
-  left: 16px;
+  left: clamp(12px, 2.5vw, 16px); /* Fluid positioning */
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
   color: var(--cosmic-cyan);
   filter: drop-shadow(0 0 5px var(--cosmic-cyan-glow));
+  width: clamp(18px, 4vw, 20px); /* Fluid icon */
+  height: clamp(18px, 4vw, 20px);
 }
 
 .all-certificates .filter-controls {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: clamp(12px, 2.5vw, 16px); /* Fluid gap */
+  flex-wrap: wrap; /* Allow wrapping */
 }
 
 .all-certificates .filter-select {
   min-height: var(--btn-height-md);
-  padding: 0 20px;
+  padding: 0 clamp(16px, 3vw, 20px); /* Fluid padding */
+  padding-right: clamp(40px, 8vw, 48px); /* Space for arrow */
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  font-size: var(--font-base);
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
+  font-size: var(--font-base); /* Already fluid */
   color: var(--cosmic-white);
   cursor: pointer;
   transition: var(--transition-smooth);
@@ -357,10 +386,13 @@
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234ECDC4' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 20px;
-  padding-right: 48px;
+  background-position: right clamp(12px, 2.5vw, 16px) center; /* Fluid position */
+  background-size: clamp(16px, 3vw, 20px); /* Fluid size */
   text-shadow: var(--text-shadow);
+  /* Ensure text doesn't overflow */
+  max-width: 100%;
+  width: auto;
+  min-width: min(150px, 40vw); /* Fluid min width */
 }
 
 .all-certificates .filter-select:focus {
@@ -383,26 +415,26 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(60px, 10vw, 100px) 20px;
+  padding: clamp(60px, 10vw, 100px) clamp(16px, 4vw, 20px); /* Fluid padding */
   text-align: center;
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 24px;
+  border-radius: clamp(20px, 4vw, 24px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
-  margin: 20px 0;
+  margin: clamp(16px, 3vw, 20px) 0; /* Fluid margin */
 }
 
 .all-certificates .loading-spinner {
-  width: 70px;
-  height: 70px;
+  width: clamp(60px, 10vw, 70px); /* Fluid size */
+  height: clamp(60px, 10vw, 70px);
   border: 3px solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--cosmic-cyan);
   border-right-color: var(--cosmic-purple);
   border-bottom-color: var(--cosmic-blue);
   border-radius: 50%;
   animation: cosmic-spin 2s linear infinite;
-  margin-bottom: 30px;
+  margin-bottom: clamp(24px, 5vw, 30px); /* Fluid margin */
   position: relative;
 }
 
@@ -421,11 +453,15 @@
 }
 
 .all-certificates .loading-container p {
-  font-size: var(--font-lg);
+  font-size: var(--font-lg); /* Already fluid */
   color: var(--cosmic-light);
   text-shadow: var(--text-shadow);
   opacity: 0.8;
   letter-spacing: 1px;
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* ERROR STATE */
@@ -434,40 +470,48 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(60px, 10vw, 100px) 20px;
+  padding: clamp(60px, 10vw, 100px) clamp(16px, 4vw, 20px); /* Fluid padding */
   text-align: center;
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 24px;
+  border-radius: clamp(20px, 4vw, 24px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), 0 0 30px rgba(255, 0, 0, 0.2);
-  margin: 20px 0;
+  margin: clamp(16px, 3vw, 20px) 0; /* Fluid margin */
 }
 
 .all-certificates .error-icon {
-  font-size: 64px;
-  margin-bottom: 24px;
+  font-size: clamp(48px, 10vw, 64px); /* Fluid icon */
+  margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
   color: #ff6b6b;
   filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.5));
 }
 
 .all-certificates .error-container h3 {
-  font-size: var(--font-2xl);
+  font-size: var(--font-2xl); /* Already fluid */
   color: var(--cosmic-white);
-  margin-bottom: 16px;
+  margin-bottom: clamp(12px, 3vw, 16px); /* Fluid margin */
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 15px rgba(255, 107, 107, 0.3);
   line-height: 1.3;
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .error-container p {
   color: var(--cosmic-light);
-  margin-bottom: 32px;
-  max-width: 500px;
+  margin-bottom: clamp(24px, 5vw, 32px); /* Fluid margin */
+  max-width: min(500px, 90vw); /* Fluid max width */
   line-height: 1.6;
   text-shadow: var(--text-shadow);
   opacity: 0.9;
-  font-size: var(--font-base);
+  font-size: var(--font-base); /* Already fluid */
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .retry-btn {
@@ -475,8 +519,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 0 32px;
+  gap: clamp(6px, 1.5vw, 10px); /* Fluid gap */
+  padding: 0 clamp(24px, 5vw, 32px); /* Fluid padding */
   background: linear-gradient(
     135deg,
     rgba(78, 205, 196, 0.2) 0%,
@@ -484,16 +528,17 @@
   );
   color: var(--cosmic-cyan);
   border: 1px solid rgba(78, 205, 196, 0.3);
-  border-radius: 12px;
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition-smooth);
-  font-size: var(--font-base);
+  font-size: var(--font-base); /* Already fluid */
   text-transform: uppercase;
   letter-spacing: 1px;
   backdrop-filter: blur(10px);
   text-shadow: var(--text-shadow);
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  white-space: nowrap; /* Keep button text together */
 }
 
 .all-certificates .retry-btn:hover {
@@ -513,52 +558,64 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(60px, 10vw, 100px) 20px;
+  padding: clamp(60px, 10vw, 100px) clamp(16px, 4vw, 20px); /* Fluid padding */
   text-align: center;
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 24px;
+  border-radius: clamp(20px, 4vw, 24px); /* Fluid radius */
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
-  margin: 20px 0;
+  margin: clamp(16px, 3vw, 20px) 0; /* Fluid margin */
 }
 
 .all-certificates .empty-icon {
-  font-size: 80px;
-  margin-bottom: 24px;
+  font-size: clamp(60px, 12vw, 80px); /* Fluid icon */
+  margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
   color: var(--cosmic-cyan);
   filter: drop-shadow(0 0 25px var(--cosmic-cyan-glow));
 }
 
 .all-certificates .empty-state h3 {
-  font-size: var(--font-2xl);
+  font-size: var(--font-2xl); /* Already fluid */
   color: var(--cosmic-white);
-  margin-bottom: 16px;
+  margin-bottom: clamp(12px, 3vw, 16px); /* Fluid margin */
   font-weight: 700;
   text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1.3;
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .empty-state p {
   color: var(--cosmic-light);
-  margin-bottom: 32px;
-  max-width: 500px;
+  margin-bottom: clamp(24px, 5vw, 32px); /* Fluid margin */
+  max-width: min(500px, 90vw); /* Fluid max width */
   line-height: 1.6;
   text-shadow: var(--text-shadow);
   opacity: 0.9;
-  font-size: var(--font-lg);
+  font-size: var(--font-lg); /* Already fluid */
+  /* Prevent word breaking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* CERTIFICATES TABLE */
 .all-certificates .certificates-table {
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
-  border-radius: 24px;
+  border-radius: clamp(20px, 4vw, 24px); /* Fluid radius */
   overflow: hidden;
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   animation: slide-in 0.6s ease-out;
+  width: 100%;
+  max-width: 100%;
+  /* Ensure table doesn't overflow container */
+  overflow-x: auto; /* Allow horizontal scroll on very small screens if needed */
 }
 
 .all-certificates .certificates-table::before {
@@ -581,7 +638,7 @@
   display: grid;
   grid-template-columns: 2fr 2fr 1fr 1fr 1fr 0.8fr;
   background: rgba(0, 0, 0, 0.4);
-  padding: clamp(16px, 3vw, 20px);
+  padding: clamp(16px, 3vw, 20px); /* Fluid padding */
   font-weight: 700;
   color: var(--cosmic-cyan);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -590,7 +647,7 @@
   text-shadow: var(--text-shadow), 0 0 10px rgba(78, 205, 196, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: var(--font-sm);
+  font-size: var(--font-sm); /* Already fluid */
 }
 
 .all-certificates .table-header::after {
@@ -611,16 +668,17 @@
 }
 
 .all-certificates .header-cell {
-  padding: 0 12px;
+  padding: 0 clamp(8px, 1.5vw, 12px); /* Fluid padding */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(4px, 1vw, 8px); /* Fluid gap */
+  white-space: nowrap; /* Keep header text in one line */
 }
 
 .all-certificates .header-cell::before {
   content: '⬥';
   color: var(--cosmic-cyan);
-  font-size: var(--font-xs);
+  font-size: var(--font-xs); /* Fluid */
   opacity: 0.7;
 }
 
@@ -630,6 +688,13 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--cosmic-cyan) rgba(0, 0, 0, 0.2);
+}
+
+/* Make max-height fluid */
+@media (max-height: 800px) {
+  .all-certificates .table-body {
+    max-height: 50vh;
+  }
 }
 
 .all-certificates .table-body::-webkit-scrollbar {
@@ -663,11 +728,13 @@
 .all-certificates .table-row {
   display: grid;
   grid-template-columns: 2fr 2fr 1fr 1fr 1fr 0.8fr;
-  padding: clamp(16px, 3vw, 20px);
+  padding: clamp(16px, 3vw, 20px); /* Fluid padding */
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: var(--transition-smooth);
   animation: table-row-glow 3s ease-in-out infinite;
   position: relative;
+  /* Allow cells to shrink */
+  min-width: 0;
 }
 
 .all-certificates .table-row:hover {
@@ -692,25 +759,30 @@
 }
 
 .all-certificates .table-cell {
-  padding: 0 12px;
+  padding: 0 clamp(8px, 1.5vw, 12px); /* Fluid padding */
   display: flex;
   align-items: center;
   color: var(--cosmic-light);
   text-shadow: var(--text-shadow);
-  font-size: var(--font-base);
+  font-size: var(--font-base); /* Already fluid */
   line-height: 1.4;
+  min-width: 0; /* Allow shrinking */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* USER CELL */
 .all-certificates .user-cell {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: clamp(8px, 2vw, 16px); /* Fluid gap */
+  min-width: 0; /* Allow shrinking */
 }
 
 .all-certificates .user-avatar-small {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 8vw, 48px); /* Fluid size */
+  height: clamp(36px, 8vw, 48px);
   border-radius: 50%;
   overflow: hidden;
   position: relative;
@@ -721,6 +793,7 @@
     rgba(78, 205, 196, 0.3) 0%,
     rgba(138, 43, 226, 0.3) 100%
   );
+  flex-shrink: 0;
 }
 
 .all-certificates .avatar-image-small {
@@ -746,7 +819,7 @@
     var(--cosmic-purple) 100%
   );
   color: var(--cosmic-white);
-  font-size: var(--font-lg);
+  font-size: clamp(16px, 4vw, 20px); /* Fluid font */
   font-weight: 700;
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
@@ -754,6 +827,7 @@
 .all-certificates .user-info-small {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Allow shrinking */
 }
 
 .all-certificates .username {
@@ -761,15 +835,22 @@
   color: var(--cosmic-white);
   margin-bottom: 4px;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
+  font-size: var(--font-base); /* Already fluid */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .user-id {
-  font-size: var(--font-xs);
+  font-size: var(--font-xs); /* Already fluid */
   color: var(--cosmic-cyan);
   font-family: 'Courier New', monospace;
   text-shadow: 0 0 5px var(--cosmic-cyan-glow);
   letter-spacing: 1px;
   opacity: 0.8;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* TEXT CELLS */
@@ -778,12 +859,18 @@
   font-weight: 600;
   color: var(--cosmic-white);
   line-height: 1.4;
+  font-size: var(--font-base); /* Already fluid */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .all-certificates .date-cell {
   font-family: 'Courier New', monospace;
   font-weight: 500;
   opacity: 0.9;
+  font-size: var(--font-sm); /* Already fluid */
+  white-space: nowrap; /* Keep date together */
 }
 
 /* STATUS BADGE */
@@ -791,19 +878,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: var(--font-xs);
+  gap: clamp(4px, 1vw, 6px); /* Fluid gap */
+  padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2vw, 16px); /* Fluid padding */
+  border-radius: clamp(16px, 4vw, 20px); /* Fluid radius */
+  font-size: var(--font-xs); /* Already fluid */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   backdrop-filter: blur(5px);
   border: 1px solid;
   text-shadow: var(--text-shadow);
-  min-width: 90px;
+  min-width: min(90px, 25vw); /* Fluid min width */
   position: relative;
   overflow: hidden;
+  white-space: nowrap; /* Keep status text together */
 }
 
 .all-certificates .status-badge::before {
@@ -846,8 +934,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 20px;
+  gap: clamp(4px, 1vw, 8px); /* Fluid gap */
+  padding: 0 clamp(12px, 2.5vw, 20px); /* Fluid padding */
   background: linear-gradient(
     135deg,
     rgba(78, 205, 196, 0.2) 0%,
@@ -855,11 +943,11 @@
   );
   color: var(--cosmic-cyan);
   border: 1px solid rgba(78, 205, 196, 0.3);
-  border-radius: 12px;
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
-  font-size: var(--font-sm);
+  font-size: var(--font-sm); /* Already fluid */
   text-transform: uppercase;
   letter-spacing: 1px;
   backdrop-filter: blur(10px);
@@ -867,6 +955,7 @@
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
   position: relative;
   overflow: hidden;
+  white-space: nowrap; /* Keep button text together */
 }
 
 .all-certificates .action-btn:hover {
@@ -885,11 +974,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(16px, 3vw, 20px);
+  padding: clamp(16px, 3vw, 20px); /* Fluid padding */
   background: rgba(0, 0, 0, 0.4);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   backdrop-filter: blur(5px);
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: clamp(12px, 3vw, 16px); /* Fluid gap when wrapping */
 }
 
 .all-certificates .table-footer::before {
@@ -912,7 +1003,8 @@
 .all-certificates .pagination {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(8px, 2vw, 12px); /* Fluid gap */
+  flex-wrap: wrap; /* Allow pagination buttons to wrap */
 }
 
 .all-certificates .pagination-btn {
@@ -920,17 +1012,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 20px;
+  gap: clamp(4px, 1vw, 8px); /* Fluid gap */
+  padding: 0 clamp(12px, 2.5vw, 20px); /* Fluid padding */
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: clamp(8px, 2vw, 12px); /* Fluid radius */
   font-weight: 600;
   color: var(--cosmic-light);
   cursor: pointer;
   transition: var(--transition-smooth);
   backdrop-filter: blur(5px);
-  font-size: var(--font-sm);
+  font-size: var(--font-sm); /* Already fluid */
+  white-space: nowrap; /* Keep button text together */
 }
 
 .all-certificates .pagination-btn:hover:not(:disabled) {
@@ -946,19 +1039,21 @@
 }
 
 .all-certificates .page-info {
-  font-size: var(--font-sm);
+  font-size: var(--font-sm); /* Already fluid */
   color: var(--cosmic-light);
   text-shadow: var(--text-shadow);
   font-weight: 500;
-  padding: 0 12px;
+  padding: 0 clamp(8px, 2vw, 12px); /* Fluid padding */
+  white-space: nowrap; /* Keep page info together */
 }
 
 .all-certificates .total-count {
-  font-size: var(--font-sm);
+  font-size: var(--font-sm); /* Already fluid */
   color: var(--cosmic-cyan);
   text-shadow: var(--text-shadow), 0 0 5px var(--cosmic-cyan-glow);
   font-weight: 600;
   letter-spacing: 1px;
+  white-space: nowrap; /* Keep count together */
 }
 
 /* RESPONSIVE DESIGN */
@@ -974,7 +1069,7 @@
   }
   
   .all-certificates .header h1 {
-    font-size: var(--font-xl);
+    font-size: var(--font-xl); /* Already fluid but we can keep */
   }
   
   .all-certificates .header p {

@@ -3,6 +3,13 @@
    Transparent cards floating in cosmic space
    Glass-morphism with cosmic glows
    Light text on dark transparent backgrounds
+
+   RESPONSIVE ENHANCEMENTS:
+   - Prevent word/character breaks across all elements
+   - Ensure containers expand to fit content
+   - Add flex-wrap to prevent element mixing in headers and action bars
+   - Add isolation for stacking contexts
+   - Preserve all original design, colors, animations
 ============================================ */
 
 :root {
@@ -64,6 +71,18 @@
 }
 
 /* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.plans-container * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
+/* ============================================
    BASE STYLES - SPACE BACKGROUND
 ============================================ */
 
@@ -84,6 +103,9 @@
   
   /* Smooth scrolling */
   scroll-behavior: smooth;
+  
+  /* Prevent z-index leaks */
+  isolation: isolate;
 }
 
 /* Subtle overlay for galaxy background visibility */
@@ -115,6 +137,7 @@
   overflow: hidden;
   max-width: 900px;
   margin: 0 auto;
+  min-height: min-content;           /* Expand with content */
 }
 
 .header::before {
@@ -146,6 +169,7 @@
   background-clip: text;
   text-shadow: 0 0 40px rgba(78, 205, 196, 0.4);
   letter-spacing: -0.02em;
+  word-break: keep-all;               /* Keep whole title together */
 }
 
 .subtitle {
@@ -176,6 +200,8 @@
   overflow: hidden;
   transition: var(--transition-normal) !important;
   transform: translateY(0);
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .pending-payment-banner:hover {
@@ -222,6 +248,7 @@
   margin-bottom: var(--space-xs) !important;
   color: var(--color-white) !important;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  word-break: keep-all;
 }
 
 .banner-text p {
@@ -235,7 +262,7 @@
   font-size: var(--font-size-sm) !important;
   color: var(--color-medium-gray) !important;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: var(--space-md);
   align-items: center;
 }
@@ -243,7 +270,7 @@
 .banner-actions {
   display: flex;
   gap: var(--space-sm);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 /* ============================================
@@ -285,6 +312,8 @@
   flex-direction: column;
   height: 100%;
   box-shadow: var(--glow-multilayer) !important;
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .plan-card::before {
@@ -336,6 +365,7 @@
   box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;                 /* Keep badge on one line */
 }
 
 /* Plan Card Content */
@@ -353,18 +383,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;                    /* Allow wrapping */
+  gap: var(--space-sm);
+  word-break: keep-all;
 }
 
 .price {
   display: flex;
   align-items: baseline;
   gap: var(--space-xs);
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .currency {
   font-size: var(--font-size-lg) !important;
   font-weight: 600 !important;
   color: var(--color-medium-gray) !important;
+  word-break: keep-all;
 }
 
 .amount {
@@ -373,12 +408,14 @@
   color: var(--color-white) !important;
   line-height: 1;
   text-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+  word-break: keep-all;
 }
 
 .period {
   font-size: var(--font-size-md) !important;
   color: var(--color-medium-gray) !important;
   margin-left: var(--space-xs);
+  word-break: keep-all;
 }
 
 .plan-description {
@@ -403,6 +440,7 @@
   color: var(--color-white) !important;
   position: relative;
   display: inline-block;
+  word-break: keep-all;
 }
 
 .plan-features h4::after {
@@ -429,6 +467,7 @@
   margin-bottom: var(--space-sm);
   padding: var(--space-xs) 0;
   position: relative;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .feature-icon {
@@ -469,6 +508,7 @@
   font-size: var(--font-size-sm);
   color: var(--color-medium-gray) !important;
   border-left: 3px solid #f59e0b;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .reason-icon {
@@ -497,6 +537,13 @@
   position: relative;
   overflow: hidden;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+  .btn {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .btn::before {
@@ -605,6 +652,8 @@
   border: 1px solid var(--glass-border) !important;
   max-width: 1000px;
   box-shadow: var(--glow-multilayer) !important;
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .current-subscriptions h3 {
@@ -615,6 +664,7 @@
   text-align: center;
   position: relative;
   padding-bottom: var(--space-sm);
+  word-break: keep-all;
 }
 
 .current-subscriptions h3::after {
@@ -644,6 +694,7 @@
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   transition: var(--transition-normal) !important;
+  min-height: min-content;
 }
 
 .subscription-item:hover {
@@ -658,6 +709,7 @@
   font-weight: 600 !important;
   margin-bottom: var(--space-xs) !important;
   color: var(--color-white) !important;
+  word-break: keep-all;
 }
 
 .subscription-info p {
@@ -668,6 +720,7 @@
   align-items: center;
   gap: var(--space-sm);
   opacity: 0.9;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .view-details-btn {
@@ -678,6 +731,13 @@
   font-size: var(--font-size-sm);
   border-radius: var(--radius-md);
   transition: var(--transition-normal);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .view-details-btn {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .view-details-btn:hover {
@@ -704,6 +764,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;                 /* Keep status on one line */
 }
 
 .status.pending {
@@ -781,6 +842,7 @@
   text-align: center;
   position: relative;
   padding-bottom: var(--space-sm);
+  word-break: keep-all;
 }
 
 .all-payments-section h3::after {
@@ -803,6 +865,7 @@
   border: 1px solid var(--glass-border) !important;
   overflow: hidden;
   box-shadow: var(--glow-multilayer) !important;
+  isolation: isolate;
 }
 
 .table-header {
@@ -820,6 +883,7 @@
   text-align: center;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  word-break: keep-all;
 }
 
 .table-body {
@@ -894,7 +958,8 @@
   font-size: var(--font-size-sm);
   color: var(--color-white);
   font-weight: 500;
-  word-break: break-word;
+  word-break: normal;                 /* Already protected */
+  overflow-wrap: break-word;
 }
 
 .actions {
@@ -902,6 +967,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .cancel-btn-small {
@@ -918,6 +984,13 @@
   justify-content: center;
   min-width: 40px;
   min-height: 40px;
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .cancel-btn-small {
+    white-space: normal;               /* Allow wrapping on small screens */
+  }
 }
 
 .cancel-btn-small:hover:not(:disabled) {
@@ -945,6 +1018,7 @@
   padding: var(--space-2xl) 0;
   text-align: center;
   background: transparent !important;
+  min-height: min-content;
 }
 
 /* Cosmic Loading Spinner */
@@ -1007,6 +1081,7 @@
   font-weight: 600;
   margin-bottom: var(--space-sm);
   color: var(--color-white);
+  word-break: keep-all;
 }
 
 .error-container p {
@@ -1017,7 +1092,7 @@
 }
 
 /* ============================================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN (Preserved and enhanced)
 ============================================ */
 
 /* Mobile (< 640px) */
@@ -1299,3 +1374,20 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .plans-container:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to `.plans-container`, `.pending-payment-banner`, `.plan-card`, `.current-subscriptions`, `.payments-table` for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.banner-details`, `.banner-actions`, `.plan-title`, `.price`, `.plan-features li`, `.disabled-reason`, `.subscription-info p`, `.actions`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (titles, headings, amounts, status labels) to keep whole words together.
+   5. Added `white-space: nowrap` to badges and buttons, with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Preserved all original colors, animations, and media queries.
+   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  

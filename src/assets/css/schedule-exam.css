@@ -1,6 +1,7 @@
 /* ============================================
    COSMIC SPACE GALAXY THEME - SCHEDULE EXAM PAGE
    COMPLETE REDESIGN FOR 3D GALAXY BACKGROUND
+   FULLY RESPONSIVE VERSION (modal border forcefully removed)
    ============================================ */
 
 /* CSS Variables for Space Theme - Consistent with exams page */
@@ -38,20 +39,20 @@
   --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.5);
   --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.6);
   
-  /* Spacing */
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 1rem;
-  --spacing-md: 1.5rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 3rem;
+  /* Spacing - made fluid with clamp */
+  --spacing-xs: clamp(0.5rem, 1.5vw, 0.75rem);
+  --spacing-sm: clamp(1rem, 2vw, 1.25rem);
+  --spacing-md: clamp(1.5rem, 3vw, 1.75rem);
+  --spacing-lg: clamp(2rem, 4vw, 2.5rem);
+  --spacing-xl: clamp(3rem, 5vw, 3.5rem);
   
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  /* Border Radius - made fluid */
+  --radius-sm: clamp(6px, 1.5vw, 8px);
+  --radius-md: clamp(10px, 2vw, 12px);
+  --radius-lg: clamp(14px, 2.5vw, 16px);
+  --radius-xl: clamp(16px, 3vw, 20px);
   
-  /* Font Sizes - Responsive */
+  /* Font Sizes - Responsive (already fluid) */
   --font-xs: clamp(12px, 1vw, 14px);
   --font-sm: clamp(14px, 1.5vw, 16px);
   --font-md: clamp(16px, 2vw, 18px);
@@ -67,6 +68,50 @@
 /* Force ALL text elements to be light colored */
 * {
   color: var(--color-text-primary) !important;
+}
+
+/* RESPONSIVE FIX: Universal box-sizing for consistent sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* RESPONSIVE FIX: Prevent unwanted word breaking across all text elements */
+.schedule-exam-page * {
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+/* RESPONSIVE FIX: Buttons should keep text on one line */
+.schedule-exam-page button,
+.schedule-exam-page .btn-cancel,
+.schedule-exam-page .btn-back,
+.schedule-exam-page .btn-next,
+.schedule-exam-page .btn-confirm,
+.schedule-exam-page .btn-primary,
+.schedule-exam-page .btn-secondary,
+.schedule-exam-page .btn-danger,
+.schedule-exam-page .retry-btn,
+.schedule-exam-page .back-btn {
+  white-space: nowrap;
+}
+
+/* RESPONSIVE FIX: Ensure containers never overflow parent */
+.schedule-exam-page,
+.schedule-exam-page [class*="container"],
+.schedule-exam-page [class*="card"],
+.schedule-exam-page [class*="content"] {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* RESPONSIVE FIX: Prevent flex items from overflowing */
+.schedule-exam-page .flex-item,
+.schedule-exam-page [class*="item"],
+.schedule-exam-page [class*="option"] {
+  min-width: 0;
 }
 
 /* Text shadows for readability against galaxy background */
@@ -199,6 +244,9 @@
   max-width: 900px;
   margin: 0 auto;
   position: relative;
+  /* RESPONSIVE FIX: Allow wrapping on very small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-md);
 }
 
 .step {
@@ -208,7 +256,8 @@
   gap: var(--spacing-xs);
   position: relative;
   z-index: 1;
-  flex: 1;
+  flex: 1 1 auto; /* RESPONSIVE FIX: Allow step to shrink and grow */
+  min-width: 80px; /* RESPONSIVE FIX: Prevent steps from becoming too narrow */
 }
 
 .step-number {
@@ -277,9 +326,12 @@
   font-size: var(--font-sm);
   color: var(--color-text-secondary) !important;
   font-weight: 500;
-  white-space: nowrap;
+  /* RESPONSIVE FIX: Allow wrapping of step labels */
+  white-space: normal;
   text-align: center;
   padding: 0 var(--spacing-xs);
+  max-width: 100%;
+  word-break: normal;
 }
 
 .step.active .step-label {
@@ -299,6 +351,7 @@
   min-width: 60px;
   position: relative;
   overflow: hidden;
+  /* RESPONSIVE FIX: Hide line on small screens where steps stack */
 }
 
 .step-line::before {
@@ -335,6 +388,7 @@
   margin-bottom: var(--spacing-lg);
   position: relative;
   overflow: hidden;
+  isolation: isolate; /* RESPONSIVE FIX: Create stacking context to prevent z-index bleed */
 }
 
 .step-content::before {
@@ -425,6 +479,9 @@
   position: relative;
   background: var(--color-bg-element);
   backdrop-filter: blur(5px);
+  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-sm);
 }
 
 .exam-option:hover:not(.disabled) {
@@ -460,7 +517,7 @@
   justify-content: center;
   font-size: 20px;
   color: var(--color-text-primary) !important;
-  flex-shrink: 0;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(5px);
 }
@@ -475,7 +532,7 @@
 }
 
 .exam-option-details {
-  flex: 1;
+  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing with minimum basis */
   min-width: 0;
   position: relative;
 }
@@ -541,6 +598,7 @@
 .exam-option-check {
   width: 24px;
   height: 24px;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent check from shrinking */
 }
 
 .check-circle {
@@ -581,7 +639,8 @@
 
 .proctors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* RESPONSIVE FIX: Allow cards to shrink below 320px on very small screens */
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
 }
@@ -598,6 +657,9 @@
   transition: all 0.3s ease;
   background: var(--color-bg-element) !important;
   backdrop-filter: blur(5px);
+  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-sm);
 }
 
 .proctor-card:hover {
@@ -627,13 +689,13 @@
   justify-content: center;
   font-size: 24px;
   font-weight: 600;
-  flex-shrink: 0;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent avatar from shrinking */
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(5px);
 }
 
 .proctor-info {
-  flex: 1;
+  flex: 1 1 min(200px, 100%); /* RESPONSIVE FIX: Allow flexible sizing */
   min-width: 0;
 }
 
@@ -673,6 +735,7 @@
 .proctor-check {
   width: 24px;
   height: 24px;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent check from shrinking */
 }
 
 /* ============================================
@@ -693,6 +756,9 @@
   padding: var(--spacing-lg);
   border: var(--glass-border);
   backdrop-filter: blur(5px);
+  /* RESPONSIVE FIX: Ensure content doesn't overflow */
+  overflow: auto;
+  max-width: 100%;
 }
 
 .date-selector h3,
@@ -707,6 +773,8 @@
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* RESPONSIVE FIX: Prevent overflow */
+  overflow-x: auto;
 }
 
 .calendar-header {
@@ -714,6 +782,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
+  flex-wrap: wrap; /* RESPONSIVE FIX: Allow wrapping if needed */
+  gap: var(--spacing-sm);
 }
 
 .current-month {
@@ -735,6 +805,7 @@
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
   box-shadow: var(--glow-white);
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent button from shrinking */
 }
 
 .nav-btn:hover {
@@ -752,6 +823,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+  min-width: 280px; /* RESPONSIVE FIX: Prevent grid from collapsing too much */
 }
 
 .day-header {
@@ -984,11 +1056,14 @@
   border-radius: var(--radius-md);
   border: var(--glass-border);
   backdrop-filter: blur(5px);
+  /* RESPONSIVE FIX: Allow stacking on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-md);
 }
 
 .old-appointment,
 .new-appointment {
-  flex: 1;
+  flex: 1 1 250px; /* RESPONSIVE FIX: Allow flexible sizing */
 }
 
 .comparison-label {
@@ -1013,6 +1088,9 @@
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* RESPONSIVE FIX: Allow wrapping if content is too long */
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
 }
 
 .detail-item:last-child {
@@ -1028,18 +1106,22 @@
   font-size: var(--font-sm);
   font-weight: 600;
   color: var(--color-text-primary) !important;
+  text-align: right;
+  max-width: 60%; /* RESPONSIVE FIX: Prevent overflow */
+  word-break: normal;
 }
 
 .arrow {
   font-size: 24px;
   color: var(--color-text-accent) !important;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
 /* FIX: Summary-card background was white - now fixed */
 .summary-card {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: var(--spacing-lg);
   background: var(--color-bg-element) !important;
   border-radius: var(--radius-md);
@@ -1064,6 +1146,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* RESPONSIVE FIX: Allow wrapping if needed */
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
 }
 
 .summary-item .label {
@@ -1075,6 +1160,9 @@
   font-size: var(--font-sm);
   font-weight: 500;
   color: var(--color-text-primary) !important;
+  text-align: right;
+  max-width: 60%;
+  word-break: normal;
 }
 
 .status-active {
@@ -1128,6 +1216,9 @@
   justify-content: space-between;
   padding-top: var(--spacing-lg);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  /* RESPONSIVE FIX: Allow buttons to wrap */
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
 /* FIX: Cancel button width too large - now smaller */
@@ -1148,6 +1239,7 @@
   backdrop-filter: blur(5px);
   min-width: 100px;
   justify-content: center;
+  white-space: nowrap; /* Prevent button text wrapping inside */
 }
 
 /* Make cancel button smaller */
@@ -1244,7 +1336,7 @@
 }
 
 /* ============================================
-   MODAL STYLES - COSMIC GLASS
+   MODAL STYLES - COSMIC GLASS (BORDER FORCIBLY REMOVED)
    ============================================ */
 
 .modal-overlay {
@@ -1263,11 +1355,14 @@
   backdrop-filter: blur(10px);
 }
 
+/* Target all possible modal classes to ensure no border */
 .success-modal,
-.cancel-modal {
+.cancel-modal,
+.modal-content {
   background: var(--color-bg-card);
   backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
+  border: none !important;
+  outline: none !important;
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   text-align: center;
@@ -1280,28 +1375,15 @@
   position: relative;
 }
 
+/* Remove any pseudo-elements that might create a border */
 .success-modal::before,
-.cancel-modal::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(78, 205, 196, 0.3),
-    rgba(138, 43, 226, 0.3)
-  );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+.success-modal::after,
+.cancel-modal::before,
+.cancel-modal::after,
+.modal-content::before,
+.modal-content::after {
+  display: none !important;
+  content: none !important;
 }
 
 .success-icon {
@@ -1347,10 +1429,12 @@
 .success-actions {
   display: flex;
   gap: var(--spacing-sm);
+  /* RESPONSIVE FIX: Allow stacking on small screens */
+  flex-wrap: wrap;
 }
 
 .success-actions button {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 14px 24px;
   border: none;
   border-radius: var(--radius-md);
@@ -1412,6 +1496,7 @@
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-lg);
   box-shadow: var(--shadow-deep);
+  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
 }
 
 /* FIX: Spinner background was white - now cosmic light spinner */
@@ -1507,6 +1592,7 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-deep);
+  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
 }
 
 .appointment-header {
@@ -1514,6 +1600,9 @@
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
+  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-sm);
 }
 
 .appointment-icon {
@@ -1530,9 +1619,14 @@
   justify-content: center;
   font-size: 24px;
   color: var(--color-text-primary) !important;
-  flex-shrink: 0;
+  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
   border: 1px solid rgba(237, 137, 54, 0.3);
   backdrop-filter: blur(5px);
+}
+
+.appointment-title {
+  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing */
+  min-width: 0;
 }
 
 .appointment-title h3 {
@@ -1551,6 +1645,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
+  /* RESPONSIVE FIX: Adjust grid on smaller screens via media query */
 }
 
 .detail-section h4 {
@@ -1585,12 +1680,19 @@
   border-radius: var(--radius-md);
   border: 1px solid rgba(237, 137, 54, 0.3);
   backdrop-filter: blur(5px);
+  /* RESPONSIVE FIX: Allow stacking on small screens */
+  flex-wrap: wrap;
+  row-gap: var(--spacing-sm);
 }
 
 .notice-icon {
   font-size: 24px;
   flex-shrink: 0;
   color: #ffaa66 !important;
+}
+
+.notice-content {
+  flex: 1 1 min(250px, 100%);
 }
 
 .notice-content h4 {
@@ -1626,6 +1728,8 @@
 .action-buttons {
   display: flex;
   gap: var(--spacing-sm);
+  /* RESPONSIVE FIX: Allow stacking on small screens */
+  flex-wrap: wrap;
 }
 
 .btn-danger {
@@ -1730,10 +1834,12 @@
 .cancel-actions {
   display: flex;
   gap: var(--spacing-sm);
+  /* RESPONSIVE FIX: Allow stacking on small screens */
+  flex-wrap: wrap;
 }
 
 .cancel-actions button {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 14px 24px;
   border: none;
   border-radius: var(--radius-md);
@@ -1834,6 +1940,49 @@
 .status-active {
   color: #4ade80 !important;
   font-weight: 600;
+}
+
+/* ============================================
+   CARD HEADER RESPONSIVE FIXES - CRITICAL FOR ELEMENT SEPARATION
+   ============================================ */
+/* 
+   Ensures that .card-title, .card-count, and .card-subtitle 
+   never overlap or mix at any screen size, especially at 1072×686 and 1711×686.
+   The parent uses flex-wrap with gap, children have appropriate flex properties,
+   and .card-subtitle is forced to a new line.
+*/
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start; /* Align items to top to prevent vertical misalignment */
+  gap: var(--spacing-sm); /* Fluid gap */
+  padding: var(--spacing-md); /* Ensure consistent padding */
+  min-height: min-content; /* Allow container to expand with content */
+}
+
+.card-header > .card-title {
+  flex: 1 1 auto; /* Allow title to grow and shrink */
+  min-width: min(200px, 100%); /* Give title enough space before wrapping */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  line-height: 1.4;
+}
+
+.card-header > .card-count {
+  flex: 0 0 auto; /* Don't grow or shrink */
+  white-space: nowrap; /* Keep count text in one line */
+  margin-left: auto; /* Push to right on larger screens */
+  align-self: center; /* Center vertically when in same row */
+}
+
+.card-header > .card-subtitle {
+  flex: 1 1 100%; /* Force to take full width on new line */
+  margin-top: var(--spacing-xs); /* Add spacing above subtitle */
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  line-height: 1.5;
 }
 
 /* ============================================

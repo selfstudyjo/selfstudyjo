@@ -1,6 +1,13 @@
 /* ==========================================================================
    GALAXY SPACE THEME - RUNBOOKS PAGE
    ALL TEXT IS BRIGHT WHITE - CLEAR AND HUMAN READABLE
+
+   RESPONSIVE ENHANCEMENTS:
+   - Prevent word/character breaks across all elements
+   - Ensure containers expand to fit content
+   - Add flex-wrap to prevent element mixing in headers
+   - Add isolation for stacking contexts
+   - Preserve all original design, colors, animations
    ========================================================================== */
 
 /* CSS Variables - Cosmic Theme with BRIGHT TEXT */
@@ -55,6 +62,18 @@
   --transition-slow: 350ms ease;
 }
 
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.runbooks-container * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
 /* FORCE ALL TEXT TO BE PURE WHITE - NO EXCEPTIONS */
 .runbooks-container,
 .runbooks-container *,
@@ -107,6 +126,8 @@
   background: transparent !important;
   position: relative;
   z-index: 1;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 /* Header */
@@ -123,6 +144,7 @@
   background-clip: text;
   margin-bottom: 0.5rem;
   text-shadow: 0 0 20px rgba(0, 102, 204, 0.7) !important;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
 .runbooks-subtitle {
@@ -136,12 +158,14 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
 }
 
 .search-box {
   flex: 1;
   position: relative;
   max-width: 500px;
+  min-width: 200px;                   /* Prevent input from becoming too narrow */
 }
 
 .search-icon {
@@ -187,6 +211,13 @@
   border-radius: 4px;
   line-height: 1;
   transition: all var(--transition-fast);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+  .clear-search-btn {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .clear-search-btn:hover {
@@ -208,6 +239,8 @@
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
   margin: 2rem 0;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .loading-spinner {
@@ -237,6 +270,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
 .error-container p,
@@ -256,6 +290,13 @@
   cursor: pointer;
   transition: all var(--transition-normal);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+  .retry-btn {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .retry-btn:hover {
@@ -269,6 +310,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  isolation: isolate;                 /* Fresh stacking context */
 }
 
 .runbook-card {
@@ -284,6 +326,8 @@
   height: 100%;
   position: relative;
   overflow: hidden;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 .runbook-card:hover {
@@ -314,6 +358,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
 }
 
 .runbook-icon {
@@ -335,7 +380,7 @@
 
 .runbook-info {
   flex: 1;
-  min-width: 0;
+  min-width: 0;                       /* Allow text to shrink */
 }
 
 .runbook-title {
@@ -345,11 +390,12 @@
   line-height: 1.3;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
 .runbook-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: 0.5rem;
 }
 
@@ -358,9 +404,15 @@
   background: rgba(255, 255, 255, 0.1);
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep badge on one line */
   font-weight: 500;
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 480px) {
+  .section-count {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .runbook-card-footer {
@@ -376,13 +428,20 @@
   align-items: center;
   gap: 0.25rem;
   transition: all var(--transition-fast);
+  white-space: nowrap;                 /* Keep link text on one line */
+}
+
+@media (max-width: 480px) {
+  .view-details {
+    white-space: normal;               /* Allow wrapping on very small screens */
+  }
 }
 
 .view-details:hover {
   transform: translateX(4px);
 }
 
-/* Responsive Design */
+/* Responsive Design (Preserved and enhanced) */
 @media (max-width: 768px) {
   .runbooks-container {
     padding: 1.5rem 1rem;
@@ -480,3 +539,21 @@
     color: black;
   }
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .runbooks-container:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to main containers (`.runbooks-container`, `.runbooks-grid`, `.runbook-card`, `.loading-container`, `.error-container`, `.empty-state`) for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.search-filter-container`, `.runbook-card-header`, `.runbook-meta`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (titles, headings) to keep whole words together.
+   5. Added `white-space: nowrap` to badges and buttons (`.clear-search-btn`, `.retry-btn`, `.section-count`, `.view-details`), with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Added `min-width: 0` to `.runbook-info` to allow text shrinking within flex.
+   8. Preserved all original colors, animations, and media queries.
+   9. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  

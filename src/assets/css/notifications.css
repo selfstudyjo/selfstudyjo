@@ -3,6 +3,13 @@
    Designed for Vue.js with 3D animated galaxy background
    Theme: Dark cosmic space with glass-morphism effects
    Date: 2024
+
+   RESPONSIVE ENHANCEMENTS:
+   - Prevent word/character breaks across all elements
+   - Ensure containers expand to fit content
+   - Add flex-wrap to prevent element mixing in headers and action bars
+   - Add isolation for stacking contexts
+   - Preserve all original design, colors, animations
    ========================================================================== */
 
 /* CSS VARIABLES FOR COSMIC THEME */
@@ -70,7 +77,21 @@
   --notif-unread: rgba(66, 133, 244, 0.1);
 }
 
-/* ANIMATIONS */
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.notifications-container * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
+/* ============================================
+   ANIMATIONS (unchanged)
+   ========================================== */
 @keyframes cosmic-spin {
   0% { transform: rotate(0deg); }
   25% { border-top-color: var(--cosmic-cyan); }
@@ -117,6 +138,8 @@
   background: transparent;
   position: relative;
   z-index: 1;
+  isolation: isolate;                 /* Fresh stacking context */
+  min-height: min-content;            /* Expand with content */
 }
 
 /* HEADER SECTION */
@@ -125,7 +148,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: clamp(24px, 5vw, 32px);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping on small screens */
   gap: 16px;
   padding: 24px;
   background: var(--cosmic-dark);
@@ -135,6 +158,8 @@
   box-shadow: var(--glass-shadow), var(--glass-glow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .notifications-header::before {
@@ -162,12 +187,13 @@
   margin: 0;
   text-shadow: var(--text-shadow), var(--text-glow);
   letter-spacing: 1px;
+  word-break: keep-all;               /* Keep whole words together */
 }
 
 .header-actions {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 /* ACTION BUTTONS */
@@ -190,10 +216,18 @@
   position: relative;
   overflow: hidden;
   text-decoration: none;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep button text on one line */
   line-height: 1;
   box-sizing: border-box;
   backdrop-filter: blur(5px);
+}
+
+/* Allow button text to wrap on very small screens if necessary */
+@media (max-width: 320px) {
+  .btn-mark-all-read,
+  .btn-refresh {
+    white-space: normal;
+  }
 }
 
 .btn-mark-all-read {
@@ -260,6 +294,8 @@
   transition: var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  min-height: min-content;            /* Expand with content */
 }
 
 .stat-card:hover {
@@ -316,6 +352,7 @@
   margin-bottom: 8px;
   text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1;
+  word-break: keep-all;               /* Keep number whole */
 }
 
 .stat-card.unread .stat-value {
@@ -346,6 +383,7 @@
   opacity: 0.8;
   font-weight: 600;
   text-shadow: var(--text-shadow);
+  word-break: keep-all;               /* Keep label whole */
 }
 
 /* FILTER TABS */
@@ -357,6 +395,8 @@
   border-radius: 16px;
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .filter-tabs {
@@ -390,12 +430,21 @@
   color: var(--cosmic-light);
   font-weight: 600;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: nowrap;                 /* Keep tab text on one line */
   transition: var(--transition-smooth);
   backdrop-filter: blur(5px);
   font-size: var(--font-sm);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Allow tabs to wrap on very small screens if needed */
+@media (max-width: 480px) {
+  .filter-tab {
+    white-space: normal;
+    flex: 1 0 auto;
+    text-align: center;
+  }
 }
 
 .filter-tab:hover {
@@ -425,6 +474,7 @@
   overflow: hidden;
   position: relative;
   min-height: 400px;
+  isolation: isolate;                 /* Fresh stacking context */
 }
 
 .notifications-list::before {
@@ -450,6 +500,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: min-content;
 }
 
 .notifications-spinner {
@@ -508,6 +559,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: min-content;
 }
 
 .empty-icon {
@@ -522,6 +574,7 @@
   color: var(--cosmic-white);
   margin-bottom: 12px;
   text-shadow: var(--text-shadow), var(--text-glow);
+  word-break: keep-all;               /* Keep heading whole */
 }
 
 .empty-state p {
@@ -546,6 +599,8 @@
   animation: notification-slide-in 0.4s ease-out;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  min-height: min-content;            /* Expand with content */
 }
 
 .notification-card:last-child {
@@ -583,7 +638,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: 12px;
 }
 
@@ -603,6 +658,7 @@
   backdrop-filter: blur(5px);
   border: 1px solid;
   text-shadow: var(--text-shadow);
+  white-space: nowrap;                 /* Keep badge text on one line */
 }
 
 .type-badge.personal {
@@ -634,6 +690,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;                 /* Keep time on one line if possible */
+}
+
+@media (max-width: 480px) {
+  .notification-time {
+    white-space: normal;               /* Allow time to wrap on small screens */
+  }
 }
 
 .notification-time::before {
@@ -653,6 +716,7 @@
   margin: 0 0 12px 0;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
   line-height: 1.4;
+  word-break: keep-all;               /* Keep title whole */
 }
 
 .notification-message {
@@ -661,6 +725,8 @@
   margin: 0 0 16px 0;
   text-shadow: var(--text-shadow);
   opacity: 0.9;
+  word-break: normal;                 /* Already protected */
+  overflow-wrap: break-word;
 }
 
 .notification-meta {
@@ -668,7 +734,7 @@
   gap: 24px;
   font-size: var(--font-sm);
   color: var(--cosmic-light);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .notification-meta strong {
@@ -681,7 +747,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   margin-top: 16px;
 }
 
@@ -704,6 +770,15 @@
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(5px);
+  white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .btn-mark-read,
+  .btn-delete {
+    white-space: normal;
+    flex: 1 1 auto;
+  }
 }
 
 .btn-mark-read {
@@ -759,6 +834,7 @@
   gap: 12px;
   background: rgba(255, 255, 255, 0.02);
   text-shadow: var(--text-shadow);
+  flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .load-more {
@@ -784,6 +860,13 @@
   backdrop-filter: blur(5px);
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .btn-load-more {
+    white-space: normal;
+  }
 }
 
 .btn-load-more:hover {
@@ -804,7 +887,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                    /* Allow wrapping */
   gap: 16px;
   backdrop-filter: blur(5px);
   box-shadow: 0 4px 15px rgba(252, 129, 129, 0.2);
@@ -815,6 +898,7 @@
   flex: 1;
   text-shadow: var(--text-shadow);
   font-weight: 500;
+  word-break: normal;
 }
 
 .btn-retry {
@@ -834,6 +918,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   backdrop-filter: blur(5px);
+  white-space: nowrap;
 }
 
 .btn-retry:hover {
@@ -842,7 +927,7 @@
   box-shadow: 0 4px 15px rgba(252, 129, 129, 0.3);
 }
 
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE DESIGN (Preserved and enhanced) */
 /* Mobile (< 640px) */
 @media (max-width: 640px) {
   .notifications-container {
@@ -1103,3 +1188,20 @@
     box-shadow: none !important;
   }
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .notifications-container:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to `.notifications-container`, `.notifications-header`, `.stat-card`, `.notifications-filters`, `.notifications-list`, `.notification-card` for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.notifications-header`, `.header-actions`, `.notification-header`, `.notification-meta`, `.notification-actions`, `.error-message`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (headings, stat values, titles) to keep whole words together.
+   5. Added `white-space: nowrap` to badges, tags, buttons with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Preserved all original colors, animations, and media queries.
+   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  

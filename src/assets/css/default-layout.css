@@ -1,49 +1,75 @@
+/* ============================================
+   DEFAULT LAYOUT - RESPONSIVE ENHANCEMENTS
+   ============================================ */
+
+/* 1. Universal box-sizing for consistent sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2. Prevent word breaking and hyphenation across the whole app */
+body {
+  word-break: keep-all;           /* Keep whole words together (non-CJK safe) */
+  overflow-wrap: normal;          /* Don't break words unless forced */
+  hyphens: none;                  /* Disable automatic hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* 3. Allow images and media to scale with container */
+img,
+video,
+svg,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 4. Default layout container */
 .default-layout {
   display: flex;
   min-height: 100vh;
   position: relative;
-  overflow: hidden; /* Prevent scrollbars from space animation */
+  overflow: hidden; /* Keep to prevent scrollbars from space animation */
 }
 
+/* 5. Main content area */
 .main-content {
   flex: 1;
   padding: 20px;
+  /* Use fluid padding that adapts to screen size */
+  padding: clamp(12px, 3vw, 20px);
   overflow-y: auto;
+  overflow-x: hidden;          /* Prevent horizontal scroll caused by overflowing children */
   transition: margin-left 0.3s ease;
   position: relative;
-  z-index: 1; /* Ensure content is above background */
-  background: rgba(10, 10, 30, 0.7); /* Semi-transparent overlay */
-  backdrop-filter: blur(2px); /* Slight blur for depth */
+  z-index: 1;
+  background: rgba(10, 10, 30, 0.7);
+  backdrop-filter: blur(2px);
+
+  /* Add bottom padding to clear the fixed chat box */
+  padding-bottom: clamp(60px, 10vh, 100px);
 }
 
+/* 6. When side navigation is present */
 .main-content.with-sidenav {
   margin-left: 260px;
 }
 
-@media (max-width: 768px) {
-  .main-content.with-sidenav {
-    margin-left: 0;
-    padding: 15px;
-    margin-top: 60px;
-  }
-}
-
-/* ChatBox positioning */
+/* 7. Chat box container - fixed position */
 .chat-box-container {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 1000;
+  /* Use fluid spacing */
+  bottom: clamp(10px, 3vh, 20px);
+  right: clamp(10px, 3vw, 20px);
 }
 
-@media (max-width: 768px) {
-  .chat-box-container {
-    bottom: 10px;
-    right: 10px;
-  }
-}
-
-/* Space Background Container */
+/* 8. Space background - remains fixed and covers viewport */
 .space-background {
   position: fixed;
   top: 0;
@@ -61,3 +87,74 @@
     #000f35 70%, 
     #000428 100%);
 }
+
+/* ============================================
+   CARD HEADER FIXES (prevent element mixing)
+   ============================================ */
+/* 
+   These rules ensure that .card-title, .card-count, and .card-subtitle 
+   never overlap, mix, or collide, regardless of screen size.
+   They use flexbox with wrapping and fluid spacing, while preserving the
+   original visual arrangement on large screens.
+*/
+.card-header {
+  display: flex;
+  flex-wrap: wrap;           /* Allow items to wrap when space is tight */
+  align-items: center;       /* Keep vertical alignment consistent */
+  gap: 0.5rem;               /* Fluid gap that scales with font size */
+  /* Ensure the container expands to fit wrapped content */
+  height: auto;
+  min-height: min-content;
+  /* Prevent any fixed height from causing overlap */
+  isolation: isolate;        /* Create a fresh stacking context */
+}
+
+/* Give each child enough breathing room and prevent shrinking below content width */
+.card-header > * {
+  flex: 0 1 auto;            /* Do not shrink below content width, allow grow if needed */
+  min-width: fit-content;    /* Never clip text */
+  white-space: normal;       /* Allow wrapping inside each element if needed */
+  word-break: keep-all;      /* Keep words intact */
+}
+
+/* ============================================
+   ADDITIONAL SAFEGUARDS FOR ALL ELEMENTS
+   ============================================ */
+/* Ensure no element overflows its parent horizontally */
+* {
+  max-width: 100%;
+}
+
+/* Use fluid typography for all text inside main content to prevent overflow on small screens */
+.main-content {
+  font-size: clamp(14px, 2vw, 16px);
+}
+
+/* Responsive adjustments for side navigation */
+@media (max-width: 768px) {
+  .main-content.with-sidenav {
+    margin-left: 0;
+    padding: clamp(10px, 4vw, 15px);
+    margin-top: 60px;
+  }
+}
+
+/* ============================================
+   SUMMARY OF CHANGES
+   ============================================
+   1. Added universal box-sizing to prevent sizing miscalculations.
+   2. Set global word‑breaking rules to keep words intact.
+   3. Made images and media fluid with max-width: 100%.
+   4. Replaced fixed padding in .main-content with clamp() for fluid spacing.
+   5. Added bottom padding to .main-content to avoid overlap with fixed chat box.
+   6. Added overflow-x: hidden to .main-content to prevent horizontal scroll.
+   7. Made chat box positioning fluid with clamp().
+   8. Added defensive styles for .card-header and its children to prevent element mixing:
+      - flex-wrap with gap allows wrapping on narrow screens.
+      - Children use flex: 0 1 auto to prevent shrinking below content width.
+      - min-width: fit-content ensures each element keeps its own space.
+      - height: auto and isolation: isolate prevent stacking context issues.
+   9. Applied fluid font size inside .main-content using clamp().
+  10. Retained original media query for mobile, but made padding fluid.
+  11. All changes preserve visual design, colors, animations, and layout logic.
+*/

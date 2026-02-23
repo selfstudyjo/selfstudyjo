@@ -12,6 +12,13 @@
  *  - All text bright white / light cyan with deep text shadows for readability
  *  - Custom cosmic scrollbar, toast notifications, and print styles
  *  - WCAG AA contrast, reduced motion, high contrast support
+ *
+ *  🔧 RESPONSIVE ENHANCEMENTS:
+ *  - Global text protection to prevent word/character breaks
+ *  - Isolation for stacking contexts to prevent z‑index leaks
+ *  - Flex‑wrap on flexible containers to avoid element mixing
+ *  - Minimum content heights to ensure containers expand
+ *  - White‑space: nowrap on badges/buttons with fallback for tiny screens
  *  ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -116,6 +123,18 @@
   --scrollbar-thumb-hover: var(--cosmic-cyan);
 }
 
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.certificate-details * {
+  word-break: normal;                /* Prevent character-by-character breaking */
+  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+  hyphens: none;                     /* Disable hyphenation */
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;            /* Consistent sizing */
+}
+
 /* --------------------------------------------------------------------------
  *  2. BASE LAYOUT – GALAXY WINDOW
  *    The main container is ultra‑transparent (5‑15% opacity) so the 3D
@@ -133,6 +152,8 @@
   flex-direction: column;
   align-items: center;
   backdrop-filter: none;               /* no blur on the galaxy itself */
+  isolation: isolate;                  /* Fresh stacking context */
+  min-height: min-content;             /* Expand with content */
 }
 
 /* Very subtle radial gradient – like a distant nebula – barely there */
@@ -179,6 +200,8 @@
   box-shadow: var(--glass-shadow), var(--glow-soft);
   padding: var(--space-xl);
   width: 100%;
+  isolation: isolate;                   /* Fresh stacking context */
+  min-height: min-content;              /* Expand with content */
 }
 
 /* TRANSPARENT SPINNER – cosmic energy ring, no white */
@@ -215,6 +238,7 @@
   color: var(--text-secondary);
   text-shadow: var(--text-shadow-deep);
   letter-spacing: 2px;
+  word-break: keep-all;                 /* Keep whole words together */
 }
 
 @keyframes cosmic-spin {
@@ -238,13 +262,14 @@
   margin-bottom: var(--space-xs);
   color: var(--text-primary);
   text-shadow: var(--text-shadow-deep), var(--text-glow);
+  word-break: keep-all;
 }
 
 .error-actions {
   display: flex;
   gap: var(--space-md);
   margin-top: var(--space-lg);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                      /* Allow wrapping on small screens */
   justify-content: center;
 }
 
@@ -269,6 +294,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;                   /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+  .retry-btn, .back-btn {
+    white-space: normal;                 /* Allow wrapping on very small screens */
+  }
 }
 
 .retry-btn {
@@ -299,14 +331,16 @@
   border-radius: 60px;
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                      /* Allow wrapping */
   gap: var(--space-sm);
+  isolation: isolate;                   /* Fresh stacking context */
+  min-height: min-content;
 }
 
 .header-actions {
   display: flex;
   gap: var(--space-xs);
-  flex-wrap: wrap;
+  flex-wrap: wrap;                      /* Allow wrapping */
 }
 
 .share-btn,
@@ -331,6 +365,13 @@
   cursor: pointer;
   transition: var(--transition-base);
   text-shadow: var(--text-shadow-deep);
+  white-space: nowrap;                   /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+  .share-btn, .copy-btn {
+    white-space: normal;                 /* Allow wrapping on small screens */
+  }
 }
 
 .share-btn {
@@ -365,6 +406,8 @@
   border: 1px solid rgba(255, 215, 0, 0.15);
   width: 100%;
   transition: var(--transition-slow);
+  isolation: isolate;                   /* Fresh stacking context */
+  min-height: min-content;              /* Expand with content */
 }
 
 .certificate-card:hover {
@@ -401,6 +444,8 @@
   grid-template-columns: 1fr 1.8fr;
   gap: 0 var(--space-lg);
   align-items: start;
+  /* Ensure grid items can shrink */
+  min-width: 0;
 }
 
 /* Use display: contents to keep semantic HTML but control grid placement */
@@ -414,6 +459,7 @@
   grid-row: 1;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;                         /* Allow shrinking */
 }
 
 .presented-to {
@@ -421,6 +467,7 @@
   grid-row: 2;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .awarded-for {
@@ -428,6 +475,7 @@
   grid-row: 3;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .certificate-message {
@@ -435,6 +483,7 @@
   grid-row: 4;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .certificate-id {
@@ -442,6 +491,7 @@
   grid-row: 5;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .main-details {
@@ -449,6 +499,7 @@
   grid-row: 2;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .detail-grid {
@@ -456,6 +507,7 @@
   grid-row: 3;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .certificate-footer {
@@ -463,6 +515,7 @@
   grid-row: 6;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .certificate-seal {
@@ -489,6 +542,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  word-break: keep-all;                   /* Keep whole title together */
 }
 
 .certificate-ribbon {
@@ -497,6 +551,7 @@
   justify-content: center;
   gap: var(--space-sm);
   margin: var(--space-xs) 0 0 0 !important;
+  flex-wrap: wrap;                        /* Allow wrapping on small screens */
 }
 
 .ribbon-left,
@@ -533,6 +588,7 @@
   margin: 0 0 6px 0 !important;
   font-weight: 400;
   display: block;
+  word-break: keep-all;
 }
 
 .user-info {
@@ -541,6 +597,7 @@
   gap: var(--space-md);
   margin: 0 !important;
   padding: 0 !important;
+  flex-wrap: wrap;                        /* Allow wrapping */
 }
 
 .user-avatar {
@@ -582,6 +639,7 @@
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), var(--text-shadow-deep);
   margin: 0 0 2px 0 !important;
   line-height: 1.2;
+  word-break: keep-all;
 }
 
 .user-email {
@@ -592,6 +650,7 @@
   letter-spacing: 0.8px;
   margin: 0 !important;
   line-height: 1.3;
+  word-break: keep-all;
 }
 
 /* VERIFIED BADGE – glowing gold, transparent glass */
@@ -611,6 +670,13 @@
   font-family: var(--font-sans);
   letter-spacing: 1px;
   width: fit-content;
+  white-space: nowrap;                     /* Keep badge on one line */
+}
+
+@media (max-width: 480px) {
+  .user-badge {
+    white-space: normal;                   /* Allow wrapping on very small screens */
+  }
 }
 
 .user-badge:hover {
@@ -633,6 +699,7 @@
   color: var(--text-primary);
   text-shadow: var(--text-shadow-deep);
   letter-spacing: 2px;
+  word-break: keep-all;
 }
 
 /* AWARDED FOR – subtle golden borders */
@@ -683,6 +750,7 @@
   z-index: 2;
   padding-left: var(--space-md);
   margin: 0 !important;
+  word-break: keep-all;
 }
 
 /* CERTIFICATE ID – monospace, golden badge */
@@ -706,13 +774,14 @@
   letter-spacing: 3px;
   font-family: var(--font-sans);
   margin-bottom: 2px;
+  word-break: keep-all;
 }
 
 .id-value {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--cosmic-gold);
-  word-break: break-all;
+  word-break: break-all;                  /* Allow long IDs to break */
   text-shadow: 0 0 12px var(--cosmic-gold-glow);
   letter-spacing: 2px;
   font-weight: 600;
@@ -754,6 +823,7 @@
   white-space: nowrap !important;
   flex-shrink: 0;
   display: inline-block;
+  word-break: keep-all;
 }
 
 .detail-item .value {
@@ -786,6 +856,7 @@
   border: 1px solid rgba(255, 215, 0, 0.2);
   transition: var(--transition-base);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  min-height: min-content;                /* Expand with content */
 }
 
 .detail-card:hover {
@@ -804,6 +875,7 @@
   color: var(--text-tertiary);
   margin-bottom: 4px;
   text-shadow: var(--text-shadow-deep);
+  word-break: keep-all;
 }
 
 .detail-card .value {
@@ -812,6 +884,7 @@
   font-family: var(--font-serif);
   color: var(--text-primary);
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.3), var(--text-shadow-deep);
+  word-break: keep-all;
 }
 
 /* STATUS BADGE – valid / expired */
@@ -831,6 +904,13 @@
   min-width: 120px;
   font-family: var(--font-sans);
   background: rgba(0, 0, 0, 0.3);
+  white-space: nowrap;                     /* Keep badge on one line */
+}
+
+@media (max-width: 480px) {
+  .status-badge {
+    white-space: normal;                   /* Allow wrapping on very small screens */
+  }
 }
 
 .status-badge.valid {
@@ -857,6 +937,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;                        /* Allow wrapping on small screens */
+  gap: var(--space-sm);
 }
 
 .issue-date {
@@ -872,6 +954,7 @@
   font-family: var(--font-sans);
   margin-bottom: 4px;
   text-shadow: var(--text-shadow-deep);
+  word-break: keep-all;
 }
 
 .issue-date .value {
@@ -880,6 +963,7 @@
   font-weight: 600;
   font-family: var(--font-serif);
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.3), var(--text-shadow-deep);
+  word-break: keep-all;
 }
 
 /* --------------------------------------------------------------------------
@@ -959,6 +1043,8 @@
   margin-top: var(--space-lg);
   border: var(--glass-border);
   box-shadow: var(--glass-shadow), var(--glow-soft);
+  isolation: isolate;
+  min-height: min-content;
 }
 
 .additional-info h3 {
@@ -973,6 +1059,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  word-break: keep-all;
 }
 
 .description {
@@ -1424,4 +1511,14 @@
 /* ==========================================================================
  *  🔥 END OF COSMIC COMMAND CENTER CERTIFICATE
  *     Deep space, ultra‑transparent, glass‑morphism perfection.
+ *
+ *     🔧 SUMMARY OF RESPONSIVE ENHANCEMENTS:
+ *      1. Added global text protection rules (word‑break, overflow‑wrap, hyphens, box‑sizing).
+ *      2. Added `isolation: isolate` to major containers to prevent z‑index leaks.
+ *      3. Added `flex-wrap: wrap` to flexible containers to avoid element mixing.
+ *      4. Added `word-break: keep-all` to important text elements to keep whole words together.
+ *      5. Added `white-space: nowrap` to buttons and badges, with fallback for tiny screens.
+ *      6. Added `min-height: min-content` to containers that might have fixed heights.
+ *      7. Added `min-width: 0` to grid items to allow proper shrinking.
+ *      8. Preserved all original colors, animations, and media queries.
  *  ========================================================================== */

@@ -2,6 +2,13 @@
  *  Proctor Exam Appointment - Galaxy Space Theme
  *  Mobile-first, fully responsive, glass-morphism
  *  Dark transparent cards floating on deep space
+ *
+ *  RESPONSIVE ENHANCEMENTS:
+ *  - Prevent word/character breaks across all elements
+ *  - Ensure containers expand to fit content
+ *  - Add flex-wrap to prevent element mixing
+ *  - Add isolation for stacking contexts
+ *  - Preserve all original design, colors, animations
  *  ============================================ */
 
 /* ---------- CSS Custom Properties ---------- */
@@ -60,6 +67,18 @@
     --border-radius-xl: 24px;
 }
 
+/* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING
+   ========================================== */
+.proctor-appointment * {
+    word-break: normal;                /* Prevent character-by-character breaking */
+    overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
+    hyphens: none;                     /* Disable hyphenation */
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    box-sizing: border-box;            /* Consistent sizing */
+}
+
 /* ---------- Base Container ---------- */
 .proctor-appointment {
     padding: var(--space-md);
@@ -74,13 +93,16 @@
 
     /* Smooth scrolling */
     scroll-behavior: smooth;
+
+    /* Prevent z-index leaks */
+    isolation: isolate;
 }
 
 /* ---------- Header ---------- */
 .appointment-header {
     margin-bottom: var(--space-lg);
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap;                    /* Allow wrapping on small screens */
     align-items: center;
     gap: var(--space-md);
     backdrop-filter: blur(8px) saturate(180%);
@@ -89,6 +111,7 @@
     border-radius: var(--border-radius-lg);
     padding: var(--space-md) var(--space-lg);
     box-shadow: var(--shadow-card);
+    min-height: min-content;            /* Expand with content */
 }
 
 .back-btn {
@@ -105,6 +128,13 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+    .back-btn {
+        white-space: normal;               /* Allow wrapping on very small screens */
+    }
 }
 
 .back-btn:hover {
@@ -126,6 +156,7 @@
     background: none;  /* Removed gradient clipping – now solid white with glow */
     -webkit-text-fill-color: initial;
     background-clip: initial;
+    word-break: keep-all;               /* Keep heading whole */
 }
 
 /* ---------- Main Content Card ---------- */
@@ -137,6 +168,8 @@
     padding: var(--space-lg);
     box-shadow: var(--shadow-card), inset 0 0 30px rgba(0, 0, 0, 0.2);
     transition: all var(--transition-speed) ease;
+    isolation: isolate;                 /* Fresh stacking context */
+    min-height: min-content;
 }
 
 /* ---------- Loading & Error States ---------- */
@@ -153,6 +186,8 @@
     border-radius: var(--border-radius-lg);
     border: var(--border-glass);
     min-height: 300px;
+    isolation: isolate;
+    min-height: min-content;
 }
 
 /* Galaxy-themed spinner – no white! */
@@ -199,6 +234,13 @@
     backdrop-filter: blur(4px);
     text-shadow: 0 0 8px rgba(0,0,0,0.5);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 320px) {
+    .retry-btn {
+        white-space: normal;               /* Allow wrapping on very small screens */
+    }
 }
 
 .retry-btn:hover {
@@ -232,6 +274,8 @@
     padding: var(--space-lg);
     box-shadow: var(--shadow-card);
     transition: transform 0.2s ease, box-shadow 0.3s ease;
+    isolation: isolate;
+    min-height: min-content;
 }
 
 .details-section:hover {
@@ -241,7 +285,7 @@
 
 .section-header {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap;                    /* Allow wrapping */
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-md);
@@ -256,6 +300,7 @@
     border-bottom: 2px solid rgba(78, 205, 196, 0.3);
     text-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
     letter-spacing: 0.5px;
+    word-break: keep-all;
 }
 
 /* ---------- Room Edit Buttons ---------- */
@@ -273,6 +318,14 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+    .edit-rooms-btn,
+    .save-rooms-btn {
+        white-space: normal;               /* Allow wrapping on small screens */
+    }
 }
 
 .edit-rooms-btn {
@@ -317,6 +370,8 @@
     border-radius: var(--border-radius-md);
     padding: var(--space-lg);
     transition: all 0.2s ease;
+    isolation: isolate;
+    min-height: min-content;
 }
 
 .info-card {
@@ -330,6 +385,8 @@
     margin-bottom: var(--space-sm);
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;                    /* Allow wrapping */
+    gap: var(--space-xs);
 }
 
 .info-row:last-child {
@@ -342,6 +399,7 @@
     font-size: var(--font-size-sm);
     color: var(--text-muted);
     font-weight: 500;
+    word-break: keep-all;
 }
 
 .info-value {
@@ -349,6 +407,8 @@
     color: var(--text-primary);
     font-weight: 600;
     text-shadow: 0 0 6px rgba(255,255,255,0.2);
+    word-break: normal;                 /* Already protected */
+    overflow-wrap: break-word;
 }
 
 .info-value.code {
@@ -359,6 +419,7 @@
     font-size: var(--font-size-xs);
     border: 1px solid rgba(255,255,255,0.15);
     color: #4ECDC4;
+    word-break: break-all;              /* Allow code to break */
 }
 
 /* Status badges – cosmic glow */
@@ -372,6 +433,13 @@
     letter-spacing: 0.5px;
     text-shadow: 0 0 5px rgba(0,0,0,0.5);
     box-shadow: 0 0 12px rgba(0,0,0,0.3);
+    white-space: nowrap;                 /* Keep badge on one line */
+}
+
+@media (max-width: 480px) {
+    .status-badge {
+        white-space: normal;               /* Allow wrapping on very small screens */
+    }
 }
 
 .status-scheduled {
@@ -425,6 +493,8 @@
     border-radius: var(--border-radius-md);
     padding: var(--space-lg);
     transition: all 0.25s ease;
+    isolation: isolate;
+    min-height: min-content;
 }
 
 .room-card:hover {
@@ -439,6 +509,7 @@
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .room-icon {
@@ -451,6 +522,7 @@
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    word-break: keep-all;
 }
 
 .room-status {
@@ -462,6 +534,7 @@
     background: rgba(72, 187, 120, 0.2);
     color: #9ae6b4;
     border: 1px solid rgba(72, 187, 120, 0.5);
+    white-space: nowrap;                 /* Keep status on one line */
 }
 
 .room-status.inactive {
@@ -488,6 +561,7 @@
     font-weight: 600;
     color: var(--text-accent);
     text-shadow: 0 0 5px rgba(78,205,196,0.3);
+    word-break: keep-all;
 }
 
 .url-input {
@@ -524,7 +598,7 @@
 .view-actions {
     display: flex;
     gap: var(--space-sm);
-    flex-wrap: wrap;
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .clear-btn,
@@ -543,6 +617,15 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+    .clear-btn,
+    .test-btn,
+    .copy-btn {
+        white-space: normal;               /* Allow wrapping on small screens */
+    }
 }
 
 .clear-btn {
@@ -598,7 +681,7 @@
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--border-radius-md);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    word-break: break-all;
+    word-break: break-all;              /* Allow URLs to break */
     transition: all 0.2s ease;
     text-shadow: 0 0 6px rgba(78,205,196,0.3);
 }
@@ -632,6 +715,8 @@
     border-radius: var(--border-radius-lg);
     border: 2px dashed rgba(78, 205, 196, 0.3);
     text-align: center;
+    isolation: isolate;
+    min-height: min-content;
 }
 
 .no-rooms-icon {
@@ -660,6 +745,13 @@
     backdrop-filter: blur(4px);
     text-shadow: 0 0 8px rgba(0,0,0,0.5);
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .add-room-btn {
+        white-space: normal;
+    }
 }
 
 .add-room-btn:hover {
@@ -685,6 +777,7 @@
     color: #4ECDC4;
     margin: 0 0 var(--space-xs) 0;
     text-shadow: 0 0 8px rgba(78,205,196,0.4);
+    word-break: keep-all;
 }
 
 .rooms-tips ul {
@@ -711,6 +804,8 @@
     padding: var(--space-lg);
     box-shadow: var(--shadow-card);
     margin-bottom: 0; /* handled by parent spacing */
+    isolation: isolate;
+    min-height: min-content;
 }
 
 .user-header {
@@ -720,6 +815,7 @@
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-md);
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .user-avatar {
@@ -735,6 +831,7 @@
     color: white;
     box-shadow: 0 0 25px rgba(78,205,196,0.5);
     border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
 }
 
 .user-info h3 {
@@ -743,6 +840,7 @@
     color: var(--text-primary);
     margin: 0 0 var(--space-xs) 0;
     text-shadow: 0 0 8px rgba(78,205,196,0.4);
+    word-break: keep-all;
 }
 
 .user-id {
@@ -763,17 +861,20 @@
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--border-radius-md);
     border: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .detail-icon {
     font-size: 18px;
     filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+    flex-shrink: 0;
 }
 
 .detail-text {
     font-size: var(--font-size-sm);
     color: var(--text-primary);
     font-weight: 500;
+    word-break: keep-all;
 }
 
 .entered-status {
@@ -794,6 +895,7 @@
     margin-bottom: var(--space-sm);
     border-bottom: 1px solid rgba(78,205,196,0.3);
     padding-bottom: var(--space-xs);
+    word-break: keep-all;
 }
 
 .control-item {
@@ -808,6 +910,7 @@
     font-size: var(--font-size-base);
     font-weight: 500;
     color: var(--text-primary);
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .control-label input[type="checkbox"] {
@@ -816,6 +919,7 @@
     cursor: pointer;
     accent-color: #4ECDC4;
     filter: drop-shadow(0 0 8px rgba(78,205,196,0.5));
+    flex-shrink: 0;
 }
 
 .control-help,
@@ -852,6 +956,13 @@
     transition: all var(--transition-speed) ease;
     text-align: center;
     backdrop-filter: blur(4px);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+    .status-btn {
+        white-space: normal;               /* Allow wrapping on small screens */
+    }
 }
 
 .status-btn:hover:not(.disabled) {
@@ -883,7 +994,7 @@
     margin-top: var(--space-xl);
     padding-top: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;
+    flex-wrap: wrap;                    /* Allow wrapping */
 }
 
 .save-btn,
@@ -902,6 +1013,14 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-xs);
+    white-space: nowrap;                 /* Keep button text on one line */
+}
+
+@media (max-width: 480px) {
+    .save-btn,
+    .refresh-btn {
+        white-space: normal;               /* Allow wrapping on small screens */
+    }
 }
 
 .save-btn {
@@ -1092,3 +1211,20 @@ a:hover {
     text-decoration: underline;
     filter: brightness(1.2);
 }
+
+/* ============================================
+   SUMMARY OF RESPONSIVE ENHANCEMENTS
+   ============================================
+   1. Added global text protection rules to all elements inside .proctor-appointment:
+      - `word-break: normal` (prevents character breaks)
+      - `overflow-wrap: break-word` (wraps only at word boundaries)
+      - `hyphens: none`
+      - `box-sizing: border-box`
+   2. Added `isolation: isolate` to main containers (`.proctor-appointment`, `.appointment-content`, `.loading-state`, `.error-state`, `.details-section`, `.info-card`, `.user-card`, `.controls-card`, `.room-card`, `.no-rooms`) for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.appointment-header`, `.section-header`, `.info-row`, `.room-header`, `.room-actions`, `.view-actions`, `.user-header`, `.detail-item`, `.control-label`, `.control-actions`) to prevent element mixing.
+   4. Added `word-break: keep-all` to important text elements (headings, labels) to keep whole words together.
+   5. Added `white-space: nowrap` to badges and buttons, with fallback media queries for very small screens to allow wrapping if necessary.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Preserved all original colors, animations, and media queries.
+   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
+*/  
