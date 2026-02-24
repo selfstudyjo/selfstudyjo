@@ -378,6 +378,23 @@ const MyPlansIcon = {
   }
 };
 
+// NEW RESULTS ICON
+const ResultsIcon = {
+  name: 'ResultsIcon',
+  render() {
+    return h('svg', {
+      width: '20',
+      height: '20',
+      viewBox: '0 0 24 24',
+      fill: 'currentColor'
+    }, [
+      h('path', {
+        d: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'
+      })
+    ]);
+  }
+};
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -448,6 +465,7 @@ const publicNavItems = computed(() => {
 const privateNavItems = computed(() => {
   const items = [
     { to: '/', text: 'Dashboard', icon: DashboardIcon },
+    { to: '/my-results', text: 'My Results', icon: ResultsIcon },   // NEW
     { to: '/notifications', text: 'Notifications', icon: NotificationsIcon },
     { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon },
     { to: '/certificates', text: 'My Certificates', icon: CertificateIcon },

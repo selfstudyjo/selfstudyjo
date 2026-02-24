@@ -26,6 +26,9 @@ import ProctorExamAppointment from '../views/ProctorExamAppointment.vue';
 import Plans from '../views/Plans.vue';
 import Payment from '../views/Payment.vue';
 import MyPlans from '../views/MyPlans.vue';
+// NEW IMPORTS
+import UserResults from '../views/UserResults.vue';
+import ReviewResults from '../views/ReviewResults.vue';
 
 const routes = [
     {
@@ -177,7 +180,6 @@ const routes = [
                 component: MyPlans,
                 meta: { title: 'My Plans', requiresAuth: true }
             },
-            // ADD LOGIN AND REGISTER HERE TOO - THIS IS THE KEY CHANGE
             {
                 path: 'login',
                 name: 'Login',
@@ -195,18 +197,32 @@ const routes = [
                 name: 'VerifyEmail',
                 component: VerifyEmail,
                 meta: { title: 'Verify Email' }
+            },
+            // NEW ROUTES
+            {
+                path: 'my-results',
+                name: 'UserResults',
+                component: UserResults,
+                meta: { title: 'My Results', requiresAuth: true }
+            },
+            {
+                path: 'review-result/:type/:id',
+                name: 'ReviewResults',
+                component: ReviewResults,
+                meta: { title: 'Review Results', requiresAuth: true },
+                props: true
             }
         ]
     },
-{
-    path: '/:catchAll(.*)',
-    redirect: '/'
-}
+    {
+        path: '/:catchAll(.*)',
+        redirect: '/'
+    }
 ];
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL), // 👈 dynamic base
-                            routes
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes
 });
 
 // Global navigation guards
@@ -217,14 +233,14 @@ router.beforeEach(async (to, from, next) => {
     // Check if this is the runbook details route
     const isRunbookDetailsRoute = to.name === 'RunbookDetails';
 
-if (to.meta.publicOnly) {
-    publicOnlyGuard(to, from, next);
-} else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
-    await authGuard(to, from, next);
-} else {
-    // For routes without authentication requirement (like Exams, Courses)
-    next();
-}
+    if (to.meta.publicOnly) {
+        publicOnlyGuard(to, from, next);
+    } else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
+        await authGuard(to, from, next);
+    } else {
+        // For routes without authentication requirement (like Exams, Courses)
+        next();
+    }
 });
 
 export default router;

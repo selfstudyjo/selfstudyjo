@@ -1,0 +1,561 @@
+/* ==========================================================================
+   REVIEW RESULTS PAGE – COSMIC SPACE THEME
+   Matches the galaxy background, glass-morphism, and glow effects
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Cosmic Dark Theme */
+  --color-space-black: rgba(5, 5, 20, 0.95);
+  --color-space-dark: rgba(10, 10, 30, 0.9);
+  --color-space-medium: rgba(15, 15, 40, 0.85);
+  --color-space-light: rgba(30, 30, 60, 0.8);
+  --color-space-glass: rgba(5, 5, 20, 0.7);
+  
+  /* Accent Colors - Nebula & Star Glow */
+  --color-cyan: #4ECDC4;
+  --color-purple: #8A2BE2;
+  --color-blue: #4169E1;
+  --color-star-white: #ffffff;
+  --color-text-light: #e0e0e0;
+  --color-text-dim: #b0b0b0;
+  
+  /* Glow Effects */
+  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
+  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
+  --glow-blue: 0 0 20px rgba(65, 105, 225, 0.4);
+  --glow-white: 0 0 20px rgba(255, 255, 255, 0.2);
+  
+  /* Typography - Responsive Fluid Sizes */
+  --font-size-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --font-size-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --font-size-base: clamp(1rem, 3vw, 1.125rem);
+  --font-size-lg: clamp(1.125rem, 3.5vw, 1.5rem);
+  --font-size-xl: clamp(1.5rem, 4vw, 2rem);
+  --font-size-xxl: clamp(2rem, 5vw, 3rem);    /* for titles */
+  
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  
+  /* Borders & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --border-glow: 1px solid rgba(255, 255, 255, 0.15);
+  --border-glow-hover: 1px solid rgba(78, 205, 196, 0.3);
+  
+  /* Glass Effects */
+  --glass-bg: rgba(5, 5, 20, 0.85);
+  --glass-blur: blur(12px) saturate(180%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  
+  /* Transitions */
+  --transition-speed: 0.3s;
+  --transition-timing: ease;
+  
+  /* Z-index layering */
+  --z-background: 0;
+  --z-content: 1;
+  --z-overlay: 2;
+  --z-modal: 10;
+}
+
+/* --------------------------------------------------------------------------
+   MAIN CONTAINER
+   -------------------------------------------------------------------------- */
+.review-results {
+  width: 100%;
+  max-width: 1200px;          /* comfortable reading width */
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-md);
+  background: transparent;
+  color: var(--color-text-light);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  isolation: isolate;
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* All text inherits light colors */
+.review-results h1,
+.review-results h2,
+.review-results h3,
+.review-results p,
+.review-results span,
+.review-results button {
+  color: inherit;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   HEADER with back button
+   -------------------------------------------------------------------------- */
+.review-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.review-header h1 {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--color-star-white), var(--color-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px var(--color-cyan);
+  letter-spacing: 2px;
+  margin: 0;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.back-btn {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 999px;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-star-white);
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-timing);
+  box-shadow: var(--glass-shadow);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  border-color: var(--color-cyan);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+  background: rgba(20, 20, 50, 0.9);
+}
+
+.back-btn:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   RESULT SUMMARY CARD
+   -------------------------------------------------------------------------- */
+.result-summary {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  box-shadow: var(--glass-shadow), 0 0 25px rgba(78, 205, 196, 0.3);
+  transition: all var(--transition-speed) var(--transition-timing);
+}
+
+.result-summary:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  box-shadow: var(--glass-shadow), var(--glow-cyan);
+}
+
+.result-summary h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  color: var(--color-star-white);
+  word-break: keep-all;
+}
+
+.result-summary p {
+  font-size: var(--font-size-base);
+  margin: var(--space-xs) 0;
+  color: var(--color-text-light);
+}
+
+.score {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.score strong {
+  font-weight: 700;
+}
+
+.score strong.pass {
+  color: #4caf50;
+  text-shadow: 0 0 15px #4caf50, 0 0 30px rgba(76, 175, 80, 0.5);
+}
+.score strong.average {
+  color: #ef6c00;
+  text-shadow: 0 0 15px #ef6c00, 0 0 30px rgba(239, 108, 0, 0.5);
+}
+.score strong.fail {
+  color: #c62828;
+  text-shadow: 0 0 15px #c62828, 0 0 30px rgba(198, 40, 40, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   QUESTIONS REVIEW SECTION
+   -------------------------------------------------------------------------- */
+.questions-review {
+  width: 100%;
+}
+
+.questions-review h3 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-lg);
+  color: var(--color-star-white);
+  text-align: center;
+  word-break: keep-all;
+  text-shadow: 0 0 15px var(--color-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   QUESTION CARD
+   -------------------------------------------------------------------------- */
+.question-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition-speed) var(--transition-timing);
+  min-height: 0;
+  height: auto;
+}
+
+.question-card:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  box-shadow: var(--glass-shadow), var(--glow-cyan);
+}
+
+.question-card.correct {
+  border-left: 4px solid #4caf50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+.question-card.incorrect {
+  border-left: 4px solid #f44336;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+}
+
+/* Question header */
+.question-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.q-num {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-cyan);
+  flex-shrink: 0;
+}
+
+.q-text {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-star-white);
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.q-score {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  background: rgba(0, 0, 0, 0.3);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+/* --------------------------------------------------------------------------
+   ANSWERS LIST
+   -------------------------------------------------------------------------- */
+.answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-left: var(--space-md);
+}
+
+.answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-speed) var(--transition-timing);
+}
+
+.answer:hover {
+  border-color: rgba(78, 205, 196, 0.3);
+  box-shadow: 0 0 15px rgba(78, 205, 196, 0.2);
+}
+
+.answer-text {
+  flex: 1 1 auto;
+  font-size: var(--font-size-base);
+  color: var(--color-text-light);
+  word-break: keep-all;
+  min-width: 0;
+}
+
+/* Selected answer (user's choice) */
+.answer.selected {
+  background: rgba(33, 150, 243, 0.2);
+  border-color: #2196f3;
+  box-shadow: 0 0 15px #2196f3;
+}
+
+/* Correct answer (actual correct option) */
+.answer.correct-answer {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4caf50;
+  box-shadow: 0 0 15px #4caf50;
+}
+
+/* If user selected a wrong answer */
+.answer.selected:not(.correct-answer) {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  box-shadow: 0 0 15px #f44336;
+}
+
+/* Badges for correct/wrong */
+.correct-badge,
+.wrong-badge {
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.correct-badge {
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 0 10px #4caf50;
+}
+
+.wrong-badge {
+  background: #f44336;
+  color: white;
+  box-shadow: 0 0 10px #f44336;
+}
+
+/* --------------------------------------------------------------------------
+   LOADING SPINNER (if any)
+   Pure circle, centered, no text, transparent background
+   -------------------------------------------------------------------------- */
+.loading {
+  /* Hide any text */
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  text-indent: -9999px;
+  
+  /* Center the spinner */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+  
+  /* Transparent background */
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.loading::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-cyan);
+  border-right-color: var(--color-purple);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+  box-shadow: 0 0 30px var(--color-cyan), 0 0 60px var(--color-purple);
+  margin: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE ADJUSTMENTS
+   -------------------------------------------------------------------------- */
+/* Tablet and below */
+@media (max-width: 768px) {
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .q-score {
+    align-self: flex-start;
+  }
+  .answer {
+    flex-wrap: wrap;
+  }
+  .correct-badge,
+  .wrong-badge {
+    margin-left: 0;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .back-btn {
+    width: 100%;
+    text-align: center;
+  }
+  .question-card {
+    padding: var(--space-md);
+  }
+  .answers {
+    padding-left: 0;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .result-summary {
+    padding: var(--space-md);
+  }
+  .answer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1440px) {
+  .review-results {
+    max-width: 1000px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   REDUCED MOTION & HIGH CONTRAST
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .question-card:hover,
+  .back-btn:hover,
+  .answer:hover {
+    transform: none;
+  }
+  
+  .loading::after {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-cyan: #00ffff;
+    --color-purple: #aa00ff;
+    --color-text-light: #ffffff;
+    --border-glow: 1px solid #ffffff;
+  }
+  
+  .question-card,
+  .result-summary,
+  .back-btn,
+  .answer {
+    border: 1px solid white;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   CUSTOM SCROLLBAR (matches cosmic theme)
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 180, 0.8);
+  box-shadow: 0 0 10px var(--color-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   ENSURE BACKGROUND IS TRANSPARENT FOR GALAXY
+   -------------------------------------------------------------------------- */
+body, html, #app {
+  background: transparent;
+}
+
+.review-results,
+.result-summary,
+.question-card,
+.answers,
+.answer {
+  background-color: transparent; /* glass backgrounds already set */
+}

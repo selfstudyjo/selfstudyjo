@@ -33,6 +33,7 @@ export interface UserQuizResult {
     user_id: string;
     username: string;
     quiz: string; // quiz external_id
+    quiz_title?: string;
     score: number;
     date_taken?: string;
     result_message?: string;
@@ -331,7 +332,24 @@ class QuizService {
                 baseUrl,
                 `/user-quiz-results/?user_id=${userId}`
             );
-            return normalizePaginatedResponse<UserQuizResult>(response).results;
+            const results = normalizePaginatedResponse<UserQuizResult>(response).results;
+
+            // Enrich with quiz titles if available
+            const enriched = await Promise.all(
+                results.map(async (result) => {
+                    try {
+                        const quiz = await this.getQuiz(result.quiz);
+                        return {
+                            ...result,
+                            quiz_title: quiz.title
+                        };
+                    } catch {
+                        return result;
+                    }
+                })
+            );
+
+            return enriched;
         } catch (error) {
             console.error('Failed to fetch user quiz results:', error);
             return [];
@@ -411,6 +429,57 @@ class QuizService {
             result_message: resultMessage,
             user_answers: userAnswersArray
         };
+    }
+
+    // NEW: Get a single quiz result by external_id
+    async getQuizResultById(resultId: string): Promise<UserQuizResult> {
+        const baseUrl = await this.getRandomQuizReplica();
+        if (!baseUrl) {
+            throw new Error('No exam service replicas available');
+        }
+
+        try {
+            // Try direct fetch (if endpoint exists)
+            return await apiService.get<UserQuizResult>(
+                baseUrl,
+                `/user-quiz-results/${resultId}/`
+            );
+        } catch (error: any) {
+            // Fallback: search through user results
+            if (error.status === 404) {
+                throw new Error('Quiz result not found');
+            }
+            throw error;
+        }
+    }
+
+    // Optionally, we might want to get quiz details along with questions/answers for review
+    async getQuizWithDetails(quizId: string): Promise<Quiz> {
+        const baseUrl = await this.getRandomQuizReplica();
+        if (!baseUrl) {
+            throw new Error('No exam service replicas available');
+        }
+
+        try {
+            const quiz = await apiService.get<Quiz>(baseUrl, `/quizzes/${quizId}/`);
+            // Fetch questions and answers as in getQuiz
+            const questionsResponse = await apiService.get<any>(
+                baseUrl,
+                `/quiz-questions/?quiz=${quiz.external_id}`
+            );
+            const questions = normalizePaginatedResponse<QuizQuestion>(questionsResponse).results;
+            for (const question of questions) {
+                const answersResponse = await apiService.get<any>(
+                    baseUrl,
+                    `/quiz-answers/?quiz_question=${question.external_id}`
+                );
+                question.answers = normalizePaginatedResponse<QuizAnswer>(answersResponse).results;
+            }
+            quiz.questions = questions;
+            return quiz;
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

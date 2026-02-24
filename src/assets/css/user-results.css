@@ -1,0 +1,734 @@
+/* ============================================
+   SPACE COMMAND CENTER THEME
+   Cosmic UI with Galaxy Background Integration
+   Mobile-First Responsive Design
+   ============================================ */
+
+:root {
+  /* Color Palette - Cosmic Dark Theme */
+  --color-space-black: rgba(5, 5, 20, 0.95);
+  --color-space-dark: rgba(10, 10, 30, 0.9);
+  --color-space-medium: rgba(15, 15, 40, 0.85);
+  --color-space-light: rgba(30, 30, 60, 0.8);
+  --color-space-glass: rgba(5, 5, 20, 0.7);
+  
+  /* Accent Colors - Nebula & Star Glow */
+  --color-cyan: #4ECDC4;
+  --color-purple: #8A2BE2;
+  --color-blue: #4169E1;
+  --color-star-white: #ffffff;
+  --color-text-light: #e0e0e0;
+  --color-text-dim: #b0b0b0;
+  
+  /* Glow Effects */
+  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
+  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
+  --glow-blue: 0 0 20px rgba(65, 105, 225, 0.4);
+  --glow-white: 0 0 20px rgba(255, 255, 255, 0.2);
+  
+  /* Typography - Responsive Fluid Sizes */
+  --font-size-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --font-size-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --font-size-base: clamp(1rem, 3vw, 1.125rem);
+  --font-size-lg: clamp(1.125rem, 3.5vw, 1.5rem);
+  --font-size-xl: clamp(1.5rem, 4vw, 2rem);
+  
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  
+  /* Borders & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --border-glow: 1px solid rgba(255, 255, 255, 0.15);
+  --border-glow-hover: 1px solid rgba(78, 205, 196, 0.3);
+  
+  /* Transitions */
+  --transition-speed: 0.3s;
+  --transition-timing: ease;
+  
+  /* Z-index layering */
+  --z-background: 0;
+  --z-content: 1;
+  --z-overlay: 2;
+  --z-modal: 10;
+}
+
+/* ============================================
+   Base Styles & Typography
+   ============================================ */
+.user-results {
+  position: relative;
+  padding: var(--space-md);
+  color: var(--color-text-light);
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: var(--z-content);
+}
+
+/* All text elements inherit light colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-star-white);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(78, 205, 196, 0.3);
+}
+
+p, span, div, label {
+  color: var(--color-text-light);
+}
+
+/* ============================================
+   Tabs Navigation - Cosmic Glass
+   ============================================ */
+.tabs {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-xs);
+  border-bottom: var(--border-glow);
+  backdrop-filter: blur(5px);
+  background: rgba(5, 5, 20, 0.3);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.tab-btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-dim);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: all var(--transition-speed) var(--transition-timing);
+  position: relative;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  flex: 1 1 auto;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  border: 1px solid transparent;
+}
+
+.tab-btn:hover {
+  color: var(--color-star-white);
+  background: rgba(78, 205, 196, 0.1);
+  border-color: rgba(78, 205, 196, 0.3);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.tab-btn.active {
+  color: var(--color-cyan);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-cyan);
+  background: rgba(78, 205, 196, 0.15);
+  text-shadow: 0 0 12px var(--color-cyan);
+  box-shadow: 0 -2px 10px rgba(78, 205, 196, 0.2);
+}
+
+.tab-btn:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Tab Content Area
+   ============================================ */
+.tab-content {
+  min-height: 400px;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) 0;
+}
+
+/* ============================================
+   Results Grid - Cards Floating in Space
+   ============================================ */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1440px) {
+  .results-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Result Card - Glassmorphic Space Window */
+.result-card {
+  background: var(--color-space-glass);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: var(--border-glow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-timing);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), var(--glow-white);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  will-change: transform, box-shadow;
+  contain: content;
+}
+
+.result-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(78, 205, 196, 0.4);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), var(--glow-cyan);
+  background: rgba(10, 10, 30, 0.8);
+}
+
+/* Card Header */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.result-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-star-white);
+  text-shadow: 0 0 10px var(--color-cyan);
+}
+
+/* Score Badge - Cosmic Glow Variants */
+.score {
+  font-weight: 600;
+  padding: 0.2rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 15px currentColor;
+}
+
+.score.pass {
+  color: var(--color-cyan);
+  border-color: var(--color-cyan);
+  text-shadow: 0 0 8px var(--color-cyan);
+}
+
+.score.average {
+  color: #ffb347;
+  border-color: #ffb347;
+  text-shadow: 0 0 8px #ffb347;
+}
+
+.score.fail {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+  text-shadow: 0 0 8px #ff6b6b;
+}
+
+/* Date styling */
+.date {
+  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+  margin: var(--space-xs) 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.date::before {
+  content: '🪐';
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Status Badge */
+.status {
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  border: 1px solid;
+  align-self: flex-start;
+}
+
+.status.passed {
+  color: var(--color-cyan);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 10px var(--color-cyan);
+}
+
+.status.failed {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+  box-shadow: 0 0 10px #ff6b6b;
+}
+
+/* ============================================
+   Loading & Empty States
+   ============================================ */
+/* Shared styles for empty state only */
+.empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-dim);
+  font-size: var(--font-size-lg);
+  background: rgba(5, 5, 20, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  border: var(--border-glow);
+  box-shadow: var(--glow-white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.empty::before {
+  content: '🌌';
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px var(--color-cyan));
+  opacity: 0.8;
+}
+
+/* Loading spinner - pure circle, no text, centered, no background */
+.loading {
+  /* Hide any text content */
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  text-indent: -9999px;
+  
+  /* Center the spinner */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px; /* Ensure it has some height for centering */
+  width: 100%;
+  
+  /* No background, border, or padding - let galaxy show through */
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Spinner circle */
+.loading::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-cyan);
+  border-right-color: var(--color-purple);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+  box-shadow: 0 0 30px var(--color-cyan), 0 0 60px var(--color-purple);
+  /* Ensure no extra space around */
+  margin: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Chart Tab - Space Analytics
+   ============================================ */
+.chart-tab {
+  padding: var(--space-md) 0;
+  background: rgba(5, 5, 20, 0.4);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  border: var(--border-glow);
+}
+
+.chart-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding: 0 var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .chart-filters {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+}
+
+.chart-filters label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.chart-filters select {
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(0, 0, 0, 0.6);
+  border: var(--border-glow);
+  border-radius: var(--radius-sm);
+  color: var(--color-star-white);
+  font-size: var(--font-size-sm);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+}
+
+.chart-filters select:hover {
+  border-color: var(--color-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.chart-filters select:focus {
+  outline: none;
+  border-color: var(--color-purple);
+  box-shadow: var(--glow-purple);
+}
+
+.chart-filters select option {
+  background: var(--color-space-dark);
+  color: var(--color-text-light);
+}
+
+/* Chart Container */
+.chart-container {
+  height: 400px;
+  width: 100%;
+  background: rgba(5, 5, 20, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm);
+  border: var(--border-glow);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.5), var(--glow-white);
+}
+
+/* ============================================
+   Form Elements (if any inputs inside filters)
+   ============================================ */
+input, textarea, select {
+  background: rgba(0, 0, 0, 0.6);
+  border: var(--border-glow);
+  border-radius: var(--radius-sm);
+  color: var(--color-star-white);
+  padding: 0.6rem 1rem;
+  font-size: var(--font-size-sm);
+  backdrop-filter: blur(4px);
+  transition: all var(--transition-speed) ease;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2), var(--glow-cyan);
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+/* ============================================
+   Buttons (if any)
+   ============================================ */
+button {
+  background: rgba(20, 20, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--color-star-white);
+  padding: 0.6rem 1.5rem;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  text-shadow: 0 0 5px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover {
+  transform: scale(1.05);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 20px var(--color-cyan);
+  background: rgba(30, 30, 70, 0.9);
+}
+
+button:active {
+  transform: scale(0.98);
+  filter: brightness(1.2);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
+  border-color: var(--color-cyan);
+}
+
+/* ============================================
+   Custom Scrollbar (WebKit)
+   ============================================ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 180, 0.8);
+  box-shadow: 0 0 10px var(--color-cyan);
+}
+
+/* ============================================
+   Accessibility & Reduced Motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .result-card:hover {
+    transform: none;
+  }
+  
+  button:hover {
+    transform: none;
+  }
+  
+  .loading::after {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-cyan: #00ffff;
+    --color-purple: #aa00ff;
+    --color-text-light: #ffffff;
+    --border-glow: 1px solid #ffffff;
+  }
+  
+  .result-card {
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: none;
+  }
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+/* Mobile (default) - already optimized */
+
+@media (min-width: 640px) {
+  .user-results {
+    padding: var(--space-lg);
+  }
+  
+  .tabs {
+    gap: var(--space-sm);
+  }
+  
+  .tab-btn {
+    padding: var(--space-sm) var(--space-lg);
+    flex: 0 1 auto;
+  }
+  
+  .results-grid {
+    gap: var(--space-lg);
+  }
+  
+  .result-card {
+    backdrop-filter: blur(8px) saturate(160%);
+  }
+}
+
+@media (min-width: 1024px) {
+  .user-results {
+    padding: var(--space-xl);
+  }
+  
+  .tabs {
+    gap: var(--space-md);
+  }
+  
+  .tab-content {
+    min-height: 500px;
+  }
+  
+  .chart-container {
+    height: 500px;
+  }
+  
+  .result-card {
+    backdrop-filter: blur(12px) saturate(200%);
+  }
+}
+
+@media (min-width: 1440px) {
+  .user-results {
+    padding: calc(var(--space-xl) * 1.5);
+  }
+  
+  .results-grid {
+    gap: calc(var(--space-lg) * 1.2);
+  }
+  
+  .result-card {
+    padding: calc(var(--space-md) * 1.2);
+  }
+  
+  .chart-container {
+    height: 600px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .user-results {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: calc(var(--space-xl) * 2);
+  }
+  
+  .results-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: calc(var(--space-xl));
+  }
+  
+  .result-card {
+    padding: calc(var(--space-lg) * 1.5);
+  }
+  
+  .tabs {
+    justify-content: center;
+  }
+  
+  .tab-btn {
+    font-size: clamp(1rem, 1vw, 1.5rem);
+    padding: var(--space-md) var(--space-xl);
+  }
+  
+  .chart-container {
+    height: 700px;
+  }
+}
+
+/* ============================================
+   Additional Cosmic Effects
+   ============================================ */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px var(--color-cyan); }
+  50% { box-shadow: 0 0 20px var(--color-cyan), 0 0 30px var(--color-purple); }
+  100% { box-shadow: 0 0 5px var(--color-cyan); }
+}
+
+.result-card:focus-visible {
+  animation: pulse-glow 2s infinite;
+}
+
+.result-card:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%);
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.4;
+}
+
+::selection {
+  background: var(--color-cyan);
+  color: var(--color-space-black);
+  text-shadow: none;
+}
+
+/* ============================================
+   Integration with Galaxy Background
+   ============================================ */
+body {
+  background: transparent;
+  margin: 0;
+  min-height: 100vh;
+}
+
+#app {
+  background: transparent;
+}
+
+* {
+  background-color: transparent;
+}
+
+.user-results,
+.tabs,
+.tab-content,
+.results-grid,
+.result-card,
+.chart-tab,
+.chart-filters,
+.chart-container {
+  background-color: transparent;
+}
+
+html {
+  background: transparent;
+}

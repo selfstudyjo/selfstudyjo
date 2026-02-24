@@ -600,6 +600,30 @@ class ExamService {
             throw new Error(error.message || 'Failed to fetch exam appointments by proctor');
         }
     }
+
+    // NEW: Get a single exam result by external_id
+    async getExamResultById(resultId: string): Promise<UserExamResult> {
+        const baseUrl = await this.getRandomExamReplica();
+        if (!baseUrl) {
+            throw new Error('No exam service replicas available');
+        }
+
+        try {
+            // Try direct fetch (if endpoint exists)
+            return await apiService.get<UserExamResult>(
+                baseUrl,
+                `/user-exam-results/${resultId}/`
+            );
+        } catch (error: any) {
+            // Fallback: search through user results (if the above fails)
+            if (error.status === 404) {
+                // Could fetch all for the current user, but we don't have userId here.
+                // Instead, we can try to get from another replica or rethrow.
+                throw new Error('Exam result not found');
+            }
+            throw error;
+        }
+    }
 }
 
 export const examService = new ExamService();
