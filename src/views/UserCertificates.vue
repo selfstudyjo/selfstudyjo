@@ -5,6 +5,7 @@
       <p>View all your course and exam certificates</p>
     </div>
 
+    <!-- Loading / Error / Empty states (unchanged) -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
       <p>Loading certificates...</p>
@@ -18,36 +19,74 @@
     </div>
 
     <div v-else class="certificates-container">
-      <!-- Course Certificates Section -->
-      <section class="certificates-section">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'course' }"
+          @click="activeTab = 'course'"
+        >
+          Course Certificates <span class="badge">{{ courseCertificates.length }}</span>
+        </button>
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'exam' }"
+          @click="activeTab = 'exam'"
+        >
+          Exam Certificates <span class="badge">{{ examCertificates.length }}</span>
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container" v-if="activeTabCertificates.length > 0">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            v-model="searchQuery"
+            :placeholder="'Search ' + (activeTab === 'course' ? 'course' : 'exam') + ' certificates...'"
+            class="search-input"
+          />
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="search-clear"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Tab Content -->
+      <section class="certificates-section" v-if="activeTab === 'course'">
         <div class="section-header">
           <h2>Course Certificates</h2>
-          <span class="badge">{{ courseCertificates.length }}</span>
+          <span class="badge">{{ filteredCourseCertificates.length }}</span>
         </div>
 
-        <div v-if="courseCertificates.length === 0" class="empty-state">
+        <div v-if="filteredCourseCertificates.length === 0" class="empty-state">
           <div class="empty-icon">📜</div>
-          <h3>No Course Certificates Yet</h3>
-          <p>Complete courses to earn certificates</p>
+          <h3>No Course Certificates Found</h3>
+          <p v-if="searchQuery">Try adjusting your search</p>
+          <p v-else>Complete courses to earn certificates</p>
         </div>
 
         <div v-else class="certificates-grid">
           <div
-            v-for="certificate in courseCertificates"
+            v-for="certificate in filteredCourseCertificates"
             :key="certificate.certificate_id"
             class="certificate-card"
             @click="viewCertificate(certificate.certificate_id, 'course')"
           >
+            <!-- certificate card content unchanged -->
             <div class="certificate-header">
-              <div class="certificate-icon course">
-                🎓
-              </div>
+              <div class="certificate-icon course">🎓</div>
               <div class="certificate-info">
                 <h3>{{ getCourseName(certificate.course_id) }}</h3>
                 <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
               </div>
             </div>
-
             <div class="certificate-details">
               <div class="detail-item">
                 <span class="label">Completion Date:</span>
@@ -62,7 +101,6 @@
                 <span class="status-badge valid">Valid</span>
               </div>
             </div>
-
             <div class="certificate-actions">
               <button class="view-btn">View Details</button>
             </div>
@@ -70,22 +108,22 @@
         </div>
       </section>
 
-      <!-- Exam Certificates Section -->
-      <section class="certificates-section">
+      <section class="certificates-section" v-else>
         <div class="section-header">
           <h2>Exam Certificates</h2>
-          <span class="badge">{{ examCertificates.length }}</span>
+          <span class="badge">{{ filteredExamCertificates.length }}</span>
         </div>
 
-        <div v-if="examCertificates.length === 0" class="empty-state">
+        <div v-if="filteredExamCertificates.length === 0" class="empty-state">
           <div class="empty-icon">📝</div>
-          <h3>No Exam Certificates Yet</h3>
-          <p>Pass exams to earn certificates</p>
+          <h3>No Exam Certificates Found</h3>
+          <p v-if="searchQuery">Try adjusting your search</p>
+          <p v-else>Pass exams to earn certificates</p>
         </div>
 
         <div v-else class="certificates-grid">
           <div
-            v-for="certificate in examCertificates"
+            v-for="certificate in filteredExamCertificates"
             :key="certificate.certificate_id"
             class="certificate-card"
             @click="viewCertificate(certificate.certificate_id, 'exam')"
@@ -99,7 +137,6 @@
                 <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
               </div>
             </div>
-
             <div class="certificate-details">
               <div class="detail-item">
                 <span class="label">Taken Date:</span>
@@ -116,7 +153,6 @@
                 </span>
               </div>
             </div>
-
             <div class="certificate-actions">
               <button class="view-btn">View Details</button>
             </div>
@@ -135,7 +171,6 @@ import { certificateService } from '@/services/certificate.service';
 import { courseService } from '@/services/course.service';
 import { examService } from '@/services/exam.service';
 
-// Import the CSS file
 import '@/assets/css/user-certificates.css';
 
 const router = useRouter();
@@ -150,6 +185,36 @@ const examsMap = ref<Map<string, string>>(new Map());
 
 const userId = computed(() => authStore.user?.id);
 
+// Tabs and search
+const activeTab = ref<'course' | 'exam'>('course');
+const searchQuery = ref('');
+
+const filteredCourseCertificates = computed(() => {
+  if (!searchQuery.value) return courseCertificates.value;
+  const q = searchQuery.value.toLowerCase();
+  return courseCertificates.value.filter(cert => {
+    const name = getCourseName(cert.course_id).toLowerCase();
+    const id = cert.certificate_id.toLowerCase();
+    return name.includes(q) || id.includes(q);
+  });
+});
+
+const filteredExamCertificates = computed(() => {
+  if (!searchQuery.value) return examCertificates.value;
+  const q = searchQuery.value.toLowerCase();
+  return examCertificates.value.filter(cert => {
+    const name = getExamName(cert.exam_id).toLowerCase();
+    const id = cert.certificate_id.toLowerCase();
+    return name.includes(q) || id.includes(q);
+  });
+});
+
+// Helper for active tab certificates count (used to hide search when empty)
+const activeTabCertificates = computed(() =>
+  activeTab.value === 'course' ? courseCertificates.value : examCertificates.value
+);
+
+// Rest of the script unchanged...
 const fetchCertificates = async () => {
   if (!userId.value) {
     error.value = 'User not authenticated';
@@ -161,19 +226,15 @@ const fetchCertificates = async () => {
     loading.value = true;
     error.value = null;
 
-    // Fetch user certificates
     const certificates = await certificateService.getUserCertificates(userId.value);
     courseCertificates.value = certificates.course_certificates || [];
     examCertificates.value = certificates.exam_certificates || [];
 
-    // Fetch course names
     const courseIds = Array.from(new Set(courseCertificates.value.map(c => c.course_id)));
     await fetchCourseNames(courseIds);
 
-    // Fetch exam names
     const examIds = Array.from(new Set(examCertificates.value.map(c => c.exam_id)));
     await fetchExamNames(examIds);
-
   } catch (err: any) {
     console.error('Failed to fetch certificates:', err);
     error.value = err.message || 'Failed to load certificates';
@@ -183,34 +244,24 @@ const fetchCertificates = async () => {
 };
 
 const fetchCourseNames = async (courseIds: string[]) => {
-  try {
-    for (const courseId of courseIds) {
-      try {
-        const course = await courseService.getCourse(courseId);
-        coursesMap.value.set(courseId, course.title);
-      } catch (err) {
-        console.warn(`Failed to fetch course ${courseId}:`, err);
-        coursesMap.value.set(courseId, `Course: ${courseId.slice(0, 8)}...`);
-      }
+  for (const courseId of courseIds) {
+    try {
+      const course = await courseService.getCourse(courseId);
+      coursesMap.value.set(courseId, course.title);
+    } catch (err) {
+      coursesMap.value.set(courseId, `Course: ${courseId.slice(0, 8)}...`);
     }
-  } catch (err) {
-    console.error('Failed to fetch course names:', err);
   }
 };
 
 const fetchExamNames = async (examIds: string[]) => {
-  try {
-    for (const examId of examIds) {
-      try {
-        const exam = await examService.getExam(examId);
-        examsMap.value.set(examId, exam.title);
-      } catch (err) {
-        console.warn(`Failed to fetch exam ${examId}:`, err);
-        examsMap.value.set(examId, `Exam: ${examId.slice(0, 8)}...`);
-      }
+  for (const examId of examIds) {
+    try {
+      const exam = await examService.getExam(examId);
+      examsMap.value.set(examId, exam.title);
+    } catch (err) {
+      examsMap.value.set(examId, `Exam: ${examId.slice(0, 8)}...`);
     }
-  } catch (err) {
-    console.error('Failed to fetch exam names:', err);
   }
 };
 

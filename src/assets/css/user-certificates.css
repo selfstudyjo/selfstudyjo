@@ -402,6 +402,122 @@
   font-size: var(--font-lg);
 }
 
+/* TABS */
+.tabs {
+  display: flex;
+  gap: clamp(8px, 2vw, 16px);
+  margin-bottom: clamp(16px, 4vw, 24px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tab-btn {
+  background: var(--cosmic-dark);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 40px;
+  padding: clamp(10px, 2vw, 14px) clamp(16px, 4vw, 28px);
+  font-size: clamp(14px, 3vw, 16px);
+  font-weight: 600;
+  color: var(--cosmic-light);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--glass-shadow);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .tab-btn {
+    white-space: normal;
+  }
+}
+
+.tab-btn.active {
+  background: linear-gradient(
+    135deg,
+    rgba(78, 205, 196, 0.3) 0%,
+    rgba(138, 43, 226, 0.3) 100%
+  );
+  color: var(--cosmic-white);
+  border-color: var(--cosmic-cyan);
+  box-shadow: var(--glass-glow), var(--glass-shadow);
+}
+
+.tab-btn .badge {
+  margin-left: 4px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+/* SEARCH BAR */
+.search-container {
+  margin-bottom: clamp(20px, 4vw, 28px);
+  width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--cosmic-dark);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 40px;
+  padding: 0 clamp(12px, 3vw, 18px);
+  transition: var(--transition-smooth);
+  box-shadow: var(--glass-shadow);
+}
+
+.search-input-wrapper:focus-within {
+  box-shadow: var(--glass-glow);
+  border-color: var(--cosmic-cyan);
+}
+
+.search-icon {
+  color: var(--cosmic-light);
+  margin-right: clamp(6px, 1.5vw, 10px);
+  font-size: clamp(16px, 4vw, 20px);
+  line-height: 1;
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: clamp(10px, 2vw, 14px) 0;
+  font-size: clamp(14px, 3vw, 16px);
+  color: var(--cosmic-white) !important;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--cosmic-light);
+  opacity: 0.6;
+}
+
+.search-clear {
+  background: transparent;
+  border: none;
+  color: var(--cosmic-light);
+  cursor: pointer;
+  padding: clamp(4px, 1vw, 8px);
+  font-size: clamp(14px, 3vw, 18px);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.search-clear:hover {
+  color: var(--cosmic-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* CERTIFICATES SECTION */
 .certificates-section {
   margin-bottom: clamp(32px, 6vw, 48px);
@@ -415,7 +531,7 @@
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
-  flex-wrap: wrap;                    /* Allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
 .section-header::after {
@@ -454,19 +570,19 @@
   border: 1px solid rgba(72, 187, 120, 0.3);
   backdrop-filter: blur(5px);
   box-shadow: 0 0 10px rgba(72, 187, 120, 0.2);
-  white-space: nowrap;                 /* Keep badge on one line */
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
   .badge {
-    white-space: normal;               /* Allow wrapping on small screens */
+    white-space: normal;
   }
 }
 
-/* CERTIFICATES GRID */
+/* CERTIFICATES GRID - wider cards */
 .certificates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
   gap: 24px;
 }
 
@@ -484,12 +600,12 @@
   }
 }
 
-/* CERTIFICATE CARD */
+/* CERTIFICATE CARD - ultra-compact professional design */
 .certificate-card {
   background: var(--cosmic-dark);
   backdrop-filter: var(--glass-blur);
   border-radius: 20px;
-  padding: clamp(20px, 4vw, 24px);
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
   box-shadow: var(--glass-shadow);
   border: var(--glass-border);
   cursor: pointer;
@@ -497,12 +613,15 @@
   position: relative;
   overflow: hidden;
   animation: certificate-glow 4s ease-in-out infinite;
-  isolation: isolate;                 /* Fresh stacking context */
-  min-height: min-content;            /* Expand with content */
+  isolation: isolate;
+  min-height: min-content;
+  height: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .certificate-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-6px) scale(1.01);
   box-shadow: var(--glass-shadow), 0 0 40px rgba(78, 205, 196, 0.4);
   border-color: rgba(78, 205, 196, 0.3);
   z-index: 2;
@@ -544,21 +663,21 @@
 .certificate-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: clamp(8px, 2vw, 12px);
+  margin-bottom: 8px;
   position: relative;
   z-index: 1;
-  flex-wrap: wrap;                    /* Allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
 .certificate-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 16px;
+  width: clamp(36px, 8vw, 48px);
+  height: clamp(36px, 8vw, 48px);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: clamp(18px, 4vw, 24px);
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -611,14 +730,14 @@
 
 .certificate-info {
   flex: 1;
-  min-width: 0;                       /* Allow text to shrink */
+  min-width: 120px;
 }
 
 .certificate-info h3 {
-  font-size: var(--font-lg);
+  font-size: clamp(16px, 4vw, 18px);
   color: var(--cosmic-white);
-  margin-bottom: 6px;
-  line-height: 1.4;
+  margin-bottom: 2px;
+  line-height: 1.3;
   font-weight: 700;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
   word-break: keep-all;
@@ -631,15 +750,15 @@
   text-shadow: 0 0 5px var(--cosmic-cyan-glow);
   letter-spacing: 1px;
   font-weight: 500;
-  word-break: break-all;              /* Allow long IDs to break */
+  word-break: break-all;
 }
 
 /* Certificate details */
 .certificate-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 4px;
+  margin-bottom: 8px;
   position: relative;
   z-index: 1;
 }
@@ -648,14 +767,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 2px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  flex-wrap: wrap;                    /* Allow wrapping on small screens */
-  gap: var(--space-xs);
+  flex-wrap: wrap;
+  gap: 4px 8px;
 }
 
 .detail-item:last-child {
   border-bottom: none;
+  justify-content: center;           /* Center the status badge with its label */
 }
 
 .label {
@@ -676,15 +796,15 @@
   font-weight: 600;
   text-shadow: var(--text-shadow);
   text-align: right;
-  word-break: normal;                 /* Already protected */
+  word-break: normal;
   overflow-wrap: break-word;
 }
 
 /* Status badge */
 .status-badge {
-  padding: 6px 16px;
+  padding: 2px 10px;
   border-radius: 20px;
-  font-size: var(--font-xs);
+  font-size: calc(var(--font-xs) - 1px);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -694,19 +814,19 @@
   backdrop-filter: blur(5px);
   border: 1px solid;
   text-shadow: var(--text-shadow);
-  white-space: nowrap;                 /* Keep badge on one line */
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
   .status-badge {
-    white-space: normal;               /* Allow wrapping on very small screens */
+    white-space: normal;
   }
 }
 
 .status-badge::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -738,22 +858,23 @@
 /* Certificate actions */
 .certificate-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;           /* Center the view button */
   position: relative;
   z-index: 1;
-  padding-top: 16px;
+  padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
 }
 
 .view-btn {
-  min-height: var(--btn-height-md);
+  min-height: clamp(36px, 7vw, 44px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 24px;
+  gap: 6px;
+  padding: 0 16px;
   background: linear-gradient(
     135deg,
     rgba(78, 205, 196, 0.2) 0%,
@@ -771,12 +892,14 @@
   backdrop-filter: blur(10px);
   text-shadow: var(--text-shadow);
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
-  white-space: nowrap;                 /* Keep button text on one line */
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
   .view-btn {
-    white-space: normal;               /* Allow wrapping on small screens */
+    white-space: normal;
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -791,7 +914,7 @@
   color: var(--cosmic-white);
 }
 
-/* RESPONSIVE DESIGN (Preserved and enhanced) */
+/* RESPONSIVE DESIGN */
 /* Mobile (< 640px) */
 @media (max-width: 640px) {
   .user-certificates {
@@ -816,26 +939,25 @@
   }
   
   .certificate-card {
-    padding: 20px;
-    border-radius: 16px;
+    padding: 12px 16px;
   }
   
   .certificate-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
   }
   
   .certificate-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
   }
   
   .detail-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 2px;
   }
   
   .value {
@@ -887,7 +1009,7 @@
   }
   
   .certificate-card {
-    padding: 28px;
+    padding: 16px 28px;
   }
 }
 
@@ -904,13 +1026,13 @@
   }
   
   .certificate-card {
-    padding: 32px;
+    padding: 20px 32px;
   }
   
   .certificate-icon {
-    width: 80px;
-    height: 80px;
-    font-size: 36px;
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
   }
   
   .certificate-info h3 {
@@ -1039,6 +1161,258 @@
 }
 
 /* ============================================
+   GLOBAL TEXT PROTECTION & BOX SIZING (enhanced)
+   ============================================ */
+.user-certificates * {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: none;
+  box-sizing: border-box;
+}
+
+/* Ensure all main containers expand with content */
+.user-certificates,
+.header,
+.loading-container,
+.error-container,
+.empty-state,
+.certificate-card,
+.certificates-section {
+  isolation: isolate;
+  min-height: min-content;
+}
+
+/* HEADER SECTION (fluid padding) */
+.header {
+  padding: clamp(20px, 5vw, 40px);
+  margin-bottom: clamp(24px, 5vw, 40px);
+}
+
+.header h1 {
+  font-size: clamp(28px, 7vw, 40px);
+  word-break: keep-all;
+}
+
+.header p {
+  font-size: clamp(16px, 4vw, 20px);
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Loading spinner (already fluid) */
+.loading-spinner {
+  width: min(70px, 15vw);
+  height: min(70px, 15vw);
+}
+
+/* Empty states */
+.empty-icon {
+  font-size: clamp(60px, 15vw, 80px);
+}
+
+.empty-state h3 {
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.empty-state p {
+  font-size: clamp(14px, 4vw, 18px);
+  max-width: 90%;
+}
+
+/* SECTION HEADER (flex wrap prevents overlap) */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 16px);
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+}
+
+.section-header h2 {
+  font-size: clamp(18px, 5vw, 24px);
+  word-break: keep-all;
+}
+
+.section-header .badge {
+  font-size: clamp(12px, 3vw, 14px);
+  padding: 4px clamp(8px, 2vw, 16px);
+  white-space: nowrap;
+}
+
+/* CERTIFICATES GRID (fully fluid) */
+.certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
+  gap: clamp(16px, 3vw, 24px);
+}
+
+/* Certificate Card (additional overrides for consistency) */
+.certificate-card {
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
+  border-radius: clamp(16px, 4vw, 20px);
+  height: auto;
+  min-height: 0;
+}
+
+.certificate-header {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(8px, 2vw, 12px);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.certificate-icon {
+  width: clamp(36px, 8vw, 48px);
+  height: clamp(36px, 8vw, 48px);
+  font-size: clamp(18px, 4vw, 24px);
+  flex-shrink: 0;
+}
+
+.certificate-info {
+  flex: 1;
+  min-width: 120px;
+}
+
+.certificate-info h3 {
+  font-size: clamp(16px, 4vw, 18px);
+  word-break: keep-all;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.certificate-id {
+  font-size: clamp(12px, 3vw, 14px);
+  word-break: break-all;
+}
+
+/* Detail items (flex wrap to avoid overlap) */
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 2px 0;
+}
+
+.detail-item:last-child {
+  justify-content: center;
+}
+
+.label, .value {
+  font-size: clamp(13px, 3.5vw, 14px);
+}
+
+.label {
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .label {
+    white-space: normal;
+  }
+}
+
+.value {
+  text-align: right;
+  word-break: normal;
+  max-width: 100%;
+}
+
+/* Status badge */
+.status-badge {
+  padding: 2px clamp(8px, 2vw, 10px);
+  font-size: calc(clamp(11px, 2.5vw, 12px) - 1px);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .status-badge {
+    white-space: normal;
+  }
+}
+
+/* Actions */
+.certificate-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.view-btn {
+  min-height: clamp(36px, 7vw, 44px);
+  padding: 0 clamp(14px, 3vw, 16px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .view-btn {
+    white-space: normal;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Retry button (already fluid) */
+.retry-btn {
+  min-height: clamp(44px, 10vw, 56px);
+  padding: 0 clamp(20px, 5vw, 32px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  white-space: nowrap;
+}
+
+@media (max-width: 320px) {
+  .retry-btn {
+    white-space: normal;
+  }
+}
+
+/* ============================================
+   RESPONSIVE MEDIA QUERIES (original structure kept, now mostly redundant due to fluid units)
+   ============================================ */
+/* Only override where needed for very small screens */
+@media (max-width: 640px) {
+  .certificate-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .certificate-info {
+    width: 100%;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .detail-item:last-child {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .value {
+    text-align: left;
+  }
+
+  .certificate-actions {
+    justify-content: center;
+  }
+
+  .view-btn {
+    width: 100%;
+  }
+}
+
+/* ============================================
    SUMMARY OF RESPONSIVE ENHANCEMENTS
    ============================================
    1. Added global text protection rules to all elements inside .user-certificates:
@@ -1054,4 +1428,6 @@
    7. Added `min-width: 0` to `.certificate-info` to allow text shrinking within flex.
    8. Preserved all original colors, animations, and media queries.
    9. Ensured no element is clipped, hidden, or overlapped at any screen size.
+  10. Enhanced certificate card to be more professional: reduced vertical padding, smaller icon, tighter spacing, increased grid min-width for wider cards (380px), and adjusted hover effect for a more refined look.
+  11. Centered the status badge (by setting `.detail-item:last-child` to `justify-content: center`) and centered the view button (by setting `.certificate-actions` to `justify-content: center`).
 */  

@@ -3,7 +3,7 @@
    Designed for Vue.js with 3D animated galaxy background
    Theme: Dark cosmic space with glass-morphism effects
    Date: 2024
-   FULLY RESPONSIVE VERSION
+   FULLY RESPONSIVE VERSION (UPDATED)
    ========================================================================== */
 
 /* CSS VARIABLES FOR COSMIC THEME */
@@ -183,7 +183,7 @@
   position: relative;
   z-index: 1;
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all to prevent word breaks */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -197,7 +197,7 @@
   text-shadow: var(--text-shadow);
   opacity: 0.9;
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -459,7 +459,7 @@
   opacity: 0.8;
   letter-spacing: 1px;
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -495,7 +495,7 @@
   text-shadow: var(--text-shadow), 0 0 15px rgba(255, 107, 107, 0.3);
   line-height: 1.3;
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -509,7 +509,7 @@
   opacity: 0.9;
   font-size: var(--font-base); /* Already fluid */
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -583,7 +583,7 @@
   text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1.3;
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -597,7 +597,7 @@
   opacity: 0.9;
   font-size: var(--font-lg); /* Already fluid */
   /* Prevent word breaking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -767,7 +767,7 @@
   font-size: var(--font-base); /* Already fluid */
   line-height: 1.4;
   min-width: 0; /* Allow shrinking */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -836,7 +836,7 @@
   margin-bottom: 4px;
   text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
   font-size: var(--font-base); /* Already fluid */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -848,7 +848,7 @@
   text-shadow: 0 0 5px var(--cosmic-cyan-glow);
   letter-spacing: 1px;
   opacity: 0.8;
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -860,7 +860,7 @@
   color: var(--cosmic-white);
   line-height: 1.4;
   font-size: var(--font-base); /* Already fluid */
-  word-break: normal;
+  word-break: keep-all; /* Changed from normal to keep-all */
   overflow-wrap: normal;
   hyphens: none;
 }
@@ -956,6 +956,23 @@
   position: relative;
   overflow: hidden;
   white-space: nowrap; /* Keep button text together */
+}
+
+/* Improve action button visibility and size in grid view */
+.all-certificates .card-footer .action-btn {
+  min-height: var(--btn-height-md); /* Slightly larger for grid */
+  padding: 0 clamp(16px, 3vw, 24px); /* More horizontal padding */
+  font-size: var(--font-base); /* Slightly larger font */
+  width: 100%; /* Make button full width on small cards */
+  max-width: 200px; /* Limit width on larger screens */
+  margin: 0 auto; /* Center if not full width */
+}
+
+/* Ensure button text is always visible */
+.all-certificates .action-btn.view {
+  color: var(--cosmic-cyan); /* Ensure color contrasts with background */
+  font-weight: 700; /* Make text bolder */
+  text-shadow: 0 0 5px currentColor; /* Add glow for readability */
 }
 
 .all-certificates .action-btn:hover {
@@ -1355,5 +1372,313 @@
   
   .all-certificates .table-body::-webkit-scrollbar {
     display: none !important;
+  }
+}
+
+/* ==========================================================================
+   GRID VIEW STYLES (added for grid/list toggle)
+   ========================================================================== */
+
+/* View toggle buttons */
+.all-certificates .view-toggle {
+  display: flex;
+  gap: clamp(4px, 1vw, 8px);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(8px, 2vw, 12px);
+  padding: 2px;
+}
+
+.all-certificates .view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36px, 8vw, 44px);
+  height: clamp(36px, 8vw, 44px);
+  background: transparent;
+  border: none;
+  border-radius: clamp(6px, 1.5vw, 8px);
+  color: var(--cosmic-gray);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.all-certificates .view-btn svg {
+  width: clamp(18px, 4vw, 20px);
+  height: clamp(18px, 4vw, 20px);
+}
+
+.all-certificates .view-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cosmic-white);
+}
+
+.all-certificates .view-btn.active {
+  background: linear-gradient(
+    135deg,
+    rgba(78, 205, 196, 0.2) 0%,
+    rgba(138, 43, 226, 0.2) 100%
+  );
+  color: var(--cosmic-cyan);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  box-shadow: 0 0 15px var(--cosmic-cyan-glow);
+}
+
+/* Certificates Grid */
+.all-certificates .certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr)); /* Increased min width from 320px to 380px for wider cards */
+  gap: clamp(20px, 3vw, 28px); /* Slightly increased gap */
+  margin-bottom: clamp(20px, 4vw, 32px);
+  animation: slide-in 0.6s ease-out;
+}
+
+/* Certificate Card */
+.all-certificates .certificate-card {
+  background: var(--cosmic-dark);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: clamp(18px, 3vw, 24px); /* Slightly larger radius */
+  padding: clamp(18px, 3vw, 24px); /* Increased padding */
+  box-shadow: var(--glass-shadow), var(--glass-glow);
+  transition: var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.all-certificates .certificate-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 70% 30%,
+    rgba(78, 205, 196, 0.05) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.all-certificates .certificate-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 30px var(--cosmic-cyan-glow);
+  border-color: rgba(78, 205, 196, 0.3);
+}
+
+.all-certificates .card-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.5vw, 20px); /* Slightly larger gap */
+  margin-bottom: clamp(18px, 3vw, 24px);
+  padding-bottom: clamp(14px, 2vw, 18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.all-certificates .card-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px; /* Slightly longer */
+  height: 2px;
+  background: linear-gradient(90deg, var(--cosmic-cyan), transparent);
+}
+
+.all-certificates .user-avatar {
+  width: clamp(64px, 12vw, 80px); /* Increased from clamp(48px, 10vw, 60px) to make avatar larger */
+  height: clamp(64px, 12vw, 80px);
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(78, 205, 196, 0.3);
+  box-shadow: 0 0 20px var(--cosmic-cyan-glow);
+  flex-shrink: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(78, 205, 196, 0.3) 0%,
+    rgba(138, 43, 226, 0.3) 100%
+  );
+}
+
+.all-certificates .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-smooth);
+}
+
+.all-certificates .certificate-card:hover .avatar-image {
+  transform: scale(1.1);
+}
+
+.all-certificates .avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--cosmic-cyan) 0%,
+    var(--cosmic-purple) 100%
+  );
+  color: var(--cosmic-white);
+  font-size: clamp(24px, 6vw, 32px); /* Increased font size for fallback */
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.all-certificates .user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.all-certificates .user-info .username {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--cosmic-white);
+  margin-bottom: 4px;
+  text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: keep-all; /* Ensure whole words stay together */
+}
+
+.all-certificates .user-info .user-id {
+  font-size: var(--font-xs);
+  color: var(--cosmic-cyan);
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 5px var(--cosmic-cyan-glow);
+  letter-spacing: 1px;
+  opacity: 0.8;
+  word-break: keep-all;
+}
+
+.all-certificates .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.5vw, 18px); /* Increased gap */
+  margin-bottom: clamp(18px, 3vw, 24px);
+}
+
+.all-certificates .certificate-title {
+  font-size: var(--font-xl); /* Increased from var(--font-lg) to make title more prominent */
+  font-weight: 700;
+  color: var(--cosmic-white);
+  text-shadow: var(--text-shadow);
+  line-height: 1.4;
+  word-break: keep-all; /* Prevent word breaks */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Improved certificate-meta styling */
+.all-certificates .certificate-meta {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px); /* Slightly larger gap */
+  background: rgba(0, 0, 0, 0.2);
+  padding: clamp(14px, 2.5vw, 18px); /* Increased padding */
+  border-radius: clamp(14px, 2.5vw, 18px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.all-certificates .meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-base); /* Increased from var(--font-sm) for better readability */
+  line-height: 1.5;
+}
+
+.all-certificates .meta-label {
+  color: var(--cosmic-gray);
+  text-shadow: var(--text-shadow);
+  font-weight: 500;
+  white-space: nowrap; /* Keep label on one line */
+  margin-right: 8px; /* Ensure space between label and value */
+}
+
+.all-certificates .meta-value {
+  color: var(--cosmic-white);
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  text-align: right; /* Align values to the right */
+  word-break: keep-all; /* Prevent breaking */
+  white-space: nowrap; /* Keep date/hours together */
+}
+
+.all-certificates .status-wrapper {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.all-certificates .card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: clamp(14px, 2.5vw, 18px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Grid footer (pagination for grid view) */
+.all-certificates .grid-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(16px, 3vw, 20px);
+  background: var(--cosmic-dark);
+  backdrop-filter: var(--glass-blur);
+  border-radius: clamp(16px, 3vw, 20px);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  margin-top: clamp(20px, 4vw, 24px);
+  flex-wrap: wrap;
+  gap: clamp(12px, 3vw, 16px);
+}
+
+/* Responsive adjustments for grid */
+@media (max-width: 640px) {
+  .all-certificates .certificates-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .all-certificates .card-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .all-certificates .user-info {
+    align-items: center;
+  }
+  
+  .all-certificates .status-wrapper {
+    justify-content: center;
+  }
+  
+  .all-certificates .card-footer {
+    justify-content: center;
+  }
+
+  /* Ensure button in footer is centered and full width on mobile */
+  .all-certificates .card-footer .action-btn {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) {
+  .all-certificates .certificates-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); /* Adjusted for tablet */
   }
 }

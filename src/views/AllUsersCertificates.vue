@@ -47,6 +47,38 @@
           <option value="date">Sort by Date</option>
           <option value="user">Sort by User</option>
         </select>
+        <!-- View mode toggle -->
+        <div class="view-toggle">
+          <button
+            :class="['view-btn', { active: viewMode === 'grid' }]"
+            @click="viewMode = 'grid'"
+            title="Grid view"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="4" width="5" height="5" fill="currentColor"/>
+              <rect x="4" y="10" width="5" height="5" fill="currentColor"/>
+              <rect x="4" y="16" width="5" height="5" fill="currentColor"/>
+              <rect x="10" y="4" width="5" height="5" fill="currentColor"/>
+              <rect x="10" y="10" width="5" height="5" fill="currentColor"/>
+              <rect x="10" y="16" width="5" height="5" fill="currentColor"/>
+              <rect x="16" y="4" width="5" height="5" fill="currentColor"/>
+              <rect x="16" y="10" width="5" height="5" fill="currentColor"/>
+              <rect x="16" y="16" width="5" height="5" fill="currentColor"/>
+            </svg>
+          </button>
+          <button
+            :class="['view-btn', { active: viewMode === 'list' }]"
+            @click="viewMode = 'list'"
+            title="List view"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="4" width="16" height="3" fill="currentColor"/>
+              <rect x="4" y="9" width="16" height="3" fill="currentColor"/>
+              <rect x="4" y="14" width="16" height="3" fill="currentColor"/>
+              <rect x="4" y="19" width="16" height="3" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -72,7 +104,8 @@
           <p v-else>No exam certificates have been issued yet</p>
         </div>
 
-        <div v-else class="certificates-table">
+        <!-- List View (Table) -->
+        <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
             <div class="header-cell user">User</div>
             <div class="header-cell exam">Exam</div>
@@ -163,6 +196,85 @@
             </div>
           </div>
         </div>
+
+        <!-- Grid View -->
+        <div v-else class="certificates-grid">
+          <div
+            v-for="certificate in filteredExamCertificates"
+            :key="certificate.certificate_id"
+            class="certificate-card"
+          >
+            <div class="card-header">
+              <div class="user-avatar">
+                <img
+                  v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
+                  :src="getProxiedAvatarUrl(certificate.user_id)"
+                  alt="User Avatar"
+                  class="avatar-image"
+                  @error="handleAvatarError(certificate.user_id)"
+                />
+                <div v-else class="avatar-fallback">
+                  {{ getUserInitials(certificate.user_id) }}
+                </div>
+              </div>
+              <div class="user-info">
+                <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="certificate-title">{{ getExamName(certificate.exam_id) }}</div>
+              <div class="certificate-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Taken:</span>
+                  <span class="meta-value">{{ formatDate(certificate.taken_date) }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Expires:</span>
+                  <span class="meta-value">{{ formatDate(certificate.expire_date) }}</span>
+                </div>
+              </div>
+              <div class="status-wrapper">
+                <span class="status-badge" :class="{ valid: certificate.is_valid, expired: !certificate.is_valid }">
+                  {{ certificate.is_valid ? 'Valid' : 'Expired' }}
+                </span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button
+                @click="viewCertificate(certificate.certificate_id, 'exam')"
+                class="action-btn view"
+              >
+                View Certificate
+              </button>
+            </div>
+          </div>
+          <!-- Pagination for grid -->
+          <div class="grid-footer">
+            <div class="pagination">
+              <button
+                :disabled="currentPage === 1"
+                @click="currentPage--"
+                class="pagination-btn"
+              >
+                Previous
+              </button>
+              <span class="page-info">
+                Page {{ currentPage }} of {{ totalPages }}
+              </span>
+              <button
+                :disabled="currentPage === totalPages"
+                @click="currentPage++"
+                class="pagination-btn"
+              >
+                Next
+              </button>
+            </div>
+            <div class="total-count">
+              Showing {{ filteredExamCertificates.length }} of {{ examCertificates.length }} certificates
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Course Certificates Tab -->
@@ -174,7 +286,8 @@
           <p v-else>No course certificates have been issued yet</p>
         </div>
 
-        <div v-else class="certificates-table">
+        <!-- List View (Table) -->
+        <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
             <div class="header-cell user">User</div>
             <div class="header-cell course">Course</div>
@@ -258,6 +371,80 @@
             </div>
           </div>
         </div>
+
+        <!-- Grid View -->
+        <div v-else class="certificates-grid">
+          <div
+            v-for="certificate in filteredCourseCertificates"
+            :key="certificate.certificate_id"
+            class="certificate-card"
+          >
+            <div class="card-header">
+              <div class="user-avatar">
+                <img
+                  v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
+                  :src="getProxiedAvatarUrl(certificate.user_id)"
+                  alt="User Avatar"
+                  class="avatar-image"
+                  @error="handleAvatarError(certificate.user_id)"
+                />
+                <div v-else class="avatar-fallback">
+                  {{ getUserInitials(certificate.user_id) }}
+                </div>
+              </div>
+              <div class="user-info">
+                <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="certificate-title">{{ getCourseName(certificate.course_id) }}</div>
+              <div class="certificate-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Completed:</span>
+                  <span class="meta-value">{{ formatDate(certificate.date) }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Hours:</span>
+                  <span class="meta-value">{{ certificate.hours }} hours</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button
+                @click="viewCertificate(certificate.certificate_id, 'course')"
+                class="action-btn view"
+              >
+                View Certificate
+              </button>
+            </div>
+          </div>
+          <!-- Pagination for grid -->
+          <div class="grid-footer">
+            <div class="pagination">
+              <button
+                :disabled="currentPage === 1"
+                @click="currentPage--"
+                class="pagination-btn"
+              >
+                Previous
+              </button>
+              <span class="page-info">
+                Page {{ currentPage }} of {{ totalPages }}
+              </span>
+              <button
+                :disabled="currentPage === totalPages"
+                @click="currentPage++"
+                class="pagination-btn"
+              >
+                Next
+              </button>
+            </div>
+            <div class="total-count">
+              Showing {{ filteredCourseCertificates.length }} of {{ courseCertificates.length }} certificates
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -282,6 +469,7 @@ const statusFilter = ref('');
 const sortBy = ref('date');
 const currentPage = ref(1);
 const itemsPerPage = 20;
+const viewMode = ref<'grid' | 'list'>('grid'); // default grid
 
 const examCertificates = ref<any[]>([]);
 const courseCertificates = ref<any[]>([]);

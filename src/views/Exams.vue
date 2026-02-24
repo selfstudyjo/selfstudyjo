@@ -5,6 +5,27 @@
       <p class="page-subtitle">View and schedule your exams</p>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search exams by title or course..."
+          class="search-input"
+        />
+        <button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          class="search-clear"
+          aria-label="Clear search"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
@@ -19,17 +40,29 @@
       <button @click="loadExams" class="retry-btn">Retry</button>
     </div>
 
-    <!-- Empty State -->
+    <!-- Empty State (no exams at all) -->
     <div v-else-if="exams.length === 0" class="empty-container">
       <div class="empty-icon">📝</div>
       <h3>No Exams Available</h3>
       <p>There are no exams available at the moment.</p>
     </div>
 
+    <!-- Empty Search State -->
+    <div v-else-if="filteredExams.length === 0" class="empty-container">
+      <div class="empty-icon">🔍</div>
+      <h3>No Matching Exams</h3>
+      <p>No exams match your search "{{ searchQuery }}".</p>
+      <button @click="searchQuery = ''" class="retry-btn">Clear Search</button>
+    </div>
+
     <!-- Exams List -->
     <div v-else class="exams-container">
       <div class="exams-grid">
-        <div v-for="exam in exams" :key="exam.external_id" class="exam-card">
+        <div
+          v-for="exam in filteredExams"
+          :key="exam.external_id"
+          class="exam-card"
+        >
           <div class="exam-header">
             <div class="exam-icon">📚</div>
             <div class="exam-title-section">
@@ -361,6 +394,23 @@ const selectedExam = ref<Exam | null>(null);
 const videoEmbed = ref({
   canEmbed: false,
   embedUrl: null as string | null
+});
+
+// Search query
+const searchQuery = ref('');
+
+// Filtered exams based on search query
+const filteredExams = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return exams.value;
+  }
+  const query = searchQuery.value.toLowerCase().trim();
+  return exams.value.filter(exam => {
+    const title = exam.title?.toLowerCase() || '';
+    const courseName = exam.course_name?.toLowerCase() || '';
+    const courseId = exam.course_id?.toLowerCase() || '';
+    return title.includes(query) || courseName.includes(query) || courseId.includes(query);
+  });
 });
 
 const userId = computed(() => authStore.user?.id);
