@@ -26,7 +26,7 @@ import ProctorExamAppointment from '../views/ProctorExamAppointment.vue';
 import Plans from '../views/Plans.vue';
 import Payment from '../views/Payment.vue';
 import MyPlans from '../views/MyPlans.vue';
-// NEW IMPORTS
+// ===== NEW IMPORTS =====
 import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
 
@@ -45,19 +45,19 @@ const routes = [
                 path: 'courses',
                 name: 'Courses',
                 component: Courses,
-                meta: { title: 'Courses', requiresAuth: false } // Public
+                meta: { title: 'Courses', requiresAuth: false }
             },
             {
                 path: 'runbooks',
                 name: 'Runbooks',
                 component: Runbooks,
-                meta: { title: 'Runbooks', requiresAuth: false } // Public
+                meta: { title: 'Runbooks', requiresAuth: false }
             },
             {
                 path: 'runbooks/:id',
                 name: 'RunbookDetails',
                 component: RunbookDetails,
-                meta: { title: 'Runbook Details', requiresAuth: false }, // Public
+                meta: { title: 'Runbook Details', requiresAuth: false },
                 props: true
             },
             {
@@ -70,7 +70,7 @@ const routes = [
                 path: 'course/:id',
                 name: 'CourseDetails',
                 component: CourseDetails,
-                meta: { title: 'Course Details', requiresAuth: false } // Public
+                meta: { title: 'Course Details', requiresAuth: false }
             },
             {
                 path: 'course/:courseId/lesson/:lessonId/homework',
@@ -117,13 +117,13 @@ const routes = [
                 path: 'all-certificates',
                 name: 'AllUsersCertificates',
                 component: AllUsersCertificates,
-                meta: { title: 'All Certificates', requiresAuth: false } // Public
+                meta: { title: 'All Certificates', requiresAuth: false }
             },
             {
                 path: 'exams',
                 name: 'Exams',
                 component: Exams,
-                meta: { title: 'Exams', requiresAuth: false } // Public
+                meta: { title: 'Exams', requiresAuth: false }
             },
             {
                 path: 'schedule-exam',
@@ -160,7 +160,7 @@ const routes = [
                 path: 'plans',
                 name: 'Plans',
                 component: Plans,
-                meta: { title: 'Subscription Plans', requiresAuth: false } // Public
+                meta: { title: 'Subscription Plans', requiresAuth: false }
             },
             {
                 path: 'payment',
@@ -180,6 +180,21 @@ const routes = [
                 component: MyPlans,
                 meta: { title: 'My Plans', requiresAuth: true }
             },
+            // ===== NEW ROUTES =====
+            {
+                path: 'my-results',
+                name: 'UserResults',
+                component: UserResults,
+                meta: { title: 'My Results', requiresAuth: true }
+            },
+            {
+                path: 'review-result/:type/:id',
+                name: 'ReviewResults',
+                component: ReviewResults,
+                meta: { title: 'Review Result', requiresAuth: true },
+                props: true
+            },
+            // Login & Register
             {
                 path: 'login',
                 name: 'Login',
@@ -197,20 +212,6 @@ const routes = [
                 name: 'VerifyEmail',
                 component: VerifyEmail,
                 meta: { title: 'Verify Email' }
-            },
-            // NEW ROUTES
-            {
-                path: 'my-results',
-                name: 'UserResults',
-                component: UserResults,
-                meta: { title: 'My Results', requiresAuth: true }
-            },
-            {
-                path: 'review-result/:type/:id',
-                name: 'ReviewResults',
-                component: ReviewResults,
-                meta: { title: 'Review Results', requiresAuth: true },
-                props: true
             }
         ]
     },
@@ -227,10 +228,8 @@ const router = createRouter({
 
 // Global navigation guards
 router.beforeEach(async (to, from, next) => {
-    // Update page title
     document.title = `${to.meta.title} | Self Study JO`;
 
-    // Check if this is the runbook details route
     const isRunbookDetailsRoute = to.name === 'RunbookDetails';
 
     if (to.meta.publicOnly) {
@@ -238,7 +237,6 @@ router.beforeEach(async (to, from, next) => {
     } else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
         await authGuard(to, from, next);
     } else {
-        // For routes without authentication requirement (like Exams, Courses)
         next();
     }
 });

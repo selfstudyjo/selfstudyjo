@@ -84,9 +84,9 @@
           <label>
             <input type="radio" value="quizzes" v-model="chartType" /> Quizzes
           </label>
-          <select v-model="selectedFilterId" v-if="currentFilterOptions.length">
+          <select v-model="selectedFilterId" v-if="filterOptions.length">
             <option value="">All</option>
-            <option v-for="opt in currentFilterOptions" :key="opt.value" :value="opt.value">
+            <option v-for="opt in filterOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
@@ -105,7 +105,7 @@ import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type UserExamResult } from '@/services/exam.service';
-import { quizService, type UserQuizResult } from '@/services/quiz.service';
+import { quizService, type UserQuizResult, type Quiz } from '@/services/quiz.service';
 import Chart from 'chart.js/auto';
 
 const router = useRouter();
@@ -121,18 +121,9 @@ const loading = ref({ exams: false, quizzes: false });
 // Chart related
 const chartType = ref<'exams' | 'quizzes'>('exams');
 const selectedFilterId = ref('');
-
-// Separate filter options for exams and quizzes
-const examFilterOptions = ref<{ value: string; label: string }[]>([]);
-const quizFilterOptions = ref<{ value: string; label: string }[]>([]);
-
+const filterOptions = ref<{ value: string; label: string }[]>([]);
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
-
-// Computed current filter options based on chartType
-const currentFilterOptions = computed(() => {
-  return chartType.value === 'exams' ? examFilterOptions.value : quizFilterOptions.value;
-});
 
 // Fetch data on mount
 onMounted(async () => {
@@ -144,15 +135,9 @@ async function fetchExamResults() {
   loading.value.exams = true;
   try {
     const results = await examService.getUserExamResults(authStore.user.id);
+    // Enrich with exam titles if needed (already done in service)
     examResults.value = results;
-    // Build exam filter options
-    const uniqueExams = new Map();
-    results.forEach(r => {
-      if (!uniqueExams.has(r.exam)) {
-        uniqueExams.set(r.exam, r.exam_title || r.exam);
-      }
-    });
-    examFilterOptions.value = Array.from(uniqueExams.entries()).map(([value, label]) => ({ value, label }));
+    updateFilterOptions('exams');
   } catch (error) {
     console.error('Failed to fetch exam results:', error);
   } finally {
@@ -166,14 +151,7 @@ async function fetchQuizResults() {
   try {
     const results = await quizService.getUserQuizResults(authStore.user.id);
     quizResults.value = results;
-    // Build quiz filter options
-    const uniqueQuizzes = new Map();
-    results.forEach(r => {
-      if (!uniqueQuizzes.has(r.quiz)) {
-        uniqueQuizzes.set(r.quiz, r.quiz_title || r.quiz);
-      }
-    });
-    quizFilterOptions.value = Array.from(uniqueQuizzes.entries()).map(([value, label]) => ({ value, label }));
+    updateFilterOptions('quizzes');
   } catch (error) {
     console.error('Failed to fetch quiz results:', error);
   } finally {
@@ -181,31 +159,37 @@ async function fetchQuizResults() {
   }
 }
 
-// Reset selected filter when chart type changes
-watch(chartType, () => {
-  selectedFilterId.value = '';
-  nextTick(renderChart);
-});
+function updateFilterOptions(type: 'exams' | 'quizzes') {
+  if (type === 'exams') {
+    const uniqueExams = new Map();
+    examResults.value.forEach(r => {
+      if (!uniqueExams.has(r.exam)) {
+        uniqueExams.set(r.exam, r.exam_title || r.exam);
+      }
+    });
+    filterOptions.value = Array.from(uniqueExams.entries()).map(([value, label]) => ({ value, label }));
+  } else {
+    const uniqueQuizzes = new Map();
+    quizResults.value.forEach(r => {
+      if (!uniqueQuizzes.has(r.quiz)) {
+        uniqueQuizzes.set(r.quiz, r.quiz_title || r.quiz);
+      }
+    });
+    filterOptions.value = Array.from(uniqueQuizzes.entries()).map(([value, label]) => ({ value, label }));
+  }
+}
 
 // Computed chart data
 const chartData = computed(() => {
   const data = chartType.value === 'exams' ? examResults.value : quizResults.value;
   let filtered = data;
   if (selectedFilterId.value) {
-    filtered = data.filter(r => {
-      if (chartType.value === 'exams') {
-        return (r as UserExamResult).exam === selectedFilterId.value;
-      } else {
-        return (r as UserQuizResult).quiz === selectedFilterId.value;
-      }
-    });
+    filtered = data.filter(r => (r as any).exam === selectedFilterId.value || (r as any).quiz === selectedFilterId.value);
   }
   // Sort by date
   filtered = [...filtered].sort((a, b) => new Date(a.date_taken).getTime() - new Date(b.date_taken).getTime());
   return filtered.map(r => ({
-    label: chartType.value === 'exams' 
-      ? (r as UserExamResult).exam_title || (r as UserExamResult).exam 
-      : (r as UserQuizResult).quiz_title || (r as UserQuizResult).quiz,
+    label: chartType.value === 'exams' ? (r as UserExamResult).exam_title || (r as UserExamResult).exam : (r as UserQuizResult).quiz_title || (r as UserQuizResult).quiz,
     date: new Date(r.date_taken),
     score: r.score
   }));
@@ -269,4 +253,4 @@ function goToReview(type: 'exam' | 'quiz', resultId: string) {
 }
 </script>
 
-<style src="@/assets/css/user-results.css"></style>
+<style scoped src="@/assets/css/user-results.css"></style>

@@ -378,7 +378,7 @@ const MyPlansIcon = {
   }
 };
 
-// NEW RESULTS ICON
+// ===== NEW ICON FOR MY RESULTS =====
 const ResultsIcon = {
   name: 'ResultsIcon',
   render() {
@@ -389,7 +389,7 @@ const ResultsIcon = {
       fill: 'currentColor'
     }, [
       h('path', {
-        d: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'
+        d: 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z'
       })
     ]);
   }
@@ -406,24 +406,20 @@ const sidebarVisible = ref(false);
 const avatarError = ref(false);
 let pollInterval: number | null = null;
 
-// Initialize auth on component mount
 onMounted(() => {
   checkIfMobile();
   window.addEventListener('resize', checkIfMobile);
 
-  // Initialize auth store if needed
   if (!authStore.isAuthenticated && authStore.token) {
     authStore.checkAuth().catch(err => {
       console.log('Initial auth check failed:', err);
     });
   }
 
-  // Initialize notifications if authenticated
   if (authStore.isAuthenticated) {
     initializeNotifications();
   }
 
-  // Handle click outside on mobile
   document.addEventListener('click', handleClickOutside);
 });
 
@@ -448,7 +444,6 @@ const hasLabAccess = computed(() => {
 
 const isProctor = computed(() => authStore.isProctor);
 
-// Public navigation items (always visible)
 const publicNavItems = computed(() => {
   const items = [
     { to: '/courses', text: 'Courses', icon: CoursesIcon },
@@ -457,18 +452,17 @@ const publicNavItems = computed(() => {
     { to: '/plans', text: 'Plans', icon: PlansIcon },
     { to: '/all-certificates', text: 'All Certificates', icon: AllCertificatesIcon },
   ];
-
   return items;
 });
 
-// Private navigation items (only when authenticated)
 const privateNavItems = computed(() => {
   const items = [
     { to: '/', text: 'Dashboard', icon: DashboardIcon },
-    { to: '/my-results', text: 'My Results', icon: ResultsIcon },   // NEW
     { to: '/notifications', text: 'Notifications', icon: NotificationsIcon },
     { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon },
     { to: '/certificates', text: 'My Certificates', icon: CertificateIcon },
+    // ===== NEW ITEM =====
+    { to: '/my-results', text: 'My Results', icon: ResultsIcon },
     { to: '/profile', text: 'Profile', icon: ProfileIcon },
   ];
 
@@ -602,7 +596,6 @@ const handleLogout = async () => {
   }
 };
 
-// Watch for authentication changes
 watch(() => authStore.isAuthenticated, (newValue) => {
   if (newValue && username.value) {
     initializeNotifications();
@@ -612,7 +605,6 @@ watch(() => authStore.isAuthenticated, (newValue) => {
   }
 });
 
-// Watch for username changes
 watch(username, (newUsername, oldUsername) => {
   if (newUsername) {
     if (oldUsername && oldUsername !== newUsername) {
@@ -625,7 +617,6 @@ watch(username, (newUsername, oldUsername) => {
   }
 });
 
-// Watch for route changes to refresh count
 watch(() => route.path, () => {
   if (authStore.isAuthenticated && username.value) {
     setTimeout(() => {
@@ -634,7 +625,6 @@ watch(() => route.path, () => {
   }
 });
 
-// Reset avatar error when user changes
 watch(() => authStore.user, () => {
   avatarError.value = false;
 });

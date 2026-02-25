@@ -9,7 +9,8 @@
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
       <div class="result-summary">
-        <h2>{{ resultTitle }}</h2>
+        <!-- Now shows the real title from the exam/quiz data -->
+        <h2>{{ contentTitle }}</h2>
         <p class="score">
           Score: <strong :class="scoreClass">{{ result?.score }}%</strong>
           ({{ result?.result_status }})
@@ -69,6 +70,9 @@ const userAnswersMap = ref<Map<string, string>>(new Map()); // question_id -> se
 const loading = ref(true);
 const error = ref('');
 
+// Store the real title (exam/quiz) separately – this is what we display in the summary
+const contentTitle = ref('');
+
 const resultType = type;
 
 onMounted(async () => {
@@ -88,21 +92,17 @@ onMounted(async () => {
 async function loadExamResult() {
   // Fetch the result
   const examResult = await examService.getExamResultById(resultId) as UserExamResult;
-  
-  // Fetch the exam with questions and answers to get the title and details
-  const exam = await examService.getExam(examResult.exam);
-  
-  // Set the exam title on the result for display
-  examResult.exam_title = exam.title;
-  
-  // Store the result
   result.value = examResult;
 
-  // Fetch exam questions with answers
+  // Fetch the exam details (which contain the real title)
+  const exam = await examService.getExam(examResult.exam);
+  contentTitle.value = exam.title || examResult.exam_title || examResult.exam;
+
+  // Fetch questions with answers
   const examQuestions = await examService.getExamQuestions(examResult.exam);
   questions.value = examQuestions;
 
-  // Build map of user's selected answers (assuming user_answers is included in result)
+  // Build map of user's selected answers
   if (examResult.user_answers) {
     examResult.user_answers.forEach((ua: any) => {
       if (ua.exam_answer) {
@@ -115,29 +115,17 @@ async function loadExamResult() {
 async function loadQuizResult() {
   // Fetch the result
   const quizResult = await quizService.getQuizResultById(resultId) as UserQuizResult;
-  
-  // Fetch the quiz with details
-  const quiz = await quizService.getQuiz(quizResult.quiz);
-  
-  // Set the quiz title
-  quizResult.quiz_title = quiz.title;
-  
-  // Store result
   result.value = quizResult;
 
-  // Get questions (already included in quiz if service fetches them, but we need to ensure)
-  // The getQuiz method should populate questions, but if not, we can fetch separately.
-  // For safety, we use quiz.questions or fetch if empty.
-  if (quiz.questions && quiz.questions.length > 0) {
-    questions.value = quiz.questions;
-  } else {
-    // Fallback: fetch quiz questions separately
-    const quizQuestions = await quizService.getQuiz(quizResult.quiz); // but this might not include questions
-    // Actually, we need to fetch questions via a separate method; quizService.getQuiz already includes questions.
-    // So we can just assign quiz.questions.
-    questions.value = quiz.questions || [];
-  }
+  // Fetch the quiz details (which contain the real title)
+  const quiz = await quizService.getQuiz(quizResult.quiz);
+  contentTitle.value = quiz.title || quizResult.quiz_title || quizResult.quiz;
 
+  // Questions are already inside the quiz object? If not, fetch them separately.
+  // The service might return quiz with questions; adjust if needed.
+  questions.value = quiz.questions || [];
+
+  // Build map of user's selected answers
   if (quizResult.user_answers) {
     quizResult.user_answers.forEach((ua: any) => {
       if (ua.quiz_answer) {
@@ -146,15 +134,6 @@ async function loadQuizResult() {
     });
   }
 }
-
-const resultTitle = computed(() => {
-  if (!result.value) return '';
-  if (type === 'exam') {
-    return (result.value as UserExamResult).exam_title || (result.value as UserExamResult).exam;
-  } else {
-    return (result.value as UserQuizResult).quiz_title || (result.value as UserQuizResult).quiz;
-  }
-});
 
 const scoreClass = computed(() => {
   const score = result.value?.score || 0;
@@ -183,4 +162,5 @@ function goBack() {
 }
 </script>
 
-<style src="@/assets/css/review-results.css"></style>
+<!-- ===== scoped prevents style conflicts with global buttons ===== -->
+<style scoped src="@/assets/css/review-results.css"></style>
