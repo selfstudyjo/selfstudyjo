@@ -46,7 +46,7 @@ canvas {
   transition: margin-left 0.3s ease;
   position: relative;
   z-index: 1;
-  background: rgba(10, 10, 30, 0.7);
+  
   backdrop-filter: blur(2px);
 
   /* Add bottom padding to clear the fixed chat box */
