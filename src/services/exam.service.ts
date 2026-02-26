@@ -3,6 +3,7 @@ import { serviceRegistry } from './config';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
 import { courseService, type Course } from './course.service';
 import { proctorService, type ExamProctor } from './proctor.service';
+import { notificationService } from './notification.service'; // <-- added for proctor notification
 
 export interface Exam {
     external_id: string;
@@ -458,7 +459,44 @@ class ExamService {
                 cleanData
             );
 
-            return await this.enrichAppointment(appointment);
+            const enriched = await this.enrichAppointment(appointment);
+
+            // --- NEW: Notify the assigned proctor about the new appointment ---
+            (async () => {
+                try {
+                    // Only attempt if proctor_id exists
+                    if (enriched.proctor_id && enriched.proctor_name) {
+                        // Use proctor_name (username) as recipient
+                        await notificationService.createNotification({
+                            title: 'New Exam Appointment',
+                            message: `New appointment booked for ${enriched.username} on ${new Date(enriched.appointment_date).toLocaleString()} for exam ${enriched.exam_title || enriched.exam}.`,
+                            notification_type: 'personal',
+                            sender: 'system', // or the student's username? Use 'system' for clarity
+                            recipient: enriched.proctor_name,
+                            read: false
+                        });
+                    } else if (enriched.proctor_id) {
+                        // If we have proctor_id but not name, fetch it
+                        const proctor = await proctorService.getProctor(enriched.proctor_id);
+                        if (proctor && proctor.username) {
+                            await notificationService.createNotification({
+                                title: 'New Exam Appointment',
+                                message: `New appointment booked for ${enriched.username} on ${new Date(enriched.appointment_date).toLocaleString()} for exam ${enriched.exam_title || enriched.exam}.`,
+                                notification_type: 'personal',
+                                sender: 'system',
+                                recipient: proctor.username,
+                                read: false
+                            });
+                        }
+                    }
+                } catch (notifyError) {
+                    // Silently fail – notification is not critical
+                    console.warn('Failed to send proctor notification:', notifyError);
+                }
+            })();
+            // -----------------------------------------------------------------
+
+            return enriched;
         } catch (error: any) {
             throw new Error(error.message || 'Failed to create exam appointment');
         }

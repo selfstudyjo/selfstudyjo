@@ -30,25 +30,92 @@
                 <p>You don't have any exam appointments assigned to you.</p>
             </div>
 
-            <!-- Appointments List -->
-            <div v-else class="appointments-grid">
-                <div class="appointments-header">
-                    <h2>Upcoming Exam Appointments</h2>
-                    <div class="stats">
-                        <span class="stat-item">
-                            <span class="stat-label">Total:</span>
-                            <span class="stat-value">{{ appointments.length }}</span>
-                        </span>
-                        <span class="stat-item">
-                            <span class="stat-label">Scheduled:</span>
-                            <span class="stat-value">{{ scheduledCount }}</span>
-                        </span>
+            <!-- Appointments List with Filters -->
+            <div v-else>
+                <!-- Filters Section -->
+                <div class="filters-section">
+                    <div class="filters-header">
+                        <h2>Upcoming Exam Appointments</h2>
+                        <div class="stats">
+                            <span class="stat-item">
+                                <span class="stat-label">Total:</span>
+                                <span class="stat-value">{{ filteredAppointments.length }}</span>
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-label">Scheduled:</span>
+                                <span class="stat-value">{{ scheduledCount }}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="searchUsername">Username</label>
+                            <input
+                                id="searchUsername"
+                                v-model="filters.username"
+                                type="text"
+                                placeholder="Filter by username"
+                                class="filter-input"
+                            />
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="searchExamTitle">Exam Title</label>
+                            <input
+                                id="searchExamTitle"
+                                v-model="filters.examTitle"
+                                type="text"
+                                placeholder="Filter by exam title"
+                                class="filter-input"
+                            />
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter" v-model="filters.status" class="filter-input">
+                                <option value="">All Statuses</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Expired">Expired</option>
+                                <option value="No Reservation Yet">No Reservation Yet</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="dateFrom">From Date</label>
+                            <input
+                                id="dateFrom"
+                                v-model="filters.dateFrom"
+                                type="date"
+                                class="filter-input"
+                            />
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="dateTo">To Date</label>
+                            <input
+                                id="dateTo"
+                                v-model="filters.dateTo"
+                                type="date"
+                                class="filter-input"
+                            />
+                        </div>
+
+                        <div class="filter-actions">
+                            <button @click="clearFilters" class="clear-filters-btn">
+                                Clear Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Appointments Grid -->
                 <div class="appointments-list">
                     <div
-                        v-for="appointment in appointments"
+                        v-for="appointment in filteredAppointments"
                         :key="appointment.external_id"
                         class="appointment-card"
                         @click="viewAppointmentDetails(appointment.external_id)"
@@ -123,7 +190,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type ExamAppointment } from '@/services/exam.service';
@@ -136,8 +203,50 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const proctorData = computed(() => authStore.proctorData);
 
+// Filter state
+const filters = reactive({
+    username: '',
+    examTitle: '',
+    status: '',
+    dateFrom: '',
+    dateTo: ''
+});
+
+// Filtered appointments based on current filters
+const filteredAppointments = computed(() => {
+    return appointments.value.filter(app => {
+        // Username filter (case-insensitive partial match)
+        if (filters.username && !app.username.toLowerCase().includes(filters.username.toLowerCase())) {
+            return false;
+        }
+        // Exam title filter (case-insensitive partial match)
+        if (filters.examTitle && app.exam_title && !app.exam_title.toLowerCase().includes(filters.examTitle.toLowerCase())) {
+            return false;
+        }
+        // Status filter
+        if (filters.status && app.appointment_status !== filters.status) {
+            return false;
+        }
+        // Date from filter
+        if (filters.dateFrom) {
+            const appDate = new Date(app.appointment_date).toISOString().split('T')[0];
+            if (appDate < filters.dateFrom) {
+                return false;
+            }
+        }
+        // Date to filter
+        if (filters.dateTo) {
+            const appDate = new Date(app.appointment_date).toISOString().split('T')[0];
+            if (appDate > filters.dateTo) {
+                return false;
+            }
+        }
+        return true;
+    });
+});
+
 const scheduledCount = computed(() => {
-    return appointments.value.filter(app =>
+    return filteredAppointments.value.filter(app =>
         app.appointment_status === 'Scheduled' ||
         app.appointment_status === 'In Progress'
     ).length;
@@ -153,12 +262,24 @@ const loadAppointments = async () => {
     error.value = null;
 
     try {
-        appointments.value = await examService.getExamAppointmentsByProctor(proctorData.value.external_id);
+        const allAppointments = await examService.getExamAppointmentsByProctor(proctorData.value.external_id);
+        // Already sorted by appointment_date descending in service, but ensure it
+        appointments.value = allAppointments.sort((a, b) =>
+            new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
+        );
     } catch (err: any) {
         error.value = err.message || 'Failed to load appointments';
     } finally {
         loading.value = false;
     }
+};
+
+const clearFilters = () => {
+    filters.username = '';
+    filters.examTitle = '';
+    filters.status = '';
+    filters.dateFrom = '';
+    filters.dateTo = '';
 };
 
 const viewAppointmentDetails = (appointmentId: string) => {
@@ -200,4 +321,101 @@ onMounted(() => {
 
 <style scoped>
 @import '@/assets/css/proctor-dashboard.css';
+
+/* Additional styles for filters */
+.filters-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(15, 15, 40, 0.85);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px) saturate(180%);
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filters-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    margin: 0;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.875rem;
+    color: #e0e0e0;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+.filter-input {
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 15px rgba(78, 205, 196, 0.3);
+}
+
+.filter-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+.clear-filters-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.9), rgba(255, 86, 86, 0.9));
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    white-space: nowrap;
+}
+
+.clear-filters-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 86, 86, 1), rgba(255, 70, 70, 1));
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    .filter-actions {
+        justify-content: flex-end;
+    }
+}
 </style>
