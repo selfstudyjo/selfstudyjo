@@ -385,5 +385,6 @@ function onWindowResize() {
   height: 100%;
   z-index: 0;
   pointer-events: none;
+  background: #03030f; /* Match scene background – eliminates white flash during initialization */
 }
 </style>

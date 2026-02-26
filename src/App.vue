@@ -52,13 +52,7 @@ watch(() => authStore.user, (newUser, oldUser) => {
   --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.6;
-  color: #1a202c;
-  background: #f7fafc;
-  overflow-x: hidden;
-}
+/* Body background is handled by src/style.css – do not add any body styles here */
 
 #app {
   min-height: 100vh;

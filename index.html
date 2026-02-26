@@ -5,8 +5,15 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>selfstudy2026</title>
+    <!-- Force dark background on html as well -->
+    <style>
+      html {
+        background: #03030f;
+      }
+    </style>
   </head>
-  <body>
+  <!-- Direct inline style on body – this is the earliest possible paint -->
+  <body style="background:#03030f !important; margin:0; padding:0;">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
