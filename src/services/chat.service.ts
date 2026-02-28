@@ -6,10 +6,18 @@ const CHAT_APP_ID = import.meta.env.VITE_CHAT_APP_ID;
 const REGISTRY_BASE = import.meta.env.VITE_API_BASE_REGISTRY;
 const REGISTRY_ALT = import.meta.env.VITE_REGISTRY_ALT;
 
-// Fallback chat replicas in case registry fails
+// Fallback chat replicas – all must support HTTPS
 const FALLBACK_CHAT_REPLICAS = [
     'https://selfstudychat.pythonanywhere.com',
-    // Add more fallback URLs if available
+'https://selfstudychat2.pythonanywhere.com',
+'https://selfstudychat3.pythonanywhere.com',
+'https://selfstudychat4.pythonanywhere.com',
+'https://selfstudychat5.pythonanywhere.com',
+'https://selfstudychat6.pythonanywhere.com',
+'https://selfstudychat7.pythonanywhere.com',
+'https://selfstudychat8.pythonanywhere.com',
+'https://selfstudychat9.pythonanywhere.com',
+'https://selfstudychat10.pythonanywhere.com',
 ];
 
 // Cache for room counts
@@ -42,6 +50,7 @@ export async function getUserIP(): Promise<string> {
 // Fetch chat app replicas from registry with fallback
 export async function fetchChatReplicas(): Promise<string[]> {
     const registries = [REGISTRY_BASE, REGISTRY_ALT];
+    const isPageHttps = window.location.protocol === 'https:';
 
     for (const registry of registries) {
         try {
@@ -60,13 +69,18 @@ export async function fetchChatReplicas(): Promise<string[]> {
                 const data = await response.json();
                 if (data.replicas && Array.isArray(data.replicas)) {
                     const replicas = data.replicas
-                        .filter((replica: any) => replica.replica_url && replica.is_active !== false)
-                        .map((replica: any) => replica.replica_url.trim().replace(/\/$/, ''))
-                        .filter((url: string) => url && url.startsWith('http'));
+                    .filter((replica: any) => replica.replica_url && replica.is_active !== false)
+                    .map((replica: any) => replica.replica_url.trim().replace(/\/$/, ''))
+                    .filter((url: string) => url && url.startsWith('http'));
 
-                    if (replicas.length > 0) {
-                        console.debug(`Found ${replicas.length} chat replicas from registry`);
-                        return replicas;
+                    // In production (HTTPS), only keep HTTPS replicas
+                    const secureReplicas = isPageHttps
+                    ? replicas.filter(url => url.startsWith('https://'))
+                    : replicas;
+
+                    if (secureReplicas.length > 0) {
+                        console.debug(`Found ${secureReplicas.length} chat replicas from registry`);
+                        return secureReplicas;
                     }
                 }
             }
@@ -75,9 +89,11 @@ export async function fetchChatReplicas(): Promise<string[]> {
         }
     }
 
-    // Fallback to hardcoded replicas
+    // Fallback to hardcoded replicas – also enforce HTTPS in production
     console.debug('Using fallback chat replicas');
-    return FALLBACK_CHAT_REPLICAS;
+    return isPageHttps
+    ? FALLBACK_CHAT_REPLICAS
+    : FALLBACK_CHAT_REPLICAS; // if not HTTPS, they are already HTTPS, but we keep as is
 }
 
 // Get room count for a replica (with error handling)
@@ -185,7 +201,7 @@ function getCachedRoomForIP(ip: string): { replicaUrl: string; roomId: number } 
         if (cache) {
             const roomCache: RoomCache = JSON.parse(cache);
             const cachedRoom = roomCache[ip];
-            
+
             // Check if cache is still valid (less than 24 hours old)
             if (cachedRoom && (Date.now() - cachedRoom.timestamp) < 24 * 60 * 60 * 1000) {
                 return {
@@ -205,13 +221,13 @@ function cacheRoomForIP(ip: string, replicaUrl: string, roomId: number): void {
     try {
         const cache = localStorage.getItem(USER_ROOM_CACHE_KEY);
         let roomCache: RoomCache = cache ? JSON.parse(cache) : {};
-        
+
         roomCache[ip] = {
             replicaUrl,
             roomId,
             timestamp: Date.now()
         };
-        
+
         // Clean up old entries (older than 7 days)
         const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         Object.keys(roomCache).forEach(key => {
@@ -219,7 +235,7 @@ function cacheRoomForIP(ip: string, replicaUrl: string, roomId: number): void {
                 delete roomCache[key];
             }
         });
-        
+
         localStorage.setItem(USER_ROOM_CACHE_KEY, JSON.stringify(roomCache));
     } catch (error) {
         console.debug('Failed to cache room:', error);
@@ -231,7 +247,7 @@ export async function selectBestReplica(userIP: string): Promise<{ replicaUrl: s
     const replicas = await fetchChatReplicas();
 
     if (replicas.length === 0) {
-        throw new Error('No chat servers available. Please try again later.');
+        throw new Error('No secure chat servers available. Please try again later or contact support.');
     }
 
     // Check cached room first
@@ -262,7 +278,7 @@ export async function selectBestReplica(userIP: string): Promise<{ replicaUrl: s
 
     // Wait for all checks to complete
     const results = await Promise.allSettled(replicaChecks);
-    
+
     // Find first successful result with a room
     for (const result of results) {
         if (result.status === 'fulfilled' && result.value) {
@@ -306,13 +322,13 @@ export async function selectBestReplica(userIP: string): Promise<{ replicaUrl: s
 
     // Filter out failed replicas and sort by room count
     const validReplicas = replicaCounts
-        .filter(result => 
-            result.status === 'fulfilled' && 
-            result.value && 
-            result.value.count !== Infinity
-        )
-        .map(result => (result as PromiseFulfilledResult<{ replicaUrl: string; count: number }>).value)
-        .sort((a, b) => a.count - b.count);
+    .filter(result =>
+    result.status === 'fulfilled' &&
+    result.value &&
+    result.value.count !== Infinity
+    )
+    .map(result => (result as PromiseFulfilledResult<{ replicaUrl: string; count: number }>).value)
+    .sort((a, b) => a.count - b.count);
 
     if (validReplicas.length === 0) {
         // Fallback to first unblocked replica
@@ -358,10 +374,10 @@ export async function getChatRoom(ip: string): Promise<{ room: ChatRoom; replica
         }
 
         const room = await response.json();
-        
+
         // Cache the newly created room
         cacheRoomForIP(ip, replicaUrl, room.id);
-        
+
         // Update room count cache
         roomCounts[replicaUrl] = (roomCounts[replicaUrl] || 0) + 1;
 
@@ -478,7 +494,7 @@ export function startMessagePolling(
     replicaUrl: string,
     roomId: number,
     callback: (messages: ChatMessage[]) => void,
-    interval: number = 5000
+                                    interval: number = 5000
 ): NodeJS.Timeout {
     return setInterval(async () => {
         try {
