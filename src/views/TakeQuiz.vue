@@ -233,7 +233,7 @@
               </div>
             </div>
 
-            <!-- Answers - Only show answers for this specific question -->
+            <!-- Answers -->
             <div class="answers-section">
               <div
                 v-for="answer in currentQuestion.answers"
@@ -260,7 +260,6 @@
                 </div>
               </div>
 
-              <!-- Show message if no answers available for this question -->
               <div v-if="!currentQuestion.answers || currentQuestion.answers.length === 0" class="no-answers">
                 <p>No answers available for this question.</p>
               </div>
@@ -358,11 +357,15 @@ const showCorrectAnswers = ref(false);
 const remainingTime = ref(0);
 const timerInterval = ref<NodeJS.Timeout | null>(null);
 
+// Replica pinning
+const quizReplicaBaseUrl = ref<string | null>(null);
+
+// Cache keys
+const getQuizCacheKey = (quizId: string) => `quiz_${quizId}`;
+
 // Computed
 const currentQuestion = computed(() => {
-  if (!quiz.value?.questions || quiz.value.questions.length === 0) {
-    return null;
-  }
+  if (!quiz.value?.questions || quiz.value.questions.length === 0) return null;
   return quiz.value.questions[currentQuestionIndex.value];
 });
 
@@ -381,7 +384,7 @@ const backToCourseLink = computed(() => {
   return courseId ? `/course/${courseId}` : '/courses';
 });
 
-// Methods
+// --- Ultimate Optimized loadQuiz ---
 const loadQuiz = async () => {
   const quizId = route.query.quizId as string;
   const lessonId = route.query.lessonId as string;
@@ -396,43 +399,93 @@ const loadQuiz = async () => {
   error.value = null;
 
   try {
-    // Clear cache for fresh replicas
-    serviceRegistry.clearCache();
-
-    // Check if user is authenticated
     if (!authStore.user?.id || !authStore.user?.username) {
       error.value = 'You must be logged in to take a quiz';
       return;
     }
 
-    let fetchedQuiz: Quiz | null = null;
-
-    // 1. Try to use the quiz object passed from CourseDetails via router state
+    // 1. Try router state (fastest)
     const state = history.state as { quiz?: Quiz } | null;
     if (state?.quiz) {
-      // Verify that the passed quiz matches the expected quizId and lessonId
-      if (state.quiz.external_id === quizId && state.quiz.lesson_id === lessonId) {
-        fetchedQuiz = state.quiz;
+      if ((quizId && state.quiz.external_id === quizId) ||
+          (lessonId && state.quiz.lesson_id === lessonId)) {
+        quiz.value = state.quiz;
+        // Check if already taken
+        const existingResult = await quizService.getUserQuizResult(
+          authStore.user.id,
+          quiz.value.external_id,
+          quizReplicaBaseUrl.value || undefined
+        );
+        if (existingResult) {
+          showResult.value = true;
+          quizResult.value = {
+            external_id: existingResult.external_id,
+            user_id: existingResult.user_id,
+            username: existingResult.username,
+            quiz: existingResult.quiz,
+            score: existingResult.score,
+            date_taken: existingResult.date_taken || new Date().toISOString(),
+            result_message: existingResult.result_message || '',
+            result_status: existingResult.result_status
+          };
+        } else {
+          remainingTime.value = quiz.value.quiz_duration * 60;
+        }
+        return;
       }
     }
 
-    // 2. If no state quiz, fetch by quizId
-    if (!fetchedQuiz && quizId) {
-      try {
-        fetchedQuiz = await quizService.getQuiz(quizId);
-      } catch (err) {
-        // ignore and try next method
+    // 2. Try sessionStorage (for this session)
+    if (quizId) {
+      const cached = sessionStorage.getItem(getQuizCacheKey(quizId));
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as Quiz;
+          if (parsed.questions && parsed.questions.length > 0) {
+            quiz.value = parsed;
+            const existingResult = await quizService.getUserQuizResult(
+              authStore.user.id,
+              quiz.value.external_id,
+              quizReplicaBaseUrl.value || undefined
+            );
+            if (existingResult) {
+              showResult.value = true;
+              quizResult.value = {
+                external_id: existingResult.external_id,
+                user_id: existingResult.user_id,
+                username: existingResult.username,
+                quiz: existingResult.quiz,
+                score: existingResult.score,
+                date_taken: existingResult.date_taken || new Date().toISOString(),
+                result_message: existingResult.result_message || '',
+                result_status: existingResult.result_status
+              };
+            } else {
+              remainingTime.value = quiz.value.quiz_duration * 60;
+            }
+            return;
+          }
+        } catch (e) {
+          // Invalid cache, ignore
+        }
       }
     }
 
-    // 3. If still no quiz, or if lessonId mismatch, fetch by lessonId
-    if (lessonId) {
-      if (!fetchedQuiz) {
-        fetchedQuiz = await quizService.getQuizByLessonId(lessonId);
-      } else if (fetchedQuiz.lesson_id !== lessonId) {
-        fetchedQuiz = await quizService.getQuizByLessonId(lessonId);
-      }
+    // 3. Fetch from API (parallel quiz + result)
+    const replica = await quizService.getRandomQuizReplica();
+    if (!replica) throw new Error('No exam service replicas available');
+    quizReplicaBaseUrl.value = replica;
+
+    let quizPromise: Promise<Quiz | null>;
+    if (quizId) {
+      quizPromise = quizService.getQuiz(quizId, quizReplicaBaseUrl.value);
+    } else {
+      quizPromise = quizService.getQuizByLessonId(lessonId, quizReplicaBaseUrl.value);
     }
+
+    const resultsPromise = quizService.getUserQuizResult(authStore.user.id, quizId || '', quizReplicaBaseUrl.value);
+
+    const [fetchedQuiz, existingResult] = await Promise.all([quizPromise, resultsPromise]);
 
     if (!fetchedQuiz) {
       error.value = 'Quiz not found for this lesson';
@@ -441,28 +494,31 @@ const loadQuiz = async () => {
 
     quiz.value = fetchedQuiz;
 
-    // Check if user has already taken this quiz
-    const hasTaken = await quizService.hasUserTakenQuiz(authStore.user.id, quiz.value.external_id);
-    if (hasTaken) {
-      showResult.value = true;
-      // Fetch the existing result
-      const result = await quizService.getUserQuizResult(authStore.user.id, quiz.value.external_id);
-      if (result) {
-        quizResult.value = {
-          external_id: result.external_id,
-          user_id: result.user_id,
-          username: result.username,
-          quiz: result.quiz,
-          score: result.score,
-          date_taken: result.date_taken || new Date().toISOString(),
-          result_message: result.result_message || '',
-          result_status: result.result_status
-        };
+    // Cache in sessionStorage
+    if (quizId) {
+      try {
+        sessionStorage.setItem(getQuizCacheKey(quizId), JSON.stringify(fetchedQuiz));
+      } catch (e) {
+        // Ignore
       }
-    } else {
-      // Initialize timer
-      remainingTime.value = quiz.value.quiz_duration * 60; // Convert minutes to seconds
     }
+
+    if (existingResult) {
+      showResult.value = true;
+      quizResult.value = {
+        external_id: existingResult.external_id,
+        user_id: existingResult.user_id,
+        username: existingResult.username,
+        quiz: existingResult.quiz,
+        score: existingResult.score,
+        date_taken: existingResult.date_taken || new Date().toISOString(),
+        result_message: existingResult.result_message || '',
+        result_status: existingResult.result_status
+      };
+    } else {
+      remainingTime.value = fetchedQuiz.quiz_duration * 60;
+    }
+
   } catch (err: any) {
     error.value = err.message || 'Failed to load quiz. Please try again.';
   } finally {
@@ -476,16 +532,11 @@ const startQuiz = () => {
 };
 
 const startTimer = () => {
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value);
-  }
-
+  if (timerInterval.value) clearInterval(timerInterval.value);
   timerInterval.value = setInterval(() => {
     if (remainingTime.value <= 0) {
-      if (timerInterval.value) {
-        clearInterval(timerInterval.value);
-      }
-      submitQuiz(); // Auto-submit when time is up
+      clearInterval(timerInterval.value!);
+      submitQuiz();
       return;
     }
     remainingTime.value--;
@@ -507,9 +558,7 @@ const goToQuestion = (index: number) => {
 const goToFlaggedQuestion = (questionId: string) => {
   if (!quiz.value?.questions) return;
   const index = quiz.value.questions.findIndex(q => q.external_id === questionId);
-  if (index !== -1) {
-    currentQuestionIndex.value = index;
-  }
+  if (index !== -1) currentQuestionIndex.value = index;
 };
 
 const getQuestionNumber = (questionId: string): number => {
@@ -531,18 +580,14 @@ const toggleFlag = (questionId: string) => {
 };
 
 const prevQuestion = () => {
-  if (currentQuestionIndex.value > 0) {
-    currentQuestionIndex.value--;
-  }
+  if (currentQuestionIndex.value > 0) currentQuestionIndex.value--;
 };
 
 const nextQuestion = () => {
   if (!quiz.value?.questions) return;
-
   if (currentQuestionIndex.value < quiz.value.questions.length - 1) {
     currentQuestionIndex.value++;
   } else {
-    // Last question - show confirmation before submit
     if (confirm('This is the last question. Do you want to submit the quiz?')) {
       submitQuiz();
     }
@@ -562,16 +607,12 @@ const submitQuiz = async () => {
   submitting.value = true;
 
   try {
-    // Stop the timer
     if (timerInterval.value) {
       clearInterval(timerInterval.value);
       timerInterval.value = null;
     }
 
-    // Calculate result
     const scoreData = quizService.calculateQuizResult(quiz.value, userAnswers.value);
-
-    // Create submission
     const submission: SubmitQuizRequest = quizService.createUserQuizResult(
       authStore.user.id,
       authStore.user.username,
@@ -580,14 +621,14 @@ const submitQuiz = async () => {
       userAnswers.value
     );
 
-    // Submit to backend (will be synced automatically)
-    quizResult.value = await quizService.submitQuiz(submission);
-
-    // Show result
+    quizResult.value = await quizService.submitQuiz(submission, quizReplicaBaseUrl.value || undefined);
     showResult.value = true;
     showCorrectAnswers.value = true;
     quizStarted.value = false;
 
+    // Clear cache for this quiz (so retake fetches fresh)
+    const quizId = quiz.value.external_id;
+    sessionStorage.removeItem(getQuizCacheKey(quizId));
   } catch (err: any) {
     error.value = 'Failed to submit quiz. Please try again.';
     alert('Failed to submit quiz. Please check console for details.');
@@ -606,29 +647,23 @@ const returnToCourse = () => {
 };
 
 const retakeQuiz = () => {
-  // Reset quiz state
   quizStarted.value = false;
   showResult.value = false;
   showCorrectAnswers.value = false;
   userAnswers.value.clear();
   flaggedQuestions.value.clear();
   currentQuestionIndex.value = 0;
-
-  // Reset timer
   if (quiz.value) {
     remainingTime.value = quiz.value.quiz_duration * 60;
   }
 };
 
-// Lifecycle
 onMounted(() => {
   loadQuiz();
 });
 
 onUnmounted(() => {
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value);
-  }
+  if (timerInterval.value) clearInterval(timerInterval.value);
 });
 </script>
 

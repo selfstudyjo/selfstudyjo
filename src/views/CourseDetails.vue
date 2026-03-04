@@ -364,7 +364,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { courseService, type Course, type Lesson, type Comment } from '@/services/course.service';
+import { courseService, type Course, type Lesson, type Comment, type Homework } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
 import { userService, type UserProfile } from '@/services/user.service';
 import { notificationService } from '@/services/notification.service';
@@ -395,6 +395,10 @@ const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
 const isUserRegistered = ref(false);
 
+// Replica pinning (for performance)
+const courseReplicaBaseUrl = ref<string | null>(null);
+const quizReplicaBaseUrl = ref<string | null>(null);
+
 // Mention functionality
 const allUsernames = ref<string[]>([]);
 const filteredUsernames = ref<string[]>([]);
@@ -405,13 +409,16 @@ const mentionDropdownLeft = ref(0);
 const mentionSearch = ref('');
 const commentTextarea = ref<HTMLTextAreaElement | null>(null);
 
+// Cache for user profiles
+const userProfileCache = new Map<string, UserProfile>();
+
 // Computed
 const tabs = computed(() => [
   { id: 'lessons', label: 'Lessons', icon: '📚' },
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
 
-// Methods
+// --- Optimized fetchCourseData (uses batch methods and replica pinning) ---
 const fetchCourseData = async () => {
   const courseId = route.params.id as string;
   if (!courseId) {
@@ -423,86 +430,106 @@ const fetchCourseData = async () => {
   error.value = null;
 
   try {
-    // Clear cache for fresh replicas
-    serviceRegistry.clearCache();
+    // Step 1: Pin replicas for this page load
+    const courseReplica = await courseService.getRandomCourseReplica();
+    if (!courseReplica) throw new Error('No course service replicas available');
+    courseReplicaBaseUrl.value = courseReplica;
 
-    // Fetch course details
-    course.value = await courseService.getCourse(courseId);
+    const quizReplica = await quizService.getRandomQuizReplica();
+    if (!quizReplica) throw new Error('No exam service replicas available');
+    quizReplicaBaseUrl.value = quizReplica;
 
-    // Fetch lessons
-    const fetchedLessons = await courseService.getCourseLessons(courseId);
+    // Step 2: Fetch course, lessons, comments in parallel
+    const [fetchedCourse, fetchedLessons, fetchedComments] = await Promise.all([
+      courseService.getCourse(courseId, courseReplicaBaseUrl.value),
+      courseService.getCourseLessons(courseId, courseReplicaBaseUrl.value),
+      courseService.getCourseComments(courseId, courseReplicaBaseUrl.value)
+    ]);
 
-    // For each lesson, check for quizzes and homeworks
-    lessons.value = [];
-    for (const lesson of fetchedLessons) {
-      // Check for quiz - use the quiz service to get quiz by lesson ID
-      let hasQuiz = false;
-      let quiz: Quiz | undefined;
+    course.value = fetchedCourse;
 
-      try {
-        quiz = await quizService.getQuizByLessonId(lesson.external_lesson_id);
-        hasQuiz = !!quiz;
-      } catch (err) {
-        hasQuiz = false;
-      }
-
-      // Check for homeworks
-      let hasHomework = false;
-      let homeworkCount = 0;
-
-      try {
-        const homeworks = await courseService.getLessonHomeworks(lesson.external_lesson_id);
-        hasHomework = homeworks.length > 0;
-        homeworkCount = homeworks.length;
-      } catch (err) {
-        hasHomework = false;
-      }
-
-      lessons.value.push({
-        ...lesson,
-        hasQuiz,
-        quiz,
-        hasHomework,
-        homeworkCount
+    // Step 3: Batch fetch quizzes (lightweight)
+    let quizzesByLessonId = new Map<string, Quiz>();
+    try {
+      const lightQuizzes = await quizService.getQuizzesForCourseLight(courseId, quizReplicaBaseUrl.value);
+      lightQuizzes.forEach(q => {
+        if (q.lesson_id) {
+          // We only need existence, so we'll create a minimal Quiz object
+          quizzesByLessonId.set(q.lesson_id, { external_id: q.external_id, lesson_id: q.lesson_id } as Quiz);
+        }
       });
+    } catch (err) {
+      // Ignore – proceed without quizzes
     }
 
-    // Fetch comments
-    const fetchedComments = await courseService.getCourseComments(courseId);
+    // Step 4: Batch fetch homeworks for the entire course
+    let homeworksByLessonId = new Map<string, Homework[]>();
+    try {
+      const allHomeworks = await courseService.getHomeworksForCourse(courseId, courseReplicaBaseUrl.value);
+      allHomeworks.forEach(hw => {
+        if (hw.lesson_external_id) {
+          if (!homeworksByLessonId.has(hw.lesson_external_id)) {
+            homeworksByLessonId.set(hw.lesson_external_id, []);
+          }
+          homeworksByLessonId.get(hw.lesson_external_id)!.push(hw);
+        }
+      });
+    } catch (err) {
+      // Ignore
+    }
 
-    // Fetch user profiles for each comment
-    comments.value = [];
-    for (const comment of fetchedComments) {
+    // Step 5: Build lessons array using batch data (no extra requests)
+    lessons.value = fetchedLessons.map(lesson => {
+      const quiz = quizzesByLessonId.get(lesson.external_lesson_id);
+      const lessonHomeworks = homeworksByLessonId.get(lesson.external_lesson_id) || [];
+      return {
+        ...lesson,
+        hasQuiz: !!quiz,
+        quiz: quiz,
+        hasHomework: lessonHomeworks.length > 0,
+        homeworkCount: lessonHomeworks.length
+      };
+    });
+
+    // Step 6: Enrich comments with user profiles (batch fetch unique users)
+    const uniqueUserIds = [...new Set(fetchedComments.map(c => c.user_id))];
+    const profilePromises = uniqueUserIds.map(async (userId) => {
+      if (userProfileCache.has(userId)) return;
       try {
-        // Try to get user profile by user_id (which might be UUID or username)
-        let userProfile: UserProfile | undefined;
-
-        // First try to see if user_id is a UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (uuidRegex.test(comment.user_id)) {
-          // It's a UUID, get user profile by ID
-          userProfile = await userService.getUserProfile(comment.user_id);
+        let profile: UserProfile | null = null;
+        if (uuidRegex.test(userId)) {
+          profile = await userService.getUserProfile(userId);
         } else {
-          // It might be a username, try to get by username
           try {
-            userProfile = await userService.getUserProfileByUsername(comment.user_id);
+            profile = await userService.getUserProfileByUsername(userId);
           } catch (err) {
             // ignore
           }
         }
-
-        comments.value.push({ ...comment, user_profile: userProfile });
+        if (profile) {
+          userProfileCache.set(userId, profile);
+        }
       } catch (err) {
-        comments.value.push(comment); // Add comment without user profile
+        // ignore
       }
-    }
+    });
+    await Promise.all(profilePromises);
 
-    // Check if user is registered for this course
+    comments.value = fetchedComments.map(comment => ({
+      ...comment,
+      user_profile: userProfileCache.get(comment.user_id)
+    }));
+
+    // Step 7: Check registration and fetch usernames for mentions
     if (authStore.user?.id) {
-      isUserRegistered.value = await courseService.isUserRegisteredForCourse(authStore.user.id, courseId);
+      isUserRegistered.value = await courseService.isUserRegisteredForCourse(
+        authStore.user.id,
+        courseId,
+        courseReplicaBaseUrl.value
+      );
     }
 
-    // Fetch all usernames for mentions
     await fetchAllUsernames();
   } catch (err: any) {
     error.value = err.message || 'Failed to load course details. Please try again.';
@@ -515,30 +542,21 @@ const fetchAllUsernames = async () => {
   try {
     allUsernames.value = await userService.getAllUsernames();
   } catch (err) {
-    // Don't throw, just use empty array
     allUsernames.value = [];
   }
 };
 
+// --- Helper functions (from original) ---
 const handleAvatarError = (userId: string) => {
   // ignore
 };
 
 const isImageUrlValid = (url: string): boolean => {
   if (!url) return false;
-
-  // Check for common placeholder patterns
   const placeholderPatterns = [
-    'default.jpg',
-    'placeholder',
-    'missing.png',
-    'no-image',
-    'default-profile',
-    'anonymous',
-    'null',
-    'undefined'
+    'default.jpg', 'placeholder', 'missing.png', 'no-image',
+    'default-profile', 'anonymous', 'null', 'undefined'
   ];
-
   return !placeholderPatterns.some(pattern =>
     url.toLowerCase().includes(pattern.toLowerCase())
   );
@@ -549,7 +567,6 @@ const handleMentionInput = (event: Event) => {
   const value = textarea.value;
   const cursorPosition = textarea.selectionStart;
 
-  // Find the last @ symbol before cursor
   const textBeforeCursor = value.substring(0, cursorPosition);
   const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
@@ -568,14 +585,12 @@ const handleMentionInput = (event: Event) => {
         showMentionDropdown.value = true;
         selectedMentionIndex.value = 0;
 
-        // Position dropdown near cursor
         const textareaRect = textarea.getBoundingClientRect();
         const textareaStyles = window.getComputedStyle(textarea);
         const lineHeight = parseInt(textareaStyles.lineHeight);
         const paddingTop = parseInt(textareaStyles.paddingTop);
         const paddingLeft = parseInt(textareaStyles.paddingLeft);
 
-        // Calculate line number
         const lines = textBeforeCursor.substring(0, lastAtIndex).split('\n');
         const lineNumber = lines.length;
 
@@ -603,12 +618,10 @@ const handleMentionKeydown = (event: KeyboardEvent) => {
         filteredUsernames.value.length - 1
       );
       break;
-
     case 'ArrowUp':
       event.preventDefault();
       selectedMentionIndex.value = Math.max(selectedMentionIndex.value - 1, 0);
       break;
-
     case 'Enter':
     case 'Tab':
       if (showMentionDropdown.value && filteredUsernames.value.length > 0) {
@@ -616,7 +629,6 @@ const handleMentionKeydown = (event: KeyboardEvent) => {
         selectMention(filteredUsernames.value[selectedMentionIndex.value]);
       }
       break;
-
     case 'Escape':
       showMentionDropdown.value = false;
       break;
@@ -645,9 +657,8 @@ const selectMention = (username: string) => {
       newComment.value = newText;
       showMentionDropdown.value = false;
 
-      // Set cursor position after inserted mention
       nextTick(() => {
-        const newCursorPosition = lastAtIndex + username.length + 2; // +2 for @ and space
+        const newCursorPosition = lastAtIndex + username.length + 2;
         textarea.focus();
         textarea.setSelectionRange(newCursorPosition, newCursorPosition);
       });
@@ -657,35 +668,24 @@ const selectMention = (username: string) => {
 
 const parseMentions = (text: string) => {
   if (!text) return '';
-
-  // Replace @mentions with highlighted text
   return text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 };
 
 const extractMentions = (text: string): string[] => {
   if (!text) return [];
-
   const mentions = text.match(/@(\w+)/g);
   if (!mentions) return [];
-
-  // Remove @ symbol and return unique usernames
   return [...new Set(mentions.map(m => m.substring(1)))];
 };
 
 const createMentionNotifications = async (commentContent: string, commentId: string) => {
   const mentions = extractMentions(commentContent);
-
   if (mentions.length === 0 || !authStore.user?.username || !course.value) return;
 
   for (const username of mentions) {
+    if (username === authStore.user.username) continue;
     try {
-      // Skip if user mentions themselves
-      if (username === authStore.user.username) continue;
-
-      // Clear cache before creating notification
       serviceRegistry.clearCache();
-
-      // Create notification for mentioned user
       await notificationService.createNotification({
         title: 'You were mentioned in a comment',
         message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}"`,
@@ -696,7 +696,7 @@ const createMentionNotifications = async (commentContent: string, commentId: str
         comment_id: commentId
       });
     } catch (err) {
-      // Don't fail the whole comment submission if notification fails
+      // ignore
     }
   }
 };
@@ -708,10 +708,8 @@ const submitComment = async () => {
   commentError.value = null;
 
   try {
-    // Clear service registry cache to get fresh replicas
     serviceRegistry.clearCache();
 
-    // Use the user's username if available, otherwise use user_id
     const userId = authStore.user.username || authStore.user.id;
 
     const commentData = {
@@ -721,15 +719,18 @@ const submitComment = async () => {
       course: course.value.external_course_id,
     };
 
-    const newCommentObj = await courseService.createComment(commentData);
+    // Use pinned replica for write if available (optional)
+    const newCommentObj = await courseService.createComment(commentData, courseReplicaBaseUrl.value || undefined);
 
-    // Try to fetch user profile for the new comment
     let userProfile: UserProfile | undefined;
     try {
       if (authStore.user.username) {
         userProfile = await userService.getUserProfileByUsername(authStore.user.username);
       } else {
         userProfile = await userService.getUserProfile(authStore.user.id);
+      }
+      if (userProfile) {
+        userProfileCache.set(userId, userProfile);
       }
     } catch (err) {
       // ignore
@@ -738,10 +739,8 @@ const submitComment = async () => {
     comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
     newComment.value = '';
 
-    // Create notifications for mentioned users
     await createMentionNotifications(commentData.content, newCommentObj.external_comment_id);
 
-    // Show success message
     alert('Comment added successfully!');
   } catch (err: any) {
     commentError.value = err.message || 'Failed to submit comment. Please try again.';
@@ -757,9 +756,8 @@ const deleteComment = async (commentId: string) => {
   deletingCommentId.value = commentId;
 
   try {
-    // Clear cache before deleting
     serviceRegistry.clearCache();
-    await courseService.deleteComment(commentId);
+    await courseService.deleteComment(commentId, courseReplicaBaseUrl.value || undefined);
     comments.value = comments.value.filter(comment => comment.external_comment_id !== commentId);
     alert('Comment deleted successfully!');
   } catch (err: any) {
@@ -774,7 +772,6 @@ const navigateToQuiz = (lesson: any) => {
     alert('No quiz available for this lesson');
     return;
   }
-
   router.push({
     path: '/take-quiz',
     query: {
@@ -791,7 +788,6 @@ const navigateToHomework = (lesson: any) => {
     alert('No homework available for this lesson');
     return;
   }
-
   router.push({
     path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework`
   });
@@ -799,7 +795,6 @@ const navigateToHomework = (lesson: any) => {
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Recently';
-
   try {
     const date = new Date(dateString);
     const now = new Date();
@@ -819,26 +814,19 @@ const formatDate = (dateString?: string) => {
 
 const getUserInitials = (userId: string) => {
   if (!userId) return 'U';
-
-  // If it's a username, use first two characters
-  if (!userId.includes('-')) { // Not a UUID
+  if (!userId.includes('-')) {
     return userId.substring(0, 2).toUpperCase();
   }
-
-  // For UUIDs or other formats, use first char
   return userId.charAt(0).toUpperCase();
 };
 
 const getUserDisplayName = (userId: string) => {
   if (!userId) return 'User';
   if (userId === authStore.user?.id || userId === authStore.user?.username) return 'You';
-
-  // If it's a UUID, just show "User"
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(userId)) {
     return 'User';
   }
-
   return userId;
 };
 
@@ -847,7 +835,6 @@ const getUserColor = (userId: string) => {
     '#667eea', '#764ba2', '#f56565', '#ed8936', '#48bb78',
     '#38b2ac', '#4299e1', '#9f7aea', '#ed64a6', '#f6ad55'
   ];
-
   const index = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
   return colors[index];
 };
