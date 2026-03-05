@@ -97,7 +97,7 @@
   overflow-x: hidden;
 }
 
-/* Loading container */
+/* Loading & Error containers - FIXED to ensure full border visibility on all screens */
 .course-details-page .loading-container,
 .course-details-page .error-container {
   display: flex;
@@ -105,13 +105,17 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 1.5rem); /* Fluid padding */
+  padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 1.5rem);
   background: rgba(10, 10, 30, 0.4);
   backdrop-filter: blur(15px);
-  border-radius: clamp(16px, 3vw, 20px); /* Fluid radius */
-  margin: clamp(1rem, 2vw, 1.5rem); /* Fluid margin */
+  border-radius: clamp(16px, 3vw, 20px);
+  /* Use explicit width + auto margins to guarantee centering and avoid edge clipping */
+  width: calc(100% - (2 * clamp(1rem, 2vw, 1.5rem)));
+  margin: clamp(1rem, 2vw, 1.5rem) auto;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 /* Loading spinner - BLUE for visibility */
