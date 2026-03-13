@@ -26,9 +26,10 @@ import ProctorExamAppointment from '../views/ProctorExamAppointment.vue';
 import Plans from '../views/Plans.vue';
 import Payment from '../views/Payment.vue';
 import MyPlans from '../views/MyPlans.vue';
-// ===== NEW IMPORTS =====
 import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
+// ===== NEW IMPORT FOR AI CHAT =====
+import AiChat from '../views/AiChat.vue';
 
 const routes = [
     {
@@ -180,7 +181,6 @@ const routes = [
                 component: MyPlans,
                 meta: { title: 'My Plans', requiresAuth: true }
             },
-            // ===== NEW ROUTES =====
             {
                 path: 'my-results',
                 name: 'UserResults',
@@ -193,6 +193,13 @@ const routes = [
                 component: ReviewResults,
                 meta: { title: 'Review Result', requiresAuth: true },
                 props: true
+            },
+            // ===== NEW AI CHAT ROUTE =====
+            {
+                path: 'ai-chat',
+                name: 'AiChat',
+                component: AiChat,
+                meta: { title: 'AI Chat Assistant', requiresAuth: true }
             },
             // Login & Register
             {

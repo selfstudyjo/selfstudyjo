@@ -1,0 +1,420 @@
+/* ==========================================================================
+   AI CHAT PAGE – SPACE THEME
+   Specifically designed for AiChat.vue with transparent backgrounds
+   to showcase the 3D galaxy animation behind.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS CUSTOM PROPERTIES (scoped to .ai-chat-container)
+   -------------------------------------------------------------------------- */
+.ai-chat-container {
+  /* Cosmic color palette – with transparency for glass effect */
+  --space-bg: transparent;                /* let galaxy show through */
+  --space-card-bg: rgba(10, 10, 30, 0.7);  /* 70% opacity for readability */
+  --space-card-bg-user: rgba(30, 30, 60, 0.75);
+  --space-card-bg-assistant: rgba(15, 15, 40, 0.75);
+  --space-input-bg: rgba(0, 0, 0, 0.5);
+  --space-border: rgba(255, 255, 255, 0.15);
+  --space-border-strong: rgba(255, 255, 255, 0.25);
+  --space-glow-cyan: 0 0 20px rgba(78, 205, 196, 0.3);
+  --space-glow-purple: 0 0 20px rgba(138, 43, 226, 0.3);
+
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-muted: #b0b0b0;
+  --text-accent: #4ecdc4;        /* cosmic cyan */
+
+  /* Typography */
+  --font-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.8);
+
+  /* Spacing – fluid */
+  --space-xs: clamp(0.25rem, 1vw, 0.5rem);
+  --space-sm: clamp(0.5rem, 2vw, 0.75rem);
+  --space-md: clamp(1rem, 3vw, 1.5rem);
+  --space-lg: clamp(1.5rem, 4vw, 2rem);
+
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+
+  /* Container styles */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: min(1200px, 95%);
+  margin: 0 auto;
+  padding: var(--space-md);
+  background: var(--space-bg); /* transparent – galaxy shows through */
+  color: var(--text-secondary);
+  font-family: var(--font-base);
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   HEADER
+   -------------------------------------------------------------------------- */
+.ai-chat-container .chat-header {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.ai-chat-container .chat-header h1 {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  color: var(--text-primary);
+  text-shadow: var(--text-shadow);
+  margin: 0 0 var(--space-xs);
+}
+
+.ai-chat-container .chat-header p {
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   MESSAGES CONTAINER – scrollable area, transparent background
+   -------------------------------------------------------------------------- */
+.ai-chat-container .messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  background: transparent; /* fully transparent – galaxy visible */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  scroll-behavior: smooth;
+  /* Custom scrollbar (will be inherited) */
+}
+
+/* --------------------------------------------------------------------------
+   INDIVIDUAL MESSAGE BUBBLES – glass‑morphism
+   -------------------------------------------------------------------------- */
+.ai-chat-container .message {
+  display: flex;
+  gap: var(--space-sm);
+  max-width: 85%;
+  animation: fadeIn 0.2s ease;
+}
+
+.ai-chat-container .message.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.ai-chat-container .message.assistant {
+  align-self: flex-start;
+}
+
+/* Avatar */
+.ai-chat-container .message-avatar {
+  flex-shrink: 0;
+  width: clamp(2rem, 6vw, 2.5rem);
+  height: clamp(2rem, 6vw, 2.5rem);
+  border-radius: 50%;
+  background: rgba(30, 30, 60, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--space-border-strong);
+  color: var(--text-accent);
+  font-size: clamp(1rem, 3vw, 1.2rem);
+}
+
+/* Message bubble */
+.ai-chat-container .message-content {
+  background: var(--space-card-bg-assistant);
+  backdrop-filter: blur(10px) saturate(180%);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--space-border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), var(--space-glow-cyan);
+  word-break: break-word;
+  color: var(--text-secondary);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  line-height: 1.5;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ai-chat-container .message.user .message-content {
+  background: var(--space-card-bg-user);
+  border-bottom-right-radius: 4px;
+}
+
+.ai-chat-container .message.assistant .message-content {
+  background: var(--space-card-bg-assistant);
+  border-bottom-left-radius: 4px;
+}
+
+.ai-chat-container .message-content:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), var(--space-glow-cyan);
+}
+
+/* Plain text inside user messages */
+.ai-chat-container .plain-text {
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   MARKDOWN STYLES (for code blocks, etc.)
+   -------------------------------------------------------------------------- */
+.ai-chat-container .markdown-body {
+  all: initial;
+  font-family: var(--font-base);
+  color: var(--text-secondary);
+}
+
+.ai-chat-container .markdown-body pre {
+  position: relative;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: var(--space-sm) 0;
+  border: 1px solid var(--space-border);
+}
+
+.ai-chat-container .markdown-body code {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  color: var(--text-accent);
+}
+
+/* Copy button inside code block */
+.ai-chat-container .copy-code-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--space-border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(5px);
+}
+
+.ai-chat-container .copy-code-btn:hover {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: var(--text-accent);
+  box-shadow: var(--space-glow-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   TYPING INDICATOR
+   -------------------------------------------------------------------------- */
+.ai-chat-container .typing-indicator {
+  display: flex;
+  gap: 0.25rem;
+  padding: var(--space-sm);
+}
+
+.ai-chat-container .typing-indicator span {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--text-accent);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+  opacity: 0.7;
+}
+
+.ai-chat-container .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.ai-chat-container .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   INPUT AREA – fixed at bottom, glass effect
+   -------------------------------------------------------------------------- */
+.ai-chat-container .input-area {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  background: rgba(5, 5, 20, 0.6);
+  backdrop-filter: blur(15px) saturate(180%);
+  border-radius: var(--radius-full);
+  padding: var(--space-xs);
+  border: 1px solid var(--space-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), var(--space-glow-cyan);
+}
+
+.ai-chat-container .input-area textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-primary);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-family: inherit;
+  resize: none;
+  max-height: 120px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.ai-chat-container .input-area textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-chat-container .input-area button {
+  background: rgba(20, 20, 50, 0.9);
+  border: 1px solid var(--space-border-strong);
+  border-radius: 50%;
+  width: clamp(2.5rem, 8vw, 3rem);
+  height: clamp(2.5rem, 8vw, 3rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  align-self: flex-end;
+}
+
+.ai-chat-container .input-area button:hover:not(:disabled) {
+  background: rgba(30, 30, 70, 0.95);
+  border-color: var(--text-accent);
+  transform: scale(1.05);
+  box-shadow: var(--space-glow-cyan);
+}
+
+.ai-chat-container .input-area button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   SPINNER – transparent, light, cosmic
+   -------------------------------------------------------------------------- */
+.ai-chat-container .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--text-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: var(--space-md) auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   CUSTOM SCROLLBAR (scoped to messages container)
+   -------------------------------------------------------------------------- */
+.ai-chat-container .messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+.ai-chat-container .messages-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-full);
+}
+.ai-chat-container .messages-container::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.ai-chat-container .messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 180, 0.7);
+}
+
+/* Firefox */
+.ai-chat-container .messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE DESIGN
+   -------------------------------------------------------------------------- */
+/* Mobile (< 640px) */
+@media (max-width: 639px) {
+  .ai-chat-container {
+    padding: var(--space-xs);
+  }
+  .ai-chat-container .message {
+    max-width: 95%;
+  }
+  .ai-chat-container .input-area {
+    border-radius: var(--radius-lg);
+  }
+  .ai-chat-container .input-area button {
+    width: 44px;
+    height: 44px;
+  }
+  /* Reduce blur on mobile for performance */
+  .ai-chat-container .message-content,
+  .ai-chat-container .input-area {
+    backdrop-filter: blur(5px);
+  }
+}
+
+/* Tablet (640px – 1024px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .ai-chat-container {
+    padding: var(--space-sm);
+  }
+}
+
+/* Large screens (> 1920px) */
+@media (min-width: 1920px) {
+  .ai-chat-container {
+    max-width: 1400px;
+    padding: var(--space-lg);
+  }
+  .ai-chat-container .message-content {
+    font-size: 1.1rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ACCESSIBILITY & REDUCED MOTION
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ai-chat-container *,
+  .ai-chat-container *::before,
+  .ai-chat-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.ai-chat-container :focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   END OF AI CHAT PAGE STYLES
+   -------------------------------------------------------------------------- */

@@ -378,7 +378,6 @@ const MyPlansIcon = {
   }
 };
 
-// ===== NEW ICON FOR MY RESULTS =====
 const ResultsIcon = {
   name: 'ResultsIcon',
   render() {
@@ -390,6 +389,23 @@ const ResultsIcon = {
     }, [
       h('path', {
         d: 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z'
+      })
+    ]);
+  }
+};
+
+// ===== NEW ICON FOR AI CHAT =====
+const AIIcon = {
+  name: 'AIIcon',
+  render() {
+    return h('svg', {
+      width: '20',
+      height: '20',
+      viewBox: '0 0 24 24',
+      fill: 'currentColor'
+    }, [
+      h('path', {
+        d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-10H8v2h2v-2zm6 0h-2v2h2v-2zm-6 4H8v2h2v-2zm6 0h-2v2h2v-2z'
       })
     ]);
   }
@@ -461,8 +477,9 @@ const privateNavItems = computed(() => {
     { to: '/notifications', text: 'Notifications', icon: NotificationsIcon },
     { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon },
     { to: '/certificates', text: 'My Certificates', icon: CertificateIcon },
-    // ===== NEW ITEM =====
     { to: '/my-results', text: 'My Results', icon: ResultsIcon },
+    // ===== NEW AI CHAT ITEM =====
+    { to: '/ai-chat', text: 'AI Chat Assistant', icon: AIIcon },
     { to: '/profile', text: 'Profile', icon: ProfileIcon },
   ];
 
