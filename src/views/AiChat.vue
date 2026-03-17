@@ -1,4 +1,4 @@
-<!-- src/views/AiChat.vue – updated onMounted (no system message) -->
+<!-- src/views/AiChat.vue – updated for multiline input and better UX -->
 <template>
   <div class="ai-chat-container">
     <div class="chat-header">
@@ -35,8 +35,9 @@
     <div class="input-area">
       <textarea
         v-model="userInput"
-        @keydown.enter.prevent="sendMessage"
-        placeholder="Type your message here... (Shift+Enter for new line)"
+        @keydown="handleKeyDown"
+        @input="adjustTextareaHeight"
+        placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
         rows="1"
         ref="textarea"
       ></textarea>
@@ -74,6 +75,7 @@ const textarea = ref<HTMLTextAreaElement | null>(null);
 
 const aiService = useAiService();
 
+// Adjust textarea height based on content
 const adjustTextareaHeight = () => {
   if (textarea.value) {
     textarea.value.style.height = 'auto';
@@ -81,6 +83,7 @@ const adjustTextareaHeight = () => {
   }
 };
 
+// Scroll to bottom of messages
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -89,6 +92,7 @@ const scrollToBottom = () => {
   });
 };
 
+// Render markdown and attach copy buttons
 const renderMarkdown = (content: string) => {
   const rawHtml = marked(content);
   nextTick(() => {
@@ -116,13 +120,24 @@ const renderMarkdown = (content: string) => {
   return rawHtml;
 };
 
+// Handle keydown: Enter sends, Shift+Enter adds new line
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault(); // Prevent default (which would add a new line)
+    sendMessage();
+  }
+  // If Shift+Enter, allow default (new line) and adjust height afterward
+  // The @input will handle height adjustment automatically
+};
+
+// Send message
 const sendMessage = async () => {
   const message = userInput.value.trim();
   if (!message || isLoading.value) return;
 
   messages.value.push({ role: 'user', content: message });
   userInput.value = '';
-  adjustTextareaHeight();
+  adjustTextareaHeight(); // Reset height after clearing
   scrollToBottom();
 
   isLoading.value = true;
@@ -143,11 +158,13 @@ const sendMessage = async () => {
 };
 
 onMounted(() => {
-  // Only the initial welcome message from the assistant
+  // Welcome message
   messages.value.push({
     role: 'assistant',
     content: 'Hello! I’m your AI assistant. How can I help you today?'
   });
+  // Ensure textarea starts with proper height
+  nextTick(adjustTextareaHeight);
 });
 </script>
 
