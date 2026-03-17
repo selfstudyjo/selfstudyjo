@@ -20,6 +20,12 @@ const FALLBACK_CHAT_REPLICAS = [
 'https://selfstudychat10.pythonanywhere.com',
 ];
 
+// Allowed domain patterns (to filter out misconfigured replicas)
+const ALLOWED_REPLICA_PATTERNS = [
+    /^https:\/\/selfstudychat\d*\.pythonanywhere\.com$/,
+...FALLBACK_CHAT_REPLICAS.map(url => new RegExp(`^${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
+];
+
 // Cache for room counts
 let roomCounts: { [url: string]: number } = {};
 
@@ -31,6 +37,21 @@ interface RoomCache {
         replicaUrl: string;
         roomId: number;
         timestamp: number;
+    }
+}
+
+// Custom error types
+class NetworkError extends Error {
+    constructor(message: string, public readonly replicaUrl: string) {
+        super(message);
+        this.name = 'NetworkError';
+    }
+}
+
+class ReplicaUnavailableError extends Error {
+    constructor(message: string, public readonly replicaUrl: string) {
+        super(message);
+        this.name = 'ReplicaUnavailableError';
     }
 }
 
@@ -47,7 +68,12 @@ export async function getUserIP(): Promise<string> {
     }
 }
 
-// Fetch chat app replicas from registry with fallback
+// Validate replica URL against allowed patterns
+function isValidReplicaUrl(url: string): boolean {
+    return ALLOWED_REPLICA_PATTERNS.some(pattern => pattern.test(url));
+}
+
+// Fetch chat app replicas from registry with fallback and validation
 export async function fetchChatReplicas(): Promise<string[]> {
     const registries = [REGISTRY_BASE, REGISTRY_ALT];
     const isPageHttps = window.location.protocol === 'https:';
@@ -73,13 +99,16 @@ export async function fetchChatReplicas(): Promise<string[]> {
                     .map((replica: any) => replica.replica_url.trim().replace(/\/$/, ''))
                     .filter((url: string) => url && url.startsWith('http'));
 
+                    // Validate against allowed patterns
+                    const validReplicas = replicas.filter(isValidReplicaUrl);
+
                     // In production (HTTPS), only keep HTTPS replicas
                     const secureReplicas = isPageHttps
-                    ? replicas.filter(url => url.startsWith('https://'))
-                    : replicas;
+                    ? validReplicas.filter(url => url.startsWith('https://'))
+                    : validReplicas;
 
                     if (secureReplicas.length > 0) {
-                        console.debug(`Found ${secureReplicas.length} chat replicas from registry`);
+                        console.debug(`Found ${secureReplicas.length} valid chat replicas from registry`);
                         return secureReplicas;
                     }
                 }
@@ -89,15 +118,16 @@ export async function fetchChatReplicas(): Promise<string[]> {
         }
     }
 
-    // Fallback to hardcoded replicas – also enforce HTTPS in production
+    // Fallback to hardcoded replicas – also validate and enforce HTTPS
     console.debug('Using fallback chat replicas');
+    const validFallback = FALLBACK_CHAT_REPLICAS.filter(isValidReplicaUrl);
     return isPageHttps
-    ? FALLBACK_CHAT_REPLICAS
-    : FALLBACK_CHAT_REPLICAS; // if not HTTPS, they are already HTTPS, but we keep as is
+    ? validFallback.filter(url => url.startsWith('https://'))
+    : validFallback;
 }
 
 // Get room count for a replica (with error handling)
-async function getReplicaRoomCount(replicaUrl: string): Promise<number> {
+async function getReplicaRoomCount(replicaUrl: string): Promise<number | null> {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -121,13 +151,13 @@ async function getReplicaRoomCount(replicaUrl: string): Promise<number> {
             return data.chat_room_count || 0;
         }
     } catch (error) {
-        console.debug(`Failed to get room count for ${replicaUrl}, using fallback value`);
+        console.debug(`Failed to get room count for ${replicaUrl}:`, error);
     }
-    return 0;
+    return null; // Indicates failure
 }
 
-// Check if IP is blocked on a replica
-async function isIPBlocked(replicaUrl: string, ip: string): Promise<boolean> {
+// Check if IP is blocked on a replica (returns boolean or null on error)
+async function isIPBlocked(replicaUrl: string, ip: string): Promise<boolean | null> {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -151,13 +181,17 @@ async function isIPBlocked(replicaUrl: string, ip: string): Promise<boolean> {
             return data.status === 'blocked';
         }
     } catch (error) {
-        console.debug(`Failed to check IP block status for ${replicaUrl}, assuming not blocked`);
+        console.debug(`Failed to check IP block status for ${replicaUrl}:`, error);
     }
-    return false;
+    return null; // Indicates failure
 }
 
-// Check if room exists for IP on a replica - with silent handling for 404
-async function getRoomForIP(replicaUrl: string, ip: string): Promise<ChatRoom | null> {
+// Check if room exists for IP on a replica.
+// Returns:
+//   - { exists: true, room: ChatRoom } if room found (200)
+//   - { exists: false } if room not found (404)
+//   - { error: true } for network/CORS errors
+async function getRoomForIP(replicaUrl: string, ip: string): Promise<{ exists: true; room: ChatRoom } | { exists: false } | { error: true }> {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -177,20 +211,17 @@ async function getRoomForIP(replicaUrl: string, ip: string): Promise<ChatRoom | 
         clearTimeout(timeoutId);
 
         if (response.ok) {
-            return await response.json();
+            const room = await response.json();
+            return { exists: true, room };
         } else if (response.status === 404) {
-            // Room not found on this replica - this is expected, not an error
-            return null;
+            return { exists: false };
         } else {
-            console.debug(`Unexpected status ${response.status} when checking room for IP on ${replicaUrl}`);
-            return null;
+            console.debug(`Unexpected status ${response.status} from ${replicaUrl}`);
+            return { error: true };
         }
     } catch (error) {
-        // Only log network errors, not 404s
-        if (error.name !== 'AbortError') {
-            console.debug(`Failed to get room for IP on ${replicaUrl}:`, error.message || error);
-        }
-        return null;
+        console.debug(`Network error checking room on ${replicaUrl}:`, error);
+        return { error: true };
     }
 }
 
@@ -242,101 +273,124 @@ function cacheRoomForIP(ip: string, replicaUrl: string, roomId: number): void {
     }
 }
 
-// Select best replica for creating a room
+// Select best replica for creating a room.
+// Returns:
+//   - { replicaUrl, existingRoom } if an existing room is found on a reachable replica.
+//   - { replicaUrl, existingRoom: null } if no existing room found, and we have a replica confirmed to have no room.
+//   - Throws error if no suitable replica available.
 export async function selectBestReplica(userIP: string): Promise<{ replicaUrl: string; existingRoom: ChatRoom | null }> {
     const replicas = await fetchChatReplicas();
 
     if (replicas.length === 0) {
-        throw new Error('No secure chat servers available. Please try again later or contact support.');
+        throw new Error('No chat servers available. Please try again later.');
     }
 
-    // Check cached room first
+    // Check cached room first (fast path)
     const cachedRoom = getCachedRoomForIP(userIP);
     if (cachedRoom) {
-        try {
-            const existingRoom = await getRoomForIP(cachedRoom.replicaUrl, userIP);
-            if (existingRoom) {
-                return { replicaUrl: cachedRoom.replicaUrl, existingRoom };
-            }
-        } catch (error) {
-            console.debug('Cached room check failed, continuing with normal discovery');
+        const result = await getRoomForIP(cachedRoom.replicaUrl, userIP);
+        if (result.exists) {
+            return { replicaUrl: cachedRoom.replicaUrl, existingRoom: result.room };
+        }
+        // If cached room not found (maybe deleted), we'll continue.
+    }
+
+    // Phase 1: Check all replicas for existing room, categorizing results.
+    const checks = await Promise.allSettled(
+        replicas.map(async (replicaUrl) => {
+            const result = await getRoomForIP(replicaUrl, userIP);
+            return { replicaUrl, result };
+        })
+    );
+
+    const existingRooms: Array<{ replicaUrl: string; room: ChatRoom }> = [];
+    const noRoomReplicas: string[] = [];
+    const failedReplicas: string[] = [];
+
+    for (const check of checks) {
+        if (check.status === 'rejected') {
+            // Should not happen because getRoomForIP doesn't throw, but just in case.
+            failedReplicas.push(check.reason?.replicaUrl || 'unknown');
+            continue;
+        }
+        const { replicaUrl, result } = check.value;
+        if (result.exists) {
+            existingRooms.push({ replicaUrl, room: result.room });
+        } else if (result.exists === false) {
+            noRoomReplicas.push(replicaUrl);
+        } else {
+            // error occurred
+            failedReplicas.push(replicaUrl);
         }
     }
 
-    // Check replicas in parallel for better performance
-    const replicaChecks = replicas.map(async (replicaUrl) => {
-        try {
-            const existingRoom = await getRoomForIP(replicaUrl, userIP);
-            if (existingRoom) {
-                return { replicaUrl, existingRoom };
-            }
-        } catch (error) {
-            console.debug(`Room check failed for ${replicaUrl}`);
-        }
-        return null;
-    });
-
-    // Wait for all checks to complete
-    const results = await Promise.allSettled(replicaChecks);
-
-    // Find first successful result with a room
-    for (const result of results) {
-        if (result.status === 'fulfilled' && result.value) {
-            return result.value;
-        }
+    // If any existing room found, return the first one (prefer cached if it was among them)
+    if (existingRooms.length > 0) {
+        // Optionally, we could pick the one with least load, but for simplicity take first.
+        const { replicaUrl, room } = existingRooms[0];
+        cacheRoomForIP(userIP, replicaUrl, room.id);
+        return { replicaUrl, existingRoom: room };
     }
 
-    // If no existing room found, check for blocked IPs
+    // No existing room found. We need a replica that we are sure has no room.
+    // If we have at least one replica with confirmed no room, we can proceed.
+    if (noRoomReplicas.length === 0) {
+        // All replicas either failed or returned errors. We cannot safely create a new room.
+        throw new Error('Unable to verify chat room status. Please check your connection and try again.');
+    }
+
+    // Phase 2: Among replicas with no room, check IP block status and load.
+    const blockChecks = await Promise.allSettled(
+        noRoomReplicas.map(async (replicaUrl) => {
+            const blocked = await isIPBlocked(replicaUrl, userIP);
+            return { replicaUrl, blocked };
+        })
+    );
+
     const unblockedReplicas: string[] = [];
-    const blockChecks = replicas.map(async (replicaUrl) => {
-        try {
-            const isBlocked = await isIPBlocked(replicaUrl, userIP);
-            if (!isBlocked) {
-                unblockedReplicas.push(replicaUrl);
-            }
-        } catch (error) {
-            console.debug(`IP block check failed for ${replicaUrl}`);
-            // If we can't check, assume not blocked
-            unblockedReplicas.push(replicaUrl);
-        }
-    });
 
-    await Promise.allSettled(blockChecks);
+    for (const check of blockChecks) {
+        if (check.status === 'fulfilled' && check.value.blocked === false) {
+            unblockedReplicas.push(check.value.replicaUrl);
+        } else if (check.status === 'fulfilled' && check.value.blocked === null) {
+            // Block check failed, but we know there's no room; we can still try this replica.
+            // We'll include it but with lower priority.
+            unblockedReplicas.push(check.value.replicaUrl);
+        }
+        // If blocked === true, skip.
+    }
 
     if (unblockedReplicas.length === 0) {
         throw new Error('Your IP is blocked from accessing chat services.');
     }
 
-    // Get room counts for load balancing
-    const replicaCounts = await Promise.allSettled(
+    // Phase 3: Get room counts for load balancing among unblocked replicas.
+    const countChecks = await Promise.allSettled(
         unblockedReplicas.map(async (replicaUrl) => {
-            try {
-                const count = await getReplicaRoomCount(replicaUrl);
-                return { replicaUrl, count };
-            } catch (error) {
-                console.debug(`Room count failed for ${replicaUrl}`);
-                return { replicaUrl, count: Infinity };
-            }
+            const count = await getReplicaRoomCount(replicaUrl);
+            return { replicaUrl, count };
         })
     );
 
-    // Filter out failed replicas and sort by room count
-    const validReplicas = replicaCounts
-    .filter(result =>
-    result.status === 'fulfilled' &&
-    result.value &&
-    result.value.count !== Infinity
+    // Filter replicas that returned a valid count, and sort by count.
+    const validReplicas = countChecks
+    .filter((result): result is PromiseFulfilledResult<{ replicaUrl: string; count: number | null }> =>
+    result.status === 'fulfilled'
     )
-    .map(result => (result as PromiseFulfilledResult<{ replicaUrl: string; count: number }>).value)
+    .map(result => result.value)
+    .filter((item): item is { replicaUrl: string; count: number } => item.count !== null)
     .sort((a, b) => a.count - b.count);
 
-    if (validReplicas.length === 0) {
-        // Fallback to first unblocked replica
-        return { replicaUrl: unblockedReplicas[0], existingRoom: null };
+    let selectedReplica: string;
+
+    if (validReplicas.length > 0) {
+        selectedReplica = validReplicas[0].replicaUrl;
+    } else {
+        // If all count checks failed, just pick the first unblocked replica.
+        selectedReplica = unblockedReplicas[0];
     }
 
-    // Return replica with least rooms
-    return { replicaUrl: validReplicas[0].replicaUrl, existingRoom: null };
+    return { replicaUrl: selectedReplica, existingRoom: null };
 }
 
 // Create or get chat room
@@ -344,11 +398,10 @@ export async function getChatRoom(ip: string): Promise<{ room: ChatRoom; replica
     const { replicaUrl, existingRoom } = await selectBestReplica(ip);
 
     if (existingRoom) {
-        // Cache the found room
-        cacheRoomForIP(ip, replicaUrl, existingRoom.id);
         return { room: existingRoom, replicaUrl };
     }
 
+    // No existing room, create a new one on the selected replica.
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);

@@ -5,6 +5,7 @@
       class="chat-toggle-btn"
       :class="{ 'has-unread': unreadCount > 0 }"
       @click="toggleChat"
+      :disabled="isReconnecting"
       aria-label="Open chat"
     >
       <svg v-if="!isOpen" class="chat-icon" viewBox="0 0 24 24">
@@ -26,10 +27,11 @@
         <!-- Header -->
         <div class="chat-header" @click="isMinimized = false">
           <div class="header-left">
-            <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected }"></div>
+            <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected, reconnecting: isReconnecting }"></div>
             <h3>SelfStudy Support</h3>
             <span v-if="isConnected" class="status-text">Online</span>
-            <span v-else class="status-text offline-text">Connecting...</span>
+            <span v-else-if="isReconnecting" class="status-text reconnecting-text">Reconnecting...</span>
+            <span v-else class="status-text offline-text">Offline</span>
           </div>
           <div class="header-right">
             <button class="header-btn" @click.stop="isMinimized = !isMinimized" aria-label="Minimize chat">
@@ -56,16 +58,18 @@
             </div>
 
             <!-- Error State -->
-            <div v-if="error" class="error-state">
+            <div v-if="error && !isReconnecting" class="error-state">
               <svg viewBox="0 0 24 24" width="48" height="48">
                 <path fill="#f56565" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
               <p>{{ error }}</p>
-              <button @click="reconnect" class="retry-btn">Retry Connection</button>
+              <button @click="reconnect" class="retry-btn" :disabled="isReconnecting">
+                {{ isReconnecting ? 'Reconnecting...' : 'Retry Connection' }}
+              </button>
             </div>
 
             <!-- Welcome Message -->
-            <div v-if="!isLoading && !error && messages.length === 0" class="welcome-message">
+            <div v-if="!isLoading && !error && messages.length === 0 && chatInitialized" class="welcome-message">
               <div class="welcome-icon">💬</div>
               <h4>Welcome to SelfStudy Support</h4>
               <p>We're here to help! Ask us anything about courses, progress, or technical issues.</p>
@@ -73,7 +77,7 @@
             </div>
 
             <!-- Messages List -->
-            <div v-if="!isLoading && !error && chatInitialized" class="messages-list">
+            <div v-if="!isLoading && !error && chatInitialized && messages.length > 0" class="messages-list">
               <div
                 v-for="message in messages"
                 :key="message.id"
@@ -100,7 +104,7 @@
           </div>
 
           <!-- Input Area -->
-          <div v-if="chatInitialized && !error" class="chat-input-area">
+          <div v-if="chatInitialized && !error && isConnected" class="chat-input-area">
             <form @submit.prevent="sendMessage" class="input-form">
               <textarea
                 ref="messageInput"
@@ -131,7 +135,7 @@
         <!-- Minimized State -->
         <div v-else class="chat-minimized">
           <div class="minimized-content">
-            <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected }"></div>
+            <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected, reconnecting: isReconnecting }"></div>
             <span class="minimized-text">SelfStudy Support</span>
             <span v-if="unreadCount > 0" class="minimized-badge">
               {{ unreadCount }}
@@ -162,10 +166,12 @@ import {
 
 interface Props {
   autoOpen?: boolean;
+  maxRetries?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoOpen: false
+  autoOpen: false,
+  maxRetries: 3
 });
 
 // State
@@ -173,6 +179,7 @@ const isOpen = ref(false);
 const isMinimized = ref(false);
 const isLoading = ref(false);
 const isConnected = ref(false);
+const isReconnecting = ref(false);
 const chatInitialized = ref(false);
 const userIP = ref('');
 const currentRoom = ref<any>(null);
@@ -181,6 +188,8 @@ const messages = ref<any[]>([]);
 const newMessage = ref('');
 const error = ref<string | null>(null);
 const lastSeenMessageId = ref<number | null>(null);
+const retryCount = ref(0);
+const retryTimeout = ref<number | null>(null);
 
 // Refs
 const messagesContainer = ref<HTMLElement | null>(null);
@@ -196,12 +205,11 @@ const unreadCount = computed(() => {
 });
 
 // Methods
-async function initChat() {
-  if (isLoading.value) return;
+async function initChat(attempt = 0) {
+  if (isLoading.value || isReconnecting.value) return;
 
   isLoading.value = true;
   error.value = null;
-  chatInitialized.value = false;
 
   try {
     // Get user IP
@@ -213,6 +221,7 @@ async function initChat() {
     currentReplicaUrl.value = replicaUrl;
     isConnected.value = true;
     chatInitialized.value = true;
+    retryCount.value = 0; // Reset retry count on success
 
     // Load existing messages
     const initialMessages = await getMessages(replicaUrl, room.id);
@@ -229,17 +238,36 @@ async function initChat() {
       isOpen.value = true;
     }
   } catch (err: any) {
-    error.value = err.message || 'Failed to connect to chat service';
     console.error('Chat initialization error:', err);
+    error.value = err.message || 'Failed to connect to chat service';
     chatInitialized.value = false;
     isConnected.value = false;
+
+    // Implement retry with exponential backoff
+    if (attempt < props.maxRetries) {
+      isReconnecting.value = true;
+      const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // 1s, 2s, 4s, max 10s
+      retryTimeout.value = window.setTimeout(() => {
+        initChat(attempt + 1);
+      }, delay);
+    } else {
+      error.value = 'Unable to connect after multiple attempts. Please refresh the page or try again later.';
+      isReconnecting.value = false;
+    }
   } finally {
-    isLoading.value = false;
+    if (!isReconnecting.value) {
+      isLoading.value = false;
+    }
   }
 }
 
 function startPolling() {
   if (!currentRoom.value || !currentReplicaUrl.value) return;
+
+  // Clear any existing polling
+  if ((window as any).chatPolling) {
+    clearInterval((window as any).chatPolling);
+  }
 
   const polling = startMessagePolling(
     currentReplicaUrl.value,
@@ -270,7 +298,6 @@ function startPolling() {
     5000 // Poll every 5 seconds
   );
 
-  // Store polling reference for cleanup
   (window as any).chatPolling = polling;
 }
 
@@ -378,8 +405,16 @@ function playNotificationSound() {
 }
 
 function reconnect() {
+  if (isReconnecting.value) return;
+  // Clear any pending retry
+  if (retryTimeout.value) {
+    clearTimeout(retryTimeout.value);
+    retryTimeout.value = null;
+  }
+  retryCount.value = 0;
+  isReconnecting.value = false;
   error.value = null;
-  initChat();
+  initChat(0);
 }
 
 // Auto-resize textarea
@@ -392,15 +427,28 @@ watch(newMessage, () => {
   });
 });
 
+// Watch for connection status changes
+watch(isConnected, (connected) => {
+  if (!connected && chatInitialized.value && !isReconnecting.value) {
+    // Connection lost, attempt reconnect
+    isReconnecting.value = true;
+    retryCount.value = 0;
+    reconnect();
+  }
+});
+
 // Initialize chat on mount
 onMounted(() => {
   initChat();
 });
 
-// Cleanup polling on unmount
+// Cleanup polling and timeouts on unmount
 onUnmounted(() => {
   if ((window as any).chatPolling) {
     clearInterval((window as any).chatPolling);
+  }
+  if (retryTimeout.value) {
+    clearTimeout(retryTimeout.value);
   }
 });
 </script>
@@ -981,4 +1029,21 @@ onUnmounted(() => {
     color: #718096;
   }
 }
+
+/* (Keep existing styles, add new status indicator for reconnecting) */
+.status-indicator.reconnecting {
+  background: #ed8936;
+  animation: pulse 1.5s infinite;
+}
+
+.reconnecting-text {
+  color: #ed8936;
+}
+
+/* Add disabled state for toggle button */
+.chat-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 </style>
