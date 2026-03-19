@@ -1694,12 +1694,13 @@
 
 /* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
 @media only screen and (min-width: 200px) and (max-width: 250px) {
-  /* Scaling variables */
-  --font-base: 8px;
-  --space-unit: 4px;
-  --container-max: 100%;
-  --border-radius-base: 4px;
-  --touch-target-min: 32px;
+  .all-certificates {
+    --font-base: 8px;
+    --space-unit: 4px;
+    --container-max: 100%;
+    --border-radius-base: 4px;
+    --touch-target-min: 32px;
+  }
 
   .all-certificates {
     padding: calc(var(--space-unit) * 2);
@@ -1867,11 +1868,13 @@
 
 /* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
 @media only screen and (min-width: 250px) and (max-width: 300px) {
-  --font-base: 9px;
-  --space-unit: 5px;
-  --container-max: 100%;
-  --border-radius-base: 5px;
-  --touch-target-min: 34px;
+  .all-certificates {
+    --font-base: 9px;
+    --space-unit: 5px;
+    --container-max: 100%;
+    --border-radius-base: 5px;
+    --touch-target-min: 34px;
+  }
 
   .all-certificates {
     padding: calc(var(--space-unit) * 2);
@@ -2039,11 +2042,13 @@
 
 /* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
 @media only screen and (min-width: 300px) and (max-width: 350px) {
-  --font-base: 10px;
-  --space-unit: 5px;
-  --container-max: 100%;
-  --border-radius-base: 5px;
-  --touch-target-min: 36px;
+  .all-certificates {
+    --font-base: 10px;
+    --space-unit: 5px;
+    --container-max: 100%;
+    --border-radius-base: 5px;
+    --touch-target-min: 36px;
+  }
 
   .all-certificates {
     padding: calc(var(--space-unit) * 2.5);
@@ -2221,11 +2226,13 @@
 
 /* ===== Breakpoint: 1200px+ | 4XL ===== */
 @media only screen and (min-width: 1200px) {
-  --font-base: 19px;
-  --space-unit: 8px;
-  --container-max: 1800px;
-  --border-radius-base: 8px;
-  --touch-target-min: 48px;
+  .all-certificates {
+    --font-base: 19px;
+    --space-unit: 8px;
+    --container-max: 1800px;
+    --border-radius-base: 8px;
+    --touch-target-min: 48px;
+  }
 
   .all-certificates {
     padding: calc(var(--space-unit) * 4);
