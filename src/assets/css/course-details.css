@@ -4,7 +4,7 @@
    FULLY RESPONSIVE VERSION
    ========================================================================== */
 
-/* Fluid variables scoped to course-details-page */
+/* Base variables (fallback) – will be overridden per breakpoint */
 .course-details-page {
   --font-xs: clamp(0.7rem, 1.5vw, 0.75rem);
   --font-sm: clamp(0.75rem, 1.5vw + 0.25rem, 0.875rem);
@@ -1126,100 +1126,6 @@
   box-shadow: 0 0 15px rgba(0, 200, 255, 0.7);
 }
 
-/* Responsive design */
-@media (max-width: 640px) {
-  .course-details-page .course-hero {
-    margin: 1rem;
-    border-radius: 16px;
-  }
-  
-  .course-details-page .course-stats {
-    gap: 1rem;
-    justify-content: center;
-  }
-  
-  .course-details-page .stat-item {
-    min-width: calc(50% - 0.5rem);
-    padding: 0.75rem;
-  }
-  
-  .course-details-page .lesson-card {
-    padding: 1.25rem;
-  }
-  
-  .course-details-page .comment-input {
-    font-size: 16px; /* Keep at 16px to prevent zoom on iOS */
-  }
-  
-  .course-details-page .course-title {
-    font-size: 1.75rem; /* Maintain as before, but already fluid */
-  }
-  
-  .course-details-page .lesson-title {
-    font-size: 1.125rem;
-  }
-  
-  /* Additional wrapping for very small screens */
-  .course-details-page .course-meta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .course-details-page .comment-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  .course-details-page .content-grid {
-    gap: 2rem;
-  }
-  
-  .course-details-page .course-stats {
-    justify-content: center;
-  }
-}
-
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .course-details-page .main-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: clamp(2rem, 3vw, 2.5rem); /* Fluid padding */
-  }
-  
-  .course-details-page .course-hero {
-    max-width: 1200px;
-    margin: 2rem auto;
-  }
-}
-
-@media (min-width: 1441px) and (max-width: 1920px) {
-  .course-details-page .main-content {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: clamp(2.5rem, 3vw, 3rem); /* Fluid padding */
-  }
-  
-  .course-details-page .course-hero {
-    max-width: 1400px;
-    margin: 2rem auto;
-  }
-}
-
-@media (min-width: 1921px) {
-  .course-details-page .main-content {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: clamp(3rem, 3vw, 3rem); /* Fluid padding */
-  }
-  
-  .course-details-page .course-hero {
-    max-width: 1600px;
-    margin: 3rem auto;
-  }
-}
-
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1282,3 +1188,961 @@
     font-weight: 900 !important;
   }
 }
+
+/* ==========================================================================
+   ENHANCED GRANULAR RESPONSIVE BREAKPOINTS (200px – 2560px+)
+   Each block overrides custom properties and key layout values for perfect scaling.
+   ========================================================================== */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .course-details-page {
+    /* Font scale – base 8px–9px (0.5rem–0.5625rem @ 16px root) */
+    --font-xs: clamp(0.35rem, 0.35rem + 0.025 * ((100vw - 200px) / 50), 0.42rem);
+    --font-sm: clamp(0.375rem, 0.375rem + 0.0325 * ((100vw - 200px) / 50), 0.49rem);
+    --font-base: clamp(0.5rem, 0.5rem + 0.0625 * ((100vw - 200px) / 50), 0.5625rem);
+    --font-md: clamp(0.5rem, 0.5rem + 0.07 * ((100vw - 200px) / 50), 0.63rem);
+    --font-lg: clamp(0.625rem, 0.625rem + 0.095 * ((100vw - 200px) / 50), 0.84rem);
+    --font-xl: clamp(0.75rem, 0.75rem + 0.125 * ((100vw - 200px) / 50), 1.125rem);
+    --font-xxl: clamp(0.875rem, 0.875rem + 0.16 * ((100vw - 200px) / 50), 1.4rem);
+    --font-xxxl: clamp(1rem, 1rem + 0.2 * ((100vw - 200px) / 50), 1.68rem);
+
+    /* Ultra‑compact spacing */
+    --space-unit: 0.2rem;
+  }
+
+  /* Containers – minimal padding, full width */
+  .course-details-page .loading-container,
+  .course-details-page .error-container {
+    padding: 0.5rem 0.25rem;
+    margin: 0.25rem auto;
+    border-radius: 0.5rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 3px;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .retry-btn,
+  .course-details-page .back-btn,
+  .course-details-page .submit-btn,
+  .course-details-page .homework-btn,
+  .course-details-page .action-btn,
+  .course-details-page .delete-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: var(--font-base);
+    min-height: 2rem;
+    border-radius: 0.4rem;
+    gap: 0.2rem;
+  }
+
+  .course-details-page .breadcrumb {
+    padding: 0.4rem 0.5rem;
+    gap: 0.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .breadcrumb-link {
+    padding: 0.2rem 0.4rem;
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .course-hero {
+    margin: 0.25rem;
+    border-radius: 0.6rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 8rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 3rem;
+  }
+
+  .course-details-page .course-info {
+    padding: 0.5rem 0.4rem 0;
+  }
+
+  .course-details-page .course-meta {
+    gap: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .course-details-page .course-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: var(--font-xs);
+    border-radius: 1rem;
+  }
+
+  .course-details-page .course-date {
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .course-title {
+    font-size: var(--font-xxl);
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .course-stats {
+    gap: 0.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .stat-item {
+    padding: 0.3rem;
+    gap: 0.3rem;
+    min-width: calc(50% - 0.3rem);
+    border-radius: 0.5rem;
+  }
+
+  .course-details-page .stat-number {
+    font-size: var(--font-md);
+  }
+
+  .course-details-page .stat-label {
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .main-content {
+    padding: 0.5rem;
+  }
+
+  .course-details-page .mobile-tabs {
+    padding: 0.2rem;
+    gap: 0.2rem;
+    margin-bottom: 1rem;
+    border-radius: 0.6rem;
+  }
+
+  .course-details-page .mobile-tab {
+    padding: 0.3rem 0.2rem;
+    gap: 0.1rem;
+  }
+
+  .course-details-page .tab-icon {
+    font-size: 1rem;
+  }
+
+  .course-details-page .tab-label {
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .section {
+    border-radius: 0.8rem;
+  }
+
+  .course-details-page .section-header {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .course-details-page .section-title {
+    font-size: var(--font-lg);
+    gap: 0.3rem;
+  }
+
+  .course-details-page .section-title svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .course-details-page .section-count {
+    padding: 0.2rem 0.5rem;
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .lessons-list,
+  .course-details-page .comments-list,
+  .course-details-page .add-comment-form {
+    padding: 0.6rem;
+  }
+
+  .course-details-page .lesson-card,
+  .course-details-page .comment-card {
+    padding: 0.6rem;
+    border-radius: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .lesson-title {
+    font-size: var(--font-base);
+  }
+
+  .course-details-page .lesson-date {
+    font-size: var(--font-xs);
+  }
+
+  .lesson-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .lesson-link {
+    padding: 0.2rem 0.5rem;
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .comment-input {
+    padding: 0.5rem;
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 4rem;
+  }
+
+  .course-details-page .form-title {
+    font-size: var(--font-base);
+  }
+
+  .course-details-page .form-subtitle {
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .user-avatar-container {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .course-details-page .user-name {
+    font-size: var(--font-sm);
+  }
+
+  .course-details-page .user-full-name {
+    font-size: var(--font-xs);
+  }
+
+  .course-details-page .comment-date {
+    font-size: 0.4rem;
+  }
+
+  .course-details-page .action-btn,
+  .course-details-page .delete-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .course-details-page .delete-btn::before {
+    font-size: 0.9rem;
+  }
+
+  .course-details-page .comment-content {
+    font-size: var(--font-xs);
+    line-height: 1.5;
+  }
+
+  .course-details-page .course-stats-card {
+    padding: 0.8rem;
+    margin: 0.8rem;
+  }
+
+  .course-details-page .stats-title {
+    font-size: var(--font-base);
+    margin-bottom: 0.5rem;
+  }
+
+  .course-details-page .stat-box {
+    padding: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .course-details-page .stat-value {
+    font-size: var(--font-base);
+  }
+
+  .course-details-page .description-content {
+    padding: 0.8rem;
+    margin: 0.8rem;
+    font-size: var(--font-sm);
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .course-details-page {
+    /* Base font 9px–10px (0.5625rem–0.625rem) */
+    --font-xs: clamp(0.394rem, 0.394rem + 0.025 * ((100vw - 250px) / 50), 0.468rem);
+    --font-sm: clamp(0.422rem, 0.422rem + 0.0325 * ((100vw - 250px) / 50), 0.547rem);
+    --font-base: clamp(0.5625rem, 0.5625rem + 0.0625 * ((100vw - 250px) / 50), 0.625rem);
+    --font-md: clamp(0.5625rem, 0.5625rem + 0.07 * ((100vw - 250px) / 50), 0.703rem);
+    --font-lg: clamp(0.703rem, 0.703rem + 0.095 * ((100vw - 250px) / 50), 0.9375rem);
+    --font-xl: clamp(0.844rem, 0.844rem + 0.125 * ((100vw - 250px) / 50), 1.25rem);
+    --font-xxl: clamp(0.984rem, 0.984rem + 0.16 * ((100vw - 250px) / 50), 1.5625rem);
+    --font-xxxl: clamp(1.125rem, 1.125rem + 0.2 * ((100vw - 250px) / 50), 1.875rem);
+  }
+
+  /* Very compact spacing – increase slightly from micro */
+  .course-details-page .loading-container,
+  .course-details-page .error-container {
+    padding: 0.6rem 0.35rem;
+    margin: 0.3rem auto;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .course-details-page .retry-btn,
+  .course-details-page .back-btn,
+  .course-details-page .submit-btn,
+  .course-details-page .homework-btn,
+  .course-details-page .action-btn,
+  .course-details-page .delete-btn {
+    padding: 0.35rem 0.7rem;
+    min-height: 2.2rem;
+  }
+
+  .course-details-page .breadcrumb {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 9rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 3.5rem;
+  }
+
+  .course-details-page .course-info {
+    padding: 0.6rem 0.5rem 0;
+  }
+
+  .course-details-page .course-title {
+    font-size: var(--font-xxl);
+  }
+
+  .course-details-page .stat-item {
+    padding: 0.35rem;
+  }
+
+  .course-details-page .main-content {
+    padding: 0.6rem;
+  }
+
+  .course-details-page .section-header {
+    padding: 0.7rem 0.9rem;
+  }
+
+  .course-details-page .lesson-card,
+  .course-details-page .comment-card {
+    padding: 0.7rem;
+  }
+
+  .course-details-page .user-avatar-container {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .course-details-page {
+    /* Base font 10px–11px (0.625rem–0.6875rem) */
+    --font-xs: clamp(0.438rem, 0.438rem + 0.025 * ((100vw - 300px) / 50), 0.515rem);
+    --font-sm: clamp(0.469rem, 0.469rem + 0.0325 * ((100vw - 300px) / 50), 0.602rem);
+    --font-base: clamp(0.625rem, 0.625rem + 0.0625 * ((100vw - 300px) / 50), 0.6875rem);
+    --font-md: clamp(0.625rem, 0.625rem + 0.07 * ((100vw - 300px) / 50), 0.773rem);
+    --font-lg: clamp(0.781rem, 0.781rem + 0.095 * ((100vw - 300px) / 50), 1.031rem);
+    --font-xl: clamp(0.938rem, 0.938rem + 0.125 * ((100vw - 300px) / 50), 1.375rem);
+    --font-xxl: clamp(1.094rem, 1.094rem + 0.16 * ((100vw - 300px) / 50), 1.719rem);
+    --font-xxxl: clamp(1.25rem, 1.25rem + 0.2 * ((100vw - 300px) / 50), 2.0625rem);
+  }
+
+  /* Compact spacing */
+  .course-details-page .loading-container,
+  .course-details-page .error-container {
+    padding: 0.7rem 0.4rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  .course-details-page .retry-btn {
+    padding: 0.4rem 0.8rem;
+    min-height: 2.4rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 10rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 4rem;
+  }
+
+  .course-details-page .stat-item {
+    min-width: calc(50% - 0.4rem);
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .course-details-page {
+    /* Base font 11px–12px (0.6875rem–0.75rem) */
+    --font-xs: clamp(0.481rem, 0.481rem + 0.025 * ((100vw - 350px) / 50), 0.5625rem);
+    --font-sm: clamp(0.516rem, 0.516rem + 0.0325 * ((100vw - 350px) / 50), 0.656rem);
+    --font-base: clamp(0.6875rem, 0.6875rem + 0.0625 * ((100vw - 350px) / 50), 0.75rem);
+    --font-md: clamp(0.6875rem, 0.6875rem + 0.07 * ((100vw - 350px) / 50), 0.844rem);
+    --font-lg: clamp(0.859rem, 0.859rem + 0.095 * ((100vw - 350px) / 50), 1.125rem);
+    --font-xl: clamp(1.031rem, 1.031rem + 0.125 * ((100vw - 350px) / 50), 1.5rem);
+    --font-xxl: clamp(1.203rem, 1.203rem + 0.16 * ((100vw - 350px) / 50), 1.875rem);
+    --font-xxxl: clamp(1.375rem, 1.375rem + 0.2 * ((100vw - 350px) / 50), 2.25rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 0.8rem 0.5rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 11rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 4.5rem;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .course-details-page {
+    /* Base font 12px–13px (0.75rem–0.8125rem) */
+    --font-xs: clamp(0.525rem, 0.525rem + 0.025 * ((100vw - 400px) / 50), 0.609rem);
+    --font-sm: clamp(0.5625rem, 0.5625rem + 0.0325 * ((100vw - 400px) / 50), 0.711rem);
+    --font-base: clamp(0.75rem, 0.75rem + 0.0625 * ((100vw - 400px) / 50), 0.8125rem);
+    --font-md: clamp(0.75rem, 0.75rem + 0.07 * ((100vw - 400px) / 50), 0.914rem);
+    --font-lg: clamp(0.938rem, 0.938rem + 0.095 * ((100vw - 400px) / 50), 1.219rem);
+    --font-xl: clamp(1.125rem, 1.125rem + 0.125 * ((100vw - 400px) / 50), 1.625rem);
+    --font-xxl: clamp(1.3125rem, 1.3125rem + 0.16 * ((100vw - 400px) / 50), 2.031rem);
+    --font-xxxl: clamp(1.5rem, 1.5rem + 0.2 * ((100vw - 400px) / 50), 2.4375rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 0.9rem 0.6rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 3.8rem;
+    height: 3.8rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 12rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 5rem;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .course-details-page {
+    /* Base font 13px–14px (0.8125rem–0.875rem) */
+    --font-xs: clamp(0.569rem, 0.569rem + 0.025 * ((100vw - 450px) / 50), 0.656rem);
+    --font-sm: clamp(0.609rem, 0.609rem + 0.0325 * ((100vw - 450px) / 50), 0.766rem);
+    --font-base: clamp(0.8125rem, 0.8125rem + 0.0625 * ((100vw - 450px) / 50), 0.875rem);
+    --font-md: clamp(0.8125rem, 0.8125rem + 0.07 * ((100vw - 450px) / 50), 0.984rem);
+    --font-lg: clamp(1.016rem, 1.016rem + 0.095 * ((100vw - 450px) / 50), 1.3125rem);
+    --font-xl: clamp(1.219rem, 1.219rem + 0.125 * ((100vw - 450px) / 50), 1.75rem);
+    --font-xxl: clamp(1.422rem, 1.422rem + 0.16 * ((100vw - 450px) / 50), 2.1875rem);
+    --font-xxxl: clamp(1.625rem, 1.625rem + 0.2 * ((100vw - 450px) / 50), 2.625rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1rem 0.7rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 13rem;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .course-details-page {
+    /* Base font 13.5px–14.5px (0.84375rem–0.90625rem) */
+    --font-xs: clamp(0.591rem, 0.591rem + 0.025 * ((100vw - 500px) / 50), 0.68rem);
+    --font-sm: clamp(0.633rem, 0.633rem + 0.0325 * ((100vw - 500px) / 50), 0.793rem);
+    --font-base: clamp(0.84375rem, 0.84375rem + 0.0625 * ((100vw - 500px) / 50), 0.90625rem);
+    --font-md: clamp(0.84375rem, 0.84375rem + 0.07 * ((100vw - 500px) / 50), 1.019rem);
+    --font-lg: clamp(1.055rem, 1.055rem + 0.095 * ((100vw - 500px) / 50), 1.359rem);
+    --font-xl: clamp(1.266rem, 1.266rem + 0.125 * ((100vw - 500px) / 50), 1.8125rem);
+    --font-xxl: clamp(1.477rem, 1.477rem + 0.16 * ((100vw - 500px) / 50), 2.266rem);
+    --font-xxxl: clamp(1.6875rem, 1.6875rem + 0.2 * ((100vw - 500px) / 50), 2.71875rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.1rem 0.8rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 4.2rem;
+    height: 4.2rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 14rem;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .course-details-page {
+    /* Base font 14px–15px (0.875rem–0.9375rem) */
+    --font-xs: clamp(0.6125rem, 0.6125rem + 0.025 * ((100vw - 550px) / 50), 0.703rem);
+    --font-sm: clamp(0.656rem, 0.656rem + 0.0325 * ((100vw - 550px) / 50), 0.82rem);
+    --font-base: clamp(0.875rem, 0.875rem + 0.0625 * ((100vw - 550px) / 50), 0.9375rem);
+    --font-md: clamp(0.875rem, 0.875rem + 0.07 * ((100vw - 550px) / 50), 1.055rem);
+    --font-lg: clamp(1.094rem, 1.094rem + 0.095 * ((100vw - 550px) / 50), 1.406rem);
+    --font-xl: clamp(1.3125rem, 1.3125rem + 0.125 * ((100vw - 550px) / 50), 1.875rem);
+    --font-xxl: clamp(1.531rem, 1.531rem + 0.16 * ((100vw - 550px) / 50), 2.344rem);
+    --font-xxxl: clamp(1.75rem, 1.75rem + 0.2 * ((100vw - 550px) / 50), 2.8125rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.2rem 0.9rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 15rem;
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .course-details-page {
+    /* Base font 14.5px–15.5px (0.90625rem–0.96875rem) */
+    --font-xs: clamp(0.634rem, 0.634rem + 0.025 * ((100vw - 600px) / 50), 0.727rem);
+    --font-sm: clamp(0.68rem, 0.68rem + 0.0325 * ((100vw - 600px) / 50), 0.848rem);
+    --font-base: clamp(0.90625rem, 0.90625rem + 0.0625 * ((100vw - 600px) / 50), 0.96875rem);
+    --font-md: clamp(0.90625rem, 0.90625rem + 0.07 * ((100vw - 600px) / 50), 1.09rem);
+    --font-lg: clamp(1.133rem, 1.133rem + 0.095 * ((100vw - 600px) / 50), 1.453rem);
+    --font-xl: clamp(1.359rem, 1.359rem + 0.125 * ((100vw - 600px) / 50), 1.9375rem);
+    --font-xxl: clamp(1.586rem, 1.586rem + 0.16 * ((100vw - 600px) / 50), 2.422rem);
+    --font-xxxl: clamp(1.8125rem, 1.8125rem + 0.2 * ((100vw - 600px) / 50), 2.90625rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.3rem 1rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 4.8rem;
+    height: 4.8rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 16rem;
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .course-details-page {
+    /* Base font 15px–16px (0.9375rem–1rem) */
+    --font-xs: clamp(0.656rem, 0.656rem + 0.025 * ((100vw - 650px) / 50), 0.75rem);
+    --font-sm: clamp(0.703rem, 0.703rem + 0.0325 * ((100vw - 650px) / 50), 0.875rem);
+    --font-base: clamp(0.9375rem, 0.9375rem + 0.0625 * ((100vw - 650px) / 50), 1rem);
+    --font-md: clamp(0.9375rem, 0.9375rem + 0.07 * ((100vw - 650px) / 50), 1.125rem);
+    --font-lg: clamp(1.172rem, 1.172rem + 0.095 * ((100vw - 650px) / 50), 1.5rem);
+    --font-xl: clamp(1.406rem, 1.406rem + 0.125 * ((100vw - 650px) / 50), 2rem);
+    --font-xxl: clamp(1.641rem, 1.641rem + 0.16 * ((100vw - 650px) / 50), 2.5rem);
+    --font-xxxl: clamp(1.875rem, 1.875rem + 0.2 * ((100vw - 650px) / 50), 3rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.4rem 1.1rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 17rem;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .course-details-page {
+    /* Base font 15.5px–16.5px (0.96875rem–1.03125rem) */
+    --font-xs: clamp(0.678rem, 0.678rem + 0.025 * ((100vw - 700px) / 50), 0.773rem);
+    --font-sm: clamp(0.727rem, 0.727rem + 0.0325 * ((100vw - 700px) / 50), 0.902rem);
+    --font-base: clamp(0.96875rem, 0.96875rem + 0.0625 * ((100vw - 700px) / 50), 1.03125rem);
+    --font-md: clamp(0.96875rem, 0.96875rem + 0.07 * ((100vw - 700px) / 50), 1.16rem);
+    --font-lg: clamp(1.211rem, 1.211rem + 0.095 * ((100vw - 700px) / 50), 1.547rem);
+    --font-xl: clamp(1.453rem, 1.453rem + 0.125 * ((100vw - 700px) / 50), 2.0625rem);
+    --font-xxl: clamp(1.695rem, 1.695rem + 0.16 * ((100vw - 700px) / 50), 2.578rem);
+    --font-xxxl: clamp(1.9375rem, 1.9375rem + 0.2 * ((100vw - 700px) / 50), 3.09375rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 5.2rem;
+    height: 5.2rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 18rem;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .course-details-page {
+    /* Base font 16px–17px (1rem–1.0625rem) */
+    --font-xs: clamp(0.7rem, 0.7rem + 0.025 * ((100vw - 750px) / 50), 0.797rem);
+    --font-sm: clamp(0.75rem, 0.75rem + 0.0325 * ((100vw - 750px) / 50), 0.93rem);
+    --font-base: clamp(1rem, 1rem + 0.0625 * ((100vw - 750px) / 50), 1.0625rem);
+    --font-md: clamp(1rem, 1rem + 0.07 * ((100vw - 750px) / 50), 1.195rem);
+    --font-lg: clamp(1.25rem, 1.25rem + 0.095 * ((100vw - 750px) / 50), 1.594rem);
+    --font-xl: clamp(1.5rem, 1.5rem + 0.125 * ((100vw - 750px) / 50), 2.125rem);
+    --font-xxl: clamp(1.75rem, 1.75rem + 0.16 * ((100vw - 750px) / 50), 2.656rem);
+    --font-xxxl: clamp(2rem, 2rem + 0.2 * ((100vw - 750px) / 50), 3.1875rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.6rem 1.3rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 19rem;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .course-details-page {
+    /* Base font 16.5px–17px (1.03125rem–1.0625rem) */
+    --font-xs: clamp(0.722rem, 0.722rem + 0.025 * ((100vw - 800px) / 50), 0.797rem);
+    --font-sm: clamp(0.773rem, 0.773rem + 0.0325 * ((100vw - 800px) / 50), 0.93rem);
+    --font-base: clamp(1.03125rem, 1.03125rem + 0.0625 * ((100vw - 800px) / 50), 1.0625rem);
+    --font-md: clamp(1.03125rem, 1.03125rem + 0.07 * ((100vw - 800px) / 50), 1.195rem);
+    --font-lg: clamp(1.289rem, 1.289rem + 0.095 * ((100vw - 800px) / 50), 1.594rem);
+    --font-xl: clamp(1.547rem, 1.547rem + 0.125 * ((100vw - 800px) / 50), 2.125rem);
+    --font-xxl: clamp(1.805rem, 1.805rem + 0.16 * ((100vw - 800px) / 50), 2.656rem);
+    --font-xxxl: clamp(2.0625rem, 2.0625rem + 0.2 * ((100vw - 800px) / 50), 3.1875rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.7rem 1.4rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 5.8rem;
+    height: 5.8rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 20rem;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .course-details-page {
+    /* Base font 17px (1.0625rem constant) */
+    --font-xs: 0.744rem;
+    --font-sm: 0.797rem;
+    --font-base: 1.0625rem;
+    --font-md: 1.0625rem;
+    --font-lg: 1.328rem;
+    --font-xl: 1.594rem;
+    --font-xxl: 1.859rem;
+    --font-xxxl: 2.125rem;
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.8rem 1.5rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 21rem;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .course-details-page {
+    /* Base font 17px–17.5px (1.0625rem–1.09375rem) */
+    --font-xs: clamp(0.744rem, 0.744rem + 0.025 * ((100vw - 900px) / 50), 0.82rem);
+    --font-sm: clamp(0.797rem, 0.797rem + 0.0325 * ((100vw - 900px) / 50), 0.957rem);
+    --font-base: clamp(1.0625rem, 1.0625rem + 0.0625 * ((100vw - 900px) / 50), 1.09375rem);
+    --font-md: clamp(1.0625rem, 1.0625rem + 0.07 * ((100vw - 900px) / 50), 1.23rem);
+    --font-lg: clamp(1.328rem, 1.328rem + 0.095 * ((100vw - 900px) / 50), 1.641rem);
+    --font-xl: clamp(1.594rem, 1.594rem + 0.125 * ((100vw - 900px) / 50), 2.1875rem);
+    --font-xxl: clamp(1.859rem, 1.859rem + 0.16 * ((100vw - 900px) / 50), 2.734rem);
+    --font-xxxl: clamp(2.125rem, 2.125rem + 0.2 * ((100vw - 900px) / 50), 3.28125rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 1.9rem 1.6rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 6.2rem;
+    height: 6.2rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 22rem;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .course-details-page {
+    /* Base font 17.5px (1.09375rem constant) */
+    --font-xs: 0.766rem;
+    --font-sm: 0.82rem;
+    --font-base: 1.09375rem;
+    --font-md: 1.09375rem;
+    --font-lg: 1.367rem;
+    --font-xl: 1.641rem;
+    --font-xxl: 1.914rem;
+    --font-xxxl: 2.1875rem;
+  }
+
+  .course-details-page .loading-container {
+    padding: 2rem 1.7rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 6.5rem;
+    height: 6.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 23rem;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .course-details-page {
+    /* Base font 17.5px–18px (1.09375rem–1.125rem) */
+    --font-xs: clamp(0.766rem, 0.766rem + 0.025 * ((100vw - 1000px) / 50), 0.844rem);
+    --font-sm: clamp(0.82rem, 0.82rem + 0.0325 * ((100vw - 1000px) / 50), 0.984rem);
+    --font-base: clamp(1.09375rem, 1.09375rem + 0.0625 * ((100vw - 1000px) / 50), 1.125rem);
+    --font-md: clamp(1.09375rem, 1.09375rem + 0.07 * ((100vw - 1000px) / 50), 1.266rem);
+    --font-lg: clamp(1.367rem, 1.367rem + 0.095 * ((100vw - 1000px) / 50), 1.6875rem);
+    --font-xl: clamp(1.641rem, 1.641rem + 0.125 * ((100vw - 1000px) / 50), 2.25rem);
+    --font-xxl: clamp(1.914rem, 1.914rem + 0.16 * ((100vw - 1000px) / 50), 2.8125rem);
+    --font-xxxl: clamp(2.1875rem, 2.1875rem + 0.2 * ((100vw - 1000px) / 50), 3.375rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 2.1rem 1.8rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 6.8rem;
+    height: 6.8rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 24rem;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .course-details-page {
+    /* Base font 18px (1.125rem constant) */
+    --font-xs: 0.7875rem;
+    --font-sm: 0.84375rem;
+    --font-base: 1.125rem;
+    --font-md: 1.125rem;
+    --font-lg: 1.40625rem;
+    --font-xl: 1.6875rem;
+    --font-xxl: 1.96875rem;
+    --font-xxxl: 2.25rem;
+  }
+
+  .course-details-page .loading-container {
+    padding: 2.2rem 1.9rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 7rem;
+    height: 7rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 25rem;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .course-details-page {
+    /* Base font 18px–18.5px (1.125rem–1.15625rem) */
+    --font-xs: clamp(0.7875rem, 0.7875rem + 0.025 * ((100vw - 1100px) / 50), 0.867rem);
+    --font-sm: clamp(0.84375rem, 0.84375rem + 0.0325 * ((100vw - 1100px) / 50), 1.012rem);
+    --font-base: clamp(1.125rem, 1.125rem + 0.0625 * ((100vw - 1100px) / 50), 1.15625rem);
+    --font-md: clamp(1.125rem, 1.125rem + 0.07 * ((100vw - 1100px) / 50), 1.301rem);
+    --font-lg: clamp(1.40625rem, 1.40625rem + 0.095 * ((100vw - 1100px) / 50), 1.734rem);
+    --font-xl: clamp(1.6875rem, 1.6875rem + 0.125 * ((100vw - 1100px) / 50), 2.3125rem);
+    --font-xxl: clamp(1.96875rem, 1.96875rem + 0.16 * ((100vw - 1100px) / 50), 2.891rem);
+    --font-xxxl: clamp(2.25rem, 2.25rem + 0.2 * ((100vw - 1100px) / 50), 3.46875rem);
+  }
+
+  .course-details-page .loading-container {
+    padding: 2.3rem 2rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 7.2rem;
+    height: 7.2rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 26rem;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .course-details-page {
+    /* Base font 18.5px (1.15625rem constant) */
+    --font-xs: 0.809rem;
+    --font-sm: 0.867rem;
+    --font-base: 1.15625rem;
+    --font-md: 1.15625rem;
+    --font-lg: 1.445rem;
+    --font-xl: 1.734rem;
+    --font-xxl: 2.023rem;
+    --font-xxxl: 2.3125rem;
+  }
+
+  .course-details-page .loading-container {
+    padding: 2.4rem 2.1rem;
+  }
+
+  .course-details-page .loading-spinner {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 27rem;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL+ Ultra-wide Screens ===== */
+@media only screen and (min-width: 1200px) {
+  .course-details-page {
+    /* Base font 19px+ (1.1875rem and up) – fluid up to 2560px */
+    --font-xs: clamp(0.831rem, 0.831rem + 0.5vw, 1.2rem);
+    --font-sm: clamp(0.891rem, 0.891rem + 0.5vw, 1.4rem);
+    --font-base: clamp(1.1875rem, 1.1875rem + 0.5vw, 1.8rem);
+    --font-md: clamp(1.1875rem, 1.1875rem + 0.6vw, 2rem);
+    --font-lg: clamp(1.484rem, 1.484rem + 0.8vw, 2.5rem);
+    --font-xl: clamp(1.781rem, 1.781rem + 1vw, 3.2rem);
+    --font-xxl: clamp(2.078rem, 2.078rem + 1.2vw, 4rem);
+    --font-xxxl: clamp(2.375rem, 2.375rem + 1.5vw, 5rem);
+  }
+
+  /* Desktop / TV layout – wider containers, generous spacing */
+  .course-details-page .main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem;
+  }
+
+  .course-details-page .course-hero {
+    max-width: 1400px;
+    margin: 3rem auto;
+  }
+
+  .course-details-page .loading-container,
+  .course-details-page .error-container {
+    max-width: 1200px;
+    padding: 3rem 2.5rem;
+  }
+
+  .course-details-page .course-image-container {
+    height: 32rem;
+  }
+
+  .course-details-page .course-initials {
+    font-size: 12rem;
+  }
+
+  .course-details-page .stat-item {
+    min-width: 200px;
+    padding: 1.2rem;
+  }
+
+  .course-details-page .lesson-card,
+  .course-details-page .comment-card {
+    padding: 2rem;
+  }
+
+  .course-details-page .comment-input {
+    min-height: 140px;
+  }
+
+  .course-details-page .user-avatar-container {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .course-details-page .action-btn,
+  .course-details-page .delete-btn {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+/* Additional fine-tuning for screens above 1920px */
+@media only screen and (min-width: 1920px) {
+  .course-details-page .main-content {
+    max-width: 1600px;
+  }
+
+  .course-details-page .course-hero {
+    max-width: 1600px;
+  }
+
+  .course-details-page .course-image-container {
+    height: 38rem;
+  }
+}
+
+/* Keep existing legacy media queries (they will be overridden by the granular ones above) */
+/* (original media queries left intact for reference) */

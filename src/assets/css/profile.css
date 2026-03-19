@@ -1,10 +1,39 @@
-/* src/assets/css/profile.css - COSMIC SPACE REDESIGN */
+/* src/assets/css/profile.css - COSMIC SPACE REDESIGN (FULLY RESPONSIVE) */
 
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   CSS CUSTOM PROPERTIES (THEME VARIABLES) - SCALABLE SYSTEM
    ========================================================================== */
 :root {
-  /* Cosmic Color Palette */
+  /* Base scaling variables – these are overridden in granular media queries */
+  --font-base-size: 12px;           /* Baseline for 400px–450px range */
+  --container-max-width: 1200px;     /* Baseline max container width */
+  
+  /* Derived values – all scale proportionally with --font-base-size */
+  --space-unit: calc(var(--font-base-size) / 3);        /* ~4px at baseline */
+  --border-radius-base: calc(var(--font-base-size) / 3);/* ~4px at baseline */
+
+  /* Font sizes (relative to base) */
+  --font-xs: calc(0.75 * var(--font-base-size));        /* 9px baseline */
+  --font-sm: calc(0.875 * var(--font-base-size));       /* 10.5px baseline */
+  --font-md: calc(1 * var(--font-base-size));           /* 12px baseline */
+  --font-lg: calc(1.25 * var(--font-base-size));        /* 15px baseline */
+  --font-xl: calc(1.5 * var(--font-base-size));         /* 18px baseline */
+  --font-xxl: calc(2 * var(--font-base-size));          /* 24px baseline */
+
+  /* Spacing (multiples of space-unit) */
+  --space-xs: calc(1 * var(--space-unit));              /* 4px baseline */
+  --space-sm: calc(2 * var(--space-unit));              /* 8px baseline */
+  --space-md: calc(4 * var(--space-unit));              /* 16px baseline */
+  --space-lg: calc(6 * var(--space-unit));              /* 24px baseline */
+  --space-xl: calc(8 * var(--space-unit));              /* 32px baseline */
+
+  /* Border radius (multiples of border-radius-base) */
+  --radius-sm: calc(1 * var(--border-radius-base));     /* 4px baseline */
+  --radius-md: calc(2 * var(--border-radius-base));     /* 8px baseline */
+  --radius-lg: calc(3 * var(--border-radius-base));     /* 12px baseline */
+  --radius-xl: calc(4 * var(--border-radius-base));     /* 16px baseline */
+
+  /* Cosmic Color Palette (unchanged) */
   --cosmic-dark: rgba(5, 5, 20, 0.9);
   --cosmic-darker: rgba(2, 2, 10, 0.95);
   --cosmic-card: rgba(10, 10, 30, 0.85);
@@ -12,7 +41,7 @@
   --cosmic-input: rgba(0, 0, 0, 0.6);
   --cosmic-input-focus: rgba(20, 20, 50, 0.8);
   
-  /* Cosmic Accent Colors */
+  /* Cosmic Accent Colors (unchanged) */
   --cosmic-cyan: #4ECDC4;
   --cosmic-cyan-glow: rgba(78, 205, 196, 0.4);
   --cosmic-purple: #8A2BE2;
@@ -23,45 +52,24 @@
   --cosmic-light: #e0e0e0;
   --cosmic-gray: #a0a0c0;
   
-  /* Typography */
+  /* Typography (unchanged) */
   --text-primary: #ffffff;
   --text-secondary: #e0e0e0;
   --text-muted: #a0a0c0;
   
-  /* Effects */
+  /* Effects (unchanged) */
   --glass-blur: blur(12px) saturate(180%);
   --glass-blur-mobile: blur(8px) saturate(160%);
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-glow: all 0.5s ease;
   
-  /* Shadows & Glows */
+  /* Shadows & Glows (unchanged) */
   --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
   --shadow-cosmic-cyan: 0 0 25px rgba(78, 205, 196, 0.4);
   --shadow-cosmic-purple: 0 0 25px rgba(138, 43, 226, 0.4);
   --shadow-inner: inset 0 2px 4px rgba(255, 255, 255, 0.1);
   --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
   --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
-  
-  /* Spacing */
-  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
-  --space-sm: clamp(0.5rem, 1vw, 1rem);
-  --space-md: clamp(1rem, 2vw, 1.5rem);
-  --space-lg: clamp(1.5rem, 3vw, 2.5rem);
-  --space-xl: clamp(2rem, 4vw, 3.5rem);
-  
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  
-  /* Font Sizes - Responsive */
-  --font-xs: clamp(0.75rem, 2vw, 0.875rem);
-  --font-sm: clamp(0.875rem, 2.5vw, 1rem);
-  --font-md: clamp(1rem, 3vw, 1.125rem);
-  --font-lg: clamp(1.25rem, 4vw, 1.5rem);
-  --font-xl: clamp(1.5rem, 5vw, 2rem);
-  --font-xxl: clamp(2rem, 6vw, 2.5rem);
 }
 
 /* ============================================
@@ -77,7 +85,7 @@
 }
 
 /* ==========================================================================
-   ANIMATIONS & KEYFRAMES
+   ANIMATIONS & KEYFRAMES (unchanged)
    ========================================================================== */
 @keyframes cosmic-spin {
   to {
@@ -151,7 +159,8 @@
 }
 
 .profile-container {
-  max-width: min(1200px, 90vw);
+  max-width: var(--container-max-width);
+  width: 100%;
   margin: 0 auto;
   position: relative;
 }
@@ -282,8 +291,8 @@
 }
 
 .profile-card-title .icon {
-  width: 24px;
-  height: 24px;
+  width: 1.6em;        /* Scales with parent font-size (--font-lg) */
+  height: 1.6em;
   color: var(--cosmic-cyan);
   filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
 }
@@ -307,6 +316,8 @@
     0 0 20px rgba(78, 205, 196, 0.3),
     inset 0 0 20px rgba(255, 255, 255, 0.1);
   transition: var(--transition-smooth);
+  max-width: 100%;                    /* Ensure image never overflows */
+  height: auto;
 }
 
 .avatar-container img:hover {
@@ -334,8 +345,8 @@
 }
 
 .avatar-info-text .icon {
-  width: 16px;
-  height: 16px;
+  width: 1.5em;        /* Scales with parent font-size (--font-sm) */
+  height: 1.5em;
   color: var(--cosmic-cyan);
 }
 
@@ -455,7 +466,7 @@
 .profile-form-group select,
 .profile-form-group textarea {
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--space-sm) var(--space-md);  /* 8px 16px at baseline */
   background: var(--cosmic-input);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
@@ -531,8 +542,8 @@
 }
 
 .profile-verified-badge .icon {
-  width: 14px;
-  height: 14px;
+  width: 1.5em;        /* Scales with parent font-size (--font-xs) */
+  height: 1.5em;
   filter: drop-shadow(0 0 4px var(--cosmic-cyan));
 }
 
@@ -550,7 +561,7 @@
 }
 
 .profile-btn {
-  padding: 12px 24px;
+  padding: var(--space-sm) var(--space-lg);  /* 8px 24px at baseline */
   border-radius: var(--radius-md);
   font-size: var(--font-sm);
   font-weight: 500;
@@ -566,6 +577,7 @@
   backdrop-filter: blur(4px);
   text-shadow: var(--text-shadow);
   white-space: nowrap;                 /* Keep button text on one line */
+  min-height: calc(var(--space-md) * 3); /* Ensure minimum touch target */
 }
 
 @media (max-width: 320px) {
@@ -652,7 +664,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-secondary);
-  padding: 8px 16px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   font-size: var(--font-sm);
   cursor: pointer;
@@ -673,8 +685,8 @@
 }
 
 .profile-edit-btn .icon {
-  width: 16px;
-  height: 16px;
+  width: 1.5em;        /* Scales with parent font-size (--font-sm) */
+  height: 1.5em;
   color: var(--cosmic-cyan);
 }
 
@@ -763,8 +775,8 @@
    ========================================================================== */
 .profile-loading {
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 1.25em;
+  height: 1.25em;
   border: 2px solid transparent;
   border-top-color: var(--cosmic-cyan);
   border-right-color: var(--cosmic-purple);
@@ -880,7 +892,7 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN - ALL SCREEN SIZES (Preserved and enhanced)
+   ORIGINAL RESPONSIVE DESIGN (Preserved)
    ========================================================================== */
 
 /* Mobile (< 640px) */
@@ -1071,18 +1083,197 @@
 }
 
 /* ==========================================================================
+   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
+   All media queries override base variables to ensure progressive scaling.
+   Ordered from smallest to largest.
+   ========================================================================== */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-base-size: 8px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-base-size: 9px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-base-size: 10px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-base-size: 11px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-base-size: 12px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-base-size: 13px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-base-size: 13.5px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-base-size: 14px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-base-size: 14.5px;
+    --container-max-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-base-size: 15px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-base-size: 15.5px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-base-size: 16px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-base-size: 16.5px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-base-size: 17px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-base-size: 17.25px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-base-size: 17.5px;
+    --container-max-width: 90%;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-base-size: 17.75px;
+    --container-max-width: 1100px;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-base-size: 18px;
+    --container-max-width: 1100px;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-base-size: 18.25px;
+    --container-max-width: 1200px;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-base-size: 18.5px;
+    --container-max-width: 1200px;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL ===== */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-base-size: 19px;
+    --container-max-width: 1600px;  /* Full-width with max-container */
+  }
+}
+
+/* Additional support for ultra-wide screens (2560px+) */
+@media only screen and (min-width: 1921px) {
+  :root {
+    --font-base-size: 20px;
+    --container-max-width: 1800px;
+  }
+}
+
+/* ==========================================================================
    SUMMARY OF RESPONSIVE ENHANCEMENTS
    ========================================================================== 
-   1. Added global text protection rules to all elements inside .profile-page:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to main containers (`.profile-page`, `.profile-card`, `.profile-modal-overlay`, `.profile-modal`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.profile-card-header`, `.avatar-info-text`, `.profile-stat-item`, `.profile-form-actions`, `.profile-modal-actions`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (titles, labels, button text) to keep whole words together.
-   5. Added `white-space: nowrap` to badges and buttons, with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Preserved all original colors, animations, and media queries.
-   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+   - Restructured :root with base scaling variables (--font-base-size, --space-unit, etc.)
+   - All font, spacing, radius values now derived from base variables.
+   - Replaced hard-coded px values with variables or em units for icons.
+   - Added granular media queries for every 50px increment from 200px to 1200px+.
+   - Each media query overrides --font-base-size and --container-max-width.
+   - Preserved all original classes, colors, animations, and existing media queries.
+   - Ensured minimum touch targets, text wrapping, and no horizontal overflow.
+   - Icons now scale with text using em units.
+   - Maintained cosmic theme and all special effects.
+   ========================================================================== */

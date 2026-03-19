@@ -556,4 +556,660 @@
    7. Added `min-width: 0` to `.runbook-info` to allow text shrinking within flex.
    8. Preserved all original colors, animations, and media queries.
    9. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+*/
+
+/* ==========================================================================
+   GRANULAR RESPONSIVE BREAKPOINTS (50px INCREMENTS)
+   Added to ensure perfect readability and usability across all devices.
+   All breakpoints follow the design rules:
+   - Progressive scaling of font sizes, spacing, and containers
+   - Minimum touch target size 32px at smallest screens, scaling to 48px+
+   - No horizontal scrollbars at any size
+   - Preserve all original class names and styles
+   ========================================================================== */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .runbooks-container {
+    padding: 0.5rem 0.375rem;
+  }
+
+  .runbooks-title {
+    font-size: 1.125rem; /* ~9px at 8px base */
+    margin-bottom: 0.25rem;
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.75rem; /* 6px? but min readable 8px -> use 8px */
+    font-size: 0.5rem; /* 8px equivalent */
+    margin-bottom: 0.75rem;
+  }
+
+  .search-filter-container {
+    gap: 0.5rem;
+  }
+
+  .search-box {
+    min-width: 150px;
+  }
+
+  .search-input {
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    font-size: 0.625rem; /* 8px */
+    min-height: 32px; /* minimum touch target */
+  }
+
+  .search-icon {
+    left: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .clear-search-btn {
+    font-size: 0.875rem;
+    padding: 0.2rem 0.375rem;
+    min-height: 32px;
+    white-space: normal; /* allow wrap on micro screens */
+  }
+
+  .runbooks-grid {
+    grid-template-columns: 1fr; /* always single column */
+    gap: 0.75rem;
+  }
+
+  .runbook-card {
+    padding: 0.75rem;
+  }
+
+  .runbook-card-header {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .runbook-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .runbook-title {
+    font-size: 0.75rem; /* 8-9px */
+    margin-bottom: 0.25rem;
+  }
+
+  .section-count {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.375rem;
+    white-space: normal;
+  }
+
+  .view-details {
+    font-size: 0.625rem;
+    white-space: normal;
+  }
+
+  .loading-container,
+  .error-container,
+  .empty-state {
+    padding: 2rem 0.5rem;
+  }
+
+  .error-container h3,
+  .empty-state h3 {
+    font-size: 0.875rem;
+  }
+
+  .error-container p,
+  .empty-state p {
+    font-size: 0.625rem;
+  }
+
+  .retry-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.625rem;
+    min-height: 32px;
+    white-space: normal;
+  }
+
+  .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border-width: 2px;
+  }
+
+  .error-icon,
+  .empty-icon {
+    font-size: 2rem;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .runbooks-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .runbooks-title {
+    font-size: 1.25rem; /* ~10px at 9px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.6875rem; /* 9px */
+    margin-bottom: 1rem;
+  }
+
+  .search-input {
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    font-size: 0.6875rem;
+    min-height: 34px;
+  }
+
+  .clear-search-btn {
+    font-size: 0.9375rem;
+    min-height: 34px;
+    white-space: normal;
+  }
+
+  .runbook-title {
+    font-size: 0.8125rem; /* 9-10px */
+  }
+
+  .section-count {
+    font-size: 0.6875rem;
+  }
+
+  .view-details {
+    font-size: 0.6875rem;
+  }
+
+  .retry-btn {
+    font-size: 0.6875rem;
+    min-height: 34px;
+  }
+
+  .error-container h3,
+  .empty-state h3 {
+    font-size: 1rem;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .runbooks-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .runbooks-title {
+    font-size: 1.5rem; /* ~12px at 10px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.75rem; /* 10px */
+  }
+
+  .search-input {
+    padding: 0.75rem 1.125rem 0.75rem 2.75rem;
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+
+  .clear-search-btn {
+    font-size: 1rem;
+    min-height: 36px;
+    white-space: nowrap; /* may fit now */
+  }
+
+  .runbook-title {
+    font-size: 0.875rem; /* 10-11px */
+  }
+
+  .section-count {
+    font-size: 0.75rem;
+  }
+
+  .view-details {
+    font-size: 0.75rem;
+  }
+
+  .retry-btn {
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .runbooks-container {
+    padding: 1.25rem 1rem;
+  }
+
+  .runbooks-title {
+    font-size: 1.75rem; /* ~14px at 11px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.8125rem; /* 11px */
+  }
+
+  .search-input {
+    font-size: 0.8125rem;
+    min-height: 38px;
+  }
+
+  .clear-search-btn {
+    min-height: 38px;
+  }
+
+  .runbook-title {
+    font-size: 0.9375rem; /* 11-12px */
+  }
+
+  .section-count,
+  .view-details,
+  .retry-btn {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .runbooks-title {
+    font-size: 2rem; /* ~16px at 12px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.875rem; /* 12px */
+  }
+
+  .search-input {
+    font-size: 0.875rem;
+    min-height: 40px;
+  }
+
+  .runbook-title {
+    font-size: 1rem; /* 12-13px */
+  }
+
+  .section-count,
+  .view-details,
+  .retry-btn {
+    font-size: 0.875rem;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .runbooks-title {
+    font-size: 2.125rem; /* ~17px at 13px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 0.9375rem; /* 13px */
+  }
+
+  .search-input {
+    font-size: 0.9375rem;
+    min-height: 42px;
+  }
+
+  .runbook-title {
+    font-size: 1.0625rem; /* 13-14px */
+  }
+
+  .section-count,
+  .view-details,
+  .retry-btn {
+    font-size: 0.9375rem;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .runbooks-title {
+    font-size: 2.25rem; /* ~18px at 13.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1rem; /* 13.5-14px */
+  }
+
+  .search-input {
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  .runbook-title {
+    font-size: 1.125rem;
+  }
+
+  .section-count,
+  .view-details,
+  .retry-btn {
+    font-size: 1rem;
+  }
+
+  .runbooks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* smaller columns */
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .runbooks-title {
+    font-size: 2.375rem; /* ~19px at 14px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.0625rem; /* 14-15px */
+  }
+
+  .search-input {
+    font-size: 1.0625rem;
+  }
+
+  .runbook-title {
+    font-size: 1.1875rem;
+  }
+
+  .runbooks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .runbooks-title {
+    font-size: 2.5rem; /* ~20px at 14.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.125rem; /* 14.5-15.5px */
+  }
+
+  .search-input {
+    font-size: 1.125rem;
+  }
+
+  .runbook-title {
+    font-size: 1.25rem;
+  }
+
+  .runbooks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .runbooks-title {
+    font-size: 2.625rem; /* ~21px at 15px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.1875rem; /* 15-16px */
+  }
+
+  .search-input {
+    font-size: 1.1875rem;
+  }
+
+  .runbook-title {
+    font-size: 1.3125rem;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .runbooks-title {
+    font-size: 2.75rem; /* ~22px at 15.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.25rem; /* 15.5-16.5px */
+  }
+
+  .search-input {
+    font-size: 1.25rem;
+  }
+
+  .runbook-title {
+    font-size: 1.375rem;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .runbooks-title {
+    font-size: 2.875rem; /* ~23px at 16px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.3125rem; /* 16-17px */
+  }
+
+  .search-input {
+    font-size: 1.3125rem;
+  }
+
+  .runbook-title {
+    font-size: 1.4375rem;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .runbooks-title {
+    font-size: 3rem; /* ~24px at 16.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.375rem; /* 16.5-17px */
+  }
+
+  .search-input {
+    font-size: 1.375rem;
+  }
+
+  .runbook-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .runbooks-title {
+    font-size: 3.125rem; /* 25px at 17px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.4375rem; /* 17px */
+  }
+
+  .search-input {
+    font-size: 1.4375rem;
+  }
+
+  .runbook-title {
+    font-size: 1.5625rem;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .runbooks-title {
+    font-size: 3.25rem; /* 26px at 17.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.5rem; /* 17.5px */
+  }
+
+  .search-input {
+    font-size: 1.5rem;
+  }
+
+  .runbook-title {
+    font-size: 1.625rem;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .runbooks-title {
+    font-size: 3.375rem; /* 27px at 17.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.5625rem;
+  }
+
+  .search-input {
+    font-size: 1.5625rem;
+  }
+
+  .runbook-title {
+    font-size: 1.6875rem;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .runbooks-title {
+    font-size: 3.5rem; /* 28px at 18px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.625rem;
+  }
+
+  .search-input {
+    font-size: 1.625rem;
+  }
+
+  .runbook-title {
+    font-size: 1.75rem;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .runbooks-title {
+    font-size: 3.625rem; /* 29px at 18px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.6875rem;
+  }
+
+  .search-input {
+    font-size: 1.6875rem;
+  }
+
+  .runbook-title {
+    font-size: 1.8125rem;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .runbooks-title {
+    font-size: 3.75rem; /* 30px at 18.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.75rem; /* 18.5px */
+  }
+
+  .search-input {
+    font-size: 1.75rem;
+  }
+
+  .runbook-title {
+    font-size: 1.875rem;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .runbooks-title {
+    font-size: 3.875rem; /* 31px at 18.5px base */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.8125rem;
+  }
+
+  .search-input {
+    font-size: 1.8125rem;
+  }
+
+  .runbook-title {
+    font-size: 1.9375rem;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and larger ===== */
+@media only screen and (min-width: 1200px) {
+  /* Keep original styles as default, but slightly scale up for very large screens */
+  .runbooks-container {
+    max-width: 1400px; /* expand container for large TVs */
+    padding: 2.5rem 2rem;
+  }
+
+  .runbooks-title {
+    font-size: 4rem; /* 64px at 19px base – but keep proportion */
+    font-size: clamp(2.5rem, 5vw, 5rem); /* fluid up to 5rem */
+  }
+
+  .runbooks-subtitle {
+    font-size: 1.5rem; /* 24px */
+  }
+
+  .search-input {
+    font-size: 1.25rem;
+    padding: 1rem 1.5rem 1rem 3.5rem;
+    min-height: 56px;
+  }
+
+  .runbook-title {
+    font-size: 1.75rem;
+  }
+
+  .section-count {
+    font-size: 1rem;
+    padding: 0.375rem 1rem;
+  }
+
+  .view-details {
+    font-size: 1rem;
+  }
+
+  .runbooks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 2rem;
+  }
+
+  .runbook-card {
+    padding: 2rem;
+  }
+
+  .retry-btn {
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+    min-height: 56px;
+  }
+
+  .loading-spinner {
+    width: 4rem;
+    height: 4rem;
+    border-width: 4px;
+  }
+
+  .error-icon,
+  .empty-icon {
+    font-size: 5rem;
+  }
+}
+
+/* ==========================================================================
+   END OF GRANULAR RESPONSIVE BREAKPOINTS
+   ========================================================================== */

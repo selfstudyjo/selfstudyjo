@@ -1412,22 +1412,1610 @@
   }
 }
 
-/* ============================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ============================================
-   1. Added global text protection rules to all elements inside .user-certificates:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to main containers (`.user-certificates`, `.header`, `.loading-container`, `.error-container`, `.empty-state`, `.certificate-card`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.section-header`, `.certificate-header`, `.detail-item`, `.certificate-actions`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (headings, titles, labels) to keep whole words together.
-   5. Added `white-space: nowrap` to badges and buttons (`.badge`, `.status-badge`, `.view-btn`, `.retry-btn`), with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Added `min-width: 0` to `.certificate-info` to allow text shrinking within flex.
-   8. Preserved all original colors, animations, and media queries.
-   9. Ensured no element is clipped, hidden, or overlapped at any screen size.
-  10. Enhanced certificate card to be more professional: reduced vertical padding, smaller icon, tighter spacing, increased grid min-width for wider cards (380px), and adjusted hover effect for a more refined look.
-  11. Centered the status badge (by setting `.detail-item:last-child` to `justify-content: center`) and centered the view button (by setting `.certificate-actions` to `justify-content: center`).
-*/  
+/* ===== ADDITIONAL GRANULAR BREAKPOINTS (50px increments) ===== */
+/* These override the default fluid styles for precise control at every screen size */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .user-certificates {
+    padding: 6px;
+    max-width: 100%;
+  }
+  .header {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+  .header h1 {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-size: 7px;
+    line-height: 1.3;
+    max-width: 100%;
+  }
+  .loading-container {
+    padding: 20px 8px;
+  }
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 2px;
+    margin-bottom: 12px;
+  }
+  .loading-container p {
+    font-size: 8px;
+  }
+  .error-container {
+    padding: 20px 8px;
+  }
+  .error-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .error-container h3 {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  .error-container p {
+    font-size: 7px;
+    margin-bottom: 12px;
+  }
+  .retry-btn {
+    min-height: 28px;
+    padding: 0 8px;
+    font-size: 7px;
+    gap: 4px;
+    border-radius: 6px;
+  }
+  .empty-state {
+    padding: 20px 8px;
+  }
+  .empty-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .empty-state h3 {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  .empty-state p {
+    font-size: 7px;
+    margin-bottom: 12px;
+  }
+  .tabs {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .tab-btn {
+    padding: 4px 8px;
+    font-size: 7px;
+    border-radius: 12px;
+    gap: 4px;
+  }
+  .tab-btn .badge {
+    padding: 1px 4px;
+    font-size: 6px;
+  }
+  .search-container {
+    max-width: 100%;
+    margin-bottom: 12px;
+  }
+  .search-input-wrapper {
+    padding: 0 6px;
+    border-radius: 16px;
+  }
+  .search-icon {
+    font-size: 10px;
+    margin-right: 4px;
+  }
+  .search-input {
+    padding: 6px 0;
+    font-size: 7px;
+  }
+  .search-clear {
+    padding: 2px;
+    font-size: 8px;
+  }
+  .certificates-section {
+    margin-bottom: 16px;
+  }
+  .section-header {
+    gap: 4px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+  }
+  .section-header h2 {
+    font-size: 10px;
+  }
+  .section-header .badge {
+    padding: 2px 6px;
+    font-size: 6px;
+  }
+  .certificates-grid {
+    gap: 6px;
+    grid-template-columns: 1fr;
+  }
+  .certificate-card {
+    padding: 6px 8px;
+    border-radius: 10px;
+  }
+  .certificate-header {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .certificate-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  .certificate-info h3 {
+    font-size: 8px;
+    margin-bottom: 1px;
+  }
+  .certificate-id {
+    font-size: 6px;
+  }
+  .certificate-details {
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+  .detail-item {
+    gap: 2px 4px;
+    padding: 1px 0;
+  }
+  .label, .value {
+    font-size: 6px;
+  }
+  .status-badge {
+    padding: 1px 4px;
+    font-size: 5px;
+    gap: 2px;
+  }
+  .status-badge::before {
+    width: 4px;
+    height: 4px;
+  }
+  .certificate-actions {
+    gap: 4px;
+    padding-top: 4px;
+  }
+  .view-btn {
+    min-height: 26px;
+    padding: 0 6px;
+    font-size: 6px;
+    gap: 2px;
+    border-radius: 6px;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .user-certificates {
+    padding: 8px;
+  }
+  .header {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+  }
+  .header h1 {
+    font-size: 14px;
+  }
+  .header p {
+    font-size: 8px;
+  }
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+  }
+  .loading-container p {
+    font-size: 9px;
+  }
+  .error-icon {
+    font-size: 32px;
+  }
+  .error-container h3 {
+    font-size: 12px;
+  }
+  .error-container p {
+    font-size: 8px;
+  }
+  .retry-btn {
+    min-height: 30px;
+    font-size: 8px;
+  }
+  .empty-icon {
+    font-size: 40px;
+  }
+  .empty-state h3 {
+    font-size: 12px;
+  }
+  .empty-state p {
+    font-size: 8px;
+  }
+  .tab-btn {
+    padding: 5px 10px;
+    font-size: 8px;
+  }
+  .search-input {
+    font-size: 8px;
+  }
+  .section-header h2 {
+    font-size: 12px;
+  }
+  .certificate-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  .certificate-info h3 {
+    font-size: 9px;
+  }
+  .certificate-id {
+    font-size: 7px;
+  }
+  .label, .value {
+    font-size: 7px;
+  }
+  .status-badge {
+    font-size: 6px;
+  }
+  .view-btn {
+    min-height: 28px;
+    font-size: 7px;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .user-certificates {
+    padding: 10px;
+  }
+  .header {
+    padding: 12px;
+  }
+  .header h1 {
+    font-size: 16px;
+  }
+  .header p {
+    font-size: 9px;
+  }
+  .loading-spinner {
+    width: 45px;
+    height: 45px;
+  }
+  .loading-container p {
+    font-size: 10px;
+  }
+  .error-icon {
+    font-size: 36px;
+  }
+  .error-container h3 {
+    font-size: 14px;
+  }
+  .error-container p {
+    font-size: 9px;
+  }
+  .retry-btn {
+    min-height: 32px;
+    font-size: 9px;
+  }
+  .empty-icon {
+    font-size: 45px;
+  }
+  .empty-state h3 {
+    font-size: 14px;
+  }
+  .empty-state p {
+    font-size: 9px;
+  }
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 9px;
+  }
+  .search-input {
+    font-size: 9px;
+  }
+  .section-header h2 {
+    font-size: 14px;
+  }
+  .certificate-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .certificate-info h3 {
+    font-size: 10px;
+  }
+  .certificate-id {
+    font-size: 8px;
+  }
+  .label, .value {
+    font-size: 8px;
+  }
+  .status-badge {
+    font-size: 7px;
+  }
+  .view-btn {
+    min-height: 30px;
+    font-size: 8px;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .user-certificates {
+    padding: 12px;
+  }
+  .header {
+    padding: 14px;
+  }
+  .header h1 {
+    font-size: 18px;
+  }
+  .header p {
+    font-size: 10px;
+  }
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+  }
+  .loading-container p {
+    font-size: 11px;
+  }
+  .error-icon {
+    font-size: 40px;
+  }
+  .error-container h3 {
+    font-size: 16px;
+  }
+  .error-container p {
+    font-size: 10px;
+  }
+  .retry-btn {
+    min-height: 34px;
+    font-size: 10px;
+  }
+  .empty-icon {
+    font-size: 50px;
+  }
+  .empty-state h3 {
+    font-size: 16px;
+  }
+  .empty-state p {
+    font-size: 10px;
+  }
+  .tab-btn {
+    padding: 7px 14px;
+    font-size: 10px;
+  }
+  .search-input {
+    font-size: 10px;
+  }
+  .section-header h2 {
+    font-size: 16px;
+  }
+  .certificate-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+  .certificate-info h3 {
+    font-size: 11px;
+  }
+  .certificate-id {
+    font-size: 9px;
+  }
+  .label, .value {
+    font-size: 9px;
+  }
+  .status-badge {
+    font-size: 8px;
+  }
+  .view-btn {
+    min-height: 32px;
+    font-size: 9px;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .user-certificates {
+    padding: 14px;
+  }
+  .header {
+    padding: 16px;
+  }
+  .header h1 {
+    font-size: 20px;
+  }
+  .header p {
+    font-size: 11px;
+  }
+  .loading-spinner {
+    width: 55px;
+    height: 55px;
+  }
+  .loading-container p {
+    font-size: 12px;
+  }
+  .error-icon {
+    font-size: 44px;
+  }
+  .error-container h3 {
+    font-size: 18px;
+  }
+  .error-container p {
+    font-size: 11px;
+  }
+  .retry-btn {
+    min-height: 36px;
+    font-size: 11px;
+    padding: 0 18px;
+  }
+  .empty-icon {
+    font-size: 55px;
+  }
+  .empty-state h3 {
+    font-size: 18px;
+  }
+  .empty-state p {
+    font-size: 11px;
+  }
+  .tab-btn {
+    padding: 8px 16px;
+    font-size: 11px;
+  }
+  .search-input {
+    font-size: 11px;
+  }
+  .section-header h2 {
+    font-size: 18px;
+  }
+  .certificate-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+  .certificate-info h3 {
+    font-size: 12px;
+  }
+  .certificate-id {
+    font-size: 10px;
+  }
+  .label, .value {
+    font-size: 10px;
+  }
+  .status-badge {
+    font-size: 9px;
+  }
+  .view-btn {
+    min-height: 34px;
+    font-size: 10px;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .user-certificates {
+    padding: 16px;
+  }
+  .header {
+    padding: 18px;
+  }
+  .header h1 {
+    font-size: 22px;
+  }
+  .header p {
+    font-size: 12px;
+  }
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+  }
+  .loading-container p {
+    font-size: 13px;
+  }
+  .error-icon {
+    font-size: 48px;
+  }
+  .error-container h3 {
+    font-size: 20px;
+  }
+  .error-container p {
+    font-size: 12px;
+  }
+  .retry-btn {
+    min-height: 38px;
+    font-size: 12px;
+  }
+  .empty-icon {
+    font-size: 60px;
+  }
+  .empty-state h3 {
+    font-size: 20px;
+  }
+  .empty-state p {
+    font-size: 12px;
+  }
+  .tab-btn {
+    padding: 9px 18px;
+    font-size: 12px;
+  }
+  .search-input {
+    font-size: 12px;
+  }
+  .section-header h2 {
+    font-size: 20px;
+  }
+  .certificate-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
+  }
+  .certificate-info h3 {
+    font-size: 13px;
+  }
+  .certificate-id {
+    font-size: 11px;
+  }
+  .label, .value {
+    font-size: 11px;
+  }
+  .status-badge {
+    font-size: 10px;
+  }
+  .view-btn {
+    min-height: 36px;
+    font-size: 11px;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .user-certificates {
+    padding: 18px;
+  }
+  .header {
+    padding: 20px;
+  }
+  .header h1 {
+    font-size: 24px;
+  }
+  .header p {
+    font-size: 13px;
+  }
+  .loading-spinner {
+    width: 65px;
+    height: 65px;
+  }
+  .error-icon {
+    font-size: 52px;
+  }
+  .error-container h3 {
+    font-size: 22px;
+  }
+  .error-container p {
+    font-size: 13px;
+  }
+  .retry-btn {
+    min-height: 40px;
+    font-size: 13px;
+  }
+  .empty-icon {
+    font-size: 65px;
+  }
+  .empty-state h3 {
+    font-size: 22px;
+  }
+  .empty-state p {
+    font-size: 13px;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  .search-input {
+    font-size: 13px;
+  }
+  .section-header h2 {
+    font-size: 22px;
+  }
+  .certificate-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+  .certificate-info h3 {
+    font-size: 14px;
+  }
+  .certificate-id {
+    font-size: 12px;
+  }
+  .label, .value {
+    font-size: 12px;
+  }
+  .status-badge {
+    font-size: 11px;
+  }
+  .view-btn {
+    min-height: 38px;
+    font-size: 12px;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .user-certificates {
+    padding: 20px;
+  }
+  .header {
+    padding: 22px;
+  }
+  .header h1 {
+    font-size: 26px;
+  }
+  .header p {
+    font-size: 14px;
+  }
+  .loading-spinner {
+    width: 68px;
+    height: 68px;
+  }
+  .error-icon {
+    font-size: 56px;
+  }
+  .error-container h3 {
+    font-size: 24px;
+  }
+  .error-container p {
+    font-size: 14px;
+  }
+  .retry-btn {
+    min-height: 42px;
+    font-size: 14px;
+  }
+  .empty-icon {
+    font-size: 68px;
+  }
+  .empty-state h3 {
+    font-size: 24px;
+  }
+  .empty-state p {
+    font-size: 14px;
+  }
+  .tab-btn {
+    padding: 11px 22px;
+    font-size: 14px;
+  }
+  .search-input {
+    font-size: 14px;
+  }
+  .section-header h2 {
+    font-size: 24px;
+  }
+  .certificate-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 26px;
+  }
+  .certificate-info h3 {
+    font-size: 15px;
+  }
+  .certificate-id {
+    font-size: 13px;
+  }
+  .label, .value {
+    font-size: 13px;
+  }
+  .status-badge {
+    font-size: 12px;
+  }
+  .view-btn {
+    min-height: 40px;
+    font-size: 13px;
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .user-certificates {
+    padding: 22px;
+  }
+  .header {
+    padding: 24px;
+  }
+  .header h1 {
+    font-size: 28px;
+  }
+  .header p {
+    font-size: 15px;
+  }
+  .loading-spinner {
+    width: 70px;
+    height: 70px;
+  }
+  .error-icon {
+    font-size: 60px;
+  }
+  .error-container h3 {
+    font-size: 26px;
+  }
+  .error-container p {
+    font-size: 15px;
+  }
+  .retry-btn {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .empty-icon {
+    font-size: 70px;
+  }
+  .empty-state h3 {
+    font-size: 26px;
+  }
+  .empty-state p {
+    font-size: 15px;
+  }
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+  .search-input {
+    font-size: 15px;
+  }
+  .section-header h2 {
+    font-size: 26px;
+  }
+  .certificate-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
+  .certificate-info h3 {
+    font-size: 16px;
+  }
+  .certificate-id {
+    font-size: 14px;
+  }
+  .label, .value {
+    font-size: 14px;
+  }
+  .status-badge {
+    font-size: 13px;
+  }
+  .view-btn {
+    min-height: 42px;
+    font-size: 14px;
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .user-certificates {
+    padding: 24px;
+  }
+  .header {
+    padding: 26px;
+  }
+  .header h1 {
+    font-size: 30px;
+  }
+  .header p {
+    font-size: 16px;
+  }
+  .error-icon {
+    font-size: 64px;
+  }
+  .error-container h3 {
+    font-size: 28px;
+  }
+  .error-container p {
+    font-size: 16px;
+  }
+  .retry-btn {
+    min-height: 46px;
+    font-size: 16px;
+  }
+  .empty-icon {
+    font-size: 74px;
+  }
+  .empty-state h3 {
+    font-size: 28px;
+  }
+  .empty-state p {
+    font-size: 16px;
+  }
+  .tab-btn {
+    padding: 13px 26px;
+    font-size: 16px;
+  }
+  .search-input {
+    font-size: 16px;
+  }
+  .section-header h2 {
+    font-size: 28px;
+  }
+  .certificate-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 30px;
+  }
+  .certificate-info h3 {
+    font-size: 17px;
+  }
+  .certificate-id {
+    font-size: 15px;
+  }
+  .label, .value {
+    font-size: 15px;
+  }
+  .status-badge {
+    font-size: 14px;
+  }
+  .view-btn {
+    min-height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .user-certificates {
+    padding: 26px;
+  }
+  .header {
+    padding: 28px;
+  }
+  .header h1 {
+    font-size: 32px;
+  }
+  .header p {
+    font-size: 17px;
+  }
+  .error-icon {
+    font-size: 68px;
+  }
+  .error-container h3 {
+    font-size: 30px;
+  }
+  .error-container p {
+    font-size: 17px;
+  }
+  .retry-btn {
+    min-height: 48px;
+    font-size: 17px;
+  }
+  .empty-icon {
+    font-size: 78px;
+  }
+  .empty-state h3 {
+    font-size: 30px;
+  }
+  .empty-state p {
+    font-size: 17px;
+  }
+  .tab-btn {
+    padding: 14px 28px;
+    font-size: 17px;
+  }
+  .search-input {
+    font-size: 17px;
+  }
+  .section-header h2 {
+    font-size: 30px;
+  }
+  .certificate-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 32px;
+  }
+  .certificate-info h3 {
+    font-size: 18px;
+  }
+  .certificate-id {
+    font-size: 16px;
+  }
+  .label, .value {
+    font-size: 16px;
+  }
+  .status-badge {
+    font-size: 15px;
+  }
+  .view-btn {
+    min-height: 46px;
+    font-size: 16px;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .user-certificates {
+    padding: 28px;
+  }
+  .header {
+    padding: 30px;
+  }
+  .header h1 {
+    font-size: 34px;
+  }
+  .header p {
+    font-size: 18px;
+  }
+  .error-icon {
+    font-size: 72px;
+  }
+  .error-container h3 {
+    font-size: 32px;
+  }
+  .error-container p {
+    font-size: 18px;
+  }
+  .retry-btn {
+    min-height: 50px;
+    font-size: 18px;
+  }
+  .empty-icon {
+    font-size: 80px;
+  }
+  .empty-state h3 {
+    font-size: 32px;
+  }
+  .empty-state p {
+    font-size: 18px;
+  }
+  .tab-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+  }
+  .search-input {
+    font-size: 18px;
+  }
+  .section-header h2 {
+    font-size: 32px;
+  }
+  .certificate-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 34px;
+  }
+  .certificate-info h3 {
+    font-size: 19px;
+  }
+  .certificate-id {
+    font-size: 17px;
+  }
+  .label, .value {
+    font-size: 17px;
+  }
+  .status-badge {
+    font-size: 16px;
+  }
+  .view-btn {
+    min-height: 48px;
+    font-size: 17px;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .user-certificates {
+    padding: 30px;
+  }
+  .header {
+    padding: 32px;
+  }
+  .header h1 {
+    font-size: 36px;
+  }
+  .header p {
+    font-size: 19px;
+  }
+  .error-icon {
+    font-size: 76px;
+  }
+  .error-container h3 {
+    font-size: 34px;
+  }
+  .error-container p {
+    font-size: 19px;
+  }
+  .retry-btn {
+    min-height: 52px;
+    font-size: 19px;
+  }
+  .empty-icon {
+    font-size: 84px;
+  }
+  .empty-state h3 {
+    font-size: 34px;
+  }
+  .empty-state p {
+    font-size: 19px;
+  }
+  .tab-btn {
+    padding: 16px 32px;
+    font-size: 19px;
+  }
+  .search-input {
+    font-size: 19px;
+  }
+  .section-header h2 {
+    font-size: 34px;
+  }
+  .certificate-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 36px;
+  }
+  .certificate-info h3 {
+    font-size: 20px;
+  }
+  .certificate-id {
+    font-size: 18px;
+  }
+  .label, .value {
+    font-size: 18px;
+  }
+  .status-badge {
+    font-size: 17px;
+  }
+  .view-btn {
+    min-height: 50px;
+    font-size: 18px;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .user-certificates {
+    padding: 32px;
+  }
+  .header {
+    padding: 34px;
+  }
+  .header h1 {
+    font-size: 38px;
+  }
+  .header p {
+    font-size: 20px;
+  }
+  .error-icon {
+    font-size: 80px;
+  }
+  .error-container h3 {
+    font-size: 36px;
+  }
+  .error-container p {
+    font-size: 20px;
+  }
+  .retry-btn {
+    min-height: 54px;
+    font-size: 20px;
+  }
+  .empty-icon {
+    font-size: 88px;
+  }
+  .empty-state h3 {
+    font-size: 36px;
+  }
+  .empty-state p {
+    font-size: 20px;
+  }
+  .tab-btn {
+    padding: 17px 34px;
+    font-size: 20px;
+  }
+  .search-input {
+    font-size: 20px;
+  }
+  .section-header h2 {
+    font-size: 36px;
+  }
+  .certificate-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 38px;
+  }
+  .certificate-info h3 {
+    font-size: 21px;
+  }
+  .certificate-id {
+    font-size: 19px;
+  }
+  .label, .value {
+    font-size: 19px;
+  }
+  .status-badge {
+    font-size: 18px;
+  }
+  .view-btn {
+    min-height: 52px;
+    font-size: 19px;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .user-certificates {
+    padding: 34px;
+  }
+  .header {
+    padding: 36px;
+  }
+  .header h1 {
+    font-size: 40px;
+  }
+  .header p {
+    font-size: 21px;
+  }
+  .error-icon {
+    font-size: 84px;
+  }
+  .error-container h3 {
+    font-size: 38px;
+  }
+  .error-container p {
+    font-size: 21px;
+  }
+  .retry-btn {
+    min-height: 56px;
+    font-size: 21px;
+  }
+  .empty-icon {
+    font-size: 92px;
+  }
+  .empty-state h3 {
+    font-size: 38px;
+  }
+  .empty-state p {
+    font-size: 21px;
+  }
+  .tab-btn {
+    padding: 18px 36px;
+    font-size: 21px;
+  }
+  .search-input {
+    font-size: 21px;
+  }
+  .section-header h2 {
+    font-size: 38px;
+  }
+  .certificate-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 40px;
+  }
+  .certificate-info h3 {
+    font-size: 22px;
+  }
+  .certificate-id {
+    font-size: 20px;
+  }
+  .label, .value {
+    font-size: 20px;
+  }
+  .status-badge {
+    font-size: 19px;
+  }
+  .view-btn {
+    min-height: 54px;
+    font-size: 20px;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .user-certificates {
+    padding: 36px;
+  }
+  .header {
+    padding: 38px;
+  }
+  .header h1 {
+    font-size: 42px;
+  }
+  .header p {
+    font-size: 22px;
+  }
+  .error-icon {
+    font-size: 88px;
+  }
+  .error-container h3 {
+    font-size: 40px;
+  }
+  .error-container p {
+    font-size: 22px;
+  }
+  .retry-btn {
+    min-height: 58px;
+    font-size: 22px;
+  }
+  .empty-icon {
+    font-size: 96px;
+  }
+  .empty-state h3 {
+    font-size: 40px;
+  }
+  .empty-state p {
+    font-size: 22px;
+  }
+  .tab-btn {
+    padding: 19px 38px;
+    font-size: 22px;
+  }
+  .search-input {
+    font-size: 22px;
+  }
+  .section-header h2 {
+    font-size: 40px;
+  }
+  .certificate-icon {
+    width: 58px;
+    height: 58px;
+    font-size: 42px;
+  }
+  .certificate-info h3 {
+    font-size: 23px;
+  }
+  .certificate-id {
+    font-size: 21px;
+  }
+  .label, .value {
+    font-size: 21px;
+  }
+  .status-badge {
+    font-size: 20px;
+  }
+  .view-btn {
+    min-height: 56px;
+    font-size: 21px;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .user-certificates {
+    padding: 38px;
+  }
+  .header {
+    padding: 40px;
+  }
+  .header h1 {
+    font-size: 44px;
+  }
+  .header p {
+    font-size: 23px;
+  }
+  .error-icon {
+    font-size: 92px;
+  }
+  .error-container h3 {
+    font-size: 42px;
+  }
+  .error-container p {
+    font-size: 23px;
+  }
+  .retry-btn {
+    min-height: 60px;
+    font-size: 23px;
+  }
+  .empty-icon {
+    font-size: 100px;
+  }
+  .empty-state h3 {
+    font-size: 42px;
+  }
+  .empty-state p {
+    font-size: 23px;
+  }
+  .tab-btn {
+    padding: 20px 40px;
+    font-size: 23px;
+  }
+  .search-input {
+    font-size: 23px;
+  }
+  .section-header h2 {
+    font-size: 42px;
+  }
+  .certificate-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 44px;
+  }
+  .certificate-info h3 {
+    font-size: 24px;
+  }
+  .certificate-id {
+    font-size: 22px;
+  }
+  .label, .value {
+    font-size: 22px;
+  }
+  .status-badge {
+    font-size: 21px;
+  }
+  .view-btn {
+    min-height: 58px;
+    font-size: 22px;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .user-certificates {
+    padding: 40px;
+  }
+  .header {
+    padding: 42px;
+  }
+  .header h1 {
+    font-size: 46px;
+  }
+  .header p {
+    font-size: 24px;
+  }
+  .error-icon {
+    font-size: 96px;
+  }
+  .error-container h3 {
+    font-size: 44px;
+  }
+  .error-container p {
+    font-size: 24px;
+  }
+  .retry-btn {
+    min-height: 62px;
+    font-size: 24px;
+  }
+  .empty-icon {
+    font-size: 104px;
+  }
+  .empty-state h3 {
+    font-size: 44px;
+  }
+  .empty-state p {
+    font-size: 24px;
+  }
+  .tab-btn {
+    padding: 21px 42px;
+    font-size: 24px;
+  }
+  .search-input {
+    font-size: 24px;
+  }
+  .section-header h2 {
+    font-size: 44px;
+  }
+  .certificate-icon {
+    width: 62px;
+    height: 62px;
+    font-size: 46px;
+  }
+  .certificate-info h3 {
+    font-size: 25px;
+  }
+  .certificate-id {
+    font-size: 23px;
+  }
+  .label, .value {
+    font-size: 23px;
+  }
+  .status-badge {
+    font-size: 22px;
+  }
+  .view-btn {
+    min-height: 60px;
+    font-size: 23px;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .user-certificates {
+    padding: 42px;
+  }
+  .header {
+    padding: 44px;
+  }
+  .header h1 {
+    font-size: 48px;
+  }
+  .header p {
+    font-size: 25px;
+  }
+  .error-icon {
+    font-size: 100px;
+  }
+  .error-container h3 {
+    font-size: 46px;
+  }
+  .error-container p {
+    font-size: 25px;
+  }
+  .retry-btn {
+    min-height: 64px;
+    font-size: 25px;
+  }
+  .empty-icon {
+    font-size: 108px;
+  }
+  .empty-state h3 {
+    font-size: 46px;
+  }
+  .empty-state p {
+    font-size: 25px;
+  }
+  .tab-btn {
+    padding: 22px 44px;
+    font-size: 25px;
+  }
+  .search-input {
+    font-size: 25px;
+  }
+  .section-header h2 {
+    font-size: 46px;
+  }
+  .certificate-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 48px;
+  }
+  .certificate-info h3 {
+    font-size: 26px;
+  }
+  .certificate-id {
+    font-size: 24px;
+  }
+  .label, .value {
+    font-size: 24px;
+  }
+  .status-badge {
+    font-size: 23px;
+  }
+  .view-btn {
+    min-height: 62px;
+    font-size: 24px;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .user-certificates {
+    padding: 44px;
+  }
+  .header {
+    padding: 46px;
+  }
+  .header h1 {
+    font-size: 50px;
+  }
+  .header p {
+    font-size: 26px;
+  }
+  .error-icon {
+    font-size: 104px;
+  }
+  .error-container h3 {
+    font-size: 48px;
+  }
+  .error-container p {
+    font-size: 26px;
+  }
+  .retry-btn {
+    min-height: 66px;
+    font-size: 26px;
+  }
+  .empty-icon {
+    font-size: 112px;
+  }
+  .empty-state h3 {
+    font-size: 48px;
+  }
+  .empty-state p {
+    font-size: 26px;
+  }
+  .tab-btn {
+    padding: 23px 46px;
+    font-size: 26px;
+  }
+  .search-input {
+    font-size: 26px;
+  }
+  .section-header h2 {
+    font-size: 48px;
+  }
+  .certificate-icon {
+    width: 66px;
+    height: 66px;
+    font-size: 50px;
+  }
+  .certificate-info h3 {
+    font-size: 27px;
+  }
+  .certificate-id {
+    font-size: 25px;
+  }
+  .label, .value {
+    font-size: 25px;
+  }
+  .status-badge {
+    font-size: 24px;
+  }
+  .view-btn {
+    min-height: 64px;
+    font-size: 25px;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
+@media only screen and (min-width: 1200px) {
+  /* Already handled by existing desktop/TV media queries above, but we ensure base sizes are comfortable */
+  .user-certificates {
+    padding: 48px;
+    max-width: 1800px;
+  }
+  .header h1 {
+    font-size: 52px;
+  }
+  .header p {
+    font-size: 28px;
+  }
+  .error-icon {
+    font-size: 120px;
+  }
+  .error-container h3 {
+    font-size: 52px;
+  }
+  .error-container p {
+    font-size: 28px;
+  }
+  .retry-btn {
+    min-height: 70px;
+    font-size: 28px;
+  }
+  .empty-icon {
+    font-size: 128px;
+  }
+  .empty-state h3 {
+    font-size: 52px;
+  }
+  .empty-state p {
+    font-size: 28px;
+  }
+  .tab-btn {
+    padding: 24px 48px;
+    font-size: 28px;
+  }
+  .search-input {
+    font-size: 28px;
+  }
+  .section-header h2 {
+    font-size: 52px;
+  }
+  .certificate-icon {
+    width: 72px;
+    height: 72px;
+    font-size: 56px;
+  }
+  .certificate-info h3 {
+    font-size: 32px;
+  }
+  .certificate-id {
+    font-size: 28px;
+  }
+  .label, .value {
+    font-size: 28px;
+  }
+  .status-badge {
+    font-size: 26px;
+  }
+  .view-btn {
+    min-height: 68px;
+    font-size: 28px;
+  }
+}

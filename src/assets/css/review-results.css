@@ -25,7 +25,7 @@
   --glow-blue: 0 0 20px rgba(65, 105, 225, 0.4);
   --glow-white: 0 0 20px rgba(255, 255, 255, 0.2);
   
-  /* Typography - Responsive Fluid Sizes */
+  /* Typography - Fluid Base (rem-based, scaled via media queries) */
   --font-size-xs: clamp(0.75rem, 2vw, 0.875rem);
   --font-size-sm: clamp(0.875rem, 2.5vw, 1rem);
   --font-size-base: clamp(1rem, 3vw, 1.125rem);
@@ -64,6 +64,9 @@
   --z-content: 1;
   --z-overlay: 2;
   --z-modal: 10;
+  
+  /* Touch target minimum size */
+  --touch-min-height: 32px;
 }
 
 /* --------------------------------------------------------------------------
@@ -136,6 +139,10 @@
   box-shadow: var(--glass-shadow);
   white-space: nowrap;
   flex-shrink: 0;
+  min-height: var(--touch-min-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-btn:hover {
@@ -422,28 +429,77 @@
 }
 
 /* --------------------------------------------------------------------------
-   RESPONSIVE ADJUSTMENTS
+   CUSTOM SCROLLBAR (matches cosmic theme)
    -------------------------------------------------------------------------- */
-/* Tablet and below */
-@media (max-width: 768px) {
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 150, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 180, 0.8);
+  box-shadow: 0 0 10px var(--color-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   ENSURE BACKGROUND IS TRANSPARENT FOR GALAXY
+   -------------------------------------------------------------------------- */
+body, html, #app {
+  background: transparent;
+}
+
+.review-results,
+.result-summary,
+.question-card,
+.answers,
+.answer {
+  background-color: transparent; /* glass backgrounds already set */
+}
+
+/* ==========================================================================
+   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
+   ========================================================================== */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    font-size: 8px; /* 1rem = 8px */
+    --font-size-xs: 0.75rem;   /* 6px */
+    --font-size-sm: 0.875rem;  /* 7px */
+    --font-size-base: 1rem;     /* 8px */
+    --font-size-lg: 1.125rem;   /* 9px */
+    --font-size-xl: 1.25rem;    /* 10px */
+    --font-size-xxl: 1.5rem;    /* 12px */
+    --space-xs: 0.25rem;  /* 2px */
+    --space-sm: 0.5rem;   /* 4px */
+    --space-md: 0.75rem;  /* 6px */
+    --space-lg: 1rem;     /* 8px */
+    --space-xl: 1.5rem;   /* 12px */
+    --radius-sm: 0.5rem;  /* 4px */
+    --radius-md: 0.75rem; /* 6px */
+    --radius-lg: 1rem;    /* 8px */
+    --radius-xl: 1.5rem;  /* 12px */
+    --touch-min-height: 32px;
+  }
   .question-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  .q-score {
-    align-self: flex-start;
+  .answers {
+    padding-left: 0;
   }
-  .answer {
-    flex-wrap: wrap;
-  }
-  .correct-badge,
-  .wrong-badge {
-    margin-left: 0;
-  }
-}
-
-/* Small phones */
-@media (max-width: 480px) {
   .review-header {
     flex-direction: column;
     align-items: flex-start;
@@ -452,29 +508,567 @@
     width: 100%;
     text-align: center;
   }
-  .question-card {
-    padding: var(--space-md);
+  .loading::after {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    font-size: 9px;
+    --font-size-xs: 0.75rem;   /* 6.75px */
+    --font-size-sm: 0.875rem;  /* 7.875px */
+    --font-size-base: 1rem;     /* 9px */
+    --font-size-lg: 1.125rem;   /* 10.125px */
+    --font-size-xl: 1.25rem;    /* 11.25px */
+    --font-size-xxl: 1.5rem;    /* 13.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 34px;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
   .answers {
     padding-left: 0;
   }
-}
-
-/* Very small phones */
-@media (max-width: 360px) {
-  .result-summary {
-    padding: var(--space-md);
-  }
-  .answer {
+  .review-header {
     flex-direction: column;
     align-items: flex-start;
   }
+  .back-btn {
+    width: 100%;
+  }
+  .loading::after {
+    width: 44px;
+    height: 44px;
+  }
 }
 
-/* Large screens */
-@media (min-width: 1440px) {
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    font-size: 10px;
+    --font-size-xs: 0.75rem;   /* 7.5px */
+    --font-size-sm: 0.875rem;  /* 8.75px */
+    --font-size-base: 1rem;     /* 10px */
+    --font-size-lg: 1.125rem;   /* 11.25px */
+    --font-size-xl: 1.25rem;    /* 12.5px */
+    --font-size-xxl: 1.5rem;    /* 15px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 36px;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .answers {
+    padding-left: var(--space-xs);
+  }
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .back-btn {
+    width: 100%;
+  }
+  .loading::after {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    font-size: 11px;
+    --font-size-xs: 0.75rem;   /* 8.25px */
+    --font-size-sm: 0.875rem;  /* 9.625px */
+    --font-size-base: 1rem;     /* 11px */
+    --font-size-lg: 1.125rem;   /* 12.375px */
+    --font-size-xl: 1.25rem;    /* 13.75px */
+    --font-size-xxl: 1.5rem;    /* 16.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 38px;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .answers {
+    padding-left: var(--space-xs);
+  }
+  .review-header {
+    flex-wrap: wrap;
+  }
+  .back-btn {
+    width: auto;
+  }
+  .loading::after {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    font-size: 12px;
+    --font-size-xs: 0.75rem;   /* 9px */
+    --font-size-sm: 0.875rem;  /* 10.5px */
+    --font-size-base: 1rem;     /* 12px */
+    --font-size-lg: 1.125rem;   /* 13.5px */
+    --font-size-xl: 1.25rem;    /* 15px */
+    --font-size-xxl: 1.5rem;    /* 18px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 40px;
+  }
+  .question-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .answers {
+    padding-left: var(--space-sm);
+  }
+  .loading::after {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    font-size: 13px;
+    --font-size-xs: 0.75rem;   /* 9.75px */
+    --font-size-sm: 0.875rem;  /* 11.375px */
+    --font-size-base: 1rem;     /* 13px */
+    --font-size-lg: 1.125rem;   /* 14.625px */
+    --font-size-xl: 1.25rem;    /* 16.25px */
+    --font-size-xxl: 1.5rem;    /* 19.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 42px;
+  }
+  .loading::after {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    font-size: 14px;
+    --font-size-xs: 0.75rem;   /* 10.5px */
+    --font-size-sm: 0.875rem;  /* 12.25px */
+    --font-size-base: 1rem;     /* 14px */
+    --font-size-lg: 1.125rem;   /* 15.75px */
+    --font-size-xl: 1.25rem;    /* 17.5px */
+    --font-size-xxl: 1.5rem;    /* 21px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 44px;
+  }
+  .loading::after {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    font-size: 14.5px;
+    --font-size-xs: 0.75rem;   /* 10.875px */
+    --font-size-sm: 0.875rem;  /* 12.6875px */
+    --font-size-base: 1rem;     /* 14.5px */
+    --font-size-lg: 1.125rem;   /* 16.3125px */
+    --font-size-xl: 1.25rem;    /* 18.125px */
+    --font-size-xxl: 1.5rem;    /* 21.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 45px;
+  }
+  .loading::after {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    font-size: 15px;
+    --font-size-xs: 0.75rem;   /* 11.25px */
+    --font-size-sm: 0.875rem;  /* 13.125px */
+    --font-size-base: 1rem;     /* 15px */
+    --font-size-lg: 1.125rem;   /* 16.875px */
+    --font-size-xl: 1.25rem;    /* 18.75px */
+    --font-size-xxl: 1.5rem;    /* 22.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 46px;
+  }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    font-size: 15.5px;
+    --font-size-xs: 0.75rem;   /* 11.625px */
+    --font-size-sm: 0.875rem;  /* 13.5625px */
+    --font-size-base: 1rem;     /* 15.5px */
+    --font-size-lg: 1.125rem;   /* 17.4375px */
+    --font-size-xl: 1.25rem;    /* 19.375px */
+    --font-size-xxl: 1.5rem;    /* 23.25px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 47px;
+  }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    font-size: 16px;
+    --font-size-xs: 0.75rem;   /* 12px */
+    --font-size-sm: 0.875rem;  /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-xxl: 1.5rem;    /* 24px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    font-size: 16.5px;
+    --font-size-xs: 0.75rem;   /* 12.375px */
+    --font-size-sm: 0.875rem;  /* 14.4375px */
+    --font-size-base: 1rem;     /* 16.5px */
+    --font-size-lg: 1.125rem;   /* 18.5625px */
+    --font-size-xl: 1.25rem;    /* 20.625px */
+    --font-size-xxl: 1.5rem;    /* 24.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    font-size: 16.75px;
+    --font-size-xs: 0.75rem;   /* 12.5625px */
+    --font-size-sm: 0.875rem;  /* 14.65625px */
+    --font-size-base: 1rem;     /* 16.75px */
+    --font-size-lg: 1.125rem;   /* 18.84375px */
+    --font-size-xl: 1.25rem;    /* 20.9375px */
+    --font-size-xxl: 1.5rem;    /* 25.125px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    font-size: 17px;
+    --font-size-xs: 0.75rem;   /* 12.75px */
+    --font-size-sm: 0.875rem;  /* 14.875px */
+    --font-size-base: 1rem;     /* 17px */
+    --font-size-lg: 1.125rem;   /* 19.125px */
+    --font-size-xl: 1.25rem;    /* 21.25px */
+    --font-size-xxl: 1.5rem;    /* 25.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    font-size: 17.25px;
+    --font-size-xs: 0.75rem;   /* 12.9375px */
+    --font-size-sm: 0.875rem;  /* 15.09375px */
+    --font-size-base: 1rem;     /* 17.25px */
+    --font-size-lg: 1.125rem;   /* 19.40625px */
+    --font-size-xl: 1.25rem;    /* 21.5625px */
+    --font-size-xxl: 1.5rem;    /* 25.875px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    font-size: 17.5px;
+    --font-size-xs: 0.75rem;   /* 13.125px */
+    --font-size-sm: 0.875rem;  /* 15.3125px */
+    --font-size-base: 1rem;     /* 17.5px */
+    --font-size-lg: 1.125rem;   /* 19.6875px */
+    --font-size-xl: 1.25rem;    /* 21.875px */
+    --font-size-xxl: 1.5rem;    /* 26.25px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    font-size: 17.75px;
+    --font-size-xs: 0.75rem;   /* 13.3125px */
+    --font-size-sm: 0.875rem;  /* 15.53125px */
+    --font-size-base: 1rem;     /* 17.75px */
+    --font-size-lg: 1.125rem;   /* 19.96875px */
+    --font-size-xl: 1.25rem;    /* 22.1875px */
+    --font-size-xxl: 1.5rem;    /* 26.625px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    font-size: 18px;
+    --font-size-xs: 0.75rem;   /* 13.5px */
+    --font-size-sm: 0.875rem;  /* 15.75px */
+    --font-size-base: 1rem;     /* 18px */
+    --font-size-lg: 1.125rem;   /* 20.25px */
+    --font-size-xl: 1.25rem;    /* 22.5px */
+    --font-size-xxl: 1.5rem;    /* 27px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    font-size: 18.25px;
+    --font-size-xs: 0.75rem;   /* 13.6875px */
+    --font-size-sm: 0.875rem;  /* 15.96875px */
+    --font-size-base: 1rem;     /* 18.25px */
+    --font-size-lg: 1.125rem;   /* 20.53125px */
+    --font-size-xl: 1.25rem;    /* 22.8125px */
+    --font-size-xxl: 1.5rem;    /* 27.375px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    font-size: 18.5px;
+    --font-size-xs: 0.75rem;   /* 13.875px */
+    --font-size-sm: 0.875rem;  /* 16.1875px */
+    --font-size-base: 1rem;     /* 18.5px */
+    --font-size-lg: 1.125rem;   /* 20.8125px */
+    --font-size-xl: 1.25rem;    /* 23.125px */
+    --font-size-xxl: 1.5rem;    /* 27.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL and beyond ----- */
+@media only screen and (min-width: 1200px) {
+  :root {
+    font-size: 19px;
+    --font-size-xs: 0.75rem;   /* 14.25px */
+    --font-size-sm: 0.875rem;  /* 16.625px */
+    --font-size-base: 1rem;     /* 19px */
+    --font-size-lg: 1.125rem;   /* 21.375px */
+    --font-size-xl: 1.25rem;    /* 23.75px */
+    --font-size-xxl: 1.5rem;    /* 28.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --touch-min-height: 48px;
+  }
   .review-results {
-    max-width: 1000px;
+    max-width: 1600px; /* wider for large displays */
+  }
+  .loading::after {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+/* Optional: extra large TVs (2560px+) */
+@media only screen and (min-width: 2000px) {
+  :root {
+    font-size: 20px;
+  }
+  .review-results {
+    max-width: 2000px;
+  }
+  .loading::after {
+    width: 80px;
+    height: 80px;
   }
 }
 
@@ -518,44 +1112,4 @@
     background: rgba(0, 0, 0, 0.95);
     backdrop-filter: none;
   }
-}
-
-/* --------------------------------------------------------------------------
-   CUSTOM SCROLLBAR (matches cosmic theme)
-   -------------------------------------------------------------------------- */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 180, 0.8);
-  box-shadow: 0 0 10px var(--color-cyan);
-}
-
-/* --------------------------------------------------------------------------
-   ENSURE BACKGROUND IS TRANSPARENT FOR GALAXY
-   -------------------------------------------------------------------------- */
-body, html, #app {
-  background: transparent;
-}
-
-.review-results,
-.result-summary,
-.question-card,
-.answers,
-.answer {
-  background-color: transparent; /* glass backgrounds already set */
 }

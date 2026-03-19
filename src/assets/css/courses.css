@@ -1,9 +1,18 @@
 /* ==========================================================================
    Courses Page Styles - GALAXY SPACE THEME
    Fully Responsive with Fluid Typography and Spacing
+   Enhanced with granular breakpoint system (200px to 2560px+)
    ========================================================================== */
 
-/* Fluid variables scoped to courses page */
+/* Root variables for the scaling system (used as fallback and for global adjustments) */
+:root {
+  --font-base: 16px; /* fallback, will be overridden by breakpoints */
+  --spacing-unit: 4px;
+  --container-max: 1400px;
+  --border-radius-base: 8px;
+}
+
+/* Fluid variables scoped to courses page (original, kept intact) */
 .courses-page {
     /* Fluid typography base values */
     --font-xs: clamp(0.7rem, 1.5vw, 0.75rem);
@@ -802,5 +811,769 @@
     .courses-page .filter-select,
     .courses-page .course-title {
         color: black !important;
+    }
+}
+
+/* ==========================================================================
+   Granular Responsive Breakpoints (50px increments)
+   All additions preserve existing styles and enhance responsiveness
+   ========================================================================== */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+    .courses-page {
+        /* Override font variables for micro screens */
+        --font-xs: 6px;
+        --font-sm: 7px;
+        --font-base: 8px;
+        --font-md: 9px;
+        --font-lg: 11px;
+        --font-xl: 13px;
+        --font-xxl: 15px;
+        
+        /* Adjust container padding to ultra-compact */
+        padding: 4px;
+    }
+    
+    .courses-page .page-header {
+        padding: 8px;
+        gap: 6px;
+        backdrop-filter: blur(2px); /* reduce blur for performance */
+        border-radius: 6px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 14px; /* override clamp with px */
+        margin-bottom: 2px;
+    }
+    
+    .courses-page .page-subtitle {
+        font-size: 8px;
+    }
+    
+    .courses-page .search-container {
+        max-width: 100%;
+        gap: 4px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        padding: 6px 8px;
+        font-size: 8px;
+        min-height: 28px; /* ensure minimum touch target */
+        border-radius: 4px;
+    }
+    
+    .courses-page .search-btn {
+        min-width: 28px;
+    }
+    
+    .courses-page .filter-label,
+    .courses-page .filter-select,
+    .courses-page .results-count,
+    .courses-page .client-side-warning {
+        font-size: 7px;
+    }
+    
+    .courses-page .filter-select {
+        padding: 4px 6px;
+    }
+    
+    .courses-page .results-count {
+        padding: 2px 4px;
+    }
+    
+    .courses-page .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border-width: 2px;
+    }
+    
+    .courses-page .loading-text {
+        font-size: 9px;
+    }
+    
+    .courses-page .error-title {
+        font-size: 11px;
+    }
+    
+    .courses-page .error-message,
+    .courses-page .retry-btn,
+    .courses-page .empty-message,
+    .courses-page .clear-search-btn {
+        font-size: 8px;
+    }
+    
+    .courses-page .course-card {
+        border-radius: 8px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 100px;
+    }
+    
+    .courses-page .course-initials {
+        font-size: 24px; /* smaller initials */
+    }
+    
+    .courses-page .course-content {
+        padding: 8px;
+    }
+    
+    .courses-page .course-title {
+        font-size: 10px; /* override clamp */
+    }
+    
+    .courses-page .course-badge {
+        font-size: 6px;
+        padding: 2px 6px;
+        border-radius: 12px;
+    }
+    
+    .courses-page .course-description {
+        font-size: 7px;
+        min-height: 32px;
+        margin-bottom: 8px;
+    }
+    
+    .courses-page .meta-item {
+        font-size: 7px;
+        gap: 3px;
+    }
+    
+    .courses-page .meta-item svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .courses-page .course-date {
+        font-size: 7px;
+    }
+    
+    .courses-page .view-course-btn {
+        padding: 4px 8px;
+        font-size: 7px;
+        min-height: 28px;
+    }
+    
+    .courses-page .pagination-btn,
+    .courses-page .page-number {
+        padding: 4px 8px;
+        font-size: 7px;
+        min-width: 28px;
+        height: 28px;
+    }
+    
+    .courses-page .pagination-info {
+        font-size: 7px;
+    }
+    
+    /* Ensure no horizontal scroll */
+    .courses-page,
+    .courses-page .page-header,
+    .courses-page .courses-grid,
+    .courses-page .course-card {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+    .courses-page {
+        --font-xs: 7px;
+        --font-sm: 8px;
+        --font-base: 9px;
+        --font-md: 10px;
+        --font-lg: 12px;
+        --font-xl: 14px;
+        --font-xxl: 16px;
+        padding: 5px;
+    }
+    
+    .courses-page .page-header {
+        padding: 10px;
+        gap: 8px;
+        border-radius: 8px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 15px;
+        margin-bottom: 3px;
+    }
+    
+    .courses-page .page-subtitle {
+        font-size: 9px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        padding: 7px 10px;
+        font-size: 9px;
+        min-height: 30px;
+    }
+    
+    .courses-page .search-btn {
+        min-width: 30px;
+    }
+    
+    .courses-page .filter-label,
+    .courses-page .filter-select,
+    .courses-page .results-count,
+    .courses-page .client-side-warning {
+        font-size: 8px;
+    }
+    
+    .courses-page .loading-spinner {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 120px;
+    }
+    
+    .courses-page .course-initials {
+        font-size: 28px;
+    }
+    
+    .courses-page .course-title {
+        font-size: 11px;
+    }
+    
+    .courses-page .course-description {
+        font-size: 8px;
+    }
+    
+    .courses-page .view-course-btn {
+        font-size: 8px;
+    }
+    
+    /* Additional fine-tuning as needed */
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+    .courses-page {
+        --font-xs: 8px;
+        --font-sm: 9px;
+        --font-base: 10px;
+        --font-md: 11px;
+        --font-lg: 13px;
+        --font-xl: 15px;
+        --font-xxl: 18px;
+        padding: 6px;
+    }
+    
+    .courses-page .page-header {
+        padding: 12px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 17px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 32px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 140px;
+    }
+    
+    .courses-page .course-initials {
+        font-size: 32px;
+    }
+    
+    .courses-page .course-title {
+        font-size: 12px;
+    }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+    .courses-page {
+        --font-xs: 9px;
+        --font-sm: 10px;
+        --font-base: 11px;
+        --font-md: 12px;
+        --font-lg: 14px;
+        --font-xl: 16px;
+        --font-xxl: 19px;
+        padding: 7px;
+    }
+    
+    .courses-page .page-header {
+        padding: 14px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 18px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 160px;
+    }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+    .courses-page {
+        --font-xs: 10px;
+        --font-sm: 11px;
+        --font-base: 12px;
+        --font-md: 13px;
+        --font-lg: 15px;
+        --font-xl: 17px;
+        --font-xxl: 20px;
+        padding: 8px;
+    }
+    
+    .courses-page .page-header {
+        padding: 16px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 19px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 36px;
+    }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+    .courses-page {
+        --font-xs: 11px;
+        --font-sm: 12px;
+        --font-base: 13px;
+        --font-md: 14px;
+        --font-lg: 16px;
+        --font-xl: 18px;
+        --font-xxl: 22px;
+        padding: 9px;
+    }
+    
+    .courses-page .page-header {
+        padding: 18px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 20px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 170px;
+    }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+    .courses-page {
+        --font-xs: 11.5px;
+        --font-sm: 12.5px;
+        --font-base: 13.5px;
+        --font-md: 14.5px;
+        --font-lg: 16.5px;
+        --font-xl: 19px;
+        --font-xxl: 23px;
+        padding: 10px;
+    }
+    
+    .courses-page .page-header {
+        padding: 20px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 38px;
+    }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+    .courses-page {
+        --font-xs: 12px;
+        --font-sm: 13px;
+        --font-base: 14px;
+        --font-md: 15px;
+        --font-lg: 17px;
+        --font-xl: 20px;
+        --font-xxl: 24px;
+        padding: 11px;
+    }
+    
+    .courses-page .page-header {
+        padding: 22px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 22px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 180px;
+    }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+    .courses-page {
+        --font-xs: 12.5px;
+        --font-sm: 13.5px;
+        --font-base: 14.5px;
+        --font-md: 15.5px;
+        --font-lg: 18px;
+        --font-xl: 21px;
+        --font-xxl: 25px;
+        padding: 12px;
+    }
+    
+    .courses-page .page-header {
+        padding: 24px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 40px;
+    }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+    .courses-page {
+        --font-xs: 13px;
+        --font-sm: 14px;
+        --font-base: 15px;
+        --font-md: 16px;
+        --font-lg: 19px;
+        --font-xl: 22px;
+        --font-xxl: 26px;
+        padding: 13px;
+    }
+    
+    .courses-page .page-header {
+        padding: 26px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 24px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 190px;
+    }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+    .courses-page {
+        --font-xs: 13.5px;
+        --font-sm: 14.5px;
+        --font-base: 15.5px;
+        --font-md: 16.5px;
+        --font-lg: 20px;
+        --font-xl: 23px;
+        --font-xxl: 27px;
+        padding: 14px;
+    }
+    
+    .courses-page .page-header {
+        padding: 28px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 42px;
+    }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+    .courses-page {
+        --font-xs: 14px;
+        --font-sm: 15px;
+        --font-base: 16px;
+        --font-md: 17px;
+        --font-lg: 21px;
+        --font-xl: 24px;
+        --font-xxl: 28px;
+        padding: 15px;
+    }
+    
+    .courses-page .page-header {
+        padding: 30px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 26px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 200px;
+    }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+    .courses-page {
+        --font-xs: 14.5px;
+        --font-sm: 15.5px;
+        --font-base: 16.5px;
+        --font-md: 17.5px;
+        --font-lg: 22px;
+        --font-xl: 25px;
+        --font-xxl: 29px;
+        padding: 16px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 44px;
+    }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+    .courses-page {
+        --font-xs: 15px;
+        --font-sm: 16px;
+        --font-base: 17px;
+        --font-md: 18px;
+        --font-lg: 23px;
+        --font-xl: 26px;
+        --font-xxl: 30px;
+        padding: 17px;
+    }
+    
+    .courses-page .page-header {
+        padding: 32px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 28px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 200px; /* maintain */
+    }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+    .courses-page {
+        --font-xs: 15.5px;
+        --font-sm: 16.5px;
+        --font-base: 17.5px;
+        --font-md: 18.5px;
+        --font-lg: 24px;
+        --font-xl: 27px;
+        --font-xxl: 31px;
+        padding: 18px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 46px;
+    }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+    .courses-page {
+        --font-xs: 16px;
+        --font-sm: 17px;
+        --font-base: 17.5px;
+        --font-md: 18.5px;
+        --font-lg: 25px;
+        --font-xl: 28px;
+        --font-xxl: 32px;
+        padding: 19px;
+    }
+    
+    .courses-page .page-header {
+        padding: 32px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 30px;
+    }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+    .courses-page {
+        --font-xs: 16.5px;
+        --font-sm: 17.5px;
+        --font-base: 18px;
+        --font-md: 19px;
+        --font-lg: 26px;
+        --font-xl: 29px;
+        --font-xxl: 33px;
+        padding: 20px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 48px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 200px;
+    }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+    .courses-page {
+        --font-xs: 17px;
+        --font-sm: 18px;
+        --font-base: 18px;
+        --font-md: 19px;
+        --font-lg: 27px;
+        --font-xl: 30px;
+        --font-xxl: 34px;
+        padding: 21px;
+    }
+    
+    .courses-page .page-header {
+        padding: 32px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 32px;
+    }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+    .courses-page {
+        --font-xs: 17.5px;
+        --font-sm: 18.5px;
+        --font-base: 18.5px;
+        --font-md: 19.5px;
+        --font-lg: 28px;
+        --font-xl: 31px;
+        --font-xxl: 35px;
+        padding: 22px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 50px;
+    }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+    .courses-page {
+        --font-xs: 18px;
+        --font-sm: 19px;
+        --font-base: 18.5px;
+        --font-md: 19.5px;
+        --font-lg: 29px;
+        --font-xl: 32px;
+        --font-xxl: 36px;
+        padding: 23px;
+    }
+    
+    .courses-page .page-header {
+        padding: 32px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 34px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 220px;
+    }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
+@media only screen and (min-width: 1200px) {
+    .courses-page {
+        --font-xs: 19px;
+        --font-sm: 20px;
+        --font-base: 19px;
+        --font-md: 20px;
+        --font-lg: 32px;
+        --font-xl: 36px;
+        --font-xxl: 40px;
+        padding: 24px;
+        /* Center content with max-width */
+        max-width: var(--container-max);
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .courses-page .page-header {
+        padding: 36px;
+    }
+    
+    .courses-page .search-input,
+    .courses-page .search-btn {
+        min-height: 52px;
+        font-size: 18px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 38px;
+    }
+    
+    .courses-page .course-image-container {
+        height: 240px;
+    }
+    
+    .courses-page .course-title {
+        font-size: 1.5rem;
+    }
+    
+    .courses-page .course-description {
+        font-size: 1rem;
+    }
+    
+    .courses-page .view-course-btn {
+        font-size: 1rem;
+        padding: 10px 20px;
+    }
+    
+    /* Ensure grid columns are balanced */
+    .courses-page .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+
+/* Additional fine-tuning for ultra-wide screens (above 1920px) */
+@media only screen and (min-width: 1920px) {
+    .courses-page {
+        --font-base: 20px;
+        --container-max: 1600px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 42px;
+    }
+    
+    .courses-page .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    }
+}
+
+@media only screen and (min-width: 2560px) {
+    .courses-page {
+        --font-base: 22px;
+        --container-max: 1800px;
+    }
+    
+    .courses-page .page-title {
+        font-size: 48px;
+    }
+    
+    .courses-page .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     }
 }

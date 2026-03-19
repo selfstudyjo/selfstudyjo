@@ -784,4 +784,1367 @@
    6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
    7. Preserved all original colors, animations, and media queries.
    8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+*/
+
+/* ========================================================================= */
+/* ===== GRANULAR RESPONSIVE BREAKPOINTS – 50px INCREMENT SCALE =========== */
+/* ========================================================================= */
+/* These media queries progressively scale all UI elements for every possible */
+/* screen width from 200px to 2560px+. They preserve all original colors and */
+/* design while ensuring readability, touch targets, and layout integrity.   */
+/* ========================================================================= */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 6px 4px;
+  }
+  .back-btn {
+    padding: 8px 10px;
+    font-size: 8px;
+    gap: 4px;
+    min-height: 32px;
+    margin-bottom: 12px;
+  }
+  .back-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .loading-container {
+    padding: 40px 8px;
+    min-height: 160px;
+  }
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+  }
+  .error-container {
+    padding: 40px 8px;
+    min-height: 160px;
+  }
+  .error-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .error-container h3 {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .error-container p {
+    font-size: 8px;
+    margin-bottom: 12px;
+  }
+  .retry-btn {
+    padding: 6px 10px;
+    font-size: 8px;
+    min-height: 32px;
+  }
+  .runbook-header {
+    margin-bottom: 16px;
+  }
+  .runbook-title-section {
+    margin-bottom: 8px;
+  }
+  .runbook-title {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .runbook-meta {
+    gap: 6px;
+  }
+  .section-count {
+    font-size: 8px;
+    padding: 4px 8px;
+  }
+  .sections-container {
+    gap: 8px;
+  }
+  .section-card {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .section-card::before {
+    width: 2px;
+  }
+  .section-header {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .section-number {
+    width: 24px;
+    height: 24px;
+    font-size: 8px;
+    border-width: 1px;
+  }
+  .section-title {
+    font-size: 10px;
+  }
+  .section-content {
+    line-height: 1.4;
+  }
+  .text-content {
+    font-size: 8px;
+    line-height: 1.4;
+  }
+  .code-block-container {
+    border-radius: 4px;
+  }
+  .code-block-header {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .code-label {
+    font-size: 7px;
+  }
+  .copy-btn {
+    padding: 2px 6px;
+    font-size: 7px;
+    min-height: 24px;
+  }
+  .code-block {
+    padding: 6px;
+  }
+  .code-block code {
+    font-size: 7px;
+    line-height: 1.3;
+  }
+  .empty-sections {
+    padding: 24px 8px;
+  }
+  .empty-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .empty-sections h3 {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+  .empty-sections p {
+    font-size: 8px;
+    margin-bottom: 8px;
+  }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 8px 6px;
+  }
+  .back-btn {
+    padding: 10px 12px;
+    font-size: 9px;
+    gap: 6px;
+    min-height: 34px;
+    margin-bottom: 14px;
+  }
+  .back-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .loading-container {
+    padding: 50px 10px;
+    min-height: 180px;
+  }
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 10px;
+  }
+  .error-container {
+    padding: 50px 10px;
+    min-height: 180px;
+  }
+  .error-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .error-container h3 {
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+  .error-container p {
+    font-size: 9px;
+    margin-bottom: 14px;
+  }
+  .retry-btn {
+    padding: 8px 12px;
+    font-size: 9px;
+    min-height: 34px;
+  }
+  .runbook-header {
+    margin-bottom: 20px;
+  }
+  .runbook-title-section {
+    margin-bottom: 10px;
+  }
+  .runbook-title {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+  .runbook-meta {
+    gap: 8px;
+  }
+  .section-count {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+  .sections-container {
+    gap: 10px;
+  }
+  .section-card {
+    padding: 10px;
+    border-radius: 9px;
+  }
+  .section-card::before {
+    width: 2px;
+  }
+  .section-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .section-number {
+    width: 26px;
+    height: 26px;
+    font-size: 9px;
+  }
+  .section-title {
+    font-size: 11px;
+  }
+  .text-content {
+    font-size: 9px;
+    line-height: 1.5;
+  }
+  .code-block-header {
+    padding: 5px 8px;
+  }
+  .code-label {
+    font-size: 8px;
+  }
+  .copy-btn {
+    padding: 3px 8px;
+    font-size: 8px;
+    min-height: 26px;
+  }
+  .code-block {
+    padding: 8px;
+  }
+  .code-block code {
+    font-size: 8px;
+  }
+  .empty-sections {
+    padding: 30px 10px;
+  }
+  .empty-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .empty-sections h3 {
+    font-size: 11px;
+  }
+  .empty-sections p {
+    font-size: 9px;
+  }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 10px 8px;
+  }
+  .back-btn {
+    padding: 11px 14px;
+    font-size: 10px;
+    gap: 7px;
+    min-height: 36px;
+    margin-bottom: 16px;
+  }
+  .back-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  .loading-container {
+    padding: 60px 12px;
+  }
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+  }
+  .error-icon {
+    font-size: 40px;
+  }
+  .error-container h3 {
+    font-size: 14px;
+  }
+  .error-container p {
+    font-size: 10px;
+  }
+  .retry-btn {
+    padding: 9px 14px;
+    font-size: 10px;
+    min-height: 36px;
+  }
+  .runbook-title {
+    font-size: 20px;
+  }
+  .section-count {
+    font-size: 10px;
+    padding: 5px 12px;
+  }
+  .sections-container {
+    gap: 12px;
+  }
+  .section-card {
+    padding: 12px;
+  }
+  .section-number {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+  .section-title {
+    font-size: 12px;
+  }
+  .text-content {
+    font-size: 10px;
+  }
+  .code-label {
+    font-size: 9px;
+  }
+  .copy-btn {
+    padding: 4px 10px;
+    font-size: 9px;
+    min-height: 28px;
+  }
+  .code-block code {
+    font-size: 9px;
+  }
+  .empty-sections h3 {
+    font-size: 12px;
+  }
+  .empty-sections p {
+    font-size: 10px;
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 12px 10px;
+  }
+  .back-btn {
+    padding: 12px 16px;
+    font-size: 11px;
+    gap: 8px;
+    min-height: 38px;
+    margin-bottom: 18px;
+  }
+  .back-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .loading-container {
+    padding: 70px 14px;
+  }
+  .loading-spinner {
+    width: 44px;
+    height: 44px;
+  }
+  .error-icon {
+    font-size: 44px;
+  }
+  .error-container h3 {
+    font-size: 15px;
+  }
+  .error-container p {
+    font-size: 11px;
+  }
+  .retry-btn {
+    padding: 10px 16px;
+    font-size: 11px;
+    min-height: 38px;
+  }
+  .runbook-title {
+    font-size: 22px;
+  }
+  .section-count {
+    font-size: 11px;
+    padding: 6px 14px;
+  }
+  .section-card {
+    padding: 14px;
+  }
+  .section-number {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+  .section-title {
+    font-size: 13px;
+  }
+  .text-content {
+    font-size: 11px;
+  }
+  .code-label {
+    font-size: 10px;
+  }
+  .copy-btn {
+    padding: 5px 12px;
+    font-size: 10px;
+    min-height: 30px;
+  }
+  .code-block code {
+    font-size: 10px;
+  }
+  .empty-sections h3 {
+    font-size: 13px;
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 14px 12px;
+  }
+  .back-btn {
+    padding: 12px 18px;
+    font-size: 12px;
+    gap: 9px;
+    min-height: 40px;
+    margin-bottom: 20px;
+  }
+  .back-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+  }
+  .error-icon {
+    font-size: 48px;
+  }
+  .error-container h3 {
+    font-size: 16px;
+  }
+  .error-container p {
+    font-size: 12px;
+  }
+  .retry-btn {
+    padding: 11px 18px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  .runbook-title {
+    font-size: 24px;
+  }
+  .section-count {
+    font-size: 12px;
+    padding: 6px 16px;
+  }
+  .section-card {
+    padding: 16px;
+  }
+  .section-number {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  .section-title {
+    font-size: 14px;
+  }
+  .text-content {
+    font-size: 12px;
+  }
+  .code-label {
+    font-size: 11px;
+  }
+  .copy-btn {
+    padding: 6px 14px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+  .code-block code {
+    font-size: 11px;
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 16px 14px;
+  }
+  .back-btn {
+    padding: 13px 20px;
+    font-size: 13px;
+    gap: 10px;
+    min-height: 42px;
+  }
+  .back-btn svg {
+    width: 19px;
+    height: 19px;
+  }
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+  }
+  .error-icon {
+    font-size: 50px;
+  }
+  .error-container h3 {
+    font-size: 17px;
+  }
+  .error-container p {
+    font-size: 13px;
+  }
+  .retry-btn {
+    padding: 11px 20px;
+    font-size: 13px;
+    min-height: 42px;
+  }
+  .runbook-title {
+    font-size: 26px;
+  }
+  .section-count {
+    font-size: 13px;
+    padding: 7px 18px;
+  }
+  .section-card {
+    padding: 18px;
+  }
+  .section-number {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+  .section-title {
+    font-size: 15px;
+  }
+  .text-content {
+    font-size: 13px;
+  }
+  .code-label {
+    font-size: 12px;
+  }
+  .copy-btn {
+    padding: 6px 16px;
+    font-size: 12px;
+    min-height: 34px;
+  }
+  .code-block code {
+    font-size: 12px;
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 18px 16px;
+  }
+  .back-btn {
+    padding: 14px 22px;
+    font-size: 13.5px;
+    min-height: 44px;
+  }
+  .back-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .loading-spinner {
+    width: 52px;
+    height: 52px;
+  }
+  .error-icon {
+    font-size: 52px;
+  }
+  .error-container h3 {
+    font-size: 18px;
+  }
+  .error-container p {
+    font-size: 13.5px;
+  }
+  .retry-btn {
+    padding: 12px 22px;
+    font-size: 13.5px;
+    min-height: 44px;
+  }
+  .runbook-title {
+    font-size: 28px;
+  }
+  .section-count {
+    font-size: 13.5px;
+  }
+  .section-card {
+    padding: 20px;
+  }
+  .section-number {
+    width: 36px;
+    height: 36px;
+    font-size: 13.5px;
+  }
+  .section-title {
+    font-size: 16px;
+  }
+  .text-content {
+    font-size: 13.5px;
+  }
+  .code-label {
+    font-size: 12.5px;
+  }
+  .copy-btn {
+    font-size: 12.5px;
+  }
+  .code-block code {
+    font-size: 12.5px;
+  }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 20px 18px;
+  }
+  .back-btn {
+    padding: 14px 24px;
+    font-size: 14px;
+    min-height: 46px;
+  }
+  .loading-spinner {
+    width: 54px;
+    height: 54px;
+  }
+  .error-icon {
+    font-size: 54px;
+  }
+  .error-container h3 {
+    font-size: 19px;
+  }
+  .error-container p {
+    font-size: 14px;
+  }
+  .retry-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    min-height: 46px;
+  }
+  .runbook-title {
+    font-size: 30px;
+  }
+  .section-count {
+    font-size: 14px;
+  }
+  .section-card {
+    padding: 22px;
+  }
+  .section-number {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+  }
+  .section-title {
+    font-size: 17px;
+  }
+  .text-content {
+    font-size: 14px;
+  }
+  .code-label {
+    font-size: 13px;
+  }
+  .copy-btn {
+    font-size: 13px;
+  }
+  .code-block code {
+    font-size: 13px;
+  }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 22px 20px;
+  }
+  .back-btn {
+    font-size: 14.5px;
+    min-height: 48px;
+  }
+  .error-container h3 {
+    font-size: 20px;
+  }
+  .error-container p {
+    font-size: 14.5px;
+  }
+  .retry-btn {
+    font-size: 14.5px;
+    min-height: 48px;
+  }
+  .runbook-title {
+    font-size: 32px;
+  }
+  .section-count {
+    font-size: 14.5px;
+  }
+  .section-card {
+    padding: 24px;
+  }
+  .section-number {
+    font-size: 14.5px;
+  }
+  .section-title {
+    font-size: 18px;
+  }
+  .text-content {
+    font-size: 14.5px;
+  }
+  .code-label {
+    font-size: 13.5px;
+  }
+  .copy-btn {
+    font-size: 13.5px;
+  }
+  .code-block code {
+    font-size: 13.5px;
+  }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 24px 22px;
+  }
+  .back-btn {
+    font-size: 15px;
+    min-height: 50px;
+  }
+  .error-container h3 {
+    font-size: 21px;
+  }
+  .error-container p {
+    font-size: 15px;
+  }
+  .retry-btn {
+    font-size: 15px;
+    min-height: 50px;
+  }
+  .runbook-title {
+    font-size: 34px;
+  }
+  .section-count {
+    font-size: 15px;
+  }
+  .section-card {
+    padding: 26px;
+  }
+  .section-number {
+    font-size: 15px;
+  }
+  .section-title {
+    font-size: 19px;
+  }
+  .text-content {
+    font-size: 15px;
+  }
+  .code-label {
+    font-size: 14px;
+  }
+  .copy-btn {
+    font-size: 14px;
+  }
+  .code-block code {
+    font-size: 14px;
+  }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 26px 24px;
+  }
+  .back-btn {
+    font-size: 15.5px;
+    min-height: 52px;
+  }
+  .error-container h3 {
+    font-size: 22px;
+  }
+  .error-container p {
+    font-size: 15.5px;
+  }
+  .retry-btn {
+    font-size: 15.5px;
+    min-height: 52px;
+  }
+  .runbook-title {
+    font-size: 36px;
+  }
+  .section-count {
+    font-size: 15.5px;
+  }
+  .section-card {
+    padding: 28px;
+  }
+  .section-number {
+    font-size: 15.5px;
+  }
+  .section-title {
+    font-size: 20px;
+  }
+  .text-content {
+    font-size: 15.5px;
+  }
+  .code-label {
+    font-size: 14.5px;
+  }
+  .copy-btn {
+    font-size: 14.5px;
+  }
+  .code-block code {
+    font-size: 14.5px;
+  }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .runbook-details-container {
+    max-width: 100%;
+    padding: 28px 26px;
+  }
+  .back-btn {
+    font-size: 16px;
+    min-height: 54px;
+  }
+  .error-container h3 {
+    font-size: 23px;
+  }
+  .error-container p {
+    font-size: 16px;
+  }
+  .retry-btn {
+    font-size: 16px;
+    min-height: 54px;
+  }
+  .runbook-title {
+    font-size: 38px;
+  }
+  .section-count {
+    font-size: 16px;
+  }
+  .section-card {
+    padding: 30px;
+  }
+  .section-number {
+    font-size: 16px;
+  }
+  .section-title {
+    font-size: 21px;
+  }
+  .text-content {
+    font-size: 16px;
+  }
+  .code-label {
+    font-size: 15px;
+  }
+  .copy-btn {
+    font-size: 15px;
+  }
+  .code-block code {
+    font-size: 15px;
+  }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .runbook-details-container {
+    max-width: 780px;
+    padding: 30px 28px;
+  }
+  .back-btn {
+    font-size: 16.5px;
+    min-height: 56px;
+  }
+  .error-container h3 {
+    font-size: 24px;
+  }
+  .error-container p {
+    font-size: 16.5px;
+  }
+  .retry-btn {
+    font-size: 16.5px;
+    min-height: 56px;
+  }
+  .runbook-title {
+    font-size: 40px;
+  }
+  .section-count {
+    font-size: 16.5px;
+  }
+  .section-card {
+    padding: 32px;
+  }
+  .section-number {
+    font-size: 16.5px;
+  }
+  .section-title {
+    font-size: 22px;
+  }
+  .text-content {
+    font-size: 16.5px;
+  }
+  .code-label {
+    font-size: 15.5px;
+  }
+  .copy-btn {
+    font-size: 15.5px;
+  }
+  .code-block code {
+    font-size: 15.5px;
+  }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .runbook-details-container {
+    max-width: 820px;
+    padding: 32px 30px;
+  }
+  .back-btn {
+    font-size: 17px;
+    min-height: 58px;
+  }
+  .error-container h3 {
+    font-size: 25px;
+  }
+  .error-container p {
+    font-size: 17px;
+  }
+  .retry-btn {
+    font-size: 17px;
+    min-height: 58px;
+  }
+  .runbook-title {
+    font-size: 42px;
+  }
+  .section-count {
+    font-size: 17px;
+  }
+  .section-card {
+    padding: 34px;
+  }
+  .section-number {
+    font-size: 17px;
+  }
+  .section-title {
+    font-size: 23px;
+  }
+  .text-content {
+    font-size: 17px;
+  }
+  .code-label {
+    font-size: 16px;
+  }
+  .copy-btn {
+    font-size: 16px;
+  }
+  .code-block code {
+    font-size: 16px;
+  }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .runbook-details-container {
+    max-width: 860px;
+    padding: 34px 32px;
+  }
+  .back-btn {
+    font-size: 17.2px;
+    min-height: 60px;
+  }
+  .error-container h3 {
+    font-size: 26px;
+  }
+  .error-container p {
+    font-size: 17.2px;
+  }
+  .retry-btn {
+    font-size: 17.2px;
+    min-height: 60px;
+  }
+  .runbook-title {
+    font-size: 44px;
+  }
+  .section-count {
+    font-size: 17.2px;
+  }
+  .section-card {
+    padding: 36px;
+  }
+  .section-number {
+    font-size: 17.2px;
+  }
+  .section-title {
+    font-size: 24px;
+  }
+  .text-content {
+    font-size: 17.2px;
+  }
+  .code-label {
+    font-size: 16.2px;
+  }
+  .copy-btn {
+    font-size: 16.2px;
+  }
+  .code-block code {
+    font-size: 16.2px;
+  }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .runbook-details-container {
+    max-width: 900px;
+    padding: 36px 34px;
+  }
+  .back-btn {
+    font-size: 17.5px;
+    min-height: 62px;
+  }
+  .error-container h3 {
+    font-size: 27px;
+  }
+  .error-container p {
+    font-size: 17.5px;
+  }
+  .retry-btn {
+    font-size: 17.5px;
+    min-height: 62px;
+  }
+  .runbook-title {
+    font-size: 46px;
+  }
+  .section-count {
+    font-size: 17.5px;
+  }
+  .section-card {
+    padding: 38px;
+  }
+  .section-number {
+    font-size: 17.5px;
+  }
+  .section-title {
+    font-size: 25px;
+  }
+  .text-content {
+    font-size: 17.5px;
+  }
+  .code-label {
+    font-size: 16.5px;
+  }
+  .copy-btn {
+    font-size: 16.5px;
+  }
+  .code-block code {
+    font-size: 16.5px;
+  }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .runbook-details-container {
+    max-width: 940px;
+    padding: 38px 36px;
+  }
+  .back-btn {
+    font-size: 17.8px;
+    min-height: 64px;
+  }
+  .error-container h3 {
+    font-size: 28px;
+  }
+  .error-container p {
+    font-size: 17.8px;
+  }
+  .retry-btn {
+    font-size: 17.8px;
+    min-height: 64px;
+  }
+  .runbook-title {
+    font-size: 48px;
+  }
+  .section-count {
+    font-size: 17.8px;
+  }
+  .section-card {
+    padding: 40px;
+  }
+  .section-number {
+    font-size: 17.8px;
+  }
+  .section-title {
+    font-size: 26px;
+  }
+  .text-content {
+    font-size: 17.8px;
+  }
+  .code-label {
+    font-size: 16.8px;
+  }
+  .copy-btn {
+    font-size: 16.8px;
+  }
+  .code-block code {
+    font-size: 16.8px;
+  }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .runbook-details-container {
+    max-width: 980px;
+    padding: 40px 38px;
+  }
+  .back-btn {
+    font-size: 18px;
+    min-height: 66px;
+  }
+  .error-container h3 {
+    font-size: 29px;
+  }
+  .error-container p {
+    font-size: 18px;
+  }
+  .retry-btn {
+    font-size: 18px;
+    min-height: 66px;
+  }
+  .runbook-title {
+    font-size: 50px;
+  }
+  .section-count {
+    font-size: 18px;
+  }
+  .section-card {
+    padding: 42px;
+  }
+  .section-number {
+    font-size: 18px;
+  }
+  .section-title {
+    font-size: 27px;
+  }
+  .text-content {
+    font-size: 18px;
+  }
+  .code-label {
+    font-size: 17px;
+  }
+  .copy-btn {
+    font-size: 17px;
+  }
+  .code-block code {
+    font-size: 17px;
+  }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .runbook-details-container {
+    max-width: 1020px;
+    padding: 42px 40px;
+  }
+  .back-btn {
+    font-size: 18.2px;
+    min-height: 68px;
+  }
+  .error-container h3 {
+    font-size: 30px;
+  }
+  .error-container p {
+    font-size: 18.2px;
+  }
+  .retry-btn {
+    font-size: 18.2px;
+    min-height: 68px;
+  }
+  .runbook-title {
+    font-size: 52px;
+  }
+  .section-count {
+    font-size: 18.2px;
+  }
+  .section-card {
+    padding: 44px;
+  }
+  .section-number {
+    font-size: 18.2px;
+  }
+  .section-title {
+    font-size: 28px;
+  }
+  .text-content {
+    font-size: 18.2px;
+  }
+  .code-label {
+    font-size: 17.2px;
+  }
+  .copy-btn {
+    font-size: 17.2px;
+  }
+  .code-block code {
+    font-size: 17.2px;
+  }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .runbook-details-container {
+    max-width: 1060px;
+    padding: 44px 42px;
+  }
+  .back-btn {
+    font-size: 18.5px;
+    min-height: 70px;
+  }
+  .error-container h3 {
+    font-size: 31px;
+  }
+  .error-container p {
+    font-size: 18.5px;
+  }
+  .retry-btn {
+    font-size: 18.5px;
+    min-height: 70px;
+  }
+  .runbook-title {
+    font-size: 54px;
+  }
+  .section-count {
+    font-size: 18.5px;
+  }
+  .section-card {
+    padding: 46px;
+  }
+  .section-number {
+    font-size: 18.5px;
+  }
+  .section-title {
+    font-size: 29px;
+  }
+  .text-content {
+    font-size: 18.5px;
+  }
+  .code-label {
+    font-size: 17.5px;
+  }
+  .copy-btn {
+    font-size: 17.5px;
+  }
+  .code-block code {
+    font-size: 17.5px;
+  }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL and beyond ----- */
+@media only screen and (min-width: 1200px) {
+  .runbook-details-container {
+    max-width: 1200px;
+    padding: 48px 44px;
+  }
+  .back-btn {
+    font-size: 19px;
+    padding: 16px 28px;
+    min-height: 72px;
+  }
+  .back-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+  .loading-container {
+    padding: 120px 24px;
+  }
+  .loading-spinner {
+    width: 70px;
+    height: 70px;
+  }
+  .error-icon {
+    font-size: 70px;
+  }
+  .error-container h3 {
+    font-size: 32px;
+  }
+  .error-container p {
+    font-size: 19px;
+    max-width: 600px;
+  }
+  .retry-btn {
+    font-size: 19px;
+    padding: 14px 32px;
+    min-height: 72px;
+  }
+  .runbook-title {
+    font-size: 56px;
+  }
+  .section-count {
+    font-size: 19px;
+    padding: 10px 24px;
+  }
+  .sections-container {
+    gap: 32px;
+  }
+  .section-card {
+    padding: 48px;
+    border-radius: 24px;
+  }
+  .section-number {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  .section-title {
+    font-size: 30px;
+  }
+  .text-content {
+    font-size: 19px;
+    line-height: 1.9;
+  }
+  .code-label {
+    font-size: 18px;
+  }
+  .copy-btn {
+    font-size: 18px;
+    padding: 8px 24px;
+    min-height: 48px;
+  }
+  .code-block {
+    padding: 32px;
+  }
+  .code-block code {
+    font-size: 18px;
+  }
+  .empty-sections {
+    padding: 100px 32px;
+  }
+  .empty-icon {
+    font-size: 80px;
+  }
+  .empty-sections h3 {
+    font-size: 28px;
+  }
+  .empty-sections p {
+    font-size: 19px;
+  }
+}
+
+/* ============================================
+   END OF GRANULAR RESPONSIVE BREAKPOINTS
+============================================ */

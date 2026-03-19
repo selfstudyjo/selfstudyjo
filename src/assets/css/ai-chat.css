@@ -2,12 +2,20 @@
    AI CHAT PAGE – SPACE THEME
    Specifically designed for AiChat.vue with transparent backgrounds
    to showcase the 3D galaxy animation behind.
+
+   FULLY RESPONSIVE – 21 granular breakpoints (200px to 2560px+)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   CSS CUSTOM PROPERTIES (scoped to .ai-chat-container)
+   GLOBAL RESET & VARIABLES (moved to :root)
    -------------------------------------------------------------------------- */
-.ai-chat-container {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
   /* Cosmic color palette – with transparency for glass effect */
   --space-bg: transparent;                /* let galaxy show through */
   --space-card-bg: rgba(10, 10, 30, 0.7);  /* 70% opacity for readability */
@@ -25,15 +33,16 @@
   --text-muted: #b0b0b0;
   --text-accent: #4ecdc4;        /* cosmic cyan */
 
-  /* Typography */
+  /* Typography – base font size is set per breakpoint (root font-size) */
   --font-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.8);
 
-  /* Spacing – fluid */
-  --space-xs: clamp(0.25rem, 1vw, 0.5rem);
-  --space-sm: clamp(0.5rem, 2vw, 0.75rem);
-  --space-md: clamp(1rem, 3vw, 1.5rem);
-  --space-lg: clamp(1.5rem, 4vw, 2rem);
+  /* Spacing – relative units (will scale with root font-size) */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
 
   /* Border radius */
   --radius-sm: 8px;
@@ -45,11 +54,16 @@
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-base: 0.3s ease;
+}
 
-  /* Container styles */
+/* --------------------------------------------------------------------------
+   MAIN CONTAINER
+   -------------------------------------------------------------------------- */
+.ai-chat-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100%;
   max-width: min(1200px, 95%);
   margin: 0 auto;
   padding: var(--space-md);
@@ -72,14 +86,14 @@
 }
 
 .ai-chat-container .chat-header h1 {
-  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  font-size: 2rem;          /* relative to root */
   color: var(--text-primary);
   text-shadow: var(--text-shadow);
   margin: 0 0 var(--space-xs);
 }
 
 .ai-chat-container .chat-header p {
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-size: 1rem;
   color: var(--text-muted);
   margin: 0;
 }
@@ -96,7 +110,6 @@
   flex-direction: column;
   gap: var(--space-sm);
   scroll-behavior: smooth;
-  /* Custom scrollbar (will be inherited) */
 }
 
 /* --------------------------------------------------------------------------
@@ -121,8 +134,8 @@
 /* Avatar */
 .ai-chat-container .message-avatar {
   flex-shrink: 0;
-  width: clamp(2rem, 6vw, 2.5rem);
-  height: clamp(2rem, 6vw, 2.5rem);
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   background: rgba(30, 30, 60, 0.8);
   display: flex;
@@ -130,7 +143,7 @@
   justify-content: center;
   border: 1px solid var(--space-border-strong);
   color: var(--text-accent);
-  font-size: clamp(1rem, 3vw, 1.2rem);
+  font-size: 1.2rem;
 }
 
 /* Message bubble */
@@ -143,7 +156,7 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), var(--space-glow-cyan);
   word-break: break-word;
   color: var(--text-secondary);
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-size: 1rem;
   line-height: 1.5;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -270,7 +283,7 @@
   outline: none;
   padding: var(--space-sm) var(--space-md);
   color: var(--text-primary);
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-size: 1rem;
   font-family: inherit;
   resize: none;
   max-height: 120px;
@@ -286,8 +299,8 @@
   background: rgba(20, 20, 50, 0.9);
   border: 1px solid var(--space-border-strong);
   border-radius: 50%;
-  width: clamp(2.5rem, 8vw, 3rem);
-  height: clamp(2.5rem, 8vw, 3rem);
+  width: 3rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -355,7 +368,591 @@
 }
 
 /* --------------------------------------------------------------------------
-   RESPONSIVE DESIGN
+   ACCESSIBILITY & REDUCED MOTION
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ai-chat-container *,
+  .ai-chat-container *::before,
+  .ai-chat-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.ai-chat-container :focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   GRANULAR RESPONSIVE BREAKPOINTS (200px – 2560px+)
+   All queries placed at the bottom, ordered smallest to largest.
+   ========================================================================== */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    font-size: 8px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    max-width: 100%;
+    padding: 4px;
+  }
+  .ai-chat-container .chat-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 2px;
+  }
+  .ai-chat-container .chat-header p {
+    font-size: 0.9rem;
+  }
+  .ai-chat-container .message {
+    max-width: 98%;
+  }
+  .ai-chat-container .message-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  .ai-chat-container .message-content {
+    font-size: 0.9rem;
+    padding: 4px 6px;
+  }
+  .ai-chat-container .input-area {
+    border-radius: 16px;
+    padding: 2px;
+  }
+  .ai-chat-container .input-area textarea {
+    font-size: 0.9rem;
+    padding: 4px 6px;
+  }
+  .ai-chat-container .input-area button {
+    width: 32px;
+    height: 32px;
+  }
+  .ai-chat-container .copy-code-btn {
+    font-size: 0.7rem;
+    padding: 2px 4px;
+  }
+  /* Reduce blur for performance */
+  .ai-chat-container .message-content,
+  .ai-chat-container .input-area {
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    font-size: 9px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    max-width: 100%;
+    padding: 5px;
+  }
+  .ai-chat-container .chat-header h1 {
+    font-size: 1.9rem;
+  }
+  .ai-chat-container .chat-header p {
+    font-size: 0.95rem;
+  }
+  .ai-chat-container .message {
+    max-width: 97%;
+  }
+  .ai-chat-container .message-avatar {
+    width: 26px;
+    height: 26px;
+  }
+  .ai-chat-container .message-content {
+    font-size: 0.95rem;
+  }
+  .ai-chat-container .input-area button {
+    width: 34px;
+    height: 34px;
+  }
+  .ai-chat-container .input-area textarea {
+    font-size: 0.95rem;
+  }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    font-size: 10px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    padding: 6px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  .ai-chat-container .input-area button {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    font-size: 11px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.8rem;
+    --space-lg: 1.1rem;
+    padding: 7px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .ai-chat-container .input-area button {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    font-size: 12px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.8rem;
+    --space-lg: 1.2rem;
+    padding: 8px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  .ai-chat-container .input-area button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    font-size: 13px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.9rem;
+    --space-lg: 1.3rem;
+    padding: 9px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 34px;
+    height: 34px;
+  }
+  .ai-chat-container .input-area button {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    font-size: 13.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.9rem;
+    --space-lg: 1.4rem;
+    padding: 10px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  .ai-chat-container .input-area button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    font-size: 14px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    padding: 11px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 38px;
+    height: 38px;
+  }
+  .ai-chat-container .input-area button {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    font-size: 14.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    padding: 12px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .ai-chat-container .input-area button {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    font-size: 15px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    padding: 13px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 42px;
+    height: 42px;
+  }
+  .ai-chat-container .input-area button {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    font-size: 15.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.6rem;
+    padding: 14px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .ai-chat-container .input-area button {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    font-size: 16px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.6rem;
+    padding: 15px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 46px;
+    height: 46px;
+  }
+  .ai-chat-container .input-area button {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    font-size: 16.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.7rem;
+    padding: 16px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 48px;
+    height: 48px;
+  }
+  .ai-chat-container .input-area button {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    font-size: 17px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.7rem;
+    padding: 17px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  .ai-chat-container .input-area button {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    font-size: 17px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.3rem;
+    --space-sm: 0.6rem;
+    --space-md: 1.1rem;
+    --space-lg: 1.8rem;
+    padding: 18px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .ai-chat-container .input-area button {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    font-size: 17.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.3rem;
+    --space-sm: 0.6rem;
+    --space-md: 1.1rem;
+    --space-lg: 1.8rem;
+    padding: 19px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 54px;
+    height: 54px;
+  }
+  .ai-chat-container .input-area button {
+    width: 62px;
+    height: 62px;
+  }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    font-size: 17.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.3rem;
+    --space-sm: 0.7rem;
+    --space-md: 1.2rem;
+    --space-lg: 1.9rem;
+    padding: 20px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 56px;
+    height: 56px;
+  }
+  .ai-chat-container .input-area button {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    font-size: 18px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.3rem;
+    --space-sm: 0.7rem;
+    --space-md: 1.2rem;
+    --space-lg: 1.9rem;
+    padding: 21px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 58px;
+    height: 58px;
+  }
+  .ai-chat-container .input-area button {
+    width: 66px;
+    height: 66px;
+  }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    font-size: 18px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.35rem;
+    --space-sm: 0.75rem;
+    --space-md: 1.3rem;
+    --space-lg: 2rem;
+    padding: 22px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 60px;
+    height: 60px;
+  }
+  .ai-chat-container .input-area button {
+    width: 68px;
+    height: 68px;
+  }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    font-size: 18.5px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.35rem;
+    --space-sm: 0.75rem;
+    --space-md: 1.3rem;
+    --space-lg: 2rem;
+    padding: 23px;
+  }
+  .ai-chat-container .message-avatar {
+    width: 62px;
+    height: 62px;
+  }
+  .ai-chat-container .input-area button {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL and beyond (up to 2560px+) ----- */
+@media only screen and (min-width: 1200px) {
+  :root {
+    font-size: 19px;
+  }
+  .ai-chat-container {
+    --space-xs: 0.4rem;
+    --space-sm: 0.8rem;
+    --space-md: 1.5rem;
+    --space-lg: 2.2rem;
+    max-width: min(1600px, 90%);
+    padding: 24px;
+  }
+  .ai-chat-container .chat-header h1 {
+    font-size: 2.5rem;
+  }
+  .ai-chat-container .message {
+    max-width: 80%;
+  }
+  .ai-chat-container .message-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+  }
+  .ai-chat-container .message-content {
+    font-size: 1.1rem;
+  }
+  .ai-chat-container .input-area button {
+    width: 72px;
+    height: 72px;
+  }
+  .ai-chat-container .input-area textarea {
+    font-size: 1.1rem;
+  }
+}
+
+/* ----- Extra large screens (1920px+) – fine tuning ----- */
+@media only screen and (min-width: 1920px) {
+  :root {
+    font-size: 20px;
+  }
+  .ai-chat-container {
+    max-width: min(2000px, 85%);
+    padding: 28px;
+  }
+  .ai-chat-container .message-content {
+    font-size: 1.2rem;
+  }
+  .ai-chat-container .input-area button {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* ----- Ultra-wide (2560px+) ----- */
+@media only screen and (min-width: 2560px) {
+  :root {
+    font-size: 22px;
+  }
+  .ai-chat-container {
+    max-width: min(2400px, 80%);
+    padding: 32px;
+  }
+  .ai-chat-container .message-content {
+    font-size: 1.3rem;
+  }
+  .ai-chat-container .input-area button {
+    width: 88px;
+    height: 88px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ORIGINAL RESPONSIVE QUERIES (preserved as requested)
    -------------------------------------------------------------------------- */
 /* Mobile (< 640px) */
 @media (max-width: 639px) {
@@ -395,24 +992,6 @@
   .ai-chat-container .message-content {
     font-size: 1.1rem;
   }
-}
-
-/* --------------------------------------------------------------------------
-   ACCESSIBILITY & REDUCED MOTION
-   -------------------------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .ai-chat-container *,
-  .ai-chat-container *::before,
-  .ai-chat-container *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-.ai-chat-container :focus-visible {
-  outline: 2px solid var(--text-accent);
-  outline-offset: 2px;
 }
 
 /* --------------------------------------------------------------------------

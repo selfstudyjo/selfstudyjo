@@ -1227,4 +1227,940 @@ a:hover {
    6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
    7. Preserved all original colors, animations, and media queries.
    8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+*/
+
+/* ============================================
+   GRANULAR RESPONSIVE BREAKPOINT SYSTEM
+   Added for ultra-fine control from 200px to 2560px+
+   Based on 50px increments with progressive scaling
+   ============================================ */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+    .proctor-appointment {
+        font-size: 8px; /* base font */
+        max-width: 100%;
+        padding: 0.5em;
+
+        /* Override variables with em-based values */
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    /* Additional micro adjustments */
+    .appointment-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5em;
+    }
+    .back-btn {
+        white-space: normal; /* allow wrap */
+    }
+    .details-grid {
+        grid-template-columns: 1fr; /* single column */
+        gap: 1em;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: 1fr; /* stack buttons */
+    }
+    .user-avatar {
+        width: 4em;
+        height: 4em;
+        font-size: 2em;
+    }
+    .control-label input[type="checkbox"] {
+        width: 2em;
+        height: 2em;
+    }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+    .proctor-appointment {
+        font-size: 9px;
+        max-width: 100%;
+        padding: 0.5em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .appointment-header {
+        flex-wrap: wrap;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+    .proctor-appointment {
+        font-size: 10px;
+        padding: 0.75em;
+        max-width: 100%;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+    .proctor-appointment {
+        font-size: 11px;
+        padding: 0.75em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+    .proctor-appointment {
+        font-size: 12px;
+        padding: 0.75em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+    .proctor-appointment {
+        font-size: 13px;
+        padding: 1em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+    .proctor-appointment {
+        font-size: 13.5px;
+        padding: 1em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.2fr;
+        gap: 1.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+    .proctor-appointment {
+        font-size: 14px;
+        padding: 1em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.3fr;
+        gap: 1.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+    .proctor-appointment {
+        font-size: 14.5px;
+        padding: 1.25em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.4fr;
+        gap: 1.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+    .proctor-appointment {
+        font-size: 15px;
+        padding: 1.25em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.4fr;
+        gap: 1.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+    .proctor-appointment {
+        font-size: 15.5px;
+        padding: 1.5em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+    .proctor-appointment {
+        font-size: 16px;
+        padding: 1.5em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+    .proctor-appointment {
+        font-size: 16.5px;
+        padding: 1.5em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.6fr;
+        gap: 2em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+    .proctor-appointment {
+        font-size: 17px;
+        padding: 1.75em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.6fr;
+        gap: 2.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+    .proctor-appointment {
+        font-size: 17.5px;
+        padding: 1.75em;
+        max-width: 100%;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.7fr;
+        gap: 2.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+    .proctor-appointment {
+        font-size: 17.5px;
+        padding: 2em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.7fr;
+        gap: 2.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+    .proctor-appointment {
+        font-size: 18px;
+        padding: 2em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.8fr;
+        gap: 3em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+    .proctor-appointment {
+        font-size: 18px;
+        padding: 2em;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.8fr;
+        gap: 3em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+    .proctor-appointment {
+        font-size: 18.5px;
+        padding: 2.5em;
+        max-width: 1200px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.9fr;
+        gap: 3em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+    .proctor-appointment {
+        font-size: 18.5px;
+        padding: 2.5em;
+        max-width: 1300px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 1.9fr;
+        gap: 3.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1200px – 1599px | 4XL Desktop ===== */
+@media only screen and (min-width: 1200px) and (max-width: 1599px) {
+    .proctor-appointment {
+        font-size: 19px;
+        padding: 3em;
+        max-width: 1400px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 2fr;
+        gap: 4em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Breakpoint: 1600px – 1919px | 5XL Large Desktop ===== */
+@media only screen and (min-width: 1600px) and (max-width: 1919px) {
+    .proctor-appointment {
+        font-size: 20px;
+        padding: 3.5em;
+        max-width: 1600px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 2fr;
+        gap: 4.5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .user-avatar {
+        width: 4em;
+        height: 4em;
+        font-size: 2em;
+    }
+}
+
+/* ===== Breakpoint: 1920px – 2559px | 6XL Ultra HD ===== */
+@media only screen and (min-width: 1920px) and (max-width: 2559px) {
+    .proctor-appointment {
+        font-size: 21px;
+        padding: 4em;
+        max-width: 1800px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 2.2fr;
+        gap: 5em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .user-avatar {
+        width: 4.5em;
+        height: 4.5em;
+        font-size: 2.2em;
+    }
+}
+
+/* ===== Breakpoint: 2560px+ | 7XL+ TV ===== */
+@media only screen and (min-width: 2560px) {
+    .proctor-appointment {
+        font-size: 22px;
+        padding: 5em;
+        max-width: 2000px;
+
+        --font-size-xs: 0.75em;
+        --font-size-sm: 0.875em;
+        --font-size-base: 1em;
+        --font-size-lg: 1.25em;
+        --font-size-xl: 1.5em;
+        --font-size-2xl: 2em;
+
+        --space-xs: 0.25em;
+        --space-sm: 0.5em;
+        --space-md: 1em;
+        --space-lg: 1.5em;
+        --space-xl: 2em;
+        --space-2xl: 3em;
+
+        --border-radius-sm: 0.25em;
+        --border-radius-md: 0.5em;
+        --border-radius-lg: 0.75em;
+        --border-radius-xl: 1em;
+    }
+    .details-grid {
+        grid-template-columns: 1fr 2.5fr;
+        gap: 6em;
+    }
+    .rooms-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .status-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .user-avatar {
+        width: 5em;
+        height: 5em;
+        font-size: 2.5em;
+    }
+}

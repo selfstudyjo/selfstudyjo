@@ -213,10 +213,662 @@ watch(() => [props.imageUrl, props.courseName], () => { cleanup(); initPlanet() 
 </script>
 
 <style scoped>
+/* ===== GLOBAL RESET & BASE ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== CSS CUSTOM PROPERTIES (DEFAULT: ~600px MEDIUM SCREEN) ===== */
+:root {
+  /* Typography */
+  --font-base: 14px;                /* base font size for ~600px */
+  --font-scale-h1: 2.5rem;
+  --font-scale-h2: 2rem;
+  --font-scale-h3: 1.75rem;
+  --font-scale-h4: 1.5rem;
+  --font-scale-h5: 1.25rem;
+  --font-scale-h6: 1rem;
+  --line-height-base: 1.5;
+  --letter-spacing-base: 0.01em;
+
+  /* Spacing */
+  --spacing-unit: 4px;              /* base unit for margins/paddings */
+  --container-max: 1000px;           /* default max container width */
+  --border-radius-base: 4px;
+
+  /* Touch targets */
+  --button-min-height: 40px;
+  --input-min-height: 40px;
+
+  /* Colors (preserve existing, only define neutrals) */
+  --color-text: #333;
+  --color-background: #fff;
+  --color-border: #ddd;
+  --color-primary: #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-focus-ring: rgba(0, 102, 204, 0.4);
+}
+
+/* ===== BASE ELEMENTS ===== */
+html {
+  font-size: var(--font-base);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-base);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: calc(var(--spacing-unit) * 2);
+  color: currentColor;
+}
+
+h1 { font-size: var(--font-scale-h1); }
+h2 { font-size: var(--font-scale-h2); }
+h3 { font-size: var(--font-scale-h3); }
+h4 { font-size: var(--font-scale-h4); }
+h5 { font-size: var(--font-scale-h5); }
+h6 { font-size: var(--font-scale-h6); }
+
+p {
+  margin-bottom: calc(var(--spacing-unit) * 2);
+}
+
+small, .text-small {
+  font-size: 0.875rem;
+}
+
+/* ===== CONTAINERS ===== */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: calc(var(--spacing-unit) * 2);
+  padding-right: calc(var(--spacing-unit) * 2);
+}
+
+.container-fluid {
+  width: 100%;
+  padding-left: calc(var(--spacing-unit) * 2);
+  padding-right: calc(var(--spacing-unit) * 2);
+}
+
+/* ===== LAYOUT UTILITIES ===== */
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+.grid {
+  display: grid;
+  gap: calc(var(--spacing-unit) * 2);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* ===== BUTTONS ===== */
+button,
+.btn,
+.button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-min-height);
+  padding: 0 calc(var(--spacing-unit) * 3);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+  color: white;
+  background-color: var(--color-primary);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-base);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+button:hover,
+.btn:hover,
+.button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+button:focus,
+.btn:focus,
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+button:active,
+.btn:active,
+.button:active {
+  transform: translateY(1px);
+}
+
+/* Secondary button style (preserve existing colors, just structure) */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-border);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* ===== FORM INPUTS ===== */
+input,
+textarea,
+select {
+  width: 100%;
+  min-height: var(--input-min-height);
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-base);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+label {
+  display: block;
+  margin-bottom: calc(var(--spacing-unit) * 1);
+  font-weight: 500;
+}
+
+/* ===== ICONS & IMAGES ===== */
+img,
+svg,
+.icon {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Preserve original icon colors — only adjust sizing if needed */
+.sidebar-toggle,
+.chat-icon,
+[class*="icon"],
+[class*="Icon"] {
+  color: inherit;  /* do not override existing colors */
+  fill: currentColor;
+  width: auto;
+  height: auto;
+}
+
+/* ===== ORIGINAL COMPONENT STYLES (PRESERVED) ===== */
 .planet-canvas {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* ===== MEDIA QUERIES – ORDERED SMALLEST TO LARGEST ===== */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-base: 8px;
+    --spacing-unit: 2px;
+    --container-max: 100%;
+    --border-radius-base: 2px;
+    --button-min-height: 32px;
+    --input-min-height: 32px;
+  }
+  h1 { --font-scale-h1: 2rem; }
+  h2 { --font-scale-h2: 1.75rem; }
+  h3 { --font-scale-h3: 1.5rem; }
+  h4 { --font-scale-h4: 1.25rem; }
+  h5 { --font-scale-h5: 1rem; }
+  h6 { --font-scale-h6: 0.875rem; }
+  .grid { grid-template-columns: 1fr; } /* single column */
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-base: 9px;
+    --spacing-unit: 2px;
+    --container-max: 100%;
+    --border-radius-base: 2px;
+    --button-min-height: 34px;
+    --input-min-height: 34px;
+  }
+  h1 { --font-scale-h1: 2rem; }
+  h2 { --font-scale-h2: 1.75rem; }
+  h3 { --font-scale-h3: 1.5rem; }
+  h4 { --font-scale-h4: 1.25rem; }
+  h5 { --font-scale-h5: 1rem; }
+  h6 { --font-scale-h6: 0.875rem; }
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-base: 10px;
+    --spacing-unit: 3px;
+    --container-max: 100%;
+    --border-radius-base: 3px;
+    --button-min-height: 36px;
+    --input-min-height: 36px;
+  }
+  h1 { --font-scale-h1: 2rem; }
+  h2 { --font-scale-h2: 1.75rem; }
+  h3 { --font-scale-h3: 1.5rem; }
+  h4 { --font-scale-h4: 1.25rem; }
+  h5 { --font-scale-h5: 1rem; }
+  h6 { --font-scale-h6: 0.875rem; }
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-base: 11px;
+    --spacing-unit: 3px;
+    --container-max: 100%;
+    --border-radius-base: 3px;
+    --button-min-height: 38px;
+    --input-min-height: 38px;
+  }
+  h1 { --font-scale-h1: 2.25rem; }
+  h2 { --font-scale-h2: 2rem; }
+  h3 { --font-scale-h3: 1.75rem; }
+  h4 { --font-scale-h4: 1.5rem; }
+  h5 { --font-scale-h5: 1.25rem; }
+  h6 { --font-scale-h6: 1rem; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-base: 12px;
+    --spacing-unit: 4px;
+    --container-max: 100%;
+    --border-radius-base: 4px;
+    --button-min-height: 40px;
+    --input-min-height: 40px;
+  }
+  h1 { --font-scale-h1: 2.5rem; }
+  h2 { --font-scale-h2: 2.2rem; }
+  h3 { --font-scale-h3: 1.9rem; }
+  h4 { --font-scale-h4: 1.6rem; }
+  h5 { --font-scale-h5: 1.3rem; }
+  h6 { --font-scale-h6: 1.1rem; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-base: 13px;
+    --spacing-unit: 4px;
+    --container-max: 100%;
+    --border-radius-base: 4px;
+    --button-min-height: 42px;
+    --input-min-height: 42px;
+  }
+  h1 { --font-scale-h1: 2.6rem; }
+  h2 { --font-scale-h2: 2.3rem; }
+  h3 { --font-scale-h3: 2rem; }
+  h4 { --font-scale-h4: 1.7rem; }
+  h5 { --font-scale-h5: 1.4rem; }
+  h6 { --font-scale-h6: 1.2rem; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-base: 13.5px;
+    --spacing-unit: 4px;
+    --container-max: 540px;
+    --border-radius-base: 4px;
+    --button-min-height: 44px;
+    --input-min-height: 44px;
+  }
+  h1 { --font-scale-h1: 2.7rem; }
+  h2 { --font-scale-h2: 2.4rem; }
+  h3 { --font-scale-h3: 2.1rem; }
+  h4 { --font-scale-h4: 1.8rem; }
+  h5 { --font-scale-h5: 1.5rem; }
+  h6 { --font-scale-h6: 1.2rem; }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-base: 14px;
+    --spacing-unit: 5px;
+    --container-max: 600px;
+    --border-radius-base: 5px;
+    --button-min-height: 45px;
+    --input-min-height: 45px;
+  }
+  h1 { --font-scale-h1: 2.8rem; }
+  h2 { --font-scale-h2: 2.5rem; }
+  h3 { --font-scale-h3: 2.2rem; }
+  h4 { --font-scale-h4: 1.9rem; }
+  h5 { --font-scale-h5: 1.6rem; }
+  h6 { --font-scale-h6: 1.3rem; }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-base: 14.5px;
+    --spacing-unit: 5px;
+    --container-max: 640px;
+    --border-radius-base: 5px;
+    --button-min-height: 46px;
+    --input-min-height: 46px;
+  }
+  h1 { --font-scale-h1: 2.9rem; }
+  h2 { --font-scale-h2: 2.6rem; }
+  h3 { --font-scale-h3: 2.3rem; }
+  h4 { --font-scale-h4: 2rem; }
+  h5 { --font-scale-h5: 1.7rem; }
+  h6 { --font-scale-h6: 1.4rem; }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-base: 15px;
+    --spacing-unit: 6px;
+    --container-max: 680px;
+    --border-radius-base: 6px;
+    --button-min-height: 48px;
+    --input-min-height: 48px;
+  }
+  h1 { --font-scale-h1: 3rem; }
+  h2 { --font-scale-h2: 2.7rem; }
+  h3 { --font-scale-h3: 2.4rem; }
+  h4 { --font-scale-h4: 2.1rem; }
+  h5 { --font-scale-h5: 1.8rem; }
+  h6 { --font-scale-h6: 1.5rem; }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-base: 15.5px;
+    --spacing-unit: 6px;
+    --container-max: 720px;
+    --border-radius-base: 6px;
+    --button-min-height: 48px;
+    --input-min-height: 48px;
+  }
+  h1 { --font-scale-h1: 3.1rem; }
+  h2 { --font-scale-h2: 2.8rem; }
+  h3 { --font-scale-h3: 2.5rem; }
+  h4 { --font-scale-h4: 2.2rem; }
+  h5 { --font-scale-h5: 1.9rem; }
+  h6 { --font-scale-h6: 1.6rem; }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-base: 16px;
+    --spacing-unit: 7px;
+    --container-max: 760px;
+    --border-radius-base: 7px;
+    --button-min-height: 50px;
+    --input-min-height: 50px;
+  }
+  h1 { --font-scale-h1: 3.2rem; }
+  h2 { --font-scale-h2: 2.9rem; }
+  h3 { --font-scale-h3: 2.6rem; }
+  h4 { --font-scale-h4: 2.3rem; }
+  h5 { --font-scale-h5: 2rem; }
+  h6 { --font-scale-h6: 1.7rem; }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-base: 16.5px;
+    --spacing-unit: 7px;
+    --container-max: 820px;
+    --border-radius-base: 7px;
+    --button-min-height: 50px;
+    --input-min-height: 50px;
+  }
+  h1 { --font-scale-h1: 3.3rem; }
+  h2 { --font-scale-h2: 3rem; }
+  h3 { --font-scale-h3: 2.7rem; }
+  h4 { --font-scale-h4: 2.4rem; }
+  h5 { --font-scale-h5: 2.1rem; }
+  h6 { --font-scale-h6: 1.8rem; }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-base: 17px;
+    --spacing-unit: 8px;
+    --container-max: 860px;
+    --border-radius-base: 8px;
+    --button-min-height: 52px;
+    --input-min-height: 52px;
+  }
+  h1 { --font-scale-h1: 3.4rem; }
+  h2 { --font-scale-h2: 3.1rem; }
+  h3 { --font-scale-h3: 2.8rem; }
+  h4 { --font-scale-h4: 2.5rem; }
+  h5 { --font-scale-h5: 2.2rem; }
+  h6 { --font-scale-h6: 1.9rem; }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-base: 17.5px;
+    --spacing-unit: 8px;
+    --container-max: 920px;
+    --border-radius-base: 8px;
+    --button-min-height: 52px;
+    --input-min-height: 52px;
+  }
+  h1 { --font-scale-h1: 3.5rem; }
+  h2 { --font-scale-h2: 3.2rem; }
+  h3 { --font-scale-h3: 2.9rem; }
+  h4 { --font-scale-h4: 2.6rem; }
+  h5 { --font-scale-h5: 2.3rem; }
+  h6 { --font-scale-h6: 2rem; }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-base: 17.5px;
+    --spacing-unit: 9px;
+    --container-max: 960px;
+    --border-radius-base: 9px;
+    --button-min-height: 54px;
+    --input-min-height: 54px;
+  }
+  h1 { --font-scale-h1: 3.5rem; }
+  h2 { --font-scale-h2: 3.2rem; }
+  h3 { --font-scale-h3: 2.9rem; }
+  h4 { --font-scale-h4: 2.6rem; }
+  h5 { --font-scale-h5: 2.3rem; }
+  h6 { --font-scale-h6: 2rem; }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-base: 18px;
+    --spacing-unit: 9px;
+    --container-max: 1000px;
+    --border-radius-base: 9px;
+    --button-min-height: 54px;
+    --input-min-height: 54px;
+  }
+  h1 { --font-scale-h1: 3.6rem; }
+  h2 { --font-scale-h2: 3.3rem; }
+  h3 { --font-scale-h3: 3rem; }
+  h4 { --font-scale-h4: 2.7rem; }
+  h5 { --font-scale-h5: 2.4rem; }
+  h6 { --font-scale-h6: 2.1rem; }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-base: 18px;
+    --spacing-unit: 10px;
+    --container-max: 1040px;
+    --border-radius-base: 10px;
+    --button-min-height: 56px;
+    --input-min-height: 56px;
+  }
+  h1 { --font-scale-h1: 3.6rem; }
+  h2 { --font-scale-h2: 3.3rem; }
+  h3 { --font-scale-h3: 3rem; }
+  h4 { --font-scale-h4: 2.7rem; }
+  h5 { --font-scale-h5: 2.4rem; }
+  h6 { --font-scale-h6: 2.1rem; }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-base: 18.5px;
+    --spacing-unit: 10px;
+    --container-max: 1100px;
+    --border-radius-base: 10px;
+    --button-min-height: 56px;
+    --input-min-height: 56px;
+  }
+  h1 { --font-scale-h1: 3.7rem; }
+  h2 { --font-scale-h2: 3.4rem; }
+  h3 { --font-scale-h3: 3.1rem; }
+  h4 { --font-scale-h4: 2.8rem; }
+  h5 { --font-scale-h5: 2.5rem; }
+  h6 { --font-scale-h6: 2.2rem; }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-base: 18.5px;
+    --spacing-unit: 11px;
+    --container-max: 1140px;
+    --border-radius-base: 11px;
+    --button-min-height: 58px;
+    --input-min-height: 58px;
+  }
+  h1 { --font-scale-h1: 3.7rem; }
+  h2 { --font-scale-h2: 3.4rem; }
+  h3 { --font-scale-h3: 3.1rem; }
+  h4 { --font-scale-h4: 2.8rem; }
+  h5 { --font-scale-h5: 2.5rem; }
+  h6 { --font-scale-h6: 2.2rem; }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL and larger (up to 2560px+) ----- */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-base: 19px;
+    --spacing-unit: 12px;
+    --container-max: 1400px;  /* wider for large screens, can be adjusted */
+    --border-radius-base: 12px;
+    --button-min-height: 60px;
+    --input-min-height: 60px;
+  }
+  h1 { --font-scale-h1: 4rem; }
+  h2 { --font-scale-h2: 3.5rem; }
+  h3 { --font-scale-h3: 3rem; }
+  h4 { --font-scale-h4: 2.5rem; }
+  h5 { --font-scale-h5: 2rem; }
+  h6 { --font-scale-h6: 1.5rem; }
+  .container {
+    max-width: var(--container-max);
+  }
+}
+
+/* Extra large TVs: we can cap container width for readability */
+@media only screen and (min-width: 1800px) {
+  :root {
+    --container-max: 1600px;
+  }
+}
+
+@media only screen and (min-width: 2200px) {
+  :root {
+    --container-max: 1800px;
+  }
+}
+
+/* ===== ACCESSIBILITY & UTILITIES ===== */
+.visually-hidden:not(:focus):not(:active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  clip-path: inset(100%);
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+/* Focus styles for keyboard navigation */
+:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Ensure all interactive elements have sufficient contrast */
+::selection {
+  background: var(--color-primary);
+  color: white;
 }
 </style>

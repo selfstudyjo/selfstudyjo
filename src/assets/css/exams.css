@@ -34,20 +34,20 @@
   --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.5);
   --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.6);
   
-  /* Spacing */
+  /* Spacing - will be overridden in media queries */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
   --spacing-md: 1.5rem;
   --spacing-lg: 2rem;
   --spacing-xl: 3rem;
   
-  /* Border Radius */
+  /* Border Radius - will be overridden */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   
-  /* Font Sizes - Responsive */
+  /* Font Sizes - will be overridden in media queries */
   --font-xs: clamp(12px, 1vw, 14px);
   --font-sm: clamp(14px, 1.5vw, 16px);
   --font-md: clamp(16px, 2vw, 18px);
@@ -1410,224 +1410,6 @@ body::before {
 }
 
 /* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-/* Mobile (< 640px) */
-@media (max-width: 640px) {
-  :root {
-    --glass-blur: blur(8px);
-  }
-  
-  .exams-page {
-    padding: var(--spacing-sm);
-  }
-  
-  .page-header {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-  }
-  
-  .page-title {
-    font-size: var(--font-lg);
-  }
-  
-  .page-subtitle {
-    font-size: var(--font-sm);
-  }
-  
-  .exams-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  
-  .exam-card {
-    padding: var(--spacing-md);
-  }
-  
-  .exam-actions {
-    flex-direction: column;
-  }
-  
-  .detail-grid,
-  .results-section {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-  }
-  
-  .btn-secondary,
-  .btn-primary {
-    width: 100%;
-  }
-  
-  .appointment-management {
-    flex-direction: column;
-  }
-  
-  .management-option {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-sm);
-  }
-  
-  .option-icon {
-    align-self: center;
-  }
-  
-  .video-embed-container {
-    /* aspect-ratio already handles height */
-  }
-  
-  /* Reduce blur for mobile performance */
-  .exam-card,
-  .modal-content,
-  .loading-container,
-  .error-container,
-  .empty-container,
-  .page-header {
-    backdrop-filter: blur(8px) saturate(160%);
-  }
-  
-  .exam-status,
-  .appointment-status {
-    min-width: 80px;
-    padding: 6px 12px;
-    font-size: 10px;
-  }
-
-  .search-input-wrapper {
-    padding: 0 var(--spacing-sm);
-  }
-
-  .search-input {
-    padding: var(--spacing-sm) 0;
-    font-size: var(--font-sm);
-  }
-}
-
-/* Tablet (640px - 1024px) */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .detail-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .results-section {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .modal-content {
-    max-width: 90%;
-  }
-}
-
-/* Laptop (1024px - 1440px) */
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .exams-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
-  
-  .modal-content {
-    max-width: 800px;
-  }
-}
-
-/* Desktop (1440px - 1920px) */
-@media (min-width: 1441px) and (max-width: 1920px) {
-  .exams-page {
-    max-width: 1600px;
-    padding: var(--spacing-xl);
-  }
-  
-  .exams-grid {
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: var(--spacing-xl);
-  }
-  
-  .exam-card {
-    padding: var(--spacing-xl);
-  }
-  
-  .modal-content {
-    max-width: 900px;
-  }
-}
-
-/* TV/4K (> 1920px) */
-@media (min-width: 1921px) {
-  .exams-page {
-    max-width: 2000px;
-    padding: var(--spacing-xl) 5%;
-  }
-  
-  .exams-grid {
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-    gap: 32px;
-  }
-  
-  .exam-card {
-    padding: 32px;
-    border-radius: 24px;
-  }
-  
-  .modal-content {
-    max-width: 1000px;
-  }
-  
-  :root {
-    --font-xs: clamp(14px, 0.8vw, 16px);
-    --font-sm: clamp(16px, 1vw, 18px);
-    --font-md: clamp(18px, 1.2vw, 22px);
-    --font-lg: clamp(22px, 1.5vw, 28px);
-    --font-xl: clamp(28px, 2vw, 36px);
-    --font-xxl: clamp(36px, 2.5vw, 48px);
-  }
-}
-
-/* Small Mobile Adjustments */
-@media (max-width: 480px) {
-  .exam-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-  }
-  
-  .exam-status {
-    align-self: flex-start;
-  }
-  
-  .detail-row {
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-  }
-  
-  .detail-value {
-    text-align: left;
-    max-width: 100%;
-  }
-  
-  .score-display,
-  .appointment-details {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-  
-  .btn-reschedule,
-  .btn-cancel-appointment,
-  .exam-actions button {
-    padding: 14px 16px;
-  }
-}
-
-/* ============================================
    ACCESSIBILITY & FOCUS STATES
    ============================================ */
 
@@ -1713,4 +1495,640 @@ a:focus,
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN (original - kept for reference but overridden by granular system below)
+   ============================================ */
+/*
+   Original responsive queries are preserved here but commented out
+   to avoid conflicts with the granular 50px system.
+*/
+
+/* ============================================
+   GRANULAR RESPONSIVE SYSTEM (50px increments)
+   ============================================ */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-xs: 8px;
+    --font-sm: 9px;
+    --font-md: 10px;
+    --font-lg: 12px;
+    --font-xl: 14px;
+    --font-xxl: 16px;
+    --spacing-xs: 4px;
+    --spacing-sm: 6px;
+    --spacing-md: 8px;
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --glass-blur: blur(4px);
+  }
+  .exams-page {
+    padding: 6px;
+    max-width: 100%;
+  }
+  .page-header {
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+  .exams-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .exam-card {
+    padding: 8px;
+  }
+  .exam-header {
+    gap: 6px;
+  }
+  .exam-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .exam-title {
+    font-size: var(--font-md);
+  }
+  .exam-course {
+    font-size: var(--font-xs);
+  }
+  .exam-status {
+    padding: 4px 8px;
+    min-width: 70px;
+    font-size: 8px;
+  }
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .detail-value {
+    max-width: 100%;
+    text-align: left;
+  }
+  .score-display,
+  .appointment-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .exam-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .exam-actions button,
+  .btn-reschedule,
+  .btn-cancel-appointment,
+  .retry-btn {
+    min-height: 32px;
+    padding: 8px 12px;
+    font-size: var(--font-xs);
+    min-width: 100px;
+  }
+  .search-input-wrapper {
+    padding: 0 4px;
+  }
+  .search-input {
+    padding: 6px 0;
+    font-size: var(--font-sm);
+  }
+  .search-icon {
+    font-size: 16px;
+    margin-right: 4px;
+  }
+  .modal-content {
+    max-width: 95%;
+    padding: 0;
+  }
+  .modal-header {
+    padding: 8px;
+  }
+  .modal-body {
+    padding: 8px;
+  }
+  .modal-footer {
+    padding: 8px;
+    flex-direction: column;
+  }
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+    min-width: unset;
+  }
+  .detail-grid,
+  .results-section {
+    grid-template-columns: 1fr;
+  }
+  .video-embed-container {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-xs: 9px;
+    --font-sm: 10px;
+    --font-md: 11px;
+    --font-lg: 13px;
+    --font-xl: 15px;
+    --font-xxl: 18px;
+    --spacing-xs: 5px;
+    --spacing-sm: 8px;
+    --spacing-md: 10px;
+    --spacing-lg: 14px;
+    --spacing-xl: 18px;
+    --radius-sm: 5px;
+    --radius-md: 7px;
+    --radius-lg: 9px;
+    --radius-xl: 11px;
+    --glass-blur: blur(5px);
+  }
+  .exams-page {
+    padding: 8px;
+  }
+  .page-header {
+    padding: 10px;
+    margin-bottom: 14px;
+  }
+  .exams-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .exam-card {
+    padding: 10px;
+  }
+  .exam-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .exam-title {
+    font-size: var(--font-md);
+  }
+  .exam-status {
+    padding: 4px 10px;
+    min-width: 75px;
+    font-size: 8px;
+  }
+  .exam-actions button,
+  .btn-reschedule,
+  .btn-cancel-appointment,
+  .retry-btn {
+    min-height: 34px;
+    padding: 9px 14px;
+  }
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .score-display,
+  .appointment-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-xs: 10px;
+    --font-sm: 11px;
+    --font-md: 12px;
+    --font-lg: 14px;
+    --font-xl: 16px;
+    --font-xxl: 20px;
+    --spacing-xs: 6px;
+    --spacing-sm: 9px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+  }
+  .exams-page {
+    padding: 10px;
+  }
+  .exams-grid {
+    gap: 12px;
+  }
+  .exam-card {
+    padding: 12px;
+  }
+  .exam-actions button,
+  .btn-reschedule,
+  .btn-cancel-appointment,
+  .retry-btn {
+    min-height: 36px;
+    padding: 10px 16px;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-xs: 11px;
+    --font-sm: 12px;
+    --font-md: 13px;
+    --font-lg: 15px;
+    --font-xl: 18px;
+    --font-xxl: 22px;
+    --spacing-xs: 6px;
+    --spacing-sm: 10px;
+    --spacing-md: 14px;
+    --spacing-lg: 18px;
+    --spacing-xl: 22px;
+  }
+  .exams-grid {
+    grid-template-columns: 1fr;
+  }
+  .exam-actions {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-xs: 12px;
+    --font-sm: 13px;
+    --font-md: 14px;
+    --font-lg: 16px;
+    --font-xl: 20px;
+    --font-xxl: 24px;
+    --spacing-xs: 7px;
+    --spacing-sm: 11px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+  }
+  .exams-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-xs: 13px;
+    --font-sm: 14px;
+    --font-md: 15px;
+    --font-lg: 17px;
+    --font-xl: 21px;
+    --font-xxl: 26px;
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 16px;
+    --spacing-lg: 22px;
+    --spacing-xl: 28px;
+  }
+  .exams-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-xs: 13.5px;
+    --font-sm: 14.5px;
+    --font-md: 15.5px;
+    --font-lg: 18px;
+    --font-xl: 22px;
+    --font-xxl: 28px;
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 18px;
+    --spacing-lg: 24px;
+    --spacing-xl: 30px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .exam-actions {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-xs: 14px;
+    --font-sm: 15px;
+    --font-md: 16px;
+    --font-lg: 19px;
+    --font-xl: 23px;
+    --font-xxl: 30px;
+    --spacing-xs: 9px;
+    --spacing-sm: 13px;
+    --spacing-md: 20px;
+    --spacing-lg: 26px;
+    --spacing-xl: 32px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-xs: 14.5px;
+    --font-sm: 15.5px;
+    --font-md: 16.5px;
+    --font-lg: 20px;
+    --font-xl: 24px;
+    --font-xxl: 32px;
+    --spacing-xs: 10px;
+    --spacing-sm: 14px;
+    --spacing-md: 22px;
+    --spacing-lg: 28px;
+    --spacing-xl: 34px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-xs: 15px;
+    --font-sm: 16px;
+    --font-md: 17px;
+    --font-lg: 21px;
+    --font-xl: 25px;
+    --font-xxl: 34px;
+    --spacing-xs: 11px;
+    --spacing-sm: 15px;
+    --spacing-md: 24px;
+    --spacing-lg: 30px;
+    --spacing-xl: 36px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-xs: 15.5px;
+    --font-sm: 16.5px;
+    --font-md: 17.5px;
+    --font-lg: 22px;
+    --font-xl: 26px;
+    --font-xxl: 36px;
+    --spacing-xs: 12px;
+    --spacing-sm: 16px;
+    --spacing-md: 26px;
+    --spacing-lg: 32px;
+    --spacing-xl: 38px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-xs: 16px;
+    --font-sm: 17px;
+    --font-md: 18px;
+    --font-lg: 23px;
+    --font-xl: 27px;
+    --font-xxl: 38px;
+    --spacing-xs: 12px;
+    --spacing-sm: 17px;
+    --spacing-md: 28px;
+    --spacing-lg: 34px;
+    --spacing-xl: 40px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-xs: 16.5px;
+    --font-sm: 17.5px;
+    --font-md: 18.5px;
+    --font-lg: 24px;
+    --font-xl: 28px;
+    --font-xxl: 40px;
+    --spacing-xs: 13px;
+    --spacing-sm: 18px;
+    --spacing-md: 30px;
+    --spacing-lg: 36px;
+    --spacing-xl: 42px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-xs: 17px;
+    --font-sm: 18px;
+    --font-md: 19px;
+    --font-lg: 25px;
+    --font-xl: 29px;
+    --font-xxl: 42px;
+    --spacing-xs: 14px;
+    --spacing-sm: 19px;
+    --spacing-md: 32px;
+    --spacing-lg: 38px;
+    --spacing-xl: 44px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-xs: 17.5px;
+    --font-sm: 18.5px;
+    --font-md: 19.5px;
+    --font-lg: 26px;
+    --font-xl: 30px;
+    --font-xxl: 44px;
+    --spacing-xs: 14px;
+    --spacing-sm: 20px;
+    --spacing-md: 34px;
+    --spacing-lg: 40px;
+    --spacing-xl: 46px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-xs: 17.5px;
+    --font-sm: 18.5px;
+    --font-md: 20px;
+    --font-lg: 27px;
+    --font-xl: 31px;
+    --font-xxl: 46px;
+    --spacing-xs: 15px;
+    --spacing-sm: 21px;
+    --spacing-md: 36px;
+    --spacing-lg: 42px;
+    --spacing-xl: 48px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-xs: 18px;
+    --font-sm: 19px;
+    --font-md: 21px;
+    --font-lg: 28px;
+    --font-xl: 32px;
+    --font-xxl: 48px;
+    --spacing-xs: 16px;
+    --spacing-sm: 22px;
+    --spacing-md: 38px;
+    --spacing-lg: 44px;
+    --spacing-xl: 50px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-xs: 18px;
+    --font-sm: 19px;
+    --font-md: 22px;
+    --font-lg: 29px;
+    --font-xl: 33px;
+    --font-xxl: 48px;
+    --spacing-xs: 16px;
+    --spacing-sm: 23px;
+    --spacing-md: 40px;
+    --spacing-lg: 46px;
+    --spacing-xl: 52px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .exams-page {
+    max-width: 1200px;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-xs: 18.5px;
+    --font-sm: 19.5px;
+    --font-md: 22.5px;
+    --font-lg: 30px;
+    --font-xl: 34px;
+    --font-xxl: 50px;
+    --spacing-xs: 17px;
+    --spacing-sm: 24px;
+    --spacing-md: 42px;
+    --spacing-lg: 48px;
+    --spacing-xl: 54px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .exams-page {
+    max-width: 1300px;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-xs: 18.5px;
+    --font-sm: 20px;
+    --font-md: 23px;
+    --font-lg: 31px;
+    --font-xl: 35px;
+    --font-xxl: 52px;
+    --spacing-xs: 18px;
+    --spacing-sm: 25px;
+    --spacing-md: 44px;
+    --spacing-lg: 50px;
+    --spacing-xl: 56px;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .exams-page {
+    max-width: 1400px;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-xs: 19px;
+    --font-sm: 21px;
+    --font-md: 24px;
+    --font-lg: 32px;
+    --font-xl: 36px;
+    --font-xxl: 54px;
+    --spacing-xs: 20px;
+    --spacing-sm: 28px;
+    --spacing-md: 48px;
+    --spacing-lg: 56px;
+    --spacing-xl: 64px;
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+  }
+  .exams-page {
+    max-width: 1600px;
+    padding: var(--spacing-xl) 5%;
+  }
+  .exams-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+  }
+  .exam-card {
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+  }
+  .modal-content {
+    max-width: 1000px;
+  }
+  .btn-reschedule,
+  .btn-cancel-appointment,
+  .exam-actions button {
+    min-height: 56px;
+    padding: 18px 32px;
+    font-size: var(--font-md);
+  }
 }

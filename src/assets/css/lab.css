@@ -1,4 +1,4 @@
-/* src/assets/css/lab.css - COSMIC SPACE LABS REDESIGN - UPDATED */
+/* src/assets/css/lab.css - COSMIC SPACE LABS REDESIGN - ENHANCED RESPONSIVE */
 
 /* ==========================================================================
    CSS CUSTOM PROPERTIES (THEME VARIABLES)
@@ -56,7 +56,7 @@
   --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
   --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
   
-  /* Spacing */
+  /* Spacing - fluid by default, overridden in breakpoints */
   --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
   --space-sm: clamp(0.5rem, 1vw, 1rem);
   --space-md: clamp(1rem, 2vw, 1.5rem);
@@ -69,26 +69,28 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   
-  /* Font Sizes */
+  /* Font Sizes - fluid by default */
   --font-xs: clamp(0.75rem, 2vw, 0.875rem);
   --font-sm: clamp(0.875rem, 2.5vw, 1rem);
   --font-md: clamp(1rem, 3vw, 1.125rem);
   --font-lg: clamp(1.25rem, 4vw, 1.5rem);
   --font-xl: clamp(1.5rem, 5vw, 2rem);
   --font-xxl: clamp(2rem, 6vw, 2.5rem);
+
+  /* Base font size (set on .labs-container) - fallback */
+  --base-font-size: 16px;
 }
 
 /* ==========================================================================
    GLOBAL TEXT PROTECTION & BOX SIZING
    ========================================================================== */
 .labs-container * {
-  /* Prevent character-by-character word breaking */
   word-break: normal;
-  overflow-wrap: break-word;   /* Allow wrapping only at word boundaries, but break long words if needed */
-  hyphens: none;               /* Disable automatic hyphenation */
+  overflow-wrap: break-word;
+  hyphens: none;
   -webkit-hyphens: none;
   -ms-hyphens: none;
-  box-sizing: border-box;      /* Ensure consistent sizing */
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -145,10 +147,11 @@
   z-index: 1;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  isolation: isolate; /* Create fresh stacking context to prevent z-index leaks */
+  isolation: isolate;
+  width: 100%;
+  margin: 0 auto;
 }
 
-/* Cosmic overlay for readability */
 .labs-container::before {
   content: '';
   position: fixed;
@@ -294,7 +297,6 @@
 
 .stat-number {
   display: block;
-  /* Fluid font size to prevent overflow on small screens */
   font-size: clamp(20px, 5vw, 28px);
   font-weight: 700;
   color: var(--text-primary);
@@ -324,7 +326,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  isolation: isolate; /* Ensure stacking context */
+  isolation: isolate;
 }
 
 .loading-spinner {
@@ -426,7 +428,7 @@
     0 0 20px rgba(66, 133, 244, 0.3);
   position: relative;
   overflow: hidden;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
   gap: var(--space-md);
 }
 
@@ -449,9 +451,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  flex: 1 1 auto; /* Allow flex to shrink/grow */
+  flex: 1 1 auto;
   z-index: 1;
-  flex-wrap: wrap; /* Allow inner items to wrap */
+  flex-wrap: wrap;
 }
 
 .lab-info-content i {
@@ -467,7 +469,7 @@
   margin-left: var(--space-sm);
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  white-space: nowrap; /* Keep student info on one line, but it may wrap inside banner */
+  white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -484,11 +486,11 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--shadow-outer);
-  flex-wrap: wrap; /* Allow tabs to wrap on very small screens */
+  flex-wrap: wrap;
 }
 
 .tab-btn {
-  flex: 1 1 auto; /* Allow tabs to shrink/grow */
+  flex: 1 1 auto;
   padding: var(--space-md);
   border: none;
   background: transparent;
@@ -504,7 +506,7 @@
   gap: var(--space-sm);
   position: relative;
   overflow: hidden;
-  min-width: max-content; /* Prevent button text from shrinking too much */
+  min-width: max-content;
 }
 
 .tab-btn::before {
@@ -569,7 +571,7 @@
    ========================================================================== */
 .sql-container {
   display: grid;
-  grid-template-columns: minmax(280px, 350px) 1fr; /* Use minmax to adapt */
+  grid-template-columns: minmax(280px, 350px) 1fr;
   gap: var(--space-lg);
   padding: var(--space-lg);
   min-height: 600px;
@@ -615,7 +617,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: var(--transition-smooth);
   cursor: pointer;
-  flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+  flex-wrap: wrap;
 }
 
 .table-item:hover {
@@ -630,14 +632,13 @@
 }
 
 .table-item span {
-  flex: 1 1 auto; /* Allow text to shrink/grow */
+  flex: 1 1 auto;
   font-weight: 500;
   color: var(--text-secondary);
-  word-break: normal; /* Ensure table name doesn't break arbitrarily */
+  word-break: normal;
   overflow-wrap: break-word;
 }
 
-/* UPDATED: Table item buttons - transparent background with light text */
 .table-item .btn-sm {
   padding: 6px 12px;
   font-size: var(--font-xs);
@@ -697,7 +698,7 @@
   padding: 2px 8px;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
-  font-size: clamp(12px, 2vw, 13px); /* Fluid code font */
+  font-size: clamp(12px, 2vw, 13px);
   color: var(--cosmic-cyan);
 }
 
@@ -726,7 +727,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap; /* Allow wrapping */
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
@@ -745,10 +746,9 @@
 .results-info {
   display: flex;
   gap: var(--space-sm);
-  flex-wrap: wrap; /* Allow action buttons to wrap */
+  flex-wrap: wrap;
 }
 
-/* UPDATED: Editor action buttons - transparent background with light text */
 .editor-actions .btn,
 .editor-actions .btn-sm {
   background: rgba(255, 255, 255, 0.08) !important;
@@ -784,7 +784,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-sm);
   font-family: 'Courier New', monospace;
-  font-size: clamp(13px, 2.5vw, 14px); /* Fluid font */
+  font-size: clamp(13px, 2.5vw, 14px);
   line-height: 1.5;
   color: var(--terminal-text);
   background: rgba(0, 0, 0, 0.3);
@@ -910,7 +910,7 @@
   font-size: var(--font-sm);
   color: var(--text-secondary);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  word-break: normal; /* Prevent breaking inside cell */
+  word-break: normal;
   overflow-wrap: break-word;
 }
 
@@ -960,7 +960,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  flex-wrap: wrap; /* Allow wrapping */
+  flex-wrap: wrap;
   gap: var(--space-sm);
 }
 
@@ -996,7 +996,6 @@
   flex-wrap: wrap;
 }
 
-/* UPDATED: Terminal action buttons - transparent background with light text */
 .terminal-actions .btn-sm {
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -1088,8 +1087,8 @@
 /* Terminal Lines */
 .terminal-line {
   margin-bottom: 8px;
-  word-break: normal; /* Changed from break-all to prevent character breaks */
-  overflow-wrap: break-word; /* Allow wrapping only when necessary */
+  word-break: normal;
+  overflow-wrap: break-word;
   white-space: pre-wrap;
   display: flex;
   align-items: flex-start;
@@ -1139,7 +1138,7 @@
   margin-top: 8px;
   position: relative;
   z-index: 2;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
 .input-prompt {
@@ -1157,7 +1156,7 @@
   align-items: center;
   gap: 5px;
   position: relative;
-  min-width: 150px; /* Prevent input from becoming too narrow */
+  min-width: 150px;
 }
 
 .command-input {
@@ -1235,7 +1234,6 @@
   margin-bottom: var(--space-sm);
 }
 
-/* UPDATED: Command buttons - transparent background with light text */
 .cmd-btn {
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -1280,7 +1278,7 @@
    ========================================================================== */
 .python-container {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* UPDATED: Made editor wider (2:1 ratio) */
+  grid-template-columns: 2fr 1fr;
   gap: var(--space-lg);
   padding: var(--space-lg);
   min-height: 600px;
@@ -1294,10 +1292,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* UPDATED: Python textarea - wider and larger */
 .python-textarea {
-  min-height: 450px; /* Increased height */
-  width: 100%; /* Full width of container */
+  min-height: 450px;
+  width: 100%;
   background: rgba(0, 0, 0, 0.3);
   color: var(--terminal-text);
   font-family: 'Courier New', monospace;
@@ -1305,7 +1302,7 @@
   border-radius: var(--radius-sm);
   padding: var(--space-md);
   line-height: 1.5;
-  font-size: clamp(13px, 2.5vw, 14px); /* Fluid font */
+  font-size: clamp(13px, 2.5vw, 14px);
   resize: vertical;
   transition: var(--transition-smooth);
   box-sizing: border-box;
@@ -1368,7 +1365,6 @@
   gap: var(--space-sm);
 }
 
-/* UPDATED: Template buttons - transparent background with light text */
 .template-btn {
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -1403,7 +1399,7 @@
   flex-direction: column;
   gap: var(--space-sm);
   max-width: 400px;
-  width: calc(100% - 40px); /* Ensure container doesn't overflow viewport */
+  width: calc(100% - 40px);
 }
 
 .toast {
@@ -1521,9 +1517,10 @@
   overflow: hidden;
   backdrop-filter: blur(4px);
   text-shadow: var(--text-shadow);
-  word-break: normal; /* Ensure button text stays whole */
-  overflow-wrap: normal; /* Prevent breaking inside button */
-  white-space: nowrap; /* Buttons typically don't wrap, but may need wrap on small screens */
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: nowrap;
+  min-height: 32px; /* Base touch target, overridden in breakpoints */
 }
 
 .btn::before {
@@ -1544,7 +1541,6 @@
   left: 100%;
 }
 
-/* UPDATED: All buttons now have transparent backgrounds with light text */
 .btn-primary {
   background: rgba(66, 133, 244, 0.2) !important;
   color: var(--text-primary) !important;
@@ -1631,122 +1627,32 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN
+   ADDITIONAL UTILITIES
    ========================================================================== */
-
-/* Mobile (< 640px) */
-@media (max-width: 640px) {
-  .labs-container {
-    padding: var(--space-md);
-  }
-  
-  .labs-header,
-  .tab-content,
-  .loading-state,
-  .error-state,
-  .no-access-state {
-    backdrop-filter: var(--glass-blur-mobile);
-    -webkit-backdrop-filter: var(--glass-blur-mobile);
-  }
-  
-  .header-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .sql-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .python-container {
-    grid-template-columns: 1fr; /* Stack editor and output on mobile */
-    min-height: 800px; /* Increased height for stacked layout */
-  }
-  
-  .python-textarea {
-    min-height: 300px; /* Adjust height for mobile */
-  }
-  
-  .sql-sidebar {
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-right: 0;
-    padding-bottom: var(--space-lg);
-    margin-bottom: var(--space-lg);
-  }
-  
-  .tabs-navigation {
-    flex-direction: column;
-  }
-  
-  .terminal-title {
-    font-size: 12px;
-  }
-  
-  .commands-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .toast-container {
-    left: 20px;
-    right: 20px;
-    max-width: none;
-  }
+.student-info.warning {
+  background: rgba(255, 209, 102, 0.2);
+  color: var(--cosmic-warning);
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.3);
 }
 
-/* Tablet (640px - 1024px) */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .sql-container {
-    grid-template-columns: minmax(280px, 320px) 1fr;
-  }
-  
-  .python-container {
-    grid-template-columns: 1.5fr 1fr; /* Adjust ratio for tablet */
-  }
-  
-  .commands-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* Terminal selection */
+.terminal-content ::selection {
+  background: rgba(78, 205, 196, 0.3);
+  color: var(--terminal-text);
 }
 
-/* Laptop (1024px - 1440px) */
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .sql-container {
-    grid-template-columns: 320px 1fr;
-  }
-  
-  .python-container {
-    grid-template-columns: 2fr 1fr; /* Maintain 2:1 ratio */
-  }
+/* Performance optimizations */
+.tab-content,
+.terminal-wrapper,
+.stat-card {
+  contain: layout style paint;
 }
 
-/* Desktop (1440px - 1920px) */
-@media (min-width: 1441px) and (max-width: 1920px) {
-  .sql-container {
-    grid-template-columns: 350px 1fr;
-  }
-  
-  .python-container {
-    grid-template-columns: 2.5fr 1fr; /* Even wider on large screens */
-  }
-  
-  .commands-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* TV/4K (> 1920px) */
-@media (min-width: 1921px) {
-  .sql-container {
-    grid-template-columns: 400px 1fr;
-  }
-  
-  .python-container {
-    grid-template-columns: 3fr 1fr; /* Maximum width ratio for 4K */
-  }
-  
-  .commands-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+.tab-btn:hover,
+.stat-card:hover,
+.terminal-actions .btn-sm:hover {
+  transform: translateZ(0);
 }
 
 /* ==========================================================================
@@ -1805,61 +1711,292 @@
 }
 
 /* ==========================================================================
-   ADDITIONAL UTILITIES
+   GRANULAR RESPONSIVE BREAKPOINTS (50px INCREMENTS)
    ========================================================================== */
-.student-info.warning {
-  background: rgba(255, 209, 102, 0.2);
-  color: var(--cosmic-warning);
-  border: 1px solid rgba(255, 209, 102, 0.4);
-  text-shadow: 0 0 8px rgba(255, 209, 102, 0.3);
-}
 
-/* Terminal selection */
-.terminal-content ::selection {
-  background: rgba(78, 205, 196, 0.3);
-  color: var(--terminal-text);
-}
-
-/* Mobile terminal input fixes */
-@media (max-width: 768px) {
-  .terminal-input-line {
-    flex-wrap: wrap;
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .labs-container {
+    font-size: 8px;
+    padding: 4px;
   }
-  
-  .input-prompt {
-    width: 100%;
-    margin-bottom: 5px;
+  .btn { min-height: 32px; }
+  .header-stats { grid-template-columns: 1fr; }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: 1fr; }
+  .tabs-navigation { flex-direction: column; }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .labs-container {
+    font-size: 9px;
+    padding: 6px;
   }
-  
-  .command-input {
-    min-width: 150px;
+  .btn { min-height: 34px; }
+  .header-stats { grid-template-columns: 1fr; }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: 1fr; }
+  .tabs-navigation { flex-direction: column; }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .labs-container {
+    font-size: 10px;
+    padding: 8px;
   }
+  .btn { min-height: 36px; }
+  .header-stats { grid-template-columns: 1fr; }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(2, 1fr); }
+  .tabs-navigation { flex-direction: column; }
 }
 
-/* Performance optimizations */
-.tab-content,
-.terminal-wrapper,
-.stat-card {
-  contain: layout style paint;
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .labs-container {
+    font-size: 11px;
+    padding: 10px;
+  }
+  .btn { min-height: 38px; }
+  .header-stats { grid-template-columns: 1fr; }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(2, 1fr); }
+  .tabs-navigation { flex-wrap: wrap; }
 }
 
-.tab-btn:hover,
-.stat-card:hover,
-.terminal-actions .btn-sm:hover {
-  transform: translateZ(0);
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .labs-container {
+    font-size: 12px;
+    padding: 12px;
+  }
+  .btn { min-height: 40px; }
+  .header-stats { grid-template-columns: 1fr; }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ==========================================================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ========================================================================== 
-   1. Added global text protection rules to prevent character-by-character word breaking.
-   2. Applied `box-sizing: border-box` to all elements for consistent sizing.
-   3. Added `isolation: isolate` to major containers to prevent z-index leaks.
-   4. Converted all explicit font sizes to `clamp()` for fluid typography.
-   5. Added `flex-wrap: wrap` and `gap` to flexible containers to allow reflow.
-   6. Changed `word-break: break-all` to `overflow-wrap: break-word` in terminal to prevent arbitrary word breaks.
-   7. Made `stat-number` font size fluid.
-   8. Added `min-width` constraints to inputs to prevent them from becoming too narrow.
-   9. Ensured all containers expand with content using `min-height: min-content` where appropriate.
-   10. Preserved all original colors, animations, and design intentions.
-*/  
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .labs-container {
+    font-size: 13px;
+    padding: 14px;
+  }
+  .btn { min-height: 42px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .labs-container {
+    font-size: 13.5px;
+    padding: 16px;
+  }
+  .btn { min-height: 44px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .labs-container {
+    font-size: 14px;
+    padding: 18px;
+  }
+  .btn { min-height: 45px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: 1fr; }
+  .python-container { grid-template-columns: 1fr; }
+  .commands-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .labs-container {
+    font-size: 14.5px;
+    padding: 20px;
+  }
+  .btn { min-height: 46px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: minmax(240px, 280px) 1fr; }
+  .python-container { grid-template-columns: 1fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .labs-container {
+    font-size: 15px;
+    padding: 22px;
+  }
+  .btn { min-height: 47px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: minmax(260px, 300px) 1fr; }
+  .python-container { grid-template-columns: 1.5fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .labs-container {
+    font-size: 15.5px;
+    padding: 24px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(2, 1fr); }
+  .sql-container { grid-template-columns: minmax(280px, 320px) 1fr; }
+  .python-container { grid-template-columns: 1.5fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .labs-container {
+    font-size: 16px;
+    padding: 26px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(3, 1fr); }
+  .sql-container { grid-template-columns: minmax(280px, 320px) 1fr; }
+  .python-container { grid-template-columns: 1.75fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .labs-container {
+    font-size: 16.5px;
+    padding: 28px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(3, 1fr); }
+  .sql-container { grid-template-columns: 300px 1fr; }
+  .python-container { grid-template-columns: 2fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .labs-container {
+    font-size: 17px;
+    padding: 30px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(3, 1fr); }
+  .sql-container { grid-template-columns: 320px 1fr; }
+  .python-container { grid-template-columns: 2fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .labs-container {
+    font-size: 17px;
+    padding: 32px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 320px 1fr; }
+  .python-container { grid-template-columns: 2fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .labs-container {
+    font-size: 17.5px;
+    padding: 34px;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 320px 1fr; }
+  .python-container { grid-template-columns: 2.2fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .labs-container {
+    font-size: 17.5px;
+    padding: 36px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 330px 1fr; }
+  .python-container { grid-template-columns: 2.2fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .labs-container {
+    font-size: 18px;
+    padding: 38px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 340px 1fr; }
+  .python-container { grid-template-columns: 2.3fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .labs-container {
+    font-size: 18px;
+    padding: 40px;
+    max-width: 1150px;
+    margin: 0 auto;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 350px 1fr; }
+  .python-container { grid-template-columns: 2.4fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .labs-container {
+    font-size: 18.5px;
+    padding: 42px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .btn { min-height: 48px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 350px 1fr; }
+  .python-container { grid-template-columns: 2.5fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and Beyond ===== */
+@media only screen and (min-width: 1200px) {
+  .labs-container {
+    font-size: 19px;
+    padding: 44px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  .btn { min-height: 52px; }
+  .header-stats { grid-template-columns: repeat(4, 1fr); }
+  .sql-container { grid-template-columns: 400px 1fr; }
+  .python-container { grid-template-columns: 3fr 1fr; }
+  .commands-grid { grid-template-columns: repeat(5, 1fr); }
+}

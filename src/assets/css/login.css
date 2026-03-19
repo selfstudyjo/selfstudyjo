@@ -1,93 +1,119 @@
 /* src/assets/css/login.css */
-/* 
-  COSMIC SPACE THEME - LOGIN COMPONENT
-  Designed for Vue.js application with 3D galaxy background
-  Theme: Dark glass-morphism with cosmic glow effects
+/*
+ C OSMIC SPACE THEME - LOGIN COMPONENT                                          *
+ Designed for Vue.js application with 3D galaxy background
+ Theme: Dark glass-morphism with cosmic glow effects
 
-  RESPONSIVE ENHANCEMENTS:
-  - Prevent word/character breaks across all elements
-  - Ensure containers expand to fit content
-  - Prevent text overlap with password toggle
-  - Use fluid typography and spacing where needed
-  - Maintain all original design, colors, and animations
-*/
+ FULLY RESPONSIVE ENHANCEMENT (200px – 2560px+)
+ - Granular 50px breakpoint system
+ - Progressive scaling of typography, spacing, containers
+ - WCAG AA contrast maintained at all sizes
+ - Touch targets scale from 32px to 48px+
+ - All original classes, colors, animations preserved
+ */
 
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES (VARIABLES)
-   ========================================================================== */
+ C SS CUSTOM PROPERTIES (VARIABLES) – SCALABLE BASE (SMALLEST SCREEN)          *
+ ========================================================================== */
 :root {
-  /* Cosmic Color Palette */
+  /* Cosmic Color Palette (unchanged) */
   --cosmic-dark: rgba(5, 5, 20, 0.9);
   --cosmic-darker: rgba(2, 2, 10, 0.95);
   --cosmic-card: rgba(10, 10, 30, 0.92);
   --cosmic-card-light: rgba(20, 20, 50, 0.95);
   --cosmic-card-hover: rgba(30, 30, 60, 0.95);
-  
+
   /* Accent Colors */
   --cosmic-cyan: #4ECDC4;
   --cosmic-purple: #8A2BE2;
   --cosmic-blue: #4285F4;
   --cosmic-nebula: rgba(138, 43, 226, 0.3);
   --cosmic-star: #FFFFFF;
-  
+
   /* Text Colors */
   --text-primary: #FFFFFF;
   --text-secondary: #E0E0E0;
   --text-tertiary: #B0B0B0;
   --text-accent: #4ECDC4;
   --text-input: #FFFFFF;
-  
+
   /* Border & Glow Effects */
   --border-subtle: rgba(255, 255, 255, 0.15);
   --border-glow: rgba(255, 255, 255, 0.25);
   --glow-cyan: rgba(78, 205, 196, 0.4);
   --glow-purple: rgba(138, 43, 226, 0.4);
   --glow-blue: rgba(66, 133, 244, 0.4);
-  
+
   /* Glass Effects */
   --glass-blur: blur(15px) saturate(180%);
   --glass-blur-mobile: blur(8px) saturate(150%);
-  
+
   /* Shadows */
   --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
   --shadow-glow: 0 0 30px rgba(78, 205, 196, 0.2);
   --shadow-deep: 0 10px 40px rgba(0, 0, 0, 0.5);
-  
-  /* Spacing */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 2rem;
-  --space-xl: 3rem;
-  
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 300ms ease;
   --transition-slow: 500ms ease;
+
+  /* ===== SCALABLE VARIABLES (BASE: 200px–250px) ===== */
+  /* Spacing (px) */
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 8px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* Border Radius (px) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Typography (px) */
+  --font-size-h1: 16px;
+  --font-size-p: 8px;
+  --font-size-label: 8px;
+  --font-size-input: 10px;
+  --font-size-button: 10px;
+  --font-size-footer: 8px;
+  --font-size-link: 8px;
+
+  /* Input & Button Dimensions (px) */
+  --input-padding-vertical: 6px;
+  --input-padding-horizontal: 8px;
+  --input-padding-right: 30px;       /* space for password toggle */
+  --button-padding-vertical: 8px;
+  --button-padding-horizontal: 12px;
+  --button-min-height: 32px;          /* minimum touch target */
+
+  /* Password Toggle */
+  --toggle-size: 24px;
+  --toggle-font-size: 14px;
+
+  /* Container */
+  --container-max-width: 260px;       /* card max-width */
+  --container-padding-vertical: var(--space-xl);
+  --container-padding-horizontal: var(--space-lg);
 }
 
 /* ==========================================================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================================================== */
+ G LOBAL TEXT PROTECTION & BOX SIZING                                          *
+ ========================================================================== */
 .login-container * {
-  /* Prevent character-by-character word breaking */
-  word-break: normal;                /* Normal word breaking, no character breaks */
-  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-  hyphens: none;                     /* Disable automatic hyphenation */
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
   -webkit-hyphens: none;
   -ms-hyphens: none;
-  box-sizing: border-box;            /* Consistent sizing */
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
-   ANIMATIONS (SCAN LINE REMOVED)
-   ========================================================================== */
+ A NIMATIONS (unchanged)                                                       *
+ ========================================================================== */
 @keyframes cosmicSlideUp {
   from {
     opacity: 0;
@@ -112,14 +138,14 @@
 
 @keyframes cosmicGlowPulse {
   0%, 100% {
-    box-shadow: 
-      0 0 20px rgba(78, 205, 196, 0.3),
-      0 0 40px rgba(78, 205, 196, 0.1);
+    box-shadow:
+    0 0 20px rgba(78, 205, 196, 0.3),
+    0 0 40px rgba(78, 205, 196, 0.1);
   }
   50% {
-    box-shadow: 
-      0 0 30px rgba(78, 205, 196, 0.5),
-      0 0 60px rgba(78, 205, 196, 0.2);
+    box-shadow:
+    0 0 30px rgba(78, 205, 196, 0.5),
+    0 0 60px rgba(78, 205, 196, 0.2);
   }
 }
 
@@ -153,16 +179,16 @@
 }
 
 /* ==========================================================================
-   MAIN CONTAINER - TRANSPARENT SPACE VIEW
-   ========================================================================== */
+ M AIN CONTAINER - TRANSPARENT SPACE VIEW                                      *
+ ========================================================================== */
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-md);
+  padding: var(--space-md);          /* uses scalable variable */
   position: relative;
-  overflow: visible;                 /* Ensure no content is clipped */
+  overflow: visible;
   background: transparent !important;
 }
 
@@ -173,59 +199,57 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(
-      circle at 30% 50%,
-      rgba(10, 10, 40, 0.15) 0%,
-      rgba(5, 5, 20, 0.08) 50%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 70% 30%,
-      rgba(138, 43, 226, 0.1) 0%,
-      transparent 70%
-    );
+  background:
+  radial-gradient(
+    circle at 30% 50%,
+    rgba(10, 10, 40, 0.15) 0%,
+                  rgba(5, 5, 20, 0.08) 50%,
+                  transparent 100%
+  ),
+  radial-gradient(
+    circle at 70% 30%,
+    rgba(138, 43, 226, 0.1) 0%,
+                  transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
 /* ==========================================================================
-   LOGIN CARD - FIXED WITHOUT SCAN LINE
-   ========================================================================== */
+ L OGIN CARD - FIXED WITHOUT SCAN LINE                                         *
+ ========================================================================== */
 .login-card {
   background: var(--cosmic-card);
   backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl) var(--space-lg);
+  border-radius: var(--radius-xl);   /* uses scalable variable */
+  padding: var(--container-padding-vertical) var(--container-padding-horizontal);
   width: 100%;
-  max-width: 440px;
-  box-shadow: 
-    var(--shadow-deep),
-    0 0 0 1px var(--border-subtle),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.2);
+  max-width: var(--container-max-width);
+  box-shadow:
+  var(--shadow-deep),
+  0 0 0 1px var(--border-subtle),
+  inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+  inset 0 -1px 0 0 rgba(0, 0, 0, 0.2);
   z-index: 100;
   position: relative;
   animation: cosmicSlideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-subtle);
   transition: all var(--transition-normal);
-  /* Responsive enhancements */
-  min-height: min-content;           /* Expand with content */
-  height: auto;                      /* No fixed height */
-  isolation: isolate;                /* Fresh stacking context */
+  min-height: min-content;
+  height: auto;
+  isolation: isolate;
 }
 
 .login-card:hover {
   border-color: var(--border-glow);
-  box-shadow: 
-    var(--shadow-deep),
-    0 0 40px rgba(78, 205, 196, 0.15),
-    0 0 0 1px rgba(78, 205, 196, 0.3),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  box-shadow:
+  var(--shadow-deep),
+  0 0 40px rgba(78, 205, 196, 0.15),
+  0 0 0 1px rgba(78, 205, 196, 0.3),
+  inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
-/* Cosmic edge glow */
 .login-card::before {
   content: '';
   position: absolute;
@@ -238,7 +262,7 @@
     135deg,
     transparent 0%,
     rgba(78, 205, 196, 0.05) 50%,
-    transparent 100%
+                              transparent 100%
   );
   pointer-events: none;
   z-index: -1;
@@ -251,13 +275,12 @@
 }
 
 /* ==========================================================================
-   HEADER SECTION - COSMIC TERMINAL TITLE
-   ========================================================================== */
+ H EADER SECTION - COSMIC TERMINAL TITLE                                       *
+ ========================================================================== */
 .login-header {
   text-align: center;
   margin-bottom: var(--space-xl);
   position: relative;
-  /* Ensure it expands */
   min-height: min-content;
 }
 
@@ -272,60 +295,58 @@
     90deg,
     transparent,
     var(--cosmic-cyan),
-    transparent
+                              transparent
   );
   border-radius: 1px;
   box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
 }
 
 .login-header h1 {
-  font-size: clamp(28px, 5vw, 36px);
+  font-size: var(--font-size-h1, clamp(28px, 5vw, 36px));
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: var(--space-sm);
-  text-shadow: 
-    0 0 20px rgba(78, 205, 196, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.8),
-    0 0 1px rgba(255, 255, 255, 0.5);
+  text-shadow:
+  0 0 20px rgba(78, 205, 196, 0.5),
+  0 2px 8px rgba(0, 0, 0, 0.8),
+  0 0 1px rgba(255, 255, 255, 0.5);
   letter-spacing: 2px;
   background: linear-gradient(
     135deg,
     var(--text-primary) 0%,
-    var(--text-accent) 50%,
-    var(--text-primary) 100%
+                              var(--text-accent) 50%,
+                              var(--text-primary) 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   background-size: 200% auto;
   animation: textShine 3s ease-in-out infinite alternate;
-  /* Prevent breaking */
-  word-break: keep-all;              /* Keep whole words together */
+  word-break: keep-all;
 }
 
 .login-header p {
   color: var(--text-secondary);
-  font-size: clamp(14px, 2.5vw, 16px);
+  font-size: var(--font-size-p, clamp(14px, 2.5vw, 16px));
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   opacity: 0.9;
   letter-spacing: 0.5px;
 }
 
 /* ==========================================================================
-   FORM LAYOUT
-   ========================================================================== */
+ F ORM LAYOUT                                                                  *
+ ========================================================================== */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  /* Ensure it expands */
   min-height: min-content;
   height: auto;
 }
 
 /* ==========================================================================
-   FORM CONTROLS - FIXED TEXT COLOR
-   ========================================================================== */
+ F ORM CONTROLS - FIXED TEXT COLOR                                             *
+ ========================================================================== */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -334,7 +355,7 @@
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: var(--font-size-label, 14px);
   font-weight: 600;
   color: var(--text-accent);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -342,15 +363,14 @@
 }
 
 .form-group input {
-  padding: 14px 16px;
-  /* Add right padding to avoid overlap with password toggle */
-  padding-right: 40px;
+  padding: var(--input-padding-vertical, 14px) var(--input-padding-horizontal, 16px);
+  padding-right: var(--input-padding-right, 40px);
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  font-size: 16px;
+  font-size: var(--font-size-input, 16px);
   transition: all var(--transition-normal);
-  color: var(--text-input) !important; /* Force light text */
+  color: var(--text-input) !important;
   backdrop-filter: blur(5px);
 }
 
@@ -359,42 +379,39 @@
   opacity: 0.7;
 }
 
-/* Ensure text remains light in all states */
 .form-group input:not(:placeholder-shown) {
   color: var(--text-input) !important;
 }
 
-/* Focus States - Fixed text color */
 .form-group input:focus {
   outline: none;
   border-color: var(--cosmic-cyan);
-  box-shadow: 
-    0 0 0 3px rgba(78, 205, 196, 0.2),
-    0 0 20px rgba(78, 205, 196, 0.3),
-    inset 0 0 10px rgba(78, 205, 196, 0.1);
+  box-shadow:
+  0 0 0 3px rgba(78, 205, 196, 0.2),
+  0 0 20px rgba(78, 205, 196, 0.3),
+  inset 0 0 10px rgba(78, 205, 196, 0.1);
   background: rgba(0, 0, 0, 0.7);
   color: var(--text-input) !important;
   animation: borderPulse 2s infinite;
 }
 
-/* Error States */
 .form-group input.error {
   border-color: #ff6b6b;
-  box-shadow: 
-    0 0 0 3px rgba(255, 107, 107, 0.2),
-    0 0 15px rgba(255, 107, 107, 0.3);
+  box-shadow:
+  0 0 0 3px rgba(255, 107, 107, 0.2),
+  0 0 15px rgba(255, 107, 107, 0.3);
   color: var(--text-input) !important;
 }
 
 /* ==========================================================================
-   PASSWORD FIELD WITH TOGGLE - Prevent text overlap
-   ========================================================================== */
+ P ASSWORD FIELD WITH TOGGLE - Prevent text overlap                            *
+ ========================================================================== */
 .password-input {
   position: relative;
 }
 
 .password-input input {
-  padding-right: 40px; /* Already applied via .form-group input, but ensure it's here */
+  padding-right: var(--input-padding-right, 40px);
 }
 
 .password-toggle {
@@ -405,14 +422,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: var(--toggle-font-size, 20px);
   padding: 4px;
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   backdrop-filter: blur(5px);
   border-radius: 4px;
-  width: 32px;
-  height: 32px;
+  width: var(--toggle-size, 32px);
+  height: var(--toggle-size, 32px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -429,8 +446,8 @@
 }
 
 /* ==========================================================================
-   ERROR MESSAGES - Wrap gracefully
-   ========================================================================== */
+ E RROR MESSAGES - Wrap gracefully                                             *
+ ========================================================================== */
 .error-message {
   color: #ff6b6b;
   font-size: 14px;
@@ -441,7 +458,7 @@
   gap: var(--space-xs);
   padding-left: 8px;
   position: relative;
-  word-break: normal;                /* Prevent breaking inside message */
+  word-break: normal;
   overflow-wrap: break-word;
 }
 
@@ -451,8 +468,8 @@
 }
 
 /* ==========================================================================
-   ALERTS & NOTIFICATIONS
-   ========================================================================== */
+ A LERTS & NOTIFICATIONS                                                       *
+ ========================================================================== */
 .login-alert {
   padding: 12px 16px;
   border-radius: var(--radius-md);
@@ -462,16 +479,16 @@
   animation: cosmicFadeIn 0.3s ease;
   backdrop-filter: blur(10px);
   border: 1px solid;
-  word-break: normal;                /* Prevent breaking */
+  word-break: normal;
 }
 
 .alert-error {
   background: rgba(255, 107, 107, 0.15);
   color: #ff6b6b;
   border-color: rgba(255, 107, 107, 0.3);
-  box-shadow: 
-    0 0 20px rgba(255, 107, 107, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  box-shadow:
+  0 0 20px rgba(255, 107, 107, 0.1),
+  inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 .alert-close {
@@ -497,13 +514,13 @@
 }
 
 /* ==========================================================================
-   BUTTONS
-   ========================================================================== */
+ B UTTONS                                                                      *
+ ========================================================================== */
 .login-btn {
-  padding: 16px;
+  padding: var(--button-padding-vertical, 16px) var(--button-padding-horizontal, 16px);
   border: none;
   border-radius: var(--radius-lg);
-  font-size: 16px;
+  font-size: var(--font-size-button, 16px);
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
@@ -515,14 +532,15 @@
   overflow: hidden;
   letter-spacing: 1px;
   text-transform: uppercase;
-  word-break: keep-all;              /* Keep button text whole */
-  white-space: nowrap;               /* Prevent wrapping by default */
+  word-break: keep-all;
+  white-space: nowrap;
+  min-height: var(--button-min-height, 44px);
 }
 
 /* Allow button text to wrap on very small screens if absolutely necessary */
 @media (max-width: 320px) {
   .login-btn {
-    white-space: normal;             /* Allow wrap only on smallest screens */
+    white-space: normal;
   }
 }
 
@@ -537,9 +555,9 @@
   background: linear-gradient(
     45deg,
     var(--cosmic-blue),
-    var(--cosmic-purple),
-    var(--cosmic-cyan),
-    var(--cosmic-blue)
+                              var(--cosmic-purple),
+                              var(--cosmic-cyan),
+                              var(--cosmic-blue)
   );
   background-size: 400% 400%;
   border-radius: var(--radius-lg);
@@ -557,14 +575,14 @@
   background: linear-gradient(
     135deg,
     var(--cosmic-blue) 0%,
-    var(--cosmic-purple) 50%,
-    var(--cosmic-cyan) 100%
+                              var(--cosmic-purple) 50%,
+                              var(--cosmic-cyan) 100%
   );
   color: var(--text-primary);
-  box-shadow: 
-    0 4px 15px rgba(66, 133, 244, 0.3),
-    0 0 20px rgba(138, 43, 226, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow:
+  0 4px 15px rgba(66, 133, 244, 0.3),
+  0 0 20px rgba(138, 43, 226, 0.2),
+  inset 0 1px 0 rgba(255, 255, 255, 0.2);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   position: relative;
   z-index: 1;
@@ -572,10 +590,10 @@
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 
-    0 8px 25px rgba(66, 133, 244, 0.4),
-    0 0 30px rgba(138, 43, 226, 0.3),
-    0 0 40px rgba(78, 205, 196, 0.2);
+  box-shadow:
+  0 8px 25px rgba(66, 133, 244, 0.4),
+  0 0 30px rgba(138, 43, 226, 0.3),
+  0 0 40px rgba(78, 205, 196, 0.2);
   animation: cosmicGlowPulse 2s infinite;
 }
 
@@ -592,13 +610,13 @@
 }
 
 /* ==========================================================================
-   FOOTER & LINKS
-   ========================================================================== */
+ F OOTER & LINKS                                                               *
+ ========================================================================== */
 .login-footer {
   text-align: center;
   margin-top: var(--space-lg);
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: var(--font-size-footer, 14px);
   padding-top: var(--space-md);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
@@ -625,8 +643,9 @@
   position: relative;
   padding: 2px 4px;
   border-radius: 4px;
-  word-break: keep-all;              /* Keep whole word */
-  white-space: nowrap;                /* Keep link on one line */
+  word-break: keep-all;
+  white-space: nowrap;
+  font-size: var(--font-size-link, 14px);
 }
 
 .login-footer .link:hover {
@@ -648,8 +667,8 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN (Preserved and enhanced)
-   ========================================================================== */
+ O RIGINAL RESPONSIVE DESIGN (Preserved)                                       *
+ ========================================================================== */
 
 /* Mobile: < 640px */
 @media (max-width: 640px) {
@@ -658,7 +677,7 @@
     align-items: flex-start;
     padding-top: var(--space-xl);
   }
-  
+
   .login-card {
     padding: var(--space-lg) var(--space-md);
     backdrop-filter: var(--glass-blur-mobile);
@@ -666,32 +685,31 @@
     max-width: 100%;
     border-radius: var(--radius-lg);
   }
-  
+
   .login-header h1 {
     font-size: clamp(24px, 8vw, 28px);
     letter-spacing: 1px;
   }
-  
+
   .login-header p {
     font-size: clamp(13px, 4vw, 15px);
   }
-  
+
   .login-form {
     gap: var(--space-md);
   }
-  
+
   .form-group input {
     padding: 12px 14px;
     font-size: 15px;
   }
-  
+
   .login-btn {
     padding: 14px;
     font-size: 15px;
     min-height: 44px;
   }
-  
-  /* Reduced animation intensity on mobile */
+
   .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
   }
@@ -703,15 +721,15 @@
     max-width: 420px;
     padding: var(--space-lg);
   }
-  
+
   .login-header h1 {
     font-size: clamp(28px, 4vw, 32px);
   }
-  
+
   .login-header p {
     font-size: 15px;
   }
-  
+
   .form-group label {
     font-size: 15px;
   }
@@ -722,11 +740,11 @@
   .login-card {
     max-width: 440px;
   }
-  
+
   .login-header h1 {
     font-size: 34px;
   }
-  
+
   .login-form {
     gap: var(--space-lg);
   }
@@ -738,24 +756,24 @@
     max-width: 480px;
     padding: var(--space-xl) var(--space-xl);
   }
-  
+
   .login-header h1 {
     font-size: 36px;
   }
-  
+
   .login-header p {
     font-size: 17px;
   }
-  
+
   .form-group label {
     font-size: 16px;
   }
-  
+
   .form-group input {
     padding: 16px 18px;
     font-size: 17px;
   }
-  
+
   .login-btn {
     padding: 18px;
     font-size: 17px;
@@ -769,24 +787,24 @@
     padding: 48px 40px;
     border-radius: 28px;
   }
-  
+
   .login-header h1 {
     font-size: 42px;
   }
-  
+
   .login-header p {
     font-size: 18px;
   }
-  
+
   .form-group label {
     font-size: 18px;
   }
-  
+
   .form-group input {
     padding: 18px 20px;
     font-size: 18px;
   }
-  
+
   .login-btn {
     padding: 20px;
     font-size: 18px;
@@ -795,8 +813,8 @@
 }
 
 /* ==========================================================================
-   ACCESSIBILITY & REDUCED MOTION
-   ========================================================================== */
+ A CCESSIBILITY & REDUCED MOTION (unchanged)                                   *
+ ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   .login-card,
   .login-btn,
@@ -806,17 +824,17 @@
     animation: none !important;
     transition: none !important;
   }
-  
+
   .login-card {
     animation: cosmicSlideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .login-card::before,
   .btn-primary::before,
   .login-container::before {
     display: none;
   }
-  
+
   .login-header h1 {
     animation: none;
     background: var(--text-accent);
@@ -826,24 +844,23 @@
   }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   .login-card {
     background: rgba(0, 0, 0, 0.95);
     border: 2px solid white;
   }
-  
+
   .form-group input {
     border: 2px solid white;
     background: black;
     color: white !important;
   }
-  
+
   .btn-primary {
     background: linear-gradient(135deg, #0000FF 0%, #800080 100%);
     border: 2px solid white;
   }
-  
+
   .login-header h1 {
     color: white;
     -webkit-text-fill-color: white;
@@ -851,7 +868,6 @@
   }
 }
 
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
     --cosmic-card: rgba(15, 15, 35, 0.92);
@@ -860,19 +876,879 @@
 }
 
 /* ==========================================================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ========================================================================== 
-   1. Added global text protection rules to all elements inside .login-container:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Set `.login-container` overflow to `visible` to avoid clipping.
-   3. Added `min-height: min-content` and `height: auto` to `.login-card`, `.login-header`, `.login-form` to ensure expansion with content.
-   4. Added `isolation: isolate` to `.login-card` for fresh stacking context.
-   5. Added `padding-right: 40px` to password input to prevent text overlapping with toggle.
-   6. Added `word-break: keep-all` to headings, buttons, and links to keep whole words together.
-   7. Added a media query for screens < 320px to allow button text to wrap if necessary.
-   8. Preserved all original colors, animations, and media queries.
-   9. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+ G RANULAR RESPONSIVE BREAKPOINTS (50px increments)                            *
+ ========================================================================== */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --space-xs: 2px;
+    --space-sm: 4px;
+    --space-md: 8px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --font-size-h1: 16px;
+    --font-size-p: 8px;
+    --font-size-label: 8px;
+    --font-size-input: 10px;
+    --font-size-button: 10px;
+    --font-size-footer: 8px;
+    --font-size-link: 8px;
+    --input-padding-vertical: 6px;
+    --input-padding-horizontal: 8px;
+    --input-padding-right: 30px;
+    --button-padding-vertical: 8px;
+    --button-padding-horizontal: 12px;
+    --button-min-height: 32px;
+    --toggle-size: 24px;
+    --toggle-font-size: 14px;
+    --container-max-width: 260px;
+  }
+  /* Ensure no text overflow */
+  .login-card { padding: var(--container-padding-vertical) var(--container-padding-horizontal); }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --space-xs: 2px;          /* 2 * 1.125 = 2.25 → 2 */
+    --space-sm: 5px;          /* 4 * 1.125 = 4.5 → 5 */
+    --space-md: 9px;          /* 8 * 1.125 = 9 */
+    --space-lg: 18px;         /* 16 * 1.125 = 18 */
+    --space-xl: 27px;         /* 24 * 1.125 = 27 */
+    --radius-sm: 5px;         /* 4 * 1.125 = 4.5 → 5 */
+    --radius-md: 7px;         /* 6 * 1.125 = 6.75 → 7 */
+    --radius-lg: 9px;         /* 8 * 1.125 = 9 */
+    --radius-xl: 14px;        /* 12 * 1.125 = 13.5 → 14 */
+    --font-size-h1: 18px;     /* 16 * 1.125 = 18 */
+    --font-size-p: 9px;       /* 8 * 1.125 = 9 */
+    --font-size-label: 9px;
+    --font-size-input: 11px;  /* 10 * 1.125 = 11.25 → 11 */
+    --font-size-button: 11px;
+    --font-size-footer: 9px;
+    --font-size-link: 9px;
+    --input-padding-vertical: 7px;   /* 6 * 1.125 = 6.75 → 7 */
+    --input-padding-horizontal: 9px;  /* 8 * 1.125 = 9 */
+    --input-padding-right: 34px;      /* 30 * 1.125 = 33.75 → 34 */
+    --button-padding-vertical: 9px;   /* 8 * 1.125 = 9 */
+    --button-padding-horizontal: 14px; /* 12 * 1.125 = 13.5 → 14 */
+    --button-min-height: 36px;         /* 32 * 1.125 = 36 */
+    --toggle-size: 27px;               /* 24 * 1.125 = 27 */
+    --toggle-font-size: 16px;          /* 14 * 1.125 = 15.75 → 16 */
+    --container-max-width: 293px;      /* 260 * 1.125 = 292.5 → 293 */
+  }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --space-xs: 3px;          /* 2 * 1.25 = 2.5 → 3 */
+    --space-sm: 5px;          /* 4 * 1.25 = 5 */
+    --space-md: 10px;         /* 8 * 1.25 = 10 */
+    --space-lg: 20px;         /* 16 * 1.25 = 20 */
+    --space-xl: 30px;         /* 24 * 1.25 = 30 */
+    --radius-sm: 5px;         /* 4 * 1.25 = 5 */
+    --radius-md: 8px;         /* 6 * 1.25 = 7.5 → 8 */
+    --radius-lg: 10px;        /* 8 * 1.25 = 10 */
+    --radius-xl: 15px;        /* 12 * 1.25 = 15 */
+    --font-size-h1: 20px;     /* 16 * 1.25 = 20 */
+    --font-size-p: 10px;      /* 8 * 1.25 = 10 */
+    --font-size-label: 10px;
+    --font-size-input: 13px;  /* 10 * 1.25 = 12.5 → 13 */
+    --font-size-button: 13px;
+    --font-size-footer: 10px;
+    --font-size-link: 10px;
+    --input-padding-vertical: 8px;   /* 6 * 1.25 = 7.5 → 8 */
+    --input-padding-horizontal: 10px; /* 8 * 1.25 = 10 */
+    --input-padding-right: 38px;      /* 30 * 1.25 = 37.5 → 38 */
+    --button-padding-vertical: 10px;  /* 8 * 1.25 = 10 */
+    --button-padding-horizontal: 15px; /* 12 * 1.25 = 15 */
+    --button-min-height: 40px;         /* 32 * 1.25 = 40 */
+    --toggle-size: 30px;               /* 24 * 1.25 = 30 */
+    --toggle-font-size: 18px;          /* 14 * 1.25 = 17.5 → 18 */
+    --container-max-width: 325px;      /* 260 * 1.25 = 325 */
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --space-xs: 3px;          /* 2 * 1.375 = 2.75 → 3 */
+    --space-sm: 6px;          /* 4 * 1.375 = 5.5 → 6 */
+    --space-md: 11px;         /* 8 * 1.375 = 11 */
+    --space-lg: 22px;         /* 16 * 1.375 = 22 */
+    --space-xl: 33px;         /* 24 * 1.375 = 33 */
+    --radius-sm: 6px;         /* 4 * 1.375 = 5.5 → 6 */
+    --radius-md: 8px;         /* 6 * 1.375 = 8.25 → 8 */
+    --radius-lg: 11px;        /* 8 * 1.375 = 11 */
+    --radius-xl: 17px;        /* 12 * 1.375 = 16.5 → 17 */
+    --font-size-h1: 22px;     /* 16 * 1.375 = 22 */
+    --font-size-p: 11px;      /* 8 * 1.375 = 11 */
+    --font-size-label: 11px;
+    --font-size-input: 14px;  /* 10 * 1.375 = 13.75 → 14 */
+    --font-size-button: 14px;
+    --font-size-footer: 11px;
+    --font-size-link: 11px;
+    --input-padding-vertical: 8px;   /* 6 * 1.375 = 8.25 → 8 */
+    --input-padding-horizontal: 11px; /* 8 * 1.375 = 11 */
+    --input-padding-right: 41px;      /* 30 * 1.375 = 41.25 → 41 */
+    --button-padding-vertical: 11px;  /* 8 * 1.375 = 11 */
+    --button-padding-horizontal: 17px; /* 12 * 1.375 = 16.5 → 17 */
+    --button-min-height: 44px;         /* 32 * 1.375 = 44 */
+    --toggle-size: 33px;               /* 24 * 1.375 = 33 */
+    --toggle-font-size: 19px;          /* 14 * 1.375 = 19.25 → 19 */
+    --container-max-width: 358px;      /* 260 * 1.375 = 357.5 → 358 */
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --space-xs: 3px;          /* 2 * 1.5 = 3 */
+    --space-sm: 6px;          /* 4 * 1.5 = 6 */
+    --space-md: 12px;         /* 8 * 1.5 = 12 */
+    --space-lg: 24px;         /* 16 * 1.5 = 24 */
+    --space-xl: 36px;         /* 24 * 1.5 = 36 */
+    --radius-sm: 6px;         /* 4 * 1.5 = 6 */
+    --radius-md: 9px;         /* 6 * 1.5 = 9 */
+    --radius-lg: 12px;        /* 8 * 1.5 = 12 */
+    --radius-xl: 18px;        /* 12 * 1.5 = 18 */
+    --font-size-h1: 24px;     /* 16 * 1.5 = 24 */
+    --font-size-p: 12px;      /* 8 * 1.5 = 12 */
+    --font-size-label: 12px;
+    --font-size-input: 15px;  /* 10 * 1.5 = 15 */
+    --font-size-button: 15px;
+    --font-size-footer: 12px;
+    --font-size-link: 12px;
+    --input-padding-vertical: 9px;   /* 6 * 1.5 = 9 */
+    --input-padding-horizontal: 12px; /* 8 * 1.5 = 12 */
+    --input-padding-right: 45px;      /* 30 * 1.5 = 45 */
+    --button-padding-vertical: 12px;  /* 8 * 1.5 = 12 */
+    --button-padding-horizontal: 18px; /* 12 * 1.5 = 18 */
+    --button-min-height: 48px;         /* 32 * 1.5 = 48 */
+    --toggle-size: 36px;               /* 24 * 1.5 = 36 */
+    --toggle-font-size: 21px;          /* 14 * 1.5 = 21 */
+    --container-max-width: 390px;      /* 260 * 1.5 = 390 */
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --space-xs: 3px;          /* 2 * 1.625 = 3.25 → 3 */
+    --space-sm: 7px;          /* 4 * 1.625 = 6.5 → 7 */
+    --space-md: 13px;         /* 8 * 1.625 = 13 */
+    --space-lg: 26px;         /* 16 * 1.625 = 26 */
+    --space-xl: 39px;         /* 24 * 1.625 = 39 */
+    --radius-sm: 7px;         /* 4 * 1.625 = 6.5 → 7 */
+    --radius-md: 10px;        /* 6 * 1.625 = 9.75 → 10 */
+    --radius-lg: 13px;        /* 8 * 1.625 = 13 */
+    --radius-xl: 20px;        /* 12 * 1.625 = 19.5 → 20 */
+    --font-size-h1: 26px;     /* 16 * 1.625 = 26 */
+    --font-size-p: 13px;      /* 8 * 1.625 = 13 */
+    --font-size-label: 13px;
+    --font-size-input: 16px;  /* 10 * 1.625 = 16.25 → 16 */
+    --font-size-button: 16px;
+    --font-size-footer: 13px;
+    --font-size-link: 13px;
+    --input-padding-vertical: 10px;  /* 6 * 1.625 = 9.75 → 10 */
+    --input-padding-horizontal: 13px; /* 8 * 1.625 = 13 */
+    --input-padding-right: 49px;      /* 30 * 1.625 = 48.75 → 49 */
+    --button-padding-vertical: 13px;  /* 8 * 1.625 = 13 */
+    --button-padding-horizontal: 20px; /* 12 * 1.625 = 19.5 → 20 */
+    --button-min-height: 52px;         /* 32 * 1.625 = 52 */
+    --toggle-size: 39px;               /* 24 * 1.625 = 39 */
+    --toggle-font-size: 23px;          /* 14 * 1.625 = 22.75 → 23 */
+    --container-max-width: 423px;      /* 260 * 1.625 = 422.5 → 423 */
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --space-xs: 3px;          /* 2 * 1.6875 = 3.375 → 3 */
+    --space-sm: 7px;          /* 4 * 1.6875 = 6.75 → 7 */
+    --space-md: 14px;         /* 8 * 1.6875 = 13.5 → 14 */
+    --space-lg: 27px;         /* 16 * 1.6875 = 27 */
+    --space-xl: 41px;         /* 24 * 1.6875 = 40.5 → 41 */
+    --radius-sm: 7px;         /* 4 * 1.6875 = 6.75 → 7 */
+    --radius-md: 10px;        /* 6 * 1.6875 = 10.125 → 10 */
+    --radius-lg: 14px;        /* 8 * 1.6875 = 13.5 → 14 */
+    --radius-xl: 20px;        /* 12 * 1.6875 = 20.25 → 20 */
+    --font-size-h1: 27px;     /* 16 * 1.6875 = 27 */
+    --font-size-p: 14px;      /* 8 * 1.6875 = 13.5 → 14 */
+    --font-size-label: 14px;
+    --font-size-input: 17px;  /* 10 * 1.6875 = 16.875 → 17 */
+    --font-size-button: 17px;
+    --font-size-footer: 14px;
+    --font-size-link: 14px;
+    --input-padding-vertical: 10px;  /* 6 * 1.6875 = 10.125 → 10 */
+    --input-padding-horizontal: 14px; /* 8 * 1.6875 = 13.5 → 14 */
+    --input-padding-right: 51px;      /* 30 * 1.6875 = 50.625 → 51 */
+    --button-padding-vertical: 14px;  /* 8 * 1.6875 = 13.5 → 14 */
+    --button-padding-horizontal: 20px; /* 12 * 1.6875 = 20.25 → 20 */
+    --button-min-height: 54px;         /* 32 * 1.6875 = 54 */
+    --toggle-size: 41px;               /* 24 * 1.6875 = 40.5 → 41 */
+    --toggle-font-size: 24px;          /* 14 * 1.6875 = 23.625 → 24 */
+    --container-max-width: 439px;      /* 260 * 1.6875 = 438.75 → 439 */
+  }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 1.75 = 3.5 → 4 */
+    --space-sm: 7px;          /* 4 * 1.75 = 7 */
+    --space-md: 14px;         /* 8 * 1.75 = 14 */
+    --space-lg: 28px;         /* 16 * 1.75 = 28 */
+    --space-xl: 42px;         /* 24 * 1.75 = 42 */
+    --radius-sm: 7px;         /* 4 * 1.75 = 7 */
+    --radius-md: 11px;        /* 6 * 1.75 = 10.5 → 11 */
+    --radius-lg: 14px;        /* 8 * 1.75 = 14 */
+    --radius-xl: 21px;        /* 12 * 1.75 = 21 */
+    --font-size-h1: 28px;     /* 16 * 1.75 = 28 */
+    --font-size-p: 14px;      /* 8 * 1.75 = 14 */
+    --font-size-label: 14px;
+    --font-size-input: 18px;  /* 10 * 1.75 = 17.5 → 18 */
+    --font-size-button: 18px;
+    --font-size-footer: 14px;
+    --font-size-link: 14px;
+    --input-padding-vertical: 11px;  /* 6 * 1.75 = 10.5 → 11 */
+    --input-padding-horizontal: 14px; /* 8 * 1.75 = 14 */
+    --input-padding-right: 53px;      /* 30 * 1.75 = 52.5 → 53 */
+    --button-padding-vertical: 14px;  /* 8 * 1.75 = 14 */
+    --button-padding-horizontal: 21px; /* 12 * 1.75 = 21 */
+    --button-min-height: 56px;         /* 32 * 1.75 = 56 */
+    --toggle-size: 42px;               /* 24 * 1.75 = 42 */
+    --toggle-font-size: 25px;          /* 14 * 1.75 = 24.5 → 25 */
+    --container-max-width: 455px;      /* 260 * 1.75 = 455 */
+  }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 1.8125 = 3.625 → 4 */
+    --space-sm: 7px;          /* 4 * 1.8125 = 7.25 → 7 */
+    --space-md: 15px;         /* 8 * 1.8125 = 14.5 → 15 */
+    --space-lg: 29px;         /* 16 * 1.8125 = 29 */
+    --space-xl: 44px;         /* 24 * 1.8125 = 43.5 → 44 */
+    --radius-sm: 7px;         /* 4 * 1.8125 = 7.25 → 7 */
+    --radius-md: 11px;        /* 6 * 1.8125 = 10.875 → 11 */
+    --radius-lg: 15px;        /* 8 * 1.8125 = 14.5 → 15 */
+    --radius-xl: 22px;        /* 12 * 1.8125 = 21.75 → 22 */
+    --font-size-h1: 29px;     /* 16 * 1.8125 = 29 */
+    --font-size-p: 15px;      /* 8 * 1.8125 = 14.5 → 15 */
+    --font-size-label: 15px;
+    --font-size-input: 18px;  /* 10 * 1.8125 = 18.125 → 18 */
+    --font-size-button: 18px;
+    --font-size-footer: 15px;
+    --font-size-link: 15px;
+    --input-padding-vertical: 11px;  /* 6 * 1.8125 = 10.875 → 11 */
+    --input-padding-horizontal: 15px; /* 8 * 1.8125 = 14.5 → 15 */
+    --input-padding-right: 54px;      /* 30 * 1.8125 = 54.375 → 54 */
+    --button-padding-vertical: 15px;  /* 8 * 1.8125 = 14.5 → 15 */
+    --button-padding-horizontal: 22px; /* 12 * 1.8125 = 21.75 → 22 */
+    --button-min-height: 58px;         /* 32 * 1.8125 = 58 */
+    --toggle-size: 44px;               /* 24 * 1.8125 = 43.5 → 44 */
+    --toggle-font-size: 25px;          /* 14 * 1.8125 = 25.375 → 25 */
+    --container-max-width: 471px;      /* 260 * 1.8125 = 471.25 → 471 */
+  }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 1.875 = 3.75 → 4 */
+    --space-sm: 8px;          /* 4 * 1.875 = 7.5 → 8 */
+    --space-md: 15px;         /* 8 * 1.875 = 15 */
+    --space-lg: 30px;         /* 16 * 1.875 = 30 */
+    --space-xl: 45px;         /* 24 * 1.875 = 45 */
+    --radius-sm: 8px;         /* 4 * 1.875 = 7.5 → 8 */
+    --radius-md: 11px;        /* 6 * 1.875 = 11.25 → 11 */
+    --radius-lg: 15px;        /* 8 * 1.875 = 15 */
+    --radius-xl: 23px;        /* 12 * 1.875 = 22.5 → 23 */
+    --font-size-h1: 30px;     /* 16 * 1.875 = 30 */
+    --font-size-p: 15px;      /* 8 * 1.875 = 15 */
+    --font-size-label: 15px;
+    --font-size-input: 19px;  /* 10 * 1.875 = 18.75 → 19 */
+    --font-size-button: 19px;
+    --font-size-footer: 15px;
+    --font-size-link: 15px;
+    --input-padding-vertical: 11px;  /* 6 * 1.875 = 11.25 → 11 */
+    --input-padding-horizontal: 15px; /* 8 * 1.875 = 15 */
+    --input-padding-right: 56px;      /* 30 * 1.875 = 56.25 → 56 */
+    --button-padding-vertical: 15px;  /* 8 * 1.875 = 15 */
+    --button-padding-horizontal: 23px; /* 12 * 1.875 = 22.5 → 23 */
+    --button-min-height: 60px;         /* 32 * 1.875 = 60 */
+    --toggle-size: 45px;               /* 24 * 1.875 = 45 */
+    --toggle-font-size: 26px;          /* 14 * 1.875 = 26.25 → 26 */
+    --container-max-width: 488px;      /* 260 * 1.875 = 487.5 → 488 */
+  }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 1.9375 = 3.875 → 4 */
+    --space-sm: 8px;          /* 4 * 1.9375 = 7.75 → 8 */
+    --space-md: 16px;         /* 8 * 1.9375 = 15.5 → 16 */
+    --space-lg: 31px;         /* 16 * 1.9375 = 31 */
+    --space-xl: 47px;         /* 24 * 1.9375 = 46.5 → 47 */
+    --radius-sm: 8px;         /* 4 * 1.9375 = 7.75 → 8 */
+    --radius-md: 12px;        /* 6 * 1.9375 = 11.625 → 12 */
+    --radius-lg: 16px;        /* 8 * 1.9375 = 15.5 → 16 */
+    --radius-xl: 23px;        /* 12 * 1.9375 = 23.25 → 23 */
+    --font-size-h1: 31px;     /* 16 * 1.9375 = 31 */
+    --font-size-p: 16px;      /* 8 * 1.9375 = 15.5 → 16 */
+    --font-size-label: 16px;
+    --font-size-input: 19px;  /* 10 * 1.9375 = 19.375 → 19 */
+    --font-size-button: 19px;
+    --font-size-footer: 16px;
+    --font-size-link: 16px;
+    --input-padding-vertical: 12px;  /* 6 * 1.9375 = 11.625 → 12 */
+    --input-padding-horizontal: 16px; /* 8 * 1.9375 = 15.5 → 16 */
+    --input-padding-right: 58px;      /* 30 * 1.9375 = 58.125 → 58 */
+    --button-padding-vertical: 16px;  /* 8 * 1.9375 = 15.5 → 16 */
+    --button-padding-horizontal: 23px; /* 12 * 1.9375 = 23.25 → 23 */
+    --button-min-height: 62px;         /* 32 * 1.9375 = 62 */
+    --toggle-size: 47px;               /* 24 * 1.9375 = 46.5 → 47 */
+    --toggle-font-size: 27px;          /* 14 * 1.9375 = 27.125 → 27 */
+    --container-max-width: 504px;      /* 260 * 1.9375 = 503.75 → 504 */
+  }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2 = 4 */
+    --space-sm: 8px;          /* 4 * 2 = 8 */
+    --space-md: 16px;         /* 8 * 2 = 16 */
+    --space-lg: 32px;         /* 16 * 2 = 32 */
+    --space-xl: 48px;         /* 24 * 2 = 48 */
+    --radius-sm: 8px;         /* 4 * 2 = 8 */
+    --radius-md: 12px;        /* 6 * 2 = 12 */
+    --radius-lg: 16px;        /* 8 * 2 = 16 */
+    --radius-xl: 24px;        /* 12 * 2 = 24 */
+    --font-size-h1: 32px;     /* 16 * 2 = 32 */
+    --font-size-p: 16px;      /* 8 * 2 = 16 */
+    --font-size-label: 16px;
+    --font-size-input: 20px;  /* 10 * 2 = 20 */
+    --font-size-button: 20px;
+    --font-size-footer: 16px;
+    --font-size-link: 16px;
+    --input-padding-vertical: 12px;  /* 6 * 2 = 12 */
+    --input-padding-horizontal: 16px; /* 8 * 2 = 16 */
+    --input-padding-right: 60px;      /* 30 * 2 = 60 */
+    --button-padding-vertical: 16px;  /* 8 * 2 = 16 */
+    --button-padding-horizontal: 24px; /* 12 * 2 = 24 */
+    --button-min-height: 64px;         /* 32 * 2 = 64 */
+    --toggle-size: 48px;               /* 24 * 2 = 48 */
+    --toggle-font-size: 28px;          /* 14 * 2 = 28 */
+    --container-max-width: 520px;      /* 260 * 2 = 520 */
+  }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2.0625 = 4.125 → 4 */
+    --space-sm: 8px;          /* 4 * 2.0625 = 8.25 → 8 */
+    --space-md: 17px;         /* 8 * 2.0625 = 16.5 → 17 */
+    --space-lg: 33px;         /* 16 * 2.0625 = 33 */
+    --space-xl: 50px;         /* 24 * 2.0625 = 49.5 → 50 */
+    --radius-sm: 8px;         /* 4 * 2.0625 = 8.25 → 8 */
+    --radius-md: 12px;        /* 6 * 2.0625 = 12.375 → 12 */
+    --radius-lg: 17px;        /* 8 * 2.0625 = 16.5 → 17 */
+    --radius-xl: 25px;        /* 12 * 2.0625 = 24.75 → 25 */
+    --font-size-h1: 33px;     /* 16 * 2.0625 = 33 */
+    --font-size-p: 17px;      /* 8 * 2.0625 = 16.5 → 17 */
+    --font-size-label: 17px;
+    --font-size-input: 21px;  /* 10 * 2.0625 = 20.625 → 21 */
+    --font-size-button: 21px;
+    --font-size-footer: 17px;
+    --font-size-link: 17px;
+    --input-padding-vertical: 12px;  /* 6 * 2.0625 = 12.375 → 12 */
+    --input-padding-horizontal: 17px; /* 8 * 2.0625 = 16.5 → 17 */
+    --input-padding-right: 62px;      /* 30 * 2.0625 = 61.875 → 62 */
+    --button-padding-vertical: 17px;  /* 8 * 2.0625 = 16.5 → 17 */
+    --button-padding-horizontal: 25px; /* 12 * 2.0625 = 24.75 → 25 */
+    --button-min-height: 66px;         /* 32 * 2.0625 = 66 */
+    --toggle-size: 50px;               /* 24 * 2.0625 = 49.5 → 50 */
+    --toggle-font-size: 29px;          /* 14 * 2.0625 = 28.875 → 29 */
+    --container-max-width: 536px;      /* 260 * 2.0625 = 536.25 → 536 */
+  }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2.125 = 4.25 → 4 */
+    --space-sm: 9px;          /* 4 * 2.125 = 8.5 → 9 */
+    --space-md: 17px;         /* 8 * 2.125 = 17 */
+    --space-lg: 34px;         /* 16 * 2.125 = 34 */
+    --space-xl: 51px;         /* 24 * 2.125 = 51 */
+    --radius-sm: 9px;         /* 4 * 2.125 = 8.5 → 9 */
+    --radius-md: 13px;        /* 6 * 2.125 = 12.75 → 13 */
+    --radius-lg: 17px;        /* 8 * 2.125 = 17 */
+    --radius-xl: 26px;        /* 12 * 2.125 = 25.5 → 26 */
+    --font-size-h1: 34px;     /* 16 * 2.125 = 34 */
+    --font-size-p: 17px;      /* 8 * 2.125 = 17 */
+    --font-size-label: 17px;
+    --font-size-input: 21px;  /* 10 * 2.125 = 21.25 → 21 */
+    --font-size-button: 21px;
+    --font-size-footer: 17px;
+    --font-size-link: 17px;
+    --input-padding-vertical: 13px;  /* 6 * 2.125 = 12.75 → 13 */
+    --input-padding-horizontal: 17px; /* 8 * 2.125 = 17 */
+    --input-padding-right: 64px;      /* 30 * 2.125 = 63.75 → 64 */
+    --button-padding-vertical: 17px;  /* 8 * 2.125 = 17 */
+    --button-padding-horizontal: 26px; /* 12 * 2.125 = 25.5 → 26 */
+    --button-min-height: 68px;         /* 32 * 2.125 = 68 */
+    --toggle-size: 51px;               /* 24 * 2.125 = 51 */
+    --toggle-font-size: 30px;          /* 14 * 2.125 = 29.75 → 30 */
+    --container-max-width: 553px;      /* 260 * 2.125 = 552.5 → 553 */
+  }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2.15625 = 4.3125 → 4 */
+    --space-sm: 9px;          /* 4 * 2.15625 = 8.625 → 9 */
+    --space-md: 17px;         /* 8 * 2.15625 = 17.25 → 17 */
+    --space-lg: 35px;         /* 16 * 2.15625 = 34.5 → 35 */
+    --space-xl: 52px;         /* 24 * 2.15625 = 51.75 → 52 */
+    --radius-sm: 9px;         /* 4 * 2.15625 = 8.625 → 9 */
+    --radius-md: 13px;        /* 6 * 2.15625 = 12.9375 → 13 */
+    --radius-lg: 17px;        /* 8 * 2.15625 = 17.25 → 17 */
+    --radius-xl: 26px;        /* 12 * 2.15625 = 25.875 → 26 */
+    --font-size-h1: 35px;     /* 16 * 2.15625 = 34.5 → 35 */
+    --font-size-p: 17px;      /* 8 * 2.15625 = 17.25 → 17 */
+    --font-size-label: 17px;
+    --font-size-input: 22px;  /* 10 * 2.15625 = 21.5625 → 22 */
+    --font-size-button: 22px;
+    --font-size-footer: 17px;
+    --font-size-link: 17px;
+    --input-padding-vertical: 13px;  /* 6 * 2.15625 = 12.9375 → 13 */
+    --input-padding-horizontal: 17px; /* 8 * 2.15625 = 17.25 → 17 */
+    --input-padding-right: 65px;      /* 30 * 2.15625 = 64.6875 → 65 */
+    --button-padding-vertical: 17px;  /* 8 * 2.15625 = 17.25 → 17 */
+    --button-padding-horizontal: 26px; /* 12 * 2.15625 = 25.875 → 26 */
+    --button-min-height: 69px;         /* 32 * 2.15625 = 69 */
+    --toggle-size: 52px;               /* 24 * 2.15625 = 51.75 → 52 */
+    --toggle-font-size: 30px;          /* 14 * 2.15625 = 30.1875 → 30 */
+    --container-max-width: 561px;      /* 260 * 2.15625 = 560.625 → 561 */
+  }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2.1875 = 4.375 → 4 */
+    --space-sm: 9px;          /* 4 * 2.1875 = 8.75 → 9 */
+    --space-md: 18px;         /* 8 * 2.1875 = 17.5 → 18 */
+    --space-lg: 35px;         /* 16 * 2.1875 = 35 */
+    --space-xl: 53px;         /* 24 * 2.1875 = 52.5 → 53 */
+    --radius-sm: 9px;         /* 4 * 2.1875 = 8.75 → 9 */
+    --radius-md: 13px;        /* 6 * 2.1875 = 13.125 → 13 */
+    --radius-lg: 18px;        /* 8 * 2.1875 = 17.5 → 18 */
+    --radius-xl: 26px;        /* 12 * 2.1875 = 26.25 → 26 */
+    --font-size-h1: 35px;     /* 16 * 2.1875 = 35 */
+    --font-size-p: 18px;      /* 8 * 2.1875 = 17.5 → 18 */
+    --font-size-label: 18px;
+    --font-size-input: 22px;  /* 10 * 2.1875 = 21.875 → 22 */
+    --font-size-button: 22px;
+    --font-size-footer: 18px;
+    --font-size-link: 18px;
+    --input-padding-vertical: 13px;  /* 6 * 2.1875 = 13.125 → 13 */
+    --input-padding-horizontal: 18px; /* 8 * 2.1875 = 17.5 → 18 */
+    --input-padding-right: 66px;      /* 30 * 2.1875 = 65.625 → 66 */
+    --button-padding-vertical: 18px;  /* 8 * 2.1875 = 17.5 → 18 */
+    --button-padding-horizontal: 26px; /* 12 * 2.1875 = 26.25 → 26 */
+    --button-min-height: 70px;         /* 32 * 2.1875 = 70 */
+    --toggle-size: 53px;               /* 24 * 2.1875 = 52.5 → 53 */
+    --toggle-font-size: 31px;          /* 14 * 2.1875 = 30.625 → 31 */
+    --container-max-width: 569px;      /* 260 * 2.1875 = 568.75 → 569 */
+  }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --space-xs: 4px;          /* 2 * 2.21875 = 4.4375 → 4 */
+    --space-sm: 9px;          /* 4 * 2.21875 = 8.875 → 9 */
+    --space-md: 18px;         /* 8 * 2.21875 = 17.75 → 18 */
+    --space-lg: 36px;         /* 16 * 2.21875 = 35.5 → 36 */
+    --space-xl: 53px;         /* 24 * 2.21875 = 53.25 → 53 */
+    --radius-sm: 9px;         /* 4 * 2.21875 = 8.875 → 9 */
+    --radius-md: 13px;        /* 6 * 2.21875 = 13.3125 → 13 */
+    --radius-lg: 18px;        /* 8 * 2.21875 = 17.75 → 18 */
+    --radius-xl: 27px;        /* 12 * 2.21875 = 26.625 → 27 */
+    --font-size-h1: 36px;     /* 16 * 2.21875 = 35.5 → 36 */
+    --font-size-p: 18px;      /* 8 * 2.21875 = 17.75 → 18 */
+    --font-size-label: 18px;
+    --font-size-input: 22px;  /* 10 * 2.21875 = 22.1875 → 22 */
+    --font-size-button: 22px;
+    --font-size-footer: 18px;
+    --font-size-link: 18px;
+    --input-padding-vertical: 13px;  /* 6 * 2.21875 = 13.3125 → 13 */
+    --input-padding-horizontal: 18px; /* 8 * 2.21875 = 17.75 → 18 */
+    --input-padding-right: 67px;      /* 30 * 2.21875 = 66.5625 → 67 */
+    --button-padding-vertical: 18px;  /* 8 * 2.21875 = 17.75 → 18 */
+    --button-padding-horizontal: 27px; /* 12 * 2.21875 = 26.625 → 27 */
+    --button-min-height: 71px;         /* 32 * 2.21875 = 71 */
+    --toggle-size: 53px;               /* 24 * 2.21875 = 53.25 → 53 */
+    --toggle-font-size: 31px;          /* 14 * 2.21875 = 31.0625 → 31 */
+    --container-max-width: 577px;      /* 260 * 2.21875 = 576.875 → 577 */
+  }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --space-xs: 5px;          /* 2 * 2.25 = 4.5 → 5 */
+    --space-sm: 9px;          /* 4 * 2.25 = 9 */
+    --space-md: 18px;         /* 8 * 2.25 = 18 */
+    --space-lg: 36px;         /* 16 * 2.25 = 36 */
+    --space-xl: 54px;         /* 24 * 2.25 = 54 */
+    --radius-sm: 9px;         /* 4 * 2.25 = 9 */
+    --radius-md: 14px;        /* 6 * 2.25 = 13.5 → 14 */
+    --radius-lg: 18px;        /* 8 * 2.25 = 18 */
+    --radius-xl: 27px;        /* 12 * 2.25 = 27 */
+    --font-size-h1: 36px;     /* 16 * 2.25 = 36 */
+    --font-size-p: 18px;      /* 8 * 2.25 = 18 */
+    --font-size-label: 18px;
+    --font-size-input: 23px;  /* 10 * 2.25 = 22.5 → 23 */
+    --font-size-button: 23px;
+    --font-size-footer: 18px;
+    --font-size-link: 18px;
+    --input-padding-vertical: 14px;  /* 6 * 2.25 = 13.5 → 14 */
+    --input-padding-horizontal: 18px; /* 8 * 2.25 = 18 */
+    --input-padding-right: 68px;      /* 30 * 2.25 = 67.5 → 68 */
+    --button-padding-vertical: 18px;  /* 8 * 2.25 = 18 */
+    --button-padding-horizontal: 27px; /* 12 * 2.25 = 27 */
+    --button-min-height: 72px;         /* 32 * 2.25 = 72 */
+    --toggle-size: 54px;               /* 24 * 2.25 = 54 */
+    --toggle-font-size: 32px;          /* 14 * 2.25 = 31.5 → 32 */
+    --container-max-width: 585px;      /* 260 * 2.25 = 585 */
+  }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --space-xs: 5px;          /* 2 * 2.28125 = 4.5625 → 5 */
+    --space-sm: 9px;          /* 4 * 2.28125 = 9.125 → 9 */
+    --space-md: 18px;         /* 8 * 2.28125 = 18.25 → 18 */
+    --space-lg: 37px;         /* 16 * 2.28125 = 36.5 → 37 */
+    --space-xl: 55px;         /* 24 * 2.28125 = 54.75 → 55 */
+    --radius-sm: 9px;         /* 4 * 2.28125 = 9.125 → 9 */
+    --radius-md: 14px;        /* 6 * 2.28125 = 13.6875 → 14 */
+    --radius-lg: 18px;        /* 8 * 2.28125 = 18.25 → 18 */
+    --radius-xl: 27px;        /* 12 * 2.28125 = 27.375 → 27 */
+    --font-size-h1: 37px;     /* 16 * 2.28125 = 36.5 → 37 */
+    --font-size-p: 18px;      /* 8 * 2.28125 = 18.25 → 18 */
+    --font-size-label: 18px;
+    --font-size-input: 23px;  /* 10 * 2.28125 = 22.8125 → 23 */
+    --font-size-button: 23px;
+    --font-size-footer: 18px;
+    --font-size-link: 18px;
+    --input-padding-vertical: 14px;  /* 6 * 2.28125 = 13.6875 → 14 */
+    --input-padding-horizontal: 18px; /* 8 * 2.28125 = 18.25 → 18 */
+    --input-padding-right: 68px;      /* 30 * 2.28125 = 68.4375 → 68 */
+    --button-padding-vertical: 18px;  /* 8 * 2.28125 = 18.25 → 18 */
+    --button-padding-horizontal: 27px; /* 12 * 2.28125 = 27.375 → 27 */
+    --button-min-height: 73px;         /* 32 * 2.28125 = 73 */
+    --toggle-size: 55px;               /* 24 * 2.28125 = 54.75 → 55 */
+    --toggle-font-size: 32px;          /* 14 * 2.28125 = 31.9375 → 32 */
+    --container-max-width: 593px;      /* 260 * 2.28125 = 593.125 → 593 */
+  }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --space-xs: 5px;          /* 2 * 2.3125 = 4.625 → 5 */
+    --space-sm: 9px;          /* 4 * 2.3125 = 9.25 → 9 */
+    --space-md: 19px;         /* 8 * 2.3125 = 18.5 → 19 */
+    --space-lg: 37px;         /* 16 * 2.3125 = 37 */
+    --space-xl: 56px;         /* 24 * 2.3125 = 55.5 → 56 */
+    --radius-sm: 9px;         /* 4 * 2.3125 = 9.25 → 9 */
+    --radius-md: 14px;        /* 6 * 2.3125 = 13.875 → 14 */
+    --radius-lg: 19px;        /* 8 * 2.3125 = 18.5 → 19 */
+    --radius-xl: 28px;        /* 12 * 2.3125 = 27.75 → 28 */
+    --font-size-h1: 37px;     /* 16 * 2.3125 = 37 */
+    --font-size-p: 19px;      /* 8 * 2.3125 = 18.5 → 19 */
+    --font-size-label: 19px;
+    --font-size-input: 23px;  /* 10 * 2.3125 = 23.125 → 23 */
+    --font-size-button: 23px;
+    --font-size-footer: 19px;
+    --font-size-link: 19px;
+    --input-padding-vertical: 14px;  /* 6 * 2.3125 = 13.875 → 14 */
+    --input-padding-horizontal: 19px; /* 8 * 2.3125 = 18.5 → 19 */
+    --input-padding-right: 69px;      /* 30 * 2.3125 = 69.375 → 69 */
+    --button-padding-vertical: 19px;  /* 8 * 2.3125 = 18.5 → 19 */
+    --button-padding-horizontal: 28px; /* 12 * 2.3125 = 27.75 → 28 */
+    --button-min-height: 74px;         /* 32 * 2.3125 = 74 */
+    --toggle-size: 56px;               /* 24 * 2.3125 = 55.5 → 56 */
+    --toggle-font-size: 32px;          /* 14 * 2.3125 = 32.375 → 32 */
+    --container-max-width: 601px;      /* 260 * 2.3125 = 601.25 → 601 */
+  }
+}
+
+/* ----- Breakpoint: 1200px – 1400px | 4XL Desktop ----- */
+@media only screen and (min-width: 1200px) and (max-width: 1400px) {
+  :root {
+    --space-xs: 5px;          /* 2 * 2.375 = 4.75 → 5 */
+    --space-sm: 10px;         /* 4 * 2.375 = 9.5 → 10 */
+    --space-md: 19px;         /* 8 * 2.375 = 19 */
+    --space-lg: 38px;         /* 16 * 2.375 = 38 */
+    --space-xl: 57px;         /* 24 * 2.375 = 57 */
+    --radius-sm: 10px;        /* 4 * 2.375 = 9.5 → 10 */
+    --radius-md: 14px;        /* 6 * 2.375 = 14.25 → 14 */
+    --radius-lg: 19px;        /* 8 * 2.375 = 19 */
+    --radius-xl: 29px;        /* 12 * 2.375 = 28.5 → 29 */
+    --font-size-h1: 38px;     /* 16 * 2.375 = 38 */
+    --font-size-p: 19px;      /* 8 * 2.375 = 19 */
+    --font-size-label: 19px;
+    --font-size-input: 24px;  /* 10 * 2.375 = 23.75 → 24 */
+    --font-size-button: 24px;
+    --font-size-footer: 19px;
+    --font-size-link: 19px;
+    --input-padding-vertical: 14px;  /* 6 * 2.375 = 14.25 → 14 */
+    --input-padding-horizontal: 19px; /* 8 * 2.375 = 19 */
+    --input-padding-right: 71px;      /* 30 * 2.375 = 71.25 → 71 */
+    --button-padding-vertical: 19px;  /* 8 * 2.375 = 19 */
+    --button-padding-horizontal: 29px; /* 12 * 2.375 = 28.5 → 29 */
+    --button-min-height: 76px;         /* 32 * 2.375 = 76 */
+    --toggle-size: 57px;               /* 24 * 2.375 = 57 */
+    --toggle-font-size: 33px;          /* 14 * 2.375 = 33.25 → 33 */
+    --container-max-width: 618px;      /* 260 * 2.375 = 617.5 → 618 */
+  }
+}
+
+/* ----- Breakpoint: 1400px – 1600px | Large Desktop ----- */
+@media only screen and (min-width: 1400px) and (max-width: 1600px) {
+  :root {
+    --space-xs: 5px;          /* 2 * 2.5 = 5 */
+    --space-sm: 10px;         /* 4 * 2.5 = 10 */
+    --space-md: 20px;         /* 8 * 2.5 = 20 */
+    --space-lg: 40px;         /* 16 * 2.5 = 40 */
+    --space-xl: 60px;         /* 24 * 2.5 = 60 */
+    --radius-sm: 10px;        /* 4 * 2.5 = 10 */
+    --radius-md: 15px;        /* 6 * 2.5 = 15 */
+    --radius-lg: 20px;        /* 8 * 2.5 = 20 */
+    --radius-xl: 30px;        /* 12 * 2.5 = 30 */
+    --font-size-h1: 40px;     /* 16 * 2.5 = 40 */
+    --font-size-p: 20px;      /* 8 * 2.5 = 20 */
+    --font-size-label: 20px;
+    --font-size-input: 25px;  /* 10 * 2.5 = 25 */
+    --font-size-button: 25px;
+    --font-size-footer: 20px;
+    --font-size-link: 20px;
+    --input-padding-vertical: 15px;  /* 6 * 2.5 = 15 */
+    --input-padding-horizontal: 20px; /* 8 * 2.5 = 20 */
+    --input-padding-right: 75px;      /* 30 * 2.5 = 75 */
+    --button-padding-vertical: 20px;  /* 8 * 2.5 = 20 */
+    --button-padding-horizontal: 30px; /* 12 * 2.5 = 30 */
+    --button-min-height: 80px;         /* 32 * 2.5 = 80 */
+    --toggle-size: 60px;               /* 24 * 2.5 = 60 */
+    --toggle-font-size: 35px;          /* 14 * 2.5 = 35 */
+    --container-max-width: 650px;      /* 260 * 2.5 = 650 */
+  }
+}
+
+/* ----- Breakpoint: 1600px – 1800px | Extra Large Desktop ----- */
+@media only screen and (min-width: 1600px) and (max-width: 1800px) {
+  :root {
+    --space-xs: 6px;          /* 2 * 2.625 = 5.25 → 6 */
+    --space-sm: 11px;         /* 4 * 2.625 = 10.5 → 11 */
+    --space-md: 21px;         /* 8 * 2.625 = 21 */
+    --space-lg: 42px;         /* 16 * 2.625 = 42 */
+    --space-xl: 63px;         /* 24 * 2.625 = 63 */
+    --radius-sm: 11px;        /* 4 * 2.625 = 10.5 → 11 */
+    --radius-md: 16px;        /* 6 * 2.625 = 15.75 → 16 */
+    --radius-lg: 21px;        /* 8 * 2.625 = 21 */
+    --radius-xl: 32px;        /* 12 * 2.625 = 31.5 → 32 */
+    --font-size-h1: 42px;     /* 16 * 2.625 = 42 */
+    --font-size-p: 21px;      /* 8 * 2.625 = 21 */
+    --font-size-label: 21px;
+    --font-size-input: 26px;  /* 10 * 2.625 = 26.25 → 26 */
+    --font-size-button: 26px;
+    --font-size-footer: 21px;
+    --font-size-link: 21px;
+    --input-padding-vertical: 16px;  /* 6 * 2.625 = 15.75 → 16 */
+    --input-padding-horizontal: 21px; /* 8 * 2.625 = 21 */
+    --input-padding-right: 79px;      /* 30 * 2.625 = 78.75 → 79 */
+    --button-padding-vertical: 21px;  /* 8 * 2.625 = 21 */
+    --button-padding-horizontal: 32px; /* 12 * 2.625 = 31.5 → 32 */
+    --button-min-height: 84px;         /* 32 * 2.625 = 84 */
+    --toggle-size: 63px;               /* 24 * 2.625 = 63 */
+    --toggle-font-size: 37px;          /* 14 * 2.625 = 36.75 → 37 */
+    --container-max-width: 683px;      /* 260 * 2.625 = 682.5 → 683 */
+  }
+}
+
+/* ----- Breakpoint: 1800px – 2000px | 2X Large Desktop ----- */
+@media only screen and (min-width: 1800px) and (max-width: 2000px) {
+  :root {
+    --space-xs: 6px;          /* 2 * 2.75 = 5.5 → 6 */
+    --space-sm: 11px;         /* 4 * 2.75 = 11 */
+    --space-md: 22px;         /* 8 * 2.75 = 22 */
+    --space-lg: 44px;         /* 16 * 2.75 = 44 */
+    --space-xl: 66px;         /* 24 * 2.75 = 66 */
+    --radius-sm: 11px;        /* 4 * 2.75 = 11 */
+    --radius-md: 17px;        /* 6 * 2.75 = 16.5 → 17 */
+    --radius-lg: 22px;        /* 8 * 2.75 = 22 */
+    --radius-xl: 33px;        /* 12 * 2.75 = 33 */
+    --font-size-h1: 44px;     /* 16 * 2.75 = 44 */
+    --font-size-p: 22px;      /* 8 * 2.75 = 22 */
+    --font-size-label: 22px;
+    --font-size-input: 28px;  /* 10 * 2.75 = 27.5 → 28 */
+    --font-size-button: 28px;
+    --font-size-footer: 22px;
+    --font-size-link: 22px;
+    --input-padding-vertical: 17px;  /* 6 * 2.75 = 16.5 → 17 */
+    --input-padding-horizontal: 22px; /* 8 * 2.75 = 22 */
+    --input-padding-right: 83px;      /* 30 * 2.75 = 82.5 → 83 */
+    --button-padding-vertical: 22px;  /* 8 * 2.75 = 22 */
+    --button-padding-horizontal: 33px; /* 12 * 2.75 = 33 */
+    --button-min-height: 88px;         /* 32 * 2.75 = 88 */
+    --toggle-size: 66px;               /* 24 * 2.75 = 66 */
+    --toggle-font-size: 39px;          /* 14 * 2.75 = 38.5 → 39 */
+    --container-max-width: 715px;      /* 260 * 2.75 = 715 */
+  }
+}
+
+/* ----- Breakpoint: 2000px – 2200px | 3X Large Desktop ----- */
+@media only screen and (min-width: 2000px) and (max-width: 2200px) {
+  :root {
+    --space-xs: 6px;          /* 2 * 2.875 = 5.75 → 6 */
+    --space-sm: 12px;         /* 4 * 2.875 = 11.5 → 12 */
+    --space-md: 23px;         /* 8 * 2.875 = 23 */
+    --space-lg: 46px;         /* 16 * 2.875 = 46 */
+    --space-xl: 69px;         /* 24 * 2.875 = 69 */
+    --radius-sm: 12px;        /* 4 * 2.875 = 11.5 → 12 */
+    --radius-md: 17px;        /* 6 * 2.875 = 17.25 → 17 */
+    --radius-lg: 23px;        /* 8 * 2.875 = 23 */
+    --radius-xl: 35px;        /* 12 * 2.875 = 34.5 → 35 */
+    --font-size-h1: 46px;     /* 16 * 2.875 = 46 */
+    --font-size-p: 23px;      /* 8 * 2.875 = 23 */
+    --font-size-label: 23px;
+    --font-size-input: 29px;  /* 10 * 2.875 = 28.75 → 29 */
+    --font-size-button: 29px;
+    --font-size-footer: 23px;
+    --font-size-link: 23px;
+    --input-padding-vertical: 17px;  /* 6 * 2.875 = 17.25 → 17 */
+    --input-padding-horizontal: 23px; /* 8 * 2.875 = 23 */
+    --input-padding-right: 86px;      /* 30 * 2.875 = 86.25 → 86 */
+    --button-padding-vertical: 23px;  /* 8 * 2.875 = 23 */
+    --button-padding-horizontal: 35px; /* 12 * 2.875 = 34.5 → 35 */
+    --button-min-height: 92px;         /* 32 * 2.875 = 92 */
+    --toggle-size: 69px;               /* 24 * 2.875 = 69 */
+    --toggle-font-size: 40px;          /* 14 * 2.875 = 40.25 → 40 */
+    --container-max-width: 748px;      /* 260 * 2.875 = 747.5 → 748 */
+  }
+}
+
+/* ----- Breakpoint: 2200px – 2400px | 4X Large Desktop ----- */
+@media only screen and (min-width: 2200px) and (max-width: 2400px) {
+  :root {
+    --space-xs: 6px;          /* 2 * 3 = 6 */
+    --space-sm: 12px;         /* 4 * 3 = 12 */
+    --space-md: 24px;         /* 8 * 3 = 24 */
+    --space-lg: 48px;         /* 16 * 3 = 48 */
+    --space-xl: 72px;         /* 24 * 3 = 72 */
+    --radius-sm: 12px;        /* 4 * 3 = 12 */
+    --radius-md: 18px;        /* 6 * 3 = 18 */
+    --radius-lg: 24px;        /* 8 * 3 = 24 */
+    --radius-xl: 36px;        /* 12 * 3 = 36 */
+    --font-size-h1: 48px;     /* 16 * 3 = 48 */
+    --font-size-p: 24px;      /* 8 * 3 = 24 */
+    --font-size-label: 24px;
+    --font-size-input: 30px;  /* 10 * 3 = 30 */
+    --font-size-button: 30px;
+    --font-size-footer: 24px;
+    --font-size-link: 24px;
+    --input-padding-vertical: 18px;  /* 6 * 3 = 18 */
+    --input-padding-horizontal: 24px; /* 8 * 3 = 24 */
+    --input-padding-right: 90px;      /* 30 * 3 = 90 */
+    --button-padding-vertical: 24px;  /* 8 * 3 = 24 */
+    --button-padding-horizontal: 36px; /* 12 * 3 = 36 */
+    --button-min-height: 96px;         /* 32 * 3 = 96 */
+    --toggle-size: 72px;               /* 24 * 3 = 72 */
+    --toggle-font-size: 42px;          /* 14 * 3 = 42 */
+    --container-max-width: 780px;      /* 260 * 3 = 780 */
+  }
+}
+
+/* ----- Breakpoint: 2400px – 2560px | 5X Large Desktop ----- */
+@media only screen and (min-width: 2400px) and (max-width: 2560px) {
+  :root {
+    --space-xs: 7px;          /* 2 * 3.125 = 6.25 → 7 */
+    --space-sm: 13px;         /* 4 * 3.125 = 12.5 → 13 */
+    --space-md: 25px;         /* 8 * 3.125 = 25 */
+    --space-lg: 50px;         /* 16 * 3.125 = 50 */
+    --space-xl: 75px;         /* 24 * 3.125 = 75 */
+    --radius-sm: 13px;        /* 4 * 3.125 = 12.5 → 13 */
+    --radius-md: 19px;        /* 6 * 3.125 = 18.75 → 19 */
+    --radius-lg: 25px;        /* 8 * 3.125 = 25 */
+    --radius-xl: 38px;        /* 12 * 3.125 = 37.5 → 38 */
+    --font-size-h1: 50px;     /* 16 * 3.125 = 50 */
+    --font-size-p: 25px;      /* 8 * 3.125 = 25 */
+    --font-size-label: 25px;
+    --font-size-input: 31px;  /* 10 * 3.125 = 31.25 → 31 */
+    --font-size-button: 31px;
+    --font-size-footer: 25px;
+    --font-size-link: 25px;
+    --input-padding-vertical: 19px;  /* 6 * 3.125 = 18.75 → 19 */
+    --input-padding-horizontal: 25px; /* 8 * 3.125 = 25 */
+    --input-padding-right: 94px;      /* 30 * 3.125 = 93.75 → 94 */
+    --button-padding-vertical: 25px;  /* 8 * 3.125 = 25 */
+    --button-padding-horizontal: 38px; /* 12 * 3.125 = 37.5 → 38 */
+    --button-min-height: 100px;        /* 32 * 3.125 = 100 */
+    --toggle-size: 75px;               /* 24 * 3.125 = 75 */
+    --toggle-font-size: 44px;          /* 14 * 3.125 = 43.75 → 44 */
+    --container-max-width: 813px;      /* 260 * 3.125 = 812.5 → 813 */
+  }
+}
+
+/* ----- Breakpoint: 2560px+ | Ultra Large Screens ----- */
+@media only screen and (min-width: 2560px) {
+  :root {
+    --space-xs: 8px;          /* 2 * 3.2 = 6.4 → 8 (capped) */
+    --space-sm: 16px;         /* 4 * 4 = 16 (progressive) */
+    --space-md: 32px;
+    --space-lg: 64px;
+    --space-xl: 96px;
+    --radius-sm: 16px;
+    --radius-md: 24px;
+    --radius-lg: 32px;
+    --radius-xl: 48px;
+    --font-size-h1: 64px;
+    --font-size-p: 32px;
+    --font-size-label: 32px;
+    --font-size-input: 40px;
+    --font-size-button: 40px;
+    --font-size-footer: 32px;
+    --font-size-link: 32px;
+    --input-padding-vertical: 24px;
+    --input-padding-horizontal: 32px;
+    --input-padding-right: 120px;
+    --button-padding-vertical: 32px;
+    --button-padding-horizontal: 48px;
+    --button-min-height: 128px;
+    --toggle-size: 96px;
+    --toggle-font-size: 56px;
+    --container-max-width: 1200px;    /* cap for extreme widths */
+  }
+}
+
+/* ==========================================================================
+ E ND OF GRANULAR RESPONSIVE BREAKPOINTS                                       *
+ ========================================================================== */

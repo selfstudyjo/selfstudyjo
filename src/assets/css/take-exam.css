@@ -42,32 +42,32 @@
                      0 0 30px rgba(78, 205, 196, 0.25),
                      0 0 45px rgba(138, 43, 226, 0.15);
   
-  /* Typography */
-  --font-size-xs: clamp(12px, 2.5vw, 14px);
-  --font-size-sm: clamp(14px, 3vw, 16px);
-  --font-size-md: clamp(15px, 2.5vw, 17px);
-  --font-size-lg: clamp(16px, 2vw, 18px);
-  --font-size-xl: clamp(18px, 2vw, 22px);
-  --font-size-2xl: clamp(22px, 2.5vw, 28px);
-  --font-size-3xl: clamp(26px, 3vw, 36px);
+  /* Typography - Base values for large screens (1200px+) */
+  --font-size-xs: 14px;
+  --font-size-sm: 16px;
+  --font-size-md: 17px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
   
-  /* Spacing */
-  --space-xs: 0.75rem;
-  --space-sm: 1.25rem;
-  --space-md: 1.75rem;
-  --space-lg: 2.5rem;
-  --space-xl: 3.5rem;
-  
-  /* Transitions */
-  --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Spacing - Base values for large screens */
+  --space-xs: 12px;
+  --space-sm: 20px;
+  --space-md: 28px;
+  --space-lg: 40px;
+  --space-xl: 56px;
   
   /* Border Radius */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
   --radius-xl: 24px;
+  
+  /* Transitions */
+  --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 600ms cubic-bezier(0.4, 0, 0.2, 1);
   
   /* Glass Effects */
   --glass-light: rgba(255, 255, 255, 0.08);
@@ -579,12 +579,6 @@
   white-space: nowrap;                 /* Keep button text on one line */
 }
 
-@media (max-width: 320px) {
-  .retry-btn {
-    white-space: normal;               /* Allow wrapping on very small screens */
-  }
-}
-
 .retry-btn > * {
   position: relative;
   z-index: 2 !important;
@@ -631,13 +625,6 @@
   grid-template-columns: 1fr 320px;
   gap: var(--space-lg);
   min-height: calc(100vh - 120px);
-}
-
-@media (max-width: 1200px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-  }
 }
 
 /* ============================================
@@ -743,12 +730,6 @@
   cursor: pointer;
   transition: all var(--transition-normal);
   white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 480px) {
-  .flag-btn {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
 }
 
 .flag-btn > * {
@@ -1274,12 +1255,6 @@
   white-space: nowrap;                 /* Keep button text on one line */
 }
 
-@media (max-width: 480px) {
-  .flagged-btn {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
-}
-
 .flagged-btn > * {
   position: relative;
   z-index: 2 !important;
@@ -1478,15 +1453,6 @@
   justify-content: center;
   border: 2px solid transparent;
   white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 480px) {
-  .btn-cancel,
-  .btn-submit,
-  .btn-review,
-  .btn-finish {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
 }
 
 .btn-cancel > *,
@@ -1727,12 +1693,6 @@
   white-space: nowrap;                 /* Keep badge on one line */
 }
 
-@media (max-width: 480px) {
-  .status-badge {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
-}
-
 .status-badge.no-reservation-yet {
   background: rgba(148, 163, 184, 0.2);
   color: var(--color-medium-gray);
@@ -1828,127 +1788,6 @@
   position: relative !important;
   z-index: 10 !important;
   color: inherit !important;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN (Preserved and enhanced)
-============================================ */
-
-/* Mobile (< 768px) */
-@media (max-width: 768px) {
-  .take-exam-page {
-    padding: 0;
-  }
-  
-  .exam-header {
-    padding: var(--space-sm);
-  }
-  
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-sm);
-  }
-  
-  .exam-controls {
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-  
-  .timer-container {
-    min-width: auto;
-    align-items: flex-start;
-  }
-  
-  .timer {
-    min-width: 80px;
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--font-size-lg);
-  }
-  
-  .main-content {
-    padding: var(--space-sm);
-  }
-  
-  .content-grid {
-    gap: var(--space-md);
-  }
-  
-  .question-header {
-    padding: var(--space-md);
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-sm);
-  }
-  
-  .question-meta {
-    justify-content: space-between;
-  }
-  
-  .question-body {
-    padding: var(--space-md);
-  }
-  
-  .answer-item {
-    padding: var(--space-sm);
-    gap: var(--space-sm);
-  }
-  
-  .question-footer {
-    padding: var(--space-md);
-  }
-  
-  .navigation-buttons {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  
-  .nav-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .card-header {
-    padding: var(--space-sm) var(--space-md);
-  }
-  
-  .questions-grid {
-    padding: var(--space-sm);
-    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
-  }
-  
-  .question-dot {
-    width: 35px;
-    height: 35px;
-  }
-  
-  .modal {
-    max-width: 100%;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: var(--space-md);
-  }
-}
-
-/* Tablet (768px - 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .header-content {
-    flex-wrap: wrap;
-  }
-  
-  .exam-controls {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    margin-top: var(--space-sm);
-  }
-  
-  .content-grid {
-    grid-template-columns: 2fr 1fr;
-  }
 }
 
 /* ============================================
@@ -2060,18 +1899,1102 @@
 }
 
 /* ============================================
+   RESPONSIVE BREAKPOINTS - GRANULAR SCALING
+   Ordered from smallest to largest
+============================================ */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-size-xs: 6px;
+    --font-size-sm: 7px;
+    --font-size-md: 8px;
+    --font-size-lg: 8px;
+    --font-size-xl: 10px;
+    --font-size-2xl: 13px;
+    --font-size-3xl: 16px;
+    --space-xs: 5px;
+    --space-sm: 9px;
+    --space-md: 13px;
+    --space-lg: 18px;
+    --space-xl: 25px;
+    --radius-sm: 5px;
+    --radius-md: 7px;
+    --radius-lg: 9px;
+    --radius-xl: 12px;
+  }
+
+  .timer-container {
+    min-width: auto;
+  }
+  .timer {
+    min-width: 60px;
+    padding: 2px 4px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 32px;
+    padding: 4px 8px;
+  }
+  .nav-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .question-dot {
+    width: 28px;
+    height: 28px;
+  }
+  .questions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn, .status-badge {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-size-xs: 7px;
+    --font-size-sm: 8px;
+    --font-size-md: 8.5px;
+    --font-size-lg: 9px;
+    --font-size-xl: 11px;
+    --font-size-2xl: 14px;
+    --font-size-3xl: 18px;
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 14px;
+    --space-lg: 20px;
+    --space-xl: 28px;
+    --radius-sm: 5.5px;
+    --radius-md: 7.5px;
+    --radius-lg: 9.5px;
+    --radius-xl: 12.5px;
+  }
+
+  .timer-container {
+    min-width: auto;
+  }
+  .timer {
+    min-width: 65px;
+    padding: 3px 6px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 34px;
+    padding: 5px 10px;
+  }
+  .nav-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .question-dot {
+    width: 30px;
+    height: 30px;
+  }
+  .questions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn, .status-badge {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-size-xs: 8px;
+    --font-size-sm: 9px;
+    --font-size-md: 9px;
+    --font-size-lg: 10px;
+    --font-size-xl: 12px;
+    --font-size-2xl: 16px;
+    --font-size-3xl: 20px;
+    --space-xs: 7px;
+    --space-sm: 12px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 13px;
+  }
+
+  .timer-container {
+    min-width: auto;
+  }
+  .timer {
+    min-width: 70px;
+    padding: 4px 8px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .question-dot {
+    width: 32px;
+    height: 32px;
+  }
+  .questions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-size-xs: 8.5px;
+    --font-size-sm: 9.5px;
+    --font-size-md: 10px;
+    --font-size-lg: 10.5px;
+    --font-size-xl: 13px;
+    --font-size-2xl: 17px;
+    --font-size-3xl: 21px;
+    --space-xs: 7.5px;
+    --space-sm: 13px;
+    --space-md: 17px;
+    --space-lg: 26px;
+    --space-xl: 34px;
+    --radius-sm: 6.5px;
+    --radius-md: 8.5px;
+    --radius-lg: 10.5px;
+    --radius-xl: 13.5px;
+  }
+
+  .timer-container {
+    min-width: auto;
+  }
+  .timer {
+    min-width: 75px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 38px;
+  }
+  .nav-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .question-dot {
+    width: 34px;
+    height: 34px;
+  }
+  .questions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-size-xs: 9px;
+    --font-size-sm: 10px;
+    --font-size-md: 10.5px;
+    --font-size-lg: 11px;
+    --font-size-xl: 14px;
+    --font-size-2xl: 18px;
+    --font-size-3xl: 22px;
+    --space-xs: 8px;
+    --space-sm: 14px;
+    --space-md: 18px;
+    --space-lg: 28px;
+    --space-xl: 36px;
+    --radius-sm: 7px;
+    --radius-md: 9px;
+    --radius-lg: 11px;
+    --radius-xl: 14px;
+  }
+
+  .timer-container {
+    min-width: auto;
+  }
+  .timer {
+    min-width: 80px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 40px;
+  }
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .question-dot {
+    width: 36px;
+    height: 36px;
+  }
+  .questions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-size-xs: 9.5px;
+    --font-size-sm: 10.5px;
+    --font-size-md: 11px;
+    --font-size-lg: 11.5px;
+    --font-size-xl: 15px;
+    --font-size-2xl: 19px;
+    --font-size-3xl: 23px;
+    --space-xs: 8.5px;
+    --space-sm: 15px;
+    --space-md: 19px;
+    --space-lg: 30px;
+    --space-xl: 38px;
+    --radius-sm: 7.5px;
+    --radius-md: 9.5px;
+    --radius-lg: 11.5px;
+    --radius-xl: 14.5px;
+  }
+
+  .timer {
+    min-width: 85px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 42px;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-size-xs: 10px;
+    --font-size-sm: 11px;
+    --font-size-md: 11.5px;
+    --font-size-lg: 12px;
+    --font-size-xl: 16px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 24px;
+    --space-xs: 9px;
+    --space-sm: 16px;
+    --space-md: 20px;
+    --space-lg: 32px;
+    --space-xl: 40px;
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-xl: 15px;
+  }
+
+  .timer {
+    min-width: 90px;
+  }
+  .nav-btn, .action-btn {
+    min-height: 44px;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-size-xs: 10.5px;
+    --font-size-sm: 11.5px;
+    --font-size-md: 12px;
+    --font-size-lg: 12.5px;
+    --font-size-xl: 17px;
+    --font-size-2xl: 21px;
+    --font-size-3xl: 25px;
+    --space-xs: 9.5px;
+    --space-sm: 17px;
+    --space-md: 21px;
+    --space-lg: 34px;
+    --space-xl: 42px;
+    --radius-sm: 8.5px;
+    --radius-md: 10.5px;
+    --radius-lg: 12.5px;
+    --radius-xl: 15.5px;
+  }
+
+  .timer {
+    min-width: 95px;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-md: 12.5px;
+    --font-size-lg: 13px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 22px;
+    --font-size-3xl: 26px;
+    --space-xs: 10px;
+    --space-sm: 18px;
+    --space-md: 22px;
+    --space-lg: 36px;
+    --space-xl: 44px;
+    --radius-sm: 9px;
+    --radius-md: 11px;
+    --radius-lg: 13px;
+    --radius-xl: 16px;
+  }
+
+  .timer {
+    min-width: 100px;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-size-xs: 11.5px;
+    --font-size-sm: 12.5px;
+    --font-size-md: 13px;
+    --font-size-lg: 13.5px;
+    --font-size-xl: 19px;
+    --font-size-2xl: 23px;
+    --font-size-3xl: 27px;
+    --space-xs: 10.5px;
+    --space-sm: 19px;
+    --space-md: 23px;
+    --space-lg: 38px;
+    --space-xl: 46px;
+    --radius-sm: 9.5px;
+    --radius-md: 11.5px;
+    --radius-lg: 13.5px;
+    --radius-xl: 16.5px;
+  }
+
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-md: 13.5px;
+    --font-size-lg: 14px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 28px;
+    --space-xs: 11px;
+    --space-sm: 20px;
+    --space-md: 24px;
+    --space-lg: 40px;
+    --space-xl: 48px;
+    --radius-sm: 10px;
+    --radius-md: 12px;
+    --radius-lg: 14px;
+    --radius-xl: 17px;
+  }
+
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-size-xs: 12.5px;
+    --font-size-sm: 13.5px;
+    --font-size-md: 14px;
+    --font-size-lg: 14.5px;
+    --font-size-xl: 21px;
+    --font-size-2xl: 25px;
+    --font-size-3xl: 29px;
+    --space-xs: 11.5px;
+    --space-sm: 21px;
+    --space-md: 25px;
+    --space-lg: 42px;
+    --space-xl: 50px;
+    --radius-sm: 10.5px;
+    --radius-md: 12.5px;
+    --radius-lg: 14.5px;
+    --radius-xl: 17.5px;
+  }
+
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: normal;
+  }
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .exam-controls {
+    justify-content: space-between;
+  }
+  .navigation-buttons {
+    flex-direction: column;
+  }
+  .question-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .question-meta {
+    justify-content: space-between;
+  }
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-footer {
+    flex-direction: column;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-size-xs: 13px;
+    --font-size-sm: 14px;
+    --font-size-md: 14.5px;
+    --font-size-lg: 15px;
+    --font-size-xl: 22px;
+    --font-size-2xl: 26px;
+    --font-size-3xl: 30px;
+    --space-xs: 12px;
+    --space-sm: 22px;
+    --space-md: 26px;
+    --space-lg: 44px;
+    --space-xl: 52px;
+    --radius-sm: 11px;
+    --radius-md: 13px;
+    --radius-lg: 15px;
+    --radius-xl: 18px;
+  }
+
+  /* Switch to row layout for larger screens */
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-size-xs: 13.5px;
+    --font-size-sm: 14.5px;
+    --font-size-md: 15px;
+    --font-size-lg: 15.5px;
+    --font-size-xl: 23px;
+    --font-size-2xl: 27px;
+    --font-size-3xl: 31px;
+    --space-xs: 12.5px;
+    --space-sm: 23px;
+    --space-md: 27px;
+    --space-lg: 46px;
+    --space-xl: 54px;
+    --radius-sm: 11.5px;
+    --radius-md: 13.5px;
+    --radius-lg: 15.5px;
+    --radius-xl: 18.5px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 15px;
+    --font-size-md: 15.5px;
+    --font-size-lg: 16px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 28px;
+    --font-size-3xl: 32px;
+    --space-xs: 13px;
+    --space-sm: 24px;
+    --space-md: 28px;
+    --space-lg: 48px;
+    --space-xl: 56px;
+    --radius-sm: 12px;
+    --radius-md: 14px;
+    --radius-lg: 16px;
+    --radius-xl: 19px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 15px;
+    --font-size-md: 16px;
+    --font-size-lg: 16.5px;
+    --font-size-xl: 25px;
+    --font-size-2xl: 29px;
+    --font-size-3xl: 33px;
+    --space-xs: 13px;
+    --space-sm: 24px;
+    --space-md: 29px;
+    --space-lg: 50px;
+    --space-xl: 58px;
+    --radius-sm: 12px;
+    --radius-md: 14px;
+    --radius-lg: 16.5px;
+    --radius-xl: 19.5px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 15.5px;
+    --font-size-md: 16.5px;
+    --font-size-lg: 17px;
+    --font-size-xl: 26px;
+    --font-size-2xl: 30px;
+    --font-size-3xl: 34px;
+    --space-xs: 13px;
+    --space-sm: 25px;
+    --space-md: 30px;
+    --space-lg: 52px;
+    --space-xl: 60px;
+    --radius-sm: 12px;
+    --radius-md: 14.5px;
+    --radius-lg: 17px;
+    --radius-xl: 20px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 17px;
+    --font-size-lg: 17.5px;
+    --font-size-xl: 27px;
+    --font-size-2xl: 31px;
+    --font-size-3xl: 35px;
+    --space-xs: 13px;
+    --space-sm: 26px;
+    --space-md: 31px;
+    --space-lg: 54px;
+    --space-xl: 62px;
+    --radius-sm: 12px;
+    --radius-md: 15px;
+    --radius-lg: 17.5px;
+    --radius-xl: 20.5px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 1fr 320px;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 17px;
+    --font-size-lg: 18px;
+    --font-size-xl: 28px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 36px;
+    --space-xs: 13px;
+    --space-sm: 27px;
+    --space-md: 32px;
+    --space-lg: 56px;
+    --space-xl: 64px;
+    --radius-sm: 12px;
+    --radius-md: 15px;
+    --radius-lg: 18px;
+    --radius-xl: 21px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 1fr 320px;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 17px;
+    --font-size-lg: 18px;
+    --font-size-xl: 29px;
+    --font-size-2xl: 33px;
+    --font-size-3xl: 37px;
+    --space-xs: 13px;
+    --space-sm: 28px;
+    --space-md: 33px;
+    --space-lg: 58px;
+    --space-xl: 66px;
+    --radius-sm: 12px;
+    --radius-md: 15px;
+    --radius-lg: 18.5px;
+    --radius-xl: 21.5px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 1fr 320px;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 17px;
+    --font-size-lg: 18px;
+    --font-size-xl: 22px;
+    --font-size-2xl: 28px;
+    --font-size-3xl: 36px;
+    --space-xs: 12px;
+    --space-sm: 20px;
+    --space-md: 28px;
+    --space-lg: 40px;
+    --space-xl: 56px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+  }
+
+  .header-content {
+    flex-direction: row;
+  }
+  .navigation-buttons {
+    flex-direction: row;
+  }
+  .question-header {
+    flex-direction: row;
+  }
+  .content-grid {
+    grid-template-columns: 1fr 320px;
+  }
+  .modal-footer {
+    flex-direction: row;
+  }
+  .flag-btn, .flagged-btn, .btn-cancel, .btn-submit, .btn-review, .btn-finish, .retry-btn {
+    white-space: nowrap;
+  }
+}
+
+/* ============================================
    SUMMARY OF RESPONSIVE ENHANCEMENTS
    ============================================
-   1. Added global text protection rules to all elements inside .take-exam-page:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to main containers (`.take-exam-page`, `.exam-header`, `.loading-container`, `.error-container`, `.question-card`, `.overview-card`, `.summary-card`, `.actions-card`, `.flagged-card`, `.modal-overlay`, `.modal`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.header-content`, `.exam-course`, `.exam-controls`, `.nav-controls`, `.question-header`, `.question-meta`, `.navigation-buttons`, `.card-header`, `.stats`, `.legend-item`, `.summary-item`, `.flagged-questions`, `.modal-header`, `.summary-row`, `.modal-footer`, `.detail`, etc.) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (titles, headings, labels, button text) to keep whole words together.
-   5. Added `white-space: nowrap` to badges and buttons (`.flag-btn`, `.flagged-btn`, `.btn-cancel`, `.btn-submit`, `.btn-review`, `.btn-finish`, `.retry-btn`, `.status-badge`), with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights (`.exam-header`, `.main-content`, `.question-card`, `.overview-card`, `.summary-card`, `.actions-card`, `.flagged-card`, `.modal`, etc.).
-   7. Preserved all original colors, animations, and media queries.
-   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+   1. Added global text protection rules to all elements inside .take-exam-page.
+   2. Added `isolation: isolate` to main containers for fresh stacking contexts.
+   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers.
+   4. Added `word-break: keep-all` to important text elements.
+   5. Added `white-space: nowrap` to badges and buttons with fallback for very small screens.
+   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+   7. Implemented granular responsive breakpoints from 200px to 2560px with progressive scaling of typography, spacing, and layout.
+   8. Preserved all original colors, animations, and class names.
+   9. Ensured touch targets scale appropriately and remain usable.
+*/

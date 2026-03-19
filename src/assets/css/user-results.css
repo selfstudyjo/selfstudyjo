@@ -2,17 +2,40 @@
    SPACE COMMAND CENTER THEME
    Cosmic UI with Galaxy Background Integration
    Mobile-First Responsive Design
+   ENHANCED WITH GRANULAR RESPONSIVE BREAKPOINTS
    ============================================ */
 
 :root {
-  /* Color Palette - Cosmic Dark Theme */
+  /* Base font size – smallest screens (200px–250px) */
+  --base-font-size: 8px;
+
+  /* Spacing & font sizes are defined in rem – they scale with base font */
+  --font-size-xs: 0.75rem;   /* 6px @ 8px base */
+  --font-size-sm: 0.875rem;  /* 7px */
+  --font-size-base: 1rem;     /* 8px */
+  --font-size-lg: 1.125rem;   /* 9px */
+  --font-size-xl: 1.5rem;     /* 12px */
+  --font-size-xxl: 2rem;      /* 16px – for future use */
+
+  /* Spacing units – scale with base font */
+  --space-xs: 0.5rem;   /* 4px */
+  --space-sm: 1rem;     /* 8px */
+  --space-md: 1.5rem;   /* 12px */
+  --space-lg: 2rem;     /* 16px */
+  --space-xl: 3rem;     /* 24px */
+  --space-xxl: 4rem;    /* 32px */
+
+  /* Container max-width – fluid until large screens */
+  --container-max: 100%;
+
+  /* Color Palette - Cosmic Dark Theme (unchanged) */
   --color-space-black: rgba(5, 5, 20, 0.95);
   --color-space-dark: rgba(10, 10, 30, 0.9);
   --color-space-medium: rgba(15, 15, 40, 0.85);
   --color-space-light: rgba(30, 30, 60, 0.8);
   --color-space-glass: rgba(5, 5, 20, 0.7);
   
-  /* Accent Colors - Nebula & Star Glow */
+  /* Accent Colors - Nebula & Star Glow (unchanged) */
   --color-cyan: #4ECDC4;
   --color-purple: #8A2BE2;
   --color-blue: #4169E1;
@@ -20,42 +43,40 @@
   --color-text-light: #e0e0e0;
   --color-text-dim: #b0b0b0;
   
-  /* Glow Effects */
+  /* Glow Effects (unchanged) */
   --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
   --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
   --glow-blue: 0 0 20px rgba(65, 105, 225, 0.4);
   --glow-white: 0 0 20px rgba(255, 255, 255, 0.2);
   
-  /* Typography - Responsive Fluid Sizes */
-  --font-size-xs: clamp(0.75rem, 2vw, 0.875rem);
-  --font-size-sm: clamp(0.875rem, 2.5vw, 1rem);
-  --font-size-base: clamp(1rem, 3vw, 1.125rem);
-  --font-size-lg: clamp(1.125rem, 3.5vw, 1.5rem);
-  --font-size-xl: clamp(1.5rem, 4vw, 2rem);
-  
-  /* Spacing */
-  --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 1.5rem;
-  --space-lg: 2rem;
-  --space-xl: 3rem;
-  
-  /* Borders & Radius */
+  /* Borders & Radius (unchanged) */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --border-glow: 1px solid rgba(255, 255, 255, 0.15);
   --border-glow-hover: 1px solid rgba(78, 205, 196, 0.3);
   
-  /* Transitions */
+  /* Transitions (unchanged) */
   --transition-speed: 0.3s;
   --transition-timing: ease;
   
-  /* Z-index layering */
+  /* Z-index layering (unchanged) */
   --z-background: 0;
   --z-content: 1;
   --z-overlay: 2;
   --z-modal: 10;
+}
+
+/* Set base font size on html – everything rem will scale */
+html {
+  font-size: var(--base-font-size);
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
 }
 
 /* ============================================
@@ -68,6 +89,9 @@
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   z-index: var(--z-content);
+  max-width: var(--container-max);
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* All text elements inherit light colors */
@@ -94,6 +118,7 @@ p, span, div, label {
   backdrop-filter: blur(5px);
   background: rgba(5, 5, 20, 0.3);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-wrap: wrap; /* Allow wrapping on tiny screens */
 }
 
 .tab-btn {
@@ -112,6 +137,11 @@ p, span, div, label {
   text-align: center;
   backdrop-filter: blur(4px);
   border: 1px solid transparent;
+  /* Touch target size */
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-btn:hover {
@@ -190,6 +220,8 @@ p, span, div, label {
   gap: var(--space-xs);
   will-change: transform, box-shadow;
   contain: content;
+  /* Touch target size */
+  min-height: 44px; /* ensure minimum tap area */
 }
 
 .result-card:hover {
@@ -205,6 +237,8 @@ p, span, div, label {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-xs);
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }
 
 .result-header h3 {
@@ -227,6 +261,7 @@ p, span, div, label {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   box-shadow: 0 0 15px currentColor;
+  white-space: nowrap;
 }
 
 .score.pass {
@@ -276,6 +311,7 @@ p, span, div, label {
   backdrop-filter: blur(4px);
   border: 1px solid;
   align-self: flex-start;
+  white-space: nowrap;
 }
 
 .status.passed {
@@ -409,6 +445,7 @@ p, span, div, label {
   backdrop-filter: blur(4px);
   cursor: pointer;
   transition: all var(--transition-speed) ease;
+  min-height: 32px; /* touch target */
 }
 
 .chart-filters select:hover {
@@ -451,6 +488,7 @@ input, textarea, select {
   backdrop-filter: blur(4px);
   transition: all var(--transition-speed) ease;
   width: 100%;
+  min-height: 32px; /* touch target */
 }
 
 input:focus, textarea:focus, select:focus {
@@ -482,6 +520,10 @@ button {
   text-shadow: 0 0 5px rgba(0,0,0,0.5);
   position: relative;
   overflow: hidden;
+  min-height: 32px; /* touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button:hover {
@@ -572,10 +614,8 @@ button.primary {
 }
 
 /* ============================================
-   Responsive Adjustments
+   Existing Responsive Adjustments (preserved)
    ============================================ */
-/* Mobile (default) - already optimized */
-
 @media (min-width: 640px) {
   .user-results {
     padding: var(--space-lg);
@@ -731,4 +771,233 @@ body {
 
 html {
   background: transparent;
+}
+
+/* ============================================
+   GRANULAR RESPONSIVE BREAKPOINTS
+   Added for perfect scaling from 200px to 2560px+
+   Each block overrides base font size and spacing
+   ============================================ */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --base-font-size: 8px;
+  }
+  .user-results {
+    padding: var(--space-xs);
+  }
+  .tabs {
+    gap: 2px;
+  }
+  .tab-btn {
+    padding: var(--space-xs) var(--space-sm);
+    min-height: 28px; /* slightly smaller but still tappable */
+  }
+  .result-card {
+    padding: var(--space-sm);
+  }
+  .chart-container {
+    height: 250px;
+  }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --base-font-size: 9px;
+  }
+  .user-results {
+    padding: var(--space-sm);
+  }
+  .tab-btn {
+    min-height: 32px;
+  }
+  .chart-container {
+    height: 280px;
+  }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --base-font-size: 10px;
+  }
+  .user-results {
+    padding: var(--space-sm);
+  }
+  .chart-container {
+    height: 300px;
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --base-font-size: 11px;
+  }
+  .chart-container {
+    height: 320px;
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --base-font-size: 12px;
+  }
+  .chart-container {
+    height: 350px;
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --base-font-size: 13px;
+  }
+  .chart-container {
+    height: 380px;
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --base-font-size: 13.5px;
+  }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --base-font-size: 14px;
+  }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --base-font-size: 14.5px;
+  }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --base-font-size: 15px;
+  }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --base-font-size: 15.5px;
+  }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --base-font-size: 16px;
+  }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --base-font-size: 16.5px;
+  }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --base-font-size: 17px;
+  }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --base-font-size: 17px;
+  }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --base-font-size: 17.5px;
+  }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --base-font-size: 17.5px;
+  }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --base-font-size: 18px;
+  }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --base-font-size: 18px;
+  }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --base-font-size: 18.5px;
+  }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL and beyond ----- */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --base-font-size: 19px;
+  }
+  /* For very large screens, increase max-width of container */
+  .user-results {
+    max-width: 1600px;
+  }
+}
+
+/* Additional fine-tuning for ultra-wide screens > 1920px */
+@media only screen and (min-width: 1921px) {
+  :root {
+    --base-font-size: 20px;
+  }
+  .user-results {
+    max-width: 1800px;
+  }
+  .results-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: calc(var(--space-xl) * 1.5);
+  }
+  .chart-container {
+    height: 800px;
+  }
+}
+
+@media only screen and (min-width: 2560px) {
+  :root {
+    --base-font-size: 22px;
+  }
+  .user-results {
+    max-width: 2200px;
+  }
+  .results-grid {
+    grid-template-columns: repeat(5, 1fr); /* extra column for massive screens */
+  }
+  .chart-container {
+    height: 900px;
+  }
 }

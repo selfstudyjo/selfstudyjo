@@ -1048,8 +1048,689 @@
 }
 
 /* ============================================
-   RESPONSIVE DESIGN (Preserved and enhanced)
+   ACCESSIBILITY & PERFORMANCE
 ============================================ */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border: 4px solid var(--color-cosmic-cyan);
+    border-right-color: transparent;
+  }
+  
+  .account-card:hover,
+  .tab-btn:hover,
+  .summary-card:hover,
+  .btn:hover,
+  .retry-btn:hover {
+    transform: none !important;
+  }
+}
+
+/* Focus states for accessibility */
+.tab-btn:focus-visible,
+.account-card:focus-visible,
+.btn:focus-visible,
+.retry-btn:focus-visible {
+  outline: 2px solid var(--color-cosmic-cyan);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --color-space-dark: rgba(0, 0, 0, 0.95);
+    --color-space-darker: rgba(0, 0, 0, 0.98);
+    --color-cosmic-cyan: #00ffff;
+    --color-white: #ffffff;
+  }
+  
+  .summary-card,
+  .account-card,
+  .summary-details,
+  .error-container {
+    border: 2px solid var(--color-white) !important;
+  }
+}
+
+/* Performance optimizations */
+.summary-card,
+.account-card,
+.tab-btn,
+.btn {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, box-shadow, border-color;
+}
+
+.payment-container {
+  contain: layout style paint;
+}
+
+/* Optimize backdrop-filter on mobile */
+@media (max-width: 1024px) {
+  .summary-card,
+  .account-card,
+  .summary-details,
+  .error-container {
+    backdrop-filter: blur(8px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
+  }
+}
+
+/* ============================================
+   GRANULAR RESPONSIVE BREAKPOINTS
+   Progressive scaling from 200px to 2560px+
+   ============================================ */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-size-xs: 8px;
+    --font-size-sm: 8px;
+    --font-size-md: 9px;
+    --font-size-lg: 10px;
+    --font-size-xl: 11px;
+    --font-size-2xl: 14px;
+    --font-size-3xl: 18px;
+    --font-size-4xl: 22px;
+
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 14px;
+    --space-lg: 20px;
+    --space-xl: 28px;
+    --space-2xl: 40px;
+  }
+
+  /* Ensure minimum touch target size */
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 32px;
+  }
+
+  /* Stack tabs vertically */
+  .tabs {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .tab-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  /* Stack payment actions */
+  .payment-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-size-xs: 8px;
+    --font-size-sm: 9px;
+    --font-size-md: 10px;
+    --font-size-lg: 11px;
+    --font-size-xl: 12px;
+    --font-size-2xl: 16px;
+    --font-size-3xl: 20px;
+    --font-size-4xl: 25px;
+
+    --space-xs: 7px;
+    --space-sm: 11px;
+    --space-md: 16px;
+    --space-lg: 23px;
+    --space-xl: 32px;
+    --space-2xl: 45px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 34px;
+  }
+  .tabs {
+    flex-direction: column;
+    gap: 7px;
+  }
+  .tab-btn {
+    width: 100%;
+  }
+  .payment-actions {
+    flex-direction: column;
+    gap: 9px;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-size-xs: 9px;
+    --font-size-sm: 10px;
+    --font-size-md: 11px;
+    --font-size-lg: 12px;
+    --font-size-xl: 14px;
+    --font-size-2xl: 18px;
+    --font-size-3xl: 22px;
+    --font-size-4xl: 28px;
+
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 18px;
+    --space-lg: 25px;
+    --space-xl: 35px;
+    --space-2xl: 50px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 36px;
+  }
+  .tabs {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tab-btn {
+    width: 100%;
+  }
+  .payment-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-size-xs: 10px;
+    --font-size-sm: 11px;
+    --font-size-md: 12px;
+    --font-size-lg: 13px;
+    --font-size-xl: 15px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 24px;
+    --font-size-4xl: 30px;
+
+    --space-xs: 9px;
+    --space-sm: 14px;
+    --space-md: 20px;
+    --space-lg: 28px;
+    --space-xl: 40px;
+    --space-2xl: 56px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 38px;
+  }
+  .tabs {
+    flex-direction: column;
+    gap: 9px;
+  }
+  .tab-btn {
+    width: 100%;
+  }
+  .payment-actions {
+    flex-direction: column;
+    gap: 11px;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-md: 13px;
+    --font-size-lg: 14px;
+    --font-size-xl: 16px;
+    --font-size-2xl: 22px;
+    --font-size-3xl: 26px;
+    --font-size-4xl: 32px;
+
+    --space-xs: 10px;
+    --space-sm: 16px;
+    --space-md: 22px;
+    --space-lg: 32px;
+    --space-xl: 45px;
+    --space-2xl: 64px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 40px;
+  }
+  .tabs {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tab-btn {
+    width: 100%;
+  }
+  .payment-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 15px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 28px;
+    --font-size-4xl: 34px;
+
+    --space-xs: 11px;
+    --space-sm: 18px;
+    --space-md: 24px;
+    --space-lg: 35px;
+    --space-xl: 50px;
+    --space-2xl: 70px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 42px;
+  }
+  .tabs {
+    flex-direction: row; /* Allow wrapping but keep row */
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    flex: 1 1 auto;
+    min-width: 100px;
+  }
+  .payment-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-size-xs: 12px;
+    --font-size-sm: 13.5px;
+    --font-size-md: 14.5px;
+    --font-size-lg: 15.5px;
+    --font-size-xl: 19px;
+    --font-size-2xl: 25px;
+    --font-size-3xl: 30px;
+    --font-size-4xl: 36px;
+
+    --space-xs: 12px;
+    --space-sm: 19px;
+    --space-md: 26px;
+    --space-lg: 38px;
+    --space-xl: 53px;
+    --space-2xl: 75px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 44px;
+  }
+  .tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .payment-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-md: 15px;
+    --font-size-lg: 16px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 26px;
+    --font-size-3xl: 32px;
+    --font-size-4xl: 38px;
+
+    --space-xs: 13px;
+    --space-sm: 20px;
+    --space-md: 28px;
+    --space-lg: 40px;
+    --space-xl: 56px;
+    --space-2xl: 80px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 46px;
+  }
+  .tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-size-xs: 13px;
+    --font-size-sm: 14.5px;
+    --font-size-md: 15.5px;
+    --font-size-lg: 16.5px;
+    --font-size-xl: 21px;
+    --font-size-2xl: 27px;
+    --font-size-3xl: 34px;
+    --font-size-4xl: 40px;
+
+    --space-xs: 14px;
+    --space-sm: 22px;
+    --space-md: 30px;
+    --space-lg: 43px;
+    --space-xl: 60px;
+    --space-2xl: 85px;
+  }
+
+  .tab-btn, .btn, .retry-btn, .account-card {
+    min-height: 48px;
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-size-xs: 13px;
+    --font-size-sm: 15px;
+    --font-size-md: 16px;
+    --font-size-lg: 17px;
+    --font-size-xl: 22px;
+    --font-size-2xl: 28px;
+    --font-size-3xl: 36px;
+    --font-size-4xl: 42px;
+
+    --space-xs: 15px;
+    --space-sm: 23px;
+    --space-md: 32px;
+    --space-lg: 45px;
+    --space-xl: 63px;
+    --space-2xl: 90px;
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 15.5px;
+    --font-size-md: 16.5px;
+    --font-size-lg: 17.5px;
+    --font-size-xl: 23px;
+    --font-size-2xl: 29px;
+    --font-size-3xl: 38px;
+    --font-size-4xl: 44px;
+
+    --space-xs: 16px;
+    --space-sm: 24px;
+    --space-md: 34px;
+    --space-lg: 48px;
+    --space-xl: 67px;
+    --space-2xl: 95px;
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 17px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 30px;
+    --font-size-3xl: 40px;
+    --font-size-4xl: 46px;
+
+    --space-xs: 17px;
+    --space-sm: 26px;
+    --space-md: 36px;
+    --space-lg: 50px;
+    --space-xl: 70px;
+    --space-2xl: 100px;
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-size-xs: 15px;
+    --font-size-sm: 16.5px;
+    --font-size-md: 17.5px;
+    --font-size-lg: 18.5px;
+    --font-size-xl: 25px;
+    --font-size-2xl: 31px;
+    --font-size-3xl: 42px;
+    --font-size-4xl: 48px;
+
+    --space-xs: 18px;
+    --space-sm: 28px;
+    --space-md: 38px;
+    --space-lg: 53px;
+    --space-xl: 74px;
+    --space-2xl: 105px;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-size-xs: 15px;
+    --font-size-sm: 17px;
+    --font-size-md: 18px;
+    --font-size-lg: 19px;
+    --font-size-xl: 26px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 44px;
+    --font-size-4xl: 50px;
+
+    --space-xs: 19px;
+    --space-sm: 29px;
+    --space-md: 40px;
+    --space-lg: 56px;
+    --space-xl: 78px;
+    --space-2xl: 110px;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-size-xs: 16px;
+    --font-size-sm: 17.5px;
+    --font-size-md: 18.5px;
+    --font-size-lg: 19.5px;
+    --font-size-xl: 27px;
+    --font-size-2xl: 33px;
+    --font-size-3xl: 46px;
+    --font-size-4xl: 52px;
+
+    --space-xs: 20px;
+    --space-sm: 30px;
+    --space-md: 42px;
+    --space-lg: 59px;
+    --space-xl: 82px;
+    --space-2xl: 115px;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-size-xs: 16px;
+    --font-size-sm: 17.5px;
+    --font-size-md: 18.5px;
+    --font-size-lg: 19.5px;
+    --font-size-xl: 27px;
+    --font-size-2xl: 33px;
+    --font-size-3xl: 46px;
+    --font-size-4xl: 52px;
+
+    --space-xs: 20px;
+    --space-sm: 30px;
+    --space-md: 42px;
+    --space-lg: 59px;
+    --space-xl: 82px;
+    --space-2xl: 115px;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-size-xs: 16px;
+    --font-size-sm: 18px;
+    --font-size-md: 19px;
+    --font-size-lg: 20px;
+    --font-size-xl: 28px;
+    --font-size-2xl: 34px;
+    --font-size-3xl: 48px;
+    --font-size-4xl: 54px;
+
+    --space-xs: 21px;
+    --space-sm: 32px;
+    --space-md: 44px;
+    --space-lg: 62px;
+    --space-xl: 86px;
+    --space-2xl: 120px;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-size-xs: 16px;
+    --font-size-sm: 18px;
+    --font-size-md: 19px;
+    --font-size-lg: 20px;
+    --font-size-xl: 28px;
+    --font-size-2xl: 34px;
+    --font-size-3xl: 48px;
+    --font-size-4xl: 54px;
+
+    --space-xs: 21px;
+    --space-sm: 32px;
+    --space-md: 44px;
+    --space-lg: 62px;
+    --space-xl: 86px;
+    --space-2xl: 120px;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-size-xs: 17px;
+    --font-size-sm: 18.5px;
+    --font-size-md: 19.5px;
+    --font-size-lg: 20.5px;
+    --font-size-xl: 29px;
+    --font-size-2xl: 35px;
+    --font-size-3xl: 50px;
+    --font-size-4xl: 56px;
+
+    --space-xs: 22px;
+    --space-sm: 34px;
+    --space-md: 46px;
+    --space-lg: 65px;
+    --space-xl: 90px;
+    --space-2xl: 125px;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-size-xs: 17px;
+    --font-size-sm: 18.5px;
+    --font-size-md: 19.5px;
+    --font-size-lg: 20.5px;
+    --font-size-xl: 29px;
+    --font-size-2xl: 35px;
+    --font-size-3xl: 50px;
+    --font-size-4xl: 56px;
+
+    --space-xs: 22px;
+    --space-sm: 34px;
+    --space-md: 46px;
+    --space-lg: 65px;
+    --space-xl: 90px;
+    --space-2xl: 125px;
+  }
+}
+
+/* ===== Breakpoint: 1200px+ | 4XL and beyond (up to 2560px) ===== */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-size-xs: 17px;
+    --font-size-sm: 19px;
+    --font-size-md: 20px;
+    --font-size-lg: 21px;
+    --font-size-xl: 30px;
+    --font-size-2xl: 36px;
+    --font-size-3xl: 52px;
+    --font-size-4xl: 58px;
+
+    --space-xs: 24px;
+    --space-sm: 36px;
+    --space-md: 48px;
+    --space-lg: 68px;
+    --space-xl: 95px;
+    --space-2xl: 130px;
+  }
+
+  /* Expand container max-width for large screens */
+  .payment-content {
+    max-width: 1400px;
+  }
+
+  .header {
+    max-width: 1000px;
+  }
+
+  .error-container {
+    max-width: 700px;
+  }
+}
+
+/* ============================================
+   ORIGINAL RESPONSIVE DESIGN (Preserved)
+   ============================================ */
 
 /* Mobile (< 768px) */
 @media (max-width: 768px) {
@@ -1150,103 +1831,3 @@
     max-width: 1300px;
   }
 }
-
-/* ============================================
-   ACCESSIBILITY & PERFORMANCE
-============================================ */
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
-  .loading-spinner {
-    animation: none;
-    border: 4px solid var(--color-cosmic-cyan);
-    border-right-color: transparent;
-  }
-  
-  .account-card:hover,
-  .tab-btn:hover,
-  .summary-card:hover,
-  .btn:hover,
-  .retry-btn:hover {
-    transform: none !important;
-  }
-}
-
-/* Focus states for accessibility */
-.tab-btn:focus-visible,
-.account-card:focus-visible,
-.btn:focus-visible,
-.retry-btn:focus-visible {
-  outline: 2px solid var(--color-cosmic-cyan);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
-}
-
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  :root {
-    --color-space-dark: rgba(0, 0, 0, 0.95);
-    --color-space-darker: rgba(0, 0, 0, 0.98);
-    --color-cosmic-cyan: #00ffff;
-    --color-white: #ffffff;
-  }
-  
-  .summary-card,
-  .account-card,
-  .summary-details,
-  .error-container {
-    border: 2px solid var(--color-white) !important;
-  }
-}
-
-/* Performance optimizations */
-.summary-card,
-.account-card,
-.tab-btn,
-.btn {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  will-change: transform, box-shadow, border-color;
-}
-
-.payment-container {
-  contain: layout style paint;
-}
-
-/* Optimize backdrop-filter on mobile */
-@media (max-width: 1024px) {
-  .summary-card,
-  .account-card,
-  .summary-details,
-  .error-container {
-    backdrop-filter: blur(8px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
-  }
-}
-
-/* ============================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ============================================
-   1. Added global text protection rules to all elements inside .payment-container:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to `.payment-container`, `.error-container`, `.summary-card`, `.account-card`, `.summary-details` for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.payment-actions`, `.tabs`, `.summary-header`, `.account-header`, `.detail-row`, `.summary-row`, `.plan-summary h3`, `.payment-methods h3`, `.payment-summary h3`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (titles, prices, labels) to keep whole words together.
-   5. Added `white-space: nowrap` to buttons and status badges, with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Added `min-width: 0` to `.account-info` to allow text shrinking within flex.
-   8. Preserved all original colors, animations, and media queries.
-   9. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  

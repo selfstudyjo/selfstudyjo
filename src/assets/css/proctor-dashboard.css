@@ -1,4 +1,5 @@
 /* src/assets/css/proctor-dashboard.css - COSMIC SPACE PROCTOR DASHBOARD */
+/* FULLY RESPONSIVE ENHANCED VERSION WITH GRANULAR BREAKPOINTS */
 
 /* ==========================================================================
    CSS CUSTOM PROPERTIES (THEME VARIABLES)
@@ -54,7 +55,7 @@
   --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
   --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
   
-  /* Spacing */
+  /* Spacing - fluid defaults, will be overridden in breakpoints */
   --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
   --space-sm: clamp(0.5rem, 1vw, 1rem);
   --space-md: clamp(1rem, 2vw, 1.5rem);
@@ -67,7 +68,7 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   
-  /* Font Sizes */
+  /* Font Sizes - fluid defaults */
   --font-xs: clamp(0.75rem, 2vw, 0.875rem);
   --font-sm: clamp(0.875rem, 2.5vw, 1rem);
   --font-md: clamp(1rem, 3vw, 1.125rem);
@@ -1189,18 +1190,1091 @@
 }
 
 /* ==========================================================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ========================================================================== 
-   1. Added global text protection rules to all elements inside .proctor-dashboard:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to major containers (`.proctor-dashboard`, `.dashboard-header`, `.dashboard-content`, `.error-state`, `.empty-state`, `.appointment-card`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.proctor-info`, `.appointments-header`, `.stats`, `.appointment-title`, `.appointment-meta`, `.detail-row`, `.appointment-actions`, `.room-links`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (headings, labels) to keep whole words together.
-   5. Added `white-space: nowrap` to badges and buttons, with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Preserved all original colors, animations, and media queries.
-   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/  
+   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
+   ========================================================================== */
+/* All breakpoints follow the 50px scale from 200px to 2560px+ */
+/* Each breakpoint overrides spacing, font sizes, and container max-width for optimal UX */
+
+/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  .proctor-dashboard {
+    font-size: 8px;
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 6px */
+    --font-sm: 0.875rem;  /* 7px */
+    --font-md: 1rem;       /* 8px */
+    --font-lg: 1.125rem;   /* 9px */
+    --font-xl: 1.375rem;   /* 11px */
+    --font-xxl: 1.75rem;   /* 14px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.375rem;
+    --space-md: 0.5rem;
+    --space-lg: 0.75rem;
+    --space-xl: 1rem;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+  }
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+  .stat-item {
+    min-width: 100%;
+  }
+  .status-badge {
+    padding: 2px 8px;
+  }
+  .retry-btn, .view-btn, .room-link {
+    padding: 0.375rem 0.75rem;
+    min-height: 28px;
+  }
+}
+
+/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  .proctor-dashboard {
+    font-size: 9px;
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 6.75px */
+    --font-sm: 0.875rem;  /* 7.875px */
+    --font-md: 1rem;       /* 9px */
+    --font-lg: 1.125rem;   /* 10.125px */
+    --font-xl: 1.375rem;   /* 12.375px */
+    --font-xxl: 1.75rem;   /* 15.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.375rem;
+    --space-md: 0.5rem;
+    --space-lg: 0.75rem;
+    --space-xl: 1rem;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+  }
+  .stat-item {
+    min-width: 100%;
+  }
+  .retry-btn, .view-btn, .room-link {
+    padding: 0.375rem 0.75rem;
+    min-height: 30px;
+  }
+}
+
+/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  .proctor-dashboard {
+    font-size: 10px;
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 7.5px */
+    --font-sm: 0.875rem;  /* 8.75px */
+    --font-md: 1rem;       /* 10px */
+    --font-lg: 1.125rem;   /* 11.25px */
+    --font-xl: 1.375rem;   /* 13.75px */
+    --font-xxl: 1.75rem;   /* 17.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.375rem;
+    --space-md: 0.5rem;
+    --space-lg: 0.75rem;
+    --space-xl: 1.125rem;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+  }
+  .stat-item {
+    min-width: 100%;
+  }
+}
+
+/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  .proctor-dashboard {
+    font-size: 11px;
+    padding: 0.625rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 8.25px */
+    --font-sm: 0.875rem;  /* 9.625px */
+    --font-md: 1rem;       /* 11px */
+    --font-lg: 1.125rem;   /* 12.375px */
+    --font-xl: 1.375rem;   /* 15.125px */
+    --font-xxl: 1.75rem;   /* 19.25px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.625rem;
+    --space-lg: 0.875rem;
+    --space-xl: 1.25rem;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+  }
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+  }
+  .appointment-meta {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+}
+
+/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  .proctor-dashboard {
+    font-size: 12px;
+    padding: 0.75rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 9px */
+    --font-sm: 0.875rem;  /* 10.5px */
+    --font-md: 1rem;       /* 12px */
+    --font-lg: 1.125rem;   /* 13.5px */
+    --font-xl: 1.375rem;   /* 16.5px */
+    --font-xxl: 1.75rem;   /* 21px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 4px;
+    --radius-md: 7px;
+    --radius-lg: 9px;
+    --radius-xl: 11px;
+  }
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+  }
+  .appointment-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  .proctor-dashboard {
+    font-size: 13px;
+    padding: 0.75rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 9.75px */
+    --font-sm: 0.875rem;  /* 11.375px */
+    --font-md: 1rem;       /* 13px */
+    --font-lg: 1.125rem;   /* 14.625px */
+    --font-xl: 1.375rem;   /* 17.875px */
+    --font-xxl: 1.75rem;   /* 22.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 5px;
+    --radius-md: 7px;
+    --radius-lg: 9px;
+    --radius-xl: 11px;
+  }
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+  }
+  .room-links {
+    justify-content: flex-start;
+  }
+}
+
+/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  .proctor-dashboard {
+    font-size: 13.5px;
+    padding: 0.875rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 10.125px */
+    --font-sm: 0.875rem;  /* 11.8125px */
+    --font-md: 1rem;       /* 13.5px */
+    --font-lg: 1.125rem;   /* 15.1875px */
+    --font-xl: 1.375rem;   /* 18.5625px */
+    --font-xxl: 1.75rem;   /* 23.625px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 5px;
+    --radius-md: 7px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+  }
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  .proctor-dashboard {
+    font-size: 14px;
+    padding: 0.875rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 10.5px */
+    --font-sm: 0.875rem;  /* 12.25px */
+    --font-md: 1rem;       /* 14px */
+    --font-lg: 1.125rem;   /* 15.75px */
+    --font-xl: 1.375rem;   /* 19.25px */
+    --font-xxl: 1.75rem;   /* 24.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+  }
+  .stat-item {
+    min-width: calc(50% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  .proctor-dashboard {
+    font-size: 14.5px;
+    padding: 1rem;
+    max-width: 100%;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 10.875px */
+    --font-sm: 0.875rem;  /* 12.6875px */
+    --font-md: 1rem;       /* 14.5px */
+    --font-lg: 1.125rem;   /* 16.3125px */
+    --font-xl: 1.375rem;   /* 19.9375px */
+    --font-xxl: 1.75rem;   /* 25.375px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1.125rem;
+    --space-xl: 1.75rem;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+  }
+  .stat-item {
+    min-width: calc(33.333% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  .proctor-dashboard {
+    font-size: 15px;
+    padding: 1rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 11.25px */
+    --font-sm: 0.875rem;  /* 13.125px */
+    --font-md: 1rem;       /* 15px */
+    --font-lg: 1.125rem;   /* 16.875px */
+    --font-xl: 1.375rem;   /* 20.625px */
+    --font-xxl: 1.75rem;   /* 26.25px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 11px;
+    --radius-xl: 13px;
+  }
+  .stat-item {
+    min-width: calc(33.333% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  .proctor-dashboard {
+    font-size: 15.5px;
+    padding: 1rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 11.625px */
+    --font-sm: 0.875rem;  /* 13.5625px */
+    --font-md: 1rem;       /* 15.5px */
+    --font-lg: 1.125rem;   /* 17.4375px */
+    --font-xl: 1.375rem;   /* 21.3125px */
+    --font-xxl: 1.75rem;   /* 27.125px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 11px;
+    --radius-xl: 13px;
+  }
+  .stat-item {
+    min-width: calc(33.333% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  .proctor-dashboard {
+    font-size: 16px;
+    padding: 1rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 12px */
+    --font-sm: 0.875rem;  /* 14px */
+    --font-md: 1rem;       /* 16px */
+    --font-lg: 1.125rem;   /* 18px */
+    --font-xl: 1.375rem;   /* 22px */
+    --font-xxl: 1.75rem;   /* 28px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+  }
+  .stat-item {
+    min-width: calc(33.333% - var(--space-sm));
+  }
+}
+
+/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  .proctor-dashboard {
+    font-size: 16.5px;
+    padding: 1.25rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 12.375px */
+    --font-sm: 0.875rem;  /* 14.4375px */
+    --font-md: 1rem;       /* 16.5px */
+    --font-lg: 1.125rem;   /* 18.5625px */
+    --font-xl: 1.375rem;   /* 22.6875px */
+    --font-xxl: 1.75rem;   /* 28.875px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 9px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+  }
+  .stat-item {
+    min-width: auto;
+    flex: 1;
+  }
+}
+
+/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  .proctor-dashboard {
+    font-size: 17px;
+    padding: 1.25rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 12.75px */
+    --font-sm: 0.875rem;  /* 14.875px */
+    --font-md: 1rem;       /* 17px */
+    --font-lg: 1.125rem;   /* 19.125px */
+    --font-xl: 1.375rem;   /* 23.375px */
+    --font-xxl: 1.75rem;   /* 29.75px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 9px;
+    --radius-lg: 12px;
+    --radius-xl: 15px;
+  }
+}
+
+/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  .proctor-dashboard {
+    font-size: 17.5px;
+    padding: 1.25rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.125px */
+    --font-sm: 0.875rem;  /* 15.3125px */
+    --font-md: 1rem;       /* 17.5px */
+    --font-lg: 1.125rem;   /* 19.6875px */
+    --font-xl: 1.375rem;   /* 24.0625px */
+    --font-xxl: 1.75rem;   /* 30.625px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.875rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 9px;
+    --radius-lg: 12px;
+    --radius-xl: 15px;
+  }
+}
+
+/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  .proctor-dashboard {
+    font-size: 17.5px;
+    padding: 1.5rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.125px */
+    --font-sm: 0.875rem;  /* 15.3125px */
+    --font-md: 1rem;       /* 17.5px */
+    --font-lg: 1.125rem;   /* 19.6875px */
+    --font-xl: 1.375rem;   /* 24.0625px */
+    --font-xxl: 1.75rem;   /* 30.625px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.25rem;
+    --radius-sm: 7px;
+    --radius-md: 10px;
+    --radius-lg: 13px;
+    --radius-xl: 16px;
+  }
+}
+
+/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  .proctor-dashboard {
+    font-size: 18px;
+    padding: 1.5rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.5px */
+    --font-sm: 0.875rem;  /* 15.75px */
+    --font-md: 1rem;       /* 18px */
+    --font-lg: 1.125rem;   /* 20.25px */
+    --font-xl: 1.375rem;   /* 24.75px */
+    --font-xxl: 1.75rem;   /* 31.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.25rem;
+    --radius-sm: 7px;
+    --radius-md: 10px;
+    --radius-lg: 13px;
+    --radius-xl: 16px;
+  }
+}
+
+/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  .proctor-dashboard {
+    font-size: 18px;
+    padding: 1.5rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.5px */
+    --font-sm: 0.875rem;  /* 15.75px */
+    --font-md: 1rem;       /* 18px */
+    --font-lg: 1.125rem;   /* 20.25px */
+    --font-xl: 1.375rem;   /* 24.75px */
+    --font-xxl: 1.75rem;   /* 31.5px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.25rem;
+    --radius-sm: 7px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 17px;
+  }
+}
+
+/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  .proctor-dashboard {
+    font-size: 18.5px;
+    padding: 1.5rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.875px */
+    --font-sm: 0.875rem;  /* 16.1875px */
+    --font-md: 1rem;       /* 18.5px */
+    --font-lg: 1.125rem;   /* 20.8125px */
+    --font-xl: 1.375rem;   /* 25.4375px */
+    --font-xxl: 1.75rem;   /* 32.375px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.25rem;
+    --radius-sm: 7px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 17px;
+  }
+}
+
+/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  .proctor-dashboard {
+    font-size: 18.5px;
+    padding: 1.5rem;
+    max-width: min(90vw, 1200px);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 13.875px */
+    --font-sm: 0.875rem;  /* 16.1875px */
+    --font-md: 1rem;       /* 18.5px */
+    --font-lg: 1.125rem;   /* 20.8125px */
+    --font-xl: 1.375rem;   /* 25.4375px */
+    --font-xxl: 1.75rem;   /* 32.375px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.5rem;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 15px;
+    --radius-xl: 18px;
+  }
+}
+
+/* ===== Breakpoint: 1200px – 1250px | 4XL Screens ===== */
+@media only screen and (min-width: 1200px) and (max-width: 1250px) {
+  .proctor-dashboard {
+    font-size: 19px;
+    padding: 1.5rem;
+    max-width: min(1200px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 14.25px */
+    --font-sm: 0.875rem;  /* 16.625px */
+    --font-md: 1rem;       /* 19px */
+    --font-lg: 1.125rem;   /* 21.375px */
+    --font-xl: 1.375rem;   /* 26.125px */
+    --font-xxl: 1.75rem;   /* 33.25px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.5rem;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 15px;
+    --radius-xl: 18px;
+  }
+}
+
+/* ===== Breakpoint: 1250px – 1300px ===== */
+@media only screen and (min-width: 1250px) and (max-width: 1300px) {
+  .proctor-dashboard {
+    font-size: 19.5px;
+    max-width: min(1300px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 14.625px */
+    --font-sm: 0.875rem;  /* 17.0625px */
+    --font-md: 1rem;       /* 19.5px */
+    --font-lg: 1.125rem;   /* 21.9375px */
+    --font-xl: 1.375rem;   /* 26.8125px */
+    --font-xxl: 1.75rem;   /* 34.125px */
+    --space-xl: 2.5rem;
+    --radius-sm: 8px;
+    --radius-md: 11px;
+    --radius-lg: 15px;
+    --radius-xl: 18px;
+  }
+}
+
+/* ===== Breakpoint: 1300px – 1350px ===== */
+@media only screen and (min-width: 1300px) and (max-width: 1350px) {
+  .proctor-dashboard {
+    font-size: 20px;
+    max-width: min(1350px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 15px */
+    --font-sm: 0.875rem;  /* 17.5px */
+    --font-md: 1rem;       /* 20px */
+    --font-lg: 1.125rem;   /* 22.5px */
+    --font-xl: 1.375rem;   /* 27.5px */
+    --font-xxl: 1.75rem;   /* 35px */
+    --space-xl: 2.75rem;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+  }
+}
+
+/* ===== Breakpoint: 1350px – 1400px ===== */
+@media only screen and (min-width: 1350px) and (max-width: 1400px) {
+  .proctor-dashboard {
+    font-size: 20.5px;
+    max-width: min(1400px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 15.375px */
+    --font-sm: 0.875rem;  /* 17.9375px */
+    --font-md: 1rem;       /* 20.5px */
+    --font-lg: 1.125rem;   /* 23.0625px */
+    --font-xl: 1.375rem;   /* 28.1875px */
+    --font-xxl: 1.75rem;   /* 35.875px */
+    --space-xl: 2.75rem;
+  }
+}
+
+/* ===== Breakpoint: 1400px – 1450px ===== */
+@media only screen and (min-width: 1400px) and (max-width: 1450px) {
+  .proctor-dashboard {
+    font-size: 21px;
+    max-width: min(1450px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 15.75px */
+    --font-sm: 0.875rem;  /* 18.375px */
+    --font-md: 1rem;       /* 21px */
+    --font-lg: 1.125rem;   /* 23.625px */
+    --font-xl: 1.375rem;   /* 28.875px */
+    --font-xxl: 1.75rem;   /* 36.75px */
+    --space-xl: 3rem;
+    --radius-sm: 9px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+  }
+}
+
+/* ===== Breakpoint: 1450px – 1500px ===== */
+@media only screen and (min-width: 1450px) and (max-width: 1500px) {
+  .proctor-dashboard {
+    font-size: 21.5px;
+    max-width: min(1500px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 16.125px */
+    --font-sm: 0.875rem;  /* 18.8125px */
+    --font-md: 1rem;       /* 21.5px */
+    --font-lg: 1.125rem;   /* 24.1875px */
+    --font-xl: 1.375rem;   /* 29.5625px */
+    --font-xxl: 1.75rem;   /* 37.625px */
+  }
+}
+
+/* ===== Breakpoint: 1500px – 1550px ===== */
+@media only screen and (min-width: 1500px) and (max-width: 1550px) {
+  .proctor-dashboard {
+    font-size: 22px;
+    max-width: min(1550px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 16.5px */
+    --font-sm: 0.875rem;  /* 19.25px */
+    --font-md: 1rem;       /* 22px */
+    --font-lg: 1.125rem;   /* 24.75px */
+    --font-xl: 1.375rem;   /* 30.25px */
+    --font-xxl: 1.75rem;   /* 38.5px */
+    --space-xl: 3rem;
+  }
+}
+
+/* ===== Breakpoint: 1550px – 1600px ===== */
+@media only screen and (min-width: 1550px) and (max-width: 1600px) {
+  .proctor-dashboard {
+    font-size: 22.5px;
+    max-width: min(1600px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 16.875px */
+    --font-sm: 0.875rem;  /* 19.6875px */
+    --font-md: 1rem;       /* 22.5px */
+    --font-lg: 1.125rem;   /* 25.3125px */
+    --font-xl: 1.375rem;   /* 30.9375px */
+    --font-xxl: 1.75rem;   /* 39.375px */
+  }
+}
+
+/* ===== Breakpoint: 1600px – 1650px ===== */
+@media only screen and (min-width: 1600px) and (max-width: 1650px) {
+  .proctor-dashboard {
+    font-size: 23px;
+    max-width: min(1650px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 17.25px */
+    --font-sm: 0.875rem;  /* 20.125px */
+    --font-md: 1rem;       /* 23px */
+    --font-lg: 1.125rem;   /* 25.875px */
+    --font-xl: 1.375rem;   /* 31.625px */
+    --font-xxl: 1.75rem;   /* 40.25px */
+    --space-xl: 3.25rem;
+  }
+}
+
+/* ===== Breakpoint: 1650px – 1700px ===== */
+@media only screen and (min-width: 1650px) and (max-width: 1700px) {
+  .proctor-dashboard {
+    font-size: 23.5px;
+    max-width: min(1700px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 17.625px */
+    --font-sm: 0.875rem;  /* 20.5625px */
+    --font-md: 1rem;       /* 23.5px */
+    --font-lg: 1.125rem;   /* 26.4375px */
+    --font-xl: 1.375rem;   /* 32.3125px */
+    --font-xxl: 1.75rem;   /* 41.125px */
+  }
+}
+
+/* ===== Breakpoint: 1700px – 1750px ===== */
+@media only screen and (min-width: 1700px) and (max-width: 1750px) {
+  .proctor-dashboard {
+    font-size: 24px;
+    max-width: min(1750px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 18px */
+    --font-sm: 0.875rem;  /* 21px */
+    --font-md: 1rem;       /* 24px */
+    --font-lg: 1.125rem;   /* 27px */
+    --font-xl: 1.375rem;   /* 33px */
+    --font-xxl: 1.75rem;   /* 42px */
+    --space-xl: 3.25rem;
+  }
+}
+
+/* ===== Breakpoint: 1750px – 1800px ===== */
+@media only screen and (min-width: 1750px) and (max-width: 1800px) {
+  .proctor-dashboard {
+    font-size: 24.5px;
+    max-width: min(1800px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 18.375px */
+    --font-sm: 0.875rem;  /* 21.4375px */
+    --font-md: 1rem;       /* 24.5px */
+    --font-lg: 1.125rem;   /* 27.5625px */
+    --font-xl: 1.375rem;   /* 33.6875px */
+    --font-xxl: 1.75rem;   /* 42.875px */
+  }
+}
+
+/* ===== Breakpoint: 1800px – 1850px ===== */
+@media only screen and (min-width: 1800px) and (max-width: 1850px) {
+  .proctor-dashboard {
+    font-size: 25px;
+    max-width: min(1850px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 18.75px */
+    --font-sm: 0.875rem;  /* 21.875px */
+    --font-md: 1rem;       /* 25px */
+    --font-lg: 1.125rem;   /* 28.125px */
+    --font-xl: 1.375rem;   /* 34.375px */
+    --font-xxl: 1.75rem;   /* 43.75px */
+    --space-xl: 3.5rem;
+  }
+}
+
+/* ===== Breakpoint: 1850px – 1900px ===== */
+@media only screen and (min-width: 1850px) and (max-width: 1900px) {
+  .proctor-dashboard {
+    font-size: 25.5px;
+    max-width: min(1900px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 19.125px */
+    --font-sm: 0.875rem;  /* 22.3125px */
+    --font-md: 1rem;       /* 25.5px */
+    --font-lg: 1.125rem;   /* 28.6875px */
+    --font-xl: 1.375rem;   /* 35.0625px */
+    --font-xxl: 1.75rem;   /* 44.625px */
+  }
+}
+
+/* ===== Breakpoint: 1900px – 1950px ===== */
+@media only screen and (min-width: 1900px) and (max-width: 1950px) {
+  .proctor-dashboard {
+    font-size: 26px;
+    max-width: min(1950px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 19.5px */
+    --font-sm: 0.875rem;  /* 22.75px */
+    --font-md: 1rem;       /* 26px */
+    --font-lg: 1.125rem;   /* 29.25px */
+    --font-xl: 1.375rem;   /* 35.75px */
+    --font-xxl: 1.75rem;   /* 45.5px */
+    --space-xl: 3.5rem;
+  }
+}
+
+/* ===== Breakpoint: 1950px – 2000px ===== */
+@media only screen and (min-width: 1950px) and (max-width: 2000px) {
+  .proctor-dashboard {
+    font-size: 26.5px;
+    max-width: min(2000px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 19.875px */
+    --font-sm: 0.875rem;  /* 23.1875px */
+    --font-md: 1rem;       /* 26.5px */
+    --font-lg: 1.125rem;   /* 29.8125px */
+    --font-xl: 1.375rem;   /* 36.4375px */
+    --font-xxl: 1.75rem;   /* 46.375px */
+  }
+}
+
+/* ===== Breakpoint: 2000px – 2050px ===== */
+@media only screen and (min-width: 2000px) and (max-width: 2050px) {
+  .proctor-dashboard {
+    font-size: 27px;
+    max-width: min(2050px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 20.25px */
+    --font-sm: 0.875rem;  /* 23.625px */
+    --font-md: 1rem;       /* 27px */
+    --font-lg: 1.125rem;   /* 30.375px */
+    --font-xl: 1.375rem;   /* 37.125px */
+    --font-xxl: 1.75rem;   /* 47.25px */
+    --space-xl: 3.75rem;
+  }
+}
+
+/* ===== Breakpoint: 2050px – 2100px ===== */
+@media only screen and (min-width: 2050px) and (max-width: 2100px) {
+  .proctor-dashboard {
+    font-size: 27.5px;
+    max-width: min(2100px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 20.625px */
+    --font-sm: 0.875rem;  /* 24.0625px */
+    --font-md: 1rem;       /* 27.5px */
+    --font-lg: 1.125rem;   /* 30.9375px */
+    --font-xl: 1.375rem;   /* 37.8125px */
+    --font-xxl: 1.75rem;   /* 48.125px */
+  }
+}
+
+/* ===== Breakpoint: 2100px – 2150px ===== */
+@media only screen and (min-width: 2100px) and (max-width: 2150px) {
+  .proctor-dashboard {
+    font-size: 28px;
+    max-width: min(2150px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 21px */
+    --font-sm: 0.875rem;  /* 24.5px */
+    --font-md: 1rem;       /* 28px */
+    --font-lg: 1.125rem;   /* 31.5px */
+    --font-xl: 1.375rem;   /* 38.5px */
+    --font-xxl: 1.75rem;   /* 49px */
+    --space-xl: 3.75rem;
+  }
+}
+
+/* ===== Breakpoint: 2150px – 2200px ===== */
+@media only screen and (min-width: 2150px) and (max-width: 2200px) {
+  .proctor-dashboard {
+    font-size: 28.5px;
+    max-width: min(2200px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 21.375px */
+    --font-sm: 0.875rem;  /* 24.9375px */
+    --font-md: 1rem;       /* 28.5px */
+    --font-lg: 1.125rem;   /* 32.0625px */
+    --font-xl: 1.375rem;   /* 39.1875px */
+    --font-xxl: 1.75rem;   /* 49.875px */
+  }
+}
+
+/* ===== Breakpoint: 2200px – 2250px ===== */
+@media only screen and (min-width: 2200px) and (max-width: 2250px) {
+  .proctor-dashboard {
+    font-size: 29px;
+    max-width: min(2250px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 21.75px */
+    --font-sm: 0.875rem;  /* 25.375px */
+    --font-md: 1rem;       /* 29px */
+    --font-lg: 1.125rem;   /* 32.625px */
+    --font-xl: 1.375rem;   /* 39.875px */
+    --font-xxl: 1.75rem;   /* 50.75px */
+    --space-xl: 4rem;
+  }
+}
+
+/* ===== Breakpoint: 2250px – 2300px ===== */
+@media only screen and (min-width: 2250px) and (max-width: 2300px) {
+  .proctor-dashboard {
+    font-size: 29.5px;
+    max-width: min(2300px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 22.125px */
+    --font-sm: 0.875rem;  /* 25.8125px */
+    --font-md: 1rem;       /* 29.5px */
+    --font-lg: 1.125rem;   /* 33.1875px */
+    --font-xl: 1.375rem;   /* 40.5625px */
+    --font-xxl: 1.75rem;   /* 51.625px */
+  }
+}
+
+/* ===== Breakpoint: 2300px – 2350px ===== */
+@media only screen and (min-width: 2300px) and (max-width: 2350px) {
+  .proctor-dashboard {
+    font-size: 30px;
+    max-width: min(2350px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 22.5px */
+    --font-sm: 0.875rem;  /* 26.25px */
+    --font-md: 1rem;       /* 30px */
+    --font-lg: 1.125rem;   /* 33.75px */
+    --font-xl: 1.375rem;   /* 41.25px */
+    --font-xxl: 1.75rem;   /* 52.5px */
+    --space-xl: 4rem;
+  }
+}
+
+/* ===== Breakpoint: 2350px – 2400px ===== */
+@media only screen and (min-width: 2350px) and (max-width: 2400px) {
+  .proctor-dashboard {
+    font-size: 30.5px;
+    max-width: min(2400px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 22.875px */
+    --font-sm: 0.875rem;  /* 26.6875px */
+    --font-md: 1rem;       /* 30.5px */
+    --font-lg: 1.125rem;   /* 34.3125px */
+    --font-xl: 1.375rem;   /* 41.9375px */
+    --font-xxl: 1.75rem;   /* 53.375px */
+  }
+}
+
+/* ===== Breakpoint: 2400px – 2450px ===== */
+@media only screen and (min-width: 2400px) and (max-width: 2450px) {
+  .proctor-dashboard {
+    font-size: 31px;
+    max-width: min(2450px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 23.25px */
+    --font-sm: 0.875rem;  /* 27.125px */
+    --font-md: 1rem;       /* 31px */
+    --font-lg: 1.125rem;   /* 34.875px */
+    --font-xl: 1.375rem;   /* 42.625px */
+    --font-xxl: 1.75rem;   /* 54.25px */
+    --space-xl: 4.25rem;
+  }
+}
+
+/* ===== Breakpoint: 2450px – 2500px ===== */
+@media only screen and (min-width: 2450px) and (max-width: 2500px) {
+  .proctor-dashboard {
+    font-size: 31.5px;
+    max-width: min(2500px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 23.625px */
+    --font-sm: 0.875rem;  /* 27.5625px */
+    --font-md: 1rem;       /* 31.5px */
+    --font-lg: 1.125rem;   /* 35.4375px */
+    --font-xl: 1.375rem;   /* 43.3125px */
+    --font-xxl: 1.75rem;   /* 55.125px */
+  }
+}
+
+/* ===== Breakpoint: 2500px – 2550px ===== */
+@media only screen and (min-width: 2500px) and (max-width: 2550px) {
+  .proctor-dashboard {
+    font-size: 32px;
+    max-width: min(2550px, 95vw);
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 24px */
+    --font-sm: 0.875rem;  /* 28px */
+    --font-md: 1rem;       /* 32px */
+    --font-lg: 1.125rem;   /* 36px */
+    --font-xl: 1.375rem;   /* 44px */
+    --font-xxl: 1.75rem;   /* 56px */
+    --space-xl: 4.25rem;
+  }
+}
+
+/* ===== Breakpoint: 2550px – 2600px+ ===== */
+@media only screen and (min-width: 2550px) {
+  .proctor-dashboard {
+    font-size: 32px;
+    max-width: min(2000px, 90vw);
+    margin: 0 auto;
+  }
+  :root {
+    --font-xs: 0.75rem;   /* 24px */
+    --font-sm: 0.875rem;  /* 28px */
+    --font-md: 1rem;       /* 32px */
+    --font-lg: 1.125rem;   /* 36px */
+    --font-xl: 1.375rem;   /* 44px */
+    --font-xxl: 1.75rem;   /* 56px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 4.5rem;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+  }
+  .appointments-list {
+    grid-template-columns: repeat(auto-fill, minmax(700px, 1fr));
+    gap: var(--space-xl);
+  }
+}

@@ -827,6 +827,156 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ==================================================
+   BASE STYLES & CSS VARIABLES
+   ================================================== */
+
+:root {
+  /* Base scale – will be overridden by media queries */
+  --font-base: 16px;
+  --font-scale: 1.2;          /* factor between heading sizes */
+  --spacing-unit: 1rem;
+  --container-max: 1200px;
+  --border-radius-base: 4px;
+  --touch-target-min: 44px;    /* minimum tap target size */
+
+  /* Colors (kept as original) */
+  --bg-dark: #03030f;
+  --text-light: #ffffff;
+  --primary: #3776AB;
+  --primary-light: #4f8ec9;
+  --secondary: #6c757d;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: var(--font-base);
+  line-height: 1.5;
+  color: var(--text-light);
+  background-color: var(--bg-dark);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography – relative to body font-size */
+h1 { font-size: calc(var(--font-base) * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+h2 { font-size: calc(var(--font-base) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+h3 { font-size: calc(var(--font-base) * var(--font-scale) * var(--font-scale)); }
+h4 { font-size: calc(var(--font-base) * var(--font-scale)); }
+h5 { font-size: calc(var(--font-base) * 0.9); }
+h6 { font-size: calc(var(--font-base) * 0.8); }
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  margin-bottom: calc(var(--spacing-unit) * 0.75);
+  font-weight: 600;
+}
+
+p, ul, ol, dl, blockquote {
+  margin-bottom: var(--spacing-unit);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* Containers & layout */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: calc(var(--spacing-unit) * 1.5);
+  padding-right: calc(var(--spacing-unit) * 1.5);
+}
+
+/* Grid system – flexbox based */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: calc(-1 * var(--spacing-unit) / 2);
+  margin-right: calc(-1 * var(--spacing-unit) / 2);
+}
+
+[class*="col-"] {
+  flex: 0 0 100%;
+  padding-left: calc(var(--spacing-unit) / 2);
+  padding-right: calc(var(--spacing-unit) / 2);
+  margin-bottom: var(--spacing-unit);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target-min);
+  padding: calc(var(--spacing-unit) * 0.5) var(--spacing-unit);
+  font-size: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-base);
+  background-color: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.btn:hover {
+  background-color: var(--primary-light);
+  text-decoration: none;
+}
+.btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Form inputs */
+input, textarea, select {
+  width: 100%;
+  min-height: var(--touch-target-min);
+  padding: calc(var(--spacing-unit) * 0.4) var(--spacing-unit);
+  font-size: inherit;
+  font-family: inherit;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius-base);
+  background-color: white;
+  color: #333;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Original class from AnimatedBackground.vue – preserved exactly */
 .three-background {
   position: fixed;
   top: 0;
@@ -837,4 +987,415 @@ onUnmounted(() => {
   pointer-events: none;
   background: #03030f; /* fallback while loading */
 }
+
+/* ==================================================
+   RESPONSIVE MEDIA QUERIES (50px increments)
+   ================================================== */
+
+/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
+@media only screen and (min-width: 200px) and (max-width: 250px) {
+  :root {
+    --font-base: 8px;
+    --spacing-unit: 0.5rem;
+    --container-max: 100%;
+    --border-radius-base: 2px;
+    --touch-target-min: 32px;
+  }
+  .container {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  h1 { font-size: calc(8px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  h2 { font-size: calc(8px * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  h3 { font-size: calc(8px * var(--font-scale) * var(--font-scale)); }
+  h4 { font-size: calc(8px * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 32px;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
+@media only screen and (min-width: 250px) and (max-width: 300px) {
+  :root {
+    --font-base: 9px;
+    --spacing-unit: 0.6rem;
+    --container-max: 100%;
+    --border-radius-base: 2px;
+    --touch-target-min: 34px;
+  }
+  .container {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
+  h1 { font-size: calc(9px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 34px;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
+@media only screen and (min-width: 300px) and (max-width: 350px) {
+  :root {
+    --font-base: 10px;
+    --spacing-unit: 0.7rem;
+    --container-max: 100%;
+    --border-radius-base: 3px;
+    --touch-target-min: 36px;
+  }
+  .container {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+  }
+  h1 { font-size: calc(10px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 36px;
+    padding: 0.35rem 0.7rem;
+  }
+}
+
+/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
+@media only screen and (min-width: 350px) and (max-width: 400px) {
+  :root {
+    --font-base: 11px;
+    --spacing-unit: 0.8rem;
+    --container-max: 100%;
+    --border-radius-base: 3px;
+    --touch-target-min: 38px;
+  }
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  h1 { font-size: calc(11px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 38px;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
+@media only screen and (min-width: 400px) and (max-width: 450px) {
+  :root {
+    --font-base: 12px;
+    --spacing-unit: 0.9rem;
+    --container-max: 100%;
+    --border-radius-base: 4px;
+    --touch-target-min: 40px;
+  }
+  .container {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+  h1 { font-size: calc(12px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 40px;
+    padding: 0.45rem 0.9rem;
+  }
+}
+
+/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
+@media only screen and (min-width: 450px) and (max-width: 500px) {
+  :root {
+    --font-base: 13px;
+    --spacing-unit: 1rem;
+    --container-max: 100%;
+    --border-radius-base: 4px;
+    --touch-target-min: 42px;
+  }
+  .container {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+  h1 { font-size: calc(13px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 42px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
+@media only screen and (min-width: 500px) and (max-width: 550px) {
+  :root {
+    --font-base: 13.5px;
+    --spacing-unit: 1rem;
+    --container-max: 540px;
+    --border-radius-base: 4px;
+    --touch-target-min: 44px;
+  }
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  h1 { font-size: calc(13.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .btn, input, select, textarea {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
+  /* Begin 2-column layout for small tablets */
+  .col-sm-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
+@media only screen and (min-width: 550px) and (max-width: 600px) {
+  :root {
+    --font-base: 14px;
+    --spacing-unit: 1rem;
+    --container-max: 580px;
+    --border-radius-base: 4px;
+    --touch-target-min: 44px;
+  }
+  .container {
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+  h1 { font-size: calc(14px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-sm-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
+@media only screen and (min-width: 600px) and (max-width: 650px) {
+  :root {
+    --font-base: 14.5px;
+    --spacing-unit: 1.1rem;
+    --container-max: 620px;
+    --border-radius-base: 5px;
+  }
+  .container {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  h1 { font-size: calc(14.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-sm-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
+@media only screen and (min-width: 650px) and (max-width: 700px) {
+  :root {
+    --font-base: 15px;
+    --spacing-unit: 1.2rem;
+    --container-max: 680px;
+    --border-radius-base: 5px;
+  }
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  h1 { font-size: calc(15px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+  .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
+@media only screen and (min-width: 700px) and (max-width: 750px) {
+  :root {
+    --font-base: 15.5px;
+    --spacing-unit: 1.3rem;
+    --container-max: 720px;
+    --border-radius-base: 5px;
+  }
+  .container {
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+  }
+  h1 { font-size: calc(15.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-md-4, .col-md-6 { /* same as above */ }
+}
+
+/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
+@media only screen and (min-width: 750px) and (max-width: 800px) {
+  :root {
+    --font-base: 16px;
+    --spacing-unit: 1.4rem;
+    --container-max: 760px;
+    --border-radius-base: 6px;
+  }
+  .container {
+    padding-left: 1.2rem;
+    padding-right: 1.2rem;
+  }
+  h1 { font-size: calc(16px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
+@media only screen and (min-width: 800px) and (max-width: 850px) {
+  :root {
+    --font-base: 16.5px;
+    --spacing-unit: 1.5rem;
+    --container-max: 820px;
+    --border-radius-base: 6px;
+  }
+  .container {
+    padding-left: 1.3rem;
+    padding-right: 1.3rem;
+  }
+  h1 { font-size: calc(16.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-lg-3 { flex: 0 0 25%; max-width: 25%; }
+  .col-lg-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+  .col-lg-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
+@media only screen and (min-width: 850px) and (max-width: 900px) {
+  :root {
+    --font-base: 17px;
+    --spacing-unit: 1.6rem;
+    --container-max: 860px;
+    --border-radius-base: 6px;
+  }
+  .container {
+    padding-left: 1.4rem;
+    padding-right: 1.4rem;
+  }
+  h1 { font-size: calc(17px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
+@media only screen and (min-width: 900px) and (max-width: 950px) {
+  :root {
+    --font-base: 17.5px;
+    --spacing-unit: 1.7rem;
+    --container-max: 920px;
+    --border-radius-base: 6px;
+  }
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  h1 { font-size: calc(17.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
+@media only screen and (min-width: 950px) and (max-width: 1000px) {
+  :root {
+    --font-base: 17.5px;
+    --spacing-unit: 1.8rem;
+    --container-max: 960px;
+    --border-radius-base: 7px;
+  }
+  .container {
+    padding-left: 1.6rem;
+    padding-right: 1.6rem;
+  }
+  h1 { font-size: calc(17.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
+@media only screen and (min-width: 1000px) and (max-width: 1050px) {
+  :root {
+    --font-base: 18px;
+    --spacing-unit: 1.9rem;
+    --container-max: 1020px;
+    --border-radius-base: 7px;
+  }
+  .container {
+    padding-left: 1.7rem;
+    padding-right: 1.7rem;
+  }
+  h1 { font-size: calc(18px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  .col-xl-3 { flex: 0 0 25%; max-width: 25%; }
+  .col-xl-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+  .col-xl-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
+@media only screen and (min-width: 1050px) and (max-width: 1100px) {
+  :root {
+    --font-base: 18px;
+    --spacing-unit: 2rem;
+    --container-max: 1080px;
+    --border-radius-base: 7px;
+  }
+  .container {
+    padding-left: 1.8rem;
+    padding-right: 1.8rem;
+  }
+  h1 { font-size: calc(18px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
+@media only screen and (min-width: 1100px) and (max-width: 1150px) {
+  :root {
+    --font-base: 18.5px;
+    --spacing-unit: 2.1rem;
+    --container-max: 1120px;
+    --border-radius-base: 8px;
+  }
+  .container {
+    padding-left: 1.9rem;
+    padding-right: 1.9rem;
+  }
+  h1 { font-size: calc(18.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
+@media only screen and (min-width: 1150px) and (max-width: 1200px) {
+  :root {
+    --font-base: 18.5px;
+    --spacing-unit: 2.2rem;
+    --container-max: 1180px;
+    --border-radius-base: 8px;
+  }
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  h1 { font-size: calc(18.5px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+}
+
+/* ----- Breakpoint: 1200px+ | 4XL+ ----- */
+@media only screen and (min-width: 1200px) {
+  :root {
+    --font-base: 19px;
+    --spacing-unit: 2.5rem;
+    --container-max: 1400px; /* allows wider on large screens */
+    --border-radius-base: 8px;
+    --touch-target-min: 48px;
+  }
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  h1 { font-size: calc(19px * var(--font-scale) * var(--font-scale) * var(--font-scale) * var(--font-scale)); }
+  /* Extra large grid */
+  .col-xxl-2 { flex: 0 0 16.666%; max-width: 16.666%; }
+  .col-xxl-3 { flex: 0 0 25%; max-width: 25%; }
+  .col-xxl-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+  .col-xxl-6 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* Additional ultra‑wide support up to 2560px and beyond */
+@media only screen and (min-width: 1800px) {
+  :root {
+    --font-base: 20px;
+    --spacing-unit: 3rem;
+    --container-max: 1600px;
+  }
+}
+
+@media only screen and (min-width: 2200px) {
+  :root {
+    --font-base: 22px;
+    --spacing-unit: 3.5rem;
+    --container-max: 1800px;
+  }
+}
+
+@media only screen and (min-width: 2560px) {
+  :root {
+    --font-base: 24px;
+    --spacing-unit: 4rem;
+    --container-max: 2000px;
+  }
+}
+
+/* ==================================================
+   UTILITY CLASSES – can be added without affecting originals
+   ================================================== */
+.text-center { text-align: center; }
+.mt-1 { margin-top: var(--spacing-unit); }
+.mb-1 { margin-bottom: var(--spacing-unit); }
+.p-1 { padding: var(--spacing-unit); }
+.hidden { display: none; }
 </style>
