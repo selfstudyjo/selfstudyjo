@@ -1,109 +1,72 @@
 /* ============================================
-   GALAXY SPACE THEME - RUNBOOK DETAILS
-   FULLY TRANSPARENT WITH LIGHT TEXT
+ G ALAXY SPACE THEME - RUNBOOK DETAILS        *
+ FULLY TRANSPARENT WITH LIGHT TEXT
 
-   RESPONSIVE ENHANCEMENTS:
-   - Prevent word/character breaks across all elements
-   - Ensure containers expand to fit content
-   - Add flex-wrap to prevent element mixing in headers
-   - Add isolation for stacking contexts
-   - Preserve all original design, colors, animations
-============================================ */
+ RESPONSIVE ENHANCEMENTS:
+ - Prevent word/character breaks across all elements
+ - Ensure containers expand to fit content
+ - Add flex-wrap to prevent element mixing in headers
+ - Add isolation for stacking contexts
+ - Preserve all original design, colors, animations
+ ============================================ */
 
 /* ============================================
-   GLOBAL OVERRIDES - FORCE LIGHT TEXT EVERYWHERE
-============================================ */
-.runbook-details-container,
-.runbook-details-container *,
-.runbook-details-container *:before,
-.runbook-details-container *:after {
-  color: #ffffff !important;
-  background-color: transparent !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  text-shadow: 0 0 15px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+ G LOBAL OVERRIDES - Allow inline styles to ta*ke precedence
+ ============================================ */
+.runbook-details-container {
+  /* Container background is transparent, as before */
+  background: transparent !important;
+  color: #ffffff; /* Default text color, but can be overridden by children */
 }
 
-/* Force white text on all text elements */
-.runbook-details-container h1,
-.runbook-details-container h2,
-.runbook-details-container h3,
-.runbook-details-container h4,
-.runbook-details-container h5,
-.runbook-details-container h6,
-.runbook-details-container p,
-.runbook-details-container span,
-.runbook-details-container div,
-.runbook-details-container a,
-.runbook-details-container button,
-.runbook-details-container li,
-.runbook-details-container label,
-.runbook-details-container strong,
-.runbook-details-container em,
-.runbook-details-container b,
-.runbook-details-container i,
-.runbook-details-container code,
-.runbook-details-container pre {
-  color: #ffffff !important;
-  text-shadow: 0 0 15px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6) !important;
-}
-
-/* Override any inline styles */
-.runbook-details-container [style*="color: black"],
-.runbook-details-container [style*="color:#000"],
-.runbook-details-container [style*="color:#333"],
-.runbook-details-container [style*="color:rgb(0"],
-.runbook-details-container [style*="color:rgba(0"] {
-  color: #ffffff !important;
+/* Do NOT force all children to have white text and transparent background.
+ Instead, let inline styles and natural inher*itance apply. */
+.runbook-details-container * {
+  /* Removed forced color/background overrides */
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+  box-sizing: border-box;
 }
 
 /* ============================================
-   CSS VARIABLES
-============================================ */
+ C SS VARIABLES                               *
+ ============================================ */
 :root {
   --cosmic-dark: rgba(5, 5, 20, 0.85);
   --cosmic-card: rgba(10, 10, 30, 0.8);
   --cosmic-card-hover: rgba(20, 20, 50, 0.85);
   --cosmic-input: rgba(0, 0, 0, 0.6);
-  
+
   --cosmic-cyan: #4ECDC4;
   --cosmic-purple: #8A2BE2;
   --cosmic-blue: #4285F4;
-  
+
   --text-primary: #ffffff;
   --text-secondary: #f0f0ff;
   --text-muted: rgba(240, 240, 255, 0.8);
-  
+
   --border-glow: rgba(255, 255, 255, 0.15);
   --border-glow-strong: rgba(78, 205, 196, 0.4);
   --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.25);
   --shadow-cosmic-cyan: 0 0 25px rgba(78, 205, 196, 0.35);
-  
+
   --glass-blur: blur(12px) saturate(180%);
   --glass-blur-mobile: blur(8px) saturate(160%);
-  
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-  
+
   --transition: 0.3s ease;
 }
 
 /* ============================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================== */
-.runbook-details-container * {
-  word-break: normal;                /* Prevent character-by-character breaking */
-  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-  hyphens: none;                     /* Disable hyphenation */
-  -webkit-hyphens: none;
-  -ms-hyphens: none;
-  box-sizing: border-box;            /* Consistent sizing */
-}
-
-/* ============================================
-   BASE CONTAINER
-============================================ */
+ B ASE CONTAINER                              *
+ ============================================ */
 .runbook-details-container {
   max-width: 800px;
   margin: 0 auto;
@@ -112,13 +75,14 @@
   background: transparent !important;
   position: relative;
   z-index: 1;
-  isolation: isolate;                 /* Fresh stacking context */
-  min-height: min-content;            /* Expand with content */
+  isolation: isolate;
+  min-height: min-content;
+  color: #ffffff; /* default text color for container */
 }
 
 /* ============================================
-   BACK BUTTON - TRANSPARENT GLASS
-============================================ */
+ B ACK BUTTON - TRANSPARENT GLASS             *
+ ============================================ */
 .back-btn {
   display: inline-flex;
   align-items: center;
@@ -138,12 +102,12 @@
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.9) !important;
   position: relative;
   overflow: hidden;
-  white-space: nowrap;                 /* Keep button text on one line */
+  white-space: nowrap;
 }
 
 @media (max-width: 320px) {
   .back-btn {
-    white-space: normal;               /* Allow wrapping on very small screens */
+    white-space: normal;
   }
 }
 
@@ -162,8 +126,8 @@
 }
 
 /* ============================================
-   LOADING SPINNER - COSMIC STYLE
-============================================ */
+ L OADING SPINNER - COSMIC STYLE              *
+ ============================================ */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -179,6 +143,7 @@
   min-height: 300px;
   isolation: isolate;
   min-height: min-content;
+  color: #ffffff;
 }
 
 .loading-spinner {
@@ -193,8 +158,8 @@
 }
 
 /* ============================================
-   ERROR CONTAINER - TRANSPARENT
-============================================ */
+ E RROR CONTAINER - TRANSPARENT               *
+ ============================================ */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -210,6 +175,7 @@
   min-height: 300px;
   isolation: isolate;
   min-height: min-content;
+  color: #ffffff;
 }
 
 .error-icon {
@@ -262,8 +228,8 @@
 }
 
 /* ============================================
-   RUNBOOK CONTENT - FLOATING IN SPACE
-============================================ */
+ R UNBOOK CONTENT - FLOATING IN SPACE         *
+ ============================================ */
 .runbook-content {
   animation: fadeIn 0.5s ease;
   min-height: min-content;
@@ -294,7 +260,7 @@
   display: flex;
   gap: 16px;
   align-items: center;
-  flex-wrap: wrap;                    /* Already present */
+  flex-wrap: wrap;
 }
 
 .section-count {
@@ -310,8 +276,8 @@
 }
 
 /* ============================================
-   SECTIONS - TRANSPARENT CARDS
-============================================ */
+ S ECTIONS - Allow custom colors but maintain *glass effect
+ ============================================ */
 .sections-container {
   display: flex;
   flex-direction: column;
@@ -319,7 +285,8 @@
 }
 
 .section-card {
-  background: rgba(10, 10, 30, 0.8) !important;
+  /* Default glass background (fallback, will be overridden by inline style) */
+  background: rgba(10, 10, 30, 0.8);
   backdrop-filter: var(--glass-blur-mobile);
   border-radius: var(--radius-lg);
   padding: clamp(24px, 6vw, 32px);
@@ -330,6 +297,19 @@
   overflow: hidden;
   isolation: isolate;
   min-height: min-content;
+  /* Allow inline styles to set background and color */
+  background-blend-mode: overlay;
+}
+
+/* When inline style sets background-color, remove overlay blend mode */
+.section-card[style*="background-color"] {
+  background-blend-mode: normal;
+}
+
+/* Ensure text color inheritance for children */
+.section-card,
+.section-card * {
+  color: inherit; /* inherit from parent, which gets inline color */
 }
 
 .section-card::before {
@@ -347,7 +327,7 @@
 .section-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), var(--shadow-cosmic-cyan);
-  background: rgba(15, 15, 45, 0.85) !important;
+  background: rgba(15, 15, 45, 0.85) !important; /* fallback hover, but may be overridden */
 }
 
 .section-header {
@@ -355,7 +335,7 @@
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 24px;
-  flex-wrap: wrap;                    /* Allow wrapping on any screen */
+  flex-wrap: wrap;
 }
 
 .section-number {
@@ -377,7 +357,7 @@
 .section-title {
   font-size: clamp(20px, 4vw, 24px);
   font-weight: 700;
-  color: #ffffff !important;
+  color: inherit; /* inherit from section card */
   line-height: 1.3;
   flex: 1;
   text-shadow: 0 0 15px rgba(0, 0, 0, 0.9) !important;
@@ -389,13 +369,12 @@
 }
 
 /* ============================================
-   TEXT CONTENT - LIGHT & READABLE
-============================================ */
+ T EXT CONTENT - LIGHT & READABLE             *
+ ============================================ */
 .text-content {
   font-size: clamp(16px, 3vw, 18px);
   line-height: 1.8;
-  color: #f0f0ff !important;
-  text-shadow: 0 0 12px rgba(0, 0, 0, 0.9) !important;
+  /* color inherited from section-card */
 }
 
 .text-content p {
@@ -408,8 +387,8 @@
 }
 
 /* ============================================
-   CODE BLOCKS - DARK TRANSPARENT
-============================================ */
+ C ODE BLOCKS - DARK TRANSPARENT but inherit t*ext color
+ ============================================ */
 .code-block-container {
   background: rgba(5, 5, 15, 0.85) !important;
   backdrop-filter: var(--glass-blur-mobile);
@@ -428,7 +407,7 @@
   padding: 12px 20px;
   background: rgba(20, 20, 40, 0.9) !important;
   border-bottom: 1px solid rgba(78, 205, 196, 0.3) !important;
-  flex-wrap: wrap;                    /* Allow wrapping on small screens */
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -485,15 +464,16 @@
   font-family: 'Courier New', Courier, monospace;
   font-size: clamp(14px, 3vw, 15px);
   line-height: 1.6;
-  color: #e0e0ff !important;
+  /* inherit text color from section-card */
+  color: inherit;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.9) !important;
   display: block;
   white-space: pre-wrap;
-  text-shadow: 0 0 12px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* ============================================
-   EMPTY SECTIONS - TRANSPARENT
-============================================ */
+ E MPTY SECTIONS - TRANSPARENT                *
+ ============================================ */
 .empty-sections {
   display: flex;
   flex-direction: column;
@@ -508,6 +488,7 @@
   box-shadow: var(--shadow-cosmic);
   isolation: isolate;
   min-height: min-content;
+  color: #ffffff;
 }
 
 .empty-icon {
@@ -532,8 +513,8 @@
 }
 
 /* ============================================
-   ANIMATIONS
-============================================ */
+ A NIMATIONS                                  *
+ ============================================ */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -550,47 +531,47 @@
 }
 
 /* ============================================
-   RESPONSIVE DESIGN (Preserved and enhanced)
-============================================ */
+ R ESPONSIVE DESIGN (Preserved and enhanced)  *
+ ============================================ */
 
 /* Mobile (< 640px) */
 @media (max-width: 639px) {
   .runbook-details-container {
     padding: 24px 16px;
   }
-  
+
   .back-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .section-card {
     padding: 20px;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .section-number {
     width: 36px;
     height: 36px;
     font-size: clamp(13px, 3vw, 14px);
   }
-  
+
   .text-content {
     font-size: clamp(15px, 4vw, 17px);
   }
-  
+
   .code-block {
     padding: 16px;
   }
-  
+
   .empty-sections {
     padding: 60px 20px;
   }
-  
+
   /* Reduce blur on mobile for performance */
   .section-card,
   .loading-container,
@@ -607,19 +588,19 @@
   .runbook-details-container {
     padding: 28px 20px;
   }
-  
+
   .runbook-title {
     font-size: clamp(32px, 5vw, 36px);
   }
-  
+
   .section-card {
     padding: 28px;
   }
-  
+
   .section-title {
     font-size: clamp(22px, 3vw, 24px);
   }
-  
+
   .text-content {
     font-size: clamp(16px, 2.5vw, 17px);
   }
@@ -630,11 +611,11 @@
   .runbook-details-container {
     max-width: 900px;
   }
-  
+
   .section-card {
     padding: 32px;
   }
-  
+
   .text-content {
     font-size: 17px;
   }
@@ -646,17 +627,17 @@
     max-width: 1000px;
     padding: 48px 40px;
   }
-  
+
   .section-card {
     padding: 36px;
   }
-  
+
   .section-number {
     width: 48px;
     height: 48px;
     font-size: clamp(16px, 3vw, 18px);
   }
-  
+
   .text-content {
     font-size: 18px;
   }
@@ -668,31 +649,31 @@
     max-width: 1200px;
     padding: 64px 48px;
   }
-  
+
   .runbook-title {
     font-size: 48px;
   }
-  
+
   .section-card {
     padding: 44px;
   }
-  
+
   .section-title {
     font-size: 28px;
   }
-  
+
   .text-content {
     font-size: 20px;
   }
-  
+
   .code-block code {
     font-size: 17px;
   }
 }
 
 /* ============================================
-   ACCESSIBILITY SUPPORT
-============================================ */
+ A CCESSIBILITY SUPPORT                       *
+ ============================================ */
 @media (prefers-reduced-motion: reduce) {
   .back-btn,
   .section-card,
@@ -710,7 +691,7 @@
     color: #ffffff !important;
     border-color: #ffffff !important;
   }
-  
+
   .section-card,
   .back-btn,
   .retry-btn {
@@ -719,8 +700,8 @@
 }
 
 /* ============================================
-   CUSTOM SCROLLBAR FOR CODE BLOCKS
-============================================ */
+ C USTOM SCROLLBAR FOR CODE BLOCKS            *
+ ============================================ */
 .code-block::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -743,17 +724,10 @@
 }
 
 /* ============================================
-   FORCE ALL TEXT TO BE LIGHT - EXTRA INSURANCE
-============================================ */
-/* This will override ANY remaining black text */
-.runbook-details-container :where(
-  h1, h2, h3, h4, h5, h6,
-  p, span, div, a, button,
-  li, td, th, label,
-  strong, em, b, i,
-  code, pre, .text, .title,
-  .heading, .label, .caption
-):not(:empty) {
+ F ORCE ALL TEXT TO BE LIGHT - EXTRA INSURANCE*
+ (But only for elements that don't have custom colors)
+ ============================================ */
+.runbook-details-container .section-card:not([style*="color"]) * {
   color: #ffffff !important;
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
 }
@@ -770,21 +744,21 @@
 }
 
 /* ============================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ============================================
-   1. Added global text protection rules to all elements inside .runbook-details-container:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to main containers (`.runbook-details-container`, `.loading-container`, `.error-container`, `.section-card`, `.code-block-container`, `.empty-sections`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.section-header`, `.code-block-header`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (titles, headings, labels) to keep whole words together.
-   5. Added `white-space: nowrap` to buttons (`.back-btn`, `.retry-btn`, `.copy-btn`), with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Preserved all original colors, animations, and media queries.
-   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/
+ S UMMARY OF RESPONSIVE ENHANCEMENTS          *
+ ============================================
+ 1. Added global text protection rules to all elements inside .runbook-details-container:
+ - `word-break: normal` (prevents character breaks)
+ - `overflow-wrap: break-word` (wraps only at word boundaries)
+ - `hyphens: none`
+ - `box-sizing: border-box`
+ 2. Added `isolation: isolate` to main containers (`.runbook-details-container`, `.loading-container`, `.error-container`, `.section-card`, `.code-block-container`, `.empty-sections`) for fresh stacking contexts.
+ 3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.section-header`, `.code-block-header`) to prevent element mixing.
+ 4. Added `word-break: keep-all` to important text elements (titles, headings, labels) to keep whole words together.
+ 5. Added `white-space: nowrap` to buttons (`.back-btn`, `.retry-btn`, `.copy-btn`), with fallback media queries for very small screens to allow wrapping if necessary.
+ 6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
+ 7. Preserved all original colors, animations, and media queries.
+ 8. Ensured no element is clipped, hidden, or overlapped at any screen size.
+ */
 
 /* ========================================================================= */
 /* ===== GRANULAR RESPONSIVE BREAKPOINTS – 50px INCREMENT SCALE =========== */
@@ -2146,5 +2120,5 @@
 }
 
 /* ============================================
-   END OF GRANULAR RESPONSIVE BREAKPOINTS
-============================================ */
+ E ND OF GRANULAR RESPONSIVE BREAKPOINTS      *
+ ============================================ */
