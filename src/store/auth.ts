@@ -6,6 +6,7 @@ import { proctorService } from '@/services/proctor.service';
 import { mediaService } from '@/services/media.service';
 import { otpService } from '@/services/otp.service';
 import { labService } from '@/services/lab.service';
+import { subscriptionService } from '@/services/subscription.service';
 import type { LoginRequest, LoginResponse } from '@/services/auth.service';
 import type {
     UserProfile,
@@ -37,29 +38,49 @@ export const useAuthStore = defineStore('auth', () => {
     const isProctor = ref(false);
     const proctorData = ref<any>(null);
     const studentRecord = ref<Student | null>(null);
+    const userFeatures = ref<string[]>([]);
 
     // Initialize from localStorage
     const initAuth = () => {
-    const storedUser = authService.getUser();
-    const storedToken = authService.getToken();
+        const storedUser = authService.getUser();
+        const storedToken = authService.getToken();
 
-    if (storedUser && storedToken) {
-        user.value = storedUser;
-        token.value = storedToken;
-        isAuthenticated.value = true;
+        if (storedUser && storedToken) {
+            user.value = storedUser;
+            token.value = storedToken;
+            isAuthenticated.value = true;
 
-        // Check if user is a proctor (non-blocking)
-        checkProctorStatus(storedUser.id).catch(err =>
-        console.warn('Failed to check proctor status on init:', err)
-        );
+            checkProctorStatus(storedUser.id).catch(err =>
+            console.warn('Failed to check proctor status on init:', err)
+            );
 
-        // Load lab student record if user has lab_url (non-blocking)
-        if (storedUser.lab_url) {
-        loadStudentRecord().catch(err =>
-            console.warn('Failed to load student record on init:', err)
-        );
+            if (storedUser.lab_url) {
+                loadStudentRecord().catch(err =>
+                console.warn('Failed to load student record on init:', err)
+                );
+            }
+
+            loadUserFeatures().catch(err =>
+            console.warn('Failed to load user features on init:', err)
+            );
         }
-    }
+    };
+
+    // Load user features from subscriptions (feature names)
+    const loadUserFeatures = async (): Promise<string[]> => {
+        if (!user.value?.id) {
+            userFeatures.value = [];
+            return [];
+        }
+        try {
+            const features = await subscriptionService.getUserFeatures(user.value.id);
+            userFeatures.value = features;
+            return features;
+        } catch (error) {
+            console.warn('Failed to load user features:', error);
+            userFeatures.value = [];
+            return [];
+        }
     };
 
     // Load student record for lab
@@ -72,12 +93,10 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const student = await labService.getOrCreateStudent(user.value.username, user.value.lab_url);
             studentRecord.value = student;
-
             if (!student) {
                 console.warn('Student record is null after getOrCreateStudent');
                 return null;
             }
-
             return student;
         } catch (error) {
             console.warn('Failed to load student record (non-critical):', error);
@@ -101,9 +120,8 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check authentication status (MAIN FIX HERE)
+    // Check authentication status
     const checkAuth = async (): Promise<boolean> => {
-        // First, check local storage
         const storedUser = authService.getUser();
         const storedToken = authService.getToken();
 
@@ -111,61 +129,56 @@ export const useAuthStore = defineStore('auth', () => {
             isAuthenticated.value = false;
             user.value = null;
             token.value = null;
+            userFeatures.value = [];
             return false;
         }
 
         try {
-            // Set current user from storage
             user.value = storedUser;
             token.value = storedToken;
 
-            // Try to validate token with server
             try {
                 const authenticated = await authService.checkAndRefreshAuth();
                 isAuthenticated.value = authenticated;
-
                 if (!authenticated) {
                     user.value = null;
                     token.value = null;
                     isProctor.value = false;
                     proctorData.value = null;
                     studentRecord.value = null;
+                    userFeatures.value = [];
                     return false;
                 }
             } catch (authError) {
                 console.warn('Server auth check failed, using local validation:', authError);
-
-                // Fallback to local validation
                 const expiresAt = new Date(storedUser.expiresAt);
                 const now = new Date();
                 const isValid = expiresAt > now;
-
                 isAuthenticated.value = isValid;
-
                 if (!isValid) {
                     user.value = null;
                     token.value = null;
                     isProctor.value = false;
                     proctorData.value = null;
                     studentRecord.value = null;
+                    userFeatures.value = [];
                     authService.clearAuth();
                     return false;
                 }
             }
 
-            // If authenticated, load additional data (non-blocking)
             if (isAuthenticated.value && user.value?.id) {
-                // Check proctor status in background
                 checkProctorStatus(user.value.id).catch(err =>
                 console.warn('Background proctor check failed:', err)
                 );
-
-                // Load student record in background
                 if (user.value.lab_url) {
                     loadStudentRecord().catch(err =>
                     console.warn('Background student record load failed:', err)
                     );
                 }
+                loadUserFeatures().catch(err =>
+                console.warn('Background user features load failed:', err)
+                );
             }
 
             return isAuthenticated.value;
@@ -177,6 +190,7 @@ export const useAuthStore = defineStore('auth', () => {
             isProctor.value = false;
             proctorData.value = null;
             studentRecord.value = null;
+            userFeatures.value = [];
             return false;
         }
     };
@@ -189,12 +203,9 @@ export const useAuthStore = defineStore('auth', () => {
         verificationData.value = null;
 
         try {
-            // Clear service registry cache to get fresh replicas
             serviceRegistry.clearCache();
-
             const response = await authService.login(credentials);
 
-            // Handle verification required response
             if (response.requires_verification) {
                 requiresVerification.value = true;
                 verificationData.value = {
@@ -206,9 +217,7 @@ export const useAuthStore = defineStore('auth', () => {
                 return response;
             }
 
-            // Successful login - fetch full user profile
             const userProfile = await userService.getUserProfile(response.user_id);
-
             user.value = {
                 id: response.user_id,
                 token: response.token,
@@ -223,21 +232,19 @@ export const useAuthStore = defineStore('auth', () => {
             };
             token.value = response.token;
             isAuthenticated.value = true;
-
-            // Save user with lab_url to localStorage
             authService.setUser(user.value);
 
-            // Check proctor status (non-blocking)
             checkProctorStatus(response.user_id).catch(err =>
             console.warn('Proctor check after login failed:', err)
             );
-
-            // Load student record if user has lab_url (non-blocking)
             if (userProfile.lab_url) {
                 loadStudentRecord().catch(err =>
                 console.warn('Student record load after login failed:', err)
                 );
             }
+            loadUserFeatures().catch(err =>
+            console.warn('User features load after login failed:', err)
+            );
 
             return response;
         } catch (err: any) {
@@ -254,19 +261,14 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            // Clear service registry cache
             serviceRegistry.clearCache();
-
             const response = await userService.register(userData);
-
-            // Set verification data for OTP
             requiresVerification.value = true;
             verificationData.value = {
                 user_id: response.user_id,
                 username: response.username,
                 email: userData.email,
             };
-
             return response;
         } catch (err: any) {
             error.value = err.message || 'Registration failed';
@@ -280,7 +282,6 @@ export const useAuthStore = defineStore('auth', () => {
     const generateOTP = async (data: OTPGenerationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             return await otpService.generateOTP(data);
@@ -296,16 +297,13 @@ export const useAuthStore = defineStore('auth', () => {
     const verifyOTP = async (data: OTPVerificationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             const response = await otpService.verifyOTP(data);
-
             if (response.email_verified) {
                 requiresVerification.value = false;
                 verificationData.value = null;
             }
-
             return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to verify OTP';
@@ -319,7 +317,6 @@ export const useAuthStore = defineStore('auth', () => {
     const resendOTP = async (data: OTPGenerationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             return await otpService.resendOTP(data);
@@ -335,16 +332,13 @@ export const useAuthStore = defineStore('auth', () => {
     const verifyEmail = async (request: EmailVerificationRequest): Promise<any> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             const response = await userService.verifyEmail(request);
-
             if (response.email_verified) {
                 requiresVerification.value = false;
                 verificationData.value = null;
             }
-
             return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to verify email';
@@ -358,7 +352,6 @@ export const useAuthStore = defineStore('auth', () => {
     const logout = async (): Promise<void> => {
         loading.value = true;
         error.value = null;
-
         try {
             const currentToken = token.value;
             if (currentToken) {
@@ -375,6 +368,7 @@ export const useAuthStore = defineStore('auth', () => {
             isProctor.value = false;
             proctorData.value = null;
             studentRecord.value = null;
+            userFeatures.value = [];
             authService.clearAuth();
             loading.value = false;
         }
@@ -414,12 +408,9 @@ export const useAuthStore = defineStore('auth', () => {
     const updateProfile = async (userId: string, updateData: UpdateProfileRequest): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             const updatedProfile = await userService.updateUserProfile(userId, updateData);
-
-            // Update local user data
             if (user.value && user.value.id === userId) {
                 user.value = {
                     ...user.value,
@@ -430,7 +421,6 @@ export const useAuthStore = defineStore('auth', () => {
                 };
                 authService.setUser(user.value);
             }
-
             return updatedProfile;
         } catch (err: any) {
             error.value = err.message || 'Failed to update profile';
@@ -444,19 +434,15 @@ export const useAuthStore = defineStore('auth', () => {
     const changePassword = async (userId: string, passwordData: ChangePasswordRequest): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             const updatedProfile = await userService.changePassword(userId, passwordData);
-
-            // Update local user data
             if (user.value && user.value.id === userId) {
                 user.value = {
                     ...user.value,
                     ...updatedProfile
                 };
             }
-
             return updatedProfile;
         } catch (err: any) {
             console.error('Change password error in store:', err);
@@ -471,18 +457,14 @@ export const useAuthStore = defineStore('auth', () => {
     const uploadProfilePicture = async (userId: string, username: string, imageFile: File) => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
             const response = await mediaService.uploadProfileImage(userId, username, imageFile);
-
-            // Update local user image_url if available
             if (user.value && user.value.id === userId) {
                 const profile = await userService.getUserProfile(userId);
                 user.value.image_url = profile.image_url;
                 authService.setUser(user.value);
             }
-
             return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to upload profile picture';
@@ -496,22 +478,14 @@ export const useAuthStore = defineStore('auth', () => {
     const deleteProfilePicture = async (userId: string): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
-
         try {
             serviceRegistry.clearCache();
-
-            // First delete from media service
             await mediaService.deleteProfileImage(userId);
-
-            // Then update user profile to remove image_url
             const updatedProfile = await userService.updateUserProfile(userId, { image_url: '' });
-
-            // Update local user data
             if (user.value && user.value.id === userId) {
                 user.value.image_url = '';
                 authService.setUser(user.value);
             }
-
             return updatedProfile;
         } catch (err: any) {
             error.value = err.message || 'Failed to delete profile picture';
@@ -540,7 +514,6 @@ export const useAuthStore = defineStore('auth', () => {
         if (!user.value?.id) {
             throw new Error('User not authenticated');
         }
-
         try {
             return await userService.getUserProfile(user.value.id);
         } catch (err: any) {
@@ -558,19 +531,13 @@ export const useAuthStore = defineStore('auth', () => {
     const deleteAccount = async (password: string): Promise<void> => {
         loading.value = true;
         error.value = null;
-
         try {
             if (!user.value?.id || !user.value?.username) {
                 throw new Error('User not authenticated');
             }
-
             serviceRegistry.clearCache();
-
             console.log('Deleting account for user:', user.value.username);
-
             await userService.deleteAccount(user.value.username.toLowerCase(), password);
-
-            // Logout after successful deletion
             await logout();
         } catch (err: any) {
             error.value = err.message || 'Failed to delete account';
@@ -613,9 +580,21 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check if user has lab access
+    // Computed properties for feature checks
     const hasLabAccess = computed(() => {
-        return user.value?.lab_url && user.value.lab_url.trim() !== '';
+        return user.value?.lab_url && user.value.lab_url.trim() !== '' && userFeatures.value.includes('lab_feature');
+    });
+
+    const hasAiAccess = computed(() => {
+        return userFeatures.value.includes('ai_feature');
+    });
+
+    const hasRunbookAccess = computed(() => {
+        return userFeatures.value.includes('runbook_feature');
+    });
+
+    const hasExamFeature = computed(() => {
+        return userFeatures.value.includes('exam_feature');
     });
 
     // Get or create student for lab
@@ -623,16 +602,13 @@ export const useAuthStore = defineStore('auth', () => {
         if (!hasLabAccess.value || !user.value?.username) {
             return null;
         }
-
         if (studentRecord.value) {
             return studentRecord.value;
         }
-
         return await loadStudentRecord();
     };
 
     return {
-        // State
         user,
         token,
         isAuthenticated,
@@ -643,11 +619,13 @@ export const useAuthStore = defineStore('auth', () => {
         isProctor,
         proctorData,
         studentRecord,
+        userFeatures,
 
-        // Computed
         hasLabAccess,
+        hasAiAccess,
+        hasRunbookAccess,
+        hasExamFeature,
 
-        // Actions
         initAuth,
         checkAuth,
         checkProctorStatus,
@@ -673,6 +651,7 @@ export const useAuthStore = defineStore('auth', () => {
         getAllUsernames,
         getUserProfileByUsername,
         loadStudentRecord,
-        ensureStudentRecord
+        ensureStudentRecord,
+        loadUserFeatures
     };
 });

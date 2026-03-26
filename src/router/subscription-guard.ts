@@ -9,7 +9,6 @@ export async function subscriptionGuard(
 ): Promise<void> {
     const authStore = useAuthStore();
 
-    // Check if route requires subscription
     const requiresSubscription = to.meta.requiresSubscription === true;
     const requiredFeatures = to.meta.requiredFeatures as string[] || [];
 
@@ -18,65 +17,48 @@ export async function subscriptionGuard(
         return;
     }
 
-    // Check if user is authenticated
     if (!authStore.isAuthenticated || !authStore.user?.id) {
         next('/login');
         return;
     }
 
-    try {
-        // Check subscription access
-        const { hasAccess, missingFeatures, activeSubscription } =
-        await subscriptionService.checkSubscriptionAccess(authStore.user.id, requiredFeatures);
-
-        if (!hasAccess) {
-            // Store the required features and redirect to plans page
-            const redirectData = {
-                requiredFeatures: missingFeatures,
-                from: to.path
-            };
-
-            // You can store this in sessionStorage or pass as query params
-            sessionStorage.setItem('subscriptionRedirect', JSON.stringify(redirectData));
-
-            // Redirect to plans page
-            next('/plans');
-            return;
-        }
-
-        // User has access, continue
-        next();
-    } catch (error) {
-        console.error('Subscription guard error:', error);
-        // On error, redirect to plans page
-        next('/plans');
+    // Ensure user features are loaded
+    if (authStore.userFeatures.length === 0) {
+        await authStore.loadUserFeatures();
     }
+
+    const userFeatures = authStore.userFeatures;
+    const missingFeatures = requiredFeatures.filter(f => !userFeatures.includes(f));
+
+    if (missingFeatures.length > 0) {
+        const redirectData = {
+            requiredFeatures: missingFeatures,
+            from: to.path
+        };
+        sessionStorage.setItem('subscriptionRedirect', JSON.stringify(redirectData));
+        next('/plans');
+        return;
+    }
+
+    next();
 }
 
-// Helper function to check access in components
-export async function checkFeatureAccess(featureExternalId: string): Promise<boolean> {
+export async function checkFeatureAccess(featureName: string): Promise<boolean> {
     const authStore = useAuthStore();
-
     if (!authStore.isAuthenticated || !authStore.user?.id) {
         return false;
     }
-
-    try {
-        return await subscriptionService.hasFeature(authStore.user.id, featureExternalId);
-    } catch (error) {
-        console.error('Feature access check error:', error);
-        return false;
+    if (authStore.userFeatures.length === 0) {
+        await authStore.loadUserFeatures();
     }
+    return authStore.userFeatures.includes(featureName);
 }
 
-// Helper function to get active subscription
 export async function getActiveSubscription() {
     const authStore = useAuthStore();
-
     if (!authStore.isAuthenticated || !authStore.user?.id) {
         return null;
     }
-
     try {
         return await subscriptionService.getActiveUserSubscription(authStore.user.id);
     } catch (error) {

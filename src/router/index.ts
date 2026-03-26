@@ -28,7 +28,6 @@ import Payment from '../views/Payment.vue';
 import MyPlans from '../views/MyPlans.vue';
 import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
-// ===== NEW IMPORT FOR AI CHAT =====
 import AiChat from '../views/AiChat.vue';
 
 const routes = [
@@ -52,20 +51,20 @@ const routes = [
                 path: 'runbooks',
                 name: 'Runbooks',
                 component: Runbooks,
-                meta: { title: 'Runbooks', requiresAuth: false }
+                meta: { title: 'Runbooks', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['runbook_feature'] }
             },
             {
                 path: 'runbooks/:id',
                 name: 'RunbookDetails',
                 component: RunbookDetails,
-                meta: { title: 'Runbook Details', requiresAuth: false },
+                meta: { title: 'Runbook Details', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['runbook_feature'] },
                 props: true
             },
             {
                 path: 'labs',
                 name: 'Labs',
                 component: Labs,
-                meta: { title: 'Labs', requiresAuth: true }
+                meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
                 path: 'course/:id',
@@ -130,19 +129,19 @@ const routes = [
                 path: 'schedule-exam',
                 name: 'ScheduleExam',
                 component: ScheduleExam,
-                meta: { title: 'Schedule Exam', requiresAuth: true }
+                meta: { title: 'Schedule Exam', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['exam_feature'] }
             },
             {
                 path: 'exam-approval',
                 name: 'ExamApproval',
                 component: ExamApproval,
-                meta: { title: 'Exam Approval', requiresAuth: true }
+                meta: { title: 'Exam Approval', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['exam_feature'] }
             },
             {
                 path: 'take-exam',
                 name: 'TakeExam',
                 component: TakeExam,
-                meta: { title: 'Take Exam', requiresAuth: true }
+                meta: { title: 'Take Exam', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['exam_feature'] }
             },
             {
                 path: 'proctor-dashboard',
@@ -194,14 +193,12 @@ const routes = [
                 meta: { title: 'Review Result', requiresAuth: true },
                 props: true
             },
-            // ===== NEW AI CHAT ROUTE =====
             {
                 path: 'ai-chat',
                 name: 'AiChat',
                 component: AiChat,
-                meta: { title: 'AI Chat Assistant', requiresAuth: true }
+                meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             },
-            // Login & Register
             {
                 path: 'login',
                 name: 'Login',
@@ -222,30 +219,27 @@ const routes = [
             }
         ]
     },
-    {
-        path: '/:catchAll(.*)',
-        redirect: '/'
-    }
+{
+    path: '/:catchAll(.*)',
+    redirect: '/'
+}
 ];
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-    routes
+                            routes
 });
 
-// Global navigation guards
 router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} | Self Study JO`;
-
     const isRunbookDetailsRoute = to.name === 'RunbookDetails';
-
-    if (to.meta.publicOnly) {
-        publicOnlyGuard(to, from, next);
-    } else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
-        await authGuard(to, from, next);
-    } else {
-        next();
-    }
+if (to.meta.publicOnly) {
+    publicOnlyGuard(to, from, next);
+} else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
+    await authGuard(to, from, next);
+} else {
+    next();
+}
 });
 
 export default router;
