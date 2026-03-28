@@ -2393,3 +2393,71 @@
     max-width: 200px;
   }
 }
+
+/* ACTION BUTTON (base) */
+.all-certificates .action-btn {
+  min-height: var(--btn-height-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1vw, 8px);
+  padding: 0 clamp(12px, 2.5vw, 20px);
+  background: linear-gradient(
+    135deg,
+    rgba(78, 205, 196, 0.2) 0%,
+    rgba(138, 43, 226, 0.2) 100%
+  );
+  color: var(--cosmic-cyan);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  border-radius: clamp(8px, 2vw, 12px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  font-size: var(--font-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  backdrop-filter: blur(10px);
+  text-shadow: var(--text-shadow);
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap; /* Keep text in one line by default */
+}
+
+/* Allow wrapping on very small screens */
+@media (max-width: 480px) {
+  .all-certificates .action-btn {
+    white-space: normal;
+    line-height: 1.2;
+    padding: 0.5rem clamp(12px, 2.5vw, 20px);
+  }
+}
+
+/* Improve action button visibility and size in grid view */
+.all-certificates .card-footer .action-btn {
+  min-height: var(--btn-height-md); /* Slightly larger for grid */
+  padding: 0 clamp(16px, 3vw, 24px);
+  font-size: var(--font-base);
+  width: 100%;
+  max-width: 280px; /* Increased from 200px to allow more text */
+  margin: 0 auto;
+  white-space: normal; /* Allow text to wrap */
+  line-height: 1.4;
+}
+
+/* For tablet view, ensure button text fits */
+@media (max-width: 768px) {
+  .all-certificates .card-footer .action-btn {
+    max-width: 240px;
+    font-size: var(--font-sm);
+  }
+}
+
+/* For mobile, make button full width */
+@media (max-width: 640px) {
+  .all-certificates .card-footer .action-btn {
+    width: 100%;
+    max-width: none;
+    font-size: var(--font-base);
+  }
+}

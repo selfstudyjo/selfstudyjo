@@ -74,8 +74,8 @@
                   </div>
                 </div>
                 <div class="user-details">
-                  <h2 class="user-name">{{ userProfile?.username || 'Space traveller' }}</h2>
-                  <p class="user-email">{{ userProfile?.email || '' }}</p>
+                  <h2 class="user-name">{{ fullName }}</h2>
+                  <!-- email removed per requirements -->
                 </div>
               </div>
               <!-- 🔥 NEW MODERN COSMIC BADGE – under user info -->
@@ -206,10 +206,26 @@ const avatarError = ref(false);
 const certificateId = computed(() => route.params.certificateId as string);
 const certificateType = computed(() => route.query.type as 'course' | 'exam' || 'course');
 
+// Full name from first and last name, fallback to username
+const fullName = computed(() => {
+  if (!userProfile.value) return 'Space traveller';
+  const first = userProfile.value.first_name || '';
+  const last = userProfile.value.last_name || '';
+  if (first.trim() || last.trim()) {
+    return `${first} ${last}`.trim();
+  }
+  return userProfile.value.username || 'Space traveller';
+});
+
+// Avatar initials: first letter of first name, otherwise first letter of username
 const userInitials = computed(() => {
   if (!userProfile.value) return 'U';
-  const name = userProfile.value.username || '';
-  return name.charAt(0).toUpperCase();
+  const first = userProfile.value.first_name;
+  if (first && first.trim()) {
+    return first.charAt(0).toUpperCase();
+  }
+  const username = userProfile.value.username || '';
+  return username.charAt(0).toUpperCase() || 'U';
 });
 
 const proxiedAvatarUrl = computed(() => {

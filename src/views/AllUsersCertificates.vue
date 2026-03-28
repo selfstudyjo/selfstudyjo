@@ -136,7 +136,7 @@
                     </div>
                   </div>
                   <div class="user-info-small">
-                    <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                    <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
                     <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@
                 </div>
               </div>
               <div class="user-info">
-                <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
                 <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
               </div>
             </div>
@@ -317,7 +317,7 @@
                     </div>
                   </div>
                   <div class="user-info-small">
-                    <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                    <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
                     <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
                   </div>
                 </div>
@@ -393,7 +393,7 @@
                 </div>
               </div>
               <div class="user-info">
-                <span class="username">{{ getUserProfile(certificate.user_id)?.username || certificate.user_id }}</span>
+                <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
                 <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
               </div>
             </div>
@@ -480,6 +480,18 @@ const examsMap = ref<Map<string, string>>(new Map());
 // Track avatar load errors per user
 const avatarErrors = reactive<Record<string, boolean>>({});
 
+// Compute full name from first_name and last_name, fallback to username
+const getUserDisplayName = (userId: string): string => {
+  const profile = getUserProfile(userId);
+  if (!profile) return 'Unknown';
+  const first = profile.first_name?.trim() || '';
+  const last = profile.last_name?.trim() || '';
+  if (first || last) {
+    return `${first} ${last}`.trim();
+  }
+  return profile.username || 'Unknown';
+};
+
 const filteredExamCertificates = computed(() => {
   let filtered = examCertificates.value;
 
@@ -487,11 +499,11 @@ const filteredExamCertificates = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(certificate => {
-      const username = getUserProfile(certificate.user_id)?.username || '';
+      const displayName = getUserDisplayName(certificate.user_id).toLowerCase();
       const examName = getExamName(certificate.exam_id).toLowerCase();
       const userId = certificate.user_id.toLowerCase();
 
-      return username.toLowerCase().includes(query) ||
+      return displayName.includes(query) ||
              examName.includes(query) ||
              userId.includes(query);
     });
@@ -507,9 +519,9 @@ const filteredExamCertificates = computed(() => {
   // Apply sorting
   if (sortBy.value === 'user') {
     filtered.sort((a, b) => {
-      const userA = getUserProfile(a.user_id)?.username || '';
-      const userB = getUserProfile(b.user_id)?.username || '';
-      return userA.localeCompare(userB);
+      const nameA = getUserDisplayName(a.user_id);
+      const nameB = getUserDisplayName(b.user_id);
+      return nameA.localeCompare(nameB);
     });
   } else {
     filtered.sort((a, b) => new Date(b.taken_date).getTime() - new Date(a.taken_date).getTime());
@@ -528,11 +540,11 @@ const filteredCourseCertificates = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(certificate => {
-      const username = getUserProfile(certificate.user_id)?.username || '';
+      const displayName = getUserDisplayName(certificate.user_id).toLowerCase();
       const courseName = getCourseName(certificate.course_id).toLowerCase();
       const userId = certificate.user_id.toLowerCase();
 
-      return username.toLowerCase().includes(query) ||
+      return displayName.includes(query) ||
              courseName.includes(query) ||
              userId.includes(query);
     });
@@ -541,9 +553,9 @@ const filteredCourseCertificates = computed(() => {
   // Apply sorting
   if (sortBy.value === 'user') {
     filtered.sort((a, b) => {
-      const userA = getUserProfile(a.user_id)?.username || '';
-      const userB = getUserProfile(b.user_id)?.username || '';
-      return userA.localeCompare(userB);
+      const nameA = getUserDisplayName(a.user_id);
+      const nameB = getUserDisplayName(b.user_id);
+      return nameA.localeCompare(nameB);
     });
   } else {
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -680,8 +692,11 @@ const getUserProfile = (userId: string) => {
 const getUserInitials = (userId: string) => {
   const profile = getUserProfile(userId);
   if (!profile) return 'U';
-  const name = profile.username || '';
-  return name.charAt(0).toUpperCase();
+  // Use first letter of first name, otherwise first letter of username
+  const first = profile.first_name?.trim();
+  if (first) return first.charAt(0).toUpperCase();
+  const username = profile.username || '';
+  return username.charAt(0).toUpperCase() || 'U';
 };
 
 const getCourseName = (courseId: string): string => {
