@@ -40,7 +40,7 @@
         </div>
         <div class="results-count">
           <span v-if="useClientSidePagination">
-            ⚠️ Client-side pagination active
+            \u26a0\ufe0f Client-side pagination active
           </span>
           Showing {{ displayedCourses.length }} of {{ filteredCourses.length }} courses
           <span v-if="searchQuery"> for "{{ searchQuery }}"</span>
@@ -123,13 +123,15 @@
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
-              <span>{{ course.lessons_count || 0 }} lessons</span>
+              <span v-if="countsLoading[course.external_course_id]" class="count-loading">...</span>
+              <span v-else>{{ courseCounts[course.external_course_id]?.lessons ?? course.lessons_count ?? 0 }} lessons</span>
             </div>
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
-              <span>{{ course.comments_count || 0 }} comments</span>
+              <span v-if="countsLoading[course.external_course_id]" class="count-loading">...</span>
+              <span v-else>{{ courseCounts[course.external_course_id]?.comments ?? course.comments_count ?? 0 }} comments</span>
             </div>
           </div>
           <div class="course-footer">
@@ -186,7 +188,7 @@
         </button>
       </div>
       <div class="pagination-info">
-        Page {{ currentPage }} of {{ totalPages }} • {{ filteredCourses.length }} total courses
+        Page {{ currentPage }} of {{ totalPages }} \u2022 {{ filteredCourses.length }} total courses
         <span v-if="useClientSidePagination" class="client-side-warning">
           (Client-side pagination active)
         </span>
@@ -216,6 +218,10 @@ const pageSize = ref(6);
 const searchTimeout = ref<NodeJS.Timeout | null>(null);
 const debounceDelay = 500;
 const useClientSidePagination = ref(false);
+
+// Counts state: { [external_course_id]: { lessons: number, comments: number } }
+const courseCounts = ref<Record<string, { lessons: number; comments: number }>>({});
+const countsLoading = ref<Record<string, boolean>>({});
 
 // Computed properties
 const filteredCourses = computed(() => {
@@ -274,6 +280,59 @@ const visiblePages = computed(() => {
 const showEllipsis = computed(() => totalPages.value > visiblePages.value.length);
 
 // Methods
+
+/**
+ * Fetch lessons count and comments count for a single course.
+ * Uses the pinned replica (baseUrl) so all requests go to the same service instance.
+ */
+const fetchCountsForCourse = async (courseId: string, baseUrl: string) => {
+  // Skip if already fetched
+  if (courseCounts.value[courseId] !== undefined) return;
+
+  countsLoading.value[courseId] = true;
+
+  try {
+    const [lessons, comments] = await Promise.allSettled([
+      courseService.getCourseLessons(courseId, baseUrl),
+      courseService.getCourseComments(courseId, baseUrl),
+    ]);
+
+    const lessonsCount = lessons.status === 'fulfilled' ? lessons.value.length : 0;
+    const commentsCount = comments.status === 'fulfilled' ? comments.value.length : 0;
+
+    courseCounts.value[courseId] = {
+      lessons: lessonsCount,
+      comments: commentsCount,
+    };
+  } catch (err) {
+    // Fallback to whatever the API returned (likely 0)
+    courseCounts.value[courseId] = {
+      lessons: 0,
+      comments: 0,
+    };
+  } finally {
+    countsLoading.value[courseId] = false;
+  }
+};
+
+/**
+ * Fetch counts for all currently displayed courses.
+ * Pins a single replica for the entire batch to avoid inconsistencies.
+ */
+const fetchCountsForDisplayedCourses = async (courses: Course[]) => {
+  if (courses.length === 0) return;
+
+  // Pin one replica for the whole batch
+  const baseUrl = await courseService.getRandomCourseReplica();
+  if (!baseUrl) return;
+
+  // Fire off all requests concurrently, but only for courses not yet fetched
+  const pending = courses.filter(c => courseCounts.value[c.external_course_id] === undefined);
+  if (pending.length === 0) return;
+
+  await Promise.all(pending.map(course => fetchCountsForCourse(course.external_course_id, baseUrl)));
+};
+
 const fetchCourses = async () => {
   loading.value = true;
   error.value = null;
@@ -390,19 +449,33 @@ const formatDate = (dateString?: string) => {
 };
 
 // Watchers
-watch(() => currentPage.value, () => {
-  if (!useClientSidePagination.value) {
-    fetchCourses();
+watch(
+  () => currentPage.value,
+  () => {
+    if (!useClientSidePagination.value) {
+      fetchCourses();
+    }
   }
-});
+);
 
-watch(() => sortBy.value, () => {
-  // No action needed, sorting handled by computed
-});
+// Whenever the displayed courses change, fetch their counts
+watch(
+  displayedCourses,
+  (courses) => {
+    if (courses.length > 0) {
+      fetchCountsForDisplayedCourses(courses);
+    }
+  },
+  { immediate: false }
+);
 
 // Lifecycle
-onMounted(() => {
-  fetchCourses();
+onMounted(async () => {
+  await fetchCourses();
+  // After courses are loaded, fetch counts for the first page
+  if (displayedCourses.value.length > 0) {
+    await fetchCountsForDisplayedCourses(displayedCourses.value);
+  }
 });
 
 onUnmounted(() => {
