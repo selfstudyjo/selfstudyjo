@@ -30,6 +30,19 @@ import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
 import AiChat from '../views/AiChat.vue';
 
+// Research Flow Views
+import ResearchFlow from '../views/ResearchFlow.vue';
+import ResearchMyProjects from '../views/ResearchMyProjects.vue';
+import ResearchSearchProjects from '../views/ResearchSearchProjects.vue';
+import ResearchLibrary from '../views/ResearchLibrary.vue';
+import ResearchCollaboration from '../views/ResearchCollaboration.vue';
+import ResearchProjectDetails from '../views/ResearchProjectDetails.vue';
+import ResearchCreateProject from '../views/ResearchCreateProject.vue';
+import ResearchImportOpenAlex from '../views/ResearchImportOpenAlex.vue';
+import ResearchResearchers from '../views/ResearchResearchers.vue';
+import ResearchResearcherProfile from '../views/ResearchResearcherProfile.vue';
+import ResearchCompleteProfile from '../views/ResearchCompleteProfile.vue';
+
 const routes = [
     {
         path: '/',
@@ -77,7 +90,7 @@ const routes = [
                 name: 'Homework',
                 component: HomeworkView,
                 meta: { title: 'Homework', requiresAuth: true },
-                props: (route) => ({
+                props: (route: any) => ({
                     courseId: route.params.courseId,
                     lessonId: route.params.lessonId,
                     homeworkId: route.query.homeworkId
@@ -167,7 +180,7 @@ const routes = [
                 name: 'Payment',
                 component: Payment,
                 meta: { title: 'Payment', requiresAuth: true },
-                props: (route) => ({
+                props: (route: any) => ({
                     plan: route.query.plan,
                     title: route.query.title,
                     price: route.query.price,
@@ -199,6 +212,81 @@ const routes = [
                 component: AiChat,
                 meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             },
+            // Research Flow Routes
+            {
+                path: 'research',
+                name: 'ResearchFlow',
+                component: ResearchFlow,
+                meta: { title: 'Research Flow', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/my-projects',
+                name: 'ResearchMyProjects',
+                component: ResearchMyProjects,
+                meta: { title: 'My Research Projects', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/search',
+                name: 'ResearchSearchProjects',
+                component: ResearchSearchProjects,
+                meta: { title: 'Search Research Projects', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/library',
+                name: 'ResearchLibrary',
+                component: ResearchLibrary,
+                meta: { title: 'My Research Library', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/collaboration',
+                name: 'ResearchCollaboration',
+                component: ResearchCollaboration,
+                meta: { title: 'Collaboration', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/project/:id',
+                name: 'ResearchProjectDetails',
+                component: ResearchProjectDetails,
+                meta: { title: 'Project Details', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] },
+                props: true
+            },
+            {
+                path: 'research/create-project',
+                name: 'ResearchCreateProject',
+                component: ResearchCreateProject,
+                meta: { title: 'Create Research Project', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/import-openalex',
+                name: 'ResearchImportOpenAlex',
+                component: ResearchImportOpenAlex,
+                meta: { title: 'Import from OpenAlex', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/researchers',
+                name: 'ResearchResearchers',
+                component: ResearchResearchers,
+                meta: { title: 'Researchers', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/researcher/:userId',
+                name: 'ResearchResearcherProfile',
+                component: ResearchResearcherProfile,
+                meta: { title: 'Researcher Profile', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] },
+                props: true
+            },
+            {
+                path: 'research/complete-profile',
+                name: 'ResearchCompleteProfile',
+                component: ResearchCompleteProfile,
+                meta: { title: 'Complete Researcher Profile', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/profile',
+                name: 'ResearchMyProfile',
+                component: ResearchCompleteProfile,
+                meta: { title: 'My Researcher Profile', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
             {
                 path: 'login',
                 name: 'Login',
@@ -219,27 +307,27 @@ const routes = [
             }
         ]
     },
-{
-    path: '/:catchAll(.*)',
-    redirect: '/'
-}
+    {
+        path: '/:catchAll(.*)',
+        redirect: '/'
+    }
 ];
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-                            routes
+    routes
 });
 
 router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} | Self Study JO`;
     const isRunbookDetailsRoute = to.name === 'RunbookDetails';
-if (to.meta.publicOnly) {
-    publicOnlyGuard(to, from, next);
-} else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
-    await authGuard(to, from, next);
-} else {
-    next();
-}
+    if (to.meta.publicOnly) {
+        publicOnlyGuard(to, from, next);
+    } else if (to.meta.requiresAuth === true || (isRunbookDetailsRoute && to.params.id)) {
+        await authGuard(to, from, next);
+    } else {
+        next();
+    }
 });
 
 export default router;

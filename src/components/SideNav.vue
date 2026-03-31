@@ -14,7 +14,7 @@
     <aside :class="['sidebar', { 'collapsed': isCollapsed, 'active': sidebarVisible }]">
       <div class="sidebar-header">
         <div class="logo" @click="toggleSidebar" v-if="!isCollapsed">
-          <div class="logo-icon">🎓</div>
+          <div class="logo-icon">\U0001f393</div>
           <span class="logo-text">Self Study JO</span>
         </div>
         <button
@@ -92,6 +92,19 @@
             </div>
             <span class="nav-text">AI Chat Assistant</span>
           </router-link>
+
+          <router-link
+            v-if="hasResearchFlowAccess"
+            to="/research"
+            class="nav-item"
+            :class="{ 'active': isActive('/research') }"
+            @click="closeSidebarOnMobile"
+          >
+            <div class="nav-icon">
+              <ResearchFlowIcon />
+            </div>
+            <span class="nav-text">Research Flow</span>
+          </router-link>
         </template>
       </nav>
 
@@ -117,7 +130,7 @@
                 v-if="displayCount > 0"
                 :aria-label="`${displayCount} unread notifications`"
               >
-                <span class="notification-icon">🔔</span>
+                <span class="notification-icon">\U0001f514</span>
                 <span class="notification-count">{{ displayCount }} unread</span>
               </div>
             </div>
@@ -291,6 +304,15 @@ const AIIcon = {
   }
 };
 
+const ResearchFlowIcon = {
+  name: 'ResearchFlowIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M9 4v1.38c-.83-.33-1.72-.5-2.5-.5-1.79 0-3.5.72-3.5 2.38V19.5C3 20.88 4.28 21 5.5 21c.96 0 1.89-.12 2.5-.38V22h10v-7.5L21.5 18l-2-2 2-2L18 17.5V4H9zM7.17 14.5c-.83 0-1.67-.21-2.17-.6V8.4c.48-.36 1.3-.55 2.17-.55.83 0 1.63.18 2.33.55v5.53c-.73.36-1.52.57-2.33.57zM16 13h-4V5h4v8z' })
+    ]);
+  }
+};
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -327,6 +349,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const hasAiAccess = computed(() => authStore.hasAiAccess);
 const hasRunbookAccess = computed(() => authStore.hasRunbookAccess);
+const hasResearchFlowAccess = computed(() => authStore.hasResearchFlowAccess);
 const isProctor = computed(() => authStore.isProctor);
 
 const publicNavItems = computed(() => {
@@ -394,7 +417,7 @@ const username = computed(() => authStore.user?.username || 'User');
 const userEmail = computed(() => authStore.user?.email || '');
 const userInitials = computed(() => {
   const name = username.value;
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  return name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
 });
 const proxiedImageUrl = computed(() => {
   if (!authStore.user?.image_url) return '';

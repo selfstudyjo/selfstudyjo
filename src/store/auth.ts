@@ -40,7 +40,6 @@ export const useAuthStore = defineStore('auth', () => {
     const studentRecord = ref<Student | null>(null);
     const userFeatures = ref<string[]>([]);
 
-    // Initialize from localStorage
     const initAuth = () => {
         const storedUser = authService.getUser();
         const storedToken = authService.getToken();
@@ -51,22 +50,21 @@ export const useAuthStore = defineStore('auth', () => {
             isAuthenticated.value = true;
 
             checkProctorStatus(storedUser.id).catch(err =>
-            console.warn('Failed to check proctor status on init:', err)
+                console.warn('Failed to check proctor status on init:', err)
             );
 
             if (storedUser.lab_url) {
                 loadStudentRecord().catch(err =>
-                console.warn('Failed to load student record on init:', err)
+                    console.warn('Failed to load student record on init:', err)
                 );
             }
 
             loadUserFeatures().catch(err =>
-            console.warn('Failed to load user features on init:', err)
+                console.warn('Failed to load user features on init:', err)
             );
         }
     };
 
-    // Load user features from subscriptions (feature names)
     const loadUserFeatures = async (): Promise<string[]> => {
         if (!user.value?.id) {
             userFeatures.value = [];
@@ -83,7 +81,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Load student record for lab
     const loadStudentRecord = async (): Promise<Student | null> => {
         if (!user.value?.username || !user.value?.lab_url) {
             studentRecord.value = null;
@@ -105,7 +102,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check proctor status
     const checkProctorStatus = async (userId: string): Promise<boolean> => {
         try {
             const response = await proctorService.checkIfUserIsProctor(userId);
@@ -120,7 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check authentication status
     const checkAuth = async (): Promise<boolean> => {
         const storedUser = authService.getUser();
         const storedToken = authService.getToken();
@@ -169,15 +164,15 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (isAuthenticated.value && user.value?.id) {
                 checkProctorStatus(user.value.id).catch(err =>
-                console.warn('Background proctor check failed:', err)
+                    console.warn('Background proctor check failed:', err)
                 );
                 if (user.value.lab_url) {
                     loadStudentRecord().catch(err =>
-                    console.warn('Background student record load failed:', err)
+                        console.warn('Background student record load failed:', err)
                     );
                 }
                 loadUserFeatures().catch(err =>
-                console.warn('Background user features load failed:', err)
+                    console.warn('Background user features load failed:', err)
                 );
             }
 
@@ -195,7 +190,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Login function
     const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
         loading.value = true;
         error.value = null;
@@ -235,15 +229,15 @@ export const useAuthStore = defineStore('auth', () => {
             authService.setUser(user.value);
 
             checkProctorStatus(response.user_id).catch(err =>
-            console.warn('Proctor check after login failed:', err)
+                console.warn('Proctor check after login failed:', err)
             );
             if (userProfile.lab_url) {
                 loadStudentRecord().catch(err =>
-                console.warn('Student record load after login failed:', err)
+                    console.warn('Student record load after login failed:', err)
                 );
             }
             loadUserFeatures().catch(err =>
-            console.warn('User features load after login failed:', err)
+                console.warn('User features load after login failed:', err)
             );
 
             return response;
@@ -255,7 +249,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Register function
     const register = async (userData: UserProfile): Promise<RegisterResponse> => {
         loading.value = true;
         error.value = null;
@@ -278,7 +271,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Generate OTP
     const generateOTP = async (data: OTPGenerationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
@@ -293,7 +285,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Verify OTP
     const verifyOTP = async (data: OTPVerificationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
@@ -313,7 +304,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Resend OTP
     const resendOTP = async (data: OTPGenerationRequest): Promise<OTPResponse> => {
         loading.value = true;
         error.value = null;
@@ -328,7 +318,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Verify email directly
     const verifyEmail = async (request: EmailVerificationRequest): Promise<any> => {
         loading.value = true;
         error.value = null;
@@ -348,7 +337,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Logout
     const logout = async (): Promise<void> => {
         loading.value = true;
         error.value = null;
@@ -374,7 +362,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check username availability
     const checkUsername = async (username: string): Promise<CheckUsernameResponse> => {
         try {
             return await userService.checkUsername(username);
@@ -384,7 +371,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check email availability
     const checkEmail = async (email: string): Promise<CheckEmailResponse> => {
         try {
             return await userService.checkEmail(email);
@@ -394,7 +380,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Check password
     const checkPassword = async (credentials: PasswordCheckRequest): Promise<PasswordCheckResponse> => {
         try {
             return await userService.checkPassword(credentials);
@@ -404,7 +389,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Update user profile
     const updateProfile = async (userId: string, updateData: UpdateProfileRequest): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
@@ -430,7 +414,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Change password
     const changePassword = async (userId: string, passwordData: ChangePasswordRequest): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
@@ -453,7 +436,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Upload profile picture
     const uploadProfilePicture = async (userId: string, username: string, imageFile: File) => {
         loading.value = true;
         error.value = null;
@@ -474,7 +456,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Delete profile picture
     const deleteProfilePicture = async (userId: string): Promise<UserProfile> => {
         loading.value = true;
         error.value = null;
@@ -495,7 +476,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Get user initials for avatar
     const getUserInitials = (firstName?: string, lastName?: string, username?: string): string => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -509,7 +489,6 @@ export const useAuthStore = defineStore('auth', () => {
         return 'U';
     };
 
-    // Get current user profile
     const getCurrentUserProfile = async (): Promise<UserProfile> => {
         if (!user.value?.id) {
             throw new Error('User not authenticated');
@@ -522,12 +501,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Clear errors
     const clearError = (): void => {
         error.value = null;
     };
 
-    // Delete account
     const deleteAccount = async (password: string): Promise<void> => {
         loading.value = true;
         error.value = null;
@@ -536,7 +513,6 @@ export const useAuthStore = defineStore('auth', () => {
                 throw new Error('User not authenticated');
             }
             serviceRegistry.clearCache();
-            console.log('Deleting account for user:', user.value.username);
             await userService.deleteAccount(user.value.username.toLowerCase(), password);
             await logout();
         } catch (err: any) {
@@ -547,7 +523,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Search users
     const searchUsers = async (searchTerm: string, limit: number = 10): Promise<UserProfile[]> => {
         try {
             serviceRegistry.clearCache();
@@ -558,7 +533,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Get all usernames
     const getAllUsernames = async (): Promise<string[]> => {
         try {
             serviceRegistry.clearCache();
@@ -569,7 +543,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Get user profile by username
     const getUserProfileByUsername = async (username: string): Promise<UserProfile> => {
         try {
             serviceRegistry.clearCache();
@@ -580,7 +553,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // Computed properties for feature checks
     const hasLabAccess = computed(() => {
         return user.value?.lab_url && user.value.lab_url.trim() !== '' && userFeatures.value.includes('lab_feature');
     });
@@ -597,7 +569,10 @@ export const useAuthStore = defineStore('auth', () => {
         return userFeatures.value.includes('exam_feature');
     });
 
-    // Get or create student for lab
+    const hasResearchFlowAccess = computed(() => {
+        return userFeatures.value.includes('research_flow_feature');
+    });
+
     const ensureStudentRecord = async (): Promise<Student | null> => {
         if (!hasLabAccess.value || !user.value?.username) {
             return null;
@@ -625,6 +600,7 @@ export const useAuthStore = defineStore('auth', () => {
         hasAiAccess,
         hasRunbookAccess,
         hasExamFeature,
+        hasResearchFlowAccess,
 
         initAuth,
         checkAuth,
