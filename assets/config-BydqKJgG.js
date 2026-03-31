@@ -1,0 +1,1 @@
+import{t as e}from"./index-DVpkgls_.js";export{e as serviceRegistry};
