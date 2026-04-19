@@ -427,10 +427,10 @@ onUnmounted(() => {
 <style scoped>
 /* ==========================================================================
    ChatBox 2026 - Modern Professional Style
-   - Explicit color tokens (no accidental inheritance)
-   - Glassmorphism + neumorphic touches
-   - Fully responsive (200px – 2560px+)
-   - WCAG AA contrast on all screens
+   CONSISTENT COLOR SCHEME ACROSS ALL DEVICES
+   - No OS-based dark mode (prevents mobile inconsistency)
+   - Single color palette enforced everywhere
+   - WCAG AA contrast guaranteed
    ========================================================================== */
 
 *,
@@ -439,27 +439,32 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* ===== Design Tokens (explicit, NOT dependent on dark-mode media) ===== */
+/* ==========================================================================
+   LOCKED DESIGN TOKENS — same on every device, every screen size
+   Using a dark-navy chat surface with light text for premium 2026 feel.
+   ========================================================================== */
 .chat-wrapper {
-  /* Brand / Gradient */
+  /* Brand gradient */
   --cb-primary: #667eea;
   --cb-primary-dark: #5a67d8;
   --cb-secondary: #764ba2;
   --cb-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --cb-gradient-hover: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 
-  /* Surfaces (light default) */
-  --cb-surface: #ffffff;
-  --cb-surface-2: #f7fafc;
-  --cb-surface-3: #edf2f7;
-  --cb-border: #e2e8f0;
-  --cb-border-strong: #cbd5e0;
+  /* Chat window surfaces — LOCKED dark theme for consistency */
+  --cb-surface: #1e2235;          /* main window background */
+  --cb-surface-2: #262b42;        /* messages area background */
+  --cb-surface-3: #2f3552;        /* input background */
+  --cb-surface-input-focus: #353c5e;
+  --cb-bubble-incoming: #2f3552;  /* incoming message bubble */
+  --cb-border: rgba(255, 255, 255, 0.08);
+  --cb-border-strong: rgba(255, 255, 255, 0.18);
 
-  /* Text (explicit — solves white-on-white bug) */
-  --cb-text: #1a202c;
-  --cb-text-muted: #4a5568;
-  --cb-text-subtle: #718096;
-  --cb-text-on-primary: #ffffff;
+  /* Text — always light on dark surfaces */
+  --cb-text: #f1f3f9;             /* primary text */
+  --cb-text-muted: #c4c9d9;       /* secondary */
+  --cb-text-subtle: #8b93ab;      /* placeholder / hints */
+  --cb-text-on-primary: #ffffff;  /* on gradient */
 
   /* Status */
   --cb-success: #48bb78;
@@ -467,11 +472,11 @@ onUnmounted(() => {
   --cb-danger: #f56565;
   --cb-danger-soft: #fed7d7;
 
-  /* Effects */
-  --cb-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --cb-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10);
-  --cb-shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.18);
-  --cb-shadow-brand: 0 10px 30px rgba(102, 126, 234, 0.35);
+  /* Shadows */
+  --cb-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --cb-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --cb-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --cb-shadow-brand: 0 10px 30px rgba(102, 126, 234, 0.4);
 
   /* Radii */
   --cb-radius-sm: 0.5rem;
@@ -485,12 +490,17 @@ onUnmounted(() => {
   bottom: 1.5rem;
   right: 1.5rem;
   z-index: 9999;
-  font-size: 16px; /* base, overridden by breakpoints */
+  font-size: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
   color: var(--cb-text);
+
+  /* Prevent OS-level color-scheme override */
+  color-scheme: only dark;
 }
 
-/* ===== Toggle Button ===== */
+/* ==========================================================================
+   Toggle Button
+   ========================================================================== */
 .chat-toggle-btn {
   position: relative;
   width: 3.75rem;
@@ -510,12 +520,10 @@ onUnmounted(() => {
 
 .chat-toggle-btn:hover {
   transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 14px 35px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 14px 35px rgba(102, 126, 234, 0.55);
 }
 
-.chat-toggle-btn:active {
-  transform: scale(0.95);
-}
+.chat-toggle-btn:active { transform: scale(0.95); }
 
 .chat-toggle-btn:disabled {
   opacity: 0.6;
@@ -551,7 +559,9 @@ onUnmounted(() => {
   animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ===== Chat Window ===== */
+/* ==========================================================================
+   Chat Window — LOCKED dark surface
+   ========================================================================== */
 .chat-window {
   position: absolute;
   bottom: 5rem;
@@ -560,8 +570,8 @@ onUnmounted(() => {
   max-width: calc(100vw - 2rem);
   height: 34rem;
   max-height: 75vh;
-  background: var(--cb-surface);
-  color: var(--cb-text);
+  background: var(--cb-surface) !important;
+  color: var(--cb-text) !important;
   border-radius: var(--cb-radius-xl);
   box-shadow: var(--cb-shadow-lg);
   display: flex;
@@ -569,15 +579,15 @@ onUnmounted(() => {
   overflow: hidden;
   z-index: 9999;
   border: 1px solid var(--cb-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 
 .chat-window.minimized {
   height: 3.75rem;
 }
 
-/* ===== Header ===== */
+/* ==========================================================================
+   Header
+   ========================================================================== */
 .chat-header {
   background: var(--cb-gradient);
   color: var(--cb-text-on-primary);
@@ -596,7 +606,7 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.12), transparent 50%);
+  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.14), transparent 50%);
   pointer-events: none;
 }
 
@@ -614,7 +624,7 @@ onUnmounted(() => {
   border-radius: 50%;
   background: var(--cb-success);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.25);
+  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.3);
 }
 
 .status-indicator.online {
@@ -630,7 +640,7 @@ onUnmounted(() => {
 .status-indicator.reconnecting {
   background: var(--cb-warning);
   animation: pulse-dot 1.2s infinite;
-  box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.25);
+  box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.3);
 }
 
 .chat-header h3 {
@@ -646,7 +656,7 @@ onUnmounted(() => {
 
 .status-text {
   font-size: 0.7rem;
-  opacity: 0.9;
+  opacity: 0.95;
   color: #fff;
   white-space: nowrap;
 }
@@ -662,7 +672,7 @@ onUnmounted(() => {
 
 .header-btn {
   background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   width: 2rem;
   height: 2rem;
@@ -672,7 +682,6 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
-  backdrop-filter: blur(8px);
 }
 
 .header-btn:hover {
@@ -680,18 +689,17 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 
-.header-btn svg {
-  width: 1rem;
-  height: 1rem;
-}
+.header-btn svg { width: 1rem; height: 1rem; }
 
-/* ===== Chat Content ===== */
+/* ==========================================================================
+   Chat Content — ALWAYS dark surface
+   ========================================================================== */
 .chat-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--cb-surface-2);
+  background: var(--cb-surface-2) !important;
 }
 
 .messages-container {
@@ -699,16 +707,13 @@ onUnmounted(() => {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1.1rem;
-  background: var(--cb-surface-2);
+  background: var(--cb-surface-2) !important;
+  color: var(--cb-text);
   scroll-behavior: smooth;
 }
 
-.messages-container::-webkit-scrollbar {
-  width: 6px;
-}
-.messages-container::-webkit-scrollbar-track {
-  background: transparent;
-}
+.messages-container::-webkit-scrollbar { width: 6px; }
+.messages-container::-webkit-scrollbar-track { background: transparent; }
 .messages-container::-webkit-scrollbar-thumb {
   background: var(--cb-border-strong);
   border-radius: var(--cb-radius-full);
@@ -717,7 +722,9 @@ onUnmounted(() => {
   background: var(--cb-text-subtle);
 }
 
-/* ===== Loading ===== */
+/* ==========================================================================
+   Loading
+   ========================================================================== */
 .loading-messages {
   display: flex;
   flex-direction: column;
@@ -725,7 +732,6 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   gap: 0.9rem;
-  color: var(--cb-text-muted);
 }
 
 .loading-messages p {
@@ -737,13 +743,15 @@ onUnmounted(() => {
 .loading-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 0.2rem solid var(--cb-border);
+  border: 0.2rem solid var(--cb-border-strong);
   border-top-color: var(--cb-primary);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
 
-/* ===== Error ===== */
+/* ==========================================================================
+   Error
+   ========================================================================== */
 .error-state {
   display: flex;
   flex-direction: column;
@@ -755,10 +763,7 @@ onUnmounted(() => {
   padding: 1.25rem;
 }
 
-.error-state svg {
-  width: 3rem;
-  height: 3rem;
-}
+.error-state svg { width: 3rem; height: 3rem; }
 
 .error-state p {
   color: var(--cb-text-muted);
@@ -790,11 +795,13 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-/* ===== Welcome ===== */
+/* ==========================================================================
+   Welcome
+   ========================================================================== */
 .welcome-message {
   text-align: center;
   padding: 1.75rem 1.25rem;
-  background: var(--cb-surface);
+  background: var(--cb-surface-3);
   color: var(--cb-text);
   border-radius: var(--cb-radius-lg);
   box-shadow: var(--cb-shadow-sm);
@@ -817,7 +824,7 @@ onUnmounted(() => {
 
 .welcome-message p {
   margin: 0.4rem 0;
-  color: var(--cb-text-subtle);
+  color: var(--cb-text-muted);
   line-height: 1.5;
   font-size: 0.85rem;
 }
@@ -829,7 +836,9 @@ onUnmounted(() => {
   margin-top: 0.75rem !important;
 }
 
-/* ===== Messages ===== */
+/* ==========================================================================
+   Messages
+   ========================================================================== */
 .messages-list {
   display: flex;
   flex-direction: column;
@@ -851,7 +860,7 @@ onUnmounted(() => {
 .message-bubble {
   max-width: 82%;
   min-width: 0;
-  background: var(--cb-surface);
+  background: var(--cb-bubble-incoming);
   color: var(--cb-text);
   border-radius: var(--cb-radius-lg);
   padding: 0.65rem 0.9rem;
@@ -870,7 +879,7 @@ onUnmounted(() => {
 }
 
 .message-incoming .message-bubble {
-  background: var(--cb-surface);
+  background: var(--cb-bubble-incoming);
   color: var(--cb-text);
   border-bottom-left-radius: 0.35rem;
 }
@@ -879,38 +888,40 @@ onUnmounted(() => {
   font-size: 0.7rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-.message-outgoing .message-sender { color: rgba(255, 255, 255, 0.9); }
-.message-incoming .message-sender { color: var(--cb-text-subtle); }
+.message-outgoing .message-sender { color: rgba(255, 255, 255, 0.95); }
+.message-incoming .message-sender { color: var(--cb-text-muted); }
 
-.sender-system { color: #38a169 !important; }
-.sender-admin  { color: var(--cb-primary) !important; }
-.message-outgoing .sender-user { color: rgba(255,255,255,0.95); }
+.sender-system { color: #68d391 !important; }
+.sender-admin  { color: #a3bffa !important; }
+.message-outgoing .sender-user { color: rgba(255, 255, 255, 0.95); }
 
 .message-text {
   word-wrap: break-word;
   overflow-wrap: anywhere;
   line-height: 1.45;
   font-size: 0.88rem;
-  color: inherit; /* inherits correct color from bubble */
+  color: inherit;
   white-space: pre-wrap;
 }
 
 .message-time {
   font-size: 0.65rem;
   margin-top: 0.25rem;
-  opacity: 0.7;
+  opacity: 0.75;
   text-align: right;
   color: inherit;
 }
 
-/* ===== Input Area (CRITICAL — fixes white-on-white bug) ===== */
+/* ==========================================================================
+   Input Area — EXPLICIT COLORS, NO INHERITANCE PROBLEMS
+   ========================================================================== */
 .chat-input-area {
   border-top: 1px solid var(--cb-border);
   padding: 0.85rem 1rem;
-  background: var(--cb-surface);
+  background: var(--cb-surface) !important;
   flex-shrink: 0;
 }
 
@@ -923,12 +934,13 @@ onUnmounted(() => {
 .message-input {
   flex: 1;
   min-width: 0;
-  /* EXPLICIT colors — do NOT rely on browser defaults */
-  background: var(--cb-surface-2) !important;
+  /* LOCKED colors — identical on all devices */
+  background-color: var(--cb-surface-3) !important;
+  background-image: none !important;
   color: var(--cb-text) !important;
-  -webkit-text-fill-color: var(--cb-text); /* Safari fix */
+  -webkit-text-fill-color: var(--cb-text) !important;
   caret-color: var(--cb-primary);
-  border: 1.5px solid var(--cb-border);
+  border: 1.5px solid var(--cb-border-strong);
   border-radius: var(--cb-radius-md);
   padding: 0.7rem 0.9rem;
   font-size: 0.9rem;
@@ -937,30 +949,43 @@ onUnmounted(() => {
   max-height: 7.5rem;
   min-height: 2.75rem;
   line-height: 1.45;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   outline: none;
+  /* Prevent iOS/Android user-agent overrides */
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .message-input::placeholder {
-  color: var(--cb-text-subtle);
+  color: var(--cb-text-subtle) !important;
+  -webkit-text-fill-color: var(--cb-text-subtle) !important;
   opacity: 1;
-  -webkit-text-fill-color: var(--cb-text-subtle);
 }
 
 .message-input:focus {
   border-color: var(--cb-primary);
-  background: var(--cb-surface) !important;
+  background-color: var(--cb-surface-input-focus) !important;
   color: var(--cb-text) !important;
-  -webkit-text-fill-color: var(--cb-text);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  -webkit-text-fill-color: var(--cb-text) !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
 }
 
 .message-input:disabled {
-  background: var(--cb-surface-3) !important;
+  background-color: var(--cb-surface-2) !important;
   color: var(--cb-text-subtle) !important;
-  -webkit-text-fill-color: var(--cb-text-subtle);
+  -webkit-text-fill-color: var(--cb-text-subtle) !important;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* Prevent iOS autofill yellow / Chrome autofill white */
+.message-input:-webkit-autofill,
+.message-input:-webkit-autofill:hover,
+.message-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--cb-surface-3) inset !important;
+  -webkit-text-fill-color: var(--cb-text) !important;
+  caret-color: var(--cb-primary);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .send-btn {
@@ -980,20 +1005,15 @@ onUnmounted(() => {
   box-shadow: var(--cb-shadow-brand);
 }
 
-.send-btn svg {
-  width: 1.2rem;
-  height: 1.2rem;
-}
+.send-btn svg { width: 1.2rem; height: 1.2rem; }
 
 .send-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   background: var(--cb-gradient-hover);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.45);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
 }
 
-.send-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
+.send-btn:active:not(:disabled) { transform: translateY(0); }
 
 .send-btn:disabled {
   opacity: 0.5;
@@ -1008,7 +1028,9 @@ onUnmounted(() => {
   text-align: center;
 }
 
-/* ===== Minimized ===== */
+/* ==========================================================================
+   Minimized
+   ========================================================================== */
 .chat-minimized {
   height: 100%;
   display: flex;
@@ -1050,7 +1072,9 @@ onUnmounted(() => {
   padding: 0 0.4rem;
 }
 
-/* ===== Animations ===== */
+/* ==========================================================================
+   Animations
+   ========================================================================== */
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1078,9 +1102,7 @@ onUnmounted(() => {
   100% { transform: scale(1); }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes slideInMsg {
   from { opacity: 0; transform: translateY(8px); }
@@ -1093,45 +1115,8 @@ onUnmounted(() => {
 }
 
 /* ==========================================================================
-   Dark Mode (system preference) — explicit overrides
-   ========================================================================== */
-@media (prefers-color-scheme: dark) {
-  .chat-wrapper {
-    --cb-surface: #1a202c;
-    --cb-surface-2: #0f1420;
-    --cb-surface-3: #2d3748;
-    --cb-border: #2d3748;
-    --cb-border-strong: #4a5568;
-    --cb-text: #f7fafc;
-    --cb-text-muted: #cbd5e0;
-    --cb-text-subtle: #a0aec0;
-  }
-
-  .chat-window {
-    background: var(--cb-surface);
-  }
-
-  /* Explicit input text color in dark mode */
-  .message-input {
-    background: var(--cb-surface-2) !important;
-    color: var(--cb-text) !important;
-    -webkit-text-fill-color: var(--cb-text);
-    border-color: var(--cb-border-strong);
-  }
-
-  .message-input:focus {
-    background: var(--cb-surface-3) !important;
-  }
-
-  .message-input::placeholder {
-    color: var(--cb-text-subtle);
-    -webkit-text-fill-color: var(--cb-text-subtle);
-  }
-}
-
-/* ==========================================================================
-   RESPONSIVE BREAKPOINTS — 200px → 2560px+
-   Scales via rem on .chat-wrapper
+   RESPONSIVE BREAKPOINTS (200px → 2560px+)
+   Only font-size and layout adjust — COLORS REMAIN IDENTICAL.
    ========================================================================== */
 
 /* ----- 200–250 | Micro ----- */
@@ -1325,13 +1310,5 @@ onUnmounted(() => {
     animation: none !important;
     transition: none !important;
   }
-}
-
-@media (prefers-contrast: more) {
-  .chat-wrapper {
-    --cb-border: #000;
-    --cb-border-strong: #000;
-  }
-  .message-input { border-width: 2px; }
 }
 </style>
