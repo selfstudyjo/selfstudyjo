@@ -1,15 +1,15 @@
 /* ==========================================================================
-   Courses Page Styles - GALAXY SPACE THEME
-   Fully Responsive with Fluid Typography and Spacing
-   Enhanced with granular breakpoint system (200px to 2560px+)
-   ========================================================================== */
+ *  Courses Page Styles - GALAXY SPACE THEME
+ *  Fully Responsive with Fluid Typography and Spacing
+ *  Enhanced with granular breakpoint system (200px to 2560px+)
+ *  ========================================================================== */
 
 /* Root variables for the scaling system (used as fallback and for global adjustments) */
 :root {
-  --font-base: 16px; /* fallback, will be overridden by breakpoints */
-  --spacing-unit: 4px;
-  --container-max: 1400px;
-  --border-radius-base: 8px;
+    --font-base: 16px; /* fallback, will be overridden by breakpoints */
+    --spacing-unit: 4px;
+    --container-max: 1400px;
+    --border-radius-base: 8px;
 }
 
 /* Fluid variables scoped to courses page (original, kept intact) */
@@ -39,14 +39,13 @@
 .courses-page .page-header {
     background: rgba(10, 10, 30, 0.8);
     backdrop-filter: blur(10px);
-    border-radius: clamp(12px, 2vw, 16px); /* Fluid border radius */
-    padding: clamp(20px, 4vw, 32px); /* Fluid padding */
-    margin-bottom: clamp(16px, 3vw, 24px); /* Fluid margin */
+    border-radius: clamp(12px, 2vw, 16px);
+    padding: clamp(20px, 4vw, 32px);
+    margin-bottom: clamp(16px, 3vw, 24px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    gap: clamp(16px, 3vw, 24px); /* Fluid gap */
-    /* Ensure content doesn't overflow */
+    gap: clamp(16px, 3vw, 24px);
     width: 100%;
     max-width: 100%;
 }
@@ -61,20 +60,18 @@
 
 .courses-page .header-content {
     flex: 1;
-    min-width: 0; /* Allow text to shrink */
-    /* Prevent word breaking */
+    min-width: 0;
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
 }
 
 .courses-page .page-title {
-    font-size: var(--font-xxl); /* Fluid heading */
+    font-size: var(--font-xxl);
     font-weight: 700;
     color: #ffffff;
-    margin-bottom: clamp(4px, 1vw, 8px); /* Fluid margin */
+    margin-bottom: clamp(4px, 1vw, 8px);
     line-height: 1.2;
-    /* Prevent word breaking */
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -82,8 +79,7 @@
 
 .courses-page .page-subtitle {
     color: #cccccc;
-    font-size: var(--font-md); /* Fluid subtitle */
-    /* Prevent word breaking */
+    font-size: var(--font-md);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -97,27 +93,26 @@
 .courses-page .search-container {
     position: relative;
     width: 100%;
-    max-width: min(400px, 90vw); /* Fluid max width */
+    max-width: min(400px, 90vw);
     display: flex;
-    gap: clamp(4px, 1vw, 8px); /* Fluid gap */
+    gap: clamp(4px, 1vw, 8px);
 }
 
 .courses-page .search-input {
     width: 100%;
-    padding: clamp(10px, 2vw, 12px) clamp(12px, 2vw, 16px); /* Fluid padding */
+    padding: clamp(10px, 2vw, 12px) clamp(12px, 2vw, 16px);
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: clamp(8px, 1.5vw, 12px); /* Fluid radius */
-    font-size: var(--font-base); /* Fluid font */
+    border-radius: clamp(8px, 1.5vw, 12px);
+    font-size: var(--font-base);
     transition: all 0.3s ease;
     color: #ffffff;
     flex: 1;
-    min-width: 0; /* Allow shrinking */
+    min-width: 0;
 }
 
 .courses-page .search-input::placeholder {
     color: rgba(255, 255, 255, 0.6);
-    /* Ensure placeholder uses same fluid size */
     font-size: var(--font-base);
 }
 
@@ -128,19 +123,19 @@
 }
 
 .courses-page .search-btn {
-    padding: clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px); /* Fluid padding */
+    padding: clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px);
     background: rgba(78, 205, 196, 0.9);
     color: white;
     border: none;
-    border-radius: clamp(8px, 1.5vw, 12px); /* Fluid radius */
+    border-radius: clamp(8px, 1.5vw, 12px);
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: clamp(40px, 8vw, 48px); /* Fluid min width */
-    white-space: nowrap; /* Keep button text in one line */
-    font-size: var(--font-base); /* Fluid font */
+    min-width: clamp(40px, 8vw, 48px);
+    white-space: nowrap;
+    font-size: var(--font-base);
 }
 
 .courses-page .search-btn:hover {
@@ -150,15 +145,14 @@
 
 /* Filters Section */
 .courses-page .filters-section {
-    margin-bottom: clamp(24px, 4vw, 32px); /* Fluid margin */
+    margin-bottom: clamp(24px, 4vw, 32px);
 }
 
 .courses-page .filters-container {
     display: flex;
     flex-direction: column;
-    gap: clamp(12px, 2vw, 16px); /* Fluid gap */
+    gap: clamp(12px, 2vw, 16px);
     align-items: flex-start;
-    /* Ensure no overflow */
     width: 100%;
     max-width: 100%;
 }
@@ -174,28 +168,28 @@
 .courses-page .filter-group {
     display: flex;
     align-items: center;
-    gap: clamp(8px, 1.5vw, 12px); /* Fluid gap */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: clamp(8px, 1.5vw, 12px);
+    flex-wrap: wrap;
 }
 
 .courses-page .filter-label {
     color: #cccccc;
     font-weight: 500;
-    white-space: nowrap; /* Keep label in one line */
-    font-size: var(--font-sm); /* Fluid font */
+    white-space: nowrap;
+    font-size: var(--font-sm);
 }
 
 .courses-page .filter-select {
-    padding: clamp(6px, 1vw, 8px) clamp(12px, 2vw, 16px); /* Fluid padding */
+    padding: clamp(6px, 1vw, 8px) clamp(12px, 2vw, 16px);
     background: rgba(10, 10, 30, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: clamp(6px, 1vw, 8px); /* Fluid radius */
+    border-radius: clamp(6px, 1vw, 8px);
     color: #ffffff;
-    font-size: var(--font-sm); /* Fluid font */
+    font-size: var(--font-sm);
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 0; /* Allow shrinking */
-    max-width: 100%; /* Prevent overflow */
+    min-width: 0;
+    max-width: 100%;
 }
 
 .courses-page .filter-select:focus {
@@ -206,21 +200,21 @@
 
 .courses-page .results-count {
     color: #cccccc;
-    font-size: var(--font-sm); /* Fluid font */
+    font-size: var(--font-sm);
     background: rgba(10, 10, 30, 0.6);
-    padding: clamp(4px, 1vw, 6px) clamp(8px, 1.5vw, 12px); /* Fluid padding */
-    border-radius: clamp(6px, 1vw, 8px); /* Fluid radius */
+    padding: clamp(4px, 1vw, 6px) clamp(8px, 1.5vw, 12px);
+    border-radius: clamp(6px, 1vw, 8px);
     display: flex;
     flex-direction: column;
     gap: 4px;
-    white-space: nowrap; /* Keep count in one line if possible */
+    white-space: nowrap;
 }
 
 .courses-page .client-side-warning {
     color: #FFD700;
-    font-size: var(--font-xs); /* Fluid font */
+    font-size: var(--font-xs);
     font-weight: 500;
-    white-space: nowrap; /* Keep warning in one line */
+    white-space: nowrap;
 }
 
 /* Loading Container */
@@ -229,24 +223,24 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: clamp(40px, 8vw, 64px) clamp(12px, 3vw, 20px); /* Fluid padding */
+    padding: clamp(40px, 8vw, 64px) clamp(12px, 3vw, 20px);
     background: rgba(10, 10, 30, 0.6);
     backdrop-filter: blur(10px);
-    border-radius: clamp(12px, 2vw, 16px); /* Fluid radius */
+    border-radius: clamp(12px, 2vw, 16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    margin: clamp(12px, 3vw, 20px) 0; /* Fluid margin */
+    margin: clamp(12px, 3vw, 20px) 0;
     width: 100%;
     max-width: 100%;
 }
 
 .courses-page .loading-spinner {
-    width: clamp(36px, 8vw, 48px); /* Fluid size */
+    width: clamp(36px, 8vw, 48px);
     height: clamp(36px, 8vw, 48px);
     border: 4px solid rgba(255, 255, 255, 0.1);
     border-top: 4px solid #4ECDC4;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: clamp(12px, 2vw, 16px); /* Fluid margin */
+    margin-bottom: clamp(12px, 2vw, 16px);
 }
 
 @keyframes spin {
@@ -256,7 +250,7 @@
 
 .courses-page .loading-text {
     color: #ffffff;
-    font-size: var(--font-md); /* Fluid font */
+    font-size: var(--font-md);
     text-align: center;
     word-break: normal;
     overflow-wrap: normal;
@@ -269,29 +263,29 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: clamp(40px, 8vw, 64px) clamp(12px, 3vw, 20px); /* Fluid padding */
+    padding: clamp(40px, 8vw, 64px) clamp(12px, 3vw, 20px);
     text-align: center;
     background: rgba(10, 10, 30, 0.8);
     backdrop-filter: blur(10px);
-    border-radius: clamp(12px, 2vw, 16px); /* Fluid radius */
+    border-radius: clamp(12px, 2vw, 16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    margin: clamp(12px, 3vw, 20px) 0; /* Fluid margin */
+    margin: clamp(12px, 3vw, 20px) 0;
     width: 100%;
     max-width: 100%;
 }
 
 .courses-page .error-icon {
     color: #FF6B6B;
-    margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
-    width: clamp(40px, 8vw, 48px); /* Fluid size */
+    margin-bottom: clamp(16px, 4vw, 24px);
+    width: clamp(40px, 8vw, 48px);
     height: clamp(40px, 8vw, 48px);
 }
 
 .courses-page .error-title {
-    font-size: var(--font-lg); /* Fluid title */
+    font-size: var(--font-lg);
     font-weight: 600;
     color: #ffffff;
-    margin-bottom: clamp(4px, 1vw, 8px); /* Fluid margin */
+    margin-bottom: clamp(4px, 1vw, 8px);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -299,25 +293,25 @@
 
 .courses-page .error-message {
     color: #cccccc;
-    margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
-    max-width: min(400px, 90vw); /* Fluid max width */
-    font-size: var(--font-base); /* Fluid font */
+    margin-bottom: clamp(16px, 4vw, 24px);
+    max-width: min(400px, 90vw);
+    font-size: var(--font-base);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
 }
 
 .courses-page .retry-btn {
-    padding: clamp(8px, 2vw, 10px) clamp(20px, 4vw, 24px); /* Fluid padding */
+    padding: clamp(8px, 2vw, 10px) clamp(20px, 4vw, 24px);
     background: rgba(255, 107, 107, 0.9);
     color: white;
     border: none;
-    border-radius: clamp(6px, 1.5vw, 8px); /* Fluid radius */
+    border-radius: clamp(6px, 1.5vw, 8px);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: var(--font-base); /* Fluid font */
-    white-space: nowrap; /* Keep button text in one line */
+    font-size: var(--font-base);
+    white-space: nowrap;
 }
 
 .courses-page .retry-btn:hover {
@@ -331,29 +325,29 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: clamp(60px, 12vw, 80px) clamp(12px, 3vw, 20px); /* Fluid padding */
+    padding: clamp(60px, 12vw, 80px) clamp(12px, 3vw, 20px);
     text-align: center;
     background: rgba(10, 10, 30, 0.6);
     backdrop-filter: blur(10px);
-    border-radius: clamp(12px, 2vw, 16px); /* Fluid radius */
+    border-radius: clamp(12px, 2vw, 16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    margin: clamp(12px, 3vw, 20px) 0; /* Fluid margin */
+    margin: clamp(12px, 3vw, 20px) 0;
     width: 100%;
     max-width: 100%;
 }
 
 .courses-page .empty-icon {
     color: rgba(255, 255, 255, 0.5);
-    margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
-    width: clamp(40px, 8vw, 48px); /* Fluid size */
+    margin-bottom: clamp(16px, 4vw, 24px);
+    width: clamp(40px, 8vw, 48px);
     height: clamp(40px, 8vw, 48px);
 }
 
 .courses-page .empty-title {
-    font-size: var(--font-lg); /* Fluid title */
+    font-size: var(--font-lg);
     font-weight: 600;
     color: #ffffff;
-    margin-bottom: clamp(4px, 1vw, 8px); /* Fluid margin */
+    margin-bottom: clamp(4px, 1vw, 8px);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -361,25 +355,25 @@
 
 .courses-page .empty-message {
     color: #cccccc;
-    max-width: min(400px, 90vw); /* Fluid max width */
-    margin-bottom: clamp(16px, 4vw, 24px); /* Fluid margin */
-    font-size: var(--font-base); /* Fluid font */
+    max-width: min(400px, 90vw);
+    margin-bottom: clamp(16px, 4vw, 24px);
+    font-size: var(--font-base);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
 }
 
 .courses-page .clear-search-btn {
-    padding: clamp(8px, 2vw, 10px) clamp(20px, 4vw, 24px); /* Fluid padding */
+    padding: clamp(8px, 2vw, 10px) clamp(20px, 4vw, 24px);
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: none;
-    border-radius: clamp(6px, 1.5vw, 8px); /* Fluid radius */
+    border-radius: clamp(6px, 1.5vw, 8px);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: var(--font-base); /* Fluid font */
-    white-space: nowrap; /* Keep button text in one line */
+    font-size: var(--font-base);
+    white-space: nowrap;
 }
 
 .courses-page .clear-search-btn:hover {
@@ -389,16 +383,16 @@
 /* Courses Grid */
 .courses-page .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); /* Fluid min column */
-    gap: clamp(16px, 3vw, 24px); /* Fluid gap */
-    margin-bottom: clamp(32px, 6vw, 48px); /* Fluid margin */
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: clamp(16px, 3vw, 24px);
+    margin-bottom: clamp(32px, 6vw, 48px);
     width: 100%;
     max-width: 100%;
 }
 
 @media (max-width: 640px) {
     .courses-page .courses-grid {
-        grid-template-columns: 1fr; /* Already handled by minmax, but keep for clarity */
+        grid-template-columns: 1fr;
     }
 }
 
@@ -406,14 +400,13 @@
 .courses-page .course-card {
     background: rgba(20, 20, 50, 0.8);
     backdrop-filter: blur(10px);
-    border-radius: clamp(12px, 2vw, 16px); /* Fluid radius */
+    border-radius: clamp(12px, 2vw, 16px);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
-    min-width: 0; /* Allow grid item to shrink */
-    /* Ensure card doesn't overflow */
+    min-width: 0;
     width: 100%;
     max-width: 100%;
 }
@@ -424,11 +417,39 @@
     border-color: rgba(78, 205, 196, 0.3);
 }
 
+/* ==========================================================================
+ *  FIX: Center the Planet/image inside the course image container
+ *  The Planet component is rendered with fixed width (300px) which may overflow
+ *  or misalign on smaller cards. Flex centering + overflow handling ensures
+ *  the planet is always visually centered regardless of card width.
+ *  ========================================================================== */
 .courses-page .course-image-container {
     position: relative;
-    height: clamp(160px, 30vw, 200px); /* Fluid height based on viewport */
+    height: clamp(160px, 30vw, 200px);
     overflow: hidden;
-    background: rgba(0,0,0,0.2); /* Fallback */
+    background: rgba(0,0,0,0.2);
+    /* Center the planet horizontally and vertically */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Ensure the Planet component (and any direct child canvas/div) is centered */
+.courses-page .course-image-container > * {
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+}
+
+/* Ensure any canvas rendered by the Planet component stays centered */
+.courses-page .course-image-container canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
 }
 
 .courses-page .course-image-generated {
@@ -444,13 +465,13 @@
 }
 
 .courses-page .course-initials {
-    font-size: clamp(32px, 8vw, 48px); /* Fluid initials */
+    font-size: clamp(32px, 8vw, 48px);
     font-weight: bold;
     color: white;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     z-index: 3;
     position: relative;
-    white-space: nowrap; /* Keep initials together */
+    white-space: nowrap;
 }
 
 .courses-page .course-image-overlay {
@@ -491,11 +512,12 @@
     bottom: 0;
     background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.7));
     z-index: 3;
+    pointer-events: none;
 }
 
 /* Course Content */
 .courses-page .course-content {
-    padding: clamp(16px, 3vw, 20px); /* Fluid padding */
+    padding: clamp(16px, 3vw, 20px);
     position: relative;
     z-index: 4;
 }
@@ -504,18 +526,18 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: clamp(8px, 2vw, 12px); /* Fluid margin */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    gap: clamp(4px, 1vw, 8px); /* Fluid gap when wrapping */
+    margin-bottom: clamp(8px, 2vw, 12px);
+    flex-wrap: wrap;
+    gap: clamp(4px, 1vw, 8px);
 }
 
 .courses-page .course-title {
-    font-size: clamp(1.1rem, 3vw, 1.25rem); /* Fluid title */
+    font-size: clamp(1.1rem, 3vw, 1.25rem);
     font-weight: 600;
     color: #ffffff;
     line-height: 1.4;
     flex: 1;
-    min-width: min(150px, 30vw); /* Ensure enough space before wrapping */
+    min-width: min(150px, 30vw);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -524,21 +546,21 @@
 .courses-page .course-badge {
     background: rgba(78, 205, 196, 0.9);
     color: white;
-    padding: 4px clamp(8px, 2vw, 12px); /* Fluid padding */
-    border-radius: clamp(16px, 4vw, 20px); /* Fluid radius */
-    font-size: var(--font-xs); /* Fluid font */
+    padding: 4px clamp(8px, 2vw, 12px);
+    border-radius: clamp(16px, 4vw, 20px);
+    font-size: var(--font-xs);
     font-weight: 500;
-    white-space: nowrap; /* Keep badge text in one line */
-    margin-left: clamp(4px, 2vw, 12px); /* Fluid margin */
-    align-self: center; /* Center vertically when wrapping */
+    white-space: nowrap;
+    margin-left: clamp(4px, 2vw, 12px);
+    align-self: center;
 }
 
 .courses-page .course-description {
     color: #cccccc;
     line-height: 1.6;
-    margin-bottom: clamp(16px, 3vw, 20px); /* Fluid margin */
-    font-size: var(--font-sm); /* Fluid font */
-    min-height: clamp(48px, 10vw, 60px); /* Fluid min height based on viewport */
+    margin-bottom: clamp(16px, 3vw, 20px);
+    font-size: var(--font-sm);
+    min-height: clamp(48px, 10vw, 60px);
     word-break: normal;
     overflow-wrap: normal;
     hyphens: none;
@@ -546,25 +568,25 @@
 
 .courses-page .course-meta {
     display: flex;
-    gap: clamp(12px, 3vw, 20px); /* Fluid gap */
-    margin-bottom: clamp(16px, 3vw, 20px); /* Fluid margin */
-    padding-bottom: clamp(16px, 3vw, 20px); /* Fluid padding */
+    gap: clamp(12px, 3vw, 20px);
+    margin-bottom: clamp(16px, 3vw, 20px);
+    padding-bottom: clamp(16px, 3vw, 20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    flex-wrap: wrap;
 }
 
 .courses-page .meta-item {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 6px); /* Fluid gap */
+    gap: clamp(4px, 1vw, 6px);
     color: #cccccc;
-    font-size: var(--font-sm); /* Fluid font */
-    white-space: nowrap; /* Keep meta items together */
+    font-size: var(--font-sm);
+    white-space: nowrap;
 }
 
 .courses-page .meta-item svg {
     color: #4ECDC4;
-    width: clamp(16px, 3vw, 18px); /* Fluid icon size */
+    width: clamp(16px, 3vw, 18px);
     height: clamp(16px, 3vw, 18px);
     flex-shrink: 0;
 }
@@ -573,30 +595,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    gap: clamp(8px, 2vw, 12px); /* Fluid gap when wrapping */
+    flex-wrap: wrap;
+    gap: clamp(8px, 2vw, 12px);
 }
 
 .courses-page .course-date {
     color: #999999;
-    font-size: var(--font-sm); /* Fluid font */
-    white-space: nowrap; /* Keep date in one line */
+    font-size: var(--font-sm);
+    white-space: nowrap;
 }
 
 .courses-page .view-course-btn {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 6px); /* Fluid gap */
-    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px); /* Fluid padding */
+    gap: clamp(4px, 1vw, 6px);
+    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px);
     background: rgba(78, 205, 196, 0.9);
     color: white;
     border: none;
-    border-radius: clamp(6px, 1.5vw, 8px); /* Fluid radius */
-    font-size: var(--font-sm); /* Fluid font */
+    border-radius: clamp(6px, 1.5vw, 8px);
+    font-size: var(--font-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    white-space: nowrap; /* Keep button text in one line */
+    white-space: nowrap;
 }
 
 .courses-page .view-course-btn:hover {
@@ -606,12 +628,12 @@
 
 /* Pagination */
 .courses-page .pagination-container {
-    margin-top: clamp(32px, 6vw, 48px); /* Fluid margin */
-    padding: clamp(12px, 3vw, 20px) 0; /* Fluid padding */
+    margin-top: clamp(32px, 6vw, 48px);
+    padding: clamp(12px, 3vw, 20px) 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(12px, 2vw, 16px); /* Fluid gap */
+    gap: clamp(12px, 2vw, 16px);
     width: 100%;
     max-width: 100%;
 }
@@ -620,24 +642,24 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: clamp(8px, 2vw, 16px); /* Fluid gap */
-    flex-wrap: wrap; /* Allow pagination controls to wrap */
+    gap: clamp(8px, 2vw, 16px);
+    flex-wrap: wrap;
 }
 
 .courses-page .pagination-btn {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 8px); /* Fluid gap */
-    padding: clamp(8px, 2vw, 10px) clamp(16px, 3vw, 20px); /* Fluid padding */
+    gap: clamp(4px, 1vw, 8px);
+    padding: clamp(8px, 2vw, 10px) clamp(16px, 3vw, 20px);
     background: rgba(20, 20, 50, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: clamp(6px, 1.5vw, 8px); /* Fluid radius */
+    border-radius: clamp(6px, 1.5vw, 8px);
     color: #ffffff;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: var(--font-sm); /* Fluid font */
-    white-space: nowrap; /* Keep button text in one line */
+    font-size: var(--font-sm);
+    white-space: nowrap;
 }
 
 .courses-page .pagination-btn:disabled {
@@ -653,25 +675,25 @@
 .courses-page .page-numbers {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 8px); /* Fluid gap */
-    flex-wrap: wrap; /* Allow page numbers to wrap */
+    gap: clamp(4px, 1vw, 8px);
+    flex-wrap: wrap;
     justify-content: center;
 }
 
 .courses-page .page-number {
-    min-width: clamp(32px, 6vw, 40px); /* Fluid min width */
-    height: clamp(32px, 6vw, 40px); /* Fluid height */
+    min-width: clamp(32px, 6vw, 40px);
+    height: clamp(32px, 6vw, 40px);
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(20, 20, 50, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: clamp(6px, 1.5vw, 8px); /* Fluid radius */
+    border-radius: clamp(6px, 1.5vw, 8px);
     color: #ffffff;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: var(--font-sm); /* Fluid font */
+    font-size: var(--font-sm);
 }
 
 .courses-page .page-number:hover {
@@ -687,13 +709,13 @@
 
 .courses-page .page-ellipsis {
     color: #999999;
-    padding: 0 clamp(4px, 1vw, 8px); /* Fluid padding */
-    font-size: var(--font-sm); /* Fluid font */
+    padding: 0 clamp(4px, 1vw, 8px);
+    font-size: var(--font-sm);
 }
 
 .courses-page .pagination-info {
     color: #cccccc;
-    font-size: var(--font-sm); /* Fluid font */
+    font-size: var(--font-sm);
     text-align: center;
     word-break: normal;
     overflow-wrap: normal;
@@ -703,27 +725,27 @@
 /* Mobile Optimizations */
 @media (max-width: 640px) {
     .courses-page {
-        padding: 8px; /* Slightly smaller base padding */
+        padding: 8px;
     }
-    
+
     .courses-page .page-header {
         padding: 16px;
         backdrop-filter: blur(5px);
     }
-    
+
     .courses-page .search-input,
     .courses-page .filter-select {
-        font-size: 16px; /* Keep at 16px to prevent zoom on iOS */
+        font-size: 16px;
     }
-    
+
     .courses-page .course-title {
-        font-size: 1.1rem; /* Keep as is */
+        font-size: 1.1rem;
     }
-    
+
     .courses-page .view-course-btn {
         font-size: 14px;
     }
-    
+
     .courses-page .course-card,
     .courses-page .page-header,
     .courses-page .loading-container,
@@ -731,19 +753,18 @@
     .courses-page .empty-state {
         backdrop-filter: blur(5px);
     }
-    
-    /* Additional wrapping for very small screens */
+
     .courses-page .course-meta {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .courses-page .course-footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .courses-page .view-course-btn {
         align-self: stretch;
         justify-content: center;
@@ -755,7 +776,7 @@
     .courses-page {
         padding: 12px;
     }
-    
+
     .courses-page .courses-grid {
         grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
     }
@@ -770,7 +791,7 @@
         color: #ffffff;
         border: 2px solid #ffffff;
     }
-    
+
     .courses-page .search-input:focus,
     .courses-page .filter-select:focus {
         border: 3px solid #4ECDC4;
@@ -786,7 +807,7 @@
     .courses-page .page-number:hover {
         transform: none;
     }
-    
+
     .courses-page .course-image {
         transition: none;
     }
@@ -798,7 +819,7 @@
         background: white !important;
         color: black !important;
     }
-    
+
     .courses-page .page-header,
     .courses-page .course-card {
         background: white !important;
@@ -806,7 +827,7 @@
         box-shadow: none !important;
         backdrop-filter: none !important;
     }
-    
+
     .courses-page .search-input,
     .courses-page .filter-select,
     .courses-page .course-title {
@@ -815,14 +836,12 @@
 }
 
 /* ==========================================================================
-   Granular Responsive Breakpoints (50px increments)
-   All additions preserve existing styles and enhance responsiveness
-   ========================================================================== */
+ *  Granular Responsive Breakpoints (50px increments)
+ *  ========================================================================== */
 
 /* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
 @media only screen and (min-width: 200px) and (max-width: 250px) {
     .courses-page {
-        /* Override font variables for micro screens */
         --font-xs: 6px;
         --font-sm: 7px;
         --font-base: 8px;
@@ -830,132 +849,130 @@
         --font-lg: 11px;
         --font-xl: 13px;
         --font-xxl: 15px;
-        
-        /* Adjust container padding to ultra-compact */
         padding: 4px;
     }
-    
+
     .courses-page .page-header {
         padding: 8px;
         gap: 6px;
-        backdrop-filter: blur(2px); /* reduce blur for performance */
+        backdrop-filter: blur(2px);
         border-radius: 6px;
     }
-    
+
     .courses-page .page-title {
-        font-size: 14px; /* override clamp with px */
+        font-size: 14px;
         margin-bottom: 2px;
     }
-    
+
     .courses-page .page-subtitle {
         font-size: 8px;
     }
-    
+
     .courses-page .search-container {
         max-width: 100%;
         gap: 4px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         padding: 6px 8px;
         font-size: 8px;
-        min-height: 28px; /* ensure minimum touch target */
+        min-height: 28px;
         border-radius: 4px;
     }
-    
+
     .courses-page .search-btn {
         min-width: 28px;
     }
-    
+
     .courses-page .filter-label,
     .courses-page .filter-select,
     .courses-page .results-count,
     .courses-page .client-side-warning {
         font-size: 7px;
     }
-    
+
     .courses-page .filter-select {
         padding: 4px 6px;
     }
-    
+
     .courses-page .results-count {
         padding: 2px 4px;
     }
-    
+
     .courses-page .loading-spinner {
         width: 24px;
         height: 24px;
         border-width: 2px;
     }
-    
+
     .courses-page .loading-text {
         font-size: 9px;
     }
-    
+
     .courses-page .error-title {
         font-size: 11px;
     }
-    
+
     .courses-page .error-message,
     .courses-page .retry-btn,
     .courses-page .empty-message,
     .courses-page .clear-search-btn {
         font-size: 8px;
     }
-    
+
     .courses-page .course-card {
         border-radius: 8px;
     }
-    
+
     .courses-page .course-image-container {
         height: 100px;
     }
-    
+
     .courses-page .course-initials {
-        font-size: 24px; /* smaller initials */
+        font-size: 24px;
     }
-    
+
     .courses-page .course-content {
         padding: 8px;
     }
-    
+
     .courses-page .course-title {
-        font-size: 10px; /* override clamp */
+        font-size: 10px;
     }
-    
+
     .courses-page .course-badge {
         font-size: 6px;
         padding: 2px 6px;
         border-radius: 12px;
     }
-    
+
     .courses-page .course-description {
         font-size: 7px;
         min-height: 32px;
         margin-bottom: 8px;
     }
-    
+
     .courses-page .meta-item {
         font-size: 7px;
         gap: 3px;
     }
-    
+
     .courses-page .meta-item svg {
         width: 12px;
         height: 12px;
     }
-    
+
     .courses-page .course-date {
         font-size: 7px;
     }
-    
+
     .courses-page .view-course-btn {
         padding: 4px 8px;
         font-size: 7px;
         min-height: 28px;
     }
-    
+
     .courses-page .pagination-btn,
     .courses-page .page-number {
         padding: 4px 8px;
@@ -963,12 +980,11 @@
         min-width: 28px;
         height: 28px;
     }
-    
+
     .courses-page .pagination-info {
         font-size: 7px;
     }
-    
-    /* Ensure no horizontal scroll */
+
     .courses-page,
     .courses-page .page-header,
     .courses-page .courses-grid,
@@ -990,66 +1006,64 @@
         --font-xxl: 16px;
         padding: 5px;
     }
-    
+
     .courses-page .page-header {
         padding: 10px;
         gap: 8px;
         border-radius: 8px;
     }
-    
+
     .courses-page .page-title {
         font-size: 15px;
         margin-bottom: 3px;
     }
-    
+
     .courses-page .page-subtitle {
         font-size: 9px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         padding: 7px 10px;
         font-size: 9px;
         min-height: 30px;
     }
-    
+
     .courses-page .search-btn {
         min-width: 30px;
     }
-    
+
     .courses-page .filter-label,
     .courses-page .filter-select,
     .courses-page .results-count,
     .courses-page .client-side-warning {
         font-size: 8px;
     }
-    
+
     .courses-page .loading-spinner {
         width: 28px;
         height: 28px;
     }
-    
+
     .courses-page .course-image-container {
         height: 120px;
     }
-    
+
     .courses-page .course-initials {
         font-size: 28px;
     }
-    
+
     .courses-page .course-title {
         font-size: 11px;
     }
-    
+
     .courses-page .course-description {
         font-size: 8px;
     }
-    
+
     .courses-page .view-course-btn {
         font-size: 8px;
     }
-    
-    /* Additional fine-tuning as needed */
 }
 
 /* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
@@ -1064,28 +1078,28 @@
         --font-xxl: 18px;
         padding: 6px;
     }
-    
+
     .courses-page .page-header {
         padding: 12px;
     }
-    
+
     .courses-page .page-title {
         font-size: 17px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 32px;
     }
-    
+
     .courses-page .course-image-container {
         height: 140px;
     }
-    
+
     .courses-page .course-initials {
         font-size: 32px;
     }
-    
+
     .courses-page .course-title {
         font-size: 12px;
     }
@@ -1103,15 +1117,15 @@
         --font-xxl: 19px;
         padding: 7px;
     }
-    
+
     .courses-page .page-header {
         padding: 14px;
     }
-    
+
     .courses-page .page-title {
         font-size: 18px;
     }
-    
+
     .courses-page .course-image-container {
         height: 160px;
     }
@@ -1129,15 +1143,15 @@
         --font-xxl: 20px;
         padding: 8px;
     }
-    
+
     .courses-page .page-header {
         padding: 16px;
     }
-    
+
     .courses-page .page-title {
         font-size: 19px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 36px;
@@ -1156,15 +1170,15 @@
         --font-xxl: 22px;
         padding: 9px;
     }
-    
+
     .courses-page .page-header {
         padding: 18px;
     }
-    
+
     .courses-page .page-title {
         font-size: 20px;
     }
-    
+
     .courses-page .course-image-container {
         height: 170px;
     }
@@ -1182,11 +1196,11 @@
         --font-xxl: 23px;
         padding: 10px;
     }
-    
+
     .courses-page .page-header {
         padding: 20px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 38px;
@@ -1205,15 +1219,15 @@
         --font-xxl: 24px;
         padding: 11px;
     }
-    
+
     .courses-page .page-header {
         padding: 22px;
     }
-    
+
     .courses-page .page-title {
         font-size: 22px;
     }
-    
+
     .courses-page .course-image-container {
         height: 180px;
     }
@@ -1231,11 +1245,11 @@
         --font-xxl: 25px;
         padding: 12px;
     }
-    
+
     .courses-page .page-header {
         padding: 24px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 40px;
@@ -1254,15 +1268,15 @@
         --font-xxl: 26px;
         padding: 13px;
     }
-    
+
     .courses-page .page-header {
         padding: 26px;
     }
-    
+
     .courses-page .page-title {
         font-size: 24px;
     }
-    
+
     .courses-page .course-image-container {
         height: 190px;
     }
@@ -1280,11 +1294,11 @@
         --font-xxl: 27px;
         padding: 14px;
     }
-    
+
     .courses-page .page-header {
         padding: 28px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 42px;
@@ -1303,15 +1317,15 @@
         --font-xxl: 28px;
         padding: 15px;
     }
-    
+
     .courses-page .page-header {
         padding: 30px;
     }
-    
+
     .courses-page .page-title {
         font-size: 26px;
     }
-    
+
     .courses-page .course-image-container {
         height: 200px;
     }
@@ -1329,7 +1343,7 @@
         --font-xxl: 29px;
         padding: 16px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 44px;
@@ -1348,17 +1362,17 @@
         --font-xxl: 30px;
         padding: 17px;
     }
-    
+
     .courses-page .page-header {
         padding: 32px;
     }
-    
+
     .courses-page .page-title {
         font-size: 28px;
     }
-    
+
     .courses-page .course-image-container {
-        height: 200px; /* maintain */
+        height: 200px;
     }
 }
 
@@ -1374,7 +1388,7 @@
         --font-xxl: 31px;
         padding: 18px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 46px;
@@ -1393,11 +1407,11 @@
         --font-xxl: 32px;
         padding: 19px;
     }
-    
+
     .courses-page .page-header {
         padding: 32px;
     }
-    
+
     .courses-page .page-title {
         font-size: 30px;
     }
@@ -1415,12 +1429,12 @@
         --font-xxl: 33px;
         padding: 20px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 48px;
     }
-    
+
     .courses-page .course-image-container {
         height: 200px;
     }
@@ -1438,11 +1452,11 @@
         --font-xxl: 34px;
         padding: 21px;
     }
-    
+
     .courses-page .page-header {
         padding: 32px;
     }
-    
+
     .courses-page .page-title {
         font-size: 32px;
     }
@@ -1460,7 +1474,7 @@
         --font-xxl: 35px;
         padding: 22px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 50px;
@@ -1479,15 +1493,15 @@
         --font-xxl: 36px;
         padding: 23px;
     }
-    
+
     .courses-page .page-header {
         padding: 32px;
     }
-    
+
     .courses-page .page-title {
         font-size: 34px;
     }
-    
+
     .courses-page .course-image-container {
         height: 220px;
     }
@@ -1504,44 +1518,42 @@
         --font-xl: 36px;
         --font-xxl: 40px;
         padding: 24px;
-        /* Center content with max-width */
         max-width: var(--container-max);
         margin-left: auto;
         margin-right: auto;
     }
-    
+
     .courses-page .page-header {
         padding: 36px;
     }
-    
+
     .courses-page .search-input,
     .courses-page .search-btn {
         min-height: 52px;
         font-size: 18px;
     }
-    
+
     .courses-page .page-title {
         font-size: 38px;
     }
-    
+
     .courses-page .course-image-container {
         height: 240px;
     }
-    
+
     .courses-page .course-title {
         font-size: 1.5rem;
     }
-    
+
     .courses-page .course-description {
         font-size: 1rem;
     }
-    
+
     .courses-page .view-course-btn {
         font-size: 1rem;
         padding: 10px 20px;
     }
-    
-    /* Ensure grid columns are balanced */
+
     .courses-page .courses-grid {
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     }
@@ -1553,11 +1565,11 @@
         --font-base: 20px;
         --container-max: 1600px;
     }
-    
+
     .courses-page .page-title {
         font-size: 42px;
     }
-    
+
     .courses-page .courses-grid {
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     }
@@ -1568,11 +1580,11 @@
         --font-base: 22px;
         --container-max: 1800px;
     }
-    
+
     .courses-page .page-title {
         font-size: 48px;
     }
-    
+
     .courses-page .courses-grid {
         grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     }
