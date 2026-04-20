@@ -20,34 +20,35 @@
       <button class="retry-btn" @click="fetchCourseData">
         Try Again
       </button>
-      <router-link to="/courses" class="back-btn">
+      <router-link to="/courses" class="back-btn" style="margin-top: 0.75rem;">
         Back to Courses
       </router-link>
     </div>
 
     <!-- Course Content -->
-    <div v-else-if="course" class="course-content">
-      <!-- Course Header -->
-      <div class="course-header">
-        <div class="breadcrumb">
-          <router-link to="/courses" class="breadcrumb-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Back to Courses
-          </router-link>
-          <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">{{ course.title }}</span>
-        </div>
+    <div v-else-if="course" class="course-content-wrapper">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/courses" class="breadcrumb-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Courses
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ course.title }}</span>
+      </div>
 
+      <div class="course-content">
+        <!-- Course Hero -->
         <div class="course-hero">
           <div class="course-image-container">
-            <!-- 3D Planet -->
+            <!-- 3D Planet - centered -->
             <Planet
               :imageUrl="course.image_url"
               :courseName="course.title"
-              :width="600"
-              :height="400"
+              :width="planetSize"
+              :height="planetSize"
             />
             <div class="image-overlay"></div>
           </div>
@@ -64,7 +65,7 @@
 
             <div class="course-stats">
               <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 20h9"></path>
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                 </svg>
@@ -75,7 +76,7 @@
               </div>
 
               <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <div class="stat-content">
@@ -86,274 +87,271 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Main Content -->
-      <div class="main-content">
-        <!-- Sidebar Tabs for Mobile -->
-        <div class="mobile-tabs">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            class="mobile-tab"
-            :class="{ active: activeTab === tab.id }"
-            @click="activeTab = tab.id"
-          >
-            <span class="tab-icon">{{ tab.icon }}</span>
-            <span class="tab-label">{{ tab.label }}</span>
-          </button>
-        </div>
-
-        <div class="content-grid">
-          <!-- Left Column - Lessons & Comments -->
-          <div class="left-column">
-            <!-- Lessons Section -->
-            <section class="section lessons-section" :class="{ active: activeTab === 'lessons' }">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                  </svg>
-                  Lessons
-                </h2>
-                <span class="section-count">{{ lessons.length }}</span>
-              </div>
-
-              <div class="lessons-list">
-                <div v-if="lessons.length === 0" class="empty-lessons">
-                  <p>No lessons available for this course yet.</p>
-                </div>
-
-                <div
-                  v-for="lesson in lessons"
-                  :key="lesson.external_lesson_id"
-                  class="lesson-card"
-                >
-                  <div class="lesson-info">
-                    <div class="lesson-header">
-                      <h3 class="lesson-title">{{ lesson.title }}</h3>
-                      <div class="lesson-badges">
-                        <!-- Quiz Badge -->
-                        <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                            <path d="M4 22h16"></path>
-                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                          </svg>
-                          <span>Take Quiz</span>
-                        </div>
-
-                        <!-- Homework Badge -->
-                        <div v-if="lesson.hasHomework" class="lesson-badge homework-badge" @click="navigateToHomework(lesson)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                          </svg>
-                          <span>Homework ({{ lesson.homeworkCount }})</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p class="lesson-date">
-                      Added {{ formatDate(lesson.date_added) }}
-                    </p>
-
-                    <div class="lesson-links">
-                      <a
-                        v-if="lesson.reading_url"
-                        :href="lesson.reading_url"
-                        target="_blank"
-                        class="lesson-link"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2V8a2 2 0 0 1 2-2h6"></path>
-                          <polyline points="15 3 21 3 21 9"></polyline>
-                          <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                        Reading Material
-                      </a>
-
-                      <a
-                        v-if="lesson.source_code_url"
-                        :href="lesson.source_code_url"
-                        target="_blank"
-                        class="lesson-link"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="16 18 22 12 16 6"></polyline>
-                          <polyline points="8 6 2 12 8 18"></polyline>
-                        </svg>
-                        Source Code
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Comments Section -->
-            <section class="section comments-section" :class="{ active: activeTab === 'comments' }">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  Comments
-                </h2>
-                <span class="section-count">{{ comments.length }}</span>
-              </div>
-
-              <!-- Add Comment Form -->
-              <div class="add-comment-form">
-                <div class="form-header">
-                  <h3 class="form-title">Add a Comment</h3>
-                  <p class="form-subtitle" v-if="!authStore.user">
-                    Please <router-link to="/login">login</router-link> to comment
-                  </p>
-                </div>
-                <form v-if="authStore.user" @submit.prevent="submitComment">
-                  <div class="form-group">
-                    <div class="mention-input-container">
-                      <textarea
-                        v-model="newComment"
-                        ref="commentTextarea"
-                        placeholder="Share your thoughts about this course... Use @ to mention users"
-                        class="comment-input"
-                        rows="4"
-                        :disabled="submittingComment"
-                        required
-                        @input="handleMentionInput"
-                        @keydown="handleMentionKeydown"
-                      ></textarea>
-
-                      <!-- Mention Dropdown -->
-                      <div
-                        v-if="showMentionDropdown && filteredUsernames.length > 0"
-                        class="mention-dropdown"
-                        :style="{ top: mentionDropdownTop + 'px', left: mentionDropdownLeft + 'px' }"
-                      >
-                        <div
-                          v-for="(username, index) in filteredUsernames"
-                          :key="username"
-                          class="mention-option"
-                          :class="{ selected: selectedMentionIndex === index }"
-                          @click="selectMention(username)"
-                          @mouseenter="selectedMentionIndex = index"
-                        >
-                          <div class="mention-avatar" :style="{ background: getUserColor(username) }">
-                            {{ getUserInitials(username) }}
-                          </div>
-                          <span class="mention-username">{{ username }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div v-if="commentError" class="error-message">
-                      {{ commentError }}
-                    </div>
-                  </div>
-                  <div class="form-actions">
-                    <button
-                      type="submit"
-                      class="submit-btn"
-                      :disabled="!newComment.trim() || submittingComment"
-                    >
-                      <span v-if="submittingComment" class="btn-loading"></span>
-                      <span v-else>Post Comment</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Comments List -->
-              <div class="comments-list">
-                <div v-if="comments.length === 0" class="empty-comments">
-                  <p>No comments yet. Be the first to share your thoughts!</p>
-                </div>
-
-                <div
-                  v-for="comment in comments"
-                  :key="comment.external_comment_id"
-                  class="comment-card"
-                >
-                  <div class="comment-header">
-                    <div class="user-info">
-                      <!-- User Profile Image or Initials -->
-                      <div class="user-avatar-container">
-                        <img
-                          v-if="comment.user_profile?.image_url && isImageUrlValid(comment.user_profile.image_url)"
-                          :src="getSecureMediaUrl(comment.user_profile.image_url)"
-                          :alt="comment.user_profile.username || 'User'"
-                          class="user-avatar-image"
-                          @error="handleAvatarError(comment.user_id)"
-                        />
-                        <div
-                          v-else
-                          class="user-avatar-generated"
-                          :style="{ background: getUserColor(comment.user_profile?.username || comment.user_id) }"
-                        >
-                          {{ getUserInitials(comment.user_profile?.username || comment.user_id) }}
-                        </div>
-                      </div>
-
-                      <div class="user-details">
-                        <div class="user-name-row">
-                          <span class="user-name">{{ comment.user_profile?.username || getUserDisplayName(comment.user_id) }}</span>
-                          <span v-if="comment.user_profile?.first_name || comment.user_profile?.last_name" class="user-full-name">
-                            ({{ comment.user_profile?.first_name || '' }} {{ comment.user_profile?.last_name || '' }})
-                          </span>
-                        </div>
-                        <span class="comment-date">{{ formatDate(comment.date_added) }}</span>
-                      </div>
-                    </div>
-
-                    <div v-if="comment.user_id === authStore.user?.id || comment.user_id === authStore.user?.username" class="comment-actions">
-                      <button
-                        class="action-btn delete-btn"
-                        @click="deleteComment(comment.external_comment_id)"
-                        :disabled="deletingCommentId === comment.external_comment_id"
-                      >
-                        <span v-if="deletingCommentId === comment.external_comment_id" class="btn-loading"></span>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="comment-content">
-                    <p v-html="parseMentions(comment.content)"></p>
-                  </div>
-                </div>
-              </div>
-            </section>
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Mobile Tabs -->
+          <div class="mobile-tabs">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              class="mobile-tab"
+              :class="{ active: activeTab === tab.id }"
+              @click="activeTab = tab.id"
+            >
+              <span class="tab-icon">{{ tab.icon }}</span>
+              <span class="tab-label">{{ tab.label }}</span>
+            </button>
           </div>
 
-          <!-- Right Column - Course Description -->
-          <div class="right-column">
-            <section class="section description-section">
-              <div class="section-header">
-                <h2 class="section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                  </svg>
-                  Course Description
-                </h2>
-              </div>
+          <div class="content-grid">
+            <!-- Left Column -->
+            <div class="left-column">
+              <!-- Lessons -->
+              <section class="section lessons-section" :class="{ active: activeTab === 'lessons' }">
+                <div class="section-header">
+                  <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9"></path>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    Lessons
+                  </h2>
+                  <span class="section-count">{{ lessons.length }}</span>
+                </div>
 
-              <div class="description-content">
-                <p>{{ course.description || 'No description available.' }}</p>
-              </div>
-            </section>
+                <div class="lessons-list">
+                  <div v-if="lessons.length === 0" class="empty-lessons">
+                    <p>No lessons available for this course yet.</p>
+                  </div>
+
+                  <div
+                    v-for="lesson in lessons"
+                    :key="lesson.external_lesson_id"
+                    class="lesson-card"
+                  >
+                    <div class="lesson-info">
+                      <div class="lesson-header">
+                        <h3 class="lesson-title">{{ lesson.title }}</h3>
+                        <div class="lesson-badges">
+                          <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                              <path d="M4 22h16"></path>
+                              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                            </svg>
+                            <span>Take Quiz</span>
+                          </div>
+
+                          <div v-if="lesson.hasHomework" class="lesson-badge homework-badge" @click="navigateToHomework(lesson)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Homework ({{ lesson.homeworkCount }})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p class="lesson-date">
+                        Added {{ formatDate(lesson.date_added) }}
+                      </p>
+
+                      <div class="lesson-links">
+                        <a
+                          v-if="lesson.reading_url"
+                          :href="lesson.reading_url"
+                          target="_blank"
+                          rel="noopener"
+                          class="lesson-link"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                          </svg>
+                          Reading Material
+                        </a>
+
+                        <a
+                          v-if="lesson.source_code_url"
+                          :href="lesson.source_code_url"
+                          target="_blank"
+                          rel="noopener"
+                          class="lesson-link"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                          </svg>
+                          Source Code
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Comments -->
+              <section class="section comments-section" :class="{ active: activeTab === 'comments' }">
+                <div class="section-header">
+                  <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Comments
+                  </h2>
+                  <span class="section-count">{{ comments.length }}</span>
+                </div>
+
+                <div class="add-comment-form">
+                  <div class="form-header">
+                    <h3 class="form-title">Add a Comment</h3>
+                    <p class="form-subtitle" v-if="!authStore.user">
+                      Please <router-link to="/login">login</router-link> to comment
+                    </p>
+                  </div>
+                  <form v-if="authStore.user" @submit.prevent="submitComment">
+                    <div class="form-group">
+                      <div class="mention-input-container">
+                        <textarea
+                          v-model="newComment"
+                          ref="commentTextarea"
+                          placeholder="Share your thoughts about this course... Use @ to mention users"
+                          class="comment-input"
+                          rows="4"
+                          :disabled="submittingComment"
+                          required
+                          @input="handleMentionInput"
+                          @keydown="handleMentionKeydown"
+                        ></textarea>
+
+                        <div
+                          v-if="showMentionDropdown && filteredUsernames.length > 0"
+                          class="mention-dropdown"
+                          :style="{ top: mentionDropdownTop + 'px', left: mentionDropdownLeft + 'px' }"
+                        >
+                          <div
+                            v-for="(username, index) in filteredUsernames"
+                            :key="username"
+                            class="mention-option"
+                            :class="{ selected: selectedMentionIndex === index }"
+                            @click="selectMention(username)"
+                            @mouseenter="selectedMentionIndex = index"
+                          >
+                            <div class="mention-avatar" :style="{ background: getUserColor(username) }">
+                              {{ getUserInitials(username) }}
+                            </div>
+                            <span class="mention-username">{{ username }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div v-if="commentError" class="error-message" style="margin-top: 0.5rem;">
+                        {{ commentError }}
+                      </div>
+                    </div>
+                    <div class="form-actions">
+                      <button
+                        type="submit"
+                        class="submit-btn"
+                        :disabled="!newComment.trim() || submittingComment"
+                      >
+                        <span v-if="submittingComment" class="btn-loading"></span>
+                        <span v-else>Post Comment</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="comments-list">
+                  <div v-if="comments.length === 0" class="empty-comments">
+                    <p>No comments yet. Be the first to share your thoughts!</p>
+                  </div>
+
+                  <div
+                    v-for="comment in comments"
+                    :key="comment.external_comment_id"
+                    class="comment-card"
+                  >
+                    <div class="comment-header">
+                      <div class="user-info">
+                        <div class="user-avatar-container">
+                          <img
+                            v-if="comment.user_profile?.image_url && isImageUrlValid(comment.user_profile.image_url)"
+                            :src="getSecureMediaUrl(comment.user_profile.image_url)"
+                            :alt="comment.user_profile.username || 'User'"
+                            class="user-avatar-image"
+                            @error="handleAvatarError(comment.user_id)"
+                          />
+                          <div
+                            v-else
+                            class="user-avatar-generated"
+                            :style="{ background: getUserColor(comment.user_profile?.username || comment.user_id) }"
+                          >
+                            {{ getUserInitials(comment.user_profile?.username || comment.user_id) }}
+                          </div>
+                        </div>
+
+                        <div class="user-details">
+                          <div class="user-name-row">
+                            <span class="user-name">{{ comment.user_profile?.username || getUserDisplayName(comment.user_id) }}</span>
+                            <span v-if="comment.user_profile?.first_name || comment.user_profile?.last_name" class="user-full-name">
+                              ({{ comment.user_profile?.first_name || '' }} {{ comment.user_profile?.last_name || '' }})
+                            </span>
+                          </div>
+                          <span class="comment-date">{{ formatDate(comment.date_added) }}</span>
+                        </div>
+                      </div>
+
+                      <div v-if="comment.user_id === authStore.user?.id || comment.user_id === authStore.user?.username" class="comment-actions">
+                        <button
+                          class="action-btn delete-btn"
+                          @click="deleteComment(comment.external_comment_id)"
+                          :disabled="deletingCommentId === comment.external_comment_id"
+                          aria-label="Delete comment"
+                        >
+                          <span v-if="deletingCommentId === comment.external_comment_id" class="btn-loading"></span>
+                          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="comment-content">
+                      <p v-html="parseMentions(comment.content)"></p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- Right Column - Description -->
+            <div class="right-column">
+              <section class="section description-section">
+                <div class="section-header">
+                  <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    About
+                  </h2>
+                </div>
+
+                <div class="description-content">
+                  <p>{{ course.description || 'No description available.' }}</p>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>
@@ -362,7 +360,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { courseService, type Course, type Lesson, type Comment, type Homework } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
@@ -395,7 +393,23 @@ const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
 const isUserRegistered = ref(false);
 
-// Replica pinning (for performance)
+// Responsive planet size
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
+const planetSize = computed(() => {
+  const w = windowWidth.value;
+  if (w < 360) return 220;
+  if (w < 480) return 260;
+  if (w < 768) return 320;
+  if (w < 1024) return 380;
+  if (w < 1440) return 440;
+  return 500;
+});
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+// Replica pinning
 const courseReplicaBaseUrl = ref<string | null>(null);
 const quizReplicaBaseUrl = ref<string | null>(null);
 
@@ -409,16 +423,13 @@ const mentionDropdownLeft = ref(0);
 const mentionSearch = ref('');
 const commentTextarea = ref<HTMLTextAreaElement | null>(null);
 
-// Cache for user profiles
 const userProfileCache = new Map<string, UserProfile>();
 
-// Computed
 const tabs = computed(() => [
   { id: 'lessons', label: 'Lessons', icon: '📚' },
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
 
-// --- Optimized fetchCourseData (uses batch methods and replica pinning) ---
 const fetchCourseData = async () => {
   const courseId = route.params.id as string;
   if (!courseId) {
@@ -430,7 +441,6 @@ const fetchCourseData = async () => {
   error.value = null;
 
   try {
-    // Step 1: Pin replicas for this page load
     const courseReplica = await courseService.getRandomCourseReplica();
     if (!courseReplica) throw new Error('No course service replicas available');
     courseReplicaBaseUrl.value = courseReplica;
@@ -439,7 +449,6 @@ const fetchCourseData = async () => {
     if (!quizReplica) throw new Error('No exam service replicas available');
     quizReplicaBaseUrl.value = quizReplica;
 
-    // Step 2: Fetch course, lessons, comments in parallel
     const [fetchedCourse, fetchedLessons, fetchedComments] = await Promise.all([
       courseService.getCourse(courseId, courseReplicaBaseUrl.value),
       courseService.getCourseLessons(courseId, courseReplicaBaseUrl.value),
@@ -448,21 +457,16 @@ const fetchCourseData = async () => {
 
     course.value = fetchedCourse;
 
-    // Step 3: Batch fetch quizzes (lightweight)
     let quizzesByLessonId = new Map<string, Quiz>();
     try {
       const lightQuizzes = await quizService.getQuizzesForCourseLight(courseId, quizReplicaBaseUrl.value);
       lightQuizzes.forEach(q => {
         if (q.lesson_id) {
-          // We only need existence, so we'll create a minimal Quiz object
           quizzesByLessonId.set(q.lesson_id, { external_id: q.external_id, lesson_id: q.lesson_id } as Quiz);
         }
       });
-    } catch (err) {
-      // Ignore – proceed without quizzes
-    }
+    } catch (err) {}
 
-    // Step 4: Batch fetch homeworks for the entire course
     let homeworksByLessonId = new Map<string, Homework[]>();
     try {
       const allHomeworks = await courseService.getHomeworksForCourse(courseId, courseReplicaBaseUrl.value);
@@ -474,11 +478,8 @@ const fetchCourseData = async () => {
           homeworksByLessonId.get(hw.lesson_external_id)!.push(hw);
         }
       });
-    } catch (err) {
-      // Ignore
-    }
+    } catch (err) {}
 
-    // Step 5: Build lessons array using batch data (no extra requests)
     lessons.value = fetchedLessons.map(lesson => {
       const quiz = quizzesByLessonId.get(lesson.external_lesson_id);
       const lessonHomeworks = homeworksByLessonId.get(lesson.external_lesson_id) || [];
@@ -491,7 +492,6 @@ const fetchCourseData = async () => {
       };
     });
 
-    // Step 6: Enrich comments with user profiles (batch fetch unique users)
     const uniqueUserIds = [...new Set(fetchedComments.map(c => c.user_id))];
     const profilePromises = uniqueUserIds.map(async (userId) => {
       if (userProfileCache.has(userId)) return;
@@ -503,16 +503,12 @@ const fetchCourseData = async () => {
         } else {
           try {
             profile = await userService.getUserProfileByUsername(userId);
-          } catch (err) {
-            // ignore
-          }
+          } catch (err) {}
         }
         if (profile) {
           userProfileCache.set(userId, profile);
         }
-      } catch (err) {
-        // ignore
-      }
+      } catch (err) {}
     });
     await Promise.all(profilePromises);
 
@@ -521,7 +517,6 @@ const fetchCourseData = async () => {
       user_profile: userProfileCache.get(comment.user_id)
     }));
 
-    // Step 7: Check registration and fetch usernames for mentions
     if (authStore.user?.id) {
       isUserRegistered.value = await courseService.isUserRegisteredForCourse(
         authStore.user.id,
@@ -546,10 +541,7 @@ const fetchAllUsernames = async () => {
   }
 };
 
-// --- Helper functions (from original) ---
-const handleAvatarError = (userId: string) => {
-  // ignore
-};
+const handleAvatarError = (userId: string) => {};
 
 const isImageUrlValid = (url: string): boolean => {
   if (!url) return false;
@@ -566,7 +558,6 @@ const handleMentionInput = (event: Event) => {
   const textarea = event.target as HTMLTextAreaElement;
   const value = textarea.value;
   const cursorPosition = textarea.selectionStart;
-
   const textBeforeCursor = value.substring(0, cursorPosition);
   const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
@@ -585,7 +576,6 @@ const handleMentionInput = (event: Event) => {
         showMentionDropdown.value = true;
         selectedMentionIndex.value = 0;
 
-        const textareaRect = textarea.getBoundingClientRect();
         const textareaStyles = window.getComputedStyle(textarea);
         const lineHeight = parseInt(textareaStyles.lineHeight);
         const paddingTop = parseInt(textareaStyles.paddingTop);
@@ -695,9 +685,7 @@ const createMentionNotifications = async (commentContent: string, commentId: str
         course_url: `${window.location.origin}/course/${course.value.external_course_id}`,
         comment_id: commentId
       });
-    } catch (err) {
-      // ignore
-    }
+    } catch (err) {}
   }
 };
 
@@ -719,7 +707,6 @@ const submitComment = async () => {
       course: course.value.external_course_id,
     };
 
-    // Use pinned replica for write if available (optional)
     const newCommentObj = await courseService.createComment(commentData, courseReplicaBaseUrl.value || undefined);
 
     let userProfile: UserProfile | undefined;
@@ -732,19 +719,14 @@ const submitComment = async () => {
       if (userProfile) {
         userProfileCache.set(userId, userProfile);
       }
-    } catch (err) {
-      // ignore
-    }
+    } catch (err) {}
 
     comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
     newComment.value = '';
 
     await createMentionNotifications(commentData.content, newCommentObj.external_comment_id);
-
-    alert('Comment added successfully!');
   } catch (err: any) {
     commentError.value = err.message || 'Failed to submit comment. Please try again.';
-    alert('Failed to submit comment. Please check console for details.');
   } finally {
     submittingComment.value = false;
   }
@@ -759,7 +741,6 @@ const deleteComment = async (commentId: string) => {
     serviceRegistry.clearCache();
     await courseService.deleteComment(commentId, courseReplicaBaseUrl.value || undefined);
     comments.value = comments.value.filter(comment => comment.external_comment_id !== commentId);
-    alert('Comment deleted successfully!');
   } catch (err: any) {
     alert('Failed to delete comment. Please try again.');
   } finally {
@@ -768,10 +749,7 @@ const deleteComment = async (commentId: string) => {
 };
 
 const navigateToQuiz = (lesson: any) => {
-  if (!lesson.hasQuiz) {
-    alert('No quiz available for this lesson');
-    return;
-  }
+  if (!lesson.hasQuiz) return;
   router.push({
     path: '/take-quiz',
     query: {
@@ -784,10 +762,7 @@ const navigateToQuiz = (lesson: any) => {
 };
 
 const navigateToHomework = (lesson: any) => {
-  if (!lesson.hasHomework) {
-    alert('No homework available for this lesson');
-    return;
-  }
+  if (!lesson.hasHomework) return;
   router.push({
     path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework`
   });
@@ -839,17 +814,22 @@ const getUserColor = (userId: string) => {
   return colors[index];
 };
 
-// Lifecycle
-onMounted(() => {
-  fetchCourseData();
-});
-
-// Close mention dropdown when clicking outside
-document.addEventListener('click', (event) => {
+const handleDocumentClick = (event: MouseEvent) => {
   if (showMentionDropdown.value && commentTextarea.value &&
       !commentTextarea.value.contains(event.target as Node)) {
     showMentionDropdown.value = false;
   }
+};
+
+onMounted(() => {
+  fetchCourseData();
+  window.addEventListener('resize', handleResize);
+  document.addEventListener('click', handleDocumentClick);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  document.removeEventListener('click', handleDocumentClick);
 });
 </script>
 
