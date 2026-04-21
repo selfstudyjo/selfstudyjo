@@ -5,7 +5,6 @@
       <p>View all your course and exam certificates</p>
     </div>
 
-    <!-- Loading / Error / Empty states (unchanged) -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
       <p>Loading certificates...</p>
@@ -19,7 +18,6 @@
     </div>
 
     <div v-else class="certificates-container">
-      <!-- Tabs -->
       <div class="tabs">
         <button
           class="tab-btn"
@@ -37,7 +35,6 @@
         </button>
       </div>
 
-      <!-- Search Bar -->
       <div class="search-container" v-if="activeTabCertificates.length > 0">
         <div class="search-input-wrapper">
           <span class="search-icon">🔍</span>
@@ -58,7 +55,6 @@
         </div>
       </div>
 
-      <!-- Active Tab Content -->
       <section class="certificates-section" v-if="activeTab === 'course'">
         <div class="section-header">
           <h2>Course Certificates</h2>
@@ -79,11 +75,10 @@
             class="certificate-card"
             @click="viewCertificate(certificate.certificate_id, 'course')"
           >
-            <!-- certificate card content unchanged -->
             <div class="certificate-header">
               <div class="certificate-icon course">🎓</div>
               <div class="certificate-info">
-                <h3>{{ getCourseName(certificate.course_id) }}</h3>
+                <h3>{{ getCourseNameFromCert(certificate) }}</h3>
                 <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
               </div>
             </div>
@@ -129,11 +124,11 @@
             @click="viewCertificate(certificate.certificate_id, 'exam')"
           >
             <div class="certificate-header">
-              <div class="certificate-icon exam" :class="{ expired: !certificate.is_valid }">
+              <div class="certificate-icon exam" :class="{ expired: !isExamValid(certificate) }">
                 📝
               </div>
               <div class="certificate-info">
-                <h3>{{ getExamName(certificate.exam_id) }}</h3>
+                <h3>{{ getExamNameFromCert(certificate) }}</h3>
                 <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
               </div>
             </div>
@@ -148,8 +143,8 @@
               </div>
               <div class="detail-item">
                 <span class="label">Status:</span>
-                <span class="status-badge" :class="{ valid: certificate.is_valid, expired: !certificate.is_valid }">
-                  {{ certificate.is_valid ? 'Valid' : 'Expired' }}
+                <span class="status-badge" :class="{ valid: isExamValid(certificate), expired: !isExamValid(certificate) }">
+                  {{ isExamValid(certificate) ? 'Valid' : 'Expired' }}
                 </span>
               </div>
             </div>
@@ -167,9 +162,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { certificateService } from '@/services/certificate.service';
-import { courseService } from '@/services/course.service';
-import { examService } from '@/services/exam.service';
+import { certificateService, type CourseCertificate, type ExamCertificate } from '@/services/certificate.service';
 
 import '@/assets/css/user-certificates.css';
 
@@ -178,22 +171,34 @@ const authStore = useAuthStore();
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-const courseCertificates = ref<any[]>([]);
-const examCertificates = ref<any[]>([]);
-const coursesMap = ref<Map<string, string>>(new Map());
-const examsMap = ref<Map<string, string>>(new Map());
+const courseCertificates = ref<CourseCertificate[]>([]);
+const examCertificates = ref<ExamCertificate[]>([]);
 
 const userId = computed(() => authStore.user?.id);
 
-// Tabs and search
 const activeTab = ref<'course' | 'exam'>('course');
 const searchQuery = ref('');
+
+// Read directly from denormalized fields
+const getCourseNameFromCert = (cert: CourseCertificate): string => {
+  return cert.course_name?.trim() || `Course: ${cert.course_id.slice(0, 8)}...`;
+};
+
+const getExamNameFromCert = (cert: ExamCertificate): string => {
+  return cert.exam_name?.trim() || `Exam: ${cert.exam_id.slice(0, 8)}...`;
+};
+
+const isExamValid = (cert: ExamCertificate): boolean => {
+  if (typeof cert.is_valid === 'boolean') return cert.is_valid;
+  if (!cert.expire_date) return false;
+  return new Date(cert.expire_date) >= new Date();
+};
 
 const filteredCourseCertificates = computed(() => {
   if (!searchQuery.value) return courseCertificates.value;
   const q = searchQuery.value.toLowerCase();
   return courseCertificates.value.filter(cert => {
-    const name = getCourseName(cert.course_id).toLowerCase();
+    const name = getCourseNameFromCert(cert).toLowerCase();
     const id = cert.certificate_id.toLowerCase();
     return name.includes(q) || id.includes(q);
   });
@@ -203,18 +208,16 @@ const filteredExamCertificates = computed(() => {
   if (!searchQuery.value) return examCertificates.value;
   const q = searchQuery.value.toLowerCase();
   return examCertificates.value.filter(cert => {
-    const name = getExamName(cert.exam_id).toLowerCase();
+    const name = getExamNameFromCert(cert).toLowerCase();
     const id = cert.certificate_id.toLowerCase();
     return name.includes(q) || id.includes(q);
   });
 });
 
-// Helper for active tab certificates count (used to hide search when empty)
 const activeTabCertificates = computed(() =>
   activeTab.value === 'course' ? courseCertificates.value : examCertificates.value
 );
 
-// Rest of the script unchanged...
 const fetchCertificates = async () => {
   if (!userId.value) {
     error.value = 'User not authenticated';
@@ -226,51 +229,16 @@ const fetchCertificates = async () => {
     loading.value = true;
     error.value = null;
 
+    // One fast call — data already contains course_name, exam_name, user_full_name, user_image_url
     const certificates = await certificateService.getUserCertificates(userId.value);
     courseCertificates.value = certificates.course_certificates || [];
     examCertificates.value = certificates.exam_certificates || [];
-
-    const courseIds = Array.from(new Set(courseCertificates.value.map(c => c.course_id)));
-    await fetchCourseNames(courseIds);
-
-    const examIds = Array.from(new Set(examCertificates.value.map(c => c.exam_id)));
-    await fetchExamNames(examIds);
   } catch (err: any) {
     console.error('Failed to fetch certificates:', err);
     error.value = err.message || 'Failed to load certificates';
   } finally {
     loading.value = false;
   }
-};
-
-const fetchCourseNames = async (courseIds: string[]) => {
-  for (const courseId of courseIds) {
-    try {
-      const course = await courseService.getCourse(courseId);
-      coursesMap.value.set(courseId, course.title);
-    } catch (err) {
-      coursesMap.value.set(courseId, `Course: ${courseId.slice(0, 8)}...`);
-    }
-  }
-};
-
-const fetchExamNames = async (examIds: string[]) => {
-  for (const examId of examIds) {
-    try {
-      const exam = await examService.getExam(examId);
-      examsMap.value.set(examId, exam.title);
-    } catch (err) {
-      examsMap.value.set(examId, `Exam: ${examId.slice(0, 8)}...`);
-    }
-  }
-};
-
-const getCourseName = (courseId: string): string => {
-  return coursesMap.value.get(courseId) || `Course: ${courseId.slice(0, 8)}...`;
-};
-
-const getExamName = (examId: string): string => {
-  return examsMap.value.get(examId) || `Exam: ${examId.slice(0, 8)}...`;
 };
 
 const formatDate = (dateString: string): string => {

@@ -47,7 +47,6 @@
           <option value="date">Sort by Date</option>
           <option value="user">Sort by User</option>
         </select>
-        <!-- View mode toggle -->
         <div class="view-toggle">
           <button
             :class="['view-btn', { active: viewMode === 'grid' }]"
@@ -104,7 +103,7 @@
           <p v-else>No exam certificates have been issued yet</p>
         </div>
 
-        <!-- List View (Table) -->
+        <!-- List View -->
         <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
             <div class="header-cell user">User</div>
@@ -125,25 +124,25 @@
                 <div class="user-cell">
                   <div class="user-avatar-small">
                     <img
-                      v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
-                      :src="getProxiedAvatarUrl(certificate.user_id)"
+                      v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
+                      :src="getProxiedImageUrl(getCertUserImage(certificate))"
                       alt="User Avatar"
                       class="avatar-image-small"
-                      @error="handleAvatarError(certificate.user_id)"
+                      @error="handleAvatarError(certificate.certificate_id)"
                     />
                     <div v-else class="avatar-fallback-small">
-                      {{ getUserInitials(certificate.user_id) }}
+                      {{ getUserInitialsFromCert(certificate) }}
                     </div>
                   </div>
                   <div class="user-info-small">
-                    <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
+                    <span class="username">{{ getCertUserName(certificate) }}</span>
                     <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
                   </div>
                 </div>
               </div>
 
               <div class="table-cell exam">
-                <span class="exam-name">{{ getExamName(certificate.exam_id) }}</span>
+                <span class="exam-name">{{ getExamNameFromCert(certificate) }}</span>
               </div>
 
               <div class="table-cell date">
@@ -155,8 +154,8 @@
               </div>
 
               <div class="table-cell status">
-                <span class="status-badge" :class="{ valid: certificate.is_valid, expired: !certificate.is_valid }">
-                  {{ certificate.is_valid ? 'Valid' : 'Expired' }}
+                <span class="status-badge" :class="{ valid: isExamValid(certificate), expired: !isExamValid(certificate) }">
+                  {{ isExamValid(certificate) ? 'Valid' : 'Expired' }}
                 </span>
               </div>
 
@@ -207,23 +206,23 @@
             <div class="card-header">
               <div class="user-avatar">
                 <img
-                  v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
-                  :src="getProxiedAvatarUrl(certificate.user_id)"
+                  v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
+                  :src="getProxiedImageUrl(getCertUserImage(certificate))"
                   alt="User Avatar"
                   class="avatar-image"
-                  @error="handleAvatarError(certificate.user_id)"
+                  @error="handleAvatarError(certificate.certificate_id)"
                 />
                 <div v-else class="avatar-fallback">
-                  {{ getUserInitials(certificate.user_id) }}
+                  {{ getUserInitialsFromCert(certificate) }}
                 </div>
               </div>
               <div class="user-info">
-                <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
+                <span class="username">{{ getCertUserName(certificate) }}</span>
                 <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
               </div>
             </div>
             <div class="card-body">
-              <div class="certificate-title">{{ getExamName(certificate.exam_id) }}</div>
+              <div class="certificate-title">{{ getExamNameFromCert(certificate) }}</div>
               <div class="certificate-meta">
                 <div class="meta-item">
                   <span class="meta-label">Taken:</span>
@@ -235,8 +234,8 @@
                 </div>
               </div>
               <div class="status-wrapper">
-                <span class="status-badge" :class="{ valid: certificate.is_valid, expired: !certificate.is_valid }">
-                  {{ certificate.is_valid ? 'Valid' : 'Expired' }}
+                <span class="status-badge" :class="{ valid: isExamValid(certificate), expired: !isExamValid(certificate) }">
+                  {{ isExamValid(certificate) ? 'Valid' : 'Expired' }}
                 </span>
               </div>
             </div>
@@ -249,7 +248,6 @@
               </button>
             </div>
           </div>
-          <!-- Pagination for grid -->
           <div class="grid-footer">
             <div class="pagination">
               <button
@@ -286,7 +284,7 @@
           <p v-else>No course certificates have been issued yet</p>
         </div>
 
-        <!-- List View (Table) -->
+        <!-- List View -->
         <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
             <div class="header-cell user">User</div>
@@ -306,25 +304,25 @@
                 <div class="user-cell">
                   <div class="user-avatar-small">
                     <img
-                      v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
-                      :src="getProxiedAvatarUrl(certificate.user_id)"
+                      v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
+                      :src="getProxiedImageUrl(getCertUserImage(certificate))"
                       alt="User Avatar"
                       class="avatar-image-small"
-                      @error="handleAvatarError(certificate.user_id)"
+                      @error="handleAvatarError(certificate.certificate_id)"
                     />
                     <div v-else class="avatar-fallback-small">
-                      {{ getUserInitials(certificate.user_id) }}
+                      {{ getUserInitialsFromCert(certificate) }}
                     </div>
                   </div>
                   <div class="user-info-small">
-                    <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
+                    <span class="username">{{ getCertUserName(certificate) }}</span>
                     <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
                   </div>
                 </div>
               </div>
 
               <div class="table-cell course">
-                <span class="course-name">{{ getCourseName(certificate.course_id) }}</span>
+                <span class="course-name">{{ getCourseNameFromCert(certificate) }}</span>
               </div>
 
               <div class="table-cell date">
@@ -382,23 +380,23 @@
             <div class="card-header">
               <div class="user-avatar">
                 <img
-                  v-if="getUserProfile(certificate.user_id)?.image_url && !avatarErrors[certificate.user_id]"
-                  :src="getProxiedAvatarUrl(certificate.user_id)"
+                  v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
+                  :src="getProxiedImageUrl(getCertUserImage(certificate))"
                   alt="User Avatar"
                   class="avatar-image"
-                  @error="handleAvatarError(certificate.user_id)"
+                  @error="handleAvatarError(certificate.certificate_id)"
                 />
                 <div v-else class="avatar-fallback">
-                  {{ getUserInitials(certificate.user_id) }}
+                  {{ getUserInitialsFromCert(certificate) }}
                 </div>
               </div>
               <div class="user-info">
-                <span class="username">{{ getUserDisplayName(certificate.user_id) }}</span>
+                <span class="username">{{ getCertUserName(certificate) }}</span>
                 <span class="user-id">{{ certificate.user_id.slice(0, 8) }}...</span>
               </div>
             </div>
             <div class="card-body">
-              <div class="certificate-title">{{ getCourseName(certificate.course_id) }}</div>
+              <div class="certificate-title">{{ getCourseNameFromCert(certificate) }}</div>
               <div class="certificate-meta">
                 <div class="meta-item">
                   <span class="meta-label">Completed:</span>
@@ -419,7 +417,6 @@
               </button>
             </div>
           </div>
-          <!-- Pagination for grid -->
           <div class="grid-footer">
             <div class="pagination">
               <button
@@ -453,10 +450,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { certificateService } from '@/services/certificate.service';
-import { userService } from '@/services/user.service';
-import { courseService } from '@/services/course.service';
-import { examService } from '@/services/exam.service';
+import { certificateService, type CourseCertificate, type ExamCertificate } from '@/services/certificate.service';
 import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 const router = useRouter();
@@ -469,99 +463,96 @@ const statusFilter = ref('');
 const sortBy = ref('date');
 const currentPage = ref(1);
 const itemsPerPage = 20;
-const viewMode = ref<'grid' | 'list'>('grid'); // default grid
+const viewMode = ref<'grid' | 'list'>('grid');
 
-const examCertificates = ref<any[]>([]);
-const courseCertificates = ref<any[]>([]);
-const userProfiles = ref<Map<string, any>>(new Map());
-const coursesMap = ref<Map<string, string>>(new Map());
-const examsMap = ref<Map<string, string>>(new Map());
+const examCertificates = ref<ExamCertificate[]>([]);
+const courseCertificates = ref<CourseCertificate[]>([]);
 
-// Track avatar load errors per user
 const avatarErrors = reactive<Record<string, boolean>>({});
 
-// Compute full name from first_name and last_name, fallback to username
-const getUserDisplayName = (userId: string): string => {
-  const profile = getUserProfile(userId);
-  if (!profile) return 'Unknown';
-  const first = profile.first_name?.trim() || '';
-  const last = profile.last_name?.trim() || '';
-  if (first || last) {
-    return `${first} ${last}`.trim();
+// Reads directly from denormalized fields on the certificate (fast!)
+const getCertUserName = (cert: CourseCertificate | ExamCertificate): string => {
+  return cert.user_full_name?.trim() || 'Unknown User';
+};
+
+const getCertUserImage = (cert: CourseCertificate | ExamCertificate): string => {
+  return cert.user_image_url || '';
+};
+
+const getUserInitialsFromCert = (cert: CourseCertificate | ExamCertificate): string => {
+  const name = cert.user_full_name?.trim() || '';
+  if (!name) return 'U';
+  const parts = name.split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
-  return profile.username || 'Unknown';
+  return name.charAt(0).toUpperCase();
+};
+
+const getCourseNameFromCert = (cert: CourseCertificate): string => {
+  return cert.course_name?.trim() || `Course: ${cert.course_id.slice(0, 8)}...`;
+};
+
+const getExamNameFromCert = (cert: ExamCertificate): string => {
+  return cert.exam_name?.trim() || `Exam: ${cert.exam_id.slice(0, 8)}...`;
+};
+
+const isExamValid = (cert: ExamCertificate): boolean => {
+  if (typeof cert.is_valid === 'boolean') return cert.is_valid;
+  // Fallback compute
+  if (!cert.expire_date) return false;
+  return new Date(cert.expire_date) >= new Date();
 };
 
 const filteredExamCertificates = computed(() => {
-  let filtered = examCertificates.value;
+  let filtered = [...examCertificates.value];
 
-  // Apply search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(certificate => {
-      const displayName = getUserDisplayName(certificate.user_id).toLowerCase();
-      const examName = getExamName(certificate.exam_id).toLowerCase();
-      const userId = certificate.user_id.toLowerCase();
-
-      return displayName.includes(query) ||
-             examName.includes(query) ||
-             userId.includes(query);
+    filtered = filtered.filter(cert => {
+      const name = getCertUserName(cert).toLowerCase();
+      const examName = getExamNameFromCert(cert).toLowerCase();
+      const userId = cert.user_id.toLowerCase();
+      return name.includes(query) || examName.includes(query) || userId.includes(query);
     });
   }
 
-  // Apply status filter
   if (statusFilter.value === 'valid') {
-    filtered = filtered.filter(certificate => certificate.is_valid);
+    filtered = filtered.filter(cert => isExamValid(cert));
   } else if (statusFilter.value === 'expired') {
-    filtered = filtered.filter(certificate => !certificate.is_valid);
+    filtered = filtered.filter(cert => !isExamValid(cert));
   }
 
-  // Apply sorting
   if (sortBy.value === 'user') {
-    filtered.sort((a, b) => {
-      const nameA = getUserDisplayName(a.user_id);
-      const nameB = getUserDisplayName(b.user_id);
-      return nameA.localeCompare(nameB);
-    });
+    filtered.sort((a, b) => getCertUserName(a).localeCompare(getCertUserName(b)));
   } else {
     filtered.sort((a, b) => new Date(b.taken_date).getTime() - new Date(a.taken_date).getTime());
   }
 
-  // Apply pagination
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   return filtered.slice(start, end);
 });
 
 const filteredCourseCertificates = computed(() => {
-  let filtered = courseCertificates.value;
+  let filtered = [...courseCertificates.value];
 
-  // Apply search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(certificate => {
-      const displayName = getUserDisplayName(certificate.user_id).toLowerCase();
-      const courseName = getCourseName(certificate.course_id).toLowerCase();
-      const userId = certificate.user_id.toLowerCase();
-
-      return displayName.includes(query) ||
-             courseName.includes(query) ||
-             userId.includes(query);
+    filtered = filtered.filter(cert => {
+      const name = getCertUserName(cert).toLowerCase();
+      const courseName = getCourseNameFromCert(cert).toLowerCase();
+      const userId = cert.user_id.toLowerCase();
+      return name.includes(query) || courseName.includes(query) || userId.includes(query);
     });
   }
 
-  // Apply sorting
   if (sortBy.value === 'user') {
-    filtered.sort((a, b) => {
-      const nameA = getUserDisplayName(a.user_id);
-      const nameB = getUserDisplayName(b.user_id);
-      return nameA.localeCompare(nameB);
-    });
+    filtered.sort((a, b) => getCertUserName(a).localeCompare(getCertUserName(b)));
   } else {
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
-  // Apply pagination
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   return filtered.slice(start, end);
@@ -571,64 +562,22 @@ const totalPages = computed(() => {
   const totalItems = activeTab.value === 'exams'
     ? examCertificates.value.length
     : courseCertificates.value.length;
-  return Math.ceil(totalItems / itemsPerPage);
+  return Math.ceil(totalItems / itemsPerPage) || 1;
 });
 
-const getProxiedAvatarUrl = (userId: string) => {
-  const profile = getUserProfile(userId);
-  return profile?.image_url ? getProxiedImageUrl(profile.image_url) : '';
+const handleAvatarError = (certificateId: string) => {
+  avatarErrors[certificateId] = true;
 };
 
-const handleAvatarError = (userId: string) => {
-  avatarErrors[userId] = true;
-};
-
+// Fetch ALL certificates directly from certificate replica (fast!)
 const fetchAllCertificates = async () => {
   try {
     loading.value = true;
     error.value = null;
 
-    // Fetch all certificates from all users
-    // Note: This implementation assumes you have access to all user IDs
-    // You might need to adjust this based on your actual API
-    const allUsers = await getAllUsers();
-
-    // Fetch certificates for each user
-    const allExamCerts: any[] = [];
-    const allCourseCerts: any[] = [];
-
-    for (const user of allUsers) {
-      try {
-        const certs = await certificateService.getUserCertificates(user.user_id);
-        if (certs.exam_certificates) {
-          allExamCerts.push(...certs.exam_certificates.map((cert: any) => ({
-            ...cert,
-            user_id: user.user_id
-          })));
-        }
-        if (certs.course_certificates) {
-          allCourseCerts.push(...certs.course_certificates.map((cert: any) => ({
-            ...cert,
-            user_id: user.user_id
-          })));
-        }
-      } catch (err) {
-        console.warn(`Failed to fetch certificates for user ${user.user_id}:`, err);
-      }
-    }
-
-    examCertificates.value = allExamCerts;
-    courseCertificates.value = allCourseCerts;
-
-    // Fetch user profiles
-    await fetchUserProfiles(allUsers.map(u => u.user_id));
-
-    // Fetch course and exam names
-    const courseIds = Array.from(new Set(courseCertificates.value.map(c => c.course_id)));
-    await fetchCourseNames(courseIds);
-
-    const examIds = Array.from(new Set(examCertificates.value.map(c => c.exam_id)));
-    await fetchExamNames(examIds);
+    const result = await certificateService.getAllCertificates();
+    examCertificates.value = result.exam_certificates || [];
+    courseCertificates.value = result.course_certificates || [];
 
   } catch (err: any) {
     console.error('Failed to fetch all certificates:', err);
@@ -638,76 +587,8 @@ const fetchAllCertificates = async () => {
   }
 };
 
-const getAllUsers = async (): Promise<any[]> => {
-  try {
-    // This is a simplified implementation
-    // You might need to adjust based on your user service
-    const users = await userService.searchUsers('', 1000);
-    return users;
-  } catch (err) {
-    console.error('Failed to fetch users:', err);
-    return [];
-  }
-};
-
-const fetchUserProfiles = async (userIds: string[]) => {
-  for (const userId of userIds) {
-    try {
-      const profile = await userService.getUserProfile(userId);
-      userProfiles.value.set(userId, profile);
-    } catch (err) {
-      console.warn(`Failed to fetch profile for user ${userId}:`, err);
-    }
-  }
-};
-
-const fetchCourseNames = async (courseIds: string[]) => {
-  for (const courseId of courseIds) {
-    try {
-      const course = await courseService.getCourse(courseId);
-      coursesMap.value.set(courseId, course.title);
-    } catch (err) {
-      console.warn(`Failed to fetch course ${courseId}:`, err);
-      coursesMap.value.set(courseId, `Course: ${courseId.slice(0, 8)}...`);
-    }
-  }
-};
-
-const fetchExamNames = async (examIds: string[]) => {
-  for (const examId of examIds) {
-    try {
-      const exam = await examService.getExam(examId);
-      examsMap.value.set(examId, exam.title);
-    } catch (err) {
-      console.warn(`Failed to fetch exam ${examId}:`, err);
-      examsMap.value.set(examId, `Exam: ${examId.slice(0, 8)}...`);
-    }
-  }
-};
-
-const getUserProfile = (userId: string) => {
-  return userProfiles.value.get(userId);
-};
-
-const getUserInitials = (userId: string) => {
-  const profile = getUserProfile(userId);
-  if (!profile) return 'U';
-  // Use first letter of first name, otherwise first letter of username
-  const first = profile.first_name?.trim();
-  if (first) return first.charAt(0).toUpperCase();
-  const username = profile.username || '';
-  return username.charAt(0).toUpperCase() || 'U';
-};
-
-const getCourseName = (courseId: string): string => {
-  return coursesMap.value.get(courseId) || `Course: ${courseId.slice(0, 8)}...`;
-};
-
-const getExamName = (examId: string): string => {
-  return examsMap.value.get(examId) || `Exam: ${examId.slice(0, 8)}...`;
-};
-
 const formatDate = (dateString: string): string => {
+  if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
