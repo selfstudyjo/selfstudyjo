@@ -16,6 +16,8 @@
             required
             placeholder="Enter your username"
             :class="{ 'error': errors.username }"
+            autocomplete="username"
+            :disabled="authStore.loading"
           />
           <div v-if="errors.username" class="error-message">{{ errors.username }}</div>
         </div>
@@ -30,8 +32,15 @@
               required
               placeholder="Enter your password"
               :class="{ 'error': errors.password }"
+              autocomplete="current-password"
+              :disabled="authStore.loading"
             />
-            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+            <button
+              type="button"
+              class="password-toggle"
+              @click="showPassword = !showPassword"
+              :disabled="authStore.loading"
+            >
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
           </div>
@@ -44,7 +53,10 @@
         </div>
 
         <button type="submit" class="login-btn btn-primary" :disabled="authStore.loading">
-          <span v-if="authStore.loading">Signing In...</span>
+          <span v-if="authStore.loading">
+            <span class="spinner"></span>
+            Signing In...
+          </span>
           <span v-else>Sign In</span>
         </button>
 
@@ -88,7 +100,7 @@ const errors = reactive({
 
 const showPassword = ref(false);
 
-const validateForm = () => {
+const validateForm = (): boolean => {
   let isValid = true;
 
   errors.username = '';
@@ -112,30 +124,46 @@ const validateForm = () => {
 
 const handleLogin = async () => {
   if (!validateForm()) return;
+  if (authStore.loading) return;
 
   try {
     const response = await authStore.login({
-      username: form.username.toLowerCase(),
+      username: form.username.trim().toLowerCase(),
       password: form.password,
     });
 
     if (response.requires_verification) {
-      // Redirect to verification page
       router.push('/verify-email');
     } else {
-      // Redirect to home
       router.push('/');
     }
   } catch (error) {
-    // Error is already handled by auth store
+    // Error message is already set in authStore.error and displayed in the template
     console.error('Login error:', error);
   }
 };
 
 onMounted(() => {
-  // Clear any previous errors
   authStore.clearError();
 });
 </script>
 
+<style scoped>
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

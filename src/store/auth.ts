@@ -50,17 +50,17 @@ export const useAuthStore = defineStore('auth', () => {
             isAuthenticated.value = true;
 
             checkProctorStatus(storedUser.id).catch(err =>
-                console.warn('Failed to check proctor status on init:', err)
+            console.warn('Failed to check proctor status on init:', err)
             );
 
             if (storedUser.lab_url) {
                 loadStudentRecord().catch(err =>
-                    console.warn('Failed to load student record on init:', err)
+                console.warn('Failed to load student record on init:', err)
                 );
             }
 
             loadUserFeatures().catch(err =>
-                console.warn('Failed to load user features on init:', err)
+            console.warn('Failed to load user features on init:', err)
             );
         }
     };
@@ -91,7 +91,6 @@ export const useAuthStore = defineStore('auth', () => {
             const student = await labService.getOrCreateStudent(user.value.username, user.value.lab_url);
             studentRecord.value = student;
             if (!student) {
-                console.warn('Student record is null after getOrCreateStudent');
                 return null;
             }
             return student;
@@ -164,15 +163,15 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (isAuthenticated.value && user.value?.id) {
                 checkProctorStatus(user.value.id).catch(err =>
-                    console.warn('Background proctor check failed:', err)
+                console.warn('Background proctor check failed:', err)
                 );
                 if (user.value.lab_url) {
                     loadStudentRecord().catch(err =>
-                        console.warn('Background student record load failed:', err)
+                    console.warn('Background student record load failed:', err)
                     );
                 }
                 loadUserFeatures().catch(err =>
-                    console.warn('Background user features load failed:', err)
+                console.warn('Background user features load failed:', err)
                 );
             }
 
@@ -197,7 +196,6 @@ export const useAuthStore = defineStore('auth', () => {
         verificationData.value = null;
 
         try {
-            serviceRegistry.clearCache();
             const response = await authService.login(credentials);
 
             if (response.requires_verification) {
@@ -211,38 +209,49 @@ export const useAuthStore = defineStore('auth', () => {
                 return response;
             }
 
-            const userProfile = await userService.getUserProfile(response.user_id);
+            // Use login response directly - no extra profile API call
             user.value = {
                 id: response.user_id,
                 token: response.token,
                 expiresAt: response.expires_at,
-                username: userProfile.username,
-                email: userProfile.email,
-                lab_url: userProfile.lab_url,
-                first_name: userProfile.first_name,
-                last_name: userProfile.last_name,
-                image_url: userProfile.image_url,
-                is_email_verified: userProfile.is_email_verified
+                username: response.username,
+                email: response.email,
+                lab_url: response.lab_url,
+                first_name: response.first_name,
+                last_name: response.last_name,
+                image_url: response.image_url,
+                is_email_verified: response.is_email_verified
             };
             token.value = response.token;
             isAuthenticated.value = true;
             authService.setUser(user.value);
 
-            checkProctorStatus(response.user_id).catch(err =>
-                console.warn('Proctor check after login failed:', err)
-            );
-            if (userProfile.lab_url) {
-                loadStudentRecord().catch(err =>
-                    console.warn('Student record load after login failed:', err)
-                );
-            }
-            loadUserFeatures().catch(err =>
-                console.warn('User features load after login failed:', err)
-            );
+            // Background non-blocking checks
+            Promise.allSettled([
+                checkProctorStatus(response.user_id),
+                               response.lab_url ? loadStudentRecord() : Promise.resolve(null),
+                               loadUserFeatures()
+            ]).catch(err => console.warn('Background checks failed:', err));
+
+            // Fetch full profile in background to fill any missing fields
+            userService.getUserProfile(response.user_id)
+            .then(profile => {
+                if (user.value && user.value.id === response.user_id) {
+                    user.value = {
+                        ...user.value,
+                        ...profile,
+                        id: user.value.id,
+                        token: user.value.token,
+                        expiresAt: user.value.expiresAt,
+                    };
+                    authService.setUser(user.value);
+                }
+            })
+            .catch(err => console.warn('Background profile fetch failed (non-critical):', err));
 
             return response;
         } catch (err: any) {
-            error.value = err.message || 'Login failed';
+            error.value = err?.message || 'Login failed';
             throw err;
         } finally {
             loading.value = false;
@@ -254,7 +263,6 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            serviceRegistry.clearCache();
             const response = await userService.register(userData);
             requiresVerification.value = true;
             verificationData.value = {
@@ -275,7 +283,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             return await otpService.generateOTP(data);
         } catch (err: any) {
             error.value = err.message || 'Failed to generate OTP';
@@ -289,7 +296,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             const response = await otpService.verifyOTP(data);
             if (response.email_verified) {
                 requiresVerification.value = false;
@@ -308,7 +314,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             return await otpService.resendOTP(data);
         } catch (err: any) {
             error.value = err.message || 'Failed to resend OTP';
@@ -322,7 +327,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             const response = await userService.verifyEmail(request);
             if (response.email_verified) {
                 requiresVerification.value = false;
@@ -338,27 +342,25 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     const logout = async (): Promise<void> => {
-        loading.value = true;
-        error.value = null;
-        try {
-            const currentToken = token.value;
-            if (currentToken) {
-                await authService.logout(currentToken);
-            }
-        } catch (err) {
-            console.warn('Logout API failed, clearing local auth anyway:', err);
-        } finally {
-            user.value = null;
-            token.value = null;
-            isAuthenticated.value = false;
-            requiresVerification.value = false;
-            verificationData.value = null;
-            isProctor.value = false;
-            proctorData.value = null;
-            studentRecord.value = null;
-            userFeatures.value = [];
-            authService.clearAuth();
-            loading.value = false;
+        const currentToken = token.value;
+
+        // Clear local state immediately
+        user.value = null;
+        token.value = null;
+        isAuthenticated.value = false;
+        requiresVerification.value = false;
+        verificationData.value = null;
+        isProctor.value = false;
+        proctorData.value = null;
+        studentRecord.value = null;
+        userFeatures.value = [];
+        authService.clearAuth();
+
+        // Fire-and-forget server logout
+        if (currentToken) {
+            authService.logout(currentToken).catch(err =>
+            console.warn('Server logout failed (ignored):', err)
+            );
         }
     };
 
@@ -393,7 +395,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             const updatedProfile = await userService.updateUserProfile(userId, updateData);
             if (user.value && user.value.id === userId) {
                 user.value = {
@@ -418,7 +419,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             const updatedProfile = await userService.changePassword(userId, passwordData);
             if (user.value && user.value.id === userId) {
                 user.value = {
@@ -440,7 +440,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             const response = await mediaService.uploadProfileImage(userId, username, imageFile);
             if (user.value && user.value.id === userId) {
                 const profile = await userService.getUserProfile(userId);
@@ -460,7 +459,6 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            serviceRegistry.clearCache();
             await mediaService.deleteProfileImage(userId);
             const updatedProfile = await userService.updateUserProfile(userId, { image_url: '' });
             if (user.value && user.value.id === userId) {
@@ -512,7 +510,6 @@ export const useAuthStore = defineStore('auth', () => {
             if (!user.value?.id || !user.value?.username) {
                 throw new Error('User not authenticated');
             }
-            serviceRegistry.clearCache();
             await userService.deleteAccount(user.value.username.toLowerCase(), password);
             await logout();
         } catch (err: any) {
@@ -525,7 +522,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     const searchUsers = async (searchTerm: string, limit: number = 10): Promise<UserProfile[]> => {
         try {
-            serviceRegistry.clearCache();
             return await userService.searchUsers(searchTerm, limit);
         } catch (err: any) {
             error.value = err.message || 'Failed to search users';
@@ -535,7 +531,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     const getAllUsernames = async (): Promise<string[]> => {
         try {
-            serviceRegistry.clearCache();
             return await userService.getAllUsernames();
         } catch (err: any) {
             error.value = err.message || 'Failed to get usernames';
@@ -545,7 +540,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     const getUserProfileByUsername = async (username: string): Promise<UserProfile> => {
         try {
-            serviceRegistry.clearCache();
             return await userService.getUserProfileByUsername(username);
         } catch (err: any) {
             error.value = err.message || 'Failed to get user profile';

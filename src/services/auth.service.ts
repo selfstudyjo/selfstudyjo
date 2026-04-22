@@ -16,6 +16,11 @@ export interface LoginResponse {
     user_profile_domain?: string;
     username?: string;
     email?: string;
+    first_name?: string;
+    last_name?: string;
+    image_url?: string;
+    lab_url?: string;
+    is_email_verified?: boolean;
 }
 
 export interface TokenVerification {
@@ -56,16 +61,33 @@ export interface TokenValidationResponse {
     };
 }
 
+/**
+ * Custom error class preserving backend data + status.
+ * This lets callers detect e.g. `requires_verification`
+ * without losing the original response object.
+ */
+export class AuthError extends Error {
+    status?: number;
+    data?: any;
+
+    constructor(message: string, status?: number, data?: any) {
+        super(message);
+        this.name = 'AuthError';
+        this.status = status;
+        this.data = data;
+    }
+}
+
 class AuthService {
     private tokenKey = 'auth_token';
     private userKey = 'auth_user';
     private lastVerificationKey = 'last_token_verification';
-    private verificationInterval = 5 * 60 * 1000; // 5 minutes
+    private verificationInterval = 15 * 60 * 1000; // 15 minutes
 
     async login(credentials: LoginRequest): Promise<LoginResponse> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            throw new Error('Authentication service is currently unavailable. Please try again later.');
+            throw new AuthError('Authentication service is currently unavailable. Please try again later.');
         }
 
         try {
@@ -82,34 +104,54 @@ class AuthService {
                     token: response.token,
                     expiresAt: response.expires_at,
                     username: response.username,
-                    email: response.email
+                    email: response.email,
+                    first_name: response.first_name,
+                    last_name: response.last_name,
+                    image_url: response.image_url,
+                    lab_url: response.lab_url,
+                    is_email_verified: response.is_email_verified,
                 });
+                localStorage.setItem(this.lastVerificationKey, Date.now().toString());
             }
-
             return response;
         } catch (error: any) {
-            // Provide user-friendly error messages
-            if (error.status === 401) {
-                throw new Error('Invalid username or password. Please check your credentials.');
-            } else if (error.status === 403 && error.data?.requires_verification) {
-                // This is not an error, it's a verification required response
-                return error.data;
-            } else if (error.status === 503) {
-                throw new Error('Service is temporarily unavailable. Please try again later.');
-            } else if (error.status === 400) {
-                throw new Error('Invalid request. Please check your input.');
-            } else if (error.message?.includes('Network error')) {
-                throw new Error('Network error. Please check your internet connection.');
-            } else {
-                throw new Error(error.message || 'Login failed. Please try again.');
+            const status = error?.status;
+            const data = error?.data;
+
+            // Handle email-not-verified path — this is a valid response flow, not an error
+            if (status === 403 && data?.requires_verification) {
+                return data as LoginResponse;
             }
+
+            // Map backend messages to user-friendly messages,
+            // but preserve structured error for the caller.
+            let userMessage: string;
+
+            if (status === 401) {
+                userMessage = data?.message || 'Invalid username or password. Please check your credentials.';
+            } else if (status === 503) {
+                userMessage = data?.message || 'Service is temporarily unavailable. Please try again later.';
+            } else if (status === 400) {
+                userMessage = data?.message || data?.error || 'Invalid request. Please check your input.';
+            } else if (status === 404) {
+                userMessage = data?.message || 'User not found.';
+            } else if (error?.message?.toLowerCase().includes('network')) {
+                userMessage = 'Network error. Please check your internet connection.';
+            } else if (data?.message) {
+                userMessage = data.message;
+            } else if (data?.error) {
+                userMessage = data.error;
+            } else {
+                userMessage = error?.message || 'Login failed. Please try again.';
+            }
+
+            throw new AuthError(userMessage, status, data);
         }
     }
 
     async logout(token: string): Promise<LogoutResponse> {
         const baseUrl = await serviceRegistry.getRandomAuthReplica();
         if (!baseUrl) {
-            // Still clear local auth even if server is unavailable
             this.clearAuth();
             return { message: 'Logged out locally (service unavailable)' };
         }
@@ -120,11 +162,10 @@ class AuthService {
                 '/api/logout/',
                 { token }
             );
-
             this.clearAuth();
             return response;
         } catch (error) {
-            this.clearAuth(); // Clear local auth even if server logout fails
+            this.clearAuth();
             return { message: 'Logged out locally' };
         }
     }
@@ -140,15 +181,11 @@ class AuthService {
             data.user_id = userId;
         }
 
-        try {
-            return await apiService.post<TokenVerification>(
-                baseUrl,
-                '/api/verify-token/',
-                data
-            );
-        } catch (error) {
-            throw error;
-        }
+        return await apiService.post<TokenVerification>(
+            baseUrl,
+            '/api/verify-token/',
+            data
+        );
     }
 
     async validateToken(token: string): Promise<TokenValidationResponse> {
@@ -157,11 +194,8 @@ class AuthService {
             throw new Error('Authentication service unavailable');
         }
 
-        // First try the simple verify-token endpoint
         try {
             const verification = await this.verifyToken(token);
-
-            // Map to TokenValidationResponse format
             const is_valid = verification.valid;
             return {
                 token,
@@ -187,7 +221,7 @@ class AuthService {
                 }
             };
         } catch (error) {
-            // If simple verify fails, try the external endpoints
+            // Fall back to external endpoints
             try {
                 return await apiService.get<TokenValidationResponse>(
                     baseUrl,
@@ -219,7 +253,7 @@ class AuthService {
             return false;
         }
 
-        // Check if token is expired locally first (fast check)
+        // Local expiry check
         if (user.expiresAt) {
             const expiresAt = new Date(user.expiresAt);
             const now = new Date();
@@ -229,7 +263,7 @@ class AuthService {
             }
         }
 
-        // Check if we recently verified the token
+        // Skip remote verification if recent
         const lastVerification = localStorage.getItem(this.lastVerificationKey);
         if (lastVerification) {
             const lastVerificationTime = parseInt(lastVerification, 10);
@@ -240,24 +274,18 @@ class AuthService {
 
         try {
             const validation = await this.validateToken(token);
-
-            // Update last verification time
             localStorage.setItem(this.lastVerificationKey, Date.now().toString());
-
             return validation.is_valid && validation.validation_details.errors.length === 0;
         } catch (error) {
-            // Fallback to local validation
             if (user.expiresAt) {
                 const expiresAt = new Date(user.expiresAt);
                 const now = new Date();
                 const isValid = expiresAt > now;
-
                 if (!isValid) {
                     this.clearAuth();
                 }
                 return isValid;
             }
-
             return false;
         }
     }
@@ -275,7 +303,6 @@ class AuthService {
         }
     }
 
-    // Token management
     setToken(token: string): void {
         localStorage.setItem(this.tokenKey, token);
     }
@@ -290,7 +317,11 @@ class AuthService {
         expiresAt: string;
         username?: string;
         email?: string;
+        first_name?: string;
+        last_name?: string;
+        image_url?: string;
         lab_url?: string;
+        is_email_verified?: boolean;
     }): void {
         localStorage.setItem(this.userKey, JSON.stringify(user));
     }
@@ -301,7 +332,11 @@ class AuthService {
         expiresAt: string;
         username?: string;
         email?: string;
+        first_name?: string;
+        last_name?: string;
+        image_url?: string;
         lab_url?: string;
+        is_email_verified?: boolean;
     } | null {
         const userStr = localStorage.getItem(this.userKey);
         return userStr ? JSON.parse(userStr) : null;
