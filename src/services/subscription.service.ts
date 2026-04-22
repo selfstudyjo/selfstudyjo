@@ -29,7 +29,7 @@ export interface Subscription {
 export interface CreateSubscriptionRequest {
     external_id?: string;
     title: string;
-    subscription_type: string; // external_id of subscription type
+    subscription_type: string;
     user_id: string;
     is_active: boolean;
     expire_date?: string;
@@ -44,12 +44,39 @@ export interface UserSubscriptionStatus {
     reason?: string;
 }
 
+const SELECTED_SUB_KEY_PREFIX = 'selected_subscription_';
+
 class SubscriptionService {
+    // ---------------------- Selected subscription persistence ----------------------
+    /** Get user-selected subscription external_id (from localStorage). */
+    getSelectedSubscriptionId(userId: string): string | null {
+        try {
+            return localStorage.getItem(`${SELECTED_SUB_KEY_PREFIX}${userId}`);
+        } catch {
+            return null;
+        }
+    }
+
+    setSelectedSubscriptionId(userId: string, subscriptionExternalId: string): void {
+        try {
+            localStorage.setItem(`${SELECTED_SUB_KEY_PREFIX}${userId}`, subscriptionExternalId);
+        } catch (err) {
+            console.warn('Failed to persist selected subscription:', err);
+        }
+    }
+
+    clearSelectedSubscriptionId(userId: string): void {
+        try {
+            localStorage.removeItem(`${SELECTED_SUB_KEY_PREFIX}${userId}`);
+        } catch {
+            /* ignore */
+        }
+    }
+
+    // ---------------------- API methods ----------------------
     async getSubscriptionTypes(): Promise<SubscriptionType[]> {
         const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
-        if (!baseUrl) {
-            throw new Error('No subscription service replicas available');
-        }
+        if (!baseUrl) throw new Error('No subscription service replicas available');
         try {
             return await apiService.get<SubscriptionType[]>(baseUrl, '/subscription-types/');
         } catch (error) {
@@ -60,9 +87,7 @@ class SubscriptionService {
 
     async getSubscriptionType(externalId: string): Promise<SubscriptionType> {
         const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
-        if (!baseUrl) {
-            throw new Error('No subscription service replicas available');
-        }
+        if (!baseUrl) throw new Error('No subscription service replicas available');
         try {
             return await apiService.get<SubscriptionType>(baseUrl, `/subscription-types/${externalId}/`);
         } catch (error) {
@@ -73,9 +98,7 @@ class SubscriptionService {
 
     async getUserSubscriptions(userId: string): Promise<Subscription[]> {
         const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
-        if (!baseUrl) {
-            throw new Error('No subscription service replicas available');
-        }
+        if (!baseUrl) throw new Error('No subscription service replicas available');
         try {
             return await apiService.get<Subscription[]>(baseUrl, `/subscriptions/?user_id=${userId}`);
         } catch (error) {
@@ -86,9 +109,7 @@ class SubscriptionService {
 
     async createSubscription(data: CreateSubscriptionRequest): Promise<Subscription> {
         const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
-        if (!baseUrl) {
-            throw new Error('No subscription service replicas available');
-        }
+        if (!baseUrl) throw new Error('No subscription service replicas available');
         try {
             return await apiService.post<Subscription>(baseUrl, '/subscriptions/', data);
         } catch (error) {
@@ -97,14 +118,57 @@ class SubscriptionService {
         }
     }
 
-    async getActiveUserSubscription(userId: string): Promise<Subscription | null> {
+    // ---------------------- Non-expired subscription helpers ----------------------
+    /**
+     * Return all non-expired subscriptions for user, sorted by created_date DESC (newest first).
+     * A subscription is considered usable if:
+     *   - expire_date is in the future
+     *   - is_active is true
+     */
+    async getUsableSubscriptions(userId: string): Promise<Subscription[]> {
         try {
-            const subscriptions = await this.getUserSubscriptions(userId);
+            const subs = await this.getUserSubscriptions(userId);
             const now = new Date();
-            return subscriptions.find(sub => {
+            return subs
+            .filter(sub => {
                 const expireDate = new Date(sub.expire_date);
                 return sub.is_active && expireDate > now;
-            }) || null;
+            })
+            .sort((a, b) => {
+                // Newest first
+                const dateA = new Date(a.created_date).getTime();
+                const dateB = new Date(b.created_date).getTime();
+                return dateB - dateA;
+            });
+        } catch (error) {
+            console.error('Failed to get usable subscriptions:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get the user's "active" subscription.
+     * Priority:
+     *   1. User-selected subscription (if still non-expired)
+     *   2. Newest non-expired subscription
+     *   3. null
+     */
+    async getActiveUserSubscription(userId: string): Promise<Subscription | null> {
+        try {
+            const usable = await this.getUsableSubscriptions(userId);
+            if (usable.length === 0) return null;
+
+            // Check user's selected preference
+            const selectedId = this.getSelectedSubscriptionId(userId);
+            if (selectedId) {
+                const selected = usable.find(s => s.external_id === selectedId);
+                if (selected) return selected;
+                // Selected is expired/not usable -> clear preference
+                this.clearSelectedSubscriptionId(userId);
+            }
+
+            // Default: newest usable subscription
+            return usable[0];
         } catch (error) {
             console.error('Failed to get active subscription:', error);
             return null;
@@ -112,29 +176,49 @@ class SubscriptionService {
     }
 
     /**
-     * Get the list of feature names (not external_ids) that the user has access to
-     * based on their active subscriptions.
+     * Switch the user's active subscription to the given one.
+     * Only allowed if the target subscription is non-expired.
+     */
+    async switchActiveSubscription(userId: string, subscriptionExternalId: string): Promise<Subscription> {
+        const usable = await this.getUsableSubscriptions(userId);
+        const target = usable.find(s => s.external_id === subscriptionExternalId);
+        if (!target) {
+            throw new Error('This subscription is expired or not usable');
+        }
+        this.setSelectedSubscriptionId(userId, subscriptionExternalId);
+        return target;
+    }
+
+    /**
+     * Get the list of feature names the user has access to through their ACTIVE selected subscription.
+     * If no selection, uses the newest non-expired subscription.
+     * If you want union of all non-expired subs, call getAllUserFeatures instead.
      */
     async getUserFeatures(userId: string): Promise<string[]> {
         try {
-            const subscriptions = await this.getUserSubscriptions(userId);
-            const now = new Date();
-            const activeSubs = subscriptions.filter(sub => {
-                const expireDate = new Date(sub.expire_date);
-                return sub.is_active && expireDate > now;
-            });
+            const active = await this.getActiveUserSubscription(userId);
+            if (!active || !active.subscription_type?.features) return [];
+            return active.subscription_type.features.map(f => f.name);
+        } catch (error) {
+            console.error('Failed to get user features:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Union of all features from ALL non-expired subscriptions.
+     * Useful if you want user to implicitly benefit from every active plan.
+     */
+    async getAllUserFeatures(userId: string): Promise<string[]> {
+        try {
+            const usable = await this.getUsableSubscriptions(userId);
             const featureSet = new Set<string>();
-            for (const sub of activeSubs) {
-                if (sub.subscription_type?.features) {
-                    sub.subscription_type.features.forEach(f => {
-                        // Use the feature name, not external_id, as the identifier
-                        featureSet.add(f.name);
-                    });
-                }
+            for (const sub of usable) {
+                sub.subscription_type?.features?.forEach(f => featureSet.add(f.name));
             }
             return Array.from(featureSet);
         } catch (error) {
-            console.error('Failed to get user features:', error);
+            console.error('Failed to get all user features:', error);
             return [];
         }
     }
@@ -164,7 +248,7 @@ class SubscriptionService {
                 };
             }
             const userFeatures = await this.getUserFeatures(userId);
-            const missingFeatures = requiredFeatures.filter(feature => !userFeatures.includes(feature));
+            const missingFeatures = requiredFeatures.filter(f => !userFeatures.includes(f));
             return {
                 hasAccess: missingFeatures.length === 0,
                 missingFeatures,
@@ -186,6 +270,7 @@ class SubscriptionService {
                 this.getActiveUserSubscription(userId),
                                                                          paymentService.getUserPayments(userId)
             ]);
+
             let pendingPaymentForPlan: Payment | null = null;
             if (subscriptionTypeExternalId) {
                 pendingPaymentForPlan = userPayments.find(payment =>
@@ -193,28 +278,36 @@ class SubscriptionService {
                 payment.status === 'PENDING'
                 ) || null;
             }
-            const pendingPayments = userPayments.filter(payment => payment.status === 'PENDING');
+
+            const pendingPayments = userPayments.filter(p => p.status === 'PENDING');
             const hasPendingPayment = pendingPayments.length > 0;
+
             let canSubscribe = true;
             let reason = '';
-            if (activeSubscription) {
-                const expireDate = new Date(activeSubscription.expire_date);
-                const now = new Date();
-                if (expireDate > now) {
+
+            // If user already has ANY active subscription for this plan type, block duplicate subscription
+            if (subscriptionTypeExternalId) {
+                const usable = await this.getUsableSubscriptions(userId);
+                const duplicate = usable.find(s =>
+                s.subscription_type?.external_id === subscriptionTypeExternalId
+                );
+                if (duplicate) {
                     canSubscribe = false;
-                    reason = 'You already have an active subscription';
+                    reason = 'You already have an active subscription for this plan';
                 }
             }
+
             if (pendingPaymentForPlan) {
                 canSubscribe = false;
                 reason = 'You have a pending payment for this plan';
             } else if (hasPendingPayment && subscriptionTypeExternalId) {
-                const otherPendingPayments = pendingPayments.filter(p => p.subscription_id !== subscriptionTypeExternalId);
-                if (otherPendingPayments.length > 0) {
+                const others = pendingPayments.filter(p => p.subscription_id !== subscriptionTypeExternalId);
+                if (others.length > 0) {
                     canSubscribe = false;
                     reason = 'You have a pending payment for another plan. Please complete it first.';
                 }
             }
+
             return {
                 hasActiveSubscription: !!activeSubscription,
                 hasPendingPayment,
@@ -239,7 +332,7 @@ class SubscriptionService {
     async getUserPendingPayments(userId: string): Promise<Payment[]> {
         try {
             const payments = await paymentService.getUserPayments(userId);
-            return payments.filter(payment => payment.status === 'PENDING');
+            return payments.filter(p => p.status === 'PENDING');
         } catch (error) {
             console.error('Failed to get user pending payments:', error);
             return [];

@@ -65,6 +65,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
+    /**
+     * Load the feature names granted by the currently-ACTIVE subscription.
+     * Active = user-selected (if still non-expired) OR the newest non-expired subscription.
+     */
     const loadUserFeatures = async (): Promise<string[]> => {
         if (!user.value?.id) {
             userFeatures.value = [];
@@ -209,7 +213,6 @@ export const useAuthStore = defineStore('auth', () => {
                 return response;
             }
 
-            // Use login response directly - no extra profile API call
             user.value = {
                 id: response.user_id,
                 token: response.token,
@@ -226,14 +229,12 @@ export const useAuthStore = defineStore('auth', () => {
             isAuthenticated.value = true;
             authService.setUser(user.value);
 
-            // Background non-blocking checks
             Promise.allSettled([
                 checkProctorStatus(response.user_id),
                                response.lab_url ? loadStudentRecord() : Promise.resolve(null),
                                loadUserFeatures()
             ]).catch(err => console.warn('Background checks failed:', err));
 
-            // Fetch full profile in background to fill any missing fields
             userService.getUserProfile(response.user_id)
             .then(profile => {
                 if (user.value && user.value.id === response.user_id) {
@@ -261,7 +262,6 @@ export const useAuthStore = defineStore('auth', () => {
     const register = async (userData: UserProfile): Promise<RegisterResponse> => {
         loading.value = true;
         error.value = null;
-
         try {
             const response = await userService.register(userData);
             requiresVerification.value = true;
@@ -343,8 +343,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     const logout = async (): Promise<void> => {
         const currentToken = token.value;
+        const currentUserId = user.value?.id;
 
-        // Clear local state immediately
         user.value = null;
         token.value = null;
         isAuthenticated.value = false;
@@ -356,7 +356,11 @@ export const useAuthStore = defineStore('auth', () => {
         userFeatures.value = [];
         authService.clearAuth();
 
-        // Fire-and-forget server logout
+        // Clear selected subscription on logout
+        if (currentUserId) {
+            subscriptionService.clearSelectedSubscriptionId(currentUserId);
+        }
+
         if (currentToken) {
             authService.logout(currentToken).catch(err =>
             console.warn('Server logout failed (ignored):', err)
@@ -421,10 +425,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const updatedProfile = await userService.changePassword(userId, passwordData);
             if (user.value && user.value.id === userId) {
-                user.value = {
-                    ...user.value,
-                    ...updatedProfile
-                };
+                user.value = { ...user.value, ...updatedProfile };
             }
             return updatedProfile;
         } catch (err: any) {
@@ -475,22 +476,15 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     const getUserInitials = (firstName?: string, lastName?: string, username?: string): string => {
-        if (firstName && lastName) {
-            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-        } else if (firstName) {
-            return firstName.charAt(0).toUpperCase();
-        } else if (lastName) {
-            return lastName.charAt(0).toUpperCase();
-        } else if (username) {
-            return username.charAt(0).toUpperCase();
-        }
+        if (firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        if (firstName) return firstName.charAt(0).toUpperCase();
+        if (lastName) return lastName.charAt(0).toUpperCase();
+        if (username) return username.charAt(0).toUpperCase();
         return 'U';
     };
 
     const getCurrentUserProfile = async (): Promise<UserProfile> => {
-        if (!user.value?.id) {
-            throw new Error('User not authenticated');
-        }
+        if (!user.value?.id) throw new Error('User not authenticated');
         try {
             return await userService.getUserProfile(user.value.id);
         } catch (err: any) {
@@ -551,29 +545,14 @@ export const useAuthStore = defineStore('auth', () => {
         return user.value?.lab_url && user.value.lab_url.trim() !== '' && userFeatures.value.includes('lab_feature');
     });
 
-    const hasAiAccess = computed(() => {
-        return userFeatures.value.includes('ai_feature');
-    });
-
-    const hasRunbookAccess = computed(() => {
-        return userFeatures.value.includes('runbook_feature');
-    });
-
-    const hasExamFeature = computed(() => {
-        return userFeatures.value.includes('exam_feature');
-    });
-
-    const hasResearchFlowAccess = computed(() => {
-        return userFeatures.value.includes('research_flow_feature');
-    });
+    const hasAiAccess = computed(() => userFeatures.value.includes('ai_feature'));
+    const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
+    const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
+    const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
 
     const ensureStudentRecord = async (): Promise<Student | null> => {
-        if (!hasLabAccess.value || !user.value?.username) {
-            return null;
-        }
-        if (studentRecord.value) {
-            return studentRecord.value;
-        }
+        if (!hasLabAccess.value || !user.value?.username) return null;
+        if (studentRecord.value) return studentRecord.value;
         return await loadStudentRecord();
     };
 

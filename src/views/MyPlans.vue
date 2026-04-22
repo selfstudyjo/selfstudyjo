@@ -288,6 +288,20 @@
                 Active Subscriptions
                 <span class="badge active-badge">{{ activeSubscriptions.length }}</span>
               </h2>
+              <p v-if="activeSubscriptions.length > 1" class="section-subtitle">
+                You have multiple active subscriptions. Click "Use This Plan" to switch between them.
+              </p>
+            </div>
+
+            <!-- Currently active subscription indicator -->
+            <div v-if="currentActiveSubscription" class="current-active-banner">
+              <div class="banner-content">
+                <span class="banner-icon">⭐</span>
+                <div class="banner-text">
+                  <span class="banner-label">Currently Active:</span>
+                  <strong class="banner-plan">{{ currentActiveSubscription.subscription_type?.title || currentActiveSubscription.title }}</strong>
+                </div>
+              </div>
             </div>
 
             <div class="subscriptions-grid">
@@ -295,20 +309,28 @@
                 v-for="subscription in activeSubscriptions"
                 :key="subscription.external_id"
                 class="subscription-card modern-card active-card"
+                :class="{ 'is-current-active': isCurrentActive(subscription) }"
               >
                 <div class="card-header">
                   <div class="status-badge active">
                     <span class="badge-dot"></span>
                     ACTIVE
                   </div>
+                  <div v-if="isCurrentActive(subscription)" class="current-indicator">
+                    ⭐ IN USE
+                  </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
-                    <div class="plan-price">JOD {{ subscription.subscription_type.price }}/month</div>
+                    <div class="plan-price">JOD {{ subscription.subscription_type?.price }}/month</div>
                   </div>
                 </div>
 
                 <div class="card-body">
                   <div class="subscription-info">
+                    <div class="info-row">
+                      <span class="info-label">Plan Type:</span>
+                      <span class="info-value">{{ subscription.subscription_type?.title || 'N/A' }}</span>
+                    </div>
                     <div class="info-row">
                       <span class="info-label">Subscription ID:</span>
                       <span class="info-value">{{ subscription.external_id }}</span>
@@ -326,7 +348,11 @@
                   <div class="features-section">
                     <h4 class="features-title">Included Features</h4>
                     <ul class="features-list">
-                      <li v-for="feature in subscription.subscription_type.features" :key="feature.external_id" class="feature-item">
+                      <li
+                        v-for="feature in subscription.subscription_type?.features"
+                        :key="feature.external_id"
+                        class="feature-item"
+                      >
                         <span class="feature-icon">✓</span>
                         <div class="feature-content">
                           <span class="feature-name">{{ feature.name }}</span>
@@ -349,6 +375,21 @@
                         :style="{ width: getTimeRemainingPercentage(subscription.expire_date) + '%' }"
                       ></div>
                     </div>
+                  </div>
+
+                  <!-- Switch / activate button -->
+                  <div class="action-buttons">
+                    <button
+                      v-if="!isCurrentActive(subscription)"
+                      @click="switchToSubscription(subscription)"
+                      class="modern-btn primary-btn"
+                      :disabled="switchingTo === subscription.external_id"
+                    >
+                      {{ switchingTo === subscription.external_id ? 'Activating...' : '✨ Use This Plan' }}
+                    </button>
+                    <span v-else class="modern-btn success-btn disabled-look">
+                      ⭐ Currently Active
+                    </span>
                   </div>
                 </div>
               </div>
@@ -378,7 +419,7 @@
                   </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
-                    <div class="plan-price">JOD {{ subscription.subscription_type.price }}/month</div>
+                    <div class="plan-price">JOD {{ subscription.subscription_type?.price }}/month</div>
                   </div>
                 </div>
 
@@ -399,7 +440,7 @@
                   <div class="action-buttons">
                     <button
                       class="modern-btn primary-btn"
-                      @click="renewSubscription(subscription.subscription_type.external_id)"
+                      @click="renewSubscription(subscription.subscription_type?.external_id)"
                       :disabled="hasPendingPayment"
                     >
                       🔄 {{ hasPendingPayment ? 'Pending Payment Exists' : 'Renew Plan' }}
@@ -511,7 +552,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { subscriptionService, type SubscriptionType, type Subscription } from '@/services/subscription.service';
+import { subscriptionService, type Subscription } from '@/services/subscription.service';
 import { paymentService, type Payment } from '@/services/payment.service';
 
 const router = useRouter();
@@ -523,39 +564,50 @@ const error = ref<string | null>(null);
 const subscriptions = ref<Subscription[]>([]);
 const allPayments = ref<Payment[]>([]);
 const cancellingPayment = ref<string | null>(null);
+const switchingTo = ref<string | null>(null);
+const currentActiveSubscription = ref<Subscription | null>(null);
 
-// Computed properties
-const pendingPayments = computed(() => {
-  return allPayments.value.filter(payment => payment.status === 'PENDING');
-});
+// Computed
+const pendingPayments = computed(() =>
+  allPayments.value.filter(p => p.status === 'PENDING')
+);
 
-const paidPayments = computed(() => {
-  return allPayments.value.filter(payment =>
-    payment.status === 'PAID' || payment.status === 'VERIFIED'
-  );
-});
+const paidPayments = computed(() =>
+  allPayments.value.filter(p => p.status === 'PAID' || p.status === 'VERIFIED')
+);
 
+/**
+ * Active = is_active AND not expired
+ * Sorted newest first so the newest appears first in the UI.
+ */
 const activeSubscriptions = computed(() => {
   const now = new Date();
-  return subscriptions.value.filter(sub => {
-    const expireDate = new Date(sub.expire_date);
-    return sub.is_active && expireDate > now;
-  });
+  return subscriptions.value
+    .filter(sub => {
+      const expireDate = new Date(sub.expire_date);
+      return sub.is_active && expireDate > now;
+    })
+    .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
 });
 
 const inactiveSubscriptions = computed(() => {
   const now = new Date();
-  return subscriptions.value.filter(sub => {
-    const expireDate = new Date(sub.expire_date);
-    return !sub.is_active || expireDate <= now;
-  });
+  return subscriptions.value
+    .filter(sub => {
+      const expireDate = new Date(sub.expire_date);
+      return !sub.is_active || expireDate <= now;
+    })
+    .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
 });
 
-const hasPendingPayment = computed(() => {
-  return pendingPayments.value.length > 0;
-});
+const hasPendingPayment = computed(() => pendingPayments.value.length > 0);
 
-// Methods
+// Helpers
+const isCurrentActive = (sub: Subscription): boolean => {
+  return currentActiveSubscription.value?.external_id === sub.external_id;
+};
+
+// Fetch
 const fetchPlans = async () => {
   loading.value = true;
   error.value = null;
@@ -565,12 +617,11 @@ const fetchPlans = async () => {
       throw new Error('User not authenticated');
     }
 
-    // Fetch user subscriptions
     subscriptions.value = await subscriptionService.getUserSubscriptions(authStore.user.id);
-
-    // Fetch user payments
     allPayments.value = await paymentService.getUserPayments(authStore.user.id);
 
+    // Determine current active subscription (selected or newest non-expired)
+    currentActiveSubscription.value = await subscriptionService.getActiveUserSubscription(authStore.user.id);
   } catch (err: any) {
     error.value = err.message || 'Failed to load your plans';
     console.error('Error fetching plans:', err);
@@ -579,54 +630,62 @@ const fetchPlans = async () => {
   }
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+// Switch between non-expired subscriptions
+const switchToSubscription = async (sub: Subscription) => {
+  if (!authStore.user?.id) return;
+
+  // Guard: must not be expired
+  const now = new Date();
+  if (new Date(sub.expire_date) <= now) {
+    alert('This subscription has expired and cannot be activated.');
+    return;
+  }
+  if (!sub.is_active) {
+    alert('This subscription is not active.');
+    return;
+  }
+
+  switchingTo.value = sub.external_id;
+  try {
+    const activated = await subscriptionService.switchActiveSubscription(
+      authStore.user.id,
+      sub.external_id
+    );
+    currentActiveSubscription.value = activated;
+
+    // Refresh user features in auth store so feature gates update immediately
+    await authStore.loadUserFeatures();
+
+    alert(`Switched to "${activated.subscription_type?.title || activated.title}" successfully!`);
+  } catch (err: any) {
+    console.error('Failed to switch subscription:', err);
+    alert(err.message || 'Failed to switch subscription. Please try again.');
+  } finally {
+    switchingTo.value = null;
+  }
 };
 
-const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+// Formatting helpers
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric'
   });
-};
 
-const formatPaymentMethod = (method: string) => {
-  return method === 'IBAN' ? 'Bank Transfer' : 'Cliq Transfer';
-};
+const formatDateTime = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+const formatPaymentMethod = (method: string) =>
+  method === 'IBAN' ? 'Bank Transfer' : 'Cliq Transfer';
 
 const getPlanTitle = (planExternalId: string): string => {
-  // Try to find plan in subscriptions first
   const subscription = subscriptions.value.find(sub =>
-    sub.subscription_type.external_id === planExternalId
+    sub.subscription_type?.external_id === planExternalId
   );
-  if (subscription) {
-    return subscription.subscription_type.title;
-  }
-
-  // Try to find in all payments by looking at subscription types
-  // (In a real app, you'd fetch the subscription type details)
-  const payment = allPayments.value.find(p => p.subscription_id === planExternalId);
-  if (payment) {
-    return `Plan ${planExternalId.substring(0, 8)}...`;
-  }
-
+  if (subscription) return subscription.subscription_type.title;
   return `Plan ${planExternalId.substring(0, 8)}...`;
-};
-
-const getAccountDetails = (payment: Payment): string => {
-  if (payment.payment_method === 'IBAN' && payment.bank_account) {
-    return `${payment.bank_account.bank_name} - ${payment.bank_account.IBAN}`;
-  } else if (payment.payment_method === 'CLIQ' && payment.cliq_account) {
-    return `@${payment.cliq_account.username}`;
-  }
-  return 'N/A';
 };
 
 const getPaymentRowClass = (status: string): string => {
@@ -640,37 +699,30 @@ const getPaymentRowClass = (status: string): string => {
   }
 };
 
-const getSubscriptionForPayment = (payment: Payment): Subscription | undefined => {
-  return subscriptions.value.find(sub =>
-    sub.subscription_type.external_id === payment.subscription_id
+const getSubscriptionForPayment = (payment: Payment): Subscription | undefined =>
+  subscriptions.value.find(sub =>
+    sub.subscription_type?.external_id === payment.subscription_id
   );
-};
 
 const getTimeRemainingPercentage = (expireDate: string): number => {
   const now = new Date();
   const expiry = new Date(expireDate);
-  const created = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Assuming 30 days duration
-
+  const created = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const totalDuration = expiry.getTime() - created.getTime();
   const remainingDuration = expiry.getTime() - now.getTime();
-
   if (remainingDuration <= 0) return 0;
   if (remainingDuration >= totalDuration) return 100;
-
   return Math.round((remainingDuration / totalDuration) * 100);
 };
 
 const getExpiryPercentage = (expireDate: string): number => {
   const now = new Date();
   const expiry = new Date(expireDate);
-  const created = new Date(expiry.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days duration for payments
-
+  const created = new Date(expiry.getTime() - 3 * 24 * 60 * 60 * 1000);
   const totalDuration = expiry.getTime() - created.getTime();
   const elapsedDuration = now.getTime() - created.getTime();
-
   if (elapsedDuration <= 0) return 0;
   if (elapsedDuration >= totalDuration) return 100;
-
   return Math.round((elapsedDuration / totalDuration) * 100);
 };
 
@@ -678,49 +730,42 @@ const getTimeRemainingText = (expireDate: string): string => {
   const now = new Date();
   const expiry = new Date(expireDate);
   const diffMs = expiry.getTime() - now.getTime();
-
   if (diffMs <= 0) return 'Expired';
-
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays === 0) {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     return `${diffHours} hours remaining`;
   } else if (diffDays === 1) {
     return '1 day remaining';
-  } else {
-    return `${diffDays} days remaining`;
   }
+  return `${diffDays} days remaining`;
 };
 
 const getTimeRemaining = (expireDate: string): string => {
   const now = new Date();
   const expiry = new Date(expireDate);
   const diffMs = expiry.getTime() - now.getTime();
-
   if (diffMs <= 0) return 'Expired';
-
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
   if (diffDays > 0) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
-  } else {
-    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
   }
+  return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
 };
 
-const renewSubscription = (subscriptionTypeExternalId: string) => {
+const renewSubscription = (subscriptionTypeExternalId?: string) => {
+  if (!subscriptionTypeExternalId) {
+    alert('Unable to determine plan type for renewal.');
+    return;
+  }
   if (hasPendingPayment.value) {
     alert('You have a pending payment. Please complete or cancel it before renewing a plan.');
     return;
   }
-
   router.push({
     path: '/payment',
-    query: {
-      plan: subscriptionTypeExternalId
-    }
+    query: { plan: subscriptionTypeExternalId }
   });
 };
 
@@ -758,22 +803,14 @@ const cancelPayment = async (paymentExternalId: string) => {
   if (!confirm('Are you sure you want to cancel this payment? This action cannot be undone.')) {
     return;
   }
-
   cancellingPayment.value = paymentExternalId;
-
   try {
-    // Call the payment service to cancel the payment
     await paymentService.cancelPayment(paymentExternalId, `Cancelled by user on ${new Date().toLocaleDateString()}`);
-
     alert('Payment cancelled successfully!');
-
-    // Refresh the data
     await fetchPlans();
   } catch (err: any) {
     console.error('Error cancelling payment:', err);
-
     if (err.status === 400) {
-      // Try to delete instead if update fails
       try {
         if (confirm('Update failed. Would you like to try deleting the payment instead?')) {
           await paymentService.deletePayment(paymentExternalId);
@@ -839,7 +876,6 @@ const contactAdmin = () => {
 onMounted(() => {
   fetchPlans();
 
-  // Check for hash in URL to scroll to specific payment
   const hash = window.location.hash;
   if (hash.startsWith('#payment-')) {
     setTimeout(() => {
@@ -855,3 +891,89 @@ onMounted(() => {
 </script>
 
 <style src="@/assets/css/my-plans.css"></style>
+
+<style scoped>
+/* Styles for the new "current active" indicator and switch button */
+.current-active-banner {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.banner-icon {
+  font-size: 28px;
+}
+
+.banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.banner-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #78350f;
+  font-weight: 600;
+}
+
+.banner-plan {
+  font-size: 18px;
+  color: #78350f;
+}
+
+.subscription-card.is-current-active {
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 8px 16px -4px rgba(245, 158, 11, 0.3) !important;
+  position: relative;
+}
+
+.current-indicator {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.success-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  cursor: default;
+}
+
+.success-btn.disabled-look {
+  opacity: 0.9;
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.section-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 4px;
+}
+</style>
