@@ -43,7 +43,6 @@
         <!-- Course Hero -->
         <div class="course-hero">
           <div class="course-image-container">
-            <!-- 3D Planet - centered -->
             <Planet
               :imageUrl="course.image_url"
               :courseName="course.title"
@@ -749,15 +748,30 @@ const deleteComment = async (commentId: string) => {
 };
 
 const navigateToQuiz = (lesson: any) => {
-  if (!lesson.hasQuiz) return;
+  if (!lesson.hasQuiz || !lesson.quiz) return;
+
+  // ✅ FIX: Use sessionStorage instead of router state.
+  // The `state` option in router.push is unreliable, especially with hash mode
+  // (which is commonly used on GitHub Pages). sessionStorage works consistently
+  // across local dev and production deployments.
+  try {
+    sessionStorage.setItem(
+      `quiz_${lesson.quiz.external_id}`,
+      JSON.stringify(lesson.quiz)
+    );
+  } catch (e) {
+    // sessionStorage may be unavailable (private mode, quota exceeded, etc.)
+    // The TakeQuiz page should fall back to fetching by quizId from query.
+    console.warn('Failed to cache quiz in sessionStorage:', e);
+  }
+
   router.push({
     path: '/take-quiz',
     query: {
       quizId: lesson.quiz.external_id,
       lessonId: lesson.external_lesson_id,
       courseId: course.value?.external_course_id
-    },
-    state: { quiz: lesson.quiz }
+    }
   });
 };
 
