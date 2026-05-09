@@ -1,4 +1,4 @@
-<!-- src/views/AiChat.vue – updated for multiline input and better UX -->
+<!-- src/views/AiChat.vue – updated for Gemini AI chat -->
 <template>
   <div class="ai-chat-container">
     <div class="chat-header">
@@ -17,7 +17,11 @@
           <span v-else>🤖</span>
         </div>
         <div class="message-content">
-          <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(msg.content)" class="markdown-body"></div>
+          <div
+            v-if="msg.role === 'assistant'"
+            v-html="renderMarkdown(msg.content)"
+            class="markdown-body"
+          ></div>
           <div v-else class="plain-text">{{ msg.content }}</div>
         </div>
       </div>
@@ -40,6 +44,7 @@
         placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
         rows="1"
         ref="textarea"
+        :disabled="isLoading"
       ></textarea>
       <button @click="sendMessage" :disabled="!userInput.trim() || isLoading">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,7 +63,7 @@ import 'highlight.js/styles/github-dark.css';
 import { useAiService } from '@/services/ai.service';
 
 marked.setOptions({
-  highlight: (code, lang) => {
+  highlight: (code: string, lang: string) => {
     if (lang && hljs.getLanguage(lang)) {
       return hljs.highlight(code, { language: lang }).value;
     }
@@ -67,7 +72,12 @@ marked.setOptions({
   breaks: true,
 });
 
-const messages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+const messages = ref<ChatMessage[]>([]);
 const userInput = ref('');
 const isLoading = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
@@ -103,7 +113,7 @@ const renderMarkdown = (content: string) => {
       button.innerHTML = '📋';
       button.setAttribute('aria-label', 'Copy code');
       button.addEventListener('click', async () => {
-        const code = pre.querySelector('code')?.innerText || '';
+        const code = (pre.querySelector('code') as HTMLElement)?.innerText || '';
         try {
           await navigator.clipboard.writeText(code);
           button.innerHTML = '✅';
@@ -113,7 +123,7 @@ const renderMarkdown = (content: string) => {
           setTimeout(() => { button.innerHTML = '📋'; }, 2000);
         }
       });
-      pre.style.position = 'relative';
+      (pre as HTMLElement).style.position = 'relative';
       pre.appendChild(button);
     });
   });
@@ -123,11 +133,9 @@ const renderMarkdown = (content: string) => {
 // Handle keydown: Enter sends, Shift+Enter adds new line
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault(); // Prevent default (which would add a new line)
+    e.preventDefault();
     sendMessage();
   }
-  // If Shift+Enter, allow default (new line) and adjust height afterward
-  // The @input will handle height adjustment automatically
 };
 
 // Send message
@@ -137,23 +145,25 @@ const sendMessage = async () => {
 
   messages.value.push({ role: 'user', content: message });
   userInput.value = '';
-  adjustTextareaHeight(); // Reset height after clearing
+  adjustTextareaHeight();
   scrollToBottom();
 
   isLoading.value = true;
 
   try {
+    // Send full conversation history to Gemini-backed proxy
     const response = await aiService.sendConversation(messages.value);
     messages.value.push({ role: 'assistant', content: response });
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI chat error:', error);
     messages.value.push({
       role: 'assistant',
-      content: 'Sorry, I encountered an error. Please try again later.',
+      content: `Sorry, I encountered an error: ${error?.message || 'Unknown error'}. Please try again later.`,
     });
   } finally {
     isLoading.value = false;
     scrollToBottom();
+    nextTick(() => textarea.value?.focus());
   }
 };
 
@@ -161,10 +171,12 @@ onMounted(() => {
   // Welcome message
   messages.value.push({
     role: 'assistant',
-    content: 'Hello! I’m your AI assistant. How can I help you today?'
+    content: 'Hello! I\'m your AI assistant powered by Google Gemini. How can I help you today?'
   });
-  // Ensure textarea starts with proper height
-  nextTick(adjustTextareaHeight);
+  nextTick(() => {
+    adjustTextareaHeight();
+    textarea.value?.focus();
+  });
 });
 </script>
 

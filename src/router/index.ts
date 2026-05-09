@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import { authGuard, publicOnlyGuard } from './guard';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
@@ -314,7 +314,10 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    // ✅ Use hash history for GitHub Pages compatibility
+    // URLs become /#/courses instead of /courses
+    // This makes refresh work on any route since the server only sees '/'
+    history: createWebHashHistory(import.meta.env.BASE_URL),
     routes
 });
 

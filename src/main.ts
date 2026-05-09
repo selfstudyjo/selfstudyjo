@@ -6,7 +6,10 @@ import './style.css'
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
+        // ✅ Use BASE_URL so SW path works on GitHub Pages subpath (e.g. /repo-name/)
+        const swPath = `${import.meta.env.BASE_URL}sw.js`.replace(/\/+/g, '/');
+
+        navigator.serviceWorker.register(swPath).then(() => {
             const token = import.meta.env.VITE_AUTH_TOKEN;
             if (token && token !== 'Token Not Found!' && token !== 'your-actual-auth-token-here') {
                 navigator.serviceWorker.ready.then(registration => {
