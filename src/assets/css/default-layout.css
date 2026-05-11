@@ -1,83 +1,133 @@
-/* ============================================
-   DEFAULT LAYOUT - RESPONSIVE ENHANCEMENTS
-   ============================================ */
+/* ============================================================
+   DEFAULT LAYOUT — Galaxy-themed, fully responsive
+   Coexists with: src/style.css + AnimatedBackground.vue + side-nav.css
+   side-nav.css OWNS .main-content margin-left (the shift).
+   This file owns padding, typography, surfaces, and utilities.
+   ============================================================ */
 
-/* 1. CSS Custom Properties (variables) for scalable system
-      Base values correspond to the smallest breakpoint (200px–250px) */
+/* --------------------------------------------------------
+   1. Global design tokens
+   -------------------------------------------------------- */
 :root {
-  --font-size-base: 8px;
-  --spacing-unit: 4px;
-  --container-max-width: 100%;
-  --border-radius-base: 2px;
-  --button-height: 32px;
-  --input-height: 32px;
-  --icon-size: 16px;
-  --gap-small: calc(var(--spacing-unit) * 1);
-  --gap-medium: calc(var(--spacing-unit) * 2);
-  --gap-large: calc(var(--spacing-unit) * 3);
-  --main-content-padding: calc(var(--spacing-unit) * 3); /* 12px */
-  --chat-box-offset: calc(var(--spacing-unit) * 2.5); /* 10px */
-  --card-header-gap: calc(var(--spacing-unit) * 2); /* 8px */
-  --body-padding-bottom: clamp(60px, 10vh, 100px);
+  --galaxy-text:           #ffffff;
+  --galaxy-text-soft:      #e8eaff;
+  --galaxy-text-muted:     rgba(255, 255, 255, 0.70);
+  --galaxy-text-dim:       rgba(255, 255, 255, 0.50);
+
+  --galaxy-accent:         #818cf8;
+  --galaxy-accent-2:       #a78bfa;
+  --galaxy-gradient:       linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  --glass-bg:              rgba(255, 255, 255, 0.05);
+  --glass-bg-strong:       rgba(255, 255, 255, 0.08);
+  --glass-bg-hover:        rgba(255, 255, 255, 0.10);
+  --glass-border:          rgba(255, 255, 255, 0.10);
+  --glass-border-strong:   rgba(255, 255, 255, 0.18);
+  --glass-blur:            blur(14px) saturate(140%);
+  --glass-blur-strong:     blur(22px) saturate(160%);
+
+  --glow-soft:             0 8px 32px rgba(102, 126, 234, 0.15);
+  --glow-medium:           0 12px 40px rgba(102, 126, 234, 0.25);
+  --glow-strong:           0 16px 50px rgba(118, 75, 162, 0.35);
+
+  --radius-sm:             10px;
+  --radius-md:             14px;
+  --radius-lg:             20px;
+  --radius-xl:             28px;
+
+  --font-size-base:        clamp(14px, 0.875rem + 0.25vw, 17px);
+  --font-size-sm:          clamp(12px, 0.75rem + 0.2vw, 14px);
+  --font-size-lg:          clamp(16px, 1rem + 0.4vw, 20px);
+
+  --spacing-unit:          clamp(6px, 0.5vw, 10px);
+  --gap-xs:                calc(var(--spacing-unit) * 0.75);
+  --gap-sm:                calc(var(--spacing-unit) * 1.25);
+  --gap-md:                calc(var(--spacing-unit) * 2);
+  --gap-lg:                calc(var(--spacing-unit) * 3);
+  --gap-xl:                calc(var(--spacing-unit) * 4);
+
+  --main-content-padding:  clamp(14px, 2.5vw, 32px);
+  --chat-box-offset:       clamp(14px, 1.6vw, 28px);
+  --body-padding-bottom:   clamp(72px, 12vh, 120px);
+
+  --button-height:         clamp(40px, 5vh, 52px);
+  --input-height:          clamp(40px, 5vh, 52px);
+  --icon-size:             clamp(18px, 1.4vw, 22px);
+
+  --card-header-gap:       var(--gap-md);
 }
 
-/* 2. Universal box-sizing for consistent sizing */
+/* --------------------------------------------------------
+   2. Universal sizing
+   -------------------------------------------------------- */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 
-/* 3. Base body styles – font size uses variable, word‑breaking rules */
+/* --------------------------------------------------------
+   3. Body — typography
+   -------------------------------------------------------- */
 body {
   font-size: var(--font-size-base);
-  word-break: keep-all;           /* Keep whole words together (non-CJK safe) */
-  overflow-wrap: normal;          /* Don't break words unless forced */
-  hyphens: none;                  /* Disable automatic hyphenation */
+  line-height: 1.6;
+  color: var(--galaxy-text-soft);
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
   -webkit-hyphens: none;
   -ms-hyphens: none;
-  line-height: 1.5;               /* Base line-height, scales with font-size */
+  background: transparent;
 }
 
-/* 4. Allow images and media to scale with container */
-img,
-video,
-svg,
-canvas {
+img, video, svg, canvas {
   max-width: 100%;
   height: auto;
 }
 
-/* 5. Default layout container */
+/* --------------------------------------------------------
+   4. Default layout shell (transparent — galaxy visible)
+   -------------------------------------------------------- */
 .default-layout {
-  display: flex;
-  min-height: 100vh;
   position: relative;
-  overflow: hidden; /* Keep to prevent scrollbars from space animation */
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  /* DO NOT use overflow:hidden here — would clip the fixed
+     galaxy canvas in some browsers. Body already has
+     overflow-x: hidden from style.css. */
+  background: transparent;
+  color: var(--galaxy-text-soft);
+  isolation: isolate;
+  z-index: 1;
 }
 
-/* 6. Main content area */
-.main-content {
-  flex: 1;
-  padding: var(--main-content-padding);
-  overflow-y: auto;
-  overflow-x: hidden;          /* Prevent horizontal scroll caused by overflowing children */
-  transition: margin-left 0.3s ease;
+/* --------------------------------------------------------
+   5. Main content area — padding / typography / scroll only
+      (margin-left for shifting is handled in side-nav.css)
+   -------------------------------------------------------- */
+.app-container > .main-content {
   position: relative;
   z-index: 1;
-  backdrop-filter: blur(2px);
-  /* Bottom padding to clear fixed chat box – uses variable but also retains clamp for fluidity */
+  padding: var(--main-content-padding);
   padding-bottom: var(--body-padding-bottom);
-  /* Font size will inherit from body, but we keep a fluid fallback */
-  font-size: clamp(calc(var(--font-size-base) * 0.875), 2vw, var(--font-size-base));
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
+  color: var(--galaxy-text-soft);
+  font-size: var(--font-size-base);
+  scrollbar-gutter: stable;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* 7. When side navigation is present */
-.main-content.with-sidenav {
-  margin-left: 260px;
+/* Subtle fade-in for top-level content on route change */
+.app-container > .main-content > * {
+  animation: fadeInUp 0.5s ease both;
 }
 
-/* 8. Chat box container - fixed position */
+/* --------------------------------------------------------
+   6. Chat box anchor
+   -------------------------------------------------------- */
 .chat-box-container {
   position: fixed;
   bottom: var(--chat-box-offset);
@@ -85,28 +135,21 @@ canvas {
   z-index: 1000;
 }
 
-/* 9. Space background - remains fixed and covers viewport */
+/* --------------------------------------------------------
+   7. Legacy `.space-background` fallback (inert)
+   -------------------------------------------------------- */
 .space-background {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 0;
-  perspective: 1000px;
+  pointer-events: none;
+  background: transparent;
   overflow: hidden;
-  background: linear-gradient(to bottom, 
-    #000428 0%, 
-    #000b2e 15%, 
-    #00113a 30%, 
-    #001848 50%, 
-    #000f35 70%, 
-    #000428 100%);
 }
 
-/* ============================================
-   CARD HEADER FIXES (prevent element mixing)
-   ============================================ */
+/* --------------------------------------------------------
+   8. Card header utility
+   -------------------------------------------------------- */
 .card-header {
   display: flex;
   flex-wrap: wrap;
@@ -116,7 +159,6 @@ canvas {
   min-height: min-content;
   isolation: isolate;
 }
-
 .card-header > * {
   flex: 0 1 auto;
   min-width: fit-content;
@@ -124,329 +166,143 @@ canvas {
   word-break: keep-all;
 }
 
-/* ============================================
-   ADDITIONAL SAFEGUARDS FOR ALL ELEMENTS
-   ============================================ */
-* {
-  max-width: 100%;
+/* --------------------------------------------------------
+   9. Reusable galaxy glass surfaces
+   -------------------------------------------------------- */
+.galaxy-card,
+.galaxy-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glow-soft);
+  color: var(--galaxy-text-soft);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+.galaxy-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-strong);
+  box-shadow: var(--glow-medium);
+  transform: translateY(-2px);
 }
 
-/* Retain original mobile adjustment for side navigation, now using variables */
+/* -------------------------------------------------------
+  10. Form / input aesthetic (scoped inside main content)
+   ------------------------------------------------------- */
+.app-container > .main-content :where(input, select, textarea):not([type='checkbox']):not([type='radio']) {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--galaxy-text);
+  caret-color: var(--galaxy-accent);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.app-container > .main-content :where(input, select, textarea)::placeholder {
+  color: var(--galaxy-text-dim);
+}
+.app-container > .main-content :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--galaxy-accent);
+  outline-offset: 2px;
+  border-color: transparent;
+  background: var(--glass-bg-strong);
+}
+
+/* -------------------------------------------------------
+  11. Text defaults inside galaxy layout
+   ------------------------------------------------------- */
+.app-container > .main-content :where(h1, h2, h3, h4, h5, h6) {
+  color: var(--galaxy-text);
+  letter-spacing: -0.01em;
+}
+.app-container > .main-content a {
+  color: var(--galaxy-accent);
+  text-underline-offset: 3px;
+}
+.app-container > .main-content a:hover {
+  color: var(--galaxy-accent-2);
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS — mobile first
+   480 → 768 → 1024 → 1440 → 1920 → 2560
+   ============================================================ */
+
 @media (max-width: 768px) {
-  .main-content.with-sidenav {
-    margin-left: 0;
-    padding: clamp(calc(var(--spacing-unit) * 2.5), 4vw, calc(var(--spacing-unit) * 3.75));
-    margin-top: 60px;
-  }
-}
-
-/* ============================================
-   RESPONSIVE MEDIA QUERIES
-   Each block overrides CSS custom properties
-   to scale typography, spacing, and layout
-   progressively.
-   ============================================ */
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
   :root {
-    --font-size-base: 8px;
-    --spacing-unit: 4px;
-    --button-height: 32px;
-    --input-height: 32px;
-    --icon-size: 14px;
-    --main-content-padding: calc(var(--spacing-unit) * 2); /* 8px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 8px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.5); /* 6px */
+    --main-content-padding: clamp(12px, 4vw, 18px);
+    --chat-box-offset:      clamp(12px, 3vw, 18px);
+    --body-padding-bottom:  clamp(80px, 14vh, 110px);
+  }
+  /* larger touch targets on mobile */
+  .app-container > .main-content :where(button, a, input, select, textarea) {
+    min-height: 44px;
   }
 }
 
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
+@media (min-width: 480px) {
+  :root { --main-content-padding: clamp(16px, 3.5vw, 22px); }
+}
+
+@media (min-width: 768px) {
   :root {
-    --font-size-base: 9px;
-    --spacing-unit: 4px;
-    --button-height: 34px;
-    --input-height: 34px;
-    --icon-size: 15px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.5); /* 10px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.25); /* 9px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.75); /* 7px */
+    --main-content-padding: clamp(20px, 3vw, 28px);
+    --chat-box-offset:      clamp(18px, 2vw, 24px);
   }
 }
 
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
+@media (min-width: 1024px) {
+  :root { --main-content-padding: clamp(24px, 2.4vw, 32px); }
+}
+
+@media (min-width: 1440px) {
   :root {
-    --font-size-base: 10px;
-    --spacing-unit: 5px;
-    --button-height: 36px;
-    --input-height: 36px;
-    --icon-size: 16px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.4); /* 12px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 10px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.6); /* 8px */
+    --main-content-padding: clamp(28px, 2vw, 40px);
+    --font-size-base:       clamp(15px, 0.85rem + 0.3vw, 18px);
   }
 }
 
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
+@media (min-width: 1920px) {
   :root {
-    --font-size-base: 11px;
-    --spacing-unit: 5px;
-    --button-height: 38px;
-    --input-height: 38px;
-    --icon-size: 18px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.6); /* 13px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.2); /* 11px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.8); /* 9px */
+    --main-content-padding: clamp(36px, 2vw, 56px);
+    --font-size-base:       clamp(16px, 0.9rem + 0.3vw, 20px);
   }
 }
 
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
+@media (min-width: 2560px) {
   :root {
-    --font-size-base: 12px;
-    --spacing-unit: 6px;
-    --button-height: 40px;
-    --input-height: 40px;
-    --icon-size: 20px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.5); /* 15px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 12px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.67); /* 10px */
+    --main-content-padding: clamp(48px, 2vw, 80px);
+    --font-size-base:       clamp(18px, 1rem + 0.3vw, 24px);
+    --radius-lg:            24px;
+    --radius-xl:            32px;
   }
 }
 
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    --font-size-base: 13px;
-    --spacing-unit: 6px;
-    --button-height: 42px;
-    --input-height: 42px;
-    --icon-size: 22px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.67); /* 16px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.17); /* 13px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.83); /* 11px */
-  }
+@media (max-width: 900px) and (orientation: landscape) {
+  :root { --body-padding-bottom: clamp(60px, 8vh, 90px); }
 }
 
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    --font-size-base: 13.5px;
-    --spacing-unit: 7px;
-    --button-height: 44px;
-    --input-height: 44px;
-    --icon-size: 24px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.57); /* 18px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 14px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.71); /* 12px */
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print {
+  .default-layout { background: #ffffff; color: #000000; }
+  .app-container > .main-content {
+    margin-left: 0 !important;
+    padding: 0;
+    color: #000;
   }
+  .chat-box-container,
+  .space-background { display: none !important; }
 }
 
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    --font-size-base: 14px;
-    --spacing-unit: 7px;
-    --button-height: 46px;
-    --input-height: 46px;
-    --icon-size: 26px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.71); /* 19px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.14); /* 15px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.86); /* 13px */
-  }
+/* ============================================================
+   REDUCED MOTION (style.css handles globally — extra guard)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .app-container > .main-content > * { animation: none !important; }
 }
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    --font-size-base: 14.5px;
-    --spacing-unit: 8px;
-    --button-height: 48px;
-    --input-height: 48px;
-    --icon-size: 28px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.5); /* 20px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 16px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.75); /* 14px */
-  }
-}
-
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    --font-size-base: 15px;
-    --spacing-unit: 8px;
-    --button-height: 50px;
-    --input-height: 50px;
-    --icon-size: 30px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.625); /* 21px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.125); /* 17px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.875); /* 15px */
-  }
-}
-
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    --font-size-base: 15.5px;
-    --spacing-unit: 9px;
-    --button-height: 52px;
-    --input-height: 52px;
-    --icon-size: 32px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.44); /* 22px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 18px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.78); /* 16px */
-  }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    --font-size-base: 16px;
-    --spacing-unit: 9px;
-    --button-height: 54px;
-    --input-height: 54px;
-    --icon-size: 34px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.56); /* 23px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.11); /* 19px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.89); /* 17px */
-  }
-}
-
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    --font-size-base: 16.5px;
-    --spacing-unit: 10px;
-    --button-height: 56px;
-    --input-height: 56px;
-    --icon-size: 36px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.4); /* 24px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 20px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.8); /* 18px */
-  }
-}
-
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    --font-size-base: 17px;
-    --spacing-unit: 10px;
-    --button-height: 58px;
-    --input-height: 58px;
-    --icon-size: 38px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.5); /* 25px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.1); /* 21px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.9); /* 19px */
-  }
-}
-
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    --font-size-base: 17.5px;
-    --spacing-unit: 11px;
-    --button-height: 60px;
-    --input-height: 60px;
-    --icon-size: 40px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.36); /* 26px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 22px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.82); /* 20px */
-  }
-}
-
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    --font-size-base: 17.5px;
-    --spacing-unit: 11px;
-    --button-height: 62px;
-    --input-height: 62px;
-    --icon-size: 42px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.45); /* 27px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.09); /* 23px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.91); /* 21px */
-  }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    --font-size-base: 18px;
-    --spacing-unit: 12px;
-    --button-height: 64px;
-    --input-height: 64px;
-    --icon-size: 44px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.33); /* 28px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 24px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.83); /* 22px */
-  }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    --font-size-base: 18px;
-    --spacing-unit: 12px;
-    --button-height: 66px;
-    --input-height: 66px;
-    --icon-size: 46px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.42); /* 29px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.08); /* 25px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.92); /* 23px */
-  }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    --font-size-base: 18.5px;
-    --spacing-unit: 13px;
-    --button-height: 68px;
-    --input-height: 68px;
-    --icon-size: 48px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.31); /* 30px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 26px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.85); /* 24px */
-  }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    --font-size-base: 18.5px;
-    --spacing-unit: 13px;
-    --button-height: 70px;
-    --input-height: 70px;
-    --icon-size: 50px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.38); /* 31px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2.08); /* 27px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.92); /* 25px */
-  }
-}
-
-/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
-@media only screen and (min-width: 1200px) {
-  :root {
-    --font-size-base: 19px;
-    --spacing-unit: 14px;
-    --button-height: 72px;
-    --input-height: 72px;
-    --icon-size: 52px;
-    --main-content-padding: calc(var(--spacing-unit) * 2.29); /* 32px */
-    --chat-box-offset: calc(var(--spacing-unit) * 2); /* 28px */
-    --card-header-gap: calc(var(--spacing-unit) * 1.86); /* 26px */
-  }
-}
-
-/* ============================================
-   SUMMARY OF ENHANCEMENTS
-   ============================================
-   - CSS custom properties drive all scalable values.
-   - Media queries (200px to 1200px+) adjust only variables.
-   - Original selectors and class names are preserved.
-   - No generic button/input styles were added – icons and sidebar toggle remain exactly as designed.
-   - Layout, typography, and spacing scale smoothly across all screen sizes.
-   ============================================ */

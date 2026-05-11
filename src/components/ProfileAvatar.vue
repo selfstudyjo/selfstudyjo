@@ -211,17 +211,30 @@ onMounted(() => {
   position: relative;
   display: inline-block;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   cursor: default;
+  isolation: isolate;
 }
 
-.profile-avatar.editable {
-  cursor: pointer;
+.profile-avatar.has-image,
+.profile-avatar:not(.has-image) {
+  filter: drop-shadow(0 8px 28px rgba(102, 126, 234, 0.35));
+}
+
+.avatar-image,
+.avatar-initials {
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(102, 126, 234, 0.3) inset,
+    0 0 24px rgba(118, 75, 162, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .avatar-image img {
@@ -229,75 +242,98 @@ onMounted(() => {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  display: block;
 }
 
 .avatar-initials {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  font-weight: bold;
+  color: #fff;
+  font-weight: 700;
   text-align: center;
   user-select: none;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 2px 12px rgba(255, 255, 255, 0.18),
+    0 0 24px rgba(102, 126, 234, 0.35);
+}
+
+.profile-avatar:hover .avatar-image,
+.profile-avatar:hover .avatar-initials {
+  border-color: rgba(78, 205, 196, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(78, 205, 196, 0.4) inset,
+    0 0 32px rgba(78, 205, 196, 0.35);
 }
 
 .avatar-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  color: #fff;
+  background: rgba(10, 10, 30, 0.55);
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
-  border-radius: 50%;
   cursor: pointer;
 }
 
-.profile-avatar:hover .avatar-overlay {
+.profile-avatar:hover .avatar-overlay,
+.profile-avatar:focus-within .avatar-overlay {
   opacity: 1;
 }
 
 .avatar-overlay .icon {
   width: 24px;
   height: 24px;
-  margin-bottom: 4px;
+  filter: drop-shadow(0 0 6px rgba(78, 205, 196, 0.6));
 }
 
 .avatar-overlay span {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
   text-align: center;
+  padding: 0 10px;
 }
 
 .remove-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: #f56565;
-  color: white;
-  border: none;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.9;
-  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #f56565, #c53030);
+  box-shadow: 0 6px 18px rgba(252, 129, 129, 0.45);
+  cursor: pointer;
+  opacity: 0.95;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
   z-index: 10;
 }
 
 .remove-btn:hover {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(252, 129, 129, 0.6);
+}
+
+.remove-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .remove-btn .icon {
@@ -307,5 +343,15 @@ onMounted(() => {
 
 .file-input {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-overlay,
+  .remove-btn,
+  .avatar-image,
+  .avatar-initials {
+    transition: none;
+  }
+  .remove-btn:hover { transform: none; }
 }
 </style>

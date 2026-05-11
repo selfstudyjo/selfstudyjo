@@ -1,3367 +1,870 @@
 /* ==========================================================================
-   GALAXY SPACE THEME - NOTIFICATIONS
-   Designed for Vue.js with 3D animated galaxy background
-   Theme: Dark cosmic space with glass-morphism effects
-   Date: 2024
-
-   RESPONSIVE ENHANCEMENTS:
-   - Prevent word/character breaks across all elements
-   - Ensure containers expand to fit content
-   - Add flex-wrap to prevent element mixing in headers and action bars
-   - Add isolation for stacking contexts
-   - Preserve all original design, colors, animations
+   GALAXY THEME — NOTIFICATIONS
+   - Mobile-first, transparent glassmorphism over the animated galaxy.
+   - Brand gradient (#667eea → #764ba2) as primary accent.
+   - All class names referenced by Notifications.vue are preserved.
    ========================================================================== */
 
-/* CSS VARIABLES FOR COSMIC THEME */
-:root {
-  /* Cosmic Color Palette */
-  --cosmic-dark: rgba(5, 5, 20, 0.85);
-  --cosmic-darker: rgba(10, 10, 30, 0.9);
-  --cosmic-deep: rgba(15, 15, 40, 0.8);
-  --cosmic-black: rgba(0, 0, 0, 0.6);
-  
-  /* Cosmic Accent Colors */
-  --cosmic-cyan: #4ECDC4;
-  --cosmic-cyan-glow: rgba(78, 205, 196, 0.5);
-  --cosmic-purple: #8A2BE2;
-  --cosmic-purple-glow: rgba(138, 43, 226, 0.5);
-  --cosmic-blue: #4285F4;
-  --cosmic-blue-glow: rgba(66, 133, 244, 0.3);
-  --cosmic-white: #ffffff;
-  --cosmic-light: #e0e0e0;
-  --cosmic-lighter: #f5f5f5;
-  --cosmic-gray: #a0a0a0;
-  
-  /* Glass Effects */
-  --glass-blur: blur(12px) saturate(180%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.15);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --glass-glow: 0 0 20px rgba(78, 205, 196, 0.2);
-  
-  /* Text Glow */
-  --text-glow: 0 0 10px rgba(255, 255, 255, 0.3);
-  --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  --text-glow-strong: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(78, 205, 196, 0.3);
-  
-  /* Transitions */
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-glow: all 0.5s ease;
-  
-  /* Responsive Font Sizes */
-  --font-xs: clamp(12px, 3vw, 14px);
-  --font-sm: clamp(14px, 3.5vw, 16px);
-  --font-base: clamp(15px, 4vw, 17px);
-  --font-lg: clamp(16px, 4.5vw, 20px);
-  --font-xl: clamp(20px, 5vw, 24px);
-  --font-2xl: clamp(24px, 6vw, 32px);
-  --font-3xl: clamp(28px, 7vw, 40px);
-  
-  /* Button Sizes */
-  --btn-height-sm: 44px;
-  --btn-height-md: 50px;
-  --btn-height-lg: 56px;
-  
-  /* Notification Colors */
-  --notif-personal: rgba(78, 205, 196, 0.2);
-  --notif-personal-border: rgba(78, 205, 196, 0.4);
-  --notif-personal-glow: rgba(78, 205, 196, 0.3);
-  --notif-general: rgba(72, 187, 120, 0.2);
-  --notif-general-border: rgba(72, 187, 120, 0.4);
-  --notif-general-glow: rgba(72, 187, 120, 0.3);
-  --notif-group: rgba(237, 137, 54, 0.2);
-  --notif-group-border: rgba(237, 137, 54, 0.4);
-  --notif-group-glow: rgba(237, 137, 54, 0.3);
-  --notif-user: rgba(159, 122, 234, 0.2);
-  --notif-user-border: rgba(159, 122, 234, 0.4);
-  --notif-user-glow: rgba(159, 122, 234, 0.3);
-  --notif-unread: rgba(66, 133, 244, 0.1);
-}
-
-/* ============================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================== */
-.notifications-container * {
-  word-break: normal;                /* Prevent character-by-character breaking */
-  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-  hyphens: none;                     /* Disable hyphenation */
-  -webkit-hyphens: none;
-  -ms-hyphens: none;
-  box-sizing: border-box;            /* Consistent sizing */
-}
-
-/* ============================================
-   ANIMATIONS (unchanged)
-   ========================================== */
-@keyframes cosmic-spin {
-  0% { transform: rotate(0deg); }
-  25% { border-top-color: var(--cosmic-cyan); }
-  50% { border-top-color: var(--cosmic-purple); }
-  75% { border-top-color: var(--cosmic-blue); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-@keyframes notification-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes unread-pulse {
-  0%, 100% { 
-    box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.2);
-  }
-  50% { 
-    box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
-  }
-}
-
-/* BASE CONTAINER */
+/* ---------- Local design tokens (scoped to this page) ----------- */
 .notifications-container {
-  padding: clamp(20px, 4vw, 32px);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: transparent;
+  /* brand */
+  --np-brand-1: #667eea;
+  --np-brand-2: #764ba2;
+  --np-brand-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* text on dark galaxy */
+  --np-text:        #ffffff;
+  --np-text-soft:   #e8eaff;
+  --np-text-muted:  rgba(255, 255, 255, 0.70);
+  --np-text-dim:    rgba(255, 255, 255, 0.50);
+
+  /* glass surfaces */
+  --np-surface:        rgba(255, 255, 255, 0.05);
+  --np-surface-strong: rgba(255, 255, 255, 0.08);
+  --np-surface-hover:  rgba(255, 255, 255, 0.10);
+  --np-border:         rgba(255, 255, 255, 0.10);
+  --np-border-strong:  rgba(255, 255, 255, 0.18);
+  --np-blur:           blur(16px) saturate(140%);
+  --np-blur-strong:    blur(20px) saturate(150%);
+  --np-shadow:         0 8px 32px rgba(102, 126, 234, 0.15);
+  --np-shadow-hover:   0 12px 40px rgba(102, 126, 234, 0.28);
+
+  /* semantic notification accents */
+  --np-personal: #818cf8;        /* indigo (brand-aligned) */
+  --np-general:  #48bb78;        /* success */
+  --np-group:    #ed8936;        /* warning */
+  --np-user:     #9f7aea;        /* purple */
+  --np-danger:   #fc8181;
+
+  /* radii */
+  --np-r-sm: 10px;
+  --np-r-md: 14px;
+  --np-r-lg: 20px;
+
+  /* fluid type */
+  --np-fs-xs:  clamp(0.72rem, 0.65rem + 0.3vw, 0.82rem);
+  --np-fs-sm:  clamp(0.82rem, 0.75rem + 0.35vw, 0.95rem);
+  --np-fs-md:  clamp(0.92rem, 0.85rem + 0.4vw, 1.05rem);
+  --np-fs-lg:  clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem);
+  --np-fs-xl:  clamp(1.25rem, 1.05rem + 0.9vw, 1.6rem);
+  --np-fs-2xl: clamp(1.5rem, 1.2rem + 1.4vw, 2.1rem);
+  --np-fs-3xl: clamp(1.8rem, 1.4rem + 2vw, 2.75rem);
+
+  /* easing */
+  --np-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Local animations ---------- */
+@keyframes np-spin    { to { transform: rotate(360deg); } }
+@keyframes np-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes np-pulse   { 0%, 100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.25); }
+                        50%      { box-shadow: 0 0 0 6px rgba(129, 140, 248, 0); } }
+
+/* ============================================================
+   ROOT CONTAINER
+   ============================================================ */
+.notifications-container {
   position: relative;
   z-index: 1;
-  isolation: isolate;                 /* Fresh stacking context */
-  min-height: min-content;            /* Expand with content */
+  isolation: isolate;
+  background: transparent;
+  color: var(--np-text);
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw + 0.5rem, 1.75rem);
+  min-height: 100dvh;
 }
 
-/* HEADER SECTION */
+.notifications-container *,
+.notifications-container *::before,
+.notifications-container *::after {
+  box-sizing: border-box;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
 .notifications-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: clamp(24px, 5vw, 32px);
-  flex-wrap: wrap;                    /* Allow wrapping on small screens */
-  gap: 16px;
-  padding: 24px;
-  background: var(--cosmic-dark);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 20px;
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow), var(--glass-glow);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: clamp(1rem, 2.5vw, 1.75rem);
+
+  background: var(--np-surface);
+  backdrop-filter: var(--np-blur);
+  -webkit-backdrop-filter: var(--np-blur);
+  border: 1px solid var(--np-border);
+  border-radius: var(--np-r-lg);
+  box-shadow: var(--np-shadow);
   position: relative;
   overflow: hidden;
-  isolation: isolate;
-  min-height: min-content;
 }
 
 .notifications-header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--cosmic-cyan),
-    var(--cosmic-purple),
-    var(--cosmic-blue),
-    transparent
-  );
-  opacity: 0.5;
+  background: linear-gradient(90deg, transparent, var(--np-brand-1), var(--np-brand-2), transparent);
+  opacity: 0.7;
 }
 
 .notifications-header h1 {
-  font-size: var(--font-2xl);
-  font-weight: 700;
-  color: var(--cosmic-white);
   margin: 0;
-  text-shadow: var(--text-shadow), var(--text-glow);
-  letter-spacing: 1px;
-  word-break: keep-all;               /* Keep whole words together */
+  font-size: var(--np-fs-2xl);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: var(--np-brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;                    /* Allow wrapping */
+  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
-/* ACTION BUTTONS */
+/* ---------- Action buttons ---------- */
 .btn-mark-all-read,
 .btn-refresh {
-  min-height: var(--btn-height-sm);
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 1.1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 20px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  border: none;
-  font-size: var(--font-base);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
-  text-decoration: none;
-  white-space: nowrap;                 /* Keep button text on one line */
-  line-height: 1;
-  box-sizing: border-box;
-  backdrop-filter: blur(5px);
-}
+  gap: 0.5rem;
 
-/* Allow button text to wrap on very small screens if necessary */
-@media (max-width: 320px) {
-  .btn-mark-all-read,
-  .btn-refresh {
-    white-space: normal;
-  }
+  font-size: var(--np-fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  border: 1px solid var(--np-border-strong);
+  border-radius: var(--np-r-sm);
+  cursor: pointer;
+  transition: transform 0.25s var(--np-ease),
+              background 0.25s var(--np-ease),
+              box-shadow 0.25s var(--np-ease),
+              color 0.25s var(--np-ease);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .btn-mark-all-read {
-  background: linear-gradient(
-    135deg,
-    rgba(78, 205, 196, 0.2) 0%,
-    rgba(66, 133, 244, 0.2) 100%
-  );
-  color: var(--cosmic-cyan);
-  border: 1px solid rgba(78, 205, 196, 0.3);
-  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  background: var(--np-brand-grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
 }
 
 .btn-mark-all-read:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
-  background: linear-gradient(
-    135deg,
-    rgba(78, 205, 196, 0.3) 0%,
-    rgba(66, 133, 244, 0.3) 100%
-  );
-  color: var(--cosmic-white);
-}
-
-.btn-mark-all-read:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
 }
 
 .btn-refresh {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--cosmic-light);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--np-surface);
+  color: var(--np-text-soft);
 }
 
 .btn-refresh:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--np-surface-hover);
+  color: var(--np-text);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-  color: var(--cosmic-white);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.08);
 }
 
+.btn-mark-all-read:disabled,
 .btn-refresh:disabled {
-  opacity: 0.3;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* STATS SUMMARY */
+.btn-mark-all-read svg,
+.btn-refresh svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   STATS SUMMARY
+   ============================================================ */
 .stats-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: clamp(24px, 5vw, 40px);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: clamp(1rem, 2.5vw, 1.75rem);
 }
 
 .stat-card {
-  background: var(--cosmic-dark);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 16px;
-  padding: clamp(20px, 4vw, 24px);
-  text-align: center;
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  transition: var(--transition-smooth);
   position: relative;
+  padding: clamp(0.9rem, 2vw, 1.25rem);
+  text-align: center;
+
+  background: var(--np-surface);
+  backdrop-filter: var(--np-blur);
+  -webkit-backdrop-filter: var(--np-blur);
+  border: 1px solid var(--np-border);
+  border-radius: var(--np-r-md);
+  box-shadow: var(--np-shadow);
   overflow: hidden;
-  isolation: isolate;
-  min-height: min-content;            /* Expand with content */
+  transition: transform 0.3s var(--np-ease), box-shadow 0.3s var(--np-ease);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--glass-shadow), 0 0 25px rgba(78, 205, 196, 0.2);
+  transform: translateY(-3px);
+  box-shadow: var(--np-shadow-hover);
 }
 
 .stat-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 4px;
-  width: 100%;
-  border-radius: 16px 16px 0 0;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--np-brand-grad);
+  opacity: 0.8;
 }
 
-.stat-card.unread {
-  border-left: 4px solid var(--cosmic-cyan);
-}
+.stat-card.unread     { border-left: 3px solid var(--np-personal); }
+.stat-card.unread::before     { background: linear-gradient(90deg, var(--np-personal), transparent); }
 
-.stat-card.unread::before {
-  background: linear-gradient(90deg, var(--cosmic-cyan), transparent);
-}
+.stat-card.general    { border-left: 3px solid var(--np-general); }
+.stat-card.general::before    { background: linear-gradient(90deg, var(--np-general), transparent); }
 
-.stat-card.general {
-  border-left: 4px solid rgba(72, 187, 120, 0.8);
-}
+.stat-card.group      { border-left: 3px solid var(--np-group); }
+.stat-card.group::before      { background: linear-gradient(90deg, var(--np-group), transparent); }
 
-.stat-card.general::before {
-  background: linear-gradient(90deg, rgba(72, 187, 120, 0.8), transparent);
-}
-
-.stat-card.group {
-  border-left: 4px solid rgba(237, 137, 54, 0.8);
-}
-
-.stat-card.group::before {
-  background: linear-gradient(90deg, rgba(237, 137, 54, 0.8), transparent);
-}
-
-.stat-card.user-info {
-  border-left: 4px solid rgba(159, 122, 234, 0.8);
-}
-
-.stat-card.user-info::before {
-  background: linear-gradient(90deg, rgba(159, 122, 234, 0.8), transparent);
-}
+.stat-card.user-info  { border-left: 3px solid var(--np-user); }
+.stat-card.user-info::before  { background: linear-gradient(90deg, var(--np-user), transparent); }
 
 .stat-value {
-  font-size: var(--font-2xl);
+  font-size: var(--np-fs-xl);
   font-weight: 800;
-  color: var(--cosmic-white);
-  margin-bottom: 8px;
-  text-shadow: var(--text-shadow), var(--text-glow);
   line-height: 1;
-  word-break: keep-all;               /* Keep number whole */
+  margin-bottom: 0.4rem;
+  color: var(--np-text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;       /* allow long usernames */
 }
-
-.stat-card.unread .stat-value {
-  color: var(--cosmic-cyan);
-  text-shadow: 0 0 10px var(--cosmic-cyan-glow);
-}
-
-.stat-card.general .stat-value {
-  color: #48bb78;
-  text-shadow: 0 0 10px rgba(72, 187, 120, 0.3);
-}
-
-.stat-card.group .stat-value {
-  color: #ffb347;
-  text-shadow: 0 0 10px rgba(237, 137, 54, 0.3);
-}
-
-.stat-card.user-info .stat-value {
-  color: #9f7aea;
-  text-shadow: 0 0 10px rgba(159, 122, 234, 0.3);
-}
+.stat-card.unread    .stat-value { color: var(--np-personal); }
+.stat-card.general   .stat-value { color: var(--np-general); }
+.stat-card.group     .stat-value { color: var(--np-group); }
+.stat-card.user-info .stat-value { color: var(--np-user); font-size: var(--np-fs-md); }
 
 .stat-label {
-  font-size: var(--font-sm);
-  color: var(--cosmic-light);
+  font-size: var(--np-fs-xs);
   text-transform: uppercase;
-  letter-spacing: 2px;
-  opacity: 0.8;
+  letter-spacing: 1.5px;
   font-weight: 600;
-  text-shadow: var(--text-shadow);
-  word-break: keep-all;               /* Keep label whole */
+  color: var(--np-text-muted);
 }
 
-/* FILTER TABS */
+/* ============================================================
+   FILTER TABS
+   ============================================================ */
 .notifications-filters {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: var(--cosmic-dark);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 16px;
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  isolation: isolate;
-  min-height: min-content;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--np-surface);
+  backdrop-filter: var(--np-blur);
+  -webkit-backdrop-filter: var(--np-blur);
+  border: 1px solid var(--np-border);
+  border-radius: var(--np-r-md);
+  box-shadow: var(--np-shadow);
 }
 
 .filter-tabs {
   display: flex;
-  gap: 10px;
+  gap: 0.5rem;
   overflow-x: auto;
-  padding-bottom: 8px;
   scrollbar-width: thin;
-  scrollbar-color: var(--cosmic-cyan) rgba(0, 0, 0, 0.2);
+  scrollbar-color: var(--np-brand-1) transparent;
+  padding-bottom: 0.25rem;
 }
 
-.filter-tabs::-webkit-scrollbar {
-  height: 6px;
-}
-
-.filter-tabs::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.filter-tabs::-webkit-scrollbar-thumb {
-  background: var(--cosmic-cyan);
-  border-radius: 3px;
-}
+.filter-tabs::-webkit-scrollbar { height: 6px; }
+.filter-tabs::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.04); border-radius: 3px; }
+.filter-tabs::-webkit-scrollbar-thumb { background: var(--np-brand-grad); border-radius: 3px; }
 
 .filter-tab {
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: var(--cosmic-light);
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0.55rem 1.1rem;
+  font-size: var(--np-fs-sm);
   font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;                 /* Keep tab text on one line */
-  transition: var(--transition-smooth);
-  backdrop-filter: blur(5px);
-  font-size: var(--font-sm);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-}
+  white-space: nowrap;
 
-/* Allow tabs to wrap on very small screens if needed */
-@media (max-width: 480px) {
-  .filter-tab {
-    white-space: normal;
-    flex: 1 0 auto;
-    text-align: center;
-  }
+  background: var(--np-surface);
+  color: var(--np-text-muted);
+  border: 1px solid var(--np-border);
+  border-radius: var(--np-r-sm);
+  cursor: pointer;
+  transition: all 0.25s var(--np-ease);
 }
 
 .filter-tab:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--np-surface-hover);
+  color: var(--np-text);
   transform: translateY(-2px);
 }
 
 .filter-tab.active {
-  background: linear-gradient(
-    135deg,
-    rgba(78, 205, 196, 0.2) 0%,
-    rgba(138, 43, 226, 0.2) 100%
-  );
-  color: var(--cosmic-white);
-  border-color: rgba(78, 205, 196, 0.3);
-  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+  background: var(--np-brand-grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
 }
 
-/* NOTIFICATIONS LIST */
+/* ============================================================
+   NOTIFICATIONS LIST
+   ============================================================ */
 .notifications-list {
-  background: var(--cosmic-dark);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 20px;
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow), var(--glass-glow);
-  overflow: hidden;
   position: relative;
-  min-height: 400px;
-  isolation: isolate;                 /* Fresh stacking context */
+  background: var(--np-surface);
+  backdrop-filter: var(--np-blur);
+  -webkit-backdrop-filter: var(--np-blur);
+  border: 1px solid var(--np-border);
+  border-radius: var(--np-r-lg);
+  box-shadow: var(--np-shadow);
+  overflow: hidden;
+  min-height: 320px;
 }
 
 .notifications-list::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at 70% 30%,
-    rgba(78, 205, 196, 0.05) 0%,
-    transparent 50%
-  );
+  inset: 0;
   pointer-events: none;
+  background: radial-gradient(circle at 70% 20%, rgba(102, 126, 234, 0.06), transparent 55%);
 }
 
-/* LOADING STATE */
-.loading-state {
-  padding: 80px 20px;
-  text-align: center;
+/* ---------- Loading & empty states ---------- */
+.loading-state,
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: min-content;
+  text-align: center;
+  padding: clamp(2.5rem, 6vw, 4.5rem) 1rem;
+  gap: 1rem;
 }
 
 .notifications-spinner {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--cosmic-cyan);
-  border-right-color: var(--cosmic-purple);
-  border-bottom-color: var(--cosmic-blue);
+  border-top-color: var(--np-brand-1);
+  border-right-color: var(--np-brand-2);
   border-radius: 50%;
-  animation: cosmic-spin 2s linear infinite;
-  margin-bottom: 24px;
-  position: relative;
-}
-
-.notifications-spinner::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--cosmic-cyan-glow) 0%, transparent 70%);
-  filter: blur(10px);
-  opacity: 0.5;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.loading-state p {
-  font-size: var(--font-lg);
-  color: var(--cosmic-light);
-  text-shadow: var(--text-shadow);
-  opacity: 0.8;
+  animation: np-spin 1s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.4));
 }
 
 .notifications-spinner.small {
-  width: 20px;
-  height: 20px;
-  margin: 0;
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
   display: inline-block;
   vertical-align: middle;
-  border-width: 2px;
-  animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* EMPTY STATE */
-.empty-state {
-  padding: 80px 20px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: min-content;
+.loading-state p {
+  font-size: var(--np-fs-md);
+  color: var(--np-text-muted);
+  margin: 0;
 }
 
 .empty-icon {
-  font-size: 64px;
-  margin-bottom: 24px;
-  color: var(--cosmic-cyan);
-  filter: drop-shadow(0 0 20px var(--cosmic-cyan-glow));
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.4));
+  animation: np-fade-in 0.5s var(--np-ease);
 }
 
 .empty-state h3 {
-  font-size: var(--font-xl);
-  color: var(--cosmic-white);
-  margin-bottom: 12px;
-  text-shadow: var(--text-shadow), var(--text-glow);
-  word-break: keep-all;               /* Keep heading whole */
+  margin: 0;
+  font-size: var(--np-fs-xl);
+  font-weight: 700;
+  color: var(--np-text);
 }
 
 .empty-state p {
-  color: var(--cosmic-light);
   margin: 0;
-  max-width: 400px;
+  max-width: 420px;
+  font-size: var(--np-fs-sm);
+  color: var(--np-text-muted);
   line-height: 1.6;
-  opacity: 0.8;
-  text-shadow: var(--text-shadow);
 }
 
-/* NOTIFICATIONS GRID */
+/* ============================================================
+   NOTIFICATION CARDS
+   ============================================================ */
 .notifications-grid {
   display: flex;
   flex-direction: column;
 }
 
 .notification-card {
-  padding: clamp(20px, 4vw, 24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: var(--transition-smooth);
-  animation: notification-slide-in 0.4s ease-out;
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  min-height: min-content;            /* Expand with content */
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border-bottom: 1px solid var(--np-border);
+  animation: np-fade-in 0.35s var(--np-ease);
+  transition: background 0.25s var(--np-ease), transform 0.25s var(--np-ease);
 }
 
-.notification-card:last-child {
-  border-bottom: none;
-}
+.notification-card:last-child { border-bottom: none; }
 
-.notification-card.personal {
-  border-left: 4px solid var(--notif-personal-border);
-}
-
-.notification-card.general {
-  border-left: 4px solid var(--notif-general-border);
-}
-
-.notification-card.group {
-  border-left: 4px solid var(--notif-group-border);
-}
+.notification-card.personal { border-left: 3px solid var(--np-personal); }
+.notification-card.general  { border-left: 3px solid var(--np-general); }
+.notification-card.group    { border-left: 3px solid var(--np-group); }
 
 .notification-card.unread {
-  background: linear-gradient(
-    90deg,
-    var(--notif-unread) 0%,
-    transparent 30%
-  );
-  animation: unread-pulse 2s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(129, 140, 248, 0.10), transparent 60%);
 }
 
 .notification-card:hover {
-  background: rgba(255, 255, 255, 0.03);
-  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.04);
 }
 
+/* ---------- Card header ---------- */
 .notification-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: 12px;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .notification-type {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .type-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: var(--font-xs);
+  padding: 0.3rem 0.85rem;
+  font-size: var(--np-fs-xs);
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 1px;
-  backdrop-filter: blur(5px);
+  text-transform: uppercase;
+  border-radius: 999px;
   border: 1px solid;
-  text-shadow: var(--text-shadow);
-  white-space: nowrap;                 /* Keep badge text on one line */
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
 }
 
 .type-badge.personal {
-  background: var(--notif-personal);
-  color: var(--cosmic-cyan);
-  border-color: var(--notif-personal-border);
-  box-shadow: 0 0 10px var(--notif-personal-glow);
+  color: var(--np-personal);
+  background: rgba(129, 140, 248, 0.12);
+  border-color: rgba(129, 140, 248, 0.4);
 }
 
 .type-badge.general {
-  background: var(--notif-general);
-  color: #48bb78;
-  border-color: var(--notif-general-border);
-  box-shadow: 0 0 10px var(--notif-general-glow);
+  color: var(--np-general);
+  background: rgba(72, 187, 120, 0.12);
+  border-color: rgba(72, 187, 120, 0.4);
 }
 
 .type-badge.group {
-  background: var(--notif-group);
-  color: #ffb347;
-  border-color: var(--notif-group-border);
-  box-shadow: 0 0 10px var(--notif-group-glow);
+  color: var(--np-group);
+  background: rgba(237, 137, 54, 0.12);
+  border-color: rgba(237, 137, 54, 0.4);
 }
 
 .notification-time {
-  font-size: var(--font-sm);
-  color: var(--cosmic-gray);
-  font-weight: 500;
-  text-shadow: var(--text-shadow);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  white-space: nowrap;                 /* Keep time on one line if possible */
-}
-
-@media (max-width: 480px) {
-  .notification-time {
-    white-space: normal;               /* Allow time to wrap on small screens */
-  }
+  gap: 0.35rem;
+  font-size: var(--np-fs-xs);
+  color: var(--np-text-dim);
+  font-weight: 500;
 }
 
 .notification-time::before {
   content: '🕐';
-  font-size: var(--font-xs);
-  opacity: 0.7;
+  font-size: 0.85em;
+  opacity: 0.8;
 }
 
-.notification-content {
-  margin-bottom: 20px;
-}
+/* ---------- Card content ---------- */
+.notification-content { margin-bottom: 0.85rem; }
 
 .notification-title {
-  font-size: var(--font-lg);
+  margin: 0 0 0.5rem 0;
+  font-size: var(--np-fs-lg);
   font-weight: 700;
-  color: var(--cosmic-white);
-  margin: 0 0 12px 0;
-  text-shadow: var(--text-shadow), 0 0 10px rgba(255, 255, 255, 0.2);
-  line-height: 1.4;
-  word-break: keep-all;               /* Keep title whole */
+  color: var(--np-text);
+  line-height: 1.35;
 }
 
 .notification-message {
-  color: var(--cosmic-lighter);
+  margin: 0 0 0.85rem 0;
+  font-size: var(--np-fs-sm);
+  color: var(--np-text-soft);
   line-height: 1.6;
-  margin: 0 0 16px 0;
-  text-shadow: var(--text-shadow);
-  opacity: 0.9;
-  word-break: normal;                 /* Already protected */
-  overflow-wrap: break-word;
 }
 
 .notification-meta {
   display: flex;
-  gap: 24px;
-  font-size: var(--font-sm);
-  color: var(--cosmic-light);
-  flex-wrap: wrap;                    /* Allow wrapping */
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: var(--np-fs-xs);
+  color: var(--np-text-muted);
 }
 
 .notification-meta strong {
-  color: var(--cosmic-white);
+  color: var(--np-text);
   font-weight: 600;
-  text-shadow: var(--text-shadow);
 }
 
+/* ---------- Card actions ---------- */
 .notification-actions {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   align-items: center;
-  flex-wrap: wrap;                    /* Allow wrapping */
-  margin-top: 16px;
+  margin-top: 0.5rem;
 }
 
 .btn-mark-read,
 .btn-delete {
-  min-height: 36px;
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 0 0.95rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  border-radius: 8px;
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  border: none;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(5px);
-  white-space: nowrap;                 /* Keep button text on one line */
-}
+  gap: 0.4rem;
 
-@media (max-width: 480px) {
-  .btn-mark-read,
-  .btn-delete {
-    white-space: normal;
-    flex: 1 1 auto;
-  }
+  font-size: var(--np-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  border: 1px solid;
+  border-radius: var(--np-r-sm);
+  cursor: pointer;
+  transition: all 0.25s var(--np-ease);
+  backdrop-filter: blur(6px);
 }
 
 .btn-mark-read {
-  background: var(--notif-general);
-  color: #48bb78;
-  border: 1px solid var(--notif-general-border);
+  color: var(--np-general);
+  background: rgba(72, 187, 120, 0.12);
+  border-color: rgba(72, 187, 120, 0.35);
 }
 
 .btn-mark-read:hover:not(:disabled) {
-  background: rgba(72, 187, 120, 0.3);
+  background: rgba(72, 187, 120, 0.22);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px var(--notif-general-glow);
-  color: var(--cosmic-white);
+  box-shadow: 0 4px 14px rgba(72, 187, 120, 0.3);
 }
 
 .btn-delete {
-  background: rgba(252, 129, 129, 0.1);
-  color: #ff6b6b;
-  border: 1px solid rgba(252, 129, 129, 0.3);
+  color: var(--np-danger);
+  background: rgba(252, 129, 129, 0.10);
+  border-color: rgba(252, 129, 129, 0.35);
 }
 
 .btn-delete:hover:not(:disabled) {
-  background: rgba(252, 129, 129, 0.3);
+  background: rgba(252, 129, 129, 0.22);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(252, 129, 129, 0.3);
-  color: var(--cosmic-white);
+  box-shadow: 0 4px 14px rgba(252, 129, 129, 0.3);
 }
 
 .btn-mark-read:disabled,
 .btn-delete:disabled {
-  opacity: 0.3;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .readonly-info {
-  font-size: var(--font-xs);
-  color: var(--cosmic-gray);
-  font-style: italic;
-  text-shadow: var(--text-shadow);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.35rem;
+  font-size: var(--np-fs-xs);
+  color: var(--np-text-dim);
+  font-style: italic;
 }
 
-/* LOAD MORE SECTION */
-.loading-more {
-  padding: 30px 20px;
+/* ============================================================
+   LOAD MORE / LOADING MORE
+   ============================================================ */
+.loading-more,
+.load-more {
+  padding: 1.25rem;
   text-align: center;
-  color: var(--cosmic-light);
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--np-border);
+}
+
+.loading-more {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  text-shadow: var(--text-shadow);
-  flex-wrap: wrap;                    /* Allow wrapping */
-}
-
-.load-more {
-  padding: 30px 20px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.02);
+  gap: 0.6rem;
+  color: var(--np-text-muted);
+  font-size: var(--np-fs-sm);
 }
 
 .btn-load-more {
-  min-height: var(--btn-height-md);
+  min-height: 44px;
+  padding: 0 1.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  color: var(--cosmic-light);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  backdrop-filter: blur(5px);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
+  gap: 0.5rem;
 
-@media (max-width: 480px) {
-  .btn-load-more {
-    white-space: normal;
-  }
+  font-size: var(--np-fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  background: var(--np-surface);
+  color: var(--np-text-soft);
+  border: 1px solid var(--np-border-strong);
+  border-radius: var(--np-r-sm);
+  cursor: pointer;
+  transition: all 0.25s var(--np-ease);
+  backdrop-filter: blur(8px);
 }
 
 .btn-load-more:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--np-brand-grad);
+  color: #fff;
+  border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-  color: var(--cosmic-white);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
 }
 
-/* ERROR MESSAGE */
+/* ============================================================
+   ERROR MESSAGE
+   ============================================================ */
 .error-message {
-  margin: 20px;
-  padding: 20px;
-  background: rgba(252, 129, 129, 0.1);
-  border: 1px solid rgba(252, 129, 129, 0.3);
-  border-radius: 12px;
-  color: #ff6b6b;
+  margin-top: 1rem;
+  padding: 1rem 1.2rem;
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: 16px;
-  backdrop-filter: blur(5px);
-  box-shadow: 0 4px 15px rgba(252, 129, 129, 0.2);
+  justify-content: space-between;
+  gap: 0.85rem;
+
+  background: rgba(252, 129, 129, 0.10);
+  border: 1px solid rgba(252, 129, 129, 0.35);
+  border-radius: var(--np-r-md);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(252, 129, 129, 0.15);
+  color: var(--np-danger);
 }
 
 .error-message p {
   margin: 0;
-  flex: 1;
-  text-shadow: var(--text-shadow);
+  flex: 1 1 220px;
+  font-size: var(--np-fs-sm);
   font-weight: 500;
-  word-break: normal;
 }
 
 .btn-retry {
-  min-height: 36px;
+  min-height: 40px;
+  padding: 0 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  background: rgba(252, 129, 129, 0.2);
-  color: var(--cosmic-white);
-  border: 1px solid rgba(252, 129, 129, 0.4);
-  border-radius: 8px;
-  cursor: pointer;
+  gap: 0.4rem;
+
+  font-size: var(--np-fs-xs);
   font-weight: 600;
-  transition: var(--transition-smooth);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  backdrop-filter: blur(5px);
-  white-space: nowrap;
+
+  background: rgba(252, 129, 129, 0.18);
+  color: #fff;
+  border: 1px solid rgba(252, 129, 129, 0.45);
+  border-radius: var(--np-r-sm);
+  cursor: pointer;
+  transition: all 0.25s var(--np-ease);
 }
 
 .btn-retry:hover {
-  background: rgba(252, 129, 129, 0.3);
+  background: rgba(252, 129, 129, 0.32);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(252, 129, 129, 0.3);
+  box-shadow: 0 4px 14px rgba(252, 129, 129, 0.35);
 }
 
-/* RESPONSIVE DESIGN (Preserved and enhanced) */
-/* Mobile (< 640px) */
-@media (max-width: 640px) {
-  .notifications-container {
-    padding: 12px;
-  }
-  
+/* ============================================================
+   FOCUS STATES (accessibility on dark galaxy)
+   ============================================================ */
+.notifications-container button:focus-visible,
+.notifications-container .filter-tab:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   RESPONSIVE — mobile-first breakpoints
+   ============================================================ */
+
+/* ≥ 480px : phablet — header becomes row */
+@media (min-width: 480px) {
   .notifications-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 20px;
-    backdrop-filter: blur(5px) saturate(160%);
-  }
-  
-  .header-actions {
-    width: 100%;
-  }
-  
-  .btn-mark-all-read,
-  .btn-refresh {
-    width: 100%;
-    justify-content: center;
-    min-height: 44px;
-  }
-  
-  .stats-summary {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
-  .stat-card {
-    padding: 16px;
-  }
-  
-  .stat-value {
-    font-size: var(--font-xl);
-  }
-  
-  .filter-tabs {
-    flex-wrap: wrap;
-  }
-  
-  .filter-tab {
-    flex: 1;
-    min-width: calc(50% - 5px);
-    text-align: center;
-  }
-  
-  .notification-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .notification-meta {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .notification-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .btn-mark-read,
-  .btn-delete {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .error-message {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-  
-  .btn-retry {
-    width: 100%;
-  }
-}
-
-/* Tablet (640px - 1024px) */
-@media (min-width: 640px) and (max-width: 1024px) {
-  .stats-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .notification-header {
-    align-items: flex-start;
-  }
-  
-  .notification-meta {
-    flex-direction: row;
-  }
-  
-  .notification-actions {
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
   }
+  .header-actions { flex: 0 0 auto; }
+  .btn-mark-all-read,
+  .btn-refresh { flex: 0 0 auto; }
+  .btn-mark-read,
+  .btn-delete  { flex: 0 0 auto; }
 }
 
-/* Laptop (1024px - 1440px) */
-@media (min-width: 1024px) and (max-width: 1440px) {
+/* ≥ 640px : 4 columns for stats, 5 if user-info present */
+@media (min-width: 640px) {
   .stats-summary {
     grid-template-columns: repeat(4, 1fr);
   }
-  
-  .notifications-container {
-    max-width: 1200px;
-  }
+  .stat-card.user-info { grid-column: 1 / -1; }
 }
 
-/* Desktop (1440px - 1920px) */
+/* ≥ 768px : tablet */
+@media (min-width: 768px) {
+  .stats-summary {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  .stat-card.user-info { grid-column: auto; }
+  .notification-card { padding: 1.5rem; }
+}
+
+/* ≥ 1024px : laptop */
+@media (min-width: 1024px) {
+  .notifications-container { padding: 2rem; }
+  .stats-summary { gap: 1.25rem; }
+  .notification-card { padding: 1.75rem; }
+}
+
+/* ≥ 1440px : desktop */
 @media (min-width: 1440px) {
-  .stats-summary {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-  }
-  
   .notifications-container {
     max-width: 1400px;
+    padding: 2.5rem;
   }
-  
-  .notification-card {
-    padding: 28px;
-  }
+  .stats-summary { gap: 1.5rem; }
+  .notification-card { padding: 2rem; }
 }
 
-/* TV/4K (> 1920px) */
+/* ≥ 1920px : large desktop */
 @media (min-width: 1920px) {
   .notifications-container {
     max-width: 1600px;
-    padding: 40px;
+    padding: 3rem;
   }
-  
-  .stats-summary {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 32px;
-  }
-  
-  .stat-card {
-    padding: 32px;
-  }
-  
-  .stat-value {
-    font-size: var(--font-3xl);
-  }
+  .stats-summary { gap: 1.75rem; }
+  .notification-card { padding: 2.25rem; }
 }
 
-/* REDUCED MOTION SUPPORT */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+/* ≥ 2560px : 4K / TV */
+@media (min-width: 2560px) {
+  .notifications-container {
+    max-width: 1900px;
+    padding: 3.5rem;
   }
-  
-  .notifications-spinner,
-  .notification-card,
-  .btn-mark-all-read:hover,
-  .btn-refresh:hover,
-  .btn-mark-read:hover,
-  .btn-delete:hover,
-  .btn-retry:hover,
-  .btn-load-more:hover,
-  .filter-tab:hover,
-  .stat-card:hover {
+  .stats-summary { gap: 2rem; }
+  .notification-card { padding: 2.5rem; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .notifications-container *,
+  .notifications-container *::before,
+  .notifications-container *::after {
     animation: none !important;
+    transition: none !important;
+  }
+  .notifications-container .stat-card:hover,
+  .notifications-container .filter-tab:hover,
+  .notifications-container .btn-mark-all-read:hover,
+  .notifications-container .btn-refresh:hover,
+  .notifications-container .btn-mark-read:hover,
+  .notifications-container .btn-delete:hover,
+  .notifications-container .btn-retry:hover,
+  .notifications-container .btn-load-more:hover {
     transform: none !important;
   }
-  
-  .notification-card.unread {
-    animation: none !important;
-  }
 }
 
-/* HIGH CONTRAST MODE */
+/* ============================================================
+   HIGH CONTRAST
+   ============================================================ */
 @media (prefers-contrast: high) {
   .notifications-container {
-    background: rgba(0, 0, 0, 0.95) !important;
+    --np-surface:        rgba(0, 0, 0, 0.85);
+    --np-surface-strong: rgba(0, 0, 0, 0.9);
+    --np-border:         rgba(255, 255, 255, 0.6);
+    --np-border-strong:  rgba(255, 255, 255, 0.8);
+    --np-text-muted:     #ffffff;
   }
-  
-  .notifications-header,
-  .notifications-list,
-  .stat-card,
-  .notifications-filters {
-    background: rgba(0, 0, 0, 0.95) !important;
-    border: 2px solid var(--cosmic-cyan) !important;
-  }
-  
-  .notifications-spinner {
-    border-color: var(--cosmic-white) !important;
-    border-top-color: var(--cosmic-cyan) !important;
-  }
-  
-  .notification-card.unread {
-    background: rgba(78, 205, 196, 0.3) !important;
-  }
-  
-  .btn-mark-all-read,
-  .btn-refresh,
-  .btn-mark-read,
-  .btn-delete,
-  .btn-retry,
-  .btn-load-more,
-  .filter-tab {
-    border: 2px solid var(--cosmic-white) !important;
+  .notifications-header h1 {
+    -webkit-text-fill-color: #ffffff;
+    color: #ffffff;
+    background: none;
   }
 }
 
-/* PRINT STYLES */
+/* ============================================================
+   PRINT
+   ============================================================ */
 @media print {
   .notifications-container {
-    background: white !important;
-    color: black !important;
-    padding: 20px;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 1rem;
   }
-  
   .notifications-header,
   .notifications-list,
   .stat-card,
-  .notifications-filters {
-    background: white !important;
+  .notifications-filters,
+  .notification-card {
+    background: #fff !important;
     border: 1px solid #ccc !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
-  
-  .notifications-header h1,
-  .notification-title,
-  .stat-value {
-    color: black !important;
-    text-shadow: none !important;
+  .notifications-header h1 {
+    -webkit-text-fill-color: #000;
+    color: #000;
+    background: none;
   }
-  
+  .notification-title,
+  .stat-value { color: #000 !important; }
   .notification-message,
   .stat-label,
-  .notification-time {
-    color: #333 !important;
-  }
-  
-  .btn-mark-all-read,
-  .btn-refresh,
-  .btn-mark-read,
-  .btn-delete,
-  .btn-retry,
-  .btn-load-more,
-  .filter-tab {
-    display: none !important;
-  }
-  
-  .type-badge {
-    border: 1px solid black !important;
-    background: transparent !important;
-    color: black !important;
-    box-shadow: none !important;
-  }
-}
-
-/* ==========================================================================
-   GRANULAR RESPONSIVE BREAKPOINTS (200px – 2560px+)
-   Based on 50px increment scale with progressive scaling
-   ========================================================================== */
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    --font-xs: 7px;
-    --font-sm: 8px;
-    --font-base: 8px;
-    --font-lg: 9px;
-    --font-xl: 10px;
-    --font-2xl: 12px;
-    --font-3xl: 14px;
-    --btn-height-sm: 32px;
-    --btn-height-md: 36px;
-    --btn-height-lg: 40px;
-  }
-
-  .notifications-container {
-    padding: 6px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 10px;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .notifications-header h1 {
-    font-size: 12px; /* override --font-2xl */
-    letter-spacing: 0.5px;
-  }
-
-  .header-actions {
-    gap: 6px;
-  }
-
-  .btn-mark-all-read,
-  .btn-refresh {
-    min-height: 32px;
-    padding: 0 8px;
-    font-size: 8px;
-    gap: 4px;
-  }
-
-  .stats-summary {
-    gap: 6px;
-    margin-bottom: 12px;
-    grid-template-columns: 1fr; /* single column */
-  }
-
-  .stat-card {
-    padding: 8px;
-  }
-
-  .stat-value {
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-
-  .stat-label {
-    font-size: 7px;
-    letter-spacing: 1px;
-  }
-
-  .notifications-filters {
-    padding: 10px;
-    margin-bottom: 12px;
-  }
-
-  .filter-tab {
-    padding: 6px 8px;
-    font-size: 7px;
-    letter-spacing: 0.5px;
-  }
-
-  .filter-tabs {
-    gap: 4px;
-  }
-
-  .notification-card {
-    padding: 10px;
-  }
-
-  .notification-header {
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-
-  .type-badge {
-    padding: 3px 8px;
-    font-size: 6px;
-    letter-spacing: 0.5px;
-  }
-
-  .notification-time {
-    font-size: 6px;
-    gap: 3px;
-  }
-
-  .notification-title {
-    font-size: 9px;
-    margin-bottom: 6px;
-  }
-
-  .notification-message {
-    font-size: 8px;
-    line-height: 1.4;
-    margin-bottom: 8px;
-  }
-
-  .notification-meta {
-    gap: 8px;
-    font-size: 7px;
-  }
-
-  .notification-actions {
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 28px;
-    padding: 0 8px;
-    font-size: 7px;
-    gap: 3px;
-  }
-
-  .btn-load-more {
-    min-height: 32px;
-    padding: 0 12px;
-    font-size: 8px;
-  }
-
-  .btn-retry {
-    min-height: 28px;
-    padding: 0 8px;
-    font-size: 7px;
-  }
-
-  .loading-state,
-  .empty-state {
-    padding: 30px 10px;
-  }
-
-  .empty-icon {
-    font-size: 32px;
-    margin-bottom: 12px;
-  }
-
-  .empty-state h3 {
-    font-size: 10px;
-    margin-bottom: 6px;
-  }
-
-  .empty-state p {
-    font-size: 8px;
-  }
-
-  .error-message {
-    padding: 10px;
-    gap: 8px;
-    margin: 10px;
-  }
-}
-
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    --font-xs: 8px;
-    --font-sm: 9px;
-    --font-base: 9px;
-    --font-lg: 10px;
-    --font-xl: 11px;
-    --font-2xl: 13.5px;
-    --font-3xl: 16px;
-    --btn-height-sm: 34px;
-    --btn-height-md: 38px;
-    --btn-height-lg: 42px;
-  }
-
-  .notifications-container {
-    padding: 8px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 12px;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
-  .notifications-header h1 {
-    font-size: 13.5px;
-    letter-spacing: 0.5px;
-  }
-
-  .header-actions {
-    gap: 8px;
-  }
-
-  .btn-mark-all-read,
-  .btn-refresh {
-    min-height: 34px;
-    padding: 0 10px;
-    font-size: 9px;
-    gap: 4px;
-  }
-
-  .stats-summary {
-    gap: 8px;
-    margin-bottom: 14px;
-    grid-template-columns: repeat(2, 1fr); /* two columns */
-  }
-
-  .stat-card {
-    padding: 10px;
-  }
-
-  .stat-value {
-    font-size: 13.5px;
-    margin-bottom: 5px;
-  }
-
-  .stat-label {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-
-  .notifications-filters {
-    padding: 12px;
-    margin-bottom: 14px;
-  }
-
-  .filter-tab {
-    padding: 8px 12px;
-    font-size: 8px;
-  }
-
-  .filter-tabs {
-    gap: 5px;
-  }
-
-  .notification-card {
-    padding: 12px;
-  }
-
-  .notification-header {
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .type-badge {
-    padding: 4px 10px;
-    font-size: 7px;
-  }
-
-  .notification-time {
-    font-size: 7px;
-    gap: 4px;
-  }
-
-  .notification-title {
-    font-size: 10px;
-    margin-bottom: 8px;
-  }
-
-  .notification-message {
-    font-size: 9px;
-    margin-bottom: 10px;
-  }
-
-  .notification-meta {
-    gap: 10px;
-    font-size: 8px;
-  }
-
-  .notification-actions {
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 30px;
-    padding: 0 10px;
-    font-size: 8px;
-    gap: 4px;
-  }
-
-  .btn-load-more {
-    min-height: 34px;
-    padding: 0 14px;
-    font-size: 9px;
-  }
-
-  .btn-retry {
-    min-height: 30px;
-    padding: 0 10px;
-    font-size: 8px;
-  }
-
-  .loading-state,
-  .empty-state {
-    padding: 40px 12px;
-  }
-
-  .empty-icon {
-    font-size: 36px;
-    margin-bottom: 14px;
-  }
-
-  .empty-state h3 {
-    font-size: 11px;
-    margin-bottom: 8px;
-  }
-
-  .empty-state p {
-    font-size: 9px;
-  }
-
-  .error-message {
-    padding: 12px;
-    gap: 10px;
-    margin: 12px;
-  }
-}
-
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    --font-xs: 9px;
-    --font-sm: 10px;
-    --font-base: 10px;
-    --font-lg: 11px;
-    --font-xl: 12.5px;
-    --font-2xl: 15px;
-    --font-3xl: 17.5px;
-    --btn-height-sm: 36px;
-    --btn-height-md: 40px;
-    --btn-height-lg: 44px;
-  }
-
-  .notifications-container {
-    padding: 10px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 14px;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .notifications-header h1 {
-    font-size: 15px;
-  }
-
-  .header-actions {
-    gap: 10px;
-  }
-
-  .btn-mark-all-read,
-  .btn-refresh {
-    min-height: 36px;
-    padding: 0 12px;
-    font-size: 10px;
-  }
-
-  .stats-summary {
-    gap: 10px;
-    margin-bottom: 16px;
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .stat-card {
-    padding: 12px;
-  }
-
-  .stat-value {
-    font-size: 15px;
-    margin-bottom: 6px;
-  }
-
-  .stat-label {
-    font-size: 9px;
-  }
-
-  .notifications-filters {
-    padding: 14px;
-    margin-bottom: 16px;
-  }
-
-  .filter-tab {
-    padding: 8px 14px;
-    font-size: 9px;
-  }
-
-  .filter-tabs {
-    gap: 6px;
-  }
-
-  .notification-card {
-    padding: 14px;
-  }
-
-  .type-badge {
-    padding: 4px 12px;
-    font-size: 8px;
-  }
-
-  .notification-time {
-    font-size: 8px;
-  }
-
-  .notification-title {
-    font-size: 11px;
-  }
-
-  .notification-message {
-    font-size: 10px;
-  }
-
-  .notification-meta {
-    gap: 12px;
-    font-size: 9px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 32px;
-    padding: 0 12px;
-    font-size: 9px;
-  }
-
-  .btn-load-more {
-    min-height: 36px;
-    padding: 0 16px;
-    font-size: 10px;
-  }
-
-  .btn-retry {
-    min-height: 32px;
-    padding: 0 12px;
-    font-size: 9px;
-  }
-
-  .loading-state,
-  .empty-state {
-    padding: 50px 14px;
-  }
-
-  .empty-icon {
-    font-size: 40px;
-  }
-
-  .empty-state h3 {
-    font-size: 12.5px;
-  }
-
-  .empty-state p {
-    font-size: 10px;
-  }
-}
-
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    --font-xs: 10px;
-    --font-sm: 11px;
-    --font-base: 11px;
-    --font-lg: 12.5px;
-    --font-xl: 14px;
-    --font-2xl: 16.5px;
-    --font-3xl: 19px;
-    --btn-height-sm: 38px;
-    --btn-height-md: 42px;
-    --btn-height-lg: 46px;
-  }
-
-  .notifications-container {
-    padding: 12px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 16px;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-
-  .notifications-header h1 {
-    font-size: 16.5px;
-  }
-
-  .stats-summary {
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-
-  .stat-card {
-    padding: 14px;
-  }
-
-  .stat-value {
-    font-size: 16.5px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-  }
-
-  .filter-tab {
-    padding: 8px 16px;
-    font-size: 10px;
-  }
-
-  .notification-card {
-    padding: 16px;
-  }
-
-  .type-badge {
-    font-size: 9px;
-    padding: 4px 12px;
-  }
-
-  .notification-time {
-    font-size: 9px;
-  }
-
-  .notification-title {
-    font-size: 12.5px;
-  }
-
-  .notification-message {
-    font-size: 11px;
-  }
-
-  .notification-meta {
-    font-size: 10px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 34px;
-    font-size: 10px;
-  }
-
-  .btn-load-more {
-    min-height: 38px;
-    font-size: 11px;
-  }
-
-  .btn-retry {
-    min-height: 34px;
-    font-size: 10px;
-  }
-
-  .empty-state h3 {
-    font-size: 14px;
-  }
-
-  .empty-state p {
-    font-size: 11px;
-  }
-}
-
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    --font-xs: 11px;
-    --font-sm: 12px;
-    --font-base: 12px;
-    --font-lg: 13.5px;
-    --font-xl: 15px;
-    --font-2xl: 18px;
-    --font-3xl: 21px;
-    --btn-height-sm: 40px;
-    --btn-height-md: 44px;
-    --btn-height-lg: 48px;
-  }
-
-  .notifications-container {
-    padding: 14px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 18px;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .notifications-header h1 {
-    font-size: 18px;
-  }
-
-  .stats-summary {
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .stat-card {
-    padding: 16px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .stat-label {
-    font-size: 11px;
-  }
-
-  .filter-tab {
-    padding: 10px 18px;
-    font-size: 11px;
-  }
-
-  .notification-card {
-    padding: 18px;
-  }
-
-  .type-badge {
-    font-size: 10px;
-    padding: 5px 14px;
-  }
-
-  .notification-time {
-    font-size: 10px;
-  }
-
-  .notification-title {
-    font-size: 13.5px;
-  }
-
-  .notification-message {
-    font-size: 12px;
-  }
-
-  .notification-meta {
-    font-size: 11px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 36px;
-    font-size: 11px;
-  }
-
-  .btn-load-more {
-    min-height: 40px;
-    font-size: 12px;
-  }
-
-  .btn-retry {
-    min-height: 36px;
-    font-size: 11px;
-  }
-}
-
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    --font-xs: 12px;
-    --font-sm: 13px;
-    --font-base: 13px;
-    --font-lg: 14.5px;
-    --font-xl: 16px;
-    --font-2xl: 19.5px;
-    --font-3xl: 23px;
-    --btn-height-sm: 42px;
-    --btn-height-md: 46px;
-    --btn-height-lg: 50px;
-  }
-
-  .notifications-container {
-    padding: 16px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 20px;
-    gap: 16px;
-    margin-bottom: 22px;
-  }
-
-  .notifications-header h1 {
-    font-size: 19.5px;
-  }
-
-  .stats-summary {
-    gap: 16px;
-    margin-bottom: 22px;
-  }
-
-  .stat-card {
-    padding: 18px;
-  }
-
-  .stat-value {
-    font-size: 19.5px;
-  }
-
-  .stat-label {
-    font-size: 12px;
-  }
-
-  .filter-tab {
-    padding: 10px 20px;
-    font-size: 12px;
-  }
-
-  .notification-card {
-    padding: 20px;
-  }
-
-  .type-badge {
-    font-size: 11px;
-    padding: 5px 16px;
-  }
-
-  .notification-time {
-    font-size: 11px;
-  }
-
-  .notification-title {
-    font-size: 14.5px;
-  }
-
-  .notification-message {
-    font-size: 13px;
-  }
-
-  .notification-meta {
-    font-size: 12px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 38px;
-    font-size: 12px;
-  }
-
-  .btn-load-more {
-    min-height: 42px;
-    font-size: 13px;
-  }
-
-  .btn-retry {
-    min-height: 38px;
-    font-size: 12px;
-  }
-}
-
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    --font-xs: 12.5px;
-    --font-sm: 13.5px;
-    --font-base: 13.5px;
-    --font-lg: 15px;
-    --font-xl: 17px;
-    --font-2xl: 20px;
-    --font-3xl: 24px;
-    --btn-height-sm: 44px;
-    --btn-height-md: 48px;
-    --btn-height-lg: 52px;
-  }
-
-  .notifications-container {
-    padding: 18px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 22px;
-    gap: 18px;
-    margin-bottom: 24px;
-  }
-
-  .notifications-header h1 {
-    font-size: 20px;
-  }
-
-  .stats-summary {
-    gap: 18px;
-    margin-bottom: 24px;
-  }
-
-  .stat-card {
-    padding: 20px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-  }
-
-  .stat-label {
-    font-size: 12.5px;
-  }
-
-  .filter-tab {
-    padding: 12px 22px;
-    font-size: 12.5px;
-  }
-
-  .notification-card {
-    padding: 22px;
-  }
-
-  .type-badge {
-    font-size: 11.5px;
-    padding: 6px 16px;
-  }
-
-  .notification-time {
-    font-size: 11.5px;
-  }
-
-  .notification-title {
-    font-size: 15px;
-  }
-
-  .notification-message {
-    font-size: 13.5px;
-  }
-
-  .notification-meta {
-    font-size: 12.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 40px;
-    font-size: 12.5px;
-  }
-
-  .btn-load-more {
-    min-height: 44px;
-    font-size: 13.5px;
-  }
-
-  .btn-retry {
-    min-height: 40px;
-    font-size: 12.5px;
-  }
-}
-
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    --font-xs: 13px;
-    --font-sm: 14px;
-    --font-base: 14px;
-    --font-lg: 15.5px;
-    --font-xl: 17.5px;
-    --font-2xl: 21px;
-    --font-3xl: 24.5px;
-    --btn-height-sm: 46px;
-    --btn-height-md: 50px;
-    --btn-height-lg: 54px;
-  }
-
-  .notifications-container {
-    padding: 20px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 24px;
-    gap: 20px;
-    margin-bottom: 26px;
-  }
-
-  .notifications-header h1 {
-    font-size: 21px;
-  }
-
-  .stats-summary {
-    gap: 20px;
-    margin-bottom: 26px;
-  }
-
-  .stat-card {
-    padding: 22px;
-  }
-
-  .stat-value {
-    font-size: 21px;
-  }
-
-  .stat-label {
-    font-size: 13px;
-  }
-
-  .filter-tab {
-    padding: 12px 24px;
-    font-size: 13px;
-  }
-
-  .notification-card {
-    padding: 24px;
-  }
-
-  .type-badge {
-    font-size: 12px;
-    padding: 6px 18px;
-  }
-
-  .notification-time {
-    font-size: 12px;
-  }
-
-  .notification-title {
-    font-size: 15.5px;
-  }
-
-  .notification-message {
-    font-size: 14px;
-  }
-
-  .notification-meta {
-    font-size: 13px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 42px;
-    font-size: 13px;
-  }
-
-  .btn-load-more {
-    min-height: 46px;
-    font-size: 14px;
-  }
-
-  .btn-retry {
-    min-height: 42px;
-    font-size: 13px;
-  }
-}
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    --font-xs: 13.5px;
-    --font-sm: 14.5px;
-    --font-base: 14.5px;
-    --font-lg: 16px;
-    --font-xl: 18px;
-    --font-2xl: 21.5px;
-    --font-3xl: 25px;
-    --btn-height-sm: 48px;
-    --btn-height-md: 52px;
-    --btn-height-lg: 56px;
-  }
-
-  .notifications-container {
-    padding: 22px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 24px;
-    gap: 20px;
-    margin-bottom: 28px;
-  }
-
-  .notifications-header h1 {
-    font-size: 21.5px;
-  }
-
-  .stats-summary {
-    gap: 22px;
-    margin-bottom: 28px;
-  }
-
-  .stat-card {
-    padding: 24px;
-  }
-
-  .stat-value {
-    font-size: 21.5px;
-  }
-
-  .stat-label {
-    font-size: 13.5px;
-  }
-
-  .filter-tab {
-    padding: 12px 24px;
-    font-size: 13.5px;
-  }
-
-  .notification-card {
-    padding: 24px;
-  }
-
-  .type-badge {
-    font-size: 12.5px;
-    padding: 6px 18px;
-  }
-
-  .notification-time {
-    font-size: 12.5px;
-  }
-
-  .notification-title {
-    font-size: 16px;
-  }
-
-  .notification-message {
-    font-size: 14.5px;
-  }
-
-  .notification-meta {
-    font-size: 13.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 44px;
-    font-size: 13.5px;
-  }
-
-  .btn-load-more {
-    min-height: 48px;
-    font-size: 14.5px;
-  }
-
-  .btn-retry {
-    min-height: 44px;
-    font-size: 13.5px;
-  }
-}
-
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    --font-xs: 14px;
-    --font-sm: 15px;
-    --font-base: 15px;
-    --font-lg: 17px;
-    --font-xl: 19px;
-    --font-2xl: 22.5px;
-    --font-3xl: 26px;
-    --btn-height-sm: 50px;
-    --btn-height-md: 54px;
-    --btn-height-lg: 58px;
-  }
-
-  .notifications-container {
-    padding: 24px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 26px;
-    gap: 22px;
-    margin-bottom: 30px;
-  }
-
-  .notifications-header h1 {
-    font-size: 22.5px;
-  }
-
-  .stats-summary {
-    gap: 24px;
-    margin-bottom: 30px;
-    grid-template-columns: repeat(4, 1fr); /* start 4 columns */
-  }
-
-  .stat-card {
-    padding: 24px;
-  }
-
-  .stat-value {
-    font-size: 22.5px;
-  }
-
-  .stat-label {
-    font-size: 14px;
-  }
-
-  .filter-tab {
-    padding: 12px 24px;
-    font-size: 14px;
-  }
-
-  .notification-card {
-    padding: 24px;
-  }
-
-  .type-badge {
-    font-size: 13px;
-  }
-
-  .notification-time {
-    font-size: 13px;
-  }
-
-  .notification-title {
-    font-size: 17px;
-  }
-
-  .notification-message {
-    font-size: 15px;
-  }
-
-  .notification-meta {
-    font-size: 14px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 46px;
-    font-size: 14px;
-  }
-
-  .btn-load-more {
-    min-height: 50px;
-    font-size: 15px;
-  }
-
-  .btn-retry {
-    min-height: 46px;
-    font-size: 14px;
-  }
-}
-
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    --font-xs: 14.5px;
-    --font-sm: 15.5px;
-    --font-base: 15.5px;
-    --font-lg: 17.5px;
-    --font-xl: 19.5px;
-    --font-2xl: 23px;
-    --font-3xl: 27px;
-    --btn-height-sm: 52px;
-    --btn-height-md: 56px;
-    --btn-height-lg: 60px;
-  }
-
-  .notifications-container {
-    padding: 26px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 28px;
-    gap: 24px;
-    margin-bottom: 32px;
-  }
-
-  .notifications-header h1 {
-    font-size: 23px;
-  }
-
-  .stats-summary {
-    gap: 26px;
-    margin-bottom: 32px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 26px;
-  }
-
-  .stat-value {
-    font-size: 23px;
-  }
-
-  .stat-label {
-    font-size: 14.5px;
-  }
-
-  .filter-tab {
-    padding: 14px 26px;
-    font-size: 14.5px;
-  }
-
-  .notification-card {
-    padding: 26px;
-  }
-
-  .type-badge {
-    font-size: 13.5px;
-  }
-
-  .notification-time {
-    font-size: 13.5px;
-  }
-
-  .notification-title {
-    font-size: 17.5px;
-  }
-
-  .notification-message {
-    font-size: 15.5px;
-  }
-
-  .notification-meta {
-    font-size: 14.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 48px;
-    font-size: 14.5px;
-  }
-
-  .btn-load-more {
-    min-height: 52px;
-    font-size: 15.5px;
-  }
-
-  .btn-retry {
-    min-height: 48px;
-    font-size: 14.5px;
-  }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    --font-xs: 15px;
-    --font-sm: 16px;
-    --font-base: 16px;
-    --font-lg: 18px;
-    --font-xl: 20px;
-    --font-2xl: 24px;
-    --font-3xl: 28px;
-    --btn-height-sm: 54px;
-    --btn-height-md: 58px;
-    --btn-height-lg: 62px;
-  }
-
-  .notifications-container {
-    padding: 28px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 30px;
-    gap: 26px;
-    margin-bottom: 34px;
-  }
-
-  .notifications-header h1 {
-    font-size: 24px;
-  }
-
-  .stats-summary {
-    gap: 28px;
-    margin-bottom: 34px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 28px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .stat-label {
-    font-size: 15px;
-  }
-
-  .filter-tab {
-    padding: 14px 28px;
-    font-size: 15px;
-  }
-
-  .notification-card {
-    padding: 28px;
-  }
-
-  .type-badge {
-    font-size: 14px;
-  }
-
-  .notification-time {
-    font-size: 14px;
-  }
-
-  .notification-title {
-    font-size: 18px;
-  }
-
-  .notification-message {
-    font-size: 16px;
-  }
-
-  .notification-meta {
-    font-size: 15px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 50px;
-    font-size: 15px;
-  }
-
-  .btn-load-more {
-    min-height: 54px;
-    font-size: 16px;
-  }
-
-  .btn-retry {
-    min-height: 50px;
-    font-size: 15px;
-  }
-}
-
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    --font-xs: 15.5px;
-    --font-sm: 16.5px;
-    --font-base: 16.5px;
-    --font-lg: 18.5px;
-    --font-xl: 20.5px;
-    --font-2xl: 24.5px;
-    --font-3xl: 28.5px;
-    --btn-height-sm: 56px;
-    --btn-height-md: 60px;
-    --btn-height-lg: 64px;
-  }
-
-  .notifications-container {
-    padding: 30px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 32px;
-    gap: 28px;
-    margin-bottom: 36px;
-  }
-
-  .notifications-header h1 {
-    font-size: 24.5px;
-  }
-
-  .stats-summary {
-    gap: 30px;
-    margin-bottom: 36px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 30px;
-  }
-
-  .stat-value {
-    font-size: 24.5px;
-  }
-
-  .stat-label {
-    font-size: 15.5px;
-  }
-
-  .filter-tab {
-    padding: 16px 30px;
-    font-size: 15.5px;
-  }
-
-  .notification-card {
-    padding: 30px;
-  }
-
-  .type-badge {
-    font-size: 14.5px;
-  }
-
-  .notification-time {
-    font-size: 14.5px;
-  }
-
-  .notification-title {
-    font-size: 18.5px;
-  }
-
-  .notification-message {
-    font-size: 16.5px;
-  }
-
-  .notification-meta {
-    font-size: 15.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 52px;
-    font-size: 15.5px;
-  }
-
-  .btn-load-more {
-    min-height: 56px;
-    font-size: 16.5px;
-  }
-
-  .btn-retry {
-    min-height: 52px;
-    font-size: 15.5px;
-  }
-}
-
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    --font-xs: 16px;
-    --font-sm: 17px;
-    --font-base: 17px;
-    --font-lg: 19px;
-    --font-xl: 21px;
-    --font-2xl: 25px;
-    --font-3xl: 29px;
-    --btn-height-sm: 58px;
-    --btn-height-md: 62px;
-    --btn-height-lg: 66px;
-  }
-
-  .notifications-container {
-    padding: 32px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 34px;
-    gap: 30px;
-    margin-bottom: 38px;
-  }
-
-  .notifications-header h1 {
-    font-size: 25px;
-  }
-
-  .stats-summary {
-    gap: 32px;
-    margin-bottom: 38px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 32px;
-  }
-
-  .stat-value {
-    font-size: 25px;
-  }
-
-  .stat-label {
-    font-size: 16px;
-  }
-
-  .filter-tab {
-    padding: 16px 32px;
-    font-size: 16px;
-  }
-
-  .notification-card {
-    padding: 32px;
-  }
-
-  .type-badge {
-    font-size: 15px;
-  }
-
-  .notification-time {
-    font-size: 15px;
-  }
-
-  .notification-title {
-    font-size: 19px;
-  }
-
-  .notification-message {
-    font-size: 17px;
-  }
-
-  .notification-meta {
-    font-size: 16px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 54px;
-    font-size: 16px;
-  }
-
-  .btn-load-more {
-    min-height: 58px;
-    font-size: 17px;
-  }
-
-  .btn-retry {
-    min-height: 54px;
-    font-size: 16px;
-  }
-}
-
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    --font-xs: 16.5px;
-    --font-sm: 17.5px;
-    --font-base: 17.5px;
-    --font-lg: 19.5px;
-    --font-xl: 21.5px;
-    --font-2xl: 26px;
-    --font-3xl: 30px;
-    --btn-height-sm: 60px;
-    --btn-height-md: 64px;
-    --btn-height-lg: 68px;
-  }
-
-  .notifications-container {
-    padding: 34px;
-    max-width: 100%;
-  }
-
-  .notifications-header {
-    padding: 36px;
-    gap: 32px;
-    margin-bottom: 40px;
-  }
-
-  .notifications-header h1 {
-    font-size: 26px;
-  }
-
-  .stats-summary {
-    gap: 34px;
-    margin-bottom: 40px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 34px;
-  }
-
-  .stat-value {
-    font-size: 26px;
-  }
-
-  .stat-label {
-    font-size: 16.5px;
-  }
-
-  .filter-tab {
-    padding: 18px 34px;
-    font-size: 16.5px;
-  }
-
-  .notification-card {
-    padding: 34px;
-  }
-
-  .type-badge {
-    font-size: 15.5px;
-  }
-
-  .notification-time {
-    font-size: 15.5px;
-  }
-
-  .notification-title {
-    font-size: 19.5px;
-  }
-
-  .notification-message {
-    font-size: 17.5px;
-  }
-
-  .notification-meta {
-    font-size: 16.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 56px;
-    font-size: 16.5px;
-  }
-
-  .btn-load-more {
-    min-height: 60px;
-    font-size: 17.5px;
-  }
-
-  .btn-retry {
-    min-height: 56px;
-    font-size: 16.5px;
-  }
-}
-
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    --font-xs: 17px;
-    --font-sm: 18px;
-    --font-base: 18px;
-    --font-lg: 20px;
-    --font-xl: 22px;
-    --font-2xl: 27px;
-    --font-3xl: 31px;
-    --btn-height-sm: 62px;
-    --btn-height-md: 66px;
-    --btn-height-lg: 70px;
-  }
-
-  .notifications-container {
-    padding: 36px;
-    max-width: 1200px; /* start using max-width */
-  }
-
-  .notifications-header {
-    padding: 38px;
-    gap: 34px;
-    margin-bottom: 42px;
-  }
-
-  .notifications-header h1 {
-    font-size: 27px;
-  }
-
-  .stats-summary {
-    gap: 36px;
-    margin-bottom: 42px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 36px;
-  }
-
-  .stat-value {
-    font-size: 27px;
-  }
-
-  .stat-label {
-    font-size: 17px;
-  }
-
-  .filter-tab {
-    padding: 18px 36px;
-    font-size: 17px;
-  }
-
-  .notification-card {
-    padding: 36px;
-  }
-
-  .type-badge {
-    font-size: 16px;
-  }
-
-  .notification-time {
-    font-size: 16px;
-  }
-
-  .notification-title {
-    font-size: 20px;
-  }
-
-  .notification-message {
-    font-size: 18px;
-  }
-
-  .notification-meta {
-    font-size: 17px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 58px;
-    font-size: 17px;
-  }
-
-  .btn-load-more {
-    min-height: 62px;
-    font-size: 18px;
-  }
-
-  .btn-retry {
-    min-height: 58px;
-    font-size: 17px;
-  }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    --font-xs: 17.5px;
-    --font-sm: 18.5px;
-    --font-base: 18.5px;
-    --font-lg: 20.5px;
-    --font-xl: 22.5px;
-    --font-2xl: 28px;
-    --font-3xl: 32px;
-    --btn-height-sm: 64px;
-    --btn-height-md: 68px;
-    --btn-height-lg: 72px;
-  }
-
-  .notifications-container {
-    padding: 38px;
-    max-width: 1200px;
-  }
-
-  .notifications-header {
-    padding: 40px;
-    gap: 36px;
-    margin-bottom: 44px;
-  }
-
-  .notifications-header h1 {
-    font-size: 28px;
-  }
-
-  .stats-summary {
-    gap: 38px;
-    margin-bottom: 44px;
-  }
-
-  .stat-card {
-    padding: 38px;
-  }
-
-  .stat-value {
-    font-size: 28px;
-  }
-
-  .stat-label {
-    font-size: 17.5px;
-  }
-
-  .filter-tab {
-    padding: 20px 38px;
-    font-size: 17.5px;
-  }
-
-  .notification-card {
-    padding: 38px;
-  }
-
-  .type-badge {
-    font-size: 16.5px;
-  }
-
-  .notification-time {
-    font-size: 16.5px;
-  }
-
-  .notification-title {
-    font-size: 20.5px;
-  }
-
-  .notification-message {
-    font-size: 18.5px;
-  }
-
-  .notification-meta {
-    font-size: 17.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 60px;
-    font-size: 17.5px;
-  }
-
-  .btn-load-more {
-    min-height: 64px;
-    font-size: 18.5px;
-  }
-
-  .btn-retry {
-    min-height: 60px;
-    font-size: 17.5px;
-  }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    --font-xs: 18px;
-    --font-sm: 19px;
-    --font-base: 19px;
-    --font-lg: 21px;
-    --font-xl: 23px;
-    --font-2xl: 29px;
-    --font-3xl: 33px;
-    --btn-height-sm: 66px;
-    --btn-height-md: 70px;
-    --btn-height-lg: 74px;
-  }
-
-  .notifications-container {
-    padding: 40px;
-    max-width: 1300px;
-  }
-
-  .notifications-header {
-    padding: 42px;
-    gap: 38px;
-    margin-bottom: 46px;
-  }
-
-  .notifications-header h1 {
-    font-size: 29px;
-  }
-
-  .stats-summary {
-    gap: 40px;
-    margin-bottom: 46px;
-  }
-
-  .stat-card {
-    padding: 40px;
-  }
-
-  .stat-value {
-    font-size: 29px;
-  }
-
-  .stat-label {
-    font-size: 18px;
-  }
-
-  .filter-tab {
-    padding: 20px 40px;
-    font-size: 18px;
-  }
-
-  .notification-card {
-    padding: 40px;
-  }
-
-  .type-badge {
-    font-size: 17px;
-  }
-
-  .notification-time {
-    font-size: 17px;
-  }
-
-  .notification-title {
-    font-size: 21px;
-  }
-
-  .notification-message {
-    font-size: 19px;
-  }
-
-  .notification-meta {
-    font-size: 18px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 62px;
-    font-size: 18px;
-  }
-
-  .btn-load-more {
-    min-height: 66px;
-    font-size: 19px;
-  }
-
-  .btn-retry {
-    min-height: 62px;
-    font-size: 18px;
-  }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    --font-xs: 18.5px;
-    --font-sm: 19.5px;
-    --font-base: 19.5px;
-    --font-lg: 21.5px;
-    --font-xl: 23.5px;
-    --font-2xl: 30px;
-    --font-3xl: 34px;
-    --btn-height-sm: 68px;
-    --btn-height-md: 72px;
-    --btn-height-lg: 76px;
-  }
-
-  .notifications-container {
-    padding: 42px;
-    max-width: 1300px;
-  }
-
-  .notifications-header {
-    padding: 44px;
-    gap: 40px;
-    margin-bottom: 48px;
-  }
-
-  .notifications-header h1 {
-    font-size: 30px;
-  }
-
-  .stats-summary {
-    gap: 42px;
-    margin-bottom: 48px;
-  }
-
-  .stat-card {
-    padding: 42px;
-  }
-
-  .stat-value {
-    font-size: 30px;
-  }
-
-  .stat-label {
-    font-size: 18.5px;
-  }
-
-  .filter-tab {
-    padding: 22px 42px;
-    font-size: 18.5px;
-  }
-
-  .notification-card {
-    padding: 42px;
-  }
-
-  .type-badge {
-    font-size: 17.5px;
-  }
-
-  .notification-time {
-    font-size: 17.5px;
-  }
-
-  .notification-title {
-    font-size: 21.5px;
-  }
-
-  .notification-message {
-    font-size: 19.5px;
-  }
-
-  .notification-meta {
-    font-size: 18.5px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 64px;
-    font-size: 18.5px;
-  }
-
-  .btn-load-more {
-    min-height: 68px;
-    font-size: 19.5px;
-  }
-
-  .btn-retry {
-    min-height: 64px;
-    font-size: 18.5px;
-  }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    --font-xs: 19px;
-    --font-sm: 20px;
-    --font-base: 20px;
-    --font-lg: 22px;
-    --font-xl: 24px;
-    --font-2xl: 31px;
-    --font-3xl: 35px;
-    --btn-height-sm: 70px;
-    --btn-height-md: 74px;
-    --btn-height-lg: 78px;
-  }
-
-  .notifications-container {
-    padding: 44px;
-    max-width: 1400px;
-  }
-
-  .notifications-header {
-    padding: 46px;
-    gap: 42px;
-    margin-bottom: 50px;
-  }
-
-  .notifications-header h1 {
-    font-size: 31px;
-  }
-
-  .stats-summary {
-    gap: 44px;
-    margin-bottom: 50px;
-  }
-
-  .stat-card {
-    padding: 44px;
-  }
-
-  .stat-value {
-    font-size: 31px;
-  }
-
-  .stat-label {
-    font-size: 19px;
-  }
-
-  .filter-tab {
-    padding: 22px 44px;
-    font-size: 19px;
-  }
-
-  .notification-card {
-    padding: 44px;
-  }
-
-  .type-badge {
-    font-size: 18px;
-  }
-
-  .notification-time {
-    font-size: 18px;
-  }
-
-  .notification-title {
-    font-size: 22px;
-  }
-
-  .notification-message {
-    font-size: 20px;
-  }
-
-  .notification-meta {
-    font-size: 19px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 66px;
-    font-size: 19px;
-  }
-
-  .btn-load-more {
-    min-height: 70px;
-    font-size: 20px;
-  }
-
-  .btn-retry {
-    min-height: 66px;
-    font-size: 19px;
-  }
-}
-
-/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
-@media only screen and (min-width: 1200px) {
-  :root {
-    --font-xs: 20px;
-    --font-sm: 21px;
-    --font-base: 21px;
-    --font-lg: 23px;
-    --font-xl: 25px;
-    --font-2xl: 32px;
-    --font-3xl: 38px;
-    --btn-height-sm: 72px;
-    --btn-height-md: 76px;
-    --btn-height-lg: 80px;
-  }
-
-  .notifications-container {
-    padding: 48px;
-    max-width: 1600px;
-  }
-
-  .notifications-header {
-    padding: 48px;
-    gap: 44px;
-    margin-bottom: 52px;
-  }
-
-  .notifications-header h1 {
-    font-size: 32px;
-  }
-
-  .stats-summary {
-    gap: 48px;
-    margin-bottom: 52px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .stat-card {
-    padding: 48px;
-  }
-
-  .stat-value {
-    font-size: 32px;
-  }
-
-  .stat-label {
-    font-size: 20px;
-  }
-
-  .filter-tab {
-    padding: 24px 48px;
-    font-size: 20px;
-  }
-
-  .notification-card {
-    padding: 48px;
-  }
-
-  .type-badge {
-    font-size: 19px;
-  }
-
-  .notification-time {
-    font-size: 19px;
-  }
-
-  .notification-title {
-    font-size: 23px;
-  }
-
-  .notification-message {
-    font-size: 21px;
-  }
-
-  .notification-meta {
-    font-size: 20px;
-  }
-
-  .btn-mark-read,
-  .btn-delete {
-    min-height: 70px;
-    font-size: 20px;
-  }
-
-  .btn-load-more {
-    min-height: 72px;
-    font-size: 21px;
-  }
-
-  .btn-retry {
-    min-height: 70px;
-    font-size: 20px;
-  }
-
-  .empty-icon {
-    font-size: 80px;
-  }
-
-  .empty-state h3 {
-    font-size: 25px;
-  }
-
-  .empty-state p {
-    font-size: 21px;
-  }
+  .notification-time,
+  .notification-meta { color: #333 !important; }
+  .header-actions,
+  .notification-actions,
+  .filter-tabs,
+  .load-more,
+  .loading-more,
+  .error-message { display: none !important; }
 }

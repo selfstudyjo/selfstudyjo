@@ -1,80 +1,80 @@
 /* ==========================================================================
-   AI CHAT PAGE – SPACE THEME
-   Specifically designed for AiChat.vue with transparent backgrounds
-   to showcase the 3D galaxy animation behind.
-
-   FULLY RESPONSIVE – 21 granular breakpoints (200px to 2560px+)
+   AI CHAT PAGE — Galaxy / Glassmorphism Theme
+   Fully transparent containers so the 3D galaxy background shines through.
+   Mobile-first. Breakpoints: 480 / 768 / 1024 / 1440 / 1920 / 2560.
+   All selectors are scoped to .ai-chat-container — zero global leakage.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   GLOBAL RESET & VARIABLES (moved to :root)
+   SCOPED TOKENS
    -------------------------------------------------------------------------- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+.ai-chat-container {
+  /* Brand palette (aligned with global style.css) */
+  --aic-accent-1: #667eea;
+  --aic-accent-2: #764ba2;
+  --aic-accent-soft: #818cf8;
 
-:root {
-  /* Cosmic color palette – with transparency for glass effect */
-  --space-bg: transparent;                /* let galaxy show through */
-  --space-card-bg: rgba(10, 10, 30, 0.7);  /* 70% opacity for readability */
-  --space-card-bg-user: rgba(30, 30, 60, 0.75);
-  --space-card-bg-assistant: rgba(15, 15, 40, 0.75);
-  --space-input-bg: rgba(0, 0, 0, 0.5);
-  --space-border: rgba(255, 255, 255, 0.15);
-  --space-border-strong: rgba(255, 255, 255, 0.25);
-  --space-glow-cyan: 0 0 20px rgba(78, 205, 196, 0.3);
-  --space-glow-purple: 0 0 20px rgba(138, 43, 226, 0.3);
+  /* Text */
+  --aic-text-primary:   #ffffff;
+  --aic-text-secondary: rgba(255, 255, 255, 0.78);
+  --aic-text-muted:     rgba(255, 255, 255, 0.55);
 
-  /* Text colors */
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-muted: #b0b0b0;
-  --text-accent: #4ecdc4;        /* cosmic cyan */
+  /* Glass surfaces */
+  --aic-glass-bg:        rgba(255, 255, 255, 0.05);
+  --aic-glass-bg-strong: rgba(255, 255, 255, 0.08);
+  --aic-glass-bg-user:   rgba(102, 126, 234, 0.18);
+  --aic-glass-bg-asst:   rgba(255, 255, 255, 0.06);
+  --aic-glass-border:    rgba(255, 255, 255, 0.12);
+  --aic-glass-border-strong: rgba(255, 255, 255, 0.20);
 
-  /* Typography – base font size is set per breakpoint (root font-size) */
-  --font-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.8);
+  /* Effects */
+  --aic-blur:        blur(16px) saturate(150%);
+  --aic-blur-strong: blur(22px) saturate(160%);
+  --aic-shadow:      0 8px 32px rgba(102, 126, 234, 0.15),
+                     0 2px 8px rgba(0, 0, 0, 0.25);
+  --aic-shadow-hover: 0 12px 40px rgba(102, 126, 234, 0.25),
+                      0 4px 12px rgba(0, 0, 0, 0.3);
 
-  /* Spacing – relative units (will scale with root font-size) */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
+  /* Spacing — fluid */
+  --aic-sp-xs: clamp(0.25rem, 0.5vw,  0.4rem);
+  --aic-sp-sm: clamp(0.5rem,  1vw,    0.75rem);
+  --aic-sp-md: clamp(0.75rem, 1.5vw,  1.25rem);
+  --aic-sp-lg: clamp(1rem,    2vw,    1.75rem);
+  --aic-sp-xl: clamp(1.5rem,  3vw,    2.5rem);
 
-  /* Border radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
+  /* Radii */
+  --aic-r-sm: 10px;
+  --aic-r-md: 14px;
+  --aic-r-lg: 20px;
+  --aic-r-xl: 28px;
+  --aic-r-full: 9999px;
 
   /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-base: 0.3s ease;
+  --aic-t-fast: 0.18s ease;
+  --aic-t-base: 0.3s ease;
 }
 
 /* --------------------------------------------------------------------------
-   MAIN CONTAINER
+   ROOT CONTAINER
    -------------------------------------------------------------------------- */
 .ai-chat-container {
+  position: relative;
+  z-index: 1;                 /* sit above galaxy canvas */
   display: flex;
   flex-direction: column;
-  height: 100vh;
   width: 100%;
-  max-width: min(1200px, 95%);
+  max-width: 1100px;
   margin: 0 auto;
-  padding: var(--space-md);
-  background: var(--space-bg); /* transparent – galaxy shows through */
-  color: var(--text-secondary);
-  font-family: var(--font-base);
+  height: 100vh;
+  height: 100dvh;             /* mobile-safe viewport */
+  padding: var(--aic-sp-md);
+  gap: var(--aic-sp-md);
+  background: transparent;    /* let galaxy show through */
+  color: var(--aic-text-secondary);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
-  word-break: keep-all;
-  overflow-wrap: normal;
-  hyphens: none;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 
 /* --------------------------------------------------------------------------
@@ -82,294 +82,388 @@
    -------------------------------------------------------------------------- */
 .ai-chat-container .chat-header {
   text-align: center;
-  margin-bottom: var(--space-md);
+  padding: var(--aic-sp-md) var(--aic-sp-sm);
+  background: var(--aic-glass-bg);
+  backdrop-filter: var(--aic-blur);
+  -webkit-backdrop-filter: var(--aic-blur);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-lg);
+  box-shadow: var(--aic-shadow);
+  animation: fadeInUp 0.4s ease both;
 }
 
 .ai-chat-container .chat-header h1 {
-  font-size: 2rem;          /* relative to root */
-  color: var(--text-primary);
-  text-shadow: var(--text-shadow);
-  margin: 0 0 var(--space-xs);
+  margin: 0 0 var(--aic-sp-xs);
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--aic-accent-1) 0%, var(--aic-accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .ai-chat-container .chat-header p {
-  font-size: 1rem;
-  color: var(--text-muted);
   margin: 0;
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  color: var(--aic-text-muted);
 }
 
 /* --------------------------------------------------------------------------
-   MESSAGES CONTAINER – scrollable area, transparent background
+   MESSAGES SCROLL AREA
    -------------------------------------------------------------------------- */
 .ai-chat-container .messages-container {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;              /* allow flex child to scroll */
   overflow-y: auto;
-  padding: var(--space-md);
-  background: transparent; /* fully transparent – galaxy visible */
+  overflow-x: hidden;
+  padding: var(--aic-sp-md) var(--aic-sp-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--aic-sp-md);
   scroll-behavior: smooth;
+  background: transparent;
 }
 
 /* --------------------------------------------------------------------------
-   INDIVIDUAL MESSAGE BUBBLES – glass‑morphism
+   MESSAGES
+   Template uses .user-message / .assistant-message
    -------------------------------------------------------------------------- */
 .ai-chat-container .message {
   display: flex;
-  gap: var(--space-sm);
-  max-width: 85%;
-  animation: fadeIn 0.2s ease;
+  gap: var(--aic-sp-sm);
+  max-width: 92%;
+  animation: fadeInUp 0.25s ease both;
 }
 
-.ai-chat-container .message.user {
+.ai-chat-container .message.user-message {
   align-self: flex-end;
   flex-direction: row-reverse;
 }
 
-.ai-chat-container .message.assistant {
+.ai-chat-container .message.assistant-message {
   align-self: flex-start;
 }
 
 /* Avatar */
 .ai-chat-container .message-avatar {
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  background: rgba(30, 30, 60, 0.8);
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--space-border-strong);
-  color: var(--text-accent);
-  font-size: 1.2rem;
+  border-radius: 50%;
+  background: var(--aic-glass-bg-strong);
+  backdrop-filter: var(--aic-blur);
+  -webkit-backdrop-filter: var(--aic-blur);
+  border: 1px solid var(--aic-glass-border-strong);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  color: var(--aic-text-primary);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
 }
 
-/* Message bubble */
+/* Bubble */
 .ai-chat-container .message-content {
-  background: var(--space-card-bg-assistant);
-  backdrop-filter: blur(10px) saturate(180%);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--space-border);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), var(--space-glow-cyan);
+  padding: var(--aic-sp-sm) var(--aic-sp-md);
+  background: var(--aic-glass-bg-asst);
+  backdrop-filter: var(--aic-blur);
+  -webkit-backdrop-filter: var(--aic-blur);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-lg);
+  box-shadow: var(--aic-shadow);
+  color: var(--aic-text-primary);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 1.55;
   word-break: break-word;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.5;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  overflow-wrap: anywhere;
+  transition: transform var(--aic-t-fast), box-shadow var(--aic-t-fast);
 }
 
-.ai-chat-container .message.user .message-content {
-  background: var(--space-card-bg-user);
-  border-bottom-right-radius: 4px;
+.ai-chat-container .message.user-message .message-content {
+  background: linear-gradient(135deg,
+              rgba(102, 126, 234, 0.22),
+              rgba(118, 75, 162, 0.22));
+  border-color: rgba(129, 140, 248, 0.35);
+  border-bottom-right-radius: 6px;
 }
 
-.ai-chat-container .message.assistant .message-content {
-  background: var(--space-card-bg-assistant);
-  border-bottom-left-radius: 4px;
+.ai-chat-container .message.assistant-message .message-content {
+  border-bottom-left-radius: 6px;
 }
 
 .ai-chat-container .message-content:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), var(--space-glow-cyan);
+  transform: translateY(-2px);
+  box-shadow: var(--aic-shadow-hover);
 }
 
-/* Plain text inside user messages */
 .ai-chat-container .plain-text {
   white-space: pre-wrap;
-  color: var(--text-primary);
+  color: var(--aic-text-primary);
 }
 
 /* --------------------------------------------------------------------------
-   MARKDOWN STYLES (for code blocks, etc.)
+   MARKDOWN
    -------------------------------------------------------------------------- */
 .ai-chat-container .markdown-body {
-  all: initial;
-  font-family: var(--font-base);
-  color: var(--text-secondary);
+  color: var(--aic-text-primary);
+  font-family: inherit;
+}
+
+.ai-chat-container .markdown-body p {
+  margin: 0 0 var(--aic-sp-sm);
+}
+.ai-chat-container .markdown-body p:last-child { margin-bottom: 0; }
+
+.ai-chat-container .markdown-body h1,
+.ai-chat-container .markdown-body h2,
+.ai-chat-container .markdown-body h3,
+.ai-chat-container .markdown-body h4 {
+  color: var(--aic-text-primary);
+  margin: var(--aic-sp-md) 0 var(--aic-sp-sm);
+  line-height: 1.3;
+}
+.ai-chat-container .markdown-body h1 { font-size: 1.4em; }
+.ai-chat-container .markdown-body h2 { font-size: 1.25em; }
+.ai-chat-container .markdown-body h3 { font-size: 1.1em; }
+
+.ai-chat-container .markdown-body a {
+  color: var(--aic-accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-chat-container .markdown-body a:hover { color: #a5b4fc; }
+
+.ai-chat-container .markdown-body ul,
+.ai-chat-container .markdown-body ol {
+  padding-left: 1.4em;
+  margin: 0 0 var(--aic-sp-sm);
+}
+
+.ai-chat-container .markdown-body blockquote {
+  border-left: 3px solid var(--aic-accent-soft);
+  padding: var(--aic-sp-xs) var(--aic-sp-md);
+  margin: var(--aic-sp-sm) 0;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0 var(--aic-r-sm) var(--aic-r-sm) 0;
+  color: var(--aic-text-secondary);
+}
+
+.ai-chat-container .markdown-body code {
+  font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  font-size: 0.92em;
+  color: #e0e7ff;
+}
+
+.ai-chat-container .markdown-body :not(pre) > code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15em 0.45em;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ai-chat-container .markdown-body pre {
   position: relative;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: var(--aic-sp-md);
+  margin: var(--aic-sp-sm) 0;
+  border-radius: var(--aic-r-md);
+  border: 1px solid var(--aic-glass-border);
   overflow-x: auto;
-  margin: var(--space-sm) 0;
-  border: 1px solid var(--space-border);
+  font-size: 0.9em;
+  line-height: 1.5;
 }
 
-.ai-chat-container .markdown-body code {
-  font-family: 'Fira Code', 'Courier New', monospace;
-  color: var(--text-accent);
+.ai-chat-container .markdown-body pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e6edf3;
 }
 
-/* Copy button inside code block */
+.ai-chat-container .markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--aic-sp-sm) 0;
+  font-size: 0.92em;
+}
+.ai-chat-container .markdown-body th,
+.ai-chat-container .markdown-body td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--aic-glass-border);
+  text-align: left;
+}
+.ai-chat-container .markdown-body th {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Copy button (injected by JS) */
 .ai-chat-container .copy-code-btn {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--space-border);
-  border-radius: var(--radius-sm);
-  padding: 0.25rem 0.5rem;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-sm);
+  color: var(--aic-text-primary);
   font-size: 0.9rem;
   cursor: pointer;
-  color: var(--text-primary);
-  transition: all var(--transition-fast);
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: all var(--aic-t-fast);
 }
-
 .ai-chat-container .copy-code-btn:hover {
-  background: rgba(78, 205, 196, 0.2);
-  border-color: var(--text-accent);
-  box-shadow: var(--space-glow-cyan);
+  background: rgba(102, 126, 234, 0.25);
+  border-color: var(--aic-accent-soft);
+  transform: translateY(-1px);
 }
 
 /* --------------------------------------------------------------------------
    TYPING INDICATOR
    -------------------------------------------------------------------------- */
 .ai-chat-container .typing-indicator {
-  display: flex;
-  gap: 0.25rem;
-  padding: var(--space-sm);
+  display: inline-flex;
+  gap: 0.3rem;
+  padding: 0.25rem 0;
+  align-items: center;
 }
-
 .ai-chat-container .typing-indicator span {
   width: 0.5rem;
   height: 0.5rem;
-  background: var(--text-accent);
   border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out both;
-  opacity: 0.7;
+  background: linear-gradient(135deg, var(--aic-accent-1), var(--aic-accent-2));
+  animation: aic-bounce 1.3s infinite ease-in-out both;
+  opacity: 0.85;
 }
-
 .ai-chat-container .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
 .ai-chat-container .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+@keyframes aic-bounce {
+  0%, 80%, 100% { transform: scale(0.4); opacity: 0.5; }
+  40%           { transform: scale(1);   opacity: 1;   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* --------------------------------------------------------------------------
-   INPUT AREA – fixed at bottom, glass effect
+   INPUT AREA
    -------------------------------------------------------------------------- */
 .ai-chat-container .input-area {
   flex-shrink: 0;
   display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-  background: rgba(5, 5, 20, 0.6);
-  backdrop-filter: blur(15px) saturate(180%);
-  border-radius: var(--radius-full);
-  padding: var(--space-xs);
-  border: 1px solid var(--space-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), var(--space-glow-cyan);
+  align-items: flex-end;
+  gap: var(--aic-sp-sm);
+  padding: var(--aic-sp-xs) var(--aic-sp-xs) var(--aic-sp-xs) var(--aic-sp-md);
+  background: var(--aic-glass-bg-strong);
+  backdrop-filter: var(--aic-blur-strong);
+  -webkit-backdrop-filter: var(--aic-blur-strong);
+  border: 1px solid var(--aic-glass-border-strong);
+  border-radius: var(--aic-r-xl);
+  box-shadow: var(--aic-shadow);
+  transition: border-color var(--aic-t-fast), box-shadow var(--aic-t-fast);
+}
+
+.ai-chat-container .input-area:focus-within {
+  border-color: rgba(129, 140, 248, 0.5);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.25),
+              0 0 0 3px rgba(102, 126, 234, 0.18);
 }
 
 .ai-chat-container .input-area textarea {
   flex: 1;
+  min-height: 24px;
+  max-height: 140px;
   background: transparent;
   border: none;
   outline: none;
-  padding: var(--space-sm) var(--space-md);
-  color: var(--text-primary);
-  font-size: 1rem;
+  padding: var(--aic-sp-sm) 0;
+  color: var(--aic-text-primary);
   font-family: inherit;
-  resize: none;
-  max-height: 120px;
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
   line-height: 1.5;
+  resize: none;
   word-break: break-word;
 }
-
 .ai-chat-container .input-area textarea::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
+.ai-chat-container .input-area textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 .ai-chat-container .input-area button {
-  background: rgba(20, 20, 50, 0.9);
-  border: 1px solid var(--space-border-strong);
-  border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: all var(--transition-fast);
-  backdrop-filter: blur(5px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  align-self: flex-end;
-}
-
-.ai-chat-container .input-area button:hover:not(:disabled) {
-  background: rgba(30, 30, 70, 0.95);
-  border-color: var(--text-accent);
-  transform: scale(1.05);
-  box-shadow: var(--space-glow-cyan);
-}
-
-.ai-chat-container .input-area button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* --------------------------------------------------------------------------
-   SPINNER – transparent, light, cosmic
-   -------------------------------------------------------------------------- */
-.ai-chat-container .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--text-accent);
+  border: none;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: var(--space-md) auto;
+  background: linear-gradient(135deg, var(--aic-accent-1) 0%, var(--aic-accent-2) 100%);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  transition: transform var(--aic-t-fast), box-shadow var(--aic-t-fast), opacity var(--aic-t-fast);
 }
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.ai-chat-container .input-area button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 8px 22px rgba(102, 126, 234, 0.55);
+}
+.ai-chat-container .input-area button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+.ai-chat-container .input-area button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.ai-chat-container .input-area button svg {
+  transform: translateX(-1px);
 }
 
 /* --------------------------------------------------------------------------
-   CUSTOM SCROLLBAR (scoped to messages container)
+   SCROLLBAR (scoped)
    -------------------------------------------------------------------------- */
+.ai-chat-container .messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.5) transparent;
+}
 .ai-chat-container .messages-container::-webkit-scrollbar {
   width: 6px;
 }
 .ai-chat-container .messages-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: var(--radius-full);
+  background: transparent;
 }
 .ai-chat-container .messages-container::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: var(--radius-full);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: linear-gradient(135deg, var(--aic-accent-1), var(--aic-accent-2));
+  border-radius: var(--aic-r-full);
 }
 .ai-chat-container .messages-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 180, 0.7);
-}
-
-/* Firefox */
-.ai-chat-container .messages-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #5a6fd8, #6a3fa0);
 }
 
 /* --------------------------------------------------------------------------
-   ACCESSIBILITY & REDUCED MOTION
+   FOCUS / ACCESSIBILITY
    -------------------------------------------------------------------------- */
+.ai-chat-container :focus-visible {
+  outline: 2px solid var(--aic-accent-soft);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ai-chat-container *,
   .ai-chat-container *::before,
@@ -380,620 +474,110 @@
   }
 }
 
-.ai-chat-container :focus-visible {
-  outline: 2px solid var(--text-accent);
-  outline-offset: 2px;
-}
-
 /* ==========================================================================
-   GRANULAR RESPONSIVE BREAKPOINTS (200px – 2560px+)
-   All queries placed at the bottom, ordered smallest to largest.
+   RESPONSIVE BREAKPOINTS (mobile-first)
    ========================================================================== */
 
-/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    font-size: 8px;
-  }
+/* ≥ 480px — Large phones */
+@media (min-width: 480px) {
   .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    max-width: 100%;
-    padding: 4px;
-  }
-  .ai-chat-container .chat-header h1 {
-    font-size: 1.8rem;
-    margin-bottom: 2px;
-  }
-  .ai-chat-container .chat-header p {
-    font-size: 0.9rem;
+    padding: var(--aic-sp-lg) var(--aic-sp-md);
   }
   .ai-chat-container .message {
-    max-width: 98%;
-  }
-  .ai-chat-container .message-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
-  }
-  .ai-chat-container .message-content {
-    font-size: 0.9rem;
-    padding: 4px 6px;
-  }
-  .ai-chat-container .input-area {
-    border-radius: 16px;
-    padding: 2px;
-  }
-  .ai-chat-container .input-area textarea {
-    font-size: 0.9rem;
-    padding: 4px 6px;
-  }
-  .ai-chat-container .input-area button {
-    width: 32px;
-    height: 32px;
-  }
-  .ai-chat-container .copy-code-btn {
-    font-size: 0.7rem;
-    padding: 2px 4px;
-  }
-  /* Reduce blur for performance */
-  .ai-chat-container .message-content,
-  .ai-chat-container .input-area {
-    backdrop-filter: blur(4px);
+    max-width: 88%;
   }
 }
 
-/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    font-size: 9px;
-  }
+/* ≥ 768px — Tablets */
+@media (min-width: 768px) {
   .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    max-width: 100%;
-    padding: 5px;
-  }
-  .ai-chat-container .chat-header h1 {
-    font-size: 1.9rem;
-  }
-  .ai-chat-container .chat-header p {
-    font-size: 0.95rem;
-  }
-  .ai-chat-container .message {
-    max-width: 97%;
-  }
-  .ai-chat-container .message-avatar {
-    width: 26px;
-    height: 26px;
-  }
-  .ai-chat-container .message-content {
-    font-size: 0.95rem;
-  }
-  .ai-chat-container .input-area button {
-    width: 34px;
-    height: 34px;
-  }
-  .ai-chat-container .input-area textarea {
-    font-size: 0.95rem;
-  }
-}
-
-/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    font-size: 10px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    padding: 6px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 28px;
-    height: 28px;
-  }
-  .ai-chat-container .input-area button {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    font-size: 11px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.8rem;
-    --space-lg: 1.1rem;
-    padding: 7px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 30px;
-    height: 30px;
-  }
-  .ai-chat-container .input-area button {
-    width: 38px;
-    height: 38px;
-  }
-}
-
-/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    font-size: 12px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.8rem;
-    --space-lg: 1.2rem;
-    padding: 8px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 32px;
-    height: 32px;
-  }
-  .ai-chat-container .input-area button {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    font-size: 13px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.9rem;
-    --space-lg: 1.3rem;
-    padding: 9px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 34px;
-    height: 34px;
-  }
-  .ai-chat-container .input-area button {
-    width: 42px;
-    height: 42px;
-  }
-}
-
-/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    font-size: 13.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.9rem;
-    --space-lg: 1.4rem;
-    padding: 10px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 36px;
-    height: 36px;
-  }
-  .ai-chat-container .input-area button {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    font-size: 14px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    padding: 11px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 38px;
-    height: 38px;
-  }
-  .ai-chat-container .input-area button {
-    width: 46px;
-    height: 46px;
-  }
-}
-
-/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    font-size: 14.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    padding: 12px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 40px;
-    height: 40px;
-  }
-  .ai-chat-container .input-area button {
-    width: 48px;
-    height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    font-size: 15px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    padding: 13px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 42px;
-    height: 42px;
-  }
-  .ai-chat-container .input-area button {
-    width: 50px;
-    height: 50px;
-  }
-}
-
-/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    font-size: 15.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.6rem;
-    padding: 14px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 44px;
-    height: 44px;
-  }
-  .ai-chat-container .input-area button {
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    font-size: 16px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.6rem;
-    padding: 15px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 46px;
-    height: 46px;
-  }
-  .ai-chat-container .input-area button {
-    width: 54px;
-    height: 54px;
-  }
-}
-
-/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    font-size: 16.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.7rem;
-    padding: 16px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 48px;
-    height: 48px;
-  }
-  .ai-chat-container .input-area button {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    font-size: 17px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.7rem;
-    padding: 17px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 50px;
-    height: 50px;
-  }
-  .ai-chat-container .input-area button {
-    width: 58px;
-    height: 58px;
-  }
-}
-
-/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    font-size: 17px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.3rem;
-    --space-sm: 0.6rem;
-    --space-md: 1.1rem;
-    --space-lg: 1.8rem;
-    padding: 18px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 52px;
-    height: 52px;
-  }
-  .ai-chat-container .input-area button {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    font-size: 17.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.3rem;
-    --space-sm: 0.6rem;
-    --space-md: 1.1rem;
-    --space-lg: 1.8rem;
-    padding: 19px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 54px;
-    height: 54px;
-  }
-  .ai-chat-container .input-area button {
-    width: 62px;
-    height: 62px;
-  }
-}
-
-/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    font-size: 17.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.3rem;
-    --space-sm: 0.7rem;
-    --space-md: 1.2rem;
-    --space-lg: 1.9rem;
-    padding: 20px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 56px;
-    height: 56px;
-  }
-  .ai-chat-container .input-area button {
-    width: 64px;
-    height: 64px;
-  }
-}
-
-/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    font-size: 18px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.3rem;
-    --space-sm: 0.7rem;
-    --space-md: 1.2rem;
-    --space-lg: 1.9rem;
-    padding: 21px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 58px;
-    height: 58px;
-  }
-  .ai-chat-container .input-area button {
-    width: 66px;
-    height: 66px;
-  }
-}
-
-/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    font-size: 18px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.35rem;
-    --space-sm: 0.75rem;
-    --space-md: 1.3rem;
-    --space-lg: 2rem;
-    padding: 22px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 60px;
-    height: 60px;
-  }
-  .ai-chat-container .input-area button {
-    width: 68px;
-    height: 68px;
-  }
-}
-
-/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    font-size: 18.5px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.35rem;
-    --space-sm: 0.75rem;
-    --space-md: 1.3rem;
-    --space-lg: 2rem;
-    padding: 23px;
-  }
-  .ai-chat-container .message-avatar {
-    width: 62px;
-    height: 62px;
-  }
-  .ai-chat-container .input-area button {
-    width: 70px;
-    height: 70px;
-  }
-}
-
-/* ----- Breakpoint: 1200px+ | 4XL and beyond (up to 2560px+) ----- */
-@media only screen and (min-width: 1200px) {
-  :root {
-    font-size: 19px;
-  }
-  .ai-chat-container {
-    --space-xs: 0.4rem;
-    --space-sm: 0.8rem;
-    --space-md: 1.5rem;
-    --space-lg: 2.2rem;
-    max-width: min(1600px, 90%);
-    padding: 24px;
-  }
-  .ai-chat-container .chat-header h1 {
-    font-size: 2.5rem;
+    padding: var(--aic-sp-lg);
+    gap: var(--aic-sp-lg);
+  }
+  .ai-chat-container .messages-container {
+    padding: var(--aic-sp-lg) var(--aic-sp-md);
   }
   .ai-chat-container .message {
     max-width: 80%;
   }
-  .ai-chat-container .message-avatar {
-    width: 64px;
-    height: 64px;
-    font-size: 1.5rem;
-  }
-  .ai-chat-container .message-content {
-    font-size: 1.1rem;
-  }
   .ai-chat-container .input-area button {
-    width: 72px;
-    height: 72px;
-  }
-  .ai-chat-container .input-area textarea {
-    font-size: 1.1rem;
+    width: 48px;
+    height: 48px;
   }
 }
 
-/* ----- Extra large screens (1920px+) – fine tuning ----- */
-@media only screen and (min-width: 1920px) {
-  :root {
-    font-size: 20px;
-  }
+/* ≥ 1024px — Laptops */
+@media (min-width: 1024px) {
   .ai-chat-container {
-    max-width: min(2000px, 85%);
-    padding: 28px;
-  }
-  .ai-chat-container .message-content {
-    font-size: 1.2rem;
-  }
-  .ai-chat-container .input-area button {
-    width: 80px;
-    height: 80px;
-  }
-}
-
-/* ----- Ultra-wide (2560px+) ----- */
-@media only screen and (min-width: 2560px) {
-  :root {
-    font-size: 22px;
-  }
-  .ai-chat-container {
-    max-width: min(2400px, 80%);
-    padding: 32px;
-  }
-  .ai-chat-container .message-content {
-    font-size: 1.3rem;
-  }
-  .ai-chat-container .input-area button {
-    width: 88px;
-    height: 88px;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   ORIGINAL RESPONSIVE QUERIES (preserved as requested)
-   -------------------------------------------------------------------------- */
-/* Mobile (< 640px) */
-@media (max-width: 639px) {
-  .ai-chat-container {
-    padding: var(--space-xs);
+    max-width: 1100px;
   }
   .ai-chat-container .message {
-    max-width: 95%;
+    max-width: 75%;
   }
-  .ai-chat-container .input-area {
-    border-radius: var(--radius-lg);
+  .ai-chat-container .message-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+/* ≥ 1440px — Large desktops */
+@media (min-width: 1440px) {
+  .ai-chat-container {
+    max-width: 1280px;
+  }
+  .ai-chat-container .message {
+    max-width: 70%;
   }
   .ai-chat-container .input-area button {
-    width: 44px;
-    height: 44px;
-  }
-  /* Reduce blur on mobile for performance */
-  .ai-chat-container .message-content,
-  .ai-chat-container .input-area {
-    backdrop-filter: blur(5px);
+    width: 52px;
+    height: 52px;
   }
 }
 
-/* Tablet (640px – 1024px) */
-@media (min-width: 640px) and (max-width: 1023px) {
-  .ai-chat-container {
-    padding: var(--space-sm);
-  }
-}
-
-/* Large screens (> 1920px) */
+/* ≥ 1920px — Full HD */
 @media (min-width: 1920px) {
   .ai-chat-container {
-    max-width: 1400px;
-    padding: var(--space-lg);
+    max-width: 1500px;
+    padding: var(--aic-sp-xl);
   }
   .ai-chat-container .message-content {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+  }
+}
+
+/* ≥ 2560px — 4K / Ultra-wide */
+@media (min-width: 2560px) {
+  .ai-chat-container {
+    max-width: 1800px;
+  }
+  .ai-chat-container .chat-header h1 {
+    font-size: 2.5rem;
+  }
+  .ai-chat-container .message-content {
+    font-size: 1.15rem;
+  }
+  .ai-chat-container .message-avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1.4rem;
+  }
+  .ai-chat-container .input-area button {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Performance: reduce blur on small low-power devices */
+@media (max-width: 480px) {
+  .ai-chat-container .message-content,
+  .ai-chat-container .input-area,
+  .ai-chat-container .chat-header,
+  .ai-chat-container .message-avatar {
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
   }
 }
 
 /* --------------------------------------------------------------------------
-   END OF AI CHAT PAGE STYLES
+   END
    -------------------------------------------------------------------------- */

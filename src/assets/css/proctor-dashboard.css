@@ -1,2280 +1,802 @@
-/* src/assets/css/proctor-dashboard.css - COSMIC SPACE PROCTOR DASHBOARD */
-/* FULLY RESPONSIVE ENHANCED VERSION WITH GRANULAR BREAKPOINTS */
+/* src/assets/css/proctor-dashboard.css
+   Galaxy-themed Proctor Dashboard — glassmorphism, transparent, fully responsive.
+   Coexists with global style.css (.gradient-text, .glass-effect, scrollbars).
+   ========================================================================== */
 
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   THEME TOKENS
    ========================================================================== */
 :root {
-  /* Cosmic Color Palette */
-  --cosmic-dark: rgba(5, 5, 20, 0.9);
-  --cosmic-darker: rgba(2, 2, 10, 0.95);
-  --cosmic-card: rgba(15, 15, 40, 0.85);
-  --cosmic-card-hover: rgba(20, 20, 60, 0.9);
-  --cosmic-input: rgba(0, 0, 0, 0.5);
-  --cosmic-input-focus: rgba(20, 20, 50, 0.8);
-  
-  /* Cosmic Accent Colors */
-  --cosmic-cyan: #4ECDC4;
-  --cosmic-cyan-glow: rgba(78, 205, 196, 0.4);
-  --cosmic-purple: #8A2BE2;
-  --cosmic-purple-glow: rgba(138, 43, 226, 0.4);
-  --cosmic-blue: #4285F4;
-  --cosmic-blue-glow: rgba(66, 133, 244, 0.3);
-  --cosmic-white: #ffffff;
-  --cosmic-light: #e0e0e0;
-  --cosmic-gray: #a0a0c0;
-  
-  /* Status Colors */
-  --status-success: #4ECDC4;
-  --status-success-glow: rgba(78, 205, 196, 0.3);
-  --status-error: #ff6b6b;
-  --status-error-glow: rgba(255, 107, 107, 0.3);
-  --status-warning: #FFD166;
-  --status-warning-glow: rgba(255, 209, 102, 0.3);
-  --status-info: #4285F4;
-  --status-info-glow: rgba(66, 133, 244, 0.3);
-  --status-default: #8A2BE2;
-  --status-default-glow: rgba(138, 43, 226, 0.3);
-  
-  /* Typography */
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-muted: #a0a0c0;
-  
+  /* Brand-aligned accents */
+  --pd-brand-1: #667eea;
+  --pd-brand-2: #764ba2;
+  --pd-brand-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Glass surfaces — keep galaxy visible */
+  --pd-surface-1: rgba(255, 255, 255, 0.05);
+  --pd-surface-2: rgba(255, 255, 255, 0.08);
+  --pd-surface-3: rgba(255, 255, 255, 0.12);
+  --pd-surface-input: rgba(10, 12, 30, 0.35);
+
+  /* Borders & rings */
+  --pd-border: rgba(255, 255, 255, 0.10);
+  --pd-border-hover: rgba(255, 255, 255, 0.20);
+  --pd-border-focus: #818cf8;
+
+  /* Typography on dark galaxy */
+  --pd-text: #ffffff;
+  --pd-text-soft: #e8eaff;
+  --pd-text-muted: rgba(255, 255, 255, 0.70);
+  --pd-text-faint: rgba(255, 255, 255, 0.50);
+
+  /* Status colors (semantic, brand-friendly) */
+  --pd-info: #0ea5e9;
+  --pd-success: #48bb78;
+  --pd-warning: #ed8936;
+  --pd-danger: #fc8181;
+  --pd-accent: #818cf8;
+
   /* Effects */
-  --glass-blur: blur(12px) saturate(180%);
-  --glass-blur-mobile: blur(8px) saturate(160%);
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-glow: all 0.5s ease;
-  
-  /* Shadows & Glows */
-  --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
-  --shadow-cosmic-cyan: 0 0 25px rgba(78, 205, 196, 0.4);
-  --shadow-cosmic-purple: 0 0 25px rgba(138, 43, 226, 0.4);
-  --shadow-inner: inset 0 2px 4px rgba(255, 255, 255, 0.1);
-  --shadow-outer: 0 4px 20px rgba(0, 0, 0, 0.5);
-  --text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
-  
-  /* Spacing - fluid defaults, will be overridden in breakpoints */
-  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
-  --space-sm: clamp(0.5rem, 1vw, 1rem);
-  --space-md: clamp(1rem, 2vw, 1.5rem);
-  --space-lg: clamp(1.5rem, 3vw, 2.5rem);
-  --space-xl: clamp(2rem, 4vw, 3.5rem);
-  
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  
-  /* Font Sizes - fluid defaults */
-  --font-xs: clamp(0.75rem, 2vw, 0.875rem);
-  --font-sm: clamp(0.875rem, 2.5vw, 1rem);
-  --font-md: clamp(1rem, 3vw, 1.125rem);
-  --font-lg: clamp(1.25rem, 4vw, 1.5rem);
-  --font-xl: clamp(1.5rem, 5vw, 2rem);
-  --font-xxl: clamp(2rem, 6vw, 2.5rem);
+  --pd-blur: blur(16px) saturate(140%);
+  --pd-blur-strong: blur(22px) saturate(160%);
+  --pd-shadow-card: 0 8px 32px rgba(102, 126, 234, 0.15);
+  --pd-shadow-hover: 0 12px 40px rgba(102, 126, 234, 0.25);
+  --pd-shadow-text: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --pd-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Fluid spacing & type */
+  --pd-space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+  --pd-space-sm: clamp(0.5rem, 1vw, 0.75rem);
+  --pd-space-md: clamp(0.75rem, 1.6vw, 1.25rem);
+  --pd-space-lg: clamp(1rem, 2.4vw, 2rem);
+  --pd-space-xl: clamp(1.5rem, 3.5vw, 3rem);
+
+  --pd-font-xs:  clamp(0.72rem, 1.4vw, 0.8rem);
+  --pd-font-sm:  clamp(0.82rem, 1.6vw, 0.92rem);
+  --pd-font-md:  clamp(0.92rem, 1.8vw, 1.05rem);
+  --pd-font-lg:  clamp(1.1rem, 2.4vw, 1.35rem);
+  --pd-font-xl:  clamp(1.35rem, 3vw, 1.75rem);
+  --pd-font-xxl: clamp(1.6rem, 4vw, 2.5rem);
+
+  --pd-r-sm: 10px;
+  --pd-r-md: 14px;
+  --pd-r-lg: 18px;
+  --pd-r-xl: 22px;
 }
 
 /* ==========================================================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================================================== */
-.proctor-dashboard * {
-  word-break: normal;                /* Prevent character-by-character breaking */
-  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-  hyphens: none;                     /* Disable hyphenation */
-  -webkit-hyphens: none;
-  -ms-hyphens: none;
-  box-sizing: border-box;            /* Consistent sizing */
-}
-
-/* ==========================================================================
-   ANIMATIONS & KEYFRAMES
-   ========================================================================== */
-@keyframes cosmic-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px var(--cosmic-blue-glow);
-  }
-  50% {
-    box-shadow: 0 0 30px var(--cosmic-blue-glow);
-  }
-}
-
-@keyframes border-glow {
-  0%, 100% {
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 20px rgba(66, 133, 244, 0.3);
-  }
-  50% {
-    border-color: var(--cosmic-cyan);
-    box-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes status-pulse {
-  0%, 100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ==========================================================================
-   BASE STYLES - COSMIC PROCTOR DASHBOARD
+   ROOT — TRANSPARENT, ABOVE GALAXY
    ========================================================================== */
 .proctor-dashboard {
-  padding: var(--space-lg);
-  max-width: min(1200px, 95vw);
-  margin: 0 auto;
-  background: transparent !important;
   position: relative;
   z-index: 1;
+  isolation: isolate;
+  width: 100%;
+  max-width: min(1280px, 96vw);
+  margin: 0 auto;
+  padding: var(--pd-space-lg) var(--pd-space-md);
   min-height: 100vh;
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  isolation: isolate;                 /* Fresh stacking context */
+  min-height: 100dvh;
+  color: var(--pd-text);
+  background: transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Cosmic overlay for readability */
-.proctor-dashboard::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 20, 0.3) 100%);
-  pointer-events: none;
-  z-index: -1;
+.proctor-dashboard *,
+.proctor-dashboard *::before,
+.proctor-dashboard *::after {
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 /* ==========================================================================
-   DASHBOARD HEADER - COSMIC STYLE
+   ANIMATIONS
+   ========================================================================== */
+@keyframes pd-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pd-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pd-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+
+/* ==========================================================================
+   HEADER
    ========================================================================== */
 .dashboard-header {
-  margin-bottom: var(--space-xl);
-  padding: var(--space-lg);
-  background: var(--cosmic-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-outer), var(--shadow-cosmic);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   position: relative;
+  margin-bottom: var(--pd-space-lg);
+  padding: var(--pd-space-lg);
+  background: var(--pd-surface-1);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-lg);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+  box-shadow: var(--pd-shadow-card);
   overflow: hidden;
-  animation: slide-in 0.5s ease-out;
-  isolation: isolate;
-  min-height: min-content;            /* Expand with content */
+  animation: pd-fade-up 0.5s ease-out both;
 }
 
 .dashboard-header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(90deg, 
-    var(--cosmic-purple),
-    var(--cosmic-cyan),
-    var(--cosmic-blue));
-  opacity: 0.7;
+  background: var(--pd-brand-grad);
+  opacity: 0.85;
 }
 
 .dashboard-header h1 {
-  font-size: var(--font-xxl);
+  font-size: var(--pd-font-xxl);
   font-weight: 700;
-  margin-bottom: var(--space-xs);
-  background: linear-gradient(135deg, 
-    var(--cosmic-cyan) 0%, 
-    var(--cosmic-purple) 50%, 
-    var(--cosmic-blue) 100%);
+  margin: 0 0 var(--pd-space-xs);
+  background: var(--pd-brand-grad);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 
-    0 0 20px rgba(78, 205, 196, 0.3),
-    var(--text-shadow);
-  letter-spacing: 0.5px;
-  word-break: keep-all;               /* Keep heading whole */
+  letter-spacing: 0.3px;
+  line-height: 1.2;
 }
 
 .proctor-info {
-  font-size: var(--font-md);
-  color: var(--text-secondary);
-  text-shadow: var(--text-shadow);
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;                    /* Allow wrapping */
+  flex-wrap: wrap;
+  gap: var(--pd-space-sm);
+  font-size: var(--pd-font-md);
+  color: var(--pd-text-soft);
+  text-shadow: var(--pd-shadow-text);
 }
 
-.proctor-info i {
-  color: var(--cosmic-cyan);
-  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
-}
+.proctor-info i { color: var(--pd-accent); }
 
 /* ==========================================================================
-   DASHBOARD CONTENT - COSMIC GLASS EFFECT
+   MAIN CONTENT PANEL
    ========================================================================== */
 .dashboard-content {
-  background: var(--cosmic-card);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-outer), var(--shadow-cosmic);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   position: relative;
+  padding: var(--pd-space-lg);
+  background: var(--pd-surface-1);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-lg);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+  box-shadow: var(--pd-shadow-card);
   overflow: hidden;
   isolation: isolate;
-  min-height: min-content;
 }
 
 .dashboard-content::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.2), 
-    transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
 }
 
 /* ==========================================================================
-   LOADING STATE - COSMIC SPINNER
+   STATE PANELS — LOADING / ERROR / EMPTY
    ========================================================================== */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
-  color: var(--text-secondary);
-  text-align: center;
-  animation: slide-in 0.3s ease-out;
-  min-height: min-content;
-}
-
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 3px solid transparent;
-  border-top-color: var(--cosmic-cyan);
-  border-right-color: var(--cosmic-purple);
-  border-bottom-color: var(--cosmic-blue);
-  border-radius: 50%;
-  animation: cosmic-spin 1s linear infinite;
-  margin-bottom: var(--space-md);
-  box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
-}
-
-.loading-state h3 {
-  font-size: var(--font-lg);
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
-  text-shadow: var(--text-shadow);
-  word-break: keep-all;
-}
-
-.loading-state p {
-  font-size: var(--font-md);
-  color: var(--text-secondary);
-  text-shadow: var(--text-shadow);
-}
-
-/* ==========================================================================
-   ERROR STATE - COSMIC STYLE
-   ========================================================================== */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
-  text-align: center;
-  background: var(--cosmic-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  animation: slide-in 0.3s ease-out;
-  isolation: isolate;
-  min-height: min-content;
-}
-
-.error-icon {
-  font-size: 64px;
-  margin-bottom: var(--space-md);
-  color: var(--status-error);
-  filter: drop-shadow(0 0 20px var(--status-error-glow));
-}
-
-.error-state h3 {
-  font-size: var(--font-lg);
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
-  text-shadow: var(--text-shadow);
-  word-break: keep-all;
-}
-
-.error-state p {
-  font-size: var(--font-md);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-lg);
-  text-shadow: var(--text-shadow);
-  max-width: 500px;
-  line-height: 1.6;
-}
-
-/* ==========================================================================
-   RETRY BUTTON - COSMIC STYLE
-   ========================================================================== */
-.retry-btn {
-  background: linear-gradient(135deg, 
-    rgba(78, 205, 196, 0.9), 
-    rgba(66, 133, 244, 0.9));
-  color: var(--text-primary);
-  border: none;
-  padding: var(--space-md) var(--space-lg);
-  border-radius: var(--radius-md);
-  font-size: var(--font-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(4px);
-  text-shadow: var(--text-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 320px) {
-  .retry-btn {
-    white-space: normal;               /* Allow wrapping on very small screens */
-  }
-}
-
-.retry-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.1), 
-    transparent);
-  transition: 0.5s;
-}
-
-.retry-btn:hover {
-  background: linear-gradient(135deg, 
-    rgba(78, 205, 196, 1), 
-    rgba(66, 133, 244, 1));
-  transform: translateY(-3px);
-  box-shadow: 
-    0 8px 25px rgba(66, 133, 244, 0.4),
-    0 0 30px rgba(66, 133, 244, 0.3);
-}
-
-.retry-btn:hover::before {
-  left: 100%;
-}
-
-.retry-btn:active {
-  transform: translateY(-1px);
-}
-
-.retry-btn i {
-  font-size: 20px;
-}
-
-/* ==========================================================================
-   EMPTY STATE - COSMIC STYLE
-   ========================================================================== */
+.loading-state,
+.error-state,
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-xl);
   text-align: center;
-  background: var(--cosmic-card);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  animation: slide-in 0.3s ease-out;
-  isolation: isolate;
-  min-height: min-content;
+  padding: var(--pd-space-xl) var(--pd-space-md);
+  background: var(--pd-surface-1);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-lg);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+  animation: pd-fade-up 0.4s ease-out both;
 }
 
-.empty-icon {
-  font-size: 80px;
-  margin-bottom: var(--space-md);
-  color: var(--cosmic-gray);
-  opacity: 0.6;
-  filter: drop-shadow(0 0 20px rgba(160, 160, 192, 0.2));
+.error-state  { border-color: rgba(252, 129, 129, 0.30); }
+
+.loading-state .loading-spinner,
+.loading-spinner {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--pd-space-md);
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--pd-brand-1);
+  border-right-color: var(--pd-brand-2);
+  border-radius: 50%;
+  animation: pd-spin 0.9s linear infinite;
+  box-shadow: 0 0 25px rgba(102, 126, 234, 0.30);
 }
 
+.error-icon  { font-size: clamp(48px, 8vw, 64px); color: var(--pd-danger); margin-bottom: var(--pd-space-md); filter: drop-shadow(0 0 14px rgba(252,129,129,0.4)); }
+.empty-icon  { font-size: clamp(56px, 9vw, 80px); color: var(--pd-text-faint); margin-bottom: var(--pd-space-md); opacity: 0.75; }
+
+.loading-state h3,
+.error-state h3,
 .empty-state h3 {
-  font-size: var(--font-xl);
+  font-size: var(--pd-font-lg);
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
-  text-shadow: var(--text-shadow);
-  word-break: keep-all;
+  color: var(--pd-text);
+  margin: 0 0 var(--pd-space-sm);
+  text-shadow: var(--pd-shadow-text);
 }
 
+.loading-state p,
+.error-state p,
 .empty-state p {
-  font-size: var(--font-md);
-  color: var(--text-secondary);
-  text-shadow: var(--text-shadow);
-  max-width: 500px;
+  font-size: var(--pd-font-md);
+  color: var(--pd-text-muted);
+  max-width: 60ch;
+  margin: 0 0 var(--pd-space-md);
   line-height: 1.6;
-  margin-bottom: var(--space-lg);
 }
 
 /* ==========================================================================
-   APPOINTMENTS HEADER - COSMIC STYLE
+   BUTTONS
+   ========================================================================== */
+.retry-btn,
+.view-btn,
+.room-link,
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pd-space-sm);
+  min-height: 44px;
+  padding: 0.65rem 1.25rem;
+  font-size: var(--pd-font-sm);
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--pd-brand-grad);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--pd-r-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--pd-transition);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+}
+
+.retry-btn::before,
+.view-btn::before,
+.room-link::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -100%;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transition: left 0.55s ease;
+}
+
+.retry-btn:hover,
+.view-btn:hover,
+.room-link:hover,
+.clear-filters-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pd-shadow-hover);
+  color: #fff;
+  text-decoration: none;
+}
+
+.retry-btn:hover::before,
+.view-btn:hover::before,
+.room-link:hover::before {
+  left: 100%;
+}
+
+.retry-btn:active,
+.view-btn:active,
+.room-link:active,
+.clear-filters-btn:active { transform: translateY(0); }
+
+/* Room link variant — teal/success tone */
+.room-link {
+  background: linear-gradient(135deg, #14b8a6 0%, #48bb78 100%);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.25);
+}
+.room-link:hover { box-shadow: 0 12px 32px rgba(20, 184, 166, 0.35); }
+
+/* Clear filters — danger tone, subtler */
+.clear-filters-btn {
+  background: linear-gradient(135deg, rgba(252,129,129,0.85), rgba(237,137,54,0.85));
+  box-shadow: 0 6px 20px rgba(252, 129, 129, 0.20);
+  white-space: nowrap;
+}
+.clear-filters-btn:hover { box-shadow: 0 12px 32px rgba(252, 129, 129, 0.30); }
+
+/* ==========================================================================
+   APPOINTMENTS HEADER + STATS
    ========================================================================== */
 .appointments-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--pd-space-md);
+  margin-bottom: var(--pd-space-lg);
+  padding-bottom: var(--pd-space-md);
+  border-bottom: 1px solid var(--pd-border);
 }
 
-.appointments-header h2 {
-  font-size: var(--font-xl);
-  font-weight: 600;
-  color: var(--text-primary);
-  text-shadow: var(--text-shadow);
+.appointments-header h2,
+.filters-header h2 {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  word-break: keep-all;
+  gap: var(--pd-space-sm);
+  margin: 0;
+  font-size: var(--pd-font-xl);
+  font-weight: 600;
+  color: var(--pd-text);
+  text-shadow: var(--pd-shadow-text);
 }
 
-.appointments-header h2 i {
-  color: var(--cosmic-cyan);
-  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
-}
+.appointments-header h2 i { color: var(--pd-accent); }
 
-/* ==========================================================================
-   STATS - COSMIC STYLE
-   ========================================================================== */
 .stats {
   display: flex;
-  gap: var(--space-lg);
-  flex-wrap: wrap;                    /* Allow wrapping */
+  flex-wrap: wrap;
+  gap: var(--pd-space-md);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: var(--space-md);
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 120px;
-  transition: var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-  flex: 1 1 auto;                     /* Allow growth/shrink */
-  min-height: min-content;
+  min-width: 110px;
+  padding: var(--pd-space-sm) var(--pd-space-md);
+  background: var(--pd-surface-2);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-md);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+  transition: var(--pd-transition);
+  flex: 1 1 auto;
 }
 
 .stat-item:hover {
-  border-color: rgba(78, 205, 196, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
-}
-
-.stat-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(78, 205, 196, 0.1), 
-    rgba(138, 43, 226, 0.1));
-  opacity: 0;
-  transition: var(--transition-smooth);
-}
-
-.stat-item:hover::before {
-  opacity: 1;
+  border-color: var(--pd-border-hover);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.20);
 }
 
 .stat-label {
-  font-size: var(--font-xs);
-  color: var(--text-secondary);
+  font-size: var(--pd-font-xs);
+  color: var(--pd-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: var(--space-xs);
-  text-shadow: var(--text-shadow);
-  z-index: 1;
-  word-break: keep-all;
+  margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: var(--font-xl);
+  font-size: var(--pd-font-xl);
   font-weight: 700;
-  color: var(--cosmic-cyan);
-  text-shadow: 
-    0 0 10px rgba(78, 205, 196, 0.5),
-    var(--text-shadow);
-  z-index: 1;
-  word-break: keep-all;
+  background: var(--pd-brand-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ==========================================================================
-   APPOINTMENTS LIST - COSMIC STYLE
+   FILTERS SECTION
+   ========================================================================== */
+.filters-section {
+  margin-bottom: var(--pd-space-lg);
+  padding: var(--pd-space-lg);
+  background: var(--pd-surface-1);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-lg);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pd-space-md);
+  margin-bottom: var(--pd-space-md);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--pd-space-md);
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filter-group label {
+  font-size: var(--pd-font-sm);
+  font-weight: 500;
+  color: var(--pd-text-soft);
+}
+
+.filter-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.85rem;
+  background: var(--pd-surface-input);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-sm);
+  color: var(--pd-text);
+  font-size: var(--pd-font-sm);
+  font-family: inherit;
+  transition: var(--pd-transition);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.filter-input::placeholder { color: var(--pd-text-faint); }
+
+.filter-input:hover { border-color: var(--pd-border-hover); }
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--pd-border-focus);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+  background: rgba(10, 12, 30, 0.55);
+}
+
+/* Calendar/select indicator visibility on dark */
+.filter-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.95);
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+select.filter-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--pd-text-soft) 50%),
+    linear-gradient(135deg, var(--pd-text-soft) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2.25rem;
+}
+
+select.filter-input option {
+  background: #14152b;
+  color: var(--pd-text);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+/* ==========================================================================
+   APPOINTMENTS LIST + CARDS
    ========================================================================== */
 .appointments-list {
   display: grid;
-  gap: var(--space-md);
+  grid-template-columns: 1fr;
+  gap: var(--pd-space-md);
 }
 
-/* ==========================================================================
-   APPOINTMENT CARD - COSMIC GLASS CARD
-   ========================================================================== */
 .appointment-card {
-  background: rgba(20, 20, 40, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  cursor: pointer;
-  transition: var(--transition-smooth);
   position: relative;
+  padding: var(--pd-space-lg);
+  background: var(--pd-surface-2);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-md);
+  backdrop-filter: var(--pd-blur);
+  -webkit-backdrop-filter: var(--pd-blur);
+  cursor: pointer;
+  transition: var(--pd-transition);
   overflow: hidden;
-  animation: slide-in 0.3s ease-out;
-  animation-fill-mode: both;
   isolation: isolate;
-  min-height: min-content;
-}
-
-.appointment-card:hover {
-  background: rgba(25, 25, 50, 0.8);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-4px);
-  box-shadow: 
-    0 8px 30px rgba(0, 0, 0, 0.4),
-    0 0 25px rgba(78, 205, 196, 0.2);
+  animation: pd-fade-up 0.45s ease-out both;
 }
 
 .appointment-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(90deg, 
-    var(--cosmic-purple),
-    var(--cosmic-cyan),
-    var(--cosmic-blue));
-  opacity: 0.5;
+  background: var(--pd-brand-grad);
+  opacity: 0.6;
 }
 
-/* Staggered animation for cards */
-.appointment-card:nth-child(1) { animation-delay: 0.1s; }
-.appointment-card:nth-child(2) { animation-delay: 0.2s; }
-.appointment-card:nth-child(3) { animation-delay: 0.3s; }
-.appointment-card:nth-child(4) { animation-delay: 0.4s; }
-.appointment-card:nth-child(5) { animation-delay: 0.5s; }
-
-/* ==========================================================================
-   APPOINTMENT HEADER - COSMIC STYLE
-   ========================================================================== */
-.appointment-header {
-  margin-bottom: var(--space-md);
+.appointment-card:hover {
+  transform: translateY(-4px);
+  background: var(--pd-surface-3);
+  border-color: var(--pd-border-hover);
+  box-shadow: var(--pd-shadow-hover);
 }
+
+.appointment-card:nth-child(1) { animation-delay: 0.05s; }
+.appointment-card:nth-child(2) { animation-delay: 0.10s; }
+.appointment-card:nth-child(3) { animation-delay: 0.15s; }
+.appointment-card:nth-child(4) { animation-delay: 0.20s; }
+.appointment-card:nth-child(5) { animation-delay: 0.25s; }
+
+.appointment-header { margin-bottom: var(--pd-space-md); }
 
 .appointment-title {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--space-sm);
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  gap: var(--pd-space-sm);
+  margin-bottom: var(--pd-space-sm);
 }
 
 .appointment-title h3 {
-  font-size: var(--font-lg);
-  font-weight: 600;
-  color: var(--text-primary);
+  flex: 1 1 auto;
   margin: 0;
-  text-shadow: var(--text-shadow);
-  flex: 1;
-  word-break: keep-all;
-}
-
-/* ==========================================================================
-   STATUS BADGES - COSMIC GLOWING STYLE
-   ========================================================================== */
-.status-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: var(--font-xs);
+  font-size: var(--pd-font-lg);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(4px);
-  border: 1px solid;
-  text-shadow: var(--text-shadow);
-  animation: status-pulse 3s infinite ease-in-out;
-  white-space: nowrap;                 /* Keep badge on one line */
+  color: var(--pd-text);
+  text-shadow: var(--pd-shadow-text);
+  min-width: 0;
 }
 
-@media (max-width: 480px) {
-  .status-badge {
-    white-space: normal;               /* Allow wrapping on very small screens */
-  }
-}
-
-.status-scheduled {
-  background: rgba(78, 205, 196, 0.15);
-  color: var(--cosmic-cyan);
-  border-color: rgba(78, 205, 196, 0.3);
-  box-shadow: 0 0 15px var(--status-success-glow);
-}
-
-.status-in-progress {
-  background: rgba(255, 209, 102, 0.15);
-  color: var(--status-warning);
-  border-color: rgba(255, 209, 102, 0.3);
-  box-shadow: 0 0 15px var(--status-warning-glow);
-  animation: status-pulse 2s infinite ease-in-out;
-}
-
-.status-completed {
-  background: rgba(66, 133, 244, 0.15);
-  color: var(--status-info);
-  border-color: rgba(66, 133, 244, 0.3);
-  box-shadow: 0 0 15px var(--status-info-glow);
-}
-
-.status-cancelled {
-  background: rgba(160, 160, 192, 0.15);
-  color: var(--cosmic-gray);
-  border-color: rgba(160, 160, 192, 0.3);
-  box-shadow: 0 0 15px rgba(160, 160, 192, 0.2);
-}
-
-.status-expired {
-  background: rgba(255, 107, 107, 0.15);
-  color: var(--status-error);
-  border-color: rgba(255, 107, 107, 0.3);
-  box-shadow: 0 0 15px var(--status-error-glow);
-}
-
-.status-pending {
-  background: rgba(255, 209, 102, 0.2);
-  color: var(--status-warning);
-  border-color: rgba(255, 209, 102, 0.4);
-  box-shadow: 0 0 15px var(--status-warning-glow);
-  animation: status-pulse 1.5s infinite ease-in-out;
-}
-
-.status-default {
-  background: rgba(138, 43, 226, 0.15);
-  color: var(--cosmic-purple);
-  border-color: rgba(138, 43, 226, 0.3);
-  box-shadow: 0 0 15px var(--status-default-glow);
-}
-
-/* ==========================================================================
-   APPOINTMENT META - COSMIC STYLE
-   ========================================================================== */
 .appointment-meta {
   display: flex;
-  gap: var(--space-lg);
-  flex-wrap: wrap;                    /* Allow wrapping */
+  flex-wrap: wrap;
+  gap: var(--pd-space-md);
 }
 
 .meta-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-sm);
-  font-size: var(--font-sm);
-  color: var(--text-secondary);
-  text-shadow: var(--text-shadow);
-  flex-wrap: wrap;                    /* Allow wrapping */
+  gap: 0.4rem;
+  font-size: var(--pd-font-sm);
+  color: var(--pd-text-muted);
 }
 
 .meta-icon {
-  font-size: 16px;
-  color: var(--cosmic-cyan);
-  filter: drop-shadow(0 0 8px var(--cosmic-cyan-glow));
+  font-size: 1rem;
+  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.4));
 }
 
 /* ==========================================================================
-   APPOINTMENT DETAILS - COSMIC STYLE
+   STATUS BADGES
+   ========================================================================== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  font-size: var(--pd-font-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1px solid;
+  border-radius: 999px;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.status-scheduled    { color: #5eead4; background: rgba( 94, 234, 212, 0.12); border-color: rgba( 94, 234, 212, 0.35); }
+.status-in-progress  { color: #fbbf24; background: rgba(251, 191,  36, 0.12); border-color: rgba(251, 191,  36, 0.35); animation: pd-pulse 2.4s ease-in-out infinite; }
+.status-completed    { color: #93c5fd; background: rgba(147, 197, 253, 0.12); border-color: rgba(147, 197, 253, 0.35); }
+.status-cancelled    { color: #cbd5e1; background: rgba(203, 213, 225, 0.10); border-color: rgba(203, 213, 225, 0.30); }
+.status-expired      { color: #fc8181; background: rgba(252, 129, 129, 0.12); border-color: rgba(252, 129, 129, 0.35); }
+.status-pending      { color: #ed8936; background: rgba(237, 137,  54, 0.14); border-color: rgba(237, 137,  54, 0.40); animation: pd-pulse 2s ease-in-out infinite; }
+.status-default      { color: #c4b5fd; background: rgba(196, 181, 253, 0.12); border-color: rgba(196, 181, 253, 0.35); }
+
+/* ==========================================================================
+   APPOINTMENT DETAIL ROWS
    ========================================================================== */
 .appointment-details {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: slide-in 0.3s ease-out;
+  margin-bottom: var(--pd-space-md);
+  padding: var(--pd-space-md);
+  background: rgba(0, 0, 0, 0.20);
+  border: 1px solid var(--pd-border);
+  border-radius: var(--pd-r-sm);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-sm);
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: var(--space-xs);
+  flex-wrap: wrap;
+  gap: var(--pd-space-xs);
+  padding-bottom: var(--pd-space-sm);
+  margin-bottom: var(--pd-space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-
-.detail-row:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
+.detail-row:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
 
 .detail-label {
-  font-size: var(--font-sm);
-  color: var(--text-secondary);
+  font-size: var(--pd-font-sm);
   font-weight: 500;
-  text-shadow: var(--text-shadow);
-  word-break: keep-all;
+  color: var(--pd-text-muted);
 }
 
 .detail-value {
-  font-size: var(--font-sm);
-  color: var(--text-primary);
+  font-size: var(--pd-font-sm);
   font-weight: 600;
-  text-shadow: var(--text-shadow);
+  color: var(--pd-text);
   text-align: right;
-  max-width: 60%;
-  word-break: normal;                 /* Already protected */
-  overflow-wrap: break-word;
+  max-width: 65%;
+  overflow-wrap: anywhere;
 }
 
 .detail-value.code {
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-xs);
-  border: 1px solid rgba(78, 205, 196, 0.3);
-  color: var(--cosmic-cyan);
-  text-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  word-break: break-all;              /* Allow code to break */
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+  padding: 0.3rem 0.65rem;
+  font-size: var(--pd-font-xs);
+  background: rgba(129, 140, 248, 0.10);
+  color: #c7d2fe;
+  border: 1px solid rgba(129, 140, 248, 0.30);
+  border-radius: var(--pd-r-sm);
+  word-break: break-all;
 }
 
 /* ==========================================================================
-   APPOINTMENT ACTIONS - COSMIC STYLE
+   ACTIONS ROW
    ========================================================================== */
 .appointment-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;                    /* Allow wrapping */
-  gap: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--pd-space-md);
+  margin-top: var(--pd-space-md);
+  padding-top: var(--pd-space-md);
+  border-top: 1px solid var(--pd-border);
 }
 
-/* ==========================================================================
-   VIEW BUTTON - COSMIC STYLE
-   ========================================================================== */
-.view-btn {
-  background: linear-gradient(135deg, 
-    rgba(66, 133, 244, 0.9), 
-    rgba(138, 43, 226, 0.9));
-  color: var(--text-primary);
-  border: none;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(4px);
-  text-shadow: var(--text-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 480px) {
-  .view-btn {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
-}
-
-.view-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.1), 
-    transparent);
-  transition: 0.5s;
-}
-
-.view-btn:hover {
-  background: linear-gradient(135deg, 
-    rgba(66, 133, 244, 1), 
-    rgba(138, 43, 226, 1));
-  transform: translateY(-3px);
-  box-shadow: 
-    0 8px 25px rgba(66, 133, 244, 0.4),
-    0 0 30px rgba(66, 133, 244, 0.3);
-  animation: pulse-glow 2s infinite;
-}
-
-.view-btn:hover::before {
-  left: 100%;
-}
-
-.view-btn:active {
-  transform: translateY(-1px);
-}
-
-.view-btn i {
-  font-size: 16px;
-}
-
-/* ==========================================================================
-   ROOM LINKS - COSMIC STYLE
-   ========================================================================== */
 .room-links {
   display: flex;
-  gap: var(--space-sm);
-  flex-wrap: wrap;                    /* Allow wrapping */
-}
-
-.room-link {
-  background: linear-gradient(135deg, 
-    rgba(78, 205, 196, 0.9), 
-    rgba(72, 187, 120, 0.9));
-  color: var(--text-primary);
-  text-decoration: none;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  transition: var(--transition-smooth);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(4px);
-  text-shadow: var(--text-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  white-space: nowrap;                 /* Keep link text on one line */
-}
-
-@media (max-width: 480px) {
-  .room-link {
-    white-space: normal;               /* Allow wrapping on small screens */
-  }
-}
-
-.room-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.1), 
-    transparent);
-  transition: 0.5s;
-}
-
-.room-link:hover {
-  background: linear-gradient(135deg, 
-    rgba(78, 205, 196, 1), 
-    rgba(72, 187, 120, 1));
-  transform: translateY(-3px);
-  box-shadow: 
-    0 8px 25px rgba(78, 205, 196, 0.4),
-    0 0 30px rgba(78, 205, 196, 0.3);
-  text-decoration: none;
-  color: var(--text-primary);
-}
-
-.room-link:hover::before {
-  left: 100%;
-}
-
-.room-link:active {
-  transform: translateY(-1px);
-}
-
-.room-link i {
-  font-size: 16px;
+  flex-wrap: wrap;
+  gap: var(--pd-space-sm);
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN (Preserved and enhanced)
+   FOCUS STYLES
+   ========================================================================== */
+.proctor-dashboard a:focus-visible,
+.proctor-dashboard button:focus-visible,
+.proctor-dashboard .filter-input:focus-visible,
+.appointment-card:focus-visible {
+  outline: 2px solid var(--pd-border-focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   RESPONSIVE — mobile-first, 6 clean breakpoints
    ========================================================================== */
 
-/* Mobile (< 640px) */
-@media (max-width: 640px) {
-  .proctor-dashboard {
-    padding: var(--space-md);
-  }
-  
-  .dashboard-content,
-  .dashboard-header,
-  .appointment-card,
-  .error-state,
-  .empty-state {
-    backdrop-filter: var(--glass-blur-mobile);
-    -webkit-backdrop-filter: var(--glass-blur-mobile);
-  }
-  
-  .appointments-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-  }
-  
-  .stats {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-  
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-    flex: 1;
-  }
-  
-  .appointment-meta {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  
-  .appointment-actions {
-    flex-direction: column;
-    gap: var(--space-md);
-    align-items: stretch;
-  }
-  
-  .room-links {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .detail-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-xs);
-  }
-  
-  .detail-value {
-    text-align: left;
-    max-width: 100%;
-  }
+/* Phones: 480px and up */
+@media (min-width: 480px) {
+  .proctor-dashboard { padding: var(--pd-space-lg); }
+  .filters-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* Tablet (640px - 1024px) */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .stats {
-    flex-wrap: wrap;
-    gap: var(--space-md);
-  }
-  
-  .stat-item {
-    min-width: calc(33.333% - var(--space-md));
-    flex: 1;
-  }
+/* Tablets: 768px and up */
+@media (min-width: 768px) {
+  .filters-grid { grid-template-columns: repeat(3, 1fr); }
+  .stat-item { min-width: 130px; }
 }
 
-/* Desktop (1024px - 1440px) */
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .proctor-dashboard {
-    max-width: min(1100px, 95vw);
-  }
+/* Laptops: 1024px and up */
+@media (min-width: 1024px) {
+  .proctor-dashboard { max-width: min(1280px, 95vw); }
+  .filters-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .appointments-list { grid-template-columns: 1fr; }
 }
 
-/* Desktop (1440px - 1920px) */
-@media (min-width: 1441px) and (max-width: 1920px) {
-  .proctor-dashboard {
-    max-width: min(1400px, 95vw);
-  }
-}
-
-/* TV/4K (> 1920px) */
-@media (min-width: 1921px) {
-  .proctor-dashboard {
-    max-width: min(1600px, 95vw);
-  }
-  
+/* Wide laptops / desktops: 1440px and up */
+@media (min-width: 1440px) {
+  .proctor-dashboard { max-width: min(1440px, 92vw); }
   .appointments-list {
-    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
-    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+    gap: var(--pd-space-lg);
   }
+}
+
+/* Full HD: 1920px and up */
+@media (min-width: 1920px) {
+  .proctor-dashboard { max-width: min(1700px, 88vw); }
+  .appointments-list {
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+  }
+}
+
+/* TV / 4K: 2560px and up */
+@media (min-width: 2560px) {
+  :root {
+    --pd-font-md: 1.15rem;
+    --pd-font-lg: 1.5rem;
+    --pd-font-xl: 1.95rem;
+    --pd-font-xxl: 2.75rem;
+  }
+  .proctor-dashboard {
+    max-width: min(2200px, 85vw);
+    padding: var(--pd-space-xl);
+  }
+  .appointments-list {
+    grid-template-columns: repeat(auto-fill, minmax(680px, 1fr));
+    gap: var(--pd-space-xl);
+  }
+}
+
+/* Mobile-only stacking adjustments */
+@media (max-width: 639px) {
+  .appointments-header,
+  .filters-header { flex-direction: column; align-items: flex-start; }
+
+  .stats { width: 100%; }
+  .stat-item { min-width: calc(50% - var(--pd-space-sm)); align-items: flex-start; }
+
+  .appointment-meta { flex-direction: column; gap: var(--pd-space-sm); }
+
+  .appointment-actions { flex-direction: column; align-items: stretch; }
+  .appointment-actions .view-btn,
+  .appointment-actions .room-links { width: 100%; }
+  .room-links { justify-content: stretch; }
+  .room-link { flex: 1 1 auto; }
+
+  .detail-row { flex-direction: column; align-items: flex-start; }
+  .detail-value { text-align: left; max-width: 100%; }
+
+  .filter-actions { justify-content: stretch; }
+  .clear-filters-btn { width: 100%; }
+}
+
+/* Very small phones: 360px and below */
+@media (max-width: 360px) {
+  .stat-item { min-width: 100%; }
 }
 
 /* ==========================================================================
-   ACCESSIBILITY
+   ACCESSIBILITY OVERRIDES
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
+  .appointment-card,
+  .stat-item,
+  .retry-btn,
+  .view-btn,
+  .room-link,
+  .clear-filters-btn { transition: none; }
+
   .appointment-card:hover,
   .stat-item:hover,
   .retry-btn:hover,
   .view-btn:hover,
-  .room-link:hover {
-    transform: none;
-  }
-  
-  .status-badge {
-    animation: none;
-  }
+  .room-link:hover,
+  .clear-filters-btn:hover { transform: none; }
+
+  .status-badge { animation: none; }
+  .loading-spinner { animation-duration: 1.6s; }
 }
 
-/* Focus indicators */
-.view-btn:focus-visible,
-.retry-btn:focus-visible,
-.room-link:focus-visible {
-  outline: 2px solid var(--cosmic-cyan);
-  outline-offset: 2px;
-  box-shadow: 0 0 20px var(--cosmic-cyan-glow);
-}
-
-/* High contrast mode */
 @media (prefers-contrast: high) {
-  .dashboard-content,
   .dashboard-header,
-  .appointment-card {
-    border: 2px solid var(--cosmic-cyan);
-    background: rgba(5, 5, 20, 0.95);
+  .dashboard-content,
+  .appointment-card,
+  .filters-section,
+  .stat-item {
+    background: rgba(5, 7, 22, 0.85);
+    border-color: var(--pd-text);
   }
-  
-  .status-badge {
-    border: 2px solid currentColor;
-  }
-  
-  .view-btn,
+  .status-badge,
   .retry-btn,
-  .room-link {
-    border: 2px solid currentColor;
-  }
-}
-
-/* Dark mode enforcement */
-@media (prefers-color-scheme: light) {
-  .proctor-dashboard {
-    color-scheme: dark;
-  }
-}
-
-/* ==========================================================================
-   PERFORMANCE OPTIMIZATIONS
-   ========================================================================== */
-.appointment-card,
-.stat-item,
-.view-btn,
-.room-link {
-  contain: layout style paint;
-}
-
-.appointment-card:hover,
-.stat-item:hover,
-.view-btn:hover,
-.room-link:hover {
-  transform: translateZ(0);
-}
-
-/* ==========================================================================
-   SCROLLBAR STYLING - COSMIC THEME
-   ========================================================================== */
-.proctor-dashboard::-webkit-scrollbar {
-  width: 10px;
-}
-
-.proctor-dashboard::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
-}
-
-.proctor-dashboard::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    to bottom,
-    rgba(78, 205, 196, 0.5),
-    rgba(138, 43, 226, 0.5)
-  );
-  border-radius: 5px;
-  border: 2px solid rgba(0, 0, 0, 0.3);
-}
-
-.proctor-dashboard::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    to bottom,
-    rgba(78, 205, 196, 0.7),
-    rgba(138, 43, 226, 0.7)
-  );
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
-}
-
-/* ==========================================================================
-   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
-   ========================================================================== */
-/* All breakpoints follow the 50px scale from 200px to 2560px+ */
-/* Each breakpoint overrides spacing, font sizes, and container max-width for optimal UX */
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  .proctor-dashboard {
-    font-size: 8px;
-    padding: 0.5rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 6px */
-    --font-sm: 0.875rem;  /* 7px */
-    --font-md: 1rem;       /* 8px */
-    --font-lg: 1.125rem;   /* 9px */
-    --font-xl: 1.375rem;   /* 11px */
-    --font-xxl: 1.75rem;   /* 14px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.375rem;
-    --space-md: 0.5rem;
-    --space-lg: 0.75rem;
-    --space-xl: 1rem;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-  }
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-  .stat-item {
-    min-width: 100%;
-  }
-  .status-badge {
-    padding: 2px 8px;
-  }
-  .retry-btn, .view-btn, .room-link {
-    padding: 0.375rem 0.75rem;
-    min-height: 28px;
-  }
-}
-
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  .proctor-dashboard {
-    font-size: 9px;
-    padding: 0.5rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 6.75px */
-    --font-sm: 0.875rem;  /* 7.875px */
-    --font-md: 1rem;       /* 9px */
-    --font-lg: 1.125rem;   /* 10.125px */
-    --font-xl: 1.375rem;   /* 12.375px */
-    --font-xxl: 1.75rem;   /* 15.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.375rem;
-    --space-md: 0.5rem;
-    --space-lg: 0.75rem;
-    --space-xl: 1rem;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-  }
-  .stat-item {
-    min-width: 100%;
-  }
-  .retry-btn, .view-btn, .room-link {
-    padding: 0.375rem 0.75rem;
-    min-height: 30px;
-  }
-}
-
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  .proctor-dashboard {
-    font-size: 10px;
-    padding: 0.5rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 7.5px */
-    --font-sm: 0.875rem;  /* 8.75px */
-    --font-md: 1rem;       /* 10px */
-    --font-lg: 1.125rem;   /* 11.25px */
-    --font-xl: 1.375rem;   /* 13.75px */
-    --font-xxl: 1.75rem;   /* 17.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.375rem;
-    --space-md: 0.5rem;
-    --space-lg: 0.75rem;
-    --space-xl: 1.125rem;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-  }
-  .stat-item {
-    min-width: 100%;
-  }
-}
-
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  .proctor-dashboard {
-    font-size: 11px;
-    padding: 0.625rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 8.25px */
-    --font-sm: 0.875rem;  /* 9.625px */
-    --font-md: 1rem;       /* 11px */
-    --font-lg: 1.125rem;   /* 12.375px */
-    --font-xl: 1.375rem;   /* 15.125px */
-    --font-xxl: 1.75rem;   /* 19.25px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.625rem;
-    --space-lg: 0.875rem;
-    --space-xl: 1.25rem;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-  }
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-  }
-  .appointment-meta {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-}
-
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  .proctor-dashboard {
-    font-size: 12px;
-    padding: 0.75rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 9px */
-    --font-sm: 0.875rem;  /* 10.5px */
-    --font-md: 1rem;       /* 12px */
-    --font-lg: 1.125rem;   /* 13.5px */
-    --font-xl: 1.375rem;   /* 16.5px */
-    --font-xxl: 1.75rem;   /* 21px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 4px;
-    --radius-md: 7px;
-    --radius-lg: 9px;
-    --radius-xl: 11px;
-  }
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-  }
-  .appointment-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  .proctor-dashboard {
-    font-size: 13px;
-    padding: 0.75rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 9.75px */
-    --font-sm: 0.875rem;  /* 11.375px */
-    --font-md: 1rem;       /* 13px */
-    --font-lg: 1.125rem;   /* 14.625px */
-    --font-xl: 1.375rem;   /* 17.875px */
-    --font-xxl: 1.75rem;   /* 22.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 5px;
-    --radius-md: 7px;
-    --radius-lg: 9px;
-    --radius-xl: 11px;
-  }
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-  }
-  .room-links {
-    justify-content: flex-start;
-  }
-}
-
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  .proctor-dashboard {
-    font-size: 13.5px;
-    padding: 0.875rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.125px */
-    --font-sm: 0.875rem;  /* 11.8125px */
-    --font-md: 1rem;       /* 13.5px */
-    --font-lg: 1.125rem;   /* 15.1875px */
-    --font-xl: 1.375rem;   /* 18.5625px */
-    --font-xxl: 1.75rem;   /* 23.625px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 5px;
-    --radius-md: 7px;
-    --radius-lg: 10px;
-    --radius-xl: 12px;
-  }
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  .proctor-dashboard {
-    font-size: 14px;
-    padding: 0.875rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.5px */
-    --font-sm: 0.875rem;  /* 12.25px */
-    --font-md: 1rem;       /* 14px */
-    --font-lg: 1.125rem;   /* 15.75px */
-    --font-xl: 1.375rem;   /* 19.25px */
-    --font-xxl: 1.75rem;   /* 24.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 5px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
-    --radius-xl: 12px;
-  }
-  .stat-item {
-    min-width: calc(50% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  .proctor-dashboard {
-    font-size: 14.5px;
-    padding: 1rem;
-    max-width: 100%;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.875px */
-    --font-sm: 0.875rem;  /* 12.6875px */
-    --font-md: 1rem;       /* 14.5px */
-    --font-lg: 1.125rem;   /* 16.3125px */
-    --font-xl: 1.375rem;   /* 19.9375px */
-    --font-xxl: 1.75rem;   /* 25.375px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1.125rem;
-    --space-xl: 1.75rem;
-    --radius-sm: 5px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
-    --radius-xl: 12px;
-  }
-  .stat-item {
-    min-width: calc(33.333% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  .proctor-dashboard {
-    font-size: 15px;
-    padding: 1rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 11.25px */
-    --font-sm: 0.875rem;  /* 13.125px */
-    --font-md: 1rem;       /* 15px */
-    --font-lg: 1.125rem;   /* 16.875px */
-    --font-xl: 1.375rem;   /* 20.625px */
-    --font-xxl: 1.75rem;   /* 26.25px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 5px;
-    --radius-md: 8px;
-    --radius-lg: 11px;
-    --radius-xl: 13px;
-  }
-  .stat-item {
-    min-width: calc(33.333% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  .proctor-dashboard {
-    font-size: 15.5px;
-    padding: 1rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 11.625px */
-    --font-sm: 0.875rem;  /* 13.5625px */
-    --font-md: 1rem;       /* 15.5px */
-    --font-lg: 1.125rem;   /* 17.4375px */
-    --font-xl: 1.375rem;   /* 21.3125px */
-    --font-xxl: 1.75rem;   /* 27.125px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 11px;
-    --radius-xl: 13px;
-  }
-  .stat-item {
-    min-width: calc(33.333% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  .proctor-dashboard {
-    font-size: 16px;
-    padding: 1rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12px */
-    --font-sm: 0.875rem;  /* 14px */
-    --font-md: 1rem;       /* 16px */
-    --font-lg: 1.125rem;   /* 18px */
-    --font-xl: 1.375rem;   /* 22px */
-    --font-xxl: 1.75rem;   /* 28px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 14px;
-  }
-  .stat-item {
-    min-width: calc(33.333% - var(--space-sm));
-  }
-}
-
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  .proctor-dashboard {
-    font-size: 16.5px;
-    padding: 1.25rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12.375px */
-    --font-sm: 0.875rem;  /* 14.4375px */
-    --font-md: 1rem;       /* 16.5px */
-    --font-lg: 1.125rem;   /* 18.5625px */
-    --font-xl: 1.375rem;   /* 22.6875px */
-    --font-xxl: 1.75rem;   /* 28.875px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 6px;
-    --radius-md: 9px;
-    --radius-lg: 12px;
-    --radius-xl: 14px;
-  }
-  .stat-item {
-    min-width: auto;
-    flex: 1;
-  }
-}
-
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  .proctor-dashboard {
-    font-size: 17px;
-    padding: 1.25rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12.75px */
-    --font-sm: 0.875rem;  /* 14.875px */
-    --font-md: 1rem;       /* 17px */
-    --font-lg: 1.125rem;   /* 19.125px */
-    --font-xl: 1.375rem;   /* 23.375px */
-    --font-xxl: 1.75rem;   /* 29.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 6px;
-    --radius-md: 9px;
-    --radius-lg: 12px;
-    --radius-xl: 15px;
-  }
-}
-
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  .proctor-dashboard {
-    font-size: 17.5px;
-    padding: 1.25rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.125px */
-    --font-sm: 0.875rem;  /* 15.3125px */
-    --font-md: 1rem;       /* 17.5px */
-    --font-lg: 1.125rem;   /* 19.6875px */
-    --font-xl: 1.375rem;   /* 24.0625px */
-    --font-xxl: 1.75rem;   /* 30.625px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.875rem;
-    --space-lg: 1.25rem;
-    --space-xl: 2rem;
-    --radius-sm: 6px;
-    --radius-md: 9px;
-    --radius-lg: 12px;
-    --radius-xl: 15px;
-  }
-}
-
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  .proctor-dashboard {
-    font-size: 17.5px;
-    padding: 1.5rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.125px */
-    --font-sm: 0.875rem;  /* 15.3125px */
-    --font-md: 1rem;       /* 17.5px */
-    --font-lg: 1.125rem;   /* 19.6875px */
-    --font-xl: 1.375rem;   /* 24.0625px */
-    --font-xxl: 1.75rem;   /* 30.625px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.25rem;
-    --radius-sm: 7px;
-    --radius-md: 10px;
-    --radius-lg: 13px;
-    --radius-xl: 16px;
-  }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  .proctor-dashboard {
-    font-size: 18px;
-    padding: 1.5rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.5px */
-    --font-sm: 0.875rem;  /* 15.75px */
-    --font-md: 1rem;       /* 18px */
-    --font-lg: 1.125rem;   /* 20.25px */
-    --font-xl: 1.375rem;   /* 24.75px */
-    --font-xxl: 1.75rem;   /* 31.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.25rem;
-    --radius-sm: 7px;
-    --radius-md: 10px;
-    --radius-lg: 13px;
-    --radius-xl: 16px;
-  }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  .proctor-dashboard {
-    font-size: 18px;
-    padding: 1.5rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.5px */
-    --font-sm: 0.875rem;  /* 15.75px */
-    --font-md: 1rem;       /* 18px */
-    --font-lg: 1.125rem;   /* 20.25px */
-    --font-xl: 1.375rem;   /* 24.75px */
-    --font-xxl: 1.75rem;   /* 31.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.25rem;
-    --radius-sm: 7px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 17px;
-  }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  .proctor-dashboard {
-    font-size: 18.5px;
-    padding: 1.5rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.875px */
-    --font-sm: 0.875rem;  /* 16.1875px */
-    --font-md: 1rem;       /* 18.5px */
-    --font-lg: 1.125rem;   /* 20.8125px */
-    --font-xl: 1.375rem;   /* 25.4375px */
-    --font-xxl: 1.75rem;   /* 32.375px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.25rem;
-    --radius-sm: 7px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 17px;
-  }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  .proctor-dashboard {
-    font-size: 18.5px;
-    padding: 1.5rem;
-    max-width: min(90vw, 1200px);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.875px */
-    --font-sm: 0.875rem;  /* 16.1875px */
-    --font-md: 1rem;       /* 18.5px */
-    --font-lg: 1.125rem;   /* 20.8125px */
-    --font-xl: 1.375rem;   /* 25.4375px */
-    --font-xxl: 1.75rem;   /* 32.375px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.5rem;
-    --radius-sm: 8px;
-    --radius-md: 11px;
-    --radius-lg: 15px;
-    --radius-xl: 18px;
-  }
-}
-
-/* ===== Breakpoint: 1200px – 1250px | 4XL Screens ===== */
-@media only screen and (min-width: 1200px) and (max-width: 1250px) {
-  .proctor-dashboard {
-    font-size: 19px;
-    padding: 1.5rem;
-    max-width: min(1200px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 14.25px */
-    --font-sm: 0.875rem;  /* 16.625px */
-    --font-md: 1rem;       /* 19px */
-    --font-lg: 1.125rem;   /* 21.375px */
-    --font-xl: 1.375rem;   /* 26.125px */
-    --font-xxl: 1.75rem;   /* 33.25px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2.5rem;
-    --radius-sm: 8px;
-    --radius-md: 11px;
-    --radius-lg: 15px;
-    --radius-xl: 18px;
-  }
-}
-
-/* ===== Breakpoint: 1250px – 1300px ===== */
-@media only screen and (min-width: 1250px) and (max-width: 1300px) {
-  .proctor-dashboard {
-    font-size: 19.5px;
-    max-width: min(1300px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 14.625px */
-    --font-sm: 0.875rem;  /* 17.0625px */
-    --font-md: 1rem;       /* 19.5px */
-    --font-lg: 1.125rem;   /* 21.9375px */
-    --font-xl: 1.375rem;   /* 26.8125px */
-    --font-xxl: 1.75rem;   /* 34.125px */
-    --space-xl: 2.5rem;
-    --radius-sm: 8px;
-    --radius-md: 11px;
-    --radius-lg: 15px;
-    --radius-xl: 18px;
-  }
-}
-
-/* ===== Breakpoint: 1300px – 1350px ===== */
-@media only screen and (min-width: 1300px) and (max-width: 1350px) {
-  .proctor-dashboard {
-    font-size: 20px;
-    max-width: min(1350px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 15px */
-    --font-sm: 0.875rem;  /* 17.5px */
-    --font-md: 1rem;       /* 20px */
-    --font-lg: 1.125rem;   /* 22.5px */
-    --font-xl: 1.375rem;   /* 27.5px */
-    --font-xxl: 1.75rem;   /* 35px */
-    --space-xl: 2.75rem;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-  }
-}
-
-/* ===== Breakpoint: 1350px – 1400px ===== */
-@media only screen and (min-width: 1350px) and (max-width: 1400px) {
-  .proctor-dashboard {
-    font-size: 20.5px;
-    max-width: min(1400px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 15.375px */
-    --font-sm: 0.875rem;  /* 17.9375px */
-    --font-md: 1rem;       /* 20.5px */
-    --font-lg: 1.125rem;   /* 23.0625px */
-    --font-xl: 1.375rem;   /* 28.1875px */
-    --font-xxl: 1.75rem;   /* 35.875px */
-    --space-xl: 2.75rem;
-  }
-}
-
-/* ===== Breakpoint: 1400px – 1450px ===== */
-@media only screen and (min-width: 1400px) and (max-width: 1450px) {
-  .proctor-dashboard {
-    font-size: 21px;
-    max-width: min(1450px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 15.75px */
-    --font-sm: 0.875rem;  /* 18.375px */
-    --font-md: 1rem;       /* 21px */
-    --font-lg: 1.125rem;   /* 23.625px */
-    --font-xl: 1.375rem;   /* 28.875px */
-    --font-xxl: 1.75rem;   /* 36.75px */
-    --space-xl: 3rem;
-    --radius-sm: 9px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-  }
-}
-
-/* ===== Breakpoint: 1450px – 1500px ===== */
-@media only screen and (min-width: 1450px) and (max-width: 1500px) {
-  .proctor-dashboard {
-    font-size: 21.5px;
-    max-width: min(1500px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 16.125px */
-    --font-sm: 0.875rem;  /* 18.8125px */
-    --font-md: 1rem;       /* 21.5px */
-    --font-lg: 1.125rem;   /* 24.1875px */
-    --font-xl: 1.375rem;   /* 29.5625px */
-    --font-xxl: 1.75rem;   /* 37.625px */
-  }
-}
-
-/* ===== Breakpoint: 1500px – 1550px ===== */
-@media only screen and (min-width: 1500px) and (max-width: 1550px) {
-  .proctor-dashboard {
-    font-size: 22px;
-    max-width: min(1550px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 16.5px */
-    --font-sm: 0.875rem;  /* 19.25px */
-    --font-md: 1rem;       /* 22px */
-    --font-lg: 1.125rem;   /* 24.75px */
-    --font-xl: 1.375rem;   /* 30.25px */
-    --font-xxl: 1.75rem;   /* 38.5px */
-    --space-xl: 3rem;
-  }
-}
-
-/* ===== Breakpoint: 1550px – 1600px ===== */
-@media only screen and (min-width: 1550px) and (max-width: 1600px) {
-  .proctor-dashboard {
-    font-size: 22.5px;
-    max-width: min(1600px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 16.875px */
-    --font-sm: 0.875rem;  /* 19.6875px */
-    --font-md: 1rem;       /* 22.5px */
-    --font-lg: 1.125rem;   /* 25.3125px */
-    --font-xl: 1.375rem;   /* 30.9375px */
-    --font-xxl: 1.75rem;   /* 39.375px */
-  }
-}
-
-/* ===== Breakpoint: 1600px – 1650px ===== */
-@media only screen and (min-width: 1600px) and (max-width: 1650px) {
-  .proctor-dashboard {
-    font-size: 23px;
-    max-width: min(1650px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 17.25px */
-    --font-sm: 0.875rem;  /* 20.125px */
-    --font-md: 1rem;       /* 23px */
-    --font-lg: 1.125rem;   /* 25.875px */
-    --font-xl: 1.375rem;   /* 31.625px */
-    --font-xxl: 1.75rem;   /* 40.25px */
-    --space-xl: 3.25rem;
-  }
-}
-
-/* ===== Breakpoint: 1650px – 1700px ===== */
-@media only screen and (min-width: 1650px) and (max-width: 1700px) {
-  .proctor-dashboard {
-    font-size: 23.5px;
-    max-width: min(1700px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 17.625px */
-    --font-sm: 0.875rem;  /* 20.5625px */
-    --font-md: 1rem;       /* 23.5px */
-    --font-lg: 1.125rem;   /* 26.4375px */
-    --font-xl: 1.375rem;   /* 32.3125px */
-    --font-xxl: 1.75rem;   /* 41.125px */
-  }
-}
-
-/* ===== Breakpoint: 1700px – 1750px ===== */
-@media only screen and (min-width: 1700px) and (max-width: 1750px) {
-  .proctor-dashboard {
-    font-size: 24px;
-    max-width: min(1750px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 18px */
-    --font-sm: 0.875rem;  /* 21px */
-    --font-md: 1rem;       /* 24px */
-    --font-lg: 1.125rem;   /* 27px */
-    --font-xl: 1.375rem;   /* 33px */
-    --font-xxl: 1.75rem;   /* 42px */
-    --space-xl: 3.25rem;
-  }
-}
-
-/* ===== Breakpoint: 1750px – 1800px ===== */
-@media only screen and (min-width: 1750px) and (max-width: 1800px) {
-  .proctor-dashboard {
-    font-size: 24.5px;
-    max-width: min(1800px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 18.375px */
-    --font-sm: 0.875rem;  /* 21.4375px */
-    --font-md: 1rem;       /* 24.5px */
-    --font-lg: 1.125rem;   /* 27.5625px */
-    --font-xl: 1.375rem;   /* 33.6875px */
-    --font-xxl: 1.75rem;   /* 42.875px */
-  }
-}
-
-/* ===== Breakpoint: 1800px – 1850px ===== */
-@media only screen and (min-width: 1800px) and (max-width: 1850px) {
-  .proctor-dashboard {
-    font-size: 25px;
-    max-width: min(1850px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 18.75px */
-    --font-sm: 0.875rem;  /* 21.875px */
-    --font-md: 1rem;       /* 25px */
-    --font-lg: 1.125rem;   /* 28.125px */
-    --font-xl: 1.375rem;   /* 34.375px */
-    --font-xxl: 1.75rem;   /* 43.75px */
-    --space-xl: 3.5rem;
-  }
-}
-
-/* ===== Breakpoint: 1850px – 1900px ===== */
-@media only screen and (min-width: 1850px) and (max-width: 1900px) {
-  .proctor-dashboard {
-    font-size: 25.5px;
-    max-width: min(1900px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 19.125px */
-    --font-sm: 0.875rem;  /* 22.3125px */
-    --font-md: 1rem;       /* 25.5px */
-    --font-lg: 1.125rem;   /* 28.6875px */
-    --font-xl: 1.375rem;   /* 35.0625px */
-    --font-xxl: 1.75rem;   /* 44.625px */
-  }
-}
-
-/* ===== Breakpoint: 1900px – 1950px ===== */
-@media only screen and (min-width: 1900px) and (max-width: 1950px) {
-  .proctor-dashboard {
-    font-size: 26px;
-    max-width: min(1950px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 19.5px */
-    --font-sm: 0.875rem;  /* 22.75px */
-    --font-md: 1rem;       /* 26px */
-    --font-lg: 1.125rem;   /* 29.25px */
-    --font-xl: 1.375rem;   /* 35.75px */
-    --font-xxl: 1.75rem;   /* 45.5px */
-    --space-xl: 3.5rem;
-  }
-}
-
-/* ===== Breakpoint: 1950px – 2000px ===== */
-@media only screen and (min-width: 1950px) and (max-width: 2000px) {
-  .proctor-dashboard {
-    font-size: 26.5px;
-    max-width: min(2000px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 19.875px */
-    --font-sm: 0.875rem;  /* 23.1875px */
-    --font-md: 1rem;       /* 26.5px */
-    --font-lg: 1.125rem;   /* 29.8125px */
-    --font-xl: 1.375rem;   /* 36.4375px */
-    --font-xxl: 1.75rem;   /* 46.375px */
-  }
-}
-
-/* ===== Breakpoint: 2000px – 2050px ===== */
-@media only screen and (min-width: 2000px) and (max-width: 2050px) {
-  .proctor-dashboard {
-    font-size: 27px;
-    max-width: min(2050px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 20.25px */
-    --font-sm: 0.875rem;  /* 23.625px */
-    --font-md: 1rem;       /* 27px */
-    --font-lg: 1.125rem;   /* 30.375px */
-    --font-xl: 1.375rem;   /* 37.125px */
-    --font-xxl: 1.75rem;   /* 47.25px */
-    --space-xl: 3.75rem;
-  }
-}
-
-/* ===== Breakpoint: 2050px – 2100px ===== */
-@media only screen and (min-width: 2050px) and (max-width: 2100px) {
-  .proctor-dashboard {
-    font-size: 27.5px;
-    max-width: min(2100px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 20.625px */
-    --font-sm: 0.875rem;  /* 24.0625px */
-    --font-md: 1rem;       /* 27.5px */
-    --font-lg: 1.125rem;   /* 30.9375px */
-    --font-xl: 1.375rem;   /* 37.8125px */
-    --font-xxl: 1.75rem;   /* 48.125px */
-  }
-}
-
-/* ===== Breakpoint: 2100px – 2150px ===== */
-@media only screen and (min-width: 2100px) and (max-width: 2150px) {
-  .proctor-dashboard {
-    font-size: 28px;
-    max-width: min(2150px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 21px */
-    --font-sm: 0.875rem;  /* 24.5px */
-    --font-md: 1rem;       /* 28px */
-    --font-lg: 1.125rem;   /* 31.5px */
-    --font-xl: 1.375rem;   /* 38.5px */
-    --font-xxl: 1.75rem;   /* 49px */
-    --space-xl: 3.75rem;
-  }
-}
-
-/* ===== Breakpoint: 2150px – 2200px ===== */
-@media only screen and (min-width: 2150px) and (max-width: 2200px) {
-  .proctor-dashboard {
-    font-size: 28.5px;
-    max-width: min(2200px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 21.375px */
-    --font-sm: 0.875rem;  /* 24.9375px */
-    --font-md: 1rem;       /* 28.5px */
-    --font-lg: 1.125rem;   /* 32.0625px */
-    --font-xl: 1.375rem;   /* 39.1875px */
-    --font-xxl: 1.75rem;   /* 49.875px */
-  }
-}
-
-/* ===== Breakpoint: 2200px – 2250px ===== */
-@media only screen and (min-width: 2200px) and (max-width: 2250px) {
-  .proctor-dashboard {
-    font-size: 29px;
-    max-width: min(2250px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 21.75px */
-    --font-sm: 0.875rem;  /* 25.375px */
-    --font-md: 1rem;       /* 29px */
-    --font-lg: 1.125rem;   /* 32.625px */
-    --font-xl: 1.375rem;   /* 39.875px */
-    --font-xxl: 1.75rem;   /* 50.75px */
-    --space-xl: 4rem;
-  }
-}
-
-/* ===== Breakpoint: 2250px – 2300px ===== */
-@media only screen and (min-width: 2250px) and (max-width: 2300px) {
-  .proctor-dashboard {
-    font-size: 29.5px;
-    max-width: min(2300px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 22.125px */
-    --font-sm: 0.875rem;  /* 25.8125px */
-    --font-md: 1rem;       /* 29.5px */
-    --font-lg: 1.125rem;   /* 33.1875px */
-    --font-xl: 1.375rem;   /* 40.5625px */
-    --font-xxl: 1.75rem;   /* 51.625px */
-  }
-}
-
-/* ===== Breakpoint: 2300px – 2350px ===== */
-@media only screen and (min-width: 2300px) and (max-width: 2350px) {
-  .proctor-dashboard {
-    font-size: 30px;
-    max-width: min(2350px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 22.5px */
-    --font-sm: 0.875rem;  /* 26.25px */
-    --font-md: 1rem;       /* 30px */
-    --font-lg: 1.125rem;   /* 33.75px */
-    --font-xl: 1.375rem;   /* 41.25px */
-    --font-xxl: 1.75rem;   /* 52.5px */
-    --space-xl: 4rem;
-  }
-}
-
-/* ===== Breakpoint: 2350px – 2400px ===== */
-@media only screen and (min-width: 2350px) and (max-width: 2400px) {
-  .proctor-dashboard {
-    font-size: 30.5px;
-    max-width: min(2400px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 22.875px */
-    --font-sm: 0.875rem;  /* 26.6875px */
-    --font-md: 1rem;       /* 30.5px */
-    --font-lg: 1.125rem;   /* 34.3125px */
-    --font-xl: 1.375rem;   /* 41.9375px */
-    --font-xxl: 1.75rem;   /* 53.375px */
-  }
-}
-
-/* ===== Breakpoint: 2400px – 2450px ===== */
-@media only screen and (min-width: 2400px) and (max-width: 2450px) {
-  .proctor-dashboard {
-    font-size: 31px;
-    max-width: min(2450px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 23.25px */
-    --font-sm: 0.875rem;  /* 27.125px */
-    --font-md: 1rem;       /* 31px */
-    --font-lg: 1.125rem;   /* 34.875px */
-    --font-xl: 1.375rem;   /* 42.625px */
-    --font-xxl: 1.75rem;   /* 54.25px */
-    --space-xl: 4.25rem;
-  }
-}
-
-/* ===== Breakpoint: 2450px – 2500px ===== */
-@media only screen and (min-width: 2450px) and (max-width: 2500px) {
-  .proctor-dashboard {
-    font-size: 31.5px;
-    max-width: min(2500px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 23.625px */
-    --font-sm: 0.875rem;  /* 27.5625px */
-    --font-md: 1rem;       /* 31.5px */
-    --font-lg: 1.125rem;   /* 35.4375px */
-    --font-xl: 1.375rem;   /* 43.3125px */
-    --font-xxl: 1.75rem;   /* 55.125px */
-  }
-}
-
-/* ===== Breakpoint: 2500px – 2550px ===== */
-@media only screen and (min-width: 2500px) and (max-width: 2550px) {
-  .proctor-dashboard {
-    font-size: 32px;
-    max-width: min(2550px, 95vw);
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 24px */
-    --font-sm: 0.875rem;  /* 28px */
-    --font-md: 1rem;       /* 32px */
-    --font-lg: 1.125rem;   /* 36px */
-    --font-xl: 1.375rem;   /* 44px */
-    --font-xxl: 1.75rem;   /* 56px */
-    --space-xl: 4.25rem;
-  }
-}
-
-/* ===== Breakpoint: 2550px – 2600px+ ===== */
-@media only screen and (min-width: 2550px) {
-  .proctor-dashboard {
-    font-size: 32px;
-    max-width: min(2000px, 90vw);
-    margin: 0 auto;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 24px */
-    --font-sm: 0.875rem;  /* 28px */
-    --font-md: 1rem;       /* 32px */
-    --font-lg: 1.125rem;   /* 36px */
-    --font-xl: 1.375rem;   /* 44px */
-    --font-xxl: 1.75rem;   /* 56px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 4.5rem;
-    --radius-sm: 10px;
-    --radius-md: 14px;
-    --radius-lg: 18px;
-    --radius-xl: 22px;
-  }
-  .appointments-list {
-    grid-template-columns: repeat(auto-fill, minmax(700px, 1fr));
-    gap: var(--space-xl);
-  }
+  .view-btn,
+  .room-link,
+  .clear-filters-btn { border-width: 2px; }
 }

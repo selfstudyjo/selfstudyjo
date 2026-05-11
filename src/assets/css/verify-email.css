@@ -1,698 +1,492 @@
-/* ============================================
- Verify Email - Galaxy Space Theme
- Cosmic glass-morphism, fully transparent base,
- dark floating card with glowing accents.
- Fully responsive with 21 granular breakpoints.
-============================================ */
+/* ============================================================
+   VERIFY EMAIL — Galaxy / Glassmorphism Theme
+   Coexists with: src/style.css + AnimatedBackground.vue
+                 + side-nav.css + default-layout.css
+   ============================================================ */
 
-/* ---------- CSS Custom Properties (Cosmic Palette) ---------- */
-:root {
-  /* Base font size unitless number (default smallest) */
-  --base: 8;
+/* ---------- Page-scoped tokens (won't leak to other pages) ---------- */
+.verify-container {
+  /* brand */
+  --ve-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --ve-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.22) 0%, rgba(118,75,162,0.22) 100%);
+  --ve-accent:      #818cf8;
+  --ve-accent-2:    #a78bfa;
 
-  /* Spacing - scaled from original 16px base */
-  --space-xs: calc(4px * var(--base) / 16);
-  --space-sm: calc(8px * var(--base) / 16);
-  --space-md: calc(16px * var(--base) / 16);
-  --space-lg: calc(24px * var(--base) / 16);
-  --space-xl: calc(32px * var(--base) / 16);
-  --space-2xl: calc(48px * var(--base) / 16);
+  /* text */
+  --ve-text:        #ffffff;
+  --ve-text-soft:   #e8eaff;
+  --ve-text-mute:   rgba(255,255,255,0.70);
+  --ve-text-dim:    rgba(255,255,255,0.50);
+  --ve-text-err:    #fecaca;
+  --ve-text-ok:     #bbf7d0;
 
-  /* Border radius */
-  --radius-sm: calc(8px * var(--base) / 16);
-  --radius-md: calc(12px * var(--base) / 16);
-  --radius-lg: calc(16px * var(--base) / 16);
-  --radius-xl: calc(24px * var(--base) / 16);
+  /* glass */
+  --ve-glass:       rgba(255,255,255,0.05);
+  --ve-glass-strong:rgba(255,255,255,0.08);
+  --ve-glass-input: rgba(255,255,255,0.04);
+  --ve-border:      rgba(255,255,255,0.10);
+  --ve-border-hi:   rgba(255,255,255,0.22);
+  --ve-blur:        blur(22px) saturate(160%);
 
-  /* Typography - with minimum readability */
-  --font-size-xs: max(8px, calc(12px * var(--base) / 16));
-  --font-size-sm: max(8px, calc(14px * var(--base) / 16));
-  --font-size-base: calc(var(--base) * 1px);
-  --font-size-lg: calc(18px * var(--base) / 16);
-  --font-size-xl: calc(24px * var(--base) / 16);
-  --font-size-2xl: calc(32px * var(--base) / 16);
+  /* shadow / glow */
+  --ve-shadow:      0 12px 40px rgba(102,126,234,0.18),
+                    0 0 0 1px rgba(255,255,255,0.04);
+  --ve-shadow-hi:   0 18px 56px rgba(118,75,162,0.30),
+                    0 0 0 1px rgba(255,255,255,0.08);
+  --ve-glow:        0 0 24px rgba(129,140,248,0.45);
 
-  /* OTP input size - ensures minimum touch target 32px */
-  --otp-width: max(32px, calc(48px * var(--base) / 16));
-  --otp-height: max(32px, calc(56px * var(--base) / 16));
+  /* sizing */
+  --ve-radius-sm:   10px;
+  --ve-radius-md:   14px;
+  --ve-radius-lg:   22px;
+  --ve-radius-xl:   28px;
 
-  /* Icon sizes */
-  --icon-size-large: calc(80px * var(--base) / 16);
-  --icon-size-small: calc(32px * var(--base) / 16);
+  --ve-card-w:      min(100%, 30rem);
+  --ve-otp-size:    clamp(40px, 11vw, 56px);
 
-  /* Background shape sizes */
-  --shape-1-size: calc(400px * var(--base) / 16);
-  --shape-2-size: calc(350px * var(--base) / 16);
-  --shape-3-size: calc(250px * var(--base) / 16);
-
-  /* Container max-width (adjusted per breakpoint) */
-  --container-max-width: 250px;
-
-  /* Dark space backgrounds - highly transparent (unchanged) */
-  --space-bg-darkest: rgba(5, 5, 20, 0.9);
-  --space-bg-dark: rgba(10, 10, 30, 0.85);
-  --space-bg-medium: rgba(15, 15, 40, 0.8);
-  --space-bg-light: rgba(20, 20, 50, 0.7);
-  --space-bg-input: rgba(0, 0, 0, 0.6);
-  --space-bg-card: rgba(8, 8, 25, 0.8);
-  --space-bg-card-hover: rgba(12, 12, 35, 0.9);
-
-  /* Text colors - light with cosmic glow */
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-accent: #4ECDC4;        /* cosmic cyan */
-  --text-accent-alt: #8A2BE2;    /* nebula purple */
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --text-placeholder: rgba(255, 255, 255, 0.5);
-  --text-error: #ffb3b3;
-  --text-success: #9ae6b4;
-
-  /* Glow effects (unchanged) */
-  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.5);
-  --glow-purple: 0 0 25px rgba(138, 43, 226, 0.5);
-  --glow-blue: 0 0 25px rgba(66, 133, 244, 0.4);
-  --glow-white: 0 0 15px rgba(255, 255, 255, 0.3);
-  --glow-red: 0 0 15px rgba(255, 100, 100, 0.4);
-  --glow-green: 0 0 15px rgba(72, 187, 120, 0.4);
-
-  /* Borders & shadows (unchanged) */
-  --border-glass: 1px solid rgba(255, 255, 255, 0.12);
-  --border-glow: 1px solid rgba(78, 205, 196, 0.4);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5),
-                 0 0 0 1px rgba(255, 255, 255, 0.05),
-                 0 0 30px rgba(78, 205, 196, 0.2);
-  --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.7),
-                  0 0 0 1px rgba(78, 205, 196, 0.3),
-                  0 0 40px rgba(78, 205, 196, 0.3);
-
-  /* Transitions */
-  --transition-speed: 0.3s;
-  --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* motion */
+  --ve-ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --ve-t-fast:      180ms var(--ve-ease);
+  --ve-t-base:      280ms var(--ve-ease);
 }
 
-/* ---------- Main Container (Fully Transparent) ---------- */
+/* ---------- Container (transparent, galaxy shows through) ---------- */
 .verify-container {
-  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-md);
-  position: relative;
-  overflow: hidden;
+  padding: clamp(1rem, 4vw, 3rem) clamp(0.75rem, 3vw, 2rem);
   background: transparent;
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ve-text-soft);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  overflow: visible;
 }
 
-/* ---------- Cosmic Glass Card ---------- */
+/* ---------- Background "shapes" — neutralized (galaxy is the real bg) ---------- */
+.verify-background,
+.background-shapes,
+.shape,
+.shape-1,
+.shape-2,
+.shape-3 {
+  display: none !important;
+}
+
+/* ---------- Card ---------- */
 .verify-card {
-  background: var(--space-bg-card);
-  backdrop-filter: blur(12px) saturate(180%);
-  border: var(--border-glass);
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl) var(--space-lg);
-  width: 100%;
-  max-width: var(--container-max-width);
-  box-shadow: var(--shadow-card);
+  position: relative;
   z-index: 2;
-  animation: slideUp 0.6s var(--transition-ease);
+  width: var(--ve-card-w);
+  max-width: 100%;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 3.5vw, 2.5rem);
+  background: var(--ve-glass);
+  border: 1px solid var(--ve-border);
+  border-radius: var(--ve-radius-xl);
+  -webkit-backdrop-filter: var(--ve-blur);
+  backdrop-filter: var(--ve-blur);
+  box-shadow: var(--ve-shadow);
   text-align: center;
-  transition: all var(--transition-speed) ease;
+  animation: fadeInUp 0.5s var(--ve-ease) both;
+  transition:
+    box-shadow var(--ve-t-base),
+    border-color var(--ve-t-base),
+    background var(--ve-t-base),
+    transform var(--ve-t-base);
+}
+
+.verify-card::before {
+  /* subtle inner highlight */
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.06) 0%,
+    rgba(255,255,255,0) 35%);
 }
 
 .verify-card:hover {
-  box-shadow: var(--shadow-hover);
-  border-color: rgba(78, 205, 196, 0.3);
+  border-color: var(--ve-border-hi);
+  box-shadow: var(--ve-shadow-hi);
 }
 
-/* ---------- Header with Cosmic Glow ---------- */
+/* ---------- Header ---------- */
 .verify-header {
-  margin-bottom: var(--space-xl);
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
 }
 
 .verify-icon {
-  margin: 0 auto var(--space-lg);
-  width: var(--icon-size-large);
-  height: var(--icon-size-large);
-  background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
+  width: clamp(64px, 14vw, 88px);
+  height: clamp(64px, 14vw, 88px);
+  margin: 0 auto clamp(0.75rem, 2vw, 1.25rem);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
-  box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
+  border-radius: 50%;
+  color: #fff;
+  background: var(--ve-grad);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow:
+    0 12px 36px rgba(102,126,234,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 .verify-icon svg {
-  width: var(--icon-size-small);
-  height: var(--icon-size-small);
-  filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.6));
+  width: 50%;
+  height: 50%;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
 }
 
 .verify-header h1 {
-  font-size: var(--font-size-2xl);
+  font-size: clamp(1.25rem, 3.2vw, 1.75rem);
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--space-xs);
-  text-shadow: 0 0 15px rgba(78, 205, 196, 0.6), 0 0 30px rgba(138, 43, 226, 0.4);
-  letter-spacing: 1px;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+  color: var(--ve-text);
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .verify-header p {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  color: var(--ve-text-mute);
+  font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+  line-height: 1.55;
+  word-break: break-word;
 }
 
-/* ---------- OTP Inputs (Cosmic Style) ---------- */
+/* ---------- Form ---------- */
 .verify-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: clamp(0.75rem, 2vw, 1.25rem);
 }
 
+/* ---------- OTP Inputs ---------- */
 .otp-inputs {
   display: flex;
   justify-content: center;
-  gap: var(--space-sm);
-  margin: var(--space-lg) 0;
+  align-items: center;
   flex-wrap: wrap;
+  gap: clamp(0.35rem, 1.4vw, 0.6rem);
+  margin: clamp(0.5rem, 2vw, 1rem) 0;
 }
 
 .otp-inputs input {
-  width: var(--otp-width);
-  height: var(--otp-height);
-  background: var(--space-bg-input);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-2xl);
+  width: var(--ve-otp-size);
+  height: var(--ve-otp-size);
+  min-width: 0;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
   font-weight: 700;
   text-align: center;
-  color: var(--text-primary);
-  transition: all var(--transition-speed) var(--transition-ease);
-  backdrop-filter: blur(4px);
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  color: var(--ve-text);
+  background: var(--ve-glass-input);
+  border: 1px solid var(--ve-border);
+  border-radius: var(--ve-radius-md);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  caret-color: var(--ve-accent);
+  transition:
+    border-color var(--ve-t-fast),
+    background var(--ve-t-fast),
+    box-shadow var(--ve-t-fast),
+    transform var(--ve-t-fast);
+  -moz-appearance: textfield;
 }
 
-.otp-inputs input:focus {
+.otp-inputs input::-webkit-outer-spin-button,
+.otp-inputs input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.otp-inputs input:focus,
+.otp-inputs input:focus-visible {
   outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2),
-              inset 0 0 10px rgba(0, 0, 0, 0.3),
-              0 0 25px rgba(78, 205, 196, 0.5);
-  background: rgba(0, 0, 0, 0.7);
+  border-color: transparent;
+  background: var(--ve-glass-strong);
+  box-shadow:
+    0 0 0 2px var(--ve-accent),
+    0 0 0 6px rgba(129,140,248,0.20),
+    0 8px 22px rgba(102,126,234,0.30);
+  transform: translateY(-1px);
 }
 
 .otp-inputs input.error {
-  border-color: rgba(255, 100, 100, 0.6);
-  animation: shake 0.5s var(--transition-ease);
-  box-shadow: 0 0 20px rgba(255, 100, 100, 0.4);
+  border-color: rgba(252,129,129,0.55);
+  background: rgba(252,129,129,0.10);
+  box-shadow: 0 0 0 3px rgba(252,129,129,0.18);
+  animation: shake 0.45s var(--ve-ease);
 }
 
 .otp-inputs input::placeholder {
-  color: var(--text-placeholder);
-  font-size: var(--font-size-sm);
-  font-weight: normal;
-}
-
-/* ---------- Verification Info ---------- */
-.verification-info {
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  margin: var(--space-sm) 0;
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
-}
-
-.verification-info .expired {
-  color: #ffb3b3;
-  font-weight: 600;
-  text-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
-}
-
-/* ---------- Buttons (Space Command Style) ---------- */
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  margin: var(--space-lg) 0;
-}
-
-.btn {
-  padding: var(--space-md) var(--space-lg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-speed) var(--transition-ease);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  backdrop-filter: blur(8px);
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
-  letter-spacing: 0.5px;
-}
-
-.btn-primary {
-  background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
-  color: var(--text-primary);
-  box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
-  border-color: rgba(78, 205, 196, 0.3);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: linear-gradient(145deg, rgba(78, 205, 196, 0.35), rgba(138, 43, 226, 0.35));
-  border-color: var(--text-accent);
-  box-shadow: 0 0 35px rgba(78, 205, 196, 0.6);
-  transform: translateY(-3px);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 0 40px rgba(78, 205, 196, 0.8);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(60%);
-}
-
-.btn-secondary {
-  background: rgba(0, 0, 0, 0.4);
-  color: var(--text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: rgba(20, 20, 50, 0.6);
-  border-color: var(--text-accent-alt);
-  color: var(--text-primary);
-  box-shadow: 0 0 25px rgba(138, 43, 226, 0.5);
-  transform: translateY(-3px);
-}
-
-.btn-secondary:active:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(60%);
-}
-
-/* ---------- Alternative Actions ---------- */
-.alternative {
-  margin-top: var(--space-lg);
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.alternative .link {
-  background: none;
-  border: none;
-  color: var(--text-accent);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.2s ease;
-  text-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
-}
-
-.alternative .link:hover {
-  text-decoration: underline;
-  filter: brightness(1.2);
-  text-shadow: 0 0 12px rgba(78, 205, 196, 0.7);
-}
-
-/* ---------- Cosmic Alerts ---------- */
-.alert {
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  animation: fadeIn 0.3s var(--transition-ease);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: var(--font-size-sm);
+  color: var(--ve-text-dim);
+  font-size: 0.85rem;
   font-weight: 500;
 }
 
+/* ---------- Verification info ---------- */
+.verification-info {
+  color: var(--ve-text-mute);
+  font-size: clamp(0.78rem, 1.5vw, 0.875rem);
+  font-weight: 500;
+  margin: 0.25rem 0;
+}
+
+.verification-info .expired {
+  color: var(--ve-text-err);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Actions ---------- */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: clamp(0.875rem, 1.6vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: var(--ve-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    background var(--ve-t-fast),
+    border-color var(--ve-t-fast),
+    box-shadow var(--ve-t-fast),
+    transform var(--ve-t-fast),
+    color var(--ve-t-fast),
+    filter var(--ve-t-fast);
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--ve-grad);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow:
+    0 10px 28px rgba(102,126,234,0.40),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 36px rgba(102,126,234,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: saturate(60%);
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  color: var(--ve-text);
+  background: var(--ve-glass);
+  border-color: var(--ve-border-hi);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--ve-glass-strong);
+  border-color: var(--ve-accent);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(129,140,248,0.30);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: saturate(60%);
+  transform: none;
+}
+
+/* ---------- Alternative link ---------- */
+.alternative {
+  margin-top: 0.75rem;
+  color: var(--ve-text-mute);
+  font-size: clamp(0.78rem, 1.5vw, 0.875rem);
+}
+
+.alternative .link {
+  margin-left: 0.25rem;
+  padding: 0.15rem 0.25rem;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ve-accent);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color var(--ve-t-fast), text-shadow var(--ve-t-fast);
+}
+
+.alternative .link:hover {
+  color: var(--ve-accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Alerts ---------- */
+.alert {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--ve-radius-md);
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+  font-weight: 500;
+  text-align: left;
+  border: 1px solid var(--ve-border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s var(--ve-ease) both;
+}
+
 .alert-error {
-  background: rgba(197, 48, 48, 0.15);
-  color: #ffb3b3;
-  border-left: 5px solid #ff6b6b;
-  box-shadow: 0 0 20px rgba(255, 80, 80, 0.2);
+  color: var(--ve-text-err);
+  background: rgba(252,129,129,0.12);
+  border-color: rgba(252,129,129,0.32);
+  border-left: 4px solid #fc8181;
+  box-shadow: 0 6px 20px rgba(252,129,129,0.18);
 }
 
 .alert-success {
-  background: rgba(72, 187, 120, 0.15);
-  color: #9ae6b4;
-  border-left: 5px solid #48bb78;
-  box-shadow: 0 0 20px rgba(72, 187, 120, 0.2);
-}
-
-/* ---------- Background Shapes (Cosmic Nebulae) ---------- */
-.verify-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.background-shapes {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(78, 205, 196, 0.05), rgba(138, 43, 226, 0.02));
-  filter: blur(40px);
-  animation: float 20s infinite alternate var(--transition-ease);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.shape-1 {
-  width: var(--shape-1-size);
-  height: var(--shape-1-size);
-  top: -200px;
-  right: -200px;
-  background: radial-gradient(circle at 70% 30%, rgba(78, 205, 196, 0.15), rgba(138, 43, 226, 0.1), transparent 70%);
-  animation-delay: 0s;
-}
-
-.shape-2 {
-  width: var(--shape-2-size);
-  height: var(--shape-2-size);
-  bottom: -150px;
-  left: -150px;
-  background: radial-gradient(circle at 30% 70%, rgba(66, 133, 244, 0.12), rgba(138, 43, 226, 0.08), transparent 70%);
-  animation-delay: 2s;
-}
-
-.shape-3 {
-  width: var(--shape-3-size);
-  height: var(--shape-3-size);
-  bottom: -80px;
-  right: 10%;
-  background: radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.1), rgba(255, 255, 255, 0.05), transparent 70%);
-  animation-delay: 4s;
-}
-
-/* Subtle floating animation for background shapes */
-@keyframes float {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translate(30px, -30px) scale(1.1);
-    opacity: 0.9;
-  }
+  color: var(--ve-text-ok);
+  background: rgba(72,187,120,0.12);
+  border-color: rgba(72,187,120,0.32);
+  border-left: 4px solid #48bb78;
+  box-shadow: 0 6px 20px rgba(72,187,120,0.18);
 }
 
 /* ---------- Animations ---------- */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
+/* fadeInUp is provided globally by style.css */
 
-/* ---------- Custom Scrollbar (Cosmic) ---------- */
-.verify-container ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.verify-container ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-}
-
-.verify-container ::-webkit-scrollbar-thumb {
-  background: rgba(78, 205, 196, 0.3);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-}
-
-.verify-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(78, 205, 196, 0.6);
-  box-shadow: 0 0 12px rgba(78, 205, 196, 0.8);
-}
-
-/* ---------- Ensure all text is readable ---------- */
-h1, p, span, a, button, label, input, .alert {
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-/* ---------- Placeholder styling for better visibility ---------- */
-::placeholder {
-  color: var(--text-placeholder);
-  opacity: 0.8;
-}
-
-/* ---------- Focus indicators (WCAG) ---------- */
-:focus-visible {
-  outline: 3px solid var(--text-accent);
+/* ---------- Accessibility / focus ---------- */
+.verify-container :where(button, input, a, .link):focus-visible {
+  outline: 2px solid var(--ve-accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.4);
+  box-shadow: 0 0 0 4px rgba(129,140,248,0.25);
 }
 
-/* ===== RESPONSIVE BREAKPOINTS ===== */
-/* 21 granular breakpoints from 200px to 2560px+ */
+/* =============================================================
+   RESPONSIVE — Mobile first
+   Breakpoints: 480 → 768 → 1024 → 1440 → 1920 → 2560
+   ============================================================= */
 
-/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    --base: 8;
-    --container-max-width: 100%;
+/* ≤ 360px — very compact phones */
+@media (max-width: 360px) {
+  .verify-container {
+    --ve-otp-size: clamp(36px, 12vw, 44px);
+    padding: 0.75rem;
   }
-  .verify-card {
-    padding: var(--space-md) var(--space-sm);
-  }
+  .otp-inputs { gap: 0.3rem; }
+  .verify-card { padding: 1.25rem 1rem; border-radius: var(--ve-radius-lg); }
 }
 
-/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    --base: 9;
-    --container-max-width: 280px;
-  }
+/* ≥ 480px — phablets */
+@media (min-width: 480px) {
+  .verify-container { --ve-card-w: min(100%, 28rem); }
+  .actions { flex-direction: row; }
+  .actions .btn { flex: 1; }
 }
 
-/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    --base: 10;
-    --container-max-width: 320px;
-  }
+/* ≥ 768px — tablets */
+@media (min-width: 768px) {
+  .verify-container { --ve-card-w: min(100%, 32rem); }
 }
 
-/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    --base: 11;
-    --container-max-width: 360px;
-  }
+/* ≥ 1024px — laptops */
+@media (min-width: 1024px) {
+  .verify-container { --ve-card-w: min(100%, 34rem); }
 }
 
-/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    --base: 12;
-    --container-max-width: 400px;
-  }
+/* ≥ 1440px — large laptop / desktop */
+@media (min-width: 1440px) {
+  .verify-container { --ve-card-w: min(100%, 36rem); }
 }
 
-/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    --base: 13;
-    --container-max-width: 450px;
+/* ≥ 1920px — Full HD */
+@media (min-width: 1920px) {
+  .verify-container {
+    --ve-card-w: min(100%, 38rem);
+    --ve-otp-size: 60px;
   }
 }
 
-/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    --base: 13.5;
-    --container-max-width: 500px;
+/* ≥ 2560px — TV / 4K */
+@media (min-width: 2560px) {
+  .verify-container {
+    --ve-card-w: min(100%, 44rem);
+    --ve-otp-size: 72px;
   }
+  .verify-card { padding: 3rem 2.75rem; }
+  .verify-header h1 { font-size: 2.25rem; }
 }
 
-/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    --base: 14;
-    --container-max-width: 520px;
-  }
+/* Landscape phones — tighter vertical padding */
+@media (max-width: 900px) and (orientation: landscape) {
+  .verify-container { padding-block: 1rem; align-items: flex-start; }
 }
 
-/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    --base: 14.5;
-    --container-max-width: 560px;
-  }
-}
-
-/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    --base: 15;
-    --container-max-width: 600px;
-  }
-}
-
-/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    --base: 15.5;
-    --container-max-width: 620px;
-  }
-}
-
-/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    --base: 16;
-    --container-max-width: 650px;
-  }
-}
-
-/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    --base: 16.5;
-    --container-max-width: 680px;
-  }
-}
-
-/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    --base: 17;
-    --container-max-width: 720px;
-  }
-}
-
-/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    --base: 17.2;
-    --container-max-width: 750px;
-  }
-}
-
-/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    --base: 17.5;
-    --container-max-width: 780px;
-  }
-}
-
-/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    --base: 17.7;
-    --container-max-width: 820px;
-  }
-}
-
-/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    --base: 18;
-    --container-max-width: 860px;
-  }
-}
-
-/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    --base: 18.2;
-    --container-max-width: 900px;
-  }
-}
-
-/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    --base: 18.5;
-    --container-max-width: 940px;
-  }
-}
-
-/* ----- Breakpoint: 1200px+ | 4XL and beyond ----- */
-@media only screen and (min-width: 1200px) {
-  :root {
-    --base: 19;
-    --container-max-width: 1000px;
-  }
-  .verify-card {
-    padding: calc(48px * var(--base) / 16) calc(40px * var(--base) / 16);
-  }
-}
-
-/* ---------- Reduced Motion ---------- */
+/* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .verify-card,
   .btn,
-  .shape,
   .otp-inputs input,
   .alert {
     animation: none !important;
     transition: none !important;
-    transform: none !important;
   }
-  .shape {
-    animation: none;
-  }
+  .verify-card:hover { transform: none; }
 }
 
-/* ---------- High Contrast Mode ---------- */
+/* ---------- High contrast ---------- */
 @media (prefers-contrast: high) {
-  .verify-container {
-    --text-primary: white;
-    --text-secondary: white;
-    --border-glass: 2px solid white;
-    --space-bg-card: rgba(0, 0, 0, 0.95);
+  .verify-card {
+    background: rgba(0,0,5,0.85);
+    border: 2px solid #fff;
   }
-  .btn,
   .otp-inputs input,
-  .alert {
-    border: 2px solid currentColor;
-  }
+  .btn { border-color: #fff; }
 }
-
-/* ---------- End of Verify Email Cosmic Theme ---------- */

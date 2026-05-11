@@ -1,263 +1,336 @@
-/* ==========================================================================
-   REVIEW RESULTS PAGE – COSMIC SPACE THEME
-   Matches the galaxy background, glass-morphism, and glow effects
-   ========================================================================== */
+/* =============================================================
+   REVIEW RESULTS — Galaxy / Glassmorphism (scoped to the page)
+   Coexists with: src/style.css + AnimatedBackground.vue
+                  + default-layout.css + side-nav.css
+   Mobile-first. Breakpoints: 480 / 768 / 1024 / 1440 / 1920 / 2560
+   ============================================================= */
 
-:root {
-  /* Color Palette - Cosmic Dark Theme */
-  --color-space-black: rgba(5, 5, 20, 0.95);
-  --color-space-dark: rgba(10, 10, 30, 0.9);
-  --color-space-medium: rgba(15, 15, 40, 0.85);
-  --color-space-light: rgba(30, 30, 60, 0.8);
-  --color-space-glass: rgba(5, 5, 20, 0.7);
-  
-  /* Accent Colors - Nebula & Star Glow */
-  --color-cyan: #4ECDC4;
-  --color-purple: #8A2BE2;
-  --color-blue: #4169E1;
-  --color-star-white: #ffffff;
-  --color-text-light: #e0e0e0;
-  --color-text-dim: #b0b0b0;
-  
-  /* Glow Effects */
-  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
-  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
-  --glow-blue: 0 0 20px rgba(65, 105, 225, 0.4);
-  --glow-white: 0 0 20px rgba(255, 255, 255, 0.2);
-  
-  /* Typography - Fluid Base (rem-based, scaled via media queries) */
-  --font-size-xs: clamp(0.75rem, 2vw, 0.875rem);
-  --font-size-sm: clamp(0.875rem, 2.5vw, 1rem);
-  --font-size-base: clamp(1rem, 3vw, 1.125rem);
-  --font-size-lg: clamp(1.125rem, 3.5vw, 1.5rem);
-  --font-size-xl: clamp(1.5rem, 4vw, 2rem);
-  --font-size-xxl: clamp(2rem, 5vw, 3rem);    /* for titles */
-  
-  /* Spacing */
-  --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 1.5rem;
-  --space-lg: 2rem;
-  --space-xl: 3rem;
-  
-  /* Borders & Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --border-glow: 1px solid rgba(255, 255, 255, 0.15);
-  --border-glow-hover: 1px solid rgba(78, 205, 196, 0.3);
-  
-  /* Glass Effects */
-  --glass-bg: rgba(5, 5, 20, 0.85);
-  --glass-blur: blur(12px) saturate(180%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5),
-                  0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-  
-  /* Transitions */
-  --transition-speed: 0.3s;
-  --transition-timing: ease;
-  
-  /* Z-index layering */
-  --z-background: 0;
-  --z-content: 1;
-  --z-overlay: 2;
-  --z-modal: 10;
-  
-  /* Touch target minimum size */
-  --touch-min-height: 32px;
+/* --------------------------------------------------------
+   PAGE-SCOPED TOKENS
+   (declared on the page root so they cascade only here)
+   -------------------------------------------------------- */
+.review-results {
+  /* brand */
+  --rr-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --rr-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.18) 0%, rgba(118,75,162,0.18) 100%);
+  --rr-accent:      #818cf8;
+  --rr-accent-2:    #a78bfa;
+
+  /* text */
+  --rr-text:        #ffffff;
+  --rr-text-soft:   #e8eaff;
+  --rr-text-mute:   rgba(255, 255, 255, 0.72);
+  --rr-text-dim:    rgba(255, 255, 255, 0.50);
+
+  /* glass */
+  --rr-glass:           rgba(255, 255, 255, 0.05);
+  --rr-glass-strong:    rgba(255, 255, 255, 0.08);
+  --rr-glass-hover:     rgba(255, 255, 255, 0.10);
+  --rr-border:          rgba(255, 255, 255, 0.10);
+  --rr-border-strong:   rgba(255, 255, 255, 0.20);
+  --rr-blur:            blur(16px) saturate(150%);
+  --rr-blur-soft:       blur(10px) saturate(140%);
+
+  /* status palette (kept clear on dark) */
+  --rr-success: #4ade80;
+  --rr-warning: #fbbf24;
+  --rr-danger:  #fc8181;
+  --rr-info:    #60a5fa;
+
+  /* radii */
+  --rr-r-sm: 10px;
+  --rr-r-md: 14px;
+  --rr-r-lg: 20px;
+  --rr-r-xl: 26px;
+
+  /* fluid type */
+  --rr-fs-xs:   clamp(0.72rem, 0.68rem + 0.18vw, 0.82rem);
+  --rr-fs-sm:   clamp(0.82rem, 0.78rem + 0.22vw, 0.95rem);
+  --rr-fs-base: clamp(0.92rem, 0.86rem + 0.30vw, 1.05rem);
+  --rr-fs-lg:   clamp(1.05rem, 0.95rem + 0.5vw,  1.30rem);
+  --rr-fs-xl:   clamp(1.30rem, 1.10rem + 0.9vw,  1.85rem);
+  --rr-fs-xxl:  clamp(1.75rem, 1.30rem + 1.6vw,  2.60rem);
+
+  /* spacing */
+  --rr-sp-xs: clamp(0.30rem, 0.20rem + 0.4vw, 0.50rem);
+  --rr-sp-sm: clamp(0.55rem, 0.40rem + 0.6vw, 0.85rem);
+  --rr-sp-md: clamp(0.85rem, 0.65rem + 0.9vw, 1.25rem);
+  --rr-sp-lg: clamp(1.25rem, 0.90rem + 1.4vw, 2.00rem);
+  --rr-sp-xl: clamp(1.75rem, 1.20rem + 2.0vw, 2.75rem);
+
+  /* motion */
+  --rr-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --rr-t:    220ms var(--rr-ease);
+  --rr-tt:   320ms var(--rr-ease);
+
+  /* glow */
+  --rr-glow-soft:   0 8px 32px rgba(102, 126, 234, 0.18);
+  --rr-glow-medium: 0 12px 40px rgba(102, 126, 234, 0.28);
+  --rr-glow-success:0 0 24px rgba(74, 222, 128, 0.30);
+  --rr-glow-danger: 0 0 24px rgba(252, 129, 129, 0.30);
+
+  /* touch */
+  --rr-touch: 44px;
 }
 
-/* --------------------------------------------------------------------------
-   MAIN CONTAINER
-   -------------------------------------------------------------------------- */
+/* --------------------------------------------------------
+   PAGE CONTAINER (transparent — galaxy bleeds through)
+   -------------------------------------------------------- */
 .review-results {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 1200px;          /* comfortable reading width */
+  max-width: 1240px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-md);
+  padding: var(--rr-sp-xl) var(--rr-sp-md);
   background: transparent;
-  color: var(--color-text-light);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--rr-text-soft);
+  font-size: var(--rr-fs-base);
   line-height: 1.6;
   isolation: isolate;
-  position: relative;
-  z-index: var(--z-content);
 }
 
-/* All text inherits light colors */
-.review-results h1,
-.review-results h2,
-.review-results h3,
-.review-results p,
-.review-results span,
-.review-results button {
+/* Generic text inherits — drop the heavy black text-shadow */
+.review-results :where(h1, h2, h3, h4, p, span, button) {
   color: inherit;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* --------------------------------------------------------------------------
-   HEADER with back button
-   -------------------------------------------------------------------------- */
+/* --------------------------------------------------------
+   HEADER
+   -------------------------------------------------------- */
 .review-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
+  gap: var(--rr-sp-md);
+  margin-bottom: var(--rr-sp-xl);
+  animation: fadeInUp 0.5s ease both;
 }
 
 .review-header h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--color-star-white), var(--color-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 30px var(--color-cyan);
-  letter-spacing: 2px;
   margin: 0;
-  word-break: keep-all;
-  overflow-wrap: normal;
-  hyphens: none;
+  font-size: var(--rr-fs-xxl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 60%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 18px rgba(102, 126, 234, 0.35));
 }
 
+/* --------------------------------------------------------
+   BACK BUTTON
+   -------------------------------------------------------- */
 .back-btn {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: 999px;
-  padding: var(--space-sm) var(--space-lg);
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--color-star-white);
-  cursor: pointer;
-  transition: all var(--transition-speed) var(--transition-timing);
-  box-shadow: var(--glass-shadow);
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-height: var(--touch-min-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  min-height: var(--rr-touch);
+  padding: 0.6rem 1.25rem;
+  font-size: var(--rr-fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #fff;
+  background: var(--rr-glass);
+  border: 1px solid var(--rr-border);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-backdrop-filter: var(--rr-blur);
+  backdrop-filter: var(--rr-blur);
+  box-shadow: var(--rr-glow-soft);
+  transition: background var(--rr-t),
+              border-color var(--rr-t),
+              transform var(--rr-t),
+              box-shadow var(--rr-t),
+              color var(--rr-t);
 }
 
 .back-btn:hover {
-  border-color: var(--color-cyan);
-  box-shadow: var(--glow-cyan);
+  background: var(--rr-grad);
+  border-color: transparent;
   transform: translateY(-2px);
-  background: rgba(20, 20, 50, 0.9);
+  box-shadow: var(--rr-glow-medium);
 }
 
+.back-btn:active { transform: translateY(0); }
+
 .back-btn:focus-visible {
-  outline: 2px solid var(--color-cyan);
+  outline: 2px solid var(--rr-accent);
   outline-offset: 2px;
 }
 
-/* --------------------------------------------------------------------------
+/* --------------------------------------------------------
    RESULT SUMMARY CARD
-   -------------------------------------------------------------------------- */
+   -------------------------------------------------------- */
 .result-summary {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--glass-shadow), 0 0 25px rgba(78, 205, 196, 0.3);
-  transition: all var(--transition-speed) var(--transition-timing);
+  position: relative;
+  padding: var(--rr-sp-lg);
+  margin-bottom: var(--rr-sp-xl);
+  background: var(--rr-glass);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-r-xl);
+  -webkit-backdrop-filter: var(--rr-blur);
+  backdrop-filter: var(--rr-blur);
+  box-shadow: var(--rr-glow-soft),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  transition: background var(--rr-t),
+              border-color var(--rr-t),
+              box-shadow var(--rr-t),
+              transform var(--rr-t);
+  animation: fadeInUp 0.5s 0.05s ease both;
 }
 
+/* subtle nebula sheen */
+.result-summary::before {
+  content: '';
+  position: absolute;
+  inset: -40% -10% auto auto;
+  width: 70%;
+  height: 200%;
+  background: radial-gradient(ellipse at center,
+              rgba(167, 139, 250, 0.18) 0%,
+              transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.result-summary > * { position: relative; z-index: 1; }
+
 .result-summary:hover {
-  border-color: rgba(78, 205, 196, 0.3);
-  box-shadow: var(--glass-shadow), var(--glow-cyan);
+  background: var(--rr-glass-strong);
+  border-color: var(--rr-border-strong);
+  box-shadow: var(--rr-glow-medium),
+              inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transform: translateY(-2px);
 }
 
 .result-summary h2 {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  margin-bottom: var(--space-sm);
-  color: var(--color-star-white);
-  word-break: keep-all;
+  margin: 0 0 var(--rr-sp-sm) 0;
+  font-size: var(--rr-fs-xl);
+  font-weight: 700;
+  color: var(--rr-text);
+  letter-spacing: -0.01em;
 }
 
 .result-summary p {
-  font-size: var(--font-size-base);
-  margin: var(--space-xs) 0;
-  color: var(--color-text-light);
+  margin: var(--rr-sp-xs) 0;
+  font-size: var(--rr-fs-base);
+  color: var(--rr-text-mute);
 }
 
 .score {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: var(--rr-fs-lg) !important;
+  font-weight: 500;
+  color: var(--rr-text-soft) !important;
 }
 
 .score strong {
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
 }
 
 .score strong.pass {
-  color: #4caf50;
-  text-shadow: 0 0 15px #4caf50, 0 0 30px rgba(76, 175, 80, 0.5);
+  color: var(--rr-success);
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.55);
 }
 .score strong.average {
-  color: #ef6c00;
-  text-shadow: 0 0 15px #ef6c00, 0 0 30px rgba(239, 108, 0, 0.5);
+  color: var(--rr-warning);
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.55);
 }
 .score strong.fail {
-  color: #c62828;
-  text-shadow: 0 0 15px #c62828, 0 0 30px rgba(198, 40, 40, 0.5);
+  color: var(--rr-danger);
+  border-color: rgba(252, 129, 129, 0.40);
+  background: rgba(252, 129, 129, 0.08);
+  text-shadow: 0 0 12px rgba(252, 129, 129, 0.55);
 }
 
-/* --------------------------------------------------------------------------
-   QUESTIONS REVIEW SECTION
-   -------------------------------------------------------------------------- */
-.questions-review {
-  width: 100%;
-}
+/* --------------------------------------------------------
+   QUESTIONS SECTION
+   -------------------------------------------------------- */
+.questions-review { width: 100%; }
 
 .questions-review h3 {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-lg);
-  color: var(--color-star-white);
+  margin: 0 0 var(--rr-sp-lg) 0;
+  font-size: var(--rr-fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   text-align: center;
-  word-break: keep-all;
-  text-shadow: 0 0 15px var(--color-cyan);
+  color: var(--rr-text);
 }
 
-/* --------------------------------------------------------------------------
+.questions-review h3::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 3px;
+  margin: 0.5rem auto 0;
+  border-radius: 2px;
+  background: var(--rr-grad);
+  box-shadow: 0 0 14px rgba(129, 140, 248, 0.6);
+}
+
+/* --------------------------------------------------------
    QUESTION CARD
-   -------------------------------------------------------------------------- */
+   -------------------------------------------------------- */
 .question-card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  box-shadow: var(--glass-shadow);
-  transition: all var(--transition-speed) var(--transition-timing);
-  min-height: 0;
-  height: auto;
+  position: relative;
+  padding: var(--rr-sp-lg);
+  margin-bottom: var(--rr-sp-md);
+  background: var(--rr-glass);
+  border: 1px solid var(--rr-border);
+  border-left: 4px solid transparent;
+  border-radius: var(--rr-r-lg);
+  -webkit-backdrop-filter: var(--rr-blur);
+  backdrop-filter: var(--rr-blur);
+  box-shadow: var(--rr-glow-soft),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: background var(--rr-t),
+              border-color var(--rr-t),
+              box-shadow var(--rr-t),
+              transform var(--rr-t);
+  animation: fadeInUp 0.45s ease both;
 }
 
 .question-card:hover {
-  border-color: rgba(78, 205, 196, 0.3);
-  box-shadow: var(--glass-shadow), var(--glow-cyan);
+  background: var(--rr-glass-strong);
+  border-color: var(--rr-border-strong);
+  box-shadow: var(--rr-glow-medium),
+              inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transform: translateY(-2px);
 }
 
 .question-card.correct {
-  border-left: 4px solid #4caf50;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+  border-left-color: var(--rr-success);
+  box-shadow: var(--rr-glow-soft),
+              -4px 0 24px rgba(74, 222, 128, 0.22),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+
 .question-card.incorrect {
-  border-left: 4px solid #f44336;
-  box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+  border-left-color: var(--rr-danger);
+  box-shadow: var(--rr-glow-soft),
+              -4px 0 24px rgba(252, 129, 129, 0.22),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Question header */
@@ -265,851 +338,307 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  gap: var(--rr-sp-sm);
+  margin-bottom: var(--rr-sp-md);
 }
 
 .q-num {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-cyan);
   flex-shrink: 0;
+  font-size: var(--rr-fs-base);
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: transparent;
+  background: var(--rr-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .q-text {
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  color: var(--color-star-white);
-  flex: 1 1 auto;
+  flex: 1 1 240px;
   min-width: 0;
+  font-size: var(--rr-fs-lg);
+  font-weight: 600;
+  color: var(--rr-text);
   word-break: keep-all;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
   hyphens: none;
 }
 
 .q-score {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-dim);
-  background: rgba(0, 0, 0, 0.3);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  white-space: nowrap;
   flex-shrink: 0;
-  backdrop-filter: blur(4px);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  font-size: var(--rr-fs-xs);
+  font-weight: 600;
+  color: var(--rr-text-soft);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--rr-border);
+  border-radius: 999px;
+  white-space: nowrap;
+  -webkit-backdrop-filter: var(--rr-blur-soft);
+  backdrop-filter: var(--rr-blur-soft);
 }
 
-/* --------------------------------------------------------------------------
+/* --------------------------------------------------------
    ANSWERS LIST
-   -------------------------------------------------------------------------- */
+   -------------------------------------------------------- */
 .answers {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  padding-left: var(--space-md);
+  gap: var(--rr-sp-sm);
+  padding-left: 0;
 }
 
 .answer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all var(--transition-speed) var(--transition-timing);
+  gap: var(--rr-sp-sm);
+  padding: var(--rr-sp-sm) var(--rr-sp-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-r-md);
+  -webkit-backdrop-filter: var(--rr-blur-soft);
+  backdrop-filter: var(--rr-blur-soft);
+  transition: background var(--rr-t),
+              border-color var(--rr-t),
+              box-shadow var(--rr-t),
+              transform var(--rr-t);
 }
 
 .answer:hover {
-  border-color: rgba(78, 205, 196, 0.3);
-  box-shadow: 0 0 15px rgba(78, 205, 196, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--rr-border-strong);
+  transform: translateX(2px);
 }
 
 .answer-text {
-  flex: 1 1 auto;
-  font-size: var(--font-size-base);
-  color: var(--color-text-light);
-  word-break: keep-all;
+  flex: 1 1 200px;
   min-width: 0;
+  font-size: var(--rr-fs-base);
+  color: var(--rr-text-soft);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
-/* Selected answer (user's choice) */
+/* User-selected (will combine with correct-answer if correct) */
 .answer.selected {
-  background: rgba(33, 150, 243, 0.2);
-  border-color: #2196f3;
-  box-shadow: 0 0 15px #2196f3;
+  background: rgba(96, 165, 250, 0.10);
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Correct answer (actual correct option) */
+/* Correct answer (regardless of user choice) */
 .answer.correct-answer {
-  background: rgba(76, 175, 80, 0.2);
-  border-color: #4caf50;
-  box-shadow: 0 0 15px #4caf50;
+  background: rgba(74, 222, 128, 0.10);
+  border-color: rgba(74, 222, 128, 0.45);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* If user selected a wrong answer */
+/* User selected and it was wrong */
 .answer.selected:not(.correct-answer) {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: #f44336;
-  box-shadow: 0 0 15px #f44336;
+  background: rgba(252, 129, 129, 0.10);
+  border-color: rgba(252, 129, 129, 0.48);
+  box-shadow: 0 0 16px rgba(252, 129, 129, 0.28),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Badges for correct/wrong */
+/* --------------------------------------------------------
+   BADGES
+   -------------------------------------------------------- */
 .correct-badge,
 .wrong-badge {
-  font-size: var(--font-size-sm);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: 999px;
-  font-weight: 600;
-  white-space: nowrap;
   flex-shrink: 0;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(4px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  font-size: var(--rr-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  -webkit-backdrop-filter: var(--rr-blur-soft);
+  backdrop-filter: var(--rr-blur-soft);
 }
 
 .correct-badge {
-  background: #4caf50;
-  color: white;
-  box-shadow: 0 0 10px #4caf50;
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.5);
 }
 
 .wrong-badge {
-  background: #f44336;
-  color: white;
-  box-shadow: 0 0 10px #f44336;
+  background: linear-gradient(135deg, #fc8181, #ef4444);
+  box-shadow: 0 0 14px rgba(252, 129, 129, 0.5);
 }
 
-/* --------------------------------------------------------------------------
-   LOADING SPINNER (if any)
-   Pure circle, centered, no text, transparent background
-   -------------------------------------------------------------------------- */
+/* --------------------------------------------------------
+   LOADING STATE
+   -------------------------------------------------------- */
 .loading {
-  /* Hide any text */
+  /* Hide loading text — pure spinner */
   font-size: 0;
   line-height: 0;
   color: transparent;
-  text-indent: -9999px;
-  
-  /* Center the spinner */
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 200px;
+  justify-content: center;
+  min-height: 240px;
   width: 100%;
-  
-  /* Transparent background */
   background: transparent;
-  backdrop-filter: none;
   border: none;
-  box-shadow: none;
   padding: 0;
 }
 
 .loading::after {
   content: '';
   display: block;
-  width: 60px;
-  height: 60px;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: var(--color-cyan);
-  border-right-color: var(--color-purple);
-  border-bottom-color: rgba(255, 255, 255, 0.05);
-  border-left-color: rgba(255, 255, 255, 0.05);
+  width: clamp(48px, 8vw, 72px);
+  height: clamp(48px, 8vw, 72px);
+  border: 3px solid rgba(255, 255, 255, 0.10);
+  border-top-color: #667eea;
+  border-right-color: #764ba2;
   border-radius: 50%;
-  animation: spin 1.2s linear infinite;
-  box-shadow: 0 0 30px var(--color-cyan), 0 0 60px var(--color-purple);
-  margin: 0;
+  animation: rr-spin 1s linear infinite;
+  box-shadow: 0 0 30px rgba(102, 126, 234, 0.35),
+              0 0 60px rgba(118, 75, 162, 0.20);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes rr-spin { to { transform: rotate(360deg); } }
+
+/* --------------------------------------------------------
+   ERROR STATE
+   -------------------------------------------------------- */
+.error {
+  max-width: 720px;
+  margin: var(--rr-sp-xl) auto;
+  padding: var(--rr-sp-lg);
+  font-size: var(--rr-fs-base);
+  color: #fff;
+  text-align: center;
+  background: rgba(252, 129, 129, 0.08);
+  border: 1px solid rgba(252, 129, 129, 0.40);
+  border-radius: var(--rr-r-lg);
+  -webkit-backdrop-filter: var(--rr-blur);
+  backdrop-filter: var(--rr-blur);
+  box-shadow: var(--rr-glow-danger);
+  animation: fadeInUp 0.5s ease both;
 }
 
-/* --------------------------------------------------------------------------
-   CUSTOM SCROLLBAR (matches cosmic theme)
-   -------------------------------------------------------------------------- */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+/* =============================================================
+   RESPONSIVE
+   ============================================================= */
 
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 180, 0.8);
-  box-shadow: 0 0 10px var(--color-cyan);
-}
-
-/* --------------------------------------------------------------------------
-   ENSURE BACKGROUND IS TRANSPARENT FOR GALAXY
-   -------------------------------------------------------------------------- */
-body, html, #app {
-  background: transparent;
-}
-
-.review-results,
-.result-summary,
-.question-card,
-.answers,
-.answer {
-  background-color: transparent; /* glass backgrounds already set */
-}
-
-/* ==========================================================================
-   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
-   ========================================================================== */
-
-/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    font-size: 8px; /* 1rem = 8px */
-    --font-size-xs: 0.75rem;   /* 6px */
-    --font-size-sm: 0.875rem;  /* 7px */
-    --font-size-base: 1rem;     /* 8px */
-    --font-size-lg: 1.125rem;   /* 9px */
-    --font-size-xl: 1.25rem;    /* 10px */
-    --font-size-xxl: 1.5rem;    /* 12px */
-    --space-xs: 0.25rem;  /* 2px */
-    --space-sm: 0.5rem;   /* 4px */
-    --space-md: 0.75rem;  /* 6px */
-    --space-lg: 1rem;     /* 8px */
-    --space-xl: 1.5rem;   /* 12px */
-    --radius-sm: 0.5rem;  /* 4px */
-    --radius-md: 0.75rem; /* 6px */
-    --radius-lg: 1rem;    /* 8px */
-    --radius-xl: 1.5rem;  /* 12px */
-    --touch-min-height: 32px;
-  }
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .answers {
-    padding-left: 0;
-  }
-  .review-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .back-btn {
-    width: 100%;
-    text-align: center;
-  }
-  .loading::after {
-    width: 40px;
-    height: 40px;
-    border-width: 2px;
-  }
-}
-
-/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    font-size: 9px;
-    --font-size-xs: 0.75rem;   /* 6.75px */
-    --font-size-sm: 0.875rem;  /* 7.875px */
-    --font-size-base: 1rem;     /* 9px */
-    --font-size-lg: 1.125rem;   /* 10.125px */
-    --font-size-xl: 1.25rem;    /* 11.25px */
-    --font-size-xxl: 1.5rem;    /* 13.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 34px;
-  }
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .answers {
-    padding-left: 0;
-  }
-  .review-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .back-btn {
-    width: 100%;
-  }
-  .loading::after {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    font-size: 10px;
-    --font-size-xs: 0.75rem;   /* 7.5px */
-    --font-size-sm: 0.875rem;  /* 8.75px */
-    --font-size-base: 1rem;     /* 10px */
-    --font-size-lg: 1.125rem;   /* 11.25px */
-    --font-size-xl: 1.25rem;    /* 12.5px */
-    --font-size-xxl: 1.5rem;    /* 15px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 36px;
-  }
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .answers {
-    padding-left: var(--space-xs);
-  }
-  .review-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .back-btn {
-    width: 100%;
-  }
-  .loading::after {
-    width: 48px;
-    height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    font-size: 11px;
-    --font-size-xs: 0.75rem;   /* 8.25px */
-    --font-size-sm: 0.875rem;  /* 9.625px */
-    --font-size-base: 1rem;     /* 11px */
-    --font-size-lg: 1.125rem;   /* 12.375px */
-    --font-size-xl: 1.25rem;    /* 13.75px */
-    --font-size-xxl: 1.5rem;    /* 16.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 38px;
-  }
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .answers {
-    padding-left: var(--space-xs);
-  }
-  .review-header {
-    flex-wrap: wrap;
-  }
-  .back-btn {
-    width: auto;
-  }
-  .loading::after {
-    width: 50px;
-    height: 50px;
-  }
-}
-
-/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    font-size: 12px;
-    --font-size-xs: 0.75rem;   /* 9px */
-    --font-size-sm: 0.875rem;  /* 10.5px */
-    --font-size-base: 1rem;     /* 12px */
-    --font-size-lg: 1.125rem;   /* 13.5px */
-    --font-size-xl: 1.25rem;    /* 15px */
-    --font-size-xxl: 1.5rem;    /* 18px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 40px;
-  }
-  .question-header {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .answers {
-    padding-left: var(--space-sm);
-  }
-  .loading::after {
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    font-size: 13px;
-    --font-size-xs: 0.75rem;   /* 9.75px */
-    --font-size-sm: 0.875rem;  /* 11.375px */
-    --font-size-base: 1rem;     /* 13px */
-    --font-size-lg: 1.125rem;   /* 14.625px */
-    --font-size-xl: 1.25rem;    /* 16.25px */
-    --font-size-xxl: 1.5rem;    /* 19.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 42px;
-  }
-  .loading::after {
-    width: 54px;
-    height: 54px;
-  }
-}
-
-/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    font-size: 14px;
-    --font-size-xs: 0.75rem;   /* 10.5px */
-    --font-size-sm: 0.875rem;  /* 12.25px */
-    --font-size-base: 1rem;     /* 14px */
-    --font-size-lg: 1.125rem;   /* 15.75px */
-    --font-size-xl: 1.25rem;    /* 17.5px */
-    --font-size-xxl: 1.5rem;    /* 21px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 44px;
-  }
-  .loading::after {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    font-size: 14.5px;
-    --font-size-xs: 0.75rem;   /* 10.875px */
-    --font-size-sm: 0.875rem;  /* 12.6875px */
-    --font-size-base: 1rem;     /* 14.5px */
-    --font-size-lg: 1.125rem;   /* 16.3125px */
-    --font-size-xl: 1.25rem;    /* 18.125px */
-    --font-size-xxl: 1.5rem;    /* 21.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 45px;
-  }
-  .loading::after {
-    width: 58px;
-    height: 58px;
-  }
-}
-
-/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    font-size: 15px;
-    --font-size-xs: 0.75rem;   /* 11.25px */
-    --font-size-sm: 0.875rem;  /* 13.125px */
-    --font-size-base: 1rem;     /* 15px */
-    --font-size-lg: 1.125rem;   /* 16.875px */
-    --font-size-xl: 1.25rem;    /* 18.75px */
-    --font-size-xxl: 1.5rem;    /* 22.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 46px;
-  }
-}
-
-/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    font-size: 15.5px;
-    --font-size-xs: 0.75rem;   /* 11.625px */
-    --font-size-sm: 0.875rem;  /* 13.5625px */
-    --font-size-base: 1rem;     /* 15.5px */
-    --font-size-lg: 1.125rem;   /* 17.4375px */
-    --font-size-xl: 1.25rem;    /* 19.375px */
-    --font-size-xxl: 1.5rem;    /* 23.25px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 47px;
-  }
-}
-
-/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    font-size: 16px;
-    --font-size-xs: 0.75rem;   /* 12px */
-    --font-size-sm: 0.875rem;  /* 14px */
-    --font-size-base: 1rem;     /* 16px */
-    --font-size-lg: 1.125rem;   /* 18px */
-    --font-size-xl: 1.25rem;    /* 20px */
-    --font-size-xxl: 1.5rem;    /* 24px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    font-size: 16.5px;
-    --font-size-xs: 0.75rem;   /* 12.375px */
-    --font-size-sm: 0.875rem;  /* 14.4375px */
-    --font-size-base: 1rem;     /* 16.5px */
-    --font-size-lg: 1.125rem;   /* 18.5625px */
-    --font-size-xl: 1.25rem;    /* 20.625px */
-    --font-size-xxl: 1.5rem;    /* 24.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    font-size: 16.75px;
-    --font-size-xs: 0.75rem;   /* 12.5625px */
-    --font-size-sm: 0.875rem;  /* 14.65625px */
-    --font-size-base: 1rem;     /* 16.75px */
-    --font-size-lg: 1.125rem;   /* 18.84375px */
-    --font-size-xl: 1.25rem;    /* 20.9375px */
-    --font-size-xxl: 1.5rem;    /* 25.125px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    font-size: 17px;
-    --font-size-xs: 0.75rem;   /* 12.75px */
-    --font-size-sm: 0.875rem;  /* 14.875px */
-    --font-size-base: 1rem;     /* 17px */
-    --font-size-lg: 1.125rem;   /* 19.125px */
-    --font-size-xl: 1.25rem;    /* 21.25px */
-    --font-size-xxl: 1.5rem;    /* 25.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    font-size: 17.25px;
-    --font-size-xs: 0.75rem;   /* 12.9375px */
-    --font-size-sm: 0.875rem;  /* 15.09375px */
-    --font-size-base: 1rem;     /* 17.25px */
-    --font-size-lg: 1.125rem;   /* 19.40625px */
-    --font-size-xl: 1.25rem;    /* 21.5625px */
-    --font-size-xxl: 1.5rem;    /* 25.875px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    font-size: 17.5px;
-    --font-size-xs: 0.75rem;   /* 13.125px */
-    --font-size-sm: 0.875rem;  /* 15.3125px */
-    --font-size-base: 1rem;     /* 17.5px */
-    --font-size-lg: 1.125rem;   /* 19.6875px */
-    --font-size-xl: 1.25rem;    /* 21.875px */
-    --font-size-xxl: 1.5rem;    /* 26.25px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    font-size: 17.75px;
-    --font-size-xs: 0.75rem;   /* 13.3125px */
-    --font-size-sm: 0.875rem;  /* 15.53125px */
-    --font-size-base: 1rem;     /* 17.75px */
-    --font-size-lg: 1.125rem;   /* 19.96875px */
-    --font-size-xl: 1.25rem;    /* 22.1875px */
-    --font-size-xxl: 1.5rem;    /* 26.625px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    font-size: 18px;
-    --font-size-xs: 0.75rem;   /* 13.5px */
-    --font-size-sm: 0.875rem;  /* 15.75px */
-    --font-size-base: 1rem;     /* 18px */
-    --font-size-lg: 1.125rem;   /* 20.25px */
-    --font-size-xl: 1.25rem;    /* 22.5px */
-    --font-size-xxl: 1.5rem;    /* 27px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    font-size: 18.25px;
-    --font-size-xs: 0.75rem;   /* 13.6875px */
-    --font-size-sm: 0.875rem;  /* 15.96875px */
-    --font-size-base: 1rem;     /* 18.25px */
-    --font-size-lg: 1.125rem;   /* 20.53125px */
-    --font-size-xl: 1.25rem;    /* 22.8125px */
-    --font-size-xxl: 1.5rem;    /* 27.375px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    font-size: 18.5px;
-    --font-size-xs: 0.75rem;   /* 13.875px */
-    --font-size-sm: 0.875rem;  /* 16.1875px */
-    --font-size-base: 1rem;     /* 18.5px */
-    --font-size-lg: 1.125rem;   /* 20.8125px */
-    --font-size-xl: 1.25rem;    /* 23.125px */
-    --font-size-xxl: 1.5rem;    /* 27.75px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1200px+ | 4XL and beyond ----- */
-@media only screen and (min-width: 1200px) {
-  :root {
-    font-size: 19px;
-    --font-size-xs: 0.75rem;   /* 14.25px */
-    --font-size-sm: 0.875rem;  /* 16.625px */
-    --font-size-base: 1rem;     /* 19px */
-    --font-size-lg: 1.125rem;   /* 21.375px */
-    --font-size-xl: 1.25rem;    /* 23.75px */
-    --font-size-xxl: 1.5rem;    /* 28.5px */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
-    --touch-min-height: 48px;
-  }
+/* ≤ 480px : compact phones */
+@media (max-width: 480px) {
   .review-results {
-    max-width: 1600px; /* wider for large displays */
+    padding: var(--rr-sp-md) var(--rr-sp-sm);
   }
-  .loading::after {
-    width: 70px;
-    height: 70px;
+  .review-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .back-btn {
+    width: 100%;
+  }
+  .question-header {
+    gap: var(--rr-sp-xs);
+  }
+  .q-score { order: 2; }
+  .q-text  { order: 3; flex: 1 1 100%; }
+  .answer {
+    padding: var(--rr-sp-sm);
   }
 }
 
-/* Optional: extra large TVs (2560px+) */
-@media only screen and (min-width: 2000px) {
-  :root {
-    font-size: 20px;
-  }
+/* ≥ 480px */
+@media (min-width: 480px) {
+  .answers { padding-left: 0; }
+}
+
+/* ≥ 768px : tablet */
+@media (min-width: 768px) {
   .review-results {
-    max-width: 2000px;
+    padding: var(--rr-sp-xl) var(--rr-sp-lg);
   }
-  .loading::after {
-    width: 80px;
-    height: 80px;
-  }
+  .answers { padding-left: var(--rr-sp-md); }
 }
 
-/* --------------------------------------------------------------------------
-   REDUCED MOTION & HIGH CONTRAST
-   -------------------------------------------------------------------------- */
+/* ≥ 1024px : laptop */
+@media (min-width: 1024px) {
+  .review-results { max-width: 1100px; }
+}
+
+/* ≥ 1440px : large laptop / desktop */
+@media (min-width: 1440px) {
+  .review-results { max-width: 1280px; }
+}
+
+/* ≥ 1920px : full HD */
+@media (min-width: 1920px) {
+  .review-results {
+    max-width: 1480px;
+    padding: 3rem 2rem;
+  }
+  .question-card { padding: 2rem; }
+}
+
+/* ≥ 2560px : TV / 4K */
+@media (min-width: 2560px) {
+  .review-results {
+    max-width: 1900px;
+    padding: 4rem 3rem;
+  }
+  .question-card { padding: 2.5rem; }
+  .result-summary { padding: 2.5rem; }
+}
+
+/* Landscape phones — tighter vertical spacing */
+@media (max-width: 900px) and (orientation: landscape) {
+  .review-results { padding: var(--rr-sp-md) var(--rr-sp-md); }
+  .review-header  { margin-bottom: var(--rr-sp-md); }
+}
+
+/* =============================================================
+   ACCESSIBILITY
+   ============================================================= */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .review-header,
+  .result-summary,
+  .question-card,
+  .error,
+  .answer,
+  .back-btn {
+    animation: none !important;
+    transition: none !important;
   }
-  
   .question-card:hover,
-  .back-btn:hover,
-  .answer:hover {
-    transform: none;
+  .result-summary:hover,
+  .answer:hover,
+  .back-btn:hover {
+    transform: none !important;
   }
-  
-  .loading::after {
-    animation: none;
-  }
+  .loading::after { animation: none !important; }
 }
 
 @media (prefers-contrast: high) {
-  :root {
-    --color-cyan: #00ffff;
-    --color-purple: #aa00ff;
-    --color-text-light: #ffffff;
-    --border-glow: 1px solid #ffffff;
-  }
-  
   .question-card,
   .result-summary,
+  .answer,
   .back-btn,
-  .answer {
-    border: 1px solid white;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: none;
+  .error {
+    background: rgba(0, 0, 0, 0.75);
+    border-color: #ffffff;
+  }
+  .q-num,
+  .review-header h1 {
+    -webkit-text-fill-color: #ffffff;
+    background: none;
   }
 }

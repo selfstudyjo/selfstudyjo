@@ -1,3030 +1,1363 @@
-/* ============================================
-   COSMIC SPACE GALAXY THEME - SCHEDULE EXAM PAGE
-   COMPLETE REDESIGN FOR 3D GALAXY BACKGROUND
-   FULLY RESPONSIVE VERSION (modal border forcefully removed)
-   ============================================ */
+/* =============================================================
+   SCHEDULE EXAM — Galaxy / Glassmorphism Theme
+   Coexists with: src/style.css + AnimatedBackground.vue +
+   default-layout.css + side-nav.css
+   Mobile-first. Breakpoints: 480 / 768 / 1024 / 1440 / 1920 / 2560
+   No global * selectors — everything is scoped to .schedule-exam-page
+   ============================================================= */
 
-/* CSS Variables for Space Theme - Consistent with exams page */
-:root {
-  /* Color Scheme - ALWAYS LIGHT TEXT */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #e0e0ff;
-  --color-text-tertiary: #b0b0ff;
-  --color-text-accent: #4ECDC4;
-  --color-text-accent-alt: #8A2BE2;
-  
-  /* Backgrounds - DARK with TRANSPARENCY (5-15% opacity) */
-  --color-bg-primary: rgba(5, 5, 20, 0.85);
-  --color-bg-secondary: rgba(10, 10, 30, 0.8);
-  --color-bg-tertiary: rgba(15, 15, 40, 0.9);
-  --color-bg-glass: rgba(10, 10, 30, 0.75);
-  --color-bg-card: rgba(5, 5, 20, 0.9);
-  --color-bg-element: rgba(0, 0, 0, 0.25);
-  
-  /* Glass Effects */
-  --glass-blur: blur(15px);
-  --glass-saturate: saturate(180%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.15);
-  
-  /* Glow Effects */
-  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
-  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
-  --glow-blue: 0 0 20px rgba(66, 133, 244, 0.4);
-  --glow-white: 0 0 15px rgba(255, 255, 255, 0.3);
-  --glow-green: 0 0 20px rgba(72, 187, 120, 0.4);
-  --glow-orange: 0 0 20px rgba(237, 137, 54, 0.4);
-  --glow-red: 0 0 20px rgba(245, 101, 101, 0.4);
-  
-  /* Shadows */
-  --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.6);
-  
-  /* Spacing - made fluid with clamp (will be overridden per breakpoint) */
-  --spacing-xs: clamp(0.5rem, 1.5vw, 0.75rem);
-  --spacing-sm: clamp(1rem, 2vw, 1.25rem);
-  --spacing-md: clamp(1.5rem, 3vw, 1.75rem);
-  --spacing-lg: clamp(2rem, 4vw, 2.5rem);
-  --spacing-xl: clamp(3rem, 5vw, 3.5rem);
-  
-  /* Border Radius - made fluid (will be overridden per breakpoint) */
-  --radius-sm: clamp(6px, 1.5vw, 8px);
-  --radius-md: clamp(10px, 2vw, 12px);
-  --radius-lg: clamp(14px, 2.5vw, 16px);
-  --radius-xl: clamp(16px, 3vw, 20px);
-  
-  /* Font Sizes - Responsive (will be overridden per breakpoint) */
-  --font-xs: clamp(12px, 1vw, 14px);
-  --font-sm: clamp(14px, 1.5vw, 16px);
-  --font-md: clamp(16px, 2vw, 18px);
-  --font-lg: clamp(20px, 2.5vw, 24px);
-  --font-xl: clamp(24px, 3vw, 32px);
-  --font-xxl: clamp(32px, 4vw, 48px);
+.schedule-exam-page {
+  /* ---------- design tokens (page-scoped) ---------- */
+  --sx-text:        #ffffff;
+  --sx-text-soft:   #e8eaff;
+  --sx-text-mute:   rgba(255, 255, 255, 0.72);
+  --sx-text-dim:    rgba(255, 255, 255, 0.55);
+
+  --sx-accent:      #818cf8;
+  --sx-accent-2:    #a78bfa;
+  --sx-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --sx-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.22) 0%, rgba(118,75,162,0.22) 100%);
+  --sx-grad-hover:  linear-gradient(135deg, rgba(102,126,234,0.45) 0%, rgba(118,75,162,0.45) 100%);
+
+  /* status colors */
+  --sx-success:     #48bb78;
+  --sx-success-bg:  rgba(72, 187, 120, 0.15);
+  --sx-warning:     #ed8936;
+  --sx-warning-bg:  rgba(237, 137, 54, 0.15);
+  --sx-danger:      #fc8181;
+  --sx-danger-bg:   rgba(252, 129, 129, 0.15);
+  --sx-info:        #0ea5e9;
+  --sx-info-bg:     rgba(14, 165, 233, 0.15);
+
+  /* glass */
+  --sx-glass:       rgba(255, 255, 255, 0.05);
+  --sx-glass-2:     rgba(255, 255, 255, 0.08);
+  --sx-glass-3:     rgba(255, 255, 255, 0.12);
+  --sx-glass-bg:    rgba(15, 17, 40, 0.35);
+  --sx-border:      rgba(255, 255, 255, 0.10);
+  --sx-border-2:    rgba(255, 255, 255, 0.18);
+  --sx-blur:        blur(16px) saturate(150%);
+  --sx-blur-strong: blur(22px) saturate(160%);
+
+  /* shadow / glow */
+  --sx-shadow:      0 8px 32px rgba(102, 126, 234, 0.15);
+  --sx-shadow-lg:   0 16px 50px rgba(118, 75, 162, 0.28);
+  --sx-glow:        0 0 18px rgba(129, 140, 248, 0.35);
+  --sx-glow-green:  0 0 18px rgba(72, 187, 120, 0.35);
+  --sx-glow-amber:  0 0 18px rgba(237, 137, 54, 0.35);
+  --sx-glow-red:    0 0 18px rgba(252, 129, 129, 0.35);
+
+  /* radii / spacing */
+  --sx-r-xs:  8px;
+  --sx-r-sm:  10px;
+  --sx-r-md:  14px;
+  --sx-r-lg:  18px;
+  --sx-r-xl:  24px;
+
+  --sx-pad:   clamp(1rem, 2.4vw, 2rem);
+
+  --sx-ease:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* page layout */
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--sx-pad);
+  color: var(--sx-text-soft);
+  background: transparent;
+  isolation: isolate;
 }
 
-/* ============================================
-   BASE RESET - ENSURING ALL TEXT IS LIGHT
-   ============================================ */
-
-/* Force ALL text elements to be light colored */
-* {
-  color: var(--color-text-primary) !important;
+/* readable shadow over galaxy */
+.schedule-exam-page :where(h1,h2,h3,h4,h5,p,span,li,label,a,button) {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-/* RESPONSIVE FIX: Universal box-sizing for consistent sizing */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* universal sizing within page */
+.schedule-exam-page,
+.schedule-exam-page *,
+.schedule-exam-page *::before,
+.schedule-exam-page *::after { box-sizing: border-box; }
 
-/* RESPONSIVE FIX: Prevent unwanted word breaking across all text elements */
-.schedule-exam-page * {
-  word-break: normal;
-  overflow-wrap: normal;
-  hyphens: none;
-}
-
-/* RESPONSIVE FIX: Buttons should keep text on one line */
-.schedule-exam-page button,
-.schedule-exam-page .btn-cancel,
-.schedule-exam-page .btn-back,
-.schedule-exam-page .btn-next,
-.schedule-exam-page .btn-confirm,
-.schedule-exam-page .btn-primary,
-.schedule-exam-page .btn-secondary,
-.schedule-exam-page .btn-danger,
-.schedule-exam-page .retry-btn,
-.schedule-exam-page .back-btn {
-  white-space: nowrap;
-}
-
-/* RESPONSIVE FIX: Ensure containers never overflow parent */
 .schedule-exam-page,
 .schedule-exam-page [class*="container"],
 .schedule-exam-page [class*="card"],
 .schedule-exam-page [class*="content"] {
   max-width: 100%;
-  width: 100%;
 }
 
-/* RESPONSIVE FIX: Prevent flex items from overflowing */
-.schedule-exam-page .flex-item,
-.schedule-exam-page [class*="item"],
-.schedule-exam-page [class*="option"] {
-  min-width: 0;
+/* keep button labels on one line */
+.schedule-exam-page button,
+.schedule-exam-page .back-btn,
+.schedule-exam-page .retry-btn { white-space: nowrap; }
+
+/* =============================================================
+   PAGE HEADER
+   ============================================================= */
+.schedule-exam-page .page-header {
+  margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
 }
-
-/* Text shadows for readability against galaxy background */
-.schedule-exam-page,
-.page-header h1,
-.page-header p,
-.header-content,
-.step-label,
-.step-header h2,
-.step-header p,
-.exam-option-details h4,
-.exam-option-details p,
-.proctor-info h4,
-.proctor-info p,
-.date-selector h3,
-.time-selector h3,
-.current-month,
-.slot-time,
-.summary-section h3,
-.summary-item .label,
-.summary-item .value,
-.instructions-card h3,
-.instructions-list li,
-.appointment-title h3,
-.appointment-title p,
-.detail-section h4,
-.detail-item .label,
-.detail-item .value,
-.notice-content h4,
-.notice-content li,
-.success-modal h3,
-.success-modal p,
-.detail-item .value,
-.cancel-modal h3,
-.cancel-modal p,
-.loading-container h3,
-.error-container h3,
-.error-container p {
-  text-shadow: 
-    0 0 10px rgba(0, 0, 0, 0.9),
-    0 2px 4px rgba(0, 0, 0, 0.7),
-    0 0 1px rgba(255, 255, 255, 0.1) !important;
-}
-
-/* ============================================
-   SCHEDULE EXAM PAGE LAYOUT
-   ============================================ */
-
-.schedule-exam-page {
-  padding: var(--spacing-lg);
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 100vh;
-  position: relative;
-  z-index: 10;
-}
-
-/* Page Header */
-.page-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.header-content {
+.schedule-exam-page .header-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 0.85rem;
+}
+.schedule-exam-page .page-title,
+.schedule-exam-page .page-header h1 {
+  font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.schedule-exam-page .page-subtitle,
+.schedule-exam-page .page-header p {
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  color: var(--sx-text-mute);
+  margin: 0;
 }
 
-.back-btn {
+.schedule-exam-page .back-btn {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: var(--color-text-primary) !important;
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.65rem 1.1rem;
+  background: var(--sx-glass);
+  color: var(--sx-text);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  align-self: flex-start;
   text-decoration: none;
-  box-shadow: var(--glow-white);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s var(--sx-ease);
 }
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: translateX(-4px);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: var(--glow-cyan);
+.schedule-exam-page .back-btn:hover {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
+  transform: translateX(-3px);
+  box-shadow: var(--sx-glow);
 }
+.schedule-exam-page .back-btn svg { width: 18px; height: 18px; }
 
-.back-btn svg {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.3s ease;
+/* =============================================================
+   PROGRESS STEPS
+   ============================================================= */
+.schedule-exam-page .progress-steps {
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
-
-.back-btn:hover svg {
-  transform: translateX(-2px);
-}
-
-.page-header h1 {
-  font-size: var(--font-xl);
-  font-weight: 700;
-  margin: 0 0 var(--spacing-xs) 0;
-  letter-spacing: 0.5px;
-}
-
-.page-header p {
-  font-size: var(--font-md);
-  color: var(--color-text-secondary) !important;
-  margin: 0;
-  opacity: 0.9;
-}
-
-/* ============================================
-   PROGRESS STEPS - COSMIC THEME
-   ============================================ */
-
-.progress-steps {
-  margin-bottom: var(--spacing-xl);
-}
-
-.steps-container {
+.schedule-exam-page .steps-container {
   display: flex;
   align-items: center;
   justify-content: center;
   max-width: 900px;
   margin: 0 auto;
-  position: relative;
-  /* RESPONSIVE FIX: Allow wrapping on very small screens */
   flex-wrap: wrap;
-  row-gap: var(--spacing-md);
+  row-gap: 1rem;
 }
-
-.step {
+.schedule-exam-page .step {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 0.5rem;
+  flex: 1 1 90px;
+  min-width: 80px;
   position: relative;
   z-index: 1;
-  flex: 1 1 auto; /* RESPONSIVE FIX: Allow step to shrink and grow */
-  min-width: 80px; /* RESPONSIVE FIX: Prevent steps from becoming too narrow */
 }
-
-.step-number {
-  width: 48px;
-  height: 48px;
+.schedule-exam-page .step-number {
+  width: 48px; height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-secondary) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  color: var(--sx-text-mute);
+  display: flex; align-items: center; justify-content: center;
   font-weight: 700;
-  font-size: 18px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
+  font-size: 1.1rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s var(--sx-ease);
 }
-
-.step-number::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(78, 205, 196, 0.3),
-    rgba(138, 43, 226, 0.3)
-  );
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.schedule-exam-page .step.active .step-number {
+  background: var(--sx-grad);
+  color: #fff;
+  border-color: transparent;
+  transform: scale(1.08);
+  box-shadow: 0 0 22px rgba(129, 140, 248, 0.55);
 }
-
-.step.active .step-number {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.3) 0%, 
-    rgba(138, 43, 226, 0.3) 100%
-  );
-  color: var(--color-text-primary) !important;
-  transform: scale(1.1);
-  box-shadow: var(--glow-purple);
-  border-color: rgba(138, 43, 226, 0.3);
+.schedule-exam-page .step.completed .step-number {
+  background: linear-gradient(135deg, rgba(72,187,120,0.55) 0%, rgba(56,161,105,0.55) 100%);
+  color: #fff;
+  border-color: rgba(72, 187, 120, 0.4);
 }
-
-.step.active .step-number::after {
-  opacity: 1;
-}
-
-.step.completed .step-number {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.3) 0%, 
-    rgba(56, 161, 105, 0.3) 100%
-  );
-  color: var(--color-text-primary) !important;
-  border-color: rgba(72, 187, 120, 0.3);
-}
-
-.step-label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
+.schedule-exam-page .step-label {
+  font-size: 0.8rem;
   font-weight: 500;
-  /* RESPONSIVE FIX: Allow wrapping of step labels */
+  color: var(--sx-text-mute);
+  text-align: center;
   white-space: normal;
-  text-align: center;
-  padding: 0 var(--spacing-xs);
-  max-width: 100%;
-  word-break: normal;
+  line-height: 1.3;
+  padding: 0 0.25rem;
 }
-
-.step.active .step-label {
-  color: var(--color-text-primary) !important;
-  font-weight: 600;
-}
-
-.step.completed .step-label {
-  color: var(--color-text-accent) !important;
-}
-
-.step-line {
-  flex: 1;
+.schedule-exam-page .step.active .step-label { color: #fff; font-weight: 600; }
+.schedule-exam-page .step.completed .step-label { color: #a7f3d0; }
+.schedule-exam-page .step-line {
+  flex: 1 1 30px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 var(--spacing-sm);
-  min-width: 60px;
+  margin: 0 0.5rem;
+  background: var(--sx-glass);
+  border-radius: 2px;
+  min-width: 30px;
+}
+
+/* =============================================================
+   STEP CONTENT — glass card
+   ============================================================= */
+.schedule-exam-page .step-content {
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-xl);
+  padding: clamp(1.25rem, 2.8vw, 2.25rem);
+  margin-bottom: 1.5rem;
+  backdrop-filter: var(--sx-blur-strong);
+  -webkit-backdrop-filter: var(--sx-blur-strong);
+  box-shadow: var(--sx-shadow);
   position: relative;
-  overflow: hidden;
-  /* RESPONSIVE FIX: Hide line on small screens where steps stack */
+  isolation: isolate;
 }
 
-.step-line::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(72, 187, 120, 0.3),
-    rgba(56, 161, 105, 0.3)
-  );
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-}
-
-.step.completed + .step-line::before {
-  transform: translateX(0);
-}
-
-/* ============================================
-   STEP CONTENT - GLASS CARDS
-   ============================================ */
-
-.step-content {
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-deep);
-  margin-bottom: var(--spacing-lg);
-  position: relative;
-  overflow: hidden;
-  isolation: isolate; /* RESPONSIVE FIX: Create stacking context to prevent z-index bleed */
-}
-
-.step-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(78, 205, 196, 0.2),
-    rgba(138, 43, 226, 0.2)
-  );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.step-header {
-  margin-bottom: var(--spacing-xl);
+.schedule-exam-page .step-header {
   text-align: center;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-
-.step-header h2 {
-  font-size: var(--font-lg);
+.schedule-exam-page .step-header h2 {
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
   font-weight: 700;
-  margin-bottom: var(--spacing-xs);
-  letter-spacing: 0.3px;
+  color: #fff;
+  margin-bottom: 0.35rem;
 }
-
-.step-header p {
-  font-size: var(--font-md);
-  color: var(--color-text-secondary) !important;
+.schedule-exam-page .step-header p {
+  font-size: clamp(0.9rem, 1.5vw, 1rem);
+  color: var(--sx-text-mute);
   margin: 0;
-  opacity: 0.9;
 }
 
-.date-warning {
+.schedule-exam-page .date-warning {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: rgba(237, 137, 54, 0.15);
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  border-radius: var(--radius-md);
-  color: #ffcc99 !important;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  background: var(--sx-warning-bg);
+  border: 1px solid rgba(237, 137, 54, 0.35);
+  border-radius: var(--sx-r-md);
+  color: #ffd5a3;
   font-weight: 600;
-  margin-top: var(--spacing-md);
+  margin: 1rem auto 0;
   max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
 }
+.schedule-exam-page .date-warning svg { flex-shrink: 0; color: #ffaa66; }
 
-.date-warning svg {
-  flex-shrink: 0;
-  color: #ffaa66 !important;
-}
-
-/* ============================================
-   EXAMS LIST - TRANSPARENT OPTIONS
-   ============================================ */
-
-.exams-list {
+/* =============================================================
+   EXAMS LIST
+   ============================================================= */
+.schedule-exam-page .exams-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  max-width: 700px;
-  margin: 0 auto var(--spacing-xl);
+  gap: 0.75rem;
+  max-width: 720px;
+  margin: 0 auto clamp(1.25rem, 2.5vw, 2rem);
 }
-
-.exam-option {
+.schedule-exam-page .exam-option {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  background: var(--color-bg-element);
-  backdrop-filter: blur(5px);
-  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s var(--sx-ease);
   flex-wrap: wrap;
-  row-gap: var(--spacing-sm);
+  row-gap: 0.5rem;
 }
-
-.exam-option:hover:not(.disabled) {
-  background: rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateX(8px);
+.schedule-exam-page .exam-option:hover:not(.disabled) {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
+  transform: translateX(4px);
+  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.2);
 }
-
-.exam-option.selected {
-  border-color: rgba(78, 205, 196, 0.5);
-  background: rgba(78, 205, 196, 0.1);
-  box-shadow: var(--glow-cyan);
+.schedule-exam-page .exam-option.selected {
+  border-color: rgba(129, 140, 248, 0.55);
+  background: var(--sx-grad-soft);
+  box-shadow: var(--sx-glow);
 }
-
-.exam-option.disabled {
-  opacity: 0.5;
+.schedule-exam-page .exam-option.disabled {
+  opacity: 0.55;
   cursor: not-allowed;
-  border-color: rgba(245, 101, 101, 0.3);
-  background: rgba(245, 101, 101, 0.1);
+  background: rgba(252, 129, 129, 0.06);
+  border-color: rgba(252, 129, 129, 0.25);
 }
 
-.exam-option-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.3) 0%, 
-    rgba(138, 43, 226, 0.3) 100%
-  );
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: var(--color-text-primary) !important;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
+.schedule-exam-page .exam-option-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--sx-r-md);
+  background: var(--sx-grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; color: #fff;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 6px 18px rgba(102,126,234,0.35);
 }
-
-.exam-option-icon.disabled {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.3) 0%, 
-    rgba(221, 107, 32, 0.3) 100%
-  );
-  border-color: rgba(237, 137, 54, 0.3);
+.schedule-exam-page .exam-option-icon.disabled {
+  background: linear-gradient(135deg, rgba(237,137,54,0.4), rgba(221,107,32,0.4));
+  box-shadow: 0 6px 18px rgba(237, 137, 54, 0.3);
 }
-
-.exam-option-details {
-  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing with minimum basis */
+.schedule-exam-page .exam-option-details {
+  flex: 1 1 min(220px, 100%);
   min-width: 0;
-  position: relative;
+}
+.schedule-exam-page .exam-option-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.25rem;
+}
+.schedule-exam-page .exam-option-details p {
+  font-size: 0.85rem;
+  color: var(--sx-text-mute);
+  margin: 0;
 }
 
-.exam-status {
+.schedule-exam-page .exam-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  backdrop-filter: blur(5px);
-  position: relative;
-  z-index: 1;
-  max-width: fit-content;
-}
-
-.exam-status.passed {
-  background-color: rgba(72, 187, 120, 0.15) !important;
-  color: #4ade80 !important;
-  border: 1px solid rgba(72, 187, 120, 0.3) !important;
-}
-
-.exam-status.scheduled {
-  background-color: rgba(237, 137, 54, 0.15) !important;
-  color: #ffaa66 !important;
-  border: 1px solid rgba(237, 137, 54, 0.3) !important;
-}
-
-.exam-status.failed {
-  background-color: rgba(245, 101, 101, 0.15) !important;
-  color: #f87171 !important;
-  border: 1px solid rgba(245, 101, 101, 0.3) !important;
-}
-
-.exam-status svg {
-  width: 14px;
-  height: 14px;
-}
-
-.exam-option-details h4 {
-  font-size: var(--font-md);
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+.schedule-exam-page .exam-status svg { width: 14px; height: 14px; }
+.schedule-exam-page .exam-status.passed {
+  background: var(--sx-success-bg);
+  color: #6ee7b7;
+  border: 1px solid rgba(72, 187, 120, 0.35);
+}
+.schedule-exam-page .exam-status.scheduled {
+  background: var(--sx-warning-bg);
+  color: #fdba74;
+  border: 1px solid rgba(237, 137, 54, 0.35);
+}
+.schedule-exam-page .exam-status.failed {
+  background: var(--sx-danger-bg);
+  color: #fca5a5;
+  border: 1px solid rgba(252, 129, 129, 0.35);
 }
 
-.exam-option-details p {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-}
-
-.already-scheduled {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #ffaa66 !important;
-  font-weight: 500;
-  margin-top: 4px;
-}
-
-.exam-option-check {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent check from shrinking */
-}
-
-.check-circle {
-  width: 24px;
-  height: 24px;
+.schedule-exam-page .exam-option-check { flex-shrink: 0; }
+.schedule-exam-page .check-circle {
+  width: 28px; height: 28px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.3) 0%, 
-    rgba(56, 161, 105, 0.3) 100%
-  );
-  color: var(--color-text-primary) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  border: 1px solid rgba(72, 187, 120, 0.3);
-  backdrop-filter: blur(5px);
-}
-
-.already-booked {
-  padding: 4px 12px;
-  background: rgba(237, 137, 54, 0.3) !important;
-  color: #ffcc99 !important;
-  border-radius: 12px;
-  font-size: 11px;
+  background: linear-gradient(135deg, rgba(72,187,120,0.6), rgba(56,161,105,0.6));
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
   font-weight: 700;
-  text-transform: uppercase;
+  border: 1px solid rgba(72, 187, 120, 0.5);
+  box-shadow: var(--sx-glow-green);
+}
+.schedule-exam-page .status-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
   white-space: nowrap;
-  border: 1px solid rgba(237, 137, 54, 0.3) !important;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(6px);
+}
+.schedule-exam-page .status-tag.passed {
+  background: var(--sx-success-bg); color: #6ee7b7;
+  border: 1px solid rgba(72,187,120,0.35);
+}
+.schedule-exam-page .status-tag.scheduled {
+  background: var(--sx-warning-bg); color: #fdba74;
+  border: 1px solid rgba(237,137,54,0.35);
+}
+.schedule-exam-page .status-tag.failed {
+  background: var(--sx-danger-bg); color: #fca5a5;
+  border: 1px solid rgba(252,129,129,0.35);
 }
 
-/* ============================================
-   PROCTORS GRID - COSMIC CARDS
-   ============================================ */
-
-.proctors-grid {
+/* =============================================================
+   PROCTOR GRID
+   ============================================================= */
+.schedule-exam-page .proctors-grid {
   display: grid;
-  /* RESPONSIVE FIX: Allow cards to shrink below 320px on very small screens */
-  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-
-/* FIX: Proctor-card background was white - now fixed */
-.proctor-card {
+.schedule-exam-page .proctor-card {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--color-bg-element) !important;
-  backdrop-filter: blur(5px);
-  /* RESPONSIVE FIX: Allow wrapping on small screens */
+  backdrop-filter: blur(10px);
+  transition: all 0.25s var(--sx-ease);
   flex-wrap: wrap;
-  row-gap: var(--spacing-sm);
+  row-gap: 0.5rem;
 }
-
-.proctor-card:hover {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-4px);
+.schedule-exam-page .proctor-card:hover {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(102, 126, 234, 0.2);
 }
-
-.proctor-card.selected {
-  border-color: rgba(78, 205, 196, 0.5);
-  background: rgba(78, 205, 196, 0.1) !important;
-  box-shadow: var(--glow-cyan);
+.schedule-exam-page .proctor-card.selected {
+  border-color: rgba(129, 140, 248, 0.55);
+  background: var(--sx-grad-soft);
+  box-shadow: var(--sx-glow);
 }
-
-.proctor-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.3) 0%, 
-    rgba(138, 43, 226, 0.3) 100%
-  );
-  color: var(--color-text-primary) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+.schedule-exam-page .proctor-avatar {
+  width: 56px; height: 56px;
+  border-radius: var(--sx-r-md);
+  background: var(--sx-grad);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
   font-weight: 600;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent avatar from shrinking */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 8px 22px rgba(102,126,234,0.4);
 }
-
-.proctor-info {
-  flex: 1 1 min(200px, 100%); /* RESPONSIVE FIX: Allow flexible sizing */
+.schedule-exam-page .proctor-info {
+  flex: 1 1 min(180px, 100%);
   min-width: 0;
 }
-
-.proctor-info h4 {
-  font-size: var(--font-md);
+.schedule-exam-page .proctor-info h4 {
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  color: #fff;
+  margin: 0 0 0.2rem;
 }
-
-.proctor-info p {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: 4px;
+.schedule-exam-page .proctor-info p {
+  font-size: 0.85rem;
+  color: var(--sx-text-mute);
+  margin: 0 0 0.4rem;
 }
-
-.proctor-status {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+.schedule-exam-page .proctor-status {
   display: inline-block;
-  backdrop-filter: blur(5px);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: var(--sx-danger-bg);
+  color: #fca5a5;
+  border: 1px solid rgba(252,129,129,0.35);
 }
-
-.proctor-status.active {
-  background: rgba(72, 187, 120, 0.3) !important;
-  color: #b3ffd9 !important;
-  border: 1px solid rgba(72, 187, 120, 0.3) !important;
+.schedule-exam-page .proctor-status.active {
+  background: var(--sx-success-bg);
+  color: #6ee7b7;
+  border-color: rgba(72,187,120,0.35);
 }
+.schedule-exam-page .proctor-check { flex-shrink: 0; }
 
-.proctor-status:not(.active) {
-  background: rgba(245, 101, 101, 0.3) !important;
-  color: #ffd6d6 !important;
-  border: 1px solid rgba(245, 101, 101, 0.3) !important;
-}
-
-.proctor-check {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent check from shrinking */
-}
-
-/* ============================================
-   DATE & TIME SELECTOR - COSMIC CALENDAR
-   ============================================ */
-
-.date-time-selector {
+/* =============================================================
+   DATE & TIME
+   ============================================================= */
+.schedule-exam-page .date-time-selector {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-
-.date-selector,
-.time-selector {
-  background: var(--color-bg-element);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  border: var(--glass-border);
-  backdrop-filter: blur(5px);
-  /* RESPONSIVE FIX: Ensure content doesn't overflow */
-  overflow: auto;
-  max-width: 100%;
+.schedule-exam-page .date-selector,
+.schedule-exam-page .time-selector {
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-lg);
+  padding: 1.2rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  min-width: 0;
 }
-
-.date-selector h3,
-.time-selector h3 {
-  font-size: var(--font-md);
+.schedule-exam-page .date-selector h3,
+.schedule-exam-page .time-selector h3 {
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  color: #fff;
+  margin: 0 0 1rem;
 }
 
-.calendar-container {
-  background: rgba(10, 10, 30, 0.5);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  /* RESPONSIVE FIX: Prevent overflow */
+.schedule-exam-page .calendar-container {
+  background: rgba(15, 17, 40, 0.35);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  padding: 1rem;
   overflow-x: auto;
 }
-
-.calendar-header {
+.schedule-exam-page .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
-  flex-wrap: wrap; /* RESPONSIVE FIX: Allow wrapping if needed */
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
 }
-
-.current-month {
-  font-size: var(--font-md);
+.schedule-exam-page .current-month {
+  font-size: 1rem;
   font-weight: 600;
+  color: #fff;
 }
-
-.nav-btn {
-  width: 40px;
-  height: 40px;
-  border: var(--glass-border);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: var(--color-text-primary) !important;
+.schedule-exam-page .nav-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-sm);
+  color: var(--sx-text);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  box-shadow: var(--glow-white);
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent button from shrinking */
+  backdrop-filter: blur(6px);
+  flex-shrink: 0;
+  transition: all 0.2s var(--sx-ease);
 }
-
-.nav-btn:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: var(--glow-cyan);
+.schedule-exam-page .nav-btn:hover {
+  background: var(--sx-grad);
+  border-color: transparent;
+  box-shadow: var(--sx-glow);
+  transform: translateY(-1px);
 }
+.schedule-exam-page .nav-btn svg { width: 18px; height: 18px; }
 
-.nav-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.calendar-days {
+.schedule-exam-page .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  min-width: 280px; /* RESPONSIVE FIX: Prevent grid from collapsing too much */
+  gap: 4px;
+  min-width: 260px;
 }
-
-.day-header {
+.schedule-exam-page .day-header {
   text-align: center;
-  font-size: var(--font-xs);
-  font-weight: 600;
-  color: var(--color-text-secondary) !important;
-  padding: 10px 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--sx-text-mute);
+  padding: 0.4rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-
-.calendar-day {
+.schedule-exam-page .calendar-day {
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+  border-radius: var(--sx-r-sm);
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--sx-glass);
+  cursor: pointer;
+  transition: all 0.2s var(--sx-ease);
+  position: relative;
+  font-size: 0.85rem;
 }
-
-.calendar-day:hover:not(.disabled):not(.has-appointment) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+.schedule-exam-page .calendar-day:hover:not(.disabled):not(.has-appointment):not(.past) {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
 }
-
-.calendar-day.available {
-  background: rgba(72, 187, 120, 0.15);
-  color: #b3ffd9 !important;
+.schedule-exam-page .calendar-day.available {
+  background: rgba(72, 187, 120, 0.12);
+  color: #a7f3d0;
   border-color: rgba(72, 187, 120, 0.3);
 }
-
-.calendar-day.available:hover:not(.disabled):not(.has-appointment) {
-  background: rgba(72, 187, 120, 0.25);
-  box-shadow: var(--glow-green);
+.schedule-exam-page .calendar-day.available:hover {
+  background: rgba(72, 187, 120, 0.22);
+  box-shadow: var(--sx-glow-green);
 }
-
-.calendar-day.selected {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.3) 0%, 
-    rgba(138, 43, 226, 0.3) 100%
-  );
-  color: var(--color-text-primary) !important;
-  transform: scale(1.1);
-  box-shadow: var(--glow-purple);
-  border-color: rgba(138, 43, 226, 0.5);
+.schedule-exam-page .calendar-day.selected {
+  background: var(--sx-grad);
+  color: #fff;
+  border-color: transparent;
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(129, 140, 248, 0.6);
   z-index: 1;
 }
-
-.calendar-day.today {
-  border: 2px solid rgba(78, 205, 196, 0.5);
-  background: rgba(78, 205, 196, 0.1);
+.schedule-exam-page .calendar-day.today {
+  border-color: rgba(129, 140, 248, 0.55);
 }
-
-.calendar-day.past {
+.schedule-exam-page .calendar-day.past {
   opacity: 0.3;
   cursor: not-allowed;
 }
-
-.calendar-day.disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
-  background: rgba(245, 101, 101, 0.1);
-}
-
-.calendar-day.has-appointment {
-  background: rgba(237, 137, 54, 0.15);
-  color: #ffcc99 !important;
-  cursor: not-allowed;
-  border: 1px dashed rgba(237, 137, 54, 0.3);
-}
-
-.day-number {
-  font-size: var(--font-sm);
-  font-weight: 600;
-}
-
-.day-availability {
-  position: absolute;
-  bottom: 4px;
-  font-size: 9px;
-  color: #4ade80 !important;
-}
-
-.day-appointment {
-  position: absolute;
-  bottom: 4px;
-  font-size: 9px;
-  color: #ffaa66 !important;
-}
-
-.time-slots {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
-
-.time-slot {
-  padding: var(--spacing-md);
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(5px);
-}
-
-.time-slot:hover:not(.unavailable) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-}
-
-.time-slot.selected {
-  border-color: rgba(78, 205, 196, 0.5);
-  background: rgba(78, 205, 196, 0.1);
-  box-shadow: var(--glow-cyan);
-  transform: translateY(-2px);
-}
-
-.time-slot.unavailable {
+.schedule-exam-page .calendar-day.disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.schedule-exam-page .calendar-day.has-appointment {
+  background: var(--sx-warning-bg);
+  color: #fdba74;
+  cursor: not-allowed;
+  border-color: rgba(237, 137, 54, 0.4);
+  border-style: dashed;
+}
+.schedule-exam-page .day-number { font-weight: 600; }
+.schedule-exam-page .day-availability,
+.schedule-exam-page .day-appointment {
+  position: absolute;
+  bottom: 3px;
+  font-size: 0.55rem;
+}
+.schedule-exam-page .day-availability { color: #6ee7b7; }
+.schedule-exam-page .day-appointment { color: #fdba74; }
+
+.schedule-exam-page .time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.65rem;
+}
+.schedule-exam-page .time-slot {
+  padding: 0.85rem;
+  text-align: center;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.2s var(--sx-ease);
+}
+.schedule-exam-page .time-slot:hover:not(.unavailable) {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
+  transform: translateY(-2px);
+}
+.schedule-exam-page .time-slot.selected {
+  background: var(--sx-grad);
+  border-color: transparent;
+  box-shadow: var(--sx-glow);
+  transform: translateY(-2px);
+}
+.schedule-exam-page .time-slot.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--sx-warning-bg);
   border-color: rgba(237, 137, 54, 0.3);
-  background: rgba(237, 137, 54, 0.1);
 }
-
-.slot-time {
-  font-size: var(--font-sm);
+.schedule-exam-page .slot-time {
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  color: #fff;
+  margin-bottom: 0.2rem;
 }
-
-.slot-status {
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.slot-status.available {
-  color: #4ade80 !important;
-}
-
-.slot-status.unavailable {
-  color: #ffaa66 !important;
-}
-
-.no-slots {
+.schedule-exam-page .slot-status { font-size: 0.7rem; font-weight: 600; }
+.schedule-exam-page .slot-status.available { color: #6ee7b7; }
+.schedule-exam-page .slot-status.unavailable { color: #fdba74; }
+.schedule-exam-page .no-slots {
   grid-column: 1 / -1;
   text-align: center;
-  padding: var(--spacing-xl);
-  color: var(--color-text-secondary) !important;
+  padding: 2rem;
+  color: var(--sx-text-mute);
   font-style: italic;
 }
 
-.time-selector.placeholder {
+.schedule-exam-page .time-selector.placeholder {
   display: flex;
   flex-direction: column;
+  min-height: 280px;
 }
-
-.time-selector.placeholder.error {
-  background: rgba(237, 137, 54, 0.1);
-  border: 1px solid rgba(237, 137, 54, 0.3);
+.schedule-exam-page .time-selector.placeholder.error {
+  background: rgba(237, 137, 54, 0.08);
+  border-color: rgba(237, 137, 54, 0.3);
 }
-
-.placeholder-message {
+.schedule-exam-page .placeholder-message {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-secondary) !important;
-  font-style: italic;
-  padding: var(--spacing-lg);
   text-align: center;
+  color: var(--sx-text-mute);
+  padding: 1.5rem;
+  font-style: italic;
+}
+.schedule-exam-page .placeholder-message .error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.85rem;
+  color: var(--sx-warning);
+  filter: drop-shadow(0 0 12px rgba(237,137,54,0.5));
 }
 
-.placeholder-message .error-icon {
-  font-size: 48px;
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text-accent) !important;
+.schedule-exam-page .debug-info {
+  background: rgba(15, 17, 40, 0.5);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-sm);
+  padding: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--sx-text-mute);
+  margin-top: 0.85rem;
 }
 
-.debug-info {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm);
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary) !important;
-  margin-top: var(--spacing-md);
+/* =============================================================
+   APPOINTMENT CARD / DETAIL SECTIONS
+   ============================================================= */
+.schedule-exam-page .current-appointment-details { margin-bottom: 1.5rem; }
+.schedule-exam-page .appointment-card {
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-xl);
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  backdrop-filter: var(--sx-blur-strong);
+  -webkit-backdrop-filter: var(--sx-blur-strong);
+  box-shadow: var(--sx-shadow);
+  isolation: isolate;
 }
-
-.debug-info p {
-  margin: 4px 0;
-}
-
-/* ============================================
-   BOOKING SUMMARY - COSMIC DISPLAY
-   ============================================ */
-
-.booking-summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-}
-
-.current-appointment-section {
-  margin-bottom: var(--spacing-lg);
-}
-
-.current-appointment-section h3 {
-  font-size: var(--font-md);
-  font-weight: 600;
-  margin-bottom: var(--spacing-md);
-}
-
-.appointment-comparison {
+.schedule-exam-page .appointment-header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
-  background: var(--color-bg-element);
-  border-radius: var(--radius-md);
-  border: var(--glass-border);
-  backdrop-filter: blur(5px);
-  /* RESPONSIVE FIX: Allow stacking on small screens */
+  gap: 1rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
-  row-gap: var(--spacing-md);
 }
-
-.old-appointment,
-.new-appointment {
-  flex: 1 1 250px; /* RESPONSIVE FIX: Allow flexible sizing */
-}
-
-.comparison-label {
-  font-size: var(--font-xs);
-  font-weight: 600;
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.appointment-detail {
-  background: rgba(10, 10, 30, 0.5);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  /* RESPONSIVE FIX: Allow wrapping if content is too long */
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.detail-item:last-child {
-  border-bottom: none;
-}
-
-.detail-item .label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-}
-
-.detail-item .value {
-  font-size: var(--font-sm);
-  font-weight: 600;
-  color: var(--color-text-primary) !important;
-  text-align: right;
-  max-width: 60%; /* RESPONSIVE FIX: Prevent overflow */
-  word-break: normal;
-}
-
-.arrow {
-  font-size: 24px;
-  color: var(--color-text-accent) !important;
-  font-weight: bold;
+.schedule-exam-page .appointment-icon {
+  width: 56px; height: 56px;
+  border-radius: var(--sx-r-md);
+  background: linear-gradient(135deg, rgba(237,137,54,0.4), rgba(221,107,32,0.4));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  color: #fff;
   flex-shrink: 0;
+  border: 1px solid rgba(237, 137, 54, 0.4);
+  box-shadow: 0 6px 22px rgba(237, 137, 54, 0.3);
+}
+.schedule-exam-page .appointment-title { flex: 1 1 220px; min-width: 0; }
+.schedule-exam-page .appointment-title h3 {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.2rem;
+}
+.schedule-exam-page .appointment-title p {
+  font-size: 0.9rem;
+  color: var(--sx-text-mute);
+  margin: 0;
 }
 
-/* FIX: Summary-card background was white - now fixed */
-.summary-card {
+.schedule-exam-page .appointment-details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-  gap: var(--spacing-lg);
-  background: var(--color-bg-element) !important;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  border: var(--glass-border);
-  backdrop-filter: blur(5px);
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
-
-.summary-section {
+.schedule-exam-page .detail-section h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.75rem;
+}
+.schedule-exam-page .detail-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
+  background: rgba(15, 17, 40, 0.3);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  padding: 0.85rem 1rem;
 }
-
-.summary-section h3 {
-  font-size: var(--font-md);
-  font-weight: 600;
-  margin-bottom: var(--spacing-xs);
-}
-
-.summary-item {
+.schedule-exam-page .detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* RESPONSIVE FIX: Allow wrapping if needed */
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
 }
-
-.summary-item .label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-}
-
-.summary-item .value {
-  font-size: var(--font-sm);
+.schedule-exam-page .detail-item:last-child { border-bottom: none; }
+.schedule-exam-page .detail-item .label {
+  font-size: 0.85rem;
+  color: var(--sx-text-mute);
   font-weight: 500;
-  color: var(--color-text-primary) !important;
+}
+.schedule-exam-page .detail-item .value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
   text-align: right;
   max-width: 60%;
-  word-break: normal;
+  word-break: break-word;
 }
+.schedule-exam-page .detail-item .value.scheduled    { color: #fdba74; }
+.schedule-exam-page .detail-item .value.in-progress,
+.schedule-exam-page .detail-item .value.inprogress   { color: #93c5fd; }
+.schedule-exam-page .detail-item .value.completed    { color: #6ee7b7; }
+.schedule-exam-page .detail-item .value.takenbutfailed,
+.schedule-exam-page .detail-item .value.expired,
+.schedule-exam-page .detail-item .value.cancelled    { color: #fca5a5; }
+.schedule-exam-page .detail-item .value.noreservationyet { color: var(--sx-text-mute); }
+.schedule-exam-page .status-active { color: #6ee7b7; font-weight: 700; }
 
-.status-active {
-  color: #4ade80 !important;
-  font-weight: 600;
-}
-
-.instructions-card {
-  background: rgba(237, 137, 54, 0.1);
+.schedule-exam-page .reschedule-notice,
+.schedule-exam-page .reschedule-note {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: var(--sx-warning-bg);
   border: 1px solid rgba(237, 137, 54, 0.3);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  backdrop-filter: blur(5px);
+  border-radius: var(--sx-r-md);
+  backdrop-filter: blur(6px);
+  flex-wrap: wrap;
 }
-
-.instructions-card h3 {
-  font-size: var(--font-md);
+.schedule-exam-page .notice-icon,
+.schedule-exam-page .note-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(237,137,54,0.5));
+}
+.schedule-exam-page .notice-content,
+.schedule-exam-page .note-content { flex: 1 1 220px; min-width: 0; }
+.schedule-exam-page .notice-content h4 {
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
-  color: #ffcc99 !important;
+  color: #fdba74;
+  margin: 0 0 0.5rem;
 }
-
-.instructions-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.instructions-list li {
-  padding: 8px 0;
-  padding-left: 28px;
+.schedule-exam-page .notice-content ul,
+.schedule-exam-page .note-content ul,
+.schedule-exam-page .note-content p { color: var(--sx-text-mute); }
+.schedule-exam-page .notice-content ul { list-style: none; padding: 0; margin: 0; }
+.schedule-exam-page .notice-content li {
+  padding: 0.3rem 0 0.3rem 1.2rem;
   position: relative;
-  color: var(--color-text-secondary) !important;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
-
-.instructions-list li:before {
-  content: "⚡";
-  color: #ffaa66;
-  font-size: 16px;
+.schedule-exam-page .notice-content li::before {
+  content: "•";
   position: absolute;
   left: 0;
-  top: 8px;
+  top: 0.3rem;
+  color: var(--sx-warning);
 }
 
-/* ============================================
-   STEP ACTIONS - COSMIC BUTTONS
-   ============================================ */
+/* =============================================================
+   BOOKING SUMMARY (final step)
+   ============================================================= */
+.schedule-exam-page .booking-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+}
+.schedule-exam-page .current-appointment-section h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.85rem;
+}
+.schedule-exam-page .appointment-comparison {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  backdrop-filter: blur(10px);
+  flex-wrap: wrap;
+  row-gap: 1rem;
+}
+.schedule-exam-page .old-appointment,
+.schedule-exam-page .new-appointment { flex: 1 1 260px; min-width: 0; }
+.schedule-exam-page .comparison-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--sx-text-mute);
+  margin-bottom: 0.5rem;
+}
+.schedule-exam-page .appointment-detail {
+  background: rgba(15, 17, 40, 0.35);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  padding: 0.85rem 1rem;
+}
+.schedule-exam-page .arrow {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--sx-accent);
+  align-self: center;
+  flex-shrink: 0;
+  text-shadow: 0 0 14px rgba(129, 140, 248, 0.7);
+}
 
-.step-actions {
+.schedule-exam-page .summary-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-lg);
+  backdrop-filter: blur(12px);
+}
+.schedule-exam-page .summary-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.schedule-exam-page .summary-section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.35rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--sx-border);
+}
+.schedule-exam-page .summary-item {
   display: flex;
   justify-content: space-between;
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  /* RESPONSIVE FIX: Allow buttons to wrap */
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
 }
-
-/* FIX: Cancel button width too large - now smaller */
-.btn-cancel,
-.btn-back,
-.btn-next,
-.btn-confirm {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: 14px 24px;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
+.schedule-exam-page .summary-item .label {
+  font-size: 0.85rem;
+  color: var(--sx-text-mute);
+}
+.schedule-exam-page .summary-item .value {
+  font-size: 0.9rem;
+  color: #fff;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  min-width: 100px;
-  justify-content: center;
-  white-space: nowrap; /* Prevent button text wrapping inside */
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
 }
 
-/* Make cancel button smaller */
-.btn-cancel {
-  background: rgba(245, 101, 101, 0.3) !important;
-  color: #ffd6d6 !important;
-  border: 1px solid rgba(245, 101, 101, 0.3) !important;
-  min-width: 90px !important;
-  padding: 12px 20px !important;
-}
-
-.btn-cancel:hover {
-  background: rgba(245, 101, 101, 0.5) !important;
-  border-color: rgba(245, 101, 101, 0.5) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-red);
-}
-
-.btn-back {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  min-width: 100px;
-}
-
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-white);
-}
-
-.btn-next,
-.btn-confirm {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.4) 0%, 
-    rgba(138, 43, 226, 0.4) 100%
-  ) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(138, 43, 226, 0.3) !important;
-  min-width: 100px;
-}
-
-.btn-next:hover:not(:disabled),
-.btn-confirm:hover:not(:disabled) {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.6) 0%, 
-    rgba(138, 43, 226, 0.6) 100%
-  ) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-purple);
-}
-
-.btn-next:disabled,
-.btn-confirm:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-confirm {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.4) 0%, 
-    rgba(56, 161, 105, 0.4) 100%
-  ) !important;
-  border: 1px solid rgba(72, 187, 120, 0.3) !important;
-}
-
-.btn-confirm:hover:not(:disabled) {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.6) 0%, 
-    rgba(56, 161, 105, 0.6) 100%
-  ) !important;
-  box-shadow: var(--glow-green);
-}
-
-.booking-loading {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.booking-loading:after {
-  content: "";
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: cosmic-spin 1s linear infinite;
-}
-
-/* ============================================
-   MODAL STYLES - COSMIC GLASS (BORDER FORCIBLY REMOVED)
-   ============================================ */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: var(--spacing-lg);
-  animation: cosmic-fade-in 0.3s ease;
+.schedule-exam-page .instructions-card {
+  padding: 1.25rem;
+  background: var(--sx-warning-bg);
+  border: 1px solid rgba(237, 137, 54, 0.35);
+  border-radius: var(--sx-r-lg);
   backdrop-filter: blur(10px);
 }
-
-/* Target all possible modal classes to ensure no border */
-.success-modal,
-.cancel-modal,
-.modal-content {
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: none !important;
-  outline: none !important;
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  text-align: center;
-  max-width: 600px;
-  width: 100%;
-  animation: cosmic-slide-up 0.4s ease;
-  box-shadow: 
-    var(--shadow-floating),
-    var(--glow-cyan);
+.schedule-exam-page .instructions-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fdba74;
+  margin: 0 0 0.85rem;
+}
+.schedule-exam-page .instructions-list { list-style: none; padding: 0; margin: 0; }
+.schedule-exam-page .instructions-list li {
+  padding: 0.4rem 0 0.4rem 1.6rem;
   position: relative;
+  color: var(--sx-text-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
-
-/* Remove any pseudo-elements that might create a border */
-.success-modal::before,
-.success-modal::after,
-.cancel-modal::before,
-.cancel-modal::after,
-.modal-content::before,
-.modal-content::after {
-  display: none !important;
-  content: none !important;
-}
-
-.success-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.3) 0%, 
-    rgba(56, 161, 105, 0.3) 100%
-  );
-  border-radius: 50%;
-  color: var(--color-text-primary) !important;
-  font-size: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--spacing-lg);
-  border: 1px solid rgba(72, 187, 120, 0.3);
-  backdrop-filter: blur(5px);
-  box-shadow: var(--glow-green);
-}
-
-.success-modal h3 {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  margin-bottom: var(--spacing-sm);
-}
-
-.success-modal p {
-  font-size: var(--font-md);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-xl);
-}
-
-.success-details {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.success-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  /* RESPONSIVE FIX: Allow stacking on small screens */
-  flex-wrap: wrap;
-}
-
-.success-actions button {
-  flex: 1 1 auto;
-  padding: 14px 24px;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-}
-
-.btn-primary {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.4) 0%, 
-    rgba(138, 43, 226, 0.4) 100%
-  ) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(138, 43, 226, 0.3) !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.6) 0%, 
-    rgba(138, 43, 226, 0.6) 100%
-  ) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-purple);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-white);
-}
-
-/* ============================================
-   LOADING AND ERROR STATES
-   ============================================ */
-
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xl);
-  text-align: center;
-  background: var(--color-bg-card) !important;
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-lg);
-  box-shadow: var(--shadow-deep);
-  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
-}
-
-/* FIX: Spinner background was white - now cosmic light spinner */
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 3px solid transparent;
-  border-top-color: var(--color-text-accent);
-  border-right-color: var(--color-text-accent-alt);
-  border-bottom-color: rgba(66, 133, 244, 0.8);
-  border-left-color: rgba(138, 43, 226, 0.8);
-  border-radius: 50%;
-  animation: cosmic-spin 1s linear infinite;
-  margin-bottom: var(--spacing-md);
-  box-shadow: 
-    0 0 20px rgba(78, 205, 196, 0.3),
-    inset 0 0 20px rgba(255, 255, 255, 0.05);
-  background: transparent !important;
-  position: relative;
-}
-
-.loading-spinner::before {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: cosmic-spin 1.5s linear infinite reverse;
-}
-
-.error-icon {
-  font-size: 64px;
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text-accent) !important;
-  text-shadow: var(--glow-cyan);
-}
-
-.error-container h3 {
-  font-size: var(--font-lg);
-  font-weight: 600;
-  margin-bottom: var(--spacing-sm);
-}
-
-.error-container p {
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-lg);
-  max-width: 400px;
-  font-size: var(--font-md);
-}
-
-.retry-btn {
-  padding: 12px 28px;
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.4) 0%, 
-    rgba(138, 43, 226, 0.4) 100%
-  ) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(138, 43, 226, 0.3) !important;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-}
-
-.retry-btn:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.6) 0%, 
-    rgba(138, 43, 226, 0.6) 100%
-  ) !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-purple);
-}
-
-/* ============================================
-   CURRENT APPOINTMENT DETAILS
-   ============================================ */
-
-.current-appointment-details {
-  margin-bottom: var(--spacing-xl);
-}
-
-.appointment-card {
-  background: var(--color-bg-card) !important;
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-deep);
-  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
-}
-
-.appointment-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  /* RESPONSIVE FIX: Allow wrapping on small screens */
-  flex-wrap: wrap;
-  row-gap: var(--spacing-sm);
-}
-
-.appointment-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.3) 0%, 
-    rgba(221, 107, 32, 0.3) 100%
-  );
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: var(--color-text-primary) !important;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  backdrop-filter: blur(5px);
-}
-
-.appointment-title {
-  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing */
-  min-width: 0;
-}
-
-.appointment-title h3 {
-  font-size: var(--font-lg);
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.appointment-title p {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-}
-
-.appointment-details {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  /* RESPONSIVE FIX: Adjust grid on smaller screens via media query */
-}
-
-.detail-section h4 {
-  font-size: var(--font-md);
-  font-weight: 600;
-  margin-bottom: var(--spacing-sm);
-}
-
-.detail-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.detail-item .value.scheduled {
-  color: #ffaa66 !important;
-}
-
-.detail-item .value.in-progress {
-  color: #66b3ff !important;
-}
-
-.detail-item .value.completed {
-  color: #4ade80 !important;
-}
-
-.reschedule-notice {
-  display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: rgba(237, 137, 54, 0.1);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  backdrop-filter: blur(5px);
-  /* RESPONSIVE FIX: Allow stacking on small screens */
-  flex-wrap: wrap;
-  row-gap: var(--spacing-sm);
-}
-
-.notice-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-  color: #ffaa66 !important;
-}
-
-.notice-content {
-  flex: 1 1 min(250px, 100%);
-}
-
-.notice-content h4 {
-  font-size: var(--font-md);
-  font-weight: 600;
-  margin-bottom: var(--spacing-xs);
-  color: #ffcc99 !important;
-}
-
-.notice-content ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-.notice-content li {
-  padding: 4px 0;
-  padding-left: 20px;
-  position: relative;
-  color: var(--color-text-secondary) !important;
-  font-size: var(--font-sm);
-  line-height: 1.5;
-}
-
-.notice-content li:before {
-  content: "•";
-  color: #ffaa66;
+.schedule-exam-page .instructions-list li::before {
+  content: "⚡";
   position: absolute;
   left: 0;
-  top: 4px;
+  top: 0.4rem;
+  color: var(--sx-warning);
 }
 
-.action-buttons {
+/* =============================================================
+   STEP ACTIONS + BUTTONS
+   ============================================================= */
+.schedule-exam-page .step-actions {
   display: flex;
-  gap: var(--spacing-sm);
-  /* RESPONSIVE FIX: Allow stacking on small screens */
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sx-border);
+  flex-wrap: wrap;
+}
+.schedule-exam-page .action-buttons {
+  display: flex;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
-.btn-danger {
-  display: flex;
+.schedule-exam-page :where(
+  .btn-cancel, .btn-back, .btn-next, .btn-confirm,
+  .btn-primary, .btn-secondary, .btn-danger, .retry-btn
+) {
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: 14px 28px;
-  background: rgba(245, 101, 101, 0.3) !important;
-  color: #ffd6d6 !important;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.75rem 1.35rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  border-radius: var(--sx-r-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(245, 101, 101, 0.3) !important;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s var(--sx-ease);
+  border: 1px solid transparent;
 }
 
-.btn-danger:hover:not(:disabled) {
-  background: rgba(245, 101, 101, 0.5) !important;
-  color: #ffffff !important;
-  transform: translateY(-3px);
-  box-shadow: var(--glow-red);
+.schedule-exam-page .btn-back,
+.schedule-exam-page .btn-secondary {
+  background: var(--sx-glass);
+  color: var(--sx-text);
+  border-color: var(--sx-border);
+}
+.schedule-exam-page .btn-back:hover,
+.schedule-exam-page .btn-secondary:hover {
+  background: var(--sx-glass-2);
+  border-color: var(--sx-border-2);
+  transform: translateY(-2px);
+  box-shadow: var(--sx-glow);
 }
 
-.btn-danger:disabled {
-  opacity: 0.4;
+.schedule-exam-page .btn-next,
+.schedule-exam-page .btn-primary,
+.schedule-exam-page .retry-btn {
+  background: var(--sx-grad);
+  color: #fff;
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 6px 22px rgba(102,126,234,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.schedule-exam-page .btn-next:hover:not(:disabled),
+.schedule-exam-page .btn-primary:hover,
+.schedule-exam-page .retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(102,126,234,0.5);
+}
+
+.schedule-exam-page .btn-confirm {
+  background: linear-gradient(135deg, rgba(72,187,120,0.7), rgba(56,161,105,0.7));
+  color: #fff;
+  border-color: rgba(72,187,120,0.45);
+  box-shadow: 0 6px 22px rgba(72,187,120,0.35);
+}
+.schedule-exam-page .btn-confirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(72,187,120,0.9), rgba(56,161,105,0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(72,187,120,0.5);
+}
+
+.schedule-exam-page .btn-cancel,
+.schedule-exam-page .btn-danger {
+  background: var(--sx-danger-bg);
+  color: #fecaca;
+  border-color: rgba(252,129,129,0.35);
+}
+.schedule-exam-page .btn-cancel:hover:not(:disabled),
+.schedule-exam-page .btn-danger:hover:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(252,129,129,0.5), rgba(245,101,101,0.5));
+  border-color: rgba(252,129,129,0.6);
+  transform: translateY(-2px);
+  box-shadow: var(--sx-glow-red);
+}
+
+.schedule-exam-page .btn-next:disabled,
+.schedule-exam-page .btn-confirm:disabled,
+.schedule-exam-page .btn-danger:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.cancelling-loading {
-  display: flex;
+.schedule-exam-page .booking-loading,
+.schedule-exam-page .cancelling-loading {
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 0.4rem;
 }
-
-.cancelling-loading:after {
+.schedule-exam-page .booking-loading::after,
+.schedule-exam-page .cancelling-loading::after {
   content: "";
-  width: 14px;
-  height: 14px;
+  width: 14px; height: 14px;
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: cosmic-spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-/* Cancel Modal */
-.cancel-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(237, 137, 54, 0.1);
-  border-radius: 50%;
-  font-size: 40px;
+/* =============================================================
+   MODALS
+   ============================================================= */
+.schedule-exam-page .modal-overlay,
+body > .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 3, 15, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--spacing-lg);
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  backdrop-filter: blur(5px);
-  color: #ffaa66 !important;
-  box-shadow: var(--glow-orange);
+  padding: 1rem;
+  z-index: 10000;
+  animation: sx-fade-in 0.25s ease;
+}
+.schedule-exam-page .modal-content,
+.schedule-exam-page .success-modal,
+.schedule-exam-page .cancel-modal {
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  text-align: center;
+  background: var(--sx-glass-bg);
+  border: 1px solid var(--sx-border-2);
+  border-radius: var(--sx-r-xl);
+  backdrop-filter: var(--sx-blur-strong);
+  -webkit-backdrop-filter: var(--sx-blur-strong);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5),
+              0 0 0 1px rgba(255,255,255,0.05) inset,
+              0 0 60px rgba(102, 126, 234, 0.15);
+  animation: sx-slide-up 0.35s var(--sx-ease);
 }
 
-.cancel-modal h3 {
-  font-size: var(--font-lg);
+.schedule-exam-page .success-icon,
+.schedule-exam-page .cancel-icon {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem;
+  margin: 0 auto 1.25rem;
+  border: 1px solid;
+  backdrop-filter: blur(6px);
+}
+.schedule-exam-page .success-icon {
+  background: linear-gradient(135deg, rgba(72,187,120,0.4), rgba(56,161,105,0.4));
+  color: #fff;
+  border-color: rgba(72,187,120,0.5);
+  box-shadow: var(--sx-glow-green), 0 8px 28px rgba(72,187,120,0.4);
+}
+.schedule-exam-page .cancel-icon {
+  background: var(--sx-warning-bg);
+  color: #fdba74;
+  border-color: rgba(237,137,54,0.45);
+  box-shadow: var(--sx-glow-amber);
+}
+
+.schedule-exam-page .success-modal h3,
+.schedule-exam-page .cancel-modal h3 {
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: 700;
-  margin-bottom: var(--spacing-sm);
+  color: #fff;
+  margin: 0 0 0.5rem;
+}
+.schedule-exam-page .success-modal p,
+.schedule-exam-page .cancel-modal p {
+  font-size: 0.95rem;
+  color: var(--sx-text-mute);
+  margin: 0 0 1.5rem;
 }
 
-.cancel-modal p {
-  font-size: var(--font-md);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-xl);
-}
-
-.cancel-details {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+.schedule-exam-page .success-details,
+.schedule-exam-page .cancel-details {
+  background: rgba(15, 17, 40, 0.4);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
-.cancel-warning {
-  padding: var(--spacing-md);
-  background: rgba(237, 137, 54, 0.1);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  margin-bottom: var(--spacing-xl);
+.schedule-exam-page .cancel-warning {
+  padding: 0.85rem 1rem;
+  background: var(--sx-warning-bg);
+  border: 1px solid rgba(237, 137, 54, 0.35);
+  border-radius: var(--sx-r-md);
+  margin-bottom: 1.25rem;
   text-align: left;
-  backdrop-filter: blur(5px);
 }
+.schedule-exam-page .cancel-warning p { color: #fdba74; font-size: 0.85rem; margin: 0; }
 
-.cancel-warning p {
-  font-size: var(--font-sm);
-  color: #ffaa66 !important;
-  margin: 0;
-}
-
-.cancel-actions {
+.schedule-exam-page .success-actions,
+.schedule-exam-page .cancel-actions {
   display: flex;
-  gap: var(--spacing-sm);
-  /* RESPONSIVE FIX: Allow stacking on small screens */
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
+.schedule-exam-page .success-actions button,
+.schedule-exam-page .cancel-actions button { flex: 1 1 auto; }
 
-.cancel-actions button {
-  flex: 1 1 auto;
-  padding: 14px 24px;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
+/* =============================================================
+   LOADING & ERROR STATES
+   ============================================================= */
+.schedule-exam-page .loading-container,
+.schedule-exam-page .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 3rem) 1.5rem;
+  text-align: center;
+  background: var(--sx-glass);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-xl);
+  margin-bottom: 1.5rem;
+  backdrop-filter: var(--sx-blur);
+  -webkit-backdrop-filter: var(--sx-blur);
+  box-shadow: var(--sx-shadow);
+  min-height: 220px;
+}
+.schedule-exam-page .loading-spinner {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 3px solid rgba(102, 126, 234, 0.15);
+  border-top-color: #818cf8;
+  border-right-color: #a78bfa;
+  margin-bottom: 1rem;
+  animation: spin 0.9s linear infinite;
+  box-shadow: 0 0 22px rgba(129, 140, 248, 0.3);
+  background: transparent;
+  position: relative;
+}
+.schedule-exam-page .loading-container p {
+  color: var(--sx-text-mute);
+  font-size: 0.95rem;
+}
+.schedule-exam-page .error-container .error-icon {
+  font-size: 3rem;
+  margin-bottom: 0.85rem;
+  color: var(--sx-danger);
+  filter: drop-shadow(0 0 14px rgba(252,129,129,0.5));
+}
+.schedule-exam-page .error-container h3 {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.4rem;
+}
+.schedule-exam-page .error-container p {
+  color: var(--sx-text-mute);
+  margin: 0 0 1.25rem;
+  max-width: 420px;
 }
 
-/* ============================================
+/* =============================================================
    ANIMATIONS
-   ============================================ */
-
-@keyframes cosmic-spin {
-  to {
-    transform: rotate(360deg);
-  }
+   ============================================================= */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes sx-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sx-slide-up {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes cosmic-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* =============================================================
+   FOCUS
+   ============================================================= */
+.schedule-exam-page :where(button, a, [tabindex], .exam-option, .proctor-card,
+  .calendar-day, .time-slot):focus-visible {
+  outline: 2px solid var(--sx-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
 }
 
-@keyframes cosmic-slide-up {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+/* =============================================================
+   RESPONSIVE — mobile-first, key breakpoints only
+   ============================================================= */
+
+/* ≥ 480px — phablet */
+@media (min-width: 480px) {
+  .schedule-exam-page .step-actions { flex-wrap: nowrap; }
 }
 
-/* ============================================
-   STATUS TAG STYLES - COSMIC COLORS
-   ============================================ */
-
-.status-tag {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(5px);
-  display: inline-block;
-}
-
-.status-tag.passed {
-  background-color: rgba(72, 187, 120, 0.3) !important;
-  color: #b3ffd9 !important;
-  border: 1px solid rgba(72, 187, 120, 0.3) !important;
-}
-
-.status-tag.scheduled {
-  background-color: rgba(237, 137, 54, 0.3) !important;
-  color: #ffcc99 !important;
-  border: 1px solid rgba(237, 137, 54, 0.3) !important;
-}
-
-.status-tag.failed {
-  background-color: rgba(245, 101, 101, 0.3) !important;
-  color: #ffd6d6 !important;
-  border: 1px solid rgba(245, 101, 101, 0.3) !important;
-}
-
-/* Appointment status styling */
-.detail-grid .value.scheduled {
-  color: #ffaa66 !important;
-  font-weight: 500;
-}
-
-.detail-grid .value.inprogress {
-  color: #66b3ff !important;
-  font-weight: 500;
-}
-
-.detail-grid .value.completed {
-  color: #4ade80 !important;
-  font-weight: 500;
-}
-
-.detail-grid .value.takenbutfailed,
-.detail-grid .value.expired,
-.detail-grid .value.cancelled {
-  color: #f87171 !important;
-  font-weight: 500;
-}
-
-.detail-grid .value.noreservationyet {
-  color: var(--color-text-secondary) !important;
-  font-weight: 500;
-}
-
-.status-active {
-  color: #4ade80 !important;
-  font-weight: 600;
-}
-
-/* ============================================
-   CARD HEADER RESPONSIVE FIXES - CRITICAL FOR ELEMENT SEPARATION
-   ============================================ */
-/* 
-   Ensures that .card-title, .card-count, and .card-subtitle 
-   never overlap or mix at any screen size, especially at 1072×686 and 1711×686.
-   The parent uses flex-wrap with gap, children have appropriate flex properties,
-   and .card-subtitle is forced to a new line.
-*/
-.card-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start; /* Align items to top to prevent vertical misalignment */
-  gap: var(--spacing-sm); /* Fluid gap */
-  padding: var(--spacing-md); /* Ensure consistent padding */
-  min-height: min-content; /* Allow container to expand with content */
-}
-
-.card-header > .card-title {
-  flex: 1 1 auto; /* Allow title to grow and shrink */
-  min-width: min(200px, 100%); /* Give title enough space before wrapping */
-  word-break: normal;
-  overflow-wrap: normal;
-  hyphens: none;
-  line-height: 1.4;
-}
-
-.card-header > .card-count {
-  flex: 0 0 auto; /* Don't grow or shrink */
-  white-space: nowrap; /* Keep count text in one line */
-  margin-left: auto; /* Push to right on larger screens */
-  align-self: center; /* Center vertically when in same row */
-}
-
-.card-header > .card-subtitle {
-  flex: 1 1 100%; /* Force to take full width on new line */
-  margin-top: var(--spacing-xs); /* Add spacing above subtitle */
-  word-break: normal;
-  overflow-wrap: normal;
-  hyphens: none;
-  line-height: 1.5;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - GRANULAR BREAKPOINT SYSTEM
-   ============================================ */
-/* 
-   All original styles are preserved. 
-   The following media queries override variables and element sizes 
-   to ensure perfect responsiveness from 200px to 2560px+.
-*/
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  html {
-    font-size: 8px; /* Base font */
-  }
-  :root {
-    /* Typography - rem based on 8px base */
-    --font-xs: 0.75rem;   /* 6px */
-    --font-sm: 0.875rem;  /* 7px */
-    --font-md: 1rem;       /* 8px */
-    --font-lg: 1.25rem;    /* 10px */
-    --font-xl: 1.5rem;     /* 12px */
-    --font-xxl: 2rem;      /* 16px */
-    /* Spacing - ultra compact */
-    --spacing-xs: 0.25rem; /* 2px */
-    --spacing-sm: 0.5rem;  /* 4px */
-    --spacing-md: 0.75rem; /* 6px */
-    --spacing-lg: 1rem;    /* 8px */
-    --spacing-xl: 1.5rem;  /* 12px */
-    /* Border radius */
-    --radius-sm: 0.5rem;   /* 4px */
-    --radius-md: 0.75rem;  /* 6px */
-    --radius-lg: 1rem;     /* 8px */
-    --radius-xl: 1.25rem;  /* 10px */
-  }
-  /* Layout adjustments */
-  .schedule-exam-page {
-    padding: var(--spacing-sm);
-  }
-  .steps-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .step {
-    min-width: auto;
-  }
-  .step-line {
-    display: none;
-  }
-  .step-number {
-    width: 2.5rem;   /* 20px */
-    height: 2.5rem;
-    font-size: 1rem;  /* 8px */
-  }
-  .step-label {
-    font-size: var(--font-sm);
-  }
-  .step-content {
-    padding: var(--spacing-md);
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  .step-actions {
-    flex-direction: column;
-  }
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm {
-    width: 100%;
-    min-width: 100% !important;
-    padding: 1rem 1.5rem !important;
-    font-size: var(--font-sm);
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .summary-card {
-    grid-template-columns: 1fr;
-  }
-  .success-actions,
-  .cancel-actions {
-    flex-direction: column;
-  }
-  .action-buttons {
-    flex-direction: column;
-  }
-  /* Element size overrides */
-  .back-btn {
-    padding: 0.75rem 1rem;
-  }
-  .back-btn svg {
-    width: 1rem;
-    height: 1rem;
-  }
-  .exam-option-icon {
-    width: 3rem;   /* 24px */
-    height: 3rem;
-    font-size: 1.25rem; /* 10px */
-  }
-  .proctor-avatar {
-    width: 4rem;   /* 32px */
-    height: 4rem;
-    font-size: 1.5rem; /* 12px */
-  }
-  .nav-btn {
-    width: 2.5rem; /* 20px */
-    height: 2.5rem;
-  }
-  .nav-btn svg {
-    width: 1rem;
-    height: 1rem;
-  }
-  .calendar-days {
-    min-width: 200px;
-  }
-  .time-slots {
-    grid-template-columns: 1fr;
-  }
-  .success-icon,
-  .cancel-icon {
-    width: 5rem;   /* 40px */
-    height: 5rem;
-    font-size: 2rem; /* 16px */
-  }
-  .appointment-icon {
-    width: 4rem;   /* 32px */
-    height: 4rem;
-    font-size: 1.5rem; /* 12px */
-  }
-  .loading-spinner {
-    width: 4rem;
-    height: 4rem;
-  }
-  .error-icon {
-    font-size: 4rem; /* 32px */
-  }
-  /* Ensure touch targets are at least 32px */
-  .step-number,
-  .back-btn,
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm,
-  .exam-option,
-  .proctor-card,
-  .nav-btn,
-  .calendar-day,
-  .time-slot,
-  .retry-btn,
-  .btn-danger,
-  .btn-primary,
-  .btn-secondary {
-    min-height: 2.5rem; /* 20px - too small, but limited by screen; we adjust */
-  }
-  /* For very small screens, we accept smaller touch targets, but try to keep them usable */
-  .back-btn, .btn-cancel, .btn-back, .btn-next, .btn-confirm, .retry-btn, .btn-danger, .btn-primary, .btn-secondary {
-    min-height: 2rem; /* 16px */
-  }
-}
-
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  html {
-    font-size: 9px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 6.75px */
-    --font-sm: 0.875rem;  /* 7.875px */
-    --font-md: 1rem;       /* 9px */
-    --font-lg: 1.25rem;    /* 11.25px */
-    --font-xl: 1.5rem;     /* 13.5px */
-    --font-xxl: 2rem;      /* 18px */
-    --spacing-xs: 0.25rem; /* 2.25px */
-    --spacing-sm: 0.5rem;  /* 4.5px */
-    --spacing-md: 0.75rem; /* 6.75px */
-    --spacing-lg: 1rem;    /* 9px */
-    --spacing-xl: 1.5rem;  /* 13.5px */
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.25rem;
-  }
-  .schedule-exam-page {
-    padding: var(--spacing-sm);
-  }
-  .steps-container {
-    flex-wrap: wrap;
-  }
-  .step-line {
-    display: none;
-  }
-  .step-number {
-    width: 2.5rem;   /* 22.5px */
-    height: 2.5rem;
-    font-size: 1rem;  /* 9px */
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  .step-actions {
-    flex-direction: column;
-  }
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm {
-    width: 100%;
-    min-width: 100% !important;
-    padding: 1rem 1.5rem !important;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .summary-card {
-    grid-template-columns: 1fr;
-  }
-  .success-actions,
-  .cancel-actions {
-    flex-direction: column;
-  }
-  .action-buttons {
-    flex-direction: column;
-  }
-  /* Element size overrides */
-  .back-btn {
-    padding: 0.75rem 1rem;
-  }
-  .exam-option-icon {
-    width: 3rem;   /* 27px */
-    height: 3rem;
-    font-size: 1.25rem; /* 11.25px */
-  }
-  .proctor-avatar {
-    width: 4rem;   /* 36px */
-    height: 4rem;
-    font-size: 1.5rem; /* 13.5px */
-  }
-  .nav-btn {
-    width: 2.5rem; /* 22.5px */
-    height: 2.5rem;
-  }
-  .time-slots {
+/* ≥ 640px — small tablet */
+@media (min-width: 640px) {
+  .schedule-exam-page .proctors-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .success-icon,
-  .cancel-icon {
-    width: 5rem;   /* 45px */
-    height: 5rem;
-    font-size: 2rem; /* 18px */
-  }
-  .appointment-icon {
-    width: 4rem;   /* 36px */
-    height: 4rem;
-    font-size: 1.5rem; /* 13.5px */
-  }
-  .loading-spinner {
-    width: 4rem;
-    height: 4rem;
-  }
-}
-
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  html {
-    font-size: 10px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 7.5px */
-    --font-sm: 0.875rem;  /* 8.75px */
-    --font-md: 1rem;       /* 10px */
-    --font-lg: 1.25rem;    /* 12.5px */
-    --font-xl: 1.5rem;     /* 15px */
-    --font-xxl: 2rem;      /* 20px */
-    --spacing-xs: 0.25rem; /* 2.5px */
-    --spacing-sm: 0.5rem;  /* 5px */
-    --spacing-md: 0.75rem; /* 7.5px */
-    --spacing-lg: 1rem;    /* 10px */
-    --spacing-xl: 1.5rem;  /* 15px */
-  }
-  .schedule-exam-page {
-    padding: var(--spacing-sm);
-  }
-  .steps-container {
-    flex-wrap: wrap;
-  }
-  .step-line {
-    display: none;
-  }
-  .step-number {
-    width: 2.5rem;   /* 25px */
-    height: 2.5rem;
-    font-size: 1rem;  /* 10px */
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-  .step-actions {
-    flex-direction: column;
-  }
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm {
-    width: 100%;
-    min-width: 100% !important;
-    padding: 1rem 1.5rem !important;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .summary-card {
-    grid-template-columns: 1fr;
-  }
-  .success-actions,
-  .cancel-actions {
-    flex-direction: column;
-  }
-  .action-buttons {
-    flex-direction: column;
-  }
-  .time-slots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .exam-option-icon {
-    width: 3rem;   /* 30px */
-    height: 3rem;
-  }
-  .proctor-avatar {
-    width: 4rem;   /* 40px */
-    height: 4rem;
-  }
-  .nav-btn {
-    width: 2.5rem; /* 25px */
-    height: 2.5rem;
-  }
-  .success-icon,
-  .cancel-icon {
-    width: 5rem;   /* 50px */
-    height: 5rem;
-  }
-  .appointment-icon {
-    width: 4rem;   /* 40px */
-    height: 4rem;
-  }
-}
-
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  html {
-    font-size: 11px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 8.25px */
-    --font-sm: 0.875rem;  /* 9.625px */
-    --font-md: 1rem;       /* 11px */
-    --font-lg: 1.25rem;    /* 13.75px */
-    --font-xl: 1.5rem;     /* 16.5px */
-    --font-xxl: 2rem;      /* 22px */
-    --spacing-xs: 0.25rem; /* 2.75px */
-    --spacing-sm: 0.5rem;  /* 5.5px */
-    --spacing-md: 0.75rem; /* 8.25px */
-    --spacing-lg: 1rem;    /* 11px */
-    --spacing-xl: 1.5rem;  /* 16.5px */
-  }
-  .step-line {
-    display: none;
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .step-actions {
-    flex-wrap: wrap;
-  }
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm {
-    min-width: 120px;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .time-slots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .step-number {
-    width: 2.5rem; /* 27.5px */
-    height: 2.5rem;
-  }
-  .exam-option-icon {
-    width: 3rem;   /* 33px */
-    height: 3rem;
-  }
-  .proctor-avatar {
-    width: 4rem;   /* 44px */
-    height: 4rem;
-  }
-  .nav-btn {
-    width: 2.5rem; /* 27.5px */
-    height: 2.5rem;
-  }
-  .success-icon,
-  .cancel-icon {
-    width: 5rem;   /* 55px */
-    height: 5rem;
-  }
-  .appointment-icon {
-    width: 4rem;   /* 44px */
-    height: 4rem;
-  }
-}
-
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  html {
-    font-size: 12px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 9px */
-    --font-sm: 0.875rem;  /* 10.5px */
-    --font-md: 1rem;       /* 12px */
-    --font-lg: 1.25rem;    /* 15px */
-    --font-xl: 1.5rem;     /* 18px */
-    --font-xxl: 2rem;      /* 24px */
-    --spacing-xs: 0.25rem; /* 3px */
-    --spacing-sm: 0.5rem;  /* 6px */
-    --spacing-md: 0.75rem; /* 9px */
-    --spacing-lg: 1rem;    /* 12px */
-    --spacing-xl: 1.5rem;  /* 18px */
-  }
-  .step-line {
-    display: none;
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .time-slots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .step-number {
-    width: 2.5rem; /* 30px */
-    height: 2.5rem;
-  }
-  .exam-option-icon {
-    width: 3rem;   /* 36px */
-    height: 3rem;
-  }
-  .proctor-avatar {
-    width: 4rem;   /* 48px */
-    height: 4rem;
-  }
-  .nav-btn {
-    width: 2.5rem; /* 30px */
-    height: 2.5rem;
-  }
-}
-
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  html {
-    font-size: 13px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 9.75px */
-    --font-sm: 0.875rem;  /* 11.375px */
-    --font-md: 1rem;       /* 13px */
-    --font-lg: 1.25rem;    /* 16.25px */
-    --font-xl: 1.5rem;     /* 19.5px */
-    --font-xxl: 2rem;      /* 26px */
-    --spacing-xs: 0.25rem; /* 3.25px */
-    --spacing-sm: 0.5rem;  /* 6.5px */
-    --spacing-md: 0.75rem; /* 9.75px */
-    --spacing-lg: 1rem;    /* 13px */
-    --spacing-xl: 1.5rem;  /* 19.5px */
-  }
-  .step-line {
-    display: none;
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: 1fr;
-  }
-  .time-slots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .step-number {
-    width: 2.5rem; /* 32.5px */
-    height: 2.5rem;
-  }
-}
-
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  html {
-    font-size: 13.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.125px */
-    --font-sm: 0.875rem;  /* 11.8125px */
-    --font-md: 1rem;       /* 13.5px */
-    --font-lg: 1.25rem;    /* 16.875px */
-    --font-xl: 1.5rem;     /* 20.25px */
-    --font-xxl: 2rem;      /* 27px */
-    --spacing-xs: 0.25rem; /* 3.375px */
-    --spacing-sm: 0.5rem;  /* 6.75px */
-    --spacing-md: 0.75rem; /* 10.125px */
-    --spacing-lg: 1rem;    /* 13.5px */
-    --spacing-xl: 1.5rem;  /* 20.25px */
-  }
-  .step-line {
-    display: block;
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .appointment-details {
-    grid-template-columns: 1fr;
-  }
-  .proctors-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .time-slots {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .step-number {
-    width: 2.5rem; /* 33.75px */
-    height: 2.5rem;
-  }
-}
-
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  html {
-    font-size: 14px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.5px */
-    --font-sm: 0.875rem;  /* 12.25px */
-    --font-md: 1rem;       /* 14px */
-    --font-lg: 1.25rem;    /* 17.5px */
-    --font-xl: 1.5rem;     /* 21px */
-    --font-xxl: 2rem;      /* 28px */
-    --spacing-xs: 0.25rem; /* 3.5px */
-    --spacing-sm: 0.5rem;  /* 7px */
-    --spacing-md: 0.75rem; /* 10.5px */
-    --spacing-lg: 1rem;    /* 14px */
-    --spacing-xl: 1.5rem;  /* 21px */
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .appointment-details {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .proctors-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .summary-card {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .time-slots {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .step-number {
-    width: 2.5rem; /* 35px */
-    height: 2.5rem;
-  }
-}
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  html {
-    font-size: 14.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 10.875px */
-    --font-sm: 0.875rem;  /* 12.6875px */
-    --font-md: 1rem;       /* 14.5px */
-    --font-lg: 1.25rem;    /* 18.125px */
-    --font-xl: 1.5rem;     /* 21.75px */
-    --font-xxl: 2rem;      /* 29px */
-    --spacing-xs: 0.25rem; /* 3.625px */
-    --spacing-sm: 0.5rem;  /* 7.25px */
-    --spacing-md: 0.75rem; /* 10.875px */
-    --spacing-lg: 1rem;    /* 14.5px */
-    --spacing-xl: 1.5rem;  /* 21.75px */
-  }
-  .date-time-selector {
-    grid-template-columns: 1fr;
-  }
-  .appointment-details {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .proctors-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .summary-card {
+  .schedule-exam-page .appointment-details {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  html {
-    font-size: 15px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 11.25px */
-    --font-sm: 0.875rem;  /* 13.125px */
-    --font-md: 1rem;       /* 15px */
-    --font-lg: 1.25rem;    /* 18.75px */
-    --font-xl: 1.5rem;     /* 22.5px */
-    --font-xxl: 2rem;      /* 30px */
-    --spacing-xs: 0.25rem; /* 3.75px */
-    --spacing-sm: 0.5rem;  /* 7.5px */
-    --spacing-md: 0.75rem; /* 11.25px */
-    --spacing-lg: 1rem;    /* 15px */
-    --spacing-xl: 1.5rem;  /* 22.5px */
-  }
-  .date-time-selector {
+/* ≥ 768px — tablet */
+@media (min-width: 768px) {
+  .schedule-exam-page .date-time-selector {
     grid-template-columns: 1fr 1fr;
   }
-  .appointment-details {
+  .schedule-exam-page .summary-card {
     grid-template-columns: repeat(2, 1fr);
   }
-  .proctors-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .summary-card {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .schedule-exam-page .step-label { font-size: 0.875rem; }
 }
 
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  html {
-    font-size: 15.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 11.625px */
-    --font-sm: 0.875rem;  /* 13.5625px */
-    --font-md: 1rem;       /* 15.5px */
-    --font-lg: 1.25rem;    /* 19.375px */
-    --font-xl: 1.5rem;     /* 23.25px */
-    --font-xxl: 2rem;      /* 31px */
-    --spacing-xs: 0.25rem; /* 3.875px */
-    --spacing-sm: 0.5rem;  /* 7.75px */
-    --spacing-md: 0.75rem; /* 11.625px */
-    --spacing-lg: 1rem;    /* 15.5px */
-    --spacing-xl: 1.5rem;  /* 23.25px */
-  }
-  .appointment-details {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .proctors-grid {
+/* ≥ 1024px — laptop */
+@media (min-width: 1024px) {
+  .schedule-exam-page .appointment-details {
     grid-template-columns: repeat(3, 1fr);
   }
-  .summary-card {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  html {
-    font-size: 16px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12px */
-    --font-sm: 0.875rem;  /* 14px */
-    --font-md: 1rem;       /* 16px */
-    --font-lg: 1.25rem;    /* 20px */
-    --font-xl: 1.5rem;     /* 24px */
-    --font-xxl: 2rem;      /* 32px */
-    --spacing-xs: 0.25rem; /* 4px */
-    --spacing-sm: 0.5rem;  /* 8px */
-    --spacing-md: 0.75rem; /* 12px */
-    --spacing-lg: 1rem;    /* 16px */
-    --spacing-xl: 1.5rem;  /* 24px */
-  }
-  .appointment-details {
+  .schedule-exam-page .summary-card {
     grid-template-columns: repeat(3, 1fr);
   }
-  .proctors-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .summary-card {
-    grid-template-columns: repeat(3, 1fr);
+  .schedule-exam-page .proctors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  html {
-    font-size: 16.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12.375px */
-    --font-sm: 0.875rem;  /* 14.4375px */
-    --font-md: 1rem;       /* 16.5px */
-    --font-lg: 1.25rem;    /* 20.625px */
-    --font-xl: 1.5rem;     /* 24.75px */
-    --font-xxl: 2rem;      /* 33px */
-    --spacing-xs: 0.25rem; /* 4.125px */
-    --spacing-sm: 0.5rem;  /* 8.25px */
-    --spacing-md: 0.75rem; /* 12.375px */
-    --spacing-lg: 1rem;    /* 16.5px */
-    --spacing-xl: 1.5rem;  /* 24.75px */
-  }
-  .appointment-details {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .proctors-grid {
-    grid-template-columns: repeat(3, 1fr);
+/* ≥ 1440px — desktop */
+@media (min-width: 1440px) {
+  .schedule-exam-page { max-width: 1500px; }
+  .schedule-exam-page .proctors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   }
 }
 
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  html {
-    font-size: 17px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12.75px */
-    --font-sm: 0.875rem;  /* 14.875px */
-    --font-md: 1rem;       /* 17px */
-    --font-lg: 1.25rem;    /* 21.25px */
-    --font-xl: 1.5rem;     /* 25.5px */
-    --font-xxl: 2rem;      /* 34px */
-    --spacing-xs: 0.25rem; /* 4.25px */
-    --spacing-sm: 0.5rem;  /* 8.5px */
-    --spacing-md: 0.75rem; /* 12.75px */
-    --spacing-lg: 1rem;    /* 17px */
-    --spacing-xl: 1.5rem;  /* 25.5px */
-  }
+/* ≥ 1920px — full HD */
+@media (min-width: 1920px) {
+  .schedule-exam-page { max-width: 1700px; }
 }
 
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  html {
-    font-size: 17.2px; /* between 17 and 17.5 */
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 12.9px */
-    --font-sm: 0.875rem;  /* 15.05px */
-    --font-md: 1rem;       /* 17.2px */
-    --font-lg: 1.25rem;    /* 21.5px */
-    --font-xl: 1.5rem;     /* 25.8px */
-    --font-xxl: 2rem;      /* 34.4px */
-    --spacing-xs: 0.25rem; /* 4.3px */
-    --spacing-sm: 0.5rem;  /* 8.6px */
-    --spacing-md: 0.75rem; /* 12.9px */
-    --spacing-lg: 1rem;    /* 17.2px */
-    --spacing-xl: 1.5rem;  /* 25.8px */
-  }
+/* ≥ 2560px — TV / 4K */
+@media (min-width: 2560px) {
+  .schedule-exam-page { max-width: 2000px; }
+  .schedule-exam-page .step-number { width: 56px; height: 56px; font-size: 1.3rem; }
+  .schedule-exam-page .proctor-avatar { width: 64px; height: 64px; font-size: 1.6rem; }
+  .schedule-exam-page .calendar-days { gap: 6px; }
 }
 
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  html {
-    font-size: 17.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.125px */
-    --font-sm: 0.875rem;  /* 15.3125px */
-    --font-md: 1rem;       /* 17.5px */
-    --font-lg: 1.25rem;    /* 21.875px */
-    --font-xl: 1.5rem;     /* 26.25px */
-    --font-xxl: 2rem;      /* 35px */
-    --spacing-xs: 0.25rem; /* 4.375px */
-    --spacing-sm: 0.5rem;  /* 8.75px */
-    --spacing-md: 0.75rem; /* 13.125px */
-    --spacing-lg: 1rem;    /* 17.5px */
-    --spacing-xl: 1.5rem;  /* 26.25px */
-  }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  html {
-    font-size: 17.5px; /* same as previous, or increase slightly? table says ~17.5–18 */
-  }
-  :root {
-    --font-xs: 0.75rem;
-    --font-sm: 0.875rem;
-    --font-md: 1rem;
-    --font-lg: 1.25rem;
-    --font-xl: 1.5rem;
-    --font-xxl: 2rem;
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 0.75rem;
-    --spacing-lg: 1rem;
-    --spacing-xl: 1.5rem;
-  }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  html {
-    font-size: 18px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.5px */
-    --font-sm: 0.875rem;  /* 15.75px */
-    --font-md: 1rem;       /* 18px */
-    --font-lg: 1.25rem;    /* 22.5px */
-    --font-xl: 1.5rem;     /* 27px */
-    --font-xxl: 2rem;      /* 36px */
-    --spacing-xs: 0.25rem; /* 4.5px */
-    --spacing-sm: 0.5rem;  /* 9px */
-    --spacing-md: 0.75rem; /* 13.5px */
-    --spacing-lg: 1rem;    /* 18px */
-    --spacing-xl: 1.5rem;  /* 27px */
-  }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  html {
-    font-size: 18px;
-  }
-  :root {
-    --font-xs: 0.75rem;
-    --font-sm: 0.875rem;
-    --font-md: 1rem;
-    --font-lg: 1.25rem;
-    --font-xl: 1.5rem;
-    --font-xxl: 2rem;
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 0.75rem;
-    --spacing-lg: 1rem;
-    --spacing-xl: 1.5rem;
-  }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  html {
-    font-size: 18.5px;
-  }
-  :root {
-    --font-xs: 0.75rem;   /* 13.875px */
-    --font-sm: 0.875rem;  /* 16.1875px */
-    --font-md: 1rem;       /* 18.5px */
-    --font-lg: 1.25rem;    /* 23.125px */
-    --font-xl: 1.5rem;     /* 27.75px */
-    --font-xxl: 2rem;      /* 37px */
-    --spacing-xs: 0.25rem; /* 4.625px */
-    --spacing-sm: 0.5rem;  /* 9.25px */
-    --spacing-md: 0.75rem; /* 13.875px */
-    --spacing-lg: 1rem;    /* 18.5px */
-    --spacing-xl: 1.5rem;  /* 27.75px */
-  }
-}
-
-/* ===== Breakpoint: 1200px+ | 4XL and beyond (up to 2560px) ===== */
-@media only screen and (min-width: 1200px) {
-  html {
-    font-size: clamp(19px, 1vw, 24px); /* Fluid scaling up to 24px at 2400px, then capped */
-  }
-  :root {
-    --font-xs: 0.75rem;
-    --font-sm: 0.875rem;
-    --font-md: 1rem;
-    --font-lg: 1.25rem;
-    --font-xl: 1.5rem;
-    --font-xxl: 2rem;
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 0.75rem;
-    --spacing-lg: 1rem;
-    --spacing-xl: 1.5rem;
-  }
-  /* Increase container max-width for very large screens */
-  .schedule-exam-page {
-    max-width: 90rem; /* 90 * base font, roughly 1710px at 19px, up to 2160px at 24px */
-    padding: var(--spacing-xl) 5%;
-  }
-  .proctors-grid {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: var(--spacing-lg);
-  }
-  .step-content {
-    padding: var(--spacing-xl);
-  }
-  .success-modal,
-  .cancel-modal {
-    max-width: 50rem; /* ~950px at 19px */
-  }
-  /* Ensure touch targets are comfortable */
-  .btn-cancel,
-  .btn-back,
-  .btn-next,
-  .btn-confirm,
-  .retry-btn,
-  .btn-danger,
-  .btn-primary,
-  .btn-secondary {
-    padding: 1rem 2rem;
-    min-height: 3rem; /* ~57px at 19px */
-  }
-}
-
-/* ============================================
-   ACCESSIBILITY & FOCUS STATES
-   ============================================ */
-
-/* Focus indicators */
-button:focus,
-input:focus,
-select:focus,
-textarea:focus,
-a:focus,
-.exam-option:focus,
-.proctor-card:focus,
-.calendar-day:focus,
-.time-slot:focus,
-.nav-btn:focus,
-.modal-close:focus {
-  outline: 2px solid var(--color-text-accent);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.3);
-}
-
-/* Reduced motion */
+/* =============================================================
+   REDUCED MOTION
+   ============================================================= */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .schedule-exam-page *,
+  .schedule-exam-page *::before,
+  .schedule-exam-page *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
-  .loading-spinner,
-  .booking-loading:after,
-  .cancelling-loading:after {
-    animation: none;
-  }
-  
-  .exam-option:hover,
-  .proctor-card:hover,
-  .calendar-day:hover,
-  .time-slot:hover,
-  .btn-cancel:hover,
-  .btn-back:hover,
-  .btn-next:hover,
-  .btn-confirm:hover,
-  .retry-btn:hover,
-  .btn-danger:hover,
-  .btn-primary:hover,
-  .btn-secondary:hover,
-  .back-btn:hover {
-    transform: none !important;
-  }
+  .schedule-exam-page .loading-spinner,
+  .schedule-exam-page .booking-loading::after,
+  .schedule-exam-page .cancelling-loading::after { animation: none; }
 }
 
-/* High contrast mode */
+/* =============================================================
+   HIGH CONTRAST
+   ============================================================= */
 @media (prefers-contrast: high) {
-  :root {
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #ffffff;
-    --color-bg-card: rgba(0, 0, 0, 0.9);
+  .schedule-exam-page .step-content,
+  .schedule-exam-page .appointment-card,
+  .schedule-exam-page .modal-content,
+  .schedule-exam-page .success-modal,
+  .schedule-exam-page .cancel-modal,
+  .schedule-exam-page .loading-container,
+  .schedule-exam-page .error-container {
+    border-color: #fff;
   }
-  
-  .step-content,
-  .appointment-card,
-  .success-modal,
-  .cancel-modal,
-  .loading-container,
-  .error-container,
-  .date-selector,
-  .time-selector {
-    border: 2px solid #ffffff;
-  }
-  
-  .step-content::before,
-  .success-modal::before,
-  .cancel-modal::before {
-    display: none;
-  }
-}
-
-/* ============================================
-   CUSTOM SCROLLBAR - COSMIC THEME
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: 6px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.2);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 180, 0.7);
-  box-shadow: 0 0 15px rgba(78, 205, 196, 0.4);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.3);
 }

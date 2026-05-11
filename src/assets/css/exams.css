@@ -1,2134 +1,1089 @@
-/* ============================================
-   COSMIC SPACE GALAXY THEME - EXAMS PAGE
-   COMPLETE REDESIGN FOR 3D GALAXY BACKGROUND
-   ============================================ */
+/* ============================================================
+   EXAMS PAGE — GALAXY THEME (Glassmorphism, Mobile-First)
+   Coexists with: src/style.css + AnimatedBackground.vue
+   No universal selectors, no body resets, no !important spam.
+   ============================================================ */
 
-/* CSS Variables for Space Theme */
-:root {
-  /* Color Scheme - ALWAYS LIGHT TEXT */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #e0e0ff;
-  --color-text-tertiary: #b0b0ff;
-  --color-text-accent: #4ECDC4;
-  --color-text-accent-alt: #8A2BE2;
-  
-  /* Backgrounds - DARK with TRANSPARENCY (5-15% opacity) */
-  --color-bg-primary: rgba(5, 5, 20, 0.85);
-  --color-bg-secondary: rgba(10, 10, 30, 0.8);
-  --color-bg-tertiary: rgba(15, 15, 40, 0.9);
-  --color-bg-glass: rgba(10, 10, 30, 0.75);
-  --color-bg-card: rgba(5, 5, 20, 0.9);
-  
-  /* Glass Effects */
-  --glass-blur: blur(15px);
-  --glass-saturate: saturate(180%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.15);
-  
-  /* Glow Effects */
-  --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.4);
-  --glow-purple: 0 0 20px rgba(138, 43, 226, 0.4);
-  --glow-blue: 0 0 20px rgba(66, 133, 244, 0.4);
-  --glow-white: 0 0 15px rgba(255, 255, 255, 0.3);
-  
-  /* Shadows */
-  --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.6);
-  
-  /* Spacing - will be overridden in media queries */
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 1rem;
-  --spacing-md: 1.5rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 3rem;
-  
-  /* Border Radius - will be overridden */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  
-  /* Font Sizes - will be overridden in media queries */
-  --font-xs: clamp(12px, 1vw, 14px);
-  --font-sm: clamp(14px, 1.5vw, 16px);
-  --font-md: clamp(16px, 2vw, 18px);
-  --font-lg: clamp(20px, 2.5vw, 24px);
-  --font-xl: clamp(24px, 3vw, 32px);
-  --font-xxl: clamp(32px, 4vw, 48px);
-}
-
-/* ============================================
-   BASE RESET - ENSURING ALL TEXT IS LIGHT
-   ============================================ */
-
-/* Force ALL text elements to be light colored */
-* {
-  color: var(--color-text-primary) !important;
-}
-
-/* RESPONSIVE FIX: Universal box-sizing for consistent sizing */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Specific text color overrides - ALL LIGHT */
-body,
-h1, h2, h3, h4, h5, h6,
-p, span, div,
-label, input, textarea, select,
-button, a,
-.exams-page,
-.page-header,
-.page-title,
-.page-subtitle,
-.loading-container,
-.error-container,
-.empty-container,
-.exam-card,
-.exam-title,
-.exam-course,
-.detail-label,
-.detail-value,
-.score-label,
-.score-value,
-.appointment-label,
-.appointment-date,
-.btn-view,
-.btn-schedule,
-.btn-start,
-.btn-reschedule,
-.btn-cancel-appointment,
-.retry-btn,
-.btn-secondary,
-.btn-primary,
-.modal-content,
-.modal-header h3,
-.instructions-content,
-.video-link-container p,
-.option-details h5,
-.option-details p,
-.result-label,
-.result-value,
-.modal-body,
-.exam-detail-section h4,
-.detail-item,
-.management-option {
-  color: var(--color-text-primary) !important;
-}
-
-/* RESPONSIVE FIX: Prevent unwanted word breaking across all text elements */
-h1, h2, h3, h4, h5, h6, p, span, div, a, button, label,
-.exam-title, .exam-course, .detail-label, .detail-value,
-.score-label, .score-value, .appointment-label, .appointment-date,
-.modal-header h3, .option-details h5, .result-label, .result-value,
-.card-title, .card-subtitle, .card-count {
-  word-break: normal;
-  overflow-wrap: normal;
-  hyphens: none;
-}
-
-/* Text shadows for readability against galaxy background */
-.exam-title,
-.exam-course,
-.detail-label,
-.detail-value,
-.score-label,
-.score-value,
-.appointment-label,
-.appointment-date,
-.modal-header h3,
-.exam-detail-section h4,
-.option-details h5,
-.result-label,
-.result-value,
-.page-title,
-.page-subtitle,
-.error-container h3,
-.empty-container h3,
-.error-container p,
-.empty-container p {
-  text-shadow: 
-    0 0 10px rgba(0, 0, 0, 0.9),
-    0 2px 4px rgba(0, 0, 0, 0.7),
-    0 0 1px rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Secondary text - slightly lighter/cyan */
-.page-subtitle,
-.exam-course,
-.detail-label,
-.appointment-label,
-.score-label,
-.result-label,
-.instructions-content,
-.video-link-container p,
-.option-details p {
-  color: var(--color-text-secondary) !important;
-}
-
-/* Accent text - cosmic colors */
-.status-passed,
-.score-value.passed,
-.result-value.passed {
-  color: #4ade80 !important;
-  text-shadow: 0 0 15px rgba(74, 222, 128, 0.7) !important;
-}
-
-.status-failed,
-.score-value.failed,
-.result-value.failed {
-  color: #f87171 !important;
-  text-shadow: 0 0 15px rgba(248, 113, 113, 0.7) !important;
-}
-
-/* ============================================
-   GLOBAL STYLES
-   ============================================ */
-
-body {
-  background: transparent !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  line-height: 1.6;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  position: relative;
-}
-
-/* Cosmic background overlay for readability without blocking galaxy */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(5, 5, 15, 0.1) 0%,  /* Very transparent - 10% opacity */
-    rgba(10, 10, 25, 0.08) 100%
-  );
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* ============================================
-   EXAMS PAGE LAYOUT
-   ============================================ */
-
+/* ---------- Page-scoped tokens ---------- */
 .exams-page {
-  padding: var(--spacing-lg);
+  --ex-text:        #ffffff;
+  --ex-text-soft:   rgba(255, 255, 255, 0.75);
+  --ex-text-muted:  rgba(255, 255, 255, 0.55);
+  --ex-text-accent: #a5b4fc;
+
+  --ex-glass:       rgba(255, 255, 255, 0.05);
+  --ex-glass-2:     rgba(255, 255, 255, 0.08);
+  --ex-glass-3:     rgba(255, 255, 255, 0.12);
+  --ex-border:      1px solid rgba(255, 255, 255, 0.1);
+  --ex-border-soft: 1px solid rgba(255, 255, 255, 0.06);
+
+  --ex-blur:        blur(14px) saturate(140%);
+  --ex-blur-strong: blur(20px) saturate(160%);
+
+  --ex-shadow:      0 8px 32px rgba(0, 0, 0, 0.35);
+  --ex-glow:        0 8px 32px rgba(102, 126, 234, 0.18);
+  --ex-glow-strong: 0 12px 48px rgba(102, 126, 234, 0.28);
+
+  --ex-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --ex-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%);
+
+  --ex-success:     #4ade80;
+  --ex-success-bg:  rgba(72, 187, 120, 0.18);
+  --ex-danger:      #f87171;
+  --ex-danger-bg:   rgba(248, 113, 113, 0.18);
+  --ex-warning:     #fbbf24;
+  --ex-warning-bg:  rgba(237, 137, 54, 0.18);
+  --ex-info:        #38bdf8;
+  --ex-info-bg:     rgba(56, 189, 248, 0.18);
+
+  --ex-radius-sm:   10px;
+  --ex-radius-md:   14px;
+  --ex-radius-lg:   18px;
+  --ex-radius-xl:   22px;
+}
+
+/* ============================================================
+   Layout root
+   ============================================================ */
+.exams-page {
+  position: relative;
+  z-index: 1;                   /* above galaxy canvas */
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  min-height: 100vh;
-  position: relative;
-  z-index: 10;
+  padding: clamp(1rem, 3vw, 2rem);
+  color: var(--ex-text);
+  min-height: 100dvh;
 }
 
-/* Page Header - FIXED: No white background, transparent dark glass */
-.page-header {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-deep);
+/* ============================================================
+   Page header
+   ============================================================ */
+.exams-page .page-header {
   position: relative;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--ex-glass);
+  backdrop-filter: var(--ex-blur);
+  -webkit-backdrop-filter: var(--ex-blur);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-lg);
+  box-shadow: var(--ex-shadow), var(--ex-glow);
   overflow: hidden;
-  isolation: isolate; /* RESPONSIVE FIX: Prevent z-index bleed */
 }
 
-/* Cosmic border effect for page header */
-.page-header::before {
+.exams-page .page-header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(78, 205, 196, 0.2),
-    rgba(138, 43, 226, 0.2)
-  );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  inset: 0;
+  background: var(--ex-grad);
+  opacity: 0.06;
   pointer-events: none;
 }
 
-.page-title {
-  font-size: var(--font-xl);
-  font-weight: 700;
-  margin-bottom: var(--spacing-xs);
-  letter-spacing: 0.5px;
+.exams-page .page-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.4rem;
+  line-height: 1.2;
 }
 
-.page-subtitle {
-  font-size: var(--font-md);
-  opacity: 0.9;
+.exams-page .page-subtitle {
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  color: var(--ex-text-soft);
   margin: 0;
 }
 
-/* ============================================
-   SEARCH BAR
-   ============================================ */
-.search-container {
-  margin-bottom: var(--spacing-lg);
-  width: 100%;
+/* ============================================================
+   Search bar
+   ============================================================ */
+.exams-page .search-container {
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
 }
 
-.search-input-wrapper {
+.exams-page .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 0 var(--spacing-md);
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-deep);
+  gap: 0.5rem;
+  padding: 0 clamp(0.75rem, 2vw, 1rem);
+  background: var(--ex-glass);
+  backdrop-filter: var(--ex-blur);
+  -webkit-backdrop-filter: var(--ex-blur);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-md);
+  transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
 }
 
-.search-input-wrapper:focus-within {
-  box-shadow: var(--glow-cyan);
-  border-color: var(--color-text-accent);
+.exams-page .search-input-wrapper:focus-within {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), var(--ex-glow);
+  background: var(--ex-glass-2);
 }
 
-.search-icon {
-  color: var(--color-text-secondary);
-  margin-right: var(--spacing-sm);
-  font-size: 20px;
+.exams-page .search-icon {
+  color: var(--ex-text-soft);
+  font-size: 1.1rem;
   line-height: 1;
 }
 
-.search-input {
+.exams-page .search-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
-  padding: var(--spacing-md) 0;
-  font-size: var(--font-md);
-  color: var(--color-text-primary) !important;
   outline: none;
+  padding: 0.85rem 0;
+  color: var(--ex-text);
+  font: inherit;
+  font-size: clamp(0.9rem, 1.6vw, 1rem);
 }
 
-.search-input::placeholder {
-  color: var(--color-text-tertiary);
-  opacity: 0.7;
-}
+.exams-page .search-input::placeholder { color: var(--ex-text-muted); }
 
-/* Clear search button */
-.search-clear {
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  font-size: 18px;
-  display: flex;
+.exams-page .search-clear {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 32px; height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ex-text-soft);
   border-radius: 50%;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+.exams-page .search-clear:hover {
+  background: rgba(248, 113, 113, 0.2);
+  color: #fff;
+  transform: rotate(90deg);
 }
 
-.search-clear:hover {
-  color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* ============================================
-   LOADING, ERROR & EMPTY STATES
-   ============================================ */
-
-.loading-container,
-.error-container,
-.empty-container {
+/* ============================================================
+   Loading / Error / Empty states
+   ============================================================ */
+.exams-page .loading-container,
+.exams-page .error-container,
+.exams-page .empty-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
+  gap: 0.75rem;
   text-align: center;
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  margin: var(--spacing-lg) 0;
-  box-shadow: var(--shadow-deep);
+  padding: clamp(2rem, 6vw, 3.5rem) 1.25rem;
+  margin: 1.5rem 0;
+  background: var(--ex-glass);
+  backdrop-filter: var(--ex-blur);
+  -webkit-backdrop-filter: var(--ex-blur);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-lg);
+  box-shadow: var(--ex-shadow);
+  animation: fadeInUp .35s ease both;
 }
 
-/* Galaxy Spinner - Transparent and Light */
-.loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-text-accent);
-  border-right-color: var(--color-text-accent-alt);
-  border-radius: 50%;
-  animation: cosmic-spin 2s linear infinite;
-  position: relative;
-  box-shadow: 
-    0 0 20px rgba(78, 205, 196, 0.3),
-    inset 0 0 20px rgba(255, 255, 255, 0.05);
+.exams-page .loading-container p,
+.exams-page .error-container p,
+.exams-page .empty-container p {
+  color: var(--ex-text-soft);
+  max-width: 480px;
+  margin: 0;
 }
 
-.loading-spinner::before {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: cosmic-spin 3s linear infinite reverse;
+.exams-page .error-container h3,
+.exams-page .empty-container h3 {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 700;
+  margin: 0;
 }
 
-@keyframes cosmic-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.exams-page .error-icon,
+.exams-page .empty-icon {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.4));
 }
 
-.error-icon,
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text-accent) !important;
-  text-shadow: var(--glow-cyan);
-}
-
-.error-container h3,
-.empty-container h3 {
-  font-size: var(--font-lg);
-  font-weight: 600;
-  margin-bottom: var(--spacing-sm);
-}
-
-.error-container p,
-.empty-container p {
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-lg);
-  max-width: 400px;
-  font-size: var(--font-md);
-}
-
-.retry-btn {
-  padding: 12px 28px;
-  background: linear-gradient(
-    135deg, 
-    rgba(30, 30, 60, 0.9) 0%, 
-    rgba(50, 50, 90, 0.9) 100%
-  );
-  color: var(--color-text-primary) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(5px);
-  min-width: 140px;
-}
-
-.retry-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--glow-cyan);
-  border-color: var(--color-text-accent);
-  background: linear-gradient(
-    135deg, 
-    rgba(40, 40, 70, 0.9) 0%, 
-    rgba(60, 60, 100, 0.9) 100%
-  );
-}
-
-/* ============================================
-   EXAMS GRID & CARDS
-   ============================================ */
-
-.exams-grid {
-  display: grid;
-  /* RESPONSIVE FIX: Allow cards to shrink below 350px on very small screens */
-  grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
-}
-
-.exam-card {
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-deep);
-  will-change: transform, box-shadow;
-  isolation: isolate; /* RESPONSIVE FIX: Create stacking context */
-}
-
-/* Cosmic border effect for cards */
-.exam-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(78, 205, 196, 0.2),
-    rgba(138, 43, 226, 0.2)
-  );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.exam-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 
-    var(--shadow-floating),
-    var(--glow-cyan);
-}
-
-.exam-card:hover::before {
-  opacity: 1;
-}
-
-/* Exam Header - FIXED: Dark transparent background */
-.exam-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  background: transparent !important;
-  padding: 0;
-  border-radius: 0;
-  /* RESPONSIVE FIX: Allow wrapping on small screens */
-  flex-wrap: wrap;
-  row-gap: var(--spacing-sm);
-}
-
-.exam-icon {
+/* override global .loading-spinner just inside this container */
+.exams-page .loading-container .loading-spinner {
   width: 56px;
   height: 56px;
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.3) 0%, 
-    rgba(138, 43, 226, 0.3) 100%
-  );
-  border-radius: var(--radius-md);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #818cf8;
+  border-right-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 1.1s linear infinite;
+  box-shadow: 0 0 24px rgba(102, 126, 234, 0.25);
+}
+
+.exams-page .retry-btn {
+  margin-top: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  min-height: 44px;
+  background: var(--ex-grad);
+  color: #fff;
+  border: none;
+  border-radius: var(--ex-radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.exams-page .retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ex-glow-strong);
+  filter: brightness(1.1);
+}
+
+/* ============================================================
+   Exams grid + cards
+   ============================================================ */
+.exams-page .exams-container { width: 100%; }
+
+.exams-page .exams-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(0.9rem, 2vw, 1.5rem);
+}
+
+.exams-page .exam-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.1rem, 2.5vw, 1.75rem);
+  background: var(--ex-glass);
+  backdrop-filter: var(--ex-blur);
+  -webkit-backdrop-filter: var(--ex-blur);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-lg);
+  box-shadow: var(--ex-shadow);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.exams-page .exam-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ex-grad);
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.exams-page .exam-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(129, 140, 248, 0.35);
+  box-shadow: var(--ex-glow-strong), var(--ex-shadow);
+  background: var(--ex-glass-2);
+}
+.exams-page .exam-card:hover::before { opacity: 0.05; }
+
+/* Card header */
+.exams-page .exam-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+}
+
+.exams-page .exam-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: var(--color-text-primary) !important;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent icon from shrinking */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
+  font-size: 1.4rem;
+  background: var(--ex-grad-soft);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-md);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.18);
 }
 
-.exam-title-section {
-  flex: 1 1 min(250px, 100%); /* RESPONSIVE FIX: Allow flexible sizing with minimum basis */
+.exams-page .exam-title-section {
+  flex: 1 1 200px;
   min-width: 0;
-  background: transparent !important;
 }
 
-.exam-title {
-  font-size: var(--font-lg);
-  font-weight: 600;
-  margin-bottom: 4px;
-  /* RESPONSIVE FIX: Remove nowrap/ellipsis to allow natural wrapping */
-  /* white-space: nowrap; */
-  overflow: visible;
-  text-overflow: clip;
-  letter-spacing: 0.3px;
+.exams-page .exam-title {
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  color: #fff;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.exam-course {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-  font-weight: 500;
+.exams-page .exam-course {
+  font-size: 0.875rem;
+  color: var(--ex-text-soft);
+  margin: 0;
+  word-break: break-word;
 }
 
-/* Status Badges - Cosmic Colors */
-.exam-status {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
+/* Status badge */
+.exams-page .exam-status {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   white-space: nowrap;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 100px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.1) !important;
-  flex-shrink: 0; /* RESPONSIVE FIX: Prevent badge from shrinking */
 }
 
-.status-passed {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.3) 0%, 
-    rgba(56, 161, 105, 0.3) 100%
-  ) !important;
-  border-color: rgba(72, 187, 120, 0.3) !important;
+.exams-page .status-passed,
+.exams-page .appointment-status.completed {
+  background: var(--ex-success-bg);
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #86efac;
 }
 
-.status-failed {
-  background: linear-gradient(
-    135deg, 
-    rgba(252, 129, 129, 0.3) 0%, 
-    rgba(245, 101, 101, 0.3) 100%
-  ) !important;
-  border-color: rgba(245, 101, 101, 0.3) !important;
+.exams-page .status-failed,
+.exams-page .appointment-status.cancelled,
+.exams-page .status-cancelled {
+  background: var(--ex-danger-bg);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
 }
 
-.status-scheduled {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.3) 0%, 
-    rgba(221, 107, 32, 0.3) 100%
-  ) !important;
-  border-color: rgba(237, 137, 54, 0.3) !important;
+.exams-page .status-scheduled,
+.exams-page .appointment-status.scheduled {
+  background: var(--ex-warning-bg);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fcd34d;
 }
 
-.status-completed {
-  background: linear-gradient(
-    135deg, 
-    rgba(160, 174, 192, 0.3) 0%, 
-    rgba(113, 128, 150, 0.3) 100%
-  ) !important;
-  border-color: rgba(160, 174, 192, 0.3) !important;
+.exams-page .status-in-progress,
+.exams-page .appointment-status.in-progress {
+  background: var(--ex-info-bg);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
 }
 
-.status-cancelled {
-  background: linear-gradient(
-    135deg, 
-    rgba(254, 215, 215, 0.3) 0%, 
-    rgba(252, 129, 129, 0.3) 100%
-  ) !important;
-  border-color: rgba(252, 129, 129, 0.3) !important;
+.exams-page .status-completed,
+.exams-page .status-not-taken,
+.exams-page .status-expired {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--ex-text-soft);
 }
 
-.status-not-taken {
-  background: linear-gradient(
-    135deg, 
-    rgba(226, 232, 240, 0.3) 0%, 
-    rgba(203, 213, 224, 0.3) 100%
-  ) !important;
-  border-color: rgba(226, 232, 240, 0.3) !important;
-}
+/* Card details */
+.exams-page .exam-details { margin-bottom: 1rem; }
 
-/* Exam Details */
-.exam-details {
-  margin-bottom: var(--spacing-lg);
-  background: transparent !important;
-}
-
-.detail-row {
+.exams-page .detail-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: transparent !important;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: var(--ex-border-soft);
+  flex-wrap: wrap;
 }
+.exams-page .detail-row:last-child { border-bottom: none; }
 
-.detail-label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
+.exams-page .detail-label {
+  font-size: 0.85rem;
+  color: var(--ex-text-soft);
   font-weight: 500;
-  background: transparent !important;
+  flex-shrink: 0;
 }
 
-.detail-value {
-  font-size: var(--font-sm);
+.exams-page .detail-value {
+  font-size: 0.9rem;
+  color: var(--ex-text);
   font-weight: 600;
-  color: var(--color-text-primary) !important;
   text-align: right;
-  max-width: 60%;
-  background: transparent !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 65%;
 }
 
-.truncated {
+.exams-page .detail-value.truncated {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
+  max-width: 60%;
 }
 
-/* Score Display */
-.score-display {
+/* Score */
+.exams-page .score-display {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent !important;
-}
-
-.score-label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-  font-weight: 500;
-  background: transparent !important;
-}
-
-.score-value {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  background: transparent !important;
-}
-
-.score-value.passed {
-  color: #4ade80 !important;
-}
-
-.score-value.failed {
-  color: #f87171 !important;
-}
-
-/* Appointment Info */
-.appointment-info {
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent !important;
-}
-
-.appointment-label {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: 6px;
-  font-weight: 500;
-  background: transparent !important;
-}
-
-.appointment-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: transparent !important;
-}
-
-.appointment-date {
-  font-size: var(--font-sm);
-  font-weight: 600;
-  color: var(--color-text-primary) !important;
-  background: transparent !important;
-}
-
-.appointment-status {
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 100px;
-  text-align: center;
-}
-
-.appointment-status.scheduled {
-  background: rgba(237, 137, 54, 0.3) !important;
-  border-color: rgba(237, 137, 54, 0.4) !important;
-}
-
-.appointment-status.in-progress {
-  background: rgba(66, 153, 225, 0.3) !important;
-  border-color: rgba(66, 153, 225, 0.4) !important;
-}
-
-.appointment-status.completed {
-  background: rgba(72, 187, 120, 0.3) !important;
-  border-color: rgba(72, 187, 120, 0.4) !important;
-}
-
-.appointment-status.cancelled {
-  background: rgba(245, 101, 101, 0.3) !important;
-  border-color: rgba(245, 101, 101, 0.4) !important;
-}
-
-/* Reschedule & Cancel Notices */
-.reschedule-notice,
-.cancel-notice {
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-  border-top: 1px dashed rgba(255, 255, 255, 0.2);
-  background: transparent !important;
-}
-
-.btn-reschedule,
-.btn-cancel-appointment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: 12px 20px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  min-height: 44px;
-}
-
-.btn-reschedule {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.3) 0%, 
-    rgba(221, 107, 32, 0.3) 100%
-  );
-}
-
-.btn-reschedule:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.5) 0%, 
-    rgba(221, 107, 32, 0.5) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: 0 0 20px rgba(237, 137, 54, 0.4);
-  border-color: rgba(237, 137, 54, 0.5);
-}
-
-.btn-cancel-appointment {
-  background: linear-gradient(
-    135deg, 
-    rgba(245, 101, 101, 0.3) 0%, 
-    rgba(229, 62, 62, 0.3) 100%
-  );
-}
-
-.btn-cancel-appointment:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(245, 101, 101, 0.5) 0%, 
-    rgba(229, 62, 62, 0.5) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: 0 0 20px rgba(245, 101, 101, 0.4);
-  border-color: rgba(245, 101, 101, 0.5);
-}
-
-/* Exam Actions */
-.exam-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent !important;
-}
-
-.exam-actions button {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: 14px 20px;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  min-height: 44px;
-}
-
-.btn-view {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-view:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px);
-  box-shadow: var(--glow-white);
-}
-
-.btn-schedule {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.4) 0%, 
-    rgba(138, 43, 226, 0.4) 100%
-  );
-  border: 1px solid rgba(138, 43, 226, 0.3);
-}
-
-.btn-schedule:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.6) 0%, 
-    rgba(138, 43, 226, 0.6) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: var(--glow-purple);
-}
-
-.btn-scheduled {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.4) 0%, 
-    rgba(221, 107, 32, 0.4) 100%
-  );
-  border: 1px solid rgba(237, 137, 54, 0.3);
-}
-
-.btn-scheduled:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.6) 0%, 
-    rgba(221, 107, 32, 0.6) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
-}
-
-.btn-start {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.4) 0%, 
-    rgba(56, 161, 105, 0.4) 100%
-  );
-  border: 1px solid rgba(72, 187, 120, 0.3);
-}
-
-.btn-start:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(72, 187, 120, 0.6) 0%, 
-    rgba(56, 161, 105, 0.6) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: 0 0 25px rgba(72, 187, 120, 0.4);
-}
-
-.btn-completed {
-  background: linear-gradient(
-    135deg, 
-    rgba(160, 174, 192, 0.4) 0%, 
-    rgba(113, 128, 150, 0.4) 100%
-  );
-  border: 1px solid rgba(160, 174, 192, 0.3);
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.btn-completed:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.appointment-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  width: 100%;
-  background: transparent !important;
-}
-
-/* ============================================
-   CARD HEADER RESPONSIVE FIXES (for any .card-header component)
-   ============================================ */
-/* RESPONSIVE FIX: Ensure card header elements never overlap */
-.card-header {
-  display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-  /* preserve existing background, colors from other styles */
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: var(--ex-border-soft);
 }
-
-.card-header > .card-title {
-  flex: 1 1 auto;
-  min-width: min(200px, 100%);
+.exams-page .score-label {
+  font-size: 0.85rem;
+  color: var(--ex-text-soft);
+  font-weight: 500;
 }
-
-.card-header > .card-count {
-  flex: 0 0 auto;
-  margin-left: auto; /* push to right if needed */
-}
-
-.card-header > .card-subtitle {
-  flex: 1 1 100%; /* force to next line if needed */
-}
-
-/* ============================================
-   MODAL STYLES - COSMIC GLASS
-   ============================================ */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  animation: cosmic-fade-in 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.modal-content {
-  background: var(--color-bg-card);
-  backdrop-filter: var(--glass-blur) var(--glass-saturate);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: cosmic-slide-up 0.4s ease;
-  box-shadow: 
-    var(--shadow-floating),
-    var(--glow-cyan);
-  position: relative;
-  isolation: isolate; /* RESPONSIVE FIX: stacking context */
-}
-
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(78, 205, 196, 0.3),
-    rgba(138, 43, 226, 0.3)
-  );
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  position: sticky;
-  top: 0;
-  background: rgba(10, 10, 30, 0.8);
-  backdrop-filter: blur(15px);
-  z-index: 10;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.modal-header h3 {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-
-.modal-close {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
-  font-size: 20px;
-  color: var(--color-text-primary) !important;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-}
-
-.modal-close:hover {
-  background: rgba(245, 101, 101, 0.3);
-  border-color: rgba(245, 101, 101, 0.5);
-  transform: rotate(90deg);
-  box-shadow: 0 0 20px rgba(245, 101, 101, 0.5);
-}
-
-.modal-body {
-  padding: var(--spacing-lg);
-  background: transparent !important;
-}
-
-.exam-detail-section {
-  margin-bottom: var(--spacing-xl);
-  background: transparent !important;
-}
-
-.exam-detail-section h4 {
-  font-size: var(--font-md);
-  font-weight: 600;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  padding: var(--spacing-md);
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.detail-label {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.detail-value {
-  font-size: var(--font-sm);
-  font-weight: 600;
-  color: var(--color-text-primary) !important;
-}
-
-.instructions-content {
-  background: rgba(0, 0, 0, 0.25);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  line-height: 1.7;
-  color: var(--color-text-secondary) !important;
-  white-space: pre-wrap;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Video Container */
-.video-container {
-  margin-top: var(--spacing-md);
-  background: transparent !important;
-}
-
-.video-embed-wrapper {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.video-embed-container {
-  position: relative;
-  width: 100%;
-  /* RESPONSIVE FIX: Replace fixed height with aspect-ratio for fluid scaling */
-  aspect-ratio: 16 / 9;
-  /* height: 300px; */ /* Removed fixed height */
-}
-
-.video-embed-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.video-link-container {
-  padding: var(--spacing-lg);
-  background: rgba(237, 137, 54, 0.15);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  text-align: center;
-}
-
-.video-link-container p {
-  margin-bottom: var(--spacing-md);
-  color: var(--color-text-secondary) !important;
-  font-size: var(--font-sm);
-}
-
-.video-external-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: 14px 28px;
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.4) 0%, 
-    rgba(221, 107, 32, 0.4) 100%
-  );
-  color: #ffffff !important;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(237, 137, 54, 0.3);
-  backdrop-filter: blur(5px);
-  min-width: 200px;
-}
-
-.video-external-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
-  background: linear-gradient(
-    135deg, 
-    rgba(237, 137, 54, 0.6) 0%, 
-    rgba(221, 107, 32, 0.6) 100%
-  );
-}
-
-/* Appointment Management */
-.appointment-management {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  background: transparent !important;
-}
-
-.management-option {
-  display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease;
-}
-
-.management-option:hover {
-  background: rgba(0, 0, 0, 0.35);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateX(8px);
-}
-
-.option-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-  color: var(--color-text-accent) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.option-details {
-  flex: 1;
-  background: transparent !important;
-}
-
-.option-details h5 {
-  font-size: var(--font-md);
-  font-weight: 700;
-  margin-bottom: var(--spacing-xs);
-}
-
-.option-details p {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: var(--spacing-md);
-  line-height: 1.6;
-}
-
-.management-option .btn-reschedule,
-.management-option .btn-cancel-appointment {
-  width: auto;
-  display: inline-flex;
-  min-width: 160px;
-  max-width: 200px;
-}
-
-.results-section {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
-  background: transparent !important;
-}
-
-.result-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: var(--spacing-md);
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.result-label {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary) !important;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.result-value {
-  font-size: var(--font-lg);
+.exams-page .score-value {
+  font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
+.exams-page .score-value.passed { color: var(--ex-success); }
+.exams-page .score-value.failed { color: var(--ex-danger); }
 
-.result-value.passed {
-  color: #4ade80 !important;
+/* Appointment info */
+.exams-page .appointment-info {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: var(--ex-border-soft);
 }
-
-.result-value.failed {
-  color: #f87171 !important;
+.exams-page .appointment-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ex-text-soft);
+  margin-bottom: 0.4rem;
 }
-
-.modal-footer {
-  padding: var(--spacing-lg);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.exams-page .appointment-details {
   display: flex;
-  gap: var(--spacing-sm);
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.exams-page .appointment-date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ex-text);
+}
+.exams-page .appointment-status {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+}
+
+/* Card actions */
+.exams-page .exam-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: var(--ex-border-soft);
+}
+
+.exams-page .exam-actions > button,
+.exams-page .appointment-actions { flex: 1 1 160px; }
+
+.exams-page .appointment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.exams-page .exam-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--ex-radius-md);
+  cursor: pointer;
+  color: #fff;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, opacity .25s ease;
+}
+
+.exams-page .btn-view {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.exams-page .btn-view:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.08);
+}
+
+.exams-page .btn-schedule {
+  background: var(--ex-grad);
+  border-color: rgba(118, 75, 162, 0.45);
+}
+.exams-page .btn-schedule:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--ex-glow-strong);
+  filter: brightness(1.08);
+}
+.exams-page .btn-schedule:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.exams-page .btn-scheduled {
+  background: linear-gradient(135deg, rgba(237,137,54,0.85) 0%, rgba(221,107,32,0.85) 100%);
+  border-color: rgba(237,137,54,0.5);
+}
+.exams-page .btn-scheduled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+}
+
+.exams-page .btn-start {
+  background: linear-gradient(135deg, rgba(34,197,94,0.85) 0%, rgba(22,163,74,0.85) 100%);
+  border-color: rgba(34,197,94,0.5);
+}
+.exams-page .btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.35);
+}
+
+.exams-page .btn-completed {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ex-text-soft);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.exams-page .btn-completed:hover { transform: none; box-shadow: none; }
+
+/* Reschedule / cancel notices */
+.exams-page .reschedule-notice,
+.exams-page .cancel-notice {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.exams-page .btn-reschedule,
+.exams-page .btn-cancel-appointment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--ex-radius-md);
+  cursor: pointer;
+  color: #fff;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.exams-page .btn-reschedule {
+  background: linear-gradient(135deg, rgba(237,137,54,0.6) 0%, rgba(221,107,32,0.6) 100%);
+  border-color: rgba(237,137,54,0.45);
+}
+.exams-page .btn-reschedule:hover {
+  background: linear-gradient(135deg, rgba(237,137,54,0.85) 0%, rgba(221,107,32,0.85) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+}
+
+.exams-page .btn-cancel-appointment {
+  background: linear-gradient(135deg, rgba(248,113,113,0.55) 0%, rgba(220,38,38,0.55) 100%);
+  border-color: rgba(248,113,113,0.45);
+}
+.exams-page .btn-cancel-appointment:hover {
+  background: linear-gradient(135deg, rgba(248,113,113,0.85) 0%, rgba(220,38,38,0.85) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(248, 113, 113, 0.35);
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+.exams-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  background: rgba(3, 3, 15, 0.65);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  animation: fadeIn .25s ease both;
+}
+
+.exams-page .modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: min(92dvh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 15, 35, 0.6);
+  backdrop-filter: var(--ex-blur-strong);
+  -webkit-backdrop-filter: var(--ex-blur-strong);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), var(--ex-glow-strong);
+  overflow: hidden;
+  animation: modalSlideUp .35s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+@keyframes fadeIn { from {opacity:0} to {opacity:1} }
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.exams-page .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border-bottom: var(--ex-border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.exams-page .modal-header h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 700;
+  color: #fff;
+  word-break: break-word;
+}
+
+.exams-page .modal-close {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: var(--ex-border);
+  border-radius: 10px;
+  font-size: 1.25rem;
+  color: #fff;
+  cursor: pointer;
+  transition: transform .25s ease, background .25s ease, border-color .25s ease;
+}
+.exams-page .modal-close:hover {
+  background: rgba(248, 113, 113, 0.25);
+  border-color: rgba(248, 113, 113, 0.45);
+  transform: rotate(90deg);
+}
+
+.exams-page .modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.exams-page .modal-footer {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  position: sticky;
-  bottom: 0;
-  background: rgba(10, 10, 30, 0.8);
-  backdrop-filter: blur(15px);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  gap: 0.6rem;
+  padding: clamp(0.85rem, 2vw, 1.25rem);
+  border-top: var(--ex-border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
 }
 
-.btn-secondary {
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
+/* Modal sections */
+.exams-page .exam-detail-section { margin-bottom: 1.5rem; }
+.exams-page .exam-detail-section:last-child { margin-bottom: 0; }
+
+.exams-page .exam-detail-section h4 {
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  border-bottom: var(--ex-border-soft);
+}
+
+.exams-page .detail-grid,
+.exams-page .appointment-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.exams-page .detail-grid .detail-item,
+.exams-page .appointment-detail-grid .detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+}
+
+.exams-page .detail-grid .detail-label,
+.exams-page .appointment-detail-grid .detail-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ex-text-muted);
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  min-width: 120px;
 }
 
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px);
-  box-shadow: var(--glow-white);
-}
-
-.btn-primary {
-  padding: 14px 28px;
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.4) 0%, 
-    rgba(138, 43, 226, 0.4) 100%
-  );
-  color: #ffffff !important;
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  border-radius: var(--radius-md);
+.exams-page .detail-grid .detail-value,
+.exams-page .appointment-detail-grid .detail-value {
+  text-align: left;
+  max-width: 100%;
+  font-size: 0.95rem;
+  color: var(--ex-text);
   font-weight: 600;
+}
+
+.exams-page .instructions-content {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+  color: var(--ex-text-soft);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Video */
+.exams-page .video-container { margin-top: 0.5rem; }
+
+.exams-page .video-embed-wrapper {
+  background: rgba(0, 0, 0, 0.3);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+  overflow: hidden;
+}
+.exams-page .video-embed-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.exams-page .video-embed-container iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.exams-page .video-link-container {
+  text-align: center;
+  padding: 1.25rem;
+  background: rgba(237, 137, 54, 0.1);
+  border: 1px solid rgba(237, 137, 54, 0.25);
+  border-radius: var(--ex-radius-md);
+}
+.exams-page .video-link-container p {
+  margin: 0 0 0.85rem;
+  color: var(--ex-text-soft);
+}
+
+.exams-page .video-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  min-height: 44px;
+  background: linear-gradient(135deg, rgba(237,137,54,0.7) 0%, rgba(221,107,32,0.7) 100%);
+  color: #fff;
+  border: 1px solid rgba(237, 137, 54, 0.45);
+  border-radius: var(--ex-radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.exams-page .video-external-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+}
+
+/* Results section */
+.exams-page .results-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.exams-page .result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+}
+.exams-page .result-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ex-text-muted);
+  font-weight: 600;
+}
+.exams-page .result-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--ex-text);
+}
+.exams-page .result-value.passed { color: var(--ex-success); }
+.exams-page .result-value.failed { color: var(--ex-danger); }
+
+/* Appointment management */
+.exams-page .appointment-management {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.exams-page .management-option {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+  transition: background .25s ease, border-color .25s ease, transform .25s ease;
+  flex-wrap: wrap;
+}
+.exams-page .management-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.exams-page .option-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ex-grad-soft);
+  border: var(--ex-border);
+  border-radius: var(--ex-radius-md);
+  font-size: 1.4rem;
+}
+
+.exams-page .option-details { flex: 1 1 200px; min-width: 0; }
+.exams-page .option-details h5 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+.exams-page .option-details p {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  color: var(--ex-text-soft);
+  line-height: 1.55;
+}
+.exams-page .management-option .btn-reschedule,
+.exams-page .management-option .btn-cancel-appointment {
+  width: auto;
+  min-width: 180px;
+  max-width: 100%;
+}
+
+/* Appointment history */
+.exams-page .history-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border: var(--ex-border-soft);
+  border-radius: var(--ex-radius-md);
+  overflow: hidden;
+}
+.exams-page .history-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: var(--ex-border-soft);
+}
+.exams-page .history-item:last-child { border-bottom: none; }
+.exams-page .history-date {
+  font-size: 0.875rem;
+  color: var(--ex-text-soft);
+}
+.exams-page .history-status {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ex-text-soft);
+}
+.exams-page .history-status.scheduled {
+  background: var(--ex-warning-bg);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+}
+.exams-page .history-status.completed {
+  background: var(--ex-success-bg);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #86efac;
+}
+.exams-page .history-status.cancelled,
+.exams-page .history-status.expired {
+  background: var(--ex-danger-bg);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fca5a5;
+}
+.exams-page .history-status.in-progress {
+  background: var(--ex-info-bg);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+}
+
+/* Modal footer buttons */
+.exams-page .btn-secondary,
+.exams-page .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--ex-radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  min-width: 120px;
+  color: #fff;
+  border: 1px solid transparent;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease, filter .25s ease;
+}
+.exams-page .btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.exams-page .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+.exams-page .btn-primary {
+  background: var(--ex-grad);
+  border-color: rgba(118, 75, 162, 0.45);
+}
+.exams-page .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ex-glow-strong);
+  filter: brightness(1.08);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(
-    135deg, 
-    rgba(66, 133, 244, 0.6) 0%, 
-    rgba(138, 43, 226, 0.6) 100%
-  );
-  transform: translateY(-3px);
-  box-shadow: var(--glow-purple);
+/* ============================================================
+   Focus styles (galaxy-friendly)
+   ============================================================ */
+.exams-page :focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
-/* ============================================
-   ANIMATIONS
-   ============================================ */
+/* ============================================================
+   RESPONSIVE — mobile-first, min-width breakpoints
+   ============================================================ */
 
-@keyframes cosmic-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ≥ 480px : large phones */
+@media (min-width: 480px) {
+  .exams-page .exam-actions > button { flex: 1 1 calc(50% - 0.3rem); }
+  .exams-page .results-section { grid-template-columns: repeat(3, 1fr); }
 }
 
-@keyframes cosmic-slide-up {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
+/* ≥ 640px : small tablets */
+@media (min-width: 640px) {
+  .exams-page .exams-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .exams-page .detail-grid,
+  .exams-page .appointment-detail-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ≥ 768px : tablets */
+@media (min-width: 768px) {
+  .exams-page .exams-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+  .exams-page .management-option { flex-wrap: nowrap; }
+}
+
+/* ≥ 1024px : laptops */
+@media (min-width: 1024px) {
+  .exams-page { padding: 2rem 2.5rem; }
+  .exams-page .exams-grid { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.75rem; }
+}
+
+/* ≥ 1440px : desktops */
+@media (min-width: 1440px) {
+  .exams-page { max-width: 1500px; }
+  .exams-page .exams-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+}
+
+/* ≥ 1920px : large desktops */
+@media (min-width: 1920px) {
+  .exams-page { max-width: 1700px; padding: 2.5rem 3rem; }
+  .exams-page .exams-grid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 2rem; }
+  .exams-page .modal-content { max-width: 880px; }
+}
+
+/* ≥ 2560px : 4K / TV */
+@media (min-width: 2560px) {
+  .exams-page {
+    max-width: 2200px;
+    padding: 3rem 4rem;
+    font-size: 1.1rem;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+  .exams-page .page-title { font-size: 2.75rem; }
+  .exams-page .exams-grid {
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 2.5rem;
   }
+  .exams-page .modal-content { max-width: 1100px; }
 }
 
-@keyframes cosmic-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-/* ============================================
-   ACCESSIBILITY & FOCUS STATES
-   ============================================ */
-
-/* Focus indicators */
-button:focus,
-input:focus,
-select:focus,
-textarea:focus,
-a:focus,
-.modal-close:focus {
-  outline: 2px solid var(--color-text-accent);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.3);
-}
-
-/* Reduced motion */
+/* ============================================================
+   Reduced motion
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  .exams-page,
+  .exams-page * {
+    animation: none !important;
     transition-duration: 0.01ms !important;
   }
-  
-  .loading-spinner {
-    animation: none;
-    border: 3px solid var(--color-text-accent);
-  }
-}
-
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  :root {
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #ffffff;
-    --color-bg-card: rgba(0, 0, 0, 0.9);
-  }
-  
-  .exam-card,
-  .modal-content,
-  .loading-container,
-  .error-container,
-  .empty-container,
-  .page-header {
-    border: 2px solid #ffffff;
-  }
-  
-  .exam-card::before,
-  .modal-content::before,
-  .page-header::before {
-    display: none;
-  }
-}
-
-/* ============================================
-   CUSTOM SCROLLBAR
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: 6px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.2);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 180, 0.7);
-  box-shadow: 0 0 15px rgba(78, 205, 196, 0.4);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 100, 150, 0.5) rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================
-   RESPONSIVE DESIGN (original - kept for reference but overridden by granular system below)
-   ============================================ */
-/*
-   Original responsive queries are preserved here but commented out
-   to avoid conflicts with the granular 50px system.
-*/
-
-/* ============================================
-   GRANULAR RESPONSIVE SYSTEM (50px increments)
-   ============================================ */
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    --font-xs: 8px;
-    --font-sm: 9px;
-    --font-md: 10px;
-    --font-lg: 12px;
-    --font-xl: 14px;
-    --font-xxl: 16px;
-    --spacing-xs: 4px;
-    --spacing-sm: 6px;
-    --spacing-md: 8px;
-    --spacing-lg: 12px;
-    --spacing-xl: 16px;
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-    --glass-blur: blur(4px);
-  }
-  .exams-page {
-    padding: 6px;
-    max-width: 100%;
-  }
-  .page-header {
-    padding: 8px;
-    margin-bottom: 12px;
-  }
-  .exams-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .exam-card {
-    padding: 8px;
-  }
-  .exam-header {
-    gap: 6px;
-  }
-  .exam-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
-  }
-  .exam-title {
-    font-size: var(--font-md);
-  }
-  .exam-course {
-    font-size: var(--font-xs);
-  }
-  .exam-status {
-    padding: 4px 8px;
-    min-width: 70px;
-    font-size: 8px;
-  }
-  .detail-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-  .detail-value {
-    max-width: 100%;
-    text-align: left;
-  }
-  .score-display,
-  .appointment-details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  .exam-actions {
-    flex-direction: column;
-    gap: 6px;
-  }
-  .exam-actions button,
-  .btn-reschedule,
-  .btn-cancel-appointment,
-  .retry-btn {
-    min-height: 32px;
-    padding: 8px 12px;
-    font-size: var(--font-xs);
-    min-width: 100px;
-  }
-  .search-input-wrapper {
-    padding: 0 4px;
-  }
-  .search-input {
-    padding: 6px 0;
-    font-size: var(--font-sm);
-  }
-  .search-icon {
-    font-size: 16px;
-    margin-right: 4px;
-  }
-  .modal-content {
-    max-width: 95%;
-    padding: 0;
-  }
-  .modal-header {
-    padding: 8px;
-  }
-  .modal-body {
-    padding: 8px;
-  }
-  .modal-footer {
-    padding: 8px;
-    flex-direction: column;
-  }
-  .btn-secondary,
-  .btn-primary {
-    width: 100%;
-    min-width: unset;
-  }
-  .detail-grid,
-  .results-section {
-    grid-template-columns: 1fr;
-  }
-  .video-embed-container {
-    aspect-ratio: 16 / 9;
-  }
-}
-
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    --font-xs: 9px;
-    --font-sm: 10px;
-    --font-md: 11px;
-    --font-lg: 13px;
-    --font-xl: 15px;
-    --font-xxl: 18px;
-    --spacing-xs: 5px;
-    --spacing-sm: 8px;
-    --spacing-md: 10px;
-    --spacing-lg: 14px;
-    --spacing-xl: 18px;
-    --radius-sm: 5px;
-    --radius-md: 7px;
-    --radius-lg: 9px;
-    --radius-xl: 11px;
-    --glass-blur: blur(5px);
-  }
-  .exams-page {
-    padding: 8px;
-  }
-  .page-header {
-    padding: 10px;
-    margin-bottom: 14px;
-  }
-  .exams-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .exam-card {
-    padding: 10px;
-  }
-  .exam-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-  }
-  .exam-title {
-    font-size: var(--font-md);
-  }
-  .exam-status {
-    padding: 4px 10px;
-    min-width: 75px;
-    font-size: 8px;
-  }
-  .exam-actions button,
-  .btn-reschedule,
-  .btn-cancel-appointment,
-  .retry-btn {
-    min-height: 34px;
-    padding: 9px 14px;
-  }
-  .detail-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .score-display,
-  .appointment-details {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .modal-footer {
-    flex-direction: column;
-  }
-}
-
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    --font-xs: 10px;
-    --font-sm: 11px;
-    --font-md: 12px;
-    --font-lg: 14px;
-    --font-xl: 16px;
-    --font-xxl: 20px;
-    --spacing-xs: 6px;
-    --spacing-sm: 9px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
-    --radius-xl: 12px;
-  }
-  .exams-page {
-    padding: 10px;
-  }
-  .exams-grid {
-    gap: 12px;
-  }
-  .exam-card {
-    padding: 12px;
-  }
-  .exam-actions button,
-  .btn-reschedule,
-  .btn-cancel-appointment,
-  .retry-btn {
-    min-height: 36px;
-    padding: 10px 16px;
-  }
-}
-
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    --font-xs: 11px;
-    --font-sm: 12px;
-    --font-md: 13px;
-    --font-lg: 15px;
-    --font-xl: 18px;
-    --font-xxl: 22px;
-    --spacing-xs: 6px;
-    --spacing-sm: 10px;
-    --spacing-md: 14px;
-    --spacing-lg: 18px;
-    --spacing-xl: 22px;
-  }
-  .exams-grid {
-    grid-template-columns: 1fr;
-  }
-  .exam-actions {
-    flex-direction: column;
-  }
-}
-
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    --font-xs: 12px;
-    --font-sm: 13px;
-    --font-md: 14px;
-    --font-lg: 16px;
-    --font-xl: 20px;
-    --font-xxl: 24px;
-    --spacing-xs: 7px;
-    --spacing-sm: 11px;
-    --spacing-md: 15px;
-    --spacing-lg: 20px;
-    --spacing-xl: 24px;
-  }
-  .exams-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    --font-xs: 13px;
-    --font-sm: 14px;
-    --font-md: 15px;
-    --font-lg: 17px;
-    --font-xl: 21px;
-    --font-xxl: 26px;
-    --spacing-xs: 8px;
-    --spacing-sm: 12px;
-    --spacing-md: 16px;
-    --spacing-lg: 22px;
-    --spacing-xl: 28px;
-  }
-  .exams-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    --font-xs: 13.5px;
-    --font-sm: 14.5px;
-    --font-md: 15.5px;
-    --font-lg: 18px;
-    --font-xl: 22px;
-    --font-xxl: 28px;
-    --spacing-xs: 8px;
-    --spacing-sm: 12px;
-    --spacing-md: 18px;
-    --spacing-lg: 24px;
-    --spacing-xl: 30px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .exam-actions {
-    flex-direction: column;
-  }
-}
-
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    --font-xs: 14px;
-    --font-sm: 15px;
-    --font-md: 16px;
-    --font-lg: 19px;
-    --font-xl: 23px;
-    --font-xxl: 30px;
-    --spacing-xs: 9px;
-    --spacing-sm: 13px;
-    --spacing-md: 20px;
-    --spacing-lg: 26px;
-    --spacing-xl: 32px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    --font-xs: 14.5px;
-    --font-sm: 15.5px;
-    --font-md: 16.5px;
-    --font-lg: 20px;
-    --font-xl: 24px;
-    --font-xxl: 32px;
-    --spacing-xs: 10px;
-    --spacing-sm: 14px;
-    --spacing-md: 22px;
-    --spacing-lg: 28px;
-    --spacing-xl: 34px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    --font-xs: 15px;
-    --font-sm: 16px;
-    --font-md: 17px;
-    --font-lg: 21px;
-    --font-xl: 25px;
-    --font-xxl: 34px;
-    --spacing-xs: 11px;
-    --spacing-sm: 15px;
-    --spacing-md: 24px;
-    --spacing-lg: 30px;
-    --spacing-xl: 36px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    --font-xs: 15.5px;
-    --font-sm: 16.5px;
-    --font-md: 17.5px;
-    --font-lg: 22px;
-    --font-xl: 26px;
-    --font-xxl: 36px;
-    --spacing-xs: 12px;
-    --spacing-sm: 16px;
-    --spacing-md: 26px;
-    --spacing-lg: 32px;
-    --spacing-xl: 38px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    --font-xs: 16px;
-    --font-sm: 17px;
-    --font-md: 18px;
-    --font-lg: 23px;
-    --font-xl: 27px;
-    --font-xxl: 38px;
-    --spacing-xs: 12px;
-    --spacing-sm: 17px;
-    --spacing-md: 28px;
-    --spacing-lg: 34px;
-    --spacing-xl: 40px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    --font-xs: 16.5px;
-    --font-sm: 17.5px;
-    --font-md: 18.5px;
-    --font-lg: 24px;
-    --font-xl: 28px;
-    --font-xxl: 40px;
-    --spacing-xs: 13px;
-    --spacing-sm: 18px;
-    --spacing-md: 30px;
-    --spacing-lg: 36px;
-    --spacing-xl: 42px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    --font-xs: 17px;
-    --font-sm: 18px;
-    --font-md: 19px;
-    --font-lg: 25px;
-    --font-xl: 29px;
-    --font-xxl: 42px;
-    --spacing-xs: 14px;
-    --spacing-sm: 19px;
-    --spacing-md: 32px;
-    --spacing-lg: 38px;
-    --spacing-xl: 44px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    --font-xs: 17.5px;
-    --font-sm: 18.5px;
-    --font-md: 19.5px;
-    --font-lg: 26px;
-    --font-xl: 30px;
-    --font-xxl: 44px;
-    --spacing-xs: 14px;
-    --spacing-sm: 20px;
-    --spacing-md: 34px;
-    --spacing-lg: 40px;
-    --spacing-xl: 46px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    --font-xs: 17.5px;
-    --font-sm: 18.5px;
-    --font-md: 20px;
-    --font-lg: 27px;
-    --font-xl: 31px;
-    --font-xxl: 46px;
-    --spacing-xs: 15px;
-    --spacing-sm: 21px;
-    --spacing-md: 36px;
-    --spacing-lg: 42px;
-    --spacing-xl: 48px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    --font-xs: 18px;
-    --font-sm: 19px;
-    --font-md: 21px;
-    --font-lg: 28px;
-    --font-xl: 32px;
-    --font-xxl: 48px;
-    --spacing-xs: 16px;
-    --spacing-sm: 22px;
-    --spacing-md: 38px;
-    --spacing-lg: 44px;
-    --spacing-xl: 50px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    --font-xs: 18px;
-    --font-sm: 19px;
-    --font-md: 22px;
-    --font-lg: 29px;
-    --font-xl: 33px;
-    --font-xxl: 48px;
-    --spacing-xs: 16px;
-    --spacing-sm: 23px;
-    --spacing-md: 40px;
-    --spacing-lg: 46px;
-    --spacing-xl: 52px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .exams-page {
-    max-width: 1200px;
-  }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    --font-xs: 18.5px;
-    --font-sm: 19.5px;
-    --font-md: 22.5px;
-    --font-lg: 30px;
-    --font-xl: 34px;
-    --font-xxl: 50px;
-    --spacing-xs: 17px;
-    --spacing-sm: 24px;
-    --spacing-md: 42px;
-    --spacing-lg: 48px;
-    --spacing-xl: 54px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .exams-page {
-    max-width: 1300px;
-  }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    --font-xs: 18.5px;
-    --font-sm: 20px;
-    --font-md: 23px;
-    --font-lg: 31px;
-    --font-xl: 35px;
-    --font-xxl: 52px;
-    --spacing-xs: 18px;
-    --spacing-sm: 25px;
-    --spacing-md: 44px;
-    --spacing-lg: 50px;
-    --spacing-xl: 56px;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .exams-page {
-    max-width: 1400px;
-  }
-}
-
-/* ===== Breakpoint: 1200px+ | 4XL and beyond ===== */
-@media only screen and (min-width: 1200px) {
-  :root {
-    --font-xs: 19px;
-    --font-sm: 21px;
-    --font-md: 24px;
-    --font-lg: 32px;
-    --font-xl: 36px;
-    --font-xxl: 54px;
-    --spacing-xs: 20px;
-    --spacing-sm: 28px;
-    --spacing-md: 48px;
-    --spacing-lg: 56px;
-    --spacing-xl: 64px;
-    --radius-sm: 12px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-    --radius-xl: 32px;
-  }
-  .exams-page {
-    max-width: 1600px;
-    padding: var(--spacing-xl) 5%;
-  }
-  .exams-grid {
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: var(--spacing-xl);
-  }
-  .exam-card {
-    padding: var(--spacing-xl);
-    border-radius: var(--radius-xl);
-  }
-  .modal-content {
-    max-width: 1000px;
-  }
-  .btn-reschedule,
-  .btn-cancel-appointment,
-  .exam-actions button {
-    min-height: 56px;
-    padding: 18px 32px;
-    font-size: var(--font-md);
+  .exams-page .exam-card:hover,
+  .exams-page .btn-view:hover,
+  .exams-page .btn-schedule:hover,
+  .exams-page .btn-start:hover,
+  .exams-page .btn-scheduled:hover,
+  .exams-page .btn-reschedule:hover,
+  .exams-page .btn-cancel-appointment:hover,
+  .exams-page .btn-primary:hover,
+  .exams-page .btn-secondary:hover,
+  .exams-page .retry-btn:hover,
+  .exams-page .video-external-link:hover,
+  .exams-page .modal-close:hover,
+  .exams-page .search-clear:hover {
+    transform: none;
   }
 }

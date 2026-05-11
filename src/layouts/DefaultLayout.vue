@@ -1,16 +1,19 @@
 <template>
   <div class="default-layout">
-    <!-- Animated 3D Space Background -->
+    <!-- Animated 3D Galaxy Background (fixed, z-index: 0) -->
     <AnimatedBackground />
-    
-    <!-- ALWAYS show SideNav for both authenticated and anonymous users -->
-    <SideNav />
 
-    <main :class="['main-content', { 'with-sidenav': true }]">
+    <!--
+      SideNav owns the .app-container + .main-content shell.
+      <router-view /> is passed through its default slot so the
+      sidebar's collapse / drawer states physically SHIFT the
+      content (sibling selector .sidebar ~ .main-content).
+    -->
+    <SideNav>
       <router-view />
-    </main>
+    </SideNav>
 
-    <!-- Show ChatBox for ALL users (authenticated and anonymous) -->
+    <!-- Chat (fixed, above everything) -->
     <ChatBox />
   </div>
 </template>
@@ -20,5 +23,3 @@ import SideNav from '@/components/SideNav.vue';
 import ChatBox from '@/components/ChatBox.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 </script>
-
-<style src="@/assets/css/default-layout.css"></style>

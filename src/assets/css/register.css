@@ -1,1455 +1,741 @@
-/* src/assets/css/register.css */
-/* 
-  COSMIC SPACE THEME - REGISTER COMPONENT
-  Designed for Vue.js application with 3D galaxy background
-  Theme: Dark glass-morphism with cosmic glow effects
+/* =============================================================
+   REGISTER — Galaxy / Glassmorphism Theme
+   Coexists with: src/style.css + AnimatedBackground.vue
+                  + default-layout.css + side-nav.css
+   Mobile-first. Brand gradient #667eea → #764ba2.
+   Transparent surfaces so the galaxy stays visible.
+   ============================================================= */
 
-  RESPONSIVE ENHANCEMENTS:
-  - Prevent word/character breaks across all elements
-  - Ensure containers expand to fit content
-  - Prevent text overlap with password toggle and validation status
-  - Use fluid typography and spacing where needed
-  - Maintain all original design, colors, and animations
-*/
+/* -------------------------------------------------------------
+   Local design tokens (scoped to register page where possible)
+   ------------------------------------------------------------- */
+.register-container {
+  /* brand */
+  --rg-grad:       linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --rg-grad-soft:  linear-gradient(135deg, rgba(102,126,234,0.18) 0%, rgba(118,75,162,0.18) 100%);
+  --rg-accent:     #818cf8;
+  --rg-accent-2:   #a78bfa;
 
-/* ==========================================================================
-   CSS CUSTOM PROPERTIES (VARIABLES) – BASE: 4XL (1200px+)
-   ========================================================================== */
-:root {
-  /* Cosmic Color Palette (unchanged) */
-  --cosmic-dark: rgba(5, 5, 20, 0.9);
-  --cosmic-darker: rgba(2, 2, 10, 0.95);
-  --cosmic-card: rgba(10, 10, 30, 0.92);
-  --cosmic-card-light: rgba(20, 20, 50, 0.95);
-  --cosmic-card-hover: rgba(30, 30, 60, 0.95);
-  
-  /* Accent Colors (unchanged) */
-  --cosmic-cyan: #4ECDC4;
-  --cosmic-purple: #8A2BE2;
-  --cosmic-blue: #4285F4;
-  --cosmic-nebula: rgba(138, 43, 226, 0.3);
-  --cosmic-star: #FFFFFF;
-  
-  /* Text Colors (unchanged) */
-  --text-primary: #FFFFFF;
-  --text-secondary: #E0E0E0;
-  --text-tertiary: #B0B0B0;
-  --text-accent: #4ECDC4;
-  --text-input: #FFFFFF;
-  
-  /* Border & Glow Effects (unchanged) */
-  --border-subtle: rgba(255, 255, 255, 0.15);
-  --border-glow: rgba(255, 255, 255, 0.25);
-  --glow-cyan: rgba(78, 205, 196, 0.4);
-  --glow-purple: rgba(138, 43, 226, 0.4);
-  --glow-blue: rgba(66, 133, 244, 0.4);
-  
-  /* Glass Effects (unchanged) */
-  --glass-blur: blur(15px) saturate(180%);
-  --glass-blur-mobile: blur(8px) saturate(150%);
-  
-  /* Shadows (unchanged) */
-  --shadow-cosmic: 0 0 20px rgba(66, 133, 244, 0.3);
-  --shadow-glow: 0 0 30px rgba(78, 205, 196, 0.2);
-  --shadow-deep: 0 10px 40px rgba(0, 0, 0, 0.5);
-  
-  /* Spacing (rem‑based – will scale with root font‑size) */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 2rem;
-  --space-xl: 3rem;
-  
-  /* Border Radius (unchanged base values) */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  
-  /* Transitions (unchanged) */
-  --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
-  --transition-slow: 500ms ease;
+  /* text */
+  --rg-text:       #ffffff;
+  --rg-text-soft:  #e8eaff;
+  --rg-text-mute:  rgba(255, 255, 255, 0.70);
+  --rg-text-dim:   rgba(255, 255, 255, 0.50);
 
-  /* ===== SCALABLE CUSTOM PROPERTIES ===== */
-  /* Base root font‑size – controls all rem values */
-  font-size: 19px; /* 4XL (1200px+) */
+  /* glass surfaces */
+  --rg-glass-bg:        rgba(255, 255, 255, 0.06);
+  --rg-glass-bg-strong: rgba(255, 255, 255, 0.10);
+  --rg-glass-bg-input:  rgba(15, 17, 40, 0.45);
+  --rg-glass-bg-input-focus: rgba(15, 17, 40, 0.65);
+  --rg-glass-border:    rgba(255, 255, 255, 0.12);
+  --rg-glass-border-hover: rgba(255, 255, 255, 0.22);
+  --rg-glass-blur:      blur(20px) saturate(160%);
 
-  /* Container */
-  --container-max-width: 600px;
-  --card-padding: var(--space-xl) var(--space-xl); /* 48px 40px at 19px base */
-  --card-border-radius: var(--radius-xl);          /* 24px */
+  /* feedback */
+  --rg-success: #48bb78;
+  --rg-danger:  #fc8181;
+  --rg-warning: #ed8936;
 
-  /* Typography */
-  --h1-font-size: 42px;
-  --h2-font-size: 32px;
-  --body-font-size: 19px;
-  --label-font-size: 18px;
-  --input-font-size: 18px;
-  --button-font-size: 18px;
-  --small-text-font-size: 14px;
-  --strength-text-font-size: 12px;
-  --error-font-size: 14px;
-  --footer-font-size: 14px;
-  --toggle-icon-size: 32px; /* width/height for password toggle */
+  /* shadows */
+  --rg-shadow-card:  0 16px 50px rgba(0, 0, 0, 0.45),
+                     0 8px 32px rgba(102, 126, 234, 0.18);
+  --rg-shadow-input-focus: 0 0 0 3px rgba(129, 140, 248, 0.30),
+                           0 6px 22px rgba(102, 126, 234, 0.25);
 
-  /* Spacing (px values for non‑rem elements) */
-  --input-padding: 18px 20px;
-  --button-padding: 20px;
-  --alert-padding: 12px 16px;
-  --terms-padding: var(--space-md);
-  --validation-icon-size: 18px;
-  --strength-bar-height: 4px;
+  /* radii / motion */
+  --rg-r-sm: 10px;
+  --rg-r-md: 14px;
+  --rg-r-lg: 20px;
+  --rg-r-xl: 26px;
+  --rg-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --rg-t-fast: 180ms var(--rg-ease);
+  --rg-t-base: 280ms var(--rg-ease);
 
-  /* Interactive */
-  --button-border-radius: var(--radius-lg);      /* 16px */
-  --input-border-radius: var(--radius-md);       /* 12px */
-  --touch-target-min-height: 48px;
+  /* fluid sizing */
+  --rg-card-max: clamp(320px, 92vw, 640px);
+  --rg-card-pad-x: clamp(1rem, 3.5vw, 2.5rem);
+  --rg-card-pad-y: clamp(1.25rem, 3.5vw, 2.5rem);
+  --rg-gap:        clamp(0.85rem, 1.6vw, 1.25rem);
 }
 
-/* ==========================================================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================================================== */
-.register-container * {
-  /* Prevent character-by-character word breaking */
-  word-break: normal;                /* Normal word breaking, no character breaks */
-  overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-  hyphens: none;                     /* Disable automatic hyphenation */
+/* -------------------------------------------------------------
+   1. Global text protection (preserved from original)
+   ------------------------------------------------------------- */
+.register-container *,
+.register-container *::before,
+.register-container *::after {
+  box-sizing: border-box;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
   -webkit-hyphens: none;
   -ms-hyphens: none;
-  box-sizing: border-box;            /* Consistent sizing */
 }
 
-/* ==========================================================================
-   ANIMATIONS (unchanged)
-   ========================================================================== */
-@keyframes cosmicFloat {
-  0%, 100% {
-    transform: translateY(0) translateX(0);
-  }
-  33% {
-    transform: translateY(-5px) translateX(3px);
-  }
-  66% {
-    transform: translateY(3px) translateX(-3px);
-  }
+/* -------------------------------------------------------------
+   2. Animations (kept; brand-tinted)
+   ------------------------------------------------------------- */
+@keyframes rgSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes rgSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes rgFloat {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(20px, -25px); }
+}
+@keyframes rgPulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.85; }
 }
 
-@keyframes cosmicGlow {
-  0%, 100% {
-    box-shadow: 
-      0 0 20px rgba(78, 205, 196, 0.3),
-      0 0 40px rgba(78, 205, 196, 0.1),
-      0 0 60px rgba(78, 205, 196, 0.05);
-  }
-  50% {
-    box-shadow: 
-      0 0 30px rgba(78, 205, 196, 0.5),
-      0 0 60px rgba(78, 205, 196, 0.2),
-      0 0 90px rgba(78, 205, 196, 0.1);
-  }
-}
-
-@keyframes borderGlow {
-  0%, 100% {
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  50% {
-    border-color: rgba(78, 205, 196, 0.6);
-  }
-}
-
-@keyframes slideUpCosmic {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes cosmicSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ==========================================================================
-   MAIN CONTAINER - SEE THROUGH SPACESHIP WINDOW
-   ========================================================================== */
+/* -------------------------------------------------------------
+   3. Container — fills available area (shifted by SideNav)
+   ------------------------------------------------------------- */
 .register-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-md);
   position: relative;
-  overflow: visible;                 /* Ensure no content is clipped */
-  background: transparent !important;
-}
-
-.register-container::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at 20% 50%,
-    rgba(10, 10, 40, 0.15) 0%,
-    rgba(5, 5, 20, 0.08) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ==========================================================================
-   REGISTER CARD - FIXED HEIGHT WITH CONSISTENT BACKGROUND
-   ========================================================================== */
-.register-card {
-  background: var(--cosmic-card);
-  backdrop-filter: var(--glass-blur);
-  border-radius: var(--card-border-radius, var(--radius-xl));
-  padding: var(--card-padding, var(--space-xl) var(--space-lg));
+  z-index: 1;
   width: 100%;
-  max-width: var(--container-max-width, 520px);
-  min-height: auto;
-  box-shadow: 
-    var(--shadow-deep),
-    0 0 0 1px var(--border-subtle),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-  z-index: 100;
-  position: relative;
-  animation: slideUpCosmic 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-  max-height: 85vh;
-  border: 1px solid var(--border-subtle);
-  transition: all var(--transition-normal);
+  min-height: calc(100vh - 4rem);
+  min-height: calc(100dvh - 4rem);
   display: flex;
-  flex-direction: column;
-  isolation: isolate;                /* Fresh stacking context */
-}
-
-/* Ensure form background matches card */
-.register-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(0.85rem, 2.5vw, 2rem) clamp(0.5rem, 2vw, 1.5rem);
   background: transparent;
 }
 
-.register-card::-webkit-scrollbar {
-  width: 8px;
+/* -------------------------------------------------------------
+   4. Decorative floating glows (galaxy-friendly)
+   ------------------------------------------------------------- */
+.register-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.register-background-shapes {
+  position: absolute;
+  inset: 0;
+}
+.register-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: rgFloat 14s ease-in-out infinite;
+}
+.register-shape-1 {
+  width: clamp(180px, 30vw, 360px);
+  height: clamp(180px, 30vw, 360px);
+  top: -8%;
+  left: -8%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.45), transparent 70%);
+  animation-delay: 0s;
+}
+.register-shape-2 {
+  width: clamp(220px, 35vw, 420px);
+  height: clamp(220px, 35vw, 420px);
+  bottom: -10%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(118, 75, 162, 0.45), transparent 70%);
+  animation-delay: -5s;
+}
+.register-shape-3 {
+  width: clamp(150px, 25vw, 300px);
+  height: clamp(150px, 25vw, 300px);
+  top: 40%;
+  right: 15%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.30), transparent 70%);
+  animation-delay: -10s;
 }
 
-.register-card::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-}
-
-.register-card::-webkit-scrollbar-thumb {
-  background: rgba(100, 100, 150, 0.5);
-  border-radius: 4px;
-  transition: all var(--transition-fast);
-}
-
-.register-card::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 100, 150, 0.7);
-}
-
-.register-card:hover {
-  border-color: var(--border-glow);
-  box-shadow: 
-    var(--shadow-deep),
-    0 0 40px rgba(78, 205, 196, 0.15),
-    0 0 0 1px rgba(78, 205, 196, 0.3);
-}
-
-/* ==========================================================================
-   HEADER SECTION
-   ========================================================================== */
-.register-header {
-  text-align: center;
-  margin-bottom: var(--space-xl);
+/* -------------------------------------------------------------
+   5. Card — glassmorphism, transparent enough to show galaxy
+   ------------------------------------------------------------- */
+.register-card {
   position: relative;
-  min-height: min-content;           /* Expand with content */
+  z-index: 2;
+  width: 100%;
+  max-width: var(--rg-card-max);
+  padding: var(--rg-card-pad-y) var(--rg-card-pad-x);
+  background: var(--rg-glass-bg);
+  border: 1px solid var(--rg-glass-border);
+  border-radius: var(--rg-r-xl);
+  -webkit-backdrop-filter: var(--rg-glass-blur);
+  backdrop-filter: var(--rg-glass-blur);
+  box-shadow: var(--rg-shadow-card);
+  color: var(--rg-text-soft);
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  animation: rgSlideUp 0.5s var(--rg-ease) both;
+  transition: border-color var(--rg-t-base), box-shadow var(--rg-t-base), transform var(--rg-t-base);
+}
+.register-card:hover {
+  border-color: var(--rg-glass-border-hover);
+  box-shadow: var(--rg-shadow-card),
+              0 0 40px rgba(129, 140, 248, 0.18);
 }
 
+/* -------------------------------------------------------------
+   6. Header
+   ------------------------------------------------------------- */
+.register-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+}
 .register-header::after {
   content: '';
   position: absolute;
-  bottom: -20px;
-  left: 25%;
-  right: 25%;
+  left: 28%;
+  right: 28%;
+  bottom: -0.85rem;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--cosmic-cyan),
-    transparent
-  );
-  border-radius: 1px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--rg-accent), transparent);
+  box-shadow: 0 0 14px rgba(129, 140, 248, 0.6);
 }
-
 .register-header h1 {
-  font-size: var(--h1-font-size, 36px);
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
-  text-shadow: 
-    0 0 20px rgba(78, 205, 196, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.8);
-  letter-spacing: 1px;
-  background: linear-gradient(
-    135deg,
-    var(--text-primary) 0%,
-    var(--text-accent) 100%
-  );
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
-  word-break: keep-all;              /* Keep whole words together */
+  -webkit-text-fill-color: transparent;
+  word-break: keep-all;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
-
 .register-header p {
-  color: var(--text-secondary);
-  font-size: var(--body-font-size, 16px);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  opacity: 0.9;
+  font-size: clamp(0.85rem, 1.05vw, 1rem);
+  color: var(--rg-text-mute);
+  margin: 0;
 }
 
-/* ==========================================================================
-   FORM LAYOUT
-   ========================================================================== */
+/* -------------------------------------------------------------
+   7. Form layout
+   ------------------------------------------------------------- */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rg-gap);
+  background: transparent;
+}
 .register-form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-  /* Ensure grid items can shrink */
+  grid-template-columns: 1fr;       /* mobile: stack */
+  gap: var(--rg-gap);
   min-width: 0;
 }
+.register-form-row > * { min-width: 0; }
 
-.register-form-row > * {
-  min-width: 0;                      /* Allow grid items to shrink below content size */
-}
-
-/* ==========================================================================
-   FORM CONTROLS - FIXED TEXT COLOR
-   ========================================================================== */
 .register-form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 0.4rem;
   position: relative;
-  background: transparent;
 }
-
 .register-form-group label {
-  font-size: var(--label-font-size, 14px);
+  font-size: clamp(0.78rem, 0.9vw, 0.9rem);
   font-weight: 600;
-  color: var(--text-accent);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
+  color: var(--rg-text-soft);
 }
 
-/* Base input styles - add padding-right to avoid overlap with validation/password toggles */
+/* -------------------------------------------------------------
+   8. Inputs / Select — glass with brand focus
+   ------------------------------------------------------------- */
 .register-form-group input,
 .register-select-input {
-  padding: var(--input-padding, 14px 16px);
-  padding-right: calc(var(--input-padding, 14px 16px) * 2); /* Ensure space for icons */
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--input-border-radius, var(--radius-md));
-  font-size: var(--input-font-size, 16px);
-  transition: all var(--transition-normal);
-  color: var(--text-input) !important; /* Force light text */
   width: 100%;
-  backdrop-filter: blur(5px);
-  min-height: var(--touch-target-min-height, 44px);
+  min-height: 48px;
+  padding: 0.85rem 2.85rem 0.85rem 1rem;   /* room for icon on right */
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  font-family: inherit;
+  color: var(--rg-text) !important;
+  background: var(--rg-glass-bg-input);
+  border: 1px solid var(--rg-glass-border);
+  border-radius: var(--rg-r-md);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  caret-color: var(--rg-accent);
+  transition: border-color var(--rg-t-fast),
+              background var(--rg-t-fast),
+              box-shadow var(--rg-t-fast);
 }
-
 .register-form-group input::placeholder,
 .register-select-input::placeholder {
-  color: var(--text-tertiary);
-  opacity: 0.7;
+  color: var(--rg-text-dim);
 }
-
-/* Ensure text remains light in all states */
-.register-form-group input:not(:placeholder-shown),
-.register-select-input:not(:placeholder-shown) {
-  color: var(--text-input) !important;
+.register-form-group input:hover,
+.register-select-input:hover {
+  border-color: var(--rg-glass-border-hover);
 }
-
-/* Focus States */
 .register-form-group input:focus,
-.register-select-input:focus {
+.register-form-group input:focus-visible,
+.register-select-input:focus,
+.register-select-input:focus-visible {
   outline: none;
-  border-color: var(--cosmic-cyan);
-  box-shadow: 
-    0 0 0 3px rgba(78, 205, 196, 0.2),
-    0 0 20px rgba(78, 205, 196, 0.3);
-  background: rgba(0, 0, 0, 0.7);
-  color: var(--text-input) !important;
-  animation: borderGlow 2s infinite;
+  border-color: var(--rg-accent);
+  background: var(--rg-glass-bg-input-focus);
+  box-shadow: var(--rg-shadow-input-focus);
 }
 
-/* Validation States */
+/* select arrow + colors */
+.register-select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a5b4fc' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-color: var(--rg-glass-bg-input);
+}
+.register-select-input option {
+  background: #1a1d3a;
+  color: var(--rg-text);
+}
+
+/* validation states */
 .register-form-group input.error {
-  border-color: #ff6b6b;
-  box-shadow: 
-    0 0 0 3px rgba(255, 107, 107, 0.2),
-    0 0 15px rgba(255, 107, 107, 0.3);
-  color: var(--text-input) !important;
+  border-color: var(--rg-danger);
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.22),
+              0 4px 18px rgba(252, 129, 129, 0.18);
 }
-
 .register-form-group input.valid {
-  border-color: #51cf66;
-  box-shadow: 
-    0 0 0 3px rgba(81, 207, 102, 0.2),
-    0 0 15px rgba(81, 207, 102, 0.3);
-  color: var(--text-input) !important;
+  border-color: var(--rg-success);
+  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.22),
+              0 4px 18px rgba(72, 187, 120, 0.15);
 }
 
-/* ==========================================================================
-   VALIDATION INDICATORS
-   ========================================================================== */
-.register-input-with-validation {
+/* -------------------------------------------------------------
+   9. Input adornments (validation icon / password toggle)
+   ------------------------------------------------------------- */
+.register-input-with-validation,
+.register-password-input {
   position: relative;
   background: transparent;
 }
 
 .register-validation-status {
   position: absolute;
-  right: 12px;
+  right: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-accent);
-  font-size: var(--validation-icon-size, 18px);
-  z-index: 2;                        /* Ensure above input text */
-  pointer-events: none;               /* Allow clicks to pass through to input */
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--rg-success);
+  pointer-events: none;
+  z-index: 2;
 }
-
-.register-validation-status .register-loading {
+.register-validation-status.valid {
+  color: var(--rg-success);
+  filter: drop-shadow(0 0 6px rgba(72, 187, 120, 0.55));
+}
+.register-loading {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: var(--cosmic-cyan);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--rg-accent);
   border-radius: 50%;
-  animation: cosmicSpin 1s linear infinite;
-}
-
-/* ==========================================================================
-   PASSWORD FIELD SPECIAL STYLES
-   ========================================================================== */
-.register-password-input {
-  position: relative;
-  background: transparent;
+  animation: rgSpin 0.9s linear infinite;
 }
 
 .register-password-toggle {
   position: absolute;
-  right: 12px;
+  right: 0.55rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--toggle-icon-size, 20px);
-  padding: 4px;
-  color: var(--text-secondary); /* keep original color */
-  transition: color var(--transition-fast);
-  backdrop-filter: blur(5px);
-  border-radius: 4px;
-  z-index: 2;                        /* Ensure above input text */
-  display: flex;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--toggle-icon-size, 32px);
-  height: var(--toggle-icon-size, 32px);
+  padding: 0;
+  font-size: 1.05rem;
+  color: var(--rg-text-mute);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 2;
+  transition: color var(--rg-t-fast),
+              background var(--rg-t-fast),
+              border-color var(--rg-t-fast);
 }
-
 .register-password-toggle:hover {
-  color: var(--text-accent); /* keep original hover color */
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--rg-glass-border);
 }
 
-/* Password Strength Indicator */
+/* -------------------------------------------------------------
+  10. Password strength indicator
+   ------------------------------------------------------------- */
 .register-password-strength {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-  background: transparent;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
 }
-
 .register-strength-bar {
   flex: 1;
-  height: var(--strength-bar-height, 4px);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
   overflow: hidden;
   position: relative;
 }
-
 .register-strength-bar::before {
   content: '';
   display: block;
   height: 100%;
-  width: var(--strength, 0%);
-  transition: width var(--transition-normal);
-  border-radius: 2px;
+  width: 0;
+  border-radius: 999px;
+  transition: width var(--rg-t-base), background var(--rg-t-base), box-shadow var(--rg-t-base);
 }
-
 .register-strength-bar.weak::before {
-  background: linear-gradient(90deg, #ff6b6b, #ff8787);
-  box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+  width: 33%;
+  background: linear-gradient(90deg, #fc8181, #f87171);
+  box-shadow: 0 0 12px rgba(252, 129, 129, 0.55);
 }
-
 .register-strength-bar.medium::before {
-  background: linear-gradient(90deg, #ffd43b, #ffde67);
-  box-shadow: 0 0 10px rgba(255, 212, 59, 0.5);
+  width: 66%;
+  background: linear-gradient(90deg, #f6ad55, #ed8936);
+  box-shadow: 0 0 12px rgba(237, 137, 54, 0.55);
 }
-
 .register-strength-bar.strong::before {
-  background: linear-gradient(90deg, #51cf66, #69db7c);
-  box-shadow: 0 0 10px rgba(81, 207, 102, 0.5);
+  width: 100%;
+  background: linear-gradient(90deg, #48bb78, #38a169);
+  box-shadow: 0 0 12px rgba(72, 187, 120, 0.55);
 }
-
 .register-strength-text {
-  font-size: var(--strength-text-font-size, 12px);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  min-width: 50px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--rg-text-mute);
+  min-width: 52px;
+  text-align: right;
 }
 
-/* ==========================================================================
-   ERROR MESSAGES
-   ========================================================================== */
+/* -------------------------------------------------------------
+  11. Error messages
+   ------------------------------------------------------------- */
 .register-error-message {
-  color: #ff6b6b;
-  font-size: var(--error-font-size, 14px);
-  margin-top: 4px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-size: 0.78rem;
+  color: var(--rg-danger);
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  background: transparent;
-  word-break: normal;                /* Prevent breaking inside message */
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  word-break: normal;
 }
 
-/* ==========================================================================
-   TERMS & CONDITIONS
-   ========================================================================== */
+/* -------------------------------------------------------------
+  12. Terms checkbox
+   ------------------------------------------------------------- */
 .register-terms {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-sm);
-  margin: var(--space-lg) 0;
-  padding: var(--terms-padding, var(--space-md));
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-top: 0.25rem;
+  background: var(--rg-glass-bg);
+  border: 1px solid var(--rg-glass-border);
+  border-radius: var(--rg-r-md);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
-
-.register-terms input[type="checkbox"] {
-  margin-top: 4px;
+.register-terms input[type='checkbox'] {
+  margin-top: 0.15rem;
   width: 18px;
   height: 18px;
-  accent-color: var(--cosmic-cyan);
-  filter: drop-shadow(0 0 5px rgba(78, 205, 196, 0.5));
-  flex-shrink: 0;
+  min-width: 18px;
+  accent-color: var(--rg-accent);
+  cursor: pointer;
+  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.45));
 }
-
 .register-terms label {
-  font-size: var(--small-text-font-size, 14px);
-  color: var(--text-secondary);
-  line-height: 1.4;
   flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--rg-text-mute);
+  cursor: pointer;
 }
 
-.register-terms .register-link {
-  color: var(--text-accent);
+/* -------------------------------------------------------------
+  13. Links
+   ------------------------------------------------------------- */
+.register-link {
+  color: var(--rg-accent);
   text-decoration: none;
   font-weight: 600;
-  transition: all var(--transition-fast);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  word-break: keep-all;              /* Keep link intact */
-  white-space: nowrap;                /* Keep on one line */
+  white-space: nowrap;
+  transition: color var(--rg-t-fast), text-shadow var(--rg-t-fast);
 }
-
-.register-terms .register-link:hover {
+.register-link:hover {
+  color: var(--rg-accent-2);
+  text-shadow: 0 0 12px rgba(129, 140, 248, 0.6);
   text-decoration: underline;
-  text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+  text-underline-offset: 3px;
 }
 
-/* ==========================================================================
-   BUTTONS
-   ========================================================================== */
+/* -------------------------------------------------------------
+  14. Buttons
+   ------------------------------------------------------------- */
 .register-btn {
-  padding: var(--button-padding, 16px);
-  border: none;
-  border-radius: var(--button-border-radius, var(--radius-lg));
-  font-size: var(--button-font-size, 16px);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  position: relative;
+  gap: 0.5rem;
+  min-height: 50px;
+  padding: 0.95rem 1.25rem;
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--rg-text);
+  border: 1px solid transparent;
+  border-radius: var(--rg-r-md);
+  cursor: pointer;
+  white-space: nowrap;
   overflow: hidden;
-  letter-spacing: 1px;
-  background: transparent;
-  word-break: keep-all;              /* Keep button text whole */
-  white-space: nowrap;                /* Prevent wrapping by default */
-  min-height: var(--touch-target-min-height, 44px);
-}
-
-/* Allow button text to wrap on very small screens if absolutely necessary */
-@media (max-width: 320px) {
-  .register-btn {
-    white-space: normal;
-  }
-}
-
-.register-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.register-btn:hover::before {
-  opacity: 1;
+  transition: transform var(--rg-t-fast),
+              box-shadow var(--rg-t-fast),
+              opacity var(--rg-t-fast),
+              filter var(--rg-t-fast);
 }
 
 .register-btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--cosmic-blue) 0%,
-    var(--cosmic-purple) 50%,
-    var(--cosmic-cyan) 100%
-  );
-  color: var(--text-primary);
-  box-shadow: 
-    0 4px 15px rgba(66, 133, 244, 0.3),
-    0 0 20px rgba(138, 43, 226, 0.2);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  background: var(--rg-grad);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 28px rgba(102, 126, 234, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-
+.register-btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 50%, rgba(255,255,255,0.12));
+  opacity: 0;
+  transition: opacity var(--rg-t-fast);
+}
 .register-btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 25px rgba(66, 133, 244, 0.4),
-    0 0 30px rgba(138, 43, 226, 0.3),
-    0 0 40px rgba(78, 205, 196, 0.2);
-  animation: cosmicGlow 2s infinite;
+  box-shadow: 0 14px 34px rgba(102, 126, 234, 0.55),
+              0 0 28px rgba(167, 139, 250, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
-
-.register-btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-  transition: transform 100ms ease;
-}
-
+.register-btn-primary:hover:not(:disabled)::before { opacity: 1; }
+.register-btn-primary:active:not(:disabled) { transform: translateY(0); }
 .register-btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
-  filter: grayscale(0.5);
+  filter: grayscale(0.25);
 }
 
-/* ==========================================================================
-   FOOTER & LINKS
-   ========================================================================== */
-.register-footer {
-  text-align: center;
-  margin-top: var(--space-lg);
-  color: var(--text-tertiary);
-  font-size: var(--footer-font-size, 14px);
-  padding-top: var(--space-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: transparent;
+/* allow wrap on tiny screens */
+@media (max-width: 340px) {
+  .register-btn { white-space: normal; }
 }
 
-.register-footer .register-link {
-  color: var(--text-accent);
-  text-decoration: none;
-  font-weight: 600;
-  margin-left: 4px;
-  transition: all var(--transition-fast);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  word-break: keep-all;              /* Keep link intact */
-  white-space: nowrap;                /* Keep on one line */
-}
-
-.register-footer .register-link:hover {
-  text-decoration: underline;
-  text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
-}
-
-/* ==========================================================================
-   ALERTS & NOTIFICATIONS
-   ========================================================================== */
+/* -------------------------------------------------------------
+  15. Alert
+   ------------------------------------------------------------- */
 .register-alert {
-  padding: var(--alert-padding, 12px 16px);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  animation: slideUpCosmic 0.3s ease;
-  backdrop-filter: blur(10px);
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--rg-r-md);
+  font-size: 0.85rem;
   border: 1px solid;
-  background: transparent;
-  word-break: normal;                /* Prevent breaking inside alert */
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: rgSlideUp 0.3s var(--rg-ease) both;
 }
-
 .alert-error {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
-  border-color: rgba(255, 107, 107, 0.3);
-  box-shadow: 
-    0 0 20px rgba(255, 107, 107, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  color: #fecaca;
+  background: rgba(252, 129, 129, 0.12);
+  border-color: rgba(252, 129, 129, 0.35);
+  box-shadow: 0 0 22px rgba(252, 129, 129, 0.18);
 }
-
 .register-alert-close {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0 4px;
-  opacity: 0.7;
-  transition: opacity var(--transition-fast);
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity var(--rg-t-fast),
+              background var(--rg-t-fast),
+              border-color var(--rg-t-fast);
 }
-
 .register-alert-close:hover {
   opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* ==========================================================================
-   ACCESSIBILITY & REDUCED MOTION (unchanged)
-   ========================================================================== */
+/* -------------------------------------------------------------
+  16. Footer
+   ------------------------------------------------------------- */
+.register-footer {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--rg-text-mute);
+  border-top: 1px solid var(--rg-glass-border);
+}
+.register-footer p { margin: 0; }
+.register-footer .register-link { margin-left: 0.35rem; }
+
+/* -------------------------------------------------------------
+  17. Focus rings (accessibility)
+   ------------------------------------------------------------- */
+.register-container :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--rg-accent);
+  outline-offset: 2px;
+}
+
+/* =============================================================
+   RESPONSIVE — mobile first
+   ============================================================= */
+
+/* ≥ 480 : phablets — start two-column for name row */
+@media (min-width: 480px) {
+  .register-form-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* ≥ 768 : tablets — slight breathing room */
+@media (min-width: 768px) {
+  .register-container {
+    align-items: center;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+  }
+}
+
+/* ≥ 1024 : laptop */
+@media (min-width: 1024px) {
+  .register-container {
+    --rg-card-max: 600px;
+  }
+}
+
+/* ≥ 1440 : large laptop */
+@media (min-width: 1440px) {
+  .register-container {
+    --rg-card-max: 640px;
+  }
+  .register-header h1 { font-size: clamp(2rem, 2.2vw, 2.6rem); }
+}
+
+/* ≥ 1920 : full HD */
+@media (min-width: 1920px) {
+  .register-container {
+    --rg-card-max: 720px;
+    --rg-card-pad-x: 3rem;
+    --rg-card-pad-y: 3rem;
+  }
+  .register-header h1 { font-size: 2.8rem; }
+  .register-btn       { min-height: 56px; font-size: 1.05rem; }
+  .register-form-group input,
+  .register-select-input { min-height: 54px; font-size: 1.05rem; }
+}
+
+/* ≥ 2560 : TV / 4K */
+@media (min-width: 2560px) {
+  .register-container {
+    --rg-card-max: 820px;
+    --rg-card-pad-x: 3.5rem;
+    --rg-card-pad-y: 3.5rem;
+    --rg-gap: 1.5rem;
+  }
+  .register-header h1 { font-size: 3.4rem; }
+  .register-header p  { font-size: 1.2rem; }
+  .register-btn       { min-height: 64px; font-size: 1.2rem; }
+  .register-form-group label { font-size: 1.05rem; }
+  .register-form-group input,
+  .register-select-input { min-height: 60px; font-size: 1.15rem; padding: 1rem 3rem 1rem 1.2rem; }
+  .register-terms label { font-size: 1rem; }
+  .register-footer { font-size: 1rem; }
+}
+
+/* =============================================================
+   REDUCED MOTION / HIGH CONTRAST
+   ============================================================= */
 @media (prefers-reduced-motion: reduce) {
   .register-card,
+  .register-shape,
+  .register-loading,
+  .register-strength-bar::before,
   .register-btn,
   .register-form-group input,
-  .register-select-input {
+  .register-select-input,
+  .register-alert {
     animation: none !important;
     transition: none !important;
   }
-  
-  .register-card {
-    animation: slideUpCosmic 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   .register-card {
-    background: rgba(0, 0, 0, 0.95);
-    border: 2px solid white;
+    background: rgba(5, 5, 20, 0.92);
+    border-color: #fff;
   }
-  
   .register-form-group input,
   .register-select-input {
-    border: 2px solid white;
-    background: black;
-    color: white !important;
+    background: #000;
+    border-color: #fff;
+    color: #fff !important;
   }
-  
-  .register-btn-primary {
-    background: linear-gradient(135deg, #0000FF 0%, #800080 100%);
-  }
-  
   .register-header h1 {
-    color: white;
-    -webkit-text-fill-color: white;
-    text-shadow: 0 0 5px black;
+    -webkit-text-fill-color: #fff;
+    color: #fff;
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cosmic-card: rgba(15, 15, 35, 0.92);
-    --cosmic-card-light: rgba(25, 25, 55, 0.95);
+/* =============================================================
+   PRINT
+   ============================================================= */
+@media print {
+  .register-background,
+  .register-password-toggle,
+  .register-alert-close { display: none !important; }
+  .register-card {
+    background: #fff;
+    color: #000;
+    border-color: #000;
+    box-shadow: none;
+    backdrop-filter: none;
   }
+  .register-header h1,
+  .register-header p,
+  .register-form-group label,
+  .register-form-group input,
+  .register-select-input,
+  .register-terms label,
+  .register-footer { color: #000 !important; -webkit-text-fill-color: #000 !important; }
 }
-
-/* ==========================================================================
-   GRANULAR RESPONSIVE BREAKPOINTS (50px increments)
-   ========================================================================== */
-
-/* ----- Breakpoint: 200px – 250px | Micro Screens ----- */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-  :root {
-    font-size: 8px;
-    --container-max-width: 100%;
-    --card-padding: var(--space-sm);
-    --card-border-radius: var(--radius-sm);
-    
-    --h1-font-size: 18px;
-    --body-font-size: 8px;
-    --label-font-size: 9px;
-    --input-font-size: 9px;
-    --button-font-size: 9px;
-    --small-text-font-size: 8px;
-    --strength-text-font-size: 7px;
-    --error-font-size: 8px;
-    --footer-font-size: 8px;
-    --toggle-icon-size: 24px;
-    
-    --input-padding: 4px 6px;
-    --button-padding: 6px;
-    --alert-padding: 4px 6px;
-    --terms-padding: var(--space-xs);
-    --validation-icon-size: 12px;
-    --strength-bar-height: 2px;
-    
-    --touch-target-min-height: 32px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-xs);
-  }
-}
-
-/* ----- Breakpoint: 250px – 300px | Tiny Screens ----- */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-  :root {
-    font-size: 9px;
-    --container-max-width: 100%;
-    --card-padding: var(--space-sm) var(--space-xs);
-    --card-border-radius: var(--radius-sm);
-    
-    --h1-font-size: 20px;
-    --body-font-size: 9px;
-    --label-font-size: 10px;
-    --input-font-size: 10px;
-    --button-font-size: 10px;
-    --small-text-font-size: 9px;
-    --strength-text-font-size: 8px;
-    --error-font-size: 9px;
-    --footer-font-size: 9px;
-    --toggle-icon-size: 26px;
-    
-    --input-padding: 5px 7px;
-    --button-padding: 7px;
-    --alert-padding: 5px 7px;
-    --terms-padding: var(--space-xs);
-    --validation-icon-size: 13px;
-    --strength-bar-height: 2.5px;
-    
-    --touch-target-min-height: 34px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-xs);
-  }
-}
-
-/* ----- Breakpoint: 300px – 350px | X-Small Screens ----- */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-  :root {
-    font-size: 10px;
-    --container-max-width: 100%;
-    --card-padding: var(--space-md) var(--space-sm);
-    --card-border-radius: var(--radius-sm);
-    
-    --h1-font-size: 22px;
-    --body-font-size: 10px;
-    --label-font-size: 11px;
-    --input-font-size: 11px;
-    --button-font-size: 11px;
-    --small-text-font-size: 10px;
-    --strength-text-font-size: 9px;
-    --error-font-size: 10px;
-    --footer-font-size: 10px;
-    --toggle-icon-size: 28px;
-    
-    --input-padding: 6px 8px;
-    --button-padding: 8px;
-    --alert-padding: 6px 8px;
-    --terms-padding: var(--space-sm);
-    --validation-icon-size: 14px;
-    --strength-bar-height: 3px;
-    
-    --touch-target-min-height: 36px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-sm);
-  }
-}
-
-/* ----- Breakpoint: 350px – 400px | Small- Screens ----- */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-  :root {
-    font-size: 11px;
-    --container-max-width: 100%;
-    --card-padding: var(--space-md);
-    --card-border-radius: var(--radius-md);
-    
-    --h1-font-size: 24px;
-    --body-font-size: 11px;
-    --label-font-size: 12px;
-    --input-font-size: 12px;
-    --button-font-size: 12px;
-    --small-text-font-size: 11px;
-    --strength-text-font-size: 10px;
-    --error-font-size: 11px;
-    --footer-font-size: 11px;
-    --toggle-icon-size: 30px;
-    
-    --input-padding: 7px 9px;
-    --button-padding: 9px;
-    --alert-padding: 7px 9px;
-    --terms-padding: var(--space-sm);
-    --validation-icon-size: 15px;
-    --strength-bar-height: 3.2px;
-    
-    --touch-target-min-height: 38px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-sm);
-  }
-}
-
-/* ----- Breakpoint: 400px – 450px | Small Screens ----- */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-  :root {
-    font-size: 12px;
-    --container-max-width: 400px;
-    --card-padding: var(--space-lg) var(--space-md);
-    --card-border-radius: var(--radius-md);
-    
-    --h1-font-size: 26px;
-    --body-font-size: 12px;
-    --label-font-size: 13px;
-    --input-font-size: 13px;
-    --button-font-size: 13px;
-    --small-text-font-size: 12px;
-    --strength-text-font-size: 11px;
-    --error-font-size: 12px;
-    --footer-font-size: 12px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 8px 10px;
-    --button-padding: 10px;
-    --alert-padding: 8px 10px;
-    --terms-padding: var(--space-md);
-    --validation-icon-size: 16px;
-    --strength-bar-height: 3.5px;
-    
-    --touch-target-min-height: 40px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-  }
-}
-
-/* ----- Breakpoint: 450px – 500px | Small+ Screens ----- */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-  :root {
-    font-size: 13px;
-    --container-max-width: 440px;
-    --card-padding: var(--space-lg) var(--space-md);
-    --card-border-radius: var(--radius-md);
-    
-    --h1-font-size: 28px;
-    --body-font-size: 13px;
-    --label-font-size: 14px;
-    --input-font-size: 14px;
-    --button-font-size: 14px;
-    --small-text-font-size: 13px;
-    --strength-text-font-size: 12px;
-    --error-font-size: 13px;
-    --footer-font-size: 13px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 9px 11px;
-    --button-padding: 11px;
-    --alert-padding: 9px 11px;
-    --terms-padding: var(--space-md);
-    --validation-icon-size: 17px;
-    --strength-bar-height: 3.8px;
-    
-    --touch-target-min-height: 42px;
-  }
-  .register-form-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-  }
-}
-
-/* ----- Breakpoint: 500px – 550px | Medium- Screens ----- */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-  :root {
-    font-size: 13.5px;
-    --container-max-width: 480px;
-    --card-padding: var(--space-lg) var(--space-lg);
-    --card-border-radius: var(--radius-lg);
-    
-    --h1-font-size: 30px;
-    --body-font-size: 13.5px;
-    --label-font-size: 14.5px;
-    --input-font-size: 14.5px;
-    --button-font-size: 14.5px;
-    --small-text-font-size: 13.5px;
-    --strength-text-font-size: 12.5px;
-    --error-font-size: 13.5px;
-    --footer-font-size: 13.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 10px 12px;
-    --button-padding: 12px;
-    --alert-padding: 10px 12px;
-    --terms-padding: var(--space-md);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 550px – 600px | Medium Screens ----- */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-  :root {
-    font-size: 14px;
-    --container-max-width: 500px;
-    --card-padding: var(--space-xl) var(--space-lg);
-    --card-border-radius: var(--radius-lg);
-    
-    --h1-font-size: 31px;
-    --body-font-size: 14px;
-    --label-font-size: 15px;
-    --input-font-size: 15px;
-    --button-font-size: 15px;
-    --small-text-font-size: 14px;
-    --strength-text-font-size: 13px;
-    --error-font-size: 14px;
-    --footer-font-size: 14px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 11px 13px;
-    --button-padding: 13px;
-    --alert-padding: 11px 13px;
-    --terms-padding: var(--space-md);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 600px – 650px | Medium+ Screens ----- */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-  :root {
-    font-size: 14.5px;
-    --container-max-width: 520px;
-    --card-padding: var(--space-xl) var(--space-lg);
-    --card-border-radius: var(--radius-lg);
-    
-    --h1-font-size: 32px;
-    --body-font-size: 14.5px;
-    --label-font-size: 15.5px;
-    --input-font-size: 15.5px;
-    --button-font-size: 15.5px;
-    --small-text-font-size: 14.5px;
-    --strength-text-font-size: 13.5px;
-    --error-font-size: 14.5px;
-    --footer-font-size: 14.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 12px 14px;
-    --button-padding: 14px;
-    --alert-padding: 12px 14px;
-    --terms-padding: var(--space-lg);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 650px – 700px | Large- Screens ----- */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-  :root {
-    font-size: 15px;
-    --container-max-width: 540px;
-    --card-padding: var(--space-xl) var(--space-lg);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 33px;
-    --body-font-size: 15px;
-    --label-font-size: 16px;
-    --input-font-size: 16px;
-    --button-font-size: 16px;
-    --small-text-font-size: 15px;
-    --strength-text-font-size: 14px;
-    --error-font-size: 15px;
-    --footer-font-size: 15px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 13px 15px;
-    --button-padding: 15px;
-    --alert-padding: 13px 15px;
-    --terms-padding: var(--space-lg);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 700px – 750px | Large Screens ----- */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-  :root {
-    font-size: 15.5px;
-    --container-max-width: 560px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 34px;
-    --body-font-size: 15.5px;
-    --label-font-size: 16.5px;
-    --input-font-size: 16.5px;
-    --button-font-size: 16.5px;
-    --small-text-font-size: 15.5px;
-    --strength-text-font-size: 14.5px;
-    --error-font-size: 15.5px;
-    --footer-font-size: 15.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 14px 16px;
-    --button-padding: 16px;
-    --alert-padding: 14px 16px;
-    --terms-padding: var(--space-lg);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 750px – 800px | Large+ Screens ----- */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-  :root {
-    font-size: 16px;
-    --container-max-width: 580px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 35px;
-    --body-font-size: 16px;
-    --label-font-size: 17px;
-    --input-font-size: 17px;
-    --button-font-size: 17px;
-    --small-text-font-size: 16px;
-    --strength-text-font-size: 15px;
-    --error-font-size: 16px;
-    --footer-font-size: 16px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 15px 17px;
-    --button-padding: 17px;
-    --alert-padding: 15px 17px;
-    --terms-padding: var(--space-lg);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 800px – 850px | XL- Screens ----- */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-  :root {
-    font-size: 16.5px;
-    --container-max-width: 600px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 36px;
-    --body-font-size: 16.5px;
-    --label-font-size: 17.5px;
-    --input-font-size: 17.5px;
-    --button-font-size: 17.5px;
-    --small-text-font-size: 16.5px;
-    --strength-text-font-size: 15.5px;
-    --error-font-size: 16.5px;
-    --footer-font-size: 16.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 16px 18px;
-    --button-padding: 18px;
-    --alert-padding: 16px 18px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 850px – 900px | XL Screens ----- */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-  :root {
-    font-size: 17px;
-    --container-max-width: 620px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 37px;
-    --body-font-size: 17px;
-    --label-font-size: 18px;
-    --input-font-size: 18px;
-    --button-font-size: 18px;
-    --small-text-font-size: 17px;
-    --strength-text-font-size: 16px;
-    --error-font-size: 17px;
-    --footer-font-size: 17px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 17px 19px;
-    --button-padding: 19px;
-    --alert-padding: 17px 19px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 900px – 950px | XL+ Screens ----- */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-  :root {
-    font-size: 17.5px;
-    --container-max-width: 640px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 38px;
-    --body-font-size: 17.5px;
-    --label-font-size: 18.5px;
-    --input-font-size: 18.5px;
-    --button-font-size: 18.5px;
-    --small-text-font-size: 17.5px;
-    --strength-text-font-size: 16.5px;
-    --error-font-size: 17.5px;
-    --footer-font-size: 17.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 950px – 1000px | 2XL- Screens ----- */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-  :root {
-    font-size: 17.5px;
-    --container-max-width: 660px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 39px;
-    --body-font-size: 17.5px;
-    --label-font-size: 18.5px;
-    --input-font-size: 18.5px;
-    --button-font-size: 18.5px;
-    --small-text-font-size: 17.5px;
-    --strength-text-font-size: 16.5px;
-    --error-font-size: 17.5px;
-    --footer-font-size: 17.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 44px;
-  }
-}
-
-/* ----- Breakpoint: 1000px – 1050px | 2XL Screens ----- */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-  :root {
-    font-size: 18px;
-    --container-max-width: 680px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 40px;
-    --body-font-size: 18px;
-    --label-font-size: 19px;
-    --input-font-size: 19px;
-    --button-font-size: 19px;
-    --small-text-font-size: 18px;
-    --strength-text-font-size: 17px;
-    --error-font-size: 18px;
-    --footer-font-size: 18px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1050px – 1100px | 2XL+ Screens ----- */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-  :root {
-    font-size: 18px;
-    --container-max-width: 700px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 41px;
-    --body-font-size: 18px;
-    --label-font-size: 19px;
-    --input-font-size: 19px;
-    --button-font-size: 19px;
-    --small-text-font-size: 18px;
-    --strength-text-font-size: 17px;
-    --error-font-size: 18px;
-    --footer-font-size: 18px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1100px – 1150px | 3XL- Screens ----- */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-  :root {
-    font-size: 18.5px;
-    --container-max-width: 720px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 42px;
-    --body-font-size: 18.5px;
-    --label-font-size: 19.5px;
-    --input-font-size: 19.5px;
-    --button-font-size: 19.5px;
-    --small-text-font-size: 18.5px;
-    --strength-text-font-size: 17.5px;
-    --error-font-size: 18.5px;
-    --footer-font-size: 18.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1150px – 1200px | 3XL Screens ----- */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-  :root {
-    font-size: 18.5px;
-    --container-max-width: 740px;
-    --card-padding: var(--space-xl) var(--space-xl);
-    --card-border-radius: var(--radius-xl);
-    
-    --h1-font-size: 42px;
-    --body-font-size: 18.5px;
-    --label-font-size: 19.5px;
-    --input-font-size: 19.5px;
-    --button-font-size: 19.5px;
-    --small-text-font-size: 18.5px;
-    --strength-text-font-size: 17.5px;
-    --error-font-size: 18.5px;
-    --footer-font-size: 18.5px;
-    --toggle-icon-size: 32px;
-    
-    --input-padding: 18px 20px;
-    --button-padding: 20px;
-    --alert-padding: 18px 20px;
-    --terms-padding: var(--space-xl);
-    --validation-icon-size: 18px;
-    --strength-bar-height: 4px;
-    
-    --touch-target-min-height: 48px;
-  }
-}
-
-/* ----- Breakpoint: 1200px+ | 4XL (base already defined in :root) ----- */
-/* No additional media query needed – base :root covers 1200px+ */
-
-/* ==========================================================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ========================================================================== 
-   1. Added global text protection rules to all elements inside .register-container:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Set `.register-container` overflow to `visible` to avoid clipping.
-   3. Added `isolation: isolate` to `.register-card` for fresh stacking context.
-   4. Added `min-height: min-content` to `.register-header` to ensure expansion.
-   5. Added `word-break: keep-all` to headings, buttons, links to keep whole words together.
-   6. Added `min-width: 0` to grid items in `.register-form-row` to allow shrinking.
-   7. Added `padding-right: 40px` to inputs to prevent text overlap with validation and password toggles.
-   8. Added `z-index: 2` and `pointer-events: none` where appropriate to ensure icons don't interfere with input.
-   9. Added a media query for screens < 320px to allow button text to wrap if necessary.
-   10. Preserved all original colors, animations, and media queries.
-   11. Implemented 20 granular breakpoints from 200px to 1200px, with progressive scaling of typography, spacing, and interactive elements.
-   12. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/

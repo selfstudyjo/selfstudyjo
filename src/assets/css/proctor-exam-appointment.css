@@ -1,2166 +1,730 @@
-/* ============================================
- *  Proctor Exam Appointment - Galaxy Space Theme
- *  Mobile-first, fully responsive, glass-morphism
- *  Dark transparent cards floating on deep space
- *
- *  RESPONSIVE ENHANCEMENTS:
- *  - Prevent word/character breaks across all elements
- *  - Ensure containers expand to fit content
- *  - Add flex-wrap to prevent element mixing
- *  - Add isolation for stacking contexts
- *  - Preserve all original design, colors, animations
- *  ============================================ */
+/* ============================================================
+   Proctor Exam Appointment — Galaxy Glass Theme
+   Fully transparent, glassmorphic, mobile‑first, responsive
+   Matches actual DOM structure of ProctorExamAppointment.vue
+   ============================================================ */
 
-/* ---------- CSS Custom Properties ---------- */
+/* ---------- Tokens (aligned with global brand) ---------- */
 .proctor-appointment {
-    /* Colors - Dark space palette */
-    --space-bg-dark: rgba(5, 5, 20, 0.85);
-    --space-bg-medium: rgba(10, 10, 30, 0.8);
-    --space-bg-light: rgba(20, 20, 50, 0.7);
-    --space-bg-input: rgba(0, 0, 0, 0.6);
-    --space-bg-card: rgba(8, 8, 25, 0.8);
-    --space-bg-card-hover: rgba(12, 12, 35, 0.9);
+  --pa-text:        #ffffff;
+  --pa-text-soft:   #e8eaff;
+  --pa-text-mute:   rgba(255, 255, 255, 0.72);
+  --pa-text-faint:  rgba(255, 255, 255, 0.5);
 
-    /* Text colors - Light with glow */
-    --text-primary: #ffffff;
-    --text-secondary: #e0e0e0;
-    --text-accent: #4ECDC4;        /* cosmic cyan */
-    --text-muted: rgba(255, 255, 255, 0.7);
-    --text-placeholder: rgba(255, 255, 255, 0.5);
+  --pa-brand-1:     #667eea;
+  --pa-brand-2:     #764ba2;
+  --pa-brand-grad:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --pa-accent:      #818cf8;
 
-    /* Accent glows - Cosmic */
-    --glow-cyan: 0 0 15px rgba(78, 205, 196, 0.4);
-    --glow-purple: 0 0 20px rgba(138, 43, 226, 0.5);
-    --glow-blue: 0 0 20px rgba(66, 133, 244, 0.4);
-    --glow-white: 0 0 10px rgba(255, 255, 255, 0.3);
+  --pa-glass:       rgba(15, 25, 45, 0.45);
+  --pa-glass-hi:    rgba(30, 40, 60, 0.55);
+  --pa-glass-input: rgba(0, 0, 0, 0.35);
+  --pa-glass-card:  rgba(10, 20, 35, 0.5);
 
-    /* Borders & shadows */
-    --border-glass: 1px solid rgba(255, 255, 255, 0.15);
-    --border-glow: 1px solid rgba(78, 205, 196, 0.3);
-    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
-    --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(78, 205, 196, 0.3), 0 0 30px rgba(78, 205, 196, 0.2);
+  --pa-border:      1px solid rgba(255, 255, 255, 0.12);
+  --pa-border-hi:   1px solid rgba(255, 255, 255, 0.2);
 
-    /* Typography */
-    --font-size-xs: clamp(12px, 3vw, 14px);
-    --font-size-sm: clamp(14px, 3.5vw, 16px);
-    --font-size-base: clamp(16px, 4vw, 18px);
-    --font-size-lg: clamp(18px, 5vw, 24px);
-    --font-size-xl: clamp(24px, 6vw, 32px);
-    --font-size-2xl: clamp(32px, 7vw, 48px);
+  --pa-blur:        blur(14px) saturate(160%);
+  --pa-blur-strong: blur(20px) saturate(180%);
 
-    /* Spacing */
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
-    --space-2xl: 48px;
+  --pa-shadow:      0 8px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(102, 126, 234, 0.1);
+  --pa-shadow-hi:   0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(102, 126, 234, 0.2);
+  --pa-glow-focus:  0 0 0 3px rgba(129, 140, 248, 0.5);
 
-    /* Transitions */
-    --transition-speed: 0.3s;
-    --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --pa-radius-sm:   10px;
+  --pa-radius:      14px;
+  --pa-radius-lg:   20px;
 
-    /* Layout */
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 16px;
-    --border-radius-xl: 24px;
+  --pa-ease:        cubic-bezier(0.2, 0.9, 0.4, 1.1);
+
+  /* Typography */
+  --fs-xs:   0.72rem;
+  --fs-sm:   0.8rem;
+  --fs-md:   0.875rem;
+  --fs-lg:   0.95rem;
+  --fs-h3:   1rem;
+  --fs-h2:   1.2rem;
+  --fs-h1:   1.7rem;
 }
 
-/* ============================================
-   GLOBAL TEXT PROTECTION & BOX SIZING
-   ========================================== */
-.proctor-appointment * {
-    word-break: normal;                /* Prevent character-by-character breaking */
-    overflow-wrap: break-word;         /* Allow wrapping only at word boundaries */
-    hyphens: none;                     /* Disable hyphenation */
-    -webkit-hyphens: none;
-    -ms-hyphens: none;
-    box-sizing: border-box;            /* Consistent sizing */
-}
-
-/* ---------- Base Container ---------- */
+/* ============================================================
+   ROOT CONTAINER
+   ============================================================ */
 .proctor-appointment {
-    padding: var(--space-md);
-    max-width: 1600px;
-    margin: 0 auto;
-    min-height: 100vh;
-    color: var(--text-primary);
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-
-    /* Fully transparent background – lets the galaxy animation show through */
-    background: transparent;
-
-    /* Smooth scrolling */
-    scroll-behavior: smooth;
-
-    /* Prevent z-index leaks */
-    isolation: isolate;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: clamp(12px, 2.5vw, 32px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--pa-text);
+  background: transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  animation: pa-fade-in 0.35s var(--pa-ease) both;
 }
 
-/* ---------- Header ---------- */
+@keyframes pa-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   HEADER with back button
+   ============================================================ */
 .appointment-header {
-    margin-bottom: var(--space-lg);
-    display: flex;
-    flex-wrap: wrap;                    /* Allow wrapping on small screens */
-    align-items: center;
-    gap: var(--space-md);
-    backdrop-filter: blur(8px) saturate(180%);
-    background: var(--space-bg-dark);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-lg);
-    padding: var(--space-md) var(--space-lg);
-    box-shadow: var(--shadow-card);
-    min-height: min-content;            /* Expand with content */
+  margin-bottom: clamp(20px, 3vw, 32px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(14px, 2vw, 20px) clamp(18px, 2.4vw, 28px);
+  background: var(--pa-glass);
+  backdrop-filter: var(--pa-blur);
+  -webkit-backdrop-filter: var(--pa-blur);
+  border: var(--pa-border);
+  border-radius: var(--pa-radius-lg);
+  box-shadow: var(--pa-shadow);
 }
 
 .back-btn {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--text-secondary);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-speed) var(--transition-ease);
-    backdrop-filter: blur(4px);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 320px) {
-    .back-btn {
-        white-space: normal;               /* Allow wrapping on very small screens */
-    }
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--pa-text-soft);
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--pa-ease);
+  backdrop-filter: blur(4px);
 }
 
 .back-btn:hover {
-    background: var(--space-bg-light);
-    border-color: #4ECDC4;
-    color: var(--text-primary);
-    box-shadow: var(--glow-cyan);
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateX(-3px);
+  border-color: var(--pa-accent);
 }
 
 .appointment-header h1 {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-primary);
-    text-shadow: 0 0 15px rgba(78, 205, 196, 0.7), 0 0 30px rgba(138, 43, 226, 0.4);
-    letter-spacing: 1px;
-    flex: 1;
-    background: none;  /* Removed gradient clipping – now solid white with glow */
-    -webkit-text-fill-color: initial;
-    background-clip: initial;
-    word-break: keep-all;               /* Keep heading whole */
+  margin: 0;
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  background: var(--pa-brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  line-height: 1.2;
 }
 
-/* ---------- Main Content Card ---------- */
-.appointment-content {
-    background: rgba(5, 5, 20, 0.7);  /* Very transparent – 70% */
-    backdrop-filter: blur(12px) saturate(180%);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-xl);
-    padding: var(--space-lg);
-    box-shadow: var(--shadow-card), inset 0 0 30px rgba(0, 0, 0, 0.2);
-    transition: all var(--transition-speed) ease;
-    isolation: isolate;                 /* Fresh stacking context */
-    min-height: min-content;
+/* ============================================================
+   LOADING / ERROR STATES
+   ============================================================ */
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: clamp(40px, 8vw, 80px) 20px;
+  text-align: center;
+  background: var(--pa-glass-card);
+  backdrop-filter: var(--pa-blur);
+  border: var(--pa-border);
+  border-radius: var(--pa-radius-lg);
+  min-height: 400px;
 }
 
-/* ---------- Loading & Error States ---------- */
-.loading-state,
-.error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-2xl);
-    text-align: center;
-    background: var(--space-bg-dark);
-    backdrop-filter: blur(8px);
-    border-radius: var(--border-radius-lg);
-    border: var(--border-glass);
-    min-height: 300px;
-    isolation: isolate;
-    min-height: min-content;
-}
-
-/* Galaxy-themed spinner – no white! */
 .loading-spinner {
-    width: 64px;
-    height: 64px;
-    border: 4px solid rgba(78, 205, 196, 0.15);
-    border-top: 4px solid #4ECDC4;
-    border-right: 4px solid #8A2BE2;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--space-md);
-    box-shadow: 0 0 25px rgba(78, 205, 196, 0.5);
-    filter: drop-shadow(0 0 8px rgba(138, 43, 226, 0.6));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--pa-brand-1);
+  border-right-color: var(--pa-brand-2);
+  animation: pa-spin 0.9s linear infinite;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+@keyframes pa-spin {
+  to { transform: rotate(360deg); }
 }
 
 .error-icon {
-    font-size: 56px;
-    filter: drop-shadow(0 0 15px rgba(255, 80, 80, 0.6));
-    margin-bottom: var(--space-md);
+  font-size: 52px;
+  filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.6));
 }
 
 .error-state p {
-    font-size: var(--font-size-lg);
-    color: #ffbaba;  /* Soft red with glow */
-    text-shadow: 0 0 8px rgba(255, 100, 100, 0.5);
-    margin-bottom: var(--space-lg);
+  color: var(--pa-text-mute);
+  max-width: 380px;
 }
 
 .retry-btn {
-    background: linear-gradient(145deg, rgba(20, 20, 50, 0.9), rgba(10, 10, 30, 0.95));
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--text-primary);
-    padding: var(--space-sm) var(--space-xl);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-speed) ease;
-    backdrop-filter: blur(4px);
-    text-shadow: 0 0 8px rgba(0,0,0,0.5);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 320px) {
-    .retry-btn {
-        white-space: normal;               /* Allow wrapping on very small screens */
-    }
+  background: var(--pa-brand-grad);
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: var(--pa-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s;
 }
 
 .retry-btn:hover {
-    border-color: #4ECDC4;
-    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.5);
-    transform: translateY(-3px);
-    background: linear-gradient(145deg, rgba(30, 30, 70, 0.9), rgba(20, 20, 50, 0.95));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.5);
 }
 
-/* ---------- Details Grid ---------- */
+/* ============================================================
+   APPOINTMENT DETAILS (Two‑column grid)
+   ============================================================ */
+.appointment-details {
+  width: 100%;
+}
+
 .details-grid {
-    display: grid;
-    grid-template-columns: 1fr;  /* Mobile: single column */
-    gap: var(--space-xl);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(20px, 3vw, 32px);
 }
 
-/* Tablet and up – two columns, right column wider */
-@media (min-width: 768px) {
-    .details-grid {
-        grid-template-columns: 1fr 1.5fr;  /* Right column takes more space */
-    }
+@media (min-width: 900px) {
+  .details-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
 }
 
-/* ---------- Details Sections ---------- */
+.details-column {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+}
+
+/* ===== Shared section style ===== */
 .details-section {
-    margin-bottom: var(--space-xl);
-    background: var(--space-bg-card);
-    backdrop-filter: blur(10px) saturate(180%);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-lg);
-    padding: var(--space-lg);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.2s ease, box-shadow 0.3s ease;
-    isolation: isolate;
-    min-height: min-content;
-}
-
-.details-section:hover {
-    box-shadow: var(--shadow-hover);
-    border-color: rgba(78, 205, 196, 0.3);
-}
-
-.section-header {
-    display: flex;
-    flex-wrap: wrap;                    /* Allow wrapping */
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-md);
+  background: var(--pa-glass);
+  backdrop-filter: var(--pa-blur);
+  -webkit-backdrop-filter: var(--pa-blur);
+  border: var(--pa-border);
+  border-radius: var(--pa-radius-lg);
+  padding: clamp(18px, 2.5vw, 28px);
+  transition: box-shadow 0.2s;
 }
 
 .details-section h2 {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    padding-bottom: var(--space-sm);
-    border-bottom: 2px solid rgba(78, 205, 196, 0.3);
-    text-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
-    letter-spacing: 0.5px;
-    word-break: keep-all;
+  margin: 0 0 16px 0;
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  color: var(--pa-text);
+  border-left: 3px solid var(--pa-brand-1);
+  padding-left: 12px;
 }
 
-/* ---------- Room Edit Buttons ---------- */
-.edit-rooms-btn,
-.save-rooms-btn {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    transition: all var(--transition-speed) var(--transition-ease);
-    backdrop-filter: blur(4px);
-    text-shadow: 0 0 4px rgba(0,0,0,0.4);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 480px) {
-    .edit-rooms-btn,
-    .save-rooms-btn {
-        white-space: normal;               /* Allow wrapping on small screens */
-    }
-}
-
-.edit-rooms-btn {
-    background: rgba(66, 133, 244, 0.25);
-    color: var(--text-primary);
-    box-shadow: 0 0 12px rgba(66, 133, 244, 0.2);
-}
-
-.edit-rooms-btn:hover {
-    background: rgba(66, 133, 244, 0.4);
-    border-color: #4ECDC4;
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
-    transform: translateY(-2px);
-}
-
-.save-rooms-btn {
-    background: rgba(72, 187, 120, 0.25);
-    color: var(--text-primary);
-    box-shadow: 0 0 12px rgba(72, 187, 120, 0.2);
-}
-
-.save-rooms-btn:hover:not(:disabled) {
-    background: rgba(72, 187, 120, 0.4);
-    border-color: #4ECDC4;
-    box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
-    transform: translateY(-2px);
-}
-
-.save-rooms-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: grayscale(50%);
-}
-
-/* ---------- Info Card ---------- */
-.info-card,
-.user-card,
-.controls-card {
-    background: rgba(5, 5, 20, 0.7);
-    backdrop-filter: blur(8px) saturate(180%);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-md);
-    padding: var(--space-lg);
-    transition: all 0.2s ease;
-    isolation: isolate;
-    min-height: min-content;
-}
-
+/* ===== Info Card (appointment info) ===== */
 .info-card {
-    padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-sm);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;                    /* Allow wrapping */
-    gap: var(--space-xs);
-}
-
-.info-row:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  font-size: var(--fs-sm);
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .info-label {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    font-weight: 500;
-    word-break: keep-all;
+  min-width: 120px;
+  color: var(--pa-text-mute);
+  font-weight: 500;
 }
 
 .info-value {
-    font-size: var(--font-size-sm);
-    color: var(--text-primary);
-    font-weight: 600;
-    text-shadow: 0 0 6px rgba(255,255,255,0.2);
-    word-break: normal;                 /* Already protected */
-    overflow-wrap: break-word;
+  color: var(--pa-text-soft);
+  word-break: break-word;
 }
 
 .info-value.code {
-    font-family: 'Monaco', 'Courier New', monospace;
-    background: rgba(0, 0, 0, 0.5);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-xs);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #4ECDC4;
-    word-break: break-all;              /* Allow code to break */
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: var(--pa-radius-sm);
 }
 
-/* Status badges – cosmic glow */
 .status-badge {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 30px;
-    font-size: var(--font-size-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 5px rgba(0,0,0,0.5);
-    box-shadow: 0 0 12px rgba(0,0,0,0.3);
-    white-space: nowrap;                 /* Keep badge on one line */
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid currentColor;
 }
 
-@media (max-width: 480px) {
-    .status-badge {
-        white-space: normal;               /* Allow wrapping on very small screens */
-    }
-}
-
-.status-scheduled {
-    background: rgba(72, 187, 120, 0.2);
-    color: #9ae6b4;
-    border: 1px solid rgba(72, 187, 120, 0.6);
-    box-shadow: 0 0 12px rgba(72, 187, 120, 0.3);
-}
-.status-in-progress {
-    background: rgba(245, 101, 101, 0.2);
-    color: #fed7d7;
-    border: 1px solid rgba(245, 101, 101, 0.6);
-    box-shadow: 0 0 12px rgba(245, 101, 101, 0.3);
-}
-.status-completed {
-    background: rgba(66, 153, 225, 0.2);
-    color: #bee3f8;
-    border: 1px solid rgba(66, 153, 225, 0.6);
-    box-shadow: 0 0 12px rgba(66, 153, 225, 0.3);
-}
+/* status colours (consistent with dashboard) */
+.status-scheduled    { color: #9ae6b4; background: rgba(72, 187, 120, 0.2); }
+.status-in-progress  { color: #fed7d7; background: rgba(245, 101, 101, 0.2); }
+.status-completed    { color: #bee3f8; background: rgba(66, 153, 225, 0.2); }
 .status-cancelled,
-.status-expired {
-    background: rgba(160, 174, 192, 0.2);
-    color: #e2e8f0;
-    border: 1px solid rgba(160, 174, 192, 0.6);
-    box-shadow: 0 0 12px rgba(160, 174, 192, 0.3);
-}
-.status-pending {
-    background: rgba(236, 201, 75, 0.2);
-    color: #fefcbf;
-    border: 1px solid rgba(236, 201, 75, 0.6);
-    box-shadow: 0 0 12px rgba(236, 201, 75, 0.3);
-}
-.status-default {
-    background: rgba(160, 174, 192, 0.2);
-    color: #e2e8f0;
-    border: 1px solid rgba(160, 174, 192, 0.6);
+.status-expired      { color: #e2e8f0; background: rgba(160, 174, 192, 0.2); }
+.status-pending      { color: #fefcbf; background: rgba(236, 201, 75, 0.2); }
+.status-default      { color: #e2e8f0; background: rgba(160, 174, 192, 0.2); }
+
+/* ===== Rooms Section ===== */
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-/* ---------- Rooms Grid ---------- */
+.section-header h2 {
+  margin: 0;
+  border-left: none;
+  padding-left: 0;
+}
+
+.edit-rooms-btn, .save-rooms-btn {
+  background: rgba(129, 140, 248, 0.2);
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  color: #c7d2fe;
+  padding: 6px 16px;
+  border-radius: 40px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-rooms-btn:hover, .save-rooms-btn:hover {
+  background: rgba(129, 140, 248, 0.35);
+  transform: translateY(-1px);
+}
+
 .rooms-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+  .rooms-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .room-card {
-    background: rgba(8, 8, 25, 0.7);
-    backdrop-filter: blur(8px);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-md);
-    padding: var(--space-lg);
-    transition: all 0.25s ease;
-    isolation: isolate;
-    min-height: min-content;
-}
-
-.room-card:hover {
-    border-color: rgba(78, 205, 196, 0.5);
-    box-shadow: var(--glow-cyan);
+  background: var(--pa-glass-card);
+  border: var(--pa-border);
+  border-radius: var(--pa-radius);
+  padding: 18px;
+  transition: all 0.2s;
 }
 
 .room-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    flex-wrap: wrap;                    /* Allow wrapping */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
-.room-icon {
-    font-size: 24px;
-    filter: drop-shadow(0 0 8px rgba(78,205,196,0.5));
-}
-
-.room-header h3 {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    word-break: keep-all;
-}
-
+.room-icon { font-size: 1.4rem; }
+.room-header h3 { margin: 0; font-size: var(--fs-h3); font-weight: 600; }
 .room-status {
-    margin-left: auto;
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 30px;
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    background: rgba(72, 187, 120, 0.2);
-    color: #9ae6b4;
-    border: 1px solid rgba(72, 187, 120, 0.5);
-    white-space: nowrap;                 /* Keep status on one line */
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: 40px;
+  background: rgba(72, 187, 120, 0.2);
+  color: #9ae6b4;
 }
-
 .room-status.inactive {
-    background: rgba(160, 174, 192, 0.2);
-    color: #cbd5e0;
-    border: 1px solid rgba(160, 174, 192, 0.5);
+  background: rgba(160, 174, 192, 0.2);
+  color: #a0aec0;
 }
 
-/* Room edit mode */
-.room-edit {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
+/* edit mode */
+.room-edit, .room-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .input-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .input-group label {
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    color: var(--text-accent);
-    text-shadow: 0 0 5px rgba(78,205,196,0.3);
-    word-break: keep-all;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--pa-text-mute);
 }
 
 .url-input {
-    padding: var(--space-sm) var(--space-md);
-    background: var(--space-bg-input);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    font-family: 'Monaco', 'Courier New', monospace;
-    color: var(--text-primary);
-    transition: all var(--transition-speed) ease;
-    backdrop-filter: blur(4px);
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--pa-glass-input);
+  border: var(--pa-border-hi);
+  border-radius: var(--pa-radius-sm);
+  color: var(--pa-text);
+  font-size: var(--fs-sm);
 }
 
 .url-input:focus {
-    outline: none;
-    border-color: #4ECDC4;
-    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2), 0 0 20px rgba(78, 205, 196, 0.4);
-    background: rgba(0, 0, 0, 0.7);
-}
-
-.url-input::placeholder {
-    color: var(--text-placeholder);
-    font-style: italic;
+  outline: none;
+  border-color: var(--pa-accent);
+  box-shadow: var(--pa-glow-focus);
 }
 
 .input-help {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-    font-style: italic;
+  font-size: var(--fs-xs);
+  color: var(--pa-text-faint);
 }
 
-.room-actions,
-.view-actions {
-    display: flex;
-    gap: var(--space-sm);
-    flex-wrap: wrap;                    /* Allow wrapping */
+.room-actions, .view-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.clear-btn,
-.test-btn,
-.copy-btn {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(0, 0, 0, 0.4);
-    color: var(--text-primary);
-    transition: all 0.2s ease;
-    backdrop-filter: blur(4px);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    white-space: nowrap;                 /* Keep button text on one line */
+.clear-btn, .test-btn, .copy-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--pa-radius-sm);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--pa-text-soft);
 }
 
-@media (max-width: 480px) {
-    .clear-btn,
-    .test-btn,
-    .copy-btn {
-        white-space: normal;               /* Allow wrapping on small screens */
-    }
-}
-
-.clear-btn {
-    background: rgba(245, 101, 101, 0.2);
-}
-.clear-btn:hover:not(:disabled) {
-    background: rgba(245, 101, 101, 0.4);
-    border-color: #fc8181;
-    box-shadow: 0 0 15px rgba(245, 101, 101, 0.6);
-    transform: translateY(-2px);
-}
-
-.test-btn {
-    background: rgba(66, 133, 244, 0.2);
-}
-.test-btn:hover:not(:disabled) {
-    background: rgba(66, 133, 244, 0.4);
-    border-color: #4ECDC4;
-    box-shadow: 0 0 15px rgba(78, 205, 196, 0.6);
-    transform: translateY(-2px);
-}
-
-.copy-btn {
-    background: rgba(72, 187, 120, 0.2);
-}
-.copy-btn:hover {
-    background: rgba(72, 187, 120, 0.4);
-    border-color: #9ae6b4;
-    box-shadow: 0 0 15px rgba(72, 187, 120, 0.6);
-    transform: translateY(-2px);
-}
-
-.clear-btn:disabled,
-.test-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    filter: grayscale(60%);
-}
-
-/* Room view mode */
-.room-view {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+.test-btn:hover, .copy-btn:hover, .clear-btn:hover {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: var(--pa-accent);
 }
 
 .room-link {
-    display: block;
-    color: #4ECDC4;
-    text-decoration: none;
-    font-size: var(--font-size-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--border-radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    word-break: break-all;              /* Allow URLs to break */
-    transition: all 0.2s ease;
-    text-shadow: 0 0 6px rgba(78,205,196,0.3);
+  color: #93c5fd;
+  text-decoration: none;
+  word-break: break-all;
+  font-size: var(--fs-sm);
 }
-
 .room-link:hover {
-    background: rgba(0, 0, 0, 0.5);
-    border-color: #4ECDC4;
-    box-shadow: 0 0 15px rgba(78,205,196,0.3);
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .no-url {
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--border-radius-md);
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    text-align: center;
+  color: var(--pa-text-faint);
+  font-style: italic;
 }
 
-/* No rooms state */
 .no-rooms {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-2xl);
-    background: rgba(8, 8, 25, 0.6);
-    backdrop-filter: blur(8px);
-    border-radius: var(--border-radius-lg);
-    border: 2px dashed rgba(78, 205, 196, 0.3);
-    text-align: center;
-    isolation: isolate;
-    min-height: min-content;
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--pa-glass-card);
+  border-radius: var(--pa-radius);
 }
 
-.no-rooms-icon {
-    font-size: 56px;
-    filter: drop-shadow(0 0 15px rgba(78,205,196,0.6));
-    margin-bottom: var(--space-md);
-    opacity: 0.9;
-}
-
-.no-rooms p {
-    color: var(--text-muted);
-    font-size: var(--font-size-base);
-    margin-bottom: var(--space-lg);
-}
-
+.no-rooms-icon { font-size: 48px; display: block; margin-bottom: 12px; }
 .add-room-btn {
-    background: linear-gradient(145deg, rgba(78, 205, 196, 0.2), rgba(138, 43, 226, 0.2));
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--text-primary);
-    padding: var(--space-sm) var(--space-xl);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(4px);
-    text-shadow: 0 0 8px rgba(0,0,0,0.5);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    white-space: nowrap;
+  background: var(--pa-brand-grad);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: white;
+  margin-top: 12px;
+  cursor: pointer;
 }
 
-@media (max-width: 480px) {
-    .add-room-btn {
-        white-space: normal;
-    }
-}
-
-.add-room-btn:hover {
-    border-color: #4ECDC4;
-    box-shadow: 0 0 25px rgba(78, 205, 196, 0.6);
-    transform: translateY(-3px);
-    background: linear-gradient(145deg, rgba(78, 205, 196, 0.3), rgba(138, 43, 226, 0.3));
-}
-
-/* Rooms tips */
 .rooms-tips {
-    margin-top: var(--space-lg);
-    padding: var(--space-md);
-    background: rgba(78, 205, 196, 0.1);
-    border-left: 5px solid #4ECDC4;
-    border-radius: var(--border-radius-md);
-    backdrop-filter: blur(4px);
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--pa-radius);
+  font-size: var(--fs-sm);
 }
 
-.rooms-tips h4 {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: #4ECDC4;
-    margin: 0 0 var(--space-xs) 0;
-    text-shadow: 0 0 8px rgba(78,205,196,0.4);
-    word-break: keep-all;
-}
+.rooms-tips h4 { margin: 0 0 6px 0; color: var(--pa-text-soft); }
+.rooms-tips ul { margin: 0; padding-left: 20px; }
+.rooms-tips li { color: var(--pa-text-mute); }
 
-.rooms-tips ul {
-    margin: 0;
-    padding-left: var(--space-lg);
-}
-
-.rooms-tips li {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    margin-bottom: var(--space-xs);
-    line-height: 1.5;
-}
-
-/* ---------- User Card & Controls Card (Right Column) ---------- */
-/* These cards automatically stretch to full column width */
-.user-card,
-.controls-card {
-    width: 100%;
-    background: rgba(10, 10, 30, 0.8);
-    backdrop-filter: blur(12px);
-    border: var(--border-glass);
-    border-radius: var(--border-radius-lg);
-    padding: var(--space-lg);
-    box-shadow: var(--shadow-card);
-    margin-bottom: 0; /* handled by parent spacing */
-    isolation: isolate;
-    min-height: min-content;
+/* ===== Student Information Card ===== */
+.user-card {
+  background: var(--pa-glass-card);
+  border-radius: var(--pa-radius);
+  padding: 16px;
 }
 
 .user-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    flex-wrap: wrap;                    /* Allow wrapping */
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .user-avatar {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(145deg, #4ECDC4, #8A2BE2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    font-weight: 700;
-    color: white;
-    box-shadow: 0 0 25px rgba(78,205,196,0.5);
-    border: 2px solid rgba(255,255,255,0.2);
-    flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  background: var(--pa-brand-grad);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.user-info h3 {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-xs) 0;
-    text-shadow: 0 0 8px rgba(78,205,196,0.4);
-    word-break: keep-all;
-}
-
-.user-id {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-}
+.user-info h3 { margin: 0; font-size: var(--fs-h3); }
+.user-id { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--pa-text-mute); }
 
 .user-details {
-    display: grid;
-    gap: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .detail-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--border-radius-md);
-    border: 1px solid rgba(255,255,255,0.1);
-    flex-wrap: wrap;                    /* Allow wrapping */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--fs-sm);
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.08);
 }
 
-.detail-icon {
-    font-size: 18px;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
-    flex-shrink: 0;
-}
+.detail-icon { font-size: 1.1rem; min-width: 28px; }
+.detail-text { color: var(--pa-text-soft); }
 
-.detail-text {
-    font-size: var(--font-size-sm);
-    color: var(--text-primary);
-    font-weight: 500;
-    word-break: keep-all;
-}
-
-.entered-status {
-    color: #9ae6b4;
-    font-weight: 600;
-    text-shadow: 0 0 6px rgba(72,187,120,0.5);
-}
-
-/* ---------- Proctor Controls ---------- */
-.control-group {
-    margin-bottom: var(--space-lg);
+/* ===== Proctor Controls ===== */
+.controls-card {
+  background: var(--pa-glass-card);
+  border-radius: var(--pa-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .control-group h3 {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: var(--text-accent);
-    margin-bottom: var(--space-sm);
-    border-bottom: 1px solid rgba(78,205,196,0.3);
-    padding-bottom: var(--space-xs);
-    word-break: keep-all;
+  margin: 0 0 12px 0;
+  font-size: var(--fs-h3);
+  color: var(--pa-text);
 }
 
 .control-item {
-    margin-bottom: var(--space-md);
+  margin-bottom: 16px;
 }
 
 .control-label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    cursor: pointer;
-    font-size: var(--font-size-base);
-    font-weight: 500;
-    color: var(--text-primary);
-    flex-wrap: wrap;                    /* Allow wrapping */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 .control-label input[type="checkbox"] {
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    accent-color: #4ECDC4;
-    filter: drop-shadow(0 0 8px rgba(78,205,196,0.5));
-    flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--pa-brand-1);
 }
 
-.control-help,
-.status-help {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    margin-top: var(--space-xs);
-    margin-left: 32px;
-    line-height: 1.6;
+.control-help {
+  margin: 6px 0 0 28px;
+  font-size: var(--fs-xs);
+  color: var(--pa-text-faint);
 }
 
-.status-help {
-    margin-left: 0;
-    margin-top: var(--space-sm);
-    color: var(--text-secondary);
+.entered-status {
+  background: rgba(72, 187, 120, 0.2);
+  padding: 4px 12px;
+  border-radius: 40px;
+  color: #9ae6b4;
 }
 
-/* Status buttons */
 .status-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
 }
 
 .status-btn {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: var(--text-secondary);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-speed) ease;
-    text-align: center;
-    backdrop-filter: blur(4px);
-    white-space: nowrap;                 /* Keep button text on one line */
-}
-
-@media (max-width: 480px) {
-    .status-btn {
-        white-space: normal;               /* Allow wrapping on small screens */
-    }
-}
-
-.status-btn:hover:not(.disabled) {
-    border-color: #4ECDC4;
-    color: var(--text-primary);
-    box-shadow: 0 0 18px rgba(78, 205, 196, 0.5);
-    transform: translateY(-2px);
-    background: rgba(78, 205, 196, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 40px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--pa-text-soft);
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
 .status-btn.active {
-    background: rgba(78, 205, 196, 0.25);
-    border-color: #4ECDC4;
-    color: white;
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
-    text-shadow: 0 0 8px rgba(78,205,196,0.8);
+  background: var(--pa-brand-grad);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 0 8px rgba(102,126,234,0.5);
 }
 
-.status-btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: grayscale(70%);
+.status-btn:hover:not(.active) {
+  background: rgba(129, 140, 248, 0.3);
 }
 
-/* Control actions */
+.status-help {
+  font-size: var(--fs-sm);
+  color: var(--pa-text-mute);
+}
+
 .control-actions {
-    display: flex;
-    gap: var(--space-md);
-    margin-top: var(--space-xl);
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;                    /* Allow wrapping */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
 }
 
-.save-btn,
+.save-btn, .refresh-btn {
+  background: var(--pa-brand-grad);
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--pa-radius);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.save-btn:disabled, .refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.save-btn:hover:not(:disabled), .refresh-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--pa-shadow-hi);
+}
+
 .refresh-btn {
-    flex: 1 1 180px;
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s var(--transition-ease);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(4px);
-    text-shadow: 0 0 5px rgba(0,0,0,0.5);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-xs);
-    white-space: nowrap;                 /* Keep button text on one line */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
 }
 
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
 @media (max-width: 480px) {
-    .save-btn,
-    .refresh-btn {
-        white-space: normal;               /* Allow wrapping on small screens */
-    }
+  .appointment-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .back-btn {
+    align-self: flex-start;
+  }
+  .info-label {
+    min-width: 90px;
+  }
+  .status-buttons {
+    justify-content: center;
+  }
+  .control-actions {
+    flex-direction: column;
+  }
+  .save-btn, .refresh-btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
-.save-btn {
-    background: linear-gradient(145deg, rgba(78, 205, 196, 0.3), rgba(138, 43, 226, 0.3));
-    color: white;
-    box-shadow: 0 0 15px rgba(78,205,196,0.2);
+@media (min-width: 768px) {
+  .proctor-appointment {
+    --fs-md: 0.9rem;
+    --fs-h1: 1.8rem;
+  }
 }
 
-.save-btn:hover:not(:disabled) {
-    background: linear-gradient(145deg, rgba(78, 205, 196, 0.5), rgba(138, 43, 226, 0.5));
-    border-color: #4ECDC4;
-    box-shadow: 0 0 30px rgba(78, 205, 196, 0.6);
-    transform: translateY(-3px);
-}
-
-.refresh-btn {
-    background: rgba(0, 0, 0, 0.5);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.refresh-btn:hover:not(:disabled) {
-    background: rgba(20, 20, 50, 0.8);
-    border-color: #8A2BE2;
-    box-shadow: 0 0 25px rgba(138, 43, 226, 0.5);
-    transform: translateY(-3px);
-}
-
-.save-btn:disabled,
-.refresh-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: grayscale(60%);
-}
-
-/* ---------- Custom Scrollbar (Cosmic) ---------- */
-.proctor-appointment ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-.proctor-appointment ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-}
-
-.proctor-appointment ::-webkit-scrollbar-thumb {
-    background: rgba(78, 205, 196, 0.3);
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
-}
-
-.proctor-appointment ::-webkit-scrollbar-thumb:hover {
-    background: rgba(78, 205, 196, 0.6);
-    box-shadow: 0 0 12px rgba(78,205,196,0.8);
-}
-
-/* ---------- Responsive Breakpoints ---------- */
-/* Mobile first – already default */
-
-/* Tablet (≥640px) */
-@media (min-width: 640px) {
-    .proctor-appointment {
-        padding: var(--space-lg);
-    }
-    .appointment-header h1 {
-        font-size: var(--font-size-2xl);
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.4fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .room-actions,
-    .view-actions {
-        flex-direction: row;
-    }
-}
-
-/* Laptop (≥1024px) */
 @media (min-width: 1024px) {
-    .proctor-appointment {
-        padding: var(--space-xl);
-    }
-    .appointment-content {
-        padding: var(--space-xl);
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.6fr;
-        gap: var(--space-2xl);
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
+  .proctor-appointment {
+    max-width: 1400px;
+    padding: 32px;
+  }
 }
 
-/* Desktop (≥1440px) */
 @media (min-width: 1440px) {
-    .proctor-appointment {
-        padding: var(--space-2xl);
-        max-width: 1800px;
-    }
-    .appointment-header h1 {
-        font-size: 48px;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.8fr;
-        gap: 64px;
-    }
-    .room-card {
-        padding: var(--space-xl);
-    }
-    .user-avatar {
-        width: 80px;
-        height: 80px;
-        font-size: 36px;
-    }
+  .proctor-appointment {
+    --fs-md: 0.95rem;
+    --fs-h1: 2rem;
+  }
+  .details-section {
+    padding: 28px;
+  }
 }
 
-/* TV/4K (≥1920px) */
-@media (min-width: 1920px) {
-    .proctor-appointment {
-        padding: 80px;
-        max-width: 2200px;
-    }
-    .appointment-content {
-        padding: 64px;
-    }
-    .details-grid {
-        gap: 80px;
-    }
-    .details-section {
-        padding: 40px;
-    }
-    .appointment-header h1 {
-        font-size: 64px;
-    }
+@media (min-width: 2560px) {
+  .proctor-appointment {
+    max-width: 2000px;
+    --fs-md: 1rem;
+    --fs-h1: 2.2rem;
+  }
+  .room-card {
+    padding: 24px;
+  }
+  .save-btn, .refresh-btn {
+    padding: 12px 32px;
+  }
 }
 
-/* ---------- Reduced Motion ---------- */
+/* ============================================================
+   ACCESSIBILITY & REDUCED MOTION
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-    .proctor-appointment *,
-    .proctor-appointment *::before,
-    .proctor-appointment *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-    .loading-spinner {
-        animation: none;
-        border-top: 4px solid #4ECDC4;
-        border-right: 4px solid #8A2BE2;
-    }
+  .proctor-appointment,
+  .proctor-appointment * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .loading-spinner {
+    animation: none;
+  }
 }
 
-/* ---------- High Contrast Mode Support ---------- */
 @media (prefers-contrast: high) {
-    .proctor-appointment {
-        --text-primary: white;
-        --text-secondary: white;
-        --border-glass: 1px solid white;
-        --space-bg-card: rgba(0, 0, 0, 0.95);
-    }
-    .status-badge,
-    .room-status,
-    .btn {
-        border: 2px solid currentColor;
-    }
+  .proctor-appointment {
+    --pa-glass: rgba(0, 0, 0, 0.85);
+    --pa-border: 1px solid white;
+  }
+  .status-badge, .room-status {
+    border-width: 2px;
+  }
 }
 
-/* ---------- Ensure text remains readable ---------- */
-h1, h2, h3, h4, p, span, a, button, label, input, .info-value, .detail-text {
-    color: inherit;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-a {
-    color: #4ECDC4;
-}
-
-a:hover {
-    text-decoration: underline;
-    filter: brightness(1.2);
-}
-
-/* ============================================
-   SUMMARY OF RESPONSIVE ENHANCEMENTS
-   ============================================
-   1. Added global text protection rules to all elements inside .proctor-appointment:
-      - `word-break: normal` (prevents character breaks)
-      - `overflow-wrap: break-word` (wraps only at word boundaries)
-      - `hyphens: none`
-      - `box-sizing: border-box`
-   2. Added `isolation: isolate` to main containers (`.proctor-appointment`, `.appointment-content`, `.loading-state`, `.error-state`, `.details-section`, `.info-card`, `.user-card`, `.controls-card`, `.room-card`, `.no-rooms`) for fresh stacking contexts.
-   3. Added `flex-wrap: wrap` and appropriate gap to flexible containers (`.appointment-header`, `.section-header`, `.info-row`, `.room-header`, `.room-actions`, `.view-actions`, `.user-header`, `.detail-item`, `.control-label`, `.control-actions`) to prevent element mixing.
-   4. Added `word-break: keep-all` to important text elements (headings, labels) to keep whole words together.
-   5. Added `white-space: nowrap` to badges and buttons, with fallback media queries for very small screens to allow wrapping if necessary.
-   6. Added `min-height: min-content` to containers that might have had implicit fixed heights.
-   7. Preserved all original colors, animations, and media queries.
-   8. Ensured no element is clipped, hidden, or overlapped at any screen size.
-*/
-
-/* ============================================
-   GRANULAR RESPONSIVE BREAKPOINT SYSTEM
-   Added for ultra-fine control from 200px to 2560px+
-   Based on 50px increments with progressive scaling
-   ============================================ */
-
-/* ===== Breakpoint: 200px – 250px | Micro Screens ===== */
-@media only screen and (min-width: 200px) and (max-width: 250px) {
-    .proctor-appointment {
-        font-size: 8px; /* base font */
-        max-width: 100%;
-        padding: 0.5em;
-
-        /* Override variables with em-based values */
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    /* Additional micro adjustments */
-    .appointment-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5em;
-    }
-    .back-btn {
-        white-space: normal; /* allow wrap */
-    }
-    .details-grid {
-        grid-template-columns: 1fr; /* single column */
-        gap: 1em;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: 1fr; /* stack buttons */
-    }
-    .user-avatar {
-        width: 4em;
-        height: 4em;
-        font-size: 2em;
-    }
-    .control-label input[type="checkbox"] {
-        width: 2em;
-        height: 2em;
-    }
-}
-
-/* ===== Breakpoint: 250px – 300px | Tiny Screens ===== */
-@media only screen and (min-width: 250px) and (max-width: 300px) {
-    .proctor-appointment {
-        font-size: 9px;
-        max-width: 100%;
-        padding: 0.5em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .appointment-header {
-        flex-wrap: wrap;
-    }
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 300px – 350px | X-Small Screens ===== */
-@media only screen and (min-width: 300px) and (max-width: 350px) {
-    .proctor-appointment {
-        font-size: 10px;
-        padding: 0.75em;
-        max-width: 100%;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 350px – 400px | Small- Screens ===== */
-@media only screen and (min-width: 350px) and (max-width: 400px) {
-    .proctor-appointment {
-        font-size: 11px;
-        padding: 0.75em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 400px – 450px | Small Screens ===== */
-@media only screen and (min-width: 400px) and (max-width: 450px) {
-    .proctor-appointment {
-        font-size: 12px;
-        padding: 0.75em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 450px – 500px | Small+ Screens ===== */
-@media only screen and (min-width: 450px) and (max-width: 500px) {
-    .proctor-appointment {
-        font-size: 13px;
-        padding: 1em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 500px – 550px | Medium- Screens ===== */
-@media only screen and (min-width: 500px) and (max-width: 550px) {
-    .proctor-appointment {
-        font-size: 13.5px;
-        padding: 1em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.2fr;
-        gap: 1.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 550px – 600px | Medium Screens ===== */
-@media only screen and (min-width: 550px) and (max-width: 600px) {
-    .proctor-appointment {
-        font-size: 14px;
-        padding: 1em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.3fr;
-        gap: 1.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 600px – 650px | Medium+ Screens ===== */
-@media only screen and (min-width: 600px) and (max-width: 650px) {
-    .proctor-appointment {
-        font-size: 14.5px;
-        padding: 1.25em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.4fr;
-        gap: 1.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: 1fr;
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 650px – 700px | Large- Screens ===== */
-@media only screen and (min-width: 650px) and (max-width: 700px) {
-    .proctor-appointment {
-        font-size: 15px;
-        padding: 1.25em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.4fr;
-        gap: 1.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 700px – 750px | Large Screens ===== */
-@media only screen and (min-width: 700px) and (max-width: 750px) {
-    .proctor-appointment {
-        font-size: 15.5px;
-        padding: 1.5em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.5fr;
-        gap: 2em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 750px – 800px | Large+ Screens ===== */
-@media only screen and (min-width: 750px) and (max-width: 800px) {
-    .proctor-appointment {
-        font-size: 16px;
-        padding: 1.5em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.5fr;
-        gap: 2em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 800px – 850px | XL- Screens ===== */
-@media only screen and (min-width: 800px) and (max-width: 850px) {
-    .proctor-appointment {
-        font-size: 16.5px;
-        padding: 1.5em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.6fr;
-        gap: 2em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 850px – 900px | XL Screens ===== */
-@media only screen and (min-width: 850px) and (max-width: 900px) {
-    .proctor-appointment {
-        font-size: 17px;
-        padding: 1.75em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.6fr;
-        gap: 2.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 900px – 950px | XL+ Screens ===== */
-@media only screen and (min-width: 900px) and (max-width: 950px) {
-    .proctor-appointment {
-        font-size: 17.5px;
-        padding: 1.75em;
-        max-width: 100%;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.7fr;
-        gap: 2.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 950px – 1000px | 2XL- Screens ===== */
-@media only screen and (min-width: 950px) and (max-width: 1000px) {
-    .proctor-appointment {
-        font-size: 17.5px;
-        padding: 2em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.7fr;
-        gap: 2.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1000px – 1050px | 2XL Screens ===== */
-@media only screen and (min-width: 1000px) and (max-width: 1050px) {
-    .proctor-appointment {
-        font-size: 18px;
-        padding: 2em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.8fr;
-        gap: 3em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1050px – 1100px | 2XL+ Screens ===== */
-@media only screen and (min-width: 1050px) and (max-width: 1100px) {
-    .proctor-appointment {
-        font-size: 18px;
-        padding: 2em;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.8fr;
-        gap: 3em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1100px – 1150px | 3XL- Screens ===== */
-@media only screen and (min-width: 1100px) and (max-width: 1150px) {
-    .proctor-appointment {
-        font-size: 18.5px;
-        padding: 2.5em;
-        max-width: 1200px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.9fr;
-        gap: 3em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1150px – 1200px | 3XL Screens ===== */
-@media only screen and (min-width: 1150px) and (max-width: 1200px) {
-    .proctor-appointment {
-        font-size: 18.5px;
-        padding: 2.5em;
-        max-width: 1300px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 1.9fr;
-        gap: 3.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1200px – 1599px | 4XL Desktop ===== */
-@media only screen and (min-width: 1200px) and (max-width: 1599px) {
-    .proctor-appointment {
-        font-size: 19px;
-        padding: 3em;
-        max-width: 1400px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 2fr;
-        gap: 4em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ===== Breakpoint: 1600px – 1919px | 5XL Large Desktop ===== */
-@media only screen and (min-width: 1600px) and (max-width: 1919px) {
-    .proctor-appointment {
-        font-size: 20px;
-        padding: 3.5em;
-        max-width: 1600px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 2fr;
-        gap: 4.5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .user-avatar {
-        width: 4em;
-        height: 4em;
-        font-size: 2em;
-    }
-}
-
-/* ===== Breakpoint: 1920px – 2559px | 6XL Ultra HD ===== */
-@media only screen and (min-width: 1920px) and (max-width: 2559px) {
-    .proctor-appointment {
-        font-size: 21px;
-        padding: 4em;
-        max-width: 1800px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 2.2fr;
-        gap: 5em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .user-avatar {
-        width: 4.5em;
-        height: 4.5em;
-        font-size: 2.2em;
-    }
-}
-
-/* ===== Breakpoint: 2560px+ | 7XL+ TV ===== */
-@media only screen and (min-width: 2560px) {
-    .proctor-appointment {
-        font-size: 22px;
-        padding: 5em;
-        max-width: 2000px;
-
-        --font-size-xs: 0.75em;
-        --font-size-sm: 0.875em;
-        --font-size-base: 1em;
-        --font-size-lg: 1.25em;
-        --font-size-xl: 1.5em;
-        --font-size-2xl: 2em;
-
-        --space-xs: 0.25em;
-        --space-sm: 0.5em;
-        --space-md: 1em;
-        --space-lg: 1.5em;
-        --space-xl: 2em;
-        --space-2xl: 3em;
-
-        --border-radius-sm: 0.25em;
-        --border-radius-md: 0.5em;
-        --border-radius-lg: 0.75em;
-        --border-radius-xl: 1em;
-    }
-    .details-grid {
-        grid-template-columns: 1fr 2.5fr;
-        gap: 6em;
-    }
-    .rooms-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .status-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .user-avatar {
-        width: 5em;
-        height: 5em;
-        font-size: 2.5em;
-    }
+/* Focus styles */
+.proctor-appointment button:focus-visible,
+.proctor-appointment a:focus-visible,
+.proctor-appointment input:focus-visible {
+  outline: 2px solid var(--pa-accent);
+  outline-offset: 2px;
+  border-radius: var(--pa-radius-sm);
 }

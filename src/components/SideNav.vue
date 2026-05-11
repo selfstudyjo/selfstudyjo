@@ -326,7 +326,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 
-const isCollapsed = ref(false);
+const isCollapsed = ref(true);
 const isMobile = ref(false);
 const sidebarVisible = ref(false);
 const avatarError = ref(false);
