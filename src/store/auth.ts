@@ -549,6 +549,7 @@ export const useAuthStore = defineStore('auth', () => {
     const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
     const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
     const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
+    const hasToastmastersAccess = computed(() => userFeatures.value.includes('toastmasters_feature'));
 
     const ensureStudentRecord = async (): Promise<Student | null> => {
         if (!hasLabAccess.value || !user.value?.username) return null;
@@ -574,6 +575,7 @@ export const useAuthStore = defineStore('auth', () => {
         hasRunbookAccess,
         hasExamFeature,
         hasResearchFlowAccess,
+        hasToastmastersAccess,
 
         initAuth,
         checkAuth,

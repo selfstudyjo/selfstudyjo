@@ -20,6 +20,7 @@ interface ImportMetaEnv {
     readonly VITE_LAB_APP_ID: string
     readonly VITE_AI_APP_ID: string 
     readonly VITE_RESEARCH_FLOW_APP_ID: string
+    readonly VITE_TOASTMASTERS_APP_ID: string
     // add any other VITE_ variables you use
 }
 

@@ -213,6 +213,16 @@ class ServiceRegistry {
         return this.getRandomReplica(replicas);
     }
 
+
+    async getRandomToastmastersReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_TOASTMASTERS_APP_ID || '27'),
+            'toastmasters'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+
     clearCache() {
         this.cache.clear();
     }

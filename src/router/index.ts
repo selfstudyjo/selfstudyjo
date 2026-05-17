@@ -43,6 +43,12 @@ import ResearchResearchers from '../views/ResearchResearchers.vue';
 import ResearchResearcherProfile from '../views/ResearchResearcherProfile.vue';
 import ResearchCompleteProfile from '../views/ResearchCompleteProfile.vue';
 
+import Toastmasters from '../views/Toastmasters.vue';
+import ToastmastersPreSession from '../views/ToastmastersPreSession.vue';
+import ToastmastersSession from '../views/ToastmastersSession.vue';
+import ToastmastersResults from '../views/ToastmastersResults.vue';
+
+
 const routes = [
     {
         path: '/',
@@ -304,7 +310,32 @@ const routes = [
                 name: 'VerifyEmail',
                 component: VerifyEmail,
                 meta: { title: 'Verify Email' }
+            },
+            {
+                path: 'toastmasters',
+                name: 'Toastmasters',
+                component: Toastmasters,
+                meta: { title: 'Toastmasters', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['toastmasters_feature'] }
+            },
+            {
+                path: 'toastmasters/pre-session',
+                name: 'ToastmastersPreSession',
+                component: ToastmastersPreSession,
+                meta: { title: 'Prepare Session', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['toastmasters_feature'] }
+            },
+            {
+                path: 'toastmasters/session',
+                name: 'ToastmastersSession',
+                component: ToastmastersSession,
+                meta: { title: 'Toastmasters Session', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['toastmasters_feature'] }
+            },
+            {
+                path: 'toastmasters/results',
+                name: 'ToastmastersResults',
+                component: ToastmastersResults,
+                meta: { title: 'My Toastmasters Results', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['toastmasters_feature'] }
             }
+
         ]
     },
     {
