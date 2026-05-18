@@ -213,7 +213,7 @@
                   <div class="form-header">
                     <h3 class="form-title">Add a Comment</h3>
                     <p class="form-subtitle" v-if="!authStore.user">
-                      Please <router-link to="/login">login</router-link> to comment
+                      Please <router-link :to="loginLink">login</router-link> to comment
                     </p>
                   </div>
                   <form v-if="authStore.user" @submit.prevent="submitComment">
@@ -428,6 +428,19 @@ const tabs = computed(() => [
   { id: 'lessons', label: 'Lessons', icon: '📚' },
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
+
+/**
+ * Login link for the "Please login to comment" hint.
+ * Carries a `redirect` back to this exact course-details URL
+ * and a friendly `message` to display on the login page.
+ */
+const loginLink = computed(() => ({
+  path: '/login',
+  query: {
+    redirect: route.fullPath,
+    message: 'You need to login first to add a comment.'
+  }
+}));
 
 const fetchCourseData = async () => {
   const courseId = route.params.id as string;
