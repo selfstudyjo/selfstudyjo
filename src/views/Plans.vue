@@ -117,7 +117,6 @@
             v-else
             class="btn select-btn"
             @click="selectPlan(plan)"
-            :disabled="!canSelectPlan(plan.external_id)"
             type="button"
           >
             <span class="btn-icon" aria-hidden="true">🚀</span>
@@ -293,7 +292,11 @@ const hasPendingPaymentForPlan = (planExternalId: string): boolean => {
 };
 
 const canSelectPlan = (planExternalId: string): boolean => {
-  if (!authStore.user?.id) return false;
+  // If user is NOT authenticated, allow selecting the plan.
+  // The click handler will redirect them to the login page.
+  if (!authStore.isAuthenticated || !authStore.user?.id) {
+    return true;
+  }
 
   const now = new Date();
   const hasActive = userSubscriptions.value.some(subscription => {
@@ -311,6 +314,7 @@ const canSelectPlan = (planExternalId: string): boolean => {
 };
 
 const getDisabledReason = (planExternalId: string): string => {
+  // Only authenticated users can ever see this reason now.
   const now = new Date();
   const hasActive = userSubscriptions.value.some(subscription => {
     const expireDate = new Date(subscription.expire_date);
@@ -350,6 +354,19 @@ const getPaymentRowClass = (status: string): string => {
 };
 
 const selectPlan = (plan: SubscriptionType) => {
+  // If the user is NOT authenticated, redirect to login page with a redirect
+  // back to /plans so they return here after signing in.
+  if (!authStore.isAuthenticated || !authStore.user?.id) {
+    router.push({
+      path: '/login',
+      query: {
+        redirect: '/plans',
+        message: 'You need to login first to select a plan.'
+      }
+    });
+    return;
+  }
+
   if (!canSelectPlan(plan.external_id)) return;
 
   router.push({

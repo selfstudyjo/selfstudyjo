@@ -37,11 +37,19 @@ export async function authGuard(
 
             next();
         } else {
-            next('/login');
+            // Preserve the originally-requested URL so we can send the user back
+            // after they successfully log in.
+            next({
+                path: '/login',
+                query: { redirect: to.fullPath }
+            });
         }
     } catch (error) {
         console.error('Auth guard error:', error);
-        next('/login');
+        next({
+            path: '/login',
+            query: { redirect: to.fullPath }
+        });
     }
 }
 
@@ -53,7 +61,13 @@ export function publicOnlyGuard(
     const authStore = useAuthStore();
     authStore.initAuth();
     if (authStore.isAuthenticated && (to.path === '/login' || to.path === '/register')) {
-        next('/');
+        // If we were given a redirect target, honor it; otherwise go home.
+        const redirect = to.query.redirect;
+        if (typeof redirect === 'string' && redirect.trim() !== '') {
+            next(redirect);
+        } else {
+            next('/');
+        }
     } else {
         next();
     }

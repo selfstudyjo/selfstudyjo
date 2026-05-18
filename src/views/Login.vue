@@ -7,6 +7,13 @@
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
+        <!-- Redirect notice (only shown when an explicit message was passed) -->
+        <div v-if="redirectMessage" class="login-alert alert-info">
+          <span class="alert-icon" aria-hidden="true">ℹ️</span>
+          <span class="alert-text">{{ redirectMessage }}</span>
+          <button type="button" @click="redirectMessage = ''" class="alert-close">×</button>
+        </div>
+
         <div class="form-group">
           <label for="username">Username</label>
           <input
@@ -63,7 +70,7 @@
         <div class="login-footer">
           <p>
             Don't have an account?
-            <router-link to="/register" class="link">Sign up</router-link>
+            <router-link :to="registerLink" class="link">Sign up</router-link>
           </p>
         </div>
       </form>
@@ -80,12 +87,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import '@/assets/css/login.css';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const form = reactive({
@@ -99,6 +107,22 @@ const errors = reactive({
 });
 
 const showPassword = ref(false);
+const redirectMessage = ref<string>('');
+
+/** Path the user wanted to reach before being redirected to /login */
+const redirectPath = computed<string>(() => {
+  const r = route.query.redirect;
+  if (typeof r === 'string' && r.trim() !== '') return r;
+  return '/';
+});
+
+/** Preserve redirect target when navigating to /register */
+const registerLink = computed(() => {
+  if (redirectPath.value && redirectPath.value !== '/') {
+    return { path: '/register', query: { redirect: redirectPath.value } };
+  }
+  return { path: '/register' };
+});
 
 const validateForm = (): boolean => {
   let isValid = true;
@@ -133,9 +157,15 @@ const handleLogin = async () => {
     });
 
     if (response.requires_verification) {
-      router.push('/verify-email');
+      // Preserve the original redirect target through verification
+      if (redirectPath.value && redirectPath.value !== '/') {
+        router.push({ path: '/verify-email', query: { redirect: redirectPath.value } });
+      } else {
+        router.push('/verify-email');
+      }
     } else {
-      router.push('/');
+      // Send the user back to the page they originally came from (if any)
+      router.push(redirectPath.value || '/');
     }
   } catch (error) {
     // Error message is already set in authStore.error and displayed in the template
@@ -145,6 +175,15 @@ const handleLogin = async () => {
 
 onMounted(() => {
   authStore.clearError();
+
+  // Only show a notice if an explicit `message` query param is provided
+  // (e.g. when the user clicks "Select Plan" on the Plans page while logged out).
+  // Do NOT show a generic message just because a `redirect` query exists,
+  // since that also happens when the user opens the app's root URL while logged out.
+  const msg = route.query.message;
+  if (typeof msg === 'string' && msg.trim() !== '') {
+    redirectMessage.value = msg;
+  }
 });
 </script>
 
@@ -165,5 +204,42 @@ onMounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ============================================================
+   INFO ALERT — light, brand-matched style
+   (kept here so the main login.css is not modified)
+   ============================================================ */
+.login-alert.alert-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e7ebff;                                  /* light, easy-to-read text */
+  background: rgba(102, 126, 234, 0.14);           /* soft brand-tinted glass */
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.08) inset;
+}
+
+.login-alert.alert-info .alert-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.5));
+}
+
+.login-alert.alert-info .alert-text {
+  flex: 1;
+  color: #e7ebff;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.login-alert.alert-info .alert-close {
+  color: #c7d2fe;
+}
+
+.login-alert.alert-info .alert-close:hover {
+  color: #ffffff;
+  background: rgba(129, 140, 248, 0.18);
 }
 </style>
