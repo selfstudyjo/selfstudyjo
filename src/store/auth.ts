@@ -40,6 +40,12 @@ export const useAuthStore = defineStore('auth', () => {
     const studentRecord = ref<Student | null>(null);
     const userFeatures = ref<string[]>([]);
 
+    // NEW: Hold the active subscription record itself.
+    // We treat the user as having an active subscription when EITHER
+    // this is non-null OR userFeatures has at least one entry.
+    const activeSubscription = ref<any>(null);
+    const subscriptionLoaded = ref(false);
+
     const initAuth = () => {
         const storedUser = authService.getUser();
         const storedToken = authService.getToken();
@@ -50,25 +56,26 @@ export const useAuthStore = defineStore('auth', () => {
             isAuthenticated.value = true;
 
             checkProctorStatus(storedUser.id).catch(err =>
-            console.warn('Failed to check proctor status on init:', err)
+                console.warn('Failed to check proctor status on init:', err)
             );
 
             if (storedUser.lab_url) {
                 loadStudentRecord().catch(err =>
-                console.warn('Failed to load student record on init:', err)
+                    console.warn('Failed to load student record on init:', err)
                 );
             }
 
             loadUserFeatures().catch(err =>
-            console.warn('Failed to load user features on init:', err)
+                console.warn('Failed to load user features on init:', err)
+            );
+
+            // Load active subscription record in parallel
+            loadActiveSubscription().catch(err =>
+                console.warn('Failed to load active subscription on init:', err)
             );
         }
     };
 
-    /**
-     * Load the feature names granted by the currently-ACTIVE subscription.
-     * Active = user-selected (if still non-expired) OR the newest non-expired subscription.
-     */
     const loadUserFeatures = async (): Promise<string[]> => {
         if (!user.value?.id) {
             userFeatures.value = [];
@@ -82,6 +89,32 @@ export const useAuthStore = defineStore('auth', () => {
             console.warn('Failed to load user features:', error);
             userFeatures.value = [];
             return [];
+        }
+    };
+
+    /**
+     * Look up the user's currently-active subscription directly.
+     * Returns the subscription object (or null) AND mirrors the result
+     * into `activeSubscription` so reactive UI updates immediately.
+     *
+     * We intentionally do NOT throw — failure is treated as "no subscription".
+     */
+    const loadActiveSubscription = async (): Promise<any> => {
+        if (!user.value?.id) {
+            activeSubscription.value = null;
+            subscriptionLoaded.value = true;
+            return null;
+        }
+        try {
+            const sub = await subscriptionService.getActiveUserSubscription(user.value.id);
+            activeSubscription.value = sub || null;
+            return activeSubscription.value;
+        } catch (error) {
+            console.warn('Failed to load active subscription:', error);
+            activeSubscription.value = null;
+            return null;
+        } finally {
+            subscriptionLoaded.value = true;
         }
     };
 
@@ -128,6 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null;
             token.value = null;
             userFeatures.value = [];
+            activeSubscription.value = null;
             return false;
         }
 
@@ -145,6 +179,7 @@ export const useAuthStore = defineStore('auth', () => {
                     proctorData.value = null;
                     studentRecord.value = null;
                     userFeatures.value = [];
+                    activeSubscription.value = null;
                     return false;
                 }
             } catch (authError) {
@@ -160,6 +195,7 @@ export const useAuthStore = defineStore('auth', () => {
                     proctorData.value = null;
                     studentRecord.value = null;
                     userFeatures.value = [];
+                    activeSubscription.value = null;
                     authService.clearAuth();
                     return false;
                 }
@@ -167,15 +203,18 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (isAuthenticated.value && user.value?.id) {
                 checkProctorStatus(user.value.id).catch(err =>
-                console.warn('Background proctor check failed:', err)
+                    console.warn('Background proctor check failed:', err)
                 );
                 if (user.value.lab_url) {
                     loadStudentRecord().catch(err =>
-                    console.warn('Background student record load failed:', err)
+                        console.warn('Background student record load failed:', err)
                     );
                 }
                 loadUserFeatures().catch(err =>
-                console.warn('Background user features load failed:', err)
+                    console.warn('Background user features load failed:', err)
+                );
+                loadActiveSubscription().catch(err =>
+                    console.warn('Background active subscription load failed:', err)
                 );
             }
 
@@ -189,6 +228,7 @@ export const useAuthStore = defineStore('auth', () => {
             proctorData.value = null;
             studentRecord.value = null;
             userFeatures.value = [];
+            activeSubscription.value = null;
             return false;
         }
     };
@@ -231,24 +271,25 @@ export const useAuthStore = defineStore('auth', () => {
 
             Promise.allSettled([
                 checkProctorStatus(response.user_id),
-                               response.lab_url ? loadStudentRecord() : Promise.resolve(null),
-                               loadUserFeatures()
+                response.lab_url ? loadStudentRecord() : Promise.resolve(null),
+                loadUserFeatures(),
+                loadActiveSubscription()
             ]).catch(err => console.warn('Background checks failed:', err));
 
             userService.getUserProfile(response.user_id)
-            .then(profile => {
-                if (user.value && user.value.id === response.user_id) {
-                    user.value = {
-                        ...user.value,
-                        ...profile,
-                        id: user.value.id,
-                        token: user.value.token,
-                        expiresAt: user.value.expiresAt,
-                    };
-                    authService.setUser(user.value);
-                }
-            })
-            .catch(err => console.warn('Background profile fetch failed (non-critical):', err));
+                .then(profile => {
+                    if (user.value && user.value.id === response.user_id) {
+                        user.value = {
+                            ...user.value,
+                            ...profile,
+                            id: user.value.id,
+                            token: user.value.token,
+                            expiresAt: user.value.expiresAt,
+                        };
+                        authService.setUser(user.value);
+                    }
+                })
+                .catch(err => console.warn('Background profile fetch failed (non-critical):', err));
 
             return response;
         } catch (err: any) {
@@ -354,16 +395,17 @@ export const useAuthStore = defineStore('auth', () => {
         proctorData.value = null;
         studentRecord.value = null;
         userFeatures.value = [];
+        activeSubscription.value = null;
+        subscriptionLoaded.value = false;
         authService.clearAuth();
 
-        // Clear selected subscription on logout
         if (currentUserId) {
             subscriptionService.clearSelectedSubscriptionId(currentUserId);
         }
 
         if (currentToken) {
             authService.logout(currentToken).catch(err =>
-            console.warn('Server logout failed (ignored):', err)
+                console.warn('Server logout failed (ignored):', err)
             );
         }
     };
@@ -551,6 +593,20 @@ export const useAuthStore = defineStore('auth', () => {
     const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
     const hasToastmastersAccess = computed(() => userFeatures.value.includes('toastmasters_feature'));
 
+    /**
+     * True when the user has ANY active subscription.
+     * - Primary signal: a non-null `activeSubscription` record from the subscriptions service.
+     * - Fallback signal: at least one entry in `userFeatures` (some plans only expose features).
+     *
+     * This dual check means the Enroll button will show even if the
+     * features endpoint is slow/empty, as long as there is an active subscription row.
+     */
+    const hasActiveSubscription = computed(() => {
+        if (activeSubscription.value) return true;
+        if (userFeatures.value.length > 0) return true;
+        return false;
+    });
+
     const ensureStudentRecord = async (): Promise<Student | null> => {
         if (!hasLabAccess.value || !user.value?.username) return null;
         if (studentRecord.value) return studentRecord.value;
@@ -569,6 +625,8 @@ export const useAuthStore = defineStore('auth', () => {
         proctorData,
         studentRecord,
         userFeatures,
+        activeSubscription,
+        subscriptionLoaded,
 
         hasLabAccess,
         hasAiAccess,
@@ -576,6 +634,7 @@ export const useAuthStore = defineStore('auth', () => {
         hasExamFeature,
         hasResearchFlowAccess,
         hasToastmastersAccess,
+        hasActiveSubscription,
 
         initAuth,
         checkAuth,
@@ -603,6 +662,7 @@ export const useAuthStore = defineStore('auth', () => {
         getUserProfileByUsername,
         loadStudentRecord,
         ensureStudentRecord,
-        loadUserFeatures
+        loadUserFeatures,
+        loadActiveSubscription
     };
 });

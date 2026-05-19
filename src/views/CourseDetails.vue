@@ -1,12 +1,10 @@
 <template>
   <div class="course-details-page">
-    <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
       <p class="loading-text">Loading course details...</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -17,17 +15,11 @@
       </div>
       <h3 class="error-title">Unable to load course</h3>
       <p class="error-message">{{ error }}</p>
-      <button class="retry-btn" @click="fetchCourseData">
-        Try Again
-      </button>
-      <router-link to="/courses" class="back-btn" style="margin-top: 0.75rem;">
-        Back to Courses
-      </router-link>
+      <button class="retry-btn" @click="fetchCourseData">Try Again</button>
+      <router-link to="/courses" class="back-btn" style="margin-top: 0.75rem;">Back to Courses</router-link>
     </div>
 
-    <!-- Course Content -->
     <div v-else-if="course" class="course-content-wrapper">
-      <!-- Breadcrumb -->
       <div class="breadcrumb">
         <router-link to="/courses" class="breadcrumb-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -40,7 +32,6 @@
       </div>
 
       <div class="course-content">
-        <!-- Course Hero -->
         <div class="course-hero">
           <div class="course-image-container">
             <Planet
@@ -55,9 +46,7 @@
           <div class="course-info">
             <div class="course-meta">
               <span class="course-badge">Course</span>
-              <span class="course-date">
-                Added {{ formatDate(course.date_added) }}
-              </span>
+              <span class="course-date">Added {{ formatDate(course.date_added) }}</span>
             </div>
 
             <h1 class="course-title">{{ course.title }}</h1>
@@ -84,12 +73,40 @@
                 </div>
               </div>
             </div>
+
+            <div v-if="canShowRegistration && !regCheckLoading" class="course-registration-actions">
+              <button
+                v-if="!isUserRegistered"
+                class="register-action-btn register-action-btn--enroll"
+                :disabled="registrationLoading"
+                @click="handleRegister"
+              >
+                <span v-if="registrationLoading" class="btn-spinner-lg"></span>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+                <span>{{ registrationLoading ? 'Enrolling...' : 'Enroll in Course' }}</span>
+              </button>
+              <button
+                v-else
+                class="register-action-btn register-action-btn--enrolled"
+                :disabled="registrationLoading"
+                @click="handleUnregister"
+              >
+                <span v-if="registrationLoading" class="btn-spinner-lg"></span>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span>{{ registrationLoading ? 'Working...' : 'Enrolled — Click to Unenroll' }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-          <!-- Mobile Tabs -->
           <div class="mobile-tabs">
             <button
               v-for="tab in tabs"
@@ -104,9 +121,7 @@
           </div>
 
           <div class="content-grid">
-            <!-- Left Column -->
             <div class="left-column">
-              <!-- Lessons -->
               <section class="section lessons-section" :class="{ active: activeTab === 'lessons' }">
                 <div class="section-header">
                   <h2 class="section-title">
@@ -158,18 +173,10 @@
                         </div>
                       </div>
 
-                      <p class="lesson-date">
-                        Added {{ formatDate(lesson.date_added) }}
-                      </p>
+                      <p class="lesson-date">Added {{ formatDate(lesson.date_added) }}</p>
 
                       <div class="lesson-links">
-                        <a
-                          v-if="lesson.reading_url"
-                          :href="lesson.reading_url"
-                          target="_blank"
-                          rel="noopener"
-                          class="lesson-link"
-                        >
+                        <a v-if="lesson.reading_url" :href="lesson.reading_url" target="_blank" rel="noopener" class="lesson-link">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                             <polyline points="15 3 21 3 21 9"></polyline>
@@ -178,13 +185,7 @@
                           Reading Material
                         </a>
 
-                        <a
-                          v-if="lesson.source_code_url"
-                          :href="lesson.source_code_url"
-                          target="_blank"
-                          rel="noopener"
-                          class="lesson-link"
-                        >
+                        <a v-if="lesson.source_code_url" :href="lesson.source_code_url" target="_blank" rel="noopener" class="lesson-link">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 18 22 12 16 6"></polyline>
                             <polyline points="8 6 2 12 8 18"></polyline>
@@ -197,7 +198,6 @@
                 </div>
               </section>
 
-              <!-- Comments -->
               <section class="section comments-section" :class="{ active: activeTab === 'comments' }">
                 <div class="section-header">
                   <h2 class="section-title">
@@ -257,11 +257,7 @@
                       </div>
                     </div>
                     <div class="form-actions">
-                      <button
-                        type="submit"
-                        class="submit-btn"
-                        :disabled="!newComment.trim() || submittingComment"
-                      >
+                      <button type="submit" class="submit-btn" :disabled="!newComment.trim() || submittingComment">
                         <span v-if="submittingComment" class="btn-loading"></span>
                         <span v-else>Post Comment</span>
                       </button>
@@ -274,11 +270,7 @@
                     <p>No comments yet. Be the first to share your thoughts!</p>
                   </div>
 
-                  <div
-                    v-for="comment in comments"
-                    :key="comment.external_comment_id"
-                    class="comment-card"
-                  >
+                  <div v-for="comment in comments" :key="comment.external_comment_id" class="comment-card">
                     <div class="comment-header">
                       <div class="user-info">
                         <div class="user-avatar-container">
@@ -333,7 +325,6 @@
               </section>
             </div>
 
-            <!-- Right Column - Description -->
             <div class="right-column">
               <section class="section description-section">
                 <div class="section-header">
@@ -359,9 +350,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { courseService, type Course, type Lesson, type Comment, type Homework } from '@/services/course.service';
+import { courseService, type Course, type Lesson, type Comment, type Homework, type CourseRegistration } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
 import { userService, type UserProfile } from '@/services/user.service';
 import { notificationService } from '@/services/notification.service';
@@ -374,7 +365,6 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// State
 const course = ref<Course | null>(null);
 const lessons = ref<(Lesson & {
   hasQuiz: boolean;
@@ -390,9 +380,13 @@ const newComment = ref('');
 const submittingComment = ref(false);
 const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
-const isUserRegistered = ref(false);
 
-// Responsive planet size
+// Registration state
+const isUserRegistered = ref(false);
+const userRegistration = ref<CourseRegistration | null>(null);
+const registrationLoading = ref(false);
+const regCheckLoading = ref(false);
+
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
 const planetSize = computed(() => {
   const w = windowWidth.value;
@@ -404,15 +398,11 @@ const planetSize = computed(() => {
   return 500;
 });
 
-const handleResize = () => {
-  windowWidth.value = window.innerWidth;
-};
+const handleResize = () => { windowWidth.value = window.innerWidth; };
 
-// Replica pinning
 const courseReplicaBaseUrl = ref<string | null>(null);
 const quizReplicaBaseUrl = ref<string | null>(null);
 
-// Mention functionality
 const allUsernames = ref<string[]>([]);
 const filteredUsernames = ref<string[]>([]);
 const showMentionDropdown = ref(false);
@@ -429,25 +419,119 @@ const tabs = computed(() => [
   { id: 'comments', label: 'Comments', icon: '💬' },
 ]);
 
-/**
- * Login link for the "Please login to comment" hint.
- * Carries a `redirect` back to this exact course-details URL
- * and a friendly `message` to display on the login page.
- */
+const canShowRegistration = computed(() =>
+  authStore.isAuthenticated && authStore.hasActiveSubscription
+);
+
 const loginLink = computed(() => ({
   path: '/login',
-  query: {
-    redirect: route.fullPath,
-    message: 'You need to login first to add a comment.'
-  }
+  query: { redirect: route.fullPath, message: 'You need to login first to add a comment.' }
 }));
+
+/**
+ * Returns every plausible user identifier — UUID, username, lowercased username.
+ * The deployed selfstudy-course app stored `user_id` as either UUID or username
+ * depending on when the registration was created.
+ */
+const buildUserIdCandidates = (): string[] => {
+  const u = authStore.user;
+  if (!u) return [];
+  const list: string[] = [];
+  if (u.id) list.push(String(u.id));
+  if (u.username) {
+    list.push(String(u.username));
+    list.push(String(u.username).toLowerCase());
+  }
+  return [...new Set(list)];
+};
+
+const loadUserRegistrationStatus = async () => {
+  if (!course.value || !authStore.user) {
+    isUserRegistered.value = false;
+    userRegistration.value = null;
+    return;
+  }
+  const ids = buildUserIdCandidates();
+  if (ids.length === 0) {
+    isUserRegistered.value = false;
+    userRegistration.value = null;
+    return;
+  }
+
+  regCheckLoading.value = true;
+  try {
+    const reg = await courseService.getUserRegistrationForCourse(
+      ids,
+      course.value.external_course_id,
+      courseReplicaBaseUrl.value || undefined
+    );
+    userRegistration.value = reg;
+    isUserRegistered.value = !!reg;
+  } catch (err) {
+    console.warn('Failed to load registration status:', err);
+    isUserRegistered.value = false;
+    userRegistration.value = null;
+  } finally {
+    regCheckLoading.value = false;
+  }
+};
+
+const handleRegister = async () => {
+  if (!authStore.user || !course.value || registrationLoading.value) return;
+  registrationLoading.value = true;
+  try {
+    const userId = String(authStore.user.id || authStore.user.username);
+    const reg = await courseService.registerUserForCourse(
+      userId,
+      course.value.external_course_id,
+      courseReplicaBaseUrl.value || undefined
+    );
+    userRegistration.value = reg;
+    isUserRegistered.value = true;
+  } catch (err: any) {
+    const msg = (err?.message || '').toLowerCase();
+    if (err?.status === 400 && msg.includes('already registered')) {
+      await loadUserRegistrationStatus();
+    } else {
+      console.error('Enroll failed:', err);
+      alert(err?.message || 'Failed to enroll in this course. Please try again.');
+    }
+  } finally {
+    registrationLoading.value = false;
+  }
+};
+
+const handleUnregister = async () => {
+  if (!authStore.user || !course.value || registrationLoading.value) return;
+  if (!confirm(`Unenroll from "${course.value.title}"?`)) return;
+
+  registrationLoading.value = true;
+  try {
+    if (userRegistration.value?.external_id) {
+      await courseService.unregisterUserFromCourse(
+        userRegistration.value.external_id,
+        courseReplicaBaseUrl.value || undefined
+      );
+    } else {
+      await courseService.unregisterUserFromCourseByCourse(
+        buildUserIdCandidates(),
+        course.value.external_course_id,
+        courseReplicaBaseUrl.value || undefined
+      );
+    }
+    userRegistration.value = null;
+    isUserRegistered.value = false;
+  } catch (err: any) {
+    console.error('Unenroll failed:', err);
+    alert(err?.message || 'Failed to unenroll. Please try again.');
+  } finally {
+    registrationLoading.value = false;
+  }
+};
 
 const fetchCourseData = async () => {
   const courseId = route.params.id as string;
-  if (!courseId) {
-    error.value = 'Invalid course ID';
-    return;
-  }
+  if (!courseId) { error.value = 'Invalid course ID'; return; }
 
   loading.value = true;
   error.value = null;
@@ -469,7 +553,7 @@ const fetchCourseData = async () => {
 
     course.value = fetchedCourse;
 
-    let quizzesByLessonId = new Map<string, Quiz>();
+    const quizzesByLessonId = new Map<string, Quiz>();
     try {
       const lightQuizzes = await quizService.getQuizzesForCourseLight(courseId, quizReplicaBaseUrl.value);
       lightQuizzes.forEach(q => {
@@ -479,7 +563,7 @@ const fetchCourseData = async () => {
       });
     } catch (err) {}
 
-    let homeworksByLessonId = new Map<string, Homework[]>();
+    const homeworksByLessonId = new Map<string, Homework[]>();
     try {
       const allHomeworks = await courseService.getHomeworksForCourse(courseId, courseReplicaBaseUrl.value);
       allHomeworks.forEach(hw => {
@@ -498,7 +582,7 @@ const fetchCourseData = async () => {
       return {
         ...lesson,
         hasQuiz: !!quiz,
-        quiz: quiz,
+        quiz,
         hasHomework: lessonHomeworks.length > 0,
         homeworkCount: lessonHomeworks.length
       };
@@ -513,13 +597,9 @@ const fetchCourseData = async () => {
         if (uuidRegex.test(userId)) {
           profile = await userService.getUserProfile(userId);
         } else {
-          try {
-            profile = await userService.getUserProfileByUsername(userId);
-          } catch (err) {}
+          try { profile = await userService.getUserProfileByUsername(userId); } catch (err) {}
         }
-        if (profile) {
-          userProfileCache.set(userId, profile);
-        }
+        if (profile) userProfileCache.set(userId, profile);
       } catch (err) {}
     });
     await Promise.all(profilePromises);
@@ -529,13 +609,8 @@ const fetchCourseData = async () => {
       user_profile: userProfileCache.get(comment.user_id)
     }));
 
-    if (authStore.user?.id) {
-      isUserRegistered.value = await courseService.isUserRegisteredForCourse(
-        authStore.user.id,
-        courseId,
-        courseReplicaBaseUrl.value
-      );
-    }
+    // Run registration check against the deployed selfstudy-course app
+    await loadUserRegistrationStatus();
 
     await fetchAllUsernames();
   } catch (err: any) {
@@ -546,14 +621,11 @@ const fetchCourseData = async () => {
 };
 
 const fetchAllUsernames = async () => {
-  try {
-    allUsernames.value = await userService.getAllUsernames();
-  } catch (err) {
-    allUsernames.value = [];
-  }
+  try { allUsernames.value = await userService.getAllUsernames(); }
+  catch (err) { allUsernames.value = []; }
 };
 
-const handleAvatarError = (userId: string) => {};
+const handleAvatarError = (_userId: string) => {};
 
 const isImageUrlValid = (url: string): boolean => {
   if (!url) return false;
@@ -561,9 +633,7 @@ const isImageUrlValid = (url: string): boolean => {
     'default.jpg', 'placeholder', 'missing.png', 'no-image',
     'default-profile', 'anonymous', 'null', 'undefined'
   ];
-  return !placeholderPatterns.some(pattern =>
-    url.toLowerCase().includes(pattern.toLowerCase())
-  );
+  return !placeholderPatterns.some(pattern => url.toLowerCase().includes(pattern.toLowerCase()));
 };
 
 const handleMentionInput = (event: Event) => {
@@ -580,8 +650,7 @@ const handleMentionInput = (event: Event) => {
     if (wordMatch) {
       mentionSearch.value = wordMatch[1].toLowerCase();
       filteredUsernames.value = allUsernames.value.filter(username =>
-        username.toLowerCase().includes(mentionSearch.value) &&
-        username !== authStore.user?.username
+        username.toLowerCase().includes(mentionSearch.value) && username !== authStore.user?.username
       );
 
       if (filteredUsernames.value.length > 0) {
@@ -595,7 +664,6 @@ const handleMentionInput = (event: Event) => {
 
         const lines = textBeforeCursor.substring(0, lastAtIndex).split('\n');
         const lineNumber = lines.length;
-
         mentionDropdownTop.value = (lineNumber * lineHeight) + paddingTop + lineHeight;
         mentionDropdownLeft.value = paddingLeft;
       } else {
@@ -611,14 +679,10 @@ const handleMentionInput = (event: Event) => {
 
 const handleMentionKeydown = (event: KeyboardEvent) => {
   if (!showMentionDropdown.value) return;
-
   switch (event.key) {
     case 'ArrowDown':
       event.preventDefault();
-      selectedMentionIndex.value = Math.min(
-        selectedMentionIndex.value + 1,
-        filteredUsernames.value.length - 1
-      );
+      selectedMentionIndex.value = Math.min(selectedMentionIndex.value + 1, filteredUsernames.value.length - 1);
       break;
     case 'ArrowUp':
       event.preventDefault();
@@ -652,10 +716,7 @@ const selectMention = (username: string) => {
     const wordMatch = wordAfterAt.match(/^(\w+)/);
 
     if (wordMatch) {
-      const newText = textBeforeCursor.substring(0, lastAtIndex) +
-                     `@${username} ` +
-                     textAfterCursor;
-
+      const newText = textBeforeCursor.substring(0, lastAtIndex) + `@${username} ` + textAfterCursor;
       newComment.value = newText;
       showMentionDropdown.value = false;
 
@@ -728,9 +789,7 @@ const submitComment = async () => {
       } else {
         userProfile = await userService.getUserProfile(authStore.user.id);
       }
-      if (userProfile) {
-        userProfileCache.set(userId, userProfile);
-      }
+      if (userProfile) userProfileCache.set(userId, userProfile);
     } catch (err) {}
 
     comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
@@ -746,9 +805,7 @@ const submitComment = async () => {
 
 const deleteComment = async (commentId: string) => {
   if (!confirm('Are you sure you want to delete this comment?')) return;
-
   deletingCommentId.value = commentId;
-
   try {
     serviceRegistry.clearCache();
     await courseService.deleteComment(commentId, courseReplicaBaseUrl.value || undefined);
@@ -762,22 +819,11 @@ const deleteComment = async (commentId: string) => {
 
 const navigateToQuiz = (lesson: any) => {
   if (!lesson.hasQuiz || !lesson.quiz) return;
-
-  // ✅ FIX: Use sessionStorage instead of router state.
-  // The `state` option in router.push is unreliable, especially with hash mode
-  // (which is commonly used on GitHub Pages). sessionStorage works consistently
-  // across local dev and production deployments.
   try {
-    sessionStorage.setItem(
-      `quiz_${lesson.quiz.external_id}`,
-      JSON.stringify(lesson.quiz)
-    );
+    sessionStorage.setItem(`quiz_${lesson.quiz.external_id}`, JSON.stringify(lesson.quiz));
   } catch (e) {
-    // sessionStorage may be unavailable (private mode, quota exceeded, etc.)
-    // The TakeQuiz page should fall back to fetching by quizId from query.
     console.warn('Failed to cache quiz in sessionStorage:', e);
   }
-
   router.push({
     path: '/take-quiz',
     query: {
@@ -790,9 +836,7 @@ const navigateToQuiz = (lesson: any) => {
 
 const navigateToHomework = (lesson: any) => {
   if (!lesson.hasHomework) return;
-  router.push({
-    path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework`
-  });
+  router.push({ path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework` });
 };
 
 const formatDate = (dateString?: string) => {
@@ -802,23 +846,18 @@ const formatDate = (dateString?: string) => {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
     return `${Math.floor(diffDays / 365)} years ago`;
-  } catch {
-    return 'Recently';
-  }
+  } catch { return 'Recently'; }
 };
 
 const getUserInitials = (userId: string) => {
   if (!userId) return 'U';
-  if (!userId.includes('-')) {
-    return userId.substring(0, 2).toUpperCase();
-  }
+  if (!userId.includes('-')) return userId.substring(0, 2).toUpperCase();
   return userId.charAt(0).toUpperCase();
 };
 
@@ -826,27 +865,33 @@ const getUserDisplayName = (userId: string) => {
   if (!userId) return 'User';
   if (userId === authStore.user?.id || userId === authStore.user?.username) return 'You';
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (uuidRegex.test(userId)) {
-    return 'User';
-  }
+  if (uuidRegex.test(userId)) return 'User';
   return userId;
 };
 
 const getUserColor = (userId: string) => {
-  const colors = [
-    '#667eea', '#764ba2', '#f56565', '#ed8936', '#48bb78',
-    '#38b2ac', '#4299e1', '#9f7aea', '#ed64a6', '#f6ad55'
-  ];
+  const colors = ['#667eea', '#764ba2', '#f56565', '#ed8936', '#48bb78', '#38b2ac', '#4299e1', '#9f7aea', '#ed64a6', '#f6ad55'];
   const index = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
   return colors[index];
 };
 
 const handleDocumentClick = (event: MouseEvent) => {
-  if (showMentionDropdown.value && commentTextarea.value &&
-      !commentTextarea.value.contains(event.target as Node)) {
+  if (showMentionDropdown.value && commentTextarea.value && !commentTextarea.value.contains(event.target as Node)) {
     showMentionDropdown.value = false;
   }
 };
+
+watch(
+  () => [authStore.isAuthenticated, authStore.user?.id, authStore.user?.username, authStore.hasActiveSubscription],
+  () => {
+    if (course.value && authStore.isAuthenticated) {
+      loadUserRegistrationStatus();
+    } else {
+      isUserRegistered.value = false;
+      userRegistration.value = null;
+    }
+  }
+);
 
 onMounted(() => {
   fetchCourseData();
@@ -861,3 +906,62 @@ onUnmounted(() => {
 </script>
 
 <style scoped src="@/assets/css/course-details.css"></style>
+
+<style scoped>
+.course-registration-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.register-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.register-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+.register-action-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.register-action-btn--enroll {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.register-action-btn--enrolled {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.register-action-btn--enrolled:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+}
+
+.btn-spinner-lg {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: detail-spin 0.7s linear infinite;
+}
+
+@keyframes detail-spin {
+  to { transform: rotate(360deg); }
+}
+</style>

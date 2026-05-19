@@ -40,7 +40,7 @@
         </div>
         <div class="results-count">
           <span v-if="useClientSidePagination">
-            \u26a0\ufe0f Client-side pagination active
+            ⚠️ Client-side pagination active
           </span>
           Showing {{ displayedCourses.length }} of {{ filteredCourses.length }} courses
           <span v-if="searchQuery"> for "{{ searchQuery }}"</span>
@@ -66,9 +66,7 @@
       </div>
       <h3 class="error-title">Unable to load courses</h3>
       <p class="error-message">{{ error }}</p>
-      <button class="retry-btn" @click="fetchCourses">
-        Try Again
-      </button>
+      <button class="retry-btn" @click="fetchCourses">Try Again</button>
     </div>
 
     <!-- Empty State -->
@@ -86,9 +84,7 @@
       <p class="empty-message">
         {{ searchQuery ? `No courses found for "${searchQuery}". Try different keywords.` : 'No courses available at the moment' }}
       </p>
-      <button v-if="searchQuery" class="clear-search-btn" @click="clearSearch">
-        Clear Search
-      </button>
+      <button v-if="searchQuery" class="clear-search-btn" @click="clearSearch">Clear Search</button>
     </div>
 
     <!-- Courses Grid -->
@@ -100,7 +96,6 @@
         @click="navigateToCourse(course.external_course_id)"
       >
         <div class="course-image-container">
-          <!-- 3D Planet -->
           <Planet
             :imageUrl="course.image_url"
             :courseName="course.title"
@@ -108,6 +103,41 @@
             :height="200"
           />
           <div class="course-overlay"></div>
+
+          <!-- Registration overlay button -->
+          <div
+            v-if="canShowRegistration && !regCheckLoading"
+            class="enroll-overlay"
+            @click.stop
+          >
+            <button
+              v-if="!isRegistered(course.external_course_id)"
+              class="enroll-btn enroll-btn--enroll"
+              :disabled="!!registrationLoading[course.external_course_id]"
+              @click.stop="handleRegister(course)"
+            >
+              <span v-if="registrationLoading[course.external_course_id]" class="btn-spinner"></span>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              <span>{{ registrationLoading[course.external_course_id] ? 'Enrolling...' : 'Enroll' }}</span>
+            </button>
+            <button
+              v-else
+              class="enroll-btn enroll-btn--unenroll"
+              :disabled="!!registrationLoading[course.external_course_id]"
+              @click.stop="handleUnregister(course)"
+            >
+              <span v-if="registrationLoading[course.external_course_id]" class="btn-spinner"></span>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+              <span>{{ registrationLoading[course.external_course_id] ? 'Working...' : 'Enrolled' }}</span>
+            </button>
+          </div>
         </div>
         <div class="course-content">
           <div class="course-header">
@@ -135,9 +165,7 @@
             </div>
           </div>
           <div class="course-footer">
-            <span class="course-date">
-              Added {{ formatDate(course.date_added) }}
-            </span>
+            <span class="course-date">Added {{ formatDate(course.date_added) }}</span>
             <button class="view-course-btn">
               View Details
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -152,17 +180,12 @@
     <!-- Pagination -->
     <div v-if="totalPages > 1 && displayedCourses.length > 0" class="pagination-container">
       <div class="pagination">
-        <button
-          class="pagination-btn"
-          :disabled="currentPage === 1"
-          @click="goToPage(currentPage - 1)"
-        >
+        <button class="pagination-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
           Previous
         </button>
-
         <div class="page-numbers">
           <button
             v-for="page in visiblePages"
@@ -170,17 +193,10 @@
             class="page-number"
             :class="{ active: page === currentPage }"
             @click="goToPage(page)"
-          >
-            {{ page }}
-          </button>
+          >{{ page }}</button>
           <span v-if="showEllipsis" class="page-ellipsis">...</span>
         </div>
-
-        <button
-          class="pagination-btn"
-          :disabled="currentPage === totalPages"
-          @click="goToPage(currentPage + 1)"
-        >
+        <button class="pagination-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
           Next
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -188,7 +204,7 @@
         </button>
       </div>
       <div class="pagination-info">
-        Page {{ currentPage }} of {{ totalPages }} \u2022 {{ filteredCourses.length }} total courses
+        Page {{ currentPage }} of {{ totalPages }} • {{ filteredCourses.length }} total courses
         <span v-if="useClientSidePagination" class="client-side-warning">
           (Client-side pagination active)
         </span>
@@ -200,7 +216,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { courseService, type Course, type CourseFilters } from '@/services/course.service';
+import { courseService, type Course, type CourseFilters, type CourseRegistration } from '@/services/course.service';
 import { useAuthStore } from '@/store/auth';
 import Planet from '@/components/Planet.vue';
 
@@ -219,15 +235,43 @@ const searchTimeout = ref<NodeJS.Timeout | null>(null);
 const debounceDelay = 500;
 const useClientSidePagination = ref(false);
 
-// Counts state: { [external_course_id]: { lessons: number, comments: number } }
+// Counts state
 const courseCounts = ref<Record<string, { lessons: number; comments: number }>>({});
 const countsLoading = ref<Record<string, boolean>>({});
 
-// Computed properties
+// Registration state: external_course_id -> CourseRegistration
+const userRegistrations = ref<Record<string, CourseRegistration>>({});
+const registrationLoading = ref<Record<string, boolean>>({});
+const regCheckLoading = ref(false);
+
+const canShowRegistration = computed(() =>
+  authStore.isAuthenticated && authStore.hasActiveSubscription
+);
+
+const isRegistered = (courseExternalId: string): boolean =>
+  !!userRegistrations.value[courseExternalId];
+
+/**
+ * Build the list of identifiers we should query the backend with.
+ * The deployed selfstudy-course app stores `user_id` as a plain string and
+ * historically it may be either the UUID or the username (lowercased).
+ */
+const buildUserIdCandidates = (): string[] => {
+  const u = authStore.user;
+  if (!u) return [];
+  const list: string[] = [];
+  if (u.id) list.push(String(u.id));
+  if (u.username) {
+    list.push(String(u.username));
+    list.push(String(u.username).toLowerCase());
+  }
+  return [...new Set(list)];
+};
+
+// Computed
 const filteredCourses = computed(() => {
   let courses = [...allCourses.value];
 
-  // Apply search filter
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.trim().toLowerCase();
     courses = courses.filter(course =>
@@ -236,7 +280,6 @@ const filteredCourses = computed(() => {
     );
   }
 
-  // Apply sorting
   if (sortBy.value === 'title') {
     courses.sort((a, b) => a.title.localeCompare(b.title));
   } else if (sortBy.value === '-title') {
@@ -250,9 +293,7 @@ const filteredCourses = computed(() => {
   return courses;
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredCourses.value.length / pageSize.value);
-});
+const totalPages = computed(() => Math.ceil(filteredCourses.value.length / pageSize.value));
 
 const displayedCourses = computed(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;
@@ -265,107 +306,149 @@ const visiblePages = computed(() => {
   const maxVisible = 5;
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
   let end = Math.min(totalPages.value, start + maxVisible - 1);
-
   if (end - start + 1 < maxVisible) {
     start = Math.max(1, end - maxVisible + 1);
   }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
+  for (let i = start; i <= end; i++) pages.push(i);
   return pages;
 });
 
 const showEllipsis = computed(() => totalPages.value > visiblePages.value.length);
 
-// Methods
-
 /**
- * Fetch lessons count and comments count for a single course.
- * Uses the pinned replica (baseUrl) so all requests go to the same service instance.
+ * Fetch ALL registrations for this user from the deployed selfstudy-course
+ * app, trying every plausible identifier (UUID, username, lowercase username).
  */
+const loadUserRegistrations = async () => {
+  const ids = buildUserIdCandidates();
+  if (ids.length === 0) {
+    userRegistrations.value = {};
+    return;
+  }
+
+  regCheckLoading.value = true;
+  try {
+    const regs = await courseService.getUserRegistrations(ids);
+    const indexed: Record<string, CourseRegistration> = {};
+    regs.forEach(r => {
+      const key = r.course_external_id || r.course;
+      if (key) indexed[key] = r;
+    });
+    userRegistrations.value = indexed;
+  } catch (err) {
+    console.warn('Failed to load user registrations:', err);
+    userRegistrations.value = {};
+  } finally {
+    regCheckLoading.value = false;
+  }
+};
+
+const handleRegister = async (course: Course) => {
+  if (!authStore.user) return;
+  const courseId = course.external_course_id;
+  if (registrationLoading.value[courseId]) return;
+
+  registrationLoading.value[courseId] = true;
+  try {
+    // Use UUID id first (most stable); fall back to username if no id
+    const userId = String(authStore.user.id || authStore.user.username);
+    const reg = await courseService.registerUserForCourse(userId, courseId);
+    userRegistrations.value = { ...userRegistrations.value, [courseId]: reg };
+  } catch (err: any) {
+    // Backend returns 400 'User is already registered' when row exists under another identifier
+    const msg = (err?.message || '').toLowerCase();
+    if (err?.status === 400 && msg.includes('already registered')) {
+      // Re-sync state from backend
+      await loadUserRegistrations();
+    } else {
+      console.error('Enroll failed:', err);
+      alert(err?.message || 'Failed to enroll in this course. Please try again.');
+    }
+  } finally {
+    registrationLoading.value[courseId] = false;
+  }
+};
+
+const handleUnregister = async (course: Course) => {
+  if (!authStore.user) return;
+  const courseId = course.external_course_id;
+  if (registrationLoading.value[courseId]) return;
+
+  if (!confirm(`Unenroll from "${course.title}"?`)) return;
+
+  registrationLoading.value[courseId] = true;
+  try {
+    const reg = userRegistrations.value[courseId];
+    if (reg?.external_id) {
+      await courseService.unregisterUserFromCourse(reg.external_id);
+    } else {
+      // Fall back: search the deployed app using every identifier and delete
+      await courseService.unregisterUserFromCourseByCourse(
+        buildUserIdCandidates(),
+        courseId
+      );
+    }
+    const copy = { ...userRegistrations.value };
+    delete copy[courseId];
+    userRegistrations.value = copy;
+  } catch (err: any) {
+    console.error('Unenroll failed:', err);
+    alert(err?.message || 'Failed to unenroll. Please try again.');
+  } finally {
+    registrationLoading.value[courseId] = false;
+  }
+};
+
 const fetchCountsForCourse = async (courseId: string, baseUrl: string) => {
-  // Skip if already fetched
   if (courseCounts.value[courseId] !== undefined) return;
-
   countsLoading.value[courseId] = true;
-
   try {
     const [lessons, comments] = await Promise.allSettled([
       courseService.getCourseLessons(courseId, baseUrl),
       courseService.getCourseComments(courseId, baseUrl),
     ]);
-
-    const lessonsCount = lessons.status === 'fulfilled' ? lessons.value.length : 0;
-    const commentsCount = comments.status === 'fulfilled' ? comments.value.length : 0;
-
     courseCounts.value[courseId] = {
-      lessons: lessonsCount,
-      comments: commentsCount,
+      lessons: lessons.status === 'fulfilled' ? lessons.value.length : 0,
+      comments: comments.status === 'fulfilled' ? comments.value.length : 0,
     };
   } catch (err) {
-    // Fallback to whatever the API returned (likely 0)
-    courseCounts.value[courseId] = {
-      lessons: 0,
-      comments: 0,
-    };
+    courseCounts.value[courseId] = { lessons: 0, comments: 0 };
   } finally {
     countsLoading.value[courseId] = false;
   }
 };
 
-/**
- * Fetch counts for all currently displayed courses.
- * Pins a single replica for the entire batch to avoid inconsistencies.
- */
 const fetchCountsForDisplayedCourses = async (courses: Course[]) => {
   if (courses.length === 0) return;
-
-  // Pin one replica for the whole batch
   const baseUrl = await courseService.getRandomCourseReplica();
   if (!baseUrl) return;
-
-  // Fire off all requests concurrently, but only for courses not yet fetched
   const pending = courses.filter(c => courseCounts.value[c.external_course_id] === undefined);
   if (pending.length === 0) return;
-
   await Promise.all(pending.map(course => fetchCountsForCourse(course.external_course_id, baseUrl)));
 };
 
 const fetchCourses = async () => {
   loading.value = true;
   error.value = null;
-
   try {
     const filters: CourseFilters = {
       page: currentPage.value,
       page_size: pageSize.value,
       ordering: sortBy.value,
     };
-
-    if (searchQuery.value.trim()) {
-      filters.search = searchQuery.value.trim();
-    }
+    if (searchQuery.value.trim()) filters.search = searchQuery.value.trim();
 
     const response = await courseService.getCourses(filters);
-
-    // If server returns paginated results
     if (response.count !== undefined && response.results) {
       useClientSidePagination.value = false;
       allCourses.value = response.results;
     } else {
       useClientSidePagination.value = true;
-
-      // Fetch all courses without pagination
       const allResponse = await courseService.getCourses({});
       allCourses.value = allResponse.results || [];
     }
-
   } catch (err: any) {
-    // Fallback: Load all courses and use client-side pagination
     useClientSidePagination.value = true;
-
     try {
       const allResponse = await courseService.getCourses({});
       allCourses.value = allResponse.results || [];
@@ -379,21 +462,13 @@ const fetchCourses = async () => {
 };
 
 const handleSearchInput = () => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
-
-  searchTimeout.value = setTimeout(() => {
-    performSearch();
-  }, debounceDelay);
+  if (searchTimeout.value) clearTimeout(searchTimeout.value);
+  searchTimeout.value = setTimeout(() => { performSearch(); }, debounceDelay);
 };
 
 const performSearch = () => {
   currentPage.value = 1;
-
-  if (!useClientSidePagination.value) {
-    fetchCourses();
-  }
+  if (!useClientSidePagination.value) fetchCourses();
 };
 
 const clearSearch = () => {
@@ -404,10 +479,7 @@ const clearSearch = () => {
 
 const handleSortChange = () => {
   currentPage.value = 1;
-
-  if (!useClientSidePagination.value) {
-    fetchCourses();
-  }
+  if (!useClientSidePagination.value) fetchCourses();
 };
 
 const goToPage = (page: number) => {
@@ -423,20 +495,16 @@ const navigateToCourse = (courseId: string) => {
 const truncateDescription = (description: string, maxLength: number = 100) => {
   if (!description) return 'No description available';
   const trimmed = description.trim();
-  return trimmed.length > maxLength
-    ? trimmed.substring(0, maxLength) + '...'
-    : trimmed;
+  return trimmed.length > maxLength ? trimmed.substring(0, maxLength) + '...' : trimmed;
 };
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Recently';
-
   try {
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -448,41 +516,99 @@ const formatDate = (dateString?: string) => {
   }
 };
 
-// Watchers
+watch(() => currentPage.value, () => {
+  if (!useClientSidePagination.value) fetchCourses();
+});
+
+watch(displayedCourses, (courses) => {
+  if (courses.length > 0) fetchCountsForDisplayedCourses(courses);
+}, { immediate: false });
+
 watch(
-  () => currentPage.value,
+  () => [authStore.isAuthenticated, authStore.user?.id, authStore.user?.username, authStore.hasActiveSubscription],
   () => {
-    if (!useClientSidePagination.value) {
-      fetchCourses();
+    if (canShowRegistration.value) {
+      loadUserRegistrations();
+    } else {
+      userRegistrations.value = {};
     }
   }
 );
 
-// Whenever the displayed courses change, fetch their counts
-watch(
-  displayedCourses,
-  (courses) => {
-    if (courses.length > 0) {
-      fetchCountsForDisplayedCourses(courses);
-    }
-  },
-  { immediate: false }
-);
-
-// Lifecycle
 onMounted(async () => {
   await fetchCourses();
-  // After courses are loaded, fetch counts for the first page
   if (displayedCourses.value.length > 0) {
-    await fetchCountsForDisplayedCourses(displayedCourses.value);
+    fetchCountsForDisplayedCourses(displayedCourses.value);
+  }
+  if (canShowRegistration.value) {
+    await loadUserRegistrations();
   }
 });
 
 onUnmounted(() => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
+  if (searchTimeout.value) clearTimeout(searchTimeout.value);
 });
 </script>
 
 <style scoped src="@/assets/css/courses.css"></style>
+
+<style scoped>
+.enroll-overlay {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+}
+
+.enroll-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.enroll-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.enroll-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.enroll-btn--enroll {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.enroll-btn--unenroll {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.enroll-btn--unenroll:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: enroll-spin 0.7s linear infinite;
+}
+
+@keyframes enroll-spin {
+  to { transform: rotate(360deg); }
+}
+</style>
