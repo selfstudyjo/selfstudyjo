@@ -58,24 +58,57 @@ class LabService {
     private ensureHttps(url: string): string {
         if (!url) return url;
         if (url.startsWith('https://')) return url;
-            if (url.startsWith('http://')) {
-                const httpsUrl = url.replace(/^http:/, 'https:');
-                return httpsUrl;
-            }
-            return url;
+        if (url.startsWith('http://')) {
+            const httpsUrl = url.replace(/^http:/, 'https:');
+            return httpsUrl;
+        }
+        return url;
     }
 
     /**
      * Get or create a student record in the lab backend
+     * Uses the check-and-create-user endpoint which creates the student in DB
+     * and creates the user folder if they don't exist.
      */
     async getOrCreateStudent(username: string, labUrl: string): Promise<Student | null> {
-        try {
-            // COMMENTED OUT - DON'T TRY TO GET/CREATE STUDENT, JUST RETURN NULL
-            // This causes CORS errors and we don't need it
+        if (!username || !labUrl) {
             return null;
+        }
 
+        const secureLabUrl = this.ensureHttps(labUrl);
+
+        try {
+            const response = await apiService.post<StudentResponse>(
+                secureLabUrl,
+                '/api/check-and-create-user/',
+                { username }
+            );
+
+            // If the user was newly created, we have the user_id and uuid in the response
+            if (response.user_id && response.uuid) {
+                return {
+                    id: response.user_id,
+                    username: response.username,
+                    uuid_credentials: response.uuid,
+                    created_at: new Date().toISOString(),
+                    expire_date: ''
+                };
+            }
+
+            // If user already existed, we still consider it a success
+            if (response.database_status === 'exists' || response.database_status === 'created') {
+                return {
+                    id: response.user_id || 0,
+                    username: response.username,
+                    uuid_credentials: response.uuid || '',
+                    created_at: '',
+                    expire_date: ''
+                };
+            }
+
+            return null;
         } catch (error: any) {
-            // Don't log any errors
+            console.warn('Failed to check/create student (non-critical):', error?.message || error);
             return null;
         }
     }
@@ -84,15 +117,13 @@ class LabService {
      * Use the check-and-create-user endpoint (recommended)
      */
     private async checkAndCreateUser(username: string, labUrl: string): Promise<Student | null> {
-        // DON'T DO ANYTHING - JUST RETURN NULL
-        return null;
+        return this.getOrCreateStudent(username, labUrl);
     }
 
     /**
      * Find student by username in the students list
      */
     private async findStudentByUsername(username: string, labUrl: string): Promise<Student | null> {
-        // DON'T DO ANYTHING - JUST RETURN NULL
         return null;
     }
 
@@ -100,7 +131,6 @@ class LabService {
      * Run SQL query
      */
     async runSQL(username: string, labUrl: string, query: string): Promise<SQLResult> {
-        // Ensure labUrl is HTTPS
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
             const response = await apiService.post<SQLResult>(
@@ -112,7 +142,6 @@ class LabService {
             return response;
 
         } catch (error: any) {
-            // Handle specific errors
             let errorMessage = 'SQL execution failed';
             if (error.status === 403) {
                 errorMessage = 'Permission denied: You do not have access to run SQL queries';
@@ -143,7 +172,6 @@ class LabService {
             return response;
 
         } catch (error: any) {
-            // Handle specific errors
             let errorMessage = 'Command execution failed';
             if (error.status === 403) {
                 errorMessage = 'Permission denied: Command not allowed';
@@ -193,7 +221,6 @@ class LabService {
             return response;
 
         } catch (error: any) {
-            // Handle specific errors
             let errorMessage = 'Python execution failed';
             if (error.status === 403) {
                 errorMessage = 'Permission denied: You do not have access to run Python code';
@@ -215,10 +242,8 @@ class LabService {
     async getAllStudents(labUrl: string): Promise<Student[]> {
         const secureLabUrl = this.ensureHttps(labUrl);
         try {
-            // COMMENTED OUT - DON'T MAKE THIS REQUEST
             return [];
         } catch (error) {
-            // Don't log anything
             return [];
         }
     }

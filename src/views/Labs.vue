@@ -1,42 +1,5 @@
 <template>
   <div class="labs-container">
-    <!-- Header Section -->
-    <div class="labs-header">
-      <div class="header-content">
-        <h1><i class="fas fa-flask"></i> Virtual Labs</h1>
-        <p>Practice SQL, Linux, and Python in a safe sandbox environment</p>
-      </div>
-      <div class="header-stats">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-database"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number">SQL</span>
-            <span class="stat-label">Database</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-terminal"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number">Linux</span>
-            <span class="stat-label">Terminal</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-code"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-number">Python</span>
-            <span class="stat-label">Compiler</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
@@ -65,25 +28,6 @@
 
     <!-- Main Content -->
     <div v-else class="labs-main">
-      <!-- Lab Info Banner -->
-      <div class="lab-info-banner">
-        <div class="lab-info-content">
-          <i class="fas fa-info-circle"></i>
-          <div>
-            <strong>Lab Environment:</strong> Connected to {{ labUrlDisplay }}
-            <span v-if="studentRecord" class="student-info">
-              • Student ID: {{ studentRecord.uuid_credentials }}
-            </span>
-            <span v-else class="student-info warning">
-              • Student record not found, but you can still use labs
-            </span>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-outline" @click="refreshLabStatus">
-          <i class="fas fa-sync-alt" :class="{ 'fa-spin': refreshing }"></i> Refresh
-        </button>
-      </div>
-
       <!-- Tabs Navigation -->
       <div class="tabs-navigation">
         <button
@@ -423,9 +367,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
-import { labService, type Student, type SQLResult, type CommandResult } from '@/services/lab.service';
+import { labService, type Student } from '@/services/lab.service';
 
 const authStore = useAuthStore();
 const terminalContent = ref<HTMLElement | null>(null);
@@ -445,23 +389,12 @@ const labUrl = computed(() => {
   return url;
 });
 
-const labUrlDisplay = computed(() => {
-  if (!labUrl.value) return 'Not connected';
-  try {
-    const url = new URL(labUrl.value);
-    return url.hostname;
-  } catch {
-    return labUrl.value;
-  }
-});
-
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const studentRecord = ref<Student | null>(null);
 
 // State
 const loading = ref(false);
 const error = ref<string | null>(null);
-const refreshing = ref(false);
 const activeTab = ref('sql');
 
 // SQL state
@@ -532,10 +465,15 @@ const tabs = [
   { id: 'python', label: 'Python Compiler', icon: 'fas fa-code' }
 ];
 
-// Initialize lab
+// Initialize lab — automatically create student record if it doesn't exist
 const initializeLab = async () => {
   if (!hasLabAccess.value) {
     error.value = 'No lab access configured for your account';
+    return;
+  }
+
+  if (!username.value || !labUrl.value) {
+    error.value = 'Missing username or lab URL configuration';
     return;
   }
 
@@ -543,17 +481,15 @@ const initializeLab = async () => {
   error.value = null;
 
   try {
-    // Try to get or create student record
+    // Automatically check and create the student record in the lab backend.
+    // This calls /api/check-and-create-user/ which will:
+    //   - Create the Student row if it doesn't exist
+    //   - Create the user's media folder if it doesn't exist
+    //   - Return success if user/folder already existed
     try {
       studentRecord.value = await labService.getOrCreateStudent(username.value, labUrl.value);
     } catch (studentError) {
-      console.warn('Failed to get student record:', studentError);
-    }
-
-    if (studentRecord.value) {
-      showToast('Success', 'Lab environment initialized successfully', 'success');
-    } else {
-      showToast('Info', 'Lab environment ready (student record may not exist)', 'info');
+      console.warn('Failed to ensure student record (non-critical):', studentError);
     }
 
     // Try to load initial SQL tables
@@ -569,24 +505,6 @@ const initializeLab = async () => {
     showToast('Error', error.value, 'error');
   } finally {
     loading.value = false;
-  }
-};
-
-// Refresh lab status
-const refreshLabStatus = async () => {
-  refreshing.value = true;
-  try {
-    studentRecord.value = await labService.getOrCreateStudent(username.value, labUrl.value);
-    if (studentRecord.value) {
-      showToast('Refreshed', 'Lab status updated', 'success');
-    } else {
-      showToast('Info', 'Lab ready (no student record)', 'info');
-    }
-  } catch (err: any) {
-    console.error('Failed to refresh lab status:', err);
-    showToast('Warning', 'Could not refresh lab status', 'warning');
-  } finally {
-    refreshing.value = false;
   }
 };
 
@@ -608,7 +526,6 @@ const showToast = (title: string, message: string, type: 'success' | 'error' | '
     icon: icons[type]
   });
 
-  // Auto-remove after 5 seconds
   setTimeout(() => {
     removeToast(id);
   }, 5000);
@@ -654,7 +571,6 @@ const runSQL = async () => {
       sqlResults.value = result.result;
       showToast('Success', `Query executed successfully. ${result.result.length} row(s) returned.`, 'success');
 
-      // Refresh tables list if query shows tables
       if (sqlQuery.value.toLowerCase().includes('table')) {
         await loadSQLTables();
       }
@@ -668,7 +584,6 @@ const runSQL = async () => {
 };
 
 const formatSQL = () => {
-  // Simple SQL formatting
   const formatted = sqlQuery.value
     .replace(/\b(SELECT|FROM|WHERE|AND|OR|ORDER BY|GROUP BY|HAVING|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/gi, '\n$1')
     .replace(/;/g, ';\n')
@@ -691,7 +606,6 @@ const showTableSchema = async (tableName: string) => {
 const addTerminalLine = (type: 'command' | 'output' | 'error' | 'info', content: string, prompt?: string) => {
   terminalLines.value.push({ type, content, prompt });
 
-  // Auto-scroll to bottom
   nextTick(() => {
     if (terminalContent.value) {
       terminalContent.value.scrollTop = terminalContent.value.scrollHeight;
@@ -700,13 +614,9 @@ const addTerminalLine = (type: 'command' | 'output' | 'error' | 'info', content:
 };
 
 const clearTerminal = () => {
-  // Clear terminal lines
   terminalLines.value = [];
-
-  // Reset command input
   currentCommand.value = '';
 
-  // Focus back on input
   nextTick(() => {
     if (commandInput.value) {
       commandInput.value.focus();
@@ -715,6 +625,7 @@ const clearTerminal = () => {
 
   showToast('Terminal Cleared', 'All terminal content has been cleared', 'info');
 };
+
 const copyTerminalContent = () => {
   const content = terminalLines.value
     .map(line => {
@@ -733,10 +644,8 @@ const runLinuxCommand = async () => {
   const command = currentCommand.value.trim();
   if (!command || runningProcess.value) return;
 
-  // Handle clear command locally
   if (command === 'clear') {
     clearTerminal();
-    // Add command to history
     if (!commandHistory.value.includes(command)) {
       commandHistory.value.unshift(command);
       if (commandHistory.value.length > 100) {
@@ -748,7 +657,6 @@ const runLinuxCommand = async () => {
     return;
   }
 
-  // Add to history (avoid duplicates)
   if (!commandHistory.value.includes(command)) {
     commandHistory.value.unshift(command);
     if (commandHistory.value.length > 100) {
@@ -757,7 +665,6 @@ const runLinuxCommand = async () => {
   }
   historyIndex.value = -1;
 
-  // Display command in terminal
   addTerminalLine('command', command, `${username.value}@lab-server:~$`);
 
   runningProcess.value = true;
@@ -767,7 +674,6 @@ const runLinuxCommand = async () => {
   try {
     const result = await labService.runLinuxCommand(username.value, labUrl.value, command);
 
-    // Display output/error
     if (result.output && result.output.trim()) {
       addTerminalLine('output', result.output.trim());
     }
@@ -775,7 +681,6 @@ const runLinuxCommand = async () => {
       addTerminalLine('error', result.error.trim());
     }
 
-    // Show toast notification
     if (result.error) {
       showToast('Command Error', result.error, 'error');
     } else {
@@ -789,7 +694,6 @@ const runLinuxCommand = async () => {
   } finally {
     runningProcess.value = false;
 
-    // Focus back on input
     nextTick(() => {
       if (commandInput.value) {
         commandInput.value.focus();
@@ -797,6 +701,7 @@ const runLinuxCommand = async () => {
     });
   }
 };
+
 const killProcess = async () => {
   if (!runningProcess.value) return;
 
