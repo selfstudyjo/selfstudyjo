@@ -9,23 +9,26 @@ if ('serviceWorker' in navigator) {
         // ✅ Use BASE_URL so SW path works on GitHub Pages subpath (e.g. /repo-name/)
         const swPath = `${import.meta.env.BASE_URL}sw.js`.replace(/\/+/g, '/');
 
-        navigator.serviceWorker.register(swPath).then(() => {
-            const token = import.meta.env.VITE_AUTH_TOKEN;
-            if (token && token !== 'Token Not Found!' && token !== 'your-actual-auth-token-here') {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.active?.postMessage({
-                        type: 'SET_AUTH_TOKEN',
-                        token: token
-                    });
-                });
+        navigator.serviceWorker.register(swPath).then((registration) => {
+            // Force an update check so users get the new (no-op) SW
+            // instead of being stuck with an older version that intercepts media.
+            try {
+                registration.update();
+            } catch {
+                /* ignore */
             }
         }).catch(() => {
             // Silently ignore service worker registration failure
         });
     });
 
-    // If a new service worker takes over, reload to ensure all fetches go through it
+    // If a new service worker takes over (e.g. the old intercepting one is
+    // replaced by the new no-op one), reload once so all requests now use
+    // the new SW state.
+    let hasReloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hasReloaded) return;
+        hasReloaded = true;
         window.location.reload();
     });
 }
