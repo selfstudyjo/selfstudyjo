@@ -23,6 +23,7 @@ interface PlanetHandle {
 interface CachedTexture {
   texture: THREE.Texture
   refs: number
+  objectUrl?: string
 }
 
 const TARGET_FPS = 30
@@ -31,28 +32,26 @@ const SPHERE_SEGMENTS = 32
 const TEXTURE_SIZE = 256
 
 /* -------------------------------------------------------------------------
- * Production CORS proxies.
- * WebGL's TextureLoader uses crossOrigin='anonymous', which forces a CORS
- * request. selfstudymedia*.pythonanywhere.com does not send CORS headers,
- * so the texture is rejected and we fall back to the generated planet.
- * Routing through a CORS-friendly proxy gives WebGL an Access-Control-
- * Allow-Origin-bearing response, exactly like Vite's dev proxy does on
- * localhost. The function tries proxies in order; if one URL fails the
- * TextureLoader's `onError` will (as before) gracefully drop to the
- * generated texture.
+ * CORS proxy chain (production only).
+ *
+ * To use your OWN Cloudflare Worker (highly recommended for reliability),
+ * just put it FIRST in this list. See the optional setup below.
+ *
+ * Each entry takes the original URL and returns the proxy URL. The loader
+ * tries them in order, remembers the first that succeeds for the lifetime
+ * of the page, and only re-tries on failure.
  * ------------------------------------------------------------------------- */
 const CORS_PROXY_TEMPLATES: Array<(u: string) => string> = [
-  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  // ⬇⬇ Add your own Cloudflare Worker URL here once deployed (recommended):
+  // (u) => `https://YOUR-NAME.YOUR-SUBDOMAIN.workers.dev/?url=${encodeURIComponent(u)}`,
+
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://cors.eu.org/${u}`,
 ]
-// Stable per-URL proxy choice so the cache key stays stable and we don't
-// thrash texture caching by picking a different proxy each call.
-function pickProxy(u: string): (x: string) => string {
-  let h = 0
-  for (let i = 0; i < u.length; i++) { h = ((h << 5) - h) + u.charCodeAt(i); h |= 0 }
-  return CORS_PROXY_TEMPLATES[Math.abs(h) % CORS_PROXY_TEMPLATES.length]
-}
+
+const FETCH_TIMEOUT_MS = 9000
 
 class PlanetRenderer {
   private static _instance: PlanetRenderer | null = null
@@ -78,6 +77,9 @@ class PlanetRenderer {
   private nextId = 1
   private webglOk = true
 
+  // Sticky proxy: once one succeeds we stop probing the others.
+  private workingProxy: ((u: string) => string) | null = null
+
   // ----- Lifecycle -----
   private ensureInit() {
     if (this.renderer || !this.webglOk) return
@@ -100,8 +102,6 @@ class PlanetRenderer {
 
       // Shared geometry — one sphere for ALL planets
       this.sharedGeometry = new THREE.SphereGeometry(1, SPHERE_SEGMENTS, SPHERE_SEGMENTS)
-
-      // Lights live in EACH scene (cheap to clone refs but easier to attach per-scene)
 
       this.intersectionObserver = new IntersectionObserver(entries => {
         for (const e of entries) {
@@ -131,40 +131,9 @@ class PlanetRenderer {
     } catch { this.webglOk = false; return false }
   }
 
-  // ----- Texture handling (cached + reference-counted) -----
-  /**
-   * Returns the URL that THREE.TextureLoader should actually fetch.
-   *
-   * Dev mode: routes selfstudymedia hosts through the Vite dev proxy
-   * (`/media1/`, `/media2/`) — your original behaviour, untouched.
-   *
-   * Production: same selfstudymedia hosts are wrapped in a CORS proxy so
-   * the response carries Access-Control-Allow-Origin and WebGL accepts
-   * the texture. Any other URL is passed through unchanged.
-   *
-   * Returning a different URL here is the ONLY change in this file vs.
-   * your original. The 3D scene, lights, rotation, sphere geometry,
-   * texture caching and rAF loop are all identical.
-   */
-  private getEffectiveUrl(url: string): string {
-    if (!url) return url
-
-    if (import.meta.env.DEV) {
-      const m1 = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
-      const m2 = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
-      if (m1.test(url)) return url.replace(m1, '/media1')
-      if (m2.test(url)) return url.replace(m2, '/media2')
-      return url
-    }
-
-    // ----- Production -----
-    const normalized = getSecureMediaUrl(url)
-    if (/^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\//.test(normalized)) {
-      return pickProxy(normalized)(normalized)
-    }
-    return normalized
-  }
-
+  // -------------------------------------------------------------------------
+  // Image loading pipeline
+  // -------------------------------------------------------------------------
   private hashString(s: string): number {
     let h = 0
     for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0 }
@@ -185,7 +154,6 @@ class PlanetRenderer {
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE)
 
-    // Light surface noise (cheap)
     const seed = this.hashString(display) || 1
     ctx.fillStyle = 'rgba(0,0,0,0.18)'
     for (let i = 0; i < 25; i++) {
@@ -195,7 +163,6 @@ class PlanetRenderer {
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
     }
 
-    // Label
     const fontSize = Math.floor(TEXTURE_SIZE * 0.16)
     ctx.font = `bold ${fontSize}px system-ui, Arial`
     ctx.textAlign = 'center'
@@ -211,12 +178,115 @@ class PlanetRenderer {
     return tex
   }
 
-  private isFallback1x1(tex: THREE.Texture): boolean {
-    const img = tex.image as HTMLImageElement
-    return img?.width === 1 && img?.height === 1
+  private decodeImageFromUrl(src: string): Promise<HTMLImageElement> {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      // src is either same-origin (blob:) or a Vite-proxied path → no CORS check needed.
+      img.onload = () => {
+        if (img.naturalWidth === 0) reject(new Error('Empty image'))
+        else resolve(img)
+      }
+      img.onerror = () => reject(new Error('Image decode failed'))
+      img.src = src
+    })
   }
 
-  private async acquireTexture(imageUrl: string | undefined, courseName: string): Promise<{ tex: THREE.Texture, key: string }> {
+  /**
+   * Fetch `url` as a Blob with timeout & basic validation, then turn it into
+   * a same-origin Image via createObjectURL. WebGL can then upload it without
+   * any further CORS check because the <img>.src is `blob:...` (same-origin).
+   */
+  private async fetchImageAsObjectUrl(url: string):
+      Promise<{ img: HTMLImageElement, objectUrl: string } | null> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        signal: controller.signal,
+      })
+      if (!res.ok) return null
+      const blob = await res.blob()
+      if (!blob.type.startsWith('image/') || blob.size < 64) return null
+
+      const objectUrl = URL.createObjectURL(blob)
+      try {
+        const img = await this.decodeImageFromUrl(objectUrl)
+        return { img, objectUrl }
+      } catch {
+        URL.revokeObjectURL(objectUrl)
+        return null
+      }
+    } catch {
+      return null
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  /**
+   * Top-level image loader.
+   *   - In dev: use the Vite dev proxy (`/media1/`, `/media2/`) — same-origin,
+   *     no CORS hassle, same as your original.
+   *   - In prod: try direct (in case CORS ever gets enabled), then the sticky
+   *     proxy, then every other proxy in order. Returns null only if ALL
+   *     options fail — in which case we fall back to the generated texture.
+   */
+  private async loadCourseImage(rawUrl: string):
+      Promise<{ img: HTMLImageElement, objectUrl?: string } | null> {
+
+    if (import.meta.env.DEV) {
+      const m1 = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
+      const m2 = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
+      let devUrl = rawUrl
+      if (m1.test(rawUrl)) devUrl = rawUrl.replace(m1, '/media1')
+      else if (m2.test(rawUrl)) devUrl = rawUrl.replace(m2, '/media2')
+      try {
+        const img = await this.decodeImageFromUrl(devUrl)
+        return { img }
+      } catch { return null }
+    }
+
+    const finalUrl = getSecureMediaUrl(rawUrl)
+    const isMediaUrl = /^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\//.test(finalUrl)
+
+    // Non-selfstudy URLs (e.g. external CDN with CORS): just load directly.
+    if (!isMediaUrl) {
+      try {
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const i = new Image()
+          i.crossOrigin = 'anonymous'
+          i.onload = () => resolve(i)
+          i.onerror = () => reject(new Error('direct failed'))
+          i.src = finalUrl
+        })
+        return { img }
+      } catch { return null }
+    }
+
+    // Try the sticky proxy first
+    if (this.workingProxy) {
+      const r = await this.fetchImageAsObjectUrl(this.workingProxy(finalUrl))
+      if (r) return r
+      this.workingProxy = null // stopped working, fall through
+    }
+
+    // Try every proxy in order, remember the first that works
+    for (const buildProxy of CORS_PROXY_TEMPLATES) {
+      const r = await this.fetchImageAsObjectUrl(buildProxy(finalUrl))
+      if (r) {
+        this.workingProxy = buildProxy
+        return r
+      }
+    }
+
+    return null
+  }
+
+  private async acquireTexture(imageUrl: string | undefined, courseName: string):
+      Promise<{ tex: THREE.Texture, key: string }> {
     const key = imageUrl ? `img:${imageUrl}` : `gen:${courseName}`
 
     const cached = this.textureCache.get(key)
@@ -226,31 +296,24 @@ class PlanetRenderer {
     }
 
     let tex: THREE.Texture
+    let objectUrl: string | undefined
+
     if (imageUrl) {
-      const finalUrl = this.getEffectiveUrl(imageUrl)
-      tex = await new Promise<THREE.Texture>((resolve) => {
-        const loader = new THREE.TextureLoader()
-        loader.crossOrigin = 'anonymous'
-        loader.load(
-          finalUrl,
-          t => {
-            if (this.isFallback1x1(t)) {
-              t.dispose()
-              resolve(this.generateNamedTexture(courseName))
-            } else {
-              t.colorSpace = THREE.SRGBColorSpace
-              resolve(t)
-            }
-          },
-          undefined,
-          () => resolve(this.generateNamedTexture(courseName))
-        )
-      })
+      const loaded = await this.loadCourseImage(imageUrl)
+      if (loaded) {
+        const t = new THREE.Texture(loaded.img)
+        t.colorSpace = THREE.SRGBColorSpace
+        t.needsUpdate = true
+        tex = t
+        objectUrl = loaded.objectUrl
+      } else {
+        tex = this.generateNamedTexture(courseName)
+      }
     } else {
       tex = this.generateNamedTexture(courseName)
     }
 
-    this.textureCache.set(key, { texture: tex, refs: 1 })
+    this.textureCache.set(key, { texture: tex, refs: 1, objectUrl })
     return { tex, key }
   }
 
@@ -260,6 +323,9 @@ class PlanetRenderer {
     c.refs--
     if (c.refs <= 0) {
       c.texture.dispose()
+      if (c.objectUrl) {
+        try { URL.revokeObjectURL(c.objectUrl) } catch {}
+      }
       this.textureCache.delete(key)
     }
   }
@@ -342,7 +408,7 @@ class PlanetRenderer {
     if (this.planets.size === 0) this.shutdown()
   }
 
-  // ----- Render loop -----
+  // ----- Render loop (UNCHANGED) -----
   private startLoop() {
     if (this.rafId) return
     const tick = (now: number) => {
@@ -361,13 +427,11 @@ class PlanetRenderer {
 
         p.mesh.rotation.y += delta * p.rotSpeed
 
-        // Sync renderer size to this planet's output size
         if (this.offscreen!.width !== p.width || this.offscreen!.height !== p.height) {
           this.renderer.setSize(p.width, p.height, false)
         }
         this.renderer.render(p.scene, p.camera)
 
-        // Copy WebGL canvas → planet's 2D canvas
         p.outCtx.clearRect(0, 0, p.width, p.height)
         p.outCtx.drawImage(this.offscreen!, 0, 0, p.width, p.height)
       }
@@ -386,7 +450,12 @@ class PlanetRenderer {
     this.intersectionObserver?.disconnect()
     this.intersectionObserver = null
 
-    for (const c of this.textureCache.values()) c.texture.dispose()
+    for (const c of this.textureCache.values()) {
+      c.texture.dispose()
+      if (c.objectUrl) {
+        try { URL.revokeObjectURL(c.objectUrl) } catch {}
+      }
+    }
     this.textureCache.clear()
 
     this.sharedGeometry?.dispose()
@@ -396,6 +465,8 @@ class PlanetRenderer {
     this.renderer?.forceContextLoss?.()
     this.renderer = null
     this.offscreen = null
+
+    this.workingProxy = null
   }
 }
 
