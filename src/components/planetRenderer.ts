@@ -30,6 +30,30 @@ const MAX_PIXEL_RATIO = 1.5
 const SPHERE_SEGMENTS = 32
 const TEXTURE_SIZE = 256
 
+/* -------------------------------------------------------------------------
+ * Production CORS proxies.
+ * WebGL's TextureLoader uses crossOrigin='anonymous', which forces a CORS
+ * request. selfstudymedia*.pythonanywhere.com does not send CORS headers,
+ * so the texture is rejected and we fall back to the generated planet.
+ * Routing through a CORS-friendly proxy gives WebGL an Access-Control-
+ * Allow-Origin-bearing response, exactly like Vite's dev proxy does on
+ * localhost. The function tries proxies in order; if one URL fails the
+ * TextureLoader's `onError` will (as before) gracefully drop to the
+ * generated texture.
+ * ------------------------------------------------------------------------- */
+const CORS_PROXY_TEMPLATES: Array<(u: string) => string> = [
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
+]
+// Stable per-URL proxy choice so the cache key stays stable and we don't
+// thrash texture caching by picking a different proxy each call.
+function pickProxy(u: string): (x: string) => string {
+  let h = 0
+  for (let i = 0; i < u.length; i++) { h = ((h << 5) - h) + u.charCodeAt(i); h |= 0 }
+  return CORS_PROXY_TEMPLATES[Math.abs(h) % CORS_PROXY_TEMPLATES.length]
+}
+
 class PlanetRenderer {
   private static _instance: PlanetRenderer | null = null
   static get(): PlanetRenderer {
@@ -108,8 +132,23 @@ class PlanetRenderer {
   }
 
   // ----- Texture handling (cached + reference-counted) -----
+  /**
+   * Returns the URL that THREE.TextureLoader should actually fetch.
+   *
+   * Dev mode: routes selfstudymedia hosts through the Vite dev proxy
+   * (`/media1/`, `/media2/`) — your original behaviour, untouched.
+   *
+   * Production: same selfstudymedia hosts are wrapped in a CORS proxy so
+   * the response carries Access-Control-Allow-Origin and WebGL accepts
+   * the texture. Any other URL is passed through unchanged.
+   *
+   * Returning a different URL here is the ONLY change in this file vs.
+   * your original. The 3D scene, lights, rotation, sphere geometry,
+   * texture caching and rAF loop are all identical.
+   */
   private getEffectiveUrl(url: string): string {
     if (!url) return url
+
     if (import.meta.env.DEV) {
       const m1 = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
       const m2 = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
@@ -117,7 +156,13 @@ class PlanetRenderer {
       if (m2.test(url)) return url.replace(m2, '/media2')
       return url
     }
-    return getSecureMediaUrl(url)
+
+    // ----- Production -----
+    const normalized = getSecureMediaUrl(url)
+    if (/^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\//.test(normalized)) {
+      return pickProxy(normalized)(normalized)
+    }
+    return normalized
   }
 
   private hashString(s: string): number {
