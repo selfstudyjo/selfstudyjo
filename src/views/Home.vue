@@ -294,7 +294,7 @@
         </div>
       </div>
 
-      <!-- Active Subscription Section -->
+      <!-- Active Subscriptions Section -->
       <div class="dashboard-card glass-effect">
         <div class="card-header">
           <div class="card-title">
@@ -304,19 +304,24 @@
                 <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h2>Active Subscription</h2>
-            <span class="card-status" :class="{ active: activeSubscription }">
-              {{ activeSubscription ? 'Active' : 'None' }}
+            <h2>Active Subscriptions</h2>
+            <span class="card-status" :class="{ active: activeSubscriptions.length > 0 }">
+              {{ activeSubscriptions.length > 0 ? `${activeSubscriptions.length} Active` : 'None' }}
             </span>
           </div>
-          <p class="card-subtitle">Your current subscription plan</p>
+          <p class="card-subtitle">
+            All your currently active subscription plans
+            <span v-if="combinedFeaturesCount > 0" class="combined-features-hint">
+              · {{ combinedFeaturesCount }} combined feature{{ combinedFeaturesCount > 1 ? 's' : '' }}
+            </span>
+          </p>
         </div>
         
         <div class="subscription-content">
           <div v-if="loading.subscription" class="loading-placeholder">
             <div class="placeholder-item"></div>
           </div>
-          <div v-else-if="!activeSubscription" class="empty-state">
+          <div v-else-if="activeSubscriptions.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="#94A3B8" stroke-width="1.5"/>
@@ -325,34 +330,57 @@
             <p class="empty-text">No active subscription</p>
             <router-link to="/plans" class="empty-action">View Plans</router-link>
           </div>
-          <div v-else class="subscription-details">
-            <div class="subscription-plan">
-              <h3 class="plan-title">{{ activeSubscription.subscription_type?.title || 'Unknown Plan' }}</h3>
-              <div class="plan-price">
-                <span class="price-amount">{{ activeSubscription.subscription_type?.price || 'Free' }}</span>
-                <span class="price-period">/month</span>
+          <div v-else class="active-subscriptions-list">
+            <div
+              v-for="sub in activeSubscriptions"
+              :key="sub.external_id"
+              class="subscription-details"
+            >
+              <div class="subscription-plan">
+                <h3 class="plan-title">{{ sub.subscription_type?.title || 'Unknown Plan' }}</h3>
+                <div class="plan-price">
+                  <span class="price-amount">{{ sub.subscription_type?.price || 'Free' }}</span>
+                  <span class="price-period">/month</span>
+                </div>
+                <p class="plan-description">{{ sub.subscription_type?.description || '' }}</p>
               </div>
-              <p class="plan-description">{{ activeSubscription.subscription_type?.description || '' }}</p>
-            </div>
-            <div class="subscription-features">
-              <h4 class="features-title">Features included:</h4>
-              <div class="features-list">
-                <div v-for="feature in activeSubscription.subscription_type?.features?.slice(0, 3)" :key="feature.external_id" class="feature-item">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 12L11 14L15 10" stroke="#48BB78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>{{ feature.name }}</span>
+
+              <div class="subscription-features">
+                <h4 class="features-title">
+                  Features included
+                  <span v-if="sub.subscription_type?.features?.length" class="features-count">
+                    ({{ sub.subscription_type.features.length }})
+                  </span>
+                </h4>
+                <div class="features-list">
+                  <div
+                    v-for="feature in (sub.subscription_type?.features || [])"
+                    :key="feature.external_id"
+                    class="feature-item"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 12L11 14L15 10" stroke="#48BB78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ feature.name }}</span>
+                  </div>
+                  <div
+                    v-if="!sub.subscription_type?.features || sub.subscription_type.features.length === 0"
+                    class="feature-item feature-empty"
+                  >
+                    <span>No features attached to this plan</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="subscription-meta">
-              <div class="meta-item">
-                <span class="meta-label">Plan Name</span>
-                <span class="meta-value">{{ activeSubscription.title }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Expires</span>
-                <span class="meta-value">{{ formatDate(activeSubscription.expire_date) }}</span>
+
+              <div class="subscription-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Plan Name</span>
+                  <span class="meta-value">{{ sub.title }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Expires</span>
+                  <span class="meta-value">{{ formatDate(sub.expire_date) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -365,9 +393,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/store/auth';
-import { courseService, type CourseRegistration, type Homework, type Course, type Lesson } from '@/services/course.service';
+import { courseService, type CourseRegistration, type Homework, type Course } from '@/services/course.service';
 import { certificateService, type ExamCertificate, type CourseCertificate } from '@/services/certificate.service';
-import { quizService, type UserQuizResult, type Quiz } from '@/services/quiz.service';
+import { quizService, type UserQuizResult } from '@/services/quiz.service';
 import { subscriptionService, type Subscription } from '@/services/subscription.service';
 import { examService, type Exam } from '@/services/exam.service';
 
@@ -379,7 +407,9 @@ const examCertificates = ref<ExamCertificate[]>([]);
 const courseCertificates = ref<CourseCertificate[]>([]);
 const quizResults = ref<UserQuizResult[]>([]);
 const homeworks = ref<Homework[]>([]);
-const activeSubscription = ref<Subscription | null>(null);
+
+// CHANGED: now an array of ALL non-expired active subscriptions
+const activeSubscriptions = ref<Subscription[]>([]);
 
 // Additional details storage
 const courseDetails = ref<Record<string, Course>>({});
@@ -413,6 +443,17 @@ const registeredCoursesCount = computed(() => registeredCourses.value.length);
 const totalCertificatesCount = computed(() => examCertificates.value.length + courseCertificates.value.length);
 const totalHomeworksCount = computed(() => homeworks.value.length);
 
+// Union count of feature names across all active subscriptions
+const combinedFeaturesCount = computed(() => {
+  const set = new Set<string>();
+  for (const sub of activeSubscriptions.value) {
+    for (const f of (sub.subscription_type?.features || [])) {
+      if (f?.name) set.add(f.name);
+    }
+  }
+  return set.size;
+});
+
 // Helper functions
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A';
@@ -439,7 +480,6 @@ const fetchRegisteredCourses = async () => {
     if (authStore.user?.id) {
       registeredCourses.value = await courseService.getUserRegistrations(authStore.user.id);
       
-      // Fetch course details for each registered course
       for (const registration of registeredCourses.value) {
         const courseId = registration.course_external_id || registration.course;
         if (courseId) {
@@ -474,7 +514,6 @@ const fetchCertificates = async () => {
       examCertificates.value = examCerts;
       courseCertificates.value = courseCerts;
       
-      // Fetch exam details for each exam certificate
       for (const cert of examCerts) {
         if (cert.exam_id) {
           try {
@@ -486,7 +525,6 @@ const fetchCertificates = async () => {
         }
       }
       
-      // Fetch course details for each course certificate
       for (const cert of courseCerts) {
         if (cert.course_id) {
           try {
@@ -515,7 +553,6 @@ const fetchQuizResults = async () => {
       const results = await quizService.getUserQuizResults(authStore.user.id);
       quizResults.value = results;
       
-      // Fetch quiz details for each quiz result
       for (const result of results) {
         if (result.quiz) {
           try {
@@ -523,7 +560,6 @@ const fetchQuizResults = async () => {
             let courseTitle = 'Unknown Course';
             let lessonTitle = 'Unknown Lesson';
             
-            // Try to get course and lesson details
             if (quiz.course_id) {
               try {
                 const course = await courseService.getCourse(quiz.course_id);
@@ -565,16 +601,13 @@ const fetchHomeworks = async () => {
   try {
     loading.value.homeworks = true;
     if (authStore.user?.id && registeredCourses.value.length > 0) {
-      // Fetch all homeworks for registered courses
       const allHomeworks: Homework[] = [];
       
       for (const registration of registeredCourses.value) {
         try {
           const courseId = registration.course_external_id || registration.course;
-          // Get course lessons
           const lessons = await courseService.getCourseLessons(courseId);
           
-          // Get homeworks for each lesson
           for (const lesson of lessons) {
             if (lesson.external_lesson_id) {
               const lessonHomeworks = await courseService.getLessonHomeworks(lesson.external_lesson_id);
@@ -585,7 +618,6 @@ const fetchHomeworks = async () => {
                   lesson_external_id: lesson.external_lesson_id
                 });
                 
-                // Store homework details
                 try {
                   const course = await courseService.getCourse(courseId);
                   const lessonDetail = await courseService.getLesson(lesson.external_lesson_id);
@@ -615,15 +647,21 @@ const fetchHomeworks = async () => {
   }
 };
 
-const fetchActiveSubscription = async () => {
+/**
+ * Fetch ALL non-expired active subscriptions, not just the selected one.
+ * This way the Home page reflects every plan currently giving the user features.
+ */
+const fetchActiveSubscriptions = async () => {
   try {
     loading.value.subscription = true;
     if (authStore.user?.id) {
-      activeSubscription.value = await subscriptionService.getActiveUserSubscription(authStore.user.id);
+      activeSubscriptions.value = await subscriptionService.getUsableSubscriptions(authStore.user.id);
+    } else {
+      activeSubscriptions.value = [];
     }
   } catch (error) {
-    console.error('Failed to fetch active subscription:', error);
-    activeSubscription.value = null;
+    console.error('Failed to fetch active subscriptions:', error);
+    activeSubscriptions.value = [];
   } finally {
     loading.value.subscription = false;
   }
@@ -635,20 +673,17 @@ const initializeData = async () => {
     fetchRegisteredCourses(),
     fetchCertificates(),
     fetchQuizResults(),
-    fetchActiveSubscription(),
+    fetchActiveSubscriptions(),
   ]);
   
-  // Fetch homeworks after courses are loaded
   if (registeredCourses.value.length > 0) {
     await fetchHomeworks();
   }
 };
 
 onMounted(async () => {
-  // Check authentication status
   await authStore.checkAuth();
   
-  // Fetch data if authenticated
   if (authStore.isAuthenticated) {
     await initializeData();
   }
@@ -656,3 +691,35 @@ onMounted(async () => {
 </script>
 
 <style scoped src="@/assets/css/home.css"></style>
+
+<style scoped>
+/* Minimal additions for multi-subscription rendering — does not override existing design */
+.active-subscriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.active-subscriptions-list .subscription-details + .subscription-details {
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+  padding-top: 16px;
+}
+
+.features-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+.feature-empty {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.combined-features-hint {
+  color: #64748b;
+  font-size: 12px;
+  margin-left: 4px;
+}
+</style>
