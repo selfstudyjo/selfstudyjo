@@ -26,7 +26,7 @@
             autocomplete="username"
             :disabled="authStore.loading"
           />
-          <div v-if="errors.username" class="error-message">{{ errors.username }}</div>
+          <div v-if="errors.username" class="error-message" role="alert">{{ errors.username }}</div>
         </div>
 
         <div class="form-group">
@@ -51,11 +51,12 @@
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
           </div>
-          <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
+          <div v-if="errors.password" class="error-message" role="alert">{{ errors.password }}</div>
         </div>
 
-        <div v-if="authStore.error" class="login-alert alert-error">
-          {{ authStore.error }}
+        <div v-if="authStore.error" class="login-alert alert-error" role="alert">
+          <span class="alert-icon" aria-hidden="true">⚠️</span>
+          <span class="alert-text">{{ authStore.error }}</span>
           <button type="button" @click="authStore.clearError()" class="alert-close">×</button>
         </div>
 
@@ -208,16 +209,16 @@ onMounted(() => {
 
 /* ============================================================
    INFO ALERT — light, brand-matched style
-   (kept here so the main login.css is not modified)
    ============================================================ */
 .login-alert.alert-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #e7ebff;                                  /* light, easy-to-read text */
-  background: rgba(102, 126, 234, 0.14);           /* soft brand-tinted glass */
+  color: #e7ebff;
+  background: rgba(102, 126, 234, 0.14);
   border: 1px solid rgba(129, 140, 248, 0.45);
   box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.08) inset;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .login-alert.alert-info .alert-icon {
@@ -241,5 +242,22 @@ onMounted(() => {
 .login-alert.alert-info .alert-close:hover {
   color: #ffffff;
   background: rgba(129, 140, 248, 0.18);
+}
+
+/* ============================================================
+   ERROR ALERT extras — make the icon/text layout consistent
+   with the info alert (text stays readable over the galaxy bg)
+   ============================================================ */
+.login-alert.alert-error .alert-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(252, 129, 129, 0.55));
+}
+
+.login-alert.alert-error .alert-text {
+  flex: 1;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 </style>

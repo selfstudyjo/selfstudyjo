@@ -36,10 +36,12 @@
   --lg-text-muted: rgba(255, 255, 255, 0.55);
   --lg-text-accent: #c7d2fe;
 
-  /* Status */
-  --lg-danger: #fc8181;
-  --lg-danger-bg: rgba(252, 129, 129, 0.12);
-  --lg-danger-border: rgba(252, 129, 129, 0.35);
+  /* Status — strong opaque red for maximum readability */
+  --lg-danger: #ffffff;                              /* pure white text */
+  --lg-danger-strong: #ffffff;                       /* pure white text */
+  --lg-danger-bg: rgba(180, 30, 40, 0.55);           /* solid-feeling red bg */
+  --lg-danger-bg-soft: rgba(180, 30, 40, 0.35);
+  --lg-danger-border: rgba(255, 130, 130, 0.75);
 
   /* Effects */
   --lg-blur: blur(18px) saturate(160%);
@@ -299,7 +301,7 @@
 
 .form-group input.error {
   border-color: var(--lg-danger-border);
-  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.15);
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.18);
 }
 
 /* ==========================================================================
@@ -350,28 +352,44 @@
 }
 
 /* ==========================================================================
-   ERROR MESSAGES
+   ERROR MESSAGES (inline, under inputs)
+   - Pure WHITE text on solid red background — maximum legibility
    ========================================================================== */
 .error-message {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
-  padding-left: 4px;
+  margin-top: 4px;
+  padding: 6px 10px;
   font-size: 12.5px;
-  color: var(--lg-danger);
+  font-weight: 600;
+  letter-spacing: 0.2px;
   line-height: 1.4;
+  color: #ffffff !important;                             /* PURE WHITE */
+  background: var(--lg-danger-bg);
+  border: 1px solid var(--lg-danger-border);
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 14px rgba(180, 30, 40, 0.30),
+              0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  align-self: flex-start;
+  max-width: 100%;
   animation: lgFadeIn 0.2s ease;
 }
 
 .error-message::before {
   content: '⚠';
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1;
+  color: #ffffff;
   flex-shrink: 0;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 /* ==========================================================================
-   ALERTS
+   ALERTS (top-of-form banners)
    ========================================================================== */
 .login-alert {
   display: flex;
@@ -381,16 +399,29 @@
   padding: 12px 14px;
   border-radius: var(--lg-radius-sm);
   font-size: 13.5px;
+  font-weight: 500;
   line-height: 1.45;
   animation: lgFadeIn 0.25s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-.alert-error {
-  color: var(--lg-danger);
+/* Error banner — PURE WHITE text on solid red glass */
+.alert-error,
+.login-alert.alert-error {
+  color: #ffffff !important;                             /* PURE WHITE */
   background: var(--lg-danger-bg);
   border: 1px solid var(--lg-danger-border);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 6px 20px rgba(180, 30, 40, 0.35),
+              0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  font-weight: 600;
+}
+
+/* Force every child of alert-error to be white as well */
+.alert-error *,
+.login-alert.alert-error * {
+  color: #ffffff !important;
 }
 
 .alert-close {
@@ -407,14 +438,14 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.9;
   transition: opacity var(--lg-transition-fast),
               background var(--lg-transition-fast);
 }
 
 .alert-close:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* ==========================================================================
@@ -545,8 +576,6 @@
   inset: 0;
 }
 
-/* Render the shapes as soft, brand-tinted blurred orbs that complement the
-   galaxy without competing with it. They are very subtle. */
 .shape {
   border-radius: 50%;
   filter: blur(70px);
@@ -622,6 +651,7 @@
     --lg-button-pad: 15px;
     --lg-gap: 22px;
   }
+  .error-message { font-size: 13px; }
 }
 
 /* Laptop — 1024+ */
@@ -650,6 +680,8 @@
     --lg-gap: 24px;
     --lg-touch: 48px;
   }
+  .error-message { font-size: 13.5px; }
+  .login-alert   { font-size: 14px; }
 }
 
 /* Large desktop / FHD — 1920+ */
@@ -674,6 +706,8 @@
     height: 40px;
     font-size: 18px;
   }
+  .error-message { font-size: 14px; padding: 7px 12px; }
+  .login-alert   { font-size: 15px; }
 }
 
 /* Ultra-wide / 4K — 2560+ */
@@ -700,6 +734,8 @@
     height: 48px;
     font-size: 22px;
   }
+  .error-message { font-size: 16px; padding: 9px 14px; }
+  .login-alert   { font-size: 17px; }
 }
 
 /* Landscape mobile (short screens) — keep card from overflowing */
@@ -742,7 +778,16 @@
     --lg-border-focus: #ffffff;
     --lg-text-secondary: #ffffff;
     --lg-text-muted: rgba(255, 255, 255, 0.85);
+    --lg-danger: #ffffff;
+    --lg-danger-strong: #ffffff;
+    --lg-danger-bg: rgba(180, 0, 0, 0.85);
+    --lg-danger-border: #ffffff;
   }
   .login-card { backdrop-filter: blur(8px); }
+  .error-message,
+  .alert-error {
+    color: #ffffff !important;
+    text-shadow: none;
+  }
   .shape { display: none; }
 }
