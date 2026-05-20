@@ -77,8 +77,6 @@ class PlanetRenderer {
       // Shared geometry — one sphere for ALL planets
       this.sharedGeometry = new THREE.SphereGeometry(1, SPHERE_SEGMENTS, SPHERE_SEGMENTS)
 
-      // Lights live in EACH scene (cheap to clone refs but easier to attach per-scene)
-
       this.intersectionObserver = new IntersectionObserver(entries => {
         for (const e of entries) {
           const id = Number((e.target as HTMLCanvasElement).dataset.planetId || 0)
@@ -140,7 +138,6 @@ class PlanetRenderer {
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE)
 
-    // Light surface noise (cheap)
     const seed = this.hashString(display) || 1
     ctx.fillStyle = 'rgba(0,0,0,0.18)'
     for (let i = 0; i < 25; i++) {
@@ -150,7 +147,6 @@ class PlanetRenderer {
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
     }
 
-    // Label
     const fontSize = Math.floor(TEXTURE_SIZE * 0.16)
     ctx.font = `bold ${fontSize}px system-ui, Arial`
     ctx.textAlign = 'center'
@@ -290,7 +286,6 @@ class PlanetRenderer {
     p.material.dispose() // geometry is shared, do NOT dispose
     this.releaseTexture(p.textureKey)
 
-    // Help GC
     p.scene.clear()
     this.planets.delete(id)
 
@@ -316,13 +311,11 @@ class PlanetRenderer {
 
         p.mesh.rotation.y += delta * p.rotSpeed
 
-        // Sync renderer size to this planet's output size
         if (this.offscreen!.width !== p.width || this.offscreen!.height !== p.height) {
           this.renderer.setSize(p.width, p.height, false)
         }
         this.renderer.render(p.scene, p.camera)
 
-        // Copy WebGL canvas → planet's 2D canvas
         p.outCtx.clearRect(0, 0, p.width, p.height)
         p.outCtx.drawImage(this.offscreen!, 0, 0, p.width, p.height)
       }
