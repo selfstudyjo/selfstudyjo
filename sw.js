@@ -1,59 +1,95 @@
 // public/sw.js
-const FALLBACK_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+// Transparent tiny PNG used as a last-resort fallback for failed image loads.
+const FALLBACK_IMAGE_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
-let authToken = null;
-
-self.addEventListener('install', event => {
-    self.skipWaiting();
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(clients.claim());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
-// Listen for messages from the main thread to set the token
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SET_AUTH_TOKEN') {
-        authToken = event.data.token;
-    }
+// Kept for backwards-compatibility with existing app code that posts a token.
+// We no longer rely on it for media (since /media/ is publicly served + CORS-enabled).
+self.addEventListener('message', (event) => {
+  // no-op; intentionally left blank
 });
 
-self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    if (
-        url.hostname.includes('selfstudymedia') ||
-        url.pathname.startsWith('/media1/') ||
-        url.pathname.startsWith('/media2/') ||
-        url.pathname.startsWith('/secure-media/')
-    ) {
-        // Rewrite /media/... to /secure-media/... (catches any missed transformations)
-        let requestUrl = event.request.url;
-        if (url.pathname.startsWith('/media/')) {
-            const newPath = url.pathname.replace('/media/', '/secure-media/');
-            requestUrl = `${url.origin}${newPath}${url.search}`;
+/**
+ * Build a fallback image Response.
+ */
+async function fallbackImageResponse() {
+  try {
+    const res = await fetch(FALLBACK_IMAGE_DATA_URL);
+    const buf = await res.arrayBuffer();
+    return new Response(buf, {
+      status: 200,
+      headers: { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' },
+    });
+  } catch {
+    return new Response('', { status: 503 });
+  }
+}
+
+self.addEventListener('fetch', (event) => {
+  // Only GET matters for media display
+  if (event.request.method !== 'GET') return;
+
+  let url;
+  try {
+    url = new URL(event.request.url);
+  } catch {
+    return;
+  }
+
+  const isSelfStudyMediaHost = url.hostname.includes('selfstudymedia');
+  const isMediaPath =
+    url.pathname.startsWith('/media/') ||
+    url.pathname.startsWith('/secure-media/') ||
+    url.pathname.startsWith('/media1/') ||
+    url.pathname.startsWith('/media2/');
+
+  if (!isSelfStudyMediaHost && !isMediaPath) return;
+
+  // Normalize: if anything still points at /secure-media/, send it through /media/
+  // (Django serves /media/ publicly with CORS already.)
+  let targetUrl = event.request.url;
+  if (url.pathname.startsWith('/secure-media/')) {
+    const newPath = url.pathname.replace('/secure-media/', '/media/');
+    targetUrl = `${url.origin}${newPath}${url.search}`;
+  }
+
+  event.respondWith(
+    (async () => {
+      try {
+        // Build a clean request: no auth header, public endpoint
+        const req = new Request(targetUrl, {
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'default',
+        });
+
+        const response = await fetch(req);
+
+        if (response && response.ok) {
+          return response;
         }
 
-        // Clone the request to add headers
-        const requestInit = {
-            method: event.request.method,
-            headers: new Headers(event.request.headers),
-                      mode: 'cors',
-                      credentials: 'omit',
-                      cache: event.request.cache
-        };
-
-        // Add Authorization header if token exists (only for non-GET? We'll keep it for all, but server now allows GET without token)
-        if (authToken && authToken !== 'Token Not Found!' && authToken !== 'your-actual-auth-token-here') {
-            requestInit.headers.set('Authorization', `Token ${authToken}`);
+        // Bad response — only swap to fallback for actual image requests
+        if (event.request.destination === 'image') {
+          return await fallbackImageResponse();
         }
 
-        // Create new request with added headers (and possibly new URL)
-        const newRequest = new Request(requestUrl, requestInit);
-
-        event.respondWith(
-            fetch(newRequest)
-            .then(response => response.ok ? response : new Response(FALLBACK_IMAGE, { headers: { 'Content-Type': 'image/png' } }))
-            .catch(() => new Response(FALLBACK_IMAGE, { headers: { 'Content-Type': 'image/png' } }))
-        );
-    }
+        return response;
+      } catch (err) {
+        if (event.request.destination === 'image') {
+          return await fallbackImageResponse();
+        }
+        return new Response('', { status: 503 });
+      }
+    })(),
+  );
 });
