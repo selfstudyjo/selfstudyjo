@@ -1,6 +1,17 @@
 /**
  * Shared Planet Renderer — singleton that drives ALL <Planet /> instances
  * with ONE WebGL context, ONE rAF loop, shared geometry & cached textures.
+ *
+ * Speed strategy:
+ *  - register() returns IMMEDIATELY with a procedurally-generated planet
+ *    texture, so the rotating 3D sphere appears with zero perceived delay.
+ *  - The real course image is fetched in the background through a parallel
+ *    CORS-proxy race (Promise.any). The first proxy to respond wins, gets
+ *    persisted to localStorage, and is reused for the rest of the page.
+ *  - When the real image arrives the material.map is hot-swapped on the
+ *    live mesh — no reflow, no flicker, no re-creation of scene/camera.
+ *  - Textures are reference-counted and shared across cards that use the
+ *    same image_url, so 6 cards never start 6 duplicate fetches.
  */
 import * as THREE from 'three'
 import { getSecureMediaUrl } from '@/utils/mediaUtils'
@@ -33,18 +44,10 @@ const TEXTURE_SIZE = 256
 
 /* -------------------------------------------------------------------------
  * CORS proxy chain (production only).
- *
- * To use your OWN Cloudflare Worker (highly recommended for reliability),
- * just put it FIRST in this list. See the optional setup below.
- *
- * Each entry takes the original URL and returns the proxy URL. The loader
- * tries them in order, remembers the first that succeeds for the lifetime
- * of the page, and only re-tries on failure.
+ * Place your own Cloudflare Worker URL FIRST for best reliability.
  * ------------------------------------------------------------------------- */
 const CORS_PROXY_TEMPLATES: Array<(u: string) => string> = [
-  // ⬇⬇ Add your own Cloudflare Worker URL here once deployed (recommended):
   // (u) => `https://YOUR-NAME.YOUR-SUBDOMAIN.workers.dev/?url=${encodeURIComponent(u)}`,
-
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
   (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
@@ -52,6 +55,7 @@ const CORS_PROXY_TEMPLATES: Array<(u: string) => string> = [
 ]
 
 const FETCH_TIMEOUT_MS = 9000
+const STICKY_PROXY_KEY = 'sfs_planet_proxy_idx'
 
 class PlanetRenderer {
   private static _instance: PlanetRenderer | null = null
@@ -69,6 +73,12 @@ class PlanetRenderer {
   private planets = new Map<number, PlanetHandle>()
   private textureCache = new Map<string, CachedTexture>()
 
+  /** Tracks one in-flight fetch per image URL so 6 cards never start 6
+   *  duplicate proxy races for the same image. */
+  private imageLoadInFlight = new Map<string, Promise<{
+    img: HTMLImageElement, objectUrl?: string
+  } | null>>()
+
   private rafId = 0
   private lastFrame = 0
   private frameInterval = 1000 / TARGET_FPS
@@ -77,8 +87,12 @@ class PlanetRenderer {
   private nextId = 1
   private webglOk = true
 
-  // Sticky proxy: once one succeeds we stop probing the others.
+  /** First successful proxy (persisted across page-loads in localStorage). */
   private workingProxy: ((u: string) => string) | null = null
+
+  private constructor() {
+    this.restoreStickyProxy()
+  }
 
   // ----- Lifecycle -----
   private ensureInit() {
@@ -100,7 +114,6 @@ class PlanetRenderer {
       })
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
 
-      // Shared geometry — one sphere for ALL planets
       this.sharedGeometry = new THREE.SphereGeometry(1, SPHERE_SEGMENTS, SPHERE_SEGMENTS)
 
       this.intersectionObserver = new IntersectionObserver(entries => {
@@ -131,9 +144,30 @@ class PlanetRenderer {
     } catch { this.webglOk = false; return false }
   }
 
-  // -------------------------------------------------------------------------
-  // Image loading pipeline
-  // -------------------------------------------------------------------------
+  // ----- Sticky proxy persistence -----
+  private restoreStickyProxy() {
+    try {
+      const raw = localStorage.getItem(STICKY_PROXY_KEY)
+      if (raw == null) return
+      const idx = parseInt(raw, 10)
+      if (Number.isFinite(idx) && idx >= 0 && idx < CORS_PROXY_TEMPLATES.length) {
+        this.workingProxy = CORS_PROXY_TEMPLATES[idx]
+      }
+    } catch { /* ignore */ }
+  }
+  private rememberStickyProxy(proxy: (u: string) => string) {
+    this.workingProxy = proxy
+    try {
+      const idx = CORS_PROXY_TEMPLATES.indexOf(proxy)
+      if (idx >= 0) localStorage.setItem(STICKY_PROXY_KEY, String(idx))
+    } catch { /* ignore */ }
+  }
+  private forgetStickyProxy() {
+    this.workingProxy = null
+    try { localStorage.removeItem(STICKY_PROXY_KEY) } catch { /* ignore */ }
+  }
+
+  // ----- Texture generation -----
   private hashString(s: string): number {
     let h = 0
     for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0 }
@@ -178,10 +212,10 @@ class PlanetRenderer {
     return tex
   }
 
+  // ----- Image pipeline -----
   private decodeImageFromUrl(src: string): Promise<HTMLImageElement> {
     return new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image()
-      // src is either same-origin (blob:) or a Vite-proxied path → no CORS check needed.
       img.onload = () => {
         if (img.naturalWidth === 0) reject(new Error('Empty image'))
         else resolve(img)
@@ -191,11 +225,7 @@ class PlanetRenderer {
     })
   }
 
-  /**
-   * Fetch `url` as a Blob with timeout & basic validation, then turn it into
-   * a same-origin Image via createObjectURL. WebGL can then upload it without
-   * any further CORS check because the <img>.src is `blob:...` (same-origin).
-   */
+  /** Fetch via proxy URL → blob → object URL → decoded <img>. */
   private async fetchImageAsObjectUrl(url: string):
       Promise<{ img: HTMLImageElement, objectUrl: string } | null> {
     const controller = new AbortController()
@@ -226,15 +256,25 @@ class PlanetRenderer {
     }
   }
 
-  /**
-   * Top-level image loader.
-   *   - In dev: use the Vite dev proxy (`/media1/`, `/media2/`) — same-origin,
-   *     no CORS hassle, same as your original.
-   *   - In prod: try direct (in case CORS ever gets enabled), then the sticky
-   *     proxy, then every other proxy in order. Returns null only if ALL
-   *     options fail — in which case we fall back to the generated texture.
-   */
-  private async loadCourseImage(rawUrl: string):
+  /** Race every proxy in parallel; first success wins and becomes sticky. */
+  private async raceProxies(url: string):
+      Promise<{ img: HTMLImageElement, objectUrl?: string } | null> {
+    const attempts = CORS_PROXY_TEMPLATES.map((buildProxy) =>
+      this.fetchImageAsObjectUrl(buildProxy(url)).then(result => {
+        if (!result) return Promise.reject(new Error('failed'))
+        if (!this.workingProxy) this.rememberStickyProxy(buildProxy)
+        return result
+      })
+    )
+    try {
+      return await Promise.any(attempts)
+    } catch {
+      return null
+    }
+  }
+
+  /** Top-level: dev-proxy in dev, sticky → race in prod. Returns null if all fail. */
+  private async loadCourseImageInternal(rawUrl: string):
       Promise<{ img: HTMLImageElement, objectUrl?: string } | null> {
 
     if (import.meta.env.DEV) {
@@ -252,7 +292,6 @@ class PlanetRenderer {
     const finalUrl = getSecureMediaUrl(rawUrl)
     const isMediaUrl = /^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\//.test(finalUrl)
 
-    // Non-selfstudy URLs (e.g. external CDN with CORS): just load directly.
     if (!isMediaUrl) {
       try {
         const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -266,71 +305,94 @@ class PlanetRenderer {
       } catch { return null }
     }
 
-    // Try the sticky proxy first
+    // Sticky path — single fetch, ~one round-trip
     if (this.workingProxy) {
       const r = await this.fetchImageAsObjectUrl(this.workingProxy(finalUrl))
       if (r) return r
-      this.workingProxy = null // stopped working, fall through
+      this.forgetStickyProxy()
     }
 
-    // Try every proxy in order, remember the first that works
-    for (const buildProxy of CORS_PROXY_TEMPLATES) {
-      const r = await this.fetchImageAsObjectUrl(buildProxy(finalUrl))
-      if (r) {
-        this.workingProxy = buildProxy
-        return r
-      }
-    }
-
-    return null
+    // First time / sticky failed: race them in parallel
+    return await this.raceProxies(finalUrl)
   }
 
-  private async acquireTexture(imageUrl: string | undefined, courseName: string):
-      Promise<{ tex: THREE.Texture, key: string }> {
-    const key = imageUrl ? `img:${imageUrl}` : `gen:${courseName}`
-
-    const cached = this.textureCache.get(key)
-    if (cached) {
-      cached.refs++
-      return { tex: cached.texture, key }
-    }
-
-    let tex: THREE.Texture
-    let objectUrl: string | undefined
-
-    if (imageUrl) {
-      const loaded = await this.loadCourseImage(imageUrl)
-      if (loaded) {
-        const t = new THREE.Texture(loaded.img)
-        t.colorSpace = THREE.SRGBColorSpace
-        t.needsUpdate = true
-        tex = t
-        objectUrl = loaded.objectUrl
-      } else {
-        tex = this.generateNamedTexture(courseName)
-      }
-    } else {
-      tex = this.generateNamedTexture(courseName)
-    }
-
-    this.textureCache.set(key, { texture: tex, refs: 1, objectUrl })
-    return { tex, key }
+  /** De-duplicated loader: if the same image_url is already loading, await
+   *  the existing promise instead of starting a second fetch. */
+  private loadCourseImage(rawUrl: string):
+      Promise<{ img: HTMLImageElement, objectUrl?: string } | null> {
+    const existing = this.imageLoadInFlight.get(rawUrl)
+    if (existing) return existing
+    const p = this.loadCourseImageInternal(rawUrl).finally(() => {
+      this.imageLoadInFlight.delete(rawUrl)
+    })
+    this.imageLoadInFlight.set(rawUrl, p)
+    return p
   }
 
+  // ----- Texture cache + ref counting -----
   private releaseTexture(key: string) {
     const c = this.textureCache.get(key)
     if (!c) return
     c.refs--
     if (c.refs <= 0) {
       c.texture.dispose()
-      if (c.objectUrl) {
-        try { URL.revokeObjectURL(c.objectUrl) } catch {}
-      }
+      if (c.objectUrl) { try { URL.revokeObjectURL(c.objectUrl) } catch {} }
       this.textureCache.delete(key)
     }
   }
 
-  // ----- Public API: register / update / unregister a planet -----
+  private applyTextureToPlanet(planetId: number, newTex: THREE.Texture, newKey: string) {
+    const p = this.planets.get(planetId)
+    if (!p) {
+      // Planet was unregistered while we were loading — release the texture.
+      this.releaseTexture(newKey)
+      return
+    }
+    const oldKey = p.textureKey
+    p.material.map = newTex
+    p.material.needsUpdate = true
+    p.textureKey = newKey
+    this.releaseTexture(oldKey)
+  }
+
+  /** Run image load + texture creation in the background, then hot-swap onto the live planet. */
+  private async upgradeToRealImage(planetId: number, imageUrl: string) {
+    const cacheKey = `img:${imageUrl}`
+
+    // Cached already?
+    const cached = this.textureCache.get(cacheKey)
+    if (cached) {
+      cached.refs++
+      this.applyTextureToPlanet(planetId, cached.texture, cacheKey)
+      return
+    }
+
+    const loaded = await this.loadCourseImage(imageUrl)
+    if (!loaded) return  // Keep generated planet — same fallback you already had.
+
+    // Re-check cache (a sibling card may have populated it while we were loading).
+    const winnerCached = this.textureCache.get(cacheKey)
+    if (winnerCached) {
+      if (loaded.objectUrl) { try { URL.revokeObjectURL(loaded.objectUrl) } catch {} }
+      winnerCached.refs++
+      this.applyTextureToPlanet(planetId, winnerCached.texture, cacheKey)
+      return
+    }
+
+    const tex = new THREE.Texture(loaded.img)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.needsUpdate = true
+
+    this.textureCache.set(cacheKey, {
+      texture: tex,
+      refs: 1,
+      objectUrl: loaded.objectUrl,
+    })
+
+    this.applyTextureToPlanet(planetId, tex, cacheKey)
+  }
+
+  // ----- Public API -----
   async register(opts: {
     canvas: HTMLCanvasElement
     imageUrl?: string
@@ -347,7 +409,11 @@ class PlanetRenderer {
 
     opts.canvas.dataset.planetId = String(id)
 
-    const { tex, key } = await this.acquireTexture(opts.imageUrl, opts.courseName)
+    // 1) IMMEDIATE: build the planet with a procedurally-generated texture.
+    //    This is what makes the perceived load instant.
+    const genKey = `gen:${id}:${opts.courseName}`
+    const genTex = this.generateNamedTexture(opts.courseName)
+    this.textureCache.set(genKey, { texture: genTex, refs: 1 })
 
     const scene = new THREE.Scene()
     scene.add(new THREE.AmbientLight(0x6677aa, 0.7))
@@ -358,7 +424,7 @@ class PlanetRenderer {
     const camera = new THREE.PerspectiveCamera(45, opts.width / opts.height, 0.1, 100)
     camera.position.set(0, 0, 3)
 
-    const material = new THREE.MeshLambertMaterial({ map: tex })
+    const material = new THREE.MeshLambertMaterial({ map: genTex })
     const mesh = new THREE.Mesh(this.sharedGeometry, material)
     scene.add(mesh)
 
@@ -370,7 +436,7 @@ class PlanetRenderer {
       camera,
       mesh,
       material,
-      textureKey: key,
+      textureKey: genKey,
       width: opts.width,
       height: opts.height,
       rotSpeed: 0.3,
@@ -378,6 +444,11 @@ class PlanetRenderer {
     }
     this.planets.set(id, handle)
     this.intersectionObserver?.observe(opts.canvas)
+
+    // 2) BACKGROUND: fetch the real image and swap the material's map.
+    if (opts.imageUrl) {
+      this.upgradeToRealImage(id, opts.imageUrl).catch(() => { /* keep generated */ })
+    }
 
     return id
   }
@@ -401,7 +472,6 @@ class PlanetRenderer {
     p.material.dispose() // geometry is shared, do NOT dispose
     this.releaseTexture(p.textureKey)
 
-    // Help GC
     p.scene.clear()
     this.planets.delete(id)
 
@@ -439,9 +509,7 @@ class PlanetRenderer {
     this.rafId = requestAnimationFrame(tick)
   }
 
-  private onVisibilityChange = () => {
-    // Loop already checks document.hidden; nothing else to do
-  }
+  private onVisibilityChange = () => { /* loop already checks document.hidden */ }
 
   private shutdown() {
     if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = 0 }
@@ -452,11 +520,10 @@ class PlanetRenderer {
 
     for (const c of this.textureCache.values()) {
       c.texture.dispose()
-      if (c.objectUrl) {
-        try { URL.revokeObjectURL(c.objectUrl) } catch {}
-      }
+      if (c.objectUrl) { try { URL.revokeObjectURL(c.objectUrl) } catch {} }
     }
     this.textureCache.clear()
+    this.imageLoadInFlight.clear()
 
     this.sharedGeometry?.dispose()
     this.sharedGeometry = null
@@ -465,8 +532,6 @@ class PlanetRenderer {
     this.renderer?.forceContextLoss?.()
     this.renderer = null
     this.offscreen = null
-
-    this.workingProxy = null
   }
 }
 

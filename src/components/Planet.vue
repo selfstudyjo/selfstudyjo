@@ -67,7 +67,7 @@ async function register() {
     height: props.height,
   })
   if (mounted && id !== null) planetId = id
-  else if (id !== null) planetRenderer.unregister(id) // unmounted while loading
+  else if (id !== null) planetRenderer.unregister(id)
 }
 
 function unregister() {
@@ -87,13 +87,11 @@ onBeforeUnmount(() => {
   unregister()
 })
 
-// Re-register when source props change
 watch(() => [props.imageUrl, props.courseName], () => {
   unregister()
   register()
 })
 
-// Resize without re-registering
 watch(() => [props.width, props.height], ([w, h]) => {
   if (planetId !== null) planetRenderer.resize(planetId, w as number, h as number)
 })
@@ -113,7 +111,6 @@ watch(() => [props.width, props.height], ([w, h]) => {
   display: block;
   max-width: 100%;
   height: auto;
-  /* prevent layout shift / blurry scaling */
   image-rendering: -webkit-optimize-contrast;
 }
 
