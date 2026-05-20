@@ -2,9 +2,12 @@
   <div class="profile-avatar" :class="{ 'has-image': effectiveImageUrl }">
     <div v-if="effectiveImageUrl && !useFallback" class="avatar-image">
       <img
-        :src="effectiveImageUrl"
+        :src="displayedImageUrl"
         :alt="altText"
+        loading="eager"
+        decoding="async"
         @error="handleImageError"
+        @load="handleImageLoad"
       />
     </div>
     <div v-else class="avatar-initials" :style="avatarStyle">
@@ -45,8 +48,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { getProxiedImageUrl } from '@/utils/imageUtils';
+import { ref, computed, onMounted, watch } from 'vue';
+import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 
 interface Props {
   imageUrl?: string;
@@ -77,6 +80,10 @@ const emit = defineEmits<{
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const useFallback = ref(false);
+const retryCount = ref(0);
+const MAX_RETRIES = 2;
+// The current `src` actually rendered (may include cache-buster on retry)
+const displayedImageUrl = ref('');
 
 const initials = computed(() => {
   if (props.firstName && props.lastName) {
@@ -102,53 +109,47 @@ const altText = computed(() => {
   return 'Profile picture';
 });
 
-// Apply proxy to the original image URL
 const proxiedImageUrl = computed(() => getProxiedImageUrl(props.imageUrl));
 
-// Determine which URL to use (proxied or fallback initials)
 const effectiveImageUrl = computed(() => {
-  if (useFallback.value) {
-    return generateInitialsImage(initials.value, 200);
-  }
+  if (useFallback.value) return '';
   return proxiedImageUrl.value;
 });
 
 const avatarStyle = computed(() => {
   const styles: Record<string, string> = {};
-
-  const sizeMap = {
-    sm: '32px',
-    md: '48px',
-    lg: '80px',
-    xl: '120px'
-  };
-
+  const sizeMap = { sm: '32px', md: '48px', lg: '80px', xl: '120px' };
   styles.width = sizeMap[props.size] || '80px';
   styles.height = sizeMap[props.size] || '80px';
   styles.fontSize = props.size === 'sm' ? '12px' :
                     props.size === 'md' ? '16px' :
                     props.size === 'lg' ? '24px' : '32px';
   styles.lineHeight = styles.height;
-
-  if (props.backgroundColor) {
-    styles.backgroundColor = props.backgroundColor;
-  }
-  if (props.textColor) {
-    styles.color = props.textColor;
-  }
-
+  if (props.backgroundColor) styles.backgroundColor = props.backgroundColor;
+  if (props.textColor) styles.color = props.textColor;
   return styles;
 });
 
+const handleImageLoad = () => {
+  // success — reset retry counter in case URL changes later
+  retryCount.value = 0;
+};
+
 const handleImageError = () => {
-  console.warn('Profile image failed to load, using fallback initials:', props.imageUrl);
+  if (retryCount.value < MAX_RETRIES && proxiedImageUrl.value) {
+    retryCount.value++;
+    // Retry with a cache-buster to bypass any stale 4xx in browser cache
+    setTimeout(() => {
+      displayedImageUrl.value = addCacheBuster(proxiedImageUrl.value);
+    }, 250 * retryCount.value);
+    return;
+  }
+  console.warn('Profile image failed to load, using initials fallback:', props.imageUrl);
   useFallback.value = true;
 };
 
 const triggerFileInput = () => {
-  if (props.editable && fileInput.value) {
-    fileInput.value.click();
-  }
+  if (props.editable && fileInput.value) fileInput.value.click();
 };
 
 const handleFileChange = (event: Event) => {
@@ -164,12 +165,9 @@ const handleFileChange = (event: Event) => {
       return;
     }
     emit('image-upload', file);
-    // Reset input
-    if (fileInput.value) {
-      fileInput.value.value = '';
-    }
-    // Reset fallback state in case new image is uploaded
+    if (fileInput.value) fileInput.value.value = '';
     useFallback.value = false;
+    retryCount.value = 0;
   }
 };
 
@@ -177,32 +175,25 @@ const handleRemoveImage = () => {
   if (confirm('Are you sure you want to remove your profile picture?')) {
     emit('image-remove');
     useFallback.value = false;
+    retryCount.value = 0;
   }
 };
 
-function generateInitialsImage(initials: string, size: number): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
-
-  const hue = (initials.charCodeAt(0) * 10) % 360;
-  const color = `hsl(${hue}, 70%, 60%)`;
-
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.fillStyle = 'white';
-  ctx.font = `bold ${size * 0.4}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(initials, size / 2, size / 2);
-
-  return canvas.toDataURL('image/png');
-}
+// Watch for URL changes — reset retry / fallback flags and refresh displayed URL
+watch(
+  () => props.imageUrl,
+  () => {
+    useFallback.value = false;
+    retryCount.value = 0;
+    displayedImageUrl.value = proxiedImageUrl.value || '';
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   useFallback.value = false;
+  retryCount.value = 0;
+  displayedImageUrl.value = proxiedImageUrl.value || '';
 });
 </script>
 

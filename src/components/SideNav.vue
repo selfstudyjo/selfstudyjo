@@ -131,11 +131,14 @@
           <div class="user-profile" @click="goToProfile">
             <div class="avatar">
               <img
-                v-if="proxiedImageUrl && !avatarError"
-                :src="proxiedImageUrl"
+                v-if="displayedAvatarUrl && !avatarError"
+                :src="displayedAvatarUrl"
                 :alt="username"
                 class="profile-image"
-                @error="avatarError = true"
+                loading="eager"
+                decoding="async"
+                @error="handleAvatarError"
+                @load="handleAvatarLoad"
               />
               <span v-else>{{ userInitials }}</span>
             </div>
@@ -196,7 +199,7 @@ import { ref, computed, h, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
-import { getProxiedImageUrl } from '@/utils/imageUtils';
+import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 
 const DashboardIcon = {
   name: 'DashboardIcon',
@@ -354,6 +357,9 @@ const isCollapsed = ref(true);
 const isMobile = ref(false);
 const sidebarVisible = ref(false);
 const avatarError = ref(false);
+const avatarRetryCount = ref(0);
+const MAX_AVATAR_RETRIES = 2;
+const displayedAvatarUrl = ref('');
 let pollInterval: number | null = null;
 
 onMounted(() => {
@@ -364,6 +370,7 @@ onMounted(() => {
   }
   if (authStore.isAuthenticated) initializeNotifications();
   document.addEventListener('click', handleClickOutside);
+  syncAvatarUrl();
 });
 
 onUnmounted(() => {
@@ -458,6 +465,27 @@ const proxiedImageUrl = computed(() => {
 });
 const displayCount = computed(() => notificationStore.unreadCount);
 
+function syncAvatarUrl() {
+  avatarError.value = false;
+  avatarRetryCount.value = 0;
+  displayedAvatarUrl.value = proxiedImageUrl.value || '';
+}
+
+function handleAvatarLoad() {
+  avatarRetryCount.value = 0;
+}
+
+function handleAvatarError() {
+  if (avatarRetryCount.value < MAX_AVATAR_RETRIES && proxiedImageUrl.value) {
+    avatarRetryCount.value++;
+    setTimeout(() => {
+      displayedAvatarUrl.value = addCacheBuster(proxiedImageUrl.value);
+    }, 250 * avatarRetryCount.value);
+    return;
+  }
+  avatarError.value = true;
+}
+
 function initializeNotifications() {
   if (username.value) {
     notificationStore.loadFromLocalStorage(username.value);
@@ -524,8 +552,13 @@ watch(() => route.path, () => {
   }
 });
 
+watch(
+  () => authStore.user?.image_url,
+  () => syncAvatarUrl()
+);
+
 watch(() => authStore.user, () => {
-  avatarError.value = false;
+  syncAvatarUrl();
 });
 </script>
 

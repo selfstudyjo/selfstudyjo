@@ -1,38 +1,50 @@
 /**
- * Converts a direct media server URL to a secure endpoint URL in production.
- * In development, returns the proxy URL (no change needed because Vite proxy handles it).
+ * Returns a media URL that can be safely loaded by the browser.
+ *
+ * Django (selfstudymedia) serves /media/ publicly with CORS enabled, so we
+ * deliberately do NOT rewrite to /secure-media/ for image rendering.
+ * (Filenames are UUIDs and the secure endpoint is still available server-side
+ *  for callers that explicitly need an authenticated stream.)
+ *
+ * If a stored URL happens to point to /secure-media/, we normalize it back
+ * to /media/ so it loads reliably on first paint.
  */
 export function getSecureMediaUrl(originalUrl: string): string {
     if (!originalUrl) return originalUrl;
 
-    // In development, we keep the original (will be proxied via Vite)
-    if (import.meta.env.DEV) {
-        return originalUrl;
+    // Normalize /secure-media/ -> /media/ for any selfstudymedia host
+    try {
+        const u = new URL(originalUrl, window.location.href);
+        if (u.hostname.includes('selfstudymedia') && u.pathname.startsWith('/secure-media/')) {
+            u.pathname = u.pathname.replace('/secure-media/', '/media/');
+            return u.toString();
+        }
+    } catch {
+        // If URL parsing fails, fall through to string-based fallback
+        if (originalUrl.includes('/secure-media/')) {
+            return originalUrl.replace('/secure-media/', '/media/');
+        }
     }
 
-    // In production, rewrite URLs that point to media servers
-    // Example: https://selfstudymedia1.pythonanywhere.com/media/course_images/239.jpg
-    //       → https://selfstudymedia1.pythonanywhere.com/secure-media/course_images/239.jpg
-    const mediaServerPattern = /^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\/media\/([^/]+)\/(.+)$/;
-    const match = originalUrl.match(mediaServerPattern);
-
-    if (match) {
-        const [, mediaType, fileName] = match;
-        // Use the same origin but with /secure-media/ prefix
-        const base = originalUrl.split('/media/')[0];
-        return `${base}/secure-media/${mediaType}/${fileName}`;
-    }
-
-    // If it's not a media server URL, return as is (e.g., external CDN)
     return originalUrl;
 }
 
 /**
+ * Adds a cache-busting query parameter to an image URL. Useful for retries.
+ */
+export function withCacheBuster(url: string): string {
+    if (!url) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_cb=${Date.now()}`;
+}
+
+/**
  * Helper to determine if a URL is a placeholder or invalid.
- * (Optional – you can reuse your existing isValidImageUrl logic)
  */
 export function isValidImageUrl(url?: string): boolean {
     if (!url) return false;
-    // ... (keep your existing validation from courseImage.ts)
+    const trimmed = url.trim();
+    if (!trimmed) return false;
+    if (trimmed === 'null' || trimmed === 'undefined') return false;
     return true;
 }
