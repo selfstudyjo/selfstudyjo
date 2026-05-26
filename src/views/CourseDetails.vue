@@ -361,6 +361,9 @@ import { serviceRegistry } from '@/services/config';
 import Planet from '@/components/Planet.vue';
 import { getSecureMediaUrl } from '@/utils/mediaUtils';
 
+const DEBUG = true;
+const log = (...a: any[]) => { if (DEBUG) console.log('[CourseDetails]', ...a); };
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -381,7 +384,6 @@ const submittingComment = ref(false);
 const commentError = ref<string | null>(null);
 const deletingCommentId = ref<string | null>(null);
 
-// Registration state
 const isUserRegistered = ref(false);
 const userRegistration = ref<CourseRegistration | null>(null);
 const registrationLoading = ref(false);
@@ -397,7 +399,6 @@ const planetSize = computed(() => {
   if (w < 1440) return 440;
   return 500;
 });
-
 const handleResize = () => { windowWidth.value = window.innerWidth; };
 
 const courseReplicaBaseUrl = ref<string | null>(null);
@@ -411,7 +412,6 @@ const mentionDropdownTop = ref(0);
 const mentionDropdownLeft = ref(0);
 const mentionSearch = ref('');
 const commentTextarea = ref<HTMLTextAreaElement | null>(null);
-
 const userProfileCache = new Map<string, UserProfile>();
 
 const tabs = computed(() => [
@@ -428,49 +428,32 @@ const loginLink = computed(() => ({
   query: { redirect: route.fullPath, message: 'You need to login first to add a comment.' }
 }));
 
-/**
- * Returns every plausible user identifier — UUID, username, lowercased username.
- * The deployed selfstudy-course app stored `user_id` as either UUID or username
- * depending on when the registration was created.
- */
 const buildUserIdCandidates = (): string[] => {
   const u = authStore.user;
   if (!u) return [];
   const list: string[] = [];
   if (u.id) list.push(String(u.id));
-  if (u.username) {
-    list.push(String(u.username));
-    list.push(String(u.username).toLowerCase());
-  }
+  if (u.username) { list.push(String(u.username)); list.push(String(u.username).toLowerCase()); }
   return [...new Set(list)];
 };
 
 const loadUserRegistrationStatus = async () => {
   if (!course.value || !authStore.user) {
-    isUserRegistered.value = false;
-    userRegistration.value = null;
-    return;
+    isUserRegistered.value = false; userRegistration.value = null; return;
   }
   const ids = buildUserIdCandidates();
-  if (ids.length === 0) {
-    isUserRegistered.value = false;
-    userRegistration.value = null;
-    return;
-  }
-
+  if (ids.length === 0) { isUserRegistered.value = false; userRegistration.value = null; return; }
   regCheckLoading.value = true;
   try {
     const reg = await courseService.getUserRegistrationForCourse(
-      ids,
-      course.value.external_course_id,
-      courseReplicaBaseUrl.value || undefined
+      ids, course.value.external_course_id, courseReplicaBaseUrl.value || undefined
     );
     userRegistration.value = reg;
     isUserRegistered.value = !!reg;
+    log('isUserRegistered =', isUserRegistered.value, 'reg =', reg);
   } catch (err) {
-    console.warn('Failed to load registration status:', err);
-    isUserRegistered.value = false;
-    userRegistration.value = null;
+    console.warn('[CourseDetails] Failed to load registration status:', err);
+    isUserRegistered.value = false; userRegistration.value = null;
   } finally {
     regCheckLoading.value = false;
   }
@@ -482,9 +465,7 @@ const handleRegister = async () => {
   try {
     const userId = String(authStore.user.id || authStore.user.username);
     const reg = await courseService.registerUserForCourse(
-      userId,
-      course.value.external_course_id,
-      courseReplicaBaseUrl.value || undefined
+      userId, course.value.external_course_id, courseReplicaBaseUrl.value || undefined
     );
     userRegistration.value = reg;
     isUserRegistered.value = true;
@@ -494,7 +475,7 @@ const handleRegister = async () => {
       await loadUserRegistrationStatus();
     } else {
       console.error('Enroll failed:', err);
-      alert(err?.message || 'Failed to enroll in this course. Please try again.');
+      alert(err?.message || 'Failed to enroll. Please try again.');
     }
   } finally {
     registrationLoading.value = false;
@@ -504,26 +485,20 @@ const handleRegister = async () => {
 const handleUnregister = async () => {
   if (!authStore.user || !course.value || registrationLoading.value) return;
   if (!confirm(`Unenroll from "${course.value.title}"?`)) return;
-
   registrationLoading.value = true;
   try {
     if (userRegistration.value?.external_id) {
-      await courseService.unregisterUserFromCourse(
-        userRegistration.value.external_id,
-        courseReplicaBaseUrl.value || undefined
-      );
+      await courseService.unregisterUserFromCourse(userRegistration.value.external_id, courseReplicaBaseUrl.value || undefined);
     } else {
       await courseService.unregisterUserFromCourseByCourse(
-        buildUserIdCandidates(),
-        course.value.external_course_id,
-        courseReplicaBaseUrl.value || undefined
+        buildUserIdCandidates(), course.value.external_course_id, courseReplicaBaseUrl.value || undefined
       );
     }
     userRegistration.value = null;
     isUserRegistered.value = false;
   } catch (err: any) {
     console.error('Unenroll failed:', err);
-    alert(err?.message || 'Failed to unenroll. Please try again.');
+    alert(err?.message || 'Failed to unenroll.');
   } finally {
     registrationLoading.value = false;
   }
@@ -540,42 +515,74 @@ const fetchCourseData = async () => {
     const courseReplica = await courseService.getRandomCourseReplica();
     if (!courseReplica) throw new Error('No course service replicas available');
     courseReplicaBaseUrl.value = courseReplica;
+    log('Course replica =', courseReplica);
 
     const quizReplica = await quizService.getRandomQuizReplica();
     if (!quizReplica) throw new Error('No exam service replicas available');
     quizReplicaBaseUrl.value = quizReplica;
+    log('Quiz/exam replica =', quizReplica);
 
     const [fetchedCourse, fetchedLessons, fetchedComments] = await Promise.all([
       courseService.getCourse(courseId, courseReplicaBaseUrl.value),
       courseService.getCourseLessons(courseId, courseReplicaBaseUrl.value),
       courseService.getCourseComments(courseId, courseReplicaBaseUrl.value)
     ]);
-
     course.value = fetchedCourse;
+    log('Course =', fetchedCourse);
+    log('Lessons external_lesson_ids =', fetchedLessons.map(l => l.external_lesson_id));
 
+    // ---------- QUIZZES (with fallback to per-lesson) ----------
     const quizzesByLessonId = new Map<string, Quiz>();
     try {
-      const lightQuizzes = await quizService.getQuizzesForCourseLight(courseId, quizReplicaBaseUrl.value);
+      let lightQuizzes = await quizService.getQuizzesForCourseLight(courseId, quizReplicaBaseUrl.value);
+      log('Quizzes via course_id filter:', lightQuizzes.length);
+
+      // Fallback: try per-lesson if course-level filter returned nothing
+      if (lightQuizzes.length === 0 && fetchedLessons.length > 0) {
+        log('Falling back to per-lesson quiz lookup');
+        const lessonIds = fetchedLessons.map(l => l.external_lesson_id).filter(Boolean);
+        lightQuizzes = await quizService.getQuizzesForLessons(lessonIds, quizReplicaBaseUrl.value);
+        log('Quizzes via per-lesson lookup:', lightQuizzes.length);
+      }
+
       lightQuizzes.forEach(q => {
         if (q.lesson_id) {
           quizzesByLessonId.set(q.lesson_id, { external_id: q.external_id, lesson_id: q.lesson_id } as Quiz);
         }
       });
-    } catch (err) {}
+      log('quizzesByLessonId keys:', Array.from(quizzesByLessonId.keys()));
+    } catch (err) {
+      console.error('[CourseDetails] Failed loading quizzes:', err);
+    }
 
+    // ---------- HOMEWORKS (with fallback to per-lesson) ----------
     const homeworksByLessonId = new Map<string, Homework[]>();
     try {
-      const allHomeworks = await courseService.getHomeworksForCourse(courseId, courseReplicaBaseUrl.value);
+      let allHomeworks = await courseService.getHomeworksForCourse(courseId, courseReplicaBaseUrl.value);
+      log('Homeworks via course_id filter:', allHomeworks.length);
+
+      if (allHomeworks.length === 0 && fetchedLessons.length > 0) {
+        log('Falling back to per-lesson homework lookup');
+        const lessonIds = fetchedLessons.map(l => l.external_lesson_id).filter(Boolean);
+        allHomeworks = await courseService.getHomeworksForLessons(lessonIds, courseReplicaBaseUrl.value);
+        log('Homeworks via per-lesson lookup:', allHomeworks.length);
+      }
+
       allHomeworks.forEach(hw => {
-        if (hw.lesson_external_id) {
-          if (!homeworksByLessonId.has(hw.lesson_external_id)) {
-            homeworksByLessonId.set(hw.lesson_external_id, []);
-          }
-          homeworksByLessonId.get(hw.lesson_external_id)!.push(hw);
+        const lid = hw.lesson_external_id || (hw as any).lesson;
+        if (lid) {
+          if (!homeworksByLessonId.has(lid)) homeworksByLessonId.set(lid, []);
+          homeworksByLessonId.get(lid)!.push(hw);
+        } else {
+          log('Homework has no lesson reference:', hw);
         }
       });
-    } catch (err) {}
+      log('homeworksByLessonId keys:', Array.from(homeworksByLessonId.keys()));
+    } catch (err) {
+      console.error('[CourseDetails] Failed loading homeworks:', err);
+    }
 
+    // ---------- Build final lessons array ----------
     lessons.value = fetchedLessons.map(lesson => {
       const quiz = quizzesByLessonId.get(lesson.external_lesson_id);
       const lessonHomeworks = homeworksByLessonId.get(lesson.external_lesson_id) || [];
@@ -588,33 +595,39 @@ const fetchCourseData = async () => {
       };
     });
 
+    log('Lessons with badges →',
+        lessons.value.map(l => ({
+          external_lesson_id: l.external_lesson_id,
+          hasQuiz: l.hasQuiz,
+          hasHomework: l.hasHomework,
+          homeworkCount: l.homeworkCount,
+        })));
+
+    // ---------- Comments user profiles ----------
     const uniqueUserIds = [...new Set(fetchedComments.map(c => c.user_id))];
-    const profilePromises = uniqueUserIds.map(async (userId) => {
-      if (userProfileCache.has(userId)) return;
+    const profilePromises = uniqueUserIds.map(async (uid) => {
+      if (userProfileCache.has(uid)) return;
       try {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         let profile: UserProfile | null = null;
-        if (uuidRegex.test(userId)) {
-          profile = await userService.getUserProfile(userId);
-        } else {
-          try { profile = await userService.getUserProfileByUsername(userId); } catch (err) {}
+        if (uuidRegex.test(uid)) profile = await userService.getUserProfile(uid);
+        else {
+          try { profile = await userService.getUserProfileByUsername(uid); } catch {}
         }
-        if (profile) userProfileCache.set(userId, profile);
-      } catch (err) {}
+        if (profile) userProfileCache.set(uid, profile);
+      } catch {}
     });
     await Promise.all(profilePromises);
 
-    comments.value = fetchedComments.map(comment => ({
-      ...comment,
-      user_profile: userProfileCache.get(comment.user_id)
+    comments.value = fetchedComments.map(c => ({
+      ...c, user_profile: userProfileCache.get(c.user_id)
     }));
 
-    // Run registration check against the deployed selfstudy-course app
     await loadUserRegistrationStatus();
-
     await fetchAllUsernames();
   } catch (err: any) {
     error.value = err.message || 'Failed to load course details. Please try again.';
+    console.error('[CourseDetails] fetchCourseData error:', err);
   } finally {
     loading.value = false;
   }
@@ -622,131 +635,89 @@ const fetchCourseData = async () => {
 
 const fetchAllUsernames = async () => {
   try { allUsernames.value = await userService.getAllUsernames(); }
-  catch (err) { allUsernames.value = []; }
+  catch { allUsernames.value = []; }
 };
 
-const handleAvatarError = (_userId: string) => {};
+const handleAvatarError = (_uid: string) => {};
 
 const isImageUrlValid = (url: string): boolean => {
   if (!url) return false;
-  const placeholderPatterns = [
-    'default.jpg', 'placeholder', 'missing.png', 'no-image',
-    'default-profile', 'anonymous', 'null', 'undefined'
-  ];
-  return !placeholderPatterns.some(pattern => url.toLowerCase().includes(pattern.toLowerCase()));
+  const placeholders = ['default.jpg', 'placeholder', 'missing.png', 'no-image', 'default-profile', 'anonymous', 'null', 'undefined'];
+  return !placeholders.some(p => url.toLowerCase().includes(p.toLowerCase()));
 };
 
 const handleMentionInput = (event: Event) => {
-  const textarea = event.target as HTMLTextAreaElement;
-  const value = textarea.value;
-  const cursorPosition = textarea.selectionStart;
-  const textBeforeCursor = value.substring(0, cursorPosition);
-  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-
-  if (lastAtIndex >= 0) {
-    const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-    const wordMatch = textAfterAt.match(/^(\w+)/);
-
+  const ta = event.target as HTMLTextAreaElement;
+  const v = ta.value;
+  const cp = ta.selectionStart;
+  const before = v.substring(0, cp);
+  const lastAt = before.lastIndexOf('@');
+  if (lastAt >= 0) {
+    const wordMatch = before.substring(lastAt + 1).match(/^(\w+)/);
     if (wordMatch) {
       mentionSearch.value = wordMatch[1].toLowerCase();
-      filteredUsernames.value = allUsernames.value.filter(username =>
-        username.toLowerCase().includes(mentionSearch.value) && username !== authStore.user?.username
-      );
-
+      filteredUsernames.value = allUsernames.value.filter(u =>
+        u.toLowerCase().includes(mentionSearch.value) && u !== authStore.user?.username);
       if (filteredUsernames.value.length > 0) {
         showMentionDropdown.value = true;
         selectedMentionIndex.value = 0;
-
-        const textareaStyles = window.getComputedStyle(textarea);
-        const lineHeight = parseInt(textareaStyles.lineHeight);
-        const paddingTop = parseInt(textareaStyles.paddingTop);
-        const paddingLeft = parseInt(textareaStyles.paddingLeft);
-
-        const lines = textBeforeCursor.substring(0, lastAtIndex).split('\n');
-        const lineNumber = lines.length;
-        mentionDropdownTop.value = (lineNumber * lineHeight) + paddingTop + lineHeight;
-        mentionDropdownLeft.value = paddingLeft;
-      } else {
-        showMentionDropdown.value = false;
-      }
-    } else {
-      showMentionDropdown.value = false;
-    }
-  } else {
-    showMentionDropdown.value = false;
-  }
+        const styles = window.getComputedStyle(ta);
+        const lineHeight = parseInt(styles.lineHeight);
+        const pTop = parseInt(styles.paddingTop);
+        const pLeft = parseInt(styles.paddingLeft);
+        const lines = before.substring(0, lastAt).split('\n');
+        mentionDropdownTop.value = (lines.length * lineHeight) + pTop + lineHeight;
+        mentionDropdownLeft.value = pLeft;
+      } else { showMentionDropdown.value = false; }
+    } else { showMentionDropdown.value = false; }
+  } else { showMentionDropdown.value = false; }
 };
 
 const handleMentionKeydown = (event: KeyboardEvent) => {
   if (!showMentionDropdown.value) return;
   switch (event.key) {
-    case 'ArrowDown':
-      event.preventDefault();
-      selectedMentionIndex.value = Math.min(selectedMentionIndex.value + 1, filteredUsernames.value.length - 1);
-      break;
-    case 'ArrowUp':
-      event.preventDefault();
-      selectedMentionIndex.value = Math.max(selectedMentionIndex.value - 1, 0);
-      break;
-    case 'Enter':
-    case 'Tab':
-      if (showMentionDropdown.value && filteredUsernames.value.length > 0) {
-        event.preventDefault();
-        selectMention(filteredUsernames.value[selectedMentionIndex.value]);
-      }
-      break;
-    case 'Escape':
-      showMentionDropdown.value = false;
-      break;
+    case 'ArrowDown': event.preventDefault();
+      selectedMentionIndex.value = Math.min(selectedMentionIndex.value + 1, filteredUsernames.value.length - 1); break;
+    case 'ArrowUp': event.preventDefault();
+      selectedMentionIndex.value = Math.max(selectedMentionIndex.value - 1, 0); break;
+    case 'Enter': case 'Tab':
+      if (filteredUsernames.value.length > 0) { event.preventDefault();
+        selectMention(filteredUsernames.value[selectedMentionIndex.value]); } break;
+    case 'Escape': showMentionDropdown.value = false; break;
   }
 };
 
 const selectMention = (username: string) => {
-  const textarea = commentTextarea.value;
-  if (!textarea) return;
-
-  const value = textarea.value;
-  const cursorPosition = textarea.selectionStart;
-  const textBeforeCursor = value.substring(0, cursorPosition);
-  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-
-  if (lastAtIndex >= 0) {
-    const textAfterCursor = value.substring(cursorPosition);
-    const wordAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-    const wordMatch = wordAfterAt.match(/^(\w+)/);
-
-    if (wordMatch) {
-      const newText = textBeforeCursor.substring(0, lastAtIndex) + `@${username} ` + textAfterCursor;
-      newComment.value = newText;
+  const ta = commentTextarea.value; if (!ta) return;
+  const v = ta.value; const cp = ta.selectionStart;
+  const before = v.substring(0, cp); const lastAt = before.lastIndexOf('@');
+  if (lastAt >= 0) {
+    const after = v.substring(cp);
+    const wAfter = before.substring(lastAt + 1).match(/^(\w+)/);
+    if (wAfter) {
+      newComment.value = before.substring(0, lastAt) + `@${username} ` + after;
       showMentionDropdown.value = false;
-
       nextTick(() => {
-        const newCursorPosition = lastAtIndex + username.length + 2;
-        textarea.focus();
-        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+        const newPos = lastAt + username.length + 2;
+        ta.focus(); ta.setSelectionRange(newPos, newPos);
       });
     }
   }
 };
 
-const parseMentions = (text: string) => {
-  if (!text) return '';
-  return text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
-};
+const parseMentions = (text: string) => text ? text.replace(/@(\w+)/g, '<span class="mention">@$1</span>') : '';
 
 const extractMentions = (text: string): string[] => {
   if (!text) return [];
-  const mentions = text.match(/@(\w+)/g);
-  if (!mentions) return [];
-  return [...new Set(mentions.map(m => m.substring(1)))];
+  const m = text.match(/@(\w+)/g);
+  return m ? [...new Set(m.map(x => x.substring(1)))] : [];
 };
 
-const createMentionNotifications = async (commentContent: string, commentId: string) => {
-  const mentions = extractMentions(commentContent);
-  if (mentions.length === 0 || !authStore.user?.username || !course.value) return;
-
-  for (const username of mentions) {
-    if (username === authStore.user.username) continue;
+const createMentionNotifications = async (content: string, commentId: string) => {
+  const mentions = extractMentions(content);
+  if (!mentions.length || !authStore.user?.username || !course.value) return;
+  for (const u of mentions) {
+    if (u === authStore.user.username) continue;
     try {
       serviceRegistry.clearCache();
       await notificationService.createNotification({
@@ -754,64 +725,54 @@ const createMentionNotifications = async (commentContent: string, commentId: str
         message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}"`,
         notification_type: 'personal',
         sender: authStore.user.username,
-        recipient: username,
+        recipient: u,
         course_url: `${window.location.origin}/course/${course.value.external_course_id}`,
         comment_id: commentId
       });
-    } catch (err) {}
+    } catch {}
   }
 };
 
 const submitComment = async () => {
   if (!newComment.value.trim() || !course.value || !authStore.user?.id) return;
-
-  submittingComment.value = true;
-  commentError.value = null;
-
+  submittingComment.value = true; commentError.value = null;
   try {
     serviceRegistry.clearCache();
-
     const userId = authStore.user.username || authStore.user.id;
-
     const commentData = {
       external_comment_id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       content: newComment.value.trim(),
       user_id: userId,
       course: course.value.external_course_id,
     };
-
     const newCommentObj = await courseService.createComment(commentData, courseReplicaBaseUrl.value || undefined);
 
-    let userProfile: UserProfile | undefined;
+    let profile: UserProfile | undefined;
     try {
-      if (authStore.user.username) {
-        userProfile = await userService.getUserProfileByUsername(authStore.user.username);
-      } else {
-        userProfile = await userService.getUserProfile(authStore.user.id);
-      }
-      if (userProfile) userProfileCache.set(userId, userProfile);
-    } catch (err) {}
+      if (authStore.user.username) profile = await userService.getUserProfileByUsername(authStore.user.username);
+      else profile = await userService.getUserProfile(authStore.user.id);
+      if (profile) userProfileCache.set(userId, profile);
+    } catch {}
 
-    comments.value.unshift({ ...newCommentObj, user_profile: userProfile });
+    comments.value.unshift({ ...newCommentObj, user_profile: profile });
     newComment.value = '';
-
     await createMentionNotifications(commentData.content, newCommentObj.external_comment_id);
   } catch (err: any) {
-    commentError.value = err.message || 'Failed to submit comment. Please try again.';
+    commentError.value = err.message || 'Failed to submit comment.';
   } finally {
     submittingComment.value = false;
   }
 };
 
 const deleteComment = async (commentId: string) => {
-  if (!confirm('Are you sure you want to delete this comment?')) return;
+  if (!confirm('Delete this comment?')) return;
   deletingCommentId.value = commentId;
   try {
     serviceRegistry.clearCache();
     await courseService.deleteComment(commentId, courseReplicaBaseUrl.value || undefined);
-    comments.value = comments.value.filter(comment => comment.external_comment_id !== commentId);
-  } catch (err: any) {
-    alert('Failed to delete comment. Please try again.');
+    comments.value = comments.value.filter(c => c.external_comment_id !== commentId);
+  } catch {
+    alert('Failed to delete comment.');
   } finally {
     deletingCommentId.value = null;
   }
@@ -819,11 +780,7 @@ const deleteComment = async (commentId: string) => {
 
 const navigateToQuiz = (lesson: any) => {
   if (!lesson.hasQuiz || !lesson.quiz) return;
-  try {
-    sessionStorage.setItem(`quiz_${lesson.quiz.external_id}`, JSON.stringify(lesson.quiz));
-  } catch (e) {
-    console.warn('Failed to cache quiz in sessionStorage:', e);
-  }
+  try { sessionStorage.setItem(`quiz_${lesson.quiz.external_id}`, JSON.stringify(lesson.quiz)); } catch {}
   router.push({
     path: '/take-quiz',
     query: {
@@ -839,44 +796,42 @@ const navigateToHomework = (lesson: any) => {
   router.push({ path: `/course/${route.params.id}/lesson/${lesson.external_lesson_id}/homework` });
 };
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return 'Recently';
+const formatDate = (s?: string) => {
+  if (!s) return 'Recently';
   try {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
+    const d = new Date(s); const n = new Date();
+    const dd = Math.floor(Math.abs(n.getTime() - d.getTime()) / 86400000);
+    if (dd === 0) return 'Today';
+    if (dd === 1) return 'Yesterday';
+    if (dd < 7) return `${dd} days ago`;
+    if (dd < 30) return `${Math.floor(dd / 7)} weeks ago`;
+    if (dd < 365) return `${Math.floor(dd / 30)} months ago`;
+    return `${Math.floor(dd / 365)} years ago`;
   } catch { return 'Recently'; }
 };
 
-const getUserInitials = (userId: string) => {
-  if (!userId) return 'U';
-  if (!userId.includes('-')) return userId.substring(0, 2).toUpperCase();
-  return userId.charAt(0).toUpperCase();
+const getUserInitials = (uid: string) => {
+  if (!uid) return 'U';
+  if (!uid.includes('-')) return uid.substring(0, 2).toUpperCase();
+  return uid.charAt(0).toUpperCase();
 };
 
-const getUserDisplayName = (userId: string) => {
-  if (!userId) return 'User';
-  if (userId === authStore.user?.id || userId === authStore.user?.username) return 'You';
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (uuidRegex.test(userId)) return 'User';
-  return userId;
+const getUserDisplayName = (uid: string) => {
+  if (!uid) return 'User';
+  if (uid === authStore.user?.id || uid === authStore.user?.username) return 'You';
+  const uuidR = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidR.test(uid)) return 'User';
+  return uid;
 };
 
-const getUserColor = (userId: string) => {
-  const colors = ['#667eea', '#764ba2', '#f56565', '#ed8936', '#48bb78', '#38b2ac', '#4299e1', '#9f7aea', '#ed64a6', '#f6ad55'];
-  const index = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-  return colors[index];
+const getUserColor = (uid: string) => {
+  const colors = ['#667eea','#764ba2','#f56565','#ed8936','#48bb78','#38b2ac','#4299e1','#9f7aea','#ed64a6','#f6ad55'];
+  const idx = uid.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
+  return colors[idx];
 };
 
-const handleDocumentClick = (event: MouseEvent) => {
-  if (showMentionDropdown.value && commentTextarea.value && !commentTextarea.value.contains(event.target as Node)) {
+const handleDocumentClick = (e: MouseEvent) => {
+  if (showMentionDropdown.value && commentTextarea.value && !commentTextarea.value.contains(e.target as Node)) {
     showMentionDropdown.value = false;
   }
 };
@@ -884,12 +839,8 @@ const handleDocumentClick = (event: MouseEvent) => {
 watch(
   () => [authStore.isAuthenticated, authStore.user?.id, authStore.user?.username, authStore.hasActiveSubscription],
   () => {
-    if (course.value && authStore.isAuthenticated) {
-      loadUserRegistrationStatus();
-    } else {
-      isUserRegistered.value = false;
-      userRegistration.value = null;
-    }
+    if (course.value && authStore.isAuthenticated) loadUserRegistrationStatus();
+    else { isUserRegistered.value = false; userRegistration.value = null; }
   }
 );
 

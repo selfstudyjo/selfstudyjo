@@ -3,7 +3,7 @@ import { serviceRegistry } from './config';
 import { normalizePaginatedResponse, type PaginatedResponse } from '@/utils/api-utils';
 
 export interface Course {
-    id?: number;
+    id?: number | string;
     external_course_id: string;
     title: string;
     description: string;
@@ -14,7 +14,7 @@ export interface Course {
 }
 
 export interface Lesson {
-    id?: number;
+    id?: number | string;
     external_lesson_id: string;
     title: string;
     course?: string;
@@ -26,7 +26,7 @@ export interface Lesson {
 }
 
 export interface Comment {
-    id?: number;
+    id?: number | string;
     external_comment_id: string;
     content: string;
     date_added?: string;
@@ -36,7 +36,7 @@ export interface Comment {
 }
 
 export interface Homework {
-    id?: number;
+    id?: number | string;
     external_homework_id: string;
     title: string;
     homework_url: string;
@@ -48,7 +48,7 @@ export interface Homework {
 }
 
 export interface SubmittedHomework {
-    id?: number;
+    id?: number | string;
     external_submitted_homework_id: string;
     user_id: string;
     homework: string | number;
@@ -59,7 +59,7 @@ export interface SubmittedHomework {
 }
 
 export interface CourseRegistration {
-    id?: number;
+    id?: number | string;
     external_id: string;
     user_id: string;
     course: string;
@@ -74,6 +74,11 @@ export interface CourseFilters {
     ordering?: string;
 }
 
+const DEBUG = true;
+const dlog = (...args: any[]) => { if (DEBUG) console.log('[CourseService]', ...args); };
+const dwarn = (...args: any[]) => { if (DEBUG) console.warn('[CourseService]', ...args); };
+const derr = (...args: any[]) => console.error('[CourseService]', ...args);
+
 class CourseService {
     private readonly APP_ID = parseInt(import.meta.env.VITE_COURSE_APP_ID || '19');
 
@@ -86,16 +91,38 @@ class CourseService {
         return serviceRegistry.getRandomReplica(replicas);
     }
 
+    /** Fetch ALL homeworks for a course (filter by course_id). */
     async getHomeworksForCourse(courseId: string, baseUrl?: string): Promise<Homework[]> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         try {
+            dlog(`GET ${url}/homeworks/?course_id=${courseId}`);
             const response = await apiService.get<any>(url, `/homeworks/?course_id=${courseId}`);
-            return normalizePaginatedResponse<Homework>(response).results;
+            const list = normalizePaginatedResponse<Homework>(response).results;
+            dlog(`Got ${list.length} homeworks for course=${courseId}`, list);
+            return list;
         } catch (error) {
-            console.error('Failed to fetch homeworks for course:', error);
+            derr('getHomeworksForCourse failed:', error);
             return [];
         }
+    }
+
+    /** Fallback: fetch homeworks per-lesson (used when per-course returns empty). */
+    async getHomeworksForLessons(lessonIds: string[], baseUrl?: string): Promise<Homework[]> {
+        const url = baseUrl || await this.getRandomCourseReplica();
+        if (!url) return [];
+        const all: Homework[] = [];
+        for (const lid of lessonIds) {
+            try {
+                const resp = await apiService.get<any>(url, `/homeworks/?lesson_id=${encodeURIComponent(lid)}`);
+                const list = normalizePaginatedResponse<Homework>(resp).results;
+                all.push(...list);
+            } catch (e) {
+                dwarn(`getHomeworksForLessons failed for lesson=${lid}`, e);
+            }
+        }
+        dlog(`getHomeworksForLessons total=${all.length}`);
+        return all;
     }
 
     async getCourses(filters?: CourseFilters, baseUrl?: string): Promise<PaginatedResponse<Course>> {
@@ -118,12 +145,12 @@ class CourseService {
         return await apiService.get<Course>(url, `/courses/${courseId}/`);
     }
 
-    async getCourseById(courseId: number, baseUrl?: string): Promise<Course> {
+    async getCourseById(courseId: number | string, baseUrl?: string): Promise<Course> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const response = await apiService.get<any>(url, '/courses/');
         const courses = normalizePaginatedResponse<Course>(response).results;
-        const course = courses.find(c => c.id === courseId);
+        const course = courses.find(c => String(c.id) === String(courseId));
         if (!course) throw new Error(`Course with ID ${courseId} not found`);
         return course;
     }
@@ -131,8 +158,12 @@ class CourseService {
     async getCourseLessons(courseId: string, baseUrl?: string): Promise<Lesson[]> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
+        dlog(`GET ${url}/lessons/?course_id=${courseId}`);
         const response = await apiService.get<any>(url, `/lessons/?course_id=${courseId}`);
-        return normalizePaginatedResponse<Lesson>(response).results;
+        const list = normalizePaginatedResponse<Lesson>(response).results;
+        dlog(`Got ${list.length} lessons for course=${courseId}`,
+             list.map(l => ({ external_lesson_id: l.external_lesson_id, title: l.title, course: (l as any).course || l.course_external_id })));
+        return list;
     }
 
     async getLesson(lessonId: string, baseUrl?: string): Promise<Lesson> {
@@ -187,7 +218,7 @@ class CourseService {
                 try {
                     await apiService.delete(url, `/api/sync/comments/${commentId}/`);
                     return;
-                } catch (syncError) {}
+                } catch {}
             }
             throw error;
         }
@@ -207,15 +238,13 @@ class CourseService {
     }
 
     async getHomeworkByExternalId(externalHomeworkId: string, baseUrl?: string): Promise<Homework> {
-        const url = baseUrl || await this.getRandomCourseReplica();
-        if (!url) throw new Error('No course service replicas available');
-        return await apiService.get<Homework>(url, `/homeworks/${externalHomeworkId}/`);
+        return this.getHomework(externalHomeworkId, baseUrl);
     }
 
     async submitHomework(submissionData: Partial<SubmittedHomework>, baseUrl?: string): Promise<SubmittedHomework> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
-        const homeworkExternalId = submissionData.homework_external_id || submissionData.homework as string;
+        const homeworkExternalId = submissionData.homework_external_id || (submissionData.homework as string);
         const payload: any = {
             external_submitted_homework_id: submissionData.external_submitted_homework_id,
             user_id: submissionData.user_id,
@@ -226,12 +255,12 @@ class CourseService {
         return await apiService.post<SubmittedHomework>(url, '/submitted-homeworks/', payload);
     }
 
-    async getHomeworkById(homeworkId: number, baseUrl?: string): Promise<Homework> {
+    async getHomeworkById(homeworkId: number | string, baseUrl?: string): Promise<Homework> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const response = await apiService.get<any>(url, '/homeworks/');
         const homeworks = normalizePaginatedResponse<Homework>(response).results;
-        const homework = homeworks.find(h => h.id === homeworkId);
+        const homework = homeworks.find(h => String(h.id) === String(homeworkId));
         if (!homework) throw new Error(`Homework with ID ${homeworkId} not found`);
         return homework;
     }
@@ -275,29 +304,17 @@ class CourseService {
         try {
             const submissions = await this.getUserSubmissions(userId, homeworkExternalId, baseUrl);
             return submissions.length > 0 ? submissions[0] : null;
-        } catch (error) {
+        } catch {
             return null;
         }
     }
 
-    /**
-     * Fetch registrations from the DEPLOYED selfstudy-course backend.
-     * Accepts a single user id or an array of user ids (e.g. UUID + username),
-     * queries the backend for each, merges and deduplicates results.
-     *
-     * This is critical because historically the `user_id` field on the backend
-     * has been written sometimes as the user UUID and sometimes as the username.
-     */
-    async getUserRegistrations(
-        userId: string | string[],
-        baseUrl?: string
-    ): Promise<CourseRegistration[]> {
+    async getUserRegistrations(userId: string | string[], baseUrl?: string): Promise<CourseRegistration[]> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
 
         const rawIds = Array.isArray(userId) ? userId : [userId];
         const ids = [...new Set(rawIds.filter(Boolean).map(s => String(s).trim()))];
-
         if (ids.length === 0) return [];
 
         const all: CourseRegistration[] = [];
@@ -305,18 +322,16 @@ class CourseService {
             ids.map(async (id) => {
                 try {
                     const response = await apiService.get<any>(
-                        url,
-                        `/registrations/?user_id=${encodeURIComponent(id)}`
+                        url, `/registrations/?user_id=${encodeURIComponent(id)}`
                     );
                     const regs = normalizePaginatedResponse<CourseRegistration>(response).results;
                     all.push(...regs);
                 } catch (err) {
-                    console.warn(`getUserRegistrations: failed for user_id=${id}`, err);
+                    dwarn(`getUserRegistrations failed for user_id=${id}`, err);
                 }
             })
         );
 
-        // Deduplicate by external_id (or id) since multiple identifiers may return overlapping rows
         const seen = new Set<string | number>();
         return all.filter(r => {
             const key = r.external_id ?? r.id ?? `${r.user_id}_${r.course_external_id || r.course}`;
@@ -326,47 +341,29 @@ class CourseService {
         });
     }
 
-    async isUserRegisteredForCourse(
-        userId: string | string[],
-        courseId: string,
-        baseUrl?: string
-    ): Promise<boolean> {
+    async isUserRegisteredForCourse(userId: string | string[], courseId: string, baseUrl?: string): Promise<boolean> {
         try {
             const registrations = await this.getUserRegistrations(userId, baseUrl);
-            return registrations.some(
-                reg =>
-                    reg.course_external_id === courseId ||
-                    reg.course === courseId
+            return registrations.some(reg =>
+                reg.course_external_id === courseId || reg.course === courseId
             );
-        } catch (error) {
+        } catch {
             return false;
         }
     }
 
-    async getUserRegistrationForCourse(
-        userId: string | string[],
-        courseExternalId: string,
-        baseUrl?: string
-    ): Promise<CourseRegistration | null> {
+    async getUserRegistrationForCourse(userId: string | string[], courseExternalId: string, baseUrl?: string): Promise<CourseRegistration | null> {
         try {
             const registrations = await this.getUserRegistrations(userId, baseUrl);
-            return (
-                registrations.find(
-                    reg =>
-                        reg.course_external_id === courseExternalId ||
-                        reg.course === courseExternalId
-                ) || null
-            );
-        } catch (error) {
+            return registrations.find(reg =>
+                reg.course_external_id === courseExternalId || reg.course === courseExternalId
+            ) || null;
+        } catch {
             return null;
         }
     }
 
-    async registerUserForCourse(
-        userId: string,
-        courseExternalId: string,
-        baseUrl?: string
-    ): Promise<CourseRegistration> {
+    async registerUserForCourse(userId: string, courseExternalId: string, baseUrl?: string): Promise<CourseRegistration> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const registrationData = {
@@ -377,14 +374,7 @@ class CourseService {
         return await apiService.post<CourseRegistration>(url, '/register-user/', registrationData);
     }
 
-    /**
-     * Delete a registration record by its external_id via
-     * DELETE /registrations/<external_id>/ on the deployed selfstudy-course app.
-     */
-    async unregisterUserFromCourse(
-        registrationExternalId: string,
-        baseUrl?: string
-    ): Promise<void> {
+    async unregisterUserFromCourse(registrationExternalId: string, baseUrl?: string): Promise<void> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const reg = await import('./config').then(m => m.serviceRegistry);
@@ -392,15 +382,7 @@ class CourseService {
         await apiService.delete(url, `/registrations/${registrationExternalId}/`);
     }
 
-    /**
-     * Look up a registration for the given user/course (trying multiple user ids)
-     * and delete it. Returns true if a registration was found and removed.
-     */
-    async unregisterUserFromCourseByCourse(
-        userId: string | string[],
-        courseExternalId: string,
-        baseUrl?: string
-    ): Promise<boolean> {
+    async unregisterUserFromCourseByCourse(userId: string | string[], courseExternalId: string, baseUrl?: string): Promise<boolean> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const registration = await this.getUserRegistrationForCourse(userId, courseExternalId, url);

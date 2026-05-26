@@ -59,7 +59,7 @@
           <h2 class="result-title">{{ quizResult?.result_status === 'PASSED' ? 'Quiz Passed!' : 'Quiz Failed' }}</h2>
           <div class="result-score">
             <div class="score-display">
-              <span class="score-value">{{ quizResult?.score || 0 }}%</span>
+              <span class="score-value">{{ formattedScore }}%</span>
               <span class="score-label">Your Score</span>
             </div>
           </div>
@@ -363,6 +363,12 @@ const quizReplicaBaseUrl = ref<string | null>(null);
 // Cache keys
 const getQuizCacheKey = (quizId: string) => `quiz_${quizId}`;
 
+/** Round a number to 1 decimal place (e.g. 85.7364 -> 85.7) */
+const round1 = (n: number): number => {
+  if (!isFinite(n)) return 0;
+  return Math.round(n * 10) / 10;
+};
+
 // Computed
 const currentQuestion = computed(() => {
   if (!quiz.value?.questions || quiz.value.questions.length === 0) return null;
@@ -382,6 +388,13 @@ const resultClass = computed(() => {
 const backToCourseLink = computed(() => {
   const courseId = route.query.courseId as string;
   return courseId ? `/course/${courseId}` : '/courses';
+});
+
+/** Display-only formatted score (always 1 decimal place, e.g. 85.7) */
+const formattedScore = computed(() => {
+  const raw = quizResult.value?.score;
+  if (raw === undefined || raw === null || isNaN(Number(raw))) return '0.0';
+  return round1(Number(raw)).toFixed(1);
 });
 
 // --- Ultimate Optimized loadQuiz ---
@@ -423,7 +436,7 @@ const loadQuiz = async () => {
             user_id: existingResult.user_id,
             username: existingResult.username,
             quiz: existingResult.quiz,
-            score: existingResult.score,
+            score: round1(existingResult.score),
             date_taken: existingResult.date_taken || new Date().toISOString(),
             result_message: existingResult.result_message || '',
             result_status: existingResult.result_status
@@ -455,7 +468,7 @@ const loadQuiz = async () => {
                 user_id: existingResult.user_id,
                 username: existingResult.username,
                 quiz: existingResult.quiz,
-                score: existingResult.score,
+                score: round1(existingResult.score),
                 date_taken: existingResult.date_taken || new Date().toISOString(),
                 result_message: existingResult.result_message || '',
                 result_status: existingResult.result_status
@@ -510,7 +523,7 @@ const loadQuiz = async () => {
         user_id: existingResult.user_id,
         username: existingResult.username,
         quiz: existingResult.quiz,
-        score: existingResult.score,
+        score: round1(existingResult.score),
         date_taken: existingResult.date_taken || new Date().toISOString(),
         result_message: existingResult.result_message || '',
         result_status: existingResult.result_status
@@ -621,7 +634,14 @@ const submitQuiz = async () => {
       userAnswers.value
     );
 
-    quizResult.value = await quizService.submitQuiz(submission, quizReplicaBaseUrl.value || undefined);
+    const response = await quizService.submitQuiz(submission, quizReplicaBaseUrl.value || undefined);
+
+    // Ensure score is exactly 1 decimal place
+    if (response && typeof response.score === 'number') {
+      response.score = round1(response.score);
+    }
+
+    quizResult.value = response;
     showResult.value = true;
     showCorrectAnswers.value = true;
     quizStarted.value = false;
