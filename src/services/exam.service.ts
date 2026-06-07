@@ -3,7 +3,8 @@ import { serviceRegistry } from './config';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
 import { courseService, type Course } from './course.service';
 import { proctorService, type ExamProctor } from './proctor.service';
-import { notificationService } from './notification.service'; // <-- added for proctor notification
+import { notificationService } from './notification.service'; // <-- proctor notifications
+import { userService } from './user.service'; // <-- to enrich student details in notifications
 
 export interface Exam {
     external_id: string;
@@ -121,6 +122,99 @@ class ExamService {
         }
 
         return enrichedAppointment;
+    }
+
+    /**
+     * Build a "Student Full Name (@username)" string by looking up the user profile.
+     */
+    private async getStudentDisplayName(username: string): Promise<string> {
+        if (!username) return 'A student';
+        try {
+            const profile = await userService.getUserProfileByUsername(username);
+            const fn = (profile.first_name || '').trim();
+            const ln = (profile.last_name || '').trim();
+            const full = `${fn} ${ln}`.trim();
+            if (full) return `${full} (@${username})`;
+        } catch {
+            /* fall through */
+        }
+        return `@${username}`;
+    }
+
+    /**
+     * Notify a proctor about an appointment event (created / rescheduled / cancelled).
+     * Includes student details, exam name and appointment time.
+     *
+     * @param proctorUsernameOverride  Force the recipient (e.g. the NEW proctor on a reschedule)
+     */
+    private async notifyProctorOfAppointment(
+        appointment: ExamAppointment,
+        action: 'created' | 'rescheduled' | 'cancelled',
+        proctorUsernameOverride?: string
+    ): Promise<void> {
+        try {
+            let proctorUsername = proctorUsernameOverride || appointment.proctor_name;
+
+            if (!proctorUsername && appointment.proctor_id) {
+                try {
+                    const proctor = await proctorService.getProctor(appointment.proctor_id);
+                    proctorUsername = proctor?.username;
+                } catch {
+                    /* ignore */
+                }
+            }
+
+            if (!proctorUsername) {
+                console.warn('No proctor recipient available; skipping proctor notification');
+                return;
+            }
+
+            const studentName = await this.getStudentDisplayName(appointment.username);
+            const examName = appointment.exam_title || appointment.exam || 'an exam';
+            const when = appointment.appointment_date
+                ? new Date(appointment.appointment_date).toLocaleString()
+                : 'N/A';
+
+            let title = 'New Exam Appointment';
+            let verb = 'booked';
+            if (action === 'rescheduled') {
+                title = 'Exam Appointment Rescheduled';
+                verb = 'rescheduled';
+            } else if (action === 'cancelled') {
+                title = 'Exam Appointment Cancelled';
+                verb = 'cancelled';
+            }
+
+            const message =
+                `${studentName} has ${verb} an exam appointment.\n` +
+                `• Exam: ${examName}\n` +
+                `• Date/Time: ${when}\n` +
+                `• Status: ${appointment.appointment_status || 'N/A'}`;
+
+            await notificationService.createActionNotification(
+                {
+                    title,
+                    message,
+                    notification_type: 'personal',
+                    sender: 'system',
+                    recipient: proctorUsername,
+                    read: false
+                },
+                {
+                    actions: [
+                        {
+                            type: 'view_appointment',
+                            label: 'View in Proctor Dashboard',
+                            path: '/proctor-dashboard',
+                            appointmentId: appointment.external_id
+                        }
+                    ]
+                }
+            );
+        } catch (error) {
+            // Notifications are non-critical
+            console.warn('Failed to notify proctor of appointment:', error);
+        }
     }
 
     async getExam(examId: string): Promise<Exam> {
@@ -461,40 +555,9 @@ class ExamService {
 
             const enriched = await this.enrichAppointment(appointment);
 
-            // --- NEW: Notify the assigned proctor about the new appointment ---
-            (async () => {
-                try {
-                    // Only attempt if proctor_id exists
-                    if (enriched.proctor_id && enriched.proctor_name) {
-                        // Use proctor_name (username) as recipient
-                        await notificationService.createNotification({
-                            title: 'New Exam Appointment',
-                            message: `New appointment booked for ${enriched.username} on ${new Date(enriched.appointment_date).toLocaleString()} for exam ${enriched.exam_title || enriched.exam}.`,
-                            notification_type: 'personal',
-                            sender: 'system', // or the student's username? Use 'system' for clarity
-                            recipient: enriched.proctor_name,
-                            read: false
-                        });
-                    } else if (enriched.proctor_id) {
-                        // If we have proctor_id but not name, fetch it
-                        const proctor = await proctorService.getProctor(enriched.proctor_id);
-                        if (proctor && proctor.username) {
-                            await notificationService.createNotification({
-                                title: 'New Exam Appointment',
-                                message: `New appointment booked for ${enriched.username} on ${new Date(enriched.appointment_date).toLocaleString()} for exam ${enriched.exam_title || enriched.exam}.`,
-                                notification_type: 'personal',
-                                sender: 'system',
-                                recipient: proctor.username,
-                                read: false
-                            });
-                        }
-                    }
-                } catch (notifyError) {
-                    // Silently fail – notification is not critical
-                    console.warn('Failed to send proctor notification:', notifyError);
-                }
-            })();
-            // -----------------------------------------------------------------
+            // --- Notify the assigned proctor about the new appointment (non-blocking) ---
+            void this.notifyProctorOfAppointment(enriched, 'created');
+            // ---------------------------------------------------------------------------
 
             return enriched;
         } catch (error: any) {
@@ -509,13 +572,38 @@ class ExamService {
         }
 
         try {
+            // Capture the previous appointment so we can detect proctor changes.
+            let previous: ExamAppointment | null = null;
+            try {
+                previous = await this.getAppointmentById(appointmentId);
+            } catch {
+                previous = null;
+            }
+
             const appointment = await apiService.patch<ExamAppointment>(
                 baseUrl,
                 `/exam-appointments/${appointmentId}/`,
                 updateData
             );
 
-            return await this.enrichAppointment(appointment);
+            const enriched = await this.enrichAppointment(appointment);
+
+            // If the proctor was changed, notify both the previous and the new proctor.
+            const prevProctor = previous?.proctor_name || previous?.proctor_id;
+            const newProctor = enriched.proctor_name || enriched.proctor_id;
+
+            if (prevProctor && newProctor && prevProctor !== newProctor) {
+                // Old proctor: this appointment is no longer theirs
+                void this.notifyProctorOfAppointment(
+                    { ...enriched, appointment_status: 'Reassigned' },
+                    'rescheduled',
+                    previous?.proctor_name
+                );
+                // New proctor: a (re)assigned appointment
+                void this.notifyProctorOfAppointment(enriched, 'rescheduled', enriched.proctor_name);
+            }
+
+            return enriched;
         } catch (error: any) {
             throw new Error(error.message || 'Failed to update exam appointment');
         }
@@ -553,7 +641,12 @@ class ExamService {
                 { appointment_status: 'Cancelled', can_start: false }
             );
 
-            return await this.enrichAppointment(appointment);
+            const enriched = await this.enrichAppointment(appointment);
+
+            // Notify the proctor that the appointment was cancelled (non-blocking)
+            void this.notifyProctorOfAppointment(enriched, 'cancelled');
+
+            return enriched;
         } catch (error: any) {
             throw new Error(error.message || 'Failed to cancel exam appointment');
         }
@@ -572,7 +665,12 @@ class ExamService {
                 appointmentData
             );
 
-            return await this.enrichAppointment(appointment);
+            const enriched = await this.enrichAppointment(appointment);
+
+            // Treat this like a creation for proctor notification purposes
+            void this.notifyProctorOfAppointment(enriched, 'created');
+
+            return enriched;
         } catch (error: any) {
             throw new Error(error.message || 'Failed to submit exam appointment');
         }
@@ -589,10 +687,12 @@ class ExamService {
         }
 
         try {
-            // First, cancel the old appointment
+            // First, cancel the old appointment.
+            // (cancelExamAppointment already notifies the OLD proctor.)
             const oldAppointment = await this.cancelExamAppointment(oldAppointmentId);
 
-            // Then create a new appointment with the new data
+            // Then create a new appointment with the new data.
+            // (createExamAppointment already notifies the NEW proctor.)
             // Ensure we use a new external_id for the new appointment
             const newAppointment = await this.createExamAppointment({
                 ...newAppointmentData,
@@ -655,8 +755,6 @@ class ExamService {
         } catch (error: any) {
             // Fallback: search through user results (if the above fails)
             if (error.status === 404) {
-                // Could fetch all for the current user, but we don't have userId here.
-                // Instead, we can try to get from another replica or rethrow.
                 throw new Error('Exam result not found');
             }
             throw error;

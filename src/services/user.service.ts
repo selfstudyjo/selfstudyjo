@@ -13,6 +13,7 @@ export interface UserProfile {
     image_url?: string;
     lab_url?: string;
     is_email_verified?: boolean;
+    is_admin?: boolean;
     date_joined?: string;
     last_updated?: string;
 }
@@ -25,6 +26,7 @@ export interface UpdateProfileRequest {
     gender?: 'M' | 'F';
     image_url?: string;
     lab_url?: string;
+    is_admin?: boolean;
 }
 
 export interface ChangePasswordRequest {
@@ -67,6 +69,11 @@ export interface PasswordCheckResponse {
     user_id?: string;
     email?: string;
     is_email_verified?: boolean;
+    is_admin?: boolean;
+    first_name?: string;
+    last_name?: string;
+    image_url?: string;
+    lab_url?: string;
 }
 
 export interface DeleteAccountRequest {
@@ -245,6 +252,74 @@ class UserService {
         } catch (error) {
             console.error('Get user profile by username failed:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Fetch ALL user profiles (handles pagination).
+     */
+    async getAllProfiles(): Promise<UserProfile[]> {
+        const baseUrl = await serviceRegistry.getRandomUserProfileReplica();
+        if (!baseUrl) {
+            throw new Error('No user profile service replicas available');
+        }
+
+        try {
+            let all: UserProfile[] = [];
+            let nextUrl: string | null = '/profiles/';
+            let guard = 0;
+
+            while (nextUrl && guard < 50) {
+                guard++;
+                const response = await apiService.get<any>(baseUrl, nextUrl);
+
+                let profiles: UserProfile[] = [];
+                if (Array.isArray(response)) {
+                    profiles = response;
+                    nextUrl = null;
+                } else if (response.results && Array.isArray(response.results)) {
+                    profiles = response.results;
+                    nextUrl = response.next
+                        ? new URL(response.next).pathname + new URL(response.next).search
+                        : null;
+                } else {
+                    const normalized = normalizePaginatedResponse<UserProfile>(response);
+                    profiles = normalized.results;
+                    nextUrl = normalized.next
+                        ? new URL(normalized.next).pathname + new URL(normalized.next).search
+                        : null;
+                }
+
+                all = [...all, ...profiles];
+
+                if (all.length >= 1000) break;
+                if (nextUrl === '/profiles/') break;
+            }
+
+            // De-duplicate by user_id
+            const seen = new Set<string>();
+            return all.filter(p => {
+                const key = p.user_id || p.username;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        } catch (error) {
+            console.error('Get all profiles failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get all admin users (is_admin === true).
+     */
+    async getAdminUsers(): Promise<UserProfile[]> {
+        try {
+            const profiles = await this.getAllProfiles();
+            return profiles.filter(p => p.is_admin === true);
+        } catch (error) {
+            console.error('Get admin users failed:', error);
+            return [];
         }
     }
 

@@ -2,6 +2,8 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
+import { userService } from './user.service';
+import { encodeNotificationMessage, type NotificationMeta } from '@/utils/notificationMeta';
 
 export interface Notification {
     notification_id?: string;
@@ -86,6 +88,90 @@ class NotificationService {
         } catch (error: any) {
             console.error('Create notification failed:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Create a notification that carries structured "action" metadata
+     * (buttons / links) encoded inside the message text.
+     */
+    async createActionNotification(
+        notificationData: Notification,
+        meta?: NotificationMeta
+    ): Promise<NotificationResponse> {
+        const encodedMessage = encodeNotificationMessage(notificationData.message, meta);
+        return this.createNotification({
+            ...notificationData,
+            message: encodedMessage
+        });
+    }
+
+    /**
+     * Notify ALL admin users that a student submitted a payment request.
+     * Each admin notification carries Approve / Ignore actions.
+     */
+    async notifyAdminsOfPaymentRequest(params: {
+        paymentId: string;
+        amount: string | number;
+        planTitle: string;
+        studentUsername: string;
+        studentFullName?: string;
+    }): Promise<void> {
+        try {
+            const admins = await userService.getAdminUsers();
+            if (!admins.length) {
+                console.warn('No admin users found to notify of payment request');
+                return;
+            }
+
+            const who = params.studentFullName
+                ? `${params.studentFullName} (@${params.studentUsername})`
+                : `@${params.studentUsername}`;
+
+            const message =
+                `${who} submitted a payment request of JOD ${params.amount} for the "${params.planTitle}" plan.\n` +
+                `Please review the request and Approve or Ignore it.`;
+
+            const meta: NotificationMeta = {
+                actions: [
+                    {
+                        type: 'approve_payment',
+                        label: 'Approve',
+                        paymentId: params.paymentId,
+                        studentUsername: params.studentUsername,
+                        planTitle: params.planTitle,
+                        amount: String(params.amount)
+                    },
+                    {
+                        type: 'ignore_payment',
+                        label: 'Ignore',
+                        paymentId: params.paymentId,
+                        studentUsername: params.studentUsername,
+                        planTitle: params.planTitle,
+                        amount: String(params.amount)
+                    }
+                ]
+            };
+
+            await Promise.all(
+                admins.map(admin =>
+                    this.createActionNotification(
+                        {
+                            title: 'New Payment Request',
+                            message,
+                            notification_type: 'personal',
+                            sender: 'system',
+                            recipient: admin.username,
+                            read: false
+                        },
+                        meta
+                    ).catch(err =>
+                        console.warn(`Failed to notify admin ${admin.username}:`, err)
+                    )
+                )
+            );
+        } catch (error) {
+            console.warn('notifyAdminsOfPaymentRequest failed:', error);
         }
     }
 

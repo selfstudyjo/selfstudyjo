@@ -118,7 +118,7 @@
 
           <div class="notification-content">
             <h4 class="notification-title">{{ notification.title }}</h4>
-            <p class="notification-message">{{ notification.message }}</p>
+            <p class="notification-message">{{ getCleanMessage(notification) }}</p>
 
             <div class="notification-meta">
               <span class="sender">
@@ -150,8 +150,28 @@
             >
               Delete
             </button>
-            <span v-else class="readonly-info">
+            <span v-if="notification.notification_type !== 'personal'" class="readonly-info">
               {{ notification.notification_type === 'general' ? 'General Notification' : 'Group Notification' }} (Read-only)
+            </span>
+
+            <!-- Action buttons (Approve / Ignore / View Course / View Plans / View Appointment) -->
+            <template v-if="!isActionHandled(notification.notification_id)">
+              <button
+                v-for="(action, idx) in getActions(notification)"
+                :key="notification.notification_id + '-act-' + idx"
+                class="btn-meta-action"
+                :class="metaActionClass(action.type)"
+                :disabled="actionLoading === notification.notification_id"
+                @click="handleAction(notification, action)"
+              >
+                {{ action.label || defaultActionLabel(action.type) }}
+              </button>
+            </template>
+            <span
+              v-else-if="getActions(notification).length > 0"
+              class="action-handled-info"
+            >
+              ✓ Handled
             </span>
           </div>
         </div>
@@ -178,12 +198,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
-import { useRoute, onBeforeRouteLeave } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
+import { notificationService, type NotificationResponse } from '@/services/notification.service';
+import { paymentService } from '@/services/payment.service';
+import { decodeNotificationMessage, type NotificationAction } from '@/utils/notificationMeta';
 import '@/assets/css/notifications.css';
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 
@@ -210,6 +234,10 @@ const hasUnread = computed(() => {
 
 // Active filter
 const activeFilter = ref('all');
+
+// Track action state for metadata buttons
+const handledActionIds = ref<Set<string>>(new Set());
+const actionLoading = ref<string | null>(null);
 
 // Filtered notifications based on active filter
 const filteredNotifications = computed(() => {
@@ -344,6 +372,122 @@ function setFilter(filterType: string) {
   activeFilter.value = filterType;
 }
 
+// ---------------- Notification metadata / action handling ----------------
+
+function getCleanMessage(notification: NotificationResponse): string {
+  return decodeNotificationMessage(notification.message).message;
+}
+
+function getActions(notification: NotificationResponse): NotificationAction[] {
+  const meta = decodeNotificationMessage(notification.message).meta;
+  return meta?.actions || [];
+}
+
+function isActionHandled(notificationId: string): boolean {
+  return handledActionIds.value.has(notificationId);
+}
+
+function defaultActionLabel(type: string): string {
+  switch (type) {
+    case 'approve_payment': return 'Approve';
+    case 'ignore_payment': return 'Ignore';
+    case 'view_course': return 'View Course';
+    case 'view_appointment': return 'View Appointment';
+    case 'view_plans': return 'View Plans';
+    default: return 'Open';
+  }
+}
+
+function metaActionClass(type: string): string {
+  switch (type) {
+    case 'approve_payment': return 'meta-approve';
+    case 'ignore_payment': return 'meta-ignore';
+    default: return 'meta-link';
+  }
+}
+
+async function notifyStudentPaymentDecision(action: NotificationAction, approved: boolean) {
+  try {
+    await notificationService.createActionNotification(
+      {
+        title: approved ? 'Payment Approved' : 'Payment Not Approved',
+        message: approved
+          ? `Your payment of JOD ${action.amount} for the "${action.planTitle}" plan has been approved. Your subscription will be activated shortly.`
+          : `Your payment request of JOD ${action.amount} for the "${action.planTitle}" plan was not approved. Please contact support or submit a new request.`,
+        notification_type: 'personal',
+        sender: authStore.user?.username || 'system',
+        recipient: action.studentUsername,
+        read: false
+      },
+      {
+        actions: [{ type: 'view_plans', label: 'View My Plans', path: '/my-plans' }]
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to notify student of payment decision:', err);
+  }
+}
+
+async function afterAdminPaymentDecision(notification: NotificationResponse) {
+  handledActionIds.value.add(notification.notification_id);
+  // Mark this admin notification as read (it is personal -> allowed)
+  try {
+    if (notification.notification_type === 'personal' && !notification.read) {
+      await notificationStore.markAsRead(notification.notification_id);
+    }
+  } catch (err) {
+    console.warn('Failed to mark admin notification as read:', err);
+  }
+}
+
+async function handleAction(notification: NotificationResponse, action: NotificationAction) {
+  if (actionLoading.value) return;
+  actionLoading.value = notification.notification_id;
+
+  try {
+    switch (action.type) {
+      case 'approve_payment': {
+        if (!action.paymentId) throw new Error('Missing payment reference');
+        await paymentService.approvePayment(
+          action.paymentId,
+          `Approved by admin ${authStore.user?.username} on ${new Date().toLocaleString()}`
+        );
+        await notifyStudentPaymentDecision(action, true);
+        await afterAdminPaymentDecision(notification);
+        alert('Payment approved and marked as PAID. The student has been notified.');
+        break;
+      }
+      case 'ignore_payment': {
+        if (!action.paymentId) throw new Error('Missing payment reference');
+        await paymentService.rejectPayment(
+          action.paymentId,
+          `Ignored by admin ${authStore.user?.username} on ${new Date().toLocaleString()}`
+        );
+        await notifyStudentPaymentDecision(action, false);
+        await afterAdminPaymentDecision(notification);
+        alert('Payment request ignored. The student has been notified.');
+        break;
+      }
+      case 'view_course':
+      case 'view_appointment':
+      case 'view_plans': {
+        if (action.path) {
+          router.push(action.path);
+        }
+        break;
+      }
+      default:
+        if (action.path) router.push(action.path);
+        break;
+    }
+  } catch (err: any) {
+    console.error('Notification action failed:', err);
+    alert(err?.message || 'Action failed. Please try again.');
+  } finally {
+    actionLoading.value = null;
+  }
+}
+
 function formatTime(timestamp: string) {
   const date = new Date(timestamp);
   const now = new Date();
@@ -366,3 +510,51 @@ function formatTime(timestamp: string) {
   }
 }
 </script>
+
+<style scoped>
+.notification-message {
+  white-space: pre-line;
+}
+
+.btn-meta-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-meta-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+
+.btn-meta-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-meta-action.meta-approve {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.btn-meta-action.meta-ignore {
+  background: linear-gradient(135deg, #f56565, #c53030);
+}
+
+.btn-meta-action.meta-link {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.action-handled-info {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #38a169;
+}
+</style>

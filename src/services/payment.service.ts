@@ -140,6 +140,54 @@ class PaymentService {
         }
     }
 
+    /**
+     * Admin action: approve a payment -> mark as PAID.
+     */
+    async approvePayment(externalId: string, notes?: string): Promise<Payment> {
+        const baseUrl = await serviceRegistry.getRandomPaymentReplica();
+        if (!baseUrl) {
+            throw new Error('No payment service replicas available');
+        }
+
+        try {
+            return await apiService.patch<Payment>(
+                baseUrl,
+                `/payments/${externalId}/`,
+                {
+                    status: 'PAID',
+                    notes: notes || `Payment approved by admin at ${new Date().toISOString()}`
+                }
+            );
+        } catch (error) {
+            console.error('Failed to approve payment:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Admin action: reject/ignore a payment -> mark as REJECTED.
+     */
+    async rejectPayment(externalId: string, notes?: string): Promise<Payment> {
+        const baseUrl = await serviceRegistry.getRandomPaymentReplica();
+        if (!baseUrl) {
+            throw new Error('No payment service replicas available');
+        }
+
+        try {
+            return await apiService.patch<Payment>(
+                baseUrl,
+                `/payments/${externalId}/`,
+                {
+                    status: 'REJECTED',
+                    notes: notes || `Payment ignored/rejected by admin at ${new Date().toISOString()}`
+                }
+            );
+        } catch (error) {
+            console.error('Failed to reject payment:', error);
+            throw error;
+        }
+    }
+
     async cancelPayment(externalId: string, notes?: string): Promise<Payment> {
         const baseUrl = await serviceRegistry.getRandomPaymentReplica();
         if (!baseUrl) {

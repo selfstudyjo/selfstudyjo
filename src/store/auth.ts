@@ -77,13 +77,32 @@ export const useAuthStore = defineStore('auth', () => {
             loadActiveSubscriptions().catch(err =>
                 console.warn('Failed to load active subscriptions on init:', err)
             );
+
+            // Make sure is_admin is fresh (in case it changed server-side)
+            refreshAdminFlag().catch(() => { /* non-critical */ });
+        }
+    };
+
+    /**
+     * Refresh the user's is_admin flag from their profile and persist it.
+     */
+    const refreshAdminFlag = async (): Promise<boolean> => {
+        if (!user.value?.id) return false;
+        try {
+            const profile = await userService.getUserProfile(user.value.id);
+            if (user.value) {
+                user.value = { ...user.value, is_admin: !!profile.is_admin };
+                authService.setUser(user.value);
+            }
+            return !!profile.is_admin;
+        } catch (err) {
+            console.warn('Failed to refresh admin flag:', err);
+            return !!user.value?.is_admin;
         }
     };
 
     /**
      * Load the UNION of features from ALL of the user's non-expired active subscriptions.
-     * This ensures that when a user has multiple active subscriptions, they get the
-     * combined set of features (e.g., runbook_feature from sub A + ai_feature from sub B).
      */
     const loadUserFeatures = async (): Promise<string[]> => {
         if (!user.value?.id) {
@@ -120,6 +139,13 @@ export const useAuthStore = defineStore('auth', () => {
             // Maintain backward-compatible "primary" sub (selected/newest)
             const primary = await subscriptionService.getActiveUserSubscription(user.value.id);
             activeSubscription.value = primary || (subs.length > 0 ? subs[0] : null);
+
+            // Notify the student about any subscriptions that are about to expire
+            if (user.value?.username) {
+                subscriptionService
+                    .notifyExpiringSubscriptions(user.value.id, user.value.username, subs)
+                    .catch(err => console.warn('Failed to notify expiring subscriptions:', err));
+            }
 
             return subs;
         } catch (error) {
@@ -241,6 +267,7 @@ export const useAuthStore = defineStore('auth', () => {
                 loadActiveSubscriptions().catch(err =>
                     console.warn('Background active subscriptions load failed:', err)
                 );
+                refreshAdminFlag().catch(() => { /* non-critical */ });
             }
 
             return isAuthenticated.value;
@@ -289,7 +316,8 @@ export const useAuthStore = defineStore('auth', () => {
                 first_name: response.first_name,
                 last_name: response.last_name,
                 image_url: response.image_url,
-                is_email_verified: response.is_email_verified
+                is_email_verified: response.is_email_verified,
+                is_admin: response.is_admin
             };
             token.value = response.token;
             isAuthenticated.value = true;
@@ -311,6 +339,8 @@ export const useAuthStore = defineStore('auth', () => {
                             id: user.value.id,
                             token: user.value.token,
                             expiresAt: user.value.expiresAt,
+                            // Make sure is_admin from the profile is reflected
+                            is_admin: !!profile.is_admin,
                         };
                         authService.setUser(user.value);
                     }
@@ -620,6 +650,9 @@ export const useAuthStore = defineStore('auth', () => {
     const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
     const hasToastmastersAccess = computed(() => userFeatures.value.includes('toastmasters_feature'));
 
+    // NEW: admin flag
+    const isAdmin = computed(() => !!user.value?.is_admin);
+
     /**
      * True when the user has ANY active subscription.
      */
@@ -659,10 +692,12 @@ export const useAuthStore = defineStore('auth', () => {
         hasResearchFlowAccess,
         hasToastmastersAccess,
         hasActiveSubscription,
+        isAdmin,
 
         initAuth,
         checkAuth,
         checkProctorStatus,
+        refreshAdminFlag,
         login,
         register,
         generateOTP,

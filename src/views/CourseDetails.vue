@@ -716,20 +716,39 @@ const extractMentions = (text: string): string[] => {
 const createMentionNotifications = async (content: string, commentId: string) => {
   const mentions = extractMentions(content);
   if (!mentions.length || !authStore.user?.username || !course.value) return;
+
+  // Build a path the notification "View Course" button can use. The app uses
+  // hash history, so an in-app router path works for all user types.
+  const coursePath = `/course/${course.value.external_course_id}`;
+
   for (const u of mentions) {
     if (u === authStore.user.username) continue;
     try {
       serviceRegistry.clearCache();
-      await notificationService.createNotification({
-        title: 'You were mentioned in a comment',
-        message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}"`,
-        notification_type: 'personal',
-        sender: authStore.user.username,
-        recipient: u,
-        course_url: `${window.location.origin}/course/${course.value.external_course_id}`,
-        comment_id: commentId
-      });
-    } catch {}
+      await notificationService.createActionNotification(
+        {
+          title: 'You were mentioned in a comment',
+          message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}". Click below to view the course.`,
+          notification_type: 'personal',
+          sender: authStore.user.username,
+          recipient: u,
+          read: false
+        },
+        {
+          commentId,
+          actions: [
+            {
+              type: 'view_course',
+              label: 'View Course',
+              path: coursePath,
+              courseId: course.value.external_course_id
+            }
+          ]
+        }
+      );
+    } catch (err) {
+      console.warn('Failed to create mention notification for', u, err);
+    }
   }
 };
 

@@ -21,6 +21,7 @@ export interface LoginResponse {
     image_url?: string;
     lab_url?: string;
     is_email_verified?: boolean;
+    is_admin?: boolean;
 }
 
 export interface TokenVerification {
@@ -110,6 +111,7 @@ class AuthService {
                     image_url: response.image_url,
                     lab_url: response.lab_url,
                     is_email_verified: response.is_email_verified,
+                    is_admin: response.is_admin,
                 });
                 localStorage.setItem(this.lastVerificationKey, Date.now().toString());
             }
@@ -322,6 +324,7 @@ class AuthService {
         image_url?: string;
         lab_url?: string;
         is_email_verified?: boolean;
+        is_admin?: boolean;
     }): void {
         localStorage.setItem(this.userKey, JSON.stringify(user));
     }
@@ -337,6 +340,7 @@ class AuthService {
         image_url?: string;
         lab_url?: string;
         is_email_verified?: boolean;
+        is_admin?: boolean;
     } | null {
         const userStr = localStorage.getItem(this.userKey);
         return userStr ? JSON.parse(userStr) : null;

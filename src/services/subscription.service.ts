@@ -1,6 +1,7 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
 import { paymentService, type Payment } from './payment.service';
+import { notificationService } from './notification.service';
 
 export interface Feature {
     external_id: string;
@@ -45,6 +46,9 @@ export interface UserSubscriptionStatus {
 }
 
 const SELECTED_SUB_KEY_PREFIX = 'selected_subscription_';
+const EXPIRY_NOTIFIED_KEY_PREFIX = 'sub_expiry_notified_';
+// Notify when a subscription expires within this window
+const EXPIRY_NOTICE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 class SubscriptionService {
     // ---------------------- Selected subscription persistence ----------------------
@@ -230,6 +234,66 @@ class SubscriptionService {
         } catch (error) {
             console.error('Failed to check feature:', error);
             return false;
+        }
+    }
+
+    /**
+     * Check all usable subscriptions and notify the student when any will expire soon.
+     * Uses localStorage to avoid repeatedly sending the same notification.
+     */
+    async notifyExpiringSubscriptions(
+        userId: string,
+        username: string,
+        subs?: Subscription[]
+    ): Promise<void> {
+        if (!userId || !username) return;
+        try {
+            const usable = subs && subs.length ? subs : await this.getUsableSubscriptions(userId);
+            const now = new Date();
+
+            for (const sub of usable) {
+                const expire = new Date(sub.expire_date);
+                const diff = expire.getTime() - now.getTime();
+
+                if (diff > 0 && diff <= EXPIRY_NOTICE_WINDOW_MS) {
+                    const key = `${EXPIRY_NOTIFIED_KEY_PREFIX}${sub.external_id}_${sub.expire_date}`;
+                    let alreadyNotified = false;
+                    try {
+                        alreadyNotified = !!localStorage.getItem(key);
+                    } catch { /* ignore */ }
+
+                    if (alreadyNotified) continue;
+
+                    const days = Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+                    const planTitle = sub.subscription_type?.title || sub.title;
+
+                    try {
+                        await notificationService.createActionNotification(
+                            {
+                                title: 'Subscription Expiring Soon',
+                                message:
+                                    `Your subscription "${planTitle}" will expire in ${days} day${days > 1 ? 's' : ''} ` +
+                                    `(on ${expire.toLocaleDateString()}). Renew now to keep your access.`,
+                                notification_type: 'personal',
+                                sender: 'system',
+                                recipient: username,
+                                read: false
+                            },
+                            {
+                                actions: [
+                                    { type: 'view_plans', label: 'View Plans', path: '/plans' }
+                                ]
+                            }
+                        );
+
+                        try { localStorage.setItem(key, Date.now().toString()); } catch { /* ignore */ }
+                    } catch (err) {
+                        console.warn('Failed to create expiring-subscription notification:', err);
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('notifyExpiringSubscriptions failed:', error);
         }
     }
 

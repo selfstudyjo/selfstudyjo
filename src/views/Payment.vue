@@ -184,6 +184,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { paymentService, type BankAccount, type CliqAccount } from '@/services/payment.service';
 import { subscriptionService } from '@/services/subscription.service';
+import { notificationService } from '@/services/notification.service';
 
 const router = useRouter();
 const route = useRoute();
@@ -325,6 +326,25 @@ const createPayment = async () => {
     };
 
     const payment = await paymentService.createPayment(paymentData);
+
+    // --- Notify all admin users about this payment request (non-blocking) ---
+    try {
+      const fullName = [authStore.user.first_name, authStore.user.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+
+      await notificationService.notifyAdminsOfPaymentRequest({
+        paymentId: payment.external_id,
+        amount: payment.amount,
+        planTitle: selectedPlan.value.title,
+        studentUsername: authStore.user.username,
+        studentFullName: fullName || undefined
+      });
+    } catch (notifyErr) {
+      console.warn('Failed to notify admins of payment request:', notifyErr);
+    }
+    // ------------------------------------------------------------------------
 
     // Show success message and redirect
     alert('Payment request created successfully! You will be redirected to your plans.');
