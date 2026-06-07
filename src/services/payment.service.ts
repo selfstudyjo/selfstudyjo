@@ -141,7 +141,8 @@ class PaymentService {
     }
 
     /**
-     * Admin action: approve a payment -> mark as PAID.
+     * Admin action: approve a payment -> mark as VERIFIED
+     * (the final accepted state; this activates the subscription).
      */
     async approvePayment(externalId: string, notes?: string): Promise<Payment> {
         const baseUrl = await serviceRegistry.getRandomPaymentReplica();
@@ -154,8 +155,8 @@ class PaymentService {
                 baseUrl,
                 `/payments/${externalId}/`,
                 {
-                    status: 'PAID',
-                    notes: notes || `Payment approved by admin at ${new Date().toISOString()}`
+                    status: 'VERIFIED',
+                    notes: notes || `Payment approved & verified by admin at ${new Date().toISOString()}`
                 }
             );
         } catch (error) {

@@ -273,6 +273,32 @@ export const useNotificationStore = defineStore('notifications', () => {
         }
     }
 
+    /**
+     * Delete ANY notification (personal/general/group) as an admin.
+     * The backend syncs the deletion across replicas so a GROUP notification
+     * disappears for every admin recipient.
+     */
+    async function deleteNotificationAsAdmin(notificationId: string) {
+        const notification = notifications.value.find(n => n.notification_id === notificationId);
+
+        await notificationService.deleteNotificationAsAdmin(notificationId);
+
+        // Remove from local state for the current user immediately
+        notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
+
+        // Defensive count adjustments (group notifications don't affect personal counts)
+        if (notification && notification.notification_type === 'personal') {
+            totalCount.value = Math.max(0, totalCount.value - 1);
+            if (!notification.read) {
+                unreadCount.value = Math.max(0, unreadCount.value - 1);
+            }
+            saveToLocalStorage(currentUsername.value);
+        } else if (notification && notification.notification_type === 'group') {
+            groupCount.value = Math.max(0, groupCount.value - 1);
+            saveToLocalStorage(currentUsername.value);
+        }
+    }
+
     function resetPagination() {
         currentPage.value = 1;
         hasMore.value = true;
@@ -332,6 +358,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         markAsRead,
         markAllAsRead,
         deleteNotification,
+        deleteNotificationAsAdmin,
         resetPagination,
         clearUserNotifications,
         clearAllNotifications,

@@ -150,7 +150,10 @@
             >
               Delete
             </button>
-            <span v-if="notification.notification_type !== 'personal'" class="readonly-info">
+            <span
+              v-if="notification.notification_type !== 'personal' && getActions(notification).length === 0"
+              class="readonly-info"
+            >
               {{ notification.notification_type === 'general' ? 'General Notification' : 'Group Notification' }} (Read-only)
             </span>
 
@@ -412,7 +415,7 @@ async function notifyStudentPaymentDecision(action: NotificationAction, approved
       {
         title: approved ? 'Payment Approved' : 'Payment Not Approved',
         message: approved
-          ? `Your payment of JOD ${action.amount} for the "${action.planTitle}" plan has been approved. Your subscription will be activated shortly.`
+          ? `Your payment of JOD ${action.amount} for the "${action.planTitle}" plan has been approved and verified. Your subscription is now active.`
           : `Your payment request of JOD ${action.amount} for the "${action.planTitle}" plan was not approved. Please contact support or submit a new request.`,
         notification_type: 'personal',
         sender: authStore.user?.username || 'system',
@@ -428,15 +431,16 @@ async function notifyStudentPaymentDecision(action: NotificationAction, approved
   }
 }
 
-async function afterAdminPaymentDecision(notification: NotificationResponse) {
+/**
+ * After an admin approves/ignores: delete the GROUP notification so it is
+ * removed for ALL admins (backend syncs the delete across replicas).
+ */
+async function deleteAdminPaymentNotification(notification: NotificationResponse) {
   handledActionIds.value.add(notification.notification_id);
-  // Mark this admin notification as read (it is personal -> allowed)
   try {
-    if (notification.notification_type === 'personal' && !notification.read) {
-      await notificationStore.markAsRead(notification.notification_id);
-    }
+    await notificationStore.deleteNotificationAsAdmin(notification.notification_id);
   } catch (err) {
-    console.warn('Failed to mark admin notification as read:', err);
+    console.warn('Failed to delete admin payment notification:', err);
   }
 }
 
@@ -448,13 +452,14 @@ async function handleAction(notification: NotificationResponse, action: Notifica
     switch (action.type) {
       case 'approve_payment': {
         if (!action.paymentId) throw new Error('Missing payment reference');
+        // Approve => mark the payment as VERIFIED (final accepted state)
         await paymentService.approvePayment(
           action.paymentId,
-          `Approved by admin ${authStore.user?.username} on ${new Date().toLocaleString()}`
+          `Approved & verified by admin ${authStore.user?.username} on ${new Date().toLocaleString()}`
         );
         await notifyStudentPaymentDecision(action, true);
-        await afterAdminPaymentDecision(notification);
-        alert('Payment approved and marked as PAID. The student has been notified.');
+        await deleteAdminPaymentNotification(notification);
+        alert('Payment approved and marked as VERIFIED. The student has been notified.');
         break;
       }
       case 'ignore_payment': {
@@ -464,7 +469,7 @@ async function handleAction(notification: NotificationResponse, action: Notifica
           `Ignored by admin ${authStore.user?.username} on ${new Date().toLocaleString()}`
         );
         await notifyStudentPaymentDecision(action, false);
-        await afterAdminPaymentDecision(notification);
+        await deleteAdminPaymentNotification(notification);
         alert('Payment request ignored. The student has been notified.');
         break;
       }

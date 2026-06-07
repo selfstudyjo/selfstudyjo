@@ -108,7 +108,10 @@ class NotificationService {
 
     /**
      * Notify ALL admin users that a student submitted a payment request.
-     * Each admin notification carries Approve / Ignore actions.
+     *
+     * This creates a SINGLE GROUP notification whose recipient list is the
+     * comma-separated set of all admin usernames. Because it's one record,
+     * deleting it (when any admin approves/ignores) removes it for everyone.
      */
     async notifyAdminsOfPaymentRequest(params: {
         paymentId: string;
@@ -119,7 +122,11 @@ class NotificationService {
     }): Promise<void> {
         try {
             const admins = await userService.getAdminUsers();
-            if (!admins.length) {
+            const recipients = admins
+                .map(a => a.username)
+                .filter(Boolean);
+
+            if (!recipients.length) {
                 console.warn('No admin users found to notify of payment request');
                 return;
             }
@@ -129,8 +136,11 @@ class NotificationService {
                 : `@${params.studentUsername}`;
 
             const message =
-                `${who} submitted a payment request of JOD ${params.amount} for the "${params.planTitle}" plan.\n` +
-                `Please review the request and Approve or Ignore it.`;
+                `${who} submitted a payment request.\n` +
+                `• Plan: ${params.planTitle}\n` +
+                `• Amount: JOD ${params.amount}\n` +
+                `• Payment ID: ${params.paymentId}\n` +
+                `Please review and Approve (verify) or Ignore (reject) the request.`;
 
             const meta: NotificationMeta = {
                 actions: [
@@ -153,22 +163,17 @@ class NotificationService {
                 ]
             };
 
-            await Promise.all(
-                admins.map(admin =>
-                    this.createActionNotification(
-                        {
-                            title: 'New Payment Request',
-                            message,
-                            notification_type: 'personal',
-                            sender: 'system',
-                            recipient: admin.username,
-                            read: false
-                        },
-                        meta
-                    ).catch(err =>
-                        console.warn(`Failed to notify admin ${admin.username}:`, err)
-                    )
-                )
+            // ONE group notification for all admins
+            await this.createActionNotification(
+                {
+                    title: 'New Payment Request',
+                    message,
+                    notification_type: 'group',
+                    sender: 'system',
+                    recipient: recipients.join(', '),
+                    read: false
+                },
+                meta
             );
         } catch (error) {
             console.warn('notifyAdminsOfPaymentRequest failed:', error);
@@ -370,6 +375,27 @@ class NotificationService {
             }
             throw error;
         }
+    }
+
+    /**
+     * Delete ANY notification type (personal / general / group) as an admin.
+     *
+     * Sends the `X-Admin-Request: true` header so the backend allows deleting a
+     * non-personal notification. The backend then also syncs the deletion to all
+     * other replicas, so the (group) notification is removed for EVERY admin.
+     */
+    async deleteNotificationAsAdmin(notificationId: string): Promise<void> {
+        const baseUrl = await this.getRandomNotificationReplica();
+        if (!baseUrl) {
+            throw new Error('No notification service replicas available');
+        }
+
+        await apiService.delete(
+            baseUrl,
+            `/api/notifications/${notificationId}/`,
+            undefined,
+            { 'X-Admin-Request': 'true' }
+        );
     }
 
     // Helper method to check if user is in group recipients
