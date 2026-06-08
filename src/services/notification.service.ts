@@ -77,6 +77,9 @@ class NotificationService {
         try {
             const payload = {
                 ...notificationData,
+                // Ensure type/recipient are always explicitly present
+                notification_type: notificationData.notification_type,
+                recipient: notificationData.recipient,
                 read: notificationData.read || false
             };
 
@@ -109,7 +112,7 @@ class NotificationService {
     /**
      * Notify ALL admin users that a student submitted a payment request.
      *
-     * This creates a SINGLE GROUP notification whose recipient list is the
+     * Creates a SINGLE GROUP notification whose recipient list is the
      * comma-separated set of all admin usernames. Because it's one record,
      * deleting it (when any admin approves/ignores) removes it for everyone.
      */
@@ -126,8 +129,13 @@ class NotificationService {
                 .map(a => a.username)
                 .filter(Boolean);
 
+            console.log('[notify] admin recipients for payment request:', recipients);
+
             if (!recipients.length) {
-                console.warn('No admin users found to notify of payment request');
+                console.warn(
+                    '[notify] No admin users found (is_admin === true). ' +
+                    'No payment-request notification was created.'
+                );
                 return;
             }
 
@@ -164,7 +172,7 @@ class NotificationService {
             };
 
             // ONE group notification for all admins
-            await this.createActionNotification(
+            const created = await this.createActionNotification(
                 {
                     title: 'New Payment Request',
                     message,
@@ -175,6 +183,21 @@ class NotificationService {
                 },
                 meta
             );
+
+            console.log(
+                '[notify] Created admin payment notification:',
+                'id=', created.notification_id,
+                'type=', created.notification_type,
+                'recipient=', created.recipient
+            );
+
+            if (created.notification_type !== 'group') {
+                console.warn(
+                    '[notify] WARNING: backend stored notification_type as',
+                    created.notification_type,
+                    '(expected "group"). Check the notification backend create() view.'
+                );
+            }
         } catch (error) {
             console.warn('notifyAdminsOfPaymentRequest failed:', error);
         }
@@ -380,9 +403,14 @@ class NotificationService {
     /**
      * Delete ANY notification type (personal / general / group) as an admin.
      *
-     * Sends the `X-Admin-Request: true` header so the backend allows deleting a
-     * non-personal notification. The backend then also syncs the deletion to all
-     * other replicas, so the (group) notification is removed for EVERY admin.
+     * IMPORTANT: We pass the privileged flag as a QUERY PARAM (?admin_request=true)
+     * rather than a custom header (X-Admin-Request). A custom header would force a
+     * CORS pre-flight that requires the backend to whitelist that header in
+     * Access-Control-Allow-Headers — otherwise the browser blocks the request and
+     * the delete silently fails. The query param avoids that entirely.
+     *
+     * The backend then deletes locally AND syncs the deletion to all replicas, so
+     * a GROUP notification disappears for every admin recipient.
      */
     async deleteNotificationAsAdmin(notificationId: string): Promise<void> {
         const baseUrl = await this.getRandomNotificationReplica();
@@ -392,9 +420,7 @@ class NotificationService {
 
         await apiService.delete(
             baseUrl,
-            `/api/notifications/${notificationId}/`,
-            undefined,
-            { 'X-Admin-Request': 'true' }
+            `/api/notifications/${notificationId}/?admin_request=true`
         );
     }
 
