@@ -2,6 +2,7 @@ import { apiService } from './api';
 import { serviceRegistry } from './config';
 import { paymentService, type Payment } from './payment.service';
 import { notificationService } from './notification.service';
+import { decodeNotificationMessage } from '@/utils/notificationMeta';
 
 export interface Feature {
     external_id: string;
@@ -49,8 +50,12 @@ const SELECTED_SUB_KEY_PREFIX = 'selected_subscription_';
 const EXPIRY_NOTIFIED_KEY_PREFIX = 'sub_expiry_notified_';
 // Notify when a subscription expires within this window
 const EXPIRY_NOTICE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const EXPIRY_TITLE = 'Subscription Expiring Soon';
 
 class SubscriptionService {
+    // Per-user in-flight lock so concurrent calls collapse into one run.
+    private _expiryRuns = new Map<string, Promise<void>>();
+
     // ---------------------- Selected subscription persistence ----------------------
     /** Get user-selected subscription external_id (from localStorage). */
     getSelectedSubscriptionId(userId: string): string | null {
@@ -238,8 +243,16 @@ class SubscriptionService {
     }
 
     /**
-     * Check all usable subscriptions and notify the student when any will expire soon.
-     * Uses localStorage to avoid repeatedly sending the same notification.
+     * Notify the student about any subscription that will expire soon.
+     *
+     * Guarantees NO duplicates:
+     *  - Per-user in-flight lock collapses concurrent calls into a single run
+     *    (fixes the "created twice per login" race).
+     *  - Authoritative server-side check: skips creating a notification if one
+     *    already exists for that exact subscription (matched via the
+     *    `subscriptionId` embedded in the notification metadata). This survives
+     *    logout/login and other devices.
+     *  - A DIFFERENT subscription that is also expiring will still be notified.
      */
     async notifyExpiringSubscriptions(
         userId: string,
@@ -247,53 +260,108 @@ class SubscriptionService {
         subs?: Subscription[]
     ): Promise<void> {
         if (!userId || !username) return;
+
+        // Collapse concurrent calls for the same user into one execution.
+        const existingRun = this._expiryRuns.get(userId);
+        if (existingRun) return existingRun;
+
+        const run = this._doNotifyExpiringSubscriptions(userId, username, subs)
+            .catch(err => console.warn('notifyExpiringSubscriptions failed:', err))
+            .finally(() => {
+                this._expiryRuns.delete(userId);
+            });
+
+        this._expiryRuns.set(userId, run);
+        return run;
+    }
+
+    private async _doNotifyExpiringSubscriptions(
+        userId: string,
+        username: string,
+        subs?: Subscription[]
+    ): Promise<void> {
+        const usable = subs && subs.length ? subs : await this.getUsableSubscriptions(userId);
+        const now = new Date();
+
+        // Subscriptions expiring within the notice window
+        const expiringSoon = usable.filter(sub => {
+            const diff = new Date(sub.expire_date).getTime() - now.getTime();
+            return diff > 0 && diff <= EXPIRY_NOTICE_WINDOW_MS;
+        });
+
+        if (expiringSoon.length === 0) return;
+
+        // Fetch the user's existing notifications ONCE (authoritative dedup source).
+        let existing: Array<{ title: string; message: string }> = [];
         try {
-            const usable = subs && subs.length ? subs : await this.getUsableSubscriptions(userId);
-            const now = new Date();
+            const resp = await notificationService.getNotificationsForUser(username, 1, 100);
+            existing = resp.results || [];
+        } catch (err) {
+            console.warn('Could not fetch existing notifications for dedup check:', err);
+            existing = [];
+        }
 
-            for (const sub of usable) {
-                const expire = new Date(sub.expire_date);
-                const diff = expire.getTime() - now.getTime();
+        for (const sub of expiringSoon) {
+            const subId = sub.external_id;
+            const planTitle = sub.subscription_type?.title || sub.title;
 
-                if (diff > 0 && diff <= EXPIRY_NOTICE_WINDOW_MS) {
-                    const key = `${EXPIRY_NOTIFIED_KEY_PREFIX}${sub.external_id}_${sub.expire_date}`;
-                    let alreadyNotified = false;
-                    try {
-                        alreadyNotified = !!localStorage.getItem(key);
-                    } catch { /* ignore */ }
+            // 1) Authoritative server-side dedup
+            const alreadyOnServer = existing.some(n => {
+                if (n.title !== EXPIRY_TITLE) return false;
+                const decoded = decodeNotificationMessage(n.message);
+                // Primary match: subscription id embedded in metadata
+                if (decoded.meta?.subscriptionId === subId) return true;
+                // Fallback for older notifications (no subscriptionId in meta)
+                if (planTitle && decoded.message.includes(`"${planTitle}"`)) return true;
+                return false;
+            });
+            if (alreadyOnServer) continue;
 
-                    if (alreadyNotified) continue;
+            // 2) Fast local guard (optional optimization)
+            const localKey = `${EXPIRY_NOTIFIED_KEY_PREFIX}${subId}_${sub.expire_date}`;
+            let localBlocked = false;
+            try {
+                localBlocked = !!localStorage.getItem(localKey);
+            } catch { /* ignore */ }
+            if (localBlocked) continue;
 
-                    const days = Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)));
-                    const planTitle = sub.subscription_type?.title || sub.title;
+            // 3) Create the notification
+            const days = Math.max(
+                1,
+                Math.ceil((new Date(sub.expire_date).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+            );
 
-                    try {
-                        await notificationService.createActionNotification(
-                            {
-                                title: 'Subscription Expiring Soon',
-                                message:
-                                    `Your subscription "${planTitle}" will expire in ${days} day${days > 1 ? 's' : ''} ` +
-                                    `(on ${expire.toLocaleDateString()}). Renew now to keep your access.`,
-                                notification_type: 'personal',
-                                sender: 'system',
-                                recipient: username,
-                                read: false
-                            },
-                            {
-                                actions: [
-                                    { type: 'view_plans', label: 'View Plans', path: '/plans' }
-                                ]
-                            }
-                        );
-
-                        try { localStorage.setItem(key, Date.now().toString()); } catch { /* ignore */ }
-                    } catch (err) {
-                        console.warn('Failed to create expiring-subscription notification:', err);
+            try {
+                await notificationService.createActionNotification(
+                    {
+                        title: EXPIRY_TITLE,
+                        message:
+                            `Your subscription "${planTitle}" will expire in ${days} day${days > 1 ? 's' : ''} ` +
+                            `(on ${new Date(sub.expire_date).toLocaleDateString()}). Renew now to keep your access.`,
+                        notification_type: 'personal',
+                        sender: 'system',
+                        recipient: username,
+                        read: false
+                    },
+                    {
+                        subscriptionId: subId,
+                        expireDate: sub.expire_date,
+                        actions: [{ type: 'view_plans', label: 'View Plans', path: '/plans' }]
                     }
-                }
+                );
+
+                // Record locally as a fast guard (server check remains authoritative)
+                try { localStorage.setItem(localKey, Date.now().toString()); } catch { /* ignore */ }
+
+                // Add to the in-memory existing list so we don't double-create
+                // within this same run for any duplicate sub entries.
+                existing.push({
+                    title: EXPIRY_TITLE,
+                    message: `"${planTitle}"`
+                });
+            } catch (err) {
+                console.warn('Failed to create expiring-subscription notification:', err);
             }
-        } catch (error) {
-            console.warn('notifyExpiringSubscriptions failed:', error);
         }
     }
 
