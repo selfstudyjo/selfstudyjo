@@ -1,0 +1,1 @@
+import{t as e}from"./index-DH8zk_LP.js";export{e as serviceRegistry};
