@@ -123,6 +123,19 @@
             <span class="nav-text">Toastmasters</span>
           </router-link>
 
+          <router-link
+            v-if="hasAiAccess"
+            to="/job-interview"
+            class="nav-item"
+            :class="{ 'active': isActive('/job-interview') }"
+            @click="closeSidebarOnMobile"
+          >
+            <div class="nav-icon">
+              <JobInterviewIcon />
+            </div>
+            <span class="nav-text">Job Interview</span>
+          </router-link>
+
         </template>
       </nav>
 
@@ -343,6 +356,15 @@ const ToastmastersIcon = {
   render() {
     return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
       h('path', { d: 'M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z' })
+    ]);
+  }
+};
+
+const JobInterviewIcon = {
+  name: 'JobInterviewIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z' })
     ]);
   }
 };

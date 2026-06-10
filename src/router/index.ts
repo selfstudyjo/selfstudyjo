@@ -48,6 +48,11 @@ import ToastmastersPreSession from '../views/ToastmastersPreSession.vue';
 import ToastmastersSession from '../views/ToastmastersSession.vue';
 import ToastmastersResults from '../views/ToastmastersResults.vue';
 
+import JobInterview from '../views/JobInterview.vue';
+import JobInterviewPreSession from '../views/JobInterviewPreSession.vue';
+import JobInterviewSession from '../views/JobInterviewSession.vue';
+import JobInterviewResults from '../views/JobInterviewResults.vue';
+
 
 const routes = [
     {
@@ -334,6 +339,32 @@ const routes = [
                 name: 'ToastmastersResults',
                 component: ToastmastersResults,
                 meta: { title: 'My Toastmasters Results', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['toastmasters_feature'] }
+            },
+
+            // Job Interview Routes (gated by ai_feature)
+            {
+                path: 'job-interview',
+                name: 'JobInterview',
+                component: JobInterview,
+                meta: { title: 'Job Interview', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                path: 'job-interview/pre-session',
+                name: 'JobInterviewPreSession',
+                component: JobInterviewPreSession,
+                meta: { title: 'Prepare Interview', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                path: 'job-interview/session',
+                name: 'JobInterviewSession',
+                component: JobInterviewSession,
+                meta: { title: 'Job Interview Session', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                path: 'job-interview/results',
+                name: 'JobInterviewResults',
+                component: JobInterviewResults,
+                meta: { title: 'My Interview Results', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             }
 
         ]
@@ -345,9 +376,6 @@ const routes = [
 ];
 
 const router = createRouter({
-    // ✅ Use hash history for GitHub Pages compatibility
-    // URLs become /#/courses instead of /courses
-    // This makes refresh work on any route since the server only sees '/'
     history: createWebHashHistory(import.meta.env.BASE_URL),
     routes
 });
