@@ -53,6 +53,8 @@ import JobInterviewPreSession from '../views/JobInterviewPreSession.vue';
 import JobInterviewSession from '../views/JobInterviewSession.vue';
 import JobInterviewResults from '../views/JobInterviewResults.vue';
 
+import RobloxTool from '../views/RobloxTool.vue';
+
 
 const routes = [
     {
@@ -365,6 +367,14 @@ const routes = [
                 name: 'JobInterviewResults',
                 component: JobInterviewResults,
                 meta: { title: 'My Interview Results', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+
+            // Roblox Tool (gated by ai_feature)
+            {
+                path: 'roblox-tool',
+                name: 'RobloxTool',
+                component: RobloxTool,
+                meta: { title: 'Roblox Animation Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             }
 
         ]

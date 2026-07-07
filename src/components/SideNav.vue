@@ -136,6 +136,19 @@
             <span class="nav-text">Job Interview</span>
           </router-link>
 
+          <router-link
+            v-if="hasAiAccess"
+            to="/roblox-tool"
+            class="nav-item"
+            :class="{ 'active': isActive('/roblox-tool') }"
+            @click="closeSidebarOnMobile"
+          >
+            <div class="nav-icon">
+              <RobloxIcon />
+            </div>
+            <span class="nav-text">Roblox Studio</span>
+          </router-link>
+
         </template>
       </nav>
 
@@ -365,6 +378,15 @@ const JobInterviewIcon = {
   render() {
     return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
       h('path', { d: 'M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z' })
+    ]);
+  }
+};
+
+const RobloxIcon = {
+  name: 'RobloxIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z' })
     ]);
   }
 };
