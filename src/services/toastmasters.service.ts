@@ -8,6 +8,7 @@ export interface ToastmastersSession {
     user_first_name?: string;
     user_last_name?: string;
     user_full_name?: string;
+    user_role?: string;
     topic: string;
     speech_type: string;
     min_time: number;
@@ -23,6 +24,7 @@ export interface ToastmastersSession {
     timer_report: string;
     speech_evaluator_report: string;
     general_evaluator_report: string;
+    role_evaluation_report?: string;
     body_language_data: any;
     body_language_advice: string;
     overall_score: number;
@@ -34,6 +36,7 @@ export interface BotCallBody {
     topic?: string;
     speech_type?: string;
     user_name?: string;
+    user_role?: string;
     transcript?: string;
     sample_speech?: string;
     duration?: number;
@@ -45,6 +48,12 @@ export interface BotCallBody {
     on_time?: boolean;
     total_fillers?: number;
     engagement_score?: number;
+    purpose?: string;
+    actual_fillers_in_sample?: Record<string, number>;
+    user_reported_fillers?: Record<string, number>;
+    user_timer_report?: string;
+    user_wod?: string;
+    sample_duration?: number;
 }
 
 class ToastmastersService {
@@ -65,6 +74,36 @@ class ToastmastersService {
             return r.text;
         } catch (e) {
             console.error(`Bot ${endpoint} failed:`, e);
+            return null;
+        }
+    }
+
+    async evaluateRole(body: BotCallBody): Promise<string | null> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            const r = await apiService.post<{ text: string }>(
+                baseUrl,
+                `/api/toastmasters/bot/evaluate-role`,
+                body
+            );
+            return r.text;
+        } catch (e) {
+            console.error('Role evaluation failed:', e);
+            return null;
+        }
+    }
+
+    async generateRoleTask(body: BotCallBody): Promise<string | null> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            const r = await apiService.post<{ text: string }>(
+                baseUrl,
+                `/api/toastmasters/bot/generate-role-task`,
+                body
+            );
+            return r.text;
+        } catch (e) {
+            console.error('Role task generation failed:', e);
             return null;
         }
     }

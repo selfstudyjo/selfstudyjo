@@ -1050,6 +1050,76 @@
 }
 
 /* -------------------------------------------------- *
+ * 12. Role badges + Filler chips + Skip buttons
+ * -------------------------------------------------- */
+
+/* Filler section in reports */
+.tm-filler-section {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--tm-glass-2);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-r-sm);
+}
+.tm-filler-section-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--tm-text-soft);
+  margin-bottom: 0.5rem;
+}
+.tm-filler-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.tm-filler-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: #fbbf24;
+}
+.tm-filler-word {
+  font-style: italic;
+  color: #fde68a;
+}
+.tm-filler-count {
+  font-weight: 700;
+  color: #f59e0b;
+}
+.tm-filler-empty {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.88rem;
+  color: var(--tm-success);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--tm-r-sm);
+}
+
+/* Role type info list styling */
+.tm-type-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.tm-type-info li {
+  padding: 0.25rem 0;
+  color: #c7d2fe;
+  font-size: 0.88rem;
+}
+.tm-type-info li::before {
+  content: "•";
+  color: var(--tm-accent);
+  font-weight: 800;
+  margin-right: 0.5rem;
+}
+
+/* -------------------------------------------------- *
  * 9. Responsive breakpoints
  *    Mobile-first additions
  * -------------------------------------------------- */

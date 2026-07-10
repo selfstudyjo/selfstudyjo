@@ -9,6 +9,16 @@
         <option>Ice Breaker</option><option>Evaluation Speech</option>
         <option>Inspirational Speech</option><option>Persuasive Speech</option>
       </select>
+      <select v-model="filters.role">
+        <option value="">All Roles</option>
+        <option value="Speaker">Speaker</option>
+        <option value="Toastmaster">Toastmaster</option>
+        <option value="Timer">Timer</option>
+        <option value="Ah-Counter">Ah-Counter</option>
+        <option value="Grammarian">Grammarian</option>
+        <option value="Speech Evaluator">Speech Evaluator</option>
+        <option value="General Evaluator">General Evaluator</option>
+      </select>
       <select v-model="filters.sort">
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
@@ -18,22 +28,24 @@
 
     <div class="tm-table-wrap">
       <table class="tm-table">
-        <thead><tr><th>Date</th><th>Topic</th><th>Type</th><th>Duration</th><th>Fillers</th><th>Score</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Role</th><th>Topic</th><th>Type</th><th>Duration</th><th>Fillers</th><th>Score</th><th></th></tr></thead>
         <tbody>
           <tr v-for="s in filtered" :key="s.id">
             <td>{{ formatDate(s.created_at) }}</td>
+            <td><span :style="roleBadgeStyle(s.user_role || 'Speaker')">{{ s.user_role || 'Speaker' }}</span></td>
             <td>{{ s.topic }}</td>
-            <td>{{ s.speech_type }}</td>
+            <td>{{ s.speech_type || '—' }}</td>
             <td>{{ Math.floor(s.duration_seconds/60) }}m {{ s.duration_seconds%60 }}s</td>
             <td>{{ s.total_fillers }}</td>
             <td><span :class="['tm-score-pill', scoreClass(s.overall_score)]">{{ s.overall_score }}</span></td>
             <td><button @click="viewReport(s)" class="tm-btn-sm tm-btn-primary">📄 View</button></td>
           </tr>
-          <tr v-if="filtered.length === 0"><td colspan="7" style="text-align:center;padding:2rem;color:#64748b">{{ loading ? 'Loading...' : 'No sessions yet.' }}</td></tr>
+          <tr v-if="filtered.length === 0"><td colspan="8" style="text-align:center;padding:2rem;color:#64748b">{{ loading ? 'Loading...' : 'No sessions yet.' }}</td></tr>
         </tbody>
       </table>
     </div>
 
+    <!-- REPORT MODAL -->
     <div v-if="modalSession" class="tm-modal" @click.self="modalSession = null">
       <div class="tm-modal-content">
         <div class="tm-report-header">
@@ -41,14 +53,15 @@
           <button @click="modalSession = null" class="tm-modal-close">✕</button>
         </div>
         <div class="tm-report-user-banner">
-          <div class="tm-report-user-avatar">{{ (modalSession.user_full_name || modalSession.username)[0]?.toUpperCase() }}</div>
+          <div class="tm-report-user-avatar">{{ (modalSession.user_full_name || modalSession.username || 'U')[0]?.toUpperCase() }}</div>
           <div>
             <div style="font-weight:700;font-size:1.1rem">{{ modalSession.user_full_name || modalSession.username }}</div>
             <div style="color:#64748b">@{{ modalSession.username }} • 📅 {{ formatDate(modalSession.created_at) }}</div>
           </div>
         </div>
         <div class="tm-report-grid">
-          <div><strong>Type:</strong> {{ modalSession.speech_type }}</div>
+          <div><strong>Role:</strong> <span :style="roleBadgeStyle(modalSession.user_role || 'Speaker')">{{ modalSession.user_role || 'Speaker' }}</span></div>
+          <div><strong>Type:</strong> {{ modalSession.speech_type || '—' }}</div>
           <div><strong>Target:</strong> {{ modalSession.min_time }}–{{ modalSession.max_time }} min</div>
           <div><strong>Duration:</strong> {{ Math.floor(modalSession.duration_seconds/60) }}m {{ modalSession.duration_seconds%60 }}s</div>
           <div><strong>Fillers:</strong> {{ modalSession.total_fillers }}</div>
@@ -56,12 +69,18 @@
         </div>
         <div class="tm-report-section"><h3>📝 Topic</h3><p>{{ modalSession.topic }}</p></div>
         <div class="tm-report-section"><h3>📚 Word of the Day</h3><p>{{ modalSession.word_of_the_day || '—' }}</p></div>
-        <div class="tm-report-section"><h3>⏱️ Timer Report</h3><p>{{ modalSession.timer_report }}</p></div>
 
-        <!-- ✨ ENHANCED AH-COUNTER WITH BREAKDOWN CHIPS -->
+        <!-- ROLE EVALUATION (for non-Speaker roles) -->
+        <div class="tm-report-section" v-if="modalSession.role_evaluation_report && (modalSession.user_role || 'Speaker') !== 'Speaker'">
+          <h3>🎭 {{ modalSession.user_role }} Role Evaluation</h3>
+          <p>{{ modalSession.role_evaluation_report }}</p>
+        </div>
+
+        <div class="tm-report-section"><h3>⏱️ Timer Report</h3><p>{{ modalSession.timer_report || '—' }}</p></div>
+
         <div class="tm-report-section">
           <h3>🗣️ Ah-Counter Report</h3>
-          <p>{{ modalSession.ah_counter_report }}</p>
+          <p>{{ modalSession.ah_counter_report || '—' }}</p>
           <div v-if="modalFillerEntries.length > 0" class="tm-filler-section">
             <div class="tm-filler-section-title">📊 Filler Word Breakdown ({{ modalSession.total_fillers }} total):</div>
             <div class="tm-filler-chips">
@@ -76,9 +95,9 @@
           </div>
         </div>
 
-        <div class="tm-report-section"><h3>✍️ Grammarian Report</h3><p>{{ modalSession.grammarian_report }}</p></div>
-        <div class="tm-report-section"><h3>📋 Speech Evaluator Report</h3><p>{{ modalSession.speech_evaluator_report }}</p></div>
-        <div class="tm-report-section"><h3>🎯 General Evaluator Report</h3><p>{{ modalSession.general_evaluator_report }}</p></div>
+        <div class="tm-report-section"><h3>✍️ Grammarian Report</h3><p>{{ modalSession.grammarian_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>📋 Speech Evaluator Report</h3><p>{{ modalSession.speech_evaluator_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>🎯 General Evaluator Report</h3><p>{{ modalSession.general_evaluator_report || '—' }}</p></div>
         <div class="tm-report-section">
           <h3>📹 Body Language Analysis</h3>
           <div class="tm-bl-grid">
@@ -87,10 +106,10 @@
             <div><strong>Looking Forward:</strong> {{ modalSession.body_language_data?.looking_forward_percent || 0 }}%</div>
             <div><strong>Centered:</strong> {{ modalSession.body_language_data?.centered_percent || 0 }}%</div>
           </div>
-          <p style="margin-top:.75rem">{{ modalSession.body_language_advice }}</p>
+          <p style="margin-top:.75rem">{{ modalSession.body_language_advice || '—' }}</p>
         </div>
         <div class="tm-report-section" v-if="modalSession.sample_speech_text">
-          <h3>🎤 Sample Speech You Evaluated</h3>
+          <h3>🎤 Sample Speech</h3>
           <div class="tm-transcript-block">{{ modalSession.sample_speech_text }}</div>
         </div>
         <div class="tm-report-section">
@@ -114,9 +133,31 @@ const authStore = useAuthStore();
 const sessions = ref<ToastmastersSession[]>([]);
 const loading = ref(true);
 const modalSession = ref<ToastmastersSession | null>(null);
-const filters = ref({ topic: '', type: '', sort: 'newest' });
+const filters = ref({ topic: '', type: '', role: '', sort: 'newest' });
 
-// ✨ Sorted filler entries for the open modal (descending by count)
+const ROLE_COLORS: Record<string, string> = {
+  'Speaker': '#4f46e5',
+  'Toastmaster': '#7c3aed',
+  'Timer': '#10b981',
+  'Ah-Counter': '#f59e0b',
+  'Grammarian': '#ec4899',
+  'Speech Evaluator': '#14b8a6',
+  'General Evaluator': '#64748b'
+};
+
+function roleBadgeStyle(role: string) {
+  const color = ROLE_COLORS[role] || '#6b7280';
+  return {
+    background: color,
+    color: '#fff',
+    padding: '2px 8px',
+    borderRadius: '12px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    display: 'inline-block'
+  };
+}
+
 const modalFillerEntries = computed(() => {
   if (!modalSession.value?.filler_counts) return [];
   return Object.entries(modalSession.value.filler_counts)
@@ -128,6 +169,7 @@ const filtered = computed(() => {
   let arr = sessions.value.filter(s => {
     if (filters.value.topic && !s.topic.toLowerCase().includes(filters.value.topic.toLowerCase())) return false;
     if (filters.value.type && s.speech_type !== filters.value.type) return false;
+    if (filters.value.role && (s.user_role || 'Speaker') !== filters.value.role) return false;
     return true;
   });
   if (filters.value.sort === 'newest') arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
