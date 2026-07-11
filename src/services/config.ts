@@ -41,11 +41,11 @@ class ServiceRegistry {
     private ensureHttps(url: string): string {
         if (!url) return url;
         if (url.startsWith('https://')) return url;
-            if (url.startsWith('http://')) {
-                const httpsUrl = url.replace(/^http:/, 'https:');
-                return httpsUrl;
-            }
-            return url;
+        if (url.startsWith('http://')) {
+            const httpsUrl = url.replace(/^http:/, 'https:');
+            return httpsUrl;
+        }
+        return url;
     }
 
     async getServiceReplicas(appId: number, serviceName: string): Promise<string[]> {
@@ -66,9 +66,9 @@ class ServiceRegistry {
 
                 const response = await fetch(url, {
                     headers: this.getHeaders(),
-                                             mode: 'cors',
-                                             credentials: 'omit',
-                                             signal: controller.signal
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
                 } as RequestInit);
 
                 clearTimeout(timeoutId);
@@ -76,9 +76,9 @@ class ServiceRegistry {
                 if (response.ok) {
                     const data: AppDetails = await response.json();
                     const replicas = data.replicas
-                    .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
-                    .filter(url => url && url.startsWith('http'))
-                    .map(url => this.ensureHttps(url));
+                        .map(replica => replica.replica_url?.trim().replace(/\/$/, '') || '')
+                        .filter(url => url && url.startsWith('http'))
+                        .map(url => this.ensureHttps(url));
 
                     this.cache.set(cacheKey, {
                         data: replicas,
@@ -104,7 +104,7 @@ class ServiceRegistry {
     async getRandomAuthReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_AUTH_APP_ID || '15'),
-                                                       'auth'
+            'auth'
         );
         return this.getRandomReplica(replicas);
     }
@@ -112,7 +112,7 @@ class ServiceRegistry {
     async getRandomUserProfileReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_USERPROFILE_APP_ID || '13'),
-                                                       'userprofile'
+            'userprofile'
         );
         return this.getRandomReplica(replicas);
     }
@@ -120,7 +120,7 @@ class ServiceRegistry {
     async getRandomOtpReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_OTP_APP_ID || '14'),
-                                                       'otp'
+            'otp'
         );
         return this.getRandomReplica(replicas);
     }
@@ -128,7 +128,7 @@ class ServiceRegistry {
     async getRandomCertificateReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_CERTIFICATE_APP_ID || '24'),
-                                                       'certificate'
+            'certificate'
         );
         return this.getRandomReplica(replicas);
     }
@@ -136,7 +136,7 @@ class ServiceRegistry {
     async getRandomCourseReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_COURSE_APP_ID || '19'),
-                                                       'course'
+            'course'
         );
         return this.getRandomReplica(replicas);
     }
@@ -144,7 +144,7 @@ class ServiceRegistry {
     async getRandomMediaReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_MEDIA_APP_ID || '18'),
-                                                       'media'
+            'media'
         );
         return this.getRandomReplica(replicas);
     }
@@ -152,7 +152,7 @@ class ServiceRegistry {
     async getRandomChatReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_CHAT_APP_ID || '9'),
-                                                       'chat'
+            'chat'
         );
         return this.getRandomReplica(replicas);
     }
@@ -160,7 +160,7 @@ class ServiceRegistry {
     async getRandomNotificationReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_NOTIFICATION_APP_ID || '16'),
-                                                       'notification'
+            'notification'
         );
         return this.getRandomReplica(replicas);
     }
@@ -168,7 +168,7 @@ class ServiceRegistry {
     async getRandomExamReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_EXAM_APP_ID || '20'),
-                                                       'exam'
+            'exam'
         );
         return this.getRandomReplica(replicas);
     }
@@ -176,7 +176,7 @@ class ServiceRegistry {
     async getRandomProctorReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_PROCTOR_APP_ID || '21'),
-                                                       'proctor'
+            'proctor'
         );
         return this.getRandomReplica(replicas);
     }
@@ -184,7 +184,7 @@ class ServiceRegistry {
     async getRandomRunbookReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_RUNBOOK_APP_ID || '17'),
-                                                       'runbook'
+            'runbook'
         );
         return this.getRandomReplica(replicas);
     }
@@ -192,7 +192,7 @@ class ServiceRegistry {
     async getRandomSubscriptionReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_SUBSCRIPTIONS_APP_ID || '22'),
-                                                       'subscription'
+            'subscription'
         );
         return this.getRandomReplica(replicas);
     }
@@ -200,7 +200,7 @@ class ServiceRegistry {
     async getRandomPaymentReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_PAYMENT_APP_ID || '23'),
-                                                       'payment'
+            'payment'
         );
         return this.getRandomReplica(replicas);
     }
@@ -208,11 +208,10 @@ class ServiceRegistry {
     async getRandomResearchFlowReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_RESEARCH_FLOW_APP_ID || '28'),
-                                                       'researchflow'
+            'researchflow'
         );
         return this.getRandomReplica(replicas);
     }
-
 
     async getRandomToastmastersReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
@@ -222,6 +221,13 @@ class ServiceRegistry {
         return this.getRandomReplica(replicas);
     }
 
+    async getRandomRobloxReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_ROBLOX_APP_ID || '29'),
+            'roblox'
+        );
+        return this.getRandomReplica(replicas);
+    }
 
     clearCache() {
         this.cache.clear();

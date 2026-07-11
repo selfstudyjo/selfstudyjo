@@ -1,177 +1,178 @@
-// src/services/roblox.service.ts – Roblox Animation AI service
+// src/services/roblox.service.ts
+import { apiService } from './api';
 import { serviceRegistry } from './config';
 
-interface CustomAnimationRequest {
+export interface RobloxAnimation {
+  id: string;
+  name: string;
+  category: string;
+  icon: string;
+  color: string;
+  description: string;
+  bestFor: string;
+  looping: boolean;
+  duration: number;
+  luaCode: string;
+  threeAnimParams: Record<string, string>;
+  created_by: string;
+  created_by_username?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface RobloxDesign {
+  id: string;
+  user_id: string;
+  username: string;
+  name: string;
+  description: string;
+  partType: string;
+  size: { x: number; y: number; z: number };
+  color: string;
+  material: string;
+  transparency: number;
+  reflectance: number;
+  shape: string;
+  anchored: boolean;
+  canCollide: boolean;
+  children: Array<{ type: string; properties: Record<string, any> }>;
+  luaCode: string;
+  animations: string[];
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface GenerateAnimationRequest {
   description: string;
   partType: string;
   looping: boolean;
   duration: number;
 }
 
-interface CustomAnimationResult {
+export interface GenerateAnimationResult {
   name: string;
   description: string;
   luaCode: string;
-  animationParams: {
-    posX?: string;
-    posY?: string;
-    posZ?: string;
-    rotX?: string;
-    rotY?: string;
-    rotZ?: string;
-    scaleX?: string;
-    scaleY?: string;
-    scaleZ?: string;
-    colorHue?: string;
-  };
+  threeAnimParams: Record<string, string>;
 }
 
-class RobloxAIService {
-  private replicas: string[] = [];
-  private currentIndex = 0;
-  private authToken: string;
-  private appId: string;
+export interface GenerateDesignRequest {
+  description: string;
+}
 
-  constructor() {
-    this.authToken = import.meta.env.VITE_AUTH_TOKEN;
-    this.appId = import.meta.env.VITE_AI_APP_ID;
+class RobloxService {
+  private async getBaseUrl(): Promise<string> {
+    const url = await serviceRegistry.getRandomRobloxReplica();
+    if (!url) throw new Error('No Roblox service replicas available');
+    return url;
   }
 
-  async initialize() {
-    if (this.replicas.length > 0) return;
-
-    const primaryDomain = import.meta.env.VITE_API_BASE_REGISTRY;
-    const altDomain = import.meta.env.VITE_REGISTRY_ALT;
-    const domains = [primaryDomain, altDomain].filter(Boolean);
-
-    for (const domain of domains) {
-      try {
-        const response = await fetch(`${domain}/apps/${this.appId}/`, {
-          headers: { Authorization: `Token ${this.authToken}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          this.replicas = data.replicas.map((r: { replica_url: string }) =>
-            r.replica_url.replace(/\/$/, '')
-          );
-          if (this.replicas.length > 0) return;
-        }
-      } catch (error) {
-        console.warn(`Roblox AI: Failed to fetch from ${domain}:`, error);
-      }
-    }
+  // ─── Animations ───
+  async getAnimations(category?: string, search?: string): Promise<RobloxAnimation[]> {
+    const baseUrl = await this.getBaseUrl();
+    let endpoint = '/api/roblox/animations';
+    const params: string[] = [];
+    if (category) params.push(`category=${encodeURIComponent(category)}`);
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (params.length) endpoint += '?' + params.join('&');
+    return apiService.get<RobloxAnimation[]>(baseUrl, endpoint);
   }
 
-  private async callAI(systemPrompt: string, userPrompt: string, maxTokens: number = 2048): Promise<string | null> {
-    await this.initialize();
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
-
-    for (let i = 0; i < this.replicas.length; i++) {
-      const index = (this.currentIndex + i) % this.replicas.length;
-      const url = this.replicas[index];
-
-      try {
-        const response = await fetch(`${url}/v1/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Token ${this.authToken}`,
-          },
-          body: JSON.stringify({
-            model: 'multi-provider',
-            messages,
-            temperature: 0.5,
-            max_tokens: maxTokens,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const content = data?.choices?.[0]?.message?.content;
-          if (content) {
-            this.currentIndex = (index + 1) % this.replicas.length;
-            return content;
-          }
-        }
-      } catch (error) {
-        console.warn(`Roblox AI replica ${url} failed:`, error);
-      }
-    }
-
-    return null;
+  async getAnimation(id: string): Promise<RobloxAnimation> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.get<RobloxAnimation>(baseUrl, `/api/roblox/animations/${id}`);
   }
 
-  async generateCustomAnimation(request: CustomAnimationRequest): Promise<CustomAnimationResult | null> {
-    const systemPrompt = `You are a Roblox Lua scripting expert and Three.js animation specialist. You generate ONLY valid JSON responses.
+  async createAnimation(data: Partial<RobloxAnimation>): Promise<{ success: boolean; animation: RobloxAnimation }> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.post(baseUrl, '/api/roblox/animations', data);
+  }
 
-When given an animation description, you must return a JSON object with:
-1. "name": A short name for the animation
-2. "description": Brief description of what it does
-3. "luaCode": Complete Roblox Lua script that implements the animation. The script should:
-   - Be placed inside a ${request.partType} as a child Script
-   - Use script.Parent to reference the part
-   - Use RunService.Heartbeat or TweenService
-   - Include clear comments
-   - Set Anchored = true at the start if needed
-   - ${request.looping ? 'Loop infinitely' : 'Play once'}
-4. "animationParams": An object with JavaScript math expressions (using variable 't' for time) that describe the motion for Three.js preview:
-   - posX, posY, posZ: position formulas (e.g., "Math.sin(t) * 3")
-   - rotX, rotY, rotZ: rotation formulas (e.g., "t * 2")
-   - scaleX, scaleY, scaleZ: scale formulas (e.g., "1 + Math.sin(t) * 0.3")
-   - colorHue: hue formula 0-1 (e.g., "(t * 0.2) % 1")
-   Only include the params that are relevant to the animation.
+  async updateAnimation(id: string, data: Partial<RobloxAnimation>): Promise<{ success: boolean; animation: RobloxAnimation }> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.put(baseUrl, `/api/roblox/animations/${id}`, data);
+  }
 
-Reply ONLY with valid JSON, no markdown fences, no extra text.`;
+  async deleteAnimation(id: string): Promise<{ success: boolean }> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.delete(baseUrl, `/api/roblox/animations/${id}`);
+  }
 
-    const userPrompt = `Generate a Roblox animation for a ${request.partType}:
+  async getCategories(): Promise<string[]> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.get<string[]>(baseUrl, '/api/roblox/animations/categories');
+  }
 
-Description: ${request.description}
-Looping: ${request.looping ? 'Yes' : 'No'}
-Duration: ${request.duration} seconds
+  async generateAnimation(req: GenerateAnimationRequest): Promise<GenerateAnimationResult> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.post<GenerateAnimationResult>(baseUrl, '/api/roblox/generate-animation', req);
+  }
 
-Generate the Lua code and Three.js preview parameters.`;
+  // ─── Designs ───
+  async getDesigns(userId?: string): Promise<RobloxDesign[]> {
+    const baseUrl = await this.getBaseUrl();
+    let endpoint = '/api/roblox/designs';
+    if (userId) endpoint += `?user_id=${encodeURIComponent(userId)}`;
+    return apiService.get<RobloxDesign[]>(baseUrl, endpoint);
+  }
 
-    const response = await this.callAI(systemPrompt, userPrompt, 2500);
+  async getDesign(id: string): Promise<RobloxDesign> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.get<RobloxDesign>(baseUrl, `/api/roblox/designs/${id}`);
+  }
 
-    if (!response) return null;
+  async saveDesign(data: Partial<RobloxDesign>): Promise<{ success: boolean; id: string; design: RobloxDesign }> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.post(baseUrl, '/api/roblox/designs', data);
+  }
 
-    try {
-      // Extract JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          name: parsed.name || 'Custom Animation',
-          description: parsed.description || request.description,
-          luaCode: parsed.luaCode || '-- Failed to generate code',
-          animationParams: parsed.animationParams || {}
-        };
-      }
-    } catch (e) {
-      console.error('Failed to parse AI response:', e);
-    }
+  async updateDesign(id: string, data: Partial<RobloxDesign>, userId?: string): Promise<{ success: boolean; design: RobloxDesign }> {
+    const baseUrl = await this.getBaseUrl();
+    let endpoint = `/api/roblox/designs/${id}`;
+    if (userId) endpoint += `?user_id=${encodeURIComponent(userId)}`;
+    return apiService.put(baseUrl, endpoint, data);
+  }
 
-    // Fallback: try to extract Lua code from plain text
-    const luaMatch = response.match(/```lua\n([\s\S]*?)```/);
-    return {
-      name: 'Custom Animation',
-      description: request.description,
-      luaCode: luaMatch ? luaMatch[1] : response,
-      animationParams: {
-        posY: 'Math.sin(t) * 1.5 + 1',
-        rotY: 't'
-      }
-    };
+  async deleteDesign(id: string, userId?: string): Promise<{ success: boolean }> {
+    const baseUrl = await this.getBaseUrl();
+    let endpoint = `/api/roblox/designs/${id}`;
+    if (userId) endpoint += `?user_id=${encodeURIComponent(userId)}`;
+    return apiService.delete(baseUrl, endpoint);
+  }
+
+  async generateDesign(req: GenerateDesignRequest): Promise<any> {
+    const baseUrl = await this.getBaseUrl();
+    return apiService.post(baseUrl, '/api/roblox/generate-design', req);
+  }
+
+  getDownloadUrl(designId: string): string {
+    // This needs to be called differently since it returns a file
+    return `/api/roblox/designs/${designId}/download`;
+  }
+
+  async downloadDesign(designId: string): Promise<void> {
+    const baseUrl = await this.getBaseUrl();
+    const authToken = import.meta.env.VITE_AUTH_TOKEN;
+    const url = `${baseUrl}/api/roblox/designs/${designId}/download`;
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Token ${authToken}` }
+    });
+
+    if (!response.ok) throw new Error('Download failed');
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    const disposition = response.headers.get('content-disposition');
+    const filename = disposition?.match(/filename="?(.+)"?/)?.[1] || 'design.zip';
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(downloadUrl);
   }
 }
 
-let instance: RobloxAIService | null = null;
-
-export function useRobloxAI(): RobloxAIService {
-  if (!instance) instance = new RobloxAIService();
-  return instance;
-}
+export const robloxService = new RobloxService();
