@@ -1141,3 +1141,97 @@
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+
+/* ═══ Parts List ═══ */
+.parts-list-section {
+  margin-top: 14px;
+  border-top: 1px solid rgba(99, 102, 241, 0.15);
+  padding-top: 10px;
+}
+
+.parts-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.parts-list-header h3 {
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.btn-sm {
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+}
+
+.parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.part-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(30, 30, 60, 0.5);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.part-list-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.part-list-item.active {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.part-list-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.part-list-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.part-list-info strong {
+  display: block;
+  font-size: 0.78rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.part-list-info span {
+  font-size: 0.65rem;
+  color: #888;
+}
+
+/* ═══ Part Editor ═══ */
+.part-editor {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+.part-editor h3 {
+  font-size: 0.82rem;
+  color: #a5b4fc;
+  margin: 0 0 8px;
+}

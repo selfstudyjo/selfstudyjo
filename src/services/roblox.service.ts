@@ -2,6 +2,22 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
 
+export interface PartData {
+  name: string;
+  partType: string;
+  shape: string;
+  size: { x: number; y: number; z: number };
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  color: string;
+  material: string;
+  transparency: number;
+  reflectance: number;
+  anchored: boolean;
+  canCollide: boolean;
+  effects: Array<{ type: string; properties: Record<string, any> }>;
+}
+
 export interface RobloxAnimation {
   id: string;
   name: string;
@@ -26,18 +42,8 @@ export interface RobloxDesign {
   username: string;
   name: string;
   description: string;
-  partType: string;
-  size: { x: number; y: number; z: number };
-  color: string;
-  material: string;
-  transparency: number;
-  reflectance: number;
-  shape: string;
-  anchored: boolean;
-  canCollide: boolean;
-  children: Array<{ type: string; properties: Record<string, any> }>;
+  parts: PartData[];
   luaCode: string;
-  animations: string[];
   created_at: string;
   updated_at?: string;
 }
@@ -56,8 +62,30 @@ export interface GenerateAnimationResult {
   threeAnimParams: Record<string, string>;
 }
 
-export interface GenerateDesignRequest {
+export interface GenerateDesignResult {
+  name: string;
   description: string;
+  parts: PartData[];
+  luaCode: string;
+}
+
+function makeDefaultPart(overrides?: Partial<PartData>): PartData {
+  return {
+    name: 'Part',
+    partType: 'Part',
+    shape: 'Block',
+    size: { x: 4, y: 4, z: 4 },
+    position: { x: 0, y: 2, z: 0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    color: '#4488ff',
+    material: 'SmoothPlastic',
+    transparency: 0,
+    reflectance: 0,
+    anchored: true,
+    canCollide: true,
+    effects: [],
+    ...overrides,
+  };
 }
 
 class RobloxService {
@@ -68,6 +96,7 @@ class RobloxService {
   }
 
   // ─── Animations ───
+
   async getAnimations(category?: string, search?: string): Promise<RobloxAnimation[]> {
     const baseUrl = await this.getBaseUrl();
     let endpoint = '/api/roblox/animations';
@@ -109,6 +138,7 @@ class RobloxService {
   }
 
   // ─── Designs ───
+
   async getDesigns(userId?: string): Promise<RobloxDesign[]> {
     const baseUrl = await this.getBaseUrl();
     let endpoint = '/api/roblox/designs';
@@ -135,38 +165,68 @@ class RobloxService {
 
   async deleteDesign(id: string, userId?: string): Promise<{ success: boolean }> {
     const baseUrl = await this.getBaseUrl();
-    let endpoint = `/api/roblox/designs/${id}`;
-    if (userId) endpoint += `?user_id=${encodeURIComponent(userId)}`;
-    return apiService.delete(baseUrl, endpoint);
+    return apiService.delete(baseUrl, `/api/roblox/designs/${id}`, userId ? { user_id: userId } : undefined);
   }
 
-  async generateDesign(req: GenerateDesignRequest): Promise<any> {
+  async generateDesign(req: { description: string }): Promise<GenerateDesignResult> {
     const baseUrl = await this.getBaseUrl();
-    return apiService.post(baseUrl, '/api/roblox/generate-design', req);
+    const result = await apiService.post<any>(baseUrl, '/api/roblox/generate-design', req);
+
+    // Normalize: ensure parts array exists with proper defaults
+    const parts: PartData[] = [];
+    if (Array.isArray(result.parts)) {
+      for (const p of result.parts) {
+        parts.push(makeDefaultPart({
+          name: p.name || 'Part',
+          partType: p.partType || 'Part',
+          shape: p.shape || 'Block',
+          size: p.size || { x: 2, y: 2, z: 2 },
+          position: p.position || { x: 0, y: 1, z: 0 },
+          rotation: p.rotation || { x: 0, y: 0, z: 0 },
+          color: p.color || '#888888',
+          material: p.material || 'SmoothPlastic',
+          transparency: p.transparency ?? 0,
+          reflectance: p.reflectance ?? 0,
+          anchored: p.anchored !== false,
+          canCollide: p.canCollide !== false,
+          effects: Array.isArray(p.effects) ? p.effects : [],
+        }));
+      }
+    }
+
+    // Fallback if AI returned nothing useful
+    if (parts.length === 0) {
+      parts.push(makeDefaultPart({ name: 'MainPart' }));
+    }
+
+    return {
+      name: result.name || 'Custom Object',
+      description: result.description || req.description,
+      parts,
+      luaCode: result.luaCode || '',
+    };
   }
 
-  getDownloadUrl(designId: string): string {
-    // This needs to be called differently since it returns a file
-    return `/api/roblox/designs/${designId}/download`;
-  }
-
-  async downloadDesign(designId: string): Promise<void> {
+  async downloadDesign(designId: string, format: 'zip' | 'rbxm' | 'lua' = 'zip'): Promise<void> {
     const baseUrl = await this.getBaseUrl();
     const authToken = import.meta.env.VITE_AUTH_TOKEN;
-    const url = `${baseUrl}/api/roblox/designs/${designId}/download`;
+    const url = `${baseUrl}/api/roblox/designs/${designId}/download?format=${format}`;
 
     const response = await fetch(url, {
-      headers: { Authorization: `Token ${authToken}` }
+      headers: { Authorization: `Token ${authToken}` },
     });
 
-    if (!response.ok) throw new Error('Download failed');
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Download failed: ${response.status} ${text.slice(0, 200)}`);
+    }
 
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadUrl;
     const disposition = response.headers.get('content-disposition');
-    const filename = disposition?.match(/filename="?(.+)"?/)?.[1] || 'design.zip';
+    const filename = disposition?.match(/filename="?(.+?)"?$/)?.[1] || `design.${format}`;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
