@@ -1,0 +1,1 @@
+import{t as e}from"./index-gegu_M2_.js";export{e as serviceRegistry};
