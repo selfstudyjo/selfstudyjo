@@ -105,6 +105,22 @@
   background: rgba(99, 102, 241, 0.25);
 }
 
+.btn-success {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  border: none;
+}
+
+.btn-success:hover {
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: white;
+  border: none;
+}
+
 .character-select {
   background: rgba(30, 30, 60, 0.8);
   color: #e0e0e0;
@@ -214,6 +230,27 @@
   border-color: #6366f1;
 }
 
+/* ─── Section Divider ─── */
+.section-divider {
+  padding: 10px 10px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-divider h3 {
+  font-size: 0.78rem;
+  color: #a5b4fc;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-divider .section-count {
+  font-size: 0.7rem;
+  color: #666;
+}
+
 .animations-grid {
   padding: 10px;
   display: grid;
@@ -228,6 +265,7 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .animation-card:hover {
@@ -251,6 +289,7 @@
 
 .card-info {
   padding: 8px;
+  position: relative;
 }
 
 .card-info h4 {
@@ -260,11 +299,40 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-right: 20px;
 }
 
 .card-category {
   font-size: 0.65rem;
   color: #818cf8;
+}
+
+.card-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(239, 68, 68, 0.3);
+  border: none;
+  border-radius: 4px;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.animation-card:hover .card-delete {
+  opacity: 1;
+}
+
+.card-delete:hover {
+  background: rgba(239, 68, 68, 0.6);
+  color: white;
 }
 
 /* ─── Preview Panel (Right) ─── */
@@ -361,6 +429,25 @@
 
 .placeholder p {
   font-size: 0.9rem;
+}
+
+/* ─── Empty Details ─── */
+.empty-details {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.empty-details-content {
+  text-align: center;
+  color: #555;
+}
+
+.empty-details-content h3 {
+  color: #888;
+  margin-bottom: 8px;
 }
 
 /* ─── Details Section ─── */
@@ -526,6 +613,25 @@
   line-height: 1.5;
 }
 
+.step-code-wrapper {
+  position: relative;
+}
+
+.step-copy-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(99, 102, 241, 0.3);
+  border: none;
+  border-radius: 4px;
+  color: #a5b4fc;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .step-code {
   background: rgba(10, 10, 30, 0.9);
   border: 1px solid rgba(99, 102, 241, 0.15);
@@ -658,6 +764,16 @@
 .option-group select:focus,
 .option-group input:focus {
   border-color: #6366f1;
+}
+
+.custom-error {
+  color: #f87171;
+  font-size: 0.82rem;
+  padding: 8px;
+  margin-top: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
 }
 
 .modal-footer {
@@ -843,6 +959,11 @@
   margin-left: 4px;
 }
 
+.card-badge.mine {
+  background: rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
 .loading-bar {
   color: #818cf8;
   font-size: 0.75rem;
@@ -981,6 +1102,7 @@
   display: flex;
   gap: 8px;
   padding-top: 6px;
+  flex-wrap: wrap;
 }
 
 .saved-designs {
@@ -1223,6 +1345,12 @@
   color: #888;
 }
 
+.part-anim-indicator {
+  font-size: 0.6rem;
+  color: #10b981;
+  margin-left: 4px;
+}
+
 /* ═══ Part Editor ═══ */
 .part-editor {
   margin-top: 12px;
@@ -1234,4 +1362,201 @@
   font-size: 0.82rem;
   color: #a5b4fc;
   margin: 0 0 8px;
+}
+
+/* ═══ Animation Picker ═══ */
+.anim-picker-section {
+  margin-top: 10px;
+  border-top: 1px solid rgba(99, 102, 241, 0.1);
+  padding-top: 8px;
+}
+
+.anim-picker-section label {
+  font-size: 0.72rem;
+  color: #818cf8;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.anim-picker-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.anim-picker-row select {
+  flex: 1;
+  background: rgba(10, 10, 30, 0.8);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 6px;
+  color: #e0e0e0;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.anim-picker-row select option {
+  background: #1a1a3e;
+}
+
+.anim-clear-btn {
+  padding: 5px 10px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.anim-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.anim-script-preview {
+  margin-top: 4px;
+}
+
+.anim-script-preview summary {
+  font-size: 0.72rem;
+  color: #a5b4fc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.anim-script-preview pre {
+  background: rgba(10, 10, 30, 0.8);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #a0a0c0;
+  max-height: 120px;
+  overflow-y: auto;
+  margin: 4px 0 0 0;
+}
+
+/* ═══ Tree Structure ═══ */
+.parts-tree {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.tree-node {
+  user-select: none;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
+  font-size: 0.78rem;
+  min-height: 30px;
+}
+
+.tree-item:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.tree-item.active {
+  background: rgba(99, 102, 241, 0.2);
+  border-left: 2px solid #6366f1;
+}
+
+.tree-toggle {
+  width: 14px;
+  font-size: 0.6rem;
+  color: #818cf8;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.tree-toggle-spacer {
+  width: 14px;
+  text-align: center;
+  color: #444;
+  flex-shrink: 0;
+}
+
+.tree-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tree-name {
+  flex: 1;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.tree-shape {
+  font-size: 0.6rem;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.tree-anim-badge,
+.tree-kill-badge {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.tree-add-btn,
+.tree-del-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.tree-item:hover .tree-add-btn,
+.tree-item:hover .tree-del-btn {
+  opacity: 1;
+}
+
+.tree-add-btn {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.tree-add-btn:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+.tree-del-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.tree-del-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.tree-children {
+  border-left: 1px solid rgba(99, 102, 241, 0.15);
+  margin-left: 12px;
 }
