@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -D - -H \"Origin: https://www.selfstudyjo.com\" \"https://selfstudymedia1.pythonanywhere.com/media/course_images/423d9427-2b11-43e2-829a-fad470ae3827.png\" --max-time 40)",
+      "Bash(curl -s -o /dev/null -D - -H \"Origin: https://www.selfstudyjo.com\" \"https://selfstudymedia2.pythonanywhere.com/media/course_images/87f97a54-a0cc-4be6-bbc5-86e08e3b8137.jpeg\" --max-time 40)",
+      "Bash(npx vue-tsc *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

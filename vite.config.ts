@@ -16,20 +16,11 @@ export default defineConfig({
     },
   },
 
+  // No /media proxy on purpose: the media backends send
+  // `Access-Control-Allow-Origin: *`, so images load directly in dev exactly
+  // as they do in production. A dev-only proxy here would hide prod CORS bugs.
   server: {
     port: 3000,
     host: true,
-    proxy: {
-      '/media1': {
-        target: 'https://selfstudymedia1.pythonanywhere.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/media1/, ''),
-      },
-      '/media2': {
-        target: 'https://selfstudymedia2.pythonanywhere.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/media2/, ''),
-      },
-    },
   },
 })

@@ -43,8 +43,16 @@ const SPHERE_SEGMENTS = 32
 const TEXTURE_SIZE = 256
 
 /* -------------------------------------------------------------------------
- * CORS proxy chain (production only).
- * Place your own Cloudflare Worker URL FIRST for best reliability.
+ * Image loading strategy.
+ *
+ * The media backends (selfstudymedia1/2.pythonanywhere.com) serve /media/
+ * with `Access-Control-Allow-Origin: *`, so a plain crossOrigin="anonymous"
+ * <img> loads fine from any origin — no proxy required. That is the primary
+ * path in BOTH dev and production, so the two environments behave identically.
+ *
+ * The public CORS proxies below are a last-resort fallback only. They are
+ * unreliable (rate limits, 403s, missing CORS headers) and must never be the
+ * first thing we try.
  * ------------------------------------------------------------------------- */
 const CORS_PROXY_TEMPLATES: Array<(u: string) => string> = [
   // (u) => `https://YOUR-NAME.YOUR-SUBDOMAIN.workers.dev/?url=${encodeURIComponent(u)}`,
@@ -273,46 +281,61 @@ class PlanetRenderer {
     }
   }
 
-  /** Top-level: dev-proxy in dev, sticky → race in prod. Returns null if all fail. */
+  /** Direct CORS load — no proxy, no fetch/blob round-trip. Resolves null on
+   *  failure or timeout instead of throwing. */
+  private loadDirect(url: string): Promise<HTMLImageElement | null> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      let settled = false
+      const finish = (value: HTMLImageElement | null) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        resolve(value)
+      }
+      const timer = setTimeout(() => { img.src = ''; finish(null) }, FETCH_TIMEOUT_MS)
+
+      img.crossOrigin = 'anonymous'
+      img.decoding = 'async'
+      img.onload = () => finish(img.naturalWidth > 0 ? img : null)
+      img.onerror = () => finish(null)
+      img.src = url
+    })
+  }
+
+  /** Upgrade http:// media URLs to https:// so they aren't blocked as mixed
+   *  content when the app itself is served over https. */
+  private normalizeUrl(url: string): string {
+    if (typeof window !== 'undefined' &&
+        window.location.protocol === 'https:' &&
+        url.startsWith('http://')) {
+      return 'https://' + url.slice('http://'.length)
+    }
+    return url
+  }
+
+  /** Top-level: direct CORS load first (dev + prod), public proxies only as a
+   *  fallback for media hosts. Returns null if everything fails. */
   private async loadCourseImageInternal(rawUrl: string):
       Promise<{ img: HTMLImageElement, objectUrl?: string } | null> {
 
-    if (import.meta.env.DEV) {
-      const m1 = /^https?:\/\/selfstudymedia1\.pythonanywhere\.com/
-      const m2 = /^https?:\/\/selfstudymedia2\.pythonanywhere\.com/
-      let devUrl = rawUrl
-      if (m1.test(rawUrl)) devUrl = rawUrl.replace(m1, '/media1')
-      else if (m2.test(rawUrl)) devUrl = rawUrl.replace(m2, '/media2')
-      try {
-        const img = await this.decodeImageFromUrl(devUrl)
-        return { img }
-      } catch { return null }
-    }
+    const finalUrl = this.normalizeUrl(getSecureMediaUrl(rawUrl))
 
-    const finalUrl = getSecureMediaUrl(rawUrl)
+    // 1. Direct — the media backends send `Access-Control-Allow-Origin: *`.
+    const direct = await this.loadDirect(finalUrl)
+    if (direct) return { img: direct }
+
     const isMediaUrl = /^https?:\/\/selfstudymedia\d+\.pythonanywhere\.com\//.test(finalUrl)
+    if (!isMediaUrl) return null
 
-    if (!isMediaUrl) {
-      try {
-        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-          const i = new Image()
-          i.crossOrigin = 'anonymous'
-          i.onload = () => resolve(i)
-          i.onerror = () => reject(new Error('direct failed'))
-          i.src = finalUrl
-        })
-        return { img }
-      } catch { return null }
-    }
-
-    // Sticky path — single fetch, ~one round-trip
+    // 2. Fallback: sticky proxy — single fetch, ~one round-trip.
     if (this.workingProxy) {
       const r = await this.fetchImageAsObjectUrl(this.workingProxy(finalUrl))
       if (r) return r
       this.forgetStickyProxy()
     }
 
-    // First time / sticky failed: race them in parallel
+    // 3. Fallback: race the remaining proxies in parallel.
     return await this.raceProxies(finalUrl)
   }
 
