@@ -4,7 +4,14 @@
       "Bash(curl -s -o /dev/null -D - -H \"Origin: https://www.selfstudyjo.com\" \"https://selfstudymedia1.pythonanywhere.com/media/course_images/423d9427-2b11-43e2-829a-fad470ae3827.png\" --max-time 40)",
       "Bash(curl -s -o /dev/null -D - -H \"Origin: https://www.selfstudyjo.com\" \"https://selfstudymedia2.pythonanywhere.com/media/course_images/87f97a54-a0cc-4be6-bbc5-86e08e3b8137.jpeg\" --max-time 40)",
       "Bash(npx vue-tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(npx vue-tsc --noEmit 2>&1)",
+      "PowerShell($out = npx vue-tsc --noEmit 2>&1 | Out-String; $m = \\($out -split \"`n\"\\) | Where-Object { $_ -match 'UserCertificate' }; if \\($m\\) { $m } else { \"NO ERRORS IN UserCertificate.vue\" })",
+      "PowerShell(Set-Location \"D:\\\\SelfStudy Apps\\\\selfstudyjo\"; $out = npx vue-tsc --noEmit 2>&1 | Out-String; $m = \\($out -split \"`n\"\\) | Where-Object { $_ -match 'UserCertificate' }; if \\($m\\) { $m } else { \"NO ERRORS IN UserCertificate.vue\" })",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,2\\)\\)\")",
+      "PowerShell(Set-Location \"D:\\\\SelfStudy Apps\\\\selfstudyjo\"; npm run build 2>&1 | Select-String -Pattern \"built in|transformed|error\" | Select-Object -Last 5; \"--- exit: $LASTEXITCODE\")"
     ]
   }
 }

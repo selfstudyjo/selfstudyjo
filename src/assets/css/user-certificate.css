@@ -1,9 +1,9 @@
 /* ==========================================================================
  *  USER CERTIFICATE — Galaxy / Glassmorphism Theme
  *  Coexists with: style.css + AnimatedBackground.vue + default-layout.css + side-nav.css
- *  Mobile-first.  Breakpoints: 480 / 768 / 1024 / 1440 / 1920 / 2560
- *  All containers translucent so the galaxy stays visible.
- *  Brand gradient: #667eea → #764ba2 ; Gold kept for the iconic seal only.
+ *  Layout: single centred column, formal certificate reading order.
+ *  Mobile-first, fluid type/space — no fixed-column grid gymnastics.
+ *  Brand gradient: #667eea → #764ba2 ; Gold kept for the iconic seal & rules.
  * ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -12,7 +12,6 @@
 :root {
   /* Brand */
   --uc-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --uc-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.18), rgba(118,75,162,0.18));
   --uc-accent:      #818cf8;
   --uc-accent-2:    #a78bfa;
 
@@ -20,6 +19,7 @@
   --uc-gold:        #ffd277;
   --uc-gold-deep:   #e0a548;
   --uc-gold-glow:   rgba(255, 215, 0, 0.35);
+  --uc-gold-line:   rgba(255, 210, 119, 0.28);
 
   /* Status */
   --uc-success:     #48bb78;
@@ -53,14 +53,14 @@
   --uc-text-shadow:  0 1px 2px rgba(0, 0, 0, 0.6);
 
   /* Type — fluid */
-  --uc-fz-xs:   clamp(0.70rem, 1.6vw, 0.78rem);
-  --uc-fz-sm:   clamp(0.80rem, 1.9vw, 0.90rem);
-  --uc-fz-base: clamp(0.90rem, 2.1vw, 1.00rem);
-  --uc-fz-md:   clamp(1.00rem, 2.4vw, 1.15rem);
-  --uc-fz-lg:   clamp(1.15rem, 2.8vw, 1.35rem);
-  --uc-fz-xl:   clamp(1.40rem, 3.6vw, 1.75rem);
-  --uc-fz-2xl:  clamp(1.70rem, 4.6vw, 2.25rem);
-  --uc-fz-3xl:  clamp(2.00rem, 5.6vw, 2.75rem);
+  --uc-fz-xs:   clamp(0.68rem, 1.4vw, 0.76rem);
+  --uc-fz-sm:   clamp(0.80rem, 1.7vw, 0.90rem);
+  --uc-fz-base: clamp(0.90rem, 1.9vw, 1.00rem);
+  --uc-fz-md:   clamp(1.00rem, 2.1vw, 1.12rem);
+  --uc-fz-lg:   clamp(1.10rem, 2.6vw, 1.45rem);
+  --uc-fz-xl:   clamp(1.30rem, 3.2vw, 1.80rem);
+  --uc-fz-2xl:  clamp(1.55rem, 4.0vw, 2.20rem);
+  --uc-fz-3xl:  clamp(1.85rem, 5.0vw, 2.90rem);
 
   /* Spacing — fluid */
   --uc-sp-xs: clamp(0.30rem, 0.8vw, 0.45rem);
@@ -79,10 +79,13 @@
   --uc-t-fast: 180ms var(--uc-ease);
   --uc-t-base: 320ms var(--uc-ease);
   --uc-t-slow: 520ms var(--uc-ease);
+
+  /* Formal serif used for the certificate wording */
+  --uc-serif: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
 }
 
 /* --------------------------------------------------------------------------
- *  2. Word-protection (preserved from original — narrowly scoped)
+ *  2. Word-protection (narrowly scoped)
  * -------------------------------------------------------------------------- */
 .certificate-details *,
 .certificate-details *::before,
@@ -131,7 +134,7 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -213,7 +216,8 @@
 .retry-btn,
 .back-btn,
 .share-btn,
-.copy-btn {
+.copy-btn,
+.print-btn {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -240,6 +244,10 @@
               background var(--uc-t-fast),
               border-color var(--uc-t-fast);
 }
+.retry-btn svg,
+.share-btn svg,
+.copy-btn svg,
+.print-btn svg { flex-shrink: 0; }
 
 .retry-btn,
 .share-btn {
@@ -251,12 +259,14 @@
 .retry-btn:hover,
 .share-btn:hover,
 .copy-btn:hover,
+.print-btn:hover,
 .back-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--uc-shadow-hover), var(--uc-glow-brand);
   border-color: rgba(255, 255, 255, 0.35);
 }
 .copy-btn:hover,
+.print-btn:hover,
 .back-btn:hover {
   background: var(--uc-glass-hover);
 }
@@ -265,10 +275,11 @@
  *  6. Floating glass action bar
  * -------------------------------------------------------------------------- */
 .certificate-header {
+  position: relative;
+  z-index: 20;                                   /* keeps the share menu above the card */
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  flex-wrap: wrap;
   gap: var(--uc-sp-sm);
   margin-bottom: var(--uc-sp-lg);
   padding: var(--uc-sp-sm) var(--uc-sp-md);
@@ -276,20 +287,121 @@
   -webkit-backdrop-filter: var(--uc-blur);
   backdrop-filter: var(--uc-blur);
   border: 1px solid var(--uc-border);
-  border-radius: 999px;
+  border-radius: var(--uc-r-lg);
   box-shadow: var(--uc-shadow);
 }
 .header-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--uc-sp-sm);
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+ *  6b. Share menu (celebration post)
+ * -------------------------------------------------------------------------- */
+.share-wrap { position: relative; }
+
+.share-menu {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: 50;
+  width: min(380px, calc(100vw - 2.5rem));
+  padding: var(--uc-sp-md);
+  background: rgba(15, 17, 40, 0.92);
+  -webkit-backdrop-filter: var(--uc-blur);
+  backdrop-filter: var(--uc-blur);
+  border: 1px solid var(--uc-border-strong);
+  border-radius: var(--uc-r-md);
+  box-shadow: var(--uc-shadow-hover), var(--uc-glow-brand);
+  text-align: left;
+}
+
+.share-menu-title {
+  margin: 0 0 var(--uc-sp-xs);
+  font-size: var(--uc-fz-xs);
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--uc-text-dim);
+}
+
+.share-menu-preview {
+  margin: 0 0 var(--uc-sp-md);
+  padding: var(--uc-sp-sm);
+  max-height: 9.5rem;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: var(--uc-fz-xs);
+  line-height: 1.55;
+  color: var(--uc-text-mute);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--uc-border-strong);
+  border-radius: var(--uc-r-sm);
+  overflow-wrap: anywhere;
+}
+
+.share-menu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--uc-sp-xs);
 }
+
+.share-option {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 var(--uc-sp-sm);
+  font-family: inherit;
+  font-size: var(--uc-fz-sm);
+  font-weight: 600;
+  color: var(--uc-text);
+  background: var(--uc-glass-strong);
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-r-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--uc-t-fast),
+              border-color var(--uc-t-fast),
+              transform var(--uc-t-fast);
+}
+.share-option:hover {
+  background: var(--uc-glass-hover);
+  border-color: rgba(129, 140, 248, 0.45);
+  transform: translateY(-1px);
+}
+.share-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.share-option.is-linkedin .share-option-icon { color: #70b5f9; }
+.share-option.is-x        .share-option-icon { color: #ffffff; }
+.share-option.is-whatsapp .share-option-icon { color: #5ce07d; }
+.share-option.is-facebook .share-option-icon { color: #7aa7ff; }
+.share-option.is-copy     .share-option-icon,
+.share-option.is-native   .share-option-icon { color: var(--uc-gold); }
+
+.uc-pop-enter-active,
+.uc-pop-leave-active { transition: opacity var(--uc-t-fast), transform var(--uc-t-fast); }
+.uc-pop-enter-from,
+.uc-pop-leave-to     { opacity: 0; transform: translateY(-6px) scale(0.98); }
 
 /* --------------------------------------------------------------------------
  *  7. Certificate card — main glass viewport
  * -------------------------------------------------------------------------- */
 .certificate-card {
   position: relative;
+  display: block;
   width: 100%;
   margin-bottom: var(--uc-sp-lg);
   background: var(--uc-glass);
@@ -316,7 +428,7 @@
 .certificate-card::before {
   content: '';
   position: absolute;
-  inset: 12px;
+  inset: clamp(8px, 1.4vw, 14px);
   border: 1.5px solid rgba(255, 210, 119, 0.18);
   border-radius: calc(var(--uc-r-xl) - 10px);
   pointer-events: none;
@@ -328,48 +440,64 @@
 }
 
 /* --------------------------------------------------------------------------
- *  8. Grid layout inside the card (preserved structure)
+ *  8. Certificate body — one centred column, formal reading order
  * -------------------------------------------------------------------------- */
-.certificate-border {
+.certificate-frame {
   position: relative;
   z-index: 3;
-  padding: var(--uc-sp-xl);
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 0 var(--uc-sp-lg);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--uc-sp-lg);
+  padding: clamp(1.6rem, 4.5vw, 3.4rem) clamp(1.1rem, 4vw, 3.2rem);
   min-width: 0;
 }
 
-.certificate-body { display: contents; }
-
-.certificate-title  { grid-column: 1 / -1; grid-row: 1; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.presented-to      { grid-column: 1;     grid-row: 2; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.awarded-for       { grid-column: 1;     grid-row: 3; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.certificate-message{grid-column: 1;     grid-row: 4; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.certificate-id    { grid-column: 1;     grid-row: 5; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.main-details      { grid-column: 2;     grid-row: 2; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.detail-grid       { grid-column: 2;     grid-row: 3; min-width: 0; margin: 0 !important; padding: 0 !important; }
-.certificate-footer{ grid-column: 1 / -1; grid-row: 6; min-width: 0; margin: 0 !important; padding: 0 !important; }
-
-.certificate-seal {
-  position: absolute;
-  bottom: var(--uc-sp-lg);
-  right: var(--uc-sp-lg);
-  z-index: 4;
-  pointer-events: none;
+.certificate-frame > * {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 
-/* --------------------------------------------------------------------------
- *  9. Title block
- * -------------------------------------------------------------------------- */
-.certificate-title h1 {
-  font-size: var(--uc-fz-2xl);
-  font-weight: 800;
-  letter-spacing: clamp(2px, 0.6vw, 6px);
+/* ---- 8a. Issuer ---- */
+.cert-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.brand-mark {
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  color: var(--uc-gold);
+  line-height: 1;
+  filter: drop-shadow(0 0 10px var(--uc-gold-glow));
+}
+.brand-name {
+  font-family: var(--uc-serif);
+  font-size: var(--uc-fz-md);
+  font-weight: 700;
+  letter-spacing: clamp(2px, 0.7vw, 5px);
   text-transform: uppercase;
-  text-align: center;
-  margin: 0 0 var(--uc-sp-xs) 0 !important;
+  color: var(--uc-text);
+  text-shadow: var(--uc-text-shadow);
+}
+.brand-sub {
+  font-size: var(--uc-fz-xs);
+  letter-spacing: clamp(1px, 0.4vw, 2.5px);
+  text-transform: uppercase;
+  color: var(--uc-text-dim);
+}
+
+/* ---- 8b. Title ---- */
+.cert-title h1 {
+  margin: 0;
+  font-family: var(--uc-serif);
+  font-size: var(--uc-fz-3xl);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: clamp(1px, 0.5vw, 5px);
+  text-transform: uppercase;
   background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 60%, #a78bfa 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -377,59 +505,49 @@
   text-shadow: 0 2px 22px rgba(129, 140, 248, 0.30);
 }
 
-.certificate-ribbon {
+.cert-ribbon {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--uc-sp-sm);
-  flex-wrap: wrap;
-  margin: var(--uc-sp-xs) 0 0 0 !important;
+  margin-top: var(--uc-sp-sm);
 }
-
-.ribbon-left,
-.ribbon-right {
-  width: clamp(28px, 6vw, 80px);
+.ribbon-line {
+  flex: 0 1 clamp(40px, 18vw, 150px);
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--uc-gold), var(--uc-accent), transparent);
   opacity: 0.85;
   box-shadow: 0 0 10px var(--uc-glow-gold);
 }
-
 .ribbon-center {
-  font-size: clamp(1.25rem, 3.5vw, 2.10rem);
+  font-size: clamp(1.2rem, 3vw, 1.9rem);
   color: var(--uc-gold);
   line-height: 1;
   filter: drop-shadow(0 0 14px var(--uc-glow-gold));
 }
 
-/* --------------------------------------------------------------------------
- * 10. Left column — recipient / message / id
- * -------------------------------------------------------------------------- */
-.presented-to .label,
-.certificate-id .label,
-.issue-date .label,
-.detail-card .label,
-.detail-item .label {
-  display: inline-block;
-  font-size: var(--uc-fz-xs);
-  font-weight: 500;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--uc-text-dim);
+/* ---- 8c. Shared lead-in line ("This is to certify that") ---- */
+.cert-lead {
+  margin: 0;
+  font-family: var(--uc-serif);
+  font-size: var(--uc-fz-base);
+  font-style: italic;
+  color: var(--uc-text-mute);
+  letter-spacing: 0.5px;
   text-shadow: var(--uc-text-shadow);
 }
 
-.user-info {
+/* ---- 8d. Recipient ---- */
+.cert-recipient {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--uc-sp-md);
-  margin: var(--uc-sp-xs) 0 0 0 !important;
+  gap: var(--uc-sp-sm);
 }
 
-.user-avatar {
-  width:  clamp(72px, 14vw, 120px);
-  height: clamp(72px, 14vw, 120px);
+.recipient-avatar {
+  width:  clamp(84px, 16vw, 132px);
+  height: clamp(84px, 16vw, 132px);
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -453,38 +571,39 @@
   font-weight: 800;
 }
 
-.user-name {
-  margin: 0 !important;
+.recipient-name {
+  margin: 0;
+  font-family: var(--uc-serif);
   font-size: var(--uc-fz-2xl);
   font-weight: 800;
-  color: var(--uc-text);
   line-height: 1.2;
+  color: var(--uc-text);
   text-shadow: 0 0 18px rgba(129, 140, 248, 0.40), var(--uc-text-shadow);
 }
 
-.user-badge {
+.name-rule {
+  display: block;
+  width: min(340px, 78%);
+  height: 1px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, var(--uc-gold-line) 20%, var(--uc-gold-line) 80%, transparent);
+}
+
+.verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  margin-top: var(--uc-sp-sm);
-  padding: 0.45rem 1.1rem;
-  width: fit-content;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
   background: var(--uc-glass);
   border: 1px solid rgba(255, 210, 119, 0.45);
   border-radius: 999px;
   box-shadow: 0 0 18px var(--uc-glow-gold);
   -webkit-backdrop-filter: var(--uc-blur-soft);
   backdrop-filter: var(--uc-blur-soft);
-  transition: all var(--uc-t-fast);
   white-space: nowrap;
 }
-.user-badge:hover {
-  border-color: var(--uc-accent);
-  box-shadow: var(--uc-glow-brand);
-  transform: translateY(-1px);
-}
-.badge-icon  { font-size: 1.1rem; color: var(--uc-gold); filter: drop-shadow(0 0 6px var(--uc-glow-gold)); }
-.badge-text  {
+.badge-icon { font-size: 0.95rem; color: var(--uc-gold); filter: drop-shadow(0 0 6px var(--uc-glow-gold)); }
+.badge-text {
   font-size: var(--uc-fz-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -493,119 +612,84 @@
   text-shadow: var(--uc-text-shadow);
 }
 
-.awarded-for {
-  margin: var(--uc-sp-sm) 0 !important;
-  padding: var(--uc-sp-xs) 0 !important;
-  font-size: var(--uc-fz-sm);
-  font-style: italic;
-  color: var(--uc-text-mute);
-  text-align: left;
-  line-height: 1.5;
-  border-top:    1px solid rgba(255, 210, 119, 0.25);
-  border-bottom: 1px solid rgba(255, 210, 119, 0.25);
-}
-
-.certificate-message {
-  position: relative;
-  margin: var(--uc-sp-xs) 0 !important;
-  padding: var(--uc-sp-sm) var(--uc-sp-md) var(--uc-sp-sm) var(--uc-sp-lg) !important;
-  background: var(--uc-glass);
-  border-left: 4px solid var(--uc-gold);
-  border-radius: var(--uc-r-md);
-  -webkit-backdrop-filter: var(--uc-blur-soft);
-  backdrop-filter: var(--uc-blur-soft);
-  font-style: italic;
-}
-.certificate-message::before {
-  content: '“';
-  position: absolute;
-  top: -0.4rem; left: 0.45rem;
-  font-family: Georgia, serif;
-  font-size: clamp(2.6rem, 8vw, 4.2rem);
-  color: rgba(255, 210, 119, 0.22);
-  line-height: 1;
-}
-.message {
-  position: relative;
-  z-index: 2;
-  margin: 0 !important;
-  padding-left: var(--uc-sp-sm);
-  color: var(--uc-text-soft);
-  font-size: var(--uc-fz-sm);
-  line-height: 1.6;
-  text-shadow: var(--uc-text-shadow);
-}
-
-.certificate-id {
-  margin: var(--uc-sp-sm) 0 0 0 !important;
-  padding: var(--uc-sp-sm) !important;
-  background: var(--uc-glass);
-  border: 1px dashed rgba(255, 210, 119, 0.45);
-  border-radius: var(--uc-r-md);
-  -webkit-backdrop-filter: var(--uc-blur-soft);
-  backdrop-filter: var(--uc-blur-soft);
+/* ---- 8e. Award ---- */
+.cert-award {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-}
-.id-value {
-  margin-top: 0.35rem;
-  display: inline-block;
-  max-width: 100%;
-  padding: 0.35rem 0.85rem;
-  background: rgba(0, 0, 0, 0.30);
-  border: 1px solid rgba(255, 210, 119, 0.35);
-  border-radius: 999px;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: var(--uc-fz-sm);
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  color: var(--uc-gold);
-  word-break: break-all;
-  text-shadow: 0 0 10px var(--uc-glow-gold);
-  -webkit-backdrop-filter: var(--uc-blur-soft);
-  backdrop-filter: var(--uc-blur-soft);
+  align-items: center;
+  gap: var(--uc-sp-sm);
+  padding: var(--uc-sp-lg) 0;
+  border-top: 1px solid var(--uc-gold-line);
+  border-bottom: 1px solid var(--uc-gold-line);
 }
 
-/* --------------------------------------------------------------------------
- * 11. Right column — main details + detail grid
- * -------------------------------------------------------------------------- */
-.main-details { transform: translateY(-1.5rem); }
-
-.detail-item {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: baseline;
-  gap: 0.35rem !important;
-  margin-bottom: var(--uc-sp-sm);
-  width: 100%;
-  min-width: 0;
-}
-.detail-item .label {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.detail-item .value {
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: var(--uc-fz-lg);
+.award-title {
+  margin: 0;
+  max-width: 46ch;
+  font-family: var(--uc-serif);
+  font-size: var(--uc-fz-xl);
   font-weight: 700;
-  color: var(--uc-text);
   line-height: 1.3;
-  word-break: break-word;
+  color: var(--uc-text);
   text-shadow: 0 0 18px rgba(255, 255, 255, 0.18), var(--uc-text-shadow);
 }
 
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--uc-sp-sm);
-  margin-top: var(--uc-sp-xs) !important;
+.award-sub {
+  margin: 0;
+  font-size: var(--uc-fz-sm);
+  color: var(--uc-text-mute);
+}
+.award-sub strong { color: var(--uc-text-soft); font-weight: 600; }
+
+/* ---- 8f. Citation / message ---- */
+.cert-citation {
+  position: relative;
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: var(--uc-sp-md) var(--uc-sp-lg);
+  background: var(--uc-glass);
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-r-md);
+  -webkit-backdrop-filter: var(--uc-blur-soft);
+  backdrop-filter: var(--uc-blur-soft);
+}
+.cert-citation::before {
+  content: '“';
+  position: absolute;
+  top: -0.5rem;
+  left: 0.6rem;
+  font-family: Georgia, serif;
+  font-size: clamp(2.4rem, 7vw, 3.8rem);
+  color: rgba(255, 210, 119, 0.22);
+  line-height: 1;
+}
+.cert-citation p {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  font-family: var(--uc-serif);
+  font-style: italic;
+  font-size: var(--uc-fz-base);
+  line-height: 1.65;
+  color: var(--uc-text-soft);
+  text-shadow: var(--uc-text-shadow);
 }
 
-.detail-card {
-  text-align: center;
-  padding: var(--uc-sp-md);
+/* ---- 8g. Facts row ---- */
+.cert-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--uc-sp-sm);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: var(--uc-sp-md) var(--uc-sp-sm);
+  min-width: 0;
   background: var(--uc-glass);
   border: 1px solid var(--uc-border);
   border-radius: var(--uc-r-md);
@@ -616,19 +700,26 @@
               border-color var(--uc-t-fast),
               background var(--uc-t-fast),
               box-shadow var(--uc-t-fast);
-  min-width: 0;
 }
-.detail-card:hover {
+.fact:hover {
   transform: translateY(-3px);
   background: var(--uc-glass-hover);
   border-color: rgba(129, 140, 248, 0.40);
   box-shadow: 0 10px 26px rgba(102, 126, 234, 0.30);
 }
-.detail-card .label { display: block; margin-bottom: 0.3rem; }
-.detail-card .value {
+.fact-label {
+  font-size: var(--uc-fz-xs);
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--uc-text-dim);
+  text-shadow: var(--uc-text-shadow);
+}
+.fact-value {
   font-size: var(--uc-fz-md);
   font-weight: 700;
   color: var(--uc-text);
+  line-height: 1.35;
   text-shadow: var(--uc-text-shadow);
 }
 
@@ -637,8 +728,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 100px;
-  padding: 0.35rem 1rem;
+  min-width: 92px;
+  padding: 0.3rem 0.9rem;
   border-radius: 999px;
   font-size: var(--uc-fz-xs);
   font-weight: 800;
@@ -663,34 +754,68 @@
   box-shadow: 0 0 18px rgba(148, 163, 184, 0.25);
 }
 
-/* --------------------------------------------------------------------------
- * 12. Footer (issue date)
- * -------------------------------------------------------------------------- */
-.certificate-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--uc-sp-sm);
-  margin-top: var(--uc-sp-lg) !important;
-  padding-top: var(--uc-sp-md) !important;
-  border-top: 1px solid rgba(255, 210, 119, 0.30);
+/* ---- 8h. Footer: issue date · seal · certificate id ---- */
+.cert-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: var(--uc-sp-lg);
+  padding-top: var(--uc-sp-lg);
+  border-top: 1px solid var(--uc-gold-line);
 }
-.issue-date { display: flex; flex-direction: column; }
-.issue-date .label { margin-bottom: 0.25rem; }
-.issue-date .value {
+
+.footer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.footer-value {
   font-size: var(--uc-fz-sm);
   font-weight: 700;
   color: var(--uc-text);
   text-shadow: var(--uc-text-shadow);
+  max-width: 100%;
+}
+.footer-rule {
+  display: block;
+  width: min(220px, 100%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--uc-gold-line) 20%, var(--uc-gold-line) 80%, transparent);
+}
+.footer-label {
+  font-size: var(--uc-fz-xs);
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--uc-text-dim);
+  text-shadow: var(--uc-text-shadow);
+}
+.cert-id {
+  padding: 0.3rem 0.8rem;
+  background: rgba(0, 0, 0, 0.30);
+  border: 1px solid rgba(255, 210, 119, 0.35);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: var(--uc-fz-xs);
+  letter-spacing: 1px;
+  color: var(--uc-gold);
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 10px var(--uc-glow-gold);
 }
 
 /* --------------------------------------------------------------------------
- * 13. Cosmic seal (kept gold — iconic to certificates)
+ *  9. Cosmic seal (kept gold — iconic to certificates)
  * -------------------------------------------------------------------------- */
+.cert-seal {
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
 .seal {
-  width:  clamp(74px, 12vw, 130px);
-  height: clamp(74px, 12vw, 130px);
+  width:  clamp(78px, 11vw, 124px);
+  height: clamp(78px, 11vw, 124px);
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%,
               var(--uc-gold) 0%, var(--uc-gold-deep) 70%);
@@ -715,32 +840,34 @@
   text-align: center;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
-  font-family: Georgia, serif;
+  font-family: var(--uc-serif);
+  padding: 0 6px;
 }
 .seal-star {
-  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-size: clamp(1.05rem, 2.4vw, 1.7rem);
   line-height: 1;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
 }
 .seal-text {
-  font-size: clamp(0.55rem, 1.3vw, 0.85rem);
+  font-size: clamp(0.52rem, 1.1vw, 0.78rem);
   font-weight: 800;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  padding: 0.20rem 0;
-  margin-bottom: 0.15rem;
+  padding: 0.16rem 0;
+  margin-bottom: 0.1rem;
   border-top: 2px solid #fff;
   border-bottom: 2px solid #fff;
 }
 .seal-org {
-  font-size: clamp(0.50rem, 1.1vw, 0.70rem);
+  font-size: clamp(0.46rem, 0.95vw, 0.64rem);
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
+  line-height: 1.2;
 }
 
 /* --------------------------------------------------------------------------
- * 14. Toast
+ * 10. Toast
  * -------------------------------------------------------------------------- */
 .toast {
   position: fixed;
@@ -768,7 +895,7 @@
 }
 
 /* --------------------------------------------------------------------------
- * 15. Keyframes (local)
+ * 11. Keyframes (local)
  * -------------------------------------------------------------------------- */
 @keyframes uc-spin       { to { transform: rotate(360deg); } }
 @keyframes uc-pulse      { 0%, 100% { opacity: 0.25; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.08); } }
@@ -776,120 +903,74 @@
 @keyframes uc-toast-out  { to   { opacity: 0; transform: translateY(20px); } }
 
 /* ==========================================================================
- *  RESPONSIVE BREAKPOINTS — mobile first
- *  480 / 768 / 1024 / 1440 / 1920 / 2560
+ *  RESPONSIVE — the column layout already flows; these only tune density
+ *  Breakpoints: 640 / 768 / 1024 / 1440 / 1920 / 2560
  * ========================================================================== */
 
-/* ----- ≤ 480 : single column ----- */
-@media (max-width: 480px) {
-  .certificate-border {
-    grid-template-columns: 1fr;
-    gap: var(--uc-sp-md) 0;
-    padding: var(--uc-sp-lg);
-  }
-  .certificate-title,
-  .presented-to,
-  .awarded-for,
-  .certificate-message,
-  .certificate-id,
-  .main-details,
-  .detail-grid,
-  .certificate-footer {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-  }
-  .main-details { transform: none; }
-  .detail-grid { grid-template-columns: 1fr; }
-  .certificate-seal {
-    position: relative;
-    inset: auto;
-    margin: var(--uc-sp-md) auto 0;
-    align-self: center;
-  }
-  .certificate-footer { flex-direction: column; align-items: flex-start; }
-  .certificate-header { justify-content: stretch; }
-  .header-actions { width: 100%; }
-  .share-btn, .copy-btn, .retry-btn, .back-btn { width: 100%; }
+/* ----- ≤ 640 : phones — stack the footer, full-width actions ----- */
+@media (max-width: 640px) {
+  .certificate-header { justify-content: stretch; padding: var(--uc-sp-sm); }
+  .header-actions { width: 100%; flex-direction: column; align-items: stretch; }
+  .share-wrap { width: 100%; }
+  .share-btn, .copy-btn, .print-btn, .retry-btn, .back-btn { width: 100%; }
+  .share-menu { right: 0; left: 0; width: auto; }
+  .share-menu-actions { grid-template-columns: 1fr; }
+
   .error-actions { flex-direction: column; width: 100%; }
   .error-actions > * { width: 100%; }
-  .detail-item { flex-wrap: wrap; }
-}
 
-/* ----- 481 – 767 : phablet single column ----- */
-@media (min-width: 481px) and (max-width: 767px) {
-  .certificate-border {
+  .cert-footer {
     grid-template-columns: 1fr;
-    gap: var(--uc-sp-md) 0;
+    justify-items: center;
+    gap: var(--uc-sp-md);
   }
-  .certificate-title,
-  .presented-to,
-  .awarded-for,
-  .certificate-message,
-  .certificate-id,
-  .main-details,
-  .detail-grid,
-  .certificate-footer {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-  }
-  .main-details { transform: none; }
-  .certificate-seal {
-    position: relative;
-    inset: auto;
-    margin: var(--uc-sp-md) auto 0;
-    align-self: center;
-  }
+  /* seal reads best between the two signature blocks on narrow screens */
+  .cert-footer .cert-seal { order: -1; }
+
+  .cert-facts { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .name-rule { width: 90%; }
 }
 
-/* ----- ≥ 768 : tablet — 2 col layout returns ----- */
+/* ----- ≥ 768 : tablet ----- */
 @media (min-width: 768px) {
-  .certificate-border {
-    grid-template-columns: 1fr 1.5fr;
-    gap: 0 var(--uc-sp-md);
-  }
-  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cert-facts { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
 }
 
 /* ----- ≥ 1024 : laptop ----- */
 @media (min-width: 1024px) {
-  .certificate-content { max-width: 1080px; }
-  .certificate-border { grid-template-columns: 1fr 1.6fr; gap: 0 var(--uc-sp-lg); }
+  .certificate-content { max-width: 960px; }
 }
 
 /* ----- ≥ 1440 : desktop ----- */
 @media (min-width: 1440px) {
-  .certificate-content { max-width: 1240px; }
-  .certificate-border  { padding: var(--uc-sp-2xl); }
+  .certificate-content { max-width: 1040px; }
 }
 
 /* ----- ≥ 1920 : full HD ----- */
 @media (min-width: 1920px) {
-  .certificate-content { max-width: 1480px; }
-  .certificate-border  { padding: var(--uc-sp-2xl); gap: 0 var(--uc-sp-xl); }
-  .main-details        { transform: translateY(-2rem); }
+  .certificate-content { max-width: 1140px; }
 }
 
 /* ----- ≥ 2560 : TV / 4K ----- */
 @media (min-width: 2560px) {
-  .certificate-content { max-width: 1800px; }
-  .certificate-border  { padding: clamp(2.4rem, 3vw, 3.6rem); gap: 0 var(--uc-sp-2xl); }
-  .main-details        { transform: translateY(-2.5rem); }
+  .certificate-content { max-width: 1320px; }
 }
 
-/* landscape phones — relax vertical seal placement */
-@media (max-width: 900px) and (orientation: landscape) {
-  .certificate-seal { margin-top: var(--uc-sp-sm); }
+/* landscape phones — trim vertical rhythm so the card still fits */
+@media (max-height: 520px) and (orientation: landscape) {
+  .certificate-frame { gap: var(--uc-sp-md); padding: var(--uc-sp-lg); }
+  .cert-award { padding: var(--uc-sp-md) 0; }
 }
 
 /* --------------------------------------------------------------------------
- * 16. Accessibility / Reduced motion / High contrast
+ * 12. Accessibility / Reduced motion / High contrast
  * -------------------------------------------------------------------------- */
 .share-btn:focus-visible,
 .copy-btn:focus-visible,
+.print-btn:focus-visible,
 .retry-btn:focus-visible,
 .back-btn:focus-visible,
-.user-badge:focus-visible,
-.detail-card:focus-visible {
+.share-option:focus-visible {
   outline: 2px solid var(--uc-accent);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
@@ -897,20 +978,21 @@
 
 @media (prefers-reduced-motion: reduce) {
   .certificate-card,
-  .detail-card,
-  .user-badge,
-  .share-btn, .copy-btn, .retry-btn, .back-btn {
+  .fact,
+  .share-option,
+  .share-btn, .copy-btn, .print-btn, .retry-btn, .back-btn {
     transition: none !important;
   }
   .loading-spinner,
   .loading-spinner::after,
   .toast { animation: none !important; }
+  .uc-pop-enter-active, .uc-pop-leave-active { transition: none !important; }
 }
 
 @media (prefers-contrast: high) {
   .certificate-card,
   .certificate-header,
-  .detail-card,
+  .fact,
   .loading-container,
   .error-container {
     background: rgba(0, 0, 8, 0.85) !important;
@@ -921,43 +1003,70 @@
 }
 
 /* --------------------------------------------------------------------------
- * 17. Print
+ * 13. Print — clean black-on-white official document
  * -------------------------------------------------------------------------- */
 @media print {
-  .certificate-details { background: #ffffff !important; color: #000 !important; padding: 20px; }
+  .certificate-details { background: #ffffff !important; color: #000 !important; padding: 0; }
   .certificate-details::before,
   .certificate-header,
+  .share-menu,
   .toast,
   .certificate-card::before { display: none !important; }
+
+  .certificate-content { max-width: none !important; }
 
   .certificate-card {
     background: #ffffff !important;
     border: 2px solid #000 !important;
     box-shadow: none !important;
+    transform: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    break-inside: avoid;
   }
-  .certificate-title h1,
-  .user-name,
-  .detail-item .value,
-  .detail-card .value,
-  .issue-date .value,
+
+  .cert-title h1,
+  .brand-name,
+  .recipient-name,
+  .award-title,
+  .award-sub,
+  .cert-lead,
+  .fact-label,
+  .fact-value,
+  .footer-label,
+  .footer-value,
   .badge-text,
-  .message,
-  .awarded-for {
+  .brand-sub,
+  .cert-citation p {
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
     background: none !important;
     text-shadow: none !important;
   }
-  .id-value {
+
+  .fact,
+  .cert-citation,
+  .verified-badge {
+    background: #fff !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .name-rule, .footer-rule, .ribbon-line { background: #000 !important; }
+
+  .cert-id {
     color: #000 !important;
     background: #f5f5f5 !important;
     border-color: #000 !important;
     text-shadow: none !important;
   }
+  .status-badge { color: #000 !important; background: #fff !important; border-color: #000 !important; box-shadow: none !important; }
   .seal {
     background: radial-gradient(circle at 30% 30%, #ccc, #999) !important;
     border-color: #000 !important;
     box-shadow: none !important;
   }
-  .user-avatar { border-color: #000 !important; box-shadow: none !important; background-image: none !important; }
+  .recipient-avatar { border-color: #000 !important; box-shadow: none !important; background-image: none !important; }
 }
