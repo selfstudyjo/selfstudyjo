@@ -85,6 +85,19 @@
           </router-link>
 
           <router-link
+            v-if="hasLabFeature"
+            to="/network-simulator"
+            class="nav-item"
+            :class="{ 'active': isActive('/network-simulator') }"
+            @click="closeSidebarOnMobile"
+          >
+            <div class="nav-icon">
+              <NetworkSimulatorIcon />
+            </div>
+            <span class="nav-text">Network Simulator</span>
+          </router-link>
+
+          <router-link
             v-if="hasAiAccess"
             to="/ai-chat"
             class="nav-item"
@@ -391,6 +404,18 @@ const RobloxIcon = {
   }
 };
 
+const NetworkSimulatorIcon = {
+  name: 'NetworkSimulatorIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('rect', { x: '9', y: '2.5', width: '6', height: '5', rx: '1.4' }),
+      h('rect', { x: '2', y: '16.5', width: '6', height: '5', rx: '1.4' }),
+      h('rect', { x: '16', y: '16.5', width: '6', height: '5', rx: '1.4' }),
+      h('path', { d: 'M12 7.5v3.5M5 16.5V11h14v5.5M12 11v5.5' })
+    ]);
+  }
+};
+
 
 const route = useRoute();
 const router = useRouter();
@@ -430,6 +455,7 @@ function checkIfMobile() {
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const hasLabAccess = computed(() => authStore.hasLabAccess);
+const hasLabFeature = computed(() => authStore.hasLabFeature);
 const hasAiAccess = computed(() => authStore.hasAiAccess);
 const hasRunbookAccess = computed(() => authStore.hasRunbookAccess);
 const hasResearchFlowAccess = computed(() => authStore.hasResearchFlowAccess);

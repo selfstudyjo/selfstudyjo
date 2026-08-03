@@ -58,6 +58,11 @@ import JobInterviewResults from '../views/JobInterviewResults.vue';
 
 import RobloxTool from '../views/RobloxTool.vue';
 
+// Network Simulator (gated by lab_feature)
+import NetworkSimulator from '../views/NetworkSimulator.vue';
+import NetworkSimulatorStudio from '../views/NetworkSimulatorStudio.vue';
+import NetworkSimulatorLearn from '../views/NetworkSimulatorLearn.vue';
+
 
 const routes = [
     {
@@ -397,6 +402,27 @@ const routes = [
                 name: 'RobloxTool',
                 component: RobloxTool,
                 meta: { title: 'Roblox Animation Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+
+            // Network Simulator (gated by lab_feature)
+            {
+                path: 'network-simulator',
+                name: 'NetworkSimulator',
+                component: NetworkSimulator,
+                meta: { title: 'Network Simulator', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            {
+                path: 'network-simulator/learn',
+                name: 'NetworkSimulatorLearn',
+                component: NetworkSimulatorLearn,
+                meta: { title: 'Network Simulator — Learn', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            {
+                path: 'network-simulator/studio/:id?',
+                name: 'NetworkSimulatorStudio',
+                component: NetworkSimulatorStudio,
+                meta: { title: 'Network Simulator Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] },
+                props: true
             }
 
         ]

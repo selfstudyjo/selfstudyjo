@@ -223,8 +223,32 @@ class ServiceRegistry {
 
     async getRandomRobloxReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
-            parseInt(import.meta.env.VITE_ROBLOX_APP_ID || '29'),
+            parseInt(import.meta.env.VITE_ROBLOX_APP_ID || '31'),
             'roblox'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    /**
+     * Self Study AI (app 27). Used by the Network Simulator's AI tutor and by
+     * anything else that needs the OpenAI-compatible /v1/chat/completions API.
+     */
+    async getRandomAiReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_AI_APP_ID || '27'),
+            'ai'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    /**
+     * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
+     * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
+     */
+    async getRandomNetSimAiReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_NETSIM_AI_APP_ID || import.meta.env.VITE_AI_APP_ID || '27'),
+            'netsim-ai'
         );
         return this.getRandomReplica(replicas);
     }

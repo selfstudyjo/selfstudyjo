@@ -644,6 +644,14 @@ export const useAuthStore = defineStore('auth', () => {
         return user.value?.lab_url && user.value.lab_url.trim() !== '' && userFeatures.value.includes('lab_feature');
     });
 
+    /**
+     * `lab_feature` on its own — no `lab_url` required.
+     * The Network Simulator runs entirely in the browser and stores its data in
+     * the selfstudynetworksimulator_data repo, so it does not need a provisioned
+     * lab container the way the SQL/Linux/Python labs do.
+     */
+    const hasLabFeature = computed(() => userFeatures.value.includes('lab_feature'));
+
     const hasAiAccess = computed(() => userFeatures.value.includes('ai_feature'));
     const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
     const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
@@ -686,6 +694,7 @@ export const useAuthStore = defineStore('auth', () => {
         subscriptionLoaded,
 
         hasLabAccess,
+        hasLabFeature,
         hasAiAccess,
         hasRunbookAccess,
         hasExamFeature,

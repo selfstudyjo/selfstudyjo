@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Network Simulator — canvas (scoped to NetworkCanvas.vue)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ns-canvas-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(900px 500px at 75% 10%, rgba(34, 211, 238, 0.05), transparent 65%),
+        radial-gradient(700px 480px at 15% 80%, rgba(168, 85, 247, 0.055), transparent 65%),
+        #06060f;
+    cursor: default;
+    user-select: none;
+}
+.ns-canvas-wrap.tool-connect { cursor: crosshair; }
+.ns-canvas-wrap.tool-delete { cursor: not-allowed; }
+.ns-canvas-wrap.tool-note { cursor: copy; }
+.ns-canvas-wrap.tool-pan,
+.ns-canvas-wrap.is-panning { cursor: grabbing; }
+
+.ns-canvas { display: block; position: absolute; inset: 0; }
+
+/* ─────────── links ─────────── */
+
+.ns-link { cursor: pointer; }
+.ns-link-hit { stroke: transparent; stroke-width: 16; }
+.ns-link-line {
+    stroke: rgba(148, 163, 184, 0.5);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke 0.18s ease, stroke-width 0.18s ease;
+}
+.ns-link:hover .ns-link-line { stroke: rgba(203, 213, 225, 0.9); stroke-width: 2.6; }
+.ns-link.status-up .ns-link-line { stroke: rgba(52, 211, 153, 0.62); }
+.ns-link.status-down .ns-link-line { stroke: rgba(248, 113, 113, 0.6); stroke-dasharray: 4 5 !important; }
+.ns-link.status-shutdown .ns-link-line { stroke: rgba(100, 116, 139, 0.55); stroke-dasharray: 3 6 !important; }
+.ns-link.status-blocked .ns-link-line { stroke: rgba(251, 191, 36, 0.65); stroke-dasharray: 7 5 !important; }
+.ns-link.selected .ns-link-line { stroke: #a855f7; stroke-width: 3.2; filter: url(#ns-glow); }
+.ns-link.in-path .ns-link-line { stroke: rgba(34, 211, 238, 0.85); stroke-width: 3; }
+.ns-link.active .ns-link-line {
+    stroke: #22d3ee;
+    stroke-width: 3.8;
+    filter: url(#ns-glow);
+    stroke-dasharray: 10 7 !important;
+    animation: ns-flow 0.7s linear infinite;
+}
+@keyframes ns-flow { to { stroke-dashoffset: -17; } }
+
+.ns-link-label {
+    font-size: 9.5px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    fill: rgba(148, 163, 184, 0.85);
+    pointer-events: none;
+}
+.ns-port-label {
+    font-size: 8px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    fill: rgba(148, 163, 184, 0.6);
+    pointer-events: none;
+}
+.ns-link-badge { fill: rgba(251, 191, 36, 0.22); stroke: #fbbf24; stroke-width: 1.2; }
+.ns-link-badge-text {
+    font-size: 11px; font-weight: 700; fill: #fcd34d;
+    text-anchor: middle; pointer-events: none;
+}
+
+.ns-wifi-line {
+    stroke: rgba(168, 85, 247, 0.4);
+    stroke-width: 1.6;
+    stroke-dasharray: 2 6;
+    stroke-linecap: round;
+    animation: ns-wifi 2.4s linear infinite;
+    pointer-events: none;
+}
+@keyframes ns-wifi { to { stroke-dashoffset: -32; } }
+
+.ns-rubber {
+    stroke: #a855f7;
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    pointer-events: none;
+    animation: ns-flow 0.6s linear infinite;
+}
+
+/* ─────────── devices ─────────── */
+
+.ns-device { cursor: grab; }
+.ns-device:active { cursor: grabbing; }
+
+.ns-device-halo {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 2;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+.ns-device.selected .ns-device-halo { fill: rgba(99, 102, 241, 0.11); stroke: rgba(99, 102, 241, 0.5); }
+.ns-device.in-path .ns-device-halo { fill: rgba(34, 211, 238, 0.07); }
+.ns-device.is-current .ns-device-halo {
+    fill: rgba(34, 211, 238, 0.16);
+    stroke: rgba(34, 211, 238, 0.7);
+    animation: ns-pulse 1.3s ease-in-out infinite;
+}
+.ns-device.pending-source .ns-device-halo { fill: rgba(168, 85, 247, 0.14); stroke: #a855f7; }
+@keyframes ns-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+.ns-device-box {
+    fill: rgba(19, 21, 40, 0.94);
+    stroke: rgba(148, 163, 184, 0.24);
+    stroke-width: 1.4;
+    transition: stroke 0.18s ease, fill 0.18s ease;
+}
+.ns-device:hover .ns-device-box { stroke: rgba(203, 213, 225, 0.5); }
+.ns-device.selected .ns-device-box { stroke: #6366f1; stroke-width: 2; }
+.ns-device.has-error .ns-device-box { stroke: rgba(248, 113, 113, 0.75); }
+.ns-device.off .ns-device-box { fill: rgba(12, 13, 26, 0.9); stroke: rgba(100, 116, 139, 0.3); }
+.ns-device.off .ns-device-icon { opacity: 0.32; }
+
+.ns-device-icon { pointer-events: none; }
+
+.ns-device-name {
+    font-size: 12px;
+    font-weight: 700;
+    fill: #e6e8f2;
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: rgba(6, 6, 15, 0.85);
+    stroke-width: 3.5px;
+    stroke-linejoin: round;
+}
+.ns-device-ip {
+    font-size: 9.5px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    fill: rgba(148, 163, 184, 0.9);
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: rgba(6, 6, 15, 0.8);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+.ns-device.off .ns-device-name { fill: #64748b; }
+
+.ns-badge circle { stroke-width: 1.4; }
+.ns-badge text { font-size: 10px; font-weight: 700; }
+.ns-badge.off-badge circle { fill: rgba(100, 116, 139, 0.9); stroke: rgba(148, 163, 184, 0.5); }
+.ns-badge.off-badge { color: #cbd5e1; }
+.ns-badge.err-badge circle { fill: rgba(220, 38, 38, 0.92); stroke: rgba(248, 113, 113, 0.6); }
+.ns-badge.err-badge text { fill: #fff; }
+.ns-badge.root-badge circle { fill: rgba(251, 191, 36, 0.9); stroke: rgba(253, 224, 71, 0.6); }
+.ns-badge.root-badge text { fill: #1a1200; }
+
+.ns-vlan-chips { pointer-events: none; }
+.ns-vlan-chip-text {
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ─────────── packet ─────────── */
+
+.ns-packet {
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ns-packet-core { fill: #f8fafc; }
+.ns-packet-label {
+    font-size: 9.5px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+    fill: #a5f3fc;
+    paint-order: stroke;
+    stroke: rgba(6, 6, 15, 0.9);
+    stroke-width: 3.5px;
+    stroke-linejoin: round;
+}
+
+/* ─────────── annotations ─────────── */
+
+.ns-annotation { cursor: move; }
+.ns-annotation.selected rect { stroke-width: 2.4; }
+.ns-note-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #c7d2fe;
+    white-space: pre-wrap;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* ─────────── overlays ─────────── */
+
+.ns-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    padding: 24px;
+}
+.ns-empty-inner {
+    pointer-events: auto;
+    text-align: center;
+    max-width: 430px;
+    color: #7c85a0;
+}
+.ns-empty-inner h3 { margin: 14px 0 8px; color: #e6e8f2; font-size: 1.15rem; }
+.ns-empty-inner p { margin: 0 0 20px; font-size: 0.88rem; line-height: 1.65; }
+.ns-empty-actions { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; }
+
+.ns-canvas-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(10, 11, 24, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    padding: 5px;
+    backdrop-filter: blur(8px);
+}
+.ns-zoom-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(148, 163, 184, 0.1);
+    color: #a5adc4;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+.ns-zoom-btn:hover { background: rgba(148, 163, 184, 0.22); color: #e6e8f2; }
+.ns-zoom-btn.wide { width: auto; padding: 0 9px; font-size: 0.72rem; font-weight: 700; }
+.ns-zoom-value {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    color: #7c85a0;
+    padding: 0 5px;
+    min-width: 38px;
+    text-align: right;
+}
+
+.ns-connect-hint {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(168, 85, 247, 0.16);
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    border-radius: 20px;
+    padding: 7px 15px;
+    font-size: 0.79rem;
+    color: #e9d5ff;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    white-space: nowrap;
+}
+.ns-connect-hint kbd {
+    background: rgba(4, 5, 12, 0.7);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+}
+
+/* ─────────── shared button styles the empty state needs ─────────── */
+
+.ns-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(99, 102, 241, 0.12);
+    color: #c7d2fe;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+.ns-btn:hover { background: rgba(99, 102, 241, 0.22); transform: translateY(-1px); }
+.ns-btn.primary { background: linear-gradient(135deg, #6366f1, #a855f7); border-color: transparent; color: #fff; }
+.ns-btn.ghost { background: rgba(148, 163, 184, 0.08); color: #a5adc4; }
+.ns-btn.ghost:hover { background: rgba(148, 163, 184, 0.16); color: #e6e8f2; }
