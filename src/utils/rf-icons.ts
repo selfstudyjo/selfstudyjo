@@ -307,3 +307,104 @@ export const RfIconArrowRight: Component = {
     ]);
   }
 };
+
+// ===== Search, Scholar & AI Writer Icons =====
+
+export const RfIconFilter: Component = {
+  name: 'RfIconFilter',
+  render() {
+    return h('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z' })
+    ]);
+  }
+};
+
+export const RfIconTag: Component = {
+  name: 'RfIconTag',
+  render() {
+    return h('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z' })
+    ]);
+  }
+};
+
+export const RfIconScholar: Component = {
+  name: 'RfIconScholar',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z' })
+    ]);
+  }
+};
+
+export const RfIconAI: Component = {
+  name: 'RfIconAI',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z' })
+    ]);
+  }
+};
+
+export const RfIconDoc: Component = {
+  name: 'RfIconDoc',
+  render() {
+    return h('svg', { width: '18', height: '18', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z' })
+    ]);
+  }
+};
+
+export const RfIconRefresh: Component = {
+  name: 'RfIconRefresh',
+  render() {
+    return h('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z' })
+    ]);
+  }
+};
+
+export const RfIconPlay: Component = {
+  name: 'RfIconPlay',
+  render() {
+    return h('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M8 5v14l11-7z' })
+    ]);
+  }
+};
+
+export const RfIconWarning: Component = {
+  name: 'RfIconWarning',
+  render() {
+    return h('svg', { width: '16', height: '16', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z' })
+    ]);
+  }
+};
+
+export const RfIconVerified: Component = {
+  name: 'RfIconVerified',
+  render() {
+    return h('svg', { width: '14', height: '14', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z' })
+    ]);
+  }
+};
+
+export const RfIconBook: Component = {
+  name: 'RfIconBook',
+  render() {
+    return h('svg', { width: '18', height: '18', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z' })
+    ]);
+  }
+};
+
+export const RfIconList: Component = {
+  name: 'RfIconList',
+  render() {
+    return h('svg', { width: '18', height: '18', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z' })
+    ]);
+  }
+};

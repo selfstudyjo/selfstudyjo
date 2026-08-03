@@ -18,6 +18,7 @@
         v-for="card in navCards"
         :key="card.to"
         class="rf-card"
+        :class="{ 'rf-card-featured': card.featured }"
         @click="navigateTo(card.to)"
       >
         <div class="rf-card-icon">
@@ -153,7 +154,30 @@ const ProfileIcon = {
   }
 };
 
+const ScholarIcon = {
+  render() {
+    return h('svg', { width: '32', height: '32', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z' })
+    ]);
+  }
+};
+
+const AIWriterIcon = {
+  render() {
+    return h('svg', { width: '32', height: '32', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z' })
+    ]);
+  }
+};
+
 const navCards = [
+  {
+    to: '/research/ai-writer',
+    iconComponent: AIWriterIcon,
+    title: 'AI Research Writer',
+    description: 'Plan and draft a Bachelor, Master or PhD document, then export it as DOCX or PDF',
+    featured: true,
+  },
   {
     to: '/research/my-projects',
     iconComponent: FolderIcon,
@@ -188,7 +212,13 @@ const navCards = [
     to: '/research/import-openalex',
     iconComponent: GlobeIcon,
     title: 'Import from OpenAlex',
-    description: 'Search and import academic papers from OpenAlex',
+    description: 'Search 250M+ papers with filters, download PDFs and save them to your library',
+  },
+  {
+    to: '/research/google-scholar',
+    iconComponent: ScholarIcon,
+    title: 'Google Scholar Search',
+    description: 'AI-assisted Scholar search, verified against OpenAlex, with direct Scholar links',
   },
   {
     to: '/research/researchers',

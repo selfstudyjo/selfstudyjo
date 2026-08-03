@@ -43,6 +43,12 @@
             <button v-if="paper.url" class="rf-btn rf-btn-sm rf-btn-primary" @click="openExternal(paper.url)">
               <RfIconLink /> View Paper
             </button>
+            <button v-if="paper.work_key && paper.has_pdf"
+                    class="rf-btn rf-btn-sm rf-btn-success"
+                    @click="downloadPdf(paper)"
+                    :disabled="downloadingId === paper.id">
+              <RfIconDownload /> {{ downloadingId === paper.id ? 'Fetching…' : 'Download PDF' }}
+            </button>
             <button class="rf-btn rf-btn-sm rf-btn-danger" @click="removePaper(paper.id)">
               <RfIconDelete /> Remove
             </button>
@@ -81,10 +87,12 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
+import { researchService } from '@/services/research.service';
+import type { ImportedPaper } from '@/services/research.service';
 import {
   RfIconBack, RfIconLibrary, RfIconGlobe, RfIconFolder,
   RfIconCalendar, RfIconCitation, RfIconOpenAccess,
-  RfIconLink, RfIconDelete
+  RfIconLink, RfIconDelete, RfIconDownload
 } from '@/utils/rf-icons';
 
 const authStore = useAuthStore();
@@ -92,12 +100,28 @@ const researchStore = useResearchStore();
 
 const loading = ref(true);
 const activeTab = ref('openalex');
+const downloadingId = ref('');
 
 const importedPapers = computed(() => researchStore.importedPapers);
 const savedLocalProjects = computed(() => researchStore.savedLocalProjects);
 
 const openExternal = (url: string) => {
   window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+/** Routed through the backend proxy — publisher hosts refuse browser fetches. */
+const downloadPdf = async (paper: ImportedPaper) => {
+  const userId = authStore.user?.id;
+  if (!userId || !paper.work_key) return;
+  downloadingId.value = paper.id;
+  try {
+    const filename = `${paper.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_').slice(0, 80)}.pdf`;
+    await researchService.downloadOpenAlexPdf(userId, paper.work_key, filename);
+  } catch (err: any) {
+    alert(err?.message || 'Could not fetch the PDF. Use "View Paper" to open it at the publisher.');
+  } finally {
+    downloadingId.value = '';
+  }
 };
 
 const removePaper = async (paperId: string) => {

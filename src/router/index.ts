@@ -39,6 +39,9 @@ import ResearchCollaboration from '../views/ResearchCollaboration.vue';
 import ResearchProjectDetails from '../views/ResearchProjectDetails.vue';
 import ResearchCreateProject from '../views/ResearchCreateProject.vue';
 import ResearchImportOpenAlex from '../views/ResearchImportOpenAlex.vue';
+import ResearchGoogleScholar from '../views/ResearchGoogleScholar.vue';
+import ResearchAIWriter from '../views/ResearchAIWriter.vue';
+import ResearchAIWriterDetail from '../views/ResearchAIWriterDetail.vue';
 import ResearchResearchers from '../views/ResearchResearchers.vue';
 import ResearchResearcherProfile from '../views/ResearchResearcherProfile.vue';
 import ResearchCompleteProfile from '../views/ResearchCompleteProfile.vue';
@@ -274,6 +277,25 @@ const routes = [
                 name: 'ResearchImportOpenAlex',
                 component: ResearchImportOpenAlex,
                 meta: { title: 'Import from OpenAlex', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/google-scholar',
+                name: 'ResearchGoogleScholar',
+                component: ResearchGoogleScholar,
+                meta: { title: 'Google Scholar Search', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/ai-writer',
+                name: 'ResearchAIWriter',
+                component: ResearchAIWriter,
+                meta: { title: 'AI Research Writer', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] }
+            },
+            {
+                path: 'research/ai-writer/:id',
+                name: 'ResearchAIWriterDetail',
+                component: ResearchAIWriterDetail,
+                meta: { title: 'AI Research Writer', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['research_flow_feature'] },
+                props: true
             },
             {
                 path: 'research/researchers',
