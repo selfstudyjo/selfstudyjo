@@ -93,6 +93,8 @@ export interface StoredFile<T> {
 
 export interface StorageStatus {
     mode: StorageMode;
+    /** False until backend discovery has finished; nothing should render before. */
+    settled: boolean;
     configured: boolean;
     online: boolean;
     repo: string;
@@ -245,6 +247,7 @@ class NetSimStorageService {
     status(): StorageStatus {
         return {
             mode: this.mode,
+            settled: this.proxyState !== 'unknown',
             configured: this.isConfigured(),
             online: this.online,
             repo: this.repoSlug,

@@ -34,7 +34,7 @@
     </header>
 
     <!-- ════════════ storage banner ════════════ -->
-    <div v-if="storage.mode === 'local' || storage.lastError" class="ns-banner" :class="{ warn: storage.mode === 'local', err: !!storage.lastError }">
+    <div v-if="isAdmin && storage.settled && (storage.mode === 'local' || storage.lastError)" class="ns-banner" :class="{ warn: storage.mode === 'local', err: !!storage.lastError }">
       <DeviceIcon name="alert" :size="16" />
       <div>
         <strong v-if="storage.mode === 'local'">Projects are saving to this browser only</strong>
@@ -49,7 +49,7 @@
       <button class="ns-btn ghost sm" @click="showStorage = true">Connect storage</button>
     </div>
 
-    <div v-else class="ns-banner ok">
+    <div v-else-if="isAdmin && storage.settled && storage.mode !== 'local'" class="ns-banner ok">
       <DeviceIcon name="check" :size="16" />
       <div>
         <strong>Syncing to {{ storage.repo }}</strong>
@@ -60,7 +60,7 @@
       </div>
       <button class="ns-btn ghost sm" @click="showStorage = true">Storage settings</button>
     </div>
-    <p v-if="storageTestMessage" class="ns-banner-note">{{ storageTestMessage }}</p>
+    <p v-if="isAdmin && storageTestMessage" class="ns-banner-note">{{ storageTestMessage }}</p>
 
     <!-- ════════════ progress ════════════ -->
     <section v-if="progress" class="ns-section">
@@ -197,7 +197,7 @@
     </section>
 
     <!-- ════════════ storage settings modal ════════════ -->
-    <div v-if="showStorage" class="ns-modal-backdrop" @click.self="showStorage = false">
+    <div v-if="showStorage && isAdmin" class="ns-modal-backdrop" @click.self="showStorage = false">
       <div class="ns-modal">
         <header>
           <h3>Storage settings</h3>
@@ -289,6 +289,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import DeviceIcon from '@/components/netsim/DeviceIcon.vue';
 import { useNetSimStore } from '@/store/netsim';
+import { useAuthStore } from '@/store/auth';
 import { netsimService } from '@/services/netsim.service';
 import { netsimStorage } from '@/services/netsim-storage.service';
 import { TOPOLOGY_TEMPLATES } from '@/netsim/topology';
@@ -298,6 +299,13 @@ import { OSI_LAYERS } from '@/netsim/types';
 
 const store = useNetSimStore();
 const router = useRouter();
+const authStore = useAuthStore();
+
+/**
+ * Storage is infrastructure, not something a student can act on. Their work is
+ * saved either way, so only an operator sees where it goes.
+ */
+const isAdmin = computed(() => authStore.isAdmin);
 
 const search = ref('');
 const showNew = ref(false);

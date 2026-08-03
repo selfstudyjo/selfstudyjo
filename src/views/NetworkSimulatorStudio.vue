@@ -17,7 +17,6 @@
           <span class="ns-project-sub">
             <span v-if="store.dirty" class="ns-dot-dirty" title="Unsaved changes"></span>
             {{ store.dirty ? 'unsaved changes' : (store.lastSavedAt ? `saved ${relTime(store.lastSavedAt)}` : 'not saved yet') }}
-            <template v-if="!storage.configured"> · local only</template>
           </span>
         </div>
       </div>

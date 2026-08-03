@@ -593,7 +593,7 @@ export const useNetSimStore = defineStore('netsim', () => {
             const res = await netsimService.listProjects(currentUsername.value);
             projects.value = res.projects;
             if (res.local && !netsimStorage.isConfigured()) {
-                storageMessage.value = 'Projects are being kept in this browser only. Open Storage settings on the Network Simulator hub to sync them to the data repository.';
+                storageMessage.value = '';  // normal operation; nothing for the user to do
             } else if (res.local) {
                 storageMessage.value = 'Showing locally cached projects — the data repository is not reachable right now.';
             } else {
@@ -700,7 +700,9 @@ export const useNetSimStore = defineStore('netsim', () => {
                 dirty.value = false;
                 lastSavedAt.value = project.value.updatedAt;
                 storageMessage.value = res.error || 'The data repository is unreachable; your work is safe in this browser.';
-                toast('warning', 'Saved locally only', storageMessage.value);
+                // Saving still succeeded from the user's point of view — their work is
+                // safe. Only say so plainly; do not raise an alarm they cannot act on.
+                toast('success', 'Saved', 'Stored on this device.');
             }
             await loadProjects();
             return res.ok;
