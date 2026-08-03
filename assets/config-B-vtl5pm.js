@@ -1,0 +1,1 @@
+import{t as e}from"./index-DAGT_QjK.js";export{e as serviceRegistry};
