@@ -1,0 +1,1 @@
+import{t as e}from"./index-DXD8SA_8.js";export{e as serviceRegistry};
