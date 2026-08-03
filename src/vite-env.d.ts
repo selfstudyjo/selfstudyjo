@@ -24,6 +24,19 @@ interface ImportMetaEnv {
     readonly VITE_JOBINTERVIEW_APP_ID: string
     readonly VITE_ROBLOX_APP_ID: string
     readonly VITE_AI_MODEL: string
+
+    /* ── Network Simulator ──────────────────────────────────────────────
+       Note: these are declarations only. A type never changes what ships —
+       every VITE_* value is inlined into the public bundle regardless, which
+       is why none of these may hold a credential. `vite.config.ts` fails the
+       build if one does.                                                   */
+
+    /** Base URL of the backend that proxies the data repo. NEVER a token. */
+    readonly VITE_NETSIM_STORAGE_PROXY: string
+    readonly VITE_NETSIM_DATA_OWNER: string
+    readonly VITE_NETSIM_DATA_REPO: string
+    readonly VITE_NETSIM_DATA_BRANCH: string
+    readonly VITE_NETSIM_AI_APP_ID: string
 }
 
 interface ImportMeta {

@@ -77,27 +77,76 @@ shared/index.json                             community-shared projects
 shared/<projectId>.json
 ```
 
-`src/services/netsim-storage.service.ts` talks to the GitHub Contents API. It serialises
-writes per path, retries once on a stale SHA, and mirrors everything into `localStorage`.
-**If the token is missing or the repo is unreachable the studio still works** — it just
-stops syncing and says so in the UI.
+### Storage modes
+
+`src/services/netsim-storage.service.ts` runs in one of three modes:
+
+| Mode | How | Use it for |
+|------|-----|-----------|
+| `proxy` | Discovered through the sfsdomains registry (Self Study AI, app 27); the backend holds the GitHub token **server-side** | Production, real multi-user sync |
+| `token` | An operator pastes a token under **Storage settings**; it is kept in that browser's `localStorage` | Admin work, local development |
+| `local` | No credentials at all | Default. Fully functional, no cross-device sync |
+
+In every mode writes are serialised per path, a stale SHA is retried once, and
+everything is mirrored into `localStorage` — so work is never lost to a network
+problem, and the studio degrades to `local` rather than breaking.
+
+> **There is deliberately no build-time token.** Anything in a `VITE_*` variable is
+> compiled into the published JavaScript bundle. A write-capable GitHub PAT there can
+> be read by anyone who loads the page, and GitHub's push protection rejects the
+> deploy outright — which is the correct outcome, not an obstacle to work around.
+> Never use the "allow this secret" link for a credential in a public bundle.
+
+### Why GitHub repo secrets / variables do NOT solve this
+
+A repo secret is injected into the **build runner**, not into the browser. A Vite app has
+no server at runtime, so any value the browser needs ends up as a literal in
+`dist/assets/*.js` — whether it came from `.env`, an Actions secret, or a repo variable.
+The bundle is published, so the credential is published. Push protection blocks it either
+way, and bypassing that block makes the token readable by every visitor.
+
+Repo secrets keep a value out of your *source*. They cannot keep it out of your *output*.
+The only place a credential can live is somewhere the browser never sees it: a backend.
+
+`vite.config.ts` enforces this — the build fails if any `VITE_*` value matches a known
+credential pattern, or if a URL-only variable such as `VITE_NETSIM_STORAGE_PROXY` holds
+something that is not an http(s) URL.
+
+### The proxy contract
+
+`proxy` mode needs no frontend configuration: the storage service resolves the
+Self Study AI replicas through the registry, probes `/api/netsim/health` on each,
+and switches itself on when one answers. No replica URL is ever hardcoded.
+`VITE_NETSIM_STORAGE_PROXY` exists only as a local-development override.
+
+The routes live in `selfstudyai/netsim_storage.py` and are registered from
+`app.py`. All of them take the usual `Authorization: Token <AUTH_TOKEN>` header.
+
+```
+GET    /api/netsim/file?path=<repo/path.json>   -> { data: <json>, sha }   | 404 if absent
+PUT    /api/netsim/file                          <- { path, data, message } -> { ok, sha }
+DELETE /api/netsim/file?path=<repo/path.json>    -> { ok }
+GET    /api/netsim/dir?path=<repo/dir>           -> { entries: [...] }
+GET    /api/netsim/health                        -> { ok, canWrite, repo, branch }
+```
+
+The backend performs the GitHub Contents API calls with its own token. The frontend
+never sees a GitHub credential.
+
+Backend environment (per replica): `NETSIM_GITHUB_TOKEN` (falls back to
+`GITHUB_TOKEN`), plus optional `NETSIM_REPO_OWNER`, `NETSIM_REPO_NAME`,
+`NETSIM_BRANCH`. Paths are confined to `users/**` and `shared/**`, records are
+capped at 4 MB, and a stale SHA is retried once.
 
 ### Environment
 
 ```
-VITE_NETSIM_GITHUB_TOKEN=      # fine-grained PAT, Contents: Read and write, that repo only
+VITE_NETSIM_STORAGE_PROXY=     # local-dev override only; blank in production (registry discovery)
 VITE_NETSIM_DATA_OWNER=selfstudyjo
 VITE_NETSIM_DATA_REPO=selfstudynetworksimulator_data
 VITE_NETSIM_DATA_BRANCH=main
 VITE_NETSIM_AI_APP_ID=27       # Self Study AI backend, resolved through the registry
 ```
-
-> **Security note.** Anything in a `VITE_*` variable is compiled into the JavaScript bundle
-> and is readable by anyone who loads the page. A write-capable PAT here can be extracted
-> and used to write to (or delete from) the data repo directly. Scope the token to that one
-> repository and nothing else, and treat its contents as public. The durable fix is a small
-> backend endpoint that holds the token server-side and proxies the reads and writes; the
-> storage service is deliberately the only file that would need to change.
 
 ### AI tutor
 

@@ -34,18 +34,31 @@
     </header>
 
     <!-- ════════════ storage banner ════════════ -->
-    <div v-if="!storage.configured || storage.lastError" class="ns-banner" :class="{ warn: !storage.configured, err: !!storage.lastError }">
+    <div v-if="storage.mode === 'local' || storage.lastError" class="ns-banner" :class="{ warn: storage.mode === 'local', err: !!storage.lastError }">
       <DeviceIcon name="alert" :size="16" />
       <div>
-        <strong v-if="!storage.configured">Projects are saving to this browser only</strong>
+        <strong v-if="storage.mode === 'local'">Projects are saving to this browser only</strong>
         <strong v-else>The data repository is not reachable</strong>
-        <p v-if="!storage.configured">
-          Add <code>VITE_NETSIM_GITHUB_TOKEN</code> to <code>selfstudyjo/.env</code> to sync your projects to
-          <code>{{ storage.repo }}</code>. Everything works without it — your work simply stays on this device.
+        <p v-if="storage.mode === 'local'">
+          Everything works — your networks, lessons and progress are all kept in this browser. Cross-device sync needs the
+          <code>/api/netsim/*</code> storage endpoints deployed on the Self Study AI backend; the frontend finds them through
+          the registry automatically. Until then, you can sync just this device from Storage settings.
         </p>
         <p v-else>{{ storage.lastError }} — your work is still safe in this browser and will sync on the next successful save.</p>
       </div>
-      <button class="ns-btn ghost sm" @click="testStorage">{{ testing ? 'Testing…' : 'Test connection' }}</button>
+      <button class="ns-btn ghost sm" @click="showStorage = true">Connect storage</button>
+    </div>
+
+    <div v-else class="ns-banner ok">
+      <DeviceIcon name="check" :size="16" />
+      <div>
+        <strong>Syncing to {{ storage.repo }}</strong>
+        <p>
+          {{ storage.mode === 'proxy' ? `Through the backend proxy at ${storage.proxy}.` : 'Using the token stored on this device.' }}
+          {{ storage.lastSyncAt ? `Last sync ${relTime(storage.lastSyncAt)}.` : '' }}
+        </p>
+      </div>
+      <button class="ns-btn ghost sm" @click="showStorage = true">Storage settings</button>
     </div>
     <p v-if="storageTestMessage" class="ns-banner-note">{{ storageTestMessage }}</p>
 
@@ -183,6 +196,59 @@
       </div>
     </section>
 
+    <!-- ════════════ storage settings modal ════════════ -->
+    <div v-if="showStorage" class="ns-modal-backdrop" @click.self="showStorage = false">
+      <div class="ns-modal">
+        <header>
+          <h3>Storage settings</h3>
+          <button class="ns-icon-btn" @click="showStorage = false"><DeviceIcon name="close" :size="16" /></button>
+        </header>
+
+        <div class="ns-info-rows">
+          <div><span>Mode</span><strong>{{ storageModeLabel }}</strong></div>
+          <div><span>Repository</span><strong>{{ storage.repo }} ({{ storage.branch }})</strong></div>
+          <div v-if="storage.proxy"><span>Proxy</span><strong>{{ storage.proxy }}</strong></div>
+          <div><span>Last sync</span><strong>{{ storage.lastSyncAt ? relTime(storage.lastSyncAt) : 'never' }}</strong></div>
+        </div>
+
+        <div class="ns-btn-row tight">
+          <button class="ns-btn ghost sm" @click="testStorage">{{ testing ? 'Testing…' : 'Test connection' }}</button>
+        </div>
+        <p v-if="storageTestMessage" class="ns-note-block">{{ storageTestMessage }}</p>
+
+        <template v-if="storage.mode !== 'proxy'">
+          <div class="ns-sub-block">
+            <h5>Connect this device with a GitHub token</h5>
+            <p class="ns-muted sm">
+              The token is stored in this browser only. It is never part of the deployed site, so it cannot leak to
+              visitors — but it also only works on this device. For real multi-user sync, point
+              <code>VITE_NETSIM_STORAGE_PROXY</code> at a backend that holds the token server-side.
+            </p>
+            <label class="ns-field block">Fine-grained personal access token
+              <input
+                v-model="tokenInput"
+                type="password"
+                spellcheck="false"
+                autocomplete="off"
+                :placeholder="storage.mode === 'token' ? `currently loaded: ${tokenHint}` : 'github_pat_… (Contents: Read and write on that repo only)'"
+                @keydown.enter="saveToken"
+              />
+            </label>
+            <div class="ns-btn-row tight">
+              <button class="ns-btn primary sm" :disabled="!tokenInput.trim()" @click="saveToken">Save and test</button>
+              <button v-if="storage.mode === 'token'" class="ns-btn danger sm" @click="forgetToken">Forget token</button>
+            </div>
+          </div>
+        </template>
+
+        <div class="ns-note-block">
+          <strong>Why there is no build-time token:</strong> anything in a <code>VITE_*</code> variable is compiled into the
+          published JavaScript. GitHub's push protection blocks a deploy that contains one, which is the right outcome —
+          a write-capable token in a public bundle can be extracted by anyone who loads the page.
+        </div>
+      </div>
+    </div>
+
     <!-- ════════════ new project modal ════════════ -->
     <div v-if="showNew" class="ns-modal-backdrop" @click.self="showNew = false">
       <div class="ns-modal">
@@ -224,6 +290,7 @@ import { useRouter } from 'vue-router';
 import DeviceIcon from '@/components/netsim/DeviceIcon.vue';
 import { useNetSimStore } from '@/store/netsim';
 import { netsimService } from '@/services/netsim.service';
+import { netsimStorage } from '@/services/netsim-storage.service';
 import { TOPOLOGY_TEMPLATES } from '@/netsim/topology';
 import { DEVICE_TYPES } from '@/netsim/devices';
 import { TOTAL_LESSONS, BADGES } from '@/netsim/lessons';
@@ -239,8 +306,21 @@ const newDesc = ref('');
 const newTemplate = ref('');
 const testing = ref(false);
 const storageTestMessage = ref('');
+const showStorage = ref(false);
+const tokenInput = ref('');
+const storageVersion = ref(0);
 
-const storage = computed(() => store.storageStatus);
+// storageVersion is bumped after any storage change so this recomputes.
+const storage = computed(() => { void storageVersion.value; return store.storageStatus; });
+const tokenHint = computed(() => { void storageVersion.value; return netsimStorage.tokenHint(); });
+
+const storageModeLabel = computed(() => {
+    switch (storage.value.mode) {
+        case 'proxy': return 'Backend proxy (recommended — token stays server-side)';
+        case 'token': return 'Token stored on this device';
+        default: return 'This browser only (no sync)';
+    }
+});
 const progress = computed(() => store.progress);
 
 const completionPct = computed(() => {
@@ -261,6 +341,8 @@ onMounted(async () => {
     await store.loadProfileAndProgress();
     await store.loadProjects();
     await store.loadSharedProjects();
+    // The banner should reflect the mode discovery actually settled on.
+    storageVersion.value++;
 });
 
 function open(id: string) {
@@ -307,7 +389,29 @@ async function testStorage() {
         storageTestMessage.value = err?.message || 'The connection test could not run.';
     } finally {
         testing.value = false;
+        storageVersion.value++;
     }
+}
+
+async function saveToken() {
+    const t = tokenInput.value.trim();
+    if (!t) return;
+    netsimStorage.setToken(t);
+    tokenInput.value = '';
+    storageVersion.value++;
+    await testStorage();
+    if (storage.value.online) {
+        store.toast('success', 'Storage connected', 'Your projects will sync to the data repository from this device.');
+        await store.loadProjects();
+        await store.loadSharedProjects();
+    }
+}
+
+function forgetToken() {
+    netsimStorage.clearToken();
+    storageVersion.value++;
+    storageTestMessage.value = 'Token removed from this device. Projects now stay in this browser only.';
+    store.toast('info', 'Token forgotten');
 }
 
 function scrollTo(id: string) {

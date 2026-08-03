@@ -587,10 +587,13 @@ export const useNetSimStore = defineStore('netsim', () => {
     async function loadProjects(): Promise<void> {
         loading.value = true;
         try {
+            // Discover the backend storage proxy before the first read, so the UI
+            // reports the mode it will actually use.
+            await netsimStorage.ensureReady();
             const res = await netsimService.listProjects(currentUsername.value);
             projects.value = res.projects;
             if (res.local && !netsimStorage.isConfigured()) {
-                storageMessage.value = 'Projects are being kept in this browser only. Add VITE_NETSIM_GITHUB_TOKEN to selfstudyjo/.env to sync them to the data repository.';
+                storageMessage.value = 'Projects are being kept in this browser only. Open Storage settings on the Network Simulator hub to sync them to the data repository.';
             } else if (res.local) {
                 storageMessage.value = 'Showing locally cached projects — the data repository is not reachable right now.';
             } else {
