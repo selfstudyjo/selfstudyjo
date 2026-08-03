@@ -60,6 +60,25 @@
         <div v-if="research.plan_error" class="rf-alert rf-alert-warn">
           <RfIconWarning /> <div>{{ research.plan_error }}</div>
         </div>
+
+        <div v-if="!research.sources.length" class="rf-alert rf-alert-warn">
+          <RfIconWarning />
+          <div>
+            <strong>No sources attached, so the document will export without a reference list.</strong>
+            Attach papers on the <button class="rf-link-btn" @click="tab = 'sources'">Sources</button>
+            tab — the writer then cites them in the text and builds the bibliography in
+            {{ research.citation_style || 'APA 7th edition' }} automatically.
+          </div>
+        </div>
+        <div v-else-if="!research.references.length" class="rf-alert rf-alert-info">
+          <RfIconList />
+          <div>
+            {{ research.sources.length }} source{{ research.sources.length === 1 ? '' : 's' }} attached.
+            The reference list is built automatically when you export, or press
+            <button class="rf-link-btn" @click="buildReferences">Build reference list</button>
+            to review it first.
+          </div>
+        </div>
       </div>
 
       <!-- ============ TABS ============ -->
@@ -274,9 +293,19 @@
           </div>
         </div>
 
+        <p class="rf-hint">
+          Formatted in {{ research.citation_style || 'APA 7th edition' }} with a hanging indent.
+          Journal titles are italicised and each DOI or URL becomes a clickable link in the exported
+          DOCX and PDF. Only metadata held for the source is used — no page range or DOI is guessed.
+        </p>
+
         <div v-if="!research.references.length" class="rf-empty">
           <p>No reference list yet.</p>
-          <p class="rf-hint">Attach sources, then press <strong>Format references</strong>.</p>
+          <p class="rf-hint">
+            {{ research.sources.length
+              ? 'Press Format references above, or just export — it is built automatically.'
+              : 'Attach sources on the Sources tab first.' }}
+          </p>
         </div>
         <ol v-else class="rf-reference-list">
           <li v-for="(ref, i) in research.references" :key="i">{{ ref }}</li>
@@ -583,7 +612,10 @@ const importLibrary = async () => {
   try {
     const result = await researchService.setAiResearchSources(userId, research.value.id, { from_library: true });
     research.value.sources = result.sources;
-    showToast(`${result.count} sources attached.`);
+    // The backend clears the cached bibliography whenever the source list
+    // changes, so it is rebuilt against the new sources rather than exported stale.
+    research.value.references = [];
+    showToast(`${result.count} sources attached. The reference list will rebuild on export.`);
   } catch (err: any) {
     showToast(err?.message || 'Could not import your library.', 'err');
   } finally {
@@ -605,6 +637,7 @@ const removeSource = async (source: any, index: number) => {
       const result = await researchService.setAiResearchSources(userId, research.value.id, { sources: next });
       research.value.sources = result.sources;
     }
+    research.value.references = [];
   } catch (err: any) {
     showToast(err?.message || 'Could not remove the source.', 'err');
   }
@@ -651,8 +684,29 @@ const exportDoc = async (format: 'docx' | 'pdf') => {
   if (!userId || !research.value) return;
   exporting.value = format;
   try {
+    // A thesis should never download without its bibliography. If the student
+    // went straight from generating sections to exporting, build the reference
+    // list first so the REFERENCES chapter is present in the file.
+    if (!research.value.references.length && research.value.sources.length) {
+      try {
+        const built = await researchService.generateAiReferences(
+          userId, research.value.id, citationStyle.value);
+        research.value.references = built.references;
+        research.value.citation_style = built.style;
+        showToast(`${built.count} references formatted in ${built.style} and added to the document.`);
+      } catch {
+        // Non-fatal: the backend rebuilds it during export as a safety net.
+      }
+    }
+
     await researchService.exportAiResearch(userId, research.value.id, format, research.value.title);
-    showToast(`${format.toUpperCase()} downloaded.`);
+
+    if (!research.value.references.length && !research.value.sources.length) {
+      showToast(`${format.toUpperCase()} downloaded, but it has no reference list — `
+        + 'attach sources on the Sources tab to get a bibliography.', 'err');
+    } else {
+      showToast(`${format.toUpperCase()} downloaded.`);
+    }
   } catch (err: any) {
     showToast(err?.message || `Could not export the ${format.toUpperCase()}.`, 'err');
   } finally {

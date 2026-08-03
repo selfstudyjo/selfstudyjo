@@ -377,6 +377,8 @@ export interface AiResearch {
     sections: ResearchSection[];
     sources: any[];
     references: string[];
+    /** Ordered source records the bibliography was built from; drives italics and DOI links on export. */
+    reference_sources?: any[];
     appendices: { title: string; content: string }[];
     status: 'draft' | 'in_progress' | 'completed';
     progress: AiResearchProgress;
@@ -399,6 +401,7 @@ export interface AiResearchSummary {
     progress: AiResearchProgress;
     source_count: number;
     reference_count: number;
+    citation_style?: string;
     created_at: string;
     updated_at: string;
 }
@@ -980,6 +983,12 @@ class ResearchService {
         );
     }
 
+    /**
+     * Format the attached sources into a reference list.
+     *
+     * APA 7 is produced deterministically on the backend from the stored
+     * metadata; other styles go through the AI with APA kept as a fallback.
+     */
     async generateAiReferences(userId: string, researchId: string, style?: string):
         Promise<{ references: string[]; style: string; count: number }> {
         const baseUrl = await this.getBaseUrl();
