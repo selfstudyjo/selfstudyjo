@@ -1,0 +1,1 @@
+import{t as e}from"./index-bpBBApwp.js";export{e as serviceRegistry};
