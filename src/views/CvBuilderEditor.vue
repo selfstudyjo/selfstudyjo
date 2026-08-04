@@ -568,14 +568,23 @@
             </div>
 
             <div class="photo-controls">
-              <label class="btn btn-secondary btn-sm photo-upload">
-                {{ photoBusy ? 'Uploading…' : 'Upload a photo' }}
-                <input type="file" accept="image/png,image/jpeg,image/webp" :disabled="photoBusy"
-                       @change="onPhotoPicked" />
-              </label>
-              <button v-if="cv.photo.data_url" class="btn btn-ghost btn-sm" @click="clearPhoto">
-                Remove photo
-              </button>
+              <div class="photo-buttons">
+                <button class="btn btn-secondary btn-sm" :disabled="photoBusy"
+                        @click="openStudio()">
+                  {{ photoBusy ? 'Saving…' : (cv.photo.data_url ? 'Edit photo' : 'Add a photo') }}
+                </button>
+                <button v-if="!cv.photo.data_url" class="btn btn-ghost btn-sm" :disabled="photoBusy"
+                        @click="openStudio()">
+                  Take a photo
+                </button>
+                <button v-if="cv.photo.data_url" class="btn btn-ghost btn-sm" @click="clearPhoto">
+                  Remove photo
+                </button>
+              </div>
+              <p class="hint">
+                Upload or take a photo, drag it to centre your face, and swap the background for a
+                professional colour. Your face is never removed — only the area around you.
+              </p>
 
               <div class="avatar-picker">
                 <span class="avatar-label">Or use a default avatar</span>
@@ -660,6 +669,17 @@
       </aside>
     </div>
 
+    <CvPhotoStudio
+      v-if="studioOpen"
+      :user-id="userId"
+      :shape="cv.photo.shape"
+      :current-data-url="cv.photo.data_url"
+      :source-path="cv.photo.source_path"
+      :initial-edit="cv.photo.edit"
+      @apply="onStudioApply"
+      @cancel="studioOpen = false"
+    />
+
     <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
   </div>
 
@@ -674,12 +694,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import CvPhotoStudio from '@/components/cvbuilder/CvPhotoStudio.vue';
 import CvPreview from '@/components/cvbuilder/CvPreview.vue';
 import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
 import {
-  blankEntry, cvBuilderService, downscaleImage,
+  blankEntry, cvBuilderService,
   type AvatarOption, type CvRecord, type CvSectionKey, type CvTemplate,
-  type CvReview, type ExportFormat, type MatchReport,
+  type CvPhotoEdit, type CvReview, type ExportFormat, type MatchReport,
 } from '@/services/cvbuilder.service';
 
 const route = useRoute();
@@ -737,6 +758,7 @@ const voiceBusy = ref(false);
 
 const photoBusy = ref(false);
 const photoError = ref('');
+const studioOpen = ref(false);
 
 const windowWide = ref(window.innerWidth >= 1380);
 
@@ -1081,30 +1103,51 @@ function pickAvatar(kind: string) {
   markDirty();
 }
 
-async function onPhotoPicked(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
+function openStudio() {
   photoError.value = '';
+  studioOpen.value = true;
+}
+
+/**
+ * Store what the studio produced.
+ *
+ * Two separate things are saved: the framed, background-swapped picture goes into
+ * the CV record (that is what gets printed), and the untouched capture is
+ * archived in the data repo so the framing can be redone later without
+ * re-cropping an already-cropped image. The archive is best effort - losing it
+ * costs a future re-edit, not this one.
+ */
+async function onStudioApply(payload: { dataUrl: string; edit: CvPhotoEdit; original: Blob | null }) {
+  studioOpen.value = false;
   photoBusy.value = true;
+  photoError.value = '';
+  const photo = cv.value!.photo;
+
   try {
-    // Downscale first: a phone photo is several MB, and it is embedded in the CV
-    // record, so every later read of that CV would carry it.
-    const resized = await downscaleImage(file);
-    const upload = new File([resized], file.name, { type: resized.type });
-    const result = await cvBuilderService.uploadPhoto(userId.value, upload);
-    cv.value!.photo.data_url = result.data_url;
-    cv.value!.photo.repo_path = result.repo_path;
-    cv.value!.photo.filename = result.filename;
-    cv.value!.photo.show = true;
+    if (payload.original) {
+      try {
+        const archived = await cvBuilderService.uploadPhoto(
+          userId.value,
+          new File([payload.original], `photo-${Date.now()}.jpg`, { type: payload.original.type }));
+        photo.source_path = archived.repo_path;
+        photo.filename = archived.filename;
+      } catch (e: any) {
+        showToast('The photo is on your CV, but the original could not be archived: '
+          + (e?.message || 'upload failed'), 'error');
+      }
+    }
+
+    photo.data_url = payload.dataUrl;
+    photo.edit = payload.edit;
+    photo.avatar = '';
+    photo.show = true;
     markDirty();
     await save('Profile photo updated');
-    showToast('Photo added.');
+    showToast('Photo updated.');
   } catch (e: any) {
-    photoError.value = e?.message || 'That photo could not be uploaded.';
+    photoError.value = e?.message || 'That photo could not be saved.';
   } finally {
     photoBusy.value = false;
-    input.value = '';
   }
 }
 

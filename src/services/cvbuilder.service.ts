@@ -125,6 +125,29 @@ export interface CvReference {
 
 export type AvatarKind = 'male' | 'female' | 'neutral' | '';
 
+export type BackgroundStyle = 'keep' | 'solid' | 'gradient';
+
+/**
+ * How the picture was framed and how its background was replaced.
+ *
+ * Persisted with the CV so the photo studio reopens an edit instead of making
+ * the user redo it. Offsets are a fraction of the frame, not pixels, so they
+ * stay correct whatever size the studio renders at.
+ */
+export interface CvPhotoEdit {
+    zoom: number;
+    offset_x: number;
+    offset_y: number;
+    rotation: number;
+    mirrored: boolean;
+    background: string;
+    background_style: BackgroundStyle;
+    tolerance: number;
+    feather: number;
+    protect: number;
+    source: string;
+}
+
 export interface CvPhoto {
     /** A data URL. Empty when the CV falls back to `avatar`. */
     data_url: string;
@@ -133,6 +156,9 @@ export interface CvPhoto {
     show: boolean;
     filename: string;
     repo_path: string;
+    /** Repo path of the untouched upload, so the original can be reframed. */
+    source_path: string;
+    edit: CvPhotoEdit;
 }
 
 export interface MatchReport {
@@ -478,6 +504,21 @@ class CvBuilderService {
         const form = new FormData();
         form.append('file', file, (file as File).name || filename);
         return apiService.post(baseUrl, '/api/cv/upload/photo', form, this.headers(userId));
+    }
+
+    /**
+     * An archived image back as a data URL.
+     *
+     * Lets the photo studio reframe the original upload on a later visit instead
+     * of re-cropping the already-cropped picture, which loses quality each time.
+     */
+    async getImageDataUrl(userId: string, path: string): Promise<string> {
+        const baseUrl = await this.getBaseUrl();
+        const r = await apiService.get<{ data_url: string }>(
+            baseUrl, `/api/cv/files/content?path=${encodeURIComponent(path)}`,
+            this.headers(userId));
+        if (!r.data_url) throw new Error('That image is no longer stored.');
+        return r.data_url;
     }
 
     async parseText(userId: string, text: string, options: { title?: string; hint?: string; save?: boolean } = {}) {
