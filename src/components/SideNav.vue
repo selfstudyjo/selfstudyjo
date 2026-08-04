@@ -151,6 +151,19 @@
 
           <router-link
             v-if="hasAiAccess"
+            to="/cv-builder"
+            class="nav-item"
+            :class="{ 'active': isActive('/cv-builder') }"
+            @click="closeSidebarOnMobile"
+          >
+            <div class="nav-icon">
+              <CvBuilderIcon />
+            </div>
+            <span class="nav-text">CV Builder</span>
+          </router-link>
+
+          <router-link
+            v-if="hasAiAccess"
             to="/roblox-tool"
             class="nav-item"
             :class="{ 'active': isActive('/roblox-tool') }"
@@ -400,6 +413,15 @@ const RobloxIcon = {
   render() {
     return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
       h('path', { d: 'M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z' })
+    ]);
+  }
+};
+
+const CvBuilderIcon = {
+  name: 'CvBuilderIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, [
+      h('path', { d: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z' })
     ]);
   }
 };

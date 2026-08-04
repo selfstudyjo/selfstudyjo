@@ -58,6 +58,10 @@ import JobInterviewResults from '../views/JobInterviewResults.vue';
 
 import RobloxTool from '../views/RobloxTool.vue';
 
+// CV Builder (gated by ai_feature)
+import CvBuilder from '../views/CvBuilder.vue';
+import CvBuilderEditor from '../views/CvBuilderEditor.vue';
+
 // Network Simulator (gated by lab_feature)
 import NetworkSimulator from '../views/NetworkSimulator.vue';
 import NetworkSimulatorStudio from '../views/NetworkSimulatorStudio.vue';
@@ -402,6 +406,21 @@ const routes = [
                 name: 'RobloxTool',
                 component: RobloxTool,
                 meta: { title: 'Roblox Animation Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+
+            // CV Builder (gated by ai_feature)
+            {
+                path: 'cv-builder',
+                name: 'CvBuilder',
+                component: CvBuilder,
+                meta: { title: 'CV Builder', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                path: 'cv-builder/editor/:id',
+                name: 'CvBuilderEditor',
+                component: CvBuilderEditor,
+                meta: { title: 'CV Builder', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] },
+                props: true
             },
 
             // Network Simulator (gated by lab_feature)

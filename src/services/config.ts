@@ -242,6 +242,18 @@ class ServiceRegistry {
     }
 
     /**
+     * Self Study CV Builder (app 33). Stores every CV in the
+     * selfstudyjo_cv_builder_data repo, so any replica can serve any request.
+     */
+    async getRandomCvBuilderReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_CV_BUILDER_APP_ID || '33'),
+            'cvbuilder'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    /**
      * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
      * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
      */

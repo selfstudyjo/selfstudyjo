@@ -167,12 +167,18 @@ export class ApiService {
                 );
             }
         } else if (data instanceof FormData) {
-            // For FormData, let browser set Content-Type automatically
+            // Caller-supplied headers must be merged here just as they are for a
+            // JSON body. Dropping them silently broke every multipart endpoint
+            // that identifies the user with X-User-ID — the request arrived
+            // authenticated but anonymous, and the backend answered
+            // "X-User-ID header is required".
             const requestHeaders: Record<string, string> = {
-                ...baseHeaders
+                ...baseHeaders,
+                ...headers
             };
 
-            // Remove Content-Type if it exists in the provided headers
+            // Deleted AFTER the merge: the browser has to set Content-Type itself
+            // so the multipart boundary matches the body it generates.
             delete requestHeaders['Content-Type'];
 
             const options: RequestInit = {
