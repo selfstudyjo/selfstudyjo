@@ -161,21 +161,37 @@ export interface CvPhoto {
     edit: CvPhotoEdit;
 }
 
+/**
+ * 'full' lets the tailor write the posting's required skills and tools into the
+ * CV and report each addition; 'strict' rewords only what the CV already
+ * evidences. Mirrors COVERAGE_MODES in the backend's utils/prompts.py.
+ */
+export type TailorCoverage = 'full' | 'strict';
+
 export interface MatchReport {
     score: number | null;
+    /** The original CV's score, so the panel can show what the pass bought. */
+    baseline_score?: number | null;
+    coverage?: TailorCoverage;
     job_title?: string;
     seniority?: string;
     matched_keywords?: string[];
+    /** Requirements the AI wrote into the CV — the user's review list. */
+    added_keywords?: string[];
+    added_items?: { section?: string; detail: string }[];
+    /** Requirements it could not add without fabricating (credentials, degrees). */
     missing_keywords?: string[];
     strengths?: string[];
     gaps?: string[];
     actions?: string[];
     ats_notes?: string[];
+    review_notes?: string[];
 }
 
 export interface JobTarget {
     job_description?: string;
     job_title?: string;
+    coverage?: TailorCoverage;
     tailored_at?: string;
     match_report?: MatchReport;
 }
@@ -539,6 +555,8 @@ class CvBuilderService {
 
     async tailorToJob(userId: string, payload: {
         cv_id?: string; cv?: Partial<CvRecord>; job_description: string;
+        /** Defaults to 'full' on the backend — it closes the gaps rather than listing them. */
+        coverage?: TailorCoverage;
         save?: boolean; as_copy?: boolean; title?: string;
     }): Promise<{ cv: CvRecord; saved: boolean; match_report: MatchReport; summary: CvSummary }> {
         const baseUrl = await this.getBaseUrl();

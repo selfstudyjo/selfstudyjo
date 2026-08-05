@@ -258,6 +258,22 @@ function parseHex(hex: string) {
 }
 
 /**
+ * One entry's heading line, matching cvdoc.py's `entry_title` / `entry_head`:
+ * bold subject, then the organisation also bold but in the accent colour, and
+ * the dates right-aligned. Both halves are bold so the job is what the eye lands
+ * on when a recruiter skims the page.
+ */
+function entryHead(primary?: string, secondary?: string, dates?: string) {
+  return h('div', { class: 'cv-entry-head' }, [
+    h('span', { class: 'cv-entry-title' }, [
+      h('span', { class: 'cv-entry-role' }, primary || ''),
+      secondary ? h('span', { class: 'cv-entry-org' }, ` — ${secondary}` ) : null,
+    ]),
+    dates ? h('span', { class: 'cv-entry-dates' }, dates) : null,
+  ]);
+}
+
+/**
  * Section bodies are rendered with a render function rather than a dozen
  * v-if blocks in the template: the shapes differ enough per section that the
  * template version was harder to read than this.
@@ -273,35 +289,31 @@ const CvSectionBody = defineComponent({
 
       if (key === 'experience' || key === 'volunteering') {
         return (value as any[]).map(entry => h('div', { class: 'cv-entry' }, [
-          h('div', { class: 'cv-entry-head' }, [
-            h('span', { class: 'cv-entry-title' },
-              [entry.role, entry.company || entry.organisation].filter(Boolean).join(' — ')),
-            h('span', { class: 'cv-entry-dates' },
-              dateRange(entry.start, entry.end, entry.current)),
+          entryHead(entry.role, entry.company || entry.organisation,
+                    dateRange(entry.start, entry.end, entry.current)),
+          h('div', { class: 'cv-entry-body' }, [
+            entry.location ? h('p', { class: 'cv-entry-meta' }, entry.location) : null,
+            entry.description ? h('p', { class: 'cv-text' }, entry.description) : null,
+            (entry.bullets || []).length
+              ? h('ul', { class: 'cv-bullets' },
+                  (entry.bullets as string[]).filter(Boolean).map(b => h('li', b)))
+              : null,
+            (entry.tech || []).length
+              ? h('p', { class: 'cv-tech' }, `Tech: ${(entry.tech as string[]).join(', ')}`)
+              : null,
           ]),
-          entry.location ? h('p', { class: 'cv-entry-meta' }, entry.location) : null,
-          entry.description ? h('p', { class: 'cv-text' }, entry.description) : null,
-          (entry.bullets || []).length
-            ? h('ul', { class: 'cv-bullets' },
-                (entry.bullets as string[]).filter(Boolean).map(b => h('li', b)))
-            : null,
-          (entry.tech || []).length
-            ? h('p', { class: 'cv-tech' }, `Tech: ${(entry.tech as string[]).join(', ')}`)
-            : null,
         ]));
       }
 
       if (key === 'education') {
         return (value as any[]).map(entry => h('div', { class: 'cv-entry' }, [
-          h('div', { class: 'cv-entry-head' }, [
-            h('span', { class: 'cv-entry-title' },
-              [entry.degree, entry.field].filter(Boolean).join(' in ')),
-            h('span', { class: 'cv-entry-dates' }, dateRange(entry.start, entry.end)),
+          entryHead([entry.degree, entry.field].filter(Boolean).join(' in '),
+                    entry.institution, dateRange(entry.start, entry.end)),
+          h('div', { class: 'cv-entry-body' }, [
+            entry.location ? h('p', { class: 'cv-entry-meta' }, entry.location) : null,
+            entry.grade ? h('p', { class: 'cv-text' }, `Grade: ${entry.grade}`) : null,
+            entry.details ? h('p', { class: 'cv-text' }, entry.details) : null,
           ]),
-          h('p', { class: 'cv-entry-meta' },
-            [entry.institution, entry.location].filter(Boolean).join(' — ')),
-          entry.grade ? h('p', { class: 'cv-text' }, `Grade: ${entry.grade}`) : null,
-          entry.details ? h('p', { class: 'cv-text' }, entry.details) : null,
         ]));
       }
 
@@ -314,19 +326,18 @@ const CvSectionBody = defineComponent({
 
       if (key === 'projects') {
         return (value as any[]).map(entry => h('div', { class: 'cv-entry' }, [
-          h('div', { class: 'cv-entry-head' }, [
-            h('span', { class: 'cv-entry-title' }, entry.name || 'Project'),
-            h('span', { class: 'cv-entry-dates' }, dateRange(entry.start, entry.end)),
+          entryHead(entry.name || 'Project', '', dateRange(entry.start, entry.end)),
+          h('div', { class: 'cv-entry-body' }, [
+            entry.description ? h('p', { class: 'cv-text' }, entry.description) : null,
+            (entry.bullets || []).length
+              ? h('ul', { class: 'cv-bullets' },
+                  (entry.bullets as string[]).filter(Boolean).map(b => h('li', b)))
+              : null,
+            (entry.tech || []).length
+              ? h('p', { class: 'cv-tech' }, `Tech: ${(entry.tech as string[]).join(', ')}`)
+              : null,
+            entry.link ? h('p', { class: 'cv-link' }, entry.link) : null,
           ]),
-          entry.description ? h('p', { class: 'cv-text' }, entry.description) : null,
-          (entry.bullets || []).length
-            ? h('ul', { class: 'cv-bullets' },
-                (entry.bullets as string[]).filter(Boolean).map(b => h('li', b)))
-            : null,
-          (entry.tech || []).length
-            ? h('p', { class: 'cv-tech' }, `Tech: ${(entry.tech as string[]).join(', ')}`)
-            : null,
-          entry.link ? h('p', { class: 'cv-link' }, entry.link) : null,
         ]));
       }
 
@@ -352,10 +363,12 @@ const CvSectionBody = defineComponent({
 
       if (key === 'references') {
         return (value as any[]).map(entry => h('div', { class: 'cv-entry' }, [
-          h('p', { class: 'cv-entry-title' },
-            [entry.name, entry.title, entry.company].filter(Boolean).join(' — ')),
-          h('p', { class: 'cv-entry-meta' },
-            [entry.email, entry.phone].filter(Boolean).join(' | ')),
+          entryHead(entry.name,
+                    [entry.title, entry.company].filter(Boolean).join(' — '), ''),
+          h('div', { class: 'cv-entry-body' }, [
+            h('p', { class: 'cv-entry-meta' },
+              [entry.email, entry.phone].filter(Boolean).join(' | ')),
+          ]),
         ]));
       }
 
@@ -385,10 +398,27 @@ const CvSectionBody = defineComponent({
   overflow: hidden;
   font-size: 12.5px;
   line-height: 1.5;
+  /* A CV is read, not scanned as UI: turn on the typographic niceties and let
+     dates line up in a column by using tabular figures. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-variant-numeric: tabular-nums;
+  /* `entry` shifts an entry's body right of its bold title, `bullet` shifts the
+     bullet text a further step. Both mirror entry_indent / bullet_hang in the
+     backend's templates.DENSITY, converted from points to ems. */
+  --cv-indent-entry: 0.9em;
+  --cv-indent-bullet: 1.1em;
 }
 
-.density-airy { font-size: 13px; line-height: 1.62; }
-.density-compact { font-size: 12px; line-height: 1.38; }
+.density-airy {
+  font-size: 13px; line-height: 1.62;
+  --cv-indent-entry: 1em; --cv-indent-bullet: 1.2em;
+}
+.density-compact {
+  font-size: 12px; line-height: 1.38;
+  --cv-indent-entry: 0.75em; --cv-indent-bullet: 1em;
+}
 
 /* ── Banner header ─────────────────────────────────────────── */
 .cv-banner {
@@ -447,8 +477,8 @@ const CvSectionBody = defineComponent({
 .density-compact .cv-section { margin-bottom: 10px; }
 
 .cv-section-title {
-  font-size: 0.84rem; font-weight: 700; letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--cv-accent); margin-bottom: 7px;
+  font-size: 0.86rem; font-weight: 800; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--cv-accent); margin-bottom: 8px;
 }
 .heading-bar .cv-section-title {
   background: var(--cv-accent-soft); padding: 4px 8px; border-radius: 3px;
@@ -458,19 +488,64 @@ const CvSectionBody = defineComponent({
 }
 .heading-caps .cv-section-title, .heading-plain .cv-section-title { color: #111827; }
 
-.cv-entry { margin-bottom: 9px; }
-.cv-entry:last-child { margin-bottom: 0; }
-.cv-entry-head {
+/* ── Entry bodies ──────────────────────────────────────────────
+   Everything below is produced by the CvSectionBody render function, not by this
+   file's template. Vue stamps the scope attribute only on the node a child
+   component returns as its root, so for a section that returns a *list* of
+   entries the entries — and everything nested in them — carry no attribute at
+   all. Reaching them needs :deep() from `.cv-section-body`, which is a template
+   node and does carry it. Written as a plain `.cv-entry {}` these rules compile
+   to `.cv-entry[data-v-…]` and silently match nothing. */
+.cv-section-body :deep(.cv-entry) { margin-bottom: 11px; }
+.cv-section-body :deep(.cv-entry:last-child) { margin-bottom: 0; }
+.cv-section-body :deep(.cv-entry-head) {
   display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
 }
-.cv-entry-title { font-weight: 700; color: #111827; }
-.cv-entry-dates { font-size: 0.76rem; color: #6b7280; font-style: italic; white-space: nowrap; }
-.cv-entry-meta { font-size: 0.79rem; color: #6b7280; font-style: italic; }
-.cv-text { margin: 2px 0; text-align: justify; }
-.cv-bullets { margin: 3px 0 0 16px; }
-.cv-bullets li { margin-bottom: 2px; }
-.cv-tech { font-size: 0.78rem; color: #4b5563; font-style: italic; margin-top: 2px; }
-.cv-link { font-size: 0.78rem; color: #1d4ed8; word-break: break-all; }
+.cv-section-body :deep(.cv-entry-title) {
+  font-size: 1.04em; font-weight: 700; color: #111827; letter-spacing: -0.005em;
+}
+/* Role and organisation are both bold — the job is what the eye should land on
+   when skimming — and the accent colour is what keeps them readable as two
+   things rather than one run-on phrase. Matches cvdoc.py's entry_title. */
+.cv-section-body :deep(.cv-entry-role) { font-weight: 700; }
+.cv-section-body :deep(.cv-entry-org) { font-weight: 700; color: var(--cv-accent); }
+.cv-section-body :deep(.cv-entry-dates) {
+  font-size: 0.76rem; color: #6b7280; font-style: italic; font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Everything under an entry's title is shifted right of it. */
+.cv-section-body :deep(.cv-entry-body) { padding-left: var(--cv-indent-entry); }
+.cv-section-body :deep(.cv-entry-meta) {
+  font-size: 0.79rem; color: #6b7280; font-style: italic;
+}
+.cv-section-body :deep(.cv-text) {
+  margin: 3px 0; text-align: left; overflow-wrap: break-word;
+}
+
+.cv-section-body :deep(.cv-bullets) {
+  margin: 4px 0 0;
+  padding-left: var(--cv-indent-bullet);
+  list-style: disc outside;
+}
+.cv-section-body :deep(.cv-bullets li) { margin-bottom: 3px; padding-left: 0.12em; }
+.cv-section-body :deep(.cv-bullets li::marker) {
+  color: var(--cv-accent); font-size: 0.92em;
+}
+
+.cv-section-body :deep(.cv-tech) {
+  font-size: 0.78rem; color: #4b5563; font-style: italic; margin-top: 3px;
+}
+.cv-section-body :deep(.cv-link) {
+  font-size: 0.78rem; color: #1d4ed8; word-break: break-all;
+}
+
+/* Sections whose whole body is one bare list (certifications, awards,
+   publications) have no entry title to hang under, so the list carries the entry
+   indent itself and lines up with the bullets in the sections that do. */
+.cv-section-body > :deep(.cv-bullets) {
+  padding-left: calc(var(--cv-indent-entry) + var(--cv-indent-bullet));
+}
 
 .cv-empty { padding: 40px 26px; text-align: center; color: #9ca3af; font-size: 0.9rem; }
 

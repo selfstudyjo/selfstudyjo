@@ -404,9 +404,10 @@
         <div class="card">
           <div class="card-head"><h3>Match this CV to a job</h3></div>
           <p class="card-note">
-            Paste the job description. The AI rewrites your summary, reorders your bullets so the
-            relevant ones come first and mirrors the posting's vocabulary — using only experience
-            you already have. Requirements you do not evidence are reported as gaps, not invented.
+            Paste the job description and the AI rewrites the CV to answer it — writing the
+            posting's required skills, tools and technologies into your skills section and into
+            the roles where that work belongs, then rewriting your summary and headline to target
+            the title. Everything it adds is listed below for you to review.
           </p>
           <textarea v-model="jobDescription" rows="12" class="jd"
                     placeholder="Paste the full job description here — responsibilities, requirements, nice-to-haves."></textarea>
@@ -415,17 +416,29 @@
                — paste a bit more; 80 is the minimum.</span>
           </p>
 
-          <div class="row-actions">
-            <button class="btn btn-ai" :disabled="tailoring || !aiReady || jobDescription.trim().length < 80"
-                    @click="tailor(false)">
-              {{ tailoring ? 'Tailoring your CV…' : '⚡ Make my CV suit this job' }}
+          <div class="coverage-picker">
+            <button v-for="mode in coverageModes" :key="mode.key" type="button"
+                    :class="['coverage-option', { active: coverage === mode.key }]"
+                    @click="coverage = mode.key">
+              <strong>{{ mode.name }}</strong>
+              <span>{{ mode.description }}</span>
             </button>
-            <button class="btn btn-ghost" :disabled="tailoring || !aiReady || jobDescription.trim().length < 80"
-                    @click="tailor(true)">
+          </div>
+
+          <div class="row-actions">
+            <button class="btn btn-ai" :disabled="tailorDisabled" @click="tailor(false)">
+              {{ tailoring ? 'Rewriting your CV…' : '⚡ Make my CV suit this job' }}
+            </button>
+            <button class="btn btn-ghost" :disabled="tailorDisabled" @click="tailor(true)">
               Tailor into a separate CV
             </button>
             <span class="hint inline">Tailoring into a copy keeps this CV as your general one.</span>
           </div>
+          <p v-if="coverage === 'full'" class="hint">
+            Read the “Added to your CV” list before you apply and delete anything you cannot
+            stand behind in an interview. Credentials — certifications, licences, degrees — are
+            never added for you, because they are checked.
+          </p>
         </div>
 
         <div v-if="matchReport" class="card">
@@ -444,24 +457,47 @@
             <div class="match-title">
               <h4>{{ matchReport.job_title || 'This role' }}</h4>
               <p v-if="matchReport.seniority">{{ matchReport.seniority }}</p>
+              <p v-if="matchReport.baseline_score != null" class="match-delta">
+                was {{ matchReport.baseline_score }}%
+                <span v-if="matchReport.score != null && matchReport.score > matchReport.baseline_score"
+                      class="up">▲ +{{ matchReport.score - matchReport.baseline_score }}</span>
+              </p>
             </div>
           </div>
 
           <div class="kw-groups">
+            <div v-if="matchReport.added_keywords?.length">
+              <h4>Added to your CV — review these</h4>
+              <div class="kws">
+                <span v-for="(kw, i) in matchReport.added_keywords" :key="i" class="kw added">{{ kw }}</span>
+              </div>
+              <ul v-if="matchReport.added_items?.length" class="added-list">
+                <li v-for="(item, i) in matchReport.added_items" :key="i">
+                  <span v-if="item.section" class="added-where">{{ item.section }}</span>{{ item.detail }}
+                </li>
+              </ul>
+              <p class="hint">Open the editor tabs and delete anything here you could not defend in
+                 an interview — you are the last check on this list.</p>
+            </div>
             <div v-if="matchReport.matched_keywords?.length">
-              <h4>Matched</h4>
+              <h4>Already evidenced</h4>
               <div class="kws">
                 <span v-for="(kw, i) in matchReport.matched_keywords" :key="i" class="kw good">{{ kw }}</span>
               </div>
             </div>
             <div v-if="matchReport.missing_keywords?.length">
-              <h4>Not evidenced in your CV</h4>
+              <h4>Still missing — only you can add these</h4>
               <div class="kws">
                 <span v-for="(kw, i) in matchReport.missing_keywords" :key="i" class="kw bad">{{ kw }}</span>
               </div>
-              <p class="hint">These were deliberately not added. If you do have the experience, put
-                 it in the editor and tailor again.</p>
+              <p class="hint">Certifications, licences and degrees are never written in for you
+                 because employers verify them. Add any you genuinely hold in the editor.</p>
             </div>
+          </div>
+
+          <div v-if="matchReport.review_notes?.length" class="review-warn">
+            <h4>Confirm before you send this</h4>
+            <ul><li v-for="(item, i) in matchReport.review_notes" :key="i">{{ item }}</li></ul>
           </div>
 
           <div class="review-cols">
@@ -701,6 +737,7 @@ import {
   blankEntry, cvBuilderService,
   type AvatarOption, type CvRecord, type CvSectionKey, type CvTemplate,
   type CvPhotoEdit, type CvReview, type ExportFormat, type MatchReport,
+  type TailorCoverage,
 } from '@/services/cvbuilder.service';
 
 const route = useRoute();
@@ -751,6 +788,17 @@ const review = ref<CvReview | null>(null);
 
 const jobDescription = ref('');
 const tailoring = ref(false);
+const coverage = ref<TailorCoverage>('full');
+
+const coverageModes: { key: TailorCoverage; name: string; description: string }[] = [
+  { key: 'full', name: 'Close the gaps',
+    description: "Writes the posting's skills, tools and technologies into your CV, and lists every addition for you to review." },
+  { key: 'strict', name: 'Reword only',
+    description: 'Rewrites and reorders what you already have. Claims nothing new.' },
+];
+
+const tailorDisabled = computed(() =>
+  tailoring.value || !aiReady.value || jobDescription.value.trim().length < 80);
 
 const voiceTranscript = ref('');
 const voiceNotes = ref('');
@@ -1033,6 +1081,7 @@ async function tailor(asCopy: boolean) {
     const result = await cvBuilderService.tailorToJob(userId.value, {
       cv_id: cv.value!.id,
       job_description: jobDescription.value,
+      coverage: coverage.value,
       as_copy: asCopy,
     });
     if (asCopy) {
@@ -1043,10 +1092,15 @@ async function tailor(asCopy: boolean) {
     cv.value = result.cv;
     dirty.value = false;
     savedAt.value = formatDate(result.cv.updated_at);
-    const score = result.match_report?.score;
-    showToast(score != null
-      ? `Tailored — the AI rates this a ${score}% match. Check the gaps it listed.`
-      : 'CV tailored to that job description.');
+    const report = result.match_report;
+    const added = report?.added_keywords?.length || 0;
+    const score = report?.score;
+    showToast(added
+      ? `Tailored — ${added} requirement${added === 1 ? '' : 's'} added${
+          score != null ? `, now a ${score}% match` : ''}. Review the “Added to your CV” list.`
+      : (score != null
+          ? `Tailored — the AI rates this a ${score}% match. Check the gaps it listed.`
+          : 'CV tailored to that job description.'));
   } catch (e: any) {
     showToast(e?.message || 'The CV could not be tailored.', 'error');
   } finally {
@@ -1427,11 +1481,63 @@ onBeforeRouteLeave(async () => {
 .match-title h4 { font-size: 1.02rem; font-weight: 650; }
 .match-title p { color: rgba(255, 255, 255, 0.55); font-size: 0.84rem; }
 
+.match-delta { margin-top: 3px; font-size: 0.78rem; }
+.match-delta .up { color: #86efac; font-weight: 700; margin-left: 4px; }
+
 .kw-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .kws { display: flex; flex-wrap: wrap; gap: 6px; }
 .kw { font-size: 0.76rem; padding: 3px 9px; border-radius: 20px; }
 .kw.good { background: rgba(34, 197, 94, 0.15); color: #86efac; }
 .kw.bad { background: rgba(239, 68, 68, 0.13); color: #fca5a5; }
+/* Additions read as "new, check me", not as pass or fail. */
+.kw.added {
+  background: rgba(139, 92, 246, 0.18); color: #ddd6fe;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+}
+
+.added-list {
+  margin-top: 9px; padding-left: 17px;
+  color: rgba(255, 255, 255, 0.76); font-size: 0.83rem; line-height: 1.55;
+}
+.added-list li { margin-bottom: 4px; }
+.added-where {
+  display: inline-block; margin-right: 6px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #c4b5fd;
+}
+
+.review-warn {
+  margin-top: 16px; padding: 11px 13px;
+  background: rgba(245, 158, 11, 0.09);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 11px;
+}
+.review-warn h4 {
+  font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #fcd34d; margin-bottom: 7px;
+}
+.review-warn ul {
+  padding-left: 17px; color: rgba(255, 255, 255, 0.82); font-size: 0.86rem; line-height: 1.6;
+}
+.review-warn li { margin-bottom: 4px; }
+
+/* ── Coverage picker (tailor strength) ──────────────────────── */
+.coverage-picker {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px; margin: 13px 0 4px;
+}
+.coverage-option {
+  background: rgba(0, 0, 0, 0.2); border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px; padding: 11px 12px; cursor: pointer; text-align: left;
+  color: inherit; font: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.coverage-option:hover { transform: translateY(-2px); border-color: rgba(139, 92, 246, 0.5); }
+.coverage-option.active { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18); }
+.coverage-option strong { display: block; font-size: 0.88rem; margin-bottom: 3px; }
+.coverage-option span {
+  display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.75rem; line-height: 1.45;
+}
 
 /* ── Template picker ────────────────────────────────────────── */
 .tpl-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; }
