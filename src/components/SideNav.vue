@@ -32,150 +32,84 @@
         </button>
       </div>
 
-      <nav class="sidebar-nav">
-        <div v-for="item in publicNavItems" :key="item.to">
-          <router-link
-            :to="item.to"
-            class="nav-item"
-            :class="{ 'active': isActive(item.to) }"
-            :aria-current="isActive(item.to) ? 'page' : null"
-            @click="closeSidebarOnMobile"
+      <div class="sidebar-search" v-if="!isCollapsed">
+        <div class="search-field" :class="{ 'has-query': !!searchQuery }">
+          <span class="search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-4.35-4.35" />
+            </svg>
+          </span>
+          <input
+            ref="searchInput"
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="Search pages…"
+            aria-label="Search navigation"
+            autocomplete="off"
+            spellcheck="false"
+            @keydown.down.prevent="moveHighlight(1)"
+            @keydown.up.prevent="moveHighlight(-1)"
+            @keydown.enter.prevent="openHighlighted"
+            @keydown.esc.prevent="onSearchEscape"
+          />
+          <button
+            v-if="searchQuery"
+            class="search-clear"
+            type="button"
+            aria-label="Clear search"
+            @click="clearSearch"
           >
-            <div class="nav-icon">
-              <component :is="item.icon" />
-            </div>
-            <span class="nav-text">{{ item.text }}</span>
-          </router-link>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <kbd v-else class="search-kbd">{{ searchShortcutLabel }}</kbd>
         </div>
+        <p class="sr-only" aria-live="polite">
+          {{ searchQuery ? `${filteredNavItems.length} pages match ${searchQuery}` : '' }}
+        </p>
+      </div>
+      <button
+        v-else
+        class="rail-search-btn"
+        type="button"
+        aria-label="Search navigation"
+        @click="focusSearch"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-4.35-4.35" />
+        </svg>
+      </button>
 
-        <template v-if="isAuthenticated">
-          <router-link
-            v-for="item in privateNavItems"
-            :key="item.to"
-            :to="item.to"
-            class="nav-item"
-            :class="{ 'active': isActive(item.to) }"
-            :aria-current="isActive(item.to) ? 'page' : null"
-            @click="closeSidebarOnMobile"
+      <nav class="sidebar-nav">
+        <router-link
+          v-for="(item, index) in filteredNavItems"
+          :key="item.to"
+          :to="item.to"
+          class="nav-item"
+          :class="{ 'active': isActive(item.to), 'highlighted': index === highlightIndex }"
+          :aria-current="isActive(item.to) ? 'page' : undefined"
+          @click="onNavClick"
+        >
+          <div class="nav-icon">
+            <component :is="item.icon" />
+          </div>
+          <span class="nav-text"><span v-for="(part, i) in matchParts(item.text)" :key="i" :class="{ 'nav-text-match': part.match }">{{ part.text }}</span></span>
+          <span
+            v-if="item.to === '/notifications' && displayCount > 0"
+            class="notification-badge"
+            :aria-label="`${displayCount} unread notifications`"
           >
-            <div class="nav-icon">
-              <component :is="item.icon" />
-            </div>
-            <span class="nav-text">{{ item.text }}</span>
-            <span
-              v-if="item.to === '/notifications' && displayCount > 0"
-              class="notification-badge"
-              :aria-label="`${displayCount} unread notifications`"
-            >
-              {{ displayCount > 99 ? '99+' : displayCount }}
-            </span>
-          </router-link>
+            {{ displayCount > 99 ? '99+' : displayCount }}
+          </span>
+        </router-link>
 
-          <router-link
-            v-if="hasLabAccess"
-            to="/labs"
-            class="nav-item"
-            :class="{ 'active': isActive('/labs') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <LabIcon />
-            </div>
-            <span class="nav-text">Labs</span>
-          </router-link>
-
-          <router-link
-            v-if="hasLabFeature"
-            to="/network-simulator"
-            class="nav-item"
-            :class="{ 'active': isActive('/network-simulator') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <NetworkSimulatorIcon />
-            </div>
-            <span class="nav-text">Network Simulator</span>
-          </router-link>
-
-          <router-link
-            v-if="hasAiAccess"
-            to="/ai-chat"
-            class="nav-item"
-            :class="{ 'active': isActive('/ai-chat') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <AIIcon />
-            </div>
-            <span class="nav-text">AI Chat Assistant</span>
-          </router-link>
-
-          <router-link
-            v-if="hasResearchFlowAccess"
-            to="/research"
-            class="nav-item"
-            :class="{ 'active': isActive('/research') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <ResearchFlowIcon />
-            </div>
-            <span class="nav-text">Research Flow</span>
-          </router-link>
-
-          <router-link
-            v-if="hasToastmastersAccess"
-            to="/toastmasters"
-            class="nav-item"
-            :class="{ 'active': isActive('/toastmasters') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <ToastmastersIcon />
-            </div>
-            <span class="nav-text">Toastmasters</span>
-          </router-link>
-
-          <router-link
-            v-if="hasAiAccess"
-            to="/job-interview"
-            class="nav-item"
-            :class="{ 'active': isActive('/job-interview') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <JobInterviewIcon />
-            </div>
-            <span class="nav-text">Job Interview</span>
-          </router-link>
-
-          <router-link
-            v-if="hasAiAccess"
-            to="/cv-builder"
-            class="nav-item"
-            :class="{ 'active': isActive('/cv-builder') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <CvBuilderIcon />
-            </div>
-            <span class="nav-text">CV Builder</span>
-          </router-link>
-
-          <router-link
-            v-if="hasAiAccess"
-            to="/roblox-tool"
-            class="nav-item"
-            :class="{ 'active': isActive('/roblox-tool') }"
-            @click="closeSidebarOnMobile"
-          >
-            <div class="nav-icon">
-              <RobloxIcon />
-            </div>
-            <span class="nav-text">Roblox Studio</span>
-          </router-link>
-
-        </template>
+        <p v-if="searchQuery && !filteredNavItems.length" class="nav-empty">
+          No pages match “{{ searchQuery }}”
+        </p>
       </nav>
 
       <div class="sidebar-footer">
@@ -247,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, h, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
@@ -461,6 +395,7 @@ onMounted(() => {
   }
   if (authStore.isAuthenticated) initializeNotifications();
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleSearchShortcut);
   syncAvatarUrl();
 });
 
@@ -468,6 +403,7 @@ onUnmounted(() => {
   stopPolling();
   window.removeEventListener('resize', checkIfMobile);
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('keydown', handleSearchShortcut);
 });
 
 function checkIfMobile() {
@@ -484,30 +420,164 @@ const hasResearchFlowAccess = computed(() => authStore.hasResearchFlowAccess);
 const isProctor = computed(() => authStore.isProctor);
 const hasToastmastersAccess = computed(() => authStore.hasToastmastersAccess);
 
-const publicNavItems = computed(() => {
-  const items = [
-    { to: '/courses', text: 'Courses', icon: CoursesIcon },
-    ...(hasRunbookAccess.value ? [{ to: '/runbooks', text: 'Runbooks', icon: RunbooksIcon }] : []),
-    { to: '/exams', text: 'Exams', icon: ExamsIcon },
-    { to: '/plans', text: 'Plans', icon: PlansIcon },
-    { to: '/all-certificates', text: 'All Certificates', icon: AllCertificatesIcon },
+interface NavItem {
+  to: string;
+  text: string;
+  icon: any;
+  /** Extra search terms so a page is findable by what it does, not only by its label. */
+  keywords?: string;
+}
+
+const publicNavItems = computed<NavItem[]>(() => {
+  const items: NavItem[] = [
+    { to: '/courses', text: 'Courses', icon: CoursesIcon, keywords: 'learn lessons training catalog study' },
+    ...(hasRunbookAccess.value ? [{ to: '/runbooks', text: 'Runbooks', icon: RunbooksIcon, keywords: 'procedures operations guides steps' }] : []),
+    { to: '/exams', text: 'Exams', icon: ExamsIcon, keywords: 'tests quizzes assessments' },
+    { to: '/plans', text: 'Plans', icon: PlansIcon, keywords: 'pricing packages subscribe subscription' },
+    { to: '/all-certificates', text: 'All Certificates', icon: AllCertificatesIcon, keywords: 'credentials badges diplomas' },
   ];
   return items;
 });
 
-const privateNavItems = computed(() => {
-  const items = [
-    { to: '/', text: 'Dashboard', icon: DashboardIcon },
-    { to: '/notifications', text: 'Notifications', icon: NotificationsIcon },
-    { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon },
-    { to: '/certificates', text: 'My Certificates', icon: CertificateIcon },
-    { to: '/my-results', text: 'My Results', icon: ResultsIcon },
-    { to: '/profile', text: 'Profile', icon: ProfileIcon },
+const privateNavItems = computed<NavItem[]>(() => {
+  const items: NavItem[] = [
+    { to: '/', text: 'Dashboard', icon: DashboardIcon, keywords: 'home overview start' },
+    { to: '/notifications', text: 'Notifications', icon: NotificationsIcon, keywords: 'alerts messages inbox unread' },
+    { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon, keywords: 'subscription billing membership' },
+    { to: '/certificates', text: 'My Certificates', icon: CertificateIcon, keywords: 'credentials badges diplomas' },
+    { to: '/my-results', text: 'My Results', icon: ResultsIcon, keywords: 'scores grades marks exam history' },
+    { to: '/profile', text: 'Profile', icon: ProfileIcon, keywords: 'account settings avatar password' },
   ];
   if (isProctor.value) {
-    items.splice(1, 0, { to: '/proctor-dashboard', text: 'Proctor Dashboard', icon: ProctorDashboardIcon });
+    items.splice(1, 0, { to: '/proctor-dashboard', text: 'Proctor Dashboard', icon: ProctorDashboardIcon, keywords: 'monitor supervise invigilate exams' });
   }
   return items;
+});
+
+const featureNavItems = computed<NavItem[]>(() => [
+  ...(hasLabAccess.value ? [{ to: '/labs', text: 'Labs', icon: LabIcon, keywords: 'practice sandbox hands on exercises' }] : []),
+  ...(hasLabFeature.value ? [{ to: '/network-simulator', text: 'Network Simulator', icon: NetworkSimulatorIcon, keywords: 'netsim topology router switch packet tracer cisco' }] : []),
+  ...(hasAiAccess.value ? [{ to: '/ai-chat', text: 'AI Chat Assistant', icon: AIIcon, keywords: 'chatbot gpt llm ask question assistant' }] : []),
+  ...(hasResearchFlowAccess.value ? [{ to: '/research', text: 'Research Flow', icon: ResearchFlowIcon, keywords: 'papers sources literature review' }] : []),
+  ...(hasToastmastersAccess.value ? [{ to: '/toastmasters', text: 'Toastmasters', icon: ToastmastersIcon, keywords: 'public speaking speech presentation' }] : []),
+  ...(hasAiAccess.value ? [{ to: '/job-interview', text: 'Job Interview', icon: JobInterviewIcon, keywords: 'hiring practice questions mock career' }] : []),
+  ...(hasAiAccess.value ? [{ to: '/cv-builder', text: 'CV Builder', icon: CvBuilderIcon, keywords: 'resume curriculum vitae pdf docx export' }] : []),
+  ...(hasAiAccess.value ? [{ to: '/roblox-tool', text: 'Roblox Studio', icon: RobloxIcon, keywords: 'game lua scripting studio' }] : []),
+]);
+
+const navItems = computed<NavItem[]>(() =>
+  isAuthenticated.value
+    ? [...publicNavItems.value, ...privateNavItems.value, ...featureNavItems.value]
+    : publicNavItems.value
+);
+
+const searchQuery = ref('');
+const searchInput = ref<HTMLInputElement | null>(null);
+const highlightIndex = ref(-1);
+const isApplePlatform = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const searchShortcutLabel = isApplePlatform ? '⌘K' : 'Ctrl K';
+
+const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, ' ').trim();
+
+const searchTerms = computed(() => normalize(searchQuery.value).split(' ').filter(Boolean));
+
+const filteredNavItems = computed(() => {
+  const terms = searchTerms.value;
+  if (!terms.length) return navItems.value;
+  return navItems.value.filter(item => {
+    const haystack = normalize(`${item.text} ${item.keywords || ''} ${item.to.replace(/[/-]/g, ' ')}`);
+    return terms.every(term => haystack.includes(term));
+  });
+});
+
+/** Split a label into matched / unmatched runs so hits can be emphasised without v-html. */
+function matchParts(text: string): { text: string; match: boolean }[] {
+  const terms = searchTerms.value;
+  if (!terms.length) return [{ text, match: false }];
+
+  const lower = text.toLowerCase();
+  const ranges: [number, number][] = [];
+  for (const term of terms) {
+    let at = lower.indexOf(term);
+    while (at !== -1) {
+      ranges.push([at, at + term.length]);
+      at = lower.indexOf(term, at + term.length);
+    }
+  }
+  if (!ranges.length) return [{ text, match: false }];
+
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+    else merged.push([range[0], range[1]]);
+  }
+
+  const parts: { text: string; match: boolean }[] = [];
+  let cursor = 0;
+  for (const [start, end] of merged) {
+    if (start > cursor) parts.push({ text: text.slice(cursor, start), match: false });
+    parts.push({ text: text.slice(start, end), match: true });
+    cursor = end;
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), match: false });
+  return parts;
+}
+
+function clearSearch() {
+  searchQuery.value = '';
+  highlightIndex.value = -1;
+}
+
+function focusSearch() {
+  if (isMobile.value) openSidebar();
+  else isCollapsed.value = false;
+  nextTick(() => searchInput.value?.focus());
+}
+
+function moveHighlight(step: number) {
+  const total = filteredNavItems.value.length;
+  if (!total) return;
+  const next = highlightIndex.value + step;
+  highlightIndex.value = next < 0 ? total - 1 : next % total;
+}
+
+function openHighlighted() {
+  const items = filteredNavItems.value;
+  if (!items.length) return;
+  const target = items[highlightIndex.value] || items[0];
+  searchInput.value?.blur();
+  clearSearch();
+  closeSidebarOnMobile();
+  if (target.to !== route.path) router.push(target.to);
+}
+
+function onSearchEscape() {
+  if (searchQuery.value) clearSearch();
+  else searchInput.value?.blur();
+}
+
+function onNavClick() {
+  clearSearch();
+  closeSidebarOnMobile();
+}
+
+function handleSearchShortcut(event: KeyboardEvent) {
+  if (event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    focusSearch();
+  }
+}
+
+// A fresh query starts on the first result so Enter always has an obvious target.
+watch(searchQuery, value => {
+  highlightIndex.value = value ? 0 : -1;
+});
+
+// Collapsing to the rail hides the field, so drop any in-progress filter with it.
+watch(isCollapsed, collapsed => {
+  if (collapsed) clearSearch();
 });
 
 const isActive = (path: string) => {
@@ -639,6 +709,7 @@ watch(username, (newUsername, oldUsername) => {
 });
 
 watch(() => route.path, () => {
+  clearSearch();
   if (authStore.isAuthenticated && username.value) {
     setTimeout(() => notificationStore.fetchNotificationCount(username.value), 1000);
   }
