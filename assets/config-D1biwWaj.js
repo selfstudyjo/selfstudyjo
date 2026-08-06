@@ -1,0 +1,1 @@
+import{t as e}from"./index-DmK-5pfW.js";export{e as serviceRegistry};
