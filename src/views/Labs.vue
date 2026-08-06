@@ -17,12 +17,16 @@
     </div>
 
     <!-- No Lab Access -->
+    <!-- This used to also fire for a user who had paid for lab_feature but had no
+         lab_url set on their profile, which read as "contact your administrator"
+         for something they had already bought. Access is the subscription now, so
+         the link goes where it can actually be fixed. -->
     <div v-else-if="!hasLabAccess" class="no-access-state">
       <i class="fas fa-flask"></i>
       <h3>No Lab Access</h3>
-      <p>You don't have access to virtual labs. Please contact your administrator to enable lab access.</p>
-      <router-link to="/profile" class="btn btn-primary">
-        <i class="fas fa-user-cog"></i> Go to Profile
+      <p>Your plan doesn't include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.</p>
+      <router-link to="/plans" class="btn btn-primary">
+        <i class="fas fa-crown"></i> View Plans
       </router-link>
     </div>
 
@@ -39,6 +43,13 @@
         >
           <i :class="tab.icon"></i> {{ tab.label }}
         </button>
+
+        <!-- Which replica holds this workspace. Worth showing: if the lab ever has
+             to recreate a workspace elsewhere, this is what changes, and a student
+             who can see it can tell us which machine their files were on. -->
+        <span v-if="homeReplica" class="workspace-indicator" :title="`Your files are stored on ${homeReplica}`">
+          <i class="fas fa-hdd"></i> {{ homeReplicaHost }}
+        </span>
       </div>
 
       <!-- SQL Tab -->
@@ -378,16 +389,13 @@ const commandInput = ref<HTMLInputElement | null>(null);
 // User info
 const username = computed(() => authStore.user?.username || '');
 
-// Ensure lab URL is HTTPS
-const labUrl = computed(() => {
-  const url = authStore.user?.lab_url || '';
-  if (!url) return '';
-  if (url.startsWith('https://')) return url;
-  if (url.startsWith('http://')) {
-    return url.replace(/^http:/, 'https:');
-  }
-  return url;
-});
+// The replica holding this student's files, once the lab has told us. Display
+// only - labService sends each call there itself. There is no lab URL on the
+// user's profile any more: app 11 replicates its records and pins each student
+// to the replica that holds their workspace.
+const homeReplica = computed(() => studentRecord.value?.home_replica || '');
+const homeReplicaHost = computed(() =>
+  homeReplica.value.replace(/^https?:\/\//, '').replace(/\/$/, ''));
 
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const studentRecord = ref<Student | null>(null);
@@ -465,15 +473,15 @@ const tabs = [
   { id: 'python', label: 'Python Compiler', icon: 'fas fa-code' }
 ];
 
-// Initialize lab — automatically create student record if it doesn't exist
+// Initialize lab — automatically create the student record if it doesn't exist
 const initializeLab = async () => {
   if (!hasLabAccess.value) {
-    error.value = 'No lab access configured for your account';
+    error.value = 'Your plan does not include the virtual labs';
     return;
   }
 
-  if (!username.value || !labUrl.value) {
-    error.value = 'Missing username or lab URL configuration';
+  if (!username.value) {
+    error.value = 'You are not signed in.';
     return;
   }
 
@@ -481,13 +489,16 @@ const initializeLab = async () => {
   error.value = null;
 
   try {
-    // Automatically check and create the student record in the lab backend.
-    // This calls /api/check-and-create-user/ which will:
-    //   - Create the Student row if it doesn't exist
-    //   - Create the user's media folder if it doesn't exist
-    //   - Return success if user/folder already existed
+    // /api/check-and-create-user/ on any lab replica — they all hold the same
+    // records. It creates the student if they are new, creates their workspace, and
+    // returns the replica that now holds it, which labService remembers so the
+    // sandbox calls below go straight there instead of being forwarded.
     try {
-      studentRecord.value = await labService.getOrCreateStudent(username.value, labUrl.value);
+      studentRecord.value = await labService.getOrCreateStudent(username.value);
+      if (!studentRecord.value) {
+        error.value = 'The lab service could not be reached. Try again in a moment.';
+        return;
+      }
     } catch (studentError) {
       console.warn('Failed to ensure student record (non-critical):', studentError);
     }
@@ -541,7 +552,7 @@ const removeToast = (id: number) => {
 // SQL Functions
 const loadSQLTables = async () => {
   try {
-    const result = await labService.runSQL(username.value, labUrl.value, sqlQuery.value);
+    const result = await labService.runSQL(username.value, sqlQuery.value);
     if (result.result && Array.isArray(result.result)) {
       const tables = result.result
         .filter((row: any) => row.type === 'table' && row.name !== 'sqlite_sequence')
@@ -562,14 +573,18 @@ const runSQL = async () => {
   lastSQLQuery.value = sqlQuery.value;
 
   try {
-    const result = await labService.runSQL(username.value, labUrl.value, sqlQuery.value);
+    const result = await labService.runSQL(username.value, sqlQuery.value);
 
     if (result.error) {
       sqlError.value = result.error;
       showToast('SQL Error', result.error, 'error');
     } else if (result.result) {
       sqlResults.value = result.result;
-      showToast('Success', `Query executed successfully. ${result.result.length} row(s) returned.`, 'success');
+      showToast('Success',
+        result.truncated
+          ? result.message || `Showing the first ${result.result.length} rows.`
+          : `Query executed successfully. ${result.result.length} row(s) returned.`,
+        result.truncated ? 'warning' : 'success');
 
       if (sqlQuery.value.toLowerCase().includes('table')) {
         await loadSQLTables();
@@ -672,13 +687,18 @@ const runLinuxCommand = async () => {
   currentCommand.value = '';
 
   try {
-    const result = await labService.runLinuxCommand(username.value, labUrl.value, command);
+    const result = await labService.runLinuxCommand(username.value, command);
 
     if (result.output && result.output.trim()) {
       addTerminalLine('output', result.output.trim());
     }
     if (result.error && result.error.trim()) {
       addTerminalLine('error', result.error.trim());
+    }
+
+    if (result.note) {
+      addTerminalLine('info', result.note);
+      showToast('Workspace moved', result.note, 'warning');
     }
 
     if (result.error) {
@@ -706,7 +726,7 @@ const killProcess = async () => {
   if (!runningProcess.value) return;
 
   try {
-    await labService.killProcess(username.value, labUrl.value);
+    await labService.killProcess(username.value);
     addTerminalLine('info', 'Process terminated by user');
     runningProcess.value = false;
     showToast('Process Killed', 'Current process has been terminated', 'warning');
@@ -782,7 +802,7 @@ const runPythonCode = async () => {
   pythonError.value = null;
 
   try {
-    const result = await labService.runPythonCode(username.value, labUrl.value, pythonCode.value);
+    const result = await labService.runPythonCode(username.value, pythonCode.value);
 
     if (result.error) {
       pythonError.value = result.error;

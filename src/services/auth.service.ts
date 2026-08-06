@@ -19,7 +19,6 @@ export interface LoginResponse {
     first_name?: string;
     last_name?: string;
     image_url?: string;
-    lab_url?: string;
     is_email_verified?: boolean;
     is_admin?: boolean;
 }
@@ -109,7 +108,6 @@ class AuthService {
                     first_name: response.first_name,
                     last_name: response.last_name,
                     image_url: response.image_url,
-                    lab_url: response.lab_url,
                     is_email_verified: response.is_email_verified,
                     is_admin: response.is_admin,
                 });
@@ -322,7 +320,6 @@ class AuthService {
         first_name?: string;
         last_name?: string;
         image_url?: string;
-        lab_url?: string;
         is_email_verified?: boolean;
         is_admin?: boolean;
     }): void {
@@ -338,7 +335,6 @@ class AuthService {
         first_name?: string;
         last_name?: string;
         image_url?: string;
-        lab_url?: string;
         is_email_verified?: boolean;
         is_admin?: boolean;
     } | null {

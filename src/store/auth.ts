@@ -64,11 +64,12 @@ export const useAuthStore = defineStore('auth', () => {
                 console.warn('Failed to check proctor status on init:', err)
             );
 
-            if (storedUser.lab_url) {
-                loadStudentRecord().catch(err =>
-                    console.warn('Failed to load student record on init:', err)
-                );
-            }
+            // No longer gated on a stored lab_url. The lab service resolves through
+            // the registry and pins the student itself, so the only thing that
+            // decides whether they have a lab is their subscription.
+            loadStudentRecord().catch(err =>
+                console.warn('Failed to load student record on init:', err)
+            );
 
             loadUserFeatures().catch(err =>
                 console.warn('Failed to load user features on init:', err)
@@ -166,14 +167,23 @@ export const useAuthStore = defineStore('auth', () => {
         return activeSubscription.value;
     };
 
+    /**
+     * Ensure the lab knows about this user, and learn which replica holds their
+     * files.
+     *
+     * This used to need `user.lab_url` — one lab replica, chosen per user by an
+     * operator on their profile, because each replica had its own student table.
+     * The lab replicates now: `getOrCreateStudent` resolves app 11 through the
+     * registry and the response says where the student's workspace lives.
+     */
     const loadStudentRecord = async (): Promise<Student | null> => {
-        if (!user.value?.username || !user.value?.lab_url) {
+        if (!user.value?.username) {
             studentRecord.value = null;
             return null;
         }
 
         try {
-            const student = await labService.getOrCreateStudent(user.value.username, user.value.lab_url);
+            const student = await labService.getOrCreateStudent(user.value.username);
             studentRecord.value = student;
             if (!student) {
                 return null;
@@ -256,11 +266,9 @@ export const useAuthStore = defineStore('auth', () => {
                 checkProctorStatus(user.value.id).catch(err =>
                     console.warn('Background proctor check failed:', err)
                 );
-                if (user.value.lab_url) {
-                    loadStudentRecord().catch(err =>
-                        console.warn('Background student record load failed:', err)
-                    );
-                }
+                loadStudentRecord().catch(err =>
+                    console.warn('Background student record load failed:', err)
+                );
                 loadUserFeatures().catch(err =>
                     console.warn('Background user features load failed:', err)
                 );
@@ -312,7 +320,6 @@ export const useAuthStore = defineStore('auth', () => {
                 expiresAt: response.expires_at,
                 username: response.username,
                 email: response.email,
-                lab_url: response.lab_url,
                 first_name: response.first_name,
                 last_name: response.last_name,
                 image_url: response.image_url,
@@ -325,7 +332,7 @@ export const useAuthStore = defineStore('auth', () => {
 
             Promise.allSettled([
                 checkProctorStatus(response.user_id),
-                response.lab_url ? loadStudentRecord() : Promise.resolve(null),
+                loadStudentRecord(),
                 loadUserFeatures(),
                 loadActiveSubscriptions()
             ]).catch(err => console.warn('Background checks failed:', err));
@@ -504,8 +511,7 @@ export const useAuthStore = defineStore('auth', () => {
                     ...user.value,
                     ...updatedProfile,
                     username: updatedProfile.username || user.value.username,
-                    email: updatedProfile.email || user.value.email,
-                    lab_url: updatedProfile.lab_url || user.value.lab_url
+                    email: updatedProfile.email || user.value.email
                 };
                 authService.setUser(user.value);
             }
@@ -640,15 +646,23 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const hasLabAccess = computed(() => {
-        return user.value?.lab_url && user.value.lab_url.trim() !== '' && userFeatures.value.includes('lab_feature');
-    });
+    /**
+     * Access to the SQL / Linux / Python labs — the subscription feature, and
+     * nothing else.
+     *
+     * This used to also require a non-empty `user.lab_url`, which is why a user with
+     * a paid `lab_feature` could still be shown "No lab access configured": each lab
+     * replica had its own student table, so somebody had to pin the user to one of
+     * them by hand on their profile, and if nobody had, the feature they had paid
+     * for was invisible. App 11 replicates and pins each student itself.
+     */
+    const hasLabAccess = computed(() => userFeatures.value.includes('lab_feature'));
 
     /**
-     * `lab_feature` on its own — no `lab_url` required.
-     * The Network Simulator runs entirely in the browser and stores its data in
-     * the selfstudynetworksimulator_data repo, so it does not need a provisioned
-     * lab container the way the SQL/Linux/Python labs do.
+     * The same feature, under the name the Network Simulator's route guard uses.
+     * Kept as a separate computed because the two were once genuinely different:
+     * the simulator runs in the browser and never needed a provisioned lab, so it
+     * checked the feature alone while the sandboxes also demanded a `lab_url`.
      */
     const hasLabFeature = computed(() => userFeatures.value.includes('lab_feature'));
 

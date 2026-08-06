@@ -221,6 +221,35 @@ class ServiceRegistry {
         return this.getRandomReplica(replicas);
     }
 
+    /**
+     * Self Study User Lab (app 11) — the SQL, Linux and Python sandboxes.
+     *
+     * This did not exist until 2026-08-06, because the lab was the one backend the
+     * app did *not* resolve: each replica had its own student table, so a user was
+     * pinned to one of them by a `lab_url` on their profile. App 11 replicates its
+     * records now and pins each student to the replica holding their files itself,
+     * so the lab is resolved here like everything else.
+     */
+    async getRandomLabReplica(): Promise<string | null> {
+        const replicas = await this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_LAB_APP_ID || '11'),
+            'lab'
+        );
+        return this.getRandomReplica(replicas);
+    }
+
+    /**
+     * Every lab replica, for the rare case where one has to be tried after
+     * another — `labService` falls back through them when the one it picked is
+     * unreachable, because a student's alternative is a Labs page that does nothing.
+     */
+    async getLabReplicas(): Promise<string[]> {
+        return this.getServiceReplicas(
+            parseInt(import.meta.env.VITE_LAB_APP_ID || '11'),
+            'lab'
+        );
+    }
+
     async getRandomRobloxReplica(): Promise<string | null> {
         const replicas = await this.getServiceReplicas(
             parseInt(import.meta.env.VITE_ROBLOX_APP_ID || '31'),

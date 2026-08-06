@@ -382,6 +382,28 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Which replica holds this student's files. Not a control — the lab pins the
+   student itself and routes every call there. It is shown because when the lab has
+   to recreate a workspace on a different replica, this is the thing that changes,
+   and a student who can read it can tell support which machine their work was on. */
+.workspace-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  align-self: center;
+  margin-left: auto;
+  padding: 0 var(--space-md);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-xs, 0.75rem);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+.workspace-indicator i {
+  color: var(--lab-primary);
+}
+
 .tab-btn {
   flex: 1 1 140px;
   display: flex;

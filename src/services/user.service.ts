@@ -11,7 +11,6 @@ export interface UserProfile {
     last_name?: string;
     gender?: 'M' | 'F';
     image_url?: string;
-    lab_url?: string;
     is_email_verified?: boolean;
     is_admin?: boolean;
     date_joined?: string;
@@ -25,7 +24,6 @@ export interface UpdateProfileRequest {
     last_name?: string;
     gender?: 'M' | 'F';
     image_url?: string;
-    lab_url?: string;
     is_admin?: boolean;
 }
 
@@ -73,7 +71,6 @@ export interface PasswordCheckResponse {
     first_name?: string;
     last_name?: string;
     image_url?: string;
-    lab_url?: string;
 }
 
 export interface DeleteAccountRequest {
