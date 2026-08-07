@@ -360,6 +360,17 @@ const CvBuilderIcon = {
   }
 };
 
+const DrawIcon = {
+  name: 'DrawIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M3 21l3.5-1L18 8.5 15.5 6 4 17.5z' }),
+      h('path', { d: 'M15.5 6l2-2a1.8 1.8 0 012.5 2.5l-2 2' }),
+      h('path', { d: 'M13.5 8l2.5 2.5' })
+    ]);
+  }
+};
+
 const NetworkSimulatorIcon = {
   name: 'NetworkSimulatorIcon',
   render() {
@@ -455,6 +466,11 @@ const privateNavItems = computed<NavItem[]>(() => {
 });
 
 const featureNavItems = computed<NavItem[]>(() => [
+  // Drawing Papers is listed with the tools but has no gate, deliberately: it is
+  // free with an account, so there is no hasXAccess to consult. Every other entry
+  // here is spread from a conditional, so an unconditional one reads like an
+  // oversight — it is not.
+  { to: '/draw', text: 'Drawing Papers', icon: DrawIcon, keywords: 'whiteboard draw paint canvas sketch diagram board collaborate free' },
   ...(hasLabAccess.value ? [{ to: '/labs', text: 'Labs', icon: LabIcon, keywords: 'practice sandbox hands on exercises' }] : []),
   ...(hasLabFeature.value ? [{ to: '/network-simulator', text: 'Network Simulator', icon: NetworkSimulatorIcon, keywords: 'netsim topology router switch packet tracer cisco' }] : []),
   ...(hasAiAccess.value ? [{ to: '/ai-chat', text: 'AI Chat Assistant', icon: AIIcon, keywords: 'chatbot gpt llm ask question assistant' }] : []),

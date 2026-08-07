@@ -304,6 +304,23 @@ class ServiceRegistry {
     }
 
     /**
+     * Self Study Draw (app 34) — the shared drawing papers.
+     *
+     * Sticky per tab like every other service here, and it matters more than most:
+     * a paper is being written to continuously while it is open, so a call that
+     * landed on a different replica each time would show the user their own canvas
+     * missing the stroke they just drew. The paper-scoped live channel on the
+     * backend converges the replicas in about a second, which is what makes two
+     * collaborators pinned to *different* replicas work — but one collaborator
+     * bouncing between replicas is a problem no backend can fix.
+     */
+    async getRandomDrawReplica(): Promise<string | null> {
+        const appId = parseInt(import.meta.env.VITE_DRAW_APP_ID || '34');
+        const replicas = await this.getServiceReplicas(appId, 'draw');
+        return this.getRandomReplica(replicas, appId);
+    }
+
+    /**
      * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
      * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
      */

@@ -62,6 +62,13 @@ import RobloxTool from '../views/RobloxTool.vue';
 import CvBuilder from '../views/CvBuilder.vue';
 import CvBuilderEditor from '../views/CvBuilderEditor.vue';
 
+// Drawing papers (app 34) — auth only. Deliberately NOT subscription-gated:
+// this tool is free with an account, so the routes carry `requiresAuth` and no
+// `requiresSubscription` / `requiredFeatures`.
+import DrawPapers from '../views/DrawPapers.vue';
+import DrawBoard from '../views/DrawBoard.vue';
+import DrawShared from '../views/DrawShared.vue';
+
 // Network Simulator (gated by lab_feature)
 import NetworkSimulator from '../views/NetworkSimulator.vue';
 import NetworkSimulatorStudio from '../views/NetworkSimulatorStudio.vue';
@@ -420,6 +427,36 @@ const routes = [
                 name: 'CvBuilderEditor',
                 component: CvBuilderEditor,
                 meta: { title: 'CV Builder', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] },
+                props: true
+            },
+
+            // Drawing papers (app 34). Auth only — no requiresSubscription and no
+            // requiredFeatures, so `subscription-guard.ts` lets any signed-in user
+            // through. This is the only feature page on the platform that is free,
+            // which is why it is worth stating rather than leaving to be inferred
+            // from the absence of two keys.
+            {
+                path: 'draw',
+                name: 'DrawPapers',
+                component: DrawPapers,
+                meta: { title: 'Drawing Papers', requiresAuth: true }
+            },
+            {
+                path: 'draw/paper/:id',
+                name: 'DrawBoard',
+                component: DrawBoard,
+                meta: { title: 'Drawing Paper', requiresAuth: true },
+                props: true
+            },
+            {
+                // A share link lands here to have its token resolved into a paper id,
+                // then replaces itself with DrawBoard. requiresAuth, because the
+                // backend needs an X-User-ID to attribute strokes to — a link grants
+                // access to a paper, it does not replace signing in.
+                path: 'draw/shared/:token',
+                name: 'DrawShared',
+                component: DrawShared,
+                meta: { title: 'Shared Paper', requiresAuth: true },
                 props: true
             },
 
