@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
     "check:photomask": "vite build --config tools/photomask-check/vite.config.ts && node tools/photomask-check/dist/check.mjs",
-    "check:drawengine": "vite build --config tools/drawengine-check/vite.config.ts && node tools/drawengine-check/dist/check.mjs"
+    "check:drawengine": "vite build --config tools/drawengine-check/vite.config.ts && node tools/drawengine-check/dist/check.mjs",
+    "check:chatmedia": "vite build --config tools/chatmedia-check/vite.config.ts && node tools/chatmedia-check/dist/check.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

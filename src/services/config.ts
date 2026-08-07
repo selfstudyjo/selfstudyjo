@@ -321,6 +321,28 @@ class ServiceRegistry {
     }
 
     /**
+     * Self Study User Chat (app 35) — conversations between signed-in users.
+     *
+     * **Not app 9.** `getRandomChatReplica()` above is Self Study Chat, the
+     * anonymous visitor support widget that reaches an operator through
+     * selfstudyadmin. This one is students and teachers messaging each other, and
+     * the two share nothing but a word in their names.
+     *
+     * Sticky per tab like every other service here, and it matters as much as it
+     * does for Draw: a room is written to continuously while it is open, so a call
+     * that landed on a different replica each time would show somebody their own
+     * conversation missing the message they just sent. The room-scoped live channel
+     * on the backend converges the replicas in about a second, which is what makes
+     * two people pinned to *different* replicas work — but one person bouncing
+     * between replicas is a problem no backend can fix.
+     */
+    async getRandomUserChatReplica(): Promise<string | null> {
+        const appId = parseInt(import.meta.env.VITE_USER_CHAT_APP_ID || '35');
+        const replicas = await this.getServiceReplicas(appId, 'userchat');
+        return this.getRandomReplica(replicas, appId);
+    }
+
+    /**
      * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
      * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
      */

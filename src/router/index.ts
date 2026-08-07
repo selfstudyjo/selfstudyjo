@@ -67,6 +67,7 @@ import CvBuilderEditor from '../views/CvBuilderEditor.vue';
 // `requiresSubscription` / `requiredFeatures`.
 import DrawPapers from '../views/DrawPapers.vue';
 import DrawBoard from '../views/DrawBoard.vue';
+import Messages from '../views/Messages.vue';
 import DrawShared from '../views/DrawShared.vue';
 
 // Network Simulator (gated by lab_feature)
@@ -457,6 +458,33 @@ const routes = [
                 name: 'DrawShared',
                 component: DrawShared,
                 meta: { title: 'Shared Paper', requiresAuth: true },
+                props: true
+            },
+
+            // Messages (app 35 — Self Study User Chat).
+            //
+            // `requiresAuth` and nothing else, like Drawing Papers above: talking
+            // to your classmates is free with an account. That is deliberate, not
+            // an omission — a study platform where students cannot message each
+            // other without paying is not much of a study platform.
+            //
+            // NOT the support chat. That is app 9, and it is the ChatBox widget
+            // that floats on every page rather than a route.
+            {
+                path: 'messages',
+                name: 'Messages',
+                component: Messages,
+                meta: { title: 'Messages', requiresAuth: true }
+            },
+            {
+                // The same component, with a room open. A separate named route
+                // rather than an optional parameter so a notification's deep link
+                // (`/#/messages/<room_id>`, built by the backend's utils/notify.py)
+                // resolves to something the router can name.
+                path: 'messages/:roomId',
+                name: 'MessageRoom',
+                component: Messages,
+                meta: { title: 'Messages', requiresAuth: true },
                 props: true
             },
 

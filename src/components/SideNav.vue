@@ -105,6 +105,13 @@
           >
             {{ displayCount > 99 ? '99+' : displayCount }}
           </span>
+          <span
+            v-else-if="item.to === '/messages' && unreadMessages > 0"
+            class="notification-badge"
+            :aria-label="`${unreadMessages} unread messages`"
+          >
+            {{ chatStore.badge }}
+          </span>
         </router-link>
 
         <p v-if="searchQuery && !filteredNavItems.length" class="nav-empty">
@@ -185,6 +192,7 @@ import { ref, computed, h, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
+import { useUserChatStore } from '@/store/userchat';
 import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 
 const DashboardIcon = {
@@ -360,6 +368,15 @@ const CvBuilderIcon = {
   }
 };
 
+const MessagesIcon = {
+  name: 'MessagesIcon',
+  render() {
+    return h('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+      h('path', { d: 'M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z' })
+    ]);
+  }
+};
+
 const DrawIcon = {
   name: 'DrawIcon',
   render() {
@@ -388,6 +405,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
+const chatStore = useUserChatStore();
 
 const isCollapsed = ref(true);
 const isMobile = ref(false);
@@ -405,6 +423,10 @@ onMounted(() => {
     authStore.checkAuth().catch(err => console.log('Initial auth check failed:', err));
   }
   if (authStore.isAuthenticated) initializeNotifications();
+  // The chime cannot play without a gesture behind it, and the browser gives no
+  // error when it refuses - a chime that was never primed simply never sounds.
+  // The first click anywhere in the app is that gesture.
+  document.addEventListener('click', () => chatStore.primeAudio(), { once: true });
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleSearchShortcut);
   syncAvatarUrl();
@@ -412,6 +434,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopPolling();
+  chatStore.stop();
   window.removeEventListener('resize', checkIfMobile);
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleSearchShortcut);
@@ -453,7 +476,12 @@ const publicNavItems = computed<NavItem[]>(() => {
 const privateNavItems = computed<NavItem[]>(() => {
   const items: NavItem[] = [
     { to: '/', text: 'Dashboard', icon: DashboardIcon, keywords: 'home overview start' },
-    { to: '/notifications', text: 'Notifications', icon: NotificationsIcon, keywords: 'alerts messages inbox unread' },
+    // Messages (app 35). Ungated like Drawing Papers — free with an account.
+    // Deliberately in the *private* list rather than with the features: it is not
+    // a tool somebody opens for a task, it is where they find out somebody is
+    // trying to reach them, so it belongs next to Notifications.
+    { to: '/messages', text: 'Messages', icon: MessagesIcon, keywords: 'chat conversation direct message dm talk classmates group voice picture free' },
+    { to: '/notifications', text: 'Notifications', icon: NotificationsIcon, keywords: 'alerts inbox unread' },
     { to: '/my-plans', text: 'My Plans', icon: MyPlansIcon, keywords: 'subscription billing membership' },
     { to: '/certificates', text: 'My Certificates', icon: CertificateIcon, keywords: 'credentials badges diplomas' },
     { to: '/my-results', text: 'My Results', icon: ResultsIcon, keywords: 'scores grades marks exam history' },
@@ -642,6 +670,7 @@ const proxiedImageUrl = computed(() => {
   return getProxiedImageUrl(authStore.user.image_url);
 });
 const displayCount = computed(() => notificationStore.unreadCount);
+const unreadMessages = computed(() => chatStore.totalUnread);
 
 function syncAvatarUrl() {
   avatarError.value = false;
@@ -670,6 +699,25 @@ function initializeNotifications() {
     notificationStore.fetchNotificationCount(username.value);
     startPolling();
   }
+  startMessagePolling();
+}
+
+/**
+ * The messages badge, which polls independently of app 16's notifications.
+ *
+ * Two counters rather than one because they answer different questions: the bell
+ * is "the platform has something to tell you", the messages badge is "a person is
+ * waiting for a reply". Chat also deliberately does *not* produce a notification
+ * per message — see utils/notify.py in selfstudyuserchat — so the bell would
+ * undercount conversations badly if it were the only signal.
+ *
+ * Started here rather than in the Messages page because the whole point is to be
+ * right when that page is closed. The store owns the interval, the chime and the
+ * visibility handling.
+ */
+function startMessagePolling() {
+  const id = String(authStore.user?.id || '');
+  if (id) chatStore.start(id);
 }
 
 function startPolling() {
@@ -699,6 +747,7 @@ const handleLogout = async () => {
   try {
     stopPolling();
     notificationStore.clearAllNotifications();
+    chatStore.reset();
     await authStore.logout();
     router.push('/login');
   } catch (error) {
@@ -711,6 +760,9 @@ watch(() => authStore.isAuthenticated, (newValue) => {
   else {
     stopPolling();
     notificationStore.clearAllNotifications();
+    // reset() also revokes every cached attachment object URL, which otherwise
+    // keeps the previous user's pictures alive in this tab's memory.
+    chatStore.reset();
   }
 });
 
