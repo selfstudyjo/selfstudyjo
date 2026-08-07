@@ -35,6 +35,58 @@ export class ApiError extends Error {
     }
 }
 
+/**
+ * Run a call against one replica of a service, moving to another if it fails.
+ *
+ * Newly worth doing as of 2026-08-06. Before then, failing over would have shown
+ * the user *different data*, because each replica of a backend held a different
+ * slice of the records — so a retry against another replica was not a retry, it
+ * was a different question. Every backend replicates now, so any of them can
+ * answer for the whole service and a dead replica no longer has to mean a dead
+ * page.
+ *
+ * **Only a transport failure or a 5xx moves on.** A 404 is the replica telling
+ * you the record does not exist, and every replica holds the same records, so
+ * asking another is a slower way to get the same answer. A 400 or a 401 is an
+ * answer too. This is the same rule `chat.service.ts` has always applied and
+ * working rule 3 in CLAUDE.md.
+ *
+ * The pin in `ServiceRegistry` is what makes this cheap: the first URL tried is
+ * the one this tab has been using, so a healthy replica costs no extra request,
+ * and a failover moves the pin so the next call goes straight to the survivor.
+ *
+ *     const courses = await withReplicas(19, 'course', (base) =>
+ *         apiService.get<Course[]>(base, '/courses/'));
+ */
+export async function withReplicas<T>(
+    appId: number,
+    serviceName: string,
+    call: (baseUrl: string) => Promise<T>,
+): Promise<T> {
+    const replicas = await serviceRegistry.getReplicaOrder(appId, serviceName);
+    if (!replicas.length) {
+        throw new ApiError(`No replica of ${serviceName} could be resolved.`, 0);
+    }
+
+    let lastError: unknown = null;
+    for (const baseUrl of replicas) {
+        try {
+            return await call(baseUrl);
+        } catch (error) {
+            const status = error instanceof ApiError ? error.status : 0;
+            // 0 is a transport failure (fetch rejected): the replica is not
+            // answering at all. Anything below 500 is an answer, and answers are
+            // the same on every replica.
+            if (status && status < 500) throw error;
+            serviceRegistry.dropReplica(appId, baseUrl);
+            lastError = error;
+        }
+    }
+    throw lastError instanceof Error
+        ? lastError
+        : new ApiError(`Every replica of ${serviceName} failed.`, 0);
+}
+
 export class ApiService {
     private AUTH_TOKEN = import.meta.env.VITE_AUTH_TOKEN;
 
