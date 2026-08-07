@@ -1,0 +1,1 @@
+import{t as e}from"./index-DPw8cMaX.js";export{e as serviceRegistry};
