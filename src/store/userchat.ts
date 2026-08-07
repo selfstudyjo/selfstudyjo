@@ -26,6 +26,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
+import { avatarDirectory } from '@/components/userchat/avatarDirectory';
 import { userChatService, type UnreadSummary } from '@/services/userchat.service';
 
 const SOUND_KEY = 'selfstudy.userchat.sound';
@@ -231,6 +232,9 @@ export const useUserChatStore = defineStore('userchat', () => {
         // Object URLs pin their blobs in memory until revoked, and a long session
         // that scrolled through a lot of pictures will be holding all of them.
         userChatService.revokeAttachments();
+        // The next person to sign in on this browser must not inherit a
+        // directory of other people's faces.
+        avatarDirectory.clear();
     }
 
     /** Called by the thread when a room is opened or closed, so the poller knows

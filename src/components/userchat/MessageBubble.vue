@@ -7,113 +7,156 @@
 
   <div v-else :class="['row', { mine, 'first-of-run': firstOfRun }]">
     <div class="avatar-slot">
-      <div
+      <ChatAvatar
         v-if="!mine && firstOfRun"
-        class="avatar"
-        :style="{ background: colourFor(message.sender_id) }"
-        :title="message.sender_username"
-      >{{ initials }}</div>
+        :user-id="message.sender_id"
+        :name="message.sender_username"
+        size="sm"
+      />
     </div>
 
     <div class="stack">
       <p v-if="!mine && firstOfRun" class="sender">{{ message.sender_username || 'Someone' }}</p>
 
-      <div
-        :class="['bubble', message.kind, { pending: message.pending, failed: message.failed }]"
-        @contextmenu.prevent="$emit('menu', message, $event)"
-      >
-        <button
-          v-if="replyTo"
-          class="quote"
-          type="button"
-          @click="$emit('jump', replyTo!.message_id)"
-        >
-          <span class="quote-who">{{ replyTo.sender_username || 'Someone' }}</span>
-          <span class="quote-text">{{ quotePreview }}</span>
-        </button>
+      <div class="bubble-line">
+        <!--
+          A visible row of actions, revealed on hover and always present for
+          keyboard and touch users.
 
-        <!-- Image -->
-        <figure v-if="message.kind === 'image'" class="media">
-          <!-- The thumbnail is a sub-kilobyte data URL that came down inside the
-               message record, so it paints instantly and the bubble is the right
-               size before the real picture has been fetched. Without it every
-               image arrives as a jump in the scroll position. -->
-          <div
-            class="frame"
-            :style="frameStyle"
-            @click="full && $emit('lightbox', full)"
-          >
-            <img
-              v-if="thumb && !full"
-              :src="thumb"
-              class="blur"
-              alt=""
-              aria-hidden="true"
-            />
-            <img
-              v-if="full"
-              :src="full"
-              :alt="message.text || 'Shared picture'"
-              class="full"
-            />
-            <div v-if="!full && !mediaError" class="spinner" aria-label="Loading picture"></div>
-            <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
-          </div>
-          <figcaption v-if="message.text">{{ message.text }}</figcaption>
-        </figure>
-
-        <!-- Voice note -->
-        <div v-else-if="message.kind === 'audio'" class="voice">
+          The right-click menu still works and does more, but it cannot be the
+          only way to delete a message: there is no right-click on a phone, and
+          a long-press there opens the browser's own menu. Deleting your own
+          message is the single most-wanted action in any chat, so it gets a
+          button.
+        -->
+        <div class="quick">
           <button
-            class="play"
             type="button"
-            :disabled="!full && !mediaError"
-            :aria-label="playing ? 'Pause voice note' : 'Play voice note'"
-            @click="togglePlay"
+            class="quick-btn"
+            title="Reply"
+            aria-label="Reply to this message"
+            @click="$emit('reply', message)"
           >
-            <svg v-if="!playing" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v5"/></svg>
           </button>
-          <div class="wave" @click="seek">
-            <!-- A static waveform derived from the attachment id, not from the
-                 audio. Decoding every voice note to draw a real one would mean
-                 downloading and decoding all of them just to render the list. It
-                 is deterministic per message, so it does not shimmer on re-render
-                 and it never looks like the same clip twice. -->
-            <span
-              v-for="(bar, i) in bars"
-              :key="i"
-              :style="{ height: bar + '%', opacity: progress > i / bars.length ? 1 : 0.4 }"
-            ></span>
-          </div>
-          <span class="duration">{{ elapsedLabel }}</span>
-          <audio
-            v-if="full"
-            ref="audioEl"
-            :src="full"
-            preload="metadata"
-            @timeupdate="onTime"
-            @ended="onEnded"
-            @loadedmetadata="onMeta"
-          ></audio>
-          <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
+          <button
+            v-if="canDelete"
+            type="button"
+            class="quick-btn danger"
+            :title="mine ? 'Delete' : 'Delete as moderator'"
+            :aria-label="deleteLabel"
+            @click="$emit('remove', message)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+          </button>
+          <button
+            type="button"
+            class="quick-btn"
+            title="More"
+            aria-label="More actions"
+            @click="$emit('menu', message, $event)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+          </button>
         </div>
 
-        <!-- Text -->
-        <p v-else class="text">{{ message.text }}</p>
-
-        <div class="foot">
-          <span v-if="message.edited" class="edited">edited</span>
-          <time :datetime="message.created_at">{{ time }}</time>
-          <span v-if="message.pending" class="tick" title="Sending">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" opacity=".35"/><path d="M12 7v5l3 2"/></svg>
-          </span>
-          <button v-else-if="message.failed" class="retry" type="button" @click="$emit('retry', message)">
-            Not sent · retry
+        <div
+          :class="['bubble', message.kind, { pending: message.pending, failed: message.failed }]"
+          @contextmenu.prevent="$emit('menu', message, $event)"
+        >
+          <button
+            v-if="replyTo"
+            class="quote"
+            type="button"
+            @click="$emit('jump', replyTo!.message_id)"
+          >
+            <span class="quote-who">{{ replyTo.sender_username || 'Someone' }}</span>
+            <span class="quote-text">{{ quotePreview }}</span>
           </button>
-          <span v-else-if="mine" class="tick" title="Sent">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
-          </span>
+
+          <!-- Image -->
+          <figure v-if="message.kind === 'image'" class="media">
+            <!-- The thumbnail is a sub-kilobyte data URL that came down inside the
+                 message record, so it paints instantly and the bubble is the right
+                 size before the real picture has been fetched. Without it every
+                 image arrives as a jump in the scroll position. -->
+            <div
+              class="frame"
+              :style="frameStyle"
+              @click="full && $emit('lightbox', full)"
+            >
+              <img
+                v-if="thumb && !full"
+                :src="thumb"
+                class="blur"
+                alt=""
+                aria-hidden="true"
+              />
+              <img
+                v-if="full"
+                :src="full"
+                :alt="message.text || 'Shared picture'"
+                class="full"
+              />
+              <div v-if="!full && !mediaError" class="spinner" aria-label="Loading picture"></div>
+              <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
+            </div>
+            <figcaption v-if="message.text">{{ message.text }}</figcaption>
+          </figure>
+
+          <!-- Voice note -->
+          <div v-else-if="message.kind === 'audio'" class="voice">
+            <button
+              class="play"
+              type="button"
+              :disabled="!full && !mediaError"
+              :aria-label="playing ? 'Pause voice note' : 'Play voice note'"
+              @click="togglePlay"
+            >
+              <svg v-if="!playing" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            </button>
+            <div class="wave" @click="seek">
+              <!-- A static waveform derived from the attachment id, not from the
+                   audio. Decoding every voice note to draw a real one would mean
+                   downloading and decoding all of them just to render the list. It
+                   is deterministic per message, so it does not shimmer on re-render
+                   and it never looks like the same clip twice. -->
+              <span
+                v-for="(bar, i) in bars"
+                :key="i"
+                :style="{ height: bar + '%', opacity: progress > i / bars.length ? 1 : 0.4 }"
+              ></span>
+            </div>
+            <span class="duration">{{ elapsedLabel }}</span>
+            <audio
+              v-if="full"
+              ref="audioEl"
+              :src="full"
+              preload="metadata"
+              @timeupdate="onTime"
+              @ended="onEnded"
+              @loadedmetadata="onMeta"
+            ></audio>
+            <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
+          </div>
+
+          <!-- Text -->
+          <p v-else class="text">{{ message.text }}</p>
+
+          <div class="foot">
+            <span v-if="message.edited" class="edited">edited</span>
+            <time :datetime="message.created_at">{{ time }}</time>
+            <span v-if="message.pending" class="tick" title="Sending">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" opacity=".35"/><path d="M12 7v5l3 2"/></svg>
+            </span>
+            <button v-else-if="message.failed" class="retry" type="button" @click="$emit('retry', message)">
+              Not sent · retry
+            </button>
+            <span v-else-if="mine" class="tick" title="Sent">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -123,6 +166,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
+import ChatAvatar from './ChatAvatar.vue';
 import { formatDuration } from './chatMedia';
 import { userChatService, type ChatMessage } from '@/services/userchat.service';
 
@@ -135,6 +179,9 @@ const props = defineProps<{
   firstOfRun: boolean;
   userId: string;
   replyTo?: ChatMessage | null;
+  /** Whether this viewer may delete somebody *else's* message — owner or admin.
+   *  Your own is always deletable and does not depend on this. */
+  canModerate?: boolean;
 }>();
 
 defineEmits<{
@@ -142,7 +189,20 @@ defineEmits<{
   (e: 'retry', message: ChatMessage): void;
   (e: 'jump', messageId: string): void;
   (e: 'lightbox', url: string): void;
+  (e: 'reply', message: ChatMessage): void;
+  (e: 'remove', message: ChatMessage): void;
 }>();
+
+/** The sender can always delete their own; a moderator can delete anybody's.
+ *  Mirrors the backend rule in routes/messages.py, so the button is only shown
+ *  where pressing it would actually work rather than producing a 403. */
+const canDelete = computed(() => props.mine || !!props.canModerate);
+
+const deleteLabel = computed(() => {
+  const kind = props.message.kind === 'image' ? 'picture'
+    : props.message.kind === 'audio' ? 'voice note' : 'message';
+  return props.mine ? `Delete this ${kind}` : `Delete this ${kind} as a moderator`;
+});
 
 const full = ref('');
 const mediaError = ref('');
@@ -150,26 +210,6 @@ const playing = ref(false);
 const progress = ref(0);
 const elapsed = ref(0);
 const audioEl = ref<HTMLAudioElement | null>(null);
-
-const PALETTE = [
-  '#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2',
-  '#db2777', '#65a30d', '#ea580c', '#4f46e5', '#0d9488', '#c026d3',
-];
-
-/** The same rule the backend's presence module uses, so a person is the same
- *  colour in the member list, on their avatar and beside their messages. */
-function colourFor(id: string) {
-  const text = String(id || '');
-  if (!text) return PALETTE[0];
-  let sum = 0;
-  for (const ch of text) sum += ch.charCodeAt(0);
-  return PALETTE[sum % PALETTE.length];
-}
-
-const initials = computed(() => {
-  const name = props.message.sender_username || '?';
-  return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
-});
 
 const thumb = computed(() => props.message.attachment?.thumbnail || '');
 
@@ -298,16 +338,58 @@ onBeforeUnmount(() => {
 .row.first-of-run { margin-top: 12px; }
 .row.mine { flex-direction: row-reverse; }
 
-.avatar-slot { width: 28px; flex: 0 0 28px; }
+.avatar-slot { width: 26px; flex: 0 0 26px; }
 .row.mine .avatar-slot { display: none; }
-.avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center;
-  color: #fff; font-size: 0.66rem; font-weight: 700;
-}
 
 .stack { min-width: 0; max-width: min(78%, 560px); }
 .row.mine .stack { display: flex; flex-direction: column; align-items: flex-end; }
+
+/*
+  The bubble and its action row on one line. `align-items: center` keeps the
+  buttons vertically centred against a one-line bubble and against a picture
+  alike, and `order` puts them on the *outside* of the bubble in both directions
+  — left of your own messages, right of everybody else's — so they never cover
+  the text.
+*/
+.bubble-line { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.row.mine .bubble-line { flex-direction: row-reverse; }
+
+.quick {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  opacity: 0;
+  transform: translateY(1px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+/* Revealed on hover, and on keyboard focus so the buttons are reachable without
+   a mouse. `focus-within` is what makes tabbing to them work at all — an
+   opacity-0 control is still focusable, and without this it would be focused and
+   invisible. */
+.row:hover .quick,
+.quick:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+
+.quick-btn {
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+.quick-btn:hover { background: #e2e8f0; color: #334155; }
+.quick-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
+.quick-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
+
+/* On a touch screen there is no hover, so the actions are always visible — at a
+   lower contrast so they do not shout. Long-press is not an option: the browser
+   claims it for its own menu. */
+@media (hover: none) {
+  .quick { opacity: 0.55; transform: none; pointer-events: auto; }
+}
 
 .sender { margin: 0 0 3px 2px; font-size: 0.73rem; font-weight: 700; color: #475569; }
 

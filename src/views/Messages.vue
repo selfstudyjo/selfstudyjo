@@ -48,29 +48,27 @@
           :class="['room', { on: room.room_id === activeRoomId, unread: (room.unread || 0) > 0 }]"
           @click="openRoom(room.room_id)"
         >
-          <span class="room-avatar" :style="{ background: avatarColour(room) }">
-            {{ initials(displayName(room)) }}
+          <ChatAvatar
+            class="room-avatar"
+            :user-id="otherPartyId(room)"
+            :name="displayName(room)"
+            :lookup="room.kind === 'direct'"
+            :online="isRoomOnline(room)"
+            size="lg"
+          />
+          <span class="room-name">{{ displayName(room) }}</span>
+          <span class="room-when">{{ shortWhen(room.last_message_at) }}</span>
+          <span class="room-preview">
+            <template v-if="room.last_message_kind === 'image'">📷 </template>
+            <template v-else-if="room.last_message_kind === 'audio'">🎤 </template>
+            <template v-if="room.last_message_sender && room.kind !== 'direct'">{{ room.last_message_sender }}: </template>{{ room.last_message_preview || 'No messages yet' }}
           </span>
-          <span class="room-body">
-            <span class="room-top">
-              <span class="room-name">{{ displayName(room) }}</span>
-              <span class="room-when">{{ shortWhen(room.last_message_at) }}</span>
+          <span class="room-tail">
+            <span v-if="room.muted" class="muted-icon" title="Muted">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.5-1.9L20.1 5.7 17.8 8l-2.3-2.3-1.4 1.4L16.4 9.4l-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>
             </span>
-            <span class="room-bottom">
-              <span class="room-preview">
-                <template v-if="room.last_message_kind === 'image'">📷 </template>
-                <template v-else-if="room.last_message_kind === 'audio'">🎤 </template>
-                <template v-if="room.last_message_sender && room.kind !== 'direct'">
-                  {{ room.last_message_sender }}:
-                </template>
-                {{ room.last_message_preview || 'No messages yet' }}
-              </span>
-              <span v-if="room.muted" class="muted-icon" title="Muted">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.5-1.9L20.1 5.7 17.8 8l-2.3-2.3-1.4 1.4L16.4 9.4l-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>
-              </span>
-              <span v-else-if="(room.unread || 0) > 0" class="room-badge">
-                {{ (room.unread || 0) > 99 ? '99+' : room.unread }}
-              </span>
+            <span v-if="(room.unread || 0) > 0" class="room-badge">
+              {{ (room.unread || 0) > 99 ? '99+' : room.unread }}
             </span>
           </span>
         </button>
@@ -90,9 +88,13 @@
           <button type="button" class="back" aria-label="Back to conversations" @click="closeRoom">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <span class="room-avatar sm" :style="{ background: avatarColour(activeRoom) }">
-            {{ initials(displayName(activeRoom)) }}
-          </span>
+          <ChatAvatar
+            :user-id="otherPartyId(activeRoom)"
+            :name="displayName(activeRoom)"
+            :lookup="activeRoom.kind === 'direct'"
+            :online="otherOnline"
+            size="md"
+          />
           <div class="thread-title">
             <h2>{{ displayName(activeRoom) }}</h2>
             <p>
@@ -136,11 +138,14 @@
               :first-of-run="isFirstOfRun(index)"
               :user-id="userId"
               :reply-to="parentOf(message)"
+              :can-moderate="canModerate"
               :class="{ highlighted: highlighted === message.message_id }"
               @menu="openMenu"
               @retry="retrySend"
               @jump="jumpTo"
               @lightbox="lightbox = $event"
+              @reply="startReplyTo"
+              @remove="confirmDeleteMessage"
             />
           </template>
 
@@ -251,6 +256,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import ChatAvatar from '@/components/userchat/ChatAvatar.vue';
 import ChatComposer, { type PendingAttachment } from '@/components/userchat/ChatComposer.vue';
 import MessageBubble from '@/components/userchat/MessageBubble.vue';
 import NewChatDialog from '@/components/userchat/NewChatDialog.vue';
@@ -305,11 +311,6 @@ const pendingPreview = ref('');
 const menu = ref<{ open: boolean; x: number; y: number; message: ChatMessage | null }>(
   { open: false, x: 0, y: 0, message: null });
 
-const PALETTE = [
-  '#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2',
-  '#db2777', '#65a30d', '#ea580c', '#4f46e5', '#0d9488', '#c026d3',
-];
-
 // -------------------------------------------------------------- rendering
 
 /** A direct room has no name of its own — it is rendered as the other person,
@@ -320,20 +321,31 @@ function displayName(room: ChatRoom): string {
   return other?.username || other?.full_name || 'Conversation';
 }
 
-function avatarColour(room: ChatRoom): string {
-  if (room.kind !== 'direct') return room.avatar_color || '#2563eb';
+/**
+ * Whose face to show on a room.
+ *
+ * A one-to-one conversation is the *other person*, so their id drives both the
+ * avatar lookup and the fallback colour. A group has no single face, so it gets
+ * the room id — which keeps its colour stable across renders — with
+ * `:lookup="false"`, because a room id is not a user and asking app 13 about it
+ * would cache a miss for ever.
+ */
+function otherPartyId(room: ChatRoom | null): string {
+  if (!room) return '';
+  if (room.kind !== 'direct') return room.room_id;
   const other = (room.members || []).find(m => m.user_id !== userId.value);
-  return colourFor(other?.user_id || room.room_id);
+  return other?.user_id || room.room_id;
 }
 
-function colourFor(id: string) {
-  let sum = 0;
-  for (const ch of String(id || '')) sum += ch.charCodeAt(0);
-  return PALETTE[sum % PALETTE.length];
-}
-
-function initials(name: string) {
-  return String(name || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+/** Whether anybody else in this room is currently online.
+ *
+ *  Only known for the room being viewed — presence is per-room and the list
+ *  endpoint does not carry it, so every other row is simply not marked rather
+ *  than marked offline. Claiming somebody is offline when we have not asked is
+ *  worse than saying nothing. */
+function isRoomOnline(room: ChatRoom): boolean {
+  if (room.room_id !== activeRoomId.value) return false;
+  return onlineCount.value > 0;
 }
 
 function shortWhen(value?: string) {
@@ -403,6 +415,13 @@ function parentOf(message: ChatMessage) {
   if (!message.reply_to) return null;
   return messages.value.find(m => m.message_id === message.reply_to) || null;
 }
+
+/** Owner or admin of the open room — mirrors `can_administer` on the backend, and
+ *  is what decides whether the delete button appears on somebody else's message. */
+const canModerate = computed(() => {
+  const role = activeRoom.value?.my_role;
+  return role === 'owner' || role === 'admin';
+});
 
 const onlineIds = computed(() =>
   new Set(participants.value.filter(p => p.idle_seconds < 30).map(p => p.user_id)));
@@ -836,6 +855,62 @@ function startReply() {
   composer.value?.focus();
 }
 
+/** The reply button on the bubble itself, rather than through the menu. */
+function startReplyTo(message: ChatMessage) {
+  replyTo.value = message;
+  composer.value?.focus();
+}
+
+/**
+ * Delete a message from the button on the bubble.
+ *
+ * Confirmed, and the wording names what is actually going — a picture and a
+ * voice note are not recoverable, and the backend deletes the stored file along
+ * with the record on every replica and in the data repo. "Delete this message?"
+ * would understate that.
+ */
+async function confirmDeleteMessage(message: ChatMessage) {
+  if (!activeRoomId.value) return;
+  const mine = message.sender_id === userId.value;
+  const what = message.kind === 'image' ? 'picture'
+    : message.kind === 'audio' ? 'voice note' : 'message';
+  const extra = message.kind === 'text' ? ''
+    : ` The ${what} file will be deleted from storage and cannot be recovered.`;
+  const who = mine ? '' : ' It was sent by somebody else.';
+  if (!window.confirm(`Delete this ${what} for everyone?${extra}${who}`)) return;
+
+  // Removed from view immediately, and restored if the call fails: a delete that
+  // sits there for a second while the request goes out reads as a dead button,
+  // and people press it again.
+  message.deleted = true;
+  try {
+    await userChatService.deleteMessage(userId.value, activeRoomId.value,
+                                        message.message_id);
+    if (replyTo.value?.message_id === message.message_id) replyTo.value = null;
+    refreshPreviewFromView();
+  } catch (error: any) {
+    message.deleted = false;
+    flash(error?.message || 'Could not delete that message.');
+  }
+}
+
+/** Keep the room list's preview honest after a delete, without a round trip.
+ *  The backend recomputes its own copy; this is so the row does not go on
+ *  advertising a sentence the transcript no longer contains until the next poll. */
+function refreshPreviewFromView() {
+  const room = rooms.value.find(r => r.room_id === activeRoomId.value);
+  if (!room) return;
+  const newest = [...visibleMessages.value].reverse()
+    .find(m => m.kind !== 'system');
+  if (!newest) {
+    room.last_message_preview = '';
+    room.last_message_kind = '';
+    room.last_message_sender = '';
+    return;
+  }
+  touchRoomPreview(room.room_id, newest);
+}
+
 function copyText() {
   navigator.clipboard?.writeText(menu.value.message?.text || '');
   menu.value.open = false;
@@ -1057,12 +1132,32 @@ watch(() => route.params.roomId, value => {
 </script>
 
 <style scoped>
+/*
+  Full-height, and getting this right is what fixes the layout rather than any
+  amount of tuning further down.
+
+  Two traps, both of which produce the same symptom — a page taller than the
+  screen, a composer below the fold, and rows squeezed until their contents
+  overlap:
+
+  1. `100vh` on a phone is the viewport *with the browser chrome hidden*, which
+     is taller than what you can actually see. `100dvh` is the visible height and
+     tracks the URL bar sliding away. The `100vh` line before it is the fallback
+     for the handful of browsers without `dvh`.
+  2. `.main-content` in side-nav.css adds `padding-top: 4.5rem` below 768px, to
+     clear the floating menu button. A child asking for the full viewport height
+     inside that padding overflows by exactly 4.5rem. The media query at the
+     bottom of this file subtracts it.
+*/
 .messages {
   display: flex;
-  height: calc(100vh - 0px);
-  max-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: #f8fafc;
   overflow: hidden;
+  /* The page owns its own scrolling regions; nothing here should ever scroll the
+     document. */
+  overscroll-behavior: contain;
 }
 
 /* ------------------------------------------------------------ room list */
@@ -1106,35 +1201,93 @@ h1 { margin: 0; font-size: 1.25rem; color: #0f172a; }
 .rooms-empty { padding: 30px 18px; text-align: center; font-size: 0.83rem; color: #94a3b8; line-height: 1.55; }
 .rooms-empty strong { display: block; margin-bottom: 4px; color: #475569; font-size: 0.9rem; }
 
+/*
+  An explicit 3-column grid rather than nested flex rows.
+
+  The nested version put the name, the time, the preview and the badge inside two
+  `<span>`s that were themselves flex containers — and inside a `<button>`, whose
+  children browsers lay out with their own rules. The result was a row whose parts
+  could ride over the avatar once anything was long enough to wrap.
+
+  A grid states the shape instead of deriving it: the avatar owns column 1 across
+  both rows, the name and time share row 1, the preview and the badge share row 2.
+  Nothing can land in the avatar's column, whatever length the text is.
+
+      ┌────────┬──────────────────────┬─────────┐
+      │        │ name                 │ time    │
+      │ avatar ├──────────────────────┼─────────┤
+      │        │ preview              │ badge   │
+      └────────┴──────────────────────┴─────────┘
+*/
 .room {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 9px 10px; border: 0; border-radius: 10px;
-  background: none; cursor: pointer; text-align: left;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "avatar name    when"
+    "avatar preview tail";
+  align-items: center;
+  column-gap: 11px;
+  row-gap: 2px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.14s;
 }
 .room:hover { background: #f1f5f9; }
-.room.on { background: #eff6ff; }
+.room.on { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
+.room:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
 
-.room-avatar {
-  width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
-  display: grid; place-items: center; color: #fff;
-  font-size: 0.82rem; font-weight: 700;
+.room-avatar { grid-area: avatar; }
+
+.room-name {
+  grid-area: name;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.room-avatar.sm { width: 34px; height: 34px; flex: 0 0 34px; font-size: 0.74rem; }
-
-.room-body { flex: 1; min-width: 0; }
-.room-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.room-name { font-size: 0.88rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .room.unread .room-name { font-weight: 700; }
-.room-when { flex: 0 0 auto; font-size: 0.71rem; color: #94a3b8; }
 
-.room-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
-.room-preview { flex: 1; min-width: 0; font-size: 0.79rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-when {
+  grid-area: when;
+  justify-self: end;
+  font-size: 0.71rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.room.unread .room-when { color: #2563eb; font-weight: 600; }
+
+.room-preview {
+  grid-area: preview;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .room.unread .room-preview { color: #334155; }
 
+.room-tail {
+  grid-area: tail;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .room-badge {
-  flex: 0 0 auto; min-width: 19px; padding: 1px 6px;
+  min-width: 20px; padding: 2px 6px;
   border-radius: 999px; background: #2563eb; color: #fff;
-  font-size: 0.68rem; font-weight: 700; text-align: center;
+  font-size: 0.68rem; font-weight: 700; text-align: center; line-height: 1.25;
 }
 .muted-icon { color: #cbd5e1; display: inline-flex; }
 
@@ -1249,15 +1402,75 @@ h1 { margin: 0; font-size: 1.25rem; color: #0f172a; }
 .icon-btn:hover { background: #e2e8f0; color: #1e293b; }
 
 /* ----------------------------------------------------------- responsive */
-/* On a narrow screen the two panes become one: the list, or the thread. Showing
-   a 320px sidebar next to a 60px conversation is the usual way a chat becomes
-   unusable on a phone. */
+
+/* ≤ 1180: the details panel overlays the thread instead of squeezing it. Three
+   columns in 1100px leaves a conversation about 400px wide, which is where
+   bubbles start wrapping every few words. */
+@media (max-width: 1180px) {
+  :deep(.panel) {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    z-index: 20;
+    box-shadow: -10px 0 30px rgba(15, 23, 42, 0.14);
+  }
+  .thread { position: relative; }
+}
+
+/* ≤ 1024: a narrower list, so the conversation keeps the room. */
+@media (max-width: 1024px) {
+  .rooms { width: 268px; flex: 0 0 268px; }
+}
+
+/*
+  ≤ 860: one pane at a time — the list, or the thread.
+
+  A 320px sidebar next to a 60px conversation is the usual way a chat becomes
+  unusable on a phone, and it is also what makes rows look like their contents
+  are colliding: they are simply out of room.
+*/
 @media (max-width: 860px) {
-  .rooms { width: 100%; flex: 1 1 auto; }
+  /* `.main-content` adds padding-top: 4.5rem below 768px for the floating menu
+     button. Without subtracting it the page is 4.5rem taller than the screen and
+     the composer sits under the fold. */
+  .messages { height: calc(100dvh - 4.5rem); }
+
+  .rooms { width: 100%; flex: 1 1 auto; border-right: 0; }
   .thread { display: none; }
   .messages.thread-open .rooms { display: none; }
   .messages.thread-open .thread { display: flex; }
-  .back { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border: 0; border-radius: 50%; background: none; color: #475569; cursor: pointer; }
+
+  .back {
+    display: grid; place-items: center;
+    width: 34px; height: 34px; flex: 0 0 34px;
+    border: 0; border-radius: 50%; background: none;
+    color: #475569; cursor: pointer;
+  }
+
   :deep(.panel) { position: fixed; inset: 0; width: 100%; z-index: 55; }
+
+  /* Comfortable touch targets, and a little more air per row now that the list
+     has the whole screen. */
+  .room { padding: 11px 12px; column-gap: 12px; }
+  .room-name { font-size: 0.94rem; }
+  .room-preview { font-size: 0.84rem; }
+  .jump-bottom { bottom: 88px; }
+}
+
+/* ≤ 420: the smallest phones. The time column is the first thing to go — the
+   preview is worth more than the exact minute. */
+@media (max-width: 420px) {
+  h1 { font-size: 1.12rem; }
+  .rooms-head { padding: 12px 11px 9px; }
+  .room { padding: 10px 9px; column-gap: 10px; }
+  .room-when { font-size: 0.67rem; }
+  .transcript { padding: 8px 10px 12px; }
+  :deep(.stack) { max-width: 86%; }
+}
+
+/* Somebody who has asked for less motion should not get a smooth-scrolling
+   transcript that animates on every incoming message. */
+@media (prefers-reduced-motion: reduce) {
+  .transcript { scroll-behavior: auto; }
+  .room, .send, .icon-btn { transition: none; }
 }
 </style>

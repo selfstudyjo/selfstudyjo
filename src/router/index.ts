@@ -474,7 +474,10 @@ const routes = [
                 path: 'messages',
                 name: 'Messages',
                 component: Messages,
-                meta: { title: 'Messages', requiresAuth: true }
+                // hideSupportChat: the app-9 widget's toggle is a fixed circle in
+                // the bottom-right corner and sits exactly on top of this page's
+                // microphone button. See DefaultLayout.vue.
+                meta: { title: 'Messages', requiresAuth: true, hideSupportChat: true }
             },
             {
                 // The same component, with a room open. A separate named route
@@ -484,7 +487,7 @@ const routes = [
                 path: 'messages/:roomId',
                 name: 'MessageRoom',
                 component: Messages,
-                meta: { title: 'Messages', requiresAuth: true },
+                meta: { title: 'Messages', requiresAuth: true, hideSupportChat: true },
                 props: true
             },
 

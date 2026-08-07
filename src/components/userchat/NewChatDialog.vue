@@ -51,9 +51,7 @@
         <ul class="results">
           <li v-for="person in visibleResults" :key="person.id">
             <button type="button" class="person" @click="pick(person)">
-              <span class="avatar" :style="{ background: colourFor(person.id) }">
-                {{ initials(person.username) }}
-              </span>
+              <ChatAvatar :user-id="person.id" :name="person.full_name || person.username" size="md" />
               <span class="who">
                 <span class="name">{{ person.full_name || person.username }}</span>
                 <span class="handle">@{{ person.username }}</span>
@@ -86,6 +84,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
+import ChatAvatar from './ChatAvatar.vue';
 import { userService } from '@/services/user.service';
 
 interface Person { id: string; username: string; full_name: string }
@@ -106,21 +105,6 @@ const searching = ref(false);
 const working = ref(false);
 const error = ref('');
 const searchBox = ref<HTMLInputElement | null>(null);
-
-const PALETTE = [
-  '#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2',
-  '#db2777', '#65a30d', '#ea580c', '#4f46e5', '#0d9488', '#c026d3',
-];
-
-function colourFor(id: string) {
-  let sum = 0;
-  for (const ch of String(id || '')) sum += ch.charCodeAt(0);
-  return PALETTE[sum % PALETTE.length];
-}
-
-function initials(name: string) {
-  return String(name || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
 
 /** Never offer to start a conversation with yourself — the backend refuses it,
  *  and being told so after clicking is a worse way to find out. */
@@ -285,11 +269,6 @@ h2 { margin: 0; font-size: 1.05rem; color: #0f172a; }
   background: none; cursor: pointer; text-align: left;
 }
 .person:hover { background: #f1f5f9; }
-.avatar {
-  width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%;
-  display: grid; place-items: center; color: #fff;
-  font-size: 0.72rem; font-weight: 700;
-}
 .who { flex: 1; min-width: 0; }
 .name { display: block; font-size: 0.87rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .handle { display: block; font-size: 0.75rem; color: #64748b; }

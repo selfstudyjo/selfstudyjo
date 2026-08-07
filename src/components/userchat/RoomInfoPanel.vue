@@ -9,9 +9,13 @@
 
     <div class="body">
       <div class="hero">
-        <div class="hero-avatar" :style="{ background: room.avatar_color || '#2563eb' }">
-          {{ initials(title) }}
-        </div>
+        <ChatAvatar
+          class="hero-avatar"
+          :user-id="heroId"
+          :name="title"
+          :lookup="isDirect"
+          size="xl"
+        />
         <div v-if="canAdminister && !isDirect" class="rename">
           <input
             v-model="nameDraft"
@@ -59,9 +63,13 @@
 
         <ul class="members">
           <li v-for="person in members" :key="person.user_id">
-            <span class="avatar" :style="{ background: colourFor(person.user_id) }">
-              {{ initials(person.username || person.user_id) }}
-            </span>
+            <ChatAvatar
+              :user-id="person.user_id"
+              :name="person.username || person.full_name"
+              :image-url="person.user_id === userId ? myImageUrl : undefined"
+              :online="onlineIds.has(person.user_id)"
+              size="md"
+            />
             <span class="who">
               <span class="name">
                 {{ person.username || 'Unknown user' }}
@@ -125,7 +133,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
+import ChatAvatar from './ChatAvatar.vue';
 import type { ChatMember, ChatRoom, RoomRole } from '@/services/userchat.service';
+import { useAuthStore } from '@/store/auth';
+import { getProxiedImageUrl } from '@/utils/imageUtils';
 
 const props = defineProps<{
   room: ChatRoom;
@@ -148,12 +159,25 @@ const emit = defineEmits<{
 }>();
 
 const RANK: Record<string, number> = { member: 1, admin: 2, owner: 3 };
-const PALETTE = [
-  '#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2',
-  '#db2777', '#65a30d', '#ea580c', '#4f46e5', '#0d9488', '#c026d3',
-];
+
+const authStore = useAuthStore();
+
+/** The signed-in user's own picture, taken from the auth store rather than
+ *  looked up: it is already in memory, and it is the one that updates the moment
+ *  they change it on their profile. */
+const myImageUrl = computed(() => {
+  const raw = authStore.user?.image_url;
+  return raw ? getProxiedImageUrl(raw) : undefined;
+});
 
 const isDirect = computed(() => props.room.kind === 'direct');
+
+/** A direct room's hero is the other person; a group's is itself. */
+const heroId = computed(() => {
+  if (!isDirect.value) return props.room.room_id;
+  const other = props.members.find(m => m.user_id !== props.userId);
+  return other?.user_id || props.room.room_id;
+});
 const canAdminister = computed(() => props.myRole === 'owner' || props.myRole === 'admin');
 
 const nameDraft = ref(props.room.name || '');
@@ -186,16 +210,6 @@ function canManage(person: ChatMember) {
   return (RANK[props.myRole] || 0) > (RANK[person.role] || 0);
 }
 
-function colourFor(id: string) {
-  let sum = 0;
-  for (const ch of String(id || '')) sum += ch.charCodeAt(0);
-  return PALETTE[sum % PALETTE.length];
-}
-
-function initials(name: string) {
-  return String(name || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
 function formatDate(value?: string) {
   if (!value) return '';
   return new Date(value).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
@@ -215,11 +229,7 @@ h2 { margin: 0; font-size: 0.92rem; color: #0f172a; }
 .body { flex: 1; overflow-y: auto; padding: 16px 14px; }
 
 .hero { text-align: center; margin-bottom: 18px; }
-.hero-avatar {
-  width: 62px; height: 62px; margin: 0 auto 10px;
-  border-radius: 50%; display: grid; place-items: center;
-  color: #fff; font-size: 1.2rem; font-weight: 700;
-}
+.hero-avatar { margin: 0 auto 10px; }
 h3 { margin: 0 0 4px; font-size: 1rem; color: #0f172a; }
 .topic { margin: 0; font-size: 0.81rem; color: #64748b; line-height: 1.45; }
 
@@ -252,7 +262,6 @@ h4 { margin: 0; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
 .members { list-style: none; margin: 0; padding: 0; }
 .members li { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 8px; }
 .members li:hover { background: #f8fafc; }
-.avatar { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 0.68rem; font-weight: 700; }
 .who { flex: 1; min-width: 0; }
 .name { display: block; font-size: 0.84rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .name em { font-style: normal; color: #94a3b8; font-size: 0.76rem; }
