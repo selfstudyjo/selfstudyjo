@@ -1,0 +1,1 @@
+import{t as e}from"./index-BEinHC51.js";export{e as serviceRegistry};
