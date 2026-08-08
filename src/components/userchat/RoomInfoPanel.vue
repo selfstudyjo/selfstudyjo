@@ -2,12 +2,12 @@
   <aside class="panel">
     <header>
       <h2>{{ isDirect ? 'Conversation' : 'Group' }}</h2>
-      <button type="button" class="icon-btn" aria-label="Close details" @click="$emit('close')">
+      <button type="button" class="uc-icon-btn" aria-label="Close details" @click="$emit('close')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </header>
 
-    <div class="body">
+    <div class="body uc-scroll">
       <div class="hero">
         <ChatAvatar
           class="hero-avatar"
@@ -49,6 +49,35 @@
           <small>No chime and no notification email. The messages still arrive.</small>
         </span>
       </label>
+
+      <!--
+        Pictures from the part of the transcript already loaded — no extra
+        request, and the thumbnails are the sub-kilobyte data URLs that came down
+        inside the message records. Clicking one scrolls the transcript to it
+        rather than opening it, because the useful question here is "what were we
+        saying when that was sent".
+      -->
+      <section v-if="media.length" class="media-section">
+        <div class="section-head">
+          <h4>Shared pictures</h4>
+          <span class="count">{{ media.length }}</span>
+        </div>
+        <div class="media-grid">
+          <button
+            v-for="item in media.slice(0, 9)"
+            :key="item.message_id"
+            type="button"
+            class="media-cell"
+            :title="`Sent by ${item.sender_username || 'someone'}`"
+            @click="$emit('jump', item.message_id)"
+          >
+            <img v-if="item.attachment?.thumbnail" :src="item.attachment.thumbnail" alt="" />
+            <span v-else class="media-fallback" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-6 6"/></svg>
+            </span>
+          </button>
+        </div>
+      </section>
 
       <section>
         <div class="section-head">
@@ -98,7 +127,7 @@
               </select>
               <button
                 type="button"
-                class="icon-btn danger"
+                class="uc-icon-btn danger tiny"
                 :aria-label="`Remove ${person.username}`"
                 @click="$emit('remove', person.user_id)"
               >
@@ -121,7 +150,7 @@
         Leave this conversation
       </button>
       <!-- Delete is the owner's alone, and it is destructive for everybody in the
-           room rather than just for them - so it is separated from Leave and
+           room rather than just for them — so it is separated from Leave and
            labelled with what it actually does. -->
       <button v-if="myRole === 'owner'" type="button" class="danger-btn solid" @click="$emit('delete')">
         Delete for everyone
@@ -134,18 +163,21 @@
 import { computed, ref, watch } from 'vue';
 
 import ChatAvatar from './ChatAvatar.vue';
-import type { ChatMember, ChatRoom, RoomRole } from '@/services/userchat.service';
+import type { ChatMember, ChatMessage, ChatRoom, RoomRole } from '@/services/userchat.service';
 import { useAuthStore } from '@/store/auth';
 import { getProxiedImageUrl } from '@/utils/imageUtils';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   room: ChatRoom;
   members: ChatMember[];
   userId: string;
   myRole: RoomRole;
   onlineIds: Set<string>;
   title: string;
-}>();
+  /** Image messages from the loaded transcript, newest first. Presentation
+   *  only — the panel never fetches anything of its own. */
+  media?: ChatMessage[];
+}>(), { media: () => [] });
 
 const emit = defineEmits<{
   (e: 'close'): void;
@@ -156,6 +188,7 @@ const emit = defineEmits<{
   (e: 'leave'): void;
   (e: 'delete'): void;
   (e: 'rename', values: { name?: string; topic?: string }): void;
+  (e: 'jump', messageId: string): void;
 }>();
 
 const RANK: Record<string, number> = { member: 1, admin: 2, owner: 3 };
@@ -218,84 +251,199 @@ function formatDate(value?: string) {
 
 <style scoped>
 .panel {
-  width: 300px; flex: 0 0 300px;
-  display: flex; flex-direction: column;
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
-  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-left: 1px solid var(--uc-border);
+  background: rgba(10, 12, 30, 0.88);
+  backdrop-filter: var(--uc-blur-strong);
+  -webkit-backdrop-filter: var(--uc-blur-strong);
+  color: var(--uc-text);
 }
-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px 11px; border-bottom: 1px solid rgba(15, 23, 42, 0.07); }
-h2 { margin: 0; font-size: 0.92rem; color: #0f172a; }
 
-.body { flex: 1; overflow-y: auto; padding: 16px 14px; }
+header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--uc-border);
+}
+h2 { margin: 0; font-size: var(--uc-fs-lg); font-weight: 650; color: var(--uc-text); }
 
-.hero { text-align: center; margin-bottom: 18px; }
-.hero-avatar { margin: 0 auto 10px; }
-h3 { margin: 0 0 4px; font-size: 1rem; color: #0f172a; }
-.topic { margin: 0; font-size: 0.81rem; color: #64748b; line-height: 1.45; }
+.body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 14px; }
+
+.hero { text-align: center; margin-bottom: 20px; }
+.hero-avatar { margin: 0 auto 12px; }
+h3 { margin: 0 0 4px; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-text); }
+.topic { margin: 0; font-size: var(--uc-fs-sm); color: var(--uc-text-muted); line-height: 1.5; }
 
 .rename input {
-  width: 100%; text-align: center; font: inherit;
-  border: 1px solid transparent; border-radius: 7px; padding: 5px 8px;
-  background: transparent; outline: none;
+  width: 100%;
+  text-align: center;
+  font: inherit;
+  color: var(--uc-text);
+  border: 1px solid transparent;
+  border-radius: var(--uc-r-xs);
+  padding: 6px 9px;
+  background: transparent;
+  outline: none;
+  transition: background var(--uc-t-fast), border-color var(--uc-t-fast);
 }
-.rename input:hover { background: #f1f5f9; }
-.rename input:focus { border-color: #2563eb; background: #fff; }
-.rename input:first-child { font-size: 1rem; font-weight: 600; color: #0f172a; }
-.topic-input { margin-top: 3px; font-size: 0.81rem; color: #64748b; }
+.rename input:hover { background: var(--uc-surface); }
+.rename input:focus { border-color: rgba(129, 140, 248, 0.5); background: var(--uc-surface-2); }
+.rename input:first-child { font-size: var(--uc-fs-xl); font-weight: 650; }
+.topic-input { margin-top: 4px; font-size: var(--uc-fs-sm); color: var(--uc-text-muted); }
+.rename input::placeholder { color: var(--uc-text-dim); }
 
 .toggle {
-  display: flex; align-items: flex-start; gap: 9px;
-  padding: 9px 10px; margin-bottom: 18px;
-  border-radius: 9px; background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.07);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  margin-bottom: 20px;
+  border-radius: var(--uc-r-sm);
+  background: var(--uc-surface);
+  border: 1px solid var(--uc-border);
+  cursor: pointer;
+  transition: background var(--uc-t-fast);
+}
+.toggle:hover { background: var(--uc-surface-2); }
+.toggle input { margin-top: 3px; accent-color: var(--uc-brand-1); }
+.toggle strong { display: block; font-size: var(--uc-fs-md); color: var(--uc-text-soft); font-weight: 600; }
+.toggle small { display: block; margin-top: 3px; font-size: var(--uc-fs-xs); color: var(--uc-text-dim); line-height: 1.45; }
+
+section { margin-bottom: 20px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+h4 {
+  margin: 0;
+  font-size: var(--uc-fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--uc-text-dim);
+}
+.count { font-size: var(--uc-fs-xs); color: var(--uc-text-dim); }
+.link {
+  border: 0;
+  background: none;
+  color: var(--uc-brand-soft);
+  font: inherit;
+  font-size: var(--uc-fs-sm);
+  font-weight: 600;
   cursor: pointer;
 }
-.toggle input { margin-top: 2px; }
-.toggle strong { display: block; font-size: 0.82rem; color: #1e293b; font-weight: 600; }
-.toggle small { display: block; margin-top: 2px; font-size: 0.73rem; color: #64748b; line-height: 1.4; }
+.link:hover { text-decoration: underline; }
 
-section { margin-bottom: 18px; }
-.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-h4 { margin: 0; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; }
-.link { border: 0; background: none; color: #2563eb; font-size: 0.79rem; font-weight: 600; cursor: pointer; }
+/* -------------------------------------------------------- shared media */
+.media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.media-cell {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-r-xs);
+  overflow: hidden;
+  background: var(--uc-surface);
+  cursor: pointer;
+  transition: transform var(--uc-t-fast), border-color var(--uc-t-fast);
+}
+.media-cell:hover { transform: scale(1.04); border-color: rgba(129, 140, 248, 0.5); }
+/* The thumbnails are 24px data URLs blown up to fill the cell, so the blur is
+   deliberate — at that size the pixels would be the only thing visible. */
+.media-cell img { width: 100%; height: 100%; object-fit: cover; filter: blur(1.5px); transform: scale(1.06); }
+.media-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: var(--uc-text-dim); }
 
+/* ------------------------------------------------------------ members */
 .members { list-style: none; margin: 0; padding: 0; }
-.members li { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 8px; }
-.members li:hover { background: #f8fafc; }
+.members li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 6px;
+  border-radius: var(--uc-r-xs);
+  transition: background var(--uc-t-fast);
+}
+.members li:hover { background: var(--uc-surface); }
 .who { flex: 1; min-width: 0; }
-.name { display: block; font-size: 0.84rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.name em { font-style: normal; color: #94a3b8; font-size: 0.76rem; }
-.online { display: block; font-size: 0.71rem; color: #16a34a; font-weight: 600; }
-.full { display: block; font-size: 0.72rem; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name {
+  display: block;
+  font-size: var(--uc-fs-md);
+  color: var(--uc-text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.name em { font-style: normal; color: var(--uc-text-dim); font-size: var(--uc-fs-xs); }
+.online { display: block; font-size: var(--uc-fs-xs); color: var(--uc-online); font-weight: 600; }
+.full {
+  display: block;
+  font-size: var(--uc-fs-xs);
+  color: var(--uc-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .role {
-  padding: 1px 7px; border-radius: 999px;
-  font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: var(--uc-r-full);
+  font-size: var(--uc-fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.role.owner { background: #fef3c7; color: #92400e; }
-.role.admin { background: #dbeafe; color: #1e40af; }
+.role.owner { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+.role.admin { background: rgba(129, 140, 248, 0.2); color: #c7d2fe; }
 
 .row-actions { display: flex; align-items: center; gap: 3px; }
 .row-actions select {
-  font: inherit; font-size: 0.72rem; padding: 2px 4px;
-  border: 1px solid rgba(15, 23, 42, 0.14); border-radius: 6px;
-  background: #fff; color: #475569; cursor: pointer;
+  font: inherit;
+  font-size: var(--uc-fs-xs);
+  padding: 3px 5px;
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-r-xs);
+  background: rgba(20, 22, 48, 0.95);
+  color: var(--uc-text-soft);
+  cursor: pointer;
 }
+.row-actions select option { background: #14162f; color: #fff; }
+.uc-icon-btn.tiny { width: 24px; height: 24px; flex: 0 0 24px; }
+.uc-icon-btn.danger:hover { background: var(--uc-danger-bg); color: var(--uc-danger); }
 
-.facts p { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 5px; font-size: 0.78rem; color: #475569; }
-.facts span { color: #94a3b8; }
+/* -------------------------------------------------------------- facts */
+.facts p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 7px;
+  font-size: var(--uc-fs-sm);
+  color: var(--uc-text-soft);
+}
+.facts span { color: var(--uc-text-dim); }
 
-footer { border-top: 1px solid rgba(15, 23, 42, 0.08); padding: 11px 14px 13px; display: grid; gap: 7px; }
+footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--uc-border);
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 8px;
+}
 .danger-btn {
-  width: 100%; padding: 8px 12px; border-radius: 8px;
-  border: 1px solid #fecaca; background: #fff; color: #b91c1c;
-  font-size: 0.83rem; font-weight: 600; cursor: pointer;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--uc-r-xs);
+  border: 1px solid var(--uc-danger-border);
+  background: transparent;
+  color: var(--uc-danger);
+  font: inherit;
+  font-size: var(--uc-fs-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--uc-t-fast);
 }
-.danger-btn:hover { background: #fef2f2; }
-.danger-btn.solid { background: #dc2626; border-color: #dc2626; color: #fff; }
-.danger-btn.solid:hover { background: #b91c1c; }
-
-.icon-btn { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: #64748b; cursor: pointer; }
-.icon-btn:hover { background: #e2e8f0; }
-.icon-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
+.danger-btn:hover { background: var(--uc-danger-bg); }
+.danger-btn.solid { background: rgba(220, 38, 38, 0.85); border-color: transparent; color: #fff; }
+.danger-btn.solid:hover { background: rgba(220, 38, 38, 1); }
 </style>

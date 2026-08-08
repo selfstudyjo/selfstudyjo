@@ -5,8 +5,14 @@
     <span>{{ message.text }}</span>
   </div>
 
-  <div v-else :class="['row', { mine, 'first-of-run': firstOfRun }]">
-    <div class="avatar-slot">
+  <div
+    v-else
+    :class="['row', mine ? 'mine' : 'theirs', {
+      'run-first': firstOfRun,
+      'run-last': lastOfRun,
+    }]"
+  >
+    <div class="gutter">
       <ChatAvatar
         v-if="!mine && firstOfRun"
         :user-id="message.sender_id"
@@ -16,7 +22,7 @@
     </div>
 
     <div class="stack">
-      <p v-if="!mine && firstOfRun" class="sender">{{ message.sender_username || 'Someone' }}</p>
+      <p v-if="showSender" class="sender">{{ message.sender_username || 'Someone' }}</p>
 
       <div class="bubble-line">
         <!--
@@ -24,8 +30,8 @@
           keyboard and touch users.
 
           The right-click menu still works and does more, but it cannot be the
-          only way to delete a message: there is no right-click on a phone, and
-          a long-press there opens the browser's own menu. Deleting your own
+          only way to delete a message: there is no right-click on a phone, and a
+          long-press there opens the browser's own menu. Deleting your own
           message is the single most-wanted action in any chat, so it gets a
           button.
         -->
@@ -62,6 +68,7 @@
 
         <div
           :class="['bubble', message.kind, { pending: message.pending, failed: message.failed }]"
+          :title="fullTime"
           @contextmenu.prevent="$emit('menu', message, $event)"
         >
           <button
@@ -125,7 +132,7 @@
               <span
                 v-for="(bar, i) in bars"
                 :key="i"
-                :style="{ height: bar + '%', opacity: progress > i / bars.length ? 1 : 0.4 }"
+                :style="{ height: bar + '%', opacity: progress > i / bars.length ? 1 : 0.35 }"
               ></span>
             </div>
             <span class="duration">{{ elapsedLabel }}</span>
@@ -144,17 +151,28 @@
           <!-- Text -->
           <p v-else class="text">{{ message.text }}</p>
 
-          <div class="foot">
+          <!--
+            The foot is drawn on the last bubble of a run, and on any bubble that
+            has something to say about itself (edited, sending, failed). Repeating
+            the same minute under all five messages of a burst is the noise that
+            makes a transcript hard to scan; the exact time of the others is on
+            the bubble's tooltip.
+          -->
+          <div v-if="showFoot" class="foot">
             <span v-if="message.edited" class="edited">edited</span>
             <time :datetime="message.created_at">{{ time }}</time>
-            <span v-if="message.pending" class="tick" title="Sending">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" opacity=".35"/><path d="M12 7v5l3 2"/></svg>
+
+            <span v-if="status === 'sending'" class="tick" title="Sending">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9" opacity=".4"/><path d="M12 7v5l3 2"/></svg>
             </span>
-            <button v-else-if="message.failed" class="retry" type="button" @click="$emit('retry', message)">
+            <button v-else-if="status === 'failed'" class="retry" type="button" @click="$emit('retry', message)">
               Not sent · retry
             </button>
-            <span v-else-if="mine" class="tick" title="Sent">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            <span v-else-if="status === 'read'" class="tick read" title="Read">
+              <svg width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9.6l4 4L14 4.4"/><path d="M9 13.6l0.6 0.6L21.5 2.8"/></svg>
+            </span>
+            <span v-else-if="status === 'sent'" class="tick" title="Sent">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
             </span>
           </div>
         </div>
@@ -163,6 +181,18 @@
   </div>
 </template>
 
+<script lang="ts">
+/**
+ * What the ticks under your own message mean.
+ *
+ * `read` is derived from the other members' `last_read_at`, not from a
+ * per-message receipt — app 35 stores a read mark per membership, so "somebody
+ * has read up to here" is the strongest true statement available. `none` is
+ * everybody else's messages: a read mark on one of those would be meaningless.
+ */
+export type SendStatus = 'none' | 'sending' | 'sent' | 'read' | 'failed';
+</script>
+
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
@@ -170,19 +200,25 @@ import ChatAvatar from './ChatAvatar.vue';
 import { formatDuration } from './chatMedia';
 import { userChatService, type ChatMessage } from '@/services/userchat.service';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   message: ChatMessage;
   mine: boolean;
-  /** First in a run from the same sender — only then is the name and avatar
-   *  drawn, so a burst of five messages is one attributed block rather than five
-   *  repetitions of the same name. */
+  /** First in a run from the same sender — only then is the avatar drawn, so a
+   *  burst of five messages is one attributed block rather than five
+   *  repetitions of the same face. */
   firstOfRun: boolean;
+  /** Last in a run — where the tail, the time and the tick go. */
+  lastOfRun: boolean;
+  /** Whether to print the sender's name above the bubble. False in a one-to-one
+   *  room, where the side of the screen already answers the question. */
+  showSender: boolean;
   userId: string;
   replyTo?: ChatMessage | null;
   /** Whether this viewer may delete somebody *else's* message — owner or admin.
    *  Your own is always deletable and does not depend on this. */
   canModerate?: boolean;
-}>();
+  status?: SendStatus;
+}>(), { status: 'none', canModerate: false, replyTo: null });
 
 defineEmits<{
   (e: 'menu', message: ChatMessage, event: MouseEvent): void;
@@ -204,6 +240,12 @@ const deleteLabel = computed(() => {
   return props.mine ? `Delete this ${kind}` : `Delete this ${kind} as a moderator`;
 });
 
+const showFoot = computed(() =>
+  props.lastOfRun
+  || props.message.edited
+  || props.status === 'sending'
+  || props.status === 'failed');
+
 const full = ref('');
 const mediaError = ref('');
 const playing = ref(false);
@@ -220,7 +262,7 @@ const frameStyle = computed(() => {
   // here the thread jumps every time an image finishes loading, which on a slow
   // connection means it jumps continuously while you are trying to read.
   const ratio = a.width / a.height;
-  const width = Math.min(320, a.width);
+  const width = Math.min(340, a.width);
   return { width: `${width}px`, aspectRatio: `${ratio}` };
 });
 
@@ -228,6 +270,14 @@ const time = computed(() => {
   const value = props.message.created_at;
   if (!value) return '';
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+});
+
+/** The tooltip, so a bubble in the middle of a run still has its exact moment
+ *  available without printing it under every line. */
+const fullTime = computed(() => {
+  const value = props.message.created_at;
+  if (!value) return '';
+  return new Date(value).toLocaleString();
 });
 
 const quotePreview = computed(() => {
@@ -321,37 +371,70 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ------------------------------------------------------- system notice */
 .system {
   display: flex;
   justify-content: center;
-  margin: 10px 0;
+  margin: var(--uc-gap-run) 0 6px;
 }
 .system span {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #eef2f7;
-  color: #64748b;
-  font-size: 0.74rem;
+  padding: 4px 13px;
+  border-radius: var(--uc-r-full);
+  background: var(--uc-surface);
+  border: 1px solid var(--uc-border);
+  color: var(--uc-text-dim);
+  font-size: var(--uc-fs-xs);
+  text-align: center;
 }
 
-.row { display: flex; gap: 8px; margin-top: 2px; align-items: flex-end; }
-.row.first-of-run { margin-top: 12px; }
+/* ------------------------------------------------------------ the row */
+.row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: var(--uc-gap-tight);
+}
+/*
+  The one rule that does most of the work. A run is tight; the space between
+  runs is four times larger. That single ratio is what stops a transcript
+  reading as one undifferentiated column, and it does more for legibility than
+  any amount of colour.
+*/
+.row.run-first { margin-top: var(--uc-gap-run); }
 .row.mine { flex-direction: row-reverse; }
 
-.avatar-slot { width: 26px; flex: 0 0 26px; }
-.row.mine .avatar-slot { display: none; }
+/* Reserved whether or not an avatar is drawn, so every bubble in a run starts
+   at the same x and the cluster reads as one block. */
+.gutter { width: 26px; flex: 0 0 26px; }
+.row.mine .gutter { display: none; }
 
-.stack { min-width: 0; max-width: min(78%, 560px); }
-.row.mine .stack { display: flex; flex-direction: column; align-items: flex-end; }
+.stack {
+  min-width: 0;
+  /* Capped by measure as well as by percentage: 76% of an ultrawide pane is a
+     120-character line, which is roughly twice the width the eye can track back
+     to the start of. */
+  max-width: min(68ch, 76%);
+  display: flex;
+  flex-direction: column;
+}
+.row.mine .stack { align-items: flex-end; }
+
+.sender {
+  margin: 0 0 4px 3px;
+  font-size: var(--uc-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--uc-brand-soft);
+}
 
 /*
   The bubble and its action row on one line. `align-items: center` keeps the
   buttons vertically centred against a one-line bubble and against a picture
-  alike, and `order` puts them on the *outside* of the bubble in both directions
-  — left of your own messages, right of everybody else's — so they never cover
-  the text.
+  alike, and reversing the row for `mine` puts them on the *outside* of the
+  bubble in both directions — left of your own messages, right of everybody
+  else's — so they never cover the text.
 */
-.bubble-line { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.bubble-line { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
 .row.mine .bubble-line { flex-direction: row-reverse; }
 
 .quick {
@@ -361,7 +444,7 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
   opacity: 0;
   transform: translateY(1px);
-  transition: opacity 0.12s ease, transform 0.12s ease;
+  transition: opacity var(--uc-t-fast), transform var(--uc-t-fast);
   pointer-events: none;
 }
 /* Revealed on hover, and on keyboard focus so the buttons are reachable without
@@ -374,68 +457,118 @@ onBeforeUnmount(() => {
 .quick-btn {
   display: grid;
   place-items: center;
-  width: 26px; height: 26px;
-  border: 0; border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
   background: transparent;
-  color: #94a3b8;
+  color: var(--uc-text-dim);
   cursor: pointer;
+  transition: background var(--uc-t-fast), color var(--uc-t-fast);
 }
-.quick-btn:hover { background: #e2e8f0; color: #334155; }
-.quick-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
-.quick-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
+.quick-btn:hover { background: var(--uc-surface-2); color: var(--uc-text); }
+.quick-btn.danger:hover { background: var(--uc-danger-bg); color: var(--uc-danger); }
 
 /* On a touch screen there is no hover, so the actions are always visible — at a
    lower contrast so they do not shout. Long-press is not an option: the browser
    claims it for its own menu. */
 @media (hover: none) {
-  .quick { opacity: 0.55; transform: none; pointer-events: auto; }
+  .quick { opacity: 0.5; transform: none; pointer-events: auto; }
 }
 
-.sender { margin: 0 0 3px 2px; font-size: 0.73rem; font-weight: 700; color: #475569; }
-
+/* --------------------------------------------------------- the bubble */
 .bubble {
   position: relative;
-  padding: 8px 11px 5px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+  padding: 8px 12px 6px;
+  border-radius: var(--uc-r-lg);
+  background: var(--uc-in-bg);
+  border: 1px solid var(--uc-in-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--uc-text);
   word-break: break-word;
+  overflow-wrap: anywhere;
+  box-shadow: 0 2px 10px rgba(4, 6, 20, 0.20);
 }
+
+/*
+  Your own messages: the brand gradient, and the only saturated colour in the
+  transcript. Everything else is a tint of white, which is what makes this read
+  as "mine" instantly rather than needing to be worked out from the alignment.
+*/
 .row.mine .bubble {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
+  background: var(--uc-out-bg);
+  border-color: var(--uc-out-border);
+  box-shadow: var(--uc-out-glow);
 }
-.bubble.pending { opacity: 0.62; }
-.bubble.failed { border-color: #dc2626; background: #fef2f2; color: #7f1d1d; }
 
-.row:not(.first-of-run) .bubble { border-top-left-radius: 6px; }
-.row.mine:not(.first-of-run) .bubble { border-top-left-radius: 14px; border-top-right-radius: 6px; }
+/*
+  Cluster geometry. The corner facing the author is tightened: bottom on the last
+  bubble of a run (the tail), top on every bubble that is not the first (the
+  join). A single message therefore gets one tail and three round corners, and a
+  run of five reads as one shape with a tail at the end.
+*/
+.row.theirs .bubble { border-bottom-left-radius: var(--uc-tail); }
+.row.theirs:not(.run-first) .bubble { border-top-left-radius: var(--uc-tail); }
+.row.mine .bubble { border-bottom-right-radius: var(--uc-tail); }
+.row.mine:not(.run-first) .bubble { border-top-right-radius: var(--uc-tail); }
 
+.bubble.pending { opacity: 0.68; }
+.bubble.failed {
+  background: var(--uc-danger-bg);
+  border-color: var(--uc-danger-border);
+  box-shadow: none;
+}
+
+/* --------------------------------------------------------------- quote */
 .quote {
-  display: block; width: 100%; text-align: left;
-  margin: 0 0 6px; padding: 5px 8px;
-  border: 0; border-left: 3px solid currentColor;
-  border-radius: 5px;
-  background: rgba(15, 23, 42, 0.055);
-  color: inherit; cursor: pointer; opacity: 0.85;
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0 0 6px;
+  padding: 5px 9px;
+  border: 0;
+  border-left: 3px solid var(--uc-brand-soft);
+  border-radius: var(--uc-r-xs);
+  background: rgba(0, 0, 0, 0.22);
+  color: inherit;
+  cursor: pointer;
   font: inherit;
+  transition: background var(--uc-t-fast);
 }
-.row.mine .quote { background: rgba(255, 255, 255, 0.17); }
-.quote-who { display: block; font-size: 0.71rem; font-weight: 700; }
-.quote-text { display: block; font-size: 0.76rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quote:hover { background: rgba(0, 0, 0, 0.32); }
+.row.mine .quote { border-left-color: rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.14); }
+.row.mine .quote:hover { background: rgba(255, 255, 255, 0.2); }
+.quote-who { display: block; font-size: var(--uc-fs-xs); font-weight: 700; }
+.quote-text {
+  display: block;
+  font-size: var(--uc-fs-sm);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.text { margin: 0; font-size: 0.9rem; line-height: 1.45; white-space: pre-wrap; }
+/* ---------------------------------------------------------------- text */
+.text {
+  margin: 0;
+  font-size: var(--uc-fs-md);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* -------------------------------------------------------------- media */
+.bubble.image { padding: 5px 5px 4px; }
 
 .media { margin: 0; }
 .frame {
   position: relative;
-  max-width: 320px;
-  min-width: 120px;
-  border-radius: 9px;
+  max-width: 340px;
+  min-width: 130px;
+  border-radius: var(--uc-r-sm);
   overflow: hidden;
-  background: #e2e8f0;
+  background: rgba(0, 0, 0, 0.3);
   cursor: zoom-in;
   display: grid;
   place-items: center;
@@ -445,48 +578,101 @@ onBeforeUnmount(() => {
    that size the pixels are the point, not a defect. */
 .blur { filter: blur(12px); transform: scale(1.12); }
 .full { position: relative; }
-.media figcaption { margin: 6px 2px 0; font-size: 0.85rem; line-height: 1.4; }
+.media figcaption {
+  margin: 7px 7px 1px;
+  font-size: var(--uc-fs-md);
+  line-height: 1.45;
+}
 
 .spinner {
   position: absolute;
-  width: 22px; height: 22px;
-  border: 2.5px solid rgba(255, 255, 255, 0.55);
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.media-error { margin: 4px 0 0; font-size: 0.75rem; color: #b91c1c; }
-.row.mine .media-error { color: #fecaca; }
+.media-error { margin: 4px 0 0; font-size: var(--uc-fs-xs); color: var(--uc-danger); }
 
-.voice { display: flex; align-items: center; gap: 9px; min-width: 208px; }
+/* -------------------------------------------------------------- voice */
+.voice { display: flex; align-items: center; gap: 10px; min-width: 214px; }
 .play {
-  flex: 0 0 30px; width: 30px; height: 30px;
-  display: grid; place-items: center;
-  border: 0; border-radius: 50%;
-  background: rgba(37, 99, 235, 0.13); color: #2563eb;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--uc-text);
   cursor: pointer;
+  transition: background var(--uc-t-fast);
 }
-.row.mine .play { background: rgba(255, 255, 255, 0.22); color: #fff; }
-.play:disabled { opacity: 0.5; cursor: default; }
+.play:hover:not(:disabled) { background: rgba(255, 255, 255, 0.24); }
+.row.theirs .play { background: rgba(129, 140, 248, 0.24); color: #c7d2fe; }
+.play:disabled { opacity: 0.45; cursor: default; }
 
 .wave { flex: 1; display: flex; align-items: center; gap: 2px; height: 26px; cursor: pointer; }
-.wave span { flex: 1; min-width: 2px; border-radius: 2px; background: #2563eb; transition: opacity 0.12s; }
-.row.mine .wave span { background: #fff; }
-
-.duration { font-size: 0.72rem; font-variant-numeric: tabular-nums; opacity: 0.75; }
-
-.foot {
-  display: flex; align-items: center; justify-content: flex-end;
-  gap: 6px; margin-top: 2px;
-  font-size: 0.66rem; opacity: 0.68;
+.wave span {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: opacity var(--uc-t-fast);
 }
-.edited { font-style: italic; }
+.row.theirs .wave { color: #a5b4fc; }
+.row.mine .wave { color: #fff; }
+
+.duration {
+  font-size: var(--uc-fs-xs);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* --------------------------------------------------------------- foot */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: var(--uc-fs-xs);
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1;
+}
+.bubble.image .foot { margin: 3px 5px 1px; }
+.edited { font-style: italic; opacity: 0.8; }
+time { font-variant-numeric: tabular-nums; }
 .tick { display: inline-flex; }
+/* The one place a second accent colour earns its keep: "delivered" and "seen"
+   are different facts and a reader should not have to count the ticks. */
+.tick.read { color: var(--uc-read); }
 .retry {
-  border: 0; background: none; padding: 0;
-  color: #b91c1c; font-size: 0.68rem; font-weight: 700;
-  cursor: pointer; text-decoration: underline;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--uc-danger);
+  font: inherit;
+  font-size: var(--uc-fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ jump-to */
+/* Applied from the page when a reply's quote is followed to its parent. */
+.row.highlighted .bubble { animation: uc-flash 1.6s ease-out; }
+@keyframes uc-flash {
+  0%, 40% { box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.6); }
+  100% { box-shadow: 0 2px 10px rgba(4, 6, 20, 0.2); }
+}
+
+@media (max-width: 768px) {
+  .stack { max-width: min(68ch, 86%); }
+  .frame { max-width: min(70vw, 340px); }
 }
 </style>

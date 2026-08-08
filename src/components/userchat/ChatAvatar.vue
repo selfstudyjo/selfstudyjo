@@ -141,10 +141,18 @@ function onError() {
 .size-lg { width: 44px; height: 44px; font-size: 0.85rem; }
 .size-xl { width: 66px; height: 66px; font-size: 1.25rem; }
 
-.ring { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px rgba(37, 99, 235, 0.35); }
+.ring { box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff), 0 0 0 3.5px rgba(129, 140, 248, 0.45); }
 
-/* The presence dot sits on the ring rather than inside the circle, so it is not
-   clipped by `overflow: hidden` on a picture. */
+/*
+  The presence dot sits on the ring rather than inside the circle, so it is not
+  clipped by `overflow: hidden` on a picture.
+
+  Its halo has to be the colour of whatever is *behind* the avatar, not white:
+  the ring is what separates the dot from the picture underneath, and a white
+  one on the dark chat panel reads as a bright speck stuck to somebody's ear.
+  `--uc-avatar-cut` is set by the Messages page; the `#fff` fallback keeps this
+  component usable on a light surface elsewhere.
+*/
 .dot {
   position: absolute;
   right: -1px;
@@ -154,7 +162,7 @@ function onError() {
   min-width: 8px;
   min-height: 8px;
   border-radius: 50%;
-  background: #16a34a;
-  box-shadow: 0 0 0 2px #fff;
+  background: var(--uc-online, #16a34a);
+  box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff);
 }
 </style>

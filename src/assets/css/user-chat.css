@@ -1,0 +1,185 @@
+/* ==========================================================================
+   GALAXY THEME — MESSAGES (Self Study User Chat, app 35)
+   --------------------------------------------------------------------------
+   One token block for the whole feature, set on `.uc-root` (the Messages page
+   wrapper) so every component underneath can read it from its *scoped* style
+   block — custom properties inherit through the DOM, scoped-style attribute
+   selectors do not. That is what lets seven components share one palette
+   without a build step and without `:deep()` reaching across boundaries.
+
+   Why dark glass rather than the white panel this page used to be: the rest of
+   the app — the side nav, Notifications, AI Chat — is glass over the animated
+   galaxy on `#03030f`. A white full-bleed page in the middle of that is the
+   single biggest reason the feature read as unfinished.
+
+   The palette is deliberately narrow. A conversation is a long column of very
+   similar objects, so the only strong colour in it is the one that answers
+   "who said this" — the brand gradient on your own messages against a neutral
+   glass panel on everybody else's. Everything else (time, ticks, dividers,
+   room rows) is a tint of white, and gets its emphasis from opacity.
+   ========================================================================== */
+
+.uc-root {
+  /* ---- brand ---------------------------------------------------------- */
+  --uc-brand-1: #667eea;
+  --uc-brand-2: #764ba2;
+  --uc-brand-soft: #818cf8;
+  --uc-brand-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* ---- text ----------------------------------------------------------- */
+  --uc-text: #ffffff;
+  --uc-text-soft: rgba(255, 255, 255, 0.82);
+  --uc-text-muted: rgba(255, 255, 255, 0.58);
+  --uc-text-dim: rgba(255, 255, 255, 0.38);
+
+  /* ---- glass surfaces -------------------------------------------------- */
+  --uc-panel: rgba(12, 14, 34, 0.62);
+  --uc-panel-2: rgba(16, 18, 42, 0.50);
+  --uc-surface: rgba(255, 255, 255, 0.05);
+  --uc-surface-2: rgba(255, 255, 255, 0.08);
+  --uc-surface-3: rgba(255, 255, 255, 0.13);
+  --uc-border: rgba(255, 255, 255, 0.10);
+  --uc-border-strong: rgba(255, 255, 255, 0.20);
+  --uc-blur: blur(18px) saturate(150%);
+  --uc-blur-strong: blur(26px) saturate(160%);
+
+  /*
+    ---- bubbles ----------------------------------------------------------
+    The two values that decide whether a transcript is readable at a glance.
+    Received is a flat neutral glass; sent is the brand gradient at an alpha
+    high enough to be unmistakable without turning the text grey. Anything
+    below about 0.40 on `--uc-out-bg` and the two start to look like the same
+    object again, which is exactly the complaint this rebuild answers.
+  */
+  --uc-in-bg: rgba(255, 255, 255, 0.085);
+  --uc-in-border: rgba(255, 255, 255, 0.13);
+  --uc-out-bg: linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%);
+  --uc-out-border: rgba(139, 148, 248, 0.55);
+  --uc-out-glow: 0 6px 20px rgba(102, 126, 234, 0.26);
+
+  /* ---- semantic -------------------------------------------------------- */
+  --uc-online: #34d399;
+  /* The colour a presence dot's halo is cut out of — read by ChatAvatar, which
+     falls back to white so it still works on a light surface elsewhere. */
+  --uc-avatar-cut: #0d1026;
+  --uc-read: #7dd3fc;              /* the double tick — never white, or it reads as "sent" */
+  --uc-danger: #fc8181;
+  --uc-danger-bg: rgba(252, 129, 129, 0.14);
+  --uc-danger-border: rgba(252, 129, 129, 0.35);
+  --uc-success: #4ade80;
+
+  /* ---- shadows --------------------------------------------------------- */
+  --uc-shadow: 0 8px 30px rgba(4, 6, 20, 0.42);
+  --uc-shadow-lg: 0 22px 60px rgba(4, 6, 20, 0.62);
+
+  /* ---- radii ----------------------------------------------------------- */
+  --uc-r-xs: 8px;
+  --uc-r-sm: 12px;
+  --uc-r-md: 16px;
+  --uc-r-lg: 18px;
+  --uc-r-xl: 26px;
+  --uc-r-full: 999px;
+  /* The tight corner that turns a stack of bubbles into one cluster with a
+     tail. Used on the side of the bubble that faces its author. */
+  --uc-tail: 6px;
+
+  /* ---- rhythm ---------------------------------------------------------- */
+  --uc-gap-tight: 3px;             /* between two messages in the same run   */
+  --uc-gap-run: 16px;              /* between runs — the grouping signal     */
+
+  /*
+    ---- type -------------------------------------------------------------
+    `--uc-scale` is 1 everywhere except on a 4K panel, where the layout is
+    capped in pixels and would otherwise render 13px text at arm's length on a
+    television. Multiplying the tokens keeps every size in step rather than
+    needing a media query per rule.
+  */
+  --uc-scale: 1;
+  --uc-fs-xs: calc(0.70rem * var(--uc-scale));
+  --uc-fs-sm: calc(0.785rem * var(--uc-scale));
+  --uc-fs-md: calc(0.875rem * var(--uc-scale));
+  --uc-fs-lg: calc(0.95rem * var(--uc-scale));
+  --uc-fs-xl: calc(1.15rem * var(--uc-scale));
+
+  --uc-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --uc-t-fast: 0.16s var(--uc-ease);
+  --uc-t-base: 0.28s var(--uc-ease);
+
+  /* ---- pane widths — overridden per breakpoint in ChatLayout.vue -------- */
+  --uc-sidebar-w: 340px;
+  --uc-aside-w: 320px;
+}
+
+/*
+  The 4K type bump has to be declared on `.uc-root` itself and nowhere deeper.
+  A custom property whose value contains `var()` is substituted at computed-value
+  time *on the element that declares it*: `--uc-fs-md` resolves against whatever
+  `--uc-scale` is here, and children inherit the resolved number. Re-declaring
+  `--uc-scale` further down the tree would therefore change nothing at all, which
+  is a genuinely confusing half-hour if you have not hit it before. The pane
+  *widths* above are different — they are read by `var()` on the same element
+  that overrides them, so ChatLayout can and does set those per breakpoint.
+*/
+@media (min-width: 1920px) { .uc-root { --uc-scale: 1.14; } }
+@media (min-width: 2560px) { .uc-root { --uc-scale: 1.30; } }
+
+/* --------------------------------------------------------------------------
+   Scrollbars inside the feature.
+   The global one is a 10px brand gradient bar, which is far too loud against a
+   transcript and a room list sitting side by side.
+   -------------------------------------------------------------------------- */
+.uc-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.uc-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.uc-scroll::-webkit-scrollbar-track { background: transparent; }
+.uc-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--uc-r-full);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.uc-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); background-clip: content-box; }
+
+/* --------------------------------------------------------------------------
+   Shared primitives. Only the things that would otherwise be copied verbatim
+   into five scoped blocks; anything a single component owns stays in it.
+   -------------------------------------------------------------------------- */
+.uc-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--uc-r-full);
+  background: transparent;
+  color: var(--uc-text-muted);
+  cursor: pointer;
+  transition: background var(--uc-t-fast), color var(--uc-t-fast), border-color var(--uc-t-fast);
+}
+.uc-icon-btn:hover:not(:disabled) {
+  background: var(--uc-surface-2);
+  border-color: var(--uc-border);
+  color: var(--uc-text);
+}
+.uc-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.uc-icon-btn.on { background: var(--uc-surface-3); color: var(--uc-text); border-color: var(--uc-border-strong); }
+
+.uc-root :focus-visible {
+  outline: 2px solid var(--uc-brand-soft);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uc-root *,
+  .uc-root *::before,
+  .uc-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
