@@ -105,7 +105,7 @@
                 :alt="message.text || 'Shared picture'"
                 class="full"
               />
-              <div v-if="!full && !mediaError" class="spinner" aria-label="Loading picture"></div>
+              <div v-if="!full && !mediaError" class="uc-spinner" aria-label="Loading picture"></div>
               <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
             </div>
             <figcaption v-if="message.text">{{ message.text }}</figcaption>
@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
 .bubble {
   position: relative;
   min-width: 0;
-  padding: 8px 12px 6px;
+  padding: 9px 13px 7px;
   border-radius: var(--uc-r-lg);
   background: var(--uc-in-bg);
   border: 1px solid var(--uc-in-border);
@@ -489,8 +489,15 @@ onBeforeUnmount(() => {
   color: var(--uc-text);
   word-break: break-word;
   overflow-wrap: anywhere;
-  box-shadow: 0 2px 10px rgba(4, 6, 20, 0.20);
+  /* The inset highlight along the top edge is what makes a flat translucent
+     rectangle read as a piece of glass with a thickness to it. */
+  box-shadow:
+    0 2px 10px rgba(4, 6, 20, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transition: box-shadow var(--uc-t-fast), transform var(--uc-t-fast);
 }
+.row:hover .bubble { transform: translateY(-1px); }
+.row.theirs:hover .bubble { box-shadow: 0 6px 18px rgba(4, 6, 20, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
 
 /*
   Your own messages: the brand gradient, and the only saturated colour in the
@@ -500,8 +507,14 @@ onBeforeUnmount(() => {
 .row.mine .bubble {
   background: var(--uc-out-bg);
   border-color: var(--uc-out-border);
-  box-shadow: var(--uc-out-glow);
+  box-shadow: var(--uc-out-glow), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
+.row.mine:hover .bubble {
+  box-shadow: 0 10px 26px rgba(102, 126, 234, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* Selecting text inside a bubble should not go invisible against the gradient. */
+.bubble ::selection, .bubble::selection { background: rgba(255, 255, 255, 0.28); color: #fff; }
 
 /*
   Cluster geometry. The corner facing the author is tightened: bottom on the last
@@ -584,7 +597,7 @@ onBeforeUnmount(() => {
   line-height: 1.45;
 }
 
-.spinner {
+.uc-spinner {
   position: absolute;
   width: 22px;
   height: 22px;

@@ -15,18 +15,19 @@
           @select-room="openRoom"
           @new-chat="showNewChat = true"
           @toggle-sound="chatStore.setSoundEnabled(!chatStore.soundEnabled)"
+          @home="goHome"
         />
       </template>
 
       <!-- -------------------------------------------------------- main -->
       <template #main>
-        <div v-if="!activeRoom" class="placeholder">
-          <div class="placeholder-mark" aria-hidden="true">
+        <div v-if="!activeRoom" class="uc-placeholder">
+          <div class="uc-placeholder-mark" aria-hidden="true">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
           </div>
           <h2>Pick a conversation</h2>
           <p>Or start a new one. Messages, pictures and voice notes, free with your account.</p>
-          <button type="button" class="placeholder-btn" @click="showNewChat = true">
+          <button type="button" class="uc-placeholder-btn" @click="showNewChat = true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             New message
           </button>
@@ -43,6 +44,7 @@
             :info-open="showInfo"
             @back="closeRoom"
             @toggle-info="showInfo = !showInfo"
+            @home="goHome"
           />
 
           <MessageList
@@ -405,6 +407,16 @@ async function openRoom(roomId: string) {
   } finally {
     loadingMessages.value = false;
   }
+}
+
+/** Leave the feature for the dashboard.
+ *
+ *  `router.push`, not `history.back()`: back from here is whatever the person
+ *  was reading before opening a notification link, which is very often another
+ *  site. The route is named `Home` and its `meta.title` is "Dashboard" — the
+ *  buttons are labelled after the title, since that is the word on the nav. */
+function goHome() {
+  router.push({ name: 'Home' });
 }
 
 function closeRoom() {
@@ -1053,7 +1065,7 @@ watch(() => route.params.roomId, value => {
 .messages-page { position: relative; }
 
 /* --------------------------------------------------------- placeholder */
-.placeholder {
+.uc-placeholder {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1064,7 +1076,7 @@ watch(() => route.params.roomId, value => {
   text-align: center;
   color: var(--uc-text-dim);
 }
-.placeholder-mark {
+.uc-placeholder-mark {
   display: grid;
   place-items: center;
   width: 78px;
@@ -1075,9 +1087,9 @@ watch(() => route.params.roomId, value => {
   border: 1px solid var(--uc-border);
   color: rgba(129, 140, 248, 0.65);
 }
-.placeholder h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-text-soft); }
-.placeholder p { margin: 0; font-size: var(--uc-fs-md); max-width: 40ch; line-height: 1.55; }
-.placeholder-btn {
+.uc-placeholder h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-text-soft); }
+.uc-placeholder p { margin: 0; font-size: var(--uc-fs-md); max-width: 40ch; line-height: 1.55; }
+.uc-placeholder-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -1094,7 +1106,7 @@ watch(() => route.params.roomId, value => {
   box-shadow: 0 4px 14px rgba(102, 126, 234, 0.38);
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast);
 }
-.placeholder-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(102, 126, 234, 0.5); }
+.uc-placeholder-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(102, 126, 234, 0.5); }
 
 /* ---------------------------------------------------------------- menus */
 .menu-backdrop { position: fixed; inset: 0; z-index: 70; }

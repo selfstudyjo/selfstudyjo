@@ -5,7 +5,7 @@
         <!-- ---------------------------------------------------- older -->
         <div class="older">
           <p v-if="loadingOlder" class="older-note">
-            <span class="spinner" aria-hidden="true"></span> Loading earlier messages…
+            <span class="uc-spinner" aria-hidden="true"></span> Loading earlier messages…
           </p>
           <button
             v-else-if="hasMore"
@@ -65,7 +65,7 @@
         </div>
 
         <!-- ---------------------------------------------------- empty -->
-        <div v-else-if="!messages.length" class="empty">
+        <div v-else-if="!messages.length" class="uc-empty">
           <div class="empty-mark" aria-hidden="true">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
           </div>
@@ -322,12 +322,21 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
 </script>
 
 <style scoped>
+/* One gentle fade per room. The component is keyed on the room id by the page,
+   so this fires exactly once when a conversation opens rather than on every
+   incoming message — which is the difference between "the room settled in" and
+   a transcript that twitches while you read it. */
 .stream {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  animation: uc-settle 0.26s var(--uc-ease) both;
+}
+@keyframes uc-settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
 .transcript {
@@ -409,7 +418,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
 }
 .older-note.faint { opacity: 0.55; font-size: var(--uc-fs-xs); }
 
-.spinner {
+.uc-spinner {
   width: 13px;
   height: 13px;
   border: 2px solid var(--uc-border-strong);
@@ -439,7 +448,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
 @keyframes shimmer { to { background-position: -220% 0; } }
 
 /* --------------------------------------------------------------- empty */
-.empty {
+.uc-empty {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -451,7 +460,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   color: var(--uc-text-dim);
   font-size: var(--uc-fs-sm);
 }
-.empty-mark {
+.uc-empty-mark {
   display: grid;
   place-items: center;
   width: 56px;
@@ -462,7 +471,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   border: 1px solid var(--uc-border);
   color: rgba(129, 140, 248, 0.6);
 }
-.empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
+.uc-empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
 
 /* ----------------------------------------------------- jump to bottom */
 .jump {

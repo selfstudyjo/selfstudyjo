@@ -50,7 +50,7 @@
 
     <!-- ---------------------------------------------------------- input -->
     <form v-else class="bar" @submit.prevent="submit">
-      <input ref="fileInput" type="file" accept="image/*" class="sr-only" @change="onPick" />
+      <input ref="fileInput" type="file" accept="image/*" class="uc-sr-only" @change="onPick" />
 
       <div class="lead">
         <button
@@ -129,7 +129,7 @@
       </div>
     </form>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="error" class="uc-error">{{ error }}</p>
   </div>
 </template>
 
@@ -436,7 +436,7 @@ defineExpose({ focus: () => input.value?.focus() });
    right edge of the bubbles rather than with the edge of the window. */
 .composer > * { max-width: 1080px; margin-left: auto; margin-right: auto; }
 
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.uc-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* ------------------------------------------------- reply / attachment */
 .strip {
@@ -632,7 +632,7 @@ defineExpose({ focus: () => input.value?.focus() });
   cursor: pointer;
 }
 
-.error { margin: 7px 2px 0; font-size: var(--uc-fs-sm); color: var(--uc-danger); }
+.uc-error { margin: 7px 2px 0; font-size: var(--uc-fs-sm); color: var(--uc-danger); }
 
 /* A 34px hit target is fine for the small close buttons on the strips, which sit
    inside a row that is already comfortably tall. */

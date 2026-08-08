@@ -14,7 +14,7 @@
       />
       <span class="titles">
         <span class="name">{{ name }}</span>
-        <span class="status">
+        <span class="uc-status">
           <!-- Typing wins over presence: it is the more specific and the more
                perishable of the two, and showing "Online" while somebody is
                visibly composing is a wasted line. -->
@@ -34,7 +34,27 @@
       </span>
     </button>
 
-    <div class="actions">
+    <div class="uc-actions">
+      <!--
+        The way out of the feature.
+
+        The Messages page is the only screen in the app that takes the full
+        viewport height and hides the support widget, and on a phone the side
+        nav is a drawer behind a button this page's header sits next to. Without
+        an explicit exit, somebody deep in a conversation has the browser's back
+        button and nothing else — and back from here is whatever they were
+        reading before, not the app.
+      -->
+      <button
+        type="button"
+        class="uc-icon-btn home"
+        aria-label="Back to the dashboard"
+        title="Back to the dashboard"
+        @click="$emit('home')"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.8V20a1 1 0 001 1h12a1 1 0 001-1V9.8"/><path d="M9.5 21v-6h5v6"/></svg>
+      </button>
+
       <span v-if="room.muted" class="muted-chip" title="Notifications are muted for this conversation">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.5-1.9L20.1 5.7 17.8 8l-2.3-2.3-1.4 1.4L16.4 9.4l-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>
         <span>Muted</span>
@@ -73,24 +93,44 @@ const props = defineProps<{
   infoOpen: boolean;
 }>();
 
-defineEmits<{ (e: 'back'): void; (e: 'toggle-info'): void }>();
+defineEmits<{ (e: 'back'): void; (e: 'toggle-info'): void; (e: 'home'): void }>();
 
 const name = computed(() => displayName(props.room, props.userId));
 </script>
 
 <style scoped>
 .head {
+  position: relative;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  background: rgba(10, 12, 30, 0.55);
+  padding: 11px 14px;
+  background: rgba(10, 12, 30, 0.62);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   border-bottom: 1px solid var(--uc-border);
   /* Above the sticky day dividers in the transcript, which scroll up under it. */
   z-index: 5;
+}
+
+/* A brand hairline along the bottom edge, brightest under the avatar and fading
+   out across the width. It is what stops the header reading as a grey bar bolted
+   on top of the conversation. */
+.head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(102, 126, 234, 0.55) 0%,
+    rgba(118, 75, 162, 0.35) 38%,
+    transparent 78%
+  );
+  pointer-events: none;
 }
 
 /* Only a phone gets a back arrow: everywhere else the room list is still there
@@ -132,7 +172,7 @@ const name = computed(() => displayName(props.room, props.userId));
   white-space: nowrap;
 }
 
-.status {
+.uc-status {
   font-size: var(--uc-fs-xs);
   color: var(--uc-text-dim);
   overflow: hidden;
@@ -154,7 +194,7 @@ const name = computed(() => displayName(props.room, props.userId));
 .dots i:nth-child(3) { animation-delay: 0.36s; }
 @keyframes blink { 0%, 60%, 100% { opacity: 0.28; } 30% { opacity: 1; } }
 
-.actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.uc-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 
 .muted-chip {
   display: inline-flex;

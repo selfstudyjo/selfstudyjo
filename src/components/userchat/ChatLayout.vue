@@ -86,8 +86,19 @@ withDefaults(defineProps<{
   border-right: 1px solid var(--uc-border);
 }
 
+/*
+  The conversation pane gets two soft brand glows baked into its background
+  rather than a flat wash. They are `background-image` layers, not a pseudo
+  element, on purpose: slot content carries the *parent's* scope id, so a
+  `.pane-main > *` rule from this file would never match the header, list and
+  input, and the pseudo would have to be lifted over them with z-index games.
+  Two gradients cost nothing and cannot be painted over anything.
+*/
 .pane-main {
-  background: var(--uc-panel-2);
+  background-color: var(--uc-panel-2);
+  background-image:
+    radial-gradient(1200px 460px at 82% -14%, rgba(118, 75, 162, 0.20), transparent 62%),
+    radial-gradient(940px 400px at 8% 112%, rgba(102, 126, 234, 0.16), transparent 60%);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
 }

@@ -1,21 +1,24 @@
 <template>
   <span
-    class="avatar"
-    :class="[`size-${size}`, { ring }]"
-    :style="{ background: loaded ? 'transparent' : colour }"
+    class="uc-avatar"
+    :class="[`uc-size-${size}`, { 'uc-ring': ring }]"
     :title="title || name"
   >
-    <img
-      v-if="src && !failed"
-      :src="src"
-      :alt="name"
-      loading="lazy"
-      decoding="async"
-      @load="loaded = true"
-      @error="onError"
-    />
-    <span v-else class="initials">{{ initials }}</span>
-    <span v-if="online" class="dot" aria-hidden="true"></span>
+    <!-- The clipping happens on this inner layer, not on the root — see the note
+         above `.uc-dot`. -->
+    <span class="uc-face" :style="{ background: loaded ? 'transparent' : colour }">
+      <img
+        v-if="src && !failed"
+        :src="src"
+        :alt="name"
+        loading="lazy"
+        decoding="async"
+        @load="loaded = true"
+        @error="onError"
+      />
+      <span v-else class="uc-initials">{{ initials }}</span>
+    </span>
+    <span v-if="online" class="uc-dot" aria-hidden="true"></span>
   </span>
 </template>
 
@@ -112,20 +115,55 @@ function onError() {
 </script>
 
 <style scoped>
-.avatar {
+/*
+  ---------------------------------------------------------------------------
+  Every class here is `uc-`-prefixed, and that is load-bearing rather than
+  tidiness.
+
+  This app has no CSS scoping at the page level: all 36 files in
+  `src/assets/css/` are imported from view modules and bundled into one global
+  `index.css` that is live on every route. A scoped block stops *our* rules
+  leaking out; it does nothing to stop *their* rules leaking in. This component
+  was previously `class="avatar"`, and `side-nav.css` has an unscoped
+
+      .avatar { width: 40px; height: 40px; min-width: 40px; border: 2px solid …; }
+
+  Our `width: 34px` won its specificity fight, `min-width: 40px` had nothing to
+  fight, and the result was a 40 × 34 ellipse with a stray border on it — every
+  face in the feature. Before adding a class anywhere under `.uc-root`, check it:
+
+      grep -rnE "(^|,\s*)\.<name>\s*(,|\{)" src/assets/css/*.css src/style.css
+  ---------------------------------------------------------------------------
+*/
+.uc-avatar {
   position: relative;
   flex: 0 0 auto;
+  display: inline-block;
+  border-radius: 50%;
+  user-select: none;
+  /*
+    Deliberately NOT `overflow: hidden`. The root is the positioning context for
+    the presence dot, which sits on the rim at the bottom-right — outside the
+    circle. Clipping here is what made the dot invisible: it was hidden by the
+    very `border-radius` + `overflow` pair meant to round the photograph. The
+    clip belongs one level in, on `.uc-face`.
+  */
+}
+
+.uc-face {
+  position: relative;
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
+  overflow: hidden;
   color: #fff;
   font-weight: 700;
-  overflow: hidden;
-  user-select: none;
   transition: background 0.2s;
 }
 
-.avatar img {
+.uc-face img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -134,35 +172,41 @@ function onError() {
   border-radius: 50%;
 }
 
-.initials { line-height: 1; letter-spacing: 0.02em; }
+.uc-initials { line-height: 1; letter-spacing: 0.02em; }
 
-.size-sm { width: 26px; height: 26px; font-size: 0.6rem; }
-.size-md { width: 34px; height: 34px; font-size: 0.72rem; }
-.size-lg { width: 44px; height: 44px; font-size: 0.85rem; }
-.size-xl { width: 66px; height: 66px; font-size: 1.25rem; }
+/* `min-width` / `min-height` are stated alongside `width` / `height` on purpose:
+   they are the two properties a stray global rule can set without contradicting
+   anything of ours, and they are exactly how this went oval. */
+.uc-size-sm { width: 26px; height: 26px; min-width: 26px; min-height: 26px; font-size: 0.6rem; }
+.uc-size-md { width: 36px; height: 36px; min-width: 36px; min-height: 36px; font-size: 0.74rem; }
+.uc-size-lg { width: 46px; height: 46px; min-width: 46px; min-height: 46px; font-size: 0.86rem; }
+.uc-size-xl { width: 72px; height: 72px; min-width: 72px; min-height: 72px; font-size: 1.3rem; }
 
-.ring { box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff), 0 0 0 3.5px rgba(129, 140, 248, 0.45); }
+.uc-ring { box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff), 0 0 0 4px rgba(129, 140, 248, 0.5); }
 
 /*
-  The presence dot sits on the ring rather than inside the circle, so it is not
-  clipped by `overflow: hidden` on a picture.
+  The presence dot.
 
   Its halo has to be the colour of whatever is *behind* the avatar, not white:
-  the ring is what separates the dot from the picture underneath, and a white
-  one on the dark chat panel reads as a bright speck stuck to somebody's ear.
-  `--uc-avatar-cut` is set by the Messages page; the `#fff` fallback keeps this
-  component usable on a light surface elsewhere.
+  the ring is what separates the dot from the picture underneath, and a white one
+  on the dark chat panel reads as a bright speck stuck to somebody's ear.
+  `--uc-avatar-cut` is set on `.uc-root`; the `#fff` fallback keeps this component
+  usable on a light surface elsewhere.
 */
-.dot {
+.uc-dot {
   position: absolute;
-  right: -1px;
-  bottom: -1px;
+  right: 0;
+  bottom: 0;
   width: 30%;
   height: 30%;
-  min-width: 8px;
-  min-height: 8px;
+  min-width: 9px;
+  min-height: 9px;
   border-radius: 50%;
   background: var(--uc-online, #16a34a);
   box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff);
 }
+/* A little more presence on the two large sizes, where 30% of the circle is a
+   dot big enough to look like a mistake if it is not deliberately placed. */
+.uc-size-lg .uc-dot,
+.uc-size-xl .uc-dot { right: 2px; bottom: 2px; width: 24%; height: 24%; }
 </style>

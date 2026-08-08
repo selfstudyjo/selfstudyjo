@@ -146,13 +146,13 @@
     </div>
 
     <footer>
-      <button type="button" class="danger-btn" @click="$emit('leave')">
+      <button type="button" class="uc-danger-btn" @click="$emit('leave')">
         Leave this conversation
       </button>
       <!-- Delete is the owner's alone, and it is destructive for everybody in the
            room rather than just for them — so it is separated from Leave and
            labelled with what it actually does. -->
-      <button v-if="myRole === 'owner'" type="button" class="danger-btn solid" @click="$emit('delete')">
+      <button v-if="myRole === 'owner'" type="button" class="uc-danger-btn solid" @click="$emit('delete')">
         Delete for everyone
       </button>
     </footer>
@@ -430,7 +430,7 @@ footer {
   display: grid;
   gap: 8px;
 }
-.danger-btn {
+.uc-danger-btn {
   width: 100%;
   padding: 9px 12px;
   border-radius: var(--uc-r-xs);
@@ -443,7 +443,7 @@ footer {
   cursor: pointer;
   transition: background var(--uc-t-fast);
 }
-.danger-btn:hover { background: var(--uc-danger-bg); }
-.danger-btn.solid { background: rgba(220, 38, 38, 0.85); border-color: transparent; color: #fff; }
-.danger-btn.solid:hover { background: rgba(220, 38, 38, 1); }
+.uc-danger-btn:hover { background: var(--uc-danger-bg); }
+.uc-danger-btn.solid { background: rgba(220, 38, 38, 0.85); border-color: transparent; color: #fff; }
+.uc-danger-btn.solid:hover { background: rgba(220, 38, 38, 1); }
 </style>

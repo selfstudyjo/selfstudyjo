@@ -8,7 +8,7 @@
         </button>
       </header>
 
-      <div class="tabs">
+      <div class="uc-tabs">
         <button :class="{ on: mode === 'direct' }" type="button" @click="mode = 'direct'">
           One to one
         </button>
@@ -35,7 +35,7 @@
               autocomplete="off"
               @input="onSearch"
             />
-            <span v-if="searching" class="spinner" aria-label="Searching"></span>
+            <span v-if="searching" class="uc-spinner" aria-label="Searching"></span>
           </div>
         </label>
 
@@ -59,18 +59,18 @@
               <svg v-if="isChosen(person.id)" class="ticked" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
             </button>
           </li>
-          <li v-if="!searching && query.trim().length >= 2 && !visibleResults.length" class="empty">
+          <li v-if="!searching && query.trim().length >= 2 && !visibleResults.length" class="uc-empty">
             Nobody matches “{{ query }}”.
           </li>
-          <li v-else-if="!query.trim()" class="empty">
+          <li v-else-if="!query.trim()" class="uc-empty">
             Type at least two letters to find somebody.
           </li>
         </ul>
       </div>
 
       <footer>
-        <p v-if="error" class="error">{{ error }}</p>
-        <div class="actions">
+        <p v-if="error" class="uc-error">{{ error }}</p>
+        <div class="uc-dialog-actions">
           <button type="button" class="ghost" @click="$emit('close')">Cancel</button>
           <button type="button" class="primary" :disabled="!canSubmit || working" @click="submit">
             {{ working ? 'Opening…' : (mode === 'direct' ? 'Start chat' : 'Create group') }}
@@ -229,15 +229,15 @@ onMounted(() => nextTick(() => searchBox.value?.focus()));
 header { display: flex; align-items: center; justify-content: space-between; padding: 15px 16px 11px; }
 h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-text); }
 
-.tabs { display: flex; gap: 5px; padding: 0 16px 12px; border-bottom: 1px solid var(--uc-border); }
-.tabs button {
+.uc-tabs { display: flex; gap: 5px; padding: 0 16px 12px; border-bottom: 1px solid var(--uc-border); }
+.uc-tabs button {
   flex: 1; padding: 8px 10px; border: 1px solid transparent; border-radius: var(--uc-r-xs);
   background: var(--uc-surface); color: var(--uc-text-muted);
   font: inherit; font-size: var(--uc-fs-sm); font-weight: 600; cursor: pointer;
   transition: background var(--uc-t-fast), color var(--uc-t-fast);
 }
-.tabs button:hover { background: var(--uc-surface-2); color: var(--uc-text-soft); }
-.tabs button.on { background: var(--uc-brand-grad); color: #fff; border-color: transparent; }
+.uc-tabs button:hover { background: var(--uc-surface-2); color: var(--uc-text-soft); }
+.uc-tabs button.on { background: var(--uc-brand-grad); color: #fff; border-color: transparent; }
 
 .body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; }
 
@@ -259,7 +259,7 @@ h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-te
 .search { position: relative; display: flex; align-items: center; }
 .search svg { position: absolute; left: 11px; color: var(--uc-text-dim); pointer-events: none; }
 .search input { padding-left: 34px; padding-right: 34px; }
-.spinner {
+.uc-spinner {
   position: absolute; right: 11px;
   width: 13px; height: 13px;
   border: 2px solid var(--uc-border-strong); border-top-color: var(--uc-brand-soft);
@@ -293,14 +293,14 @@ h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-te
 }
 .handle { display: block; font-size: var(--uc-fs-xs); color: var(--uc-text-dim); }
 .ticked { color: var(--uc-brand-soft); flex: 0 0 auto; }
-.empty { padding: 18px 8px; font-size: var(--uc-fs-sm); color: var(--uc-text-dim); text-align: center; }
+.uc-empty { padding: 18px 8px; font-size: var(--uc-fs-sm); color: var(--uc-text-dim); text-align: center; }
 
 footer {
   border-top: 1px solid var(--uc-border);
   padding: 12px 16px calc(13px + env(safe-area-inset-bottom, 0px));
 }
-.error { margin: 0 0 8px; font-size: var(--uc-fs-sm); color: var(--uc-danger); }
-.actions { display: flex; justify-content: flex-end; gap: 8px; }
+.uc-error { margin: 0 0 8px; font-size: var(--uc-fs-sm); color: var(--uc-danger); }
+.uc-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .ghost, .primary {
   border: 1px solid transparent; border-radius: var(--uc-r-xs); padding: 9px 16px;
   font: inherit; font-size: var(--uc-fs-md); font-weight: 600; cursor: pointer;

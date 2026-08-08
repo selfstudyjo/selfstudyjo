@@ -1,7 +1,20 @@
 <template>
-  <div class="sidebar">
+  <div class="uc-side">
     <header class="head">
       <div class="title-row">
+        <!-- The way out of the feature — see the matching note in ChatHeader.
+             It is here as well as in the thread because on a phone those are two
+             separate screens and only one of them is ever on show. -->
+        <button
+          type="button"
+          class="uc-icon-btn home"
+          aria-label="Back to the dashboard"
+          title="Back to the dashboard"
+          @click="$emit('home')"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.8V20a1 1 0 001 1h12a1 1 0 001-1V9.8"/><path d="M9.5 21v-6h5v6"/></svg>
+        </button>
+
         <h1>
           Messages
           <span v-if="totalUnread > 0" class="total">{{ totalUnread > 99 ? '99+' : totalUnread }}</span>
@@ -52,10 +65,10 @@
     <div class="list uc-scroll">
       <template v-if="loading">
         <div v-for="n in 6" :key="n" class="skeleton" aria-hidden="true"></div>
-        <p class="sr-only">Loading your conversations</p>
+        <p class="uc-sr-only">Loading your conversations</p>
       </template>
 
-      <div v-else-if="!rooms.length && !modelValue" class="empty">
+      <div v-else-if="!rooms.length && !modelValue" class="uc-empty">
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
         <strong>No conversations yet</strong>
         <span>Start one with a classmate or a teacher — it is free with your account.</span>
@@ -65,7 +78,7 @@
         </button>
       </div>
 
-      <p v-else-if="!rooms.length" class="empty terse">
+      <p v-else-if="!rooms.length" class="uc-empty terse">
         Nothing matches “{{ modelValue }}”.
       </p>
 
@@ -111,11 +124,12 @@ defineEmits<{
   (e: 'select-room', roomId: string): void;
   (e: 'new-chat'): void;
   (e: 'toggle-sound'): void;
+  (e: 'home'): void;
 }>();
 </script>
 
 <style scoped>
-.sidebar {
+.uc-side {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -137,6 +151,8 @@ defineEmits<{
 }
 
 h1 {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -146,6 +162,8 @@ h1 {
   letter-spacing: -0.01em;
   color: var(--uc-text);
 }
+
+.home { flex: 0 0 34px; margin-left: -6px; }
 
 .total {
   padding: 2px 8px;
@@ -240,7 +258,7 @@ h1 {
 }
 @keyframes shimmer { to { background-position: -220% 0; } }
 
-.empty {
+.uc-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -251,9 +269,9 @@ h1 {
   color: var(--uc-text-dim);
   line-height: 1.55;
 }
-.empty svg { color: rgba(129, 140, 248, 0.45); margin-bottom: 4px; }
-.empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
-.empty.terse { padding: 30px 18px; }
+.uc-empty svg { color: rgba(129, 140, 248, 0.45); margin-bottom: 4px; }
+.uc-empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
+.uc-empty.terse { padding: 30px 18px; }
 
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.uc-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
