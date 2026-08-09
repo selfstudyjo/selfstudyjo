@@ -1,0 +1,570 @@
+/**
+ * The ten galaxies.
+ *
+ * A PLAIN module like `contrast.ts` — no Vue, no DOM — so `npm run check:theme`
+ * can load it in node and prove every token in every theme is readable on the
+ * surface it lands on. `apply.ts` is the half that touches the document.
+ *
+ * ---------------------------------------------------------------------------
+ * The one rule that shapes this file
+ * ---------------------------------------------------------------------------
+ * A theme author picks a GALAXY — a space colour and two or three lights. They
+ * do not pick a single text colour. Every `text`, `on*` and `*Text` token is
+ * derived by `ensureContrast()` from the surface it will actually sit on, so
+ * "light text on dark, dark text on light" is a consequence of the build
+ * rather than an instruction somebody has to remember. Adding an eleventh
+ * galaxy means adding a `ThemeSeed`; the readable palette comes out the far
+ * end on its own, and `check:theme` fails if the seed is one no palette can be
+ * derived from (a mid-tone space colour with no headroom either way).
+ *
+ * ---------------------------------------------------------------------------
+ * Why surfaces are composited before contrast is measured
+ * ---------------------------------------------------------------------------
+ * Almost every card in this app is a translucent tint over the 3D galaxy —
+ * `rgb(var(--sfs-tint-rgb) / 0.08)`, not an opaque fill. Measuring text
+ * against the *tint* would be measuring against something the eye never sees.
+ * So `surfaceAt()` composites the tint over the space colour first and the
+ * derivation runs against that. It is the difference between a palette that
+ * passes a checker and one that is legible.
+ */
+
+import {
+  AAA_TEXT,
+  AA_LARGE,
+  AA_TEXT,
+  alpha,
+  bestTextOn,
+  channels,
+  contrastRatio,
+  darken,
+  ensureContrast,
+  isDark,
+  lighten,
+  mix,
+  over,
+} from './contrast';
+
+export type ThemeMode = 'dark' | 'light';
+
+/**
+ * The 3D background's palette. `AnimatedBackground.vue` reads this, which is
+ * what makes each theme a different *galaxy* rather than a different button
+ * colour.
+ */
+export interface GalaxyPalette {
+  /** Deep space — the scene clear colour and the fog. */
+  space: string;
+  /** Galactic core bloom. */
+  core: string;
+  /** Inner arm stars. */
+  inner: string;
+  /** Mid-disc stars. */
+  mid: string;
+  /** Arm tips and the outer halo. */
+  outer: string;
+  /** The field stars scattered around the camera. */
+  star: string;
+  /** Planet key light. */
+  light: string;
+}
+
+/** What a theme author writes. Everything else is computed. */
+export interface ThemeSeed {
+  id: string;
+  name: string;
+  tagline: string;
+  mode: ThemeMode;
+  /** Page void — also the 3D scene's clear colour. */
+  space: string;
+  /** Primary light of this galaxy: buttons, active states, links. */
+  accent: string;
+  /** Second light — the far end of every gradient. */
+  accent2: string;
+  /** Third light, used for tertiary chips and the picker's swatch. */
+  accent3: string;
+  galaxy: GalaxyPalette;
+}
+
+export interface Theme extends ThemeSeed {
+  /** Every CSS custom property this theme sets, ready for `style.setProperty`. */
+  vars: Record<string, string>;
+  /** The composited colour text is actually measured against. */
+  measuredSurface: string;
+}
+
+/* -------------------------------------------------------------------------- *
+ * The seeds
+ *
+ * Seven dark galaxies and three light ones. The split is deliberate: a light
+ * theme is the only thing that exercises the other half of requirement 2, and
+ * a platform students read on a phone in daylight needs at least one.
+ *
+ * Hues are spread around the wheel on purpose — indigo, cyan, amber, emerald,
+ * rose, azure, lime, then cobalt / peach / slate for the light three — so the
+ * ten are told apart at a glance in the picker rather than being ten shades of
+ * blue.
+ * -------------------------------------------------------------------------- */
+export const THEME_SEEDS: ThemeSeed[] = [
+  {
+    id: 'andromeda',
+    name: 'Andromeda',
+    tagline: 'Indigo and violet — the original night sky',
+    mode: 'dark',
+    space: '#04040f',
+    // The platform's original two colours, kept exactly. Andromeda is the
+    // default, so the app it ships looks like the app it already was — the
+    // other nine are the change, this one is the baseline.
+    accent: '#667eea',
+    accent2: '#764ba2',
+    accent3: '#38bdf8',
+    galaxy: {
+      space: '#04040f',
+      core: '#ffe6b8',
+      inner: '#fff4de',
+      mid: '#c3b6ff',
+      outer: '#5b7cff',
+      star: '#dfe4ff',
+      light: '#ffeedd',
+    },
+  },
+  {
+    id: 'orion',
+    name: 'Orion Nebula',
+    tagline: 'Ice cyan against nebula magenta',
+    mode: 'dark',
+    space: '#03101a',
+    accent: '#22d3ee',
+    accent2: '#f472b6',
+    accent3: '#5eead4',
+    galaxy: {
+      space: '#03101a',
+      core: '#d9fbff',
+      inner: '#a5f3fc',
+      mid: '#7dd3fc',
+      outer: '#f472b6',
+      star: '#d7f7ff',
+      light: '#e8fbff',
+    },
+  },
+  {
+    id: 'sombrero',
+    name: 'Sombrero',
+    tagline: 'Molten gold across a dust lane',
+    mode: 'dark',
+    space: '#0d0904',
+    accent: '#f5b642',
+    accent2: '#fb7238',
+    accent3: '#fcd34d',
+    galaxy: {
+      space: '#0d0904',
+      core: '#fff2cc',
+      inner: '#ffd89b',
+      mid: '#f0a860',
+      outer: '#b4541f',
+      star: '#ffeccd',
+      light: '#fff0d4',
+    },
+  },
+  {
+    id: 'whirlpool',
+    name: 'Whirlpool',
+    tagline: 'Emerald arms over deep water',
+    mode: 'dark',
+    space: '#03110f',
+    accent: '#34d399',
+    accent2: '#22d3ee',
+    accent3: '#a3e635',
+    galaxy: {
+      space: '#03110f',
+      core: '#e9fff6',
+      inner: '#a7f3d0',
+      mid: '#5eead4',
+      outer: '#0ea5e9',
+      star: '#d6fff2',
+      light: '#e6fff7',
+    },
+  },
+  {
+    id: 'pinwheel',
+    name: 'Pinwheel',
+    tagline: 'Rose light through a plum sky',
+    mode: 'dark',
+    space: '#100518',
+    accent: '#fb7185',
+    accent2: '#c084fc',
+    accent3: '#f0abfc',
+    galaxy: {
+      space: '#100518',
+      core: '#ffe9f3',
+      inner: '#fbcfe8',
+      mid: '#e9a8ff',
+      outer: '#8b5cf6',
+      star: '#ffe4f2',
+      light: '#ffeaf4',
+    },
+  },
+  {
+    id: 'triangulum',
+    name: 'Triangulum',
+    tagline: 'Amethyst haze over deep space',
+    mode: 'dark',
+    space: '#0b0518',
+    // Violet rather than the azure this started as: at #38bdf8 it sat 10° of
+    // hue from Orion and the two were indistinguishable in the picker, which
+    // `check:theme` refuses. Ten galaxies means ten, not eight and two
+    // near-duplicates.
+    accent: '#8b5cf6',
+    accent2: '#6366f1',
+    accent3: '#67e8f9',
+    galaxy: {
+      space: '#0b0518',
+      core: '#f3e8ff',
+      inner: '#ddd6fe',
+      mid: '#a78bfa',
+      outer: '#4f46e5',
+      star: '#e6dcff',
+      light: '#f4ecff',
+    },
+  },
+  {
+    id: 'sunflower',
+    name: 'Sunflower',
+    tagline: 'Chartreuse bloom on an olive night',
+    mode: 'dark',
+    space: '#0a0f03',
+    accent: '#a3e635',
+    accent2: '#facc15',
+    accent3: '#4ade80',
+    galaxy: {
+      space: '#0a0f03',
+      core: '#fbffe0',
+      inner: '#e4f8a8',
+      mid: '#bef264',
+      outer: '#65a30d',
+      star: '#f2ffd6',
+      light: '#f8ffe4',
+    },
+  },
+  {
+    id: 'cartwheel',
+    name: 'Cartwheel',
+    tagline: 'Daylight galaxy — cobalt on cool white',
+    mode: 'light',
+    space: '#eef2fb',
+    accent: '#1d4ed8',
+    accent2: '#7048e8',
+    accent3: '#0f766e',
+    galaxy: {
+      space: '#eef2fb',
+      core: '#4c6ef5',
+      inner: '#748ffc',
+      mid: '#91a7ff',
+      outer: '#b197fc',
+      star: '#8da2fb',
+      light: '#ffffff',
+    },
+  },
+  {
+    id: 'dawn',
+    name: 'Dawn Nebula',
+    tagline: 'Warm cream and coral at first light',
+    mode: 'light',
+    space: '#fdf5ec',
+    accent: '#c2410c',
+    accent2: '#be123c',
+    accent3: '#a16207',
+    galaxy: {
+      space: '#fdf5ec',
+      core: '#f97316',
+      inner: '#fb923c',
+      mid: '#f9a8a0',
+      outer: '#e11d48',
+      star: '#f7a08a',
+      light: '#fffaf3',
+    },
+  },
+  {
+    id: 'silver',
+    name: 'Silver Spiral',
+    tagline: 'Quiet slate on paper white',
+    mode: 'light',
+    space: '#f2f4f7',
+    accent: '#334f78',
+    accent2: '#5b6b8c',
+    accent3: '#0f766e',
+    galaxy: {
+      space: '#f2f4f7',
+      core: '#64748b',
+      inner: '#7f8ea3',
+      mid: '#9aa7b8',
+      outer: '#475569',
+      star: '#8d9bad',
+      light: '#ffffff',
+    },
+  },
+];
+
+export const DEFAULT_THEME_ID = 'andromeda';
+
+/* -------------------------------------------------------------------------- *
+ * Derivation
+ * -------------------------------------------------------------------------- */
+
+/**
+ * The composited colour a card actually presents to the eye: the theme's
+ * standard surface tint laid over deep space. Text contrast is measured
+ * against this, not against the tint.
+ */
+function surfaceAt(seed: ThemeSeed, tintAlpha: number): string {
+  const tint = seed.mode === 'dark' ? '#ffffff' : '#0b1020';
+  return over(tint, tintAlpha, seed.space);
+}
+
+/** Status hues, per mode, before they are made readable against the surface. */
+function statusSeeds(mode: ThemeMode) {
+  return mode === 'dark'
+    ? { success: '#34d399', warning: '#fbbf24', danger: '#f87171', info: '#38bdf8' }
+    : { success: '#047857', warning: '#b45309', danger: '#b91c1c', info: '#0369a1' };
+}
+
+function buildTheme(seed: ThemeSeed): Theme {
+  const dark = seed.mode === 'dark';
+
+  /* The three surfaces the app really uses, composited. */
+  const surface = surfaceAt(seed, dark ? 0.06 : 0.055);
+  const surface2 = surfaceAt(seed, dark ? 0.1 : 0.09);
+  const surface3 = surfaceAt(seed, dark ? 0.16 : 0.14);
+
+  /* --- Text, derived. Never written down. --- */
+  const inkStart = dark ? '#ffffff' : '#0d1220';
+  const text = ensureContrast(inkStart, surface, AAA_TEXT);
+  // Muted text carries a hint of the galaxy so the theme reads in body copy
+  // too, then is pulled back until it clears AA. Tinting after the contrast
+  // pass would undo it.
+  const textMuted = ensureContrast(mix(text, seed.accent, 0.42), surface, AA_TEXT);
+  // Faint text is captions and timestamps — AA large is the honest bar for it,
+  // and pretending otherwise just produces four identical greys.
+  const textFaint = ensureContrast(mix(text, surface, 0.42), surface, AA_LARGE);
+
+  /* --- Accents. The fill keeps the author's colour; the ink is derived. --- */
+  const onAccent = ensureContrast(bestTextOn(seed.accent), seed.accent, AA_TEXT);
+  const onAccent2 = ensureContrast(bestTextOn(seed.accent2), seed.accent2, AA_TEXT);
+  const onAccent3 = ensureContrast(bestTextOn(seed.accent3), seed.accent3, AA_TEXT);
+  // The accent used AS TEXT on a surface is a different colour from the accent
+  // used as a fill, and conflating the two is the single most common way an
+  // accessible palette stops being one.
+  const accentText = ensureContrast(seed.accent, surface, AA_TEXT);
+  const accentTextSoft = ensureContrast(seed.accent, surface, AA_LARGE);
+
+  /* --- Paper.
+   *
+   * A certificate is a white page in every theme, and so is anything printed.
+   * These two tokens are the escape hatch for that: paper stays light and its
+   * ink stays dark in all ten galaxies, taking only a breath of the accent so
+   * it still belongs to the theme. Without them, "make the background follow
+   * the theme" turns a certificate black and the codemod would have had to
+   * skip a third of the stylesheets.
+   */
+  const paper = mix('#ffffff', seed.accent, 0.035);
+  const paper2 = mix('#ffffff', seed.accent, 0.075);
+  const paper3 = mix('#ffffff', seed.accent, 0.12);
+  const onPaper = ensureContrast(mix('#151a24', seed.accent, 0.1), paper, AAA_TEXT);
+  const onPaperMuted = ensureContrast(mix(onPaper, paper, 0.4), paper, AA_TEXT);
+
+  /* --- Status, and the two readings every colour needs.
+   *
+   * A status hue is three tokens, not one, and the codemod proved why: the
+   * same `#f87171` appears in the stylesheets as a filled badge, as error text
+   * on a card, and as error text on a white certificate. Those are three
+   * different colours if they are to stay legible, and deriving each against
+   * the surface it actually lands on is the whole of requirement 2.
+   */
+  const status = statusSeeds(seed.mode);
+  const statusVars: Record<string, string> = {};
+  for (const [name, hue] of Object.entries(status)) {
+    statusVars[`--sfs-${name}`] = hue;
+    statusVars[`--sfs-${name}-rgb`] = channels(hue);
+    statusVars[`--sfs-${name}-text`] = ensureContrast(hue, surface, AA_TEXT);
+    statusVars[`--sfs-${name}-on-paper`] = ensureContrast(hue, paper, AA_TEXT);
+    statusVars[`--sfs-on-${name}`] = ensureContrast(bestTextOn(hue), hue, AA_TEXT);
+    statusVars[`--sfs-${name}-soft`] = alpha(hue, dark ? 0.16 : 0.13);
+    statusVars[`--sfs-${name}-border`] = alpha(hue, dark ? 0.42 : 0.38);
+  }
+
+  /* --- Tints.
+   *
+   * One channel triple serves every opacity in the stylesheets. In a dark
+   * galaxy the tint that lifts a card off the background is white; in a light
+   * one it is near-black. Flipping this single token is what turns ~1500
+   * `rgba(255,255,255,α)` literals into a working light theme.
+   */
+  const tintRgb = dark ? '255 255 255' : '11 16 32';
+  const shadeRgb = dark ? '0 0 0' : '15 23 42';
+
+  const borderAlpha = dark ? 0.14 : 0.16;
+  const border = alpha(text, borderAlpha);
+  const borderStrong = alpha(text, dark ? 0.26 : 0.3);
+
+  const vars: Record<string, string> = {
+    /* Identity — readable in devtools, and what `[data-theme]` selectors use. */
+    '--sfs-theme': seed.id,
+    '--sfs-mode': seed.mode,
+
+    /* Space and surfaces */
+    '--sfs-space': seed.space,
+    '--sfs-space-rgb': channels(seed.space),
+    '--sfs-surface': surface,
+    '--sfs-surface-2': surface2,
+    '--sfs-surface-3': surface3,
+    '--sfs-surface-rgb': channels(surface),
+    '--sfs-overlay': alpha(dark ? '#01010a' : '#0b1020', dark ? 0.72 : 0.55),
+
+    /* Tint ladder — one triple, every opacity */
+    '--sfs-tint-rgb': tintRgb,
+    '--sfs-shade-rgb': shadeRgb,
+
+    /* Text */
+    '--sfs-text': text,
+    '--sfs-text-rgb': channels(text),
+    '--sfs-text-muted': textMuted,
+    '--sfs-text-muted-rgb': channels(textMuted),
+    '--sfs-text-faint': textFaint,
+    '--sfs-text-inverse': dark ? '#0d1220' : '#ffffff',
+
+    /* Accents */
+    '--sfs-accent': seed.accent,
+    '--sfs-accent-rgb': channels(seed.accent),
+    '--sfs-accent-2': seed.accent2,
+    '--sfs-accent-2-rgb': channels(seed.accent2),
+    '--sfs-accent-3': seed.accent3,
+    '--sfs-accent-3-rgb': channels(seed.accent3),
+    '--sfs-accent-soft': dark ? lighten(seed.accent, 0.18) : darken(seed.accent, 0.12),
+    '--sfs-accent-strong': dark ? darken(seed.accent, 0.18) : darken(seed.accent, 0.24),
+    '--sfs-accent-text': accentText,
+    '--sfs-accent-2-text': ensureContrast(seed.accent2, surface, AA_TEXT),
+    '--sfs-accent-3-text': ensureContrast(seed.accent3, surface, AA_TEXT),
+    '--sfs-accent-text-soft': accentTextSoft,
+    '--sfs-accent-on-paper': ensureContrast(seed.accent, paper, AA_TEXT),
+    '--sfs-accent-2-on-paper': ensureContrast(seed.accent2, paper, AA_TEXT),
+    '--sfs-on-accent': onAccent,
+    '--sfs-on-accent-2': onAccent2,
+    '--sfs-on-accent-3': onAccent3,
+
+    /* Gradients — the app's signature, restated per galaxy */
+    '--sfs-gradient': `linear-gradient(135deg, ${seed.accent} 0%, ${seed.accent2} 100%)`,
+    '--sfs-gradient-soft': `linear-gradient(135deg, ${alpha(seed.accent, 0.22)} 0%, ${alpha(seed.accent2, 0.22)} 100%)`,
+    '--sfs-gradient-3': `linear-gradient(135deg, ${seed.accent} 0%, ${seed.accent3} 55%, ${seed.accent2} 100%)`,
+
+    /* Lines, focus, shadow */
+    '--sfs-border': border,
+    '--sfs-border-strong': borderStrong,
+    '--sfs-border-accent': alpha(seed.accent, dark ? 0.45 : 0.4),
+    '--sfs-focus': accentTextSoft,
+    '--sfs-shadow': dark ? 'rgb(0 0 0 / 0.45)' : 'rgb(15 23 42 / 0.12)',
+    '--sfs-shadow-strong': dark ? 'rgb(0 0 0 / 0.65)' : 'rgb(15 23 42 / 0.22)',
+    '--sfs-glow': alpha(seed.accent, dark ? 0.4 : 0.28),
+
+    /* Paper — always light, always dark-inked */
+    '--sfs-paper': paper,
+    '--sfs-paper-2': paper2,
+    '--sfs-paper-3': paper3,
+    '--sfs-on-paper': onPaper,
+    '--sfs-on-paper-muted': onPaperMuted,
+    '--sfs-paper-border': alpha(onPaper, 0.16),
+
+    /* Form controls get their own pair so a native <select> popup, which
+       inherits from the control rather than from the page, is legible too. */
+    '--sfs-field': dark ? over('#ffffff', 0.08, seed.space) : '#ffffff',
+    '--sfs-field-text': dark
+      ? ensureContrast('#ffffff', over('#ffffff', 0.08, seed.space), AAA_TEXT)
+      : ensureContrast('#0d1220', '#ffffff', AAA_TEXT),
+    '--sfs-field-border': border,
+    '--sfs-placeholder': textFaint,
+
+    /* The 3D scene */
+    '--sfs-galaxy-core': seed.galaxy.core,
+    '--sfs-galaxy-inner': seed.galaxy.inner,
+    '--sfs-galaxy-mid': seed.galaxy.mid,
+    '--sfs-galaxy-outer': seed.galaxy.outer,
+    '--sfs-galaxy-star': seed.galaxy.star,
+
+    ...statusVars,
+  };
+
+  return { ...seed, vars, measuredSurface: surface };
+}
+
+export const THEMES: Theme[] = THEME_SEEDS.map(buildTheme);
+
+export const THEME_IDS = THEMES.map(t => t.id);
+
+export function getTheme(id: string | null | undefined): Theme {
+  return THEMES.find(t => t.id === id) ?? THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
+}
+
+/** The default for a first-time visitor who has expressed a colour-scheme preference. */
+export function defaultThemeFor(prefersLight: boolean): string {
+  return prefersLight ? 'cartwheel' : DEFAULT_THEME_ID;
+}
+
+/* -------------------------------------------------------------------------- *
+ * Self-description, for the checker and the picker
+ * -------------------------------------------------------------------------- */
+
+/** Every (foreground, background, minimum) triple a theme promises to honour. */
+export interface ContrastClaim {
+  fg: string;
+  bg: string;
+  min: number;
+  label: string;
+}
+
+/**
+ * The contract `check:theme` enforces. It lives here rather than in the check
+ * script so that adding a token and forgetting to claim anything about it is
+ * visible in the same file that defines it.
+ */
+export function contrastClaims(theme: Theme): ContrastClaim[] {
+  const v = theme.vars;
+  const s = theme.measuredSurface;
+  const claims: ContrastClaim[] = [
+    { fg: v['--sfs-text'], bg: s, min: AAA_TEXT, label: 'text on surface' },
+    { fg: v['--sfs-text'], bg: v['--sfs-space'], min: AA_TEXT, label: 'text on space' },
+    { fg: v['--sfs-text'], bg: v['--sfs-surface-2'], min: AA_TEXT, label: 'text on surface-2' },
+    { fg: v['--sfs-text'], bg: v['--sfs-surface-3'], min: AA_TEXT, label: 'text on surface-3' },
+    { fg: v['--sfs-text-muted'], bg: s, min: AA_TEXT, label: 'muted on surface' },
+    { fg: v['--sfs-text-muted'], bg: v['--sfs-surface-3'], min: AA_LARGE, label: 'muted on surface-3' },
+    { fg: v['--sfs-text-faint'], bg: s, min: AA_LARGE, label: 'faint on surface' },
+    { fg: v['--sfs-accent-text'], bg: s, min: AA_TEXT, label: 'accent text on surface' },
+    { fg: v['--sfs-accent-2-text'], bg: s, min: AA_TEXT, label: 'accent-2 text on surface' },
+    { fg: v['--sfs-accent-3-text'], bg: s, min: AA_TEXT, label: 'accent-3 text on surface' },
+    { fg: v['--sfs-accent-on-paper'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'accent text on paper' },
+    { fg: v['--sfs-accent-2-on-paper'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'accent-2 text on paper' },
+    { fg: v['--sfs-on-accent'], bg: v['--sfs-accent'], min: AA_TEXT, label: 'ink on accent' },
+    { fg: v['--sfs-on-accent-2'], bg: v['--sfs-accent-2'], min: AA_TEXT, label: 'ink on accent-2' },
+    { fg: v['--sfs-on-accent-3'], bg: v['--sfs-accent-3'], min: AA_TEXT, label: 'ink on accent-3' },
+    { fg: v['--sfs-on-paper'], bg: v['--sfs-paper'], min: AAA_TEXT, label: 'ink on paper' },
+    { fg: v['--sfs-on-paper-muted'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'muted ink on paper' },
+    { fg: v['--sfs-on-paper'], bg: v['--sfs-paper-3'], min: AA_TEXT, label: 'ink on paper-3' },
+    { fg: v['--sfs-field-text'], bg: v['--sfs-field'], min: AAA_TEXT, label: 'field text on field' },
+    { fg: v['--sfs-placeholder'], bg: v['--sfs-field'], min: AA_LARGE, label: 'placeholder on field' },
+  ];
+  for (const name of ['success', 'warning', 'danger', 'info']) {
+    claims.push(
+      { fg: v[`--sfs-${name}-text`], bg: s, min: AA_TEXT, label: `${name} text on surface` },
+      { fg: v[`--sfs-${name}-on-paper`], bg: v['--sfs-paper'], min: AA_TEXT, label: `${name} text on paper` },
+      { fg: v[`--sfs-on-${name}`], bg: v[`--sfs-${name}`], min: AA_TEXT, label: `ink on ${name}` }
+    );
+  }
+  return claims;
+}
+
+/** `true` when the derivation actually delivered what the claim asks for. */
+export function claimHolds(claim: ContrastClaim): boolean {
+  return contrastRatio(claim.fg, claim.bg) >= claim.min - 0.001;
+}
+
+/** Does this theme paint a dark world? Used for the `.dark-mode` class. */
+export function themeIsDark(theme: Theme): boolean {
+  return theme.mode === 'dark' && isDark(theme.measuredSurface);
+}

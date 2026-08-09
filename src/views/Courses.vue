@@ -570,7 +570,7 @@ onUnmounted(() => {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -588,22 +588,22 @@ onUnmounted(() => {
 }
 
 .enroll-btn--enroll {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
 }
 
 .enroll-btn--unenroll {
-  background: linear-gradient(135deg, #48bb78, #38a169);
+  background: linear-gradient(135deg, var(--sfs-success, #48bb78), var(--sfs-success, #38a169));
 }
 
 .enroll-btn--unenroll:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e53e3e, #c53030);
+  background: linear-gradient(135deg, var(--sfs-danger, #e53e3e), var(--sfs-danger, #c53030));
 }
 
 .btn-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: enroll-spin 0.7s linear infinite;
 }

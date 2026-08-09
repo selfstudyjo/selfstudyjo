@@ -391,8 +391,8 @@ const CvSectionBody = defineComponent({
   width: 100%;
   max-width: 780px;
   min-height: 500px;
-  background: #ffffff;
-  color: #1f2937;
+  background: var(--sfs-paper, #ffffff);
+  color: var(--sfs-on-paper, #1f2937);
   border-radius: 6px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
   overflow: hidden;
@@ -423,7 +423,7 @@ const CvSectionBody = defineComponent({
 /* ── Banner header ─────────────────────────────────────────── */
 .cv-banner {
   background: var(--cv-accent);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   padding: 22px 26px;
   display: flex;
   align-items: center;
@@ -438,8 +438,8 @@ const CvSectionBody = defineComponent({
 .cv-plain-header { padding: 26px 30px 10px; }
 .cv-plain-header.centred { text-align: center; }
 .cv-plain-header h1 { font-size: 1.8rem; font-weight: 700; color: var(--cv-accent); }
-.cv-plain-header .cv-headline { font-size: 1rem; color: #374151; margin-top: 2px; }
-.cv-plain-header .cv-contact { font-size: 0.78rem; color: #4b5563; margin-top: 6px; }
+.cv-plain-header .cv-headline { font-size: 1rem; color: var(--sfs-accent-text, #374151); margin-top: 2px; }
+.cv-plain-header .cv-contact { font-size: 0.78rem; color: var(--sfs-accent-text, #4b5563); margin-top: 6px; }
 .cv-plain-header .cv-photo { margin-bottom: 10px; }
 .cv-plain-header.centred .cv-photo { margin-left: auto; margin-right: auto; }
 
@@ -510,14 +510,14 @@ const CvSectionBody = defineComponent({
 .cv-section-body :deep(.cv-entry-role) { font-weight: 700; }
 .cv-section-body :deep(.cv-entry-org) { font-weight: 700; color: var(--cv-accent); }
 .cv-section-body :deep(.cv-entry-dates) {
-  font-size: 0.76rem; color: #6b7280; font-style: italic; font-weight: 500;
+  font-size: 0.76rem; color: var(--sfs-text-faint, #6b7280); font-style: italic; font-weight: 500;
   white-space: nowrap;
 }
 
 /* Everything under an entry's title is shifted right of it. */
 .cv-section-body :deep(.cv-entry-body) { padding-left: var(--cv-indent-entry); }
 .cv-section-body :deep(.cv-entry-meta) {
-  font-size: 0.79rem; color: #6b7280; font-style: italic;
+  font-size: 0.79rem; color: var(--sfs-text-faint, #6b7280); font-style: italic;
 }
 .cv-section-body :deep(.cv-text) {
   margin: 3px 0; text-align: left; overflow-wrap: break-word;
@@ -534,10 +534,10 @@ const CvSectionBody = defineComponent({
 }
 
 .cv-section-body :deep(.cv-tech) {
-  font-size: 0.78rem; color: #4b5563; font-style: italic; margin-top: 3px;
+  font-size: 0.78rem; color: var(--sfs-accent-text, #4b5563); font-style: italic; margin-top: 3px;
 }
 .cv-section-body :deep(.cv-link) {
-  font-size: 0.78rem; color: #1d4ed8; word-break: break-all;
+  font-size: 0.78rem; color: var(--sfs-accent-text, #1d4ed8); word-break: break-all;
 }
 
 /* Sections whose whole body is one bare list (certifications, awards,
@@ -547,7 +547,7 @@ const CvSectionBody = defineComponent({
   padding-left: calc(var(--cv-indent-entry) + var(--cv-indent-bullet));
 }
 
-.cv-empty { padding: 40px 26px; text-align: center; color: #9ca3af; font-size: 0.9rem; }
+.cv-empty { padding: 40px 26px; text-align: center; color: var(--sfs-text-muted, #9ca3af); font-size: 0.9rem; }
 
 @media (max-width: 720px) {
   .cv-columns { grid-template-columns: 1fr; }

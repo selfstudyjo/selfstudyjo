@@ -8,34 +8,34 @@
 
 :root {
   /* Brand colors aligned with global style.css */
-  --pay-accent-1: #667eea;
-  --pay-accent-2: #764ba2;
-  --pay-accent-glow: rgba(102, 126, 234, 0.45);
-  --pay-accent-soft: rgba(102, 126, 234, 0.15);
+  --pay-accent-1: var(--sfs-accent, #667eea);
+  --pay-accent-2: var(--sfs-accent-2, #764ba2);
+  --pay-accent-glow: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  --pay-accent-soft: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
 
   /* Status */
-  --pay-success: #48bb78;
-  --pay-warning: #ed8936;
-  --pay-danger:  #fc8181;
-  --pay-info:    #0ea5e9;
+  --pay-success: var(--sfs-success, #48bb78);
+  --pay-warning: var(--sfs-warning, #ed8936);
+  --pay-danger:  var(--sfs-danger, #fc8181);
+  --pay-info:    var(--sfs-info, #0ea5e9);
 
   /* Text on dark galaxy */
-  --pay-text:        #ffffff;
-  --pay-text-strong: #e8eaff;
-  --pay-text-soft:   rgba(255, 255, 255, 0.78);
-  --pay-text-muted:  rgba(255, 255, 255, 0.55);
+  --pay-text:        var(--sfs-text, #ffffff);
+  --pay-text-strong: var(--sfs-text-muted, #e8eaff);
+  --pay-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --pay-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* Glass surfaces */
-  --pay-glass:        rgba(255, 255, 255, 0.06);
-  --pay-glass-strong: rgba(255, 255, 255, 0.09);
-  --pay-glass-hover:  rgba(255, 255, 255, 0.12);
-  --pay-border:       rgba(255, 255, 255, 0.12);
-  --pay-border-strong:rgba(255, 255, 255, 0.22);
+  --pay-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  --pay-glass-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
+  --pay-glass-hover:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  --pay-border:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  --pay-border-strong:rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
 
   /* Shadows / glows */
   --pay-shadow:       0 8px 32px rgba(0, 0, 0, 0.35);
-  --pay-shadow-soft:  0 8px 32px rgba(102, 126, 234, 0.18);
-  --pay-shadow-hover: 0 12px 40px rgba(102, 126, 234, 0.32);
+  --pay-shadow-soft:  0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  --pay-shadow-hover: 0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.32);
 
   /* Fluid type scale (mobile → desktop) */
   --pay-fs-xs:  clamp(0.72rem, 0.66rem + 0.3vw, 0.85rem);
@@ -125,11 +125,11 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: var(--pay-sp-sm);
-  background: linear-gradient(135deg, #ffffff 0%, var(--pay-accent-1) 60%, var(--pay-accent-2) 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--pay-accent-1) 60%, var(--pay-accent-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 0 40px rgba(102, 126, 234, 0.25);
+  text-shadow: 0 0 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
 }
 
 .subtitle {
@@ -185,9 +185,9 @@
   background: var(--pay-glass);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(252, 129, 129, 0.28);
+  border: 1px solid rgb(var(--sfs-danger-rgb, 252 129 129) / 0.28);
   border-radius: var(--pay-r-xl);
-  box-shadow: var(--pay-shadow), 0 0 40px rgba(252, 129, 129, 0.15);
+  box-shadow: var(--pay-shadow), 0 0 40px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.15);
   isolation: isolate;
 }
 
@@ -203,7 +203,7 @@
 .error-icon {
   font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem);
   margin-bottom: var(--pay-sp-md);
-  filter: drop-shadow(0 0 20px rgba(252, 129, 129, 0.5));
+  filter: drop-shadow(0 0 20px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5));
   animation: pay-pulse 2.4s ease-in-out infinite;
 }
 
@@ -233,22 +233,22 @@
   padding: 0.75rem 2rem;
   font-size: var(--pay-fs-md);
   font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--sfs-on-danger, #fff);
+  background: linear-gradient(135deg, var(--sfs-danger, #ef4444), var(--sfs-danger, #dc2626));
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
   border-radius: var(--pay-r-lg);
   cursor: pointer;
   transition: transform var(--pay-t), box-shadow var(--pay-t);
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 20px rgb(var(--sfs-danger-rgb, 239 68 68) / 0.3);
 }
 
 .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(239, 68, 68, 0.45);
+  box-shadow: 0 8px 28px rgb(var(--sfs-danger-rgb, 239 68 68) / 0.45);
 }
 
 .retry-btn:focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
 }
 
@@ -410,7 +410,7 @@
 }
 
 .tab-btn.active {
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: linear-gradient(135deg, var(--pay-accent-1) 0%, var(--pay-accent-2) 100%);
   border-color: transparent;
   box-shadow: 0 8px 24px var(--pay-accent-glow);
@@ -418,7 +418,7 @@
 }
 
 .tab-btn:focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
 }
 
@@ -441,7 +441,7 @@
 
 .accounts-list::-webkit-scrollbar { width: 8px; }
 .accounts-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border-radius: 4px;
 }
 .accounts-list::-webkit-scrollbar-thumb {
@@ -463,7 +463,7 @@
 .account-card.selected {
   border-color: var(--pay-accent-1);
   background:
-    linear-gradient(135deg, rgba(102, 126, 234, 0.10), rgba(118, 75, 162, 0.10)),
+    linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.1)),
     var(--pay-glass);
   box-shadow:
     0 8px 32px var(--pay-accent-glow),
@@ -471,7 +471,7 @@
 }
 
 .account-card:focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
 }
 
@@ -529,10 +529,10 @@
   justify-content: center;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, #10b981, #34d399);
+  color: var(--sfs-on-success, #fff);
+  background: linear-gradient(135deg, var(--sfs-success, #10b981), var(--sfs-success, #34d399));
   border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 16px rgb(var(--sfs-success-rgb, 16 185 129) / 0.4);
   opacity: 0;
   transform: scale(0.8);
   transition: opacity var(--pay-t), transform var(--pay-t);
@@ -585,13 +585,13 @@
 }
 
 .status.active {
-  background: rgba(72, 187, 120, 0.15);
-  color: #6ee7b7;
-  border-color: rgba(72, 187, 120, 0.35);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+  color: var(--sfs-success-text, #6ee7b7);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
 
 .status.inactive {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   color: var(--pay-text-muted);
   border-color: var(--pay-border);
 }
@@ -706,7 +706,7 @@
 }
 
 .btn:focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
 }
 
@@ -723,7 +723,7 @@
 }
 
 .pay-btn {
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: linear-gradient(135deg, var(--pay-accent-1), var(--pay-accent-2));
   border-color: transparent;
   box-shadow: 0 6px 22px var(--pay-accent-glow);
@@ -737,7 +737,7 @@
   inset: 0;
   background: linear-gradient(120deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.18) 50%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18) 50%,
     transparent 100%);
   transform: translateX(-100%);
   transition: transform 0.7s ease;
@@ -848,7 +848,7 @@
   .no-accounts,
   .tab-btn,
   .btn {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.6);
   }
 
   .plan-price,

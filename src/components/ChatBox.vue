@@ -94,7 +94,20 @@
                     <span v-else-if="message.sender === 'admin'" class="sender-admin">👨‍🏫 Support</span>
                     <span v-else class="sender-user">You</span>
                   </div>
-                  <div class="message-text">{{ message.message }}</div>
+                  <!--
+                    Support replies are where a link matters most: an operator
+                    answering a question almost always sends one. `on-fill`
+                    because the visitor's own messages sit on the accent
+                    gradient, where the surface-derived link ink would be
+                    unreadable — the fill decides the ink, not the page.
+                  -->
+                  <RichText
+                    tag="div"
+                    class="message-text"
+                    :text="message.message"
+                    :on-fill="message.sender === 'anonymous'"
+                    :mentions="false"
+                  />
                   <div class="message-time">
                     {{ formatTime(message.timestamp) }}
                   </div>
@@ -154,6 +167,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import RichText from '@/components/RichText.vue';
 import {
   getUserIP,
   getChatRoom,
@@ -443,45 +457,45 @@ onUnmounted(() => {
    ========================================================================== */
 .chat-wrapper {
   /* brand (aligned with style.css :root --chat-primary) */
-  --cb-primary:        #667eea;
-  --cb-primary-dark:   #5a67d8;
-  --cb-secondary:      #764ba2;
-  --cb-accent:         #818cf8;
-  --cb-gradient:       linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --cb-gradient-hover: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  --cb-primary:        var(--sfs-accent, #667eea);
+  --cb-primary-dark:   var(--sfs-accent, #5a67d8);
+  --cb-secondary:      var(--sfs-accent-2, #764ba2);
+  --cb-accent:         var(--sfs-accent-soft, #818cf8);
+  --cb-gradient:       linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --cb-gradient-hover: linear-gradient(135deg, var(--sfs-accent, #5a67d8) 0%, var(--sfs-accent-2, #6b46c1) 100%);
 
   /* glass surfaces — translucent so galaxy bleeds through */
-  --cb-glass-1:        rgba(15, 17, 40, 0.62);   /* window */
-  --cb-glass-2:        rgba(15, 17, 40, 0.42);   /* messages area */
-  --cb-glass-3:        rgba(255, 255, 255, 0.06); /* input field */
-  --cb-glass-3-focus:  rgba(255, 255, 255, 0.10);
-  --cb-bubble-in:      rgba(255, 255, 255, 0.07);
-  --cb-border:         rgba(255, 255, 255, 0.10);
-  --cb-border-strong:  rgba(255, 255, 255, 0.20);
+  --cb-glass-1:        rgb(var(--sfs-shade-rgb, 15 17 40) / 0.62);   /* window */
+  --cb-glass-2:        rgb(var(--sfs-shade-rgb, 15 17 40) / 0.42);   /* messages area */
+  --cb-glass-3:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06); /* input field */
+  --cb-glass-3-focus:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --cb-bubble-in:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  --cb-border:         rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --cb-border-strong:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 
   /* blurs */
   --cb-blur:           blur(22px) saturate(160%);
   --cb-blur-soft:      blur(14px) saturate(140%);
 
   /* text — light on dark glass */
-  --cb-text:           #f1f3f9;
-  --cb-text-muted:     rgba(241, 243, 249, 0.78);
-  --cb-text-subtle:    rgba(241, 243, 249, 0.55);
-  --cb-text-on-primary:#ffffff;
+  --cb-text:           var(--sfs-text-muted, #f1f3f9);
+  --cb-text-muted:     rgb(var(--sfs-accent-rgb, 241 243 249) / 0.78);
+  --cb-text-subtle:    rgb(var(--sfs-accent-rgb, 241 243 249) / 0.55);
+  --cb-text-on-primary:var(--sfs-text, #ffffff);
 
   /* status */
-  --cb-success:        #48bb78;
-  --cb-warning:        #ed8936;
-  --cb-danger:         #fc8181;
-  --cb-danger-soft:    #fed7d7;
+  --cb-success:        var(--sfs-success, #48bb78);
+  --cb-warning:        var(--sfs-warning, #ed8936);
+  --cb-danger:         var(--sfs-danger, #fc8181);
+  --cb-danger-soft:    var(--sfs-danger, #fed7d7);
 
   /* shadows / glow */
   --cb-shadow-sm:      0 4px 14px rgba(0, 0, 0, 0.28);
   --cb-shadow-md:      0 10px 32px rgba(0, 0, 0, 0.4);
   --cb-shadow-lg:      0 24px 60px rgba(0, 0, 0, 0.55),
-                        0 8px 32px rgba(102, 126, 234, 0.18);
-  --cb-shadow-brand:   0 10px 30px rgba(102, 126, 234, 0.45);
-  --cb-glow:           0 0 24px rgba(129, 140, 248, 0.35);
+                        0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  --cb-shadow-brand:   0 10px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  --cb-glow:           0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 
   /* radii */
   --cb-r-sm:           10px;
@@ -513,7 +527,7 @@ onUnmounted(() => {
   min-height: 44px;
   border-radius: var(--cb-r-full);
   background: var(--cb-gradient);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   color: var(--cb-text-on-primary);
   cursor: pointer;
   display: flex;
@@ -529,7 +543,7 @@ onUnmounted(() => {
 .chat-toggle-btn:hover {
   transform: translateY(-3px) scale(1.05);
   background: var(--cb-gradient-hover);
-  box-shadow: 0 14px 35px rgba(102, 126, 234, 0.6),
+  box-shadow: 0 14px 35px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.6),
               inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .chat-toggle-btn:active { transform: scale(0.96); }
@@ -542,8 +556,8 @@ onUnmounted(() => {
   position: absolute;
   top: -0.35rem;
   right: -0.35rem;
-  background: linear-gradient(135deg, #fc8181, #f56565);
-  color: #fff;
+  background: linear-gradient(135deg, var(--sfs-danger, #fc8181), var(--sfs-danger, #f56565));
+  color: var(--sfs-on-danger, #fff);
   font-size: 0.7rem;
   font-weight: 700;
   min-width: 1.35rem;
@@ -553,8 +567,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 0.4rem;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 10px rgba(245, 101, 101, 0.6);
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.85);
+  box-shadow: 0 2px 10px rgb(var(--sfs-danger-rgb, 245 101 101) / 0.6);
   animation: bounce-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -600,14 +614,14 @@ onUnmounted(() => {
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
 }
 .chat-header::before {
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.18), transparent 55%),
-    radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.08), transparent 50%);
+    radial-gradient(circle at 20% 30%, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18), transparent 55%),
+    radial-gradient(circle at 90% 90%, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08), transparent 50%);
   pointer-events: none;
 }
 
@@ -625,27 +639,27 @@ onUnmounted(() => {
   border-radius: 50%;
   background: var(--cb-success);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.3);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-success-rgb, 72 187 120) / 0.3);
 }
 .status-indicator.online {
   background: var(--cb-success);
   animation: pulse-dot 2s infinite;
 }
 .status-indicator.offline {
-  background: #a0aec0;
-  box-shadow: 0 0 0 3px rgba(160, 174, 192, 0.25);
+  background: var(--sfs-accent, #a0aec0);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 160 174 192) / 0.25);
 }
 .status-indicator.reconnecting {
   background: var(--cb-warning);
   animation: pulse-dot 1.2s infinite;
-  box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.3);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
 }
 
 .chat-header h3 {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -655,18 +669,18 @@ onUnmounted(() => {
 .status-text {
   font-size: 0.72rem;
   opacity: 0.95;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.92);
   white-space: nowrap;
 }
 .status-text.offline-text     { color: var(--cb-danger-soft); }
-.status-text.reconnecting-text{ color: #ffe4c4; }
+.status-text.reconnecting-text{ color: var(--sfs-warning-text, #ffe4c4); }
 
 .header-right { display: flex; gap: 0.4rem; flex-shrink: 0; }
 
 .header-btn {
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  color: var(--sfs-text, #fff);
   width: 2rem;
   height: 2rem;
   min-width: 32px;
@@ -680,8 +694,8 @@ onUnmounted(() => {
   backdrop-filter: blur(6px);
 }
 .header-btn:hover {
-  background: rgba(255, 255, 255, 0.32);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.32);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
   transform: translateY(-1px);
 }
 .header-btn svg { width: 1rem; height: 1rem; }
@@ -709,7 +723,7 @@ onUnmounted(() => {
 .messages-container::-webkit-scrollbar { width: 6px; }
 .messages-container::-webkit-scrollbar-track { background: transparent; }
 .messages-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #667eea, #764ba2);
+  background: linear-gradient(180deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
   border-radius: var(--cb-r-full);
 }
 .messages-container::-webkit-scrollbar-thumb:hover { background: var(--cb-accent); }
@@ -737,7 +751,7 @@ onUnmounted(() => {
   border-top-color: var(--cb-accent);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
-  box-shadow: 0 0 18px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
 }
 
 .error-state {
@@ -750,13 +764,13 @@ onUnmounted(() => {
   gap: 0.9rem;
   padding: 1.25rem;
 }
-.error-state svg { width: 3rem; height: 3rem; filter: drop-shadow(0 0 12px rgba(245, 101, 101, 0.5)); }
+.error-state svg { width: 3rem; height: 3rem; filter: drop-shadow(0 0 12px rgb(var(--sfs-danger-rgb, 245 101 101) / 0.5)); }
 .error-state p { color: var(--cb-text-muted); line-height: 1.5; font-size: 0.875rem; margin: 0; }
 
 .retry-btn {
   background: var(--cb-gradient);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--sfs-on-accent, #fff);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   padding: 0.65rem 1.35rem;
   border-radius: var(--cb-r-md);
   cursor: pointer;
@@ -770,7 +784,7 @@ onUnmounted(() => {
 .retry-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   background: var(--cb-gradient-hover);
-  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5),
+  box-shadow: 0 12px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .retry-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -778,12 +792,12 @@ onUnmounted(() => {
 .welcome-message {
   text-align: center;
   padding: 1.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: var(--cb-text);
   border-radius: var(--cb-r-lg);
-  box-shadow: var(--cb-shadow-sm), 0 0 24px rgba(102, 126, 234, 0.1);
+  box-shadow: var(--cb-shadow-sm), 0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1);
   border: 1px solid var(--cb-border);
 }
 .welcome-icon {
@@ -791,14 +805,14 @@ onUnmounted(() => {
   margin-bottom: 0.75rem;
   display: inline-block;
   animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 4px 14px rgba(129, 140, 248, 0.35));
+  filter: drop-shadow(0 4px 14px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35));
 }
 .welcome-message h4 {
   margin: 0 0 0.5rem 0;
   color: var(--cb-text);
   font-size: 1.05rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -834,7 +848,7 @@ onUnmounted(() => {
 .message.unread .message-bubble {
   box-shadow: 0 0 0 2px var(--cb-accent),
               0 4px 14px rgba(0, 0, 0, 0.28),
-              0 0 22px rgba(129, 140, 248, 0.35);
+              0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 }
 
 .message-bubble {
@@ -857,8 +871,8 @@ onUnmounted(() => {
   background: var(--cb-gradient);
   color: var(--cb-text-on-primary);
   border-bottom-right-radius: 0.35rem;
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.35),
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .message-incoming .message-bubble {
@@ -871,11 +885,11 @@ onUnmounted(() => {
   margin-bottom: 0.25rem;
   opacity: 0.9;
 }
-.message-outgoing .message-sender { color: rgba(255, 255, 255, 0.95); }
+.message-outgoing .message-sender { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.95); }
 .message-incoming .message-sender { color: var(--cb-text-muted); }
-.sender-system { color: #68d391 !important; }
-.sender-admin  { color: #a3bffa !important; }
-.message-outgoing .sender-user { color: rgba(255, 255, 255, 0.95); }
+.sender-system { color: var(--sfs-success-text, #68d391) !important; }
+.sender-admin  { color: var(--sfs-text-muted, #a3bffa) !important; }
+.message-outgoing .sender-user { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.95); }
 
 .message-text {
   word-wrap: break-word;
@@ -946,11 +960,11 @@ onUnmounted(() => {
   background-color: var(--cb-glass-3-focus) !important;
   color: var(--cb-text) !important;
   -webkit-text-fill-color: var(--cb-text) !important;
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.28),
-              0 0 18px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.28),
+              0 0 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
 }
 .message-input:disabled {
-  background-color: rgba(255, 255, 255, 0.03) !important;
+  background-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03) !important;
   color: var(--cb-text-subtle) !important;
   -webkit-text-fill-color: var(--cb-text-subtle) !important;
   cursor: not-allowed;
@@ -971,8 +985,8 @@ onUnmounted(() => {
   min-width: 2.75rem;
   border-radius: var(--cb-r-md);
   background: var(--cb-gradient);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  color: var(--sfs-on-accent, #fff);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -986,7 +1000,7 @@ onUnmounted(() => {
 .send-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   background: var(--cb-gradient-hover);
-  box-shadow: 0 10px 26px rgba(102, 126, 234, 0.55),
+  box-shadow: 0 10px 26px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .send-btn:active:not(:disabled) { transform: translateY(0); }
@@ -1008,7 +1022,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 0 1.1rem;
   background: var(--cb-gradient);
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1016,7 +1030,7 @@ onUnmounted(() => {
 .chat-minimized::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.14), transparent 55%);
+  background: radial-gradient(circle at 20% 50%, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14), transparent 55%);
   pointer-events: none;
 }
 .minimized-content {
@@ -1031,15 +1045,15 @@ onUnmounted(() => {
   font-size: 0.88rem;
   font-weight: 600;
   flex: 1;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 .minimized-badge {
-  background: linear-gradient(135deg, #fc8181, #f56565);
-  color: #fff;
+  background: linear-gradient(135deg, var(--sfs-danger, #fc8181), var(--sfs-danger, #f56565));
+  color: var(--sfs-on-danger, #fff);
   font-size: 0.7rem;
   font-weight: 700;
   min-width: 1.3rem;
@@ -1049,8 +1063,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(245, 101, 101, 0.5);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  box-shadow: 0 2px 8px rgb(var(--sfs-danger-rgb, 245 101 101) / 0.5);
 }
 
 /* ==========================================================================
@@ -1073,7 +1087,7 @@ onUnmounted(() => {
 }
 @keyframes pulse-ring {
   0%, 100% { box-shadow: var(--cb-shadow-brand), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
-  50%      { box-shadow: 0 0 0 14px rgba(102, 126, 234, 0),
+  50%      { box-shadow: 0 0 0 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0),
                           inset 0 1px 0 rgba(255, 255, 255, 0.25); }
 }
 @keyframes bounce-in {
@@ -1200,7 +1214,7 @@ onUnmounted(() => {
 .message-input:focus-visible {
   outline: 2px solid var(--cb-accent);
   outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1221,8 +1235,8 @@ onUnmounted(() => {
 }
 
 @media (prefers-contrast: high) {
-  .chat-window      { background: rgba(5, 5, 20, 0.92); border-color: #fff; }
-  .message-bubble   { border-color: rgba(255, 255, 255, 0.4); }
-  .message-input    { border-color: #fff !important; }
+  .chat-window      { background: rgb(var(--sfs-surface-rgb, 5 5 20) / 0.92); border-color: var(--sfs-border-strong, #fff); }
+  .message-bubble   { border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4); }
+  .message-input    { border-color: var(--sfs-border-strong, #fff) !important; }
 }
 </style>

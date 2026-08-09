@@ -12,30 +12,30 @@
 
 /* ---------- design tokens (page-scoped suffix to avoid global clash) ---------- */
 .runbook-details-container {
-  --rd-text:            #ffffff;
-  --rd-text-soft:       #e8eaff;
-  --rd-text-mute:       rgba(255, 255, 255, 0.72);
-  --rd-text-dim:        rgba(255, 255, 255, 0.55);
+  --rd-text:            var(--sfs-text, #ffffff);
+  --rd-text-soft:       var(--sfs-text-muted, #e8eaff);
+  --rd-text-mute:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+  --rd-text-dim:        rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
-  --rd-accent:          #818cf8;
-  --rd-accent-2:        #a78bfa;
-  --rd-grad:            linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --rd-grad-text:       linear-gradient(135deg, #c7d2fe 0%, #a78bfa 50%, #f0abfc 100%);
-  --rd-danger:          #fc8181;
+  --rd-accent:          var(--sfs-accent-soft, #818cf8);
+  --rd-accent-2:        var(--sfs-accent-2, #a78bfa);
+  --rd-grad:            linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --rd-grad-text:       linear-gradient(135deg, var(--sfs-text-muted, #c7d2fe) 0%, var(--sfs-text-muted, #a78bfa) 50%, var(--sfs-text-muted, #f0abfc) 100%);
+  --rd-danger:          var(--sfs-danger, #fc8181);
 
-  --rd-glass:           rgba(255, 255, 255, 0.05);
-  --rd-glass-strong:    rgba(255, 255, 255, 0.08);
-  --rd-glass-hover:     rgba(255, 255, 255, 0.10);
-  --rd-glass-code:      rgba(8, 10, 28, 0.55);
-  --rd-border:          rgba(255, 255, 255, 0.10);
-  --rd-border-strong:   rgba(255, 255, 255, 0.22);
-  --rd-border-accent:   rgba(129, 140, 248, 0.40);
+  --rd-glass:           rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --rd-glass-strong:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --rd-glass-hover:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --rd-glass-code:      rgb(var(--sfs-shade-rgb, 8 10 28) / 0.55);
+  --rd-border:          rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --rd-border-strong:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --rd-border-accent:   rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4);
   --rd-blur:            blur(16px) saturate(150%);
   --rd-blur-soft:       blur(10px) saturate(140%);
 
-  --rd-shadow:          0 8px 32px rgba(102, 126, 234, 0.15);
-  --rd-shadow-hover:    0 12px 40px rgba(102, 126, 234, 0.28);
-  --rd-glow:            0 0 24px rgba(129, 140, 248, 0.35);
+  --rd-shadow:          0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  --rd-shadow-hover:    0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28);
+  --rd-glow:            0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 
   --rd-r-sm:  10px;
   --rd-r-md:  14px;
@@ -99,7 +99,7 @@
               color var(--rd-t-fast);
 }
 .back-btn:hover {
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--rd-grad);
   border-color: transparent;
   transform: translateX(-4px);
@@ -142,12 +142,12 @@
 .loading-spinner {
   width: clamp(40px, 6vw, 64px);
   height: clamp(40px, 6vw, 64px);
-  border: 3px solid rgba(129, 140, 248, 0.18);
+  border: 3px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
   border-top-color: var(--rd-accent);
   border-radius: 50%;
   margin-bottom: 1rem;
   animation: spin 1s linear infinite;
-  box-shadow: 0 0 20px rgba(129, 140, 248, 0.3);
+  box-shadow: 0 0 20px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 }
 .loading-container p {
   color: var(--rd-text-mute);
@@ -158,13 +158,13 @@
 .error-icon {
   font-size: clamp(2.5rem, 6vw, 3.5rem);
   margin-bottom: 0.6rem;
-  filter: drop-shadow(0 0 18px rgba(252, 129, 129, 0.45));
+  filter: drop-shadow(0 0 18px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45));
 }
 .error-container h3,
 .empty-sections h3 {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin: 0;
 }
 .error-container p,
@@ -180,26 +180,26 @@
   padding: 0.65rem 1.4rem;
   font-size: clamp(0.85rem, 1.6vw, 0.95rem);
   font-weight: 600;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--rd-grad);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   border-radius: var(--rd-r-md);
   cursor: pointer;
   transition: transform var(--rd-t-fast), box-shadow var(--rd-t-fast);
-  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.35),
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
   min-height: 44px;
 }
 .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(102, 126, 234, 0.5),
+  box-shadow: 0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .empty-icon {
   font-size: clamp(2.5rem, 6vw, 3.5rem);
   margin-bottom: 0.6rem;
-  filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.4));
+  filter: drop-shadow(0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4));
 }
 
 /* ============================================================
@@ -228,7 +228,7 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   /* outline shadow, NOT a dark text color */
-  filter: drop-shadow(0 4px 18px rgba(118, 75, 162, 0.35));
+  filter: drop-shadow(0 4px 18px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.35));
 }
 
 .runbook-meta {
@@ -332,11 +332,11 @@
   font-size: clamp(0.85rem, 1.6vw, 1rem);
   font-weight: 700;
   /* Independent visual — keep brand gradient regardless of inline color */
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--rd-grad);
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
 }
 
 .section-title {
@@ -374,7 +374,7 @@
    ============================================================ */
 .code-block-container {
   margin-top: 0.5rem;
-  border: 1px solid rgba(129, 140, 248, 0.22);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.22);
   border-radius: var(--rd-r-md);
   background: var(--rd-glass-code);
   -webkit-backdrop-filter: var(--rd-blur-soft);
@@ -390,8 +390,8 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(129, 140, 248, 0.18);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+  border-bottom: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
 }
 
 .code-label {
@@ -400,7 +400,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--rd-accent-2);
-  text-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
+  text-shadow: 0 0 12px rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.5);
 }
 
 .copy-btn {
@@ -410,9 +410,9 @@
   padding: 0.35rem 0.85rem;
   font-size: clamp(0.75rem, 1.3vw, 0.85rem);
   font-weight: 600;
-  color: #fff;
-  background: rgba(129, 140, 248, 0.18);
-  border: 1px solid rgba(129, 140, 248, 0.35);
+  color: var(--sfs-text, #fff);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   border-radius: var(--rd-r-sm);
   cursor: pointer;
   transition: all var(--rd-t-fast);
@@ -420,15 +420,15 @@
   white-space: nowrap;
 }
 .copy-btn:hover {
-  background: rgba(129, 140, 248, 0.32);
-  border-color: rgba(129, 140, 248, 0.55);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.32);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
   transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(129, 140, 248, 0.35);
+  box-shadow: 0 0 16px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 }
 .copy-btn.copied {
-  color: #ffffff;
-  background: rgba(72, 187, 120, 0.30);
-  border-color: rgba(72, 187, 120, 0.55);
+  color: var(--sfs-text, #ffffff);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.3);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.55);
   animation: copiedAnimation 0.3s ease;
 }
 
@@ -438,7 +438,7 @@
   overflow-x: auto;
   max-width: 100%;
   scrollbar-width: thin;
-  scrollbar-color: rgba(129, 140, 248, 0.45) transparent;
+  scrollbar-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45) transparent;
 }
 .code-block::-webkit-scrollbar {
   height: 8px;
@@ -448,7 +448,7 @@
   background: transparent;
 }
 .code-block::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
   border-radius: 8px;
 }
 
@@ -459,7 +459,7 @@
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #f0f4ff;   /* explicit light — code never inherits a dark section color */
+  color: var(--sfs-text-muted, #f0f4ff);   /* explicit light — code never inherits a dark section color */
 }
 
 /* ============================================================
@@ -551,7 +551,7 @@
 .copy-btn:focus-visible {
   outline: 2px solid var(--rd-accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -566,10 +566,10 @@
 }
 
 @media (prefers-contrast: high) {
-  .section-card { border-color: #fff; }
+  .section-card { border-color: var(--sfs-paper-border, #fff); }
   .back-btn,
   .retry-btn,
-  .copy-btn { border-color: #fff; color: #fff; }
+  .copy-btn { border-color: var(--sfs-border-strong, #fff); color: var(--sfs-on-accent, #fff); }
   /* Do NOT force background — inline section colors must stand */
 }
 
@@ -580,14 +580,14 @@
   .runbook-details-container { color: #000; }
   .back-btn, .retry-btn, .copy-btn { display: none !important; }
   .section-card {
-    background: #fff;
-    color: #000;
-    border: 1px solid #ccc;
+    background: var(--sfs-paper, #fff);
+    color: var(--sfs-on-paper, #000);
+    border: 1px solid var(--sfs-paper-border, #ccc);
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     page-break-inside: avoid;
   }
-  .code-block-container { background: #f7f7f7; border-color: #ccc; }
+  .code-block-container { background: var(--sfs-paper, #f7f7f7); border-color: var(--sfs-paper-border, #ccc); }
   .code-block code { color: #000; }
 }

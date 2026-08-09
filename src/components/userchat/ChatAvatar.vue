@@ -6,7 +6,7 @@
   >
     <!-- The clipping happens on this inner layer, not on the root — see the note
          above `.uc-dot`. -->
-    <span class="uc-face" :style="{ background: loaded ? 'transparent' : colour }">
+    <span class="uc-face" :style="loaded ? { background: 'transparent' } : paint(colour)">
       <img
         v-if="src && !failed"
         :src="src"
@@ -24,6 +24,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { paint } from '@/theme/contrast';
 
 import { avatarDirectory } from './avatarDirectory';
 
@@ -158,7 +159,7 @@ function onError() {
   height: 100%;
   border-radius: 50%;
   overflow: hidden;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font-weight: 700;
   transition: background 0.2s;
 }
@@ -182,7 +183,7 @@ function onError() {
 .uc-size-lg { width: 46px; height: 46px; min-width: 46px; min-height: 46px; font-size: 0.86rem; }
 .uc-size-xl { width: 72px; height: 72px; min-width: 72px; min-height: 72px; font-size: 1.3rem; }
 
-.uc-ring { box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff), 0 0 0 4px rgba(129, 140, 248, 0.5); }
+.uc-ring { box-shadow: 0 0 0 2px var(--uc-avatar-cut, #fff), 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5); }
 
 /*
   The presence dot.

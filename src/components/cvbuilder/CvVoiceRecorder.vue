@@ -283,8 +283,8 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 
 <style scoped>
 .voice-recorder {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   border-radius: 14px;
   padding: 18px;
 }
@@ -299,37 +299,37 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 }
 
 .vr-title { display: flex; align-items: center; gap: 10px; }
-.vr-title h4 { color: #fff; font-size: 1.05rem; font-weight: 600; }
+.vr-title h4 { color: var(--sfs-text, #fff); font-size: 1.05rem; font-weight: 600; }
 
 .vr-dot {
   width: 10px; height: 10px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
 }
-.vr-dot.live { background: #ef4444; animation: vr-pulse 1.2s infinite; }
+.vr-dot.live { background: var(--sfs-danger, #ef4444); animation: vr-pulse 1.2s infinite; }
 @keyframes vr-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgb(var(--sfs-danger-rgb, 239 68 68) / 0.55); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 7px rgb(var(--sfs-danger-rgb, 239 68 68) / 0); }
 }
 
 .vr-meta {
   display: flex; gap: 12px; align-items: center;
-  color: rgba(255, 255, 255, 0.6); font-size: 0.82rem; font-variant-numeric: tabular-nums;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.6); font-size: 0.82rem; font-variant-numeric: tabular-nums;
 }
-.vr-pending { color: #a5b4fc; }
+.vr-pending { color: var(--sfs-text-muted, #a5b4fc); }
 
 .vr-hint {
-  color: rgba(255, 255, 255, 0.62);
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
   font-size: 0.86rem;
   line-height: 1.5;
   margin-bottom: 12px;
 }
 
 .vr-level {
-  height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.1);
+  height: 5px; border-radius: 3px; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   overflow: hidden; margin-bottom: 12px;
 }
 .vr-level-bar {
-  height: 100%; background: linear-gradient(90deg, #667eea, #a855f7);
+  height: 100%; background: linear-gradient(90deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #a855f7));
   transition: width 90ms linear;
 }
 
@@ -346,31 +346,31 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 .vr-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
 .vr-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.vr-btn-record { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
-.vr-btn-stop { background: #ef4444; color: #fff; }
+.vr-btn-record { background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2)); color: var(--sfs-on-accent, #fff); }
+.vr-btn-stop { background: var(--sfs-danger, #ef4444); color: var(--sfs-on-danger, #fff); }
 .vr-btn-ghost {
-  background: transparent; color: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.75);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 }
 
-.vr-error { color: #fca5a5; font-size: 0.83rem; flex: 1 1 220px; }
+.vr-error { color: var(--sfs-danger-text, #fca5a5); font-size: 0.83rem; flex: 1 1 220px; }
 
 .vr-transcript-wrap, .vr-notes-wrap { margin-bottom: 12px; }
 
 .vr-transcript-wrap label, .vr-notes-wrap label {
-  display: block; color: rgba(255, 255, 255, 0.8);
+  display: block; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.8);
   font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;
 }
-.vr-editable { color: rgba(255, 255, 255, 0.45); font-weight: 400; }
+.vr-editable { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45); font-weight: 400; }
 
 .vr-transcript, .vr-notes {
-  width: 100%; background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 10px;
-  color: #fff; padding: 11px 13px; font-size: 0.9rem; line-height: 1.55;
+  width: 100%; background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); border-radius: 10px;
+  color: var(--sfs-text, #fff); padding: 11px 13px; font-size: 0.9rem; line-height: 1.55;
   font-family: inherit; resize: vertical;
 }
 .vr-transcript:focus, .vr-notes:focus {
-  outline: none; border-color: rgba(102, 126, 234, 0.7);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.16);
+  outline: none; border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.7);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
 }
 </style>

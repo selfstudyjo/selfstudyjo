@@ -169,11 +169,11 @@ h1 {
   padding: 2px 8px;
   border-radius: var(--uc-r-full);
   background: var(--uc-brand-grad);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font-size: var(--uc-fs-xs);
   font-weight: 700;
   line-height: 1.4;
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.45);
+  box-shadow: 0 2px 10px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
 }
 
 .head-actions { display: flex; align-items: center; gap: 6px; }
@@ -186,15 +186,15 @@ h1 {
   border: 0;
   border-radius: var(--uc-r-full);
   background: var(--uc-brand-grad);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font: inherit;
   font-size: var(--uc-fs-sm);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.38);
+  box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.38);
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast);
 }
-.new-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(102, 126, 234, 0.5); }
+.new-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5); }
 .new-btn:active { transform: none; }
 .new-btn.wide { margin-top: 6px; }
 
@@ -214,9 +214,9 @@ h1 {
 }
 .search input::placeholder { color: var(--uc-text-dim); }
 .search input:focus {
-  border-color: rgba(129, 140, 248, 0.5);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
   background: var(--uc-surface-2);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.16);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
 }
 .clear {
   position: absolute;
@@ -249,9 +249,9 @@ h1 {
   border-radius: var(--uc-r-md);
   background: linear-gradient(
     100deg,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0.10) 50%,
-    rgba(255, 255, 255, 0.04) 70%
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 30%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1) 50%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 70%
   );
   background-size: 220% 100%;
   animation: shimmer 1.4s infinite;
@@ -269,7 +269,7 @@ h1 {
   color: var(--uc-text-dim);
   line-height: 1.55;
 }
-.uc-empty svg { color: rgba(129, 140, 248, 0.45); margin-bottom: 4px; }
+.uc-empty svg { color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45); margin-bottom: 4px; }
 .uc-empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
 .uc-empty.terse { padding: 30px 18px; }
 

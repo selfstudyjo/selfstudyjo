@@ -11,7 +11,10 @@
     "check:photomask": "vite build --config tools/photomask-check/vite.config.ts && node tools/photomask-check/dist/check.mjs",
     "check:drawengine": "vite build --config tools/drawengine-check/vite.config.ts && node tools/drawengine-check/dist/check.mjs",
     "check:chatmedia": "vite build --config tools/chatmedia-check/vite.config.ts && node tools/chatmedia-check/dist/check.mjs",
-    "check:appnav": "vite build --config tools/appnav-check/vite.config.ts && node tools/appnav-check/dist/check.mjs"
+    "check:appnav": "vite build --config tools/appnav-check/vite.config.ts && node tools/appnav-check/dist/check.mjs",
+    "check:theme": "vite build --config tools/theme-check/vite.config.ts && node tools/theme-check/dist/check.mjs",
+    "check:linkify": "vite build --config tools/linkify-check/vite.config.ts && node tools/linkify-check/dist/check.mjs",
+    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:appnav && npm run check:theme && npm run check:linkify"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

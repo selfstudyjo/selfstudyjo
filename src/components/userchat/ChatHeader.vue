@@ -106,7 +106,7 @@ const name = computed(() => displayName(props.room, props.userId));
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  background: rgba(10, 12, 30, 0.62);
+  background: rgb(var(--sfs-shade-rgb, 10 12 30) / 0.62);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   border-bottom: 1px solid var(--uc-border);
@@ -126,8 +126,8 @@ const name = computed(() => displayName(props.room, props.userId));
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgba(102, 126, 234, 0.55) 0%,
-    rgba(118, 75, 162, 0.35) 38%,
+    rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55) 0%,
+    rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.35) 38%,
     transparent 78%
   );
   pointer-events: none;

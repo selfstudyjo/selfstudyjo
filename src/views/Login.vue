@@ -193,8 +193,8 @@ onMounted(() => {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
+  border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   vertical-align: middle;
@@ -214,10 +214,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #e7ebff;
-  background: rgba(102, 126, 234, 0.14);
-  border: 1px solid rgba(129, 140, 248, 0.45);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.08) inset;
+  color: var(--sfs-text-muted, #e7ebff);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45);
+  box-shadow: 0 0 0 1px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.08) inset;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
@@ -225,23 +225,23 @@ onMounted(() => {
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.5));
+  filter: drop-shadow(0 0 6px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5));
 }
 
 .login-alert.alert-info .alert-text {
   flex: 1;
-  color: #e7ebff;
+  color: var(--sfs-text-muted, #e7ebff);
   font-weight: 500;
   letter-spacing: 0.2px;
 }
 
 .login-alert.alert-info .alert-close {
-  color: #c7d2fe;
+  color: var(--sfs-text-muted, #c7d2fe);
 }
 
 .login-alert.alert-info .alert-close:hover {
-  color: #ffffff;
-  background: rgba(129, 140, 248, 0.18);
+  color: var(--sfs-text, #ffffff);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
 }
 
 /* ============================================================
@@ -252,7 +252,7 @@ onMounted(() => {
   font-size: 16px;
   line-height: 1;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 6px rgba(252, 129, 129, 0.55));
+  filter: drop-shadow(0 0 6px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.55));
 }
 
 .login-alert.alert-error .alert-text {

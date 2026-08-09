@@ -1,0 +1,386 @@
+/* ==========================================================================
+   theme.css — the token contract, and the elements no stylesheet ever styled
+   ==========================================================================
+
+   The ten galaxies live in src/theme/themes.ts and are written onto
+   <html> by src/theme/apply.ts as ~70 custom properties. This file is the
+   other half: the base layer that spends those tokens on the elements the
+   page stylesheets never touched.
+
+   WHY A BASE LAYER IS NEEDED AT ALL
+   ---------------------------------
+   The codemod (tools/tokenize-colors) converted 4376 colour literals across
+   46 stylesheets and 73 components, so everything that WAS styled now follows
+   the theme. What it could not convert is everything that was never styled:
+   a <select> popup, an <option> row, Chrome's autofill wash, the scrollbar,
+   the text-selection highlight, a native checkbox. Those render in the
+   browser's own colours, and the browser's own colours are decided by
+   `color-scheme` and by whatever the element inherits. On a dark galaxy an
+   unstyled <select> is white-on-white in exactly one place: the dropdown that
+   opens over it. Requirement 2 says "all select input all objects", and this
+   is where that is honoured.
+
+   SPECIFICITY IS DELIBERATE AND LOW
+   ---------------------------------
+   Almost everything here is a bare element selector (0,0,1) so any page rule
+   still wins. This layer sets a floor, it does not take anything over. The
+   handful of exceptions are marked where they appear and each is a case where
+   the browser, not a stylesheet, is the thing being overridden.
+
+   EVERY var() CARRIES A FALLBACK
+   ------------------------------
+   Same rule as the codemod: the fallback is the pre-theme literal, so a frame
+   rendered before apply.ts runs — or a print stylesheet, or a token somebody
+   deletes — is the old app rather than a colourless one. `check:theme`
+   enforces it.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Mode
+   --------------------------------------------------------------------------
+   `color-scheme` is the single most valuable line in this file. It tells the
+   browser to render its OWN widgets — the select popup, the scrollbar, the
+   date picker, the spinner arrows, the checkbox, the resize grip — in the
+   matching palette. Without it a dark theme has a white select dropdown and
+   there is no CSS that can reach inside and fix it.
+
+   apply.ts sets data-mode; these two rules are what it buys.
+   -------------------------------------------------------------------------- */
+:root,
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-mode='light'] {
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   2. The page itself
+   -------------------------------------------------------------------------- */
+html,
+body,
+#app {
+  background-color: var(--sfs-space, #03030f);
+  color: var(--sfs-text, #ffffff);
+}
+
+/* The 3D galaxy paints over this; the colour underneath still matters for the
+   overscroll area, for the moment before WebGL initialises, and for anyone
+   whose device refused a WebGL context. */
+html {
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1) 0%,
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+/* --------------------------------------------------------------------------
+   3. Text
+   --------------------------------------------------------------------------
+   Headings inherit rather than being given a colour of their own: a page that
+   sets a colour on its container should carry its headings with it.
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6, p, li, dt, dd, blockquote, figcaption, label, legend {
+  color: inherit;
+}
+
+small,
+.text-muted {
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+}
+
+::selection {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+  /* Not `inherit`: the highlight has its own background, so it needs the ink
+     that suits THAT background rather than the one behind it. */
+  color: var(--sfs-on-accent, #ffffff);
+}
+
+/* --------------------------------------------------------------------------
+   4. Links
+   --------------------------------------------------------------------------
+   Bare element selectors, so the many `a.btn` / `a.nav-item` rules that make
+   an anchor look like something else all still win. What this catches is the
+   anchor that is genuinely a link — including every one that linkify.ts now
+   creates inside a notification, a comment or a chat message (requirement 4).
+   -------------------------------------------------------------------------- */
+a {
+  color: var(--sfs-accent-text, #818cf8);
+  text-decoration-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  text-underline-offset: 0.16em;
+}
+
+a:hover {
+  color: var(--sfs-accent-text-soft, #a5b4fc);
+  text-decoration-color: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   5. Form controls — requirement 2's hardest corner
+   --------------------------------------------------------------------------
+   A control is its own surface. It does not inherit the card behind it, and
+   on Windows an <option> does not even inherit its own <select> unless it is
+   told to. Each of these needs the pair — background AND ink — set together,
+   which is the whole point of the --sfs-field-* group.
+   -------------------------------------------------------------------------- */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color: var(--sfs-field-text, #ffffff);
+}
+
+input,
+textarea,
+select {
+  background-color: var(--sfs-field, rgb(255 255 255 / 0.08));
+  border-color: var(--sfs-field-border, rgb(255 255 255 / 0.14));
+  caret-color: var(--sfs-accent-text, #818cf8);
+  accent-color: var(--sfs-accent, #667eea);
+}
+
+/* The dropdown list. It is rendered by the OS, it is NOT inside the page, and
+   on Windows it takes the system palette unless both halves are named here.
+   This is the "all select input" case in the request, and it is invisible
+   until somebody opens the menu on a dark theme and reads white on white. */
+option,
+optgroup {
+  background-color: var(--sfs-field, #14141f);
+  color: var(--sfs-field-text, #ffffff);
+}
+
+option:checked,
+option:hover {
+  background-color: var(--sfs-accent, #667eea);
+  color: var(--sfs-on-accent, #ffffff);
+}
+
+::placeholder {
+  color: var(--sfs-placeholder, rgb(255 255 255 / 0.5));
+  opacity: 1; /* Firefox dims it a second time otherwise. */
+}
+
+/*
+  Chrome's autofill.
+
+  It paints its own background — a pale yellow-white — straight over whatever
+  the stylesheet asked for, and `background-color` cannot override it. The
+  inset shadow trick is the only thing that can, and `-webkit-text-fill-color`
+  is the only thing that moves the text. Skip this and every remembered
+  username on the login page is black text in a white box on a black card.
+  Specificity is high here because the thing being fought is the UA sheet.
+*/
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--sfs-field-text, #ffffff);
+  -webkit-box-shadow: 0 0 0 1000px var(--sfs-field, #14141f) inset;
+  box-shadow: 0 0 0 1000px var(--sfs-field, #14141f) inset;
+  caret-color: var(--sfs-field-text, #ffffff);
+  transition: background-color 100000s ease 0s;
+}
+
+/* A disabled control has to read as unavailable without becoming invisible —
+   `opacity: 0.4` on a card that is already translucent takes it below the
+   contrast floor, so the ink is dimmed rather than the whole element. */
+:disabled,
+[aria-disabled='true'] {
+  color: var(--sfs-text-faint, rgb(255 255 255 / 0.45));
+  cursor: not-allowed;
+}
+
+/* Date and time fields render their own icon; on a dark theme it ships black. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator,
+input[type='month']::-webkit-calendar-picker-indicator,
+input[type='week']::-webkit-calendar-picker-indicator {
+  filter: var(--sfs-picker-filter, invert(1) opacity(0.7));
+}
+
+:root[data-mode='light'] {
+  --sfs-picker-filter: opacity(0.65);
+}
+
+/* --------------------------------------------------------------------------
+   6. Focus
+   --------------------------------------------------------------------------
+   One ring, derived per theme, always at least AA-large against the surface —
+   a focus ring in the accent colour is useless on a page whose surface is the
+   accent colour, which is why --sfs-focus is derived rather than aliased.
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--sfs-focus, #818cf8);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Scrollbars
+   -------------------------------------------------------------------------- */
+* {
+  scrollbar-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sfs-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sfs-accent-strong, #5a6fd8);
+}
+
+/* --------------------------------------------------------------------------
+   8. Code
+   -------------------------------------------------------------------------- */
+code,
+kbd,
+samp,
+pre {
+  background-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  color: var(--sfs-text, #ffffff);
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   9. Utility classes the app already uses, restated per galaxy
+   -------------------------------------------------------------------------- */
+.gradient-text,
+.text-gradient {
+  background: var(--sfs-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gradient text is a picture of text, so it has no contrast guarantee at all.
+   Under forced-colours or a high-contrast preference it becomes real text in
+   a colour that is derived, and therefore checked. */
+@media (prefers-contrast: more), (forced-colors: active) {
+  .gradient-text,
+  .text-gradient {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--sfs-accent-text, #818cf8);
+  }
+}
+
+.glass-effect {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+}
+
+/* --------------------------------------------------------------------------
+   10. Rich text — the anchors linkify.ts produces (requirement 4)
+   --------------------------------------------------------------------------
+   A notification body, a course comment and a chat message are plain text
+   that has had links, mentions and addresses turned into real elements. They
+   sit inside bubbles and cards of every colour in the app, so the styling
+   here is deliberately restrained: an underline and the accent ink, both of
+   which are derived against the surface.
+   -------------------------------------------------------------------------- */
+.rich-text {
+  /* User text is the one place a single unbroken 400-character "word" is
+     normal input rather than a mistake, and it is what blows a chat bubble
+     off the side of a phone. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rich-text a.rt-link {
+  color: var(--sfs-accent-text, #818cf8);
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+  text-underline-offset: 0.16em;
+  border-radius: 3px;
+}
+
+.rich-text a.rt-link:hover,
+.rich-text a.rt-link:focus-visible {
+  color: var(--sfs-accent-text-soft, #a5b4fc);
+  text-decoration-color: currentColor;
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+}
+
+/* A mention is a person, not a destination — same family, no underline, so
+   the two are told apart at a glance in a message full of both. */
+.rich-text .rt-mention,
+.mention {
+  color: var(--sfs-accent-text, #818cf8);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
+  border-radius: 5px;
+  padding: 0 4px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* An external link on a filled bubble — a sent chat message, a coloured
+   banner — cannot use the surface-derived accent ink, because it is not on
+   the surface. It takes the fill's own ink and keeps the underline to stay
+   distinguishable from the text around it. */
+.rich-text.on-fill a.rt-link,
+.rich-text.on-fill .rt-mention {
+  color: var(--sfs-on-accent, #ffffff);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  text-decoration-color: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   11. Print
+   --------------------------------------------------------------------------
+   Paper is white in every galaxy — a certificate printed from the Sombrero
+   theme must not come out as gold ink on a black page, and most printers will
+   not print the background at all, leaving gold on white.
+   -------------------------------------------------------------------------- */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #app {
+    background: #ffffff !important;
+    color: #101010 !important;
+  }
+
+  .no-print,
+  .three-background {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   12. Forced colours
+   --------------------------------------------------------------------------
+   Windows High Contrast replaces the palette wholesale. Fighting it is the
+   wrong move; what matters is that the elements drawn as backgrounds rather
+   than as borders keep an edge, since a forced palette flattens them.
+   -------------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  button,
+  input,
+  select,
+  textarea,
+  .card,
+  .glass-effect {
+    border: 1px solid CanvasText;
+  }
+}

@@ -11,34 +11,34 @@
 .take-exam-page {
   /* ---- design tokens (scoped) ---- */
   --te-text:        #ffffff;
-  --te-text-soft:   #e8eaff;
+  --te-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
   --te-text-mute:   rgba(255, 255, 255, 0.72);
   --te-text-dim:    rgba(255, 255, 255, 0.5);
 
-  --te-accent:      #818cf8;
-  --te-accent-2:    #a78bfa;
-  --te-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --te-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.18) 0%, rgba(118,75,162,0.18) 100%);
+  --te-accent:      var(--sfs-accent-soft, #818cf8);
+  --te-accent-2:    var(--sfs-accent-2, #a78bfa);
+  --te-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --te-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.18) 100%);
 
-  --te-ok:          #34d399;
-  --te-ok-2:        #10b981;
-  --te-warn:        #fbbf24;
-  --te-warn-2:      #f59e0b;
-  --te-err:         #fc8181;
-  --te-err-2:       #ef4444;
+  --te-ok:          var(--sfs-success, #34d399);
+  --te-ok-2:        var(--sfs-success, #10b981);
+  --te-warn:        var(--sfs-warning, #fbbf24);
+  --te-warn-2:      var(--sfs-warning, #f59e0b);
+  --te-err:         var(--sfs-danger, #fc8181);
+  --te-err-2:       var(--sfs-danger, #ef4444);
 
-  --te-glass:       rgba(255, 255, 255, 0.05);
-  --te-glass-2:     rgba(255, 255, 255, 0.08);
-  --te-glass-3:     rgba(255, 255, 255, 0.12);
-  --te-border:      rgba(255, 255, 255, 0.10);
-  --te-border-2:    rgba(255, 255, 255, 0.20);
+  --te-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --te-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --te-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  --te-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --te-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 
   --te-blur:        blur(16px) saturate(150%);
   --te-blur-strong: blur(22px) saturate(160%);
 
-  --te-shadow:      0 8px 32px rgba(102, 126, 234, 0.15);
-  --te-shadow-md:   0 12px 40px rgba(102, 126, 234, 0.25);
-  --te-glow:        0 0 24px rgba(129, 140, 248, 0.35);
+  --te-shadow:      0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  --te-shadow-md:   0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  --te-glow:        0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 
   --te-r-sm: 10px;
   --te-r-md: 14px;
@@ -92,7 +92,7 @@
   top: 0;
   z-index: 50;
   padding: var(--te-sp-md) var(--te-sp-lg);
-  background: rgba(15, 17, 40, 0.55);
+  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.55);
   -webkit-backdrop-filter: var(--te-blur-strong);
   backdrop-filter: var(--te-blur-strong);
   border-bottom: 1px solid var(--te-border);
@@ -117,7 +117,7 @@
   font-weight: 700;
   color: var(--te-text);
   margin: 0 0 4px;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   overflow: hidden;
@@ -172,8 +172,8 @@
   border-radius: var(--te-r-md);
   background: var(--te-glass);
   color: var(--te-accent);
-  border: 1px solid rgba(129, 140, 248, 0.35);
-  box-shadow: 0 0 18px rgba(129, 140, 248, 0.18);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
+  box-shadow: 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
   font-variant-numeric: tabular-nums;
   -webkit-backdrop-filter: var(--te-blur);
   backdrop-filter: var(--te-blur);
@@ -181,16 +181,16 @@
 }
 .take-exam-page .timer.warning {
   color: var(--te-warn);
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(251, 191, 36, 0.10);
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.25);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.1);
+  box-shadow: 0 0 18px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.25);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .take-exam-page .timer.critical {
   color: var(--te-err);
-  border-color: rgba(252, 129, 129, 0.5);
-  background: rgba(252, 129, 129, 0.12);
-  box-shadow: 0 0 24px rgba(252, 129, 129, 0.35);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12);
+  box-shadow: 0 0 24px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
   animation: pulse 0.7s ease-in-out infinite;
 }
 .take-exam-page .timer.ended {
@@ -304,14 +304,14 @@
 .take-exam-page .nav-btn.primary,
 .take-exam-page .action-btn.primary {
   background: var(--te-grad);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.35),
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .take-exam-page .nav-btn.primary:hover:not(:disabled),
 .take-exam-page .action-btn.primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 10px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
 .take-exam-page .nav-btn.success,
@@ -320,8 +320,8 @@
 .take-exam-page .btn-finish {
   background: linear-gradient(135deg, var(--te-ok), var(--te-ok-2));
   color: #053b29;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 6px 22px rgba(52, 211, 153, 0.35),
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  box-shadow: 0 6px 22px rgb(var(--sfs-success-rgb, 52 211 153) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .take-exam-page .nav-btn.success:hover:not(:disabled),
@@ -329,7 +329,7 @@
 .take-exam-page .btn-submit:hover:not(:disabled),
 .take-exam-page .btn-finish:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(52, 211, 153, 0.45);
+  box-shadow: 0 10px 30px rgb(var(--sfs-success-rgb, 52 211 153) / 0.45);
 }
 
 .take-exam-page .nav-btn.secondary,
@@ -343,38 +343,38 @@
 /* review button uses brand */
 .take-exam-page .btn-review {
   background: var(--te-grad);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.35);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 .take-exam-page .btn-review:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 10px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
 /* retry */
 .take-exam-page .retry-btn {
   background: linear-gradient(135deg, var(--te-err), var(--te-err-2));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 22px rgba(252, 129, 129, 0.3);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  box-shadow: 0 6px 22px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.3);
   padding: 0.8rem 2rem;
   font-size: var(--te-fs-md);
 }
 .take-exam-page .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(252, 129, 129, 0.45);
+  box-shadow: 0 10px 30px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45);
 }
 
 /* flag button */
 .take-exam-page .flag-btn {
   color: var(--te-warn);
-  background: rgba(251, 191, 36, 0.08);
-  border-color: rgba(251, 191, 36, 0.35);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.08);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35);
 }
 .take-exam-page .flag-btn.flagged {
-  background: rgba(251, 191, 36, 0.22);
-  border-color: rgba(251, 191, 36, 0.6);
-  color: #fff;
-  box-shadow: 0 0 22px rgba(251, 191, 36, 0.35);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.22);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.6);
+  color: var(--sfs-text, #fff);
+  box-shadow: 0 0 22px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35);
 }
 
 /* close button */
@@ -407,14 +407,14 @@
   width: 72px;
   height: 72px;
   border: 4px solid transparent;
-  border-top-color: #667eea;
-  border-right-color: #764ba2;
+  border-top-color: var(--sfs-accent, #667eea);
+  border-right-color: var(--sfs-accent-2, #764ba2);
   border-bottom-color: var(--te-accent);
-  border-left-color: rgba(129, 140, 248, 0.35);
+  border-left-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   border-radius: 50%;
   animation: spin 1.2s linear infinite;
   margin-bottom: var(--te-sp-lg);
-  box-shadow: 0 0 30px rgba(129, 140, 248, 0.35);
+  box-shadow: 0 0 30px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
 }
 
 .take-exam-page .loading-container p {
@@ -426,7 +426,7 @@
 .take-exam-page .error-icon {
   font-size: 3.5rem;
   margin-bottom: var(--te-sp-md);
-  filter: drop-shadow(0 0 25px rgba(252, 129, 129, 0.55));
+  filter: drop-shadow(0 0 25px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.55));
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -499,8 +499,8 @@
   gap: var(--te-sp-sm);
   border-bottom: 1px solid var(--te-border);
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0) 100%);
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 0%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0) 100%);
 }
 .take-exam-page .card-header h3,
 .take-exam-page .question-number {
@@ -571,20 +571,20 @@
 
 .take-exam-page .answer-item.selected {
   background: var(--te-grad-soft);
-  border-color: rgba(129, 140, 248, 0.55);
-  box-shadow: 0 0 24px rgba(129, 140, 248, 0.3);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
+  box-shadow: 0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 }
 .take-exam-page .answer-item.show-correct,
 .take-exam-page .answer-item.user-correct {
-  background: rgba(52, 211, 153, 0.14);
-  border-color: rgba(52, 211, 153, 0.5);
-  box-shadow: 0 0 22px rgba(52, 211, 153, 0.25);
+  background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.14);
+  border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.5);
+  box-shadow: 0 0 22px rgb(var(--sfs-success-rgb, 52 211 153) / 0.25);
 }
 .take-exam-page .answer-item.user-correct { cursor: default; }
 .take-exam-page .answer-item.user-incorrect {
-  background: rgba(252, 129, 129, 0.14);
-  border-color: rgba(252, 129, 129, 0.5);
-  box-shadow: 0 0 22px rgba(252, 129, 129, 0.25);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.14);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5);
+  box-shadow: 0 0 22px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.25);
   cursor: default;
 }
 
@@ -598,7 +598,7 @@
   justify-content: center;
   flex-shrink: 0;
   margin-top: 2px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
 }
 .take-exam-page .radio-circle {
   width: 10px;
@@ -609,15 +609,15 @@
 }
 .take-exam-page .answer-item.selected .radio-circle {
   background: var(--te-accent);
-  box-shadow: 0 0 10px rgba(129, 140, 248, 0.7);
+  box-shadow: 0 0 10px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7);
 }
 .take-exam-page .answer-item.user-correct .radio-circle {
   background: var(--te-ok);
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.7);
+  box-shadow: 0 0 10px rgb(var(--sfs-success-rgb, 52 211 153) / 0.7);
 }
 .take-exam-page .answer-item.user-incorrect .radio-circle {
   background: var(--te-err);
-  box-shadow: 0 0 10px rgba(252, 129, 129, 0.7);
+  box-shadow: 0 0 10px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.7);
 }
 
 .take-exam-page .answer-text {
@@ -633,7 +633,7 @@
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--te-ok);
-  text-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+  text-shadow: 0 0 12px rgb(var(--sfs-success-rgb, 52 211 153) / 0.6);
 }
 
 /* footer / nav between questions */
@@ -641,8 +641,8 @@
   padding: var(--te-sp-md) var(--te-sp-lg);
   border-top: 1px solid var(--te-border);
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.04) 100%);
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0) 0%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 100%);
 }
 .take-exam-page .navigation-buttons {
   display: flex;
@@ -685,11 +685,11 @@
   max-height: 300px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(129, 140, 248, 0.4) transparent;
+  scrollbar-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4) transparent;
 }
 .take-exam-page .questions-grid::-webkit-scrollbar { width: 6px; }
 .take-exam-page .questions-grid::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #667eea, #764ba2);
+  background: linear-gradient(180deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
   border-radius: 3px;
 }
 
@@ -715,29 +715,29 @@
 }
 .take-exam-page .question-dot.current {
   background: var(--te-grad);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 18px rgba(102, 126, 234, 0.5);
+  color: var(--sfs-on-accent, #fff);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  box-shadow: 0 4px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 .take-exam-page .question-dot.answered {
-  background: rgba(129, 140, 248, 0.22);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.22);
   color: var(--te-accent);
-  border-color: rgba(129, 140, 248, 0.45);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45);
 }
 .take-exam-page .question-dot.flagged {
-  background: rgba(251, 191, 36, 0.22);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.22);
   color: var(--te-warn);
-  border-color: rgba(251, 191, 36, 0.45);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
 }
 .take-exam-page .question-dot.correct {
-  background: rgba(52, 211, 153, 0.22);
+  background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.22);
   color: var(--te-ok);
-  border-color: rgba(52, 211, 153, 0.45);
+  border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.45);
 }
 .take-exam-page .question-dot.incorrect {
-  background: rgba(252, 129, 129, 0.22);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.22);
   color: var(--te-err);
-  border-color: rgba(252, 129, 129, 0.45);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45);
 }
 
 /* legend */
@@ -780,7 +780,7 @@
   justify-content: space-between;
   gap: var(--te-sp-xs);
   padding: 6px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  border-bottom: 1px dashed rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
 }
 .take-exam-page .summary-item:last-child { border-bottom: none; }
 .take-exam-page .summary-item .label { color: var(--te-text-mute); font-size: var(--te-fs-sm); }
@@ -813,14 +813,14 @@
   min-height: 36px;
   padding: 0.4rem 0.8rem;
   color: var(--te-warn);
-  background: rgba(251, 191, 36, 0.12);
-  border-color: rgba(251, 191, 36, 0.4);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.12);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.4);
   font-size: var(--te-fs-sm);
 }
 .take-exam-page .flagged-btn.active {
-  background: rgba(251, 191, 36, 0.3);
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(251, 191, 36, 0.35);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.3);
+  color: var(--sfs-text, #fff);
+  box-shadow: 0 4px 18px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35);
 }
 
 /* =============================================================
@@ -842,30 +842,30 @@
 }
 .take-exam-page .status-badge.no-reservation-yet { color: var(--te-text-mute); }
 .take-exam-page .status-badge.scheduled {
-  background: rgba(102, 126, 234, 0.18);
-  color: #c7d2fe;
-  border-color: rgba(102, 126, 234, 0.5);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  color: var(--sfs-text-muted, #c7d2fe);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 .take-exam-page .status-badge.in-progress {
-  background: rgba(251, 191, 36, 0.18);
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.18);
   color: var(--te-warn);
-  border-color: rgba(251, 191, 36, 0.45);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
 }
 .take-exam-page .status-badge.completed {
-  background: rgba(52, 211, 153, 0.18);
+  background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.18);
   color: var(--te-ok);
-  border-color: rgba(52, 211, 153, 0.45);
+  border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.45);
 }
 .take-exam-page .status-badge.taken-but-failed,
 .take-exam-page .status-badge.cancelled {
-  background: rgba(252, 129, 129, 0.18);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
   color: var(--te-err);
-  border-color: rgba(252, 129, 129, 0.45);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45);
 }
 .take-exam-page .status-badge.expired {
-  background: rgba(148, 163, 184, 0.18);
-  color: #cbd5e1;
-  border-color: rgba(148, 163, 184, 0.45);
+  background: rgb(var(--sfs-accent-rgb, 148 163 184) / 0.18);
+  color: var(--sfs-text-muted, #cbd5e1);
+  border-color: rgb(var(--sfs-accent-rgb, 148 163 184) / 0.45);
 }
 
 /* =============================================================
@@ -879,7 +879,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--te-sp-md);
-  background: rgba(3, 3, 15, 0.55);
+  background: rgb(var(--sfs-shade-rgb, 3 3 15) / 0.55);
   -webkit-backdrop-filter: var(--te-blur);
   backdrop-filter: var(--te-blur);
   animation: fadeInUp 0.3s ease both;
@@ -887,7 +887,7 @@
 .take-exam-page .modal {
   width: 100%;
   max-width: 520px;
-  background: rgba(15, 17, 40, 0.65);
+  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.65);
   border: 1px solid var(--te-border-2);
   border-radius: var(--te-r-xl);
   -webkit-backdrop-filter: var(--te-blur-strong);
@@ -971,7 +971,7 @@
   font-weight: 700;
   color: var(--te-text);
   margin-bottom: var(--te-sp-xs);
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -985,8 +985,8 @@
   margin-bottom: var(--te-sp-sm);
   animation: pulse 2.2s ease-in-out infinite;
 }
-.take-exam-page .result-icon.passed { filter: drop-shadow(0 0 25px rgba(52, 211, 153, 0.6)); }
-.take-exam-page .result-icon.failed { filter: drop-shadow(0 0 25px rgba(252, 129, 129, 0.6)); }
+.take-exam-page .result-icon.passed { filter: drop-shadow(0 0 25px rgb(var(--sfs-success-rgb, 52 211 153) / 0.6)); }
+.take-exam-page .result-icon.failed { filter: drop-shadow(0 0 25px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.6)); }
 
 .take-exam-page .score-display { margin: var(--te-sp-md) 0; }
 .take-exam-page .score-circle {
@@ -1003,14 +1003,14 @@
   backdrop-filter: blur(10px);
 }
 .take-exam-page .score-circle.passed {
-  border-color: rgba(52, 211, 153, 0.5);
-  box-shadow: 0 0 28px rgba(52, 211, 153, 0.4),
-              inset 0 0 24px rgba(52, 211, 153, 0.18);
+  border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.5);
+  box-shadow: 0 0 28px rgb(var(--sfs-success-rgb, 52 211 153) / 0.4),
+              inset 0 0 24px rgb(var(--sfs-success-rgb, 52 211 153) / 0.18);
 }
 .take-exam-page .score-circle.failed {
-  border-color: rgba(252, 129, 129, 0.5);
-  box-shadow: 0 0 28px rgba(252, 129, 129, 0.4),
-              inset 0 0 24px rgba(252, 129, 129, 0.18);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5);
+  box-shadow: 0 0 28px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.4),
+              inset 0 0 24px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
 }
 .take-exam-page .score-value {
   font-size: 2.4rem;
@@ -1061,7 +1061,7 @@
 .take-exam-page :focus-visible {
   outline: 2px solid var(--te-accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
 }
 @media (prefers-reduced-motion: reduce) {
   .take-exam-page *,
@@ -1079,8 +1079,8 @@
   .take-exam-page .actions-card,
   .take-exam-page .flagged-card,
   .take-exam-page .modal {
-    background: rgba(3, 3, 15, 0.85);
-    border-color: #fff;
+    background: rgb(var(--sfs-surface-rgb, 3 3 15) / 0.85);
+    border-color: var(--sfs-border-strong, #fff);
   }
 }
 
@@ -1177,5 +1177,5 @@
   .take-exam-page .question-footer,
   .take-exam-page .modal-overlay { display: none !important; }
   .take-exam-page,
-  .take-exam-page * { color: #000 !important; background: #fff !important; }
+  .take-exam-page * { color: var(--sfs-on-paper, #000) !important; background: var(--sfs-paper, #fff) !important; }
 }

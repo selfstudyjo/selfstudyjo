@@ -3,7 +3,7 @@
     <div class="tm-meeting-header">
       <div>
         <strong>🎭 Role:</strong>
-        <span class="tm-badge" :style="{background:roleBadgeColor}">{{ userRole }}</span>
+        <span class="tm-badge" :style="paint(roleBadgeColor)">{{ userRole }}</span>
         <template v-if="userRole==='Speaker'">
           <strong style="margin-left:.75rem">📍 Topic:</strong> <span>{{ displayTopic }}</span>
           <span class="tm-badge">{{ speechType }}</span>
@@ -48,7 +48,7 @@
           <span class="tm-status-icon" :class="{ muted: !cameraEnabled }">{{ cameraEnabled ? '📹' : '📷' }}</span>
           <span class="tm-status-icon" :class="{ muted: !faceDetected }">{{ faceDetected ? '😊' : '🙈' }}</span>
         </div>
-        <div class="tm-focus-badge" v-if="focusBadgeText" :style="{ background: focusBadgeColor }">{{ focusBadgeText }}</div>
+        <div class="tm-focus-badge" v-if="focusBadgeText" :style="paint(focusBadgeColor)">{{ focusBadgeText }}</div>
         <div class="tm-cam-debug" v-if="cameraAnalysisActive">
           <div><strong>AI:</strong> {{ detectionMethod }}</div>
           <div><strong>Frames:</strong> {{ dbgFrames }}</div>
@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted, reactive } from 'vue';
+import { paint } from '@/theme/contrast';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService } from '@/services/toastmasters.service';

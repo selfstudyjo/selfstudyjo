@@ -209,7 +209,7 @@ onMounted(() => {
 
 .profile-avatar.has-image,
 .profile-avatar:not(.has-image) {
-  filter: drop-shadow(0 8px 28px rgba(102, 126, 234, 0.35));
+  filter: drop-shadow(0 8px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35));
 }
 
 .avatar-image,
@@ -221,10 +221,10 @@ onMounted(() => {
 .avatar-image {
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.22);
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
   box-shadow:
-    0 0 0 1px rgba(102, 126, 234, 0.3) inset,
-    0 0 24px rgba(118, 75, 162, 0.25);
+    0 0 0 1px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3) inset,
+    0 0 24px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.25);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -240,23 +240,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  color: var(--sfs-on-accent, #fff);
   font-weight: 700;
   text-align: center;
   user-select: none;
-  border: 2px solid rgba(255, 255, 255, 0.22);
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
   box-shadow:
     inset 0 2px 12px rgba(255, 255, 255, 0.18),
-    0 0 24px rgba(102, 126, 234, 0.35);
+    0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 
 .profile-avatar:hover .avatar-image,
 .profile-avatar:hover .avatar-initials {
-  border-color: rgba(78, 205, 196, 0.7);
+  border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.7);
   box-shadow:
-    0 0 0 1px rgba(78, 205, 196, 0.4) inset,
-    0 0 32px rgba(78, 205, 196, 0.35);
+    0 0 0 1px rgb(var(--sfs-info-rgb, 78 205 196) / 0.4) inset,
+    0 0 32px rgb(var(--sfs-info-rgb, 78 205 196) / 0.35);
 }
 
 .avatar-overlay {
@@ -267,8 +267,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: #fff;
-  background: rgba(10, 10, 30, 0.55);
+  color: var(--sfs-text, #fff);
+  background: rgb(var(--sfs-shade-rgb, 10 10 30) / 0.55);
   backdrop-filter: blur(8px) saturate(160%);
   -webkit-backdrop-filter: blur(8px) saturate(160%);
   border-radius: 50%;
@@ -285,7 +285,7 @@ onMounted(() => {
 .avatar-overlay .icon {
   width: 24px;
   height: 24px;
-  filter: drop-shadow(0 0 6px rgba(78, 205, 196, 0.6));
+  filter: drop-shadow(0 0 6px rgb(var(--sfs-info-rgb, 78 205 196) / 0.6));
 }
 
 .avatar-overlay span {
@@ -305,11 +305,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
   border-radius: 50%;
-  color: #fff;
-  background: linear-gradient(135deg, #f56565, #c53030);
-  box-shadow: 0 6px 18px rgba(252, 129, 129, 0.45);
+  color: var(--sfs-on-danger, #fff);
+  background: linear-gradient(135deg, var(--sfs-danger, #f56565), var(--sfs-danger, #c53030));
+  box-shadow: 0 6px 18px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45);
   cursor: pointer;
   opacity: 0.95;
   transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
@@ -319,11 +319,11 @@ onMounted(() => {
 .remove-btn:hover {
   opacity: 1;
   transform: scale(1.08);
-  box-shadow: 0 8px 24px rgba(252, 129, 129, 0.6);
+  box-shadow: 0 8px 24px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.6);
 }
 
 .remove-btn:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--sfs-border-strong, #fff);
   outline-offset: 2px;
 }
 

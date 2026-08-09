@@ -1,0 +1,287 @@
+/* ==========================================================================
+   responsive.css — one app, every screen (requirement 3)
+   ==========================================================================
+
+   The page stylesheets already carry ~200 media queries, almost all of them
+   `max-width: 768px`. That covers "is this a phone" and nothing else, and it
+   leaves the two ends of the range unhandled: a 360px phone, where fixed
+   padding eats a third of the width, and a 3840px television, where a layout
+   built for a laptop sits in the middle of the screen at the size of a
+   postcard.
+
+   This file is the layer underneath those queries. It does not restyle any
+   page — it scales the units the pages are built out of, so every existing
+   `padding: 1.5rem` and `font-size: 1rem` becomes screen-aware at once.
+
+   HOW IT WORKS
+   ------------
+   The root font size is fluid. `rem` is the unit almost every page here uses,
+   so moving the root moves the whole app coherently — text, spacing, radii and
+   icon sizes together, in the ratio their author chose. Scaling a stylesheet
+   by hand at six breakpoints would be six chances to get one number wrong;
+   this is one number, six times.
+
+   WHY clamp() AND NOT BREAKPOINTS FOR TYPE
+   ----------------------------------------
+   A breakpoint changes size in a step, so a 767px tablet and a 769px tablet
+   render at noticeably different scales. clamp() with a vw term is continuous:
+   every width in between gets the size that belongs to it, and the min and max
+   stop it running away at the extremes.
+
+   ORDER MATTERS: this is imported after theme.css and before any page CSS, so
+   a page that genuinely needs a different answer at some width still wins.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. The fluid root
+   --------------------------------------------------------------------------
+   16px at 480px wide, growing to 18px by 1600px. The lower bound is 15px
+   rather than something smaller because 14px body text on a phone is where
+   people start zooming, and a zoomed page breaks every fixed layout it meets.
+   -------------------------------------------------------------------------- */
+:root {
+  font-size: clamp(0.9375rem, 0.875rem + 0.28vw, 1.125rem);
+
+  /* Spacing scale, exposed so new work can use it instead of inventing more
+     magic numbers. Everything already written in rem scales with the root
+     regardless. */
+  --sfs-gap-xs: 0.25rem;
+  --sfs-gap-sm: 0.5rem;
+  --sfs-gap: 1rem;
+  --sfs-gap-lg: 1.5rem;
+  --sfs-gap-xl: 2.5rem;
+
+  /* The reading measure. Not the layout width — the width past which a line
+     of text stops being comfortable to read no matter how big the screen is. */
+  --sfs-measure: 78ch;
+
+  /* How wide the content shell is allowed to get. Raised on very large
+     screens in §5 rather than being unbounded, because full-bleed text on a
+     television is unreadable from a sofa. */
+  --sfs-shell-max: 1600px;
+
+  /* Notches, rounded corners and the iOS home indicator. Zero everywhere
+     else, so it is always safe to add. */
+  --sfs-safe-top: env(safe-area-inset-top, 0px);
+  --sfs-safe-right: env(safe-area-inset-right, 0px);
+  --sfs-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sfs-safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* --------------------------------------------------------------------------
+   2. Things that must never overflow
+   --------------------------------------------------------------------------
+   A single element wider than the viewport gives the whole document a
+   horizontal scrollbar, and on a phone that means the layout can be dragged
+   sideways off the screen. These four are the usual culprits.
+   -------------------------------------------------------------------------- */
+img,
+svg,
+video,
+canvas,
+iframe,
+embed,
+object {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+/* A table cannot be made narrow, so it is given somewhere to scroll instead.
+   `max-width: 100%` on the table itself would squash the columns into
+   unreadable slivers. */
+table {
+  max-width: 100%;
+}
+
+.table-scroll,
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --------------------------------------------------------------------------
+   3. Touch
+   --------------------------------------------------------------------------
+   `pointer: coarse` is the honest test — it catches a touchscreen laptop and
+   a TV remote's on-screen pointer, both of which a width query calls
+   "desktop". 44px is the size a finger can hit reliably.
+   -------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  a.btn,
+  .nav-item,
+  input[type='checkbox'],
+  input[type='radio'],
+  select {
+    min-height: 44px;
+  }
+
+  button,
+  [role='button'],
+  a.btn {
+    min-width: 44px;
+  }
+
+  /* iOS zooms the whole page when a field with text below 16px is focused,
+     and never zooms back out. The fix is the font size, not a viewport lock:
+     `user-scalable=no` would take pinch-zoom away from everyone. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Small screens
+   -------------------------------------------------------------------------- */
+
+/* Phones and anything held in one hand. */
+@media (max-width: 640px) {
+  :root {
+    /* Pull the outer padding in — at 360px, 1.5rem each side is 8% of the
+       screen spent on nothing. */
+    --sfs-gap-lg: 1rem;
+    --sfs-gap-xl: 1.5rem;
+  }
+
+  /* Respect the notch and the home indicator. Applied to the shell rather
+     than to body so a fixed sidebar is not pushed off its own edge. */
+  .main-content {
+    padding-left: max(0px, var(--sfs-safe-left, 0px));
+    padding-right: max(0px, var(--sfs-safe-right, 0px));
+    padding-bottom: var(--sfs-safe-bottom, 0px);
+  }
+
+  /* A grid whose tracks have a fixed minimum cannot go below it and will
+     overflow instead. Collapsing to one column is the only thing that fits. */
+  .stats-grid,
+  .cards-grid,
+  .courses-grid,
+  .plans-grid,
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Small phones — 360px and under, which is still a large share of Android. */
+@media (max-width: 380px) {
+  :root {
+    font-size: 0.9375rem;
+  }
+
+  /* Long unbroken strings — a URL in a message, an exam id, an email — are
+     the last thing that overflows once the layout itself fits. */
+  body {
+    overflow-wrap: break-word;
+  }
+}
+
+/* Landscape phone: short and wide. A vertical layout built for portrait
+   leaves nothing on screen, and `100vh` sections leave less. */
+@media (max-height: 480px) and (orientation: landscape) {
+  :root {
+    --sfs-gap-lg: 0.75rem;
+    --sfs-gap-xl: 1rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Large screens and televisions
+   --------------------------------------------------------------------------
+   The genuinely missing half. A 1440p monitor, a 4K display and a living-room
+   television all render a laptop layout as a small island in the middle, and
+   a TV is additionally viewed from three metres away.
+   -------------------------------------------------------------------------- */
+
+/* Large desktop. */
+@media (min-width: 1800px) {
+  :root {
+    --sfs-shell-max: 1800px;
+  }
+}
+
+/* 4K and television. The root grows faster than the layout so that text is
+   readable at a distance rather than the same physical size in more pixels —
+   which is what simply widening the shell would give. */
+@media (min-width: 2400px) {
+  :root {
+    font-size: 1.375rem;
+    --sfs-shell-max: 2200px;
+  }
+}
+
+@media (min-width: 3200px) {
+  :root {
+    font-size: 1.625rem;
+    --sfs-shell-max: 2600px;
+  }
+}
+
+/*
+  A television specifically: a coarse pointer (a remote) on a very wide screen.
+  Two things change that a monitor does not need — the content is centred and
+  bounded so a line of text is never metres long, and it is inset by 3% because
+  most TVs overscan and clip the outer edge of the picture entirely.
+*/
+@media (min-width: 1920px) and (pointer: coarse) {
+  .main-content {
+    padding: 3vh 3vw;
+  }
+
+  .main-content > * {
+    max-width: var(--sfs-shell-max, 1600px);
+    margin-inline: auto;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Viewport height
+   --------------------------------------------------------------------------
+   `100vh` on a mobile browser means "the viewport with the address bar
+   hidden", so a full-height page is always taller than the screen and always
+   scrolls by the height of the bar. `100dvh` is the live value. The old unit
+   stays as the first declaration for any browser that does not know the new
+   one.
+   -------------------------------------------------------------------------- */
+.full-height,
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* --------------------------------------------------------------------------
+   7. Reading measure
+   --------------------------------------------------------------------------
+   Opt-in, for prose. Applied to the rich-text bodies because those are the
+   ones that would otherwise run the full width of a television.
+   -------------------------------------------------------------------------- */
+.prose,
+.rich-text.measured {
+  max-width: var(--sfs-measure, 78ch);
+}
+
+/* --------------------------------------------------------------------------
+   8. Reduced motion
+   --------------------------------------------------------------------------
+   The app animates a great deal — the galaxy, page transitions, the pulses on
+   unread badges. `transition-duration: 0` rather than `none` so anything
+   listening for `transitionend` still fires and does not hang half-open.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

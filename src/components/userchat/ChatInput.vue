@@ -426,7 +426,7 @@ defineExpose({ focus: () => input.value?.focus() });
   /* Clears the home indicator on an iPhone and the gesture bar on Android. On
      everything else `env()` is 0 and this is the plain 10px. */
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(10, 12, 30, 0.62);
+  background: rgb(var(--sfs-shade-rgb, 10 12 30) / 0.62);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   border-top: 1px solid var(--uc-border);
@@ -475,8 +475,8 @@ defineExpose({ focus: () => input.value?.focus() });
 .audio-thumb {
   display: grid;
   place-items: center;
-  background: rgba(129, 140, 248, 0.2);
-  color: #c7d2fe;
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2);
+  color: var(--sfs-text-muted, #c7d2fe);
 }
 
 /* ---------------------------------------------------------- input bar */
@@ -493,8 +493,8 @@ defineExpose({ focus: () => input.value?.focus() });
 }
 .bar:focus-within {
   background: var(--uc-surface-2);
-  border-color: rgba(129, 140, 248, 0.5);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.16);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
 }
 
 .lead { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
@@ -528,13 +528,13 @@ defineExpose({ focus: () => input.value?.focus() });
   border: 0;
   border-radius: 50%;
   background: var(--uc-brand-grad);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast), opacity var(--uc-t-fast);
 }
 .send svg { transform: translateX(-1px); }
-.send:hover:not(:disabled) { transform: scale(1.06); box-shadow: 0 8px 22px rgba(102, 126, 234, 0.55); }
+.send:hover:not(:disabled) { transform: scale(1.06); box-shadow: 0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55); }
 .send:active:not(:disabled) { transform: scale(0.95); }
 .send:disabled { opacity: 0.4; box-shadow: none; cursor: not-allowed; }
 
@@ -553,7 +553,7 @@ defineExpose({ focus: () => input.value?.focus() });
   gap: 2px;
   border: 1px solid var(--uc-border-strong);
   border-radius: var(--uc-r-md);
-  background: rgba(14, 16, 38, 0.97);
+  background: rgb(var(--sfs-surface-rgb, 14 16 38) / 0.97);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   box-shadow: var(--uc-shadow-lg);
@@ -598,7 +598,7 @@ defineExpose({ focus: () => input.value?.focus() });
   color: var(--uc-danger);
   font-variant-numeric: tabular-nums;
 }
-.rec-level { flex: 1; height: 5px; border-radius: 3px; background: rgba(252, 129, 129, 0.22); overflow: hidden; }
+.rec-level { flex: 1; height: 5px; border-radius: 3px; background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.22); overflow: hidden; }
 .rec-level span {
   display: block;
   height: 100%;

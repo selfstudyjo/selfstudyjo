@@ -118,7 +118,18 @@
 
           <div class="notification-content">
             <h4 class="notification-title">{{ notification.title }}</h4>
-            <p class="notification-message">{{ getCleanMessage(notification) }}</p>
+            <!--
+              Notification bodies routinely carry a URL — a link to a course, a
+              payment page, an external resource. Rendered as text they had to
+              be selected and copied by hand. RichText escapes the body before
+              it builds any anchor, so this is not a v-html hole; see
+              src/utils/linkify.ts.
+            -->
+            <RichText
+              class="notification-message"
+              :text="getCleanMessage(notification)"
+              measured
+            />
 
             <div class="notification-meta">
               <span class="sender">
@@ -207,6 +218,7 @@ import { useNotificationStore } from '@/store/notifications';
 import { notificationService, type NotificationResponse } from '@/services/notification.service';
 import { paymentService } from '@/services/payment.service';
 import { decodeNotificationMessage, type NotificationAction } from '@/utils/notificationMeta';
+import RichText from '@/components/RichText.vue';
 import '@/assets/css/notifications.css';
 
 const route = useRoute();
@@ -531,7 +543,7 @@ function formatTime(timestamp: string) {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-on-success, #fff);
   transition: transform 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -546,20 +558,20 @@ function formatTime(timestamp: string) {
 }
 
 .btn-meta-action.meta-approve {
-  background: linear-gradient(135deg, #48bb78, #38a169);
+  background: linear-gradient(135deg, var(--sfs-success, #48bb78), var(--sfs-success, #38a169));
 }
 
 .btn-meta-action.meta-ignore {
-  background: linear-gradient(135deg, #f56565, #c53030);
+  background: linear-gradient(135deg, var(--sfs-danger, #f56565), var(--sfs-danger, #c53030));
 }
 
 .btn-meta-action.meta-link {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
 }
 
 .action-handled-info {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #38a169;
+  color: var(--sfs-success-text, #38a169);
 }
 </style>

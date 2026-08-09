@@ -6,35 +6,35 @@
 
 /* ---------- Page-scoped tokens ---------- */
 .exams-page {
-  --ex-text:        #ffffff;
-  --ex-text-soft:   rgba(255, 255, 255, 0.75);
-  --ex-text-muted:  rgba(255, 255, 255, 0.55);
-  --ex-text-accent: #a5b4fc;
+  --ex-text:        var(--sfs-text, #ffffff);
+  --ex-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.75);
+  --ex-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --ex-text-accent: var(--sfs-text-muted, #a5b4fc);
 
-  --ex-glass:       rgba(255, 255, 255, 0.05);
-  --ex-glass-2:     rgba(255, 255, 255, 0.08);
-  --ex-glass-3:     rgba(255, 255, 255, 0.12);
-  --ex-border:      1px solid rgba(255, 255, 255, 0.1);
-  --ex-border-soft: 1px solid rgba(255, 255, 255, 0.06);
+  --ex-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --ex-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --ex-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  --ex-border:      1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --ex-border-soft: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
 
   --ex-blur:        blur(14px) saturate(140%);
   --ex-blur-strong: blur(20px) saturate(160%);
 
   --ex-shadow:      0 8px 32px rgba(0, 0, 0, 0.35);
-  --ex-glow:        0 8px 32px rgba(102, 126, 234, 0.18);
-  --ex-glow-strong: 0 12px 48px rgba(102, 126, 234, 0.28);
+  --ex-glow:        0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  --ex-glow-strong: 0 12px 48px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28);
 
-  --ex-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --ex-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%);
+  --ex-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --ex-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.25) 100%);
 
-  --ex-success:     #4ade80;
-  --ex-success-bg:  rgba(72, 187, 120, 0.18);
-  --ex-danger:      #f87171;
-  --ex-danger-bg:   rgba(248, 113, 113, 0.18);
-  --ex-warning:     #fbbf24;
-  --ex-warning-bg:  rgba(237, 137, 54, 0.18);
-  --ex-info:        #38bdf8;
-  --ex-info-bg:     rgba(56, 189, 248, 0.18);
+  --ex-success:     var(--sfs-success, #4ade80);
+  --ex-success-bg:  rgb(var(--sfs-success-rgb, 72 187 120) / 0.18);
+  --ex-danger:      var(--sfs-danger, #f87171);
+  --ex-danger-bg:   rgb(var(--sfs-danger-rgb, 248 113 113) / 0.18);
+  --ex-warning:     var(--sfs-warning, #fbbf24);
+  --ex-warning-bg:  rgb(var(--sfs-warning-rgb, 237 137 54) / 0.18);
+  --ex-info:        var(--sfs-info, #38bdf8);
+  --ex-info-bg:     rgb(var(--sfs-info-rgb, 56 189 248) / 0.18);
 
   --ex-radius-sm:   10px;
   --ex-radius-md:   14px;
@@ -85,7 +85,7 @@
   font-size: clamp(1.5rem, 3.5vw, 2.25rem);
   font-weight: 800;
   letter-spacing: 0.3px;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -120,8 +120,8 @@
 }
 
 .exams-page .search-input-wrapper:focus-within {
-  border-color: rgba(129, 140, 248, 0.55);
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), var(--ex-glow);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15), var(--ex-glow);
   background: var(--ex-glass-2);
 }
 
@@ -151,15 +151,15 @@
   justify-content: center;
   width: 32px; height: 32px;
   border: none;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   color: var(--ex-text-soft);
   border-radius: 50%;
   cursor: pointer;
   transition: background .2s ease, color .2s ease, transform .2s ease;
 }
 .exams-page .search-clear:hover {
-  background: rgba(248, 113, 113, 0.2);
-  color: #fff;
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.2);
+  color: var(--sfs-text, #fff);
   transform: rotate(90deg);
 }
 
@@ -204,19 +204,19 @@
 .exams-page .error-icon,
 .exams-page .empty-icon {
   font-size: clamp(2.5rem, 6vw, 3.5rem);
-  filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.4));
+  filter: drop-shadow(0 0 12px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4));
 }
 
 /* override global .loading-spinner just inside this container */
 .exams-page .loading-container .loading-spinner {
   width: 56px;
   height: 56px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #818cf8;
-  border-right-color: #c084fc;
+  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border-top-color: var(--sfs-accent-soft, #818cf8);
+  border-right-color: var(--sfs-accent-2, #c084fc);
   border-radius: 50%;
   animation: spin 1.1s linear infinite;
-  box-shadow: 0 0 24px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
 }
 
 .exams-page .retry-btn {
@@ -224,7 +224,7 @@
   padding: 0.7rem 1.5rem;
   min-height: 44px;
   background: var(--ex-grad);
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   border: none;
   border-radius: var(--ex-radius-md);
   font-weight: 600;
@@ -277,7 +277,7 @@
 
 .exams-page .exam-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(129, 140, 248, 0.35);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   box-shadow: var(--ex-glow-strong), var(--ex-shadow);
   background: var(--ex-glass-2);
 }
@@ -303,7 +303,7 @@
   background: var(--ex-grad-soft);
   border: var(--ex-border);
   border-radius: var(--ex-radius-md);
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.18);
+  box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
 }
 
 .exams-page .exam-title-section {
@@ -315,7 +315,7 @@
   font-size: clamp(1rem, 1.8vw, 1.2rem);
   font-weight: 700;
   margin: 0 0 0.25rem;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -336,8 +336,8 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   white-space: nowrap;
   text-align: center;
 }
@@ -345,37 +345,37 @@
 .exams-page .status-passed,
 .exams-page .appointment-status.completed {
   background: var(--ex-success-bg);
-  border-color: rgba(74, 222, 128, 0.45);
-  color: #86efac;
+  border-color: rgb(var(--sfs-success-rgb, 74 222 128) / 0.45);
+  color: var(--sfs-success-text, #86efac);
 }
 
 .exams-page .status-failed,
 .exams-page .appointment-status.cancelled,
 .exams-page .status-cancelled {
   background: var(--ex-danger-bg);
-  border-color: rgba(248, 113, 113, 0.45);
-  color: #fca5a5;
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.45);
+  color: var(--sfs-danger-text, #fca5a5);
 }
 
 .exams-page .status-scheduled,
 .exams-page .appointment-status.scheduled {
   background: var(--ex-warning-bg);
-  border-color: rgba(251, 191, 36, 0.45);
-  color: #fcd34d;
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
+  color: var(--sfs-warning-text, #fcd34d);
 }
 
 .exams-page .status-in-progress,
 .exams-page .appointment-status.in-progress {
   background: var(--ex-info-bg);
-  border-color: rgba(56, 189, 248, 0.45);
-  color: #7dd3fc;
+  border-color: rgb(var(--sfs-info-rgb, 56 189 248) / 0.45);
+  color: var(--sfs-info-text, #7dd3fc);
 }
 
 .exams-page .status-completed,
 .exams-page .status-not-taken,
 .exams-page .status-expired {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   color: var(--ex-text-soft);
 }
 
@@ -474,7 +474,7 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
   white-space: nowrap;
 }
 
@@ -509,23 +509,23 @@
   border: 1px solid transparent;
   border-radius: var(--ex-radius-md);
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, opacity .25s ease;
 }
 
 .exams-page .btn-view {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
 }
 .exams-page .btn-view:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 255, 255, 0.08);
 }
 
 .exams-page .btn-schedule {
   background: var(--ex-grad);
-  border-color: rgba(118, 75, 162, 0.45);
+  border-color: rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.45);
 }
 .exams-page .btn-schedule:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -535,26 +535,26 @@
 .exams-page .btn-schedule:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .exams-page .btn-scheduled {
-  background: linear-gradient(135deg, rgba(237,137,54,0.85) 0%, rgba(221,107,32,0.85) 100%);
-  border-color: rgba(237,137,54,0.5);
+  background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.85) 0%, rgb(var(--sfs-warning-rgb, 221 107 32) / 0.85) 100%);
+  border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.5);
 }
 .exams-page .btn-scheduled:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+  box-shadow: 0 10px 28px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
 }
 
 .exams-page .btn-start {
-  background: linear-gradient(135deg, rgba(34,197,94,0.85) 0%, rgba(22,163,74,0.85) 100%);
-  border-color: rgba(34,197,94,0.5);
+  background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 34 197 94) / 0.85) 0%, rgb(var(--sfs-success-rgb, 22 163 74) / 0.85) 100%);
+  border-color: rgb(var(--sfs-success-rgb, 34 197 94) / 0.5);
 }
 .exams-page .btn-start:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 10px 28px rgb(var(--sfs-success-rgb, 34 197 94) / 0.35);
 }
 
 .exams-page .btn-completed {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   color: var(--ex-text-soft);
   cursor: not-allowed;
   opacity: 0.7;
@@ -566,7 +566,7 @@
 .exams-page .cancel-notice {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  border-top: 1px dashed rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
 }
 
 .exams-page .btn-reschedule,
@@ -583,28 +583,28 @@
   border: 1px solid transparent;
   border-radius: var(--ex-radius-md);
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
 }
 
 .exams-page .btn-reschedule {
-  background: linear-gradient(135deg, rgba(237,137,54,0.6) 0%, rgba(221,107,32,0.6) 100%);
-  border-color: rgba(237,137,54,0.45);
+  background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.6) 0%, rgb(var(--sfs-warning-rgb, 221 107 32) / 0.6) 100%);
+  border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.45);
 }
 .exams-page .btn-reschedule:hover {
-  background: linear-gradient(135deg, rgba(237,137,54,0.85) 0%, rgba(221,107,32,0.85) 100%);
+  background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.85) 0%, rgb(var(--sfs-warning-rgb, 221 107 32) / 0.85) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+  box-shadow: 0 10px 28px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
 }
 
 .exams-page .btn-cancel-appointment {
-  background: linear-gradient(135deg, rgba(248,113,113,0.55) 0%, rgba(220,38,38,0.55) 100%);
-  border-color: rgba(248,113,113,0.45);
+  background: linear-gradient(135deg, rgb(var(--sfs-danger-rgb, 248 113 113) / 0.55) 0%, rgb(var(--sfs-danger-rgb, 220 38 38) / 0.55) 100%);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.45);
 }
 .exams-page .btn-cancel-appointment:hover {
-  background: linear-gradient(135deg, rgba(248,113,113,0.85) 0%, rgba(220,38,38,0.85) 100%);
+  background: linear-gradient(135deg, rgb(var(--sfs-danger-rgb, 248 113 113) / 0.85) 0%, rgb(var(--sfs-danger-rgb, 220 38 38) / 0.85) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(248, 113, 113, 0.35);
+  box-shadow: 0 10px 28px rgb(var(--sfs-danger-rgb, 248 113 113) / 0.35);
 }
 
 /* ============================================================
@@ -618,7 +618,7 @@
   justify-content: center;
   z-index: 9999;
   padding: clamp(0.75rem, 2vw, 1.25rem);
-  background: rgba(3, 3, 15, 0.65);
+  background: rgb(var(--sfs-shade-rgb, 3 3 15) / 0.65);
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   animation: fadeIn .25s ease both;
@@ -631,7 +631,7 @@
   max-height: min(92dvh, 900px);
   display: flex;
   flex-direction: column;
-  background: rgba(15, 15, 35, 0.6);
+  background: rgb(var(--sfs-shade-rgb, 15 15 35) / 0.6);
   backdrop-filter: var(--ex-blur-strong);
   -webkit-backdrop-filter: var(--ex-blur-strong);
   border: var(--ex-border);
@@ -654,7 +654,7 @@
   gap: 1rem;
   padding: clamp(1rem, 2.5vw, 1.5rem);
   border-bottom: var(--ex-border-soft);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
   flex-shrink: 0;
 }
 
@@ -662,7 +662,7 @@
   margin: 0;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   word-break: break-word;
 }
 
@@ -673,17 +673,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   border: var(--ex-border);
   border-radius: 10px;
   font-size: 1.25rem;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   cursor: pointer;
   transition: transform .25s ease, background .25s ease, border-color .25s ease;
 }
 .exams-page .modal-close:hover {
-  background: rgba(248, 113, 113, 0.25);
-  border-color: rgba(248, 113, 113, 0.45);
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.25);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.45);
   transform: rotate(90deg);
 }
 
@@ -700,7 +700,7 @@
   gap: 0.6rem;
   padding: clamp(0.85rem, 2vw, 1.25rem);
   border-top: var(--ex-border-soft);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
   flex-shrink: 0;
 }
 
@@ -713,7 +713,7 @@
   padding-bottom: 0.5rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   border-bottom: var(--ex-border-soft);
 }
 
@@ -730,7 +730,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
 }
@@ -755,7 +755,7 @@
 
 .exams-page .instructions-content {
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
   color: var(--ex-text-soft);
@@ -769,7 +769,7 @@
 .exams-page .video-container { margin-top: 0.5rem; }
 
 .exams-page .video-embed-wrapper {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
   overflow: hidden;
@@ -790,8 +790,8 @@
 .exams-page .video-link-container {
   text-align: center;
   padding: 1.25rem;
-  background: rgba(237, 137, 54, 0.1);
-  border: 1px solid rgba(237, 137, 54, 0.25);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.1);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.25);
   border-radius: var(--ex-radius-md);
 }
 .exams-page .video-link-container p {
@@ -805,9 +805,9 @@
   gap: 0.5rem;
   padding: 0.7rem 1.4rem;
   min-height: 44px;
-  background: linear-gradient(135deg, rgba(237,137,54,0.7) 0%, rgba(221,107,32,0.7) 100%);
-  color: #fff;
-  border: 1px solid rgba(237, 137, 54, 0.45);
+  background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.7) 0%, rgb(var(--sfs-warning-rgb, 221 107 32) / 0.7) 100%);
+  color: var(--sfs-text, #fff);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.45);
   border-radius: var(--ex-radius-md);
   font-weight: 600;
   text-decoration: none;
@@ -815,7 +815,7 @@
 }
 .exams-page .video-external-link:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35);
+  box-shadow: 0 10px 28px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
 }
 
 /* Results section */
@@ -831,7 +831,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
 }
@@ -862,15 +862,15 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
   transition: background .25s ease, border-color .25s ease, transform .25s ease;
   flex-wrap: wrap;
 }
 .exams-page .management-option:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
 }
 
 .exams-page .option-icon {
@@ -891,7 +891,7 @@
   margin: 0 0 0.35rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
 }
 .exams-page .option-details p {
   margin: 0 0 0.85rem;
@@ -910,7 +910,7 @@
 .exams-page .history-container {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
   border: var(--ex-border-soft);
   border-radius: var(--ex-radius-md);
   overflow: hidden;
@@ -936,30 +936,30 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   color: var(--ex-text-soft);
 }
 .exams-page .history-status.scheduled {
   background: var(--ex-warning-bg);
-  border-color: rgba(251, 191, 36, 0.4);
-  color: #fcd34d;
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.4);
+  color: var(--sfs-warning-text, #fcd34d);
 }
 .exams-page .history-status.completed {
   background: var(--ex-success-bg);
-  border-color: rgba(74, 222, 128, 0.4);
-  color: #86efac;
+  border-color: rgb(var(--sfs-success-rgb, 74 222 128) / 0.4);
+  color: var(--sfs-success-text, #86efac);
 }
 .exams-page .history-status.cancelled,
 .exams-page .history-status.expired {
   background: var(--ex-danger-bg);
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #fca5a5;
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.4);
+  color: var(--sfs-danger-text, #fca5a5);
 }
 .exams-page .history-status.in-progress {
   background: var(--ex-info-bg);
-  border-color: rgba(56, 189, 248, 0.4);
-  color: #7dd3fc;
+  border-color: rgb(var(--sfs-info-rgb, 56 189 248) / 0.4);
+  color: var(--sfs-info-text, #7dd3fc);
 }
 
 /* Modal footer buttons */
@@ -974,21 +974,21 @@
   font-weight: 600;
   border-radius: var(--ex-radius-md);
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   border: 1px solid transparent;
   transition: transform .25s ease, box-shadow .25s ease, background .25s ease, filter .25s ease;
 }
 .exams-page .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
 }
 .exams-page .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
   transform: translateY(-2px);
 }
 .exams-page .btn-primary {
   background: var(--ex-grad);
-  border-color: rgba(118, 75, 162, 0.45);
+  border-color: rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.45);
 }
 .exams-page .btn-primary:hover {
   transform: translateY(-2px);
@@ -1000,7 +1000,7 @@
    Focus styles (galaxy-friendly)
    ============================================================ */
 .exams-page :focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
   border-radius: 8px;
 }

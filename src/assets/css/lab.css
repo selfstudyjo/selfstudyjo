@@ -7,40 +7,40 @@
    ========================================================================== */
 :root {
   /* Brand-aligned accents (match global gradient #667eea → #764ba2) */
-  --lab-primary:       #667eea;
-  --lab-primary-soft:  rgba(102, 126, 234, 0.18);
-  --lab-primary-glow:  rgba(102, 126, 234, 0.35);
-  --lab-secondary:     #818cf8;
-  --lab-accent:        #a78bfa;
-  --lab-accent-glow:   rgba(167, 139, 250, 0.35);
-  --lab-purple:        #764ba2;
+  --lab-primary:       var(--sfs-accent, #667eea);
+  --lab-primary-soft:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  --lab-primary-glow:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+  --lab-secondary:     var(--sfs-accent-soft, #818cf8);
+  --lab-accent:        var(--sfs-accent-2, #a78bfa);
+  --lab-accent-glow:   rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.35);
+  --lab-purple:        var(--sfs-accent-2, #764ba2);
 
   /* Status */
-  --lab-success: #48bb78;
-  --lab-success-glow: rgba(72, 187, 120, 0.35);
-  --lab-warning: #ed8936;
-  --lab-warning-glow: rgba(237, 137, 54, 0.35);
-  --lab-danger:  #fc8181;
-  --lab-danger-glow:  rgba(252, 129, 129, 0.35);
-  --lab-info:    #0ea5e9;
-  --lab-info-glow:    rgba(14, 165, 233, 0.35);
+  --lab-success: var(--sfs-success, #48bb78);
+  --lab-success-glow: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
+  --lab-warning: var(--sfs-warning, #ed8936);
+  --lab-warning-glow: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
+  --lab-danger:  var(--sfs-danger, #fc8181);
+  --lab-danger-glow:  rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
+  --lab-info:    var(--sfs-info, #0ea5e9);
+  --lab-info-glow:    rgb(var(--sfs-info-rgb, 14 165 233) / 0.35);
 
   /* Glass surfaces — translucent so the galaxy stays visible */
-  --glass-1: rgba(255, 255, 255, 0.04);
-  --glass-2: rgba(255, 255, 255, 0.06);
-  --glass-3: rgba(255, 255, 255, 0.09);
-  --glass-border:        rgba(255, 255, 255, 0.10);
-  --glass-border-strong: rgba(255, 255, 255, 0.18);
+  --glass-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+  --glass-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  --glass-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
+  --glass-border:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --glass-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
 
   /* Terminal — slightly darker but still translucent */
-  --term-bg:     rgba(10, 12, 28, 0.55);
-  --term-header: rgba(20, 22, 40, 0.55);
-  --term-text:   #e8eaff;
+  --term-bg:     rgb(var(--sfs-shade-rgb, 10 12 28) / 0.55);
+  --term-header: rgb(var(--sfs-shade-rgb, 20 22 40) / 0.55);
+  --term-text:   var(--sfs-text-muted, #e8eaff);
 
   /* Typography */
-  --text-primary:   #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.78);
-  --text-muted:     rgba(255, 255, 255, 0.55);
+  --text-primary:   var(--sfs-text, #ffffff);
+  --text-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* Effects */
   --blur-soft:   blur(14px) saturate(140%);
@@ -50,8 +50,8 @@
 
   /* Shadows */
   --shadow-soft:  0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-card:  0 8px 32px rgba(15, 18, 50, 0.35), 0 0 0 1px var(--glass-border);
-  --shadow-glow:  0 8px 32px rgba(102, 126, 234, 0.18);
+  --shadow-card:  0 8px 32px rgb(var(--sfs-shade-rgb, 15 18 50) / 0.35), 0 0 0 1px var(--glass-border);
+  --shadow-glow:  0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
 
   /* Spacing — fluid */
   --space-xs: clamp(0.25rem, 0.6vw, 0.5rem);
@@ -131,7 +131,7 @@
 
 .labs-header:hover {
   border-color: var(--glass-border-strong);
-  box-shadow: var(--shadow-card), 0 12px 36px rgba(102, 126, 234, 0.25);
+  box-shadow: var(--shadow-card), 0 12px 36px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
 }
 
 .header-content h1 {
@@ -186,7 +186,7 @@
 .stat-card::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, var(--lab-primary-soft), rgba(167, 139, 250, 0.10));
+  background: linear-gradient(135deg, var(--lab-primary-soft), rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.1));
   opacity: 0;
   transition: var(--transition);
   pointer-events: none;
@@ -195,7 +195,7 @@
 .stat-card:hover {
   transform: translateY(-2px);
   border-color: var(--glass-border-strong);
-  box-shadow: 0 8px 28px rgba(102, 126, 234, 0.22);
+  box-shadow: 0 8px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
 }
 .stat-card:hover::before { opacity: 1; }
 
@@ -209,8 +209,8 @@
   justify-content: center;
   font-size: clamp(18px, 4vw, 24px);
   color: var(--lab-secondary);
-  background: linear-gradient(135deg, var(--lab-primary-soft), rgba(167, 139, 250, 0.18));
-  border: 1px solid rgba(129, 140, 248, 0.30);
+  background: linear-gradient(135deg, var(--lab-primary-soft), rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.18));
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
   border-radius: var(--r-md);
   box-shadow: 0 0 18px var(--lab-primary-glow);
   flex-shrink: 0;
@@ -224,7 +224,7 @@
   font-size: clamp(1.1rem, 3.5vw, 1.6rem);
   font-weight: 700;
   line-height: 1.15;
-  background: linear-gradient(135deg, #ffffff, #c7d2fe);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff), var(--sfs-accent-soft, #c7d2fe));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -312,19 +312,19 @@
   margin-bottom: var(--space-lg);
   padding: var(--space-md) var(--space-lg);
   color: var(--text-primary);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.32), rgba(118, 75, 162, 0.32));
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.32), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.32));
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   border-radius: var(--r-md);
   backdrop-filter: var(--blur-medium);
   -webkit-backdrop-filter: var(--blur-medium);
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.20);
+  box-shadow: 0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
   overflow: hidden;
 }
 
 .lab-info-banner::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1), transparent);
   background-size: 200% 100%;
   animation: lab-shimmer 4s infinite linear;
   pointer-events: none;
@@ -343,7 +343,7 @@
 
 .lab-info-content i {
   font-size: 1.3em;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 
@@ -352,17 +352,17 @@
   margin-left: var(--space-xs);
   padding: 4px 12px;
   font-size: var(--font-xs);
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.28);
   border-radius: 999px;
   backdrop-filter: blur(6px);
   white-space: nowrap;
 }
 
 .student-info.warning {
-  background: rgba(237, 137, 54, 0.25);
-  border-color: rgba(237, 137, 54, 0.45);
-  color: #fed7aa;
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.25);
+  border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.45);
+  color: var(--sfs-warning-text, #fed7aa);
 }
 
 /* ==========================================================================
@@ -431,10 +431,10 @@
 }
 
 .tab-btn.active {
-  color: #ffffff;
+  color: var(--sfs-on-accent, #ffffff);
   background: linear-gradient(135deg, var(--lab-primary), var(--lab-purple));
-  border-color: rgba(255, 255, 255, 0.20);
-  box-shadow: 0 6px 22px rgba(102, 126, 234, 0.40);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 
 .tab-btn i { font-size: 1.05em; }
@@ -537,7 +537,7 @@
 }
 
 .table-item .btn-sm:hover {
-  color: #fff;
+  color: var(--sfs-text, #fff);
   background: var(--lab-primary-soft);
   border-color: var(--lab-secondary);
   box-shadow: 0 0 12px var(--lab-primary-glow);
@@ -546,7 +546,7 @@
 .sql-instructions {
   padding: var(--space-md);
   background: var(--lab-primary-soft);
-  border: 1px solid rgba(129, 140, 248, 0.30);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
   border-radius: var(--r-md);
 }
 
@@ -570,7 +570,7 @@
   padding: 6px 0;
   font-size: var(--font-sm);
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(129, 140, 248, 0.18);
+  border-bottom: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
   line-height: 1.5;
 }
 .sql-instructions li:last-child { border-bottom: none; }
@@ -581,8 +581,8 @@
   padding: 2px 8px;
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: 0.9em;
-  color: #c7d2fe;
-  background: rgba(102, 126, 234, 0.18);
+  color: var(--sfs-text-muted, #c7d2fe);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
   border-radius: 4px;
 }
 
@@ -689,9 +689,9 @@
   gap: var(--space-sm);
   margin-top: var(--space-md);
   padding: var(--space-md);
-  color: #ffd5d5;
-  background: rgba(252, 129, 129, 0.10);
-  border: 1px solid rgba(252, 129, 129, 0.32);
+  color: var(--sfs-danger-text, #ffd5d5);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.1);
+  border: 1px solid rgb(var(--sfs-danger-rgb, 252 129 129) / 0.32);
   border-radius: var(--r-sm);
 }
 
@@ -709,7 +709,7 @@
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: 0.85em;
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
   border-radius: 4px;
   overflow-wrap: break-word;
 }
@@ -742,11 +742,11 @@
 .results-table {
   width: 100%;
   border-collapse: collapse;
-  background: rgba(0, 0, 0, 0.20);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
 }
 
 .results-table thead {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.50), rgba(118, 75, 162, 0.50));
+  background: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.5));
 }
 
 .results-table th,
@@ -759,7 +759,7 @@
 
 .results-table th {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--sfs-text, #ffffff);
 }
 
 .results-table th:last-child,
@@ -770,7 +770,7 @@
   transition: var(--transition);
 }
 
-.results-table tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+.results-table tbody tr:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05); }
 
 .results-table td {
   color: var(--text-secondary);
@@ -858,14 +858,14 @@
   font-size: clamp(0.82rem, 1.8vw, 0.92rem);
   line-height: 1.5;
   color: var(--term-text);
-  background: rgba(5, 7, 22, 0.45);
+  background: rgb(var(--sfs-shade-rgb, 5 7 22) / 0.45);
   cursor: text;
 }
 
 .terminal-content::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(transparent 50%, rgba(255, 255, 255, 0.02) 50%);
+  background: linear-gradient(transparent 50%, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.02) 50%);
   background-size: 100% 4px;
   pointer-events: none;
   opacity: 0.25;
@@ -884,7 +884,7 @@
   margin: var(--space-sm) 0;
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25), transparent);
 }
 
 .terminal-line {
@@ -901,8 +901,8 @@
 
 .terminal-line.command { color: var(--term-text); }
 .terminal-line.output  { color: var(--text-secondary); }
-.terminal-line.error   { color: #ffd5d5; }
-.terminal-line.info    { color: #c7d2fe; }
+.terminal-line.error   { color: var(--sfs-danger-text, #ffd5d5); }
+.terminal-line.info    { color: var(--sfs-text-muted, #c7d2fe); }
 
 .line-prompt,
 .input-prompt {
@@ -948,7 +948,7 @@
   caret-color: var(--lab-success);
 }
 
-.command-input::placeholder { color: rgba(255, 255, 255, 0.30); }
+.command-input::placeholder { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.3); }
 .command-input:disabled    { opacity: 0.5; cursor: not-allowed; }
 
 .cursor {
@@ -969,7 +969,7 @@
 /* Terminal help */
 .terminal-help {
   padding: var(--space-md);
-  background: rgba(20, 22, 40, 0.40);
+  background: rgb(var(--sfs-shade-rgb, 20 22 40) / 0.4);
   border-top: 1px solid var(--glass-border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1014,7 +1014,7 @@
 }
 
 .cmd-btn:hover {
-  color: #fff;
+  color: var(--sfs-text, #fff);
   background: var(--lab-primary-soft);
   border-color: var(--lab-secondary);
   transform: translateY(-1px);
@@ -1023,7 +1023,7 @@
 
 .cmd-btn code {
   font-weight: 700;
-  color: #c7d2fe;
+  color: var(--sfs-text-muted, #c7d2fe);
   background: transparent;
   padding: 0;
 }
@@ -1064,7 +1064,7 @@
   font-size: clamp(0.82rem, 1.8vw, 0.92rem);
   line-height: 1.5;
   color: var(--term-text);
-  background: rgba(0, 0, 0, 0.30);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-sm);
 }
@@ -1116,7 +1116,7 @@
 }
 
 .template-btn:hover {
-  color: #fff;
+  color: var(--sfs-text, #fff);
   background: var(--lab-primary-soft);
   border-color: var(--lab-secondary);
   transform: translateY(-1px);
@@ -1153,7 +1153,7 @@
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1), transparent);
   transition: 0.5s;
 }
 .btn:hover::before { left: 100%; }
@@ -1161,7 +1161,7 @@
 .btn:hover {
   transform: translateY(-2px);
   border-color: var(--glass-border-strong);
-  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.22);
+  box-shadow: 0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
 }
 
 .btn:disabled {
@@ -1172,11 +1172,11 @@
 
 .btn-primary {
   background: linear-gradient(135deg, var(--lab-primary), var(--lab-purple));
-  border-color: rgba(255, 255, 255, 0.20);
-  color: #ffffff;
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  color: var(--sfs-on-accent, #ffffff);
 }
 .btn-primary:hover {
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.40);
+  box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
   filter: brightness(1.06);
 }
 
@@ -1196,14 +1196,14 @@
 }
 
 .btn-danger {
-  background: rgba(252, 129, 129, 0.18);
-  border-color: rgba(252, 129, 129, 0.40);
-  color: #ffd5d5;
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.4);
+  color: var(--sfs-danger-text, #ffd5d5);
 }
 .btn-danger:hover {
-  background: rgba(252, 129, 129, 0.32);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.32);
   box-shadow: 0 0 18px var(--lab-danger-glow);
-  color: #fff;
+  color: var(--sfs-text, #fff);
 }
 
 .btn-sm {
@@ -1216,14 +1216,14 @@
 /* Lab info banner buttons override */
 .lab-info-banner .btn,
 .lab-info-banner .btn-outline {
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.30);
-  color: #fff;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
+  color: var(--sfs-text, #fff);
 }
 .lab-info-banner .btn:hover,
 .lab-info-banner .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.26);
-  color: #fff;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.26);
+  color: var(--sfs-text, #fff);
 }
 
 /* ==========================================================================
@@ -1322,7 +1322,7 @@
 .output-container::-webkit-scrollbar-track,
 .tables-list::-webkit-scrollbar-track,
 .results-table-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.20);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
   border-radius: 4px;
 }
 
@@ -1335,7 +1335,7 @@
 }
 
 /* Selection inside terminal */
-.terminal-content ::selection { background: rgba(102, 126, 234, 0.40); color: #fff; }
+.terminal-content ::selection { background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4); color: var(--sfs-text, #fff); }
 
 /* ==========================================================================
    FOCUS / ACCESSIBILITY
@@ -1367,7 +1367,7 @@
 }
 
 @media (prefers-contrast: more) {
-  .labs-container { color: #ffffff; }
+  .labs-container { color: var(--sfs-text, #ffffff); }
   .stat-card,
   .tab-content,
   .terminal-wrapper,

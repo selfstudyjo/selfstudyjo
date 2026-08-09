@@ -3,8 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as THREE from 'three'
+import { useThemeStore } from '@/store/theme'
+import type { GalaxyPalette, ThemeMode } from '@/theme/themes'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,6 +86,24 @@ const PLANET_DATA: PlanetData[] = [
 // Refs / State
 // ---------------------------------------------------------------------------
 const container = ref<HTMLElement | null>(null)
+const themeStore = useThemeStore()
+
+/**
+ * The scene's colours come from the active theme, which is what makes the ten
+ * themes ten GALAXIES rather than ten button colours. `palette` and `mode` are
+ * read once per build and then used everywhere a literal used to be.
+ */
+let palette: GalaxyPalette = themeStore.theme.galaxy
+let mode: ThemeMode = themeStore.theme.mode
+
+/**
+ * Additive blending is what makes a star field glow — each particle ADDS light
+ * to what is behind it. Over a pale sky that saturates to white almost at
+ * once, so on the three light galaxies the particles are composited normally
+ * and drawn in colours darker than the sky instead. Without this switch a
+ * light theme's background is a blank sheet of paper.
+ */
+const blending = () => (mode === 'dark' ? THREE.AdditiveBlending : THREE.NormalBlending)
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
@@ -154,6 +174,7 @@ function createStarField(): void {
   const colors    = new Float32Array(count * 3)
   const sizes     = new Float32Array(count)
   const phases    = new Float32Array(count)
+  const starTint  = new THREE.Color(palette.star)
 
   for (let i = 0; i < count; i++) {
     // Spread on a big sphere
@@ -164,17 +185,29 @@ function createStarField(): void {
     positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
     positions[i * 3 + 2] = r * Math.cos(phi)
 
-    // Realistic star color temperature
+    /*
+      Star colour temperature, tinted toward the galaxy's own light.
+      The physical distribution is kept — mostly blue-white main sequence,
+      some yellow, a few orange, the odd red giant — and then pulled 45%
+      toward the theme's star colour. Replacing the distribution outright
+      would give ten fields of one flat colour; leaving it alone would give
+      ten identical fields. The blend is what makes Sombrero's sky read as
+      gold and Whirlpool's as green while both still look like stars.
+    */
     const t = Math.random()
+    let sr: number, sg: number, sb: number
     if (t < 0.6) {        // white-blue main sequence
-      colors[i*3]=0.85; colors[i*3+1]=0.9;  colors[i*3+2]=1.0
+      sr = 0.85; sg = 0.9;  sb = 1.0
     } else if (t < 0.85) {// yellow
-      colors[i*3]=1.0;  colors[i*3+1]=0.95; colors[i*3+2]=0.75
+      sr = 1.0;  sg = 0.95; sb = 0.75
     } else if (t < 0.95) {// orange
-      colors[i*3]=1.0;  colors[i*3+1]=0.7;  colors[i*3+2]=0.5
+      sr = 1.0;  sg = 0.7;  sb = 0.5
     } else {              // red giants (rare)
-      colors[i*3]=1.0;  colors[i*3+1]=0.5;  colors[i*3+2]=0.4
+      sr = 1.0;  sg = 0.5;  sb = 0.4
     }
+    colors[i * 3]     = sr + (starTint.r - sr) * 0.45
+    colors[i * 3 + 1] = sg + (starTint.g - sg) * 0.45
+    colors[i * 3 + 2] = sb + (starTint.b - sb) * 0.45
 
     sizes[i]  = 0.5 + Math.random() * 2.0
     phases[i] = Math.random() * Math.PI * 2
@@ -222,7 +255,7 @@ function createStarField(): void {
     `,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: blending(),
     vertexColors: true,
   }))
 
@@ -245,10 +278,12 @@ function createGalaxy(): void {
   const RADIUS = 130
   const RANDOMNESS = 0.35
 
-  // Color gradients
-  const insideColor  = new THREE.Color(0xffd9a3) // warm yellow core
-  const middleColor  = new THREE.Color(0xffffff) // white-yellow
-  const outsideColor = new THREE.Color(0x4488ff) // blue arm tips
+  // Colour gradient, core → disc → arm tips. Four of the theme's five galaxy
+  // colours; the fifth (star) belongs to the field around the camera.
+  const insideColor  = new THREE.Color(palette.core)
+  const middleColor  = new THREE.Color(palette.inner)
+  const outsideColor = new THREE.Color(palette.outer)
+  const discColor    = new THREE.Color(palette.mid)
 
   for (let i = 0; i < count; i++) {
     let r: number, isHalo = false, isBulge = false
@@ -280,12 +315,16 @@ function createGalaxy(): void {
     positions[i * 3 + 1] = ry
     positions[i * 3 + 2] = Math.sin(angle) * r + rz
 
-    // Color: core → middle → outside
+    // Colour: core → inner → disc → arm tips.
     const tColor = Math.min(r / RADIUS, 1.0)
     const c = new THREE.Color()
     if (tColor < 0.3)      c.copy(insideColor).lerp(middleColor, tColor / 0.3)
-    else                   c.copy(middleColor).lerp(outsideColor, (tColor - 0.3) / 0.7)
-    if (isHalo) c.multiplyScalar(0.55)
+    else if (tColor < 0.6) c.copy(middleColor).lerp(discColor, (tColor - 0.3) / 0.3)
+    else                   c.copy(discColor).lerp(outsideColor, (tColor - 0.6) / 0.4)
+    // On a light sky, dimming a halo particle moves it TOWARD the background
+    // and it disappears; it has to be darkened relative to the sky instead,
+    // which for a normally-blended particle means lowering the value.
+    if (isHalo) c.multiplyScalar(mode === 'dark' ? 0.55 : 0.75)
 
     colors[i * 3]     = c.r
     colors[i * 3 + 1] = c.g
@@ -326,7 +365,7 @@ function createGalaxy(): void {
     `,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: blending(),
     vertexColors: true,
   }))
 
@@ -336,20 +375,32 @@ function createGalaxy(): void {
   galaxy.rotation.z =  Math.PI / 8
   scene.add(galaxy)
 
-  // Bright bloom core sprite (procedural, no texture upload)
+  // Bright bloom core sprite (procedural, no texture upload). Drawn from the
+  // theme's core and inner colours so the brightest thing on screen is the one
+  // that most identifies the galaxy.
   const coreCanvas = document.createElement('canvas')
   coreCanvas.width = coreCanvas.height = 128
   const ctx = coreCanvas.getContext('2d')!
+  const core = new THREE.Color(palette.core)
+  const inner = new THREE.Color(palette.inner)
+  const rgb = (c: THREE.Color) =>
+    `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`
   const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-  grad.addColorStop(0,   'rgba(255,235,180,1)')
-  grad.addColorStop(0.3, 'rgba(255,200,140,0.6)')
-  grad.addColorStop(0.7, 'rgba(255,180,120,0.15)')
+  grad.addColorStop(0,   `rgba(${rgb(core)},1)`)
+  grad.addColorStop(0.3, `rgba(${rgb(core)},0.6)`)
+  grad.addColorStop(0.7, `rgba(${rgb(inner)},0.15)`)
   grad.addColorStop(1,   'rgba(0,0,0,0)')
   ctx.fillStyle = grad; ctx.fillRect(0, 0, 128, 128)
   const tex = track(new THREE.CanvasTexture(coreCanvas))
 
   const coreMat = track(new THREE.SpriteMaterial({
-    map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
+    map: tex,
+    blending: blending(),
+    depthWrite: false,
+    transparent: true,
+    // Normally blended, the bloom would be an opaque disc; on a light sky it
+    // is a soft glow instead.
+    opacity: mode === 'dark' ? 1 : 0.5,
   }))
   galaxyCore = new THREE.Sprite(coreMat)
   galaxyCore.scale.set(35, 35, 1)
@@ -449,14 +500,22 @@ function createPlanets(): void {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
+/**
+ * No WebGL, or the visitor asked for no motion. Still themed: this is what a
+ * low-end phone and anyone with `prefers-reduced-motion` actually sees, so it
+ * has to be the right galaxy rather than a fixed indigo one.
+ */
 function showFallback() {
   if (container.value) {
     container.value.style.background =
-      'radial-gradient(ellipse at center, #0a0a2e 0%, #03030f 70%)'
+      `radial-gradient(ellipse at center, ${palette.outer} 0%, ${palette.space} 70%)`
   }
 }
 
 function init(): boolean {
+  palette = themeStore.theme.galaxy
+  mode = themeStore.theme.mode
+
   if (!hasWebGL()) { showFallback(); return false }
 
   tier = detectTier()
@@ -465,8 +524,11 @@ function init(): boolean {
 
   try {
     scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x03030f)
-    scene.fog = new THREE.FogExp2(0x03030f, 0.0014)
+    const space = new THREE.Color(palette.space)
+    scene.background = space
+    // The fog is the same colour as the sky, which is what makes distant
+    // particles fade out rather than pile up into a bright band at the horizon.
+    scene.fog = new THREE.FogExp2(space.getHex(), 0.0014)
 
     const w = window.innerWidth, h = window.innerHeight
     camera = new THREE.PerspectiveCamera(70, w / h, 0.1, 1500)
@@ -486,9 +548,16 @@ function init(): boolean {
     container.value!.appendChild(renderer.domElement)
     renderer.domElement.style.display = 'block'
 
-    // Lights — minimal but effective
-    scene.add(new THREE.HemisphereLight(0x223377, 0x000005, 0.7))
-    const dir = new THREE.DirectionalLight(0xffeedd, 1.0)
+    // Lights — minimal but effective. The ambient half is the galaxy's own
+    // mid tone so the planets pick up the sky they are floating in, and the
+    // key light is the theme's, which is what stops a warm galaxy having
+    // cold-lit planets in it.
+    scene.add(new THREE.HemisphereLight(
+      new THREE.Color(palette.mid).getHex(),
+      new THREE.Color(palette.space).getHex(),
+      mode === 'dark' ? 0.7 : 1.1,
+    ))
+    const dir = new THREE.DirectionalLight(new THREE.Color(palette.light).getHex(), 1.0)
     dir.position.set(3, 5, 4)
     scene.add(dir)
 
@@ -592,14 +661,9 @@ function onContextLost(e: Event) {
 }
 
 // ---------------------------------------------------------------------------
-// Lifecycle
+// Teardown — also used between galaxies, not only on unmount
 // ---------------------------------------------------------------------------
-onMounted(() => {
-  if (prefersReducedMotion()) { showFallback(); return }
-  if (init()) animate()
-})
-
-onBeforeUnmount(() => {
+function teardown(): void {
   cancelAnimationFrame(rafId)
   rafId = 0
   isRunning = false
@@ -607,6 +671,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResizeDebounced)
   document.removeEventListener('visibilitychange', onVisibility)
   intersectionObserver?.disconnect()
+  intersectionObserver = null
 
   // Dispose every tracked resource
   for (const d of disposables) {
@@ -614,14 +679,55 @@ onBeforeUnmount(() => {
   }
   disposables.length = 0
   planets.length = 0
+  starField = null
+  galaxy = null
+  galaxyCore = null
 
   if (renderer) {
     renderer.domElement.removeEventListener('webglcontextlost', onContextLost as any)
     renderer.dispose()
     renderer.forceContextLoss?.()
     renderer.domElement.parentNode?.removeChild(renderer.domElement)
+    renderer = undefined as any
   }
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
+onMounted(() => {
+  if (prefersReducedMotion()) { showFallback(); return }
+  if (init()) animate()
 })
+
+/*
+  Switching galaxy rebuilds the scene rather than recolouring it in place.
+
+  Colour is baked into a BufferAttribute per particle and into two procedural
+  canvas textures, so "recolour" would mean rewriting ~12000 floats, both
+  textures and three materials' blend modes — most of a rebuild, with a second
+  code path that only runs on a theme change and would therefore be the one
+  nobody notices is broken. A rebuild reuses the path that runs on every page
+  load, and it happens once per deliberate click.
+
+  `teardown()` disposes everything first: without it, ten theme changes leak
+  ten WebGL contexts and the browser silently drops the oldest, which appears
+  as the background vanishing rather than as an error.
+*/
+watch(() => themeStore.themeId, () => {
+  if (prefersReducedMotion()) {
+    palette = themeStore.theme.galaxy
+    showFallback()
+    return
+  }
+  teardown()
+  elapsed = 0
+  lastFrame = 0
+  isRunning = true
+  if (init()) animate()
+})
+
+onBeforeUnmount(teardown)
 </script>
 
 <style scoped>
@@ -639,8 +745,8 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background: radial-gradient(
     ellipse at center,
-    #0a0a1f 0%,
-    #03030f 70%
+    var(--sfs-surface-2, #0a0a1f) 0%,
+    var(--sfs-space, #03030f) 70%
   );
   /* keep canvas crisp on every device */
   contain: strict;

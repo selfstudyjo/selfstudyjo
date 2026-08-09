@@ -125,14 +125,14 @@ watch(() => [props.width, props.height], ([w, h]) => {
   box-shadow:
     inset -10px -10px 30px rgba(0, 0, 0, 0.4),
     inset 10px 10px 30px rgba(255, 255, 255, 0.15),
-    0 0 30px rgba(0, 217, 255, 0.2);
+    0 0 30px rgb(var(--sfs-info-rgb, 0 217 255) / 0.2);
   animation: planet-spin 18s linear infinite;
 }
 
 .planet-fallback-text {
   font-size: clamp(28px, 8vw, 60px);
   font-weight: 800;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   letter-spacing: -0.02em;
 }

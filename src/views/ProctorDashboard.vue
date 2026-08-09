@@ -326,9 +326,9 @@ onMounted(() => {
 .filters-section {
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: rgba(15, 15, 40, 0.85);
+    background: rgb(var(--sfs-surface-rgb, 15 15 40) / 0.85);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
     backdrop-filter: blur(12px) saturate(180%);
 }
 
@@ -344,7 +344,7 @@ onMounted(() => {
 .filters-header h2 {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--sfs-text, #ffffff);
     text-shadow: 0 0 10px rgba(0,0,0,0.8);
     margin: 0;
 }
@@ -364,24 +364,24 @@ onMounted(() => {
 
 .filter-group label {
     font-size: 0.875rem;
-    color: #e0e0e0;
+    color: var(--sfs-text, #e0e0e0);
     text-shadow: 0 0 10px rgba(0,0,0,0.8);
 }
 
 .filter-input {
     padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.5);
+    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--sfs-text, #ffffff);
     font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
 .filter-input:focus {
     outline: none;
-    border-color: #4ECDC4;
-    box-shadow: 0 0 15px rgba(78, 205, 196, 0.3);
+    border-color: var(--sfs-info, #4ECDC4);
+    box-shadow: 0 0 15px rgb(var(--sfs-info-rgb, 78 205 196) / 0.3);
 }
 
 .filter-actions {
@@ -391,8 +391,8 @@ onMounted(() => {
 
 .clear-filters-btn {
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.9), rgba(255, 86, 86, 0.9));
-    color: #ffffff;
+    background: linear-gradient(135deg, rgb(var(--sfs-danger-rgb, 255 107 107) / 0.9), rgb(var(--sfs-danger-rgb, 255 86 86) / 0.9));
+    color: var(--sfs-on-danger, #ffffff);
     border: none;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -404,9 +404,9 @@ onMounted(() => {
 }
 
 .clear-filters-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 86, 86, 1), rgba(255, 70, 70, 1));
+    background: linear-gradient(135deg, var(--sfs-danger, rgba(255, 86, 86, 1)), var(--sfs-danger, rgba(255, 70, 70, 1)));
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 5px 15px rgb(var(--sfs-danger-rgb, 255 107 107) / 0.4);
 }
 
 /* Responsive adjustments */

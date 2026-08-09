@@ -7,18 +7,18 @@
 /* ---------- Page-scoped tokens (no global leakage) ---------- */
 .homework-page {
   /* Brand */
-  --hv-accent-1: #818cf8;
-  --hv-accent-2: #a78bfa;
-  --hv-accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --hv-accent-grad-soft: linear-gradient(135deg, rgba(102,126,234,0.18) 0%, rgba(118,75,162,0.18) 100%);
-  --hv-accent-grad-hover: linear-gradient(135deg, rgba(102,126,234,0.32) 0%, rgba(118,75,162,0.32) 100%);
+  --hv-accent-1: var(--sfs-accent-soft, #818cf8);
+  --hv-accent-2: var(--sfs-accent-2, #a78bfa);
+  --hv-accent-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --hv-accent-grad-soft: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.18) 100%);
+  --hv-accent-grad-hover: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.32) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.32) 100%);
 
   /* Glass surfaces */
-  --hv-glass-1: rgba(255, 255, 255, 0.05);
-  --hv-glass-2: rgba(255, 255, 255, 0.07);
-  --hv-glass-3: rgba(255, 255, 255, 0.10);
-  --hv-glass-border: 1px solid rgba(255, 255, 255, 0.10);
-  --hv-glass-border-strong: 1px solid rgba(255, 255, 255, 0.16);
+  --hv-glass-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --hv-glass-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  --hv-glass-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --hv-glass-border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --hv-glass-border-strong: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
   --hv-blur: blur(16px) saturate(140%);
   --hv-blur-strong: blur(22px) saturate(160%);
 
@@ -28,19 +28,19 @@
   --hv-text-muted: rgba(255, 255, 255, 0.55);
 
   /* Status */
-  --hv-success: #4ade80;
-  --hv-success-bg: rgba(74, 222, 128, 0.12);
-  --hv-success-border: rgba(74, 222, 128, 0.35);
-  --hv-danger: #fc8181;
-  --hv-danger-bg: rgba(252, 129, 129, 0.12);
-  --hv-danger-border: rgba(252, 129, 129, 0.35);
-  --hv-warn: #fbbf24;
-  --hv-warn-bg: rgba(251, 191, 36, 0.10);
-  --hv-warn-border: rgba(251, 191, 36, 0.30);
+  --hv-success: var(--sfs-success, #4ade80);
+  --hv-success-bg: rgb(var(--sfs-success-rgb, 74 222 128) / 0.12);
+  --hv-success-border: rgb(var(--sfs-success-rgb, 74 222 128) / 0.35);
+  --hv-danger: var(--sfs-danger, #fc8181);
+  --hv-danger-bg: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12);
+  --hv-danger-border: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
+  --hv-warn: var(--sfs-warning, #fbbf24);
+  --hv-warn-bg: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.1);
+  --hv-warn-border: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.3);
 
   /* Shadows */
   --hv-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --hv-glow: 0 0 24px rgba(102, 126, 234, 0.18);
+  --hv-glow: 0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
 
   /* Fluid sizing */
   --hv-radius: clamp(14px, 1.4vw, 22px);
@@ -124,7 +124,7 @@
 .homework-page .loading-spinner {
   width: clamp(48px, 6vw, 64px);
   height: clamp(48px, 6vw, 64px);
-  border: 3px solid rgba(255, 255, 255, 0.12);
+  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   border-top-color: var(--hv-accent-1);
   border-right-color: var(--hv-accent-2);
   border-radius: 50%;
@@ -137,7 +137,7 @@
   position: absolute;
   inset: -8px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(129,140,248,0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35) 0%, transparent 70%);
   filter: blur(14px);
   animation: hv-pulse 2s ease-in-out infinite;
   z-index: -1;
@@ -152,7 +152,7 @@
 .homework-page .error-icon {
   color: var(--hv-danger);
   margin-bottom: 16px;
-  filter: drop-shadow(0 0 14px rgba(252, 129, 129, 0.45));
+  filter: drop-shadow(0 0 14px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.45));
 }
 .homework-page .error-icon svg {
   width: clamp(40px, 5vw, 56px);
@@ -212,11 +212,11 @@
 }
 .homework-page .breadcrumb-link:hover {
   color: var(--hv-text);
-  background: rgba(129, 140, 248, 0.10);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.1);
 }
 
 .homework-page .breadcrumb-separator {
-  color: rgba(255, 255, 255, 0.25);
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.25);
 }
 
 .homework-page .breadcrumb-current {
@@ -253,7 +253,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #818cf8, #a78bfa, transparent);
+  background: linear-gradient(90deg, transparent, var(--sfs-accent-soft, #818cf8), var(--sfs-accent-2, #a78bfa), transparent);
   opacity: 0.55;
 }
 
@@ -271,8 +271,8 @@
   padding: 6px 14px;
   border-radius: 999px;
   background: var(--hv-accent-grad-soft);
-  border: 1px solid rgba(129, 140, 248, 0.35);
-  color: #c7d2fe;
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
+  color: var(--sfs-text-muted, #c7d2fe);
   font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -291,7 +291,7 @@
   font-weight: 800;
   line-height: 1.15;
   margin-bottom: 14px;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 50%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 50%, var(--sfs-accent-2, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -344,14 +344,14 @@
   justify-content: space-between;
   gap: 12px 18px;
   padding: clamp(16px, 2.5vw, 24px) clamp(18px, 3vw, 28px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
 }
 .homework-page .section-header::after {
   content: '';
   position: absolute;
   inset: auto 0 0 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(129,140,248,0.5), rgba(167,139,250,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5), rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.5), transparent);
 }
 
 .homework-page .section-title {
@@ -417,8 +417,8 @@
   align-items: center;
   gap: 10px;
   padding: clamp(12px, 2vw, 18px) clamp(14px, 2.5vw, 22px);
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
+  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
 }
 
 .homework-page .materials-title {
@@ -442,7 +442,7 @@
 }
 .homework-page .external-link:hover {
   color: var(--hv-text);
-  background: rgba(129, 140, 248, 0.12);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.12);
 }
 
 /* Google Docs warning */
@@ -457,14 +457,14 @@
   color: var(--hv-warn);
   flex-shrink: 0;
   margin-top: 2px;
-  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.35));
+  filter: drop-shadow(0 0 6px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35));
 }
 .homework-page .warning-content {
   flex: 1;
   min-width: 0;
 }
 .homework-page .warning-content p {
-  color: #fde68a;
+  color: var(--sfs-warning-text, #fde68a);
   margin: 0 0 12px;
   font-size: var(--fs-sm);
   line-height: 1.6;
@@ -472,8 +472,8 @@
 .homework-page .docs-link {
   display: block;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(129, 140, 248, 0.30);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
   border-radius: 10px;
   color: var(--hv-accent-1);
   text-decoration: none;
@@ -482,15 +482,15 @@
   transition: var(--hv-transition);
 }
 .homework-page .docs-link:hover {
-  background: rgba(129, 140, 248, 0.12);
-  border-color: rgba(129, 140, 248, 0.5);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.12);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
   color: var(--hv-text);
 }
 
 /* Iframe / embed */
 .homework-page .embed-container {
   padding: clamp(14px, 2.5vw, 22px);
-  background: rgba(0, 0, 0, 0.18);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
 }
 
 .homework-page .homework-iframe {
@@ -499,7 +499,7 @@
   min-height: 280px;
   border: var(--hv-glass-border);
   border-radius: var(--hv-radius-sm);
-  background: rgba(0, 0, 0, 0.35);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
   box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
   display: block;
 }
@@ -508,7 +508,7 @@
   padding: clamp(24px, 4vw, 40px);
   text-align: center;
   color: var(--hv-text-soft);
-  background: rgba(0, 0, 0, 0.18);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
   border-radius: var(--hv-radius-sm);
   font-size: var(--fs-base);
 }
@@ -643,7 +643,7 @@
 .homework-page .submission-description p {
   margin: 0;
   padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.20);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
   border-left: 3px solid var(--hv-accent-1);
   border-radius: 0 var(--hv-radius-sm) var(--hv-radius-sm) 0;
   color: var(--hv-text-soft);
@@ -698,8 +698,8 @@
   width: 100%;
   min-height: var(--hv-touch);
   padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.30);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   border-radius: var(--hv-radius-sm);
   color: var(--hv-text);
   font-family: inherit;
@@ -711,14 +711,14 @@
 }
 .homework-page .form-input::placeholder,
 .homework-page .form-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.35);
 }
 .homework-page .form-input:focus,
 .homework-page .form-textarea:focus {
   outline: none;
   border-color: var(--hv-accent-1);
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.22), 0 0 18px rgba(129, 140, 248, 0.18);
-  background: rgba(0, 0, 0, 0.40);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.22), 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.4);
 }
 .homework-page .form-input:disabled,
 .homework-page .form-textarea:disabled {
@@ -796,9 +796,9 @@
 .homework-page .link-btn,
 .homework-page .submit-btn {
   background: var(--hv-accent-grad-soft);
-  border-color: rgba(129, 140, 248, 0.35);
-  color: #e0e7ff;
-  box-shadow: 0 4px 18px rgba(102, 126, 234, 0.22);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
+  color: var(--sfs-text-muted, #e0e7ff);
+  box-shadow: 0 4px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
 }
 .homework-page .retry-btn:hover,
 .homework-page .link-btn:hover,
@@ -806,22 +806,22 @@
   background: var(--hv-accent-grad-hover);
   color: var(--hv-text);
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 8px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 
 /* Secondary (ghost) — back, edit, cancel */
 .homework-page .back-btn,
 .homework-page .edit-btn,
 .homework-page .cancel-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   color: var(--hv-text-soft);
 }
 .homework-page .back-btn:hover,
 .homework-page .edit-btn:hover,
 .homework-page .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
   color: var(--hv-text);
   transform: translateY(-2px);
 }
@@ -839,8 +839,8 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #ffffff;
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border-top-color: var(--sfs-border-strong, #ffffff);
   border-radius: 50%;
   animation: hv-spin 0.9s linear infinite;
 }
@@ -854,7 +854,7 @@
   background: var(--hv-danger-bg);
   border: 1px solid var(--hv-danger-border);
   border-radius: var(--hv-radius-sm);
-  color: #fecaca;
+  color: var(--sfs-danger-text, #fecaca);
   font-size: var(--fs-sm);
   line-height: 1.5;
   backdrop-filter: blur(6px);
@@ -962,12 +962,12 @@
   .homework-page .submission-card,
   .homework-page .submission-form,
   .homework-page .homework-materials {
-    background: rgba(0, 0, 0, 0.85);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.85);
+    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.5);
   }
   .homework-page .form-input,
   .homework-page .form-textarea {
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.5);
   }
 }
 
@@ -976,8 +976,8 @@
    ========================================================================== */
 @media print {
   .homework-page {
-    background: #fff !important;
-    color: #000 !important;
+    background: var(--sfs-paper, #fff) !important;
+    color: var(--sfs-on-paper, #000) !important;
     padding: 16px;
   }
   .homework-page .loading-container,
@@ -987,8 +987,8 @@
   .homework-page .instructions-container,
   .homework-page .submission-card,
   .homework-page .submission-form {
-    background: #fff !important;
-    border: 1px solid #ccc !important;
+    background: var(--sfs-paper, #fff) !important;
+    border: 1px solid var(--sfs-paper-border, #ccc) !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
@@ -997,8 +997,8 @@
   .homework-page .submission-title,
   .homework-page .form-title,
   .homework-page .error-title {
-    color: #000 !important;
-    -webkit-text-fill-color: #000 !important;
+    color: var(--sfs-on-paper, #000) !important;
+    -webkit-text-fill-color: var(--sfs-on-paper, #000) !important;
     background: none !important;
   }
   .homework-page .homework-description,

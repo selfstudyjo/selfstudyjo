@@ -244,7 +244,7 @@
                             @click="selectMention(username)"
                             @mouseenter="selectedMentionIndex = index"
                           >
-                            <div class="mention-avatar" :style="{ background: getUserColor(username) }">
+                            <div class="mention-avatar" :style="paint(getUserColor(username))">
                               {{ getUserInitials(username) }}
                             </div>
                             <span class="mention-username">{{ username }}</span>
@@ -284,7 +284,7 @@
                           <div
                             v-else
                             class="user-avatar-generated"
-                            :style="{ background: getUserColor(comment.user_profile?.username || comment.user_id) }"
+                            :style="paint(getUserColor(comment.user_profile?.username || comment.user_id))"
                           >
                             {{ getUserInitials(comment.user_profile?.username || comment.user_id) }}
                           </div>
@@ -318,7 +318,24 @@
                     </div>
 
                     <div class="comment-content">
-                      <p v-html="parseMentions(comment.content)"></p>
+                      <!--
+                        Was `v-html="parseMentions(comment.content)"`, where
+                        parseMentions ran a bare `.replace(/@(\w+)/…)` over the
+                        raw comment and handed the result straight to v-html —
+                        so a comment containing `<img src=x onerror=…>`
+                        executed. RichText escapes first and only then inserts
+                        the anchors it built itself; see src/utils/linkify.ts.
+                        It also makes a URL in a comment clickable, which is
+                        what it looks like it is doing.
+                      -->
+                      <!--
+                        Mentions stay styled-but-unlinked, as they were. There
+                        is no `/profile/:username` route — `/profile` is your
+                        own — so linking one would send a reader to a dead
+                        path. Give RichText a `mention-href` on the day that
+                        route exists.
+                      -->
+                      <RichText :text="comment.content" />
                     </div>
                   </div>
                 </div>
@@ -359,6 +376,8 @@ import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 import { serviceRegistry } from '@/services/config';
 import Planet from '@/components/Planet.vue';
+import RichText from '@/components/RichText.vue';
+import { paint } from '@/theme/contrast';
 import { getSecureMediaUrl } from '@/utils/mediaUtils';
 
 const DEBUG = true;
@@ -705,7 +724,6 @@ const selectMention = (username: string) => {
   }
 };
 
-const parseMentions = (text: string) => text ? text.replace(/@(\w+)/g, '<span class="mention">@$1</span>') : '';
 
 const extractMentions = (text: string): string[] => {
   if (!text) return [];
@@ -895,7 +913,7 @@ onUnmounted(() => {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
@@ -911,22 +929,22 @@ onUnmounted(() => {
 }
 
 .register-action-btn--enroll {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
 }
 
 .register-action-btn--enrolled {
-  background: linear-gradient(135deg, #48bb78, #38a169);
+  background: linear-gradient(135deg, var(--sfs-success, #48bb78), var(--sfs-success, #38a169));
 }
 
 .register-action-btn--enrolled:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e53e3e, #c53030);
+  background: linear-gradient(135deg, var(--sfs-danger, #e53e3e), var(--sfs-danger, #c53030));
 }
 
 .btn-spinner-lg {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: detail-spin 0.7s linear infinite;
 }

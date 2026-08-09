@@ -2,7 +2,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+// Order matters. theme.css declares what everything else spends and sets the
+// floor for elements no page styles; responsive.css scales the units those
+// pages are written in. Both are imported before style.css and before any
+// route chunk, so a page rule always wins a tie against them.
+import './assets/css/theme.css'
+import './assets/css/responsive.css'
 import './style.css'
+import { bootstrapTheme } from './theme/apply'
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -32,6 +39,11 @@ if ('serviceWorker' in navigator) {
         window.location.reload();
     });
 }
+
+// Applied before Vue exists so the first frame is already the right galaxy.
+// Every var(--sfs-…) in the stylesheets carries the pre-theme literal as its
+// fallback, so this failing would render the old palette rather than nothing.
+bootstrapTheme()
 
 const app = createApp(App)
 const pinia = createPinia()

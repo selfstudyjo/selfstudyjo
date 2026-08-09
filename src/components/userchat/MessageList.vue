@@ -379,7 +379,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
 .day span {
   padding: 4px 14px;
   border-radius: var(--uc-r-full);
-  background: rgba(10, 12, 32, 0.78);
+  background: rgb(var(--sfs-surface-rgb, 10 12 32) / 0.78);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
   border: 1px solid var(--uc-border);
@@ -436,9 +436,9 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   border-radius: var(--uc-r-lg);
   background: linear-gradient(
     100deg,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0.10) 50%,
-    rgba(255, 255, 255, 0.04) 70%
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 30%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1) 50%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04) 70%
   );
   background-size: 220% 100%;
   animation: shimmer 1.4s infinite;
@@ -469,7 +469,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   border-radius: 50%;
   background: var(--uc-surface);
   border: 1px solid var(--uc-border);
-  color: rgba(129, 140, 248, 0.6);
+  color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.6);
 }
 .uc-empty strong { color: var(--uc-text-soft); font-size: var(--uc-fs-lg); font-weight: 600; }
 
@@ -486,7 +486,7 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   padding: 0 13px;
   border: 1px solid var(--uc-border-strong);
   border-radius: var(--uc-r-full);
-  background: rgba(16, 18, 44, 0.92);
+  background: rgb(var(--sfs-surface-rgb, 16 18 44) / 0.92);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
   color: var(--uc-text-soft);
@@ -501,8 +501,8 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
 .jump.pinged {
   background: var(--uc-brand-grad);
   border-color: transparent;
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+  color: var(--sfs-text, #fff);
+  box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
 .fab-enter-active, .fab-leave-active { transition: opacity var(--uc-t-fast), transform var(--uc-t-fast); }

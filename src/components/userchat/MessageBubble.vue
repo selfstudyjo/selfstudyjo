@@ -108,7 +108,12 @@
               <div v-if="!full && !mediaError" class="uc-spinner" aria-label="Loading picture"></div>
               <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
             </div>
-            <figcaption v-if="message.text">{{ message.text }}</figcaption>
+            <RichText
+              v-if="message.text"
+              tag="figcaption"
+              :text="message.text"
+              :on-fill="mine"
+            />
           </figure>
 
           <!-- Voice note -->
@@ -148,8 +153,16 @@
             <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
           </div>
 
-          <!-- Text -->
-          <p v-else class="text">{{ message.text }}</p>
+          <!--
+            Text.
+
+            `on-fill` for your own bubble, which is painted with the accent
+            gradient: a link there needs the ink derived for that fill, not the
+            one derived for the page surface behind it. Mentions are on — this
+            is a conversation between named people and "@sara" in a group chat
+            is the normal way to address one of them.
+          -->
+          <RichText v-else class="text" :text="message.text" :on-fill="mine" />
 
           <!--
             The foot is drawn on the last bubble of a run, and on any bubble that
@@ -197,6 +210,7 @@ export type SendStatus = 'none' | 'sending' | 'sent' | 'read' | 'failed';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import ChatAvatar from './ChatAvatar.vue';
+import RichText from '@/components/RichText.vue';
 import { formatDuration } from './chatMedia';
 import { userChatService, type ChatMessage } from '@/services/userchat.service';
 
@@ -510,11 +524,11 @@ onBeforeUnmount(() => {
   box-shadow: var(--uc-out-glow), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 .row.mine:hover .bubble {
-  box-shadow: 0 10px 26px rgba(102, 126, 234, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 26px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 /* Selecting text inside a bubble should not go invisible against the gradient. */
-.bubble ::selection, .bubble::selection { background: rgba(255, 255, 255, 0.28); color: #fff; }
+.bubble ::selection, .bubble::selection { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.28); color: var(--sfs-text, #fff); }
 
 /*
   Cluster geometry. The corner facing the author is tightened: bottom on the last
@@ -544,15 +558,15 @@ onBeforeUnmount(() => {
   border: 0;
   border-left: 3px solid var(--uc-brand-soft);
   border-radius: var(--uc-r-xs);
-  background: rgba(0, 0, 0, 0.22);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.22);
   color: inherit;
   cursor: pointer;
   font: inherit;
   transition: background var(--uc-t-fast);
 }
-.quote:hover { background: rgba(0, 0, 0, 0.32); }
-.row.mine .quote { border-left-color: rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.14); }
-.row.mine .quote:hover { background: rgba(255, 255, 255, 0.2); }
+.quote:hover { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.32); }
+.row.mine .quote { border-left-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
+.row.mine .quote:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
 .quote-who { display: block; font-size: var(--uc-fs-xs); font-weight: 700; }
 .quote-text {
   display: block;
@@ -581,7 +595,7 @@ onBeforeUnmount(() => {
   min-width: 130px;
   border-radius: var(--uc-r-sm);
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
   cursor: zoom-in;
   display: grid;
   place-items: center;
@@ -601,8 +615,8 @@ onBeforeUnmount(() => {
   position: absolute;
   width: 22px;
   height: 22px;
-  border: 2.5px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
+  border: 2.5px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.35);
+  border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
@@ -620,13 +634,13 @@ onBeforeUnmount(() => {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
   color: var(--uc-text);
   cursor: pointer;
   transition: background var(--uc-t-fast);
 }
-.play:hover:not(:disabled) { background: rgba(255, 255, 255, 0.24); }
-.row.theirs .play { background: rgba(129, 140, 248, 0.24); color: #c7d2fe; }
+.play:hover:not(:disabled) { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.24); }
+.row.theirs .play { background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.24); color: var(--sfs-text-muted, #c7d2fe); }
 .play:disabled { opacity: 0.45; cursor: default; }
 
 .wave { flex: 1; display: flex; align-items: center; gap: 2px; height: 26px; cursor: pointer; }
@@ -637,8 +651,8 @@ onBeforeUnmount(() => {
   background: currentColor;
   transition: opacity var(--uc-t-fast);
 }
-.row.theirs .wave { color: #a5b4fc; }
-.row.mine .wave { color: #fff; }
+.row.theirs .wave { color: var(--sfs-text-muted, #a5b4fc); }
+.row.mine .wave { color: var(--sfs-text, #fff); }
 
 .duration {
   font-size: var(--uc-fs-xs);
@@ -654,7 +668,7 @@ onBeforeUnmount(() => {
   gap: 6px;
   margin-top: 3px;
   font-size: var(--uc-fs-xs);
-  color: rgba(255, 255, 255, 0.62);
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
   line-height: 1;
 }
 .bubble.image .foot { margin: 3px 5px 1px; }
@@ -680,7 +694,7 @@ time { font-variant-numeric: tabular-nums; }
 /* Applied from the page when a reply's quote is followed to its parent. */
 .row.highlighted .bubble { animation: uc-flash 1.6s ease-out; }
 @keyframes uc-flash {
-  0%, 40% { box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.6); }
+  0%, 40% { box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.6); }
   100% { box-shadow: 0 2px 10px rgba(4, 6, 20, 0.2); }
 }
 

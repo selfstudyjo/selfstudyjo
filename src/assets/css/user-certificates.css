@@ -7,26 +7,26 @@
 /* ---------- Page-scoped tokens (NO :root leakage) ---------- */
 .user-certificates {
   --uc-text:        #ffffff;
-  --uc-text-soft:   #e8eaff;
+  --uc-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
   --uc-text-mute:   rgba(255, 255, 255, 0.72);
-  --uc-text-dim:    rgba(255, 255, 255, 0.50);
+  --uc-text-dim:    rgba(255, 255, 255, 0.5);
 
-  --uc-accent:      #818cf8;
-  --uc-accent-2:    #a78bfa;
-  --uc-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --uc-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.20) 0%, rgba(118,75,162,0.20) 100%);
+  --uc-accent:      var(--sfs-accent-soft, #818cf8);
+  --uc-accent-2:    var(--sfs-accent-2, #a78bfa);
+  --uc-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --uc-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.2) 100%);
 
-  --uc-glass:       rgba(255, 255, 255, 0.05);
-  --uc-glass-2:     rgba(255, 255, 255, 0.08);
-  --uc-glass-hover: rgba(255, 255, 255, 0.10);
-  --uc-border:      rgba(255, 255, 255, 0.10);
-  --uc-border-2:    rgba(255, 255, 255, 0.22);
+  --uc-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --uc-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --uc-glass-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --uc-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --uc-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
   --uc-blur:        blur(16px) saturate(150%);
   --uc-blur-strong: blur(22px) saturate(160%);
 
-  --uc-shadow:      0 8px 32px rgba(102, 126, 234, 0.15);
-  --uc-shadow-lg:   0 16px 48px rgba(118, 75, 162, 0.28);
-  --uc-glow:        0 0 28px rgba(129, 140, 248, 0.30);
+  --uc-shadow:      0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  --uc-shadow-lg:   0 16px 48px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.28);
+  --uc-glow:        0 0 28px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 
   --uc-r-sm:        12px;
   --uc-r-md:        16px;
@@ -113,7 +113,7 @@
   content: '';
   position: absolute;
   inset: -50%;
-  background: radial-gradient(circle, rgba(129,140,248,0.08) 0%, transparent 60%);
+  background: radial-gradient(circle, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.08) 0%, transparent 60%);
   pointer-events: none;
   z-index: -1;
 }
@@ -122,7 +122,7 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0 0 0.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 50%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 50%, var(--sfs-accent-2, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -162,10 +162,10 @@
 .user-certificates .loading-spinner {
   width: clamp(48px, 10vw, 72px);
   height: clamp(48px, 10vw, 72px);
-  border: 3px solid rgba(255,255,255,0.10);
-  border-top-color: #667eea;
-  border-right-color: #818cf8;
-  border-bottom-color: #764ba2;
+  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border-top-color: var(--sfs-accent, #667eea);
+  border-right-color: var(--sfs-accent-soft, #818cf8);
+  border-bottom-color: var(--sfs-accent-2, #764ba2);
   border-radius: 50%;
   animation: uc-spin 1.1s linear infinite;
   margin-bottom: 1.25rem;
@@ -176,7 +176,7 @@
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(129,140,248,0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35) 0%, transparent 70%);
   filter: blur(12px);
   opacity: 0.5;
   animation: uc-pulse 2s ease-in-out infinite;
@@ -189,18 +189,18 @@
 
 /* error */
 .user-certificates .error-container {
-  box-shadow: 0 8px 32px rgba(252,129,129,0.18);
-  border-color: rgba(252,129,129,0.28);
+  box-shadow: 0 8px 32px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.28);
 }
 .user-certificates .error-icon {
   font-size: clamp(2.5rem, 8vw, 4rem);
-  color: #fc8181;
-  filter: drop-shadow(0 0 16px rgba(252,129,129,0.55));
+  color: var(--sfs-danger-text, #fc8181);
+  filter: drop-shadow(0 0 16px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.55));
   margin-bottom: 1rem;
 }
 .user-certificates .error-container h3 {
   font-size: var(--uc-fs-xl);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin-bottom: 0.5rem;
   line-height: 1.25;
 }
@@ -225,19 +225,19 @@
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--uc-grad);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   border-radius: var(--uc-r-sm);
   cursor: pointer;
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast), background var(--uc-t-fast);
-  box-shadow: 0 6px 20px rgba(102,126,234,0.30), inset 0 1px 0 rgba(255,255,255,0.18);
+  box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3), inset 0 1px 0 rgba(255,255,255,0.18);
   white-space: nowrap;
 }
 .user-certificates .retry-btn:hover,
 .user-certificates .view-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(102,126,234,0.45), inset 0 1px 0 rgba(255,255,255,0.22);
+  box-shadow: 0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 .user-certificates .retry-btn:focus-visible,
 .user-certificates .view-btn:focus-visible {
@@ -249,13 +249,13 @@
 .user-certificates .empty-icon {
   font-size: clamp(3rem, 11vw, 5rem);
   color: var(--uc-accent);
-  filter: drop-shadow(0 0 22px rgba(129,140,248,0.55));
+  filter: drop-shadow(0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55));
   animation: uc-float 3s ease-in-out infinite;
   margin-bottom: 1rem;
 }
 .user-certificates .empty-state h3 {
   font-size: var(--uc-fs-xl);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin-bottom: 0.5rem;
   line-height: 1.25;
 }
@@ -297,21 +297,21 @@
 .user-certificates .tab-btn:hover {
   background: var(--uc-glass-hover);
   border-color: var(--uc-border-2);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   transform: translateY(-1px);
 }
 .user-certificates .tab-btn.active {
   background: var(--uc-grad-soft);
-  color: #fff;
-  border-color: rgba(129,140,248,0.40);
-  box-shadow: 0 6px 22px rgba(102,126,234,0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  color: var(--sfs-text, #fff);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4);
+  box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .user-certificates .tab-btn .badge {
   margin-left: 0.25rem;
   padding: 0.15rem 0.55rem;
   font-size: 0.78em;
   font-weight: 700;
-  background: rgba(255,255,255,0.15);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
   border-radius: 999px;
   color: inherit;
 }
@@ -338,7 +338,7 @@
 .user-certificates .search-input-wrapper:focus-within {
   background: var(--uc-glass-2);
   border-color: var(--uc-accent);
-  box-shadow: 0 0 0 4px rgba(129,140,248,0.20);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2);
 }
 .user-certificates .search-icon {
   color: var(--uc-text-mute);
@@ -352,7 +352,7 @@
   background: transparent;
   border: 0;
   outline: none;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font-size: var(--uc-fs-base);
   padding: 0.7rem 0;
   min-height: 44px;
@@ -376,8 +376,8 @@
   transition: all var(--uc-t-fast);
 }
 .user-certificates .search-clear:hover {
-  background: rgba(255,255,255,0.10);
-  color: #fff;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  color: var(--sfs-text, #fff);
 }
 
 /* ============================================================
@@ -409,7 +409,7 @@
 .user-certificates .section-header h2 {
   font-size: var(--uc-fs-lg);
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin: 0;
   line-height: 1.25;
 }
@@ -419,9 +419,9 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #c7d2fe;
-  background: rgba(129,140,248,0.16);
-  border: 1px solid rgba(129,140,248,0.32);
+  color: var(--sfs-text-muted, #c7d2fe);
+  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.16);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.32);
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -465,7 +465,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 85% 15%, rgba(129,140,248,0.08) 0%, transparent 60%);
+  background: radial-gradient(circle at 85% 15%, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.08) 0%, transparent 60%);
   pointer-events: none;
   z-index: -1;
 }
@@ -497,18 +497,18 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
 }
 .user-certificates .certificate-icon.course {
-  background: linear-gradient(135deg, rgba(102,126,234,0.30), rgba(129,140,248,0.30));
-  color: #c7d2fe;
-  box-shadow: 0 0 20px rgba(129,140,248,0.30);
+  background: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3), rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3));
+  color: var(--sfs-text-muted, #c7d2fe);
+  box-shadow: 0 0 20px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 }
 .user-certificates .certificate-icon.exam {
-  background: linear-gradient(135deg, rgba(167,139,250,0.30), rgba(118,75,162,0.30));
-  color: #ddd6fe;
-  box-shadow: 0 0 20px rgba(167,139,250,0.30);
+  background: linear-gradient(135deg, rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.3), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.3));
+  color: var(--sfs-text-muted, #ddd6fe);
+  box-shadow: 0 0 20px rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.3);
 }
 .user-certificates .certificate-icon.expired {
-  background: linear-gradient(135deg, rgba(156,163,175,0.25), rgba(107,114,128,0.25));
-  color: #d1d5db;
+  background: linear-gradient(135deg, rgb(var(--sfs-tint-rgb, 156 163 175) / 0.25), rgb(var(--sfs-shade-rgb, 107 114 128) / 0.25));
+  color: var(--sfs-text-muted, #d1d5db);
   box-shadow: 0 0 18px rgba(156,163,175,0.25);
 }
 
@@ -519,7 +519,7 @@
 .user-certificates .certificate-info h3 {
   font-size: var(--uc-fs-md);
   font-weight: 700;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin: 0 0 0.15rem;
   line-height: 1.3;
   letter-spacing: -0.005em;
@@ -546,7 +546,7 @@
   justify-content: space-between;
   gap: 0.25rem 0.75rem;
   padding: 0.35rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
 }
 .user-certificates .detail-item:last-child {
   border-bottom: 0;
@@ -592,19 +592,19 @@
   display: inline-block;
 }
 .user-certificates .status-badge.valid {
-  color: #6ee7b7;
-  background: rgba(16, 185, 129, 0.14);
-  border-color: rgba(16, 185, 129, 0.40);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  color: var(--sfs-success-text, #6ee7b7);
+  background: rgb(var(--sfs-success-rgb, 16 185 129) / 0.14);
+  border-color: rgb(var(--sfs-success-rgb, 16 185 129) / 0.4);
+  box-shadow: 0 0 12px rgb(var(--sfs-success-rgb, 16 185 129) / 0.25);
 }
 .user-certificates .status-badge.valid::before {
-  background: #34d399;
-  box-shadow: 0 0 6px #34d399;
+  background: var(--sfs-success, #34d399);
+  box-shadow: 0 0 6px var(--sfs-success, #34d399);
 }
 .user-certificates .status-badge.expired {
-  color: #d1d5db;
-  background: rgba(156, 163, 175, 0.14);
-  border-color: rgba(156, 163, 175, 0.40);
+  color: var(--sfs-text-muted, #d1d5db);
+  background: rgb(var(--sfs-tint-rgb, 156 163 175) / 0.14);
+  border-color: rgb(var(--sfs-tint-rgb, 156 163 175) / 0.4);
   box-shadow: 0 0 10px rgba(156, 163, 175, 0.20);
 }
 .user-certificates .status-badge.expired::before {
@@ -620,7 +620,7 @@
   gap: 0.5rem;
   margin-top: 0.35rem;
   padding-top: 0.6rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
 }
 .user-certificates .view-btn {
   min-height: 40px;
@@ -757,8 +757,8 @@
   .user-certificates .error-container,
   .user-certificates .empty-state,
   .user-certificates .certificate-card {
-    background: rgba(0, 0, 5, 0.85);
-    border: 2px solid #fff;
+    background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85);
+    border: 2px solid var(--sfs-paper-border, #fff);
   }
   .user-certificates .status-badge,
   .user-certificates .tab-btn,
@@ -773,8 +773,8 @@
    ============================================================ */
 @media print {
   .user-certificates {
-    background: #fff !important;
-    color: #000 !important;
+    background: var(--sfs-paper, #fff) !important;
+    color: var(--sfs-on-paper, #000) !important;
     padding: 1rem;
     max-width: none;
   }
@@ -783,16 +783,16 @@
   .user-certificates .loading-container,
   .user-certificates .error-container,
   .user-certificates .empty-state {
-    background: #fff !important;
-    border: 1px solid #ccc !important;
+    background: var(--sfs-paper, #fff) !important;
+    border: 1px solid var(--sfs-paper-border, #ccc) !important;
     box-shadow: none !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
   .user-certificates .header h1 {
     background: none !important;
-    -webkit-text-fill-color: #000 !important;
-    color: #000 !important;
+    -webkit-text-fill-color: var(--sfs-on-paper, #000) !important;
+    color: var(--sfs-on-paper, #000) !important;
   }
   .user-certificates .section-header h2,
   .user-certificates .certificate-info h3,

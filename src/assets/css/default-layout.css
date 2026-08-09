@@ -9,26 +9,26 @@
    1. Global design tokens
    -------------------------------------------------------- */
 :root {
-  --galaxy-text:           #ffffff;
-  --galaxy-text-soft:      #e8eaff;
-  --galaxy-text-muted:     rgba(255, 255, 255, 0.70);
-  --galaxy-text-dim:       rgba(255, 255, 255, 0.50);
+  --galaxy-text:           var(--sfs-text, #ffffff);
+  --galaxy-text-soft:      var(--sfs-text-muted, #e8eaff);
+  --galaxy-text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  --galaxy-text-dim:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
-  --galaxy-accent:         #818cf8;
-  --galaxy-accent-2:       #a78bfa;
-  --galaxy-gradient:       linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --galaxy-accent:         var(--sfs-accent-soft, #818cf8);
+  --galaxy-accent-2:       var(--sfs-accent-2, #a78bfa);
+  --galaxy-gradient:       linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
-  --glass-bg:              rgba(255, 255, 255, 0.05);
-  --glass-bg-strong:       rgba(255, 255, 255, 0.08);
-  --glass-bg-hover:        rgba(255, 255, 255, 0.10);
-  --glass-border:          rgba(255, 255, 255, 0.10);
-  --glass-border-strong:   rgba(255, 255, 255, 0.18);
+  --glass-bg:              rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --glass-bg-strong:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --glass-bg-hover:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --glass-border:          rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --glass-border-strong:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   --glass-blur:            blur(14px) saturate(140%);
   --glass-blur-strong:     blur(22px) saturate(160%);
 
-  --glow-soft:             0 8px 32px rgba(102, 126, 234, 0.15);
-  --glow-medium:           0 12px 40px rgba(102, 126, 234, 0.25);
-  --glow-strong:           0 16px 50px rgba(118, 75, 162, 0.35);
+  --glow-soft:             0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  --glow-medium:           0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  --glow-strong:           0 16px 50px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.35);
 
   --radius-sm:             10px;
   --radius-md:             14px;
@@ -290,7 +290,7 @@ img, video, svg, canvas {
    PRINT
    ============================================================ */
 @media print {
-  .default-layout { background: #ffffff; color: #000000; }
+  .default-layout { background: var(--sfs-paper, #ffffff); color: var(--sfs-on-paper, #000000); }
   .app-container > .main-content {
     margin-left: 0 !important;
     padding: 0;

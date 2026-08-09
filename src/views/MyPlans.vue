@@ -897,8 +897,8 @@ onMounted(() => {
 .current-active-banner {
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
+  background: linear-gradient(135deg, var(--sfs-warning, #fef3c7) 0%, var(--sfs-warning, #fde68a) 100%);
+  border: 2px solid var(--sfs-warning, #f59e0b);
   border-radius: 12px;
   padding: 16px 20px;
   margin-bottom: 24px;
@@ -925,23 +925,23 @@ onMounted(() => {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #78350f;
+  color: var(--sfs-warning-text, #78350f);
   font-weight: 600;
 }
 
 .banner-plan {
   font-size: 18px;
-  color: #78350f;
+  color: var(--sfs-warning-text, #78350f);
 }
 
 .subscription-card.is-current-active {
-  border: 2px solid #f59e0b !important;
-  box-shadow: 0 8px 16px -4px rgba(245, 158, 11, 0.3) !important;
+  border: 2px solid var(--sfs-warning, #f59e0b) !important;
+  box-shadow: 0 8px 16px -4px rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3) !important;
   position: relative;
 }
 
 .current-indicator {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, var(--sfs-warning, #f59e0b) 0%, var(--sfs-warning, #d97706) 100%);
   color: white;
   padding: 4px 12px;
   border-radius: 12px;
@@ -955,7 +955,7 @@ onMounted(() => {
 }
 
 .success-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--sfs-success, #10b981) 0%, var(--sfs-success, #059669) 100%);
   color: white;
   cursor: default;
 }
@@ -972,7 +972,7 @@ onMounted(() => {
 }
 
 .section-subtitle {
-  color: #64748b;
+  color: var(--sfs-accent-text, #64748b);
   font-size: 14px;
   margin-top: 4px;
 }

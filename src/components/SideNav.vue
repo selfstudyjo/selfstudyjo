@@ -209,6 +209,14 @@
       </nav>
 
       <div class="sidebar-footer">
+        <!--
+          The galaxy picker sits above the account block and outside the
+          authenticated branch on purpose: choosing how the app looks is not
+          something a visitor should have to sign in for, and the login page
+          is one of the screens most worth being able to read.
+        -->
+        <ThemePicker :collapsed="isCollapsed" />
+
         <template v-if="isAuthenticated">
           <div class="user-profile" @click="goToProfile">
             <div class="avatar">
@@ -282,6 +290,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
 import { useUserChatStore } from '@/store/userchat';
+import ThemePicker from '@/components/ThemePicker.vue';
 import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 import {
   HOME_ENTRY,

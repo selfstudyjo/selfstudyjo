@@ -97,8 +97,8 @@ withDefaults(defineProps<{
 .pane-main {
   background-color: var(--uc-panel-2);
   background-image:
-    radial-gradient(1200px 460px at 82% -14%, rgba(118, 75, 162, 0.20), transparent 62%),
-    radial-gradient(940px 400px at 8% 112%, rgba(102, 126, 234, 0.16), transparent 60%);
+    radial-gradient(1200px 460px at 82% -14%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.2), transparent 62%),
+    radial-gradient(940px 400px at 8% 112%, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16), transparent 60%);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
 }

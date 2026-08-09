@@ -701,24 +701,24 @@ onMounted(async () => {
 }
 
 .active-subscriptions-list .subscription-details + .subscription-details {
-  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+  border-top: 1px dashed rgb(var(--sfs-accent-rgb, 148 163 184) / 0.4);
   padding-top: 16px;
 }
 
 .features-count {
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sfs-accent-text, #64748b);
   margin-left: 4px;
 }
 
 .feature-empty {
-  color: #94a3b8;
+  color: var(--sfs-accent-text, #94a3b8);
   font-style: italic;
 }
 
 .combined-features-hint {
-  color: #64748b;
+  color: var(--sfs-accent-text, #64748b);
   font-size: 12px;
   margin-left: 4px;
 }

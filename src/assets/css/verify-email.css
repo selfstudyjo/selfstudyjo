@@ -7,33 +7,33 @@
 /* ---------- Page-scoped tokens (won't leak to other pages) ---------- */
 .verify-container {
   /* brand */
-  --ve-grad:        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --ve-grad-soft:   linear-gradient(135deg, rgba(102,126,234,0.22) 0%, rgba(118,75,162,0.22) 100%);
-  --ve-accent:      #818cf8;
-  --ve-accent-2:    #a78bfa;
+  --ve-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --ve-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.22) 100%);
+  --ve-accent:      var(--sfs-accent-soft, #818cf8);
+  --ve-accent-2:    var(--sfs-accent-2, #a78bfa);
 
   /* text */
-  --ve-text:        #ffffff;
-  --ve-text-soft:   #e8eaff;
-  --ve-text-mute:   rgba(255,255,255,0.70);
-  --ve-text-dim:    rgba(255,255,255,0.50);
-  --ve-text-err:    #fecaca;
-  --ve-text-ok:     #bbf7d0;
+  --ve-text:        var(--sfs-text, #ffffff);
+  --ve-text-soft:   var(--sfs-text-muted, #e8eaff);
+  --ve-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  --ve-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --ve-text-err:    var(--sfs-danger-text, #fecaca);
+  --ve-text-ok:     var(--sfs-success-text, #bbf7d0);
 
   /* glass */
-  --ve-glass:       rgba(255,255,255,0.05);
-  --ve-glass-strong:rgba(255,255,255,0.08);
-  --ve-glass-input: rgba(255,255,255,0.04);
-  --ve-border:      rgba(255,255,255,0.10);
-  --ve-border-hi:   rgba(255,255,255,0.22);
+  --ve-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --ve-glass-strong:rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --ve-glass-input: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+  --ve-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --ve-border-hi:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
   --ve-blur:        blur(22px) saturate(160%);
 
   /* shadow / glow */
-  --ve-shadow:      0 12px 40px rgba(102,126,234,0.18),
+  --ve-shadow:      0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18),
                     0 0 0 1px rgba(255,255,255,0.04);
-  --ve-shadow-hi:   0 18px 56px rgba(118,75,162,0.30),
+  --ve-shadow-hi:   0 18px 56px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.3),
                     0 0 0 1px rgba(255,255,255,0.08);
-  --ve-glow:        0 0 24px rgba(129,140,248,0.45);
+  --ve-glow:        0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45);
 
   /* sizing */
   --ve-radius-sm:   10px;
@@ -106,8 +106,8 @@
   pointer-events: none;
   border-radius: inherit;
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.06) 0%,
-    rgba(255,255,255,0) 35%);
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06) 0%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0) 35%);
 }
 
 .verify-card:hover {
@@ -128,11 +128,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--ve-grad);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   box-shadow:
-    0 12px 36px rgba(102,126,234,0.45),
+    0 12px 36px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45),
     inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
@@ -149,7 +149,7 @@
   letter-spacing: 0.2px;
   color: var(--ve-text);
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -214,15 +214,15 @@
   background: var(--ve-glass-strong);
   box-shadow:
     0 0 0 2px var(--ve-accent),
-    0 0 0 6px rgba(129,140,248,0.20),
-    0 8px 22px rgba(102,126,234,0.30);
+    0 0 0 6px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2),
+    0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
   transform: translateY(-1px);
 }
 
 .otp-inputs input.error {
-  border-color: rgba(252,129,129,0.55);
-  background: rgba(252,129,129,0.10);
-  box-shadow: 0 0 0 3px rgba(252,129,129,0.18);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.55);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.1);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
   animation: shake 0.45s var(--ve-ease);
 }
 
@@ -280,18 +280,18 @@
 }
 
 .btn-primary {
-  color: #fff;
+  color: var(--sfs-on-accent, #fff);
   background: var(--ve-grad);
-  border-color: rgba(255,255,255,0.18);
+  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
   box-shadow:
-    0 10px 28px rgba(102,126,234,0.40),
+    0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4),
     inset 0 1px 0 rgba(255,255,255,0.22);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow:
-    0 14px 36px rgba(102,126,234,0.55),
+    0 14px 36px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55),
     inset 0 1px 0 rgba(255,255,255,0.28);
 }
 
@@ -316,9 +316,9 @@
 .btn-secondary:hover:not(:disabled) {
   background: var(--ve-glass-strong);
   border-color: var(--ve-accent);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(129,140,248,0.30);
+  box-shadow: 0 10px 26px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -373,18 +373,18 @@
 
 .alert-error {
   color: var(--ve-text-err);
-  background: rgba(252,129,129,0.12);
-  border-color: rgba(252,129,129,0.32);
-  border-left: 4px solid #fc8181;
-  box-shadow: 0 6px 20px rgba(252,129,129,0.18);
+  background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12);
+  border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.32);
+  border-left: 4px solid var(--sfs-danger, #fc8181);
+  box-shadow: 0 6px 20px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
 }
 
 .alert-success {
   color: var(--ve-text-ok);
-  background: rgba(72,187,120,0.12);
-  border-color: rgba(72,187,120,0.32);
-  border-left: 4px solid #48bb78;
-  box-shadow: 0 6px 20px rgba(72,187,120,0.18);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.32);
+  border-left: 4px solid var(--sfs-success, #48bb78);
+  box-shadow: 0 6px 20px rgb(var(--sfs-success-rgb, 72 187 120) / 0.18);
 }
 
 /* ---------- Animations ---------- */
@@ -406,7 +406,7 @@
 .verify-container :where(button, input, a, .link):focus-visible {
   outline: 2px solid var(--ve-accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(129,140,248,0.25);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
 }
 
 /* =============================================================
@@ -484,9 +484,9 @@
 /* ---------- High contrast ---------- */
 @media (prefers-contrast: high) {
   .verify-card {
-    background: rgba(0,0,5,0.85);
-    border: 2px solid #fff;
+    background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85);
+    border: 2px solid var(--sfs-border-strong, #fff);
   }
   .otp-inputs input,
-  .btn { border-color: #fff; }
+  .btn { border-color: var(--sfs-border-strong, #fff); }
 }

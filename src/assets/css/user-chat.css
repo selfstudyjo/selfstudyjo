@@ -21,25 +21,25 @@
 
 .uc-root {
   /* ---- brand ---------------------------------------------------------- */
-  --uc-brand-1: #667eea;
-  --uc-brand-2: #764ba2;
-  --uc-brand-soft: #818cf8;
-  --uc-brand-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --uc-brand-1: var(--sfs-accent, #667eea);
+  --uc-brand-2: var(--sfs-accent-2, #764ba2);
+  --uc-brand-soft: var(--sfs-accent-soft, #818cf8);
+  --uc-brand-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
   /* ---- text ----------------------------------------------------------- */
-  --uc-text: #ffffff;
-  --uc-text-soft: rgba(255, 255, 255, 0.82);
-  --uc-text-muted: rgba(255, 255, 255, 0.58);
-  --uc-text-dim: rgba(255, 255, 255, 0.38);
+  --uc-text: var(--sfs-text, #ffffff);
+  --uc-text-soft: rgb(var(--sfs-text-rgb, 255 255 255) / 0.82);
+  --uc-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.58);
+  --uc-text-dim: rgb(var(--sfs-text-rgb, 255 255 255) / 0.38);
 
   /* ---- glass surfaces -------------------------------------------------- */
-  --uc-panel: rgba(12, 14, 34, 0.62);
-  --uc-panel-2: rgba(16, 18, 42, 0.50);
-  --uc-surface: rgba(255, 255, 255, 0.05);
-  --uc-surface-2: rgba(255, 255, 255, 0.08);
-  --uc-surface-3: rgba(255, 255, 255, 0.13);
-  --uc-border: rgba(255, 255, 255, 0.10);
-  --uc-border-strong: rgba(255, 255, 255, 0.20);
+  --uc-panel: rgb(var(--sfs-shade-rgb, 12 14 34) / 0.62);
+  --uc-panel-2: rgb(var(--sfs-shade-rgb, 16 18 42) / 0.5);
+  --uc-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --uc-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --uc-surface-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.13);
+  --uc-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  --uc-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
   --uc-blur: blur(18px) saturate(150%);
   --uc-blur-strong: blur(26px) saturate(160%);
 
@@ -51,22 +51,22 @@
     below about 0.40 on `--uc-out-bg` and the two start to look like the same
     object again, which is exactly the complaint this rebuild answers.
   */
-  --uc-in-bg: rgba(255, 255, 255, 0.085);
-  --uc-in-border: rgba(255, 255, 255, 0.13);
-  --uc-out-bg: linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%);
-  --uc-out-border: rgba(139, 148, 248, 0.55);
-  --uc-out-glow: 0 6px 20px rgba(102, 126, 234, 0.26);
+  --uc-in-bg: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.085);
+  --uc-in-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.13);
+  --uc-out-bg: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.55) 100%);
+  --uc-out-border: rgb(var(--sfs-accent-rgb, 139 148 248) / 0.55);
+  --uc-out-glow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.26);
 
   /* ---- semantic -------------------------------------------------------- */
-  --uc-online: #34d399;
+  --uc-online: var(--sfs-success, #34d399);
   /* The colour a presence dot's halo is cut out of — read by ChatAvatar, which
      falls back to white so it still works on a light surface elsewhere. */
   --uc-avatar-cut: #0d1026;
-  --uc-read: #7dd3fc;              /* the double tick — never white, or it reads as "sent" */
-  --uc-danger: #fc8181;
-  --uc-danger-bg: rgba(252, 129, 129, 0.14);
-  --uc-danger-border: rgba(252, 129, 129, 0.35);
-  --uc-success: #4ade80;
+  --uc-read: var(--sfs-info, #7dd3fc);              /* the double tick — never white, or it reads as "sent" */
+  --uc-danger: var(--sfs-danger, #fc8181);
+  --uc-danger-bg: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.14);
+  --uc-danger-border: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
+  --uc-success: var(--sfs-success, #4ade80);
 
   /* ---- shadows --------------------------------------------------------- */
   --uc-shadow: 0 8px 30px rgba(4, 6, 20, 0.42);
@@ -130,17 +130,17 @@
    -------------------------------------------------------------------------- */
 .uc-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18) transparent;
 }
 .uc-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .uc-scroll::-webkit-scrollbar-track { background: transparent; }
 .uc-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
   border-radius: var(--uc-r-full);
   border: 2px solid transparent;
   background-clip: content-box;
 }
-.uc-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); background-clip: content-box; }
+.uc-scroll::-webkit-scrollbar-thumb:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.28); background-clip: content-box; }
 
 /* --------------------------------------------------------------------------
    Shared primitives. Only the things that would otherwise be copied verbatim

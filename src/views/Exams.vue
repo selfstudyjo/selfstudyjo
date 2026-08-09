@@ -926,7 +926,7 @@ function goToLogin() {
 
 .appointment-detail-grid .detail-label {
   font-size: 14px;
-  color: #718096;
+  color: var(--sfs-accent-text, #718096);
   margin-bottom: 4px;
 }
 
@@ -938,7 +938,7 @@ function goToLogin() {
 
 .history-container {
   margin-top: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sfs-accent-soft, #e2e8f0);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -948,7 +948,7 @@ function goToLogin() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--sfs-accent-soft, #e2e8f0);
 }
 
 .history-item:last-child {
@@ -957,7 +957,7 @@ function goToLogin() {
 
 .history-date {
   font-size: 14px;
-  color: #4a5568;
+  color: var(--sfs-accent-text, #4a5568);
 }
 
 .history-status {
@@ -968,27 +968,27 @@ function goToLogin() {
 }
 
 .history-status.scheduled {
-  background-color: #ebf8ff;
-  color: #2b6cb0;
+  background-color: var(--sfs-info, #ebf8ff);
+  color: var(--sfs-accent-on-paper, #2b6cb0);
 }
 
 .history-status.cancelled {
-  background-color: #fed7d7;
-  color: #c53030;
+  background-color: var(--sfs-danger, #fed7d7);
+  color: var(--sfs-danger-on-paper, #c53030);
 }
 
 .history-status.expired {
-  background-color: #fed7d7;
-  color: #c53030;
+  background-color: var(--sfs-danger, #fed7d7);
+  color: var(--sfs-danger-on-paper, #c53030);
 }
 
 .history-status.completed {
-  background-color: #c6f6d5;
-  color: #276749;
+  background-color: var(--sfs-success, #c6f6d5);
+  color: var(--sfs-success-on-paper, #276749);
 }
 
 .status-in-progress {
-  background-color: #fefcbf;
-  color: #744210;
+  background-color: var(--sfs-warning, #fefcbf);
+  color: var(--sfs-warning-on-paper, #744210);
 }
 </style>

@@ -26,7 +26,7 @@
           v-for="person in participants.slice(0, 5)"
           :key="person.user_id"
           class="face"
-          :style="{ background: person.colour }"
+          :style="paint(person.colour)"
           :title="`${person.username}${person.user_id === userId ? ' (you)' : ''}`"
         >{{ (person.username || '?').charAt(0).toUpperCase() }}</span>
         <span v-if="participants.length > 5" class="face more">
@@ -150,6 +150,7 @@
  * reverses *your* actions, which is what the word means to the person pressing it.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { paint } from '@/theme/contrast';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { ApiError } from '@/services/api';
@@ -628,7 +629,7 @@ async function leave() {
   flex-direction: column;
   height: calc(100vh - 0px);
   min-height: 0;
-  background: #f8fafc;
+  background: var(--sfs-accent-soft, #f8fafc);
 }
 
 .board-head {
@@ -636,22 +637,22 @@ async function leave() {
   align-items: center;
   gap: 14px;
   padding: 10px 16px;
-  background: #fff;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sfs-paper, #fff);
+  border-bottom: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.08);
 }
 
 .back {
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12);
   border-radius: 9px;
-  background: #fff;
+  background: var(--sfs-paper, #fff);
   font-size: 1rem;
-  color: #334155;
+  color: var(--sfs-accent-on-paper, #334155);
   cursor: pointer;
 }
-.back:hover { background: #f1f5f9; }
+.back:hover { background: var(--sfs-accent-soft, #f1f5f9); }
 
 .title-block { min-width: 0; flex: 1; }
 
@@ -671,15 +672,15 @@ async function leave() {
   text-overflow: ellipsis;
 }
 
-.title-input:hover { border-color: rgba(15, 23, 42, 0.12); }
-.title-input:focus { outline: none; border-color: #2563eb; background: #fff; }
+.title-input:hover { border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12); }
+.title-input:focus { outline: none; border-color: var(--sfs-accent, #2563eb); background: var(--sfs-paper, #fff); }
 
-.byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: #94a3b8; }
+.byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: var(--sfs-accent-text, #94a3b8); }
 
-.save-saved { color: #16a34a; }
-.save-saving { color: #2563eb; }
-.save-dirty { color: #d97706; }
-.save-error { color: #dc2626; font-weight: 600; }
+.save-saved { color: var(--sfs-success-text, #16a34a); }
+.save-saving { color: var(--sfs-accent-text, #2563eb); }
+.save-dirty { color: var(--sfs-warning-text, #d97706); }
+.save-error { color: var(--sfs-danger-text, #dc2626); font-weight: 600; }
 
 .people { display: flex; align-items: center; }
 
@@ -690,14 +691,14 @@ async function leave() {
   height: 29px;
   margin-left: -7px;
   border-radius: 50%;
-  border: 2px solid #fff;
-  color: #fff;
+  border: 2px solid var(--sfs-border-strong, #fff);
+  color: var(--sfs-on-accent, #fff);
   font-size: 0.76rem;
   font-weight: 700;
   cursor: default;
 }
 .face:first-child { margin-left: 0; }
-.face.more { background: #64748b; }
+.face.more { background: var(--sfs-accent, #64748b); }
 
 .head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
@@ -707,8 +708,8 @@ async function leave() {
   font-size: 0.72rem;
   font-weight: 700;
 }
-.pill.view { background: rgba(100, 116, 139, 0.14); color: #475569; }
-.pill.edit { background: rgba(22, 163, 74, 0.13); color: #15803d; }
+.pill.view { background: rgb(var(--sfs-accent-rgb, 100 116 139) / 0.14); color: var(--sfs-accent-text, #475569); }
+.pill.edit { background: rgb(var(--sfs-success-rgb, 22 163 74) / 0.13); color: var(--sfs-success-text, #15803d); }
 
 .btn {
   padding: 8px 14px;
@@ -718,10 +719,10 @@ async function leave() {
   font-weight: 600;
   cursor: pointer;
 }
-.btn.ghost { background: #f1f5f9; color: #334155; }
-.btn.ghost:hover { background: #e2e8f0; }
-.btn.primary { background: #2563eb; color: #fff; }
-.btn.danger { background: #dc2626; color: #fff; }
+.btn.ghost { background: var(--sfs-accent-soft, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
+.btn.ghost:hover { background: var(--sfs-accent-soft, #e2e8f0); }
+.btn.primary { background: var(--sfs-accent, #2563eb); color: var(--sfs-on-accent, #fff); }
+.btn.danger { background: var(--sfs-danger, #dc2626); color: var(--sfs-on-danger, #fff); }
 
 .state {
   flex: 1;
@@ -729,10 +730,10 @@ async function leave() {
   place-content: center;
   gap: 10px;
   text-align: center;
-  color: #64748b;
+  color: var(--sfs-accent-text, #64748b);
   font-size: 0.92rem;
 }
-.state.error h2 { margin: 0; font-size: 1.05rem; color: #b91c1c; }
+.state.error h2 { margin: 0; font-size: 1.05rem; color: var(--sfs-danger-text, #b91c1c); }
 .state.error p { margin: 0; max-width: 46ch; line-height: 1.55; }
 .state .btn { justify-self: center; }
 
@@ -744,8 +745,8 @@ async function leave() {
   margin: 0;
   padding: 9px 16px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.88);
-  color: #f8fafc;
+  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.88);
+  color: var(--sfs-text-muted, #f8fafc);
   font-size: 0.82rem;
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3);
   z-index: 20;
@@ -758,18 +759,18 @@ async function leave() {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.55);
 }
 
 .dialog {
   width: min(460px, 100%);
   padding: 22px 24px 18px;
   border-radius: 15px;
-  background: #fff;
+  background: var(--sfs-paper, #fff);
   box-shadow: 0 26px 64px rgba(15, 23, 42, 0.34);
 }
 .dialog h2 { margin: 0 0 10px; font-size: 1.06rem; }
-.dialog p { margin: 0; color: #64748b; font-size: 0.88rem; line-height: 1.55; }
+.dialog p { margin: 0; color: var(--sfs-accent-text, #64748b); font-size: 0.88rem; line-height: 1.55; }
 .dialog footer { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
 
 @media (max-width: 760px) {

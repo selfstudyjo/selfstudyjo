@@ -256,7 +256,7 @@ function formatDate(value?: string) {
   height: 100%;
   min-height: 0;
   border-left: 1px solid var(--uc-border);
-  background: rgba(10, 12, 30, 0.88);
+  background: rgb(var(--sfs-surface-rgb, 10 12 30) / 0.88);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   color: var(--uc-text);
@@ -292,7 +292,7 @@ h3 { margin: 0 0 4px; font-size: var(--uc-fs-xl); font-weight: 650; color: var(-
   transition: background var(--uc-t-fast), border-color var(--uc-t-fast);
 }
 .rename input:hover { background: var(--uc-surface); }
-.rename input:focus { border-color: rgba(129, 140, 248, 0.5); background: var(--uc-surface-2); }
+.rename input:focus { border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5); background: var(--uc-surface-2); }
 .rename input:first-child { font-size: var(--uc-fs-xl); font-weight: 650; }
 .topic-input { margin-top: 4px; font-size: var(--uc-fs-sm); color: var(--uc-text-muted); }
 .rename input::placeholder { color: var(--uc-text-dim); }
@@ -349,7 +349,7 @@ h4 {
   cursor: pointer;
   transition: transform var(--uc-t-fast), border-color var(--uc-t-fast);
 }
-.media-cell:hover { transform: scale(1.04); border-color: rgba(129, 140, 248, 0.5); }
+.media-cell:hover { transform: scale(1.04); border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5); }
 /* The thumbnails are 24px data URLs blown up to fill the cell, so the blur is
    deliberate — at that size the pixels would be the only thing visible. */
 .media-cell img { width: 100%; height: 100%; object-fit: cover; filter: blur(1.5px); transform: scale(1.06); }
@@ -394,8 +394,8 @@ h4 {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.role.owner { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
-.role.admin { background: rgba(129, 140, 248, 0.2); color: #c7d2fe; }
+.role.owner { background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.18); color: var(--sfs-warning-text, #fcd34d); }
+.role.admin { background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2); color: var(--sfs-text-muted, #c7d2fe); }
 
 .row-actions { display: flex; align-items: center; gap: 3px; }
 .row-actions select {
@@ -404,11 +404,11 @@ h4 {
   padding: 3px 5px;
   border: 1px solid var(--uc-border);
   border-radius: var(--uc-r-xs);
-  background: rgba(20, 22, 48, 0.95);
+  background: rgb(var(--sfs-surface-rgb, 20 22 48) / 0.95);
   color: var(--uc-text-soft);
   cursor: pointer;
 }
-.row-actions select option { background: #14162f; color: #fff; }
+.row-actions select option { background: var(--sfs-surface-2, #14162f); color: var(--sfs-text, #fff); }
 .uc-icon-btn.tiny { width: 24px; height: 24px; flex: 0 0 24px; }
 .uc-icon-btn.danger:hover { background: var(--uc-danger-bg); color: var(--uc-danger); }
 
@@ -444,6 +444,6 @@ footer {
   transition: background var(--uc-t-fast);
 }
 .uc-danger-btn:hover { background: var(--uc-danger-bg); }
-.uc-danger-btn.solid { background: rgba(220, 38, 38, 0.85); border-color: transparent; color: #fff; }
-.uc-danger-btn.solid:hover { background: rgba(220, 38, 38, 1); }
+.uc-danger-btn.solid { background: rgb(var(--sfs-danger-rgb, 220 38 38) / 0.85); border-color: transparent; color: var(--sfs-text, #fff); }
+.uc-danger-btn.solid:hover { background: var(--sfs-danger, rgba(220, 38, 38, 1)); }
 </style>

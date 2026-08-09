@@ -8,9 +8,17 @@
 import { onMounted, watch } from 'vue';
 import { useAuthStore } from './store/auth';
 import { useNotificationStore } from './store/notifications';
+import { useThemeStore } from './store/theme';
 
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
+const themeStore = useThemeStore();
+
+// `main.ts` already applied the stored galaxy to the document before mount, so
+// there is no flash to avoid here. This brings the store into line with what
+// is on screen — without it the picker would open showing Andromeda selected
+// while the page is painted in something else.
+themeStore.initTheme();
 
 onMounted(() => {
   // Initialize authentication from localStorage
@@ -44,12 +52,12 @@ watch(() => authStore.user, (newUser, oldUser) => {
 }
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --secondary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  --success-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  --warning-gradient: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-  --danger-gradient: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
-  --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  --primary-gradient: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --secondary-gradient: linear-gradient(135deg, var(--sfs-accent, #4f46e5) 0%, var(--sfs-accent-2, #7c3aed) 100%);
+  --success-gradient: linear-gradient(135deg, var(--sfs-success, #48bb78) 0%, var(--sfs-success, #38a169) 100%);
+  --warning-gradient: linear-gradient(135deg, var(--sfs-warning, #ed8936) 0%, var(--sfs-warning, #dd6b20) 100%);
+  --danger-gradient: linear-gradient(135deg, var(--sfs-danger, #fc8181) 0%, var(--sfs-danger, #f56565) 100%);
+  --info-gradient: linear-gradient(135deg, var(--sfs-info, #0ea5e9) 0%, var(--sfs-accent, #3b82f6) 100%);
 }
 
 /* Body background is handled by src/style.css – do not add any body styles here */
@@ -65,12 +73,12 @@ watch(() => authStore.user, (newUser, oldUser) => {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--sfs-paper, #f1f1f1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--sfs-paper-3, #c1c1c1);
   border-radius: 4px;
 }
 
@@ -126,9 +134,9 @@ watch(() => authStore.user, (newUser, oldUser) => {
 }
 
 .glass-effect {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 }
 
 /* Responsive design */
@@ -153,7 +161,7 @@ watch(() => authStore.user, (newUser, oldUser) => {
 
 /* Focus styles */
 :focus-visible {
-  outline: 2px solid #667eea;
+  outline: 2px solid var(--sfs-accent, #667eea);
   outline-offset: 2px;
 }
 
@@ -162,8 +170,8 @@ watch(() => authStore.user, (newUser, oldUser) => {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid #e2e8f0;
-  border-top-color: #667eea;
+  border: 2px solid var(--sfs-accent-soft, #e2e8f0);
+  border-top-color: var(--sfs-accent, #667eea);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

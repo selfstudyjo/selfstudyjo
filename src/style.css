@@ -6,7 +6,7 @@
 }
 
 html, body, #app {
-  background: #03030f; /* Deep space color – matches the Three.js scene */
+  background: var(--sfs-space, #03030f); /* Deep space color – matches the Three.js scene */
   min-height: 100vh;
   width: 100%;
 }
@@ -15,13 +15,24 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #333;
+  /* Was a flat `#333`, with a `.dark-mode body { color: #fff }` underneath it
+     that never applied, because nothing in the app had ever added that class
+     — so on a black page the document default was dark grey and every page
+     stylesheet had to set its own ink to compensate. apply.ts now sets the
+     class, and the token resolves to the right ink either way.
+
+     NOTE for anyone re-running tools/tokenize-colors with --remap: the
+     codemod deliberately leaves dark ink alone when its block sets no light
+     background, because that is nearly always text inside a light card. This
+     one is the exception — it is the document default — so it is set by hand
+     and a remap will revert it. Put it back. */
+  color: var(--sfs-text, #333);
   line-height: 1.6;
   overflow-x: hidden;
 }
 
 .dark-mode body {
-  color: #fff;
+  color: var(--sfs-text, #fff);
 }
 
 /* Scrollbar styling */
@@ -31,31 +42,31 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.05);
   border-radius: 5px;
 }
 
 .dark-mode ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a3fa0 100%);
+  background: linear-gradient(135deg, var(--sfs-accent, #5a6fd8) 0%, var(--sfs-accent-2, #6a3fa0) 100%);
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(102, 126, 234, 0.3);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
   color: inherit;
 }
 
 .dark-mode ::selection {
-  background: rgba(102, 126, 234, 0.5);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
 /* Smooth transitions */
@@ -65,7 +76,7 @@ body {
 
 /* Utility classes */
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -135,9 +146,9 @@ body {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(102, 126, 234, 0.1);
+  border: 3px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1);
   border-radius: 50%;
-  border-top-color: #667eea;
+  border-top-color: var(--sfs-accent, #667eea);
   animation: spin 1s ease-in-out infinite;
 }
 
@@ -149,19 +160,19 @@ body {
 
 /* Glass effect */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 }
 
 .dark-mode .glass-effect {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
 }
 
 /* Focus styles for accessibility */
 :focus {
-  outline: 2px solid #667eea;
+  outline: 2px solid var(--sfs-accent, #667eea);
   outline-offset: 2px;
 }
 
@@ -179,10 +190,10 @@ body {
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .gradient-text {
-    background: #667eea;
+    background: var(--sfs-accent, #667eea);
     -webkit-background-clip: initial;
     -webkit-text-fill-color: initial;
-    color: #667eea;
+    color: var(--sfs-accent-text, #667eea);
   }
 }
 
@@ -197,11 +208,11 @@ body {
 
 /* Chat variables */
 :root {
-  --chat-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --chat-success: #48bb78;
-  --chat-warning: #ed8936;
-  --chat-danger: #fc8181;
-  --chat-info: #0ea5e9;
+  --chat-primary: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --chat-success: var(--sfs-success, #48bb78);
+  --chat-warning: var(--sfs-warning, #ed8936);
+  --chat-danger: var(--sfs-danger, #fc8181);
+  --chat-info: var(--sfs-info, #0ea5e9);
 }
 
 /* Ensure chat box appears above other elements */

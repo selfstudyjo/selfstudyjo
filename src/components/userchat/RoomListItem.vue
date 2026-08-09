@@ -116,8 +116,8 @@ const previewText = computed(() => {
 .room:hover { background: var(--uc-surface); }
 
 .room.on {
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.22), rgba(118, 75, 162, 0.10));
-  border-color: rgba(129, 140, 248, 0.30);
+  background: linear-gradient(90deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.1));
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
 }
 /* A gradient rail rather than a flat left border: it survives the rounded
    corner, where `border-left` on a 16px radius shows as two stubby ticks. */
@@ -183,12 +183,12 @@ const previewText = computed(() => {
   padding: 2px 6px;
   border-radius: var(--uc-r-full);
   background: var(--uc-brand-grad);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font-size: var(--uc-fs-xs);
   font-weight: 700;
   text-align: center;
   line-height: 1.3;
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.45);
+  box-shadow: 0 2px 10px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
 }
 
 .muted-icon { display: inline-flex; color: var(--uc-text-dim); }

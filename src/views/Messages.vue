@@ -1085,7 +1085,7 @@ watch(() => route.params.roomId, value => {
   border-radius: 50%;
   background: var(--uc-surface);
   border: 1px solid var(--uc-border);
-  color: rgba(129, 140, 248, 0.65);
+  color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.65);
 }
 .uc-placeholder h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-text-soft); }
 .uc-placeholder p { margin: 0; font-size: var(--uc-fs-md); max-width: 40ch; line-height: 1.55; }
@@ -1098,15 +1098,15 @@ watch(() => route.params.roomId, value => {
   border: 0;
   border-radius: var(--uc-r-full);
   background: var(--uc-brand-grad);
-  color: #fff;
+  color: var(--sfs-text, #fff);
   font: inherit;
   font-size: var(--uc-fs-md);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.38);
+  box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.38);
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast);
 }
-.uc-placeholder-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(102, 126, 234, 0.5); }
+.uc-placeholder-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5); }
 
 /* ---------------------------------------------------------------- menus */
 .menu-backdrop { position: fixed; inset: 0; z-index: 70; }
@@ -1117,7 +1117,7 @@ watch(() => route.params.roomId, value => {
   padding: 5px;
   min-width: 158px;
   border-radius: var(--uc-r-sm);
-  background: rgba(16, 18, 42, 0.98);
+  background: rgb(var(--sfs-surface-rgb, 16 18 42) / 0.98);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
   border: 1px solid var(--uc-border-strong);
@@ -1147,14 +1147,14 @@ watch(() => route.params.roomId, value => {
   z-index: 60;
   display: grid;
   place-items: center;
-  background: rgba(3, 4, 16, 0.72);
+  background: rgb(var(--sfs-surface-rgb, 3 4 16) / 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   padding: 18px;
 }
 .edit-dialog {
   width: min(460px, 100%);
-  background: rgba(14, 16, 38, 0.97);
+  background: rgb(var(--sfs-surface-rgb, 14 16 38) / 0.97);
   border: 1px solid var(--uc-border-strong);
   border-radius: var(--uc-r-lg);
   box-shadow: var(--uc-shadow-lg);
@@ -1174,8 +1174,8 @@ watch(() => route.params.roomId, value => {
   outline: none;
 }
 .edit-dialog textarea:focus {
-  border-color: rgba(129, 140, 248, 0.5);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.16);
+  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
 }
 .edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .ghost, .primary {
@@ -1189,7 +1189,7 @@ watch(() => route.params.roomId, value => {
 }
 .ghost { background: var(--uc-surface); color: var(--uc-text-muted); border-color: var(--uc-border); }
 .ghost:hover { background: var(--uc-surface-2); color: var(--uc-text); }
-.primary { background: var(--uc-brand-grad); color: #fff; }
+.primary { background: var(--uc-brand-grad); color: var(--sfs-text, #fff); }
 .primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ------------------------------------------------------------ lightbox */
@@ -1199,7 +1199,7 @@ watch(() => route.params.roomId, value => {
   z-index: 80;
   display: grid;
   place-items: center;
-  background: rgba(2, 3, 12, 0.94);
+  background: rgb(var(--sfs-surface-rgb, 2 3 12) / 0.94);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   cursor: zoom-out;
@@ -1238,7 +1238,7 @@ watch(() => route.params.roomId, value => {
   margin: 0;
   padding: 10px 20px;
   border-radius: var(--uc-r-full);
-  background: rgba(16, 18, 42, 0.97);
+  background: rgb(var(--sfs-surface-rgb, 16 18 42) / 0.97);
   border: 1px solid var(--uc-border-strong);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
