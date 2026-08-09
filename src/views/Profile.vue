@@ -366,6 +366,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { userService, type UpdateProfileRequest, type ChangePasswordRequest } from '@/services/user.service';
 import { mediaService } from '@/services/media.service';
+import { notificationService } from '@/services/notification.service';
 import ProfileAvatar from '@/components/ProfileAvatar.vue';
 import '@/assets/css/profile.css';
 
@@ -626,6 +627,14 @@ const handleChangePassword = async () => {
       current_password: '',
       new_password: '',
       confirm_password: ''
+    });
+
+    // A security event, and the one notification whose value is entirely in
+    // being wrong: if the person reading it did not change their password,
+    // somebody else did. `urgent` in the catalogue for that reason.
+    notificationService.notify('account.password_changed', {
+      to: profileData.username,
+      params: { when: new Date().toLocaleString() },
     });
 
     alert('Password changed successfully!');

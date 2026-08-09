@@ -91,6 +91,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { notificationService } from '@/services/notification.service';
 
 // Import the CSS file
 import '@/assets/css/verify-email.css';
@@ -266,6 +267,21 @@ const handleVerify = async () => {
 
       // Store verification status
       localStorage.setItem('email_verified', 'true');
+
+      // The first two things in a new account's bell, so it is never empty on
+      // the first visit — an empty bell on day one reads as a feature that does
+      // not work rather than as a feature with nothing to say yet.
+      const username = authStore.user?.username
+        || authStore.verificationData?.username
+        || localStorage.getItem('verification_username')
+        || '';
+      if (username) {
+        notificationService.notify('account.email_verified', { to: username });
+        notificationService.notify('account.welcome', {
+          to: username,
+          params: { name: authStore.user?.first_name || username },
+        });
+      }
 
       // Redirect after delay
       setTimeout(() => {

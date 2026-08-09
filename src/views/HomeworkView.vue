@@ -260,6 +260,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { courseService, type Homework, type SubmittedHomework, type Lesson, type Course } from '@/services/course.service';
+import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
@@ -417,6 +418,15 @@ const submitHomework = async () => {
       // Create new submission
       const newSubmission = await courseService.submitHomework(submissionData);
       submission.value = newSubmission;
+
+      // Only on a first submission, not on every edit: a student polishing a
+      // link three times should not ring an operator's bell three times.
+      notificationService.notifyAdmins('course.homework_submitted', {
+        student: authStore.user?.username || 'A student',
+        homework: homework.value?.title || 'Homework',
+        course: course.value?.title || 'a course',
+        courseId: course.value?.external_course_id || '',
+      });
     }
 
     showSubmissionForm.value = false;

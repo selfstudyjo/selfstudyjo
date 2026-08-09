@@ -1,8 +1,65 @@
 // store/notifications.ts
+//
+// The bell: the badge, the list, the poller, and the sound.
+//
+// The poller and the chime live here rather than in `SideNav.vue` — where the
+// `setInterval` used to be — for the same reason `store/userchat.ts` owns its
+// own: **a notification only matters when you are not looking at it.** The
+// sidebar is mounted on every authenticated screen, so it happened to work, but
+// nothing said so and the chime had nowhere to live. Now the component asks the
+// store to start and draws what it is given.
+//
+// Four decisions worth knowing:
+//
+// 1. **"Something new arrived" is not "the unread count went up."** Reading a
+//    notification on a phone while another one arrives leaves the count exactly
+//    where it was, and the bell would stay silent. So the poll compares
+//    `latest_id` — the newest notification in the inbox — and rings when that
+//    changes to something the tab has not seen. `latest_at` breaks the tie when
+//    two arrive between ticks.
+// 2. **The chime is unlocked by a user gesture, once.** Browsers refuse
+//    `audio.play()` that no interaction led to, and the refusal is a rejected
+//    promise rather than an error anyone sees — a chime that was never primed
+//    simply never sounds and looks like a broken feature. `primeAudio()` is
+//    wired to the first click of the session in `SideNav.vue`.
+// 3. **It does not ring on the first load of a session.** Everything unread is
+//    "new" then, and a chime on sign-in is noise. Noise is what makes people
+//    turn notifications off.
+// 4. **Delete means delete.** `dismiss()` is the recipient's delete, and the
+//    backend decides whether that is a tombstone (they own it) or a state row
+//    (an announcement everybody else is still reading). The store does not try
+//    to guess, and it no longer refuses to delete a non-personal notification —
+//    that refusal was the reason the list filled up with announcements nobody
+//    could get rid of.
+
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { notificationService } from '@/services/notification.service';
-import type { NotificationResponse, NotificationStats, PaginatedNotifications } from '@/services/notification.service';
+import type {
+    NotificationResponse, NotificationStats,
+} from '@/services/notification.service';
+
+/**
+ * The chime, the same file `admin_alerts.js` rings in the operator console.
+ *
+ * Deliberately not `selfstudy_newmessage.mp3`, which the support widget and user
+ * chat share: "a person is talking to you" and "the platform has something to
+ * tell you" are different events, and a user who hears one sound for both cannot
+ * tell from the next room whether it is worth getting up for.
+ *
+ * `new URL(..., import.meta.url)` rather than a path under `public/`: that is
+ * what puts the asset through Vite's fingerprinting, so it is cached properly
+ * and cannot 404 after a deploy under a different base path.
+ */
+const CHIME_URL = new URL('@/assets/audio/selfstudy_notification.mp3', import.meta.url).href;
+
+const SOUND_KEY = 'selfstudy.notifications.sound';
+
+/** How often the bell refreshes while the tab is in front. */
+const POLL_VISIBLE_MS = 25000;
+/** A hidden tab still polls — the chime is the reason it exists — but much less
+ *  often, so twenty background tabs are not twenty pollers. */
+const POLL_HIDDEN_MS = 90000;
 
 export const useNotificationStore = defineStore('notifications', () => {
     // State
@@ -17,6 +74,16 @@ export const useNotificationStore = defineStore('notifications', () => {
     const pageSize = ref(20);
     const hasMore = ref(true);
     const currentUsername = ref<string>('');
+    const soundEnabled = ref(readSoundPreference());
+    /** The title of whatever arrived last, for a toast or a tooltip. */
+    const latestTitle = ref('');
+
+    let timer: number | null = null;
+    let chime: HTMLAudioElement | null = null;
+    let primed = false;
+    let firstLoad = true;
+    let lastSeenId = '';
+    let lastSeenAt = '';
 
     // Local storage key
     const getStorageKey = (username: string) => `notifications_${username}`;
@@ -63,10 +130,137 @@ export const useNotificationStore = defineStore('notifications', () => {
         );
     });
 
-    const canModifyNotification = computed(() => (notification: NotificationResponse) => {
-        // Only personal notifications can be modified
-        return notification.notification_type === 'personal';
-    });
+    const unreadNotifications = computed(() =>
+        allUserNotifications.value.filter(n => !n.read));
+
+    /**
+     * Everything in the list can now be deleted and marked read by its
+     * recipient — that is what the state rows in app 16 are for. The computed
+     * stays because callers use it; it just no longer says no.
+     */
+    const canModifyNotification = computed(() => (_notification: NotificationResponse) => true);
+
+    const badge = computed(() =>
+        unreadCount.value > 99 ? '99+' : String(unreadCount.value));
+
+    // -- Sound ---------------------------------------------------------------
+
+    function readSoundPreference(): boolean {
+        try {
+            return localStorage.getItem(SOUND_KEY) !== 'off';
+        } catch {
+            return true;
+        }
+    }
+
+    function setSoundEnabled(value: boolean) {
+        soundEnabled.value = value;
+        try {
+            localStorage.setItem(SOUND_KEY, value ? 'on' : 'off');
+        } catch {
+            // Private browsing. The preference simply does not persist.
+        }
+        if (value) primeAudio();
+    }
+
+    /**
+     * Make the chime playable.
+     *
+     * Must be called from a real user gesture. Playing it muted and immediately
+     * pausing is the standard way to satisfy an autoplay policy without the user
+     * hearing anything: the element is then "activated" for the rest of the
+     * page's life and later `play()` calls succeed.
+     */
+    function primeAudio() {
+        if (primed) return;
+        try {
+            if (!chime) {
+                chime = new Audio(CHIME_URL);
+                chime.preload = 'auto';
+            }
+            chime.muted = true;
+            const attempt = chime.play();
+            if (attempt && typeof attempt.then === 'function') {
+                attempt.then(() => {
+                    chime!.pause();
+                    chime!.currentTime = 0;
+                    chime!.muted = false;
+                    primed = true;
+                }).catch(() => {
+                    chime!.muted = false;
+                });
+            } else {
+                chime.pause();
+                chime.muted = false;
+                primed = true;
+            }
+        } catch {
+            chime = null;
+        }
+    }
+
+    function ring() {
+        if (!soundEnabled.value) return;
+        try {
+            if (!chime) chime = new Audio(CHIME_URL);
+            chime.currentTime = 0;
+            // A rejected play() is the normal outcome before the first gesture
+            // and is not worth surfacing — the badge still updates either way.
+            chime.play()?.catch(() => undefined);
+        } catch {
+            // No audio device, or the file is missing. Never fatal.
+        }
+    }
+
+    // -- Polling -------------------------------------------------------------
+
+    /**
+     * Whether this refresh should make a sound. Pure, and separated out because
+     * every clause is a complaint somebody would otherwise make.
+     */
+    function shouldRing(count: { latest_id: string; latest_at: string; unread_count: number }): boolean {
+        if (firstLoad) return false;
+        if (!count.unread_count) return false;
+        if (!count.latest_id) return false;
+        if (count.latest_id === lastSeenId) return false;
+        // A record that predates what we have already seen is a replica catching
+        // up, not something new — the tab pins one replica, but a failover moves
+        // it and the newer replica may serve an older tail for a moment.
+        if (lastSeenAt && count.latest_at && count.latest_at < lastSeenAt) return false;
+        return true;
+    }
+
+    function start(username: string) {
+        if (!username) return;
+        currentUsername.value = username;
+        firstLoad = true;
+        stopPolling();
+        loadFromLocalStorage(username);
+        fetchNotificationCount(username);
+        schedule();
+        document.addEventListener('visibilitychange', onVisibility);
+    }
+
+    function schedule() {
+        if (timer) window.clearTimeout(timer);
+        timer = window.setTimeout(async () => {
+            if (currentUsername.value) await fetchNotificationCount(currentUsername.value);
+            schedule();
+        }, document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS);
+    }
+
+    function onVisibility() {
+        // Coming back to the tab should feel immediate rather than waiting out
+        // whatever remains of a 90-second hidden interval.
+        if (!document.hidden && currentUsername.value) fetchNotificationCount(currentUsername.value);
+        schedule();
+    }
+
+    function stopPolling() {
+        if (timer) window.clearTimeout(timer);
+        timer = null;
+        document.removeEventListener('visibilitychange', onVisibility);
+    }
 
     // Actions
     async function fetchNotifications(username: string, refresh = false) {
@@ -127,6 +321,14 @@ export const useNotificationStore = defineStore('notifications', () => {
 
             // Only update if we got valid data
             if (count && typeof count.unread_count === 'number') {
+                if (shouldRing(count)) ring();
+                if (count.latest_id) {
+                    lastSeenId = count.latest_id;
+                    lastSeenAt = count.latest_at || lastSeenAt;
+                    latestTitle.value = count.latest_title || '';
+                }
+                firstLoad = false;
+
                 unreadCount.value = count.unread_count;
                 totalCount.value = count.total_count;
                 currentUsername.value = username;
@@ -145,11 +347,13 @@ export const useNotificationStore = defineStore('notifications', () => {
         if (!username) return;
 
         try {
-            const stats = await notificationService.getNotificationStats(username);
+            const stats: NotificationStats = await notificationService.getNotificationStats(username);
 
-            // Update counts
-            unreadCount.value = stats.unread_personal;
-            totalCount.value = stats.total_personal;
+            // The bell counts everything the user can see, so it reads the
+            // visible totals rather than the personal ones. Those two disagreeing
+            // is why the badge used to sit at 3 over a list of eleven.
+            unreadCount.value = stats.unread_visible;
+            totalCount.value = stats.total_visible;
             generalCount.value = stats.total_general;
             groupCount.value = stats.total_group;
             currentUsername.value = username;
@@ -174,7 +378,11 @@ export const useNotificationStore = defineStore('notifications', () => {
             timestamp: Date.now()
         };
 
-        localStorage.setItem(getStorageKey(username), JSON.stringify(data));
+        try {
+            localStorage.setItem(getStorageKey(username), JSON.stringify(data));
+        } catch {
+            // Private browsing, or a full quota. The badge is simply not cached.
+        }
     }
 
     function loadFromLocalStorage(username: string) {
@@ -195,82 +403,86 @@ export const useNotificationStore = defineStore('notifications', () => {
         }
     }
 
+    /** Read, for this user. Works on an announcement too, which is the point. */
     async function markAsRead(notificationId: string) {
-        try {
-            const updatedNotification = await notificationService.markNotificationAsRead(notificationId);
+        const username = currentUsername.value;
+        if (!username) return;
 
-            // Update in local state
-            const index = notifications.value.findIndex(n => n.notification_id === notificationId);
-            if (index !== -1) {
-                notifications.value[index] = updatedNotification;
-            }
+        const index = notifications.value.findIndex(n => n.notification_id === notificationId);
+        const wasUnread = index !== -1 && !notifications.value[index].read;
 
-            // Update count if this is a personal notification
-            if (updatedNotification.notification_type === 'personal' && updatedNotification.read) {
-                unreadCount.value = Math.max(0, unreadCount.value - 1);
-                saveToLocalStorage(currentUsername.value);
-            }
-        } catch (err: any) {
-            console.error('Failed to mark notification as read:', err);
-            throw err;
+        await notificationService.markNotificationAsRead(notificationId, username);
+
+        if (index !== -1) {
+            notifications.value[index] = { ...notifications.value[index], read: true };
+        }
+        if (wasUnread) {
+            unreadCount.value = Math.max(0, unreadCount.value - 1);
+            saveToLocalStorage(username);
         }
     }
 
     async function markAllAsRead(username: string) {
         if (!username) return;
 
-        try {
-            const result = await notificationService.markAllAsRead(username);
+        const result = await notificationService.markAllAsRead(username);
 
-            // Update all personal notifications in local state
-            notifications.value = notifications.value.map(n =>
-            n.notification_type === 'personal' && n.recipient === username
-            ? { ...n, read: true }
-            : n
-            );
+        // Everything visible, not just the personal ones — the endpoint changed
+        // to match what the button says.
+        notifications.value = notifications.value.map(n => ({ ...n, read: true }));
 
-            // Update count
-            if (username === currentUsername.value) {
-                unreadCount.value = 0;
-                saveToLocalStorage(username);
+        if (username === currentUsername.value) {
+            unreadCount.value = 0;
+            saveToLocalStorage(username);
+        }
+
+        return result;
+    }
+
+    /**
+     * The recipient's Delete. Gone from their list either way; the backend
+     * decides whether the record itself goes with it.
+     */
+    async function deleteNotification(notificationId: string) {
+        const username = currentUsername.value;
+        if (!username) return;
+
+        const notification = notifications.value.find(n => n.notification_id === notificationId);
+
+        await notificationService.dismissNotification(notificationId, username);
+
+        notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
+
+        if (notification) {
+            totalCount.value = Math.max(0, totalCount.value - 1);
+            if (!notification.read) unreadCount.value = Math.max(0, unreadCount.value - 1);
+            if (notification.notification_type === 'general') {
+                generalCount.value = Math.max(0, generalCount.value - 1);
+            } else if (notification.notification_type === 'group') {
+                groupCount.value = Math.max(0, groupCount.value - 1);
             }
-
-            return result;
-        } catch (err) {
-            console.error('Failed to mark all as read:', err);
-            throw err;
+            saveToLocalStorage(username);
         }
     }
 
-    async function deleteNotification(notificationId: string) {
-        try {
-            // Find the notification first
-            const notification = notifications.value.find(n => n.notification_id === notificationId);
+    /**
+     * Empty the inbox. One request, not one per notification — see the note on
+     * `clear-all` in the service.
+     */
+    async function clearAll(username?: string) {
+        const target = username || currentUsername.value;
+        if (!target) return;
 
-            if (notification) {
-                // Check if it's personal before deleting
-                if (notification.notification_type !== 'personal') {
-                    throw new Error('Cannot delete non-personal notifications');
-                }
+        const result = await notificationService.clearAll(target);
 
-                await notificationService.deleteNotification(notificationId);
-
-                // Remove from local state
-                notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
-
-                // Update counts if it's a personal notification
-                if (notification.recipient === currentUsername.value) {
-                    totalCount.value = Math.max(0, totalCount.value - 1);
-                    if (!notification.read) {
-                        unreadCount.value = Math.max(0, unreadCount.value - 1);
-                    }
-                    saveToLocalStorage(currentUsername.value);
-                }
-            }
-        } catch (err) {
-            console.error('Failed to delete notification:', err);
-            throw err;
-        }
+        notifications.value = [];
+        unreadCount.value = 0;
+        totalCount.value = 0;
+        generalCount.value = 0;
+        groupCount.value = 0;
+        resetPagination();
+        saveToLocalStorage(target);
+        return result;
     }
 
     /**
@@ -286,15 +498,12 @@ export const useNotificationStore = defineStore('notifications', () => {
         // Remove from local state for the current user immediately
         notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
 
-        // Defensive count adjustments (group notifications don't affect personal counts)
-        if (notification && notification.notification_type === 'personal') {
+        if (notification) {
             totalCount.value = Math.max(0, totalCount.value - 1);
-            if (!notification.read) {
-                unreadCount.value = Math.max(0, unreadCount.value - 1);
+            if (!notification.read) unreadCount.value = Math.max(0, unreadCount.value - 1);
+            if (notification.notification_type === 'group') {
+                groupCount.value = Math.max(0, groupCount.value - 1);
             }
-            saveToLocalStorage(currentUsername.value);
-        } else if (notification && notification.notification_type === 'group') {
-            groupCount.value = Math.max(0, groupCount.value - 1);
             saveToLocalStorage(currentUsername.value);
         }
     }
@@ -318,7 +527,11 @@ export const useNotificationStore = defineStore('notifications', () => {
         resetPagination();
     }
 
+    /** Local teardown on sign-out. Deliberately touches no network — the name is
+     *  unfortunate next to `clearAll`, and it is kept because SideNav, App.vue
+     *  and the router all call it. */
     function clearAllNotifications() {
+        stopPolling();
         notifications.value = [];
         unreadCount.value = 0;
         totalCount.value = 0;
@@ -328,6 +541,10 @@ export const useNotificationStore = defineStore('notifications', () => {
         hasMore.value = true;
         error.value = null;
         currentUsername.value = '';
+        latestTitle.value = '';
+        lastSeenId = '';
+        lastSeenAt = '';
+        firstLoad = true;
         resetPagination();
     }
 
@@ -342,22 +559,32 @@ export const useNotificationStore = defineStore('notifications', () => {
         error,
         hasMore,
         currentUsername,
+        soundEnabled,
+        latestTitle,
 
         // Computed
+        badge,
         personalNotifications,
         generalNotifications,
         groupNotifications,
+        unreadNotifications,
         unreadPersonalNotifications,
         allUserNotifications,
         canModifyNotification,
 
         // Actions
+        start,
+        stopPolling,
+        primeAudio,
+        setSoundEnabled,
+        ring,
         fetchNotifications,
         fetchNotificationCount,
         fetchNotificationStats,
         markAsRead,
         markAllAsRead,
         deleteNotification,
+        clearAll,
         deleteNotificationAsAdmin,
         resetPagination,
         clearUserNotifications,

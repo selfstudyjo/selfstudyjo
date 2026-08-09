@@ -366,9 +366,12 @@ const handleRegister = async () => {
 
     const response = await authStore.register(userData);
 
-    // Store verification data
+    // Store verification data. The username joins the pair because the verify
+    // page sends the welcome notification, app 16 addresses people by username,
+    // and the store's copy does not survive a reload of that page.
     localStorage.setItem('verification_user_id', response.user_id);
     localStorage.setItem('verification_email', form.email.toLowerCase());
+    localStorage.setItem('verification_username', form.username.toLowerCase());
 
     // Redirect to verification page
     router.push('/verify-email');

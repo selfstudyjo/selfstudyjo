@@ -264,6 +264,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
 import { researchService } from '@/services/research.service';
+import { notificationService } from '@/services/notification.service';
 import type { AiResearchSummary, ResearchTypeInfo } from '@/services/research.service';
 import {
   RfIconBack, RfIconAI, RfIconAdd, RfIconList, RfIconBook, RfIconEdit, RfIconDelete,
@@ -393,6 +394,13 @@ const create = async () => {
       research_questions_draft: draft.research_questions_draft,
       notes: draft.notes,
       sources,
+    });
+    // A durable pointer back to it. Generating a thesis draft is minutes of
+    // work the user is expected to walk away from, and the id is not something
+    // anybody remembers — this is the way back in.
+    notificationService.notify('research.ai_draft_ready', {
+      to: authStore.user?.username || '',
+      params: { title: draft.title.trim() || draft.topic.trim(), draftId: created.id },
     });
     router.push(`/research/ai-writer/${created.id}`);
   } catch (err: any) {

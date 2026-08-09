@@ -197,6 +197,7 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
 import { researchService } from '@/services/research.service';
+import { notificationService } from '@/services/notification.service';
 import type { ProjectComment } from '@/services/research.service';
 import {
   RfIconBack, RfIconFile, RfIconCrown, RfIconEdit, RfIconEye,
@@ -313,7 +314,35 @@ const downloadFileToDevice = async (file: any) => {
 };
 
 const removeFile = async (fileId: string) => { if (!confirm('Delete this file?')) return; try { await researchStore.deleteFile(fileId, userId.value); } catch { alert('Failed to delete file'); } };
-const postComment = async () => { if (!newComment.value.trim()) return; try { await researchStore.addComment(projectId.value, userId.value, newComment.value); newComment.value = ''; } catch { alert('Failed to post comment'); } };
+/**
+ * Post a comment, and tell the rest of the team.
+ *
+ * Everybody on the project except the author, in one bulk call. Research
+ * discussions are slow — days between replies — which is exactly the case where
+ * nobody is watching the page and a notification is the only thing that makes a
+ * comment a conversation rather than a message in a bottle.
+ */
+const postComment = async () => {
+  if (!newComment.value.trim()) return;
+  try {
+    await researchStore.addComment(projectId.value, userId.value, newComment.value);
+    newComment.value = '';
+    const others = (team.value || [])
+      .map((member: any) => String(member.user_id || ''))
+      .filter((id: string) => id && id !== userId.value);
+    for (const memberId of others) {
+      notificationService.notifyById('research.project_comment', {
+        userId: memberId,
+        sender: authStore.user?.username || 'system',
+        params: {
+          author: authStore.user?.username || 'A collaborator',
+          project: project.value?.title || 'your project',
+          projectId: projectId.value,
+        },
+      });
+    }
+  } catch { alert('Failed to post comment'); }
+};
 const startEditComment = (comment: ProjectComment) => { editingCommentId.value = comment.id; editCommentText.value = comment.content; };
 const saveCommentEdit = async (commentId: string) => { if (!editCommentText.value.trim()) return; try { await researchStore.updateComment(commentId, userId.value, editCommentText.value); editingCommentId.value = ''; } catch { alert('Failed to update comment'); } };
 const removeComment = async (commentId: string) => { if (!confirm('Delete this comment?')) return; try { await researchStore.deleteComment(commentId, userId.value); } catch { alert('Failed to delete comment'); } };

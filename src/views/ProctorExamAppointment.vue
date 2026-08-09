@@ -371,6 +371,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { examService, type ExamAppointment } from '@/services/exam.service';
+import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
@@ -513,11 +514,36 @@ const testRoomUrl = (url: string, roomNumber: number) => {
     }
 };
 
+/**
+ * Tell the candidate they may start.
+ *
+ * Only on the false -> true edge. `can_start` is deliberately revocable (it is
+ * not in app 20's MONOTONIC_FLAGS), so it can be toggled several times while a
+ * proctor sets a room up, and a notification per toggle would be a bell ringing
+ * at somebody who is already sitting in front of the exam page.
+ */
+const announceApproval = (wasAllowed: boolean) => {
+    if (wasAllowed || !canStart.value || !appointment.value) return;
+    const student = appointment.value.username;
+    if (!student) return;
+    notificationService.notify('exam.appointment_approved', {
+        to: student,
+        sender: authStore.user?.username || 'system',
+        params: {
+            exam: appointment.value.exam_title || 'your exam',
+            when: appointment.value.appointment_date
+                ? new Date(appointment.value.appointment_date).toLocaleString()
+                : 'the scheduled time',
+        },
+    });
+};
+
 // Update can_start status
 const updateCanStart = async () => {
     if (!appointment.value) return;
 
     updating.value = true;
+    const wasAllowed = originalCanStart.value;
 
     try {
         const updated = await examService.updateExamAppointment(
@@ -527,6 +553,7 @@ const updateCanStart = async () => {
 
         appointment.value = updated;
         originalCanStart.value = canStart.value;
+        announceApproval(wasAllowed);
 
         showNotification('Exam control updated successfully!', 'success');
     } catch (err: any) {
@@ -567,6 +594,7 @@ const saveAllChanges = async () => {
     if (!hasChanges.value || !appointment.value) return;
 
     updating.value = true;
+    const wasAllowed = originalCanStart.value;
 
     try {
         const updates: any = {};
@@ -593,6 +621,7 @@ const saveAllChanges = async () => {
             // Update original values
             if (updates.can_start !== undefined) {
                 originalCanStart.value = canStart.value;
+                announceApproval(wasAllowed);
             }
             if (updates.room_url_1 !== undefined) {
                 originalRoomUrl1.value = roomUrl1.value;

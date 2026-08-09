@@ -625,6 +625,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type Exam, type ExamAppointment, type UserExamResult } from '@/services/exam.service';
 import { proctorService, type ExamProctor, type AvailableDay, type AvailableHour } from '@/services/proctor.service';
+import { notificationService } from '@/services/notification.service';
 
 // Import the CSS file
 import '@/assets/css/schedule-exam.css';
@@ -1238,6 +1239,20 @@ async function handleNewBooking(appointmentDateTime: Date) {
   };
 
   await examService.createExamAppointment(appointmentData);
+
+  // An appointment sits at `can_start: false` until somebody approves it, and
+  // nothing told anybody it was waiting — a student turned up to an exam they
+  // could not start.
+  //
+  // Only the operators here. The *proctor* is told by `exam.service.ts`, which
+  // has done it inside `createExamAppointment` all along and also covers the
+  // reschedule and cancel cases; notifying them from here as well would be two
+  // notifications for one booking.
+  notificationService.notifyAdmins('exam.appointment_requested', {
+    student: username.value,
+    exam: selectedExam.value?.title || 'an exam',
+    when: appointmentDateTime.toLocaleString(),
+  });
 }
 
 // Cancel appointment methods

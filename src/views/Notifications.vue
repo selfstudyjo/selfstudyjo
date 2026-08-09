@@ -11,7 +11,33 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
           </svg>
-          Mark All Personal as Read
+          Mark All as Read
+        </button>
+        <button
+          class="btn-clear-all"
+          @click="askToClear"
+          :disabled="allUserNotifications.length === 0 || loading"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          Clear All
+        </button>
+        <button
+          class="btn-sound"
+          :class="{ 'is-off': !soundEnabled }"
+          @click="toggleSound"
+          :title="soundEnabled ? 'Notification sound is on' : 'Notification sound is off'"
+        >
+          <svg v-if="soundEnabled" width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+            <path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+            <path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          {{ soundEnabled ? 'Sound On' : 'Sound Off' }}
         </button>
         <button
           class="btn-refresh"
@@ -26,14 +52,35 @@
       </div>
     </div>
 
+    <!--
+      Clear All is destructive and irreversible, so it asks — inline rather than
+      through `confirm()`, which a browser renders outside the theme and some
+      block outright after a few uses.
+    -->
+    <div v-if="confirmingClear" class="clear-confirm">
+      <p>
+        Clear all {{ allUserNotifications.length }} notifications? The ones sent
+        to you are deleted for good. Announcements are removed from your list and
+        stay in everybody else's.
+      </p>
+      <button class="confirm-yes" @click="clearAll" :disabled="clearing">
+        {{ clearing ? 'Clearing…' : 'Yes, clear all' }}
+      </button>
+      <button class="confirm-no" @click="confirmingClear = false" :disabled="clearing">
+        Cancel
+      </button>
+    </div>
+
+    <p v-if="actionNote" class="action-note">{{ actionNote }}</p>
+
     <div class="stats-summary">
       <div class="stat-card">
         <div class="stat-value">{{ totalCount }}</div>
-        <div class="stat-label">Personal</div>
+        <div class="stat-label">Total</div>
       </div>
       <div class="stat-card unread">
         <div class="stat-value">{{ unreadCount }}</div>
-        <div class="stat-label">Unread Personal</div>
+        <div class="stat-label">Unread</div>
       </div>
       <div class="stat-card general">
         <div class="stat-value">{{ generalCount }}</div>
@@ -57,6 +104,13 @@
           @click="setFilter('all')"
         >
           All ({{ allUserNotifications.length }})
+        </button>
+        <button
+          class="filter-tab"
+          :class="{ active: activeFilter === 'unread' }"
+          @click="setFilter('unread')"
+        >
+          Unread ({{ unreadNotifications.length }})
         </button>
         <button
           class="filter-tab"
@@ -90,8 +144,12 @@
 
       <div v-else-if="filteredNotifications.length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
-        <h3>No notifications yet</h3>
-        <p>When you receive notifications, they'll appear here.</p>
+        <h3>{{ activeFilter === 'all' ? 'No notifications yet' : 'Nothing here' }}</h3>
+        <p>
+          {{ activeFilter === 'all'
+            ? "When you receive notifications, they'll appear here."
+            : 'Try another filter — there may be notifications under one of the other tabs.' }}
+        </p>
       </div>
 
       <div v-else class="notifications-grid">
@@ -106,9 +164,19 @@
           }]"
         >
           <div class="notification-header">
-            <div class="notification-type">
+            <div class="notification-type notification-tags">
+              <span v-if="!notification.read" class="unread-dot" aria-label="Unread"></span>
               <span :class="['type-badge', notification.notification_type]">
                 {{ notification.notification_type.toUpperCase() }}
+              </span>
+              <span v-if="notification.category" class="category-chip">
+                {{ notification.category }}
+              </span>
+              <span
+                v-if="notification.priority === 'high' || notification.priority === 'urgent'"
+                :class="['priority-badge', notification.priority]"
+              >
+                {{ notification.priority }}
               </span>
             </div>
             <div class="notification-time">
@@ -145,30 +213,37 @@
           </div>
 
           <div class="notification-actions">
+            <!--
+              Mark as read and Delete now work on every kind, not just personal.
+              App 16 keeps a per-recipient state row, so marking an announcement
+              read marks it read for you and nobody else, and deleting one takes
+              it out of your list without touching anybody else's.
+            -->
             <button
-              v-if="notification.notification_type === 'personal' && !notification.read"
+              v-if="!notification.read"
               class="btn-mark-read"
               @click="markAsRead(notification.notification_id)"
-              :disabled="loading"
+              :disabled="busyId === notification.notification_id"
             >
               Mark as Read
             </button>
             <button
-              v-if="notification.notification_type === 'personal'"
+              v-if="notification.link"
+              class="btn-view-link"
+              @click="openLink(notification)"
+            >
+              View
+            </button>
+            <button
               class="btn-delete"
-              @click="deleteNotification(notification.notification_id)"
-              :disabled="loading"
+              @click="deleteNotification(notification)"
+              :disabled="busyId === notification.notification_id"
             >
               Delete
             </button>
-            <span
-              v-if="notification.notification_type !== 'personal' && getActions(notification).length === 0"
-              class="readonly-info"
-            >
-              {{ notification.notification_type === 'general' ? 'General Notification' : 'Group Notification' }} (Read-only)
-            </span>
 
-            <!-- Action buttons (Approve / Ignore / View Course / View Plans / View Appointment) -->
+            <!-- Action buttons (Approve / Ignore) for the payment pair, which
+                 carries parameters rather than a path. -->
             <template v-if="!isActionHandled(notification.notification_id)">
               <button
                 v-for="(action, idx) in getActions(notification)"
@@ -211,7 +286,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
@@ -228,16 +303,17 @@ const notificationStore = useNotificationStore();
 
 const loading = computed(() => notificationStore.loading);
 const error = computed(() => notificationStore.error);
-const notifications = computed(() => notificationStore.notifications);
 const personalNotifications = computed(() => notificationStore.personalNotifications);
 const generalNotifications = computed(() => notificationStore.generalNotifications);
 const groupNotifications = computed(() => notificationStore.groupNotifications);
+const unreadNotifications = computed(() => notificationStore.unreadNotifications);
 const allUserNotifications = computed(() => notificationStore.allUserNotifications);
 const unreadCount = computed(() => notificationStore.unreadCount);
 const totalCount = computed(() => notificationStore.totalCount);
 const generalCount = computed(() => notificationStore.generalCount);
 const groupCount = computed(() => notificationStore.groupCount);
 const hasMore = computed(() => notificationStore.hasMore);
+const soundEnabled = computed(() => notificationStore.soundEnabled);
 
 const currentUser = computed(() => {
   return authStore.user?.username || 'Not logged in';
@@ -253,10 +329,18 @@ const activeFilter = ref('all');
 // Track action state for metadata buttons
 const handledActionIds = ref<Set<string>>(new Set());
 const actionLoading = ref<string | null>(null);
+/** The one card currently mid-request, so its two buttons disable together
+ *  without freezing the whole list. */
+const busyId = ref<string | null>(null);
+const confirmingClear = ref(false);
+const clearing = ref(false);
+const actionNote = ref('');
 
 // Filtered notifications based on active filter
 const filteredNotifications = computed(() => {
   switch (activeFilter.value) {
+    case 'unread':
+      return unreadNotifications.value;
     case 'personal':
       return personalNotifications.value;
     case 'general':
@@ -273,14 +357,11 @@ const filteredNotifications = computed(() => {
 const hasLoaded = ref(false);
 
 onMounted(() => {
-  if (currentUser.value) {
-    loadNotifications();
-  }
-});
-
-onUnmounted(() => {
-  // Don't clear notifications on unmount, just reset pagination
-  notificationStore.resetPagination();
+  // Opening the bell is a user gesture, and it is the one moment we can be sure
+  // of. Priming here as well as on the first click means the chime works even
+  // for somebody who lands straight on this page from a link.
+  notificationStore.primeAudio();
+  if (currentUser.value) loadNotifications();
 });
 
 // Use route guard to handle leaving the page
@@ -316,10 +397,7 @@ watch(() => route.name, (routeName) => {
 });
 
 async function loadNotifications() {
-  if (!currentUser.value) {
-    error.value = 'Please log in to view notifications';
-    return;
-  }
+  if (!currentUser.value) return;
 
   await notificationStore.fetchNotifications(currentUser.value, true);
   await notificationStore.fetchNotificationStats(currentUser.value);
@@ -330,7 +408,7 @@ async function refreshNotifications() {
   if (!currentUser.value) return;
 
   hasLoaded.value = false;
-  activeFilter.value = 'all';
+  actionNote.value = '';
   await loadNotifications();
 }
 
@@ -340,51 +418,102 @@ async function loadMore() {
   await notificationStore.fetchNotifications(currentUser.value);
 }
 
+function toggleSound() {
+  notificationStore.setSoundEnabled(!soundEnabled.value);
+  // Play it once when switching on, so the choice is audible rather than a
+  // setting somebody has to take on trust until the next notification.
+  if (notificationStore.soundEnabled) notificationStore.ring();
+}
+
 async function markAsRead(notificationId: string) {
+  busyId.value = notificationId;
   try {
     await notificationStore.markAsRead(notificationId);
-    // Refresh stats after marking as read
-    if (currentUser.value) {
-      await notificationStore.fetchNotificationStats(currentUser.value);
-    }
   } catch (err: any) {
-    alert(err.message || 'Failed to mark as read');
-    console.error('Failed to mark as read:', err);
+    actionNote.value = err?.message || 'Could not mark that as read. Try again.';
+  } finally {
+    busyId.value = null;
   }
 }
 
 async function markAllAsRead() {
   if (!currentUser.value) return;
-
-  if (confirm('Are you sure you want to mark all personal notifications as read?')) {
-    try {
-      await notificationStore.markAllAsRead(currentUser.value);
-      // Refresh stats after marking all as read
-      await notificationStore.fetchNotificationStats(currentUser.value);
-    } catch (err: any) {
-      alert(err.message || 'Failed to mark all as read');
-      console.error('Failed to mark all as read:', err);
-    }
+  try {
+    const result = await notificationStore.markAllAsRead(currentUser.value);
+    actionNote.value = `Marked ${result?.updated_count ?? 0} notifications as read.`;
+  } catch (err: any) {
+    actionNote.value = err?.message || 'Could not mark everything as read. Try again.';
   }
 }
 
-async function deleteNotification(notificationId: string) {
-  if (!currentUser.value) return;
+/**
+ * One notification's Delete.
+ *
+ * The message afterwards is not decoration. An announcement is a single record
+ * the whole platform reads, so all a recipient can do is take it out of their
+ * own list — and a user who is told that once stops wondering why it is still
+ * listed in the admin console.
+ */
+async function deleteNotification(notification: NotificationResponse) {
+  busyId.value = notification.notification_id;
+  try {
+    await notificationStore.deleteNotification(notification.notification_id);
+    actionNote.value = notification.notification_type === 'personal'
+      ? 'Notification deleted.'
+      : 'Removed from your list. Announcements stay in everybody else\'s.';
+  } catch (err: any) {
+    actionNote.value = err?.message || 'Could not delete that notification. Try again.';
+  } finally {
+    busyId.value = null;
+  }
+}
 
-  if (confirm('Are you sure you want to delete this personal notification?')) {
-    try {
-      await notificationStore.deleteNotification(notificationId);
-      // Refresh stats after deletion
-      await notificationStore.fetchNotificationStats(currentUser.value);
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete notification');
-      console.error('Failed to delete notification:', err);
-    }
+function askToClear() {
+  actionNote.value = '';
+  confirmingClear.value = true;
+}
+
+async function clearAll() {
+  if (!currentUser.value) return;
+  clearing.value = true;
+  try {
+    const result = await notificationStore.clearAll(currentUser.value);
+    confirmingClear.value = false;
+    const deleted = result?.deleted ?? 0;
+    const dismissed = result?.dismissed ?? 0;
+    actionNote.value = dismissed
+      ? `Cleared ${deleted + dismissed}. ${deleted} deleted, ${dismissed} announcement${dismissed === 1 ? '' : 's'} removed from your list.`
+      : `Cleared ${deleted} notifications.`;
+  } catch (err: any) {
+    actionNote.value = err?.message || 'Could not clear your notifications. Try again.';
+  } finally {
+    clearing.value = false;
   }
 }
 
 function setFilter(filterType: string) {
   activeFilter.value = filterType;
+}
+
+/**
+ * Follow a notification's destination.
+ *
+ * Marks it read on the way, because arriving at the thing a notification is
+ * about and then finding it still unread is the single most common complaint
+ * about any bell. Failure is deliberately ignored: the navigation is what the
+ * user asked for.
+ */
+async function openLink(notification: NotificationResponse) {
+  const to = notification.link;
+  if (!notification.read) {
+    notificationStore.markAsRead(notification.notification_id).catch(() => undefined);
+  }
+  if (!to) return;
+  if (/^https?:\/\//i.test(to)) {
+    window.open(to, '_blank', 'noopener,noreferrer');
+  } else {
+    router.push(to);
+  }
 }
 
 // ---------------- Notification metadata / action handling ----------------
@@ -422,25 +551,18 @@ function metaActionClass(type: string): string {
 }
 
 async function notifyStudentPaymentDecision(action: NotificationAction, approved: boolean) {
-  try {
-    await notificationService.createActionNotification(
-      {
-        title: approved ? 'Payment Approved' : 'Payment Not Approved',
-        message: approved
-          ? `Your payment of JOD ${action.amount} for the "${action.planTitle}" plan has been approved and verified. Your subscription is now active.`
-          : `Your payment request of JOD ${action.amount} for the "${action.planTitle}" plan was not approved. Please contact support or submit a new request.`,
-        notification_type: 'personal',
-        sender: authStore.user?.username || 'system',
-        recipient: action.studentUsername,
-        read: false
+  await notificationService.notify(
+    approved ? 'payment.approved' : 'payment.rejected',
+    {
+      to: action.studentUsername,
+      sender: authStore.user?.username || 'system',
+      params: {
+        plan: action.planTitle,
+        amount: action.amount,
+        reason: 'Please contact support or submit a new request.',
       },
-      {
-        actions: [{ type: 'view_plans', label: 'View My Plans', path: '/my-plans' }]
-      }
-    );
-  } catch (err) {
-    console.warn('Failed to notify student of payment decision:', err);
-  }
+    }
+  );
 }
 
 /**
@@ -471,7 +593,7 @@ async function handleAction(notification: NotificationResponse, action: Notifica
         );
         await notifyStudentPaymentDecision(action, true);
         await deleteAdminPaymentNotification(notification);
-        alert('Payment approved and marked as VERIFIED. The student has been notified.');
+        actionNote.value = 'Payment approved and marked as VERIFIED. The student has been notified.';
         break;
       }
       case 'ignore_payment': {
@@ -482,7 +604,7 @@ async function handleAction(notification: NotificationResponse, action: Notifica
         );
         await notifyStudentPaymentDecision(action, false);
         await deleteAdminPaymentNotification(notification);
-        alert('Payment request ignored. The student has been notified.');
+        actionNote.value = 'Payment request ignored. The student has been notified.';
         break;
       }
       case 'view_course':
@@ -499,7 +621,7 @@ async function handleAction(notification: NotificationResponse, action: Notifica
     }
   } catch (err: any) {
     console.error('Notification action failed:', err);
-    alert(err?.message || 'Action failed. Please try again.');
+    actionNote.value = err?.message || 'Action failed. Please try again.';
   } finally {
     actionLoading.value = null;
   }

@@ -175,42 +175,19 @@ class ExamService {
                 ? new Date(appointment.appointment_date).toLocaleString()
                 : 'N/A';
 
-            let title = 'New Exam Appointment';
-            let verb = 'booked';
-            if (action === 'rescheduled') {
-                title = 'Exam Appointment Rescheduled';
-                verb = 'rescheduled';
-            } else if (action === 'cancelled') {
-                title = 'Exam Appointment Cancelled';
-                verb = 'cancelled';
-            }
+            // The wording, category, priority and destination all come from the
+            // catalogue now — `src/utils/notificationEvents.ts`. This used to
+            // build a four-line message here and smuggle the destination into
+            // the body as an HTML comment, which the admin console then rendered
+            // as part of the text.
+            const event = action === 'rescheduled' ? 'proctor.appointment_rescheduled'
+                : action === 'cancelled' ? 'proctor.appointment_cancelled'
+                : 'proctor.appointment_assigned';
 
-            const message =
-                `${studentName} has ${verb} an exam appointment.\n` +
-                `• Exam: ${examName}\n` +
-                `• Date/Time: ${when}\n` +
-                `• Status: ${appointment.appointment_status || 'N/A'}`;
-
-            await notificationService.createActionNotification(
-                {
-                    title,
-                    message,
-                    notification_type: 'personal',
-                    sender: 'system',
-                    recipient: proctorUsername,
-                    read: false
-                },
-                {
-                    actions: [
-                        {
-                            type: 'view_appointment',
-                            label: 'View in Proctor Dashboard',
-                            path: '/proctor-dashboard',
-                            appointmentId: appointment.external_id
-                        }
-                    ]
-                }
-            );
+            await notificationService.notify(event, {
+                to: proctorUsername,
+                params: { student: studentName, exam: examName, when },
+            });
         } catch (error) {
             // Notifications are non-critical
             console.warn('Failed to notify proctor of appointment:', error);

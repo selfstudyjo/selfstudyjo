@@ -731,43 +731,51 @@ const extractMentions = (text: string): string[] => {
   return m ? [...new Set(m.map(x => x.substring(1)))] : [];
 };
 
-const createMentionNotifications = async (content: string, commentId: string) => {
-  const mentions = extractMentions(content);
-  if (!mentions.length || !authStore.user?.username || !course.value) return;
+/**
+ * Tell the people a comment named that it named them.
+ *
+ * The wording, the category and the destination come from the catalogue
+ * (`src/utils/notificationEvents.ts`) rather than from a template string here —
+ * this used to build both by hand and smuggle the destination into the message
+ * body as an HTML comment, which is why the admin console rendered the comment.
+ *
+ * Everybody mentioned is notified in **one** bulk call, so a comment naming five
+ * classmates is one request and one replication push rather than five of each.
+ */
+const createMentionNotifications = async (content: string, _commentId: string) => {
+  const author = authStore.user?.username;
+  if (!author || !course.value) return;
 
-  // Build a path the notification "View Course" button can use. The app uses
-  // hash history, so an in-app router path works for all user types.
-  const coursePath = `/course/${course.value.external_course_id}`;
+  const mentions = extractMentions(content).filter(u => u !== author);
+  if (!mentions.length) return;
 
-  for (const u of mentions) {
-    if (u === authStore.user.username) continue;
+  // A mention is only worth sending to somebody who exists. `@lunch` in a
+  // sentence is not a person, and a notification addressed to a username nobody
+  // holds is a record that will never be read or cleared.
+  const recipients: string[] = [];
+  for (const username of mentions) {
     try {
-      serviceRegistry.clearCache();
-      await notificationService.createActionNotification(
-        {
-          title: 'You were mentioned in a comment',
-          message: `@${authStore.user.username} mentioned you in a comment on "${course.value.title}". Click below to view the course.`,
-          notification_type: 'personal',
-          sender: authStore.user.username,
-          recipient: u,
-          read: false
-        },
-        {
-          commentId,
-          actions: [
-            {
-              type: 'view_course',
-              label: 'View Course',
-              path: coursePath,
-              courseId: course.value.external_course_id
-            }
-          ]
-        }
-      );
-    } catch (err) {
-      console.warn('Failed to create mention notification for', u, err);
+      const profile = await userService.getUserProfileByUsername(username);
+      if (profile?.username) recipients.push(profile.username);
+    } catch {
+      // Unknown username, or the profile service is cold. Either way, skip it
+      // rather than sending into the void.
     }
   }
+  if (!recipients.length) return;
+
+  serviceRegistry.clearCache();
+  const excerpt = content.trim().slice(0, 120) + (content.trim().length > 120 ? '…' : '');
+  await notificationService.notify('course.mentioned', {
+    to: recipients,
+    sender: author,
+    params: {
+      author: `@${author}`,
+      course: course.value.title,
+      courseId: course.value.external_course_id,
+      excerpt,
+    },
+  });
 };
 
 const submitComment = async () => {

@@ -91,6 +91,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
+import { notificationService } from '@/services/notification.service';
 import { RfIconBack, RfIconProfile } from '@/utils/rf-icons';
 
 const router = useRouter();
@@ -157,6 +158,12 @@ const saveProfile = async () => {
     } else {
       await researchStore.createResearcherProfile(userId.value, profileData);
       successMsg.value = 'Profile created successfully!';
+      // Only on creation. Editing a bio is not news to anybody.
+      notificationService.notifyAdmins('research.new_researcher', {
+        researcher: `${form.value.first_name} ${form.value.last_name}`.trim()
+          || authStore.user?.username || 'A researcher',
+        field: form.value.institution || form.value.department || 'research',
+      });
     }
 
     setTimeout(() => { router.push('/research'); }, 1500);

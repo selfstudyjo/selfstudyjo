@@ -74,6 +74,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
 import { researchService } from '@/services/research.service';
+import { notificationService } from '@/services/notification.service';
 import type { ResearchProject } from '@/services/research.service';
 import {
   RfIconBack, RfIconCollab, RfIconSend, RfIconInbox,
@@ -131,7 +132,22 @@ const sendRequest = async () => {
   if (!selectedProjectId.value || !requestMessage.value || !userId.value) return;
   sendingRequest.value = true;
   try {
-    await researchStore.sendCollaborationRequest(userId.value, selectedProjectId.value, requestMessage.value);
+    const created = await researchStore.sendCollaborationRequest(userId.value, selectedProjectId.value, requestMessage.value);
+    // The owner of the project, addressed by id — Research Flow stores UUIDs and
+    // app 16 addresses people by username, which is what `notifyById` bridges.
+    // Without this the request sat in a list nobody had a reason to open.
+    if (created?.recipient_id) {
+      notificationService.notifyById('research.collaboration_invite', {
+        userId: created.recipient_id,
+        sender: authStore.user?.username || 'system',
+        params: {
+          inviter: authStore.user?.username || 'A researcher',
+          project: getProjectTitle(selectedProjectId.value),
+          role: 'a collaborator',
+          projectId: selectedProjectId.value,
+        },
+      });
+    }
     alert('Collaboration request sent!');
     requestMessage.value = '';
     selectedProjectId.value = '';
@@ -143,8 +159,22 @@ const sendRequest = async () => {
 };
 
 const respondTo = async (requestId: string, action: 'approve' | 'reject') => {
+  const request = allRequests.value.find(r => r.id === requestId);
   try {
     await researchStore.respondToCollaboration(requestId, userId.value, action);
+    // Only on approve. Somebody whose request was turned down is better served
+    // by the list on this page than by a notification about it.
+    if (action === 'approve' && request?.requester_id) {
+      notificationService.notifyById('research.collaboration_accepted', {
+        userId: request.requester_id,
+        sender: authStore.user?.username || 'system',
+        params: {
+          researcher: authStore.user?.username || 'The project owner',
+          project: getProjectTitle(request.project_id),
+          projectId: request.project_id,
+        },
+      });
+    }
     alert(`Request ${action}d!`);
   } catch (err: any) {
     alert(err.message || `Failed to ${action} request`);

@@ -321,6 +321,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
+import { notificationService } from '@/services/notification.service';
 
 // Import the CSS file
 import '@/assets/css/take-exam.css';
@@ -714,6 +715,23 @@ async function submitExamResults() {
   showResultsModal.value = true;
   showCorrectAnswers.value = true;
   stopTimer();
+
+  // The candidate is looking at their score right now, so the notification is
+  // not news — it is the durable copy. An exam result is the one thing on this
+  // platform somebody comes back looking for weeks later, and the modal is gone
+  // the moment they close the tab.
+  const outcome = score >= passingScore
+    ? `passed with ${score}%`
+    : `${score}%, below the ${passingScore}% pass mark`;
+  notificationService.notify('exam.result_published', {
+    to: authStore.user?.username || '',
+    params: { exam: exam.value?.title || 'your exam', outcome },
+  });
+  notificationService.notifyAdmins('exam.submitted', {
+    student: authStore.user?.username || 'A student',
+    exam: exam.value?.title || 'an exam',
+    score: `${score}%`,
+  });
 }
 
 // Alternative approach if submitExam fails (called from submitExamResults)

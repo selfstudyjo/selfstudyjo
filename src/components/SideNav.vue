@@ -456,7 +456,6 @@ const avatarError = ref(false);
 const avatarRetryCount = ref(0);
 const MAX_AVATAR_RETRIES = 2;
 const displayedAvatarUrl = ref('');
-let pollInterval: number | null = null;
 
 onMounted(() => {
   checkIfMobile();
@@ -465,10 +464,16 @@ onMounted(() => {
     authStore.checkAuth().catch(err => console.log('Initial auth check failed:', err));
   }
   if (authStore.isAuthenticated) initializeNotifications();
-  // The chime cannot play without a gesture behind it, and the browser gives no
-  // error when it refuses - a chime that was never primed simply never sounds.
-  // The first click anywhere in the app is that gesture.
-  document.addEventListener('click', () => chatStore.primeAudio(), { once: true });
+  // Neither chime can play without a gesture behind it, and the browser gives
+  // no error when it refuses - a chime that was never primed simply never
+  // sounds. The first click anywhere in the app is that gesture, and it has to
+  // prime both: the bell and the messages badge are separate sounds because
+  // "the platform has something to tell you" and "a person is waiting for a
+  // reply" are different events.
+  document.addEventListener('click', () => {
+    chatStore.primeAudio();
+    notificationStore.primeAudio();
+  }, { once: true });
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleSearchShortcut);
   syncAvatarUrl();
@@ -707,11 +712,11 @@ function handleAvatarError() {
 }
 
 function initializeNotifications() {
-  if (username.value) {
-    notificationStore.loadFromLocalStorage(username.value);
-    notificationStore.fetchNotificationCount(username.value);
-    startPolling();
-  }
+  // The store owns the interval, the chime and the visibility handling now —
+  // this used to be a setInterval here, which happened to work because the
+  // sidebar is mounted on every authenticated screen, and gave the chime
+  // nowhere to live. Same shape as the messages badge below.
+  if (username.value) notificationStore.start(username.value);
   startMessagePolling();
 }
 
@@ -733,17 +738,8 @@ function startMessagePolling() {
   if (id) chatStore.start(id);
 }
 
-function startPolling() {
-  stopPolling();
-  if (!username.value) return;
-  pollInterval = window.setInterval(() => {
-    if (username.value) notificationStore.fetchNotificationCount(username.value);
-  }, 30000);
-}
-
 function stopPolling() {
-  if (pollInterval) clearInterval(pollInterval);
-  pollInterval = null;
+  notificationStore.stopPolling();
 }
 
 function goToNotifications() {

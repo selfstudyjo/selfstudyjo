@@ -33,9 +33,11 @@ watch(() => authStore.user, (newUser, oldUser) => {
       notificationStore.clearUserNotifications(oldUser.username);
     }
 
-    // Load notifications for the new user
-    notificationStore.loadFromLocalStorage(newUser.username);
-    notificationStore.fetchNotificationCount(newUser.username);
+    // Load notifications for the new user. `start` also begins the poll and the
+    // chime, which is what makes the bell ring on a screen the sidebar is not
+    // on — the login page redirect, most obviously. Calling it twice is safe:
+    // it stops whatever was running first.
+    notificationStore.start(newUser.username);
   } else {
     // Clear notifications when user logs out
     notificationStore.clearAllNotifications();

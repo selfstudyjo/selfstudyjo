@@ -217,6 +217,7 @@
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { courseService, type Course, type CourseFilters, type CourseRegistration } from '@/services/course.service';
+import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 import Planet from '@/components/Planet.vue';
 
@@ -354,6 +355,14 @@ const handleRegister = async (course: Course) => {
     const userId = String(authStore.user.id || authStore.user.username);
     const reg = await courseService.registerUserForCourse(userId, courseId);
     userRegistrations.value = { ...userRegistrations.value, [courseId]: reg };
+    // The operators, not the student — they are looking at the button they just
+    // pressed and do not need telling. `notify` never throws; an enrolment must
+    // not fail because the bell service is cold.
+    notificationService.notifyAdmins('course.enrolled', {
+      student: authStore.user.username,
+      course: course.title,
+      courseId,
+    });
   } catch (err: any) {
     // Backend returns 400 'User is already registered' when row exists under another identifier
     const msg = (err?.message || '').toLowerCase();

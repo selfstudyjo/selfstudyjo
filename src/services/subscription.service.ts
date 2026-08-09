@@ -51,6 +51,17 @@ const EXPIRY_NOTIFIED_KEY_PREFIX = 'sub_expiry_notified_';
 // Notify when a subscription expires within this window
 const EXPIRY_NOTICE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const EXPIRY_TITLE = 'Subscription Expiring Soon';
+/**
+ * The catalogue key this sweep sends.
+ *
+ * **The frontend owns "expiring" and the console owns "expired"**, and the split
+ * is deliberate rather than accidental: this runs whenever the person concerned
+ * loads their plans, which is far more reliable for a warning than the console's
+ * sweep, which only runs when an operator happens to open the Subscriptions
+ * screen. The console keeps the after-the-fact one, which nobody's own browsing
+ * will trigger. Both sending it would be two bells for one fact.
+ */
+const EXPIRY_EVENT = 'subscription.expiring';
 
 class SubscriptionService {
     // Per-user in-flight lock so concurrent calls collapse into one run.
@@ -292,7 +303,7 @@ class SubscriptionService {
         if (expiringSoon.length === 0) return;
 
         // Fetch the user's existing notifications ONCE (authoritative dedup source).
-        let existing: Array<{ title: string; message: string }> = [];
+        let existing: Array<{ title: string; message: string; event?: string }> = [];
         try {
             const resp = await notificationService.getNotificationsForUser(username, 1, 100);
             existing = resp.results || [];
@@ -307,7 +318,10 @@ class SubscriptionService {
 
             // 1) Authoritative server-side dedup
             const alreadyOnServer = existing.some(n => {
-                if (n.title !== EXPIRY_TITLE) return false;
+                // `event` is a first-class field on app 16 since 2026-08-09 and
+                // is the reliable match; the title comparison behind it is for
+                // the notifications already stored without one.
+                if (n.event !== EXPIRY_EVENT && n.title !== EXPIRY_TITLE) return false;
                 const decoded = decodeNotificationMessage(n.message);
                 // Primary match: subscription id embedded in metadata
                 if (decoded.meta?.subscriptionId === subId) return true;
@@ -332,23 +346,13 @@ class SubscriptionService {
             );
 
             try {
-                await notificationService.createActionNotification(
-                    {
-                        title: EXPIRY_TITLE,
-                        message:
-                            `Your subscription "${planTitle}" will expire in ${days} day${days > 1 ? 's' : ''} ` +
-                            `(on ${new Date(sub.expire_date).toLocaleDateString()}). Renew now to keep your access.`,
-                        notification_type: 'personal',
-                        sender: 'system',
-                        recipient: username,
-                        read: false
-                    },
-                    {
-                        subscriptionId: subId,
-                        expireDate: sub.expire_date,
-                        actions: [{ type: 'view_plans', label: 'View Plans', path: '/plans' }]
-                    }
-                );
+                // Through the catalogue, so this reads the same as the console's
+                // "your subscription has expired" rather than being a second
+                // wording for the same family of fact.
+                await notificationService.notify(EXPIRY_EVENT, {
+                    to: username,
+                    params: { plan: planTitle, days },
+                });
 
                 // Record locally as a fast guard (server check remains authoritative)
                 try { localStorage.setItem(localKey, Date.now().toString()); } catch { /* ignore */ }
@@ -357,6 +361,7 @@ class SubscriptionService {
                 // within this same run for any duplicate sub entries.
                 existing.push({
                     title: EXPIRY_TITLE,
+                    event: EXPIRY_EVENT,
                     message: `"${planTitle}"`
                 });
             } catch (err) {
