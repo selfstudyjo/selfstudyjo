@@ -24,8 +24,8 @@
     --galaxy-surface-3:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
 
     /* Brand */
-    --galaxy-accent:          var(--sfs-accent-soft, #818cf8);
-    --galaxy-accent-2:        var(--sfs-accent-2, #a78bfa);
+    --galaxy-accent:          var(--sfs-accent-text, #818cf8);
+    --galaxy-accent-2:        var(--sfs-accent-2-text, #a78bfa);
     --galaxy-gradient:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
     --galaxy-gradient-hover:  linear-gradient(135deg, var(--sfs-accent, #5a6fd8) 0%, var(--sfs-accent-2, #6a3fa0) 100%);
     --galaxy-glow:            0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);

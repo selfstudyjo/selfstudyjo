@@ -30,10 +30,10 @@
   --pp-r-xl: 24px;
 
   /* Galaxy palette (brand gradient + cosmic accents) */
-  --pp-accent-1: var(--sfs-accent, #667eea);
+  --pp-accent-1: var(--sfs-accent-text, #667eea);
   --pp-accent-2: var(--sfs-accent-2, #764ba2);
-  --pp-accent-cyan: var(--sfs-info, #4ECDC4);
-  --pp-danger: var(--sfs-danger, #fc8181);
+  --pp-accent-cyan: var(--sfs-info-text, #4ECDC4);
+  --pp-danger: var(--sfs-danger-text, #fc8181);
   --pp-success: var(--sfs-success, #48bb78);
 
   /* Text on dark galaxy */

@@ -7,8 +7,8 @@
 /* ---------- Local design tokens ---------- */
 .all-certificates {
   /* Brand */
-  --acc-1: var(--sfs-accent-soft, #818cf8);            /* lighter indigo, AA over dark */
-  --acc-2: var(--sfs-accent-2, #a78bfa);            /* lighter purple */
+  --acc-1: var(--sfs-accent-text, #818cf8);            /* lighter indigo, AA over dark */
+  --acc-2: var(--sfs-accent-2-text, #a78bfa);            /* lighter purple */
   --acc-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
   /* Text */

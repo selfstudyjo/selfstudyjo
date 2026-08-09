@@ -5,10 +5,10 @@
 
 :root {
   /* Brand palette (aligned with global gradient #667eea → #764ba2) */
-  --ea-primary: var(--sfs-accent-soft, #818cf8);
-  --ea-primary-2: var(--sfs-accent-2, #a78bfa);
-  --ea-cyan: var(--sfs-info, #4ECDC4);
-  --ea-blue: var(--sfs-accent, #4285f4);
+  --ea-primary: var(--sfs-accent-text, #818cf8);
+  --ea-primary-2: var(--sfs-accent-2-text, #a78bfa);
+  --ea-cyan: var(--sfs-info-text, #4ECDC4);
+  --ea-blue: var(--sfs-accent-text, #4285f4);
   --ea-purple: var(--sfs-accent-2, #8A2BE2);
 
   /* Text on dark galaxy */

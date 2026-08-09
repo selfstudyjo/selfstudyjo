@@ -559,10 +559,20 @@ function formatTime(timestamp: string) {
 
 .btn-meta-action.meta-approve {
   background: linear-gradient(135deg, var(--sfs-success, #48bb78), var(--sfs-success, #38a169));
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-success, #fff);
 }
 
 .btn-meta-action.meta-ignore {
   background: linear-gradient(135deg, var(--sfs-danger, #f56565), var(--sfs-danger, #c53030));
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
 }
 
 .btn-meta-action.meta-link {

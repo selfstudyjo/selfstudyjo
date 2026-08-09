@@ -305,7 +305,12 @@ defineExpose({ stop, transcript: editableTranscript, notes });
   width: 10px; height: 10px; border-radius: 50%;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
 }
-.vr-dot.live { background: var(--sfs-danger, #ef4444); animation: vr-pulse 1.2s infinite; }
+.vr-dot.live { background: var(--sfs-danger, #ef4444); animation: vr-pulse 1.2s infinite;   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
+}
 @keyframes vr-pulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgb(var(--sfs-danger-rgb, 239 68 68) / 0.55); }
   50% { opacity: 0.7; box-shadow: 0 0 0 7px rgb(var(--sfs-danger-rgb, 239 68 68) / 0); }

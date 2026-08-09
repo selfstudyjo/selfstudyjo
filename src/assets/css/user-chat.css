@@ -62,11 +62,11 @@
   /* The colour a presence dot's halo is cut out of — read by ChatAvatar, which
      falls back to white so it still works on a light surface elsewhere. */
   --uc-avatar-cut: #0d1026;
-  --uc-read: var(--sfs-info, #7dd3fc);              /* the double tick — never white, or it reads as "sent" */
-  --uc-danger: var(--sfs-danger, #fc8181);
+  --uc-read: var(--sfs-info-text, #7dd3fc);              /* the double tick — never white, or it reads as "sent" */
+  --uc-danger: var(--sfs-danger-text, #fc8181);
   --uc-danger-bg: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.14);
   --uc-danger-border: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
-  --uc-success: var(--sfs-success, #4ade80);
+  --uc-success: var(--sfs-success-text, #4ade80);
 
   /* ---- shadows --------------------------------------------------------- */
   --uc-shadow: 0 8px 30px rgba(4, 6, 20, 0.42);

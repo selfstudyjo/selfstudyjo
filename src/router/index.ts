@@ -113,6 +113,22 @@ const routes = [
                 meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
+                /*
+                  The three sandboxes are addressable.
+
+                  They were tabs in component state, which meant the sidebar had
+                  nothing to point at — one "Labs" entry for three tools — and a
+                  student could not link a classmate to the Python tab or come
+                  back to the one they were in. The tab is a route param now, so
+                  it survives a reload, a back button and a shared URL, and
+                  appNav can list all three. `/labs` still works and lands on SQL.
+                */
+                path: 'labs/:tab(sql|linux|python)',
+                name: 'LabsTab',
+                component: Labs,
+                meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            {
                 path: 'course/:id',
                 name: 'CourseDetails',
                 component: CourseDetails,

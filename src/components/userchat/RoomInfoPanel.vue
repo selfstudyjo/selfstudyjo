@@ -445,5 +445,10 @@ footer {
 }
 .uc-danger-btn:hover { background: var(--uc-danger-bg); }
 .uc-danger-btn.solid { background: rgb(var(--sfs-danger-rgb, 220 38 38) / 0.85); border-color: transparent; color: var(--sfs-text, #fff); }
-.uc-danger-btn.solid:hover { background: var(--sfs-danger, rgba(220, 38, 38, 1)); }
+.uc-danger-btn.solid:hover { background: var(--sfs-danger, rgba(220, 38, 38, 1));   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
+}
 </style>

@@ -327,6 +327,11 @@ defineExpose({ tools });
     linear-gradient(to top right, transparent calc(50% - 1px), var(--sfs-danger, #dc2626) 50%,
                     transparent calc(50% + 1px)),
     var(--sfs-paper, #fff);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
 }
 
 .swatch.custom {

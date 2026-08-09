@@ -22,9 +22,9 @@
   /* brand */
   --rf-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --rf-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.18) 100%);
-  --rf-accent:      var(--sfs-accent-soft, #818cf8);
-  --rf-accent-2:    var(--sfs-accent-2, #a78bfa);
-  --rf-accent-hot:  var(--sfs-accent-2, #c084fc);
+  --rf-accent:      var(--sfs-accent-text, #818cf8);
+  --rf-accent-2:    var(--sfs-accent-2-text, #a78bfa);
+  --rf-accent-hot:  var(--sfs-accent-2-text, #c084fc);
 
   /* text */
   --rf-text:        var(--sfs-text, #ffffff);
@@ -2120,7 +2120,12 @@
 .rf-section-card-status { display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0; }
 .rf-word-count { font-size: 0.8em; color: var(--rf-text-dim); white-space: nowrap; }
 .rf-status-dot { width: 10px; height: 10px; border-radius: 50%; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
-.rf-dot-generated { background: var(--sfs-success, #34d399); }
+.rf-dot-generated { background: var(--sfs-success, #34d399);   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-success, #fff);
+}
 .rf-dot-edited    { background: var(--sfs-accent, #60a5fa); }
 .rf-dot-pending   { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
 

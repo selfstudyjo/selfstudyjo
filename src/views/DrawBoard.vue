@@ -667,13 +667,16 @@ async function leave() {
   background: transparent;
   font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
+  /* The board's topbar is transparent over the galaxy, not a light card —
+     this was written against a light page the Draw app never got, and it is
+     invisible on every dark galaxy. */
+  color: var(--sfs-text, #0f172a);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .title-input:hover { border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12); }
-.title-input:focus { outline: none; border-color: var(--sfs-accent-wash, #2563eb); background: var(--sfs-paper, #fff); }
+.title-input:focus { outline: none; border-color: var(--sfs-accent, #2563eb); background: var(--sfs-field, #fff); color: var(--sfs-field-text, #0f172a); }
 
 .byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: var(--sfs-accent-text, #94a3b8); }
 

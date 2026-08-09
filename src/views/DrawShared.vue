@@ -106,7 +106,7 @@ function retry() {
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.09);
 }
 
-h1 { margin: 0 0 10px; font-size: 1.12rem; color: #0f172a; }
+h1 { margin: 0 0 10px; font-size: 1.12rem; color: var(--sfs-text, #0f172a); }
 p { margin: 0; color: var(--sfs-accent-text, #64748b); font-size: 0.9rem; line-height: 1.6; }
 
 .panel.error h1 { color: var(--sfs-danger-text, #b91c1c); }

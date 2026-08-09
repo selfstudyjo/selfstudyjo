@@ -10,9 +10,9 @@
    -------------------------------------------------------------------------- */
 .ai-chat-container {
   /* Brand palette (aligned with global style.css) */
-  --aic-accent-1: var(--sfs-accent, #667eea);
+  --aic-accent-1: var(--sfs-accent-text, #667eea);
   --aic-accent-2: var(--sfs-accent-2, #764ba2);
-  --aic-accent-soft: var(--sfs-accent-soft, #818cf8);
+  --aic-accent-soft: var(--sfs-accent-text, #818cf8);
 
   /* Text */
   --aic-text-primary:   var(--sfs-text, #ffffff);

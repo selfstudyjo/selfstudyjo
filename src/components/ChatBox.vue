@@ -457,10 +457,10 @@ onUnmounted(() => {
    ========================================================================== */
 .chat-wrapper {
   /* brand (aligned with style.css :root --chat-primary) */
-  --cb-primary:        var(--sfs-accent, #667eea);
-  --cb-primary-dark:   var(--sfs-accent, #5a67d8);
+  --cb-primary:        var(--sfs-accent-text, #667eea);
+  --cb-primary-dark:   var(--sfs-accent-text, #5a67d8);
   --cb-secondary:      var(--sfs-accent-2, #764ba2);
-  --cb-accent:         var(--sfs-accent-soft, #818cf8);
+  --cb-accent:         var(--sfs-accent-text, #818cf8);
   --cb-gradient:       linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --cb-gradient-hover: linear-gradient(135deg, var(--sfs-accent, #5a67d8) 0%, var(--sfs-accent-2, #6b46c1) 100%);
 
@@ -485,9 +485,9 @@ onUnmounted(() => {
 
   /* status */
   --cb-success:        var(--sfs-success, #48bb78);
-  --cb-warning:        var(--sfs-warning, #ed8936);
-  --cb-danger:         var(--sfs-danger, #fc8181);
-  --cb-danger-soft:    var(--sfs-danger, #fed7d7);
+  --cb-warning:        var(--sfs-warning-text, #ed8936);
+  --cb-danger:         var(--sfs-danger-text, #fc8181);
+  --cb-danger-soft:    var(--sfs-danger-text, #fed7d7);
 
   /* shadows / glow */
   --cb-shadow-sm:      0 4px 14px rgba(0, 0, 0, 0.28);

@@ -331,13 +331,13 @@ function ago(stamp?: string): string {
   margin-bottom: 26px;
 }
 
-h1 { margin: 0 0 6px; font-size: 1.6rem; color: #0f172a; }
+h1 { margin: 0 0 6px; font-size: 1.6rem; color: var(--sfs-text, #0f172a); }
 .page-head p { margin: 0; max-width: 62ch; color: var(--sfs-accent-text, #64748b); font-size: 0.9rem; line-height: 1.55; }
 
 section { margin-bottom: 34px; }
 
 .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-h2 { margin: 0; font-size: 1.05rem; color: #1e293b; }
+h2 { margin: 0; font-size: 1.05rem; color: var(--sfs-text, #1e293b); }
 
 .count {
   padding: 1px 9px;
@@ -395,7 +395,7 @@ h2 { margin: 0; font-size: 1.05rem; color: #1e293b; }
 .bg-dots { background-image: radial-gradient(rgb(var(--sfs-accent-rgb, 37 99 235) / 0.25) 1.2px, transparent 1.2px); background-size: 18px 18px; }
 
 .card-body { padding: 12px 14px 14px; }
-h3 { margin: 0 0 4px; font-size: 0.95rem; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h3 { margin: 0 0 4px; font-size: 0.95rem; color: var(--sfs-text, #0f172a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meta { margin: 0 0 9px; font-size: 0.76rem; color: var(--sfs-accent-text, #64748b); }
 
 .tags { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -437,7 +437,12 @@ h3 { margin: 0 0 4px; font-size: 0.95rem; color: #0f172a; overflow: hidden; text
   cursor: pointer;
 }
 .icon:hover { background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.9); }
-.icon.danger:hover { background: var(--sfs-danger, #dc2626); }
+.icon.danger:hover { background: var(--sfs-danger, #dc2626);   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
+}
 
 .empty {
   padding: 34px 26px;

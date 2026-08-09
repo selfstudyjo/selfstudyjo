@@ -637,5 +637,10 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   height: 7px;
   border-radius: 50%;
   background: var(--sfs-warning, #fbbf24);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: #fff;
 }
 </style>

@@ -65,7 +65,22 @@ const REMAP = process.argv.includes('--remap');
   round trip re-derives those from the fallback literal, which is a reasonable
   guess and a worse answer than the one already there.
 */
-const SKIP_FILES = new Set(['theme.css', 'responsive.css', 'ThemePicker.vue']);
+const SKIP_FILES = new Set([
+  'theme.css', 'responsive.css', 'ThemePicker.vue',
+  /*
+    Hand-corrected, and a `--remap` would undo it.
+
+    The Draw app and the Roblox tool were written against a light page they
+    never got — their headings are `#0f172a` on a background that is the 3D
+    galaxy, so they were invisible in every dark theme. The codemod cannot see
+    that: its rule is "dark ink with no light background IN THIS BLOCK is
+    probably inside a light card, leave it", which is right almost everywhere
+    and wrong here, and it has no way to know there is no card. Those rules
+    were pointed at `--sfs-text` by hand; skipping the files keeps them that
+    way. `audit:ink` is what proves they are still correct.
+  */
+  'DrawPapers.vue', 'DrawShared.vue', 'DrawBoard.vue', 'roblox-tool.css',
+]);
 
 /* -------------------------------------------------------------------------- *
  * Colour maths (a copy — this script runs in bare node before any build)
@@ -266,7 +281,10 @@ function customRole(name) {
 /** `accent2` is spelled `accent-2` in the token names. */
 const familyBase = family => (family === 'accent2' ? 'accent-2' : family);
 
-function pickToken(c, family, tone, role, island, fill, clipText) {
+/** Custom-property names that really do name a fill rather than an ink. */
+const FILLISH_NAME = /(brand|grad|gradient|fill|bg|background|surface|panel|card|chip|badge|pill|dot|swatch|marker|bar|track|glow|shadow|ring|border)/i;
+
+function pickToken(c, family, tone, role, island, fill, clipText, propName) {
   const translucent = c.a < 0.999;
   /* A custom property whose NAME says it is the quiet variant. Treated as
      text, one step down the hierarchy. */
@@ -398,6 +416,23 @@ function pickToken(c, family, tone, role, island, fill, clipText) {
       return { name: `--sfs-${familyBase(family)}-text` };
     }
     return { name: `--sfs-${family}-text` };
+  }
+  if (role === 'custom' && tone >= 0.55 && !FILLISH_NAME.test(propName || '')) {
+    /*
+      A page-local token holding a PALE brand tint, with a name that gives no
+      clue what it is for.
+
+      `--rf-accent-2: #a78bfa` is a light violet, and on a dark galaxy the only
+      thing a light violet can be is ink — you cannot fill a button with it and
+      read anything. Sent to the solid `--sfs-accent-2` (`#764ba2`) it became
+      dark purple text on a dark page: invisible, and twelve rules across six
+      stylesheets had it. The `-text` variant is the safe answer either way,
+      since it is derived to be readable on the surface in both modes.
+
+      A name that says fill — `--np-brand-grad`, `--x-bg` — is exempt, because
+      those really are fills and are used as gradients.
+    */
+    return { name: `--sfs-${familyBase(family)}-text` };
   }
   if (role === 'bg' || role === 'border' || role === 'custom' || role === 'other') {
     if (family === 'accent' && tone >= 0.7) return { name: '--sfs-accent-soft' };
@@ -789,7 +824,7 @@ function rewrite(source, stats) {
         const key = literal.toLowerCase();
         const auto = classify(c);
         const family = OVERRIDES[key] ?? auto.family;
-        const pick = pickToken(c, family, auto.tone, role, island, fill, clipText);
+        const pick = pickToken(c, family, auto.tone, role, island, fill, clipText, decl.prop);
         /* `SFS_DEBUG=<substring>` prints the decision for every declaration
            whose property name contains it. Every wrong mapping found while
            building this was found with it — the classification is otherwise

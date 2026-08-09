@@ -14,7 +14,7 @@
   --pa-brand-1:     var(--sfs-accent, #667eea);
   --pa-brand-2:     var(--sfs-accent-2, #764ba2);
   --pa-brand-grad:  linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
-  --pa-accent:      var(--sfs-accent-soft, #818cf8);
+  --pa-accent:      var(--sfs-accent-text, #818cf8);
 
   --pa-glass:       rgb(var(--sfs-shade-rgb, 15 25 45) / 0.45);
   --pa-glass-hi:    rgb(var(--sfs-surface-rgb, 30 40 60) / 0.55);

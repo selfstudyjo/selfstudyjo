@@ -407,6 +407,11 @@ onMounted(() => {
     background: linear-gradient(135deg, var(--sfs-danger, rgba(255, 86, 86, 1)), var(--sfs-danger, rgba(255, 70, 70, 1)));
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgb(var(--sfs-danger-rgb, 255 107 107) / 0.4);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
 }
 
 /* Responsive adjustments */

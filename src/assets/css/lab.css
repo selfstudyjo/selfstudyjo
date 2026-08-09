@@ -7,20 +7,20 @@
    ========================================================================== */
 :root {
   /* Brand-aligned accents (match global gradient #667eea → #764ba2) */
-  --lab-primary:       var(--sfs-accent, #667eea);
+  --lab-primary:       var(--sfs-accent-text, #667eea);
   --lab-primary-soft:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
   --lab-primary-glow:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
-  --lab-secondary:     var(--sfs-accent-soft, #818cf8);
-  --lab-accent:        var(--sfs-accent-2, #a78bfa);
+  --lab-secondary:     var(--sfs-accent-text, #818cf8);
+  --lab-accent:        var(--sfs-accent-2-text, #a78bfa);
   --lab-accent-glow:   rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.35);
   --lab-purple:        var(--sfs-accent-2, #764ba2);
 
   /* Status */
   --lab-success: var(--sfs-success, #48bb78);
   --lab-success-glow: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
-  --lab-warning: var(--sfs-warning, #ed8936);
+  --lab-warning: var(--sfs-warning-text, #ed8936);
   --lab-warning-glow: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
-  --lab-danger:  var(--sfs-danger, #fc8181);
+  --lab-danger:  var(--sfs-danger-text, #fc8181);
   --lab-danger-glow:  rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
   --lab-info:    var(--sfs-info, #0ea5e9);
   --lab-info-glow:    rgb(var(--sfs-info-rgb, 14 165 233) / 0.35);

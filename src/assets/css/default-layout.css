@@ -14,8 +14,8 @@
   --galaxy-text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
   --galaxy-text-dim:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
-  --galaxy-accent:         var(--sfs-accent-soft, #818cf8);
-  --galaxy-accent-2:       var(--sfs-accent-2, #a78bfa);
+  --galaxy-accent:         var(--sfs-accent-text, #818cf8);
+  --galaxy-accent-2:       var(--sfs-accent-2-text, #a78bfa);
   --galaxy-gradient:       linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
   --glass-bg:              rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);

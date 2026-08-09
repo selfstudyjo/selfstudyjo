@@ -60,7 +60,8 @@ export type IconName =
     | 'ai' | 'research' | 'toastmasters' | 'jobInterview' | 'roblox' | 'cvBuilder'
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
-    | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard';
+    | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
+    | 'database' | 'terminal' | 'python';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -286,6 +287,22 @@ const SCHEDULE_EXAM: NavEntry = { to: '/schedule-exam', text: 'Schedule Exam', i
 const EXAM_APPROVAL: NavEntry = { to: '/exam-approval', text: 'Exam Approval', icon: 'check', keywords: 'approve pending request start permission', requires: 'exam' };
 const RUNBOOKS: NavEntry = { to: '/runbooks', text: 'Runbooks', icon: 'runbooks', keywords: 'procedures operations guides steps playbook', requires: 'runbook' };
 const LABS: NavEntry = { to: '/labs', text: 'Labs', icon: 'lab', keywords: 'practice sandbox hands on exercises sql linux python terminal', requires: 'lab' };
+/*
+  The three sandboxes, listed rather than hidden behind tabs.
+
+  They were tabs in the page's own state, so the sidebar could only offer
+  "Labs" and a student two clicks into the Python compiler had no way to see
+  that a Linux terminal existed. Now each is a route (`/labs/<tab>`), which is
+  what lets them appear here at all — every `to` in this registry has to be a
+  path the router can match, and `check:appnav` enforces it.
+
+  SQL is `/labs` rather than `/labs/sql` because it is the default the page
+  opens on, and two paths that render the same thing would light up two entries
+  at once.
+*/
+const LAB_SQL: NavEntry = { to: '/labs', text: 'SQL Database', icon: 'database', keywords: 'sql database query select table sqlite schema', requires: 'lab' };
+const LAB_LINUX: NavEntry = { to: '/labs/linux', text: 'Linux Terminal', icon: 'terminal', keywords: 'linux terminal shell bash command line ls cd', requires: 'lab' };
+const LAB_PYTHON: NavEntry = { to: '/labs/python', text: 'Python Compiler', icon: 'python', keywords: 'python compiler run script code interpreter', requires: 'lab' };
 
 // -- Certificates --------------------------------------------------------
 const MY_CERTIFICATES: NavEntry = { to: '/certificates', text: 'My Certificates', icon: 'certificate', keywords: 'credentials badges diplomas awarded mine' };
@@ -396,7 +413,7 @@ export const APP_SECTIONS: AppSection[] = [
         icon: 'lab',
         match: ['/labs'],
         home: '/labs',
-        items: [LABS],
+        items: [LAB_SQL, LAB_LINUX, LAB_PYTHON],
         related: [NETSIM, COURSES, AI_CHAT],
     },
     {

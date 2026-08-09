@@ -212,10 +212,10 @@ body {
 
 /* Chat variables */
 :root {
-  --chat-primary: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  --chat-primary: linear-gradient(135deg, var(--sfs-accent-text, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --chat-success: var(--sfs-success, #48bb78);
-  --chat-warning: var(--sfs-warning, #ed8936);
-  --chat-danger: var(--sfs-danger, #fc8181);
+  --chat-warning: var(--sfs-warning-text, #ed8936);
+  --chat-danger: var(--sfs-danger-text, #fc8181);
   --chat-info: var(--sfs-info, #0ea5e9);
 }
 

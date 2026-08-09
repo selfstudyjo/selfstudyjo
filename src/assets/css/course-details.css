@@ -22,10 +22,10 @@
   --brand-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
   /* Supportive accents */
-  --accent-cyan:  var(--sfs-accent-soft, #818cf8);
-  --accent-pink:  var(--sfs-accent-2, #ec4899);
+  --accent-cyan:  var(--sfs-accent-text, #818cf8);
+  --accent-pink:  var(--sfs-accent-2-text, #ec4899);
   --accent-green: var(--sfs-success, #48bb78);
-  --accent-red:   var(--sfs-danger, #fc8181);
+  --accent-red:   var(--sfs-danger-text, #fc8181);
   --accent-blue:  var(--sfs-info, #0ea5e9);
 
   /* Text colors over galaxy */

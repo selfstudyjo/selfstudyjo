@@ -13,10 +13,10 @@
   --glass-border-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
 
   /* Brand & aurora accents (aligned with global #667eea → #764ba2) */
-  --aurora-cyan: var(--sfs-info, #4ECDC4);
+  --aurora-cyan: var(--sfs-info-text, #4ECDC4);
   --aurora-purple: var(--sfs-accent-2, #8A2BE2);
-  --aurora-blue: var(--sfs-accent, #4285f4);
-  --aurora-pink: var(--sfs-accent-2, #e879f9);
+  --aurora-blue: var(--sfs-accent-text, #4285f4);
+  --aurora-pink: var(--sfs-accent-2-text, #e879f9);
   --aurora-emerald: var(--sfs-success, #10b981);
   --brand-1: var(--sfs-accent, #667eea);
   --brand-2: var(--sfs-accent-2, #764ba2);
@@ -30,8 +30,8 @@
   /* Semantic */
   --clr-success: var(--sfs-success, #10b981);
   --clr-warning: var(--sfs-warning, #f59e0b);
-  --clr-danger: var(--sfs-danger, #ef4444);
-  --clr-info: var(--sfs-accent, #3b82f6);
+  --clr-danger: var(--sfs-danger-text, #ef4444);
+  --clr-info: var(--sfs-accent-text, #3b82f6);
 
   /* Gradients */
   --gradient-aurora: linear-gradient(135deg, var(--sfs-info, #4ECDC4) 0%, var(--sfs-accent, #667eea) 50%, var(--sfs-accent-2, #8A2BE2) 100%);
@@ -153,6 +153,11 @@
   -webkit-text-fill-color: transparent;
   animation: plansShimmer 6s ease-in-out infinite;
   text-shadow: 0 2px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-text, #fff);
 }
 
 @keyframes plansShimmer {

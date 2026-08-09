@@ -32,9 +32,9 @@
   /* Status colors (semantic, brand-friendly) */
   --pd-info: var(--sfs-info, #0ea5e9);
   --pd-success: var(--sfs-success, #48bb78);
-  --pd-warning: var(--sfs-warning, #ed8936);
-  --pd-danger: var(--sfs-danger, #fc8181);
-  --pd-accent: var(--sfs-accent-soft, #818cf8);
+  --pd-warning: var(--sfs-warning-text, #ed8936);
+  --pd-danger: var(--sfs-danger-text, #fc8181);
+  --pd-accent: var(--sfs-accent-text, #818cf8);
 
   /* Effects */
   --pd-blur: blur(16px) saturate(140%);
@@ -289,6 +289,12 @@
   color: var(--sfs-on-accent, #fff);
   text-decoration: none;
 }
+
+/* The hover rule above is shared with .room-link, which is filled with a
+   brand gradient — so its single ink is --sfs-on-accent, and that is right
+   there. This button is glass, so on a light galaxy that ink is white on
+   near-white. It follows the page instead. */
+.clear-filters-btn:hover { color: var(--sfs-text, #fff); }
 
 .retry-btn:hover::before,
 .view-btn:hover::before,

@@ -30,11 +30,11 @@
   --np-shadow-hover:   0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28);
 
   /* semantic notification accents */
-  --np-personal: var(--sfs-accent-soft, #818cf8);        /* indigo (brand-aligned) */
+  --np-personal: var(--sfs-accent-text, #818cf8);        /* indigo (brand-aligned) */
   --np-general:  var(--sfs-success, #48bb78);        /* success */
-  --np-group:    var(--sfs-warning, #ed8936);        /* warning */
-  --np-user:     var(--sfs-accent-2, #9f7aea);        /* purple */
-  --np-danger:   var(--sfs-danger, #fc8181);
+  --np-group:    var(--sfs-warning-text, #ed8936);        /* warning */
+  --np-user:     var(--sfs-accent-2-text, #9f7aea);        /* purple */
+  --np-danger:   var(--sfs-danger-text, #fc8181);
 
   /* radii */
   --np-r-sm: 10px;

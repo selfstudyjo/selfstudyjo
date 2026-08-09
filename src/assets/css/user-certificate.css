@@ -12,19 +12,19 @@
 :root {
   /* Brand */
   --uc-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
-  --uc-accent:      var(--sfs-accent-soft, #818cf8);
-  --uc-accent-2:    var(--sfs-accent-2, #a78bfa);
+  --uc-accent:      var(--sfs-accent-text, #818cf8);
+  --uc-accent-2:    var(--sfs-accent-2-text, #a78bfa);
 
   /* Seal-only (iconic gold) */
-  --uc-gold:        var(--sfs-warning, #ffd277);
-  --uc-gold-deep:   var(--sfs-warning, #e0a548);
+  --uc-gold:        var(--sfs-warning-text, #ffd277);
+  --uc-gold-deep:   var(--sfs-warning-text, #e0a548);
   --uc-gold-glow:   rgb(var(--sfs-warning-rgb, 255 215 0) / 0.35);
   --uc-gold-line:   rgb(var(--sfs-warning-rgb, 255 210 119) / 0.28);
 
   /* Status */
   --uc-success:     var(--sfs-success, #48bb78);
   --uc-success-bg:  rgb(var(--sfs-success-rgb, 72 187 120) / 0.18);
-  --uc-muted:       var(--sfs-accent, #94a3b8);
+  --uc-muted:       var(--sfs-accent-text, #94a3b8);
   --uc-muted-bg:    rgb(var(--sfs-accent-rgb, 148 163 184) / 0.18);
 
   /* Text */
@@ -386,6 +386,13 @@
 }
 .share-option.is-linkedin .share-option-icon { color: #70b5f9; }
 .share-option.is-x        .share-option-icon { color: #ffffff; }
+/* The share glyphs are third-party brand colours and the codemod leaves them
+   alone on purpose — a WhatsApp icon is #25D366 because that is what WhatsApp
+   is. Two of them are tuned for a dark chip, though, and go invisible on the
+   three light galaxies, so those two get a light-mode value. Still each
+   brand's own colour, just the variant meant for a light background. */
+:root[data-mode='light'] .share-option.is-x .share-option-icon { color: #0f1419; }
+:root[data-mode='light'] .share-option.is-whatsapp .share-option-icon { color: #128c7e; }
 .share-option.is-whatsapp .share-option-icon { color: #5ce07d; }
 .share-option.is-facebook .share-option-icon { color: #7aa7ff; }
 .share-option.is-copy     .share-option-icon,

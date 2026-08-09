@@ -39,7 +39,7 @@
           :key="tab.id"
           class="tab-btn"
           :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
+          @click="selectTab(tab.id)"
         >
           <i :class="tab.icon"></i> {{ tab.label }}
         </button>
@@ -379,6 +379,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { labService, type Student } from '@/services/lab.service';
 
@@ -403,7 +404,33 @@ const studentRecord = ref<Student | null>(null);
 // State
 const loading = ref(false);
 const error = ref<string | null>(null);
-const activeTab = ref('sql');
+/*
+  Which sandbox is open. Mirrored into the URL as `/labs/<tab>` so the sidebar
+  can link straight to one, a reload comes back to the same place, and a
+  student can send a classmate the tab they are stuck on. `/labs` with no
+  segment is SQL.
+*/
+const route = useRoute();
+const router = useRouter();
+
+const TABS = ['sql', 'linux', 'python'] as const;
+type TabId = (typeof TABS)[number];
+
+const tabFromRoute = (): TabId => {
+  const value = String(route.params.tab || '');
+  return (TABS as readonly string[]).includes(value) ? (value as TabId) : 'sql';
+};
+
+const activeTab = ref<TabId>(tabFromRoute());
+
+/** Clicking a tab navigates; the watcher below is what actually switches it. */
+function selectTab(id: TabId) {
+  if (activeTab.value === id) return;
+  router.push(id === 'sql' ? '/labs' : `/labs/${id}`);
+}
+
+// Back button, a pasted link, and the sidebar all arrive here.
+watch(() => route.params.tab, () => { activeTab.value = tabFromRoute(); });
 
 // SQL state
 const sqlQuery = ref('SELECT * FROM sqlite_master WHERE type="table";');
@@ -467,7 +494,7 @@ const toasts = ref<Array<{
 let toastId = 0;
 
 // Tabs configuration
-const tabs = [
+const tabs: Array<{ id: TabId; label: string; icon: string }> = [
   { id: 'sql', label: 'SQL Database', icon: 'fas fa-database' },
   { id: 'linux', label: 'Linux Terminal', icon: 'fas fa-terminal' },
   { id: 'python', label: 'Python Compiler', icon: 'fas fa-code' }

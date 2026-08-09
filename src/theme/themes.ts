@@ -42,6 +42,7 @@ import {
   lighten,
   mix,
   over,
+  relativeLuminance,
 } from './contrast';
 
 export type ThemeMode = 'dark' | 'light';
@@ -370,6 +371,43 @@ function washOf(hue: string): string {
   return mix(hue, '#ffffff', 0.86);
 }
 
+/**
+ * A filled control and the ink on it, decided together.
+ *
+ * The first version derived the ink alone and kept the author's fill exactly.
+ * On Andromeda that produced NEAR-BLACK text on the indigo `#667eea` — the
+ * arithmetic is right (black is 5.7:1 there, white only 3.66:1) and the result
+ * looks broken, because every primary button and active tab on the platform
+ * suddenly had dark text. It was reported as "black text in the dark theme".
+ *
+ * So the fill gives way instead. For a deep hue — anything below `BRIGHT` —
+ * the fill is darkened just enough for WHITE to clear AA, which is a shade a
+ * viewer cannot pick out of a line-up and keeps the light-text convention that
+ * every button on the platform already followed.
+ *
+ * Above that line the convention flips on its own and dark ink is what a
+ * designer would pick anyway: nobody puts white text on a lime or gold button.
+ * Orion's cyan, Sombrero's gold, Whirlpool's green and Sunflower's lime all
+ * keep their exact colour and take dark ink, and that reads as intentional
+ * rather than as a bug.
+ */
+const BRIGHT = 0.3;
+
+function fillAndInk(hue: string): { fill: string; ink: string } {
+  const light = '#ffffff';
+  if (contrastRatio(light, hue) >= AA_TEXT) return { fill: hue, ink: light };
+
+  if (relativeLuminance(hue) < BRIGHT) {
+    let fill = hue;
+    for (let step = 1; step <= 60 && contrastRatio(light, fill) < AA_TEXT; step++) {
+      fill = mix(hue, '#000000', step / 100);
+    }
+    return { fill, ink: light };
+  }
+
+  return { fill: hue, ink: ensureContrast(bestTextOn(hue), hue, AA_TEXT) };
+}
+
 /** Status hues, per mode, before they are made readable against the surface. */
 function statusSeeds(mode: ThemeMode) {
   return mode === 'dark'
@@ -385,26 +423,33 @@ function buildTheme(seed: ThemeSeed): Theme {
   const surface2 = surfaceAt(seed, dark ? 0.1 : 0.09);
   const surface3 = surfaceAt(seed, dark ? 0.16 : 0.14);
 
+  /* --- Accents. Fill and ink are decided together — see fillAndInk(). --- */
+  const a1 = fillAndInk(seed.accent);
+  const a2 = fillAndInk(seed.accent2);
+  const a3 = fillAndInk(seed.accent3);
+  const accent = a1.fill;
+  const accent2 = a2.fill;
+  const accent3 = a3.fill;
+  const onAccent = a1.ink;
+  const onAccent2 = a2.ink;
+  const onAccent3 = a3.ink;
+
   /* --- Text, derived. Never written down. --- */
   const inkStart = dark ? '#ffffff' : '#0d1220';
   const text = ensureContrast(inkStart, surface, AAA_TEXT);
   // Muted text carries a hint of the galaxy so the theme reads in body copy
   // too, then is pulled back until it clears AA. Tinting after the contrast
   // pass would undo it.
-  const textMuted = ensureContrast(mix(text, seed.accent, 0.42), surface, AA_TEXT);
+  const textMuted = ensureContrast(mix(text, accent, 0.42), surface, AA_TEXT);
   // Faint text is captions and timestamps — AA large is the honest bar for it,
   // and pretending otherwise just produces four identical greys.
   const textFaint = ensureContrast(mix(text, surface, 0.42), surface, AA_LARGE);
 
-  /* --- Accents. The fill keeps the author's colour; the ink is derived. --- */
-  const onAccent = ensureContrast(bestTextOn(seed.accent), seed.accent, AA_TEXT);
-  const onAccent2 = ensureContrast(bestTextOn(seed.accent2), seed.accent2, AA_TEXT);
-  const onAccent3 = ensureContrast(bestTextOn(seed.accent3), seed.accent3, AA_TEXT);
   // The accent used AS TEXT on a surface is a different colour from the accent
   // used as a fill, and conflating the two is the single most common way an
   // accessible palette stops being one.
-  const accentText = ensureContrast(seed.accent, washedBackdrop(seed.accent, seed.space), AA_TEXT);
-  const accentTextSoft = ensureContrast(seed.accent, washedBackdrop(seed.accent, seed.space), AA_LARGE);
+  const accentText = ensureContrast(accent, washedBackdrop(accent, seed.space), AA_TEXT);
+  const accentTextSoft = ensureContrast(accent, washedBackdrop(accent, seed.space), AA_LARGE);
 
   /* --- Paper.
    *
@@ -415,10 +460,10 @@ function buildTheme(seed: ThemeSeed): Theme {
    * the theme" turns a certificate black and the codemod would have had to
    * skip a third of the stylesheets.
    */
-  const paper = mix('#ffffff', seed.accent, 0.035);
-  const paper2 = mix('#ffffff', seed.accent, 0.075);
-  const paper3 = mix('#ffffff', seed.accent, 0.12);
-  const onPaper = ensureContrast(mix('#151a24', seed.accent, 0.1), paper, AAA_TEXT);
+  const paper = mix('#ffffff', accent, 0.035);
+  const paper2 = mix('#ffffff', accent, 0.075);
+  const paper3 = mix('#ffffff', accent, 0.12);
+  const onPaper = ensureContrast(mix('#151a24', accent, 0.1), paper, AAA_TEXT);
   const onPaperMuted = ensureContrast(mix(onPaper, paper, 0.4), paper, AA_TEXT);
 
   /* --- Status, and the two readings every colour needs.
@@ -431,8 +476,11 @@ function buildTheme(seed: ThemeSeed): Theme {
    */
   const status = statusSeeds(seed.mode);
   const statusVars: Record<string, string> = {};
-  for (const [name, hue] of Object.entries(status)) {
+  const statusFill: Record<string, string> = {};
+  for (const [name, seedHue] of Object.entries(status)) {
+    const { fill: hue, ink } = fillAndInk(seedHue);
     const wash = washOf(hue);
+    statusFill[name] = hue;
     statusVars[`--sfs-${name}`] = hue;
     statusVars[`--sfs-${name}-rgb`] = channels(hue);
     statusVars[`--sfs-${name}-text`] = ensureContrast(hue, washedBackdrop(hue, seed.space), AA_TEXT);
@@ -440,7 +488,7 @@ function buildTheme(seed: ThemeSeed): Theme {
     // Derived against the WASH rather than plain paper, because the wash is the
     // darker of the two and this ink has to clear both.
     statusVars[`--sfs-${name}-on-paper`] = ensureContrast(hue, wash, AA_TEXT);
-    statusVars[`--sfs-on-${name}`] = ensureContrast(bestTextOn(hue), hue, AA_TEXT);
+    statusVars[`--sfs-on-${name}`] = ink;
     statusVars[`--sfs-${name}-soft`] = alpha(hue, dark ? 0.16 : 0.13);
     statusVars[`--sfs-${name}-border`] = alpha(hue, dark ? 0.42 : 0.38);
   }
@@ -496,22 +544,22 @@ function buildTheme(seed: ThemeSeed): Theme {
     '--sfs-text-inverse': dark ? '#0d1220' : '#ffffff',
 
     /* Accents */
-    '--sfs-accent': seed.accent,
-    '--sfs-accent-rgb': channels(seed.accent),
-    '--sfs-accent-2': seed.accent2,
-    '--sfs-accent-2-rgb': channels(seed.accent2),
-    '--sfs-accent-3': seed.accent3,
-    '--sfs-accent-3-rgb': channels(seed.accent3),
-    '--sfs-accent-soft': dark ? lighten(seed.accent, 0.18) : darken(seed.accent, 0.12),
-    '--sfs-accent-strong': dark ? darken(seed.accent, 0.18) : darken(seed.accent, 0.24),
+    '--sfs-accent': accent,
+    '--sfs-accent-rgb': channels(accent),
+    '--sfs-accent-2': accent2,
+    '--sfs-accent-2-rgb': channels(accent2),
+    '--sfs-accent-3': accent3,
+    '--sfs-accent-3-rgb': channels(accent3),
+    '--sfs-accent-soft': dark ? lighten(accent, 0.18) : darken(accent, 0.12),
+    '--sfs-accent-strong': darken(accent, dark ? 0.18 : 0.24),
     '--sfs-accent-text': accentText,
-    '--sfs-accent-2-text': ensureContrast(seed.accent2, washedBackdrop(seed.accent2, seed.space), AA_TEXT),
-    '--sfs-accent-3-text': ensureContrast(seed.accent3, washedBackdrop(seed.accent3, seed.space), AA_TEXT),
+    '--sfs-accent-2-text': ensureContrast(accent2, washedBackdrop(accent2, seed.space), AA_TEXT),
+    '--sfs-accent-3-text': ensureContrast(accent3, washedBackdrop(accent3, seed.space), AA_TEXT),
     '--sfs-accent-text-soft': accentTextSoft,
-    '--sfs-accent-wash': washOf(seed.accent),
-    '--sfs-accent-2-wash': washOf(seed.accent2),
-    '--sfs-accent-on-paper': ensureContrast(seed.accent, washOf(seed.accent), AA_TEXT),
-    '--sfs-accent-2-on-paper': ensureContrast(seed.accent2, washOf(seed.accent2), AA_TEXT),
+    '--sfs-accent-wash': washOf(accent),
+    '--sfs-accent-2-wash': washOf(accent2),
+    '--sfs-accent-on-paper': ensureContrast(accent, washOf(accent), AA_TEXT),
+    '--sfs-accent-2-on-paper': ensureContrast(accent2, washOf(accent2), AA_TEXT),
     '--sfs-on-accent': onAccent,
     // The ink's own channels, so something sitting ON a filled surface can tint
     // itself with a wash of that ink rather than with the page's tint — which
@@ -521,18 +569,18 @@ function buildTheme(seed: ThemeSeed): Theme {
     '--sfs-on-accent-3': onAccent3,
 
     /* Gradients — the app's signature, restated per galaxy */
-    '--sfs-gradient': `linear-gradient(135deg, ${seed.accent} 0%, ${seed.accent2} 100%)`,
-    '--sfs-gradient-soft': `linear-gradient(135deg, ${alpha(seed.accent, 0.22)} 0%, ${alpha(seed.accent2, 0.22)} 100%)`,
-    '--sfs-gradient-3': `linear-gradient(135deg, ${seed.accent} 0%, ${seed.accent3} 55%, ${seed.accent2} 100%)`,
+    '--sfs-gradient': `linear-gradient(135deg, ${accent} 0%, ${accent2} 100%)`,
+    '--sfs-gradient-soft': `linear-gradient(135deg, ${alpha(accent, 0.22)} 0%, ${alpha(accent2, 0.22)} 100%)`,
+    '--sfs-gradient-3': `linear-gradient(135deg, ${accent} 0%, ${accent3} 55%, ${accent2} 100%)`,
 
     /* Lines, focus, shadow */
     '--sfs-border': border,
     '--sfs-border-strong': borderStrong,
-    '--sfs-border-accent': alpha(seed.accent, dark ? 0.45 : 0.4),
+    '--sfs-border-accent': alpha(accent, dark ? 0.45 : 0.4),
     '--sfs-focus': accentTextSoft,
     '--sfs-shadow': dark ? 'rgb(0 0 0 / 0.45)' : 'rgb(15 23 42 / 0.12)',
     '--sfs-shadow-strong': dark ? 'rgb(0 0 0 / 0.65)' : 'rgb(15 23 42 / 0.22)',
-    '--sfs-glow': alpha(seed.accent, dark ? 0.4 : 0.28),
+    '--sfs-glow': alpha(accent, dark ? 0.4 : 0.28),
 
     /* Paper — always light, always dark-inked */
     '--sfs-paper': paper,
@@ -565,9 +613,9 @@ function buildTheme(seed: ThemeSeed): Theme {
     ...seed,
     vars,
     measuredSurface: surface,
-    accentWash: washedBackdrop(seed.accent, seed.space),
+    accentWash: washedBackdrop(accent, seed.space),
     statusWash: Object.fromEntries(
-      Object.entries(status).map(([name, hue]) => [name, washedBackdrop(hue, seed.space)])
+      Object.entries(statusFill).map(([name, hue]) => [name, washedBackdrop(hue, seed.space)])
     ),
   };
 }

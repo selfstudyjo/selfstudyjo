@@ -5,7 +5,7 @@
 .roblox-tool {
   min-height: 100vh;
   padding: 0;
-  color: #e0e0e0;
+  color: var(--sfs-text, #e0e0e0);
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 

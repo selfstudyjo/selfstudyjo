@@ -219,12 +219,30 @@ console.log('\n5. Light text on dark objects, dark text on light ones');
       ['surface', theme.measuredSurface, v['--sfs-text']],
       ['field', v['--sfs-field'], v['--sfs-field-text']],
     ];
+    /*
+      Stated as readability, not as a luminance rule.
+
+      The obvious formulation — "light ink iff the background is dark" — was
+      what this check used, and it started failing the moment `fillAndInk()`
+      began deepening a fill so that WHITE could clear AA on it. Those fills
+      land at luminance ≈ 0.18, a hair above the black/white break-even point,
+      so the naive rule demanded dark ink on a colour deliberately tuned for
+      light ink. The rule was wrong, not the palette: what a reader needs is
+      contrast, and "points the right way" is only a proxy for it.
+
+      So: the ink must clear AA, and it must not be dramatically worse than the
+      alternative — which is what actually catches an inverted pair, since a
+      genuinely backwards ink is many times worse rather than a few percent.
+    */
     for (const [name, bg, ink] of fills) {
-      const inkIsLight = relativeLuminance(ink) > 0.5;
-      const bgIsDark = isDark(bg);
-      check(`${theme.id}: ink on ${name} points the right way`,
-            inkIsLight === bgIsDark,
-            { bg, ink, bgLum: round(relativeLuminance(bg)), inkLum: round(relativeLuminance(ink)) });
+      const chosen = contrastRatio(ink, bg);
+      const other = contrastRatio(relativeLuminance(ink) > 0.5 ? '#10131c' : '#ffffff', bg);
+      check(`${theme.id}: ink on ${name} is readable`,
+            chosen >= AA_TEXT - 0.001,
+            { bg, ink, ratio: round(chosen) });
+      check(`${theme.id}: ink on ${name} is not the inverted choice`,
+            chosen >= other * 0.75,
+            { bg, ink, chosen: round(chosen), alternative: round(other) });
     }
   }
 }

@@ -8,15 +8,15 @@
 
 :root {
   /* Brand colors aligned with global style.css */
-  --pay-accent-1: var(--sfs-accent, #667eea);
+  --pay-accent-1: var(--sfs-accent-text, #667eea);
   --pay-accent-2: var(--sfs-accent-2, #764ba2);
   --pay-accent-glow: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
   --pay-accent-soft: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
 
   /* Status */
   --pay-success: var(--sfs-success, #48bb78);
-  --pay-warning: var(--sfs-warning, #ed8936);
-  --pay-danger:  var(--sfs-danger, #fc8181);
+  --pay-warning: var(--sfs-warning-text, #ed8936);
+  --pay-danger:  var(--sfs-danger-text, #fc8181);
   --pay-info:    var(--sfs-info, #0ea5e9);
 
   /* Text on dark galaxy */

@@ -20,14 +20,14 @@
     --ns-text-dim: var(--sfs-accent-text, #a5adc4);
     --ns-text-faint: var(--sfs-accent-text, #7c85a0);
 
-    --ns-accent: var(--sfs-accent, #6366f1);
-    --ns-accent-2: var(--sfs-accent-2, #a855f7);
+    --ns-accent: var(--sfs-accent-text, #6366f1);
+    --ns-accent-2: var(--sfs-accent-2-text, #a855f7);
     --ns-accent-grad: linear-gradient(135deg, var(--sfs-accent, #6366f1), var(--sfs-accent-2, #a855f7));
     --ns-cyan: var(--sfs-info, #22d3ee);
     --ns-green: var(--sfs-success, #34d399);
-    --ns-amber: var(--sfs-warning, #fbbf24);
-    --ns-red: var(--sfs-danger, #f87171);
-    --ns-pink: var(--sfs-accent-2, #f472b6);
+    --ns-amber: var(--sfs-warning-text, #fbbf24);
+    --ns-red: var(--sfs-danger-text, #f87171);
+    --ns-pink: var(--sfs-accent-2-text, #f472b6);
 
     --ns-r-sm: 8px;
     --ns-r: 12px;
@@ -1161,7 +1161,7 @@
 .ns-learn-layout { display: grid; grid-template-columns: 290px 1fr; gap: 22px; align-items: start; }
 .ns-track-rail { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 18px; }
 .ns-track-btn {
-    --accent: var(--sfs-accent, #6366f1);
+    --accent: var(--sfs-accent-text, #6366f1);
     display: flex; align-items: center; gap: 11px; text-align: left;
     padding: 11px 13px; border-radius: var(--ns-r);
     border: 1px solid transparent; background: rgb(var(--sfs-accent-rgb, 148 163 184) / 0.04);
@@ -1177,7 +1177,7 @@
 
 .ns-lesson-main { min-width: 0; }
 .ns-track-intro {
-    --accent: var(--sfs-accent, #6366f1);
+    --accent: var(--sfs-accent-text, #6366f1);
     border-left: 3px solid var(--accent); padding: 4px 0 4px 15px; margin-bottom: 20px;
 }
 .ns-track-intro h2 { display: flex; align-items: center; gap: 9px; margin: 0 0 7px; font-size: 1.15rem; color: var(--accent); }

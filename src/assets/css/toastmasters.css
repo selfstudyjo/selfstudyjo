@@ -21,8 +21,8 @@
 
   --tm-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --tm-grad-text:   linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #e0e7ff) 55%, var(--sfs-text-muted, #c7d2fe) 100%);
-  --tm-accent:      var(--sfs-accent-soft, #818cf8);
-  --tm-accent-2:    var(--sfs-accent-2, #a78bfa);
+  --tm-accent:      var(--sfs-accent-text, #818cf8);
+  --tm-accent-2:    var(--sfs-accent-2-text, #a78bfa);
 
   --tm-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --tm-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
@@ -52,9 +52,9 @@
   --tm-success:     var(--sfs-success, #22c55e);
   --tm-success-2:   var(--sfs-success, #10b981);
   --tm-warn:        var(--sfs-warning, #f59e0b);
-  --tm-danger:      var(--sfs-danger, #ef4444);
-  --tm-danger-2:    var(--sfs-danger, #fc8181);
-  --tm-info:        var(--sfs-accent, #60a5fa);
+  --tm-danger:      var(--sfs-danger-text, #ef4444);
+  --tm-danger-2:    var(--sfs-danger-text, #fc8181);
+  --tm-info:        var(--sfs-accent-text, #60a5fa);
 }
 
 /* -------------------------------------------------- *
@@ -343,6 +343,11 @@
 .tm-btn-success {
   background: linear-gradient(135deg, var(--sfs-success, #22c55e) 0%, var(--sfs-success, #10b981) 100%);
   box-shadow: 0 6px 18px rgb(var(--sfs-success-rgb, 16 185 129) / 0.35);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-success, #fff);
 }
 .tm-btn-success:hover:not(:disabled) {
   transform: translateY(-2px); filter: brightness(1.08);
@@ -352,6 +357,11 @@
 .tm-btn-warning {
   background: linear-gradient(135deg, var(--sfs-warning, #f59e0b) 0%, var(--sfs-warning, #d97706) 100%);
   box-shadow: 0 6px 18px rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-warning, #fff);
 }
 .tm-btn-warning:hover:not(:disabled) {
   transform: translateY(-2px); filter: brightness(1.08);
@@ -361,6 +371,11 @@
 .tm-btn-danger {
   background: linear-gradient(135deg, var(--sfs-danger, #ef4444) 0%, var(--sfs-danger, #dc2626) 100%);
   box-shadow: 0 6px 18px rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
 }
 .tm-btn-danger:hover:not(:disabled) {
   transform: translateY(-2px); filter: brightness(1.08);
@@ -878,9 +893,24 @@
   border-radius: 999px;
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
 }
-.tm-score-pill.good { background: linear-gradient(135deg, var(--sfs-success, #22c55e), var(--sfs-success, #10b981)); box-shadow: 0 4px 12px rgb(var(--sfs-success-rgb, 16 185 129) / 0.35); }
-.tm-score-pill.mid  { background: linear-gradient(135deg, var(--sfs-warning, #f59e0b), var(--sfs-warning, #d97706)); box-shadow: 0 4px 12px rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35); }
-.tm-score-pill.low  { background: linear-gradient(135deg, var(--sfs-danger, #ef4444), var(--sfs-danger, #dc2626)); box-shadow: 0 4px 12px rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35); }
+.tm-score-pill.good { background: linear-gradient(135deg, var(--sfs-success, #22c55e), var(--sfs-success, #10b981)); box-shadow: 0 4px 12px rgb(var(--sfs-success-rgb, 16 185 129) / 0.35);   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-success, #fff);
+}
+.tm-score-pill.mid  { background: linear-gradient(135deg, var(--sfs-warning, #f59e0b), var(--sfs-warning, #d97706)); box-shadow: 0 4px 12px rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35);   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-warning, #fff);
+}
+.tm-score-pill.low  { background: linear-gradient(135deg, var(--sfs-danger, #ef4444), var(--sfs-danger, #dc2626)); box-shadow: 0 4px 12px rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35);   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
+}
 
 /* -------------------------------------------------- *
  * 8. Modal (report viewer)

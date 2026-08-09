@@ -13,8 +13,8 @@
   /* brand */
   --rg-grad:       linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --rg-grad-soft:  linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.18) 100%);
-  --rg-accent:     var(--sfs-accent-soft, #818cf8);
-  --rg-accent-2:   var(--sfs-accent-2, #a78bfa);
+  --rg-accent:     var(--sfs-accent-text, #818cf8);
+  --rg-accent-2:   var(--sfs-accent-2-text, #a78bfa);
 
   /* text */
   --rg-text:       var(--sfs-text, #ffffff);
@@ -33,8 +33,8 @@
 
   /* feedback */
   --rg-success: var(--sfs-success, #48bb78);
-  --rg-danger:  var(--sfs-danger, #fc8181);
-  --rg-warning: var(--sfs-warning, #ed8936);
+  --rg-danger:  var(--sfs-danger-text, #fc8181);
+  --rg-warning: var(--sfs-warning-text, #ed8936);
 
   /* shadows */
   --rg-shadow-card:  0 16px 50px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45),
@@ -409,16 +409,31 @@
   width: 33%;
   background: linear-gradient(90deg, var(--sfs-danger, #fc8181), var(--sfs-danger, #f87171));
   box-shadow: 0 0 12px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.55);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-danger, #fff);
 }
 .register-strength-bar.medium::before {
   width: 66%;
   background: linear-gradient(90deg, var(--sfs-warning, #f6ad55), var(--sfs-warning, #ed8936));
   box-shadow: 0 0 12px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.55);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-warning, #fff);
 }
 .register-strength-bar.strong::before {
   width: 100%;
   background: linear-gradient(90deg, var(--sfs-success, #48bb78), var(--sfs-success, #38a169));
   box-shadow: 0 0 12px rgb(var(--sfs-success-rgb, 72 187 120) / 0.55);
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-success, #fff);
 }
 .register-strength-text {
   font-size: 0.72rem;

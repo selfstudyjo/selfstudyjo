@@ -575,7 +575,12 @@ onMounted(async () => {
 }
 .path-icon.upload { background: linear-gradient(135deg, var(--sfs-accent, #3b82f6), var(--sfs-accent, #6366f1)); }
 .path-icon.voice { background: linear-gradient(135deg, var(--sfs-accent-2, #ec4899), var(--sfs-accent-2, #a855f7)); }
-.path-icon.paste { background: linear-gradient(135deg, var(--sfs-info, #14b8a6), var(--sfs-info, #0ea5e9)); }
+.path-icon.paste { background: linear-gradient(135deg, var(--sfs-info, #14b8a6), var(--sfs-info, #0ea5e9));   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-on-info, #fff);
+}
 .path-card h3 { font-size: 1.06rem; font-weight: 650; margin-bottom: 6px; }
 .path-card p { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.6); font-size: 0.86rem; line-height: 1.55; margin-bottom: 14px; }
 

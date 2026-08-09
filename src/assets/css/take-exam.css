@@ -15,17 +15,17 @@
   --te-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
   --te-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
-  --te-accent:      var(--sfs-accent-soft, #818cf8);
-  --te-accent-2:    var(--sfs-accent-2, #a78bfa);
+  --te-accent:      var(--sfs-accent-text, #818cf8);
+  --te-accent-2:    var(--sfs-accent-2-text, #a78bfa);
   --te-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --te-grad-soft:   linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.18) 100%);
 
   --te-ok:          var(--sfs-success, #34d399);
   --te-ok-2:        var(--sfs-success, #10b981);
-  --te-warn:        var(--sfs-warning, #fbbf24);
+  --te-warn:        var(--sfs-warning-text, #fbbf24);
   --te-warn-2:      var(--sfs-warning, #f59e0b);
-  --te-err:         var(--sfs-danger, #fc8181);
-  --te-err-2:       var(--sfs-danger, #ef4444);
+  --te-err:         var(--sfs-danger-text, #fc8181);
+  --te-err-2:       var(--sfs-danger-text, #ef4444);
 
   --te-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --te-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);

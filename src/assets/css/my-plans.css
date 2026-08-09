@@ -31,9 +31,9 @@
   /* Status accents */
   --mp-pending:  var(--sfs-warning, #f59e0b);
   --mp-success:  var(--sfs-success, #48bb78);
-  --mp-verified: var(--sfs-accent-soft, #818cf8);
+  --mp-verified: var(--sfs-accent-text, #818cf8);
   --mp-info:     var(--sfs-info, #0ea5e9);
-  --mp-danger:   var(--sfs-danger, #fc8181);
+  --mp-danger:   var(--sfs-danger-text, #fc8181);
   --mp-neutral:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.55);
 
   /* Spacing */
@@ -523,11 +523,21 @@
   color: transparent;
   white-space: nowrap;
 }
-.pending-card .amount   { background: linear-gradient(135deg, var(--sfs-warning-text, #f59e0b), var(--sfs-warning-text, #fbbf24)); -webkit-background-clip: text; background-clip: text; }
+.pending-card .amount   { background: linear-gradient(135deg, var(--sfs-warning-text, #f59e0b), var(--sfs-warning-text, #fbbf24)); -webkit-background-clip: text; background-clip: text;   /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-text, #fff);
+}
 .payment-card.paid .amount,
 .payment-card.verified .amount {
   background: linear-gradient(135deg, var(--mp-success), var(--sfs-success-text, #38d39f));
   -webkit-background-clip: text; background-clip: text;
+  /* Its own ink. The base rule this shares with the other variants can only
+     hold one `color`, and that one belongs to whichever variant came first —
+     so an amber or green button inherited the ink meant for the indigo one.
+     A fill decides its own ink. */
+  color: var(--sfs-text, #fff);
 }
 
 /* Info rows */
