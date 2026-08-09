@@ -11,16 +11,16 @@
 /* ---------- Local tokens (scoped to the page) ---------- */
 .home-container {
   /* text */
-  --hc-text:        #ffffff;
-  --hc-text-soft:   rgba(255, 255, 255, 0.78);
-  --hc-text-muted:  rgba(255, 255, 255, 0.55);
+  --hc-text:        var(--sfs-text, #ffffff);
+  --hc-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --hc-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* surfaces (translucent so the galaxy is visible) */
   --hc-surface-1:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --hc-surface-2:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
   --hc-surface-3:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --hc-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --hc-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --hc-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --hc-border-strong: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
 
   /* brand */
   --hc-brand-1:     var(--sfs-accent, #667eea);
@@ -91,7 +91,7 @@
   background:
     linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.22) 100%),
     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow: 0 10px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
@@ -126,7 +126,7 @@
   min-width: 110px;
   border-radius: var(--hc-r-lg);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -206,7 +206,7 @@
   border-radius: var(--hc-r-md);
   display: flex; align-items: center; justify-content: center;
   color: var(--sfs-text, #fff);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .title-icon.course-icon       { background: linear-gradient(135deg, rgb(var(--sfs-accent-2-rgb, 139 92 246) / 0.85), rgb(var(--sfs-accent-2-rgb, 124 58 237) / 0.85)); }
@@ -631,7 +631,7 @@
   color: var(--sfs-on-accent, #fff) !important;
   text-decoration: none;
   background: var(--hc-brand-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.32);
   transition: transform var(--hc-t-fast), box-shadow var(--hc-t-fast);
   white-space: nowrap;

@@ -106,7 +106,7 @@ const name = computed(() => displayName(props.room, props.userId));
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  background: rgb(var(--sfs-shade-rgb, 10 12 30) / 0.62);
+  background: rgb(var(--sfs-surface-rgb, 10 12 30) / 0.62);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   border-bottom: 1px solid var(--uc-border);

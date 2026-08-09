@@ -136,7 +136,7 @@ watch(() => authStore.user, (newUser, oldUser) => {
 .glass-effect {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
 }
 
 /* Responsive design */
@@ -170,7 +170,7 @@ watch(() => authStore.user, (newUser, oldUser) => {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--sfs-accent-soft, #e2e8f0);
+  border: 2px solid var(--sfs-border-strong, #e2e8f0);
   border-top-color: var(--sfs-accent, #667eea);
   border-radius: 50%;
   animation: spin 1s linear infinite;

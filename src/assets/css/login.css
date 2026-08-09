@@ -26,8 +26,8 @@
   --lg-input-bg-focus: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
 
   /* Borders */
-  --lg-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --lg-border-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --lg-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --lg-border-hover: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   --lg-border-focus: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.65);
 
   /* Text */
@@ -47,7 +47,7 @@
   --lg-blur: blur(18px) saturate(160%);
   --lg-shadow-card: 0 12px 48px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45),
                     0 0 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1);
-  --lg-shadow-card-hover: 0 18px 56px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55),
+  --lg-shadow-card-hover: 0 18px 56px rgb(var(--sfs-surface-rgb, 0 0 0) / 0.55),
                           0 0 48px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
   --lg-shadow-button: 0 6px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
   --lg-shadow-button-hover: 0 10px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55);
@@ -219,9 +219,9 @@
   line-height: 1.2;
   letter-spacing: 0.4px;
   background: linear-gradient(135deg,
-    var(--sfs-paper, #ffffff) 0%,
-    var(--sfs-accent-soft, #c7d2fe) 50%,
-    var(--sfs-paper, #ffffff) 100%);
+    var(--sfs-text, #ffffff) 0%,
+    var(--sfs-text-muted, #c7d2fe) 50%,
+    var(--sfs-text, #ffffff) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -467,7 +467,7 @@
   background: linear-gradient(135deg,
     var(--lg-brand-1) 0%,
     var(--lg-brand-2) 100%);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   border-radius: var(--lg-radius-sm);
   cursor: pointer;
   position: relative;
@@ -526,7 +526,7 @@
   text-align: center;
   font-size: 13px;
   color: var(--lg-text-muted);
-  border-top: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
 }
 
 .login-footer p {
@@ -774,9 +774,9 @@
 @media (prefers-contrast: more) {
   .login-container {
     --lg-surface: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.7);
-    --lg-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.55);
+    --lg-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.55);
     --lg-border-focus: var(--sfs-border-strong, #ffffff);
-    --lg-text-secondary: var(--sfs-text, #ffffff);
+    --lg-text-secondary: var(--sfs-text-muted, #ffffff);
     --lg-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.85);
     --lg-danger: #ffffff;
     --lg-danger-strong: #ffffff;

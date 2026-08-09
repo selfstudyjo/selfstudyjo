@@ -26,9 +26,9 @@
   --rd-glass:           rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --rd-glass-strong:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --rd-glass-hover:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rd-glass-code:      rgb(var(--sfs-shade-rgb, 8 10 28) / 0.55);
-  --rd-border:          rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rd-border-strong:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --rd-glass-code:      rgb(var(--sfs-surface-rgb, 8 10 28) / 0.55);
+  --rd-border:          rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --rd-border-strong:   rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   --rd-border-accent:   rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4);
   --rd-blur:            blur(16px) saturate(150%);
   --rd-blur-soft:       blur(10px) saturate(140%);
@@ -182,7 +182,7 @@
   font-weight: 600;
   color: var(--sfs-on-accent, #fff);
   background: var(--rd-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   border-radius: var(--rd-r-md);
   cursor: pointer;
   transition: transform var(--rd-t-fast), box-shadow var(--rd-t-fast);
@@ -335,7 +335,7 @@
   color: var(--sfs-on-accent, #fff);
   background: var(--rd-grad);
   border-radius: 50%;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   box-shadow: 0 4px 14px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
 }
 
@@ -459,7 +459,7 @@
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--sfs-text-muted, #f0f4ff);   /* explicit light — code never inherits a dark section color */
+  color: var(--sfs-text, #f0f4ff);   /* explicit light — code never inherits a dark section color */
 }
 
 /* ============================================================
@@ -566,10 +566,10 @@
 }
 
 @media (prefers-contrast: high) {
-  .section-card { border-color: var(--sfs-paper-border, #fff); }
+  .section-card { border-color: var(--sfs-border-strong, #fff); }
   .back-btn,
   .retry-btn,
-  .copy-btn { border-color: var(--sfs-border-strong, #fff); color: var(--sfs-on-accent, #fff); }
+  .copy-btn { border-color: var(--sfs-border-strong, #fff); color: var(--sfs-text, #fff); }
   /* Do NOT force background — inline section colors must stand */
 }
 

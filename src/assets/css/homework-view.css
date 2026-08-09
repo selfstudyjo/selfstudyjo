@@ -23,9 +23,9 @@
   --hv-blur-strong: blur(22px) saturate(160%);
 
   /* Text */
-  --hv-text: #ffffff;
-  --hv-text-soft: rgba(255, 255, 255, 0.78);
-  --hv-text-muted: rgba(255, 255, 255, 0.55);
+  --hv-text: var(--sfs-text, #ffffff);
+  --hv-text-soft: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --hv-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* Status */
   --hv-success: var(--sfs-success, #4ade80);
@@ -124,7 +124,7 @@
 .homework-page .loading-spinner {
   width: clamp(48px, 6vw, 64px);
   height: clamp(48px, 6vw, 64px);
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   border-top-color: var(--hv-accent-1);
   border-right-color: var(--hv-accent-2);
   border-radius: 50%;
@@ -291,7 +291,7 @@
   font-weight: 800;
   line-height: 1.15;
   margin-bottom: 14px;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 50%, var(--sfs-accent-2, #a78bfa) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 50%, var(--sfs-text-muted, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -344,7 +344,7 @@
   justify-content: space-between;
   gap: 12px 18px;
   padding: clamp(16px, 2.5vw, 24px) clamp(18px, 3vw, 28px);
-  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
 }
 .homework-page .section-header::after {
   content: '';
@@ -418,7 +418,7 @@
   gap: 10px;
   padding: clamp(12px, 2vw, 18px) clamp(14px, 2.5vw, 22px);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
-  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
 }
 
 .homework-page .materials-title {
@@ -699,7 +699,7 @@
   min-height: var(--hv-touch);
   padding: 12px 16px;
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   border-radius: var(--hv-radius-sm);
   color: var(--hv-text);
   font-family: inherit;
@@ -814,14 +814,14 @@
 .homework-page .edit-btn,
 .homework-page .cancel-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   color: var(--hv-text-soft);
 }
 .homework-page .back-btn:hover,
 .homework-page .edit-btn:hover,
 .homework-page .cancel-btn:hover {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   color: var(--hv-text);
   transform: translateY(-2px);
 }
@@ -839,7 +839,7 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
   border-top-color: var(--sfs-border-strong, #ffffff);
   border-radius: 50%;
   animation: hv-spin 0.9s linear infinite;
@@ -963,11 +963,11 @@
   .homework-page .submission-form,
   .homework-page .homework-materials {
     background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.85);
-    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.5);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.5);
   }
   .homework-page .form-input,
   .homework-page .form-textarea {
-    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.5);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.5);
   }
 }
 
@@ -997,8 +997,8 @@
   .homework-page .submission-title,
   .homework-page .form-title,
   .homework-page .error-title {
-    color: var(--sfs-on-paper, #000) !important;
-    -webkit-text-fill-color: var(--sfs-on-paper, #000) !important;
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
     background: none !important;
   }
   .homework-page .homework-description,

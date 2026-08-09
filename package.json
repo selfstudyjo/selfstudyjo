@@ -14,7 +14,9 @@
     "check:appnav": "vite build --config tools/appnav-check/vite.config.ts && node tools/appnav-check/dist/check.mjs",
     "check:theme": "vite build --config tools/theme-check/vite.config.ts && node tools/theme-check/dist/check.mjs",
     "check:linkify": "vite build --config tools/linkify-check/vite.config.ts && node tools/linkify-check/dist/check.mjs",
-    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:appnav && npm run check:theme && npm run check:linkify"
+    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:appnav && npm run check:theme && npm run check:linkify",
+    "audit:contrast": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-contrast.mjs",
+    "audit:pairs": "node tools/tokenize-colors/audit-pairs.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

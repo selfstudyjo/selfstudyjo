@@ -90,6 +90,10 @@ export interface Theme extends ThemeSeed {
   vars: Record<string, string>;
   /** The composited colour text is actually measured against. */
   measuredSurface: string;
+  /** The accent wash a coloured text token most often lands on. */
+  accentWash: string;
+  /** The same, per status hue. */
+  statusWash: Record<string, string>;
 }
 
 /* -------------------------------------------------------------------------- *
@@ -250,12 +254,12 @@ export const THEME_SEEDS: ThemeSeed[] = [
     name: 'Cartwheel',
     tagline: 'Daylight galaxy — cobalt on cool white',
     mode: 'light',
-    space: '#eef2fb',
+    space: '#e3e9f6',
     accent: '#1d4ed8',
     accent2: '#7048e8',
     accent3: '#0f766e',
     galaxy: {
-      space: '#eef2fb',
+      space: '#e3e9f6',
       core: '#4c6ef5',
       inner: '#748ffc',
       mid: '#91a7ff',
@@ -269,12 +273,12 @@ export const THEME_SEEDS: ThemeSeed[] = [
     name: 'Dawn Nebula',
     tagline: 'Warm cream and coral at first light',
     mode: 'light',
-    space: '#fdf5ec',
+    space: '#f6e9da',
     accent: '#c2410c',
     accent2: '#be123c',
     accent3: '#a16207',
     galaxy: {
-      space: '#fdf5ec',
+      space: '#f6e9da',
       core: '#f97316',
       inner: '#fb923c',
       mid: '#f9a8a0',
@@ -288,12 +292,12 @@ export const THEME_SEEDS: ThemeSeed[] = [
     name: 'Silver Spiral',
     tagline: 'Quiet slate on paper white',
     mode: 'light',
-    space: '#f2f4f7',
+    space: '#e6eaf0',
     accent: '#334f78',
     accent2: '#5b6b8c',
     accent3: '#0f766e',
     galaxy: {
-      space: '#f2f4f7',
+      space: '#e6eaf0',
       core: '#64748b',
       inner: '#7f8ea3',
       mid: '#9aa7b8',
@@ -316,8 +320,54 @@ export const DEFAULT_THEME_ID = 'andromeda';
  * against this, not against the tint.
  */
 function surfaceAt(seed: ThemeSeed, tintAlpha: number): string {
-  const tint = seed.mode === 'dark' ? '#ffffff' : '#0b1020';
-  return over(tint, tintAlpha, seed.space);
+  /*
+    White in BOTH modes, and that is the correction that made the light
+    galaxies look like a product rather than a washed-out draft.
+
+    A tint's job is to LIFT a surface off the page. Over a dark galaxy that
+    means white. The first version flipped it to near-black for the light
+    galaxies, on the theory that everything flips — and the result was cards
+    DARKER than the page they sat on, elevation running backwards, and a grey
+    card carrying grey-on-grey text. Lifting is lifting: cards are white, the
+    page behind them is a light grey, and the ink is dark. What flips is the
+    INK, not the direction of elevation.
+  */
+  return over('#ffffff', tintAlpha, seed.space);
+}
+
+/**
+ * The HARDEST background a coloured text token actually lands on.
+ *
+ * `--sfs-success-text` is not only used on a plain card. Across the app it
+ * mostly sits on a wash of its own hue — `rgb(var(--sfs-success-rgb) / 0.3)`
+ * behind a "Passed" pill, an active plan, a completed task. Derived against
+ * the plain surface it cleared 4.5 there and only 3.3 on the wash, and the
+ * wash is where it is nearly always seen: 117 of the light themes' 173
+ * remaining failures were this one mistake.
+ *
+ * The wash is the harder background in BOTH modes, which is why one reference
+ * is enough rather than a search. Over a dark galaxy a light hue washes
+ * *lighter* than the surface, and over a pale one a dark hue washes *darker* —
+ * either way it moves toward the text and takes contrast away.
+ */
+function washedBackdrop(hue: string, space: string): string {
+  return over(hue, 0.35, space);
+}
+
+/**
+ * A pale tinted CARD of some hue — the `#fffbeb` behind a warning, the
+ * `#fed7d7` behind an error, the `#f0f9ff` behind a hint.
+ *
+ * Always light, in all ten galaxies, exactly like `--sfs-paper`, and paired
+ * with a `-on-paper` ink that is always dark. That pairing is the whole point:
+ * a pale callout is a small light island, and an island is the one thing on
+ * the page that must NOT invert with the theme, or its two halves invert
+ * independently and meet in the middle. Before this existed the codemod had
+ * nowhere to send those backgrounds and sent them to the solid status colour,
+ * which put amber text on an amber block.
+ */
+function washOf(hue: string): string {
+  return mix(hue, '#ffffff', 0.86);
 }
 
 /** Status hues, per mode, before they are made readable against the surface. */
@@ -353,8 +403,8 @@ function buildTheme(seed: ThemeSeed): Theme {
   // The accent used AS TEXT on a surface is a different colour from the accent
   // used as a fill, and conflating the two is the single most common way an
   // accessible palette stops being one.
-  const accentText = ensureContrast(seed.accent, surface, AA_TEXT);
-  const accentTextSoft = ensureContrast(seed.accent, surface, AA_LARGE);
+  const accentText = ensureContrast(seed.accent, washedBackdrop(seed.accent, seed.space), AA_TEXT);
+  const accentTextSoft = ensureContrast(seed.accent, washedBackdrop(seed.accent, seed.space), AA_LARGE);
 
   /* --- Paper.
    *
@@ -382,10 +432,14 @@ function buildTheme(seed: ThemeSeed): Theme {
   const status = statusSeeds(seed.mode);
   const statusVars: Record<string, string> = {};
   for (const [name, hue] of Object.entries(status)) {
+    const wash = washOf(hue);
     statusVars[`--sfs-${name}`] = hue;
     statusVars[`--sfs-${name}-rgb`] = channels(hue);
-    statusVars[`--sfs-${name}-text`] = ensureContrast(hue, surface, AA_TEXT);
-    statusVars[`--sfs-${name}-on-paper`] = ensureContrast(hue, paper, AA_TEXT);
+    statusVars[`--sfs-${name}-text`] = ensureContrast(hue, washedBackdrop(hue, seed.space), AA_TEXT);
+    statusVars[`--sfs-${name}-wash`] = wash;
+    // Derived against the WASH rather than plain paper, because the wash is the
+    // darker of the two and this ink has to clear both.
+    statusVars[`--sfs-${name}-on-paper`] = ensureContrast(hue, wash, AA_TEXT);
     statusVars[`--sfs-on-${name}`] = ensureContrast(bestTextOn(hue), hue, AA_TEXT);
     statusVars[`--sfs-${name}-soft`] = alpha(hue, dark ? 0.16 : 0.13);
     statusVars[`--sfs-${name}-border`] = alpha(hue, dark ? 0.42 : 0.38);
@@ -398,8 +452,17 @@ function buildTheme(seed: ThemeSeed): Theme {
    * one it is near-black. Flipping this single token is what turns ~1500
    * `rgba(255,255,255,α)` literals into a working light theme.
    */
-  const tintRgb = dark ? '255 255 255' : '11 16 32';
-  const shadeRgb = dark ? '0 0 0' : '15 23 42';
+  const tintRgb = '255 255 255';
+  const shadeRgb = '0 0 0';
+  /*
+    Borders cannot share the tint.
+
+    A hairline written `rgba(255,255,255,0.14)` reads as an edge over a dark
+    galaxy and is invisible over a pale one, so the one thing that genuinely
+    must flip gets its own channel triple — the ink's. Splitting this out is
+    what allowed the tint above to stop flipping.
+  */
+  const lineRgb = channels(text);
 
   const borderAlpha = dark ? 0.14 : 0.16;
   const border = alpha(text, borderAlpha);
@@ -422,6 +485,7 @@ function buildTheme(seed: ThemeSeed): Theme {
     /* Tint ladder — one triple, every opacity */
     '--sfs-tint-rgb': tintRgb,
     '--sfs-shade-rgb': shadeRgb,
+    '--sfs-line-rgb': lineRgb,
 
     /* Text */
     '--sfs-text': text,
@@ -441,12 +505,18 @@ function buildTheme(seed: ThemeSeed): Theme {
     '--sfs-accent-soft': dark ? lighten(seed.accent, 0.18) : darken(seed.accent, 0.12),
     '--sfs-accent-strong': dark ? darken(seed.accent, 0.18) : darken(seed.accent, 0.24),
     '--sfs-accent-text': accentText,
-    '--sfs-accent-2-text': ensureContrast(seed.accent2, surface, AA_TEXT),
-    '--sfs-accent-3-text': ensureContrast(seed.accent3, surface, AA_TEXT),
+    '--sfs-accent-2-text': ensureContrast(seed.accent2, washedBackdrop(seed.accent2, seed.space), AA_TEXT),
+    '--sfs-accent-3-text': ensureContrast(seed.accent3, washedBackdrop(seed.accent3, seed.space), AA_TEXT),
     '--sfs-accent-text-soft': accentTextSoft,
-    '--sfs-accent-on-paper': ensureContrast(seed.accent, paper, AA_TEXT),
-    '--sfs-accent-2-on-paper': ensureContrast(seed.accent2, paper, AA_TEXT),
+    '--sfs-accent-wash': washOf(seed.accent),
+    '--sfs-accent-2-wash': washOf(seed.accent2),
+    '--sfs-accent-on-paper': ensureContrast(seed.accent, washOf(seed.accent), AA_TEXT),
+    '--sfs-accent-2-on-paper': ensureContrast(seed.accent2, washOf(seed.accent2), AA_TEXT),
     '--sfs-on-accent': onAccent,
+    // The ink's own channels, so something sitting ON a filled surface can tint
+    // itself with a wash of that ink rather than with the page's tint — which
+    // is the wrong colour there in one mode or the other.
+    '--sfs-on-accent-rgb': channels(onAccent),
     '--sfs-on-accent-2': onAccent2,
     '--sfs-on-accent-3': onAccent3,
 
@@ -491,7 +561,15 @@ function buildTheme(seed: ThemeSeed): Theme {
     ...statusVars,
   };
 
-  return { ...seed, vars, measuredSurface: surface };
+  return {
+    ...seed,
+    vars,
+    measuredSurface: surface,
+    accentWash: washedBackdrop(seed.accent, seed.space),
+    statusWash: Object.fromEntries(
+      Object.entries(status).map(([name, hue]) => [name, washedBackdrop(hue, seed.space)])
+    ),
+  };
 }
 
 export const THEMES: Theme[] = THEME_SEEDS.map(buildTheme);
@@ -502,9 +580,21 @@ export function getTheme(id: string | null | undefined): Theme {
   return THEMES.find(t => t.id === id) ?? THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 }
 
-/** The default for a first-time visitor who has expressed a colour-scheme preference. */
-export function defaultThemeFor(prefersLight: boolean): string {
-  return prefersLight ? 'cartwheel' : DEFAULT_THEME_ID;
+/**
+ * What a first-time visitor gets: Andromeda, always.
+ *
+ * This deliberately ignores `prefers-color-scheme`. Self Study is a dark
+ * product — the 3D galaxy behind every page is the identity, and it is the
+ * dark galaxies that show it. Opening a visitor whose laptop happens to be in
+ * light mode into a pale theme shows them a different-looking product than
+ * everyone else is describing, and the light themes are a preference somebody
+ * chooses rather than a default anybody should be dropped into.
+ *
+ * The parameter is kept so the OS preference stays visible at the call site
+ * rather than being quietly dropped somewhere in `apply.ts`.
+ */
+export function defaultThemeFor(_prefersLight: boolean): string {
+  return DEFAULT_THEME_ID;
 }
 
 /* -------------------------------------------------------------------------- *
@@ -536,10 +626,14 @@ export function contrastClaims(theme: Theme): ContrastClaim[] {
     { fg: v['--sfs-text-muted'], bg: v['--sfs-surface-3'], min: AA_LARGE, label: 'muted on surface-3' },
     { fg: v['--sfs-text-faint'], bg: s, min: AA_LARGE, label: 'faint on surface' },
     { fg: v['--sfs-accent-text'], bg: s, min: AA_TEXT, label: 'accent text on surface' },
+    { fg: v['--sfs-accent-text'], bg: theme.accentWash, min: AA_TEXT, label: 'accent text on its own wash' },
     { fg: v['--sfs-accent-2-text'], bg: s, min: AA_TEXT, label: 'accent-2 text on surface' },
     { fg: v['--sfs-accent-3-text'], bg: s, min: AA_TEXT, label: 'accent-3 text on surface' },
     { fg: v['--sfs-accent-on-paper'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'accent text on paper' },
+    { fg: v['--sfs-accent-on-paper'], bg: v['--sfs-accent-wash'], min: AA_TEXT, label: 'accent text on accent wash' },
     { fg: v['--sfs-accent-2-on-paper'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'accent-2 text on paper' },
+    { fg: v['--sfs-accent-2-on-paper'], bg: v['--sfs-accent-2-wash'], min: AA_TEXT, label: 'accent-2 text on accent-2 wash' },
+    { fg: v['--sfs-on-paper'], bg: v['--sfs-accent-wash'], min: AA_TEXT, label: 'ink on accent wash' },
     { fg: v['--sfs-on-accent'], bg: v['--sfs-accent'], min: AA_TEXT, label: 'ink on accent' },
     { fg: v['--sfs-on-accent-2'], bg: v['--sfs-accent-2'], min: AA_TEXT, label: 'ink on accent-2' },
     { fg: v['--sfs-on-accent-3'], bg: v['--sfs-accent-3'], min: AA_TEXT, label: 'ink on accent-3' },
@@ -552,6 +646,7 @@ export function contrastClaims(theme: Theme): ContrastClaim[] {
   for (const name of ['success', 'warning', 'danger', 'info']) {
     claims.push(
       { fg: v[`--sfs-${name}-text`], bg: s, min: AA_TEXT, label: `${name} text on surface` },
+      { fg: v[`--sfs-${name}-text`], bg: theme.statusWash[name], min: AA_TEXT, label: `${name} text on its own wash` },
       { fg: v[`--sfs-${name}-on-paper`], bg: v['--sfs-paper'], min: AA_TEXT, label: `${name} text on paper` },
       { fg: v[`--sfs-on-${name}`], bg: v[`--sfs-${name}`], min: AA_TEXT, label: `ink on ${name}` }
     );

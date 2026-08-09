@@ -367,10 +367,10 @@ defineExpose({ tools });
 }
 
 .icon-btn.wide { min-width: 54px; }
-.icon-btn:hover:not(:disabled) { background: var(--sfs-accent-soft, #f1f5f9); border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.22); }
+.icon-btn:hover:not(:disabled) { background: var(--sfs-paper, #f1f5f9); border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.22); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .icon-btn.danger { color: var(--sfs-danger-text, #b91c1c); border-color: rgb(var(--sfs-danger-rgb, 185 28 28) / 0.25); }
-.icon-btn.danger:hover:not(:disabled) { background: var(--sfs-danger, #fef2f2); }
+.icon-btn.danger:hover:not(:disabled) { background: var(--sfs-paper, #fef2f2); }
 
 @media (max-width: 900px) {
   .tool-label { display: none; }

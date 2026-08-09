@@ -10,10 +10,10 @@
 
 .take-exam-page {
   /* ---- design tokens (scoped) ---- */
-  --te-text:        #ffffff;
-  --te-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
-  --te-text-mute:   rgba(255, 255, 255, 0.72);
-  --te-text-dim:    rgba(255, 255, 255, 0.5);
+  --te-text:        var(--sfs-text, #ffffff);
+  --te-text-soft:   var(--sfs-text-muted, #e8eaff);
+  --te-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+  --te-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
   --te-accent:      var(--sfs-accent-soft, #818cf8);
   --te-accent-2:    var(--sfs-accent-2, #a78bfa);
@@ -30,8 +30,8 @@
   --te-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --te-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --te-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --te-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --te-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  --te-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --te-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
 
   --te-blur:        blur(16px) saturate(150%);
   --te-blur-strong: blur(22px) saturate(160%);
@@ -92,7 +92,7 @@
   top: 0;
   z-index: 50;
   padding: var(--te-sp-md) var(--te-sp-lg);
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.55);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.55);
   -webkit-backdrop-filter: var(--te-blur-strong);
   backdrop-filter: var(--te-blur-strong);
   border-bottom: 1px solid var(--te-border);
@@ -117,7 +117,7 @@
   font-weight: 700;
   color: var(--te-text);
   margin: 0 0 4px;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   overflow: hidden;
@@ -304,7 +304,7 @@
 .take-exam-page .nav-btn.primary,
 .take-exam-page .action-btn.primary {
   background: var(--te-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -319,8 +319,8 @@
 .take-exam-page .btn-submit,
 .take-exam-page .btn-finish {
   background: linear-gradient(135deg, var(--te-ok), var(--te-ok-2));
-  color: #053b29;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  color: var(--sfs-on-success, #053b29);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   box-shadow: 0 6px 22px rgb(var(--sfs-success-rgb, 52 211 153) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
@@ -343,7 +343,7 @@
 /* review button uses brand */
 .take-exam-page .btn-review {
   background: var(--te-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 .take-exam-page .btn-review:hover {
@@ -354,7 +354,7 @@
 /* retry */
 .take-exam-page .retry-btn {
   background: linear-gradient(135deg, var(--te-err), var(--te-err-2));
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 6px 22px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.3);
   padding: 0.8rem 2rem;
   font-size: var(--te-fs-md);
@@ -716,7 +716,7 @@
 .take-exam-page .question-dot.current {
   background: var(--te-grad);
   color: var(--sfs-on-accent, #fff);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.4);
   box-shadow: 0 4px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 .take-exam-page .question-dot.answered {
@@ -780,7 +780,7 @@
   justify-content: space-between;
   gap: var(--te-sp-xs);
   padding: 6px 0;
-  border-bottom: 1px dashed rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-bottom: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
 }
 .take-exam-page .summary-item:last-child { border-bottom: none; }
 .take-exam-page .summary-item .label { color: var(--te-text-mute); font-size: var(--te-fs-sm); }
@@ -879,7 +879,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--te-sp-md);
-  background: rgb(var(--sfs-shade-rgb, 3 3 15) / 0.55);
+  background: rgb(var(--sfs-surface-rgb, 3 3 15) / 0.55);
   -webkit-backdrop-filter: var(--te-blur);
   backdrop-filter: var(--te-blur);
   animation: fadeInUp 0.3s ease both;
@@ -887,7 +887,7 @@
 .take-exam-page .modal {
   width: 100%;
   max-width: 520px;
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.65);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.65);
   border: 1px solid var(--te-border-2);
   border-radius: var(--te-r-xl);
   -webkit-backdrop-filter: var(--te-blur-strong);
@@ -971,7 +971,7 @@
   font-weight: 700;
   color: var(--te-text);
   margin-bottom: var(--te-sp-xs);
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }

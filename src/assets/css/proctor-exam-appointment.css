@@ -17,12 +17,12 @@
   --pa-accent:      var(--sfs-accent-soft, #818cf8);
 
   --pa-glass:       rgb(var(--sfs-shade-rgb, 15 25 45) / 0.45);
-  --pa-glass-hi:    rgb(var(--sfs-shade-rgb, 30 40 60) / 0.55);
+  --pa-glass-hi:    rgb(var(--sfs-surface-rgb, 30 40 60) / 0.55);
   --pa-glass-input: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
-  --pa-glass-card:  rgb(var(--sfs-shade-rgb, 10 20 35) / 0.5);
+  --pa-glass-card:  rgb(var(--sfs-surface-rgb, 10 20 35) / 0.5);
 
-  --pa-border:      1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pa-border-hi:   1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  --pa-border:      1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --pa-border-hi:   1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
 
   --pa-blur:        blur(14px) saturate(160%);
   --pa-blur-strong: blur(20px) saturate(180%);
@@ -94,7 +94,7 @@
 
 .back-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   color: var(--pa-text-soft);
   padding: 8px 16px;
   border-radius: 40px;
@@ -145,7 +145,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   border-top-color: var(--pa-brand-1);
   border-right-color: var(--pa-brand-2);
   animation: pa-spin 0.9s linear infinite;
@@ -169,7 +169,7 @@
 .retry-btn {
   background: var(--pa-brand-grad);
   border: none;
-  color: white;
+  color: var(--sfs-on-accent, white);
   padding: 10px 24px;
   border-radius: var(--pa-radius);
   font-weight: 600;
@@ -242,7 +242,7 @@
   gap: 12px;
   font-size: var(--fs-sm);
   padding-bottom: 8px;
-  border-bottom: 1px dashed rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-bottom: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
 }
 
 .info-label {
@@ -280,9 +280,9 @@
 .status-in-progress  { color: var(--sfs-danger-text, #fed7d7); background: rgb(var(--sfs-danger-rgb, 245 101 101) / 0.2); }
 .status-completed    { color: var(--sfs-info-text, #bee3f8); background: rgb(var(--sfs-accent-rgb, 66 153 225) / 0.2); }
 .status-cancelled,
-.status-expired      { color: var(--sfs-text-muted, #e2e8f0); background: rgb(var(--sfs-accent-rgb, 160 174 192) / 0.2); }
+.status-expired      { color: var(--sfs-text, #e2e8f0); background: rgb(var(--sfs-accent-rgb, 160 174 192) / 0.2); }
 .status-pending      { color: var(--sfs-warning-text, #fefcbf); background: rgb(var(--sfs-warning-rgb, 236 201 75) / 0.2); }
-.status-default      { color: var(--sfs-text-muted, #e2e8f0); background: rgb(var(--sfs-accent-rgb, 160 174 192) / 0.2); }
+.status-default      { color: var(--sfs-text, #e2e8f0); background: rgb(var(--sfs-accent-rgb, 160 174 192) / 0.2); }
 
 /* ===== Rooms Section ===== */
 .section-header {
@@ -408,7 +408,7 @@
 
 .clear-btn, .test-btn, .copy-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   padding: 6px 14px;
   border-radius: var(--pa-radius-sm);
   font-size: var(--fs-xs);
@@ -450,7 +450,7 @@
   border: none;
   padding: 8px 20px;
   border-radius: 40px;
-  color: white;
+  color: var(--sfs-on-accent, white);
   margin-top: 12px;
   cursor: pointer;
 }
@@ -491,7 +491,7 @@
   justify-content: center;
   font-size: 28px;
   font-weight: bold;
-  color: white;
+  color: var(--sfs-on-accent, white);
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
@@ -510,7 +510,7 @@
   gap: 12px;
   font-size: var(--fs-sm);
   padding: 6px 0;
-  border-bottom: 1px dashed rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border-bottom: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
 }
 
 .detail-icon { font-size: 1.1rem; min-width: 28px; }
@@ -573,7 +573,7 @@
 
 .status-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   padding: 6px 14px;
   border-radius: 40px;
   font-size: var(--fs-xs);
@@ -586,7 +586,7 @@
 .status-btn.active {
   background: var(--pa-brand-grad);
   border-color: transparent;
-  color: white;
+  color: var(--sfs-on-accent, white);
   box-shadow: 0 0 8px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
@@ -612,7 +612,7 @@
   padding: 10px 24px;
   border-radius: var(--pa-radius);
   font-weight: 600;
-  color: white;
+  color: var(--sfs-on-accent, white);
   cursor: pointer;
   transition: transform 0.18s, box-shadow 0.18s;
 }
@@ -630,6 +630,10 @@
 .refresh-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   backdrop-filter: blur(4px);
+  /* The base rule it shares with .save-btn is a brand gradient, so that
+     rule's ink is --sfs-on-accent. This override makes the button glass
+     instead, so its ink has to follow the page. */
+  color: var(--sfs-text, #fff);
 }
 
 /* ============================================================
@@ -712,8 +716,8 @@
 
 @media (prefers-contrast: high) {
   .proctor-appointment {
-    --pa-glass: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.85);
-    --pa-border: 1px solid white;
+    --pa-glass: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.85);
+    --pa-border: 1px solid var(--sfs-border-strong, white);
   }
   .status-badge, .room-status {
     border-width: 2px;

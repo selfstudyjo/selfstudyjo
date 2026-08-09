@@ -17,8 +17,8 @@
     --galaxy-text-dim:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
     /* Surfaces / borders */
-    --galaxy-border:         rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
-    --galaxy-border-strong:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.26);
+    --galaxy-border:         rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    --galaxy-border-strong:  rgb(var(--sfs-line-rgb, 255 255 255) / 0.26);
     --galaxy-surface:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
     --galaxy-surface-2:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
     --galaxy-surface-3:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
@@ -271,7 +271,7 @@
     background: var(--galaxy-gradient);
     color: var(--sfs-on-accent, #ffffff) !important;
     -webkit-text-fill-color: var(--sfs-on-accent, #ffffff) !important;
-    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
     border-radius: clamp(10px, 1.5vw, 14px);
     cursor: pointer;
     display: inline-flex;
@@ -386,7 +386,7 @@
 .courses-page .loading-spinner {
     width: clamp(36px, 8vw, 48px);
     height: clamp(36px, 8vw, 48px);
-    border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
     border-top: 3px solid var(--galaxy-accent);
     border-right: 3px solid var(--galaxy-accent-2);
     border-radius: 50%;
@@ -429,7 +429,7 @@
     background: var(--galaxy-gradient);
     color: var(--sfs-on-accent, #ffffff) !important;
     -webkit-text-fill-color: var(--sfs-on-accent, #ffffff) !important;
-    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
     border-radius: clamp(8px, 1.5vw, 12px);
     font-weight: 600;
     cursor: pointer;
@@ -557,7 +557,7 @@
 .courses-page .course-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 50%, rgb(var(--sfs-shade-rgb, 0 0 0) / 0.5));
+    background: linear-gradient(to bottom, transparent 50%, rgb(var(--sfs-surface-rgb, 0 0 0) / 0.5));
     z-index: 3;
     pointer-events: none;
 }
@@ -647,7 +647,7 @@
     background: var(--galaxy-gradient);
     color: var(--sfs-on-accent, #ffffff) !important;
     -webkit-text-fill-color: var(--sfs-on-accent, #ffffff) !important;
-    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
     border-radius: clamp(8px, 1.5vw, 10px);
     font-size: var(--font-sm);
     font-weight: 600;
@@ -738,8 +738,8 @@
     background: var(--galaxy-surface-2);
     border: 1px solid var(--galaxy-border);
     border-radius: clamp(8px, 1.5vw, 10px);
-    color: var(--sfs-on-accent, #ffffff) !important;
-    -webkit-text-fill-color: var(--sfs-on-accent, #ffffff) !important;
+    color: var(--sfs-text, #ffffff) !important;
+    -webkit-text-fill-color: var(--sfs-text, #ffffff) !important;
     font-weight: 600;
     cursor: pointer;
     transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
@@ -840,7 +840,7 @@
     .courses-page .pagination-btn,
     .courses-page .page-number {
         border-color: var(--sfs-border-strong, #ffffff);
-        background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.6);
+        background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.6);
     }
 }
 

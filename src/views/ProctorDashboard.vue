@@ -328,7 +328,7 @@ onMounted(() => {
     padding: 1.5rem;
     background: rgb(var(--sfs-surface-rgb, 15 15 40) / 0.85);
     border-radius: 16px;
-    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
     backdrop-filter: blur(12px) saturate(180%);
 }
 
@@ -370,8 +370,8 @@ onMounted(() => {
 
 .filter-input {
     padding: 0.75rem;
-    background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.5);
-    border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.5);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
     border-radius: 8px;
     color: var(--sfs-text, #ffffff);
     font-size: 0.9rem;

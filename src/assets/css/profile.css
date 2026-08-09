@@ -37,16 +37,16 @@
   --pp-success: var(--sfs-success, #48bb78);
 
   /* Text on dark galaxy */
-  --pp-text: #ffffff;
-  --pp-text-2: rgba(255, 255, 255, 0.78);
-  --pp-text-3: rgba(255, 255, 255, 0.55);
+  --pp-text: var(--sfs-text, #ffffff);
+  --pp-text-2: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --pp-text-3: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* Glass surfaces */
   --pp-glass-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --pp-glass-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --pp-glass-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pp-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pp-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --pp-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --pp-border-strong: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
 
   /* Effects */
   --pp-blur: blur(16px) saturate(160%);
@@ -126,7 +126,7 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   margin-bottom: var(--pp-sp-sm);
-  background: linear-gradient(135deg, var(--sfs-paper, #fff) 0%, var(--sfs-accent-soft, #c7d0ff) 60%, var(--sfs-accent-2, #b39bf7) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #fff) 0%, var(--sfs-text-muted, #c7d0ff) 60%, var(--sfs-text-muted, #b39bf7) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -401,7 +401,7 @@
 .profile-form-group select:hover,
 .profile-form-group textarea:hover {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
 }
 
 .profile-form-group input:focus,
@@ -547,7 +547,7 @@
 .profile-btn-primary {
   color: var(--sfs-on-accent, #fff);
   background: linear-gradient(135deg, var(--pp-accent-1) 0%, var(--pp-accent-2) 100%);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 .profile-btn-primary:hover:not(:disabled) {
@@ -558,7 +558,7 @@
 .profile-btn-danger {
   color: var(--sfs-on-danger, #fff);
   background: linear-gradient(135deg, var(--sfs-danger, #f56565) 0%, var(--sfs-danger, #c53030) 100%);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   box-shadow: 0 6px 22px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
 }
 .profile-btn-danger:hover:not(:disabled) {
@@ -678,7 +678,7 @@
   display: inline-block;
   width: 1.1em;
   height: 1.1em;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
   border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: ppSpin 0.8s linear infinite;
@@ -697,7 +697,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--pp-sp-md);
-  background: rgb(var(--sfs-shade-rgb, 3 3 15) / 0.6);
+  background: rgb(var(--sfs-surface-rgb, 3 3 15) / 0.6);
   backdrop-filter: blur(8px) saturate(140%);
   -webkit-backdrop-filter: blur(8px) saturate(140%);
   animation: ppFade 0.3s ease;
@@ -709,7 +709,7 @@
   width: 100%;
   max-width: min(520px, 94vw);
   padding: var(--pp-sp-xl);
-  background: rgb(var(--sfs-shade-rgb, 18 18 40) / 0.65);
+  background: rgb(var(--sfs-surface-rgb, 18 18 40) / 0.65);
   border: 1px solid var(--pp-border-strong);
   border-radius: var(--pp-r-xl);
   backdrop-filter: var(--pp-blur-strong);
@@ -820,9 +820,9 @@
 }
 
 @media (prefers-contrast: more) {
-  .profile-card { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55); border-color: var(--sfs-paper-border, #fff); }
+  .profile-card { background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.55); border-color: var(--sfs-border-strong, #fff); }
   .profile-form-group input,
-  .profile-form-group select { border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.5); }
+  .profile-form-group select { border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.5); }
 }
 
 /* ==========================================================================

@@ -260,7 +260,7 @@
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   padding: 0.15em 0.45em;
   border-radius: 6px;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
 .ai-chat-container .markdown-body pre {
@@ -281,7 +281,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  color: var(--sfs-text-muted, #e6edf3);
+  color: var(--sfs-text, #e6edf3);
 }
 
 .ai-chat-container .markdown-body table {

@@ -5,10 +5,10 @@
    ========================================================================== */
 
 .runbooks-container {
-  --rb-text:        #ffffff;
-  --rb-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
-  --rb-text-mute:   rgba(255, 255, 255, 0.72);
-  --rb-text-dim:    rgba(255, 255, 255, 0.55);
+  --rb-text:        var(--sfs-text, #ffffff);
+  --rb-text-soft:   var(--sfs-text-muted, #e8eaff);
+  --rb-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+  --rb-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   --rb-accent:      var(--sfs-accent-soft, #818cf8);
   --rb-accent-2:    var(--sfs-accent-2, #a78bfa);
@@ -18,8 +18,8 @@
   --rb-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --rb-glass-hover:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
   --rb-glass-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  --rb-border:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rb-border-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --rb-border:       rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --rb-border-hover: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   --rb-blur:         blur(16px) saturate(150%);
 
   --rb-shadow:       0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
@@ -72,7 +72,7 @@
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 50%, var(--sfs-accent-2, #a78bfa) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 50%, var(--sfs-text-muted, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -233,7 +233,7 @@
   font-weight: 600;
   color: var(--sfs-on-accent, #fff);
   background: var(--rb-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   border-radius: var(--rb-r-md);
   cursor: pointer;
   box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
@@ -322,7 +322,7 @@
   font-size: clamp(1.1rem, 1.8vw, 1.5rem);
   border-radius: var(--rb-r-md);
   background: var(--rb-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
@@ -481,12 +481,12 @@
   .error-container,
   .empty-state {
     background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.7);
-    border-color: var(--sfs-paper-border, #ffffff);
+    border-color: var(--sfs-border-strong, #ffffff);
   }
   .runbooks-title {
     background: none;
-    -webkit-text-fill-color: var(--sfs-on-accent-2, #ffffff);
-    color: var(--sfs-on-accent-2, #ffffff);
+    -webkit-text-fill-color: var(--sfs-text, #ffffff);
+    color: var(--sfs-text, #ffffff);
   }
 }
 
@@ -498,8 +498,8 @@
   .runbook-card { background: var(--sfs-paper, #fff); border: 1px solid var(--sfs-paper-border, #000); box-shadow: none; }
   .runbooks-title {
     background: none;
-    -webkit-text-fill-color: var(--sfs-on-paper, #000);
-    color: var(--sfs-on-paper, #000);
+    -webkit-text-fill-color: #000;
+    color: #000;
   }
   .clear-search-btn, .retry-btn { display: none; }
 }

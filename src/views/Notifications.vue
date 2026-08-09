@@ -543,7 +543,7 @@ function formatTime(timestamp: string) {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  color: var(--sfs-on-success, #fff);
+  color: var(--sfs-text, #fff);
   transition: transform 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
 }
 

@@ -6,10 +6,10 @@
 
 /* ---------- Page-scoped tokens (NO :root leakage) ---------- */
 .user-certificates {
-  --uc-text:        #ffffff;
-  --uc-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
-  --uc-text-mute:   rgba(255, 255, 255, 0.72);
-  --uc-text-dim:    rgba(255, 255, 255, 0.5);
+  --uc-text:        var(--sfs-text, #ffffff);
+  --uc-text-soft:   var(--sfs-text-muted, #e8eaff);
+  --uc-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+  --uc-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
   --uc-accent:      var(--sfs-accent-soft, #818cf8);
   --uc-accent-2:    var(--sfs-accent-2, #a78bfa);
@@ -19,8 +19,8 @@
   --uc-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --uc-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --uc-glass-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --uc-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --uc-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --uc-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --uc-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   --uc-blur:        blur(16px) saturate(150%);
   --uc-blur-strong: blur(22px) saturate(160%);
 
@@ -122,7 +122,7 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0 0 0.5rem;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 50%, var(--sfs-accent-2, #a78bfa) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 50%, var(--sfs-text-muted, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -162,7 +162,7 @@
 .user-certificates .loading-spinner {
   width: clamp(48px, 10vw, 72px);
   height: clamp(48px, 10vw, 72px);
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top-color: var(--sfs-accent, #667eea);
   border-right-color: var(--sfs-accent-soft, #818cf8);
   border-bottom-color: var(--sfs-accent-2, #764ba2);
@@ -227,7 +227,7 @@
   text-transform: uppercase;
   color: var(--sfs-on-accent, #fff);
   background: var(--uc-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   border-radius: var(--uc-r-sm);
   cursor: pointer;
   transition: transform var(--uc-t-fast), box-shadow var(--uc-t-fast), background var(--uc-t-fast);
@@ -546,7 +546,7 @@
   justify-content: space-between;
   gap: 0.25rem 0.75rem;
   padding: 0.35rem 0;
-  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
 }
 .user-certificates .detail-item:last-child {
   border-bottom: 0;
@@ -604,7 +604,7 @@
 .user-certificates .status-badge.expired {
   color: var(--sfs-text-muted, #d1d5db);
   background: rgb(var(--sfs-tint-rgb, 156 163 175) / 0.14);
-  border-color: rgb(var(--sfs-tint-rgb, 156 163 175) / 0.4);
+  border-color: rgb(var(--sfs-line-rgb, 156 163 175) / 0.4);
   box-shadow: 0 0 10px rgba(156, 163, 175, 0.20);
 }
 .user-certificates .status-badge.expired::before {
@@ -620,7 +620,7 @@
   gap: 0.5rem;
   margin-top: 0.35rem;
   padding-top: 0.6rem;
-  border-top: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
 }
 .user-certificates .view-btn {
   min-height: 40px;
@@ -758,7 +758,7 @@
   .user-certificates .empty-state,
   .user-certificates .certificate-card {
     background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85);
-    border: 2px solid var(--sfs-paper-border, #fff);
+    border: 2px solid var(--sfs-border-strong, #fff);
   }
   .user-certificates .status-badge,
   .user-certificates .tab-btn,
@@ -791,8 +791,8 @@
   }
   .user-certificates .header h1 {
     background: none !important;
-    -webkit-text-fill-color: var(--sfs-on-paper, #000) !important;
-    color: var(--sfs-on-paper, #000) !important;
+    -webkit-text-fill-color: #000 !important;
+    color: #000 !important;
   }
   .user-certificates .section-header h2,
   .user-certificates .certificate-info h3,

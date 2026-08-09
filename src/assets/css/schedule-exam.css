@@ -34,8 +34,8 @@
   --sx-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --sx-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   --sx-glass-bg:    rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
-  --sx-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --sx-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  --sx-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --sx-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   --sx-blur:        blur(16px) saturate(150%);
   --sx-blur-strong: blur(22px) saturate(160%);
 
@@ -109,9 +109,9 @@
   font-size: clamp(1.5rem, 3.2vw, 2.25rem);
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #fff;
+  color: var(--sfs-text, #fff);
   margin: 0;
-  background: linear-gradient(135deg, var(--sfs-paper, #fff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #fff) 0%, var(--sfs-text-muted, #c7d2fe) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -315,7 +315,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 1.25rem; color: var(--sfs-on-accent, #fff);
   flex-shrink: 0;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   box-shadow: 0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 .schedule-exam-page .exam-option-icon.disabled {
@@ -444,7 +444,7 @@
   font-size: 1.4rem;
   font-weight: 600;
   flex-shrink: 0;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 .schedule-exam-page .proctor-info {
@@ -703,7 +703,7 @@
 }
 
 .schedule-exam-page .debug-info {
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.5);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.5);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-sm);
   padding: 0.65rem;
@@ -784,7 +784,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.4rem 0;
-  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
   flex-wrap: wrap;
 }
 .schedule-exam-page .detail-item:last-child { border-bottom: none; }
@@ -1031,7 +1031,7 @@
 .schedule-exam-page .retry-btn {
   background: var(--sx-grad);
   color: var(--sfs-on-accent, #fff);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255,255,255,0.2);
 }

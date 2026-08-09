@@ -98,7 +98,11 @@ hr {
 }
 
 ::selection {
-  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+  /* Solid, not a 40% wash. A wash of the accent over a pale galaxy is a pale
+     background, and the `--sfs-on-accent` ink is chosen for the SOLID accent —
+     white on near-white. Either the fill or the ink has to give, and a solid
+     highlight is what a selection is supposed to look like anyway. */
+  background: var(--sfs-accent, #667eea);
   /* Not `inherit`: the highlight has its own background, so it needs the ink
      that suits THAT background rather than the one behind it. */
   color: var(--sfs-on-accent, #ffffff);
@@ -338,7 +342,11 @@ pre {
 .rich-text.on-fill a.rt-link,
 .rich-text.on-fill .rt-mention {
   color: var(--sfs-on-accent, #ffffff);
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  /* A wash of the INK, not of the page's tint. `--sfs-tint-rgb` is the right
+     colour for lifting a card off the page and the wrong one here: on a filled
+     bubble it is a dark smear under light text in a light galaxy. Tinting with
+     the ink itself is correct whichever way the fill goes. */
+  background: rgb(var(--sfs-on-accent-rgb, 255 255 255) / 0.18);
   text-decoration-color: currentColor;
 }
 

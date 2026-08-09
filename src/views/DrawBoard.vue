@@ -629,7 +629,7 @@ async function leave() {
   flex-direction: column;
   height: calc(100vh - 0px);
   min-height: 0;
-  background: var(--sfs-accent-soft, #f8fafc);
+  background: var(--sfs-paper, #f8fafc);
 }
 
 .board-head {
@@ -652,7 +652,7 @@ async function leave() {
   color: var(--sfs-accent-on-paper, #334155);
   cursor: pointer;
 }
-.back:hover { background: var(--sfs-accent-soft, #f1f5f9); }
+.back:hover { background: var(--sfs-paper, #f1f5f9); }
 
 .title-block { min-width: 0; flex: 1; }
 
@@ -673,7 +673,7 @@ async function leave() {
 }
 
 .title-input:hover { border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12); }
-.title-input:focus { outline: none; border-color: var(--sfs-accent, #2563eb); background: var(--sfs-paper, #fff); }
+.title-input:focus { outline: none; border-color: var(--sfs-accent-wash, #2563eb); background: var(--sfs-paper, #fff); }
 
 .byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: var(--sfs-accent-text, #94a3b8); }
 
@@ -692,7 +692,7 @@ async function leave() {
   margin-left: -7px;
   border-radius: 50%;
   border: 2px solid var(--sfs-border-strong, #fff);
-  color: var(--sfs-on-accent, #fff);
+  color: var(--sfs-text, #fff);
   font-size: 0.76rem;
   font-weight: 700;
   cursor: default;
@@ -719,8 +719,8 @@ async function leave() {
   font-weight: 600;
   cursor: pointer;
 }
-.btn.ghost { background: var(--sfs-accent-soft, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
-.btn.ghost:hover { background: var(--sfs-accent-soft, #e2e8f0); }
+.btn.ghost { background: var(--sfs-paper, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
+.btn.ghost:hover { background: var(--sfs-paper-2, #e2e8f0); }
 .btn.primary { background: var(--sfs-accent, #2563eb); color: var(--sfs-on-accent, #fff); }
 .btn.danger { background: var(--sfs-danger, #dc2626); color: var(--sfs-on-danger, #fff); }
 
@@ -746,7 +746,7 @@ async function leave() {
   padding: 9px 16px;
   border-radius: 999px;
   background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.88);
-  color: var(--sfs-text-muted, #f8fafc);
+  color: var(--sfs-text, #f8fafc);
   font-size: 0.82rem;
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3);
   z-index: 20;
@@ -759,7 +759,7 @@ async function leave() {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.55);
+  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.55);
 }
 
 .dialog {

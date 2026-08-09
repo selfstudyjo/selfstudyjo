@@ -426,7 +426,7 @@ defineExpose({ focus: () => input.value?.focus() });
   /* Clears the home indicator on an iPhone and the gesture bar on Android. On
      everything else `env()` is 0 and this is the plain 10px. */
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgb(var(--sfs-shade-rgb, 10 12 30) / 0.62);
+  background: rgb(var(--sfs-surface-rgb, 10 12 30) / 0.62);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);
   border-top: 1px solid var(--uc-border);

@@ -938,7 +938,7 @@ function goToLogin() {
 
 .history-container {
   margin-top: 12px;
-  border: 1px solid var(--sfs-accent-soft, #e2e8f0);
+  border: 1px solid var(--sfs-border-strong, #e2e8f0);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -948,7 +948,7 @@ function goToLogin() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--sfs-accent-soft, #e2e8f0);
+  border-bottom: 1px solid var(--sfs-border-strong, #e2e8f0);
 }
 
 .history-item:last-child {
@@ -968,27 +968,27 @@ function goToLogin() {
 }
 
 .history-status.scheduled {
-  background-color: var(--sfs-info, #ebf8ff);
+  background-color: var(--sfs-paper, #ebf8ff);
   color: var(--sfs-accent-on-paper, #2b6cb0);
 }
 
 .history-status.cancelled {
-  background-color: var(--sfs-danger, #fed7d7);
+  background-color: var(--sfs-danger-wash, #fed7d7);
   color: var(--sfs-danger-on-paper, #c53030);
 }
 
 .history-status.expired {
-  background-color: var(--sfs-danger, #fed7d7);
+  background-color: var(--sfs-danger-wash, #fed7d7);
   color: var(--sfs-danger-on-paper, #c53030);
 }
 
 .history-status.completed {
-  background-color: var(--sfs-success, #c6f6d5);
+  background-color: var(--sfs-success-wash, #c6f6d5);
   color: var(--sfs-success-on-paper, #276749);
 }
 
 .status-in-progress {
-  background-color: var(--sfs-warning, #fefcbf);
+  background-color: var(--sfs-warning-wash, #fefcbf);
   color: var(--sfs-warning-on-paper, #744210);
 }
 </style>

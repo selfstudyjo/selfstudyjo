@@ -602,7 +602,7 @@ onUnmounted(() => {
 .btn-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.4);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.4);
   border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: enroll-spin 0.7s linear infinite;

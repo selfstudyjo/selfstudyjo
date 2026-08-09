@@ -122,7 +122,7 @@ p { margin: 0; color: var(--sfs-accent-text, #64748b); font-size: 0.9rem; line-h
   cursor: pointer;
 }
 .btn.primary { background: var(--sfs-accent, #2563eb); color: var(--sfs-on-accent, #fff); }
-.btn.ghost { background: var(--sfs-accent-soft, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
+.btn.ghost { background: var(--sfs-paper, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
 
 .spinner {
   width: 34px;

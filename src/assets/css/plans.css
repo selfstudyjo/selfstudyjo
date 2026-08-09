@@ -146,7 +146,7 @@
   line-height: 1.1;
   letter-spacing: -0.035em;
   margin: 0 0 var(--sp-md);
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-info, #a5f3fc) 40%, var(--sfs-accent-soft, #c4b5fd) 70%, var(--sfs-paper, #ffffff) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-info-text, #a5f3fc) 40%, var(--sfs-text-muted, #c4b5fd) 70%, var(--sfs-text, #ffffff) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -444,7 +444,7 @@
   gap: 4px;
   padding: 6px 12px;
   background: var(--gradient-warning);
-  color: var(--sfs-on-paper, #1a1a1a);
+  color: var(--sfs-on-warning, #1a1a1a);
   font-size: var(--fs-xs);
   font-weight: 700;
   border-radius: var(--r-full);
@@ -675,7 +675,7 @@
   background: linear-gradient(135deg, rgb(var(--sfs-info-rgb, 78 205 196) / 0.85), rgb(var(--sfs-accent-rgb, 102 126 234) / 0.85));
   color: var(--sfs-text, #fff);
   box-shadow: 0 6px 18px rgb(var(--sfs-info-rgb, 78 205 196) / 0.3);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
 .view-payment-btn:hover:not(:disabled) {

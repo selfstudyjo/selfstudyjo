@@ -26,8 +26,8 @@
   --rr-glass:           rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --rr-glass-strong:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --rr-glass-hover:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rr-border:          rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rr-border-strong:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  --rr-border:          rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --rr-border-strong:   rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   --rr-blur:            blur(16px) saturate(150%);
   --rr-blur-soft:       blur(10px) saturate(140%);
 
@@ -113,7 +113,7 @@
   font-size: var(--rr-fs-xxl);
   font-weight: 700;
   letter-spacing: -0.01em;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 60%, var(--sfs-accent-2, #a78bfa) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 60%, var(--sfs-text-muted, #a78bfa) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -241,7 +241,7 @@
   font-weight: 800;
   letter-spacing: 0.3px;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   backdrop-filter: blur(6px);
 }
 
@@ -463,7 +463,7 @@
   border-radius: 999px;
   white-space: nowrap;
   color: var(--sfs-on-success, #fff);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   -webkit-backdrop-filter: var(--rr-blur-soft);
   backdrop-filter: var(--rr-blur-soft);
 }
@@ -501,7 +501,7 @@
   display: block;
   width: clamp(48px, 8vw, 72px);
   height: clamp(48px, 8vw, 72px);
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top-color: var(--sfs-accent, #667eea);
   border-right-color: var(--sfs-accent-2, #764ba2);
   border-radius: 50%;
@@ -638,7 +638,7 @@
   }
   .q-num,
   .review-header h1 {
-    -webkit-text-fill-color: var(--sfs-on-accent, #ffffff);
+    -webkit-text-fill-color: var(--sfs-text, #ffffff);
     background: none;
   }
 }

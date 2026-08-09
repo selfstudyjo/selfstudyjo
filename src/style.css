@@ -76,7 +76,7 @@ body {
 
 /* Utility classes */
 .gradient-text {
-  background: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+  background: linear-gradient(135deg, var(--sfs-accent-text, #667eea) 0%, var(--sfs-accent-2-text, #764ba2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -162,12 +162,12 @@ body {
 .glass-effect {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
 }
 
 .dark-mode .glass-effect {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
 /* Focus styles for accessibility */
@@ -190,7 +190,11 @@ body {
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .gradient-text {
-    background: var(--sfs-accent, #667eea);
+    /* Was `background: #667eea` next to `color: #667eea` — the accent painted
+       over itself, so gradient headings vanished for anyone asking for MORE
+       contrast. The clip is being turned off here, so the background has to go
+       away entirely and let the colour do the work. */
+    background: none;
     -webkit-background-clip: initial;
     -webkit-text-fill-color: initial;
     color: var(--sfs-accent-text, #667eea);

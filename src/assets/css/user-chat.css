@@ -33,13 +33,13 @@
   --uc-text-dim: rgb(var(--sfs-text-rgb, 255 255 255) / 0.38);
 
   /* ---- glass surfaces -------------------------------------------------- */
-  --uc-panel: rgb(var(--sfs-shade-rgb, 12 14 34) / 0.62);
-  --uc-panel-2: rgb(var(--sfs-shade-rgb, 16 18 42) / 0.5);
+  --uc-panel: rgb(var(--sfs-surface-rgb, 12 14 34) / 0.62);
+  --uc-panel-2: rgb(var(--sfs-surface-rgb, 16 18 42) / 0.5);
   --uc-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --uc-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --uc-surface-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.13);
-  --uc-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --uc-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  --uc-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --uc-border-strong: rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   --uc-blur: blur(18px) saturate(150%);
   --uc-blur-strong: blur(26px) saturate(160%);
 
@@ -52,7 +52,7 @@
     object again, which is exactly the complaint this rebuild answers.
   */
   --uc-in-bg: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.085);
-  --uc-in-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.13);
+  --uc-in-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.13);
   --uc-out-bg: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55) 0%, rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.55) 100%);
   --uc-out-border: rgb(var(--sfs-accent-rgb, 139 148 248) / 0.55);
   --uc-out-glow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.26);
@@ -130,7 +130,7 @@
    -------------------------------------------------------------------------- */
 .uc-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18) transparent;
+  scrollbar-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18) transparent;
 }
 .uc-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .uc-scroll::-webkit-scrollbar-track { background: transparent; }

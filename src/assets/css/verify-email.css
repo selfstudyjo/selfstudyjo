@@ -24,8 +24,8 @@
   --ve-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --ve-glass-strong:rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --ve-glass-input: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
-  --ve-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --ve-border-hi:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --ve-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --ve-border-hi:   rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   --ve-blur:        blur(22px) saturate(160%);
 
   /* shadow / glow */
@@ -130,7 +130,7 @@
   border-radius: 50%;
   color: var(--sfs-on-accent, #fff);
   background: var(--ve-grad);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow:
     0 12px 36px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45),
     inset 0 1px 0 rgba(255,255,255,0.25);
@@ -149,7 +149,7 @@
   letter-spacing: 0.2px;
   color: var(--ve-text);
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--sfs-accent-soft, #c7d2fe) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -282,7 +282,7 @@
 .btn-primary {
   color: var(--sfs-on-accent, #fff);
   background: var(--ve-grad);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow:
     0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4),
     inset 0 1px 0 rgba(255,255,255,0.22);

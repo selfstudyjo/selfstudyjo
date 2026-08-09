@@ -284,7 +284,7 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 <style scoped>
 .voice-recorder {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-radius: 14px;
   padding: 18px;
 }
@@ -350,7 +350,7 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 .vr-btn-stop { background: var(--sfs-danger, #ef4444); color: var(--sfs-on-danger, #fff); }
 .vr-btn-ghost {
   background: transparent; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.75);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
 }
 
 .vr-error { color: var(--sfs-danger-text, #fca5a5); font-size: 0.83rem; flex: 1 1 220px; }
@@ -365,7 +365,7 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 
 .vr-transcript, .vr-notes {
   width: 100%; background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); border-radius: 10px;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14); border-radius: 10px;
   color: var(--sfs-text, #fff); padding: 11px 13px; font-size: 0.9rem; line-height: 1.55;
   font-family: inherit; resize: vertical;
 }

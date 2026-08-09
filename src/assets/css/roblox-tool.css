@@ -44,7 +44,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--sfs-on-accent, white);
 }
 
 .roblox-header h1 {
@@ -82,7 +82,7 @@
 
 .btn-primary {
   background: linear-gradient(135deg, var(--sfs-accent, #6366f1), var(--sfs-accent-2, #8b5cf6));
-  color: white;
+  color: var(--sfs-on-accent, white);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -107,7 +107,7 @@
 
 .btn-success {
   background: linear-gradient(135deg, var(--sfs-success, #059669), var(--sfs-success, #10b981));
-  color: white;
+  color: var(--sfs-on-success, white);
   border: none;
 }
 
@@ -117,7 +117,7 @@
 
 .btn-warning {
   background: linear-gradient(135deg, var(--sfs-warning, #d97706), var(--sfs-warning, #f59e0b));
-  color: white;
+  color: var(--sfs-on-warning, white);
   border: none;
 }
 
@@ -226,7 +226,7 @@
 
 .filter-tag.active {
   background: var(--sfs-accent, #6366f1);
-  color: white;
+  color: var(--sfs-on-accent, white);
   border-color: var(--sfs-accent, #6366f1);
 }
 
@@ -259,7 +259,7 @@
 }
 
 .animation-card {
-  background: rgb(var(--sfs-shade-rgb, 30 30 60) / 0.6);
+  background: rgb(var(--sfs-surface-rgb, 30 30 60) / 0.6);
   border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
   border-radius: 10px;
   overflow: hidden;
@@ -332,7 +332,7 @@
 
 .card-delete:hover {
   background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.6);
-  color: white;
+  color: var(--sfs-text, white);
 }
 
 /* ─── Preview Panel (Right) ─── */
@@ -386,7 +386,7 @@
 
 .ctrl-btn:hover {
   background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.3);
-  color: white;
+  color: var(--sfs-text, white);
 }
 
 .speed-control {
@@ -496,7 +496,7 @@
 }
 
 .info-item {
-  background: rgb(var(--sfs-shade-rgb, 30 30 60) / 0.5);
+  background: rgb(var(--sfs-surface-rgb, 30 30 60) / 0.5);
   border-radius: 8px;
   padding: 10px;
 }
@@ -529,7 +529,7 @@
 
 .code-lang {
   background: var(--sfs-accent, #6366f1);
-  color: white;
+  color: var(--sfs-on-accent, white);
   padding: 2px 10px;
   border-radius: 4px;
   font-size: 0.7rem;
@@ -590,7 +590,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--sfs-on-accent, white);
   font-size: 0.8rem;
   font-weight: 700;
   flex-shrink: 0;
@@ -788,8 +788,8 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
-  border-top-color: white;
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+  border-top-color: var(--sfs-border-strong, white);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -813,12 +813,12 @@
 
 .toast.success {
   background: linear-gradient(135deg, var(--sfs-success, #059669), var(--sfs-success, #10b981));
-  color: white;
+  color: var(--sfs-on-success, white);
 }
 
 .toast.error {
   background: linear-gradient(135deg, var(--sfs-danger, #dc2626), var(--sfs-danger, #ef4444));
-  color: white;
+  color: var(--sfs-on-danger, white);
 }
 
 .toast-enter-active,
@@ -914,7 +914,7 @@
 .tool-tabs-header {
   display: flex;
   gap: 4px;
-  background: rgb(var(--sfs-shade-rgb, 30 30 60) / 0.5);
+  background: rgb(var(--sfs-surface-rgb, 30 30 60) / 0.5);
   border-radius: 8px;
   padding: 3px;
 }
@@ -1128,7 +1128,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  background: rgb(var(--sfs-shade-rgb, 30 30 60) / 0.5);
+  background: rgb(var(--sfs-surface-rgb, 30 30 60) / 0.5);
   border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
   border-radius: 6px;
   cursor: pointer;
@@ -1302,7 +1302,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: rgb(var(--sfs-shade-rgb, 30 30 60) / 0.5);
+  background: rgb(var(--sfs-surface-rgb, 30 30 60) / 0.5);
   border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
   border-radius: 6px;
   cursor: pointer;
@@ -1323,7 +1323,7 @@
   height: 16px;
   border-radius: 4px;
   flex-shrink: 0;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
 .part-list-info {
@@ -1493,7 +1493,7 @@
   height: 12px;
   border-radius: 3px;
   flex-shrink: 0;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
 .tree-name {

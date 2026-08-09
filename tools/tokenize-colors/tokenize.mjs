@@ -151,6 +151,24 @@ const channels = c => `${Math.round(c.r)} ${Math.round(c.g)} ${Math.round(c.b)}`
  * -------------------------------------------------------------------------- */
 function classify(c) {
   const { h, s, l } = hsl(c);
+
+  /*
+    Chroma, not HSL saturation, decides whether a colour has a hue worth
+    keeping.
+
+    HSL saturation is meaningless near white: `#f1f5f9` — slate-50, which this
+    app uses as a plain light card — reports s = 0.39 because its channels
+    differ by 8 out of 255. Classified on that it became "an accent", and the
+    codemod turned a near-white card into a solid indigo one. Every pale
+    tailwind-50 colour in the app had the same problem, and in a light galaxy
+    the result was a saturated block with same-coloured text on it: the
+    "text not clear, colours inconsistent" report.
+
+    Raw chroma asks the question directly — how far apart are the channels —
+    and answers it the same way at every lightness.
+  */
+  const chroma = Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+  if (chroma < 26) return { family: 'neutral', tone: l };
   if (s < 0.12) return { family: 'neutral', tone: l };
   /*
     A near-black is a surface whatever its hue.
@@ -222,10 +240,18 @@ function roleOf(prop) {
  * alone (ambiguous, and guessing wrong is a page rendered in one colour).
  */
 function customRole(name) {
-  if (/(^|-)(text|ink|fg|foreground|label|title|heading|caption|link|placeholder)(-|$)/.test(name)) return 'text';
-  if (/(^|-)(bg|background|surface|fill|panel|card|sheet|track|backdrop|scrim)(-|$)/.test(name)) return 'bg';
-  if (/(^|-)(border|line|divider|rule|outline|stroke|edge)(-|$)/.test(name)) return 'border';
-  if (/(^|-)(shadow|glow|elevation)(-|$)/.test(name)) return 'shadow';
+  const isText = /(^|-)(text|txt|ink|fg|foreground|label|title|heading|caption|link|placeholder|copy)(-|$)/.test(name);
+  if (isText) {
+    /* `--np-text` and `--np-text-soft` are a hierarchy, and flattening both to
+       `--sfs-text` loses the only thing that made body copy readable as
+       secondary. A name that says it is the quiet one is demoted a step. */
+    return /(^|-)(soft|muted|dim|subtle|secondary|faint|quiet|weak|light|low)(-|\d*$)/.test(name)
+      ? 'text-soft'
+      : 'text';
+  }
+  if (/(^|-)(bg|background|surface|fill|panel|card|sheet|track|backdrop|scrim|glass|tint|wash|overlay)(-|\d*$)/.test(name)) return 'bg';
+  if (/(^|-)(border|line|divider|rule|outline|stroke|edge)(-|\d*$)/.test(name)) return 'border';
+  if (/(^|-)(shadow|glow|elevation)(-|\d*$)/.test(name)) return 'shadow';
   return 'custom';
 }
 
@@ -237,8 +263,37 @@ function customRole(name) {
  * is always a legitimate answer: an unconverted colour keeps today's
  * behaviour, a wrongly converted one is a bug in ten themes at once.
  * -------------------------------------------------------------------------- */
-function pickToken(c, family, tone, role, island, fill) {
+/** `accent2` is spelled `accent-2` in the token names. */
+const familyBase = family => (family === 'accent2' ? 'accent-2' : family);
+
+function pickToken(c, family, tone, role, island, fill, clipText) {
   const translucent = c.a < 0.999;
+  /* A custom property whose NAME says it is the quiet variant. Treated as
+     text, one step down the hierarchy. */
+  const demote = role === 'text-soft';
+  if (demote) role = 'text';
+
+  /*
+    `background-clip: text`.
+
+    The background of such a block is not a background — it IS the text, poured
+    through the glyphs, with `color` reduced to a fallback for browsers that
+    cannot do it. Every page heading on this app is built that way:
+
+        background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+        -webkit-background-clip: text;
+        color: #fff;
+
+    Classified as a background, that gradient goes to `--sfs-paper` and
+    `--sfs-accent-soft` — both light, which is right over a dark galaxy and
+    invisible over a pale one. Every h1 on the platform disappeared in the
+    three light themes. Reclassifying the whole block as text is the fix, and
+    it is one line because the token tables already know what text means.
+  */
+  if (clipText && (role === 'bg' || role === 'text')) {
+    role = 'text';
+    island = false;
+  }
 
   /* --- White text on a brand-coloured fill.
    *
@@ -250,7 +305,7 @@ function pickToken(c, family, tone, role, island, fill) {
    * becomes unreadable at once. The ink on a filled control is decided by the
    * FILL, which is what `--sfs-on-*` is for.
    */
-  if (role === 'text' && family === 'neutral' && fill && !translucent && tone >= 0.7) {
+  if (role === 'text' && fill && !translucent) {
     return { name: `--sfs-on-${fill === 'accent2' ? 'accent-2' : fill}` };
   }
 
@@ -264,18 +319,30 @@ function pickToken(c, family, tone, role, island, fill) {
       }
       return { name: `--sfs-${family === 'accent2' ? 'accent-2' : family}-on-paper` };
     }
-    if (role === 'bg' && family === 'neutral' && !translucent) {
-      if (tone >= 0.93) return { name: '--sfs-paper' };
-      if (tone >= 0.82) return { name: '--sfs-paper-2' };
-      if (tone >= 0.55) return { name: '--sfs-paper-3' };
-      return null;
+    if (role === 'bg' && !translucent) {
+      if (family === 'neutral') {
+        if (tone >= 0.93) return { name: '--sfs-paper' };
+        if (tone >= 0.82) return { name: '--sfs-paper-2' };
+        if (tone >= 0.55) return { name: '--sfs-paper-3' };
+        return null;
+      }
+      /*
+        A PALE TINTED card — `#fffbeb` behind a warning, `#fed7d7` behind an
+        error, `#c6f6d5` behind a pass. It is a light island that happens to
+        carry a hue, and it needs a token that is light in every galaxy, the
+        way --sfs-paper is. Sending it to the solid `--sfs-warning` instead is
+        what produced the worst failure in the whole system: a saturated amber
+        block with `--sfs-warning-on-paper` amber text on it, 1:1, unreadable.
+      */
+      if (tone >= 0.72) return { name: `--sfs-${familyBase(family)}-wash` };
+      /* A saturated, genuinely dark fill inside a light card is still a fill —
+         a brand button on a white panel — and its ink comes from --sfs-on-*. */
+      return { name: `--sfs-${familyBase(family)}` };
     }
-    if (role === 'border' && family === 'neutral' && !translucent) {
-      return { name: '--sfs-paper-border' };
+    if (role === 'border' && !translucent) {
+      if (family === 'neutral') return { name: '--sfs-paper-border' };
+      return { name: `--sfs-${familyBase(family)}-wash` };
     }
-    /* Accent and status inside an island fall through to the ordinary rules —
-       a brand-coloured button on a white card is still a brand-coloured
-       button, and its own ink comes from --sfs-on-accent. */
   }
 
   /* --- Neutrals: the white/black/grey world --- */
@@ -288,12 +355,19 @@ function pickToken(c, family, tone, role, island, fill) {
       /* A dark wash at 0.7 and up is not a scrim, it is an opaque panel that
          happens to be written with an alpha. It has to flip with the theme;
          a scrim below that threshold has to stay dark in both. */
-      if (role === 'bg' && tone < 0.5 && c.a >= 0.7) return { rgbVar: '--sfs-surface-rgb' };
+      if (role === 'bg' && tone < 0.5 && c.a >= 0.5) return { rgbVar: '--sfs-surface-rgb' };
+      /* A hairline is the one neutral that must flip with the mode — see the
+         --sfs-line-rgb note in themes.ts. The tint no longer does. */
+      if (role === 'border') return { rgbVar: tone >= 0.5 ? '--sfs-line-rgb' : '--sfs-shade-rgb' };
       return { rgbVar: tone >= 0.5 ? '--sfs-tint-rgb' : '--sfs-shade-rgb' };
     }
     if (role === 'text') {
-      if (tone >= 0.86) return { name: '--sfs-text' };
-      if (tone >= 0.58) return { name: '--sfs-text-muted' };
+      /* A clip-text block's `color` is only the fallback for a browser that
+         cannot paint the gradient, so a dark literal there is not 'ink on a
+         light card' — it is the heading, and it has to follow the theme. */
+      if (clipText && tone < 0.3) return { name: '--sfs-text' };
+      if (tone >= 0.86) return { name: demote ? '--sfs-text-muted' : '--sfs-text' };
+      if (tone >= 0.58) return { name: demote ? '--sfs-text-faint' : '--sfs-text-muted' };
       if (tone >= 0.3) return { name: '--sfs-text-faint' };
       return null;                          // dark ink with no light bg in this block
     }
@@ -312,8 +386,7 @@ function pickToken(c, family, tone, role, island, fill) {
   }
 
   /* --- Brand and status --- */
-  const base = family === 'accent2' ? 'accent-2' : family;
-  if (translucent) return { rgbVar: `--sfs-${base}-rgb` };
+  if (translucent) return { rgbVar: `--sfs-${familyBase(family)}-rgb` };
 
   if (role === 'text') {
     /* A pale brand tint used as body copy is muted text, not a brand accent —
@@ -322,15 +395,15 @@ function pickToken(c, family, tone, role, island, fill) {
       return { name: '--sfs-text-muted' };
     }
     if (family === 'accent' || family === 'accent2') {
-      return { name: `--sfs-${base}-text` };
+      return { name: `--sfs-${familyBase(family)}-text` };
     }
     return { name: `--sfs-${family}-text` };
   }
   if (role === 'bg' || role === 'border' || role === 'custom' || role === 'other') {
     if (family === 'accent' && tone >= 0.7) return { name: '--sfs-accent-soft' };
-    return { name: `--sfs-${base}` };
+    return { name: `--sfs-${familyBase(family)}` };
   }
-  if (role === 'shadow') return { name: `--sfs-${base}` };
+  if (role === 'shadow') return { name: `--sfs-${familyBase(family)}` };
   return null;
 }
 
@@ -362,7 +435,9 @@ const THIRD_PARTY = new RegExp(
  * Declaration scanning
  * -------------------------------------------------------------------------- */
 
-const COLOR_RE = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\([^()]*\)/g;
+/* `color: white` is as common in these stylesheets as `#fff`, and leaving
+   the keyword unconverted leaves white text on a light galaxy. */
+const COLOR_RE = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\([^()]*\)|\b(?:white|black)\b/g;
 
 /**
  * Walk a stylesheet body and yield every declaration with the offsets of the
@@ -386,7 +461,17 @@ function scanBlocks(css) {
     const ch = css[i];
     if (ch === '{') {
       depth++;
-      stack.push({ decls: [], start: i + 1, selector: css.slice(declStart, i).trim() });
+      stack.push({
+        decls: [],
+        start: i + 1,
+        selector: css.slice(declStart, i).trim(),
+        /* The at-rules this block sits inside. `@media print` describes a
+           different medium entirely, and letting it speak for the screen is
+           how `.notifications-container { background: #fff }` — correct for
+           paper — marked the whole component a light island and left its white
+           screen text unconverted. */
+        context: stack.map(b => b.selector),
+      });
       declStart = i + 1;
       i++;
       continue;
@@ -454,11 +539,21 @@ function pushDecl(block, css, start, end) {
 function blockPaint(block, locals) {
   let island = false;
   let fill = null;
+  let hasBackground = false;
+  /* See the note in pickToken: this block's "background" is its text. */
+  const clipText = block.decls.some(d =>
+    /^-?(webkit-)?background-clip$/i.test(d.prop) && /\btext\b/i.test(d.value));
+  if (clipText) return { island: false, fill: null, clipText: true, hasBackground: false };
+
   for (const d of block.decls) {
     if (roleOf(d.prop) !== 'bg') continue;
+    hasBackground = true;
     if (/url\(/i.test(d.value)) continue;
     for (const m of expandLocals(d.value, locals).match(COLOR_RE) || []) {
-      const c = m.startsWith('#') ? parseHex(m) : parseFunc(m);
+      const k = m.toLowerCase();
+      const c = k === 'white' ? { r: 255, g: 255, b: 255, a: 1 }
+             : k === 'black' ? { r: 0, g: 0, b: 0, a: 1 }
+             : m.startsWith('#') ? parseHex(m) : parseFunc(m);
       /* A translucent wash does not decide the ink — whatever is behind it
          still shows through, and that is the themed surface. */
       if (!c || c.a < 0.9) continue;
@@ -469,7 +564,7 @@ function blockPaint(block, locals) {
       if (family !== 'neutral' && !fill && luminance(c) < 0.5) fill = family;
     }
   }
-  return { island, fill };
+  return { island, fill, clipText: false, hasBackground };
 }
 
 /**
@@ -489,6 +584,19 @@ function collectLocals(css) {
     table.set(m[1], m[2].trim());
   }
   return table;
+}
+
+/**
+ * Is this block describing a different medium or rendering mode?
+ *
+ * `@media print` is paper, `forced-colors` is the OS palette and
+ * `prefers-contrast` is an override. Each legitimately sets colours the screen
+ * must not inherit, so none of them may contribute to what a selector paints
+ * on screen. They are still converted — on their own terms.
+ */
+function isAlternateMedium(block) {
+  return (block.context || []).some(s =>
+    /^\s*@media\b/i.test(s) && /(?:^|[^a-z-])(print|forced-colors|prefers-contrast)(?![a-z-])/i.test(s));
 }
 
 /** The individual selectors of a rule, normalised. */
@@ -527,13 +635,19 @@ function selectorParts(selector) {
  * hovered, so the state's ink is decided by the base's fill.
  */
 function lookupPaint(block, index, locals) {
+  const own = blockPaint(block, locals);
+  /* A print or forced-colours rule is judged entirely on its own terms. */
+  if (isAlternateMedium(block)) return own;
+  /* clip-text is a property of THIS rule, never inherited from a selector
+     relative — a heading and its container are not the same element. */
+  if (own.clipText) return { island: false, fill: null, clipText: true };
   let island = false;
   let fill = null;
   for (const part of selectorParts(block.selector)) {
-    const own = index.get(part);
-    if (own) {
-      island = island || own.island;
-      fill = fill ?? own.fill;
+    const direct = index.get(part);
+    if (direct) {
+      island = island || direct.island;
+      fill = fill ?? direct.fill;
     }
     if (!fill) {
       // This block is a state of something: inherit the base's fill.
@@ -550,14 +664,14 @@ function lookupPaint(block, index, locals) {
     for (const [selector, paint] of index) {
       if (selector.length <= part.length || !selector.startsWith(part)) continue;
       const next = selector.slice(part.length);
-      if (!/^(--[a-z0-9-]+|\.[a-z0-9_-]+)$/i.test(next)) continue;
+      if (!/^--[a-z0-9-]+$/i.test(next)) continue;
       island = island || paint.island;
       fill = fill ?? paint.fill;
       if (fill) break;
     }
   }
-  if (!island && !fill) return blockPaint(block, locals);
-  return { island, fill };
+  if (!island && !fill) return own;
+  return { island, fill, clipText: false };
 }
 
 function expandLocals(value, locals) {
@@ -619,24 +733,34 @@ function rewrite(source, stats) {
   */
   const paintBySelector = new Map();
   for (const block of blocks) {
+    if (isAlternateMedium(block)) continue;
     const paint = blockPaint(block, locals);
-    if (!paint.island && !paint.fill) continue;
+    /* A block that declares a background REPLACES what the selector paints,
+       even when that background is a plain tint — "this is no longer filled"
+       is exactly the information the last-wins rule exists to carry. A block
+       with no background at all says nothing and is skipped. */
+    if (!paint.hasBackground) continue;
     /* A rule is usually written for several selectors at once —
        `.correct-badge, .wrong-badge { … }` — so each one is indexed
        separately. Indexing the whole list as one string is why the first
        attempt at this missed most of the app's badges. */
     for (const part of selectorParts(block.selector)) {
-      const merged = paintBySelector.get(part) ?? { island: false, fill: null };
-      paintBySelector.set(part, {
-        island: merged.island || paint.island,
-        fill: merged.fill ?? paint.fill,
-      });
+      /*
+        Last background wins, because that is the cascade.
+
+        `.save-btn, .refresh-btn { background: <brand gradient> }` followed by
+        `.refresh-btn { background: <glass> }` means the refresh button is
+        glass, not brand — and its ink therefore comes from the page rather
+        than from a fill it no longer has. Merging with `??` kept the first
+        answer and re-broke the button on every re-run.
+      */
+      paintBySelector.set(part, { island: paint.island, fill: paint.fill });
     }
   }
 
   for (const block of blocks) {
     if (THIRD_PARTY.test(block.selector || '')) { stats.thirdParty++; continue; }
-    const { island, fill } = lookupPaint(block, paintBySelector, locals);
+    const { island, fill, clipText } = lookupPaint(block, paintBySelector, locals);
     for (const decl of block.decls) {
       const role = roleOf(decl.prop);
       if (role === 'other' && !/color|shadow|gradient|fill|stroke/i.test(decl.prop)) {
@@ -656,13 +780,24 @@ function rewrite(source, stats) {
         /* Idempotency: a literal already serving as a var() fallback stays. */
         if (insideVarFallback(css, at)) continue;
 
-        const c = literal.startsWith('#') ? parseHex(literal) : parseFunc(literal);
+        const named = literal.toLowerCase();
+        const c = named === 'white' ? { r: 255, g: 255, b: 255, a: 1 }
+               : named === 'black' ? { r: 0, g: 0, b: 0, a: 1 }
+               : literal.startsWith('#') ? parseHex(literal) : parseFunc(literal);
         if (!c) continue;
 
         const key = literal.toLowerCase();
         const auto = classify(c);
         const family = OVERRIDES[key] ?? auto.family;
-        const pick = pickToken(c, family, auto.tone, role, island, fill);
+        const pick = pickToken(c, family, auto.tone, role, island, fill, clipText);
+        /* `SFS_DEBUG=<substring>` prints the decision for every declaration
+           whose property name contains it. Every wrong mapping found while
+           building this was found with it — the classification is otherwise
+           invisible until it shows up as a colour on a page. */
+        if (process.env.SFS_DEBUG && decl.prop.includes(process.env.SFS_DEBUG)) {
+          console.log('debug', decl.prop, literal, '->',
+                      JSON.stringify({ role, family, tone: Number(auto.tone.toFixed(3)), island, fill, clipText, pick }));
+        }
         if (!pick) { stats.skipped++; continue; }
 
         let replacement;

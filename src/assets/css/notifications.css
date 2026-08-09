@@ -13,17 +13,17 @@
   --np-brand-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
 
   /* text on dark galaxy */
-  --np-text:        #ffffff;
-  --np-text-soft:   var(--sfs-accent-on-paper, #e8eaff);
-  --np-text-muted:  rgba(255, 255, 255, 0.7);
-  --np-text-dim:    rgba(255, 255, 255, 0.5);
+  --np-text:        var(--sfs-text, #ffffff);
+  --np-text-soft:   var(--sfs-text-muted, #e8eaff);
+  --np-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  --np-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
 
   /* glass surfaces */
   --np-surface:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --np-surface-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --np-surface-hover:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --np-border:         rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --np-border-strong:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  --np-border:         rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+  --np-border-strong:  rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   --np-blur:           blur(16px) saturate(140%);
   --np-blur-strong:    blur(20px) saturate(150%);
   --np-shadow:         0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
@@ -367,7 +367,7 @@
 .notifications-spinner {
   width: 56px;
   height: 56px;
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top-color: var(--np-brand-1);
   border-right-color: var(--np-brand-2);
   border-radius: 50%;
@@ -820,13 +820,13 @@
   .notifications-container {
     --np-surface:        rgb(var(--sfs-surface-rgb, 0 0 0) / 0.85);
     --np-surface-strong: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.9);
-    --np-border:         rgb(var(--sfs-tint-rgb, 255 255 255) / 0.6);
-    --np-border-strong:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.8);
-    --np-text-muted:     #ffffff;
+    --np-border:         rgb(var(--sfs-line-rgb, 255 255 255) / 0.6);
+    --np-border-strong:  rgb(var(--sfs-line-rgb, 255 255 255) / 0.8);
+    --np-text-muted:     var(--sfs-text-muted, #ffffff);
   }
   .notifications-header h1 {
-    -webkit-text-fill-color: var(--sfs-on-accent, #ffffff);
-    color: var(--sfs-on-accent, #ffffff);
+    -webkit-text-fill-color: var(--sfs-text, #ffffff);
+    color: var(--sfs-text, #ffffff);
     background: none;
   }
 }

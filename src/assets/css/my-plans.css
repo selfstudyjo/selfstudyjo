@@ -21,8 +21,8 @@
   --mp-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   --mp-glass-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   --mp-glass-soft:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
-  --mp-border:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --mp-border-soft:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --mp-border:       rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --mp-border-soft:  rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
   --mp-shadow:       0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18),
                      0 2px 8px rgba(0, 0, 0, 0.35);
   --mp-shadow-hover: 0 14px 44px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28),
@@ -238,7 +238,7 @@
 .spinner-container { margin-bottom: var(--mp-md); }
 .spinner {
   width: 64px; height: 64px;
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
   border-top-color: var(--mp-grad-1);
   border-right-color: var(--mp-grad-2);
   border-radius: 50%;
@@ -523,10 +523,10 @@
   color: transparent;
   white-space: nowrap;
 }
-.pending-card .amount   { background: linear-gradient(135deg, var(--sfs-warning, #f59e0b), var(--sfs-warning, #fbbf24)); -webkit-background-clip: text; background-clip: text; }
+.pending-card .amount   { background: linear-gradient(135deg, var(--sfs-warning-text, #f59e0b), var(--sfs-warning-text, #fbbf24)); -webkit-background-clip: text; background-clip: text; }
 .payment-card.paid .amount,
 .payment-card.verified .amount {
-  background: linear-gradient(135deg, var(--mp-success), var(--sfs-success, #38d39f));
+  background: linear-gradient(135deg, var(--mp-success), var(--sfs-success-text, #38d39f));
   -webkit-background-clip: text; background-clip: text;
 }
 
@@ -1077,6 +1077,6 @@
   .history-table,
   .error-card,
   .empty-card,
-  .modern-header { border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.35); }
+  .modern-header { border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.35); }
   .info-value, .cell-value { color: var(--sfs-text, #fff); }
 }

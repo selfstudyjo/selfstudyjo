@@ -193,7 +193,7 @@ onMounted(() => {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
   border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -214,7 +214,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--sfs-text-muted, #e7ebff);
+  color: var(--sfs-text, #e7ebff);
   background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
   border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.45);
   box-shadow: 0 0 0 1px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.08) inset;
@@ -230,7 +230,7 @@ onMounted(() => {
 
 .login-alert.alert-info .alert-text {
   flex: 1;
-  color: var(--sfs-text-muted, #e7ebff);
+  color: var(--sfs-text, #e7ebff);
   font-weight: 500;
   letter-spacing: 0.2px;
 }

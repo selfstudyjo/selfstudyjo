@@ -565,7 +565,7 @@ onBeforeUnmount(() => {
   transition: background var(--uc-t-fast);
 }
 .quote:hover { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.32); }
-.row.mine .quote { border-left-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
+.row.mine .quote { border-left-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
 .row.mine .quote:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
 .quote-who { display: block; font-size: var(--uc-fs-xs); font-weight: 700; }
 .quote-text {
@@ -615,7 +615,7 @@ onBeforeUnmount(() => {
   position: absolute;
   width: 22px;
   height: 22px;
-  border: 2.5px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.35);
+  border: 2.5px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.35);
   border-top-color: var(--sfs-border-strong, #fff);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;

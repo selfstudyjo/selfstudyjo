@@ -897,8 +897,8 @@ onMounted(() => {
 .current-active-banner {
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, var(--sfs-warning, #fef3c7) 0%, var(--sfs-warning, #fde68a) 100%);
-  border: 2px solid var(--sfs-warning, #f59e0b);
+  background: linear-gradient(135deg, var(--sfs-warning-wash, #fef3c7) 0%, var(--sfs-warning-wash, #fde68a) 100%);
+  border: 2px solid var(--sfs-warning-wash, #f59e0b);
   border-radius: 12px;
   padding: 16px 20px;
   margin-bottom: 24px;
@@ -942,7 +942,7 @@ onMounted(() => {
 
 .current-indicator {
   background: linear-gradient(135deg, var(--sfs-warning, #f59e0b) 0%, var(--sfs-warning, #d97706) 100%);
-  color: white;
+  color: var(--sfs-on-warning, white);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 11px;
@@ -956,7 +956,7 @@ onMounted(() => {
 
 .success-btn {
   background: linear-gradient(135deg, var(--sfs-success, #10b981) 0%, var(--sfs-success, #059669) 100%);
-  color: white;
+  color: var(--sfs-on-success, white);
   cursor: default;
 }
 

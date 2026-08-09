@@ -21,7 +21,7 @@
 
   /* Text on dark galaxy */
   --pay-text:        var(--sfs-text, #ffffff);
-  --pay-text-strong: var(--sfs-text-muted, #e8eaff);
+  --pay-text-strong: var(--sfs-text, #e8eaff);
   --pay-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
   --pay-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
@@ -29,8 +29,8 @@
   --pay-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   --pay-glass-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
   --pay-glass-hover:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pay-border:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pay-border-strong:rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --pay-border:       rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --pay-border-strong:rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
 
   /* Shadows / glows */
   --pay-shadow:       0 8px 32px rgba(0, 0, 0, 0.35);
@@ -125,7 +125,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: var(--pay-sp-sm);
-  background: linear-gradient(135deg, var(--sfs-paper, #ffffff) 0%, var(--pay-accent-1) 60%, var(--pay-accent-2) 100%);
+  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--pay-accent-1) 60%, var(--pay-accent-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -235,7 +235,7 @@
   font-weight: 600;
   color: var(--sfs-on-danger, #fff);
   background: linear-gradient(135deg, var(--sfs-danger, #ef4444), var(--sfs-danger, #dc2626));
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   border-radius: var(--pay-r-lg);
   cursor: pointer;
   transition: transform var(--pay-t), box-shadow var(--pay-t);
@@ -848,7 +848,7 @@
   .no-accounts,
   .tab-btn,
   .btn {
-    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.6);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.6);
   }
 
   .plan-price,

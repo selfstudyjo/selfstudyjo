@@ -221,7 +221,7 @@ onMounted(() => {
 .avatar-image {
   width: 100%;
   height: 100%;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   box-shadow:
     0 0 0 1px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3) inset,
     0 0 24px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.25);
@@ -245,7 +245,7 @@ onMounted(() => {
   font-weight: 700;
   text-align: center;
   user-select: none;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
   box-shadow:
     inset 0 2px 12px rgba(255, 255, 255, 0.18),
     0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
@@ -268,7 +268,7 @@ onMounted(() => {
   justify-content: center;
   gap: 4px;
   color: var(--sfs-text, #fff);
-  background: rgb(var(--sfs-shade-rgb, 10 10 30) / 0.55);
+  background: rgb(var(--sfs-surface-rgb, 10 10 30) / 0.55);
   backdrop-filter: blur(8px) saturate(160%);
   -webkit-backdrop-filter: blur(8px) saturate(160%);
   border-radius: 50%;
@@ -305,7 +305,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
   border-radius: 50%;
   color: var(--sfs-on-danger, #fff);
   background: linear-gradient(135deg, var(--sfs-danger, #f56565), var(--sfs-danger, #c53030));

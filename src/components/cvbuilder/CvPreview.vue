@@ -439,7 +439,7 @@ const CvSectionBody = defineComponent({
 .cv-plain-header.centred { text-align: center; }
 .cv-plain-header h1 { font-size: 1.8rem; font-weight: 700; color: var(--cv-accent); }
 .cv-plain-header .cv-headline { font-size: 1rem; color: var(--sfs-accent-text, #374151); margin-top: 2px; }
-.cv-plain-header .cv-contact { font-size: 0.78rem; color: var(--sfs-accent-text, #4b5563); margin-top: 6px; }
+.cv-plain-header .cv-contact { font-size: 0.78rem; color: var(--sfs-text-faint, #4b5563); margin-top: 6px; }
 .cv-plain-header .cv-photo { margin-bottom: 10px; }
 .cv-plain-header.centred .cv-photo { margin-left: auto; margin-right: auto; }
 
@@ -534,7 +534,7 @@ const CvSectionBody = defineComponent({
 }
 
 .cv-section-body :deep(.cv-tech) {
-  font-size: 0.78rem; color: var(--sfs-accent-text, #4b5563); font-style: italic; margin-top: 3px;
+  font-size: 0.78rem; color: var(--sfs-text-faint, #4b5563); font-style: italic; margin-top: 3px;
 }
 .cv-section-body :deep(.cv-link) {
   font-size: 0.78rem; color: var(--sfs-accent-text, #1d4ed8); word-break: break-all;

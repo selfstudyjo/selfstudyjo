@@ -584,7 +584,7 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   background:
     radial-gradient(circle at 20% 20%, rgb(var(--sfs-accent-rgb, 59 130 246) / 0.08), transparent 45%),
     radial-gradient(circle at 80% 70%, rgb(var(--sfs-accent-2-rgb, 168 85 247) / 0.08), transparent 45%),
-    var(--sfs-accent-soft, #eef2f7);
+    var(--sfs-paper, #eef2f7);
   touch-action: none;
 }
 
@@ -606,7 +606,7 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   min-width: 200px;
   min-height: 2.2em;
   padding: 4px 6px;
-  border: 2px dashed var(--sfs-accent, #2563eb);
+  border: 2px dashed var(--sfs-accent-wash, #2563eb);
   border-radius: 6px;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.96);
   font-family: Inter, system-ui, sans-serif;
@@ -625,7 +625,7 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   padding: 6px 12px;
   border-radius: 999px;
   background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.82);
-  color: var(--sfs-text-muted, #f8fafc);
+  color: var(--sfs-text, #f8fafc);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;

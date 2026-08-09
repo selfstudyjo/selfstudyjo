@@ -14,24 +14,24 @@
 .tm-page,
 .tm-meeting-room,
 .tm-modal {
-  --tm-text:        #ffffff;
-  --tm-text-soft:   rgba(255, 255, 255, 0.85);
-  --tm-text-mute:   rgba(255, 255, 255, 0.65);
-  --tm-text-dim:    rgba(255, 255, 255, 0.45);
+  --tm-text:        var(--sfs-text, #ffffff);
+  --tm-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.85);
+  --tm-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.65);
+  --tm-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.45);
 
   --tm-grad:        linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
-  --tm-grad-text:   linear-gradient(135deg, #ffffff 0%, var(--sfs-accent-on-paper, #e0e7ff) 55%, var(--sfs-accent-on-paper, #c7d2fe) 100%);
+  --tm-grad-text:   linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #e0e7ff) 55%, var(--sfs-text-muted, #c7d2fe) 100%);
   --tm-accent:      var(--sfs-accent-soft, #818cf8);
   --tm-accent-2:    var(--sfs-accent-2, #a78bfa);
 
   --tm-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --tm-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --tm-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --tm-glass-dark:  rgb(var(--sfs-shade-rgb, 15 17 40) / 0.55);
-  --tm-glass-darker:rgb(var(--sfs-shade-rgb, 10 12 30) / 0.7);
+  --tm-glass-dark:  rgb(var(--sfs-surface-rgb, 15 17 40) / 0.55);
+  --tm-glass-darker:rgb(var(--sfs-surface-rgb, 10 12 30) / 0.7);
 
-  --tm-border:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --tm-border-2:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
+  --tm-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  --tm-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
 
   --tm-blur:        blur(18px) saturate(140%);
   --tm-blur-soft:   blur(12px) saturate(130%);
@@ -120,7 +120,7 @@
   font-size: clamp(0.95rem, 1vw + 0.5rem, 1.1rem);
 }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .tm-hero h1 { background: none; color: #fff; -webkit-text-fill-color: #fff; }
+  .tm-hero h1 { background: none; color: var(--sfs-text, #fff); -webkit-text-fill-color: var(--sfs-text, #fff); }
 }
 
 /* -------------------------------------------------- *
@@ -310,7 +310,7 @@
   gap: 0.5rem;
   padding: 0.7rem 1.5rem;
   min-height: 44px;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   border-radius: var(--tm-r-sm);
   font-weight: 600;
   font-size: 1rem;
@@ -383,6 +383,10 @@
 .tm-btn-control {
   background: var(--tm-glass-dark);
   border: 1px solid var(--tm-border-2);
+  /* The base rule it shares with the filled buttons carries a single ink,
+     and that ink belongs to the fill. This variant is glass, so it follows
+     the page instead. */
+  color: var(--sfs-text, #fff);
 }
 .tm-btn-control:hover:not(:disabled) {
   background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.75);
@@ -470,7 +474,7 @@
   width: 18px; height: 18px;
   border-radius: 50%;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   transition: all var(--tm-t-base);
 }
 .tm-light.green.on  { background: var(--tm-success-2); border-color: var(--tm-success-2); box-shadow: 0 0 14px rgb(var(--sfs-success-rgb, 16 185 129) / 0.8); }
@@ -506,7 +510,7 @@
   justify-content: center;
   border-radius: var(--tm-r-md);
   border: 3px solid transparent;
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.65);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.65);
   overflow: hidden;
   transition: all var(--tm-t-base);
 }
@@ -608,8 +612,8 @@
   font-size: 0.78rem;
   font-weight: 500;
   color: var(--sfs-text, #fff);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.65);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.65);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   border-radius: 6px;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -649,16 +653,16 @@
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.8rem;
-  color: var(--sfs-on-danger, #fff);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.65);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  color: var(--sfs-text, #fff);
+  background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.65);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   border-radius: 50%;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 .tm-status-icon.muted {
   background: var(--tm-danger);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
 }
 
 .tm-focus-badge {
@@ -788,7 +792,7 @@
   filter: drop-shadow(0 0 14px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35));
 }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .tm-page h1 { background: none; color: #fff; -webkit-text-fill-color: #fff; }
+  .tm-page h1 { background: none; color: var(--sfs-text, #fff); -webkit-text-fill-color: var(--sfs-text, #fff); }
 }
 
 .tm-filters {
@@ -870,9 +874,9 @@
   padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--sfs-on-success, #fff);
+  color: var(--sfs-text, #fff);
   border-radius: 999px;
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
 }
 .tm-score-pill.good { background: linear-gradient(135deg, var(--sfs-success, #22c55e), var(--sfs-success, #10b981)); box-shadow: 0 4px 12px rgb(var(--sfs-success-rgb, 16 185 129) / 0.35); }
 .tm-score-pill.mid  { background: linear-gradient(135deg, var(--sfs-warning, #f59e0b), var(--sfs-warning, #d97706)); box-shadow: 0 4px 12px rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35); }
@@ -889,7 +893,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgb(var(--sfs-shade-rgb, 3 3 15) / 0.65);
+  background: rgb(var(--sfs-surface-rgb, 3 3 15) / 0.65);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
@@ -920,7 +924,7 @@
   padding: 1.25rem 1.75rem;
   color: var(--sfs-on-accent, #fff);
   background: var(--tm-grad);
-  border-bottom: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
 }
 .tm-report-header h2 {
   font-size: clamp(1.1rem, 1.5vw + 0.3rem, 1.4rem);
@@ -937,7 +941,7 @@
   font-size: 1.1rem;
   color: var(--sfs-text, #fff);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
-  border: 1px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
   border-radius: 50%;
   cursor: pointer;
   transition: background var(--tm-t-fast), transform var(--tm-t-fast);
@@ -965,7 +969,7 @@
   color: var(--sfs-on-accent, #fff);
   background: var(--tm-grad);
   border-radius: 50%;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
   box-shadow: 0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 .tm-report-user-banner > div:last-child > div:first-child {
@@ -1247,7 +1251,7 @@
   .tm-transcript-box,
   .tm-meeting-room {
     background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85);
-    border-color: var(--sfs-paper-border, #fff);
+    border-color: var(--sfs-border-strong, #fff);
   }
   .tm-type-info { border-color: var(--sfs-border-strong, #fff); }
 }

@@ -29,9 +29,9 @@
   --accent-blue:  var(--sfs-info, #0ea5e9);
 
   /* Text colors over galaxy */
-  --txt-primary:   #ffffff;
-  --txt-secondary: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.78);
-  --txt-muted:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.55);
+  --txt-primary:   var(--sfs-text, #ffffff);
+  --txt-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
+  --txt-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
 
   /* Glass surfaces */
   --glass-bg:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
@@ -105,7 +105,7 @@
 .course-details-page .loading-spinner {
   width: clamp(56px, 9vw, 76px);
   height: clamp(56px, 9vw, 76px);
-  border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top: 3px solid var(--brand-from);
   border-right: 3px solid var(--brand-to);
   border-radius: 50%;
@@ -187,7 +187,7 @@
 .course-details-page .submit-btn,
 .course-details-page .homework-btn {
   background: var(--brand-grad);
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   box-shadow: var(--shadow-glow);
 }
 
@@ -355,7 +355,7 @@
     transparent 0%,
     transparent 55%,
     rgb(var(--sfs-shade-rgb, 8 10 25) / 0.35) 85%,
-    rgb(var(--sfs-shade-rgb, 8 10 25) / 0.55) 100%
+    rgb(var(--sfs-surface-rgb, 8 10 25) / 0.55) 100%
   );
   z-index: 4;
   pointer-events: none;
@@ -371,7 +371,7 @@
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgb(var(--sfs-shade-rgb, 15 18 40) / 0.55) 35%,
+    rgb(var(--sfs-surface-rgb, 15 18 40) / 0.55) 35%,
     rgb(var(--sfs-surface-rgb, 12 15 35) / 0.72) 100%
   );
   backdrop-filter: blur(8px);
@@ -553,7 +553,7 @@
 }
 
 .course-details-page .section:hover {
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: var(--shadow-md), var(--shadow-glow-strong);
 }
 
@@ -903,7 +903,7 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.3);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
   border-top-color: var(--sfs-border-strong, #ffffff);
   border-radius: 50%;
   animation: cd-spin 0.8s linear infinite;
@@ -919,7 +919,7 @@
 }
 
 .course-details-page .comment-card:hover {
-  border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   background: var(--glass-bg);
   box-shadow: var(--shadow-sm);
 }
@@ -968,7 +968,7 @@
   font-size: clamp(13px, 2.4vw, 17px);
   background: var(--brand-grad);
   color: var(--sfs-on-accent, #fff);
-  border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -1179,7 +1179,7 @@
   .course-details-page .comment-card,
   .course-details-page .stat-item {
     border-width: 2px;
-    border-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.6);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.6);
   }
   .course-details-page .comment-content,
   .course-details-page .description-content,
