@@ -152,6 +152,54 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* -------------------------------------------------------------
+   APP BADGE — replaces the brand lockup while inside an application.
+   A link to that application's landing page: the title says where you
+   are, the link acts on it.
+   ------------------------------------------------------------- */
+.app-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--sn-r-md);
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: background var(--sn-t-fast), border-color var(--sn-t-fast), transform var(--sn-t-fast);
+}
+.app-badge:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--sn-glass-border-hover);
+  transform: translateY(-1px);
+}
+.sidebar.collapsed .app-badge { display: none; }
+
+.app-badge-icon {
+  width: 36px; height: 36px; min-width: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--sn-r-md);
+  background: var(--sn-grad);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.app-badge-icon svg { width: 20px; height: 20px; }
+
+.app-badge-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.app-badge-title {
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1px;
+  color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.app-badge-sub {
+  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.15px;
+  color: var(--sn-text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 .sidebar-toggle {
   width: 40px; height: 40px; min-width: 40px;
   display: flex; align-items: center; justify-content: center;
@@ -333,6 +381,69 @@
   border-radius: 4px;
 }
 .sidebar-nav::before { display: none; }
+
+/* -------------------------------------------------------------
+   GROUP LABELS
+   The scoped list and the disclosed platform list both group their
+   entries; on the rail the label has nowhere to go, so it degrades to
+   a hairline that still says "new group".
+   ------------------------------------------------------------- */
+.nav-group-label {
+  margin: 0.85rem 0 0.15rem;
+  padding: 0 0.85rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--sn-text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nav-group-label:first-child { margin-top: 0.35rem; }
+.nav-group-label-extra { color: rgba(167, 139, 250, 0.75); }
+
+.nav-group-rule {
+  display: block;
+  height: 1px;
+  margin: 0.5rem 0.9rem;
+  background: linear-gradient(90deg, transparent, var(--sn-glass-border-hover), transparent);
+}
+
+/* -------------------------------------------------------------
+   HOME — pinned, always rendered, never filtered away.
+   ------------------------------------------------------------- */
+.nav-home {
+  margin-bottom: 0.15rem;
+  color: var(--sn-text);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--sn-glass-border) !important;
+}
+.nav-home .nav-icon { color: var(--sn-accent-2); }
+.nav-home:hover { background: rgba(255, 255, 255, 0.09); }
+.nav-home.active .nav-icon { color: #fff; }
+
+/* -------------------------------------------------------------
+   "ALL APPLICATIONS" DISCLOSURE
+   ------------------------------------------------------------- */
+.nav-more {
+  width: 100%;
+  margin-top: 0.6rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--sn-glass-border-hover) !important;
+  color: var(--sn-text-mute);
+}
+.nav-more:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.nav-more-chevron {
+  flex-shrink: 0;
+  transition: transform var(--sn-t-fast);
+}
+.nav-more-chevron.open { transform: rotate(180deg); }
+.sidebar.collapsed .nav-more-chevron { display: none; }
 
 .nav-item {
   position: relative;
@@ -698,6 +809,8 @@
    ACCESSIBILITY
    ============================================================= */
 .nav-item:focus-visible,
+.app-badge:focus-visible,
+.nav-more:focus-visible,
 .sidebar-toggle:focus-visible,
 .search-clear:focus-visible,
 .rail-search-btn:focus-visible,
@@ -715,6 +828,8 @@
   .sidebar,
   .app-container > .main-content,
   .nav-item,
+  .app-badge,
+  .nav-more-chevron,
   .sidebar-toggle,
   .mobile-toggle,
   .logout-btn,
