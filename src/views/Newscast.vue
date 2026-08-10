@@ -56,8 +56,12 @@ import {
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
 import {
+    ApiError,
+} from '@/services/api';
+import {
     newsService, splitCategoryPath,
     type NewsBulletin, type NewsCategory, type NewsHeadline, type NewsLanguageInfo,
+    type SpeechCapabilities,
 } from '@/services/news.service';
 
 /**
@@ -113,6 +117,11 @@ const UI = {
         serverVoice: 'Self Study voice service',
         maleVoice: 'male voice', femaleVoice: 'female voice',
         noPairHelp: 'This device only has voices of one gender for this language, so the two presenters are being read by the Self Study voice service instead.',
+        soloHelp: 'The voice service on this replica can only produce one voice at the '
+            + 'moment, so this bulletin is being read by a single presenter. Two presenters '
+            + 'return automatically once the replica is fixed — one of them would otherwise '
+            + 'be read in the wrong voice.',
+        soloBadge: 'Single presenter',
         breaking: 'BREAKING', fresh: 'NEW',
     },
     ar: {
@@ -142,6 +151,10 @@ const UI = {
         serverVoice: 'خدمة سيلف ستدي الصوتية',
         maleVoice: 'صوت رجل', femaleVoice: 'صوت امرأة',
         noPairHelp: 'لا يتوفر على هذا الجهاز سوى أصوات من جنس واحد لهذه اللغة، لذلك يقرأ المذيعان بصوت خدمة سيلف ستدي الصوتية (رجل وامرأة).',
+        soloHelp: 'لا تستطيع خدمة الصوت على هذا الخادم توفير سوى صوت واحد حاليا، لذلك تُقرأ '
+            + 'النشرة بمذيع واحد. سيعود المذيعان تلقائيا بعد إصلاح الخادم — وإلا لقرأ أحدهما '
+            + 'بصوت لا يخصه.',
+        soloBadge: 'مذيع واحد',
         breaking: 'عاجل', fresh: 'جديد',
     },
 } as const;
@@ -177,6 +190,15 @@ const availableVoices = ref<VoiceLike[]>([]);
 const chosenVoice = reactive<{ female: string; male: string }>({ female: '', male: '' });
 /** The server voice each anchor last spoke with — displayed, so it is checkable. */
 const serverVoices = reactive<{ female: string; male: string }>({ female: '', male: '' });
+/**
+ * What the backend says it can voice, or null before it has been asked.
+ *
+ * `paired: false` means the replica is down to a provider with one voice per
+ * language, and the bulletin has to be read by a single presenter. Null is
+ * treated as paired: a replica running an older build has no such route, and
+ * "assume two anchors" is exactly how the page behaved before this existed.
+ */
+const capabilities = ref<SpeechCapabilities | null>(null);
 /** Consecutive synthesis failures, so a dead engine stops rather than silently skipping. */
 let failures = 0;
 
@@ -207,6 +229,16 @@ const speakingAnchor = computed<AnchorId | null>(() =>
     status.value === 'playing' && !buffering.value
         ? currentSegment.value?.anchor ?? null
         : null);
+
+/**
+ * Who is on set.
+ *
+ * Always in this order, never in the order they speak: the rota alternates who
+ * opens between categories, so following the script would swap the two
+ * presenters around the desk every time the reader changed section.
+ */
+const onAirAnchors = computed<AnchorId[]>(() =>
+    soloAnchor.value ? [soloAnchor.value] : (['female', 'male'] as AnchorId[]));
 
 const currentItem = computed(() => {
     const id = currentSegment.value?.itemId;
@@ -321,7 +353,23 @@ function rebuildScript() {
         // always start with the same voice saying the same sentence.
         firstAnchor: (rundown.value.length % 2 === 0 ? 'female' : 'male') as AnchorId,
         maxItems: 12,
+        // Overrides `firstAnchor` when set, which is what we want: one voice
+        // reads the whole thing rather than the rota quietly casting the same
+        // voice as both people.
+        soloAnchor: soloAnchor.value,
     });
+}
+
+/**
+ * Ask the backend whether it can field two anchors.
+ *
+ * Cheap on the backend (an import check plus whatever the last real synthesis
+ * reported) and asked once per visit, before anything is spoken — the answer
+ * changes the running order, so discovering it mid-bulletin means the listener
+ * has already heard the wrong voice.
+ */
+async function loadCapabilities() {
+    capabilities.value = await newsService.speechCapabilities();
 }
 
 /* ------------------------------------------------------------------ *
@@ -373,25 +421,53 @@ const activeSource = computed<'device' | 'server'>(() => {
     if (!speechSupported.value || availableVoices.value.length === 0) return 'server';
 
     /*
-      ARABIC ALWAYS GOES TO THE SERVER.
+      ARABIC GOES TO THE SERVER, unless the server cannot field a pair either.
 
-      Not a preference — three separate reports of the male anchor sounding
-      female all came back to device Arabic voices, and each had a different
-      cause: no Arabic voice at all, then two female voices and no male, then a
-      male voice too light to read as one. The device's Arabic line-up is a
-      lottery that varies by OS, browser, and which language packs happen to be
-      installed, and nothing here can measure it at runtime.
+      The first clause is the settled answer and it stays: several reports of
+      the male anchor sounding female all came back to device Arabic voices, and
+      each had a different cause — no Arabic voice at all, then two female
+      voices and no male, then a male voice too light to read as one. The
+      device's Arabic line-up is a lottery that varies by OS, browser and
+      installed packs, and nothing here can measure it at runtime. The server
+      pair is measured and fixed: Zariyah at 208 Hz and Hamed at 113 Hz, an
+      octave apart, identical on every device.
 
-      The server pair is measured and fixed: Zariyah at 208 Hz and Hamed at
-      113 Hz, an octave apart, identical on every device. For a two-anchor
-      bulletin that guarantee is worth more than saving a round trip, and the
-      audio is cached after the first play anyway.
+      The exception is new, and it is the whole point of `capabilities`. That
+      guarantee is what the rule was written for, and it does not hold when the
+      replica has lost the provider that supplies it — the fallback has ONE
+      voice per language and it is female, so "always the server" then means an
+      Arabic bulletin read by two women, which is the report this rule exists to
+      prevent. A device that has a genuinely gendered pair (`hasGenderedPair`,
+      which is a measured question, not a hopeful one) is strictly better than
+      that. When neither can pair, we stay on the server and read with one
+      presenter — see `soloAnchor`.
 
       English device voices stay in use when the device can field a real pair —
       they are instant and they are usually right.
     */
-    if (language.value === 'ar') return 'server';
+    if (language.value === 'ar') {
+        return (!serverPaired.value && devicePair.value) ? 'device' : 'server';
+    }
     return devicePair.value ? 'device' : 'server';
+});
+
+/** Can the backend read a bulletin with two people? Unknown counts as yes. */
+const serverPaired = computed(() => capabilities.value?.paired ?? true);
+
+/**
+ * The one presenter this bulletin is read by, or null for the usual two.
+ *
+ * Only ever set under the server engine: the device path already refuses to
+ * cast a mismatched pair (`hasGenderedPair` gates it, and `activeSource` sends
+ * an unpairable device to the server), so a solo device bulletin is not a state
+ * that can arise.
+ */
+const soloAnchor = computed<AnchorId | null>(() => {
+    if (!usingServer.value || serverPaired.value) return null;
+    const solo = capabilities.value?.languages?.[language.value]?.solo_gender;
+    // Default female: it is what every fallback voice on offer actually is, and
+    // guessing male would put us straight back into the bug.
+    return solo === 'male' ? 'male' : 'female';
 });
 
 /** Set after repeated server failures, so `auto` can fall back to the device. */
@@ -565,6 +641,56 @@ function prefetch(index: number) {
         .catch(() => undefined);
 }
 
+/**
+ * Drop to a single presenter, mid-bulletin, and carry on from where we are.
+ *
+ * The backend refuses to voice an anchor it has no voice for (409
+ * `no_gendered_voice`) rather than substituting the one voice it has. That
+ * refusal is recoverable and this is the recovery: rebuild the running order
+ * for one presenter and resume the story being read, so the listener hears a
+ * handover line and then the same story continued, not an error.
+ *
+ * It duplicates what `loadCapabilities` normally settles before playback, and
+ * it is not redundant — it is what covers a replica that loses the provider
+ * mid-bulletin, a failover onto a differently-configured replica, and a page
+ * that was open before the backend changed.
+ */
+function fallBackToSoloPresenter(gender: 'female' | 'male'): boolean {
+    if (soloAnchor.value) return false;                 // already solo; not this
+    const existing = capabilities.value;
+    capabilities.value = {
+        provider: 'google',
+        edge: { ok: false },
+        ...(existing || {}),
+        paired: false,
+        languages: {
+            ...(existing?.languages || {}),
+            [language.value]: {
+                paired: false,
+                genders: [gender],
+                solo_gender: gender,
+                voices: { female: null, male: null },
+            },
+        },
+    };
+
+    const itemId = currentSegment.value?.itemId;
+    rebuildScript();
+    failures = 0;
+    serverSpeechError.value = '';
+    if (status.value === 'playing') {
+        // Resume the story, not the bulletin: restarting from the top would
+        // make a provider hiccup sound like the page reloading itself.
+        const index = itemId
+            ? script.value.findIndex(s => s.itemId === itemId && s.kind === 'headline')
+            : 0;
+        speakSegment(index === -1 ? 0 : index);
+    } else {
+        cursor.value = -1;
+    }
+    return true;
+}
+
 async function speakViaServer(segment: Segment, mine: number) {
     const audio = ensureVoiceAudio();
     buffering.value = true;
@@ -573,6 +699,23 @@ async function speakViaServer(segment: Segment, mine: number) {
             segment.text, language.value, segment.anchor, rate.value);
         // The reader skipped, paused or stopped while this was synthesising.
         if (mine !== generation) return;
+
+        /*
+          THE LAST LINE OF DEFENCE, and the only one on this side of the wire.
+
+          Every other guard against an anchor being read in the wrong voice
+          lives in the backend, and the outage that prompted all of this got
+          past all of them — the voice table was right, the pitch assertions
+          passed, and the replica quietly fell through to a provider none of
+          them described. So the page now checks the audio it was actually
+          given: if the server says it rendered a woman for آدم, we stop
+          casting آدم rather than playing it.
+        */
+        if (clip.gender && clip.gender !== segment.anchor) {
+            buffering.value = false;
+            if (fallBackToSoloPresenter(clip.gender)) return;
+        }
+
         serverSpeechError.value = '';
         serverUnavailable.value = false;
         // Record what actually spoke. Shown under the anchor, because "is آدم
@@ -602,6 +745,22 @@ async function speakViaServer(segment: Segment, mine: number) {
         prefetch(cursor.value + 1);
     } catch (err: any) {
         if (mine !== generation) return;
+
+        // 409 `no_gendered_voice`: the replica has no voice for this anchor and
+        // said so instead of substituting one. Not a failure to count — it is
+        // an instruction, and the bulletin continues with one presenter.
+        if (err instanceof ApiError && err.status === 409
+            && err.data?.code === 'no_gendered_voice') {
+            buffering.value = false;
+            // The server names the gender it does have; with two of them,
+            // "not the one we asked for" is the same answer, and is what a
+            // body that did not survive a proxy falls back to.
+            const gender = err.data?.available_gender === 'male' ? 'male'
+                : err.data?.available_gender === 'female' ? 'female'
+                : (segment.anchor === 'male' ? 'female' : 'male');
+            if (fallBackToSoloPresenter(gender)) return;
+        }
+
         serverSpeechError.value = err?.message || String(err);
         failures += 1;
         if (failures >= 3) {
@@ -840,6 +999,19 @@ watch(speechSource, () => {
     if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
 });
 
+/*
+  The running order depends on how many presenters there are, so it has to be
+  rebuilt when that changes — switching the voice source, or the capabilities
+  answer arriving after the first bulletin has already been built, both flip it.
+  Rebuilding while idle only; a change during playback comes through
+  `fallBackToSoloPresenter`, which also resumes the story being read.
+*/
+watch(soloAnchor, () => {
+    if (status.value === 'playing') return;
+    rebuildScript();
+    cursor.value = -1;
+});
+
 watch(activeKey, async (key) => {
     if (!key) return;
     stop();
@@ -891,7 +1063,10 @@ onMounted(async () => {
         // Fires once the list is populated, and on some platforms again later.
         window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
     }
-    await loadLanguages();
+    // Before the bulletin, not after: the answer decides whether the running
+    // order has one presenter or two, and rebuilding it under a listener who
+    // has already pressed play is the thing this is meant to avoid.
+    await Promise.all([loadLanguages(), loadCapabilities()]);
     await Promise.all([loadCatalogue(), loadTicker()]);
     await loadBulletin();
 });
@@ -960,20 +1135,24 @@ onBeforeRouteLeave(() => {
                 <span class="studio__grid"></span>
             </div>
 
+            <!--
+              Only the presenters who actually speak are on set.
+
+              With one voice available the second anchor would stand there in
+              silence for the whole bulletin, which reads as a broken presenter
+              rather than an absent one — and it is the exact impression that
+              produced the original report. `anchorsUsed` reads it off the
+              script, so the studio can never show someone the running order
+              does not cast.
+            -->
             <div class="studio__anchors">
                 <NewsAnchor
-                    anchor="female"
-                    :name="anchorNames.female"
-                    :voice-label="voiceLabel('female')"
-                    :speaking="speakingAnchor === 'female'"
-                    :active="speakingAnchor === 'female' || status !== 'playing'"
-                />
-                <NewsAnchor
-                    anchor="male"
-                    :name="anchorNames.male"
-                    :voice-label="voiceLabel('male')"
-                    :speaking="speakingAnchor === 'male'"
-                    :active="speakingAnchor === 'male' || status !== 'playing'"
+                    v-for="anchor in onAirAnchors" :key="anchor"
+                    :anchor="anchor"
+                    :name="anchorNames[anchor]"
+                    :voice-label="voiceLabel(anchor)"
+                    :speaking="speakingAnchor === anchor"
+                    :active="speakingAnchor === anchor || status !== 'playing'"
                 />
             </div>
 
@@ -986,6 +1165,7 @@ onBeforeRouteLeave(() => {
                     <span v-if="activeCategory" class="lower-third__cat">
                         {{ categoryLabel(activeCategory) }} · {{ activeCategory.source_label }}
                     </span>
+                    <span v-if="soloAnchor" class="badge">{{ t.soloBadge }}</span>
                     <span v-if="currentItem?.fresh" class="badge badge--fresh">{{ t.fresh }}</span>
                 </div>
                 <p class="lower-third__text">
@@ -1104,7 +1284,18 @@ onBeforeRouteLeave(() => {
           a note about which engine is doing the reading, because the server
           fallback speaks every supported language on every device.
         -->
-        <div v-if="missingVoice || (!speechSupported && usingServer)" class="notice">
+        <!--
+          One presenter, because the backend has one voice.
+
+          First, because it is the notice that explains what the reader can
+          actually see — a studio with one person in it — and because the two
+          below are about the device, which is not what is deciding anything
+          here.
+        -->
+        <div v-if="soloAnchor" class="notice">
+            <Radio :size="16" /> {{ t.soloHelp }}
+        </div>
+        <div v-else-if="missingVoice || (!speechSupported && usingServer)" class="notice">
             <Radio :size="16" /> {{ t.noVoiceHelp }}
         </div>
         <!--
@@ -1112,7 +1303,8 @@ onBeforeRouteLeave(() => {
           Edge's two Arabic voices are both female. Rather than reading the
           bulletin with two women, `auto` uses the server pair and says why.
         -->
-        <div v-else-if="speechSource === 'auto' && !devicePair && availableVoices.length"
+        <div v-else-if="speechSource === 'auto' && !devicePair && availableVoices.length
+                        && usingServer"
              class="notice">
             <Radio :size="16" /> {{ t.noPairHelp }}
         </div>

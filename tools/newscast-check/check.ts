@@ -26,7 +26,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
     BED_COUNT, OTHER_ANCHOR, PHRASES,
-    bedIndexFor, bedVolumeFor, buildScript, canSpeak, castVoices, detailText,
+    anchorsUsed, bedIndexFor, bedVolumeFor, buildScript, canSpeak, castVoices, detailText,
     estimateDurationMs, genderOf, hasDetail, hasGenderedPair, isRtl, localeFor,
     pickVoice, sentences, speakable, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type NewsItem, type Segment, type VoiceLike,
@@ -499,6 +499,81 @@ console.log('\n10. A whole bulletin end to end');
     const kinds = script.map(s => s.kind).join(' ');
     check('the shape is open, then stories, then close',
           kinds.startsWith('open headline detail') && kinds.endsWith('close'), kinds);
+}
+
+console.log('\n11. One presenter, when the engine can only field one voice');
+{
+    /*
+      WHY THIS SECTION EXISTS.
+
+      Reported as "in Arabic, when a man speaks, he speaks in a woman's voice",
+      and none of the ten sections above could have caught it, because none of
+      them is about the *provider*. Section 9 proves the device path never casts
+      a mismatched pair. The backend proves its own neural pair is measured and
+      separated. What sat between them: with `edge-tts` missing from the
+      replica, app 36 fell through to a provider that has exactly one voice per
+      language — female — and rendered both anchors with it. Every check passed.
+
+      The engine's answer is `soloAnchor`. Sharing one voice between two named
+      presenters is the bug; reading the bulletin with one presenter is a
+      bulletin. These assertions are the difference.
+    */
+    const solo = buildScript({ language: 'ar', items: ENGLISH, soloAnchor: 'female' });
+
+    check('a solo bulletin casts exactly one presenter',
+          anchorsUsed(solo).length === 1, anchorsUsed(solo));
+    check('and it is the one asked for',
+          solo.every(s => s.anchor === 'female'),
+          [...new Set(solo.filter(s => s.anchor !== 'female').map(s => s.kind))]);
+    check('the sign-off is the same presenter, not the "other" one',
+          solo[solo.length - 1].anchor === 'female', solo[solo.length - 1].anchor);
+    check('the male presenter is never cast anywhere in it',
+          !solo.some(s => s.anchor === 'male'));
+
+    const soloMale = buildScript({ language: 'ar', items: ENGLISH, soloAnchor: 'male' });
+    check('a solo bulletin works for either presenter',
+          anchorsUsed(soloMale).length === 1 && soloMale[0].anchor === 'male',
+          anchorsUsed(soloMale));
+
+    // `soloAnchor` OVERRIDES `firstAnchor`. Honouring both would open with one
+    // voice and read with another — the two-voice bug wearing a hat.
+    const conflicting = buildScript({
+        language: 'en', items: ENGLISH, firstAnchor: 'female', soloAnchor: 'male',
+    });
+    check('soloAnchor wins over a conflicting firstAnchor',
+          anchorsUsed(conflicting).length === 1 && conflicting[0].anchor === 'male',
+          anchorsUsed(conflicting));
+
+    // Everything else about the bulletin has to survive it. A solo bulletin is
+    // a normal bulletin, not a degraded mode with its own rules.
+    check('the bed policy is unchanged',
+          solo.every(s => (s.kind === 'detail') === (s.bed === false)));
+    check('every story is still read',
+          storyOrder(solo).length === storyOrder(
+              buildScript({ language: 'ar', items: ENGLISH })).length);
+    check('handover lines still link the stories',
+          solo.filter(s => s.kind === 'handover').length === ENGLISH.length - 1,
+          solo.filter(s => s.kind === 'handover').length);
+    check('a headline is still followed by its own detail',
+          solo.every((s, i) => s.kind !== 'detail' || solo[i - 1]?.itemId === s.itemId));
+    check('nothing spoken is empty', solo.every(s => s.text.trim().length > 0));
+    check('the shape is still open, stories, close',
+          solo[0].kind === 'open' && solo[solo.length - 1].kind === 'close');
+
+    // And the default is unaffected: two presenters, alternating, as before.
+    const paired = buildScript({ language: 'en', items: ENGLISH });
+    check('without soloAnchor there are still two presenters',
+          anchorsUsed(paired).length === 2, anchorsUsed(paired));
+    check('soloAnchor: null is the same as omitting it',
+          JSON.stringify(buildScript({ language: 'en', items: ENGLISH, soloAnchor: null }))
+          === JSON.stringify(paired));
+
+    // An empty category speaks either way — it is the one script with a single
+    // segment, so it must not be mistaken for a solo bulletin by anything.
+    const emptySolo = buildScript({ language: 'ar', items: [], soloAnchor: 'female' });
+    check('an empty solo bulletin still says so',
+          emptySolo.length === 1 && emptySolo[0].anchor === 'female'
+          && emptySolo[0].text.length > 0, emptySolo);
 }
 
 console.log(`\n${failures ? `FAILED: ${failures} check(s)` : 'All newscast engine checks passed.'}`);

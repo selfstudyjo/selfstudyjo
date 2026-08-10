@@ -231,15 +231,35 @@ class NewsService {
                     });
                     if (!response.ok) {
                         let detail = `Speech unavailable (${response.status})`;
+                        let body: any = null;
                         try {
-                            detail = (await response.json())?.error || detail;
+                            body = await response.json();
+                            detail = body?.error || detail;
                         } catch { /* a non-JSON error body is not worth surfacing */ }
-                        throw new ApiError(detail, response.status);
+                        // The body is carried, not just the sentence: a 409 says
+                        // `code: 'no_gendered_voice'` and which gender it DOES
+                        // have, and the page acts on both. Flattening an
+                        // upstream error to its message is the mistake
+                        // CLAUDE.md warns about on the console's screens, and it
+                        // costs the same thing here.
+                        throw new ApiError(detail, response.status, body);
                     }
+                    // These three only arrive because app 36 lists them in the
+                    // CORS `expose_headers`. It did not until the two-women
+                    // bulletin was traced: a header a browser was not told to
+                    // expose reads back as null, silently, so the page's "which
+                    // voice actually spoke" caption showed the generic fallback
+                    // and hid the very thing it was built to reveal.
+                    const rendered = response.headers.get('X-Sfs-Voice-Gender');
                     const clip: SpeechClip = {
                         url: URL.createObjectURL(await response.blob()),
                         voice: response.headers.get('X-Sfs-Voice') || '',
                         provider: response.headers.get('X-Sfs-Provider') || '',
+                        // Anything the backend does not recognise reads as '',
+                        // which means "unknown" and is never treated as a
+                        // mismatch — guessing in either direction here would be
+                        // worse than the check not firing.
+                        gender: rendered === 'female' || rendered === 'male' ? rendered : '',
                     };
                     this.clips.set(key, clip);
                     return clip;
@@ -267,6 +287,28 @@ class NewsService {
     }
 
     /**
+     * Can the backend field TWO anchors, or only one?
+     *
+     * Asked before the bulletin starts, because after it starts there is no
+     * useful answer left. The backend renders a male/female pair with a neural
+     * provider and falls back to one that has a single female voice per
+     * language; with the fallback in charge, a two-anchor bulletin is two
+     * women, and the page reads it with one presenter instead.
+     *
+     * Never throws — a replica running a build without this route answers 404,
+     * and the honest reading of that is "assume it is paired, as it always
+     * was". Deploy order is then not a trap: an old backend behaves exactly as
+     * it does today, and the 409 on the synthesis call is the safety net.
+     */
+    async speechCapabilities(): Promise<SpeechCapabilities | null> {
+        try {
+            return await this.call<SpeechCapabilities>('/api/news/tts/capabilities/');
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * Release every synthesised clip.
      *
      * An object URL pins its blob in memory until revoked, and a bulletin is
@@ -288,12 +330,41 @@ export interface SpeechClip {
     voice: string;
     /** 'edge' | 'google' | 'cache'. Names the fallback when it is in use. */
     provider: string;
+    /**
+     * The gender that voice actually is, as the backend measures it — not the
+     * anchor that was asked for. The page compares the two and stops trusting
+     * the server if they disagree, which is the only check that sits on this
+     * side of the wire.
+     */
+    gender: 'female' | 'male' | '';
 }
 
 export interface SpeechHealth {
     ok: boolean;
+    /** False when only the single-voice fallback provider is reachable. */
+    paired?: boolean;
+    anchors?: number;
     providers: Record<string, { ok: boolean; error?: string; bytes?: number }>;
     hint?: string;
+}
+
+export interface SpeechLanguageCapability {
+    paired: boolean;
+    genders: Array<'female' | 'male'>;
+    /** The one gender available when `paired` is false. */
+    solo_gender: 'female' | 'male' | '';
+    voices: Record<'female' | 'male', string | null>;
+}
+
+export interface SpeechCapabilities {
+    /** The whole question: can this replica read a bulletin with two people? */
+    paired: boolean;
+    provider: 'edge' | 'google';
+    edge: { ok: boolean; error?: string };
+    languages: Record<string, SpeechLanguageCapability>;
+    reason?: string;
+    /** What an operator has to do about it, in words. */
+    fix?: string;
 }
 
 export const newsService = new NewsService();

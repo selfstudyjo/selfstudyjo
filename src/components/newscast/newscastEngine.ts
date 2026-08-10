@@ -90,6 +90,21 @@ export interface ScriptOptions {
     firstAnchor?: AnchorId;
     /** Cap the running order. */
     maxItems?: number;
+    /**
+     * Read the whole bulletin with ONE presenter, of this gender.
+     *
+     * Set when the speech engine in use cannot field a male and a female voice
+     * — which is not hypothetical: with `edge-tts` missing from the replica the
+     * backend falls through to a provider that has exactly one voice per
+     * language, and it is female.
+     *
+     * The tempting thing to do there is nothing, and let both anchors share the
+     * voice. That is the bug: the listener hears a woman say آدم's lines, and
+     * the handover between two identical voices reads as a fault on top. One
+     * presenter reading everything is a normal, correct bulletin — plenty of
+     * real ones are — so it is what we do instead.
+     */
+    soloAnchor?: AnchorId | null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -275,7 +290,9 @@ export const OTHER_ANCHOR: Record<AnchorId, AnchorId> = {
  * * every `detail` segment has `bed === false` and every other kind has
  *   `bed === true`;
  * * a story's `headline` and its `detail` are read by the SAME anchor, and
- *   consecutive stories are read by different ones.
+ *   consecutive stories are read by different ones — unless `soloAnchor` is
+ *   set, in which case every segment is that one presenter and the rota is
+ *   deliberately switched off rather than degraded.
  */
 export function buildScript(options: ScriptOptions): Segment[] {
     const {
@@ -283,9 +300,15 @@ export function buildScript(options: ScriptOptions): Segment[] {
         meta,
         withDetail = true,
         detailSentences = 3,
-        firstAnchor = 'female',
         maxItems = 12,
+        soloAnchor = null,
     } = options;
+
+    // One presenter means one presenter throughout: whoever opens also reads
+    // every story and signs off. Overriding `firstAnchor` rather than honouring
+    // it is the point — a solo bulletin that opened with the *other* voice
+    // would be the two-voice bug with extra steps.
+    const firstAnchor: AnchorId = soloAnchor || options.firstAnchor || 'female';
 
     const phrases = PHRASES[language];
     const items = (options.items || [])
@@ -310,9 +333,11 @@ export function buildScript(options: ScriptOptions): Segment[] {
     items.forEach((item, index) => {
         // A story belongs to one anchor. The handover line is spoken by the
         // anchor taking over, which is what makes it a handover rather than an
-        // announcement — so the switch happens before it, not after.
+        // announcement — so the switch happens before it, not after. With one
+        // presenter there is nobody to hand over to, and the line still works
+        // as a link ("Our next story." / "وفي خبر آخر.").
         if (index > 0) {
-            anchor = OTHER_ANCHOR[anchor];
+            if (!soloAnchor) anchor = OTHER_ANCHOR[anchor];
             script.push({
                 kind: 'handover',
                 anchor,
@@ -350,12 +375,27 @@ export function buildScript(options: ScriptOptions): Segment[] {
 
     script.push({
         kind: 'close',
-        anchor: OTHER_ANCHOR[anchor],
+        anchor: soloAnchor || OTHER_ANCHOR[anchor],
         text: phrases.close,
         bed: true,
     });
 
     return script;
+}
+
+/**
+ * Every presenter the script actually uses, in first-heard order.
+ *
+ * One entry means a solo bulletin, which is what the studio renders: showing a
+ * second anchor who never says anything is how somebody concludes the male
+ * presenter is broken rather than absent.
+ */
+export function anchorsUsed(script: Segment[]): AnchorId[] {
+    const seen: AnchorId[] = [];
+    for (const segment of script) {
+        if (!seen.includes(segment.anchor)) seen.push(segment.anchor);
+    }
+    return seen;
 }
 
 /** Every story the script touches, in order — what the page highlights. */
