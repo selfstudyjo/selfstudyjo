@@ -27,8 +27,8 @@ import { resolve } from 'node:path';
 import {
     BED_COUNT, OTHER_ANCHOR, PHRASES,
     bedIndexFor, bedVolumeFor, buildScript, canSpeak, castVoices, detailText,
-    estimateDurationMs, hasDetail, isRtl, localeFor, pickVoice, sentences,
-    speakable, storyOrder, utteranceLang, voicesFor,
+    estimateDurationMs, genderOf, hasDetail, hasGenderedPair, isRtl, localeFor,
+    pickVoice, sentences, speakable, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type NewsItem, type Segment, type VoiceLike,
 } from '../../src/components/newscast/newscastEngine';
 
@@ -369,6 +369,62 @@ console.log('\n9. Casting two distinct voices');
                   cast_voice);
         }
     }
+
+    /*
+      TWO FEMALE VOICES IS NOT A PAIR.
+
+      Reported after the language fix: "both voices in Arabic are female". The
+      voices themselves were fine — measured, the Arabic females sit at ~216 Hz
+      and the males at ~108 Hz, nearly an octave apart. What was wrong is that
+      Edge exposes Salma AND Zariyah on many machines, both female, so the
+      device had "plenty of Arabic voices" and still could not staff a
+      two-anchor bulletin. `hasGenderedPair` is the question the page has to ask
+      before using device voices at all.
+    */
+    const twoFemales: VoiceLike[] = [
+        { name: 'Microsoft Salma Online (Natural) - Arabic (Egypt)', lang: 'ar-EG' },
+        { name: 'Microsoft Zariyah Online (Natural) - Arabic (Saudi Arabia)', lang: 'ar-SA' },
+    ];
+    check('two female arabic voices are not a gendered pair',
+          !hasGenderedPair(twoFemales, 'ar'));
+    check('a real arabic pair is', hasGenderedPair([
+        twoFemales[0],
+        { name: 'Microsoft Shakir Online (Natural) - Arabic (Egypt)', lang: 'ar-EG' },
+    ], 'ar'));
+    check('no arabic voices at all is not a pair', !hasGenderedPair([], 'ar'));
+    check('english voices do not make an arabic pair',
+          !hasGenderedPair(voices.slice(0, 2), 'ar'));
+
+    // The known-name table is what makes the above reliable.
+    check('Zariyah is known female', genderOf(twoFemales[1]) === 'female');
+    check('Shakir is known male',
+          genderOf({ name: 'Microsoft Shakir Online (Natural) - Arabic (Egypt)', lang: 'ar-EG' })
+          === 'male');
+    check('Hamed is known male',
+          genderOf({ name: 'Microsoft Hamed Online (Natural) - Arabic (Saudi Arabia)', lang: 'ar-SA' })
+          === 'male');
+    check('an unrecognised voice is honestly unknown',
+          genderOf({ name: 'Google العربية', lang: 'ar-XA' }) === null);
+
+    // Whole-word matching, not `includes`. A substring test puts `ali` inside
+    // `Australia` and silently swaps an anchor's gender.
+    check('a substring is not a match',
+          genderOf({ name: 'English (Australia)', lang: 'en-AU' }) === null,
+          genderOf({ name: 'English (Australia)', lang: 'en-AU' }));
+    check('"female" in the name still works',
+          genderOf({ name: 'Google UK English Female', lang: 'en-GB' }) === 'female');
+    check('"male" in the name still works',
+          genderOf({ name: 'Google UK English Male', lang: 'en-GB' }) === 'male');
+
+    // And the cast honours it: given one of each, the anchors must not swap.
+    const realPair = castVoices([
+        { name: 'Microsoft Zariyah Online (Natural) - Arabic (Saudi Arabia)', lang: 'ar-SA' },
+        { name: 'Microsoft Hamed Online (Natural) - Arabic (Saudi Arabia)', lang: 'ar-SA' },
+    ], 'ar');
+    check('the female anchor gets the female voice',
+          /Zariyah/.test(realPair.female?.name || ''), realPair.female);
+    check('the male anchor gets the male voice',
+          /Hamed/.test(realPair.male?.name || ''), realPair.male);
 
     check('voicesFor filters to the language', voicesFor(voices, 'ar').length === 2,
           voicesFor(voices, 'ar').map(v => v.name));

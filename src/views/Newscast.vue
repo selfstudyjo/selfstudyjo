@@ -52,7 +52,7 @@ import NewsAnchor from '@/components/newscast/NewsAnchor.vue';
 import NewsTicker from '@/components/newscast/NewsTicker.vue';
 import {
     buildScript, bedIndexFor, bedVolumeFor, castVoices, estimateScriptMs,
-    isRtl, storyOrder, utteranceLang, voicesFor,
+    hasGenderedPair, isRtl, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
 import {
@@ -111,6 +111,7 @@ const UI = {
         sourceServer: 'Self Study (any device)',
         buffering: 'Preparing audio…',
         serverVoice: 'Self Study voice service',
+        noPairHelp: 'This device only has voices of one gender for this language, so the two presenters are being read by the Self Study voice service instead.',
         breaking: 'BREAKING', fresh: 'NEW',
     },
     ar: {
@@ -138,6 +139,7 @@ const UI = {
         sourceServer: 'خدمة سيلف ستدي (يعمل على كل الأجهزة)',
         buffering: 'جارٍ تجهيز الصوت…',
         serverVoice: 'خدمة سيلف ستدي الصوتية',
+        noPairHelp: 'لا يتوفر على هذا الجهاز سوى أصوات من جنس واحد لهذه اللغة، لذلك يقرأ المذيعان بصوت خدمة سيلف ستدي الصوتية (رجل وامرأة).',
         breaking: 'عاجل', fresh: 'جديد',
     },
 } as const;
@@ -361,9 +363,17 @@ const missingVoice = computed(() =>
 const activeSource = computed<'device' | 'server'>(() => {
     if (speechSource.value === 'server') return 'server';
     if (speechSource.value === 'device') return 'device';
-    return (!speechSupported.value || availableVoices.value.length === 0)
-        ? 'server' : 'device';
+    if (!speechSupported.value || availableVoices.value.length === 0) return 'server';
+    // A device with Arabic voices is not necessarily a device that can staff a
+    // two-anchor bulletin: Edge ships Salma and Zariyah, both female, so the
+    // male presenter would be a woman. The server always has a real pair, so
+    // `auto` prefers it whenever the device cannot field one.
+    return devicePair.value ? 'device' : 'server';
 });
+
+/** Does the device have both a male and a female voice for this language? */
+const devicePair = computed(() =>
+    hasGenderedPair(availableVoices.value, language.value));
 
 /** The reader is being read to by the backend rather than by their own device. */
 const usingServer = computed(() => activeSource.value === 'server');
@@ -1045,6 +1055,15 @@ onBeforeRouteLeave(() => {
         -->
         <div v-if="missingVoice || (!speechSupported && usingServer)" class="notice">
             <Radio :size="16" /> {{ t.noVoiceHelp }}
+        </div>
+        <!--
+          The device has voices for this language, but not one of each gender —
+          Edge's two Arabic voices are both female. Rather than reading the
+          bulletin with two women, `auto` uses the server pair and says why.
+        -->
+        <div v-else-if="speechSource === 'auto' && !devicePair && availableVoices.length"
+             class="notice">
+            <Radio :size="16" /> {{ t.noPairHelp }}
         </div>
         <div v-else-if="!speechSupported" class="notice notice--warn">
             <AlertCircle :size="16" /> {{ t.unsupported }}
