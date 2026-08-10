@@ -1,0 +1,1 @@
+import{t as e}from"./index-CYNmoM8O.js";export{e as serviceRegistry};
