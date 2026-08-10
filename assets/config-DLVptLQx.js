@@ -1,0 +1,1 @@
+import{t as e}from"./index-4lHL2_ms.js";export{e as serviceRegistry};
