@@ -44,6 +44,8 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Radio, Volume2 } from 'lucide-vue-next';
 
+import StudioScreen from './StudioScreen.vue';
+
 import emptyStill from '@/assets/studio/empty_news_studio.webp';
 import emptyLoop from '@/assets/studio/empty_news_studio.mp4';
 import femaleStill from '@/assets/studio/news_anchor_female.webp';
@@ -78,6 +80,15 @@ const props = defineProps<{
     /** Set when this presenter's voice is the reshaped fallback, not a real one. */
     shapedVoice?: boolean;
     shapedLabel?: string;
+    /** The article picture, for the left-hand monitor. */
+    articleImage?: string;
+    /** The line being read right now, for the right-hand monitor. */
+    liveText?: string;
+    /** Straps and chips on the two monitors. */
+    screenImageLabel: string;
+    screenTextLabel: string;
+    screenSource?: string;
+    screenIdle: string;
 }>();
 
 const SHOTS: Record<Shot, { still: string; loop: string }> = {
@@ -89,6 +100,17 @@ const SHOTS: Record<Shot, { still: string; loop: string }> = {
 const SHOT_ORDER: Shot[] = ['empty', 'female', 'male'];
 
 const shot = computed<Shot>(() => props.anchor ?? 'empty');
+
+/**
+ * Neither monitor has anything on it yet.
+ *
+ * Only used by the stacked layout, and it earns its place there: overlaid, two
+ * standby monitors cost nothing, but stacked they are ~440px of "Studio
+ * standby" sitting between the studio and the play button on a phone — so the
+ * first thing a visitor has to do on the one page that needs no account is
+ * scroll past two empty screens to find out how to start it.
+ */
+const monitorsIdle = computed(() => !props.articleImage && !props.liveText);
 
 /**
  * Which loop should be running.
@@ -209,6 +231,45 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
+        <!--
+          The two studio monitors.
+
+          A SIBLING of the stage rather than a child of it, and that is what
+          makes the two layouts possible without duplicating them in the DOM:
+          on a wide screen they are placed into the stage's own grid cell and
+          float over the picture, over-the-shoulder, the way a broadcast puts
+          them. Below 1100px they fall back into normal flow underneath it —
+          because the phone complaint that started this was overlays covering
+          the presenter's face, and the answer to that is not smaller overlays.
+        -->
+        <div class="screens" :class="{ 'screens--idle': monitorsIdle }">
+            <StudioScreen
+                class="screens__one"
+                :label="screenImageLabel"
+                :strap="screenSource"
+                :live="live"
+                :placeholder="screenIdle"
+            >
+                <img v-if="articleImage" class="screens__photo" :src="articleImage"
+                     alt="" loading="lazy" referrerpolicy="no-referrer" />
+            </StudioScreen>
+
+            <!--
+              Between bulletins there is no presenter to name, and a monitor
+              with a blank strap looks like a monitor with a fault — so the
+              brand fills the gap, as it does on the studio wall behind it.
+            -->
+            <StudioScreen
+                class="screens__two"
+                :label="screenTextLabel"
+                :strap="anchorName || 'Self Study JO'"
+                :live="live && speaking"
+                :placeholder="screenIdle"
+            >
+                <p v-if="liveText" class="screens__script" :key="liveText">{{ liveText }}</p>
+            </StudioScreen>
+        </div>
+
         <!-- The ticker sits inside the frame, where a broadcast puts it. -->
         <div class="studio__strip">
             <slot name="ticker"></slot>
@@ -217,14 +278,31 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/*
+  A grid, so the monitor row can either sit in its own row under the picture or
+  be dropped into the picture's cell and overlap it — with one DOM, no
+  duplication, and no JavaScript watching the viewport.
+*/
 .studio {
     position: relative;
+    display: grid;
+    /* ONE column, stated explicitly. Without it, giving `.screens` the stage's
+       row does not stack the two — auto-placement looks for the next FREE slot
+       in that row, invents a second column, and puts the monitors in a 236px
+       gutter beside the picture. Sharing a cell needs both the row and the
+       column pinned. */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
     border-radius: 1rem;
     overflow: hidden;
     border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
     background: var(--sfs-overlay, #05070f);
     box-shadow: 0 18px 46px rgb(0 0 0 / 0.32);
 }
+
+.studio__stage { grid-area: 1 / 1; }
+.screens { grid-area: 2 / 1; }
+.studio__strip { grid-area: 3 / 1; }
 
 .studio--live {
     border-color: rgb(var(--sfs-danger-rgb, 210 75 90) / 0.55);
@@ -475,6 +553,96 @@ onBeforeUnmount(() => {
     transition: width 0.4s ease;
 }
 
+/* -- the two monitors ------------------------------------------------ */
+.screens {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    padding: 0.7rem;
+    background: linear-gradient(to bottom,
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05), transparent);
+    border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+}
+
+.screens__photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0.1rem;
+    display: block;
+}
+
+.screens__script {
+    margin: auto 0;
+    width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    font-size: clamp(0.62rem, 1.15vw, 0.95rem);
+    font-weight: 600;
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.96);
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.7);
+    /* Clamped, never scrolled: a monitor that scrolls under the reader's own
+       hand is a control, and this is a display. The line being read is short
+       by construction — the engine caps a detail at three sentences. */
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    /* Each new line fades up, so the glass reads as changing rather than as
+       text being retyped in place. */
+    animation: cue 0.32s ease;
+}
+
+@keyframes cue {
+    from { opacity: 0; transform: translateY(0.35rem); }
+    to   { opacity: 1; transform: none; }
+}
+
+/*
+  Over the shoulder, once there is room for it.
+
+  `grid-row: 1` drops the monitor row into the stage's own cell — grid lets two
+  items share one cell, which is what makes the overlay and the stacked layout
+  the same markup. Padding in % resolves against the WIDTH, so the monitors keep
+  their position in the shot as the stage scales, which `top` in vh would not.
+*/
+@media (min-width: 1100px) {
+    .screens {
+        grid-area: 1 / 1;
+        align-self: start;
+        z-index: 2;
+        padding: 11% 1.6% 0;
+        gap: 0;
+        justify-content: space-between;
+        grid-template-columns: 27% 27%;
+        background: none;
+        border-top: 0;
+        /* The picture behind stays draggable/selectable; nothing here is a
+           control, so nothing here should swallow a click. */
+        pointer-events: none;
+    }
+
+    /* Pushed apart so the presenter, who is dead centre in every shot, is
+       never behind one of them. */
+    .screens__one { justify-self: start; }
+    .screens__two { justify-self: end; }
+}
+
+/* Stacked, they take real vertical space, so they wait until they have
+   something to show. Overlaid (above) they cost none and stay on standby. */
+@media (max-width: 1099px) {
+    .screens--idle { display: none; }
+}
+
+@media (max-width: 560px) {
+    /* Two monitors side by side on a phone are two unreadable monitors. */
+    .screens {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.5rem;
+    }
+}
+
 /* -- ticker strip ---------------------------------------------------- */
 .studio__strip {
     border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
@@ -492,10 +660,48 @@ onBeforeUnmount(() => {
     background: transparent;
 }
 
+/*
+  THE NAME PLATE ON A SMALL SCREEN.
+
+  Reported as "the face of the anchor does not appear because of the
+  خدمة سيلف ستدي الصوتية and Microsoft Zira - English (United States) labels".
+  The plate is anchored a fixed distance off the bottom of the stage, which is
+  fine at 740px tall and is most of the way up the presenter's chest at 200px —
+  so on a phone a technical voice ID was parked across their chin.
+
+  The name stays, because a name plate under a presenter is the one caption a
+  broadcast always has room for. The VOICE goes: it is a diagnostic, it is the
+  longest string on the page, and the page shows it under the transport
+  controls where there is a whole line for it. Nothing is lost and the face is
+  the face again.
+*/
+@media (max-width: 760px) {
+    .plate {
+        bottom: auto;
+        top: 2.6rem;
+        inset-inline-start: 0.45rem;
+        max-width: 52%;
+        padding: 0.22rem 0.5rem;
+    }
+
+    .plate__voice { display: none; }
+
+    .third { padding-block: 0.45rem; }
+    .third__text { -webkit-line-clamp: 2; line-clamp: 2; }
+}
+
+/* Shorter than it is narrow — a landscape phone, where the stage is a letterbox
+   and every overlay is competing for the same few pixels. */
+@media (max-height: 460px) and (orientation: landscape) {
+    .plate { top: 2.4rem; bottom: auto; }
+    .plate__voice { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     /* The stills carry the whole design on their own — this is exactly the
        case the layered still was built for. */
     .shot__loop { display: none; }
     .bug__live--on .bug__dot { animation: none; }
+    .screens__script { animation: none; }
 }
 </style>

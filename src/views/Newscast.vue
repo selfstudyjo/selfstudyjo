@@ -126,6 +126,9 @@ const UI = {
             + 'return automatically once the replica is fixed — one of them would otherwise '
             + 'be read in the wrong voice.',
         soloBadge: 'Single presenter',
+        screenImage: 'On screen', screenText: 'Now reading',
+        screenIdle: 'Studio standby',
+        onAirVoices: 'On-air voices',
         shapedBadge: 'stand-in',
         shapedHelp: 'The voice service on this replica only has a female voice at the moment, '
             + 'so Adam is reading through a stand-in voice pitched into his own register. '
@@ -163,6 +166,9 @@ const UI = {
             + 'النشرة بمذيع واحد. سيعود المذيعان تلقائيا بعد إصلاح الخادم — وإلا لقرأ أحدهما '
             + 'بصوت لا يخصه.',
         soloBadge: 'مذيع واحد',
+        screenImage: 'الصورة', screenText: 'يُقرأ الآن',
+        screenIdle: 'الاستوديو في وضع الانتظار',
+        onAirVoices: 'أصوات النشرة',
         shapedBadge: 'صوت بديل',
         shapedHelp: 'لا يتوفر على خدمة الصوت في هذا الخادم سوى صوت أنثوي حاليا، لذلك يقرأ آدم '
             + 'بصوت بديل مضبوط على طبقته الصوتية. يبقى آدم في مكانه، ويعود صوته الأصلي تلقائيا '
@@ -1326,6 +1332,12 @@ onBeforeRouteLeave(() => {
             :rtl="rtl"
             :shaped-voice="deskAnchor !== null && deskAnchor === shapedAnchor"
             :shaped-label="t.shapedBadge"
+            :article-image="currentItem?.image || ''"
+            :live-text="currentSegment?.text || ''"
+            :screen-image-label="t.screenImage"
+            :screen-text-label="t.screenText"
+            :screen-source="currentItem?.source_label || activeCategory?.source_label || ''"
+            :screen-idle="t.screenIdle"
         >
             <template #ticker>
                 <NewsTicker :headlines="tickerLines" :rtl="rtl" :label="t.breaking">
@@ -1427,6 +1439,26 @@ onBeforeRouteLeave(() => {
 
                 <span v-if="buffering" class="voices__busy">
                     <RefreshCw :size="13" class="spinning" /> {{ t.buffering }}
+                </span>
+
+                <!--
+                  Where the voice IDs live now.
+
+                  They used to be the second line of each anchor's name plate,
+                  over the picture — which on a phone put "Microsoft Zira -
+                  English (United States)" across the presenter's chin. This is
+                  a diagnostic, not a caption: it exists so a reader can check
+                  that the male anchor really is on a male voice, and it does
+                  that just as well on its own line under the controls, where
+                  there is room for it at any width.
+                -->
+                <span v-if="usingServer" class="voices__now">
+                    <span class="voices__label">{{ t.onAirVoices }}</span>
+                    <span v-for="anchor in (['female', 'male'] as const)" :key="anchor"
+                          class="voices__chip"
+                          :class="{ 'voices__chip--shaped': anchor === shapedAnchor }">
+                        <strong>{{ anchorNames[anchor] }}</strong> {{ voiceLabel(anchor) }}
+                    </span>
                 </span>
             </div>
         </section>
@@ -1766,6 +1798,40 @@ onBeforeRouteLeave(() => {
     gap: 0.35rem;
     font-size: 0.76rem;
     color: var(--sfs-accent-text, #cfd6ff);
+}
+
+.voices__now {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.voices__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 100%;
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.35rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    font-size: 0.72rem;
+    color: var(--sfs-text-muted, #a8b0c5);
+    /* The voice names are long and unbreakable; wrapping them would push the
+       transport around every time an anchor changed. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.voices__chip strong { color: var(--sfs-text, #eef1f8); font-weight: 700; }
+
+.voices__chip--shaped {
+    border-color: rgb(var(--sfs-warning-rgb, 232 196 92) / 0.5);
+    background: rgb(var(--sfs-warning-rgb, 232 196 92) / 0.12);
+    color: var(--sfs-warning-text, #f0d590);
 }
 
 .picker__select--sm {
