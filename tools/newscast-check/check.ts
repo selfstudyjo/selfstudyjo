@@ -392,6 +392,27 @@ console.log('\n9. Casting two distinct voices');
         { name: 'Microsoft Shakir Online (Natural) - Arabic (Egypt)', lang: 'ar-EG' },
     ], 'ar'));
     check('no arabic voices at all is not a pair', !hasGenderedPair([], 'ar'));
+
+    /*
+      A "male" voice that reads female is not half a pair either.
+
+      Reported after the Arabic fix, and it turned out to be English: Microsoft
+      labels `Guy` Male and it is — but it measures 160 Hz, inside the female
+      range and 37 Hz from Aria, where every other male voice measured
+      105-150 Hz. So the male anchor sounded female and the declared gender said
+      nothing was wrong.
+    */
+    const guyOnly: VoiceLike[] = [
+        { name: 'Microsoft Aria Online (Natural) - English (United States)', lang: 'en-US' },
+        { name: 'Microsoft Guy Online (Natural) - English (United States)', lang: 'en-US' },
+    ];
+    check('Aria + Guy is not a usable pair', !hasGenderedPair(guyOnly, 'en'),
+          'Guy measures 160Hz and does not read as male beside Aria');
+    check('Aria + Christopher is', hasGenderedPair([
+        guyOnly[0],
+        { name: 'Microsoft Christopher Online (Natural) - English (United States)', lang: 'en-US' },
+    ], 'en'));
+    check('Guy is still known to be male', genderOf(guyOnly[1]) === 'male');
     check('english voices do not make an arabic pair',
           !hasGenderedPair(voices.slice(0, 2), 'ar'));
 

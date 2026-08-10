@@ -587,9 +587,33 @@ export function hasGenderedPair(voices: VoiceLike[], language: LanguageCode): bo
     for (const voice of pool) {
         const gender = genderOf(voice);
         if (gender === 'female') female = true;
-        if (gender === 'male') male = true;
+        if (gender === 'male' && !READS_LIGHT.has(primaryName(voice))) male = true;
     }
     return female && male;
+}
+
+/**
+ * Male voices that do not read as male beside a female co-anchor.
+ *
+ * `Guy` is labelled Male by Microsoft and is one — and measures **160 Hz**,
+ * inside the female range and 37 Hz from Aria, where every other male voice
+ * measured 105-150 Hz. It was the English male anchor and was reported as
+ * sounding female. A declared gender cannot express that, so the exception is
+ * listed.
+ *
+ * It only affects whether the DEVICE is considered able to field a pair: with
+ * Guy as the only male voice the page uses the server pair instead, which is
+ * measured and separated. Guy is still cast if the reader pins the source to
+ * their device — it is their device and their choice.
+ */
+const READS_LIGHT = new Set(['guy']);
+
+/** The word in a voice's name that identified its gender, for the set above. */
+function primaryName(voice: VoiceLike): string {
+    for (const part of words(voice?.name || '')) {
+        if (KNOWN_GENDER[part]) return part;
+    }
+    return '';
 }
 
 /**
