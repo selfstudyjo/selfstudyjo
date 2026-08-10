@@ -600,19 +600,26 @@ onBeforeUnmount(() => {
 }
 
 /*
-  Over the shoulder, once there is room for it.
+  Into the top corners, once there is room for it — desktops, laptops and TVs.
 
-  `grid-row: 1` drops the monitor row into the stage's own cell — grid lets two
-  items share one cell, which is what makes the overlay and the stacked layout
-  the same markup. Padding in % resolves against the WIDTH, so the monitors keep
-  their position in the shot as the stage scales, which `top` in vh would not.
+  `grid-area: 1 / 1` drops the monitor row into the stage's own cell; grid lets
+  two items share one cell, which is what makes the overlay and the stacked
+  layout the same markup. Both the row AND the column have to be pinned — with
+  the row alone, auto-placement hunts for the next free slot and invents a
+  second column beside the picture.
+
+  Flush: no padding, no gap, so each monitor's outer corner meets the frame's
+  own corner and the studio's rounded corner clips it. Floated inwards they read
+  as two windows dropped on top of a photograph; in the corners they read as
+  part of the set. The presenter is dead centre in every shot, so 27% a side
+  leaves them clear either way.
 */
 @media (min-width: 1100px) {
     .screens {
         grid-area: 1 / 1;
         align-self: start;
         z-index: 2;
-        padding: 11% 1.6% 0;
+        padding: 0;
         gap: 0;
         justify-content: space-between;
         grid-template-columns: 27% 27%;
@@ -623,10 +630,20 @@ onBeforeUnmount(() => {
         pointer-events: none;
     }
 
-    /* Pushed apart so the presenter, who is dead centre in every shot, is
-       never behind one of them. */
     .screens__one { justify-self: start; }
     .screens__two { justify-self: end; }
+
+    /*
+      Both top corners are monitors now, so the on-air bug takes the only piece
+      of frame left to it: the gap between them. That is 46% of the width, more
+      than twice what the chips need, and a centred live bug over a two-screen
+      wall is what the corner arrangement asks for — left-aligned it would sit
+      underneath the left monitor.
+    */
+    .bug {
+        inset-inline: 0;
+        justify-content: center;
+    }
 }
 
 /* Stacked, they take real vertical space, so they wait until they have
