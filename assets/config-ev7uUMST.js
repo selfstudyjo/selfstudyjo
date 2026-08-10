@@ -1,0 +1,1 @@
+import{t as e}from"./index-kf86aPhy.js";export{e as serviceRegistry};
