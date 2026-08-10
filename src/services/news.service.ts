@@ -21,7 +21,8 @@
 //    Fetching bulletins to build a ticker would download several megabytes to
 //    show forty lines of text.
 
-import { apiService, withReplicas } from './api';
+import { ApiError, apiService, withReplicas } from './api';
+import { serviceRegistry } from './config';
 
 export const NEWS_APP_ID = parseInt(import.meta.env.VITE_NEWS_APP_ID || '36');
 
@@ -175,6 +176,124 @@ class NewsService {
             `/api/news/latest/?language=${encodeURIComponent(language)}`);
         return data.headlines || [];
     }
+
+    /* ---------------------------------------------------------------- *
+     * Speech
+     * ---------------------------------------------------------------- */
+
+    /**
+     * Synthesise one line and return a playable object URL.
+     *
+     * This is what makes the newscast work in Arabic on a device with no
+     * Arabic voice installed — which is most Windows machines, and which the
+     * Web Speech API simply cannot do anything about. The backend renders it
+     * with a free neural voice and streams back an MP3.
+     *
+     * **POST rather than GET, and a blob rather than a `src`**, for the reason
+     * `attachmentUrl` in `userchat.service.ts` gives: an `<audio src>` cannot
+     * send an `Authorization` header, so nothing here ever points the browser
+     * straight at a protected URL. The text also belongs in a body — a full
+     * paragraph in a query string runs into URL length limits.
+     *
+     * Cached per tab, keyed on everything that changes the audio. The backend
+     * caches too, on disk; this one saves the round trip.
+     */
+    async speech(
+        text: string,
+        language: NewsLanguage,
+        anchor: 'female' | 'male',
+        rate = 1,
+        voice = '',
+    ): Promise<SpeechClip> {
+        const key = `${language}|${anchor}|${rate}|${voice}|${text}`;
+        const cached = this.clips.get(key);
+        if (cached) return cached;
+
+        const pending = this.clipsInFlight.get(key);
+        if (pending) return pending;
+
+        const request = (async (): Promise<SpeechClip> => {
+            const replicas = await serviceRegistry.getReplicaOrder(NEWS_APP_ID, 'news');
+            if (!replicas.length) throw new ApiError('No replica of news could be resolved.', 0);
+
+            let lastError: unknown = null;
+            for (const base of replicas) {
+                try {
+                    const response = await fetch(`${base}/api/news/tts/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${import.meta.env.VITE_AUTH_TOKEN}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ text, language, anchor, rate, voice }),
+                        mode: 'cors',
+                        credentials: 'omit',
+                    });
+                    if (!response.ok) {
+                        let detail = `Speech unavailable (${response.status})`;
+                        try {
+                            detail = (await response.json())?.error || detail;
+                        } catch { /* a non-JSON error body is not worth surfacing */ }
+                        throw new ApiError(detail, response.status);
+                    }
+                    const clip: SpeechClip = {
+                        url: URL.createObjectURL(await response.blob()),
+                        voice: response.headers.get('X-Sfs-Voice') || '',
+                        provider: response.headers.get('X-Sfs-Provider') || '',
+                    };
+                    this.clips.set(key, clip);
+                    return clip;
+                } catch (error) {
+                    const status = error instanceof ApiError ? error.status : 0;
+                    // 503 means no provider is reachable from that replica, and
+                    // another replica may well have working outbound access —
+                    // so unlike a normal read, this one IS worth retrying.
+                    if (status && status < 500 && status !== 503) throw error;
+                    serviceRegistry.dropReplica(NEWS_APP_ID, base);
+                    lastError = error;
+                }
+            }
+            throw lastError instanceof Error
+                ? lastError : new ApiError('Speech unavailable', 0);
+        })().finally(() => this.clipsInFlight.delete(key));
+
+        this.clipsInFlight.set(key, request);
+        return request;
+    }
+
+    /** Is server-side speech working from this replica? */
+    speechHealth(): Promise<SpeechHealth> {
+        return this.call<SpeechHealth>('/api/news/tts/health/');
+    }
+
+    /**
+     * Release every synthesised clip.
+     *
+     * An object URL pins its blob in memory until revoked, and a bulletin is
+     * forty of them — leaving them behind is a leak measured in megabytes per
+     * category the listener browses through.
+     */
+    revokeSpeech() {
+        for (const clip of this.clips.values()) URL.revokeObjectURL(clip.url);
+        this.clips.clear();
+    }
+
+    private clips = new Map<string, SpeechClip>();
+    private clipsInFlight = new Map<string, Promise<SpeechClip>>();
+}
+
+export interface SpeechClip {
+    url: string;
+    /** The voice that actually spoke — shown under the anchor. */
+    voice: string;
+    /** 'edge' | 'google' | 'cache'. Names the fallback when it is in use. */
+    provider: string;
+}
+
+export interface SpeechHealth {
+    ok: boolean;
+    providers: Record<string, { ok: boolean; error?: string; bytes?: number }>;
+    hint?: string;
 }
 
 export const newsService = new NewsService();

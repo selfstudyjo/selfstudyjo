@@ -60,6 +60,20 @@ import {
     type NewsBulletin, type NewsCategory, type NewsHeadline, type NewsLanguageInfo,
 } from '@/services/news.service';
 
+/**
+ * Where the voice comes from.
+ *
+ * `device` is the Web Speech API — instant, free, no network, and only able to
+ * speak languages the OS has a voice for. `server` is app 36 synthesising an
+ * MP3 with a free neural voice, which works on every device and costs a round
+ * trip on the first play of each line.
+ *
+ * `auto` picks `device` when the OS has a voice for the selected language and
+ * `server` when it does not, which is the whole point: Arabic works everywhere
+ * without the reader having to know why.
+ */
+type SpeechSource = 'auto' | 'device' | 'server';
+
 import bedOpen from '@/assets/audio/selfstudy_newscast_open.mp3';
 import bed1 from '@/assets/audio/selfstudy_newscast_bed1.mp3';
 import bed2 from '@/assets/audio/selfstudy_newscast_bed2.mp3';
@@ -90,9 +104,13 @@ const UI = {
         noVoice: 'no matching voice',
         voices: 'Voices',
         autoVoice: 'Automatic',
-        noVoiceHelp: 'This device has no English speech voice installed, so the bulletin cannot '
-            + 'be read aloud. You can still read the stories below.',
-        speechFailed: 'Speech synthesis stopped responding. Try again, or pick a different voice.',
+        noVoiceHelp: 'This device has no English voice installed, so the bulletin is being read '
+            + 'by the Self Study voice service instead. Nothing to install.',
+        speechFailed: 'Speech synthesis stopped responding. Try again, or switch the voice source.',
+        source: 'Voice from', sourceAuto: 'Automatic', sourceDevice: 'This device',
+        sourceServer: 'Self Study (any device)',
+        buffering: 'Preparing audio…',
+        serverVoice: 'Self Study voice service',
         breaking: 'BREAKING', fresh: 'NEW',
     },
     ar: {
@@ -111,14 +129,15 @@ const UI = {
         noVoice: 'لا يوجد صوت عربي',
         voices: 'الأصوات',
         autoVoice: 'تلقائي',
-        // The message that matters most on this page: an Arabic voice is a
-        // separate OS install on Windows, and without it the browser has
-        // nothing to read Arabic with.
-        noVoiceHelp: 'لا يوجد صوت عربي مثبّت على هذا الجهاز، لذلك لا يمكن قراءة النشرة صوتيا. '
-            + 'على ويندوز: الإعدادات ← الوقت واللغة ← اللغة والمنطقة ← أضف العربية مع حزمة '
-            + 'تحويل النص إلى كلام. أو استخدم متصفح Microsoft Edge الذي يوفر أصواتا عربية '
-            + 'عبر الإنترنت. يمكنك قراءة الأخبار أدناه في كل الأحوال.',
-        speechFailed: 'توقف محرك الصوت عن الاستجابة. حاول مرة أخرى أو اختر صوتا آخر.',
+        // No longer a dead end. A missing OS voice is now just a note about
+        // which engine is doing the reading — the bulletin plays either way.
+        noVoiceHelp: 'لا يوجد صوت عربي مثبّت على هذا الجهاز، لذلك تُقرأ النشرة بصوت خدمة '
+            + '"سيلف ستدي" الصوتية. لا حاجة لتثبيت أي شيء.',
+        speechFailed: 'توقف محرك الصوت عن الاستجابة. حاول مرة أخرى أو غيّر مصدر الصوت.',
+        source: 'مصدر الصوت', sourceAuto: 'تلقائي', sourceDevice: 'هذا الجهاز',
+        sourceServer: 'خدمة سيلف ستدي (يعمل على كل الأجهزة)',
+        buffering: 'جارٍ تجهيز الصوت…',
+        serverVoice: 'خدمة سيلف ستدي الصوتية',
         breaking: 'عاجل', fresh: 'جديد',
     },
 } as const;
@@ -155,9 +174,16 @@ const chosenVoice = reactive<{ female: string; male: string }>({ female: '', mal
 /** Consecutive synthesis failures, so a dead engine stops rather than silently skipping. */
 let failures = 0;
 
+const speechSource = ref<SpeechSource>('auto');
+const serverSpeechError = ref('');
+/** True while a line is being synthesised — the anchors should not mime through it. */
+const buffering = ref(false);
+
 let utterance: SpeechSynthesisUtterance | null = null;
 let keepAlive: number | null = null;
 let bedAudio: HTMLAudioElement | null = null;
+/** The `<audio>` that plays server-synthesised speech. Separate from the bed. */
+let voiceAudio: HTMLAudioElement | null = null;
 let fadeTimer: number | null = null;
 /** Guards the `onend` handler against a `cancel()` we issued ourselves. */
 let generation = 0;
@@ -169,8 +195,12 @@ const anchorNames = computed(() => ANCHOR_NAMES[language.value]);
 const currentSegment = computed<Segment | null>(() =>
     cursor.value >= 0 ? script.value[cursor.value] ?? null : null);
 
+// Not while buffering: an anchor whose mouth moves through two seconds of
+// silence looks broken in a way that a still anchor does not.
 const speakingAnchor = computed<AnchorId | null>(() =>
-    status.value === 'playing' ? currentSegment.value?.anchor ?? null : null);
+    status.value === 'playing' && !buffering.value
+        ? currentSegment.value?.anchor ?? null
+        : null);
 
 const currentItem = computed(() => {
     const id = currentSegment.value?.itemId;
@@ -321,10 +351,30 @@ function refreshVoices() {
 const missingVoice = computed(() =>
     speechSupported.value && availableVoices.value.length === 0);
 
+/**
+ * Which engine will actually speak.
+ *
+ * `auto` resolves to the server exactly when the device cannot speak the
+ * selected language — including when the browser has no speech support at all,
+ * which used to mean the page could not read anything.
+ */
+const activeSource = computed<'device' | 'server'>(() => {
+    if (speechSource.value === 'server') return 'server';
+    if (speechSource.value === 'device') return 'device';
+    return (!speechSupported.value || availableVoices.value.length === 0)
+        ? 'server' : 'device';
+});
+
+/** The reader is being read to by the backend rather than by their own device. */
+const usingServer = computed(() => activeSource.value === 'server');
+
 const sharingVoice = computed(() =>
     !!voices.female && voices.female.name === voices.male?.name);
 
 function voiceLabel(anchor: AnchorId): string {
+    // Under the server engine the device's voice list is irrelevant — saying
+    // "no matching voice" there would be true and completely misleading.
+    if (usingServer.value) return t.value.serverVoice;
     const voice = voices[anchor];
     if (!voice) return t.value.noVoice;
     return sharingVoice.value ? `${voice.name} — ${t.value.sharedVoice}` : voice.name;
@@ -447,6 +497,79 @@ function stopKeepAlive() {
     }
 }
 
+/* ---- server speech ------------------------------------------------- */
+
+function ensureVoiceAudio() {
+    if (voiceAudio) return voiceAudio;
+    voiceAudio = new Audio();
+    voiceAudio.preload = 'auto';
+    return voiceAudio;
+}
+
+/**
+ * Warm the next line's audio while the current one plays.
+ *
+ * Synthesising a sentence takes a second or two on a cache miss. Without this,
+ * every story would be followed by that much dead air, which on a newscast
+ * reads as the thing having crashed. Fire and forget — a failed prefetch just
+ * means the normal fetch happens when we get there.
+ */
+function prefetch(index: number) {
+    if (!usingServer.value) return;
+    const next = script.value[index];
+    if (!next) return;
+    newsService
+        .speech(next.text, language.value, next.anchor, rate.value)
+        .catch(() => undefined);
+}
+
+async function speakViaServer(segment: Segment, mine: number) {
+    const audio = ensureVoiceAudio();
+    buffering.value = true;
+    try {
+        const clip = await newsService.speech(
+            segment.text, language.value, segment.anchor, rate.value);
+        // The reader skipped, paused or stopped while this was synthesising.
+        if (mine !== generation) return;
+        serverSpeechError.value = '';
+
+        audio.src = clip.url;
+        audio.onended = () => {
+            if (mine !== generation || status.value !== 'playing') return;
+            failures = 0;
+            advance();
+        };
+        audio.onerror = () => {
+            if (mine !== generation) return;
+            failures += 1;
+            if (failures >= 3) {
+                error.value = t.value.speechFailed;
+                stop();
+                return;
+            }
+            advance();
+        };
+        await audio.play();
+        // Only once it is actually playing, so the next synthesis competes with
+        // playback rather than with the one the listener is waiting on.
+        prefetch(cursor.value + 1);
+    } catch (err: any) {
+        if (mine !== generation) return;
+        serverSpeechError.value = err?.message || String(err);
+        failures += 1;
+        if (failures >= 3) {
+            error.value = serverSpeechError.value;
+            stop();
+            return;
+        }
+        advance();
+    } finally {
+        if (mine === generation) buffering.value = false;
+    }
+}
+
+/* ---- the sequence -------------------------------------------------- */
+
 function speakSegment(index: number) {
     const segment = script.value[index];
     if (!segment) {
@@ -456,11 +579,24 @@ function speakSegment(index: number) {
     cursor.value = index;
     applyBed(segment);
 
+    const mine = ++generation;
+    // Silence whichever engine was last used — switching source mid-bulletin,
+    // or skipping, must not leave two voices running.
+    if (speechSupported.value) window.speechSynthesis.cancel();
+    if (voiceAudio) {
+        voiceAudio.pause();
+        voiceAudio.onended = null;
+        voiceAudio.onerror = null;
+    }
+
+    if (usingServer.value) {
+        void speakViaServer(segment, mine);
+        return;
+    }
+
     if (!speechSupported.value) return;
 
-    const mine = ++generation;
     const synth = window.speechSynthesis;
-    synth.cancel();
 
     utterance = new SpeechSynthesisUtterance(segment.text);
     const voice = nativeVoice(segment.anchor);
@@ -521,14 +657,18 @@ function play() {
     if (status.value === 'paused') {
         status.value = 'playing';
         if (speechSupported.value) window.speechSynthesis.resume();
+        if (voiceAudio && voiceAudio.src) voiceAudio.play().catch(() => undefined);
         if (currentSegment.value) applyBed(currentSegment.value);
         startKeepAlive();
         return;
     }
 
-    // Priming, inside the click. Both APIs refuse to start otherwise, and both
-    // refuse silently — an empty utterance and a muted play() are the cheapest
-    // way to spend the gesture.
+    // Priming, inside the click. Every one of these APIs refuses to start
+    // without a gesture and refuses silently — an empty utterance and two muted
+    // play() calls are the cheapest way to spend it. The voice element needs
+    // priming just as much as the bed: it is created here but first used
+    // seconds later, inside an async synthesis, by which time the gesture is
+    // long gone and the play() would be blocked.
     if (speechSupported.value) {
         const primer = new SpeechSynthesisUtterance('');
         primer.volume = 0;
@@ -537,6 +677,11 @@ function play() {
     const audio = ensureBed();
     audio.volume = 0;
     audio.play().then(() => audio.pause()).catch(() => undefined);
+
+    const voice = ensureVoiceAudio();
+    voice.muted = true;
+    voice.play().then(() => { voice.pause(); voice.muted = false; })
+        .catch(() => { voice.muted = false; });
 
     status.value = 'playing';
     startKeepAlive();
@@ -547,6 +692,7 @@ function pause() {
     if (status.value !== 'playing') return;
     status.value = 'paused';
     if (speechSupported.value) window.speechSynthesis.pause();
+    if (voiceAudio) voiceAudio.pause();
     fadeBedTo(0, 220);
     stopKeepAlive();
 }
@@ -555,8 +701,14 @@ function stop() {
     generation += 1;
     status.value = 'idle';
     cursor.value = -1;
+    buffering.value = false;
     stopKeepAlive();
     if (speechSupported.value) window.speechSynthesis.cancel();
+    if (voiceAudio) {
+        voiceAudio.pause();
+        voiceAudio.onended = null;
+        voiceAudio.onerror = null;
+    }
     stopBed();
 }
 
@@ -617,6 +769,13 @@ watch(() => [chosenVoice.female, chosenVoice.male], () => {
     refreshVoices();
     // Take effect on the line being spoken rather than at the next story, so
     // choosing a voice is audibly a choice.
+    if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
+});
+
+watch(speechSource, () => {
+    serverSpeechError.value = '';
+    error.value = '';
+    failures = 0;
     if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
 });
 
@@ -681,7 +840,12 @@ onBeforeUnmount(() => {
     if (speechSupported.value) {
         window.speechSynthesis.removeEventListener('voiceschanged', refreshVoices);
     }
+    // An object URL pins its blob until revoked, and a bulletin is forty of
+    // them — a listener who browsed several categories would leave megabytes
+    // behind on every visit.
+    newsService.revokeSpeech();
     bedAudio = null;
+    voiceAudio = null;
 });
 
 // `speechSynthesis` belongs to the window, not to this component: without this
@@ -836,33 +1000,57 @@ onBeforeRouteLeave(() => {
               single Arabic voice installed both anchors share it, which the
               caption states rather than hiding.
             -->
-            <div v-if="availableVoices.length" class="voices">
-                <span class="voices__label"><Mic :size="14" /> {{ t.voices }}</span>
-                <label v-for="anchor in (['female', 'male'] as const)" :key="anchor" class="voices__pick">
-                    <span class="voices__who">{{ anchorNames[anchor] }}</span>
-                    <select v-model="chosenVoice[anchor]" class="picker__select picker__select--sm">
-                        <option value="">{{ t.autoVoice }}</option>
-                        <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
-                            {{ voice.name }} ({{ voice.lang }})
+            <div class="voices">
+                <label class="voices__pick">
+                    <span class="voices__label"><Mic :size="14" /> {{ t.source }}</span>
+                    <select v-model="speechSource" class="picker__select picker__select--sm">
+                        <option value="auto">{{ t.sourceAuto }}</option>
+                        <option value="device" :disabled="!availableVoices.length">
+                            {{ t.sourceDevice }}
                         </option>
+                        <option value="server">{{ t.sourceServer }}</option>
                     </select>
                 </label>
+
+                <!--
+                  The per-anchor pickers only apply to the device engine — the
+                  server picks its own neural pair. Hiding them under the server
+                  avoids offering a control that would silently do nothing.
+                -->
+                <template v-if="!usingServer && availableVoices.length">
+                    <label v-for="anchor in (['female', 'male'] as const)" :key="anchor"
+                           class="voices__pick">
+                        <span class="voices__who">{{ anchorNames[anchor] }}</span>
+                        <select v-model="chosenVoice[anchor]" class="picker__select picker__select--sm">
+                            <option value="">{{ t.autoVoice }}</option>
+                            <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                                {{ voice.name }} ({{ voice.lang }})
+                            </option>
+                        </select>
+                    </label>
+                </template>
+
+                <span v-if="buffering" class="voices__busy">
+                    <RefreshCw :size="13" class="spinning" /> {{ t.buffering }}
+                </span>
             </div>
         </section>
 
         <!-- Errors / empty -------------------------------------------- -->
-        <div v-if="!speechSupported" class="notice notice--warn">
+        <!--
+          No voice on the device for this language. This used to be a dead end
+          — the page said Arabic could not be read and stopped. It is now just
+          a note about which engine is doing the reading, because the server
+          fallback speaks every supported language on every device.
+        -->
+        <div v-if="missingVoice || (!speechSupported && usingServer)" class="notice">
+            <Radio :size="16" /> {{ t.noVoiceHelp }}
+        </div>
+        <div v-else-if="!speechSupported" class="notice notice--warn">
             <AlertCircle :size="16" /> {{ t.unsupported }}
         </div>
-        <!--
-          No voice for the selected language. Stated plainly, because the old
-          behaviour was to quietly substitute a voice from another language and
-          read Arabic with English phonetics — which sounds like a broken app
-          rather than a missing OS component, and sent the reader looking in the
-          wrong place.
-        -->
-        <div v-else-if="missingVoice" class="notice notice--warn">
-            <AlertCircle :size="16" /> {{ t.noVoiceHelp }}
+        <div v-if="serverSpeechError" class="notice notice--warn">
+            <AlertCircle :size="16" /> {{ serverSpeechError }}
         </div>
         <div v-if="error" class="notice notice--error">
             <AlertCircle :size="16" /> {{ error }}
@@ -1240,6 +1428,14 @@ onBeforeRouteLeave(() => {
 .voices__who {
     font-size: 0.76rem;
     color: var(--sfs-text, #eef1f8);
+}
+
+.voices__busy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    color: var(--sfs-accent-text, #cfd6ff);
 }
 
 .picker__select--sm {
