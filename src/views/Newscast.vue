@@ -48,20 +48,24 @@ import {
     RefreshCw, AlertCircle, ExternalLink, Clock, Languages, Gauge, Mic,
 } from 'lucide-vue-next';
 
-import NewsAnchor from '@/components/newscast/NewsAnchor.vue';
+import NewsStudio from '@/components/newscast/NewsStudio.vue';
 import NewsTicker from '@/components/newscast/NewsTicker.vue';
 import {
+    OTHER_ANCHOR,
     buildScript, bedIndexFor, bedVolumeFor, castVoices, estimateScriptMs,
     hasGenderedPair, isRtl, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
+import {
+    IDENTITY_RATIO, canShape, shapeRatio, timeScale,
+} from '@/components/newscast/voiceShaper';
 import {
     ApiError,
 } from '@/services/api';
 import {
     newsService, splitCategoryPath,
     type NewsBulletin, type NewsCategory, type NewsHeadline, type NewsLanguageInfo,
-    type SpeechCapabilities,
+    type SpeechCapabilities, type SpeechClip,
 } from '@/services/news.service';
 
 /**
@@ -122,6 +126,10 @@ const UI = {
             + 'return automatically once the replica is fixed — one of them would otherwise '
             + 'be read in the wrong voice.',
         soloBadge: 'Single presenter',
+        shapedBadge: 'stand-in',
+        shapedHelp: 'The voice service on this replica only has a female voice at the moment, '
+            + 'so Adam is reading through a stand-in voice pitched into his own register. '
+            + 'He keeps his slot; the real voice returns automatically once the replica is fixed.',
         breaking: 'BREAKING', fresh: 'NEW',
     },
     ar: {
@@ -155,6 +163,10 @@ const UI = {
             + 'النشرة بمذيع واحد. سيعود المذيعان تلقائيا بعد إصلاح الخادم — وإلا لقرأ أحدهما '
             + 'بصوت لا يخصه.',
         soloBadge: 'مذيع واحد',
+        shapedBadge: 'صوت بديل',
+        shapedHelp: 'لا يتوفر على خدمة الصوت في هذا الخادم سوى صوت أنثوي حاليا، لذلك يقرأ آدم '
+            + 'بصوت بديل مضبوط على طبقته الصوتية. يبقى آدم في مكانه، ويعود صوته الأصلي تلقائيا '
+            + 'بعد إصلاح الخادم.',
         breaking: 'عاجل', fresh: 'جديد',
     },
 } as const;
@@ -216,6 +228,21 @@ let fadeTimer: number | null = null;
 /** Guards the `onend` handler against a `cancel()` we issued ourselves. */
 let generation = 0;
 
+/* ---- reshaped speech, for the anchor the backend cannot voice --------- */
+
+/** Can this browser reshape audio at all? Decided once; it cannot change. */
+const shapingAvailable = ref(canShape());
+
+let audioContext: AudioContext | null = null;
+let shapedSource: AudioBufferSourceNode | null = null;
+/**
+ * Reshaped audio, keyed by clip and ratio.
+ *
+ * Worth keeping: the WSOLA pass is the one genuinely expensive thing on this
+ * page, and a listener who skips back a story would otherwise pay for it twice.
+ */
+const shapedBuffers = new Map<string, AudioBuffer>();
+
 const t = computed(() => UI[language.value]);
 const rtl = computed(() => isRtl(language.value));
 const anchorNames = computed(() => ANCHOR_NAMES[language.value]);
@@ -231,14 +258,16 @@ const speakingAnchor = computed<AnchorId | null>(() =>
         : null);
 
 /**
- * Who is on set.
+ * Who is at the desk — which shot the studio is cutting to.
  *
- * Always in this order, never in the order they speak: the rota alternates who
- * opens between categories, so following the script would swap the two
- * presenters around the desk every time the reader changed section.
+ * Not the same question as `speakingAnchor`, and the difference is what makes
+ * the studio look alive rather than switched on and off. A presenter stays at
+ * the desk while the bulletin is paused and while the next line is being
+ * synthesised; they are only *speaking* in the second of those. Null means
+ * nobody is on, and the camera is on the empty studio.
  */
-const onAirAnchors = computed<AnchorId[]>(() =>
-    soloAnchor.value ? [soloAnchor.value] : (['female', 'male'] as AnchorId[]));
+const deskAnchor = computed<AnchorId | null>(() =>
+    status.value === 'idle' ? null : (currentSegment.value?.anchor ?? null));
 
 const currentItem = computed(() => {
     const id = currentSegment.value?.itemId;
@@ -454,8 +483,39 @@ const activeSource = computed<'device' | 'server'>(() => {
 /** Can the backend read a bulletin with two people? Unknown counts as yes. */
 const serverPaired = computed(() => capabilities.value?.paired ?? true);
 
+/** The gender the backend can actually voice when it cannot field a pair. */
+const serverSoloGender = computed<AnchorId>(() =>
+    capabilities.value?.languages?.[language.value]?.solo_gender === 'male'
+        ? 'male' : 'female');
+
+/**
+ * The anchor whose audio has to be reshaped into their own register, or null.
+ *
+ * THE MAN IS NOT REMOVED. That was the first answer to a replica with only a
+ * female voice on it, and it was the wrong one: a newsroom whose microphone
+ * breaks does not delete a presenter. The backend renders his lines with the
+ * only voice it has, says plainly that it is female (`X-Sfs-Voice-Gender`), and
+ * the page drops it into a male register on the way to the speakers — see
+ * `voiceShaper.ts`. He stays at the desk, he sounds like a different person,
+ * and the name plate says the voice is a stand-in.
+ *
+ * It is a fallback, not the design. Install `edge-tts` on the replica and
+ * `serverPaired` goes true, this returns null, and both anchors are back on
+ * their own measured neural voices with nothing reshaped.
+ */
+const shapedAnchor = computed<AnchorId | null>(() => {
+    if (!usingServer.value || serverPaired.value) return null;
+    if (!shapingAvailable.value) return null;      // then, and only then, solo
+    return OTHER_ANCHOR[serverSoloGender.value];
+});
+
 /**
  * The one presenter this bulletin is read by, or null for the usual two.
+ *
+ * Now a genuine last resort — it needs the backend to be unable to pair AND the
+ * browser to have no Web Audio, which is an unusual browser rather than an
+ * unpatched replica. When there is honestly no way to give the man a voice of
+ * his own, reading with one presenter still beats reading his lines as a woman.
  *
  * Only ever set under the server engine: the device path already refuses to
  * cast a mismatched pair (`hasGenderedPair` gates it, and `activeSource` sends
@@ -464,10 +524,8 @@ const serverPaired = computed(() => capabilities.value?.paired ?? true);
  */
 const soloAnchor = computed<AnchorId | null>(() => {
     if (!usingServer.value || serverPaired.value) return null;
-    const solo = capabilities.value?.languages?.[language.value]?.solo_gender;
-    // Default female: it is what every fallback voice on offer actually is, and
-    // guessing male would put us straight back into the bug.
-    return solo === 'male' ? 'male' : 'female';
+    if (shapingAvailable.value) return null;
+    return serverSoloGender.value;
 });
 
 /** Set after repeated server failures, so `auto` can fall back to the device. */
@@ -489,6 +547,15 @@ function voiceLabel(anchor: AnchorId): string {
     // the actual voice once one has spoken, so the reader can verify for
     // themselves that the male anchor is on a male voice.
     if (usingServer.value) {
+        // A reshaped voice is named for what it IS — the fallback voice, moved
+        // into this anchor's register — never for the voice it is standing in
+        // for. Printing "male voice" over a pitched-down female one would be
+        // the original bug, restated in the caption that exists to catch it.
+        if (anchor === shapedAnchor.value) {
+            return serverVoices[anchor]
+                ? `${serverVoices[anchor]} → ${anchor === 'male' ? t.value.maleVoice : t.value.femaleVoice}`
+                : t.value.serverVoice;
+        }
         return serverVoices[anchor]
             ? `${serverVoices[anchor]} · ${anchor === 'male' ? t.value.maleVoice : t.value.femaleVoice}`
             : t.value.serverVoice;
@@ -637,8 +704,74 @@ function prefetch(index: number) {
     const next = script.value[index];
     if (!next) return;
     newsService
-        .speech(next.text, language.value, next.anchor, rate.value)
+        .speech(next.text, language.value, next.anchor, rate.value, '',
+                shapedAnchor.value === next.anchor)
         .catch(() => undefined);
+}
+
+/* ---- reshaping ------------------------------------------------------- */
+
+function ensureAudioContext(): AudioContext | null {
+    if (audioContext) return audioContext;
+    const Ctor = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctor) return null;
+    audioContext = new Ctor() as AudioContext;
+    return audioContext;
+}
+
+function stopShaped() {
+    if (!shapedSource) return;
+    shapedSource.onended = null;
+    try { shapedSource.stop(); } catch { /* already finished */ }
+    shapedSource = null;
+}
+
+/**
+ * Play a clip that came back in the wrong register, in the right one.
+ *
+ * Two halves, and only the first is ours: `timeScale` shortens the audio to
+ * `ratio` of its length at unchanged pitch, then `playbackRate = ratio` drops
+ * the pitch and the formants by that factor and puts the length back. See
+ * `voiceShaper.ts` for why it is split that way and why the ratio is what it
+ * is.
+ *
+ * Web Audio rather than the `<audio>` element because an element cannot play a
+ * buffer we computed. That costs the one thing an element gave us for free —
+ * `pause()` — so pausing suspends the whole context instead.
+ */
+async function speakShaped(clip: SpeechClip, ratio: number, mine: number) {
+    const context = ensureAudioContext();
+    if (!context) throw new Error('no audio context');
+    if (context.state === 'suspended') await context.resume();
+
+    const key = `${clip.url}|${ratio}`;
+    let buffer = shapedBuffers.get(key);
+    if (!buffer) {
+        // Back through the object URL rather than holding the ArrayBuffer on
+        // the clip: `decodeAudioData` DETACHES what it is given, so a shared
+        // buffer would decode once and then be empty for every replay.
+        const bytes = await (await fetch(clip.url)).arrayBuffer();
+        const decoded = await context.decodeAudioData(bytes);
+        const scaled = timeScale(decoded.getChannelData(0), ratio, decoded.sampleRate);
+        buffer = context.createBuffer(1, scaled.length, decoded.sampleRate);
+        buffer.getChannelData(0).set(scaled);
+        shapedBuffers.set(key, buffer);
+    }
+    if (mine !== generation) return;
+
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = ratio;
+    source.connect(context.destination);
+    source.onended = () => {
+        if (mine !== generation || status.value !== 'playing') return;
+        failures = 0;
+        advance();
+    };
+    shapedSource = source;
+    source.start();
+    buffering.value = false;
+    prefetch(cursor.value + 1);
 }
 
 /**
@@ -696,7 +829,8 @@ async function speakViaServer(segment: Segment, mine: number) {
     buffering.value = true;
     try {
         const clip = await newsService.speech(
-            segment.text, language.value, segment.anchor, rate.value);
+            segment.text, language.value, segment.anchor, rate.value, '',
+            shapedAnchor.value === segment.anchor);
         // The reader skipped, paused or stopped while this was synthesising.
         if (mine !== generation) return;
 
@@ -707,13 +841,29 @@ async function speakViaServer(segment: Segment, mine: number) {
           lives in the backend, and the outage that prompted all of this got
           past all of them — the voice table was right, the pitch assertions
           passed, and the replica quietly fell through to a provider none of
-          them described. So the page now checks the audio it was actually
-          given: if the server says it rendered a woman for آدم, we stop
-          casting آدم rather than playing it.
+          them described. So the page checks the audio it was actually given
+          rather than the audio it asked for.
+
+          What it does about a mismatch is the part that changed. It used to
+          strike the anchor off the bulletin, which fixed the voice by removing
+          the person. Now the audio is reshaped into his own register and he
+          keeps reading; solo is only for a browser that cannot do that.
         */
-        if (clip.gender && clip.gender !== segment.anchor) {
+        const rendered = clip.gender;
+        // Branch on the MISMATCH, not on the ratio. `shapeRatio` answers 1 for
+        // a direction it has no honest ratio for — a male-only provider asked
+        // for the female anchor, which does not exist today and would need a
+        // 1.65x up-shift that sounds like a cartoon. Keying off the ratio alone
+        // would read that 1 as "nothing to do" and play the wrong voice, which
+        // is the original bug arriving through the door built to stop it.
+        if (rendered && rendered !== segment.anchor) {
+            const ratio = shapeRatio(rendered, segment.anchor);
+            if (shapingAvailable.value && ratio !== IDENTITY_RATIO) {
+                await speakShaped(clip, ratio, mine);
+                return;
+            }
             buffering.value = false;
-            if (fallBackToSoloPresenter(clip.gender)) return;
+            if (fallBackToSoloPresenter(rendered)) return;
         }
 
         serverSpeechError.value = '';
@@ -797,8 +947,13 @@ function speakSegment(index: number) {
 
     const mine = ++generation;
     // Silence whichever engine was last used — switching source mid-bulletin,
-    // or skipping, must not leave two voices running.
+    // or skipping, must not leave two voices running. There are three of them
+    // now, and the reshaped one is the easiest to forget: an
+    // AudioBufferSourceNode keeps playing to the destination whatever the rest
+    // of the page thinks, so a skip would leave the previous anchor talking
+    // underneath the next one.
     if (speechSupported.value) window.speechSynthesis.cancel();
+    stopShaped();
     if (voiceAudio) {
         voiceAudio.pause();
         voiceAudio.onended = null;
@@ -873,6 +1028,9 @@ function play() {
     if (status.value === 'paused') {
         status.value = 'playing';
         if (speechSupported.value) window.speechSynthesis.resume();
+        // A buffer source cannot be paused, so pausing suspended the whole
+        // context and resuming is the other half of that.
+        void audioContext?.resume();
         if (voiceAudio && voiceAudio.src) voiceAudio.play().catch(() => undefined);
         if (currentSegment.value) applyBed(currentSegment.value);
         startKeepAlive();
@@ -899,6 +1057,12 @@ function play() {
     voice.play().then(() => { voice.pause(); voice.muted = false; })
         .catch(() => { voice.muted = false; });
 
+    // An AudioContext created outside a gesture starts `suspended` and every
+    // buffer played through it is silent — with no error, and with `onended`
+    // never arriving, so the bulletin would hang on the male anchor's first
+    // line rather than fail. Created and resumed here, inside the click.
+    if (shapingAvailable.value) void ensureAudioContext()?.resume();
+
     status.value = 'playing';
     startKeepAlive();
     speakSegment(0);
@@ -909,6 +1073,7 @@ function pause() {
     status.value = 'paused';
     if (speechSupported.value) window.speechSynthesis.pause();
     if (voiceAudio) voiceAudio.pause();
+    void audioContext?.suspend();
     fadeBedTo(0, 220);
     stopKeepAlive();
 }
@@ -920,6 +1085,10 @@ function stop() {
     buffering.value = false;
     stopKeepAlive();
     if (speechSupported.value) window.speechSynthesis.cancel();
+    stopShaped();
+    // Back to running, so a Stop while paused does not leave the context
+    // suspended and the next Play silent.
+    void audioContext?.resume();
     if (voiceAudio) {
         voiceAudio.pause();
         voiceAudio.onended = null;
@@ -1080,6 +1249,12 @@ onBeforeUnmount(() => {
     // them — a listener who browsed several categories would leave megabytes
     // behind on every visit.
     newsService.revokeSpeech();
+    // Reshaped buffers are keyed on the object URLs that were just revoked, so
+    // they can never be reused — and a bulletin's worth of decoded PCM is tens
+    // of megabytes, which is far more than the clips themselves.
+    shapedBuffers.clear();
+    void audioContext?.close();
+    audioContext = null;
     bedAudio = null;
     voiceAudio = null;
 });
@@ -1128,57 +1303,36 @@ onBeforeRouteLeave(() => {
             </div>
         </header>
 
-        <!-- Studio ---------------------------------------------------- -->
-        <section class="studio" :class="{ 'studio--live': status === 'playing' }">
-            <div class="studio__backdrop" aria-hidden="true">
-                <span class="studio__glow"></span>
-                <span class="studio__grid"></span>
-            </div>
-
-            <!--
-              Only the presenters who actually speak are on set.
-
-              With one voice available the second anchor would stand there in
-              silence for the whole bulletin, which reads as a broken presenter
-              rather than an absent one — and it is the exact impression that
-              produced the original report. `anchorsUsed` reads it off the
-              script, so the studio can never show someone the running order
-              does not cast.
-            -->
-            <div class="studio__anchors">
-                <NewsAnchor
-                    v-for="anchor in onAirAnchors" :key="anchor"
-                    :anchor="anchor"
-                    :name="anchorNames[anchor]"
-                    :voice-label="voiceLabel(anchor)"
-                    :speaking="speakingAnchor === anchor"
-                    :active="speakingAnchor === anchor || status !== 'playing'"
-                />
-            </div>
-
-            <!-- Lower third: what is being said right now -->
-            <div class="lower-third" :class="{ 'lower-third--on': !!currentSegment }">
-                <div class="lower-third__kicker">
-                    <span class="lower-third__live" :class="{ 'is-live': status === 'playing' }">
-                        {{ status === 'playing' ? t.onAir : t.ready }}
-                    </span>
-                    <span v-if="activeCategory" class="lower-third__cat">
-                        {{ categoryLabel(activeCategory) }} · {{ activeCategory.source_label }}
-                    </span>
-                    <span v-if="soloAnchor" class="badge">{{ t.soloBadge }}</span>
-                    <span v-if="currentItem?.fresh" class="badge badge--fresh">{{ t.fresh }}</span>
-                </div>
-                <p class="lower-third__text">
-                    {{ currentItem?.title || currentSegment?.text || t.ready }}
-                </p>
-                <div class="lower-third__bar" :style="{ width: progress + '%' }"></div>
-            </div>
-        </section>
-
-        <!-- Ticker ---------------------------------------------------- -->
-        <NewsTicker :headlines="tickerLines" :rtl="rtl" :label="t.breaking">
-            <template #empty>{{ loading ? t.loading : t.empty }}</template>
-        </NewsTicker>
+        <!-- Studio ------------------------------------------------------
+             One stage, cut between three shots. The camera is on whoever is
+             reading; between stories, and before the bulletin starts, it is on
+             the empty studio. See NewsStudio.vue for why that is video layered
+             over a still rather than the GIFs as they arrived.
+        -->
+        <NewsStudio
+            :anchor="deskAnchor"
+            :speaking="speakingAnchor !== null"
+            :live="status === 'playing'"
+            :anchor-name="deskAnchor ? anchorNames[deskAnchor] : ''"
+            :voice-label="deskAnchor ? voiceLabel(deskAnchor) : ''"
+            :headline="currentItem?.title || currentSegment?.text || ''"
+            :kicker="activeCategory
+                ? `${categoryLabel(activeCategory)} · ${activeCategory.source_label}` : ''"
+            :progress="progress"
+            :live-label="t.onAir"
+            :ready-label="t.ready"
+            :fresh-label="t.fresh"
+            :fresh="!!currentItem?.fresh"
+            :rtl="rtl"
+            :shaped-voice="deskAnchor !== null && deskAnchor === shapedAnchor"
+            :shaped-label="t.shapedBadge"
+        >
+            <template #ticker>
+                <NewsTicker :headlines="tickerLines" :rtl="rtl" :label="t.breaking">
+                    <template #empty>{{ loading ? t.loading : t.empty }}</template>
+                </NewsTicker>
+            </template>
+        </NewsStudio>
 
         <!-- Transport ------------------------------------------------- -->
         <section class="transport">
@@ -1295,6 +1449,15 @@ onBeforeRouteLeave(() => {
         <div v-if="soloAnchor" class="notice">
             <Radio :size="16" /> {{ t.soloHelp }}
         </div>
+        <!--
+          The man is still on air, on a reshaped voice. Said out loud rather
+          than left to be noticed: a listener who can hear that a voice is
+          processed should be told why, and an operator reading this knows
+          exactly which replica to fix.
+        -->
+        <div v-else-if="shapedAnchor" class="notice">
+            <Radio :size="16" /> {{ t.shapedHelp }}
+        </div>
         <div v-else-if="missingVoice || (!speechSupported && usingServer)" class="notice">
             <Radio :size="16" /> {{ t.noVoiceHelp }}
         </div>
@@ -1322,7 +1485,13 @@ onBeforeRouteLeave(() => {
         </div>
 
         <!-- Story + rundown -------------------------------------------- -->
-        <section class="body">
+        <!--
+          Two columns only when there are two things to put in them. Before the
+          bulletin starts there is no current story, and a fixed 1.65fr/1fr grid
+          left the rundown squeezed into the left two thirds with a third of the
+          page empty beside it — which reads as a panel that failed to load.
+        -->
+        <section class="body" :class="{ 'body--single': !currentItem }">
             <article v-if="currentItem" class="story">
                 <img v-if="currentItem.image" class="story__image" :src="currentItem.image"
                      :alt="currentItem.title" loading="lazy" referrerpolicy="no-referrer" />
@@ -1484,112 +1653,11 @@ onBeforeRouteLeave(() => {
 .spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* -- studio ---------------------------------------------------------- */
-.studio {
-    position: relative;
-    border-radius: 1rem;
-    overflow: hidden;
-    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
-    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
-    padding: 1rem 1rem 0;
-    min-height: 260px;
-}
-
-.studio--live {
-    border-color: rgb(var(--sfs-danger-rgb, 210 75 90) / 0.5);
-}
-
-.studio__backdrop { position: absolute; inset: 0; overflow: hidden; }
-
-.studio__glow {
-    position: absolute;
-    inset-inline-start: 50%;
-    top: -35%;
-    width: 60%;
-    aspect-ratio: 1;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28), transparent 68%);
-}
-
-.studio__grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgb(var(--sfs-line-rgb, 255 255 255) / 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgb(var(--sfs-line-rgb, 255 255 255) / 0.05) 1px, transparent 1px);
-    background-size: 42px 42px;
-    mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent 72%);
-}
-
-.studio__anchors {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 1.5rem;
-    max-width: 620px;
-    margin: 0 auto;
-}
-
-/* -- lower third ----------------------------------------------------- */
-.lower-third {
-    position: relative;
-    margin: 0.6rem -1rem 0;
-    padding: 0.6rem 1rem 0.85rem;
-    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-    border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
-    opacity: 0.65;
-    transition: opacity 0.3s ease;
-}
-
-.lower-third--on { opacity: 1; }
-
-.lower-third__kicker {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem;
-    margin-bottom: 0.3rem;
-}
-
-.lower-third__live {
-    font-size: 0.63rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 0.12rem 0.42rem;
-    border-radius: 0.25rem;
-    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
-    color: var(--sfs-text-muted, #a8b0c5);
-}
-
-.lower-third__live.is-live {
-    background: var(--sfs-danger, #d24b5a);
-    color: var(--sfs-on-danger, #ffffff);
-}
-
-.lower-third__cat {
-    font-size: 0.72rem;
-    color: var(--sfs-text-muted, #a8b0c5);
-}
-
-.lower-third__text {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--sfs-text, #eef1f8);
-}
-
-.lower-third__bar {
-    position: absolute;
-    inset-inline-start: 0;
-    bottom: 0;
-    height: 3px;
-    background: var(--sfs-accent, #667eea);
-    transition: width 0.4s ease;
-}
+/* -- studio ----------------------------------------------------------
+   The stage, the lower third and the on-air bug now live in
+   NewsStudio.vue, scoped to it, because they are overlays ON the studio
+   image rather than page furniture around it. Nothing here styles them.
+-------------------------------------------------------------------- */
 
 /* -- transport ------------------------------------------------------- */
 .transport {
@@ -1735,6 +1803,8 @@ onBeforeRouteLeave(() => {
     gap: 1rem;
     align-items: start;
 }
+
+.body--single { grid-template-columns: minmax(0, 1fr); }
 
 .story {
     border-radius: 0.85rem;

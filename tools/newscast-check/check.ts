@@ -31,12 +31,17 @@ import {
     pickVoice, sentences, speakable, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type NewsItem, type Segment, type VoiceLike,
 } from '../../src/components/newscast/newscastEngine';
+import {
+    IDENTITY_RATIO, MALE_F0_CEILING, MALE_RATIO,
+    canShape, hann, shapeRatio, shapedPitch, timeScale,
+} from '../../src/components/newscast/voiceShaper';
 
 // Read as TEXT as well as imported, so the check can assert things about the
 // source that are invisible once it has been compiled — the lookbehind ban
 // below being the one that matters, since bundling would have already
 // succeeded on the machine running this.
 const ENGINE_PATH = resolve('src/components/newscast/newscastEngine.ts');
+const SHAPER_PATH = resolve('src/components/newscast/voiceShaper.ts');
 
 let failures = 0;
 
@@ -574,6 +579,174 @@ console.log('\n11. One presenter, when the engine can only field one voice');
     check('an empty solo bulletin still says so',
           emptySolo.length === 1 && emptySolo[0].anchor === 'female'
           && emptySolo[0].text.length > 0, emptySolo);
+}
+
+console.log('\n12. Reshaping a voice, so the male anchor is never removed');
+{
+    /*
+      The second answer to "in Arabic the man speaks in a woman's voice", and
+      the one that keeps him on air.
+
+      Section 11 removes him, which is honest and is not what a newsroom does.
+      `voiceShaper.ts` instead time-compresses the fallback audio and lets the
+      caller play it back slower, which drops pitch AND formants together — the
+      cue that reads as a different, larger speaker.
+
+      Every property below is inaudible-until-shipped, which is the whole
+      argument for it being a plain module:
+
+      * a time-scaler that changes PITCH is not a time-scaler, it is a chipmunk,
+        and the bug would present as "the man sounds like a cartoon";
+      * a wrong output length desynchronises the shift, so the male anchor would
+        read at the wrong speed for the whole bulletin;
+      * a missing window normalisation fades every line in and out;
+      * and a ratio that lands the pitch outside the male range reproduces the
+        original report exactly, having done a lot of arithmetic on the way.
+    */
+    const RATE = 24000;      // what the fallback provider actually returns
+
+    function tone(hz: number, seconds: number, rate = RATE): Float32Array {
+        const out = new Float32Array(Math.round(rate * seconds));
+        for (let i = 0; i < out.length; i++) {
+            out[i] = Math.sin((2 * Math.PI * hz * i) / rate) * 0.7;
+        }
+        return out;
+    }
+
+    /** Fundamental by zero-crossing rate — crude, and enough to catch a shift. */
+    function measureHz(signal: Float32Array, rate = RATE): number {
+        let crossings = 0;
+        // Skip the first and last frame: they are the partially-windowed ends.
+        const from = Math.min(2000, Math.floor(signal.length / 4));
+        const to = signal.length - from;
+        for (let i = from + 1; i < to; i++) {
+            if (signal[i - 1] <= 0 && signal[i] > 0) crossings++;
+        }
+        return (crossings * rate) / Math.max(1, to - from);
+    }
+
+    function rms(signal: Float32Array): number {
+        let total = 0;
+        for (let i = 0; i < signal.length; i++) total += signal[i] * signal[i];
+        return Math.sqrt(total / Math.max(1, signal.length));
+    }
+
+    // ---- the ratio -----------------------------------------------------
+    check('a voice already in the right register is left completely alone',
+          shapeRatio('male', 'male') === IDENTITY_RATIO
+          && shapeRatio('female', 'female') === IDENTITY_RATIO);
+    check('an unknown rendered gender is not guessed at',
+          shapeRatio('', 'male') === IDENTITY_RATIO,
+          'reshaping on a guess is how a correct voice gets mangled');
+    check('a female voice asked to read the male anchor is lowered',
+          shapeRatio('female', 'male') === MALE_RATIO && MALE_RATIO < 1, MALE_RATIO);
+
+    /*
+      The direction that does NOT exist, and the trap in it.
+
+      No provider here is male-only, so there is no measured up-shift and
+      inventing one would mean a 1.65x rise that sounds like a cartoon. It
+      answers 1 — which the CALLER must read as "cannot shape this", never as
+      "nothing needs shaping". Newscast.vue therefore branches on the gender
+      mismatch and treats a ratio of 1 there as a reason to fall back to one
+      presenter. Getting that backwards plays a man as the female anchor: the
+      original bug, arriving through the door built to stop it.
+    */
+    check('the direction with no honest ratio refuses rather than inventing one',
+          shapeRatio('male', 'female') === IDENTITY_RATIO,
+          'must be read as "cannot shape", not as "no shaping needed"');
+
+    // THE ASSERTION THIS FILE EXISTS FOR. app 36 calls a voice male below
+    // 155 Hz, learned from en-US-GuyNeural at 160 Hz being reported as female.
+    // A shaped voice has to clear the same bar the neural ones do.
+    const shaped = shapedPitch(MALE_RATIO);
+    check(`a reshaped voice lands in the male range (${shaped.toFixed(0)}Hz)`,
+          shaped <= MALE_F0_CEILING, `${shaped} must be <= ${MALE_F0_CEILING}`);
+    check('and is not dropped so far it stops sounding like a person',
+          shaped >= 100, `${shaped}Hz — below ~100 the formants read as a giant`);
+
+    // ---- the time scaler ------------------------------------------------
+    const voice = tone(216, 0.6);                    // the fallback's pitch
+
+    check('a ratio of exactly 1 is a byte-for-byte no-op',
+          timeScale(voice, 1, RATE).length === voice.length
+          && timeScale(voice, 1, RATE).every((v, i) => v === voice[i]));
+
+    const compressed = timeScale(voice, MALE_RATIO, RATE);
+    check('the output is shorter by the ratio',
+          Math.abs(compressed.length - voice.length * MALE_RATIO) <= 2,
+          [compressed.length, voice.length * MALE_RATIO]);
+
+    // The one that matters: time-scaling must NOT move the pitch. The shift
+    // comes later, from playbackRate; if it happened here too it would be
+    // applied twice and the anchor would sound like a foghorn.
+    const before = measureHz(voice);
+    const after = measureHz(compressed);
+    check(`time-scaling leaves the pitch alone (${before.toFixed(0)} -> ${after.toFixed(0)}Hz)`,
+          Math.abs(after - before) / before < 0.06, [before, after]);
+
+    // ...and the two halves together land where the ratio promised. Playing
+    // the compressed buffer at `playbackRate = ratio` is what the component
+    // does; here that is the same as reading it at a lower sample rate.
+    const played = measureHz(compressed, RATE * MALE_RATIO);
+    check(`played back at the ratio it becomes a male pitch (${played.toFixed(0)}Hz)`,
+          played <= MALE_F0_CEILING, played);
+
+    // Duration is restored by the same move: shorter buffer, slower playback.
+    const finalSeconds = compressed.length / (RATE * MALE_RATIO);
+    check('and the line still takes exactly as long to read',
+          Math.abs(finalSeconds - voice.length / RATE) < 0.01,
+          [finalSeconds, voice.length / RATE]);
+
+    // No fade at the ends: a missing window normalisation is inaudible on a
+    // test tone's average and very audible on every spoken line.
+    check('the level is held across the whole line',
+          Math.abs(rms(compressed) - rms(voice)) / rms(voice) < 0.25,
+          [rms(voice), rms(compressed)]);
+    const head = compressed.subarray(0, Math.floor(compressed.length * 0.06));
+    check('including at the very start, which is where a fade would show',
+          rms(head) > rms(compressed) * 0.5, [rms(head), rms(compressed)]);
+
+    // ---- it must not fall over on the odd input -------------------------
+    check('silence stays silent rather than becoming noise',
+          timeScale(new Float32Array(4096), MALE_RATIO, RATE).every(v => v === 0));
+    check('empty in, empty out', timeScale(new Float32Array(0), MALE_RATIO, RATE).length === 0);
+    check('a clip shorter than one frame does not crash',
+          timeScale(tone(216, 0.004), MALE_RATIO, RATE) instanceof Float32Array);
+    check('a nonsense ratio returns the audio untouched',
+          timeScale(voice, 0, RATE).length === voice.length
+          && timeScale(voice, NaN, RATE).length === voice.length);
+    check('output is finite everywhere — a NaN silences the rest of the line',
+          compressed.every(v => Number.isFinite(v)));
+    check('and never clips',
+          compressed.every(v => v >= -1.001 && v <= 1.001),
+          Math.max(...Array.from(compressed).map(Math.abs)));
+
+    // Stretching as well as compressing, since `shapeRatio` is the only thing
+    // stopping a future caller passing > 1.
+    const stretched = timeScale(voice, 1.4, RATE);
+    check('it stretches as well as it compresses',
+          Math.abs(stretched.length - voice.length * 1.4) <= 2, stretched.length);
+    check('and still without moving the pitch',
+          Math.abs(measureHz(stretched) - before) / before < 0.06, measureHz(stretched));
+
+    // ---- the window -----------------------------------------------------
+    check('the hann window starts and ends at zero',
+          hann(64)[0] === 0 && Math.abs(hann(64)[63]) < 1e-12);
+    check('and peaks in the middle', Math.abs(hann(65)[32] - 1) < 1e-9);
+    check('a degenerate window does not divide by zero',
+          hann(1)[0] === 1 && hann(0).length === 0);
+
+    // ---- capability detection -------------------------------------------
+    check('canShape is false without Web Audio', !canShape({}));
+    check('canShape is true with it', canShape({ AudioContext: function () {} }));
+    check('and accepts the prefixed name Safari used to ship',
+          canShape({ webkitAudioContext: function () {} }));
+
+    // Same Safari rule as the engine: a lookbehind is a PARSE-TIME error
+    // before 16.4 and would take the whole bundle down, not just this module.
+    check('the shaper source contains no lookbehind',
+          !readFileSync(SHAPER_PATH, 'utf-8').includes('(?<='));
 }
 
 console.log(`\n${failures ? `FAILED: ${failures} check(s)` : 'All newscast engine checks passed.'}`);

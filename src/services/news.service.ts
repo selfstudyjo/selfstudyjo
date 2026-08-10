@@ -204,8 +204,18 @@ class NewsService {
         anchor: 'female' | 'male',
         rate = 1,
         voice = '',
+        /**
+         * Accept a voice of the wrong gender for this anchor.
+         *
+         * The backend refuses one by default, because handing a female voice to
+         * the male anchor unannounced is the bug all of this exists to stop.
+         * The page sets this only when it is going to reshape the audio into
+         * the right register itself — the refusal is there to prevent a
+         * *silent* substitution, not an informed one.
+         */
+        allowAnyVoice = false,
     ): Promise<SpeechClip> {
-        const key = `${language}|${anchor}|${rate}|${voice}|${text}`;
+        const key = `${language}|${anchor}|${rate}|${voice}|${allowAnyVoice}|${text}`;
         const cached = this.clips.get(key);
         if (cached) return cached;
 
@@ -225,7 +235,10 @@ class NewsService {
                             'Authorization': `Token ${import.meta.env.VITE_AUTH_TOKEN}`,
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ text, language, anchor, rate, voice }),
+                        body: JSON.stringify({
+                            text, language, anchor, rate, voice,
+                            allow_any_voice: allowAnyVoice,
+                        }),
                         mode: 'cors',
                         credentials: 'omit',
                     });
