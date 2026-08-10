@@ -1,0 +1,1 @@
+import{t as e}from"./index-XMIkVzEX.js";export{e as serviceRegistry};
