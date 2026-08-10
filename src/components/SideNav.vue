@@ -114,22 +114,31 @@
 
       <nav class="sidebar-nav">
         <!--
-          Home. Pinned above every group, rendered in every mode, never
+          The pinned entries. Rendered above every group in every mode, never
           filtered by the search and never hidden by an access flag — a sidebar
           scoped to one application is a sidebar that no longer lists the rest
           of the platform, so the way back to the dashboard has to be somewhere
-          the user can always find it. See HOME_ENTRY in appNav.ts.
+          the user can always find it.
+
+          Home is always here. The Newscast is here whenever the sidebar is
+          scoped to a DIFFERENT application, because that is precisely when the
+          platform menu is hidden and the one page needing no account at all
+          would otherwise be two clicks and a disclosure away. `pinnedEntries()`
+          in appNav.ts decides which; this only draws them, and it never
+          duplicates something already visible below.
         -->
         <router-link
-          :to="homeEntry.to"
+          v-for="entry in pinned"
+          :key="entry.to"
+          :to="entry.to"
           class="nav-item nav-home"
-          :class="{ 'active': currentPath === homeEntry.to }"
-          :aria-current="currentPath === homeEntry.to ? 'page' : undefined"
-          :title="isCollapsed ? 'Home' : undefined"
+          :class="{ 'active': currentPath === entry.to }"
+          :aria-current="currentPath === entry.to ? 'page' : undefined"
+          :title="isCollapsed ? entry.text : undefined"
           @click="onNavClick"
         >
-          <div class="nav-icon"><component :is="icons[homeEntry.icon]" /></div>
-          <span class="nav-text">{{ homeEntry.text }}</span>
+          <div class="nav-icon"><component :is="icons[entry.icon]" /></div>
+          <span class="nav-text">{{ entry.text }}</span>
         </router-link>
 
         <template v-for="group in renderGroups.scoped" :key="group.key">
@@ -293,11 +302,11 @@ import { useUserChatStore } from '@/store/userchat';
 import ThemePicker from '@/components/ThemePicker.vue';
 import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 import {
-  HOME_ENTRY,
   activePath,
   flatten,
   matchParts,
   navLayout,
+  pinnedEntries,
   resolveSection,
   searchTerms,
   type Access,
@@ -525,9 +534,15 @@ const access = computed<Access>(() => ({
   proctor: authStore.isProctor,
 }));
 
-const homeEntry = HOME_ENTRY;
 const currentPath = computed(() => route.path);
 const activeSection = computed(() => resolveSection(currentPath.value, access.value));
+
+/**
+ * Home, plus the Newscast when the sidebar is scoped elsewhere. Decided in
+ * appNav.ts so `check:appnav` can prove the pin never duplicates an entry that
+ * is already visible below it.
+ */
+const pinned = computed(() => pinnedEntries(activeSection.value));
 
 const searchQuery = ref('');
 const searchInput = ref<HTMLInputElement | null>(null);

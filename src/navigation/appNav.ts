@@ -338,8 +338,12 @@ const ROBLOX: NavEntry = { to: '/roblox-tool', text: 'Roblox Studio', icon: 'rob
   Plans and All Certificates, and NOT with Drawing Papers and Messages, which
   are ungated but still need an account. `check:appnav` asserts it, so nobody
   "tidies" it into the authenticated set.
+
+  It is also PINNED — see `pinnedEntries()`. Exported because the component
+  renders it outside the groups.
 */
-const NEWSCAST: NavEntry = { to: '/newscast', text: 'Newscast', icon: 'newscast', keywords: 'news world headlines bulletin radio listen anchor arabic english rt aljazeera breaking free public', requires: 'public' };
+export const NEWSCAST_ENTRY: NavEntry = { to: '/newscast', text: 'Newscast', icon: 'newscast', keywords: 'news world headlines bulletin radio listen anchor arabic english rt aljazeera breaking free public', requires: 'public' };
+const NEWSCAST = NEWSCAST_ENTRY;
 
 // -- Proctoring ----------------------------------------------------------
 const PROCTOR_DASHBOARD: NavEntry = { to: '/proctor-dashboard', text: 'Proctor Dashboard', icon: 'proctor', keywords: 'monitor supervise invigilate exams candidates', requires: 'proctor' };
@@ -596,6 +600,33 @@ export function globalGroups(access: Access): NavGroup[] {
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);
+}
+
+/**
+ * The entries rendered ABOVE every group, which no filter or access flag can
+ * remove.
+ *
+ * Home is always here, for the reason on `HOME_ENTRY`. The Newscast joins it
+ * **whenever the sidebar is scoped to some other application**, and that is the
+ * whole point: a scoped sidebar has hidden the platform menu, so the one page
+ * on this platform that needs no account and no subscription becomes reachable
+ * only by expanding "All applications". Somebody three clicks into Research
+ * Flow could not find the news, which is exactly how it was reported.
+ *
+ * It is deliberately NOT pinned in the two cases where it is already on screen,
+ * because a pinned duplicate of a visible entry is worse than the problem:
+ *
+ *  - no section — the platform menu is showing, and `globalGroups` lists it
+ *    under "Main";
+ *  - the newscast section — it is that section's own item.
+ *
+ * So the pin never duplicates anything, which `check:appnav` asserts across
+ * every application. Returning a list rather than a boolean keeps the decision
+ * here: the component renders what it is given and decides nothing.
+ */
+export function pinnedEntries(section: AppSection | null): NavEntry[] {
+    if (!section || section.id === 'newscast') return [HOME_ENTRY];
+    return [HOME_ENTRY, NEWSCAST_ENTRY];
 }
 
 /** One application's pages, plus its links out, filtered to what this user may see. */

@@ -24,7 +24,7 @@ import { resolve } from 'node:path';
 import {
     APP_SECTIONS, HOME_ENTRY,
     activePath, canSee, entryMatches, filterGroups, flatten, globalGroups, isUnder,
-    matchParts, navLayout, resolveSection, searchTerms, sectionGroups,
+    matchParts, navLayout, pinnedEntries, resolveSection, searchTerms, sectionGroups,
     type Access, type AppSection, type NavEntry,
 } from '../../src/navigation/appNav';
 
@@ -248,6 +248,38 @@ console.log('\n6. Access gating');
     */
     check('the Newscast is visible to a signed-out visitor',
           publicOnly.some(i => i.to === '/newscast'), publicOnly.map(i => i.to));
+
+    /*
+      And reachable from EVERY sidebar, which the platform menu alone does not
+      give you.
+
+      This is the bug that was reported: the sidebar scopes itself to whichever
+      application you are in, so from inside Courses, Messages, Profile or any
+      of the other sixteen, `/newscast` was only behind the "All applications"
+      disclosure. The free, no-account page was the hardest one to find.
+      `pinnedEntries()` puts it above the groups whenever it would otherwise be
+      scoped away — and NOT when it is already on screen, or the pin would be a
+      duplicate of a visible row.
+    */
+    for (const access of [SIGNED_OUT, BASIC]) {
+        const label = access.auth ? 'signed in' : 'signed out';
+        for (const section of [null, ...APP_SECTIONS]) {
+            const pins = pinnedEntries(section);
+            const visible = flatten(navLayout({
+                section, access, query: '', showAllApps: false,
+            }).scoped).map(i => i.to);
+            const reachable = pins.some(p => p.to === '/newscast') || visible.includes('/newscast');
+            check(`${label}: the Newscast is reachable from the ${section?.id ?? 'platform'} sidebar`,
+                  reachable, { pinned: pins.map(p => p.to), visible });
+
+            const duplicated = pins.filter(p => visible.includes(p.to)).map(p => p.to);
+            check(`${label}: nothing pinned on ${section?.id ?? 'platform'} is duplicated below`,
+                  duplicated.length === 0, duplicated);
+        }
+    }
+
+    check('Home is pinned everywhere, unconditionally',
+          [null, ...APP_SECTIONS].every(s => pinnedEntries(s).some(p => p.to === '/')));
     const newscastSection = APP_SECTIONS.find(s => s.id === 'newscast')!;
     check('the Newscast application scopes the sidebar for a signed-out visitor',
           flatten(sectionGroups(newscastSection, SIGNED_OUT)).some(i => i.to === '/newscast'));
