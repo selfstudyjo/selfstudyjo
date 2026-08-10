@@ -1,0 +1,348 @@
+// Verifies src/components/newscast/newscastEngine.ts without a browser.
+//
+//   npm run check:newscast
+//
+// Playback needs `speechSynthesis` and an `<audio>` element and is not checkable
+// here. What *is* checkable is everything that decides what the listener hears,
+// and all of it fails silently:
+//
+// * **The bed policy.** "Music under the headlines, stopped for the details" is
+//   the entire brief for the audio, and it is one boolean per segment. Wrong,
+//   and a bulletin either plays music over every word of a 300-word story or
+//   never plays any at all — and both sound deliberate.
+// * **The anchor rota.** Two presenters who swap mid-story is the most obviously
+//   robotic thing a bulletin can do, and it is exactly what `index % 2` over
+//   segments produces. Nothing about it throws.
+// * **`speakable`.** Everything it misses is *heard*: a URL read out character
+//   by character, "quot" in the middle of a sentence, a pipe read as "vertical
+//   bar". You only find these by listening, one story at a time.
+// * **Arabic sentence splitting.** An English-only `[.!?]` split returns one
+//   enormous sentence for Arabic, so the detail cap stops capping and a feature
+//   is read for nine minutes without a pause.
+// * **Voice casting.** Both anchors landing on the same voice makes the handover
+//   lines sound like a fault rather than a handover.
+
+import {
+    BED_COUNT, OTHER_ANCHOR, PHRASES,
+    bedIndexFor, bedVolumeFor, buildScript, castVoices, detailText,
+    estimateDurationMs, hasDetail, isRtl, localeFor, pickVoice, sentences,
+    speakable, storyOrder,
+    type AnchorId, type NewsItem, type Segment, type VoiceLike,
+} from '../../src/components/newscast/newscastEngine';
+
+let failures = 0;
+
+function check(label: string, ok: boolean, detail: any = '') {
+    console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : '  ' + JSON.stringify(detail)}`);
+    if (!ok) failures++;
+}
+
+function item(id: string, title: string, over: Partial<NewsItem> = {}): NewsItem {
+    return {
+        id,
+        title,
+        summary: `Summary for ${title}.`,
+        body: `First sentence about ${title}. Second sentence. Third sentence. Fourth sentence. Fifth sentence.`,
+        paragraphs: [`First sentence about ${title}. Second sentence.`, 'Third sentence. Fourth sentence. Fifth sentence.'],
+        has_detail: true,
+        ...over,
+    };
+}
+
+const ENGLISH = [item('a', 'Typhoon hits east China'),
+                 item('b', 'Talks resume in Geneva'),
+                 item('c', 'Oil prices climb')];
+
+console.log('\n1. The bed plays under headlines and stops for detail');
+{
+    const script = buildScript({ language: 'en', items: ENGLISH });
+
+    check('every detail segment has the bed off',
+          script.filter(s => s.kind === 'detail').every(s => s.bed === false),
+          script.filter(s => s.kind === 'detail' && s.bed).map(s => s.text));
+
+    check('every non-detail segment has the bed on',
+          script.filter(s => s.kind !== 'detail').every(s => s.bed === true),
+          script.filter(s => s.kind !== 'detail' && !s.bed).map(s => s.kind));
+
+    check('a headline is always followed by its own detail',
+          script.every((s, i) => s.kind !== 'detail' || script[i - 1]?.itemId === s.itemId),
+          script.map(s => `${s.kind}:${s.itemId ?? '-'}`));
+
+    check('bedVolumeFor is zero exactly when bed is off',
+          script.every(s => (bedVolumeFor(s) === 0) === !s.bed));
+
+    check('the bed is ducked under a headline, not full',
+          script.filter(s => s.kind === 'headline').every(s => bedVolumeFor(s) > 0 && bedVolumeFor(s) < 0.2));
+
+    check('the opening is louder than a headline',
+          bedVolumeFor(script[0]) > bedVolumeFor(script.find(s => s.kind === 'headline')!));
+}
+
+console.log('\n2. Two anchors, alternating per story');
+{
+    const script = buildScript({ language: 'en', items: ENGLISH, firstAnchor: 'female' });
+
+    for (const id of storyOrder(script)) {
+        const forStory = script.filter(s => s.itemId === id && s.kind !== 'handover');
+        const anchors = new Set(forStory.map(s => s.anchor));
+        check(`story ${id} is read by exactly one anchor`, anchors.size === 1, [...anchors]);
+    }
+
+    const byStory = storyOrder(script).map(id =>
+        script.find(s => s.itemId === id && s.kind === 'headline')!.anchor);
+    check('consecutive stories go to different anchors',
+          byStory.every((a, i) => i === 0 || a !== byStory[i - 1]), byStory);
+
+    check('the requested anchor opens', script[0].anchor === 'female', script[0].anchor);
+
+    const other = buildScript({ language: 'en', items: ENGLISH, firstAnchor: 'male' });
+    check('opening with the other anchor mirrors the rota',
+          other[0].anchor === 'male'
+          && other.filter(s => s.kind === 'headline')[0].anchor === 'male');
+
+    check('the handover is spoken by the anchor taking over',
+          script.every((s, i) => s.kind !== 'handover'
+              || script.slice(i + 1).find(n => n.kind === 'headline')?.anchor === s.anchor));
+
+    check('the sign-off is not the anchor who read the last story',
+          script[script.length - 1].anchor
+          !== script.filter(s => s.kind === 'headline').pop()!.anchor);
+
+    check('OTHER_ANCHOR is an involution',
+          (['female', 'male'] as AnchorId[]).every(a => OTHER_ANCHOR[OTHER_ANCHOR[a]] === a));
+}
+
+console.log('\n3. A story with no detail is a headline and nothing else');
+{
+    // Al Jazeera's /videos/ and /gallery/ sections. The DAG sets has_detail.
+    const video = item('v', 'Watch: floods in Bangkok',
+                       { has_detail: false, body: '', paragraphs: [], summary: '' });
+    const script = buildScript({ language: 'en', items: [ENGLISH[0], video] });
+
+    check('hasDetail is false for a headline-only story', !hasDetail(video));
+    check('no detail segment is emitted for it',
+          !script.some(s => s.kind === 'detail' && s.itemId === 'v'),
+          script.map(s => `${s.kind}:${s.itemId ?? '-'}`));
+    check('its headline is still read',
+          script.some(s => s.kind === 'headline' && s.itemId === 'v'));
+    check('a story WITH detail still gets one',
+          script.some(s => s.kind === 'detail' && s.itemId === 'a'));
+
+    // has_detail absent (an older stored bulletin) must fall back to the text.
+    const legacy = item('l', 'An older stored story', { has_detail: undefined });
+    check('a bulletin without has_detail falls back to the body', hasDetail(legacy));
+    const empty = { id: 'e', title: 'Nothing but a headline here' } as NewsItem;
+    check('and a story with no text at all has no detail', !hasDetail(empty));
+}
+
+console.log('\n4. speakable() — everything it misses is heard aloud');
+{
+    // The point is that the *word* "quot" is never spoken and the sentence
+    // survives intact. The quote characters themselves are then dropped
+    // deliberately — some voices pronounce them, and none needs them.
+    check('&quot; never reaches a voice as a word',
+          !speakable('the &quot;yellow line&quot; area').includes('quot'),
+          speakable('the &quot;yellow line&quot; area'));
+    check('and the words around it survive',
+          speakable('the &quot;yellow line&quot; area') === 'the yellow line area',
+          speakable('the &quot;yellow line&quot; area'));
+    check('strips a URL', !speakable('See https://example.com/a/b for more').includes('http'),
+          speakable('See https://example.com/a/b for more'));
+    check("Al Jazeera's breaking pipe becomes a pause",
+          speakable('عاجل | زلزال بقوة 6.7') === 'عاجل, زلزال بقوة 6.7',
+          speakable('عاجل | زلزال بقوة 6.7'));
+    check('a two-dot ellipsis becomes a comma',
+          speakable('النيران تتخطى الخط.. صور فضائية') === 'النيران تتخطى الخط, صور فضائية',
+          speakable('النيران تتخطى الخط.. صور فضائية'));
+    check('an em dash becomes a pause',
+          speakable('Khamenei footage – commander') === 'Khamenei footage, commander',
+          speakable('Khamenei footage – commander'));
+    check('collapses whitespace', speakable('a\n\n  b   c') === 'a b c');
+    check('leaves ordinary text alone',
+          speakable('Oil prices climb 3% in Asia') === 'Oil prices climb 3% in Asia');
+    check('an unknown entity does not survive',
+          !speakable('a &mdash; b').includes('&'), speakable('a &mdash; b'));
+    check('empty in, empty out', speakable('') === '');
+}
+
+console.log('\n5. Sentence splitting works in both scripts');
+{
+    const english = sentences('One. Two! Three? Four.');
+    check('splits english on terminators', english.length === 4, english);
+
+    // The failure this exists to catch: an English-only split returns ONE
+    // sentence here, so the detail cap silently stops capping.
+    const arabic = sentences('الجملة الأولى. الجملة الثانية؟ الجملة الثالثة. الرابعة.');
+    check('splits arabic, including on ؟', arabic.length === 4, arabic);
+
+    check('keeps the terminator with its sentence', english[0] === 'One.', english[0]);
+    check('ignores empty fragments', sentences('One.   \n\n  Two.').length === 2);
+    check('no text, no sentences', sentences('').length === 0);
+
+    const long = item('x', 'Long feature', {
+        paragraphs: ['A. B. C. D. E. F. G. H.'], body: 'A. B. C. D. E. F. G. H.',
+    });
+    check('detailText caps at the sentence count',
+          detailText(long, 3) === 'A. B. C.', detailText(long, 3));
+    check('detailText falls back to the summary when there is no body',
+          detailText({ id: 'y', title: 't', summary: 'Just a summary.' } as NewsItem, 3)
+          === 'Just a summary.');
+    check('detailText never returns undefined',
+          detailText({ id: 'z', title: 't' } as NewsItem, 3) === '');
+}
+
+console.log('\n6. Both languages are first class');
+{
+    const arabic = buildScript({
+        language: 'ar',
+        items: [item('a', 'زلزال بقوة 6.7 يضرب كولومبيا')],
+        meta: { label: 'أخبار', label_en: 'News' },
+    });
+    check('the arabic opening is in arabic', /نشرة/.test(arabic[0].text), arabic[0].text);
+    check('the arabic opening names the arabic category',
+          arabic[0].text.includes('أخبار'), arabic[0].text);
+    check('the arabic sign-off is in arabic',
+          /شكرا/.test(arabic[arabic.length - 1].text), arabic[arabic.length - 1].text);
+
+    const english = buildScript({
+        language: 'en', items: [item('a', 'A story')],
+        meta: { label: 'أخبار', label_en: 'News' },
+    });
+    check('the english opening uses label_en, not the native label',
+          english[0].text.includes('News') && !english[0].text.includes('أخبار'),
+          english[0].text);
+
+    check('arabic is rtl and english is not', isRtl('ar') && !isRtl('en'));
+    check('each language has a distinct locale',
+          localeFor('ar') !== localeFor('en'));
+    check('no phrase list is empty',
+          (['ar', 'en'] as const).every(l =>
+              PHRASES[l].handover.length > 0 && PHRASES[l].close.length > 0));
+
+    // A category with nothing in it has to SAY so. Silence reads as broken.
+    const empty = buildScript({ language: 'ar', items: [] });
+    check('an empty bulletin still speaks', empty.length === 1 && empty[0].text.length > 0);
+    check('and does it in the right language', /لا توجد/.test(empty[0].text), empty[0].text);
+    check('and plays no music over it', empty[0].bed === false);
+}
+
+console.log('\n7. Running order and limits');
+{
+    const many = Array.from({ length: 30 }, (_, i) => item(`i${i}`, `Story number ${i}`));
+    const script = buildScript({ language: 'en', items: many, maxItems: 5 });
+    check('maxItems caps the running order', storyOrder(script).length === 5,
+          storyOrder(script).length);
+    check('the order is the bulletin order',
+          storyOrder(script).join(',') === 'i0,i1,i2,i3,i4', storyOrder(script));
+
+    const headlinesOnly = buildScript({ language: 'en', items: ENGLISH, withDetail: false });
+    check('withDetail:false gives a headlines-only bulletin',
+          !headlinesOnly.some(s => s.kind === 'detail'));
+    check('and therefore never stops the bed',
+          headlinesOnly.every(s => s.bed === true));
+
+    check('a story with a blank title is dropped',
+          storyOrder(buildScript({
+              language: 'en', items: [item('a', 'Real story'), item('b', '  ')],
+          })).length === 1);
+
+    check('the script opens and closes',
+          script[0].kind === 'open' && script[script.length - 1].kind === 'close');
+}
+
+console.log('\n8. Bed rotation and duration estimates');
+{
+    const seen = new Set(Array.from({ length: 12 }, (_, i) => bedIndexFor(i)));
+    check('bed rotation uses every bed', seen.size === BED_COUNT, [...seen]);
+    check('bed indices are 1-based and in range',
+          [...seen].every(n => n >= 1 && n <= BED_COUNT), [...seen]);
+    check('rotation is deterministic', bedIndexFor(0) === bedIndexFor(BED_COUNT));
+    check('a negative index does not escape the range', bedIndexFor(-3) >= 1);
+
+    check('a longer line takes longer',
+          estimateDurationMs('a'.repeat(200), 'en') > estimateDurationMs('a'.repeat(50), 'en'));
+    check('arabic is estimated slower than english for the same length',
+          estimateDurationMs('a'.repeat(100), 'ar') > estimateDurationMs('a'.repeat(100), 'en'));
+    check('a faster rate is quicker',
+          estimateDurationMs('a'.repeat(100), 'en', 2) < estimateDurationMs('a'.repeat(100), 'en', 1));
+    check('empty text takes no time', estimateDurationMs('', 'en') === 0);
+}
+
+console.log('\n9. Casting two distinct voices');
+{
+    const voices: VoiceLike[] = [
+        { name: 'Microsoft Zira - English (United States)', lang: 'en-US', localService: true },
+        { name: 'Microsoft David - English (United States)', lang: 'en-US', localService: true },
+        { name: 'Microsoft Hoda - Arabic (Egypt)', lang: 'ar-EG', localService: true },
+        { name: 'Microsoft Naayf - Arabic (Saudi)', lang: 'ar-SA', localService: true },
+        { name: 'Google Deutsch', lang: 'de-DE' },
+    ];
+
+    const english = castVoices(voices, 'en');
+    check('an english cast is english', english.female?.lang.startsWith('en')
+          && english.male?.lang.startsWith('en'), english);
+    check('the two english anchors are different voices',
+          english.female?.name !== english.male?.name, english);
+    check('Zira is cast as the woman', /Zira/.test(english.female?.name || ''), english.female);
+    check('David is cast as the man', /David/.test(english.male?.name || ''), english.male);
+
+    const arabic = castVoices(voices, 'ar');
+    check('an arabic cast is arabic', arabic.female?.lang.startsWith('ar')
+          && arabic.male?.lang.startsWith('ar'), arabic);
+    check('the two arabic anchors are different voices',
+          arabic.female?.name !== arabic.male?.name, arabic);
+
+    // The degradations. A browser with one Arabic voice, or none, still has to
+    // produce a bulletin — the page says the anchors share a voice rather than
+    // failing to read the news.
+    const single = castVoices([voices[2]], 'ar');
+    check('one voice is used for both anchors rather than failing',
+          single.female?.name === 'Microsoft Hoda - Arabic (Egypt)'
+          && single.male?.name === 'Microsoft Hoda - Arabic (Egypt)', single);
+
+    const noArabic = castVoices([voices[0], voices[1]], 'ar');
+    check('no arabic voice falls back to whatever exists',
+          noArabic.female !== null && noArabic.male !== null, noArabic);
+
+    check('no voices at all returns null, not a crash',
+          pickVoice([], 'en', 'female') === null);
+    check('castVoices with no voices returns nulls',
+          castVoices([], 'en').female === null);
+}
+
+console.log('\n10. A whole bulletin end to end');
+{
+    const script = buildScript({
+        language: 'ar',
+        items: [
+            item('a', 'عاجل | زلزال بقوة 6.7 يضرب كولومبيا'),
+            item('b', 'المساعدات لا تصل إلى غزة'),
+            { id: 'c', title: 'مشاهدة: فيضانات بانكوك', has_detail: false } as NewsItem,
+        ],
+        meta: { label: 'أخبار', label_en: 'News' },
+        detailSentences: 2,
+    });
+
+    check('nothing spoken is empty', script.every(s => s.text.trim().length > 0),
+          script.filter(s => !s.text.trim()).map(s => s.kind));
+    check('no unresolved entity reaches a voice',
+          script.every(s => !/&[a-z]+;/i.test(s.text)),
+          script.filter(s => /&[a-z]+;/i.test(s.text)).map(s => s.text));
+    check('no URL reaches a voice', script.every(s => !s.text.includes('http')));
+    check('no pipe reaches a voice', script.every(s => !s.text.includes('|')),
+          script.filter(s => s.text.includes('|')).map(s => s.text));
+    check('the headline-only story has no detail',
+          !script.some(s => s.kind === 'detail' && s.itemId === 'c'));
+    check('every segment names a known anchor',
+          script.every(s => s.anchor === 'female' || s.anchor === 'male'));
+    check('every story segment carries its index',
+          script.filter(s => s.itemId).every(s => typeof s.itemIndex === 'number'));
+
+    const kinds = script.map(s => s.kind).join(' ');
+    check('the shape is open, then stories, then close',
+          kinds.startsWith('open headline detail') && kinds.endsWith('close'), kinds);
+}
+
+console.log(`\n${failures ? `FAILED: ${failures} check(s)` : 'All newscast engine checks passed.'}`);
+process.exit(failures ? 1 : 0);

@@ -234,6 +234,28 @@ console.log('\n6. Access gating');
           ['/courses', '/exams', '/plans', '/all-certificates'].every(to => publicOnly.some(i => i.to === to)),
           publicOnly.map(i => i.to));
 
+    /*
+      The Newscast is public, and the level matters.
+
+      There are two kinds of ungated page here and they are easy to confuse.
+      Drawing Papers and Messages are free but need an ACCOUNT — `requiresAuth`
+      and nothing else. The Newscast needs neither: a signed-out visitor gets
+      the whole bulletin, which is why it sits in this list beside Courses and
+      Plans rather than beside Draw and Messages. Sitting in the sidebar's
+      "Main" group next to Messages makes that look like an oversight, so it is
+      asserted: `requires: 'public'` in appNav.ts and `requiresAuth: false` on
+      the route have to stay in step, and neither can be quietly tightened.
+    */
+    check('the Newscast is visible to a signed-out visitor',
+          publicOnly.some(i => i.to === '/newscast'), publicOnly.map(i => i.to));
+    const newscastSection = APP_SECTIONS.find(s => s.id === 'newscast')!;
+    check('the Newscast application scopes the sidebar for a signed-out visitor',
+          flatten(sectionGroups(newscastSection, SIGNED_OUT)).some(i => i.to === '/newscast'));
+    check('and every one of its related links is public too — no dead ends',
+          flatten(sectionGroups(newscastSection, SIGNED_OUT)).length
+          === (newscastSection.items.length + (newscastSection.related?.length ?? 0)),
+          flatten(sectionGroups(newscastSection, SIGNED_OUT)).map(i => i.to));
+
     // Fail-closed: an entry that forgets `requires` must need an account.
     check('the default requirement is an account',
           !canSee({ to: '/x', text: 'x', icon: 'home' }, SIGNED_OUT));

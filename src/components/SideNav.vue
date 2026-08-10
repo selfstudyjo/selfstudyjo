@@ -388,6 +388,17 @@ const icons: Record<IconName, any> = {
     h('path', { d: 'M13.5 8l2.5 2.5' }),
   ]),
 
+  // A broadcast mast rather than a newspaper: the page is something you listen
+  // to, and the icon is the only hint of that before you open it.
+  newscast: stroked('NewscastIcon', '1.8', () => [
+    h('circle', { cx: '12', cy: '11', r: '2.2' }),
+    h('path', { d: 'M8.4 7.4a5 5 0 000 7.2' }),
+    h('path', { d: 'M15.6 7.4a5 5 0 010 7.2' }),
+    h('path', { d: 'M5.8 4.8a8.6 8.6 0 000 12.4' }),
+    h('path', { d: 'M18.2 4.8a8.6 8.6 0 010 12.4' }),
+    h('path', { d: 'M12 13.2V21' }),
+  ]),
+
   ai: filled('AIIcon',
     'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-10H8v2h2v-2zm6 0h-2v2h2v-2zm-6 4H8v2h2v-2zm6 0h-2v2h2v-2z'),
   research: filled('ResearchFlowIcon',

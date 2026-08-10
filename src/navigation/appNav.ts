@@ -61,7 +61,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python';
+    | 'database' | 'terminal' | 'python' | 'newscast';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -330,6 +330,17 @@ const JOB_INTERVIEW: NavEntry = { to: '/job-interview', text: 'Job Interview', i
 const CV_BUILDER: NavEntry = { to: '/cv-builder', text: 'CV Builder', icon: 'cvBuilder', keywords: 'resume curriculum vitae pdf docx export photo voice', requires: 'ai' };
 const ROBLOX: NavEntry = { to: '/roblox-tool', text: 'Roblox Studio', icon: 'roblox', keywords: 'game lua scripting studio animation', requires: 'ai' };
 
+/*
+  Newscast (app 36) — the most open page on the platform.
+
+  `requires: 'public'` rather than the default 'auth', and no feature: a
+  signed-out visitor gets the whole bulletin. That puts it with Courses, Exams,
+  Plans and All Certificates, and NOT with Drawing Papers and Messages, which
+  are ungated but still need an account. `check:appnav` asserts it, so nobody
+  "tidies" it into the authenticated set.
+*/
+const NEWSCAST: NavEntry = { to: '/newscast', text: 'Newscast', icon: 'newscast', keywords: 'news world headlines bulletin radio listen anchor arabic english rt aljazeera breaking free public', requires: 'public' };
+
 // -- Proctoring ----------------------------------------------------------
 const PROCTOR_DASHBOARD: NavEntry = { to: '/proctor-dashboard', text: 'Proctor Dashboard', icon: 'proctor', keywords: 'monitor supervise invigilate exams candidates', requires: 'proctor' };
 
@@ -531,6 +542,20 @@ export const APP_SECTIONS: AppSection[] = [
         related: [NOTIFICATIONS, DRAW, PROFILE],
     },
     {
+        id: 'newscast',
+        title: 'Newscast',
+        subtitle: 'World news, read to you hourly',
+        icon: 'newscast',
+        match: ['/newscast'],
+        home: '/newscast',
+        items: [NEWSCAST],
+        // Everything here is reachable signed out, which matters more on this
+        // section than on any other: it is the one application a visitor can
+        // land on without an account, so its way onward must not be a wall of
+        // entries that vanish for them.
+        related: [COURSES, ALL_CERTIFICATES, PLANS],
+    },
+    {
         id: 'proctor',
         title: 'Proctoring',
         subtitle: 'Supervise exam appointments',
@@ -565,7 +590,7 @@ export const APP_SECTIONS: AppSection[] = [
  */
 export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
-        { label: 'Main', items: [MESSAGES, NOTIFICATIONS] },
+        { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES] },
         { label: 'Tools', items: [DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },

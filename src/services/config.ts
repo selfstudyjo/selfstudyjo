@@ -343,6 +343,28 @@ class ServiceRegistry {
     }
 
     /**
+     * Self Study News (app 36) — the hourly world-news bulletins.
+     *
+     * The one service on this platform the frontend reads but nobody here
+     * writes: Airflow scrapes RT and Al Jazeera into the
+     * `selfstudyjo/selfstudy_news_data` repo every hour, and app 36 is a
+     * read-through cache in front of it. It exists *because* of working rule 9
+     * — the fine-grained GitHub token that reads that repo cannot be a `VITE_*`
+     * variable, since Vite compiles those into the published bundle.
+     *
+     * Sticky per tab like everything else, and for a slightly different reason
+     * than usual: every replica reads the same repo, so they cannot disagree
+     * about content, only about how stale their cache is. Bouncing between them
+     * mid-bulletin is how a listener hears the same story twice, or a headline
+     * the anchor has already read disappearing from the ticker.
+     */
+    async getRandomNewsReplica(): Promise<string | null> {
+        const appId = parseInt(import.meta.env.VITE_NEWS_APP_ID || '36');
+        const replicas = await this.getServiceReplicas(appId, 'news');
+        return this.getRandomReplica(replicas, appId);
+    }
+
+    /**
      * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
      * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
      */

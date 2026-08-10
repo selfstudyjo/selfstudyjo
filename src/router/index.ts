@@ -70,6 +70,12 @@ import DrawBoard from '../views/DrawBoard.vue';
 import Messages from '../views/Messages.vue';
 import DrawShared from '../views/DrawShared.vue';
 
+// Newscast (app 36) — deliberately the most open page on the platform: no
+// account and no subscription. Its route carries `requiresAuth: false`, which
+// puts it alongside Courses, Exams, Plans and All Certificates rather than
+// alongside Drawing Papers and Messages, which need an account.
+import Newscast from '../views/Newscast.vue';
+
 // Network Simulator (gated by lab_feature)
 import NetworkSimulator from '../views/NetworkSimulator.vue';
 import NetworkSimulatorStudio from '../views/NetworkSimulatorStudio.vue';
@@ -260,6 +266,15 @@ const routes = [
                 name: 'AiChat',
                 component: AiChat,
                 meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                // Public on purpose — no `requiresSubscription`, no
+                // `requiredFeatures`, and `requiresAuth: false`. A signed-out
+                // visitor can listen to the whole bulletin.
+                path: 'newscast',
+                name: 'Newscast',
+                component: Newscast,
+                meta: { title: 'Newscast', requiresAuth: false }
             },
             // Research Flow Routes
             {
