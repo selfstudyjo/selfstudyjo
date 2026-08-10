@@ -22,13 +22,21 @@
 // * **Voice casting.** Both anchors landing on the same voice makes the handover
 //   lines sound like a fault rather than a handover.
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
     BED_COUNT, OTHER_ANCHOR, PHRASES,
-    bedIndexFor, bedVolumeFor, buildScript, castVoices, detailText,
+    bedIndexFor, bedVolumeFor, buildScript, canSpeak, castVoices, detailText,
     estimateDurationMs, hasDetail, isRtl, localeFor, pickVoice, sentences,
-    speakable, storyOrder,
+    speakable, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type NewsItem, type Segment, type VoiceLike,
 } from '../../src/components/newscast/newscastEngine';
+
+// Read as TEXT as well as imported, so the check can assert things about the
+// source that are invisible once it has been compiled — the lookbehind ban
+// below being the one that matters, since bundling would have already
+// succeeded on the machine running this.
+const ENGINE_PATH = resolve('src/components/newscast/newscastEngine.ts');
 
 let failures = 0;
 
@@ -180,11 +188,36 @@ console.log('\n5. Sentence splitting works in both scripts');
     check('ignores empty fragments', sentences('One.   \n\n  Two.').length === 2);
     check('no text, no sentences', sentences('').length === 0);
 
-    const long = item('x', 'Long feature', {
-        paragraphs: ['A. B. C. D. E. F. G. H.'], body: 'A. B. C. D. E. F. G. H.',
-    });
+    // A terminator with no whitespace after it is not a sentence break.
+    check('a decimal is not split', sentences('Oil rose 3.5 percent today.').length === 1,
+          sentences('Oil rose 3.5 percent today.'));
+    check('an abbreviation is not split', sentences('The U.S. said no.').length === 1,
+          sentences('The U.S. said no.'));
+    check('a line break is a break', sentences('One\nTwo').length === 2);
+
+    // Real scraped Arabic, which is where the cap actually has to work.
+    const scraped = 'قال مسؤول في وزارة الحرب الأمريكية إن بلاده لا تنسحب من آسيا. '
+                  + 'وأضاف أن الهدف هو توازن القوى. فهل ينجح ذلك؟ الوقت وحده يحكم.';
+    check('real arabic prose splits into its sentences', sentences(scraped).length === 4,
+          sentences(scraped));
+
+    // A lookbehind is a PARSE-TIME error on Safari < 16.4, so it would not fail
+    // at runtime — it would take the whole bundle down before a line executed.
+    // The rule is documented in linkify.ts and this module has to honour it too.
+    check('the engine source contains no lookbehind',
+          !readFileSync(ENGINE_PATH, 'utf-8').includes('(?<='),
+          'a (?<=...) group would break Safari < 16.4 at parse time');
+
+    // Realistic prose, not 'A. B. C.' — a run of single letters is exactly what
+    // `endsInAbbreviation` is supposed to treat as initials, so it made a poor
+    // fixture for the cap.
+    const feature = 'One sentence. Two sentence. Three sentence. Four sentence. Five sentence.';
+    const long = item('x', 'Long feature', { paragraphs: [feature], body: feature });
     check('detailText caps at the sentence count',
-          detailText(long, 3) === 'A. B. C.', detailText(long, 3));
+          detailText(long, 3) === 'One sentence. Two sentence. Three sentence.',
+          detailText(long, 3));
+    check('and takes the whole thing when the cap is above the count',
+          detailText(long, 99) === feature, detailText(long, 99));
     check('detailText falls back to the summary when there is no body',
           detailText({ id: 'y', title: 't', summary: 'Just a summary.' } as NewsItem, 3)
           === 'Just a summary.');
@@ -293,22 +326,69 @@ console.log('\n9. Casting two distinct voices');
     check('the two arabic anchors are different voices',
           arabic.female?.name !== arabic.male?.name, arabic);
 
-    // The degradations. A browser with one Arabic voice, or none, still has to
-    // produce a bulletin — the page says the anchors share a voice rather than
-    // failing to read the news.
+    // With one Arabic voice installed, both anchors share it rather than the
+    // bulletin failing — the page says so in the caption.
     const single = castVoices([voices[2]], 'ar');
     check('one voice is used for both anchors rather than failing',
           single.female?.name === 'Microsoft Hoda - Arabic (Egypt)'
           && single.male?.name === 'Microsoft Hoda - Arabic (Egypt)', single);
 
+    /*
+      THE REGRESSION THIS SECTION EXISTS FOR.
+
+      `pickVoice` used to fall back to "any voice at all" when the requested
+      language had none, on the reasoning that some voice beats silence. It does
+      not. An explicitly assigned `utterance.voice` OVERRIDES `utterance.lang`,
+      so with no Arabic voice installed the page assigned an ENGLISH voice and
+      handed it Arabic characters. That is not accented Arabic, it is
+      unintelligible — and it was reported exactly that way: "it reads in
+      English and reads mixed words, not Arabic".
+
+      Returning null is what lets the component leave `voice` unset so the
+      platform can match on `lang` alone, and what lets the page say an Arabic
+      voice is missing instead of pretending to read the news.
+    */
     const noArabic = castVoices([voices[0], voices[1]], 'ar');
-    check('no arabic voice falls back to whatever exists',
-          noArabic.female !== null && noArabic.male !== null, noArabic);
+    check('no arabic voice returns null rather than an english one',
+          noArabic.female === null && noArabic.male === null, noArabic);
+    check('and pickVoice agrees',
+          pickVoice([voices[0], voices[1]], 'ar', 'female') === null);
+    check('a german voice is never cast for arabic',
+          pickVoice([voices[4]], 'ar', 'male') === null, pickVoice([voices[4]], 'ar', 'male'));
+    check('nor for english',
+          pickVoice([voices[4]], 'en', 'male') === null);
+
+    // The invariant, stated once over the whole matrix: a cast voice always
+    // speaks the language it was cast for.
+    for (const language of ['ar', 'en'] as const) {
+        const cast = castVoices(voices, language);
+        for (const anchor of ['female', 'male'] as const) {
+            const cast_voice = cast[anchor];
+            check(`${language}/${anchor} is cast in the right language`,
+                  cast_voice === null || cast_voice.lang.toLowerCase().startsWith(language),
+                  cast_voice);
+        }
+    }
+
+    check('voicesFor filters to the language', voicesFor(voices, 'ar').length === 2,
+          voicesFor(voices, 'ar').map(v => v.name));
+    check('canSpeak is true when a voice exists', canSpeak(voices, 'ar'));
+    check('canSpeak is false when none does', !canSpeak([voices[0]], 'ar'));
 
     check('no voices at all returns null, not a crash',
           pickVoice([], 'en', 'female') === null);
     check('castVoices with no voices returns nulls',
           castVoices([], 'en').female === null);
+
+    // The utterance's `lang` follows the voice that was actually cast, so an
+    // ar-EG voice is not asked to speak ar-SA. With no voice it falls back to
+    // the nominal tag, which is the platform's only remaining hint.
+    check('utteranceLang follows the cast voice',
+          utteranceLang('ar', voices[2]) === 'ar-EG', utteranceLang('ar', voices[2]));
+    check('utteranceLang falls back to the language locale',
+          utteranceLang('ar', null) === localeFor('ar'), utteranceLang('ar', null));
+    check('and never returns an english tag for arabic',
+          !utteranceLang('ar', null).toLowerCase().startsWith('en'));
 }
 
 console.log('\n10. A whole bulletin end to end');

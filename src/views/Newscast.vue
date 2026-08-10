@@ -45,14 +45,14 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router';
 import {
     Radio, Play, Pause, SkipForward, SkipBack, Square, Volume2, VolumeX,
-    RefreshCw, AlertCircle, ExternalLink, Clock, Languages, Gauge,
+    RefreshCw, AlertCircle, ExternalLink, Clock, Languages, Gauge, Mic,
 } from 'lucide-vue-next';
 
 import NewsAnchor from '@/components/newscast/NewsAnchor.vue';
 import NewsTicker from '@/components/newscast/NewsTicker.vue';
 import {
     buildScript, bedIndexFor, bedVolumeFor, castVoices, estimateScriptMs,
-    isRtl, localeFor, storyOrder,
+    isRtl, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
 import {
@@ -86,7 +86,13 @@ const UI = {
         speed: 'Speed', muted: 'Music off', unmuted: 'Music on',
         openOriginal: 'Open the original article', rundown: 'Rundown',
         unsupported: 'This browser cannot read text aloud. The headlines below are still live.',
-        sharedVoice: 'one voice available',
+        sharedVoice: 'only voice available',
+        noVoice: 'no matching voice',
+        voices: 'Voices',
+        autoVoice: 'Automatic',
+        noVoiceHelp: 'This device has no English speech voice installed, so the bulletin cannot '
+            + 'be read aloud. You can still read the stories below.',
+        speechFailed: 'Speech synthesis stopped responding. Try again, or pick a different voice.',
         breaking: 'BREAKING', fresh: 'NEW',
     },
     ar: {
@@ -101,7 +107,18 @@ const UI = {
         speed: 'السرعة', muted: 'الموسيقى متوقفة', unmuted: 'الموسيقى تعمل',
         openOriginal: 'فتح الخبر الأصلي', rundown: 'ترتيب النشرة',
         unsupported: 'هذا المتصفح لا يدعم قراءة النص. العناوين أدناه محدّثة.',
-        sharedVoice: 'صوت واحد متاح',
+        sharedVoice: 'الصوت العربي الوحيد المتاح',
+        noVoice: 'لا يوجد صوت عربي',
+        voices: 'الأصوات',
+        autoVoice: 'تلقائي',
+        // The message that matters most on this page: an Arabic voice is a
+        // separate OS install on Windows, and without it the browser has
+        // nothing to read Arabic with.
+        noVoiceHelp: 'لا يوجد صوت عربي مثبّت على هذا الجهاز، لذلك لا يمكن قراءة النشرة صوتيا. '
+            + 'على ويندوز: الإعدادات ← الوقت واللغة ← اللغة والمنطقة ← أضف العربية مع حزمة '
+            + 'تحويل النص إلى كلام. أو استخدم متصفح Microsoft Edge الذي يوفر أصواتا عربية '
+            + 'عبر الإنترنت. يمكنك قراءة الأخبار أدناه في كل الأحوال.',
+        speechFailed: 'توقف محرك الصوت عن الاستجابة. حاول مرة أخرى أو اختر صوتا آخر.',
         breaking: 'عاجل', fresh: 'جديد',
     },
 } as const;
@@ -131,6 +148,12 @@ const speechSupported = ref(true);
 const voices = reactive<{ female: VoiceLike | null; male: VoiceLike | null }>({
     female: null, male: null,
 });
+/** Every installed voice for the selected language — drives the two pickers. */
+const availableVoices = ref<VoiceLike[]>([]);
+/** Operator overrides from those pickers, cleared when the language changes. */
+const chosenVoice = reactive<{ female: string; male: string }>({ female: '', male: '' });
+/** Consecutive synthesis failures, so a dead engine stops rather than silently skipping. */
+let failures = 0;
 
 let utterance: SpeechSynthesisUtterance | null = null;
 let keepAlive: number | null = null;
@@ -271,20 +294,48 @@ function rebuildScript() {
 
 function refreshVoices() {
     if (!speechSupported.value) return;
-    const available = window.speechSynthesis.getVoices() as unknown as VoiceLike[];
-    if (!available || !available.length) return;      // fires again via voiceschanged
-    const cast = castVoices(available, language.value);
-    voices.female = cast.female;
-    voices.male = cast.male;
+    const installed = window.speechSynthesis.getVoices() as unknown as VoiceLike[];
+    if (!installed || !installed.length) return;      // fires again via voiceschanged
+
+    availableVoices.value = voicesFor(installed, language.value);
+
+    // An operator's pick wins, but only while it is still a voice for this
+    // language — otherwise switching to Arabic would keep an English choice.
+    const override = (anchor: AnchorId) =>
+        availableVoices.value.find(v => v.name === chosenVoice[anchor]) ?? null;
+
+    const cast = castVoices(installed, language.value);
+    voices.female = override('female') ?? cast.female;
+    voices.male = override('male') ?? cast.male;
 }
+
+/**
+ * True when the browser has no voice at all for the selected language.
+ *
+ * This is a real, common state — a Windows install without the Arabic speech
+ * pack has no `ar-*` voice — and it used to be *hidden* by casting an English
+ * voice instead, which read Arabic text as gibberish. Saying so is the honest
+ * answer; the bulletin still runs, because leaving `utterance.voice` unset lets
+ * the platform try to match on `lang` alone and it sometimes succeeds.
+ */
+const missingVoice = computed(() =>
+    speechSupported.value && availableVoices.value.length === 0);
+
+const sharingVoice = computed(() =>
+    !!voices.female && voices.female.name === voices.male?.name);
 
 function voiceLabel(anchor: AnchorId): string {
     const voice = voices[anchor];
-    if (!voice) return '';
-    const sharing = voices.female?.name === voices.male?.name;
-    return sharing ? `${voice.name} — ${t.value.sharedVoice}` : voice.name;
+    if (!voice) return t.value.noVoice;
+    return sharingVoice.value ? `${voice.name} — ${t.value.sharedVoice}` : voice.name;
 }
 
+/**
+ * The live `SpeechSynthesisVoice`, matched by name, or null.
+ *
+ * Null is a valid and useful answer — see `speakSegment`, which then leaves
+ * `utterance.voice` alone rather than assigning a voice in the wrong language.
+ */
 function nativeVoice(anchor: AnchorId): SpeechSynthesisVoice | null {
     const wanted = voices[anchor];
     if (!wanted) return null;
@@ -412,24 +463,43 @@ function speakSegment(index: number) {
     synth.cancel();
 
     utterance = new SpeechSynthesisUtterance(segment.text);
-    utterance.lang = localeFor(language.value);
+    const voice = nativeVoice(segment.anchor);
+
+    // Assign the voice ONLY when it genuinely speaks the selected language.
+    // `pickVoice` guarantees that or returns null, and the null case is the
+    // important one: an explicitly assigned voice OVERRIDES `lang`, so putting
+    // an English voice here and `ar-SA` below is what produced Arabic read with
+    // English phonetics. Leaving it unset makes `lang` the only signal, which
+    // the platform can still match against an OS voice it never listed.
+    if (voice) utterance.voice = voice;
+    utterance.lang = utteranceLang(language.value, voice);
     utterance.rate = rate.value;
     utterance.pitch = segment.anchor === 'female' ? 1.08 : 0.92;
-    const voice = nativeVoice(segment.anchor);
-    if (voice) utterance.voice = voice;
 
     utterance.onend = () => {
         // A cancel() we issued ourselves also fires onend. Without the
         // generation guard, skipping a story starts the next segment twice and
         // the two anchors talk over each other.
         if (mine !== generation || status.value !== 'playing') return;
+        failures = 0;
         advance();
     };
     utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
         if (mine !== generation) return;
-        // 'interrupted' and 'canceled' are us. Anything else is a real failure
-        // of this one line, and skipping it is better than stopping the news.
+        // 'interrupted' and 'canceled' are us.
         if (event.error === 'interrupted' || event.error === 'canceled') return;
+
+        // Anything else is a real failure of this one line, and skipping it is
+        // better than stopping the news — unless the engine is failing on
+        // everything, which is what a missing language pack or a dead network
+        // voice looks like. Skipping silently through forty segments reads as
+        // "the play button does nothing".
+        failures += 1;
+        if (failures >= 3) {
+            error.value = missingVoice.value ? t.value.noVoiceHelp : t.value.speechFailed;
+            stop();
+            return;
+        }
         advance();
     };
 
@@ -532,9 +602,22 @@ function toggleMusic() {
 
 watch(language, async () => {
     stop();
+    // An Arabic bulletin must not inherit the English voice the reader picked,
+    // which is the whole bug this page had. Clear first, then re-cast.
+    chosenVoice.female = '';
+    chosenVoice.male = '';
+    error.value = '';
+    failures = 0;
     refreshVoices();
     await Promise.all([loadCatalogue(), loadTicker()]);
     await loadBulletin();
+});
+
+watch(() => [chosenVoice.female, chosenVoice.male], () => {
+    refreshVoices();
+    // Take effect on the line being spoken rather than at the next story, so
+    // choosing a voice is audibly a choice.
+    if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
 });
 
 watch(activeKey, async (key) => {
@@ -743,11 +826,43 @@ onBeforeRouteLeave(() => {
                     <Clock :size="14" /> {{ t.running }} ≈ {{ runningTime }}
                 </span>
             </div>
+
+            <!--
+              The voice pickers.
+
+              Rendered only when the selected language actually has voices, and
+              they list ONLY that language's voices — offering an English voice
+              while Arabic is selected is the bug this page shipped with. With a
+              single Arabic voice installed both anchors share it, which the
+              caption states rather than hiding.
+            -->
+            <div v-if="availableVoices.length" class="voices">
+                <span class="voices__label"><Mic :size="14" /> {{ t.voices }}</span>
+                <label v-for="anchor in (['female', 'male'] as const)" :key="anchor" class="voices__pick">
+                    <span class="voices__who">{{ anchorNames[anchor] }}</span>
+                    <select v-model="chosenVoice[anchor]" class="picker__select picker__select--sm">
+                        <option value="">{{ t.autoVoice }}</option>
+                        <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                            {{ voice.name }} ({{ voice.lang }})
+                        </option>
+                    </select>
+                </label>
+            </div>
         </section>
 
         <!-- Errors / empty -------------------------------------------- -->
         <div v-if="!speechSupported" class="notice notice--warn">
             <AlertCircle :size="16" /> {{ t.unsupported }}
+        </div>
+        <!--
+          No voice for the selected language. Stated plainly, because the old
+          behaviour was to quietly substitute a voice from another language and
+          read Arabic with English phonetics — which sounds like a broken app
+          rather than a missing OS component, and sent the reader looking in the
+          wrong place.
+        -->
+        <div v-else-if="missingVoice" class="notice notice--warn">
+            <AlertCircle :size="16" /> {{ t.noVoiceHelp }}
         </div>
         <div v-if="error" class="notice notice--error">
             <AlertCircle :size="16" /> {{ error }}
@@ -1093,6 +1208,44 @@ onBeforeRouteLeave(() => {
     gap: 0.35rem;
     font-size: 0.78rem;
     color: var(--sfs-text-muted, #a8b0c5);
+}
+
+.voices {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+.voices__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--sfs-text-muted, #a8b0c5);
+}
+
+.voices__pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.voices__who {
+    font-size: 0.76rem;
+    color: var(--sfs-text, #eef1f8);
+}
+
+.picker__select--sm {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.78rem;
+    max-width: 14rem;
 }
 
 /* -- notices --------------------------------------------------------- */

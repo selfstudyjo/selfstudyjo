@@ -181,12 +181,63 @@ export function speakable(raw: string): string {
  * uncapped detail is a 1300-word feature read in a single breath, which is
  * about nine minutes of one story.
  */
+/**
+ * Does `buffer` end in a dotted abbreviation rather than a full stop?
+ *
+ * "The U.S. said no." is one sentence, not three. Without this the anchor's
+ * first line is the fragment "The U.S." and the detail cap spends two of its
+ * three sentences on it — which is how a story gets read as a stub.
+ *
+ * Two shapes cover almost all of it in news copy: a single-letter initial
+ * (`H.`, `U.`) and a dotted pair (`U.S.`, `a.m.`, `e.g.`). Unicode property
+ * escapes so it holds for both scripts, and deliberately NOT an abbreviation
+ * dictionary — the cost of missing one is a slightly early pause, and the cost
+ * of a dictionary is a dictionary.
+ */
+function endsInAbbreviation(buffer: string): boolean {
+    return /(?:^|\s)\p{L}\.$/u.test(buffer) || /\p{L}\.\p{L}\.$/u.test(buffer);
+}
+
 export function sentences(text: string): string[] {
     if (!text) return [];
-    return text
-        .split(/(?<=[.!?؟])\s+|\n+/)
-        .map(s => s.trim())
-        .filter(s => s.length > 1);
+
+    // Scanned rather than split with a regex, for two reasons that both bite.
+    //
+    // A lookbehind on the terminator class is the obvious spelling and is a
+    // **parse-time** syntax error on Safari before 16.4 — it would not fail
+    // here, it would take the whole bundle down on that browser. Same reasoning
+    // as `linkify.ts`.
+    //
+    // And a terminator only ends a sentence when whitespace FOLLOWS it, so
+    // "3.5" and "U.S." stay whole. Arabic needs the same rule with its own
+    // question mark, U+061F: an English-only `[.!?]` split returns ONE enormous
+    // sentence for Arabic prose, which silently disables the detail cap and
+    // reads a whole feature in a single breath.
+    const out: string[] = [];
+    const chars = Array.from(text);
+    let buffer = '';
+
+    const flush = () => {
+        const line = buffer.trim();
+        if (line.length > 1) out.push(line);
+        buffer = '';
+    };
+
+    for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i];
+        if (ch === '\n' || ch === '\r') {
+            flush();
+            continue;
+        }
+        buffer += ch;
+        const terminator = ch === '.' || ch === '!' || ch === '?' || ch === '؟';
+        const next = chars[i + 1];
+        if (terminator && (next === undefined || /\s/.test(next)) && !endsInAbbreviation(buffer)) {
+            flush();
+        }
+    }
+    flush();
+    return out;
 }
 
 /** The first `count` sentences of a story's body, as one spoken passage. */
@@ -355,32 +406,77 @@ export interface VoiceLike {
 // and Chrome's server voices. Matched case-insensitively against the voice
 // name, which is the only signal the Web Speech API exposes — there is no
 // gender field, and there never has been.
+/*
+  Gender is guessed from the voice NAME, because the Web Speech API exposes no
+  gender field and never has.
+
+  Arabic names are listed as carefully as the English ones, and getting them
+  wrong is worse here: on a platform with exactly two Arabic voices, one bad
+  hint puts both presenters on the same one. `naayf` was originally in both
+  lists — it is Microsoft's male Saudi voice — so its score cancelled to zero
+  and it was cast at random.
+*/
 const FEMALE_HINTS = [
-    'female', 'woman', 'zira', 'hoda', 'salma', 'amira', 'laila', 'layla', 'naayf',
-    'samantha', 'victoria', 'karen', 'moira', 'tessa', 'fiona', 'serena', 'allison',
-    'susan', 'joanna', 'kendra', 'kimberly', 'sara', 'aria', 'jenny', 'michelle',
-    'google uk english female', 'google us english', 'zeina', 'maged female',
+    'female', 'woman',
+    // Arabic
+    'hoda', 'salma', 'laila', 'layla', 'zeina', 'amira', 'hala', 'noura', 'nora',
+    'fatima', 'rana', 'sana',
+    // English
+    'zira', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 'fiona', 'serena',
+    'allison', 'susan', 'joanna', 'kendra', 'kimberly', 'aria', 'jenny', 'michelle',
+    'eva', 'emma', 'libby', 'sonia', 'natasha', 'clara',
 ];
 const MALE_HINTS = [
-    'male', 'man', 'david', 'mark', 'george', 'james', 'guy', 'ryan', 'brian',
-    'alex', 'daniel', 'fred', 'oliver', 'thomas', 'aaron', 'matthew', 'justin',
-    'maged', 'tarik', 'naayf', 'hamed', 'shakir', 'google uk english male',
+    'male', 'man',
+    // Arabic
+    'naayf', 'nayf', 'maged', 'majed', 'tarik', 'hamed', 'shakir', 'omar', 'ali',
+    'khalid', 'bassel',
+    // English
+    'david', 'mark', 'george', 'james', 'guy', 'ryan', 'brian', 'alex', 'daniel',
+    'fred', 'oliver', 'thomas', 'aaron', 'matthew', 'justin', 'william', 'liam',
+    'christopher', 'eric', 'roger', 'steffan',
 ];
 
 function scoreName(name: string, hints: string[]): number {
-    const lower = name.toLowerCase();
+    const lower = (name || '').toLowerCase();
     return hints.reduce((score, hint) => (lower.includes(hint) ? score + 1 : score), 0);
 }
 
+/** The BCP-47 prefix a language's voices must carry. */
+function langPrefix(language: LanguageCode): string {
+    return language === 'ar' ? 'ar' : 'en';
+}
+
+/** Every installed voice that actually speaks `language`. */
+export function voicesFor(voices: VoiceLike[], language: LanguageCode): VoiceLike[] {
+    const prefix = langPrefix(language);
+    return (voices || []).filter(v => (v.lang || '').toLowerCase().startsWith(prefix));
+}
+
+/** Can this browser speak `language` at all? */
+export function canSpeak(voices: VoiceLike[], language: LanguageCode): boolean {
+    return voicesFor(voices, language).length > 0;
+}
+
 /**
- * Pick the best available voice for a language and a presenter.
+ * Pick the best available voice for a language and a presenter, or `null`.
  *
- * Everything about this is a preference, not a requirement: a browser may ship
- * one Arabic voice or none, and the page must still work. So it degrades in
- * steps — right language and right gender, then right language, then the
- * default — and `null` only when the browser has no voices at all.
+ * **It never returns a voice in the wrong language, and that is the whole
+ * point of this function.** It used to fall back to "any voice at all" when the
+ * requested language had none, on the reasoning that some voice is better than
+ * silence. That reasoning is wrong, and Arabic is where it shows: an explicitly
+ * assigned `utterance.voice` OVERRIDES `utterance.lang`, so an English engine
+ * was handed Arabic characters and read them with English phonetics. The result
+ * is not accented Arabic, it is unintelligible noise — reported, correctly, as
+ * "it reads mixed words, not Arabic".
  *
- * `exclude` is what stops both presenters being the same voice when the
+ * Returning `null` is strictly better, because the caller can then leave
+ * `utterance.voice` unset and let the platform match on `lang` alone. That
+ * frequently reaches an OS voice the browser never listed, and when it does
+ * not, the failure is silence plus a message the reader can act on rather than
+ * a minute of gibberish.
+ *
+ * `exclude` is what stops both presenters landing on the same voice when the
  * platform offers two. Two identical voices "taking turns" is worse than one
  * voice reading everything, because the handover lines then sound like a fault.
  */
@@ -390,28 +486,24 @@ export function pickVoice(
     anchor: AnchorId,
     exclude?: VoiceLike | null,
 ): VoiceLike | null {
-    if (!voices || !voices.length) return null;
-
-    const prefix = language === 'ar' ? 'ar' : 'en';
-    const matching = voices.filter(v => (v.lang || '').toLowerCase().startsWith(prefix));
-    const pool = matching.length ? matching : voices;
+    const pool = voicesFor(voices, language);
+    if (!pool.length) return null;
 
     const wanted = anchor === 'female' ? FEMALE_HINTS : MALE_HINTS;
     const unwanted = anchor === 'female' ? MALE_HINTS : FEMALE_HINTS;
 
     const ranked = pool
         .map(voice => {
-            const positive = scoreName(voice.name || '', wanted);
-            const negative = scoreName(voice.name || '', unwanted);
-            let score = positive * 4 - negative * 4;
+            let score = scoreName(voice.name, wanted) * 4 - scoreName(voice.name, unwanted) * 4;
+            // Not a hard exclusion: with one Arabic voice installed, both
+            // presenters have to share it.
             if (exclude && voice.name === exclude.name) score -= 10;
-            if (matching.length && (voice.lang || '').toLowerCase().startsWith(prefix)) score += 2;
             if (voice.localService) score += 1;      // no network hiccup mid-sentence
             return { voice, score };
         })
         .sort((a, b) => b.score - a.score);
 
-    return ranked.length ? ranked[0].voice : null;
+    return ranked[0].voice;
 }
 
 /**
@@ -428,6 +520,19 @@ export function castVoices(
     const female = pickVoice(voices, language, 'female');
     const male = pickVoice(voices, language, 'male', female);
     return { female, male };
+}
+
+/**
+ * The `lang` to put on an utterance.
+ *
+ * When a voice was found, use **that voice's own** tag rather than the
+ * language's nominal one: casting `ar-EG` (Microsoft Hoda) while asking for
+ * `ar-SA` is a mismatch some engines resolve by ignoring the voice. With no
+ * voice, the nominal tag is the only signal the platform gets, and it is what
+ * lets it reach an OS voice that was never in `getVoices()`.
+ */
+export function utteranceLang(language: LanguageCode, voice?: VoiceLike | null): string {
+    return voice?.lang || localeFor(language);
 }
 
 /* ------------------------------------------------------------------ *
