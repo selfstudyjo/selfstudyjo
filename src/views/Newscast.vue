@@ -52,12 +52,13 @@ import NewsStudio from '@/components/newscast/NewsStudio.vue';
 import NewsTicker from '@/components/newscast/NewsTicker.vue';
 import {
     OTHER_ANCHOR,
-    buildScript, bedIndexFor, bedVolumeFor, castVoices, estimateScriptMs,
+    buildScript, bedIndexFor, bedTrimFor, bedVolumeFor, castVoices, estimateScriptMs,
     hasGenderedPair, isRtl, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
 import {
-    IDENTITY_RATIO, canShape, shapeRatio, timeScale,
+    IDENTITY_RATIO, MALE_LOUDNESS_MAKEUP, TARGET_RMS,
+    canShape, normalizeLevel, shapeRatio, timeScale,
 } from '@/components/newscast/voiceShaper';
 import {
     ApiError,
@@ -236,8 +237,15 @@ let generation = 0;
 
 /* ---- reshaped speech, for the anchor the backend cannot voice --------- */
 
-/** Can this browser reshape audio at all? Decided once; it cannot change. */
-const shapingAvailable = ref(canShape());
+/**
+ * Can this browser decode and play audio itself? Decided once; cannot change.
+ *
+ * Two jobs hang off it: reshaping the male anchor's voice, and setting the
+ * LEVEL of every server clip — an `<audio>` element can only turn a quiet
+ * provider down, never up. Without it the page falls back to the element,
+ * which still plays, just at whatever level the provider chose.
+ */
+const webAudioReady = ref(canShape());
 
 let audioContext: AudioContext | null = null;
 let shapedSource: AudioBufferSourceNode | null = null;
@@ -511,7 +519,7 @@ const serverSoloGender = computed<AnchorId>(() =>
  */
 const shapedAnchor = computed<AnchorId | null>(() => {
     if (!usingServer.value || serverPaired.value) return null;
-    if (!shapingAvailable.value) return null;      // then, and only then, solo
+    if (!webAudioReady.value) return null;      // then, and only then, solo
     return OTHER_ANCHOR[serverSoloGender.value];
 });
 
@@ -530,7 +538,7 @@ const shapedAnchor = computed<AnchorId | null>(() => {
  */
 const soloAnchor = computed<AnchorId | null>(() => {
     if (!usingServer.value || serverPaired.value) return null;
-    if (shapingAvailable.value) return null;
+    if (webAudioReady.value) return null;
     return serverSoloGender.value;
 });
 
@@ -629,9 +637,12 @@ function fadeBedTo(target: number, ms = 380) {
 /** Point the bed at the right track and set its level for this segment. */
 function applyBed(segment: Segment) {
     const audio = ensureBed();
-    const wanted = segment.kind === 'open' || segment.kind === 'close'
-        ? bedOpen
-        : BEDS[bedIndexFor(segment.itemIndex ?? 0)];
+    const opener = segment.kind === 'open' || segment.kind === 'close';
+    const index = bedIndexFor(segment.itemIndex ?? 0);
+    const wanted = opener ? bedOpen : BEDS[index];
+    // The five tracks were mastered up to 5 dB apart, so one `volume` makes the
+    // music jump between stories. The trim is measured, per track.
+    const trim = bedTrimFor(opener ? 'open' : `bed${index}`);
 
     if (segment.bed && musicOn.value) {
         if (!audio.src.endsWith(wanted.split('/').pop() || wanted)) {
@@ -643,7 +654,7 @@ function applyBed(segment: Segment) {
             // silent bed is a degradation and never a failure.
             audio.play().catch(() => undefined);
         }
-        fadeBedTo(bedVolumeFor(segment));
+        fadeBedTo(bedVolumeFor(segment) * trim);
     } else {
         // The brief: no music under the detail.
         fadeBedTo(0, 260);
@@ -733,19 +744,25 @@ function stopShaped() {
 }
 
 /**
- * Play a clip that came back in the wrong register, in the right one.
+ * Play a server clip through Web Audio: levelled, and reshaped if it has to be.
  *
- * Two halves, and only the first is ours: `timeScale` shortens the audio to
- * `ratio` of its length at unchanged pitch, then `playbackRate = ratio` drops
- * the pitch and the formants by that factor and puts the length back. See
- * `voiceShaper.ts` for why it is split that way and why the ratio is what it
- * is.
+ * EVERY server clip comes through here, not just the reshaped ones, and that is
+ * the fix for "the voice is too low". The provider hands back audio at a peak
+ * of ~0.41 and a voiced RMS of ~0.10 — eight decibels of headroom left unused —
+ * and an `<audio>` element has no way to take it back, because `volume` only
+ * goes down. Against a music bed ducked to 0.12 that is not an anchor with a
+ * bed under them, it is a duet. `normalizeLevel` sets it on the samples, where
+ * it can be exact.
  *
- * Web Audio rather than the `<audio>` element because an element cannot play a
- * buffer we computed. That costs the one thing an element gave us for free —
- * `pause()` — so pausing suspends the whole context instead.
+ * The reshaping is two halves and only the first is ours: `timeScale` shortens
+ * the audio to `ratio` of its length at unchanged pitch, then
+ * `playbackRate = ratio` drops pitch and formants by that factor and puts the
+ * length back. `ratio === 1` skips it entirely. See `voiceShaper.ts`.
+ *
+ * Web Audio costs the one thing the element gave us for free — `pause()` — so
+ * pausing suspends the whole context instead.
  */
-async function speakShaped(clip: SpeechClip, ratio: number, mine: number) {
+async function speakDecoded(clip: SpeechClip, ratio: number, mine: number) {
     const context = ensureAudioContext();
     if (!context) throw new Error('no audio context');
     if (context.state === 'suspended') await context.resume();
@@ -758,9 +775,22 @@ async function speakShaped(clip: SpeechClip, ratio: number, mine: number) {
         // buffer would decode once and then be empty for every replay.
         const bytes = await (await fetch(clip.url)).arrayBuffer();
         const decoded = await context.decodeAudioData(bytes);
-        const scaled = timeScale(decoded.getChannelData(0), ratio, decoded.sampleRate);
-        buffer = context.createBuffer(1, scaled.length, decoded.sampleRate);
-        buffer.getChannelData(0).set(scaled);
+        const shaped = ratio === IDENTITY_RATIO
+            ? Float32Array.from(decoded.getChannelData(0))
+            : timeScale(decoded.getChannelData(0), ratio, decoded.sampleRate);
+        // A reshaped voice is aimed higher, because the same RMS an octave
+        // lower reads as quieter. See MALE_LOUDNESS_MAKEUP.
+        normalizeLevel(shaped, ratio === IDENTITY_RATIO
+            ? TARGET_RMS : TARGET_RMS * MALE_LOUDNESS_MAKEUP);
+        buffer = context.createBuffer(1, shaped.length, decoded.sampleRate);
+        buffer.getChannelData(0).set(shaped);
+        // Decoded PCM is ~25x the size of the MP3 it came from, and a bulletin
+        // is forty lines. The cache is what stops a skip-back re-doing the
+        // WSOLA pass; it does not need to hold the whole hour.
+        if (shapedBuffers.size > 24) {
+            const oldest = shapedBuffers.keys().next().value;
+            if (oldest !== undefined) shapedBuffers.delete(oldest);
+        }
         shapedBuffers.set(key, buffer);
     }
     if (mine !== generation) return;
@@ -862,14 +892,20 @@ async function speakViaServer(segment: Segment, mine: number) {
         // 1.65x up-shift that sounds like a cartoon. Keying off the ratio alone
         // would read that 1 as "nothing to do" and play the wrong voice, which
         // is the original bug arriving through the door built to stop it.
-        if (rendered && rendered !== segment.anchor) {
-            const ratio = shapeRatio(rendered, segment.anchor);
-            if (shapingAvailable.value && ratio !== IDENTITY_RATIO) {
-                await speakShaped(clip, ratio, mine);
-                return;
-            }
+        const mismatched = !!rendered && rendered !== segment.anchor;
+        const ratio = mismatched ? shapeRatio(rendered, segment.anchor) : IDENTITY_RATIO;
+
+        if (mismatched && !(webAudioReady.value && ratio !== IDENTITY_RATIO)) {
+            // Wrong voice and no way to put it right. Never play it.
             buffering.value = false;
-            if (fallBackToSoloPresenter(rendered)) return;
+            if (fallBackToSoloPresenter(rendered as 'female' | 'male')) return;
+        }
+
+        // Every clip, not only the reshaped ones: this is also where the level
+        // is set, and both anchors were too quiet.
+        if (webAudioReady.value) {
+            await speakDecoded(clip, ratio, mine);
+            return;
         }
 
         serverSpeechError.value = '';
@@ -1067,7 +1103,7 @@ function play() {
     // buffer played through it is silent — with no error, and with `onended`
     // never arriving, so the bulletin would hang on the male anchor's first
     // line rather than fail. Created and resumed here, inside the click.
-    if (shapingAvailable.value) void ensureAudioContext()?.resume();
+    if (webAudioReady.value) void ensureAudioContext()?.resume();
 
     status.value = 'playing';
     startKeepAlive();

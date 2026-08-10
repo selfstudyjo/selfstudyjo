@@ -119,6 +119,110 @@ export function shapedPitch(ratio: number, source = FALLBACK_F0): number {
     return source * ratio;
 }
 
+/* ------------------------------------------------------------------ *
+ * Level
+ *
+ * WHY THIS IS HERE AND NOT LEFT TO THE PLAYER
+ *
+ * Reported as "the Arabic male voice is too low, and the female a little low
+ * too". Measured, the shaping was not the cause — it returns the level it was
+ * given, to within 0.0 dB. The provider is: Google's TTS comes back at a peak
+ * of **0.41** and a voiced RMS of **0.10**, which is around 8 dB of headroom
+ * simply left on the table. An `<audio>` element cannot get it back, because
+ * `volume` only goes down.
+ *
+ * Two things then made it worse for the male anchor specifically:
+ *
+ *  * the music bed ducks to 0.12 under a voice, which against a voice at 0.10
+ *    is not a bed under an anchor, it is a duet;
+ *  * dropping pitch and formants by 0.7 moves the energy out of the 1-4 kHz
+ *    band the ear is most sensitive to, so the *same* RMS reads as noticeably
+ *    quieter. That is perception, not arithmetic, and no amount of measuring
+ *    the waveform will show it.
+ *
+ * So the level is set here, on the samples, where it can be exact — and the
+ * male anchor gets a deliberate extra push to land at the same *perceived*
+ * loudness as his co-presenter rather than the same measured one.
+ * ------------------------------------------------------------------ */
+
+/** Where a spoken line should sit. Chosen against the ducked bed, not in isolation. */
+export const TARGET_RMS = 0.2;
+
+/** Never louder than this, so nothing ever clips. */
+export const PEAK_CEILING = 0.97;
+
+/**
+ * How much louder the reshaped voice has to be to SOUND as loud.
+ *
+ * Empirical, and it is compensating for a perceptual effect rather than a
+ * measurable one — a 0.7 resample moves the whole spectrum down by a third,
+ * away from where hearing is most sensitive. Matching RMS leaves him audibly
+ * behind; this closes it without approaching the ceiling.
+ */
+export const MALE_LOUDNESS_MAKEUP = 1.2;
+
+/** Loudest sample, ignoring sign. */
+export function peakOf(samples: Float32Array): number {
+    let peak = 0;
+    for (let i = 0; i < samples.length; i++) {
+        const value = samples[i] < 0 ? -samples[i] : samples[i];
+        if (value > peak) peak = value;
+    }
+    return peak;
+}
+
+/**
+ * RMS of the parts that are actually speech.
+ *
+ * Plain RMS over the whole clip counts the gaps between sentences, so a line
+ * with a long pause in it measures quiet and gets boosted until the words
+ * clip. Anything under 1% of the peak is treated as silence and left out.
+ */
+export function voicedRms(samples: Float32Array): number {
+    const floor = peakOf(samples) * 0.01;
+    let total = 0;
+    let counted = 0;
+    for (let i = 0; i < samples.length; i++) {
+        const value = samples[i];
+        if (value > floor || value < -floor) {
+            total += value * value;
+            counted++;
+        }
+    }
+    return counted ? Math.sqrt(total / counted) : 0;
+}
+
+/**
+ * The gain that brings a clip to `targetRms` without going past `ceiling`.
+ *
+ * Loudness first, peak as a backstop — the other way round (peak normalisation
+ * alone) leaves two clips at the same peak and audibly different volumes,
+ * because speech has a high crest factor and one loud consonant decides the
+ * whole answer.
+ */
+export function levelGain(
+    samples: Float32Array,
+    targetRms = TARGET_RMS,
+    ceiling = PEAK_CEILING,
+): number {
+    const rms = voicedRms(samples);
+    const peak = peakOf(samples);
+    if (!rms || !peak) return 1;
+    return Math.min(targetRms / rms, ceiling / peak);
+}
+
+/** `samples` brought to a sensible broadcast level, in place. */
+export function normalizeLevel(
+    samples: Float32Array,
+    targetRms = TARGET_RMS,
+    ceiling = PEAK_CEILING,
+): Float32Array {
+    const gain = levelGain(samples, targetRms, ceiling);
+    if (Math.abs(gain - 1) < 0.01) return samples;
+    for (let i = 0; i < samples.length; i++) samples[i] *= gain;
+    return samples;
+}
+
 /** A Hann window. Sums to a constant at a hop of a quarter of its length. */
 export function hann(size: number): Float32Array {
     const window = new Float32Array(size);

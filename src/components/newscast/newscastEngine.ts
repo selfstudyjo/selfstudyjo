@@ -255,14 +255,66 @@ export function sentences(text: string): string[] {
     return out;
 }
 
-/** The first `count` sentences of a story's body, as one spoken passage. */
+/**
+ * A story's spoken detail: its SUMMARY first, then the body.
+ *
+ * THE SUMMARY IS NEVER SKIPPED, and it used to be, always.
+ *
+ * The old version read `paragraphs` when there were any and only fell back to
+ * `summary` when there were none — and every story from both sources has
+ * paragraphs, so the summary was never spoken in either language. That is not
+ * a small omission: the summary is the standfirst, written to carry the story
+ * on its own, and it is materially different text from the first paragraph.
+ * Checked against a live bulletin, one Arabic story had a 178-character
+ * summary holding the whole news and a single paragraph that was nothing but
+ * "on the 55th day since the memorandum was signed:" — so the anchor read the
+ * date and stopped. It is also the paragraph the page prints in bold under the
+ * headline, so a reader following along watched it be jumped over.
+ *
+ * The order is the newsroom's: standfirst, then detail. The cap applies to the
+ * body only — the summary is short by construction and reading half of it
+ * would be the same bug with extra steps.
+ */
 export function detailText(item: NewsItem, count: number): string {
-    const source = (item.paragraphs && item.paragraphs.length)
+    const lead = sentences(speakable(item.summary || ''));
+
+    const bodySource = (item.paragraphs && item.paragraphs.length)
         ? item.paragraphs.join(' ')
-        : (item.body || item.summary || '');
-    const picked = sentences(speakable(source)).slice(0, Math.max(1, count));
+        : (item.body || '');
+
+    // Sources sometimes repeat the standfirst as the opening paragraph. Saying
+    // it twice in a row is the most obvious way an automated bulletin stops
+    // sounding like a newsroom, so a body sentence already in the lead is
+    // dropped — compared on words alone, since the two copies routinely differ
+    // in punctuation.
+    const spoken = new Set(lead.map(sentenceKey));
+    const body = sentences(speakable(bodySource))
+        .filter(sentence => !spoken.has(sentenceKey(sentence)));
+
+    const picked = lead.slice();
+    let length = picked.join(' ').length;
+    for (const sentence of body.slice(0, Math.max(1, count))) {
+        // App 36 truncates a request at MAX_TEXT_CHARS and does it mid-word, so
+        // running past that trades a whole sentence for a clipped one. Stopping
+        // on a sentence boundary keeps the line speakable.
+        if (length + sentence.length > SPOKEN_CHAR_BUDGET && picked.length) break;
+        picked.push(sentence);
+        length += sentence.length + 1;
+    }
+
     if (picked.length) return picked.join(' ');
-    return speakable(item.summary || '');
+    return speakable(item.summary || '') || speakable(bodySource);
+}
+
+/**
+ * Comfortably inside app 36's `MAX_TEXT_CHARS` (1200), which truncates
+ * mid-word — and inside what one anchor should say without drawing breath.
+ */
+const SPOKEN_CHAR_BUDGET = 900;
+
+/** A sentence reduced to its words, for comparing two copies of one sentence. */
+function sentenceKey(sentence: string): string {
+    return sentence.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
 /** Does this story have anything to say after its headline? */
@@ -705,12 +757,47 @@ export function bedIndexFor(itemIndex: number): number {
 }
 
 /**
- * Bed volume for a segment.
+ * Measured RMS of each bed, and the level they are all trimmed to.
+ *
+ * The five tracks were mastered at different levels — bed1 at 0.398 against
+ * bed2 at 0.226, which is 5 dB. Played at one `volume` that is a music cue
+ * that gets louder and quieter as the bulletin moves from story to story, for
+ * no reason a listener can attribute to anything, and under a quiet anchor
+ * bed1 sat only 7 dB below the voice. That was part of "the voice is too low":
+ * the voice was raised, and the bed has to stop moving around underneath it.
+ *
+ * Measured the same way `VOICE_F0` in app 36 is — decoded and averaged, not
+ * estimated. Re-measure rather than guess if a bed is ever replaced.
+ */
+export const BED_RMS: Record<string, number> = {
+    open: 0.237, bed1: 0.398, bed2: 0.226, bed3: 0.293, bed4: 0.234,
+};
+
+/** The level every bed is trimmed to before the ducking below is applied. */
+export const BED_REFERENCE_RMS = 0.237;
+
+/**
+ * The correction that puts a given bed at the reference level.
+ *
+ * Clamped: a very quiet bed would otherwise ask for a gain that pushes the
+ * element's `volume` past 1, where it is silently ignored and the bed is
+ * quiet anyway.
+ */
+export function bedTrimFor(bed: string): number {
+    const rms = BED_RMS[bed];
+    if (!rms) return 1;
+    return Math.max(0.25, Math.min(2, BED_REFERENCE_RMS / rms));
+}
+
+/**
+ * Bed volume for a segment, before the per-track trim.
  *
  * Zero under detail; ducked under a voice; full only on the opening, where
  * there is no speech competing for the first moment. Ducking to ~12% rather
  * than muting is what keeps a bulletin sounding continuous across the gaps
- * between utterances.
+ * between utterances — and at that level, with the voice normalised to
+ * `TARGET_RMS`, the bed sits about 16 dB under the anchor, which is where a
+ * newsroom puts it.
  */
 export function bedVolumeFor(segment: Segment): number {
     if (!segment.bed) return 0;

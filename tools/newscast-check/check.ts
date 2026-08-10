@@ -25,15 +25,17 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-    BED_COUNT, OTHER_ANCHOR, PHRASES,
-    anchorsUsed, bedIndexFor, bedVolumeFor, buildScript, canSpeak, castVoices, detailText,
-    estimateDurationMs, genderOf, hasDetail, hasGenderedPair, isRtl, localeFor,
-    pickVoice, sentences, speakable, storyOrder, utteranceLang, voicesFor,
+    BED_COUNT, BED_REFERENCE_RMS, BED_RMS, OTHER_ANCHOR, PHRASES,
+    anchorsUsed, bedIndexFor, bedTrimFor, bedVolumeFor, buildScript, canSpeak,
+    castVoices, detailText, estimateDurationMs, genderOf, hasDetail, hasGenderedPair,
+    isRtl, localeFor, pickVoice, sentences, speakable, storyOrder, utteranceLang, voicesFor,
     type AnchorId, type NewsItem, type Segment, type VoiceLike,
 } from '../../src/components/newscast/newscastEngine';
 import {
-    IDENTITY_RATIO, MALE_F0_CEILING, MALE_RATIO,
-    canShape, hann, shapeRatio, shapedPitch, timeScale,
+    IDENTITY_RATIO, MALE_F0_CEILING, MALE_LOUDNESS_MAKEUP, MALE_RATIO,
+    PEAK_CEILING, TARGET_RMS,
+    canShape, hann, levelGain, normalizeLevel, peakOf, shapeRatio, shapedPitch,
+    timeScale, voicedRms,
 } from '../../src/components/newscast/voiceShaper';
 
 // Read as TEXT as well as imported, so the check can assert things about the
@@ -217,8 +219,8 @@ console.log('\n5. Sentence splitting works in both scripts');
     // `endsInAbbreviation` is supposed to treat as initials, so it made a poor
     // fixture for the cap.
     const feature = 'One sentence. Two sentence. Three sentence. Four sentence. Five sentence.';
-    const long = item('x', 'Long feature', { paragraphs: [feature], body: feature });
-    check('detailText caps at the sentence count',
+    const long = item('x', 'Long feature', { paragraphs: [feature], body: feature, summary: '' });
+    check('detailText caps the BODY at the sentence count',
           detailText(long, 3) === 'One sentence. Two sentence. Three sentence.',
           detailText(long, 3));
     check('and takes the whole thing when the cap is above the count',
@@ -228,6 +230,67 @@ console.log('\n5. Sentence splitting works in both scripts');
           === 'Just a summary.');
     check('detailText never returns undefined',
           detailText({ id: 'z', title: 't' } as NewsItem, 3) === '');
+
+    /*
+      THE SUMMARY IS READ, AND IT IS READ FIRST.
+
+      Reported as the presenters skipping `story__summary` and jumping straight
+      into the body, in both languages — and they did, always. `detailText`
+      read `paragraphs` when there were any and only fell back to `summary`
+      when there were none, and every story from both sources has paragraphs.
+      Checked against a live bulletin, one Arabic story had a 178-character
+      summary carrying the whole news and a single paragraph reading "on the
+      55th day since the memorandum was signed:" — so the anchor read the date
+      and moved on, while the page printed the summary in bold above it.
+    */
+    const withSummary = item('s', 'A story', {
+        summary: 'The standfirst carries the story.',
+        paragraphs: ['Body one. Body two. Body three. Body four.'],
+        body: 'Body one. Body two. Body three. Body four.',
+    });
+    const spoken = detailText(withSummary, 3);
+    check('the summary is spoken', spoken.includes('The standfirst carries the story.'), spoken);
+    check('and it is spoken FIRST, before any body',
+          spoken.indexOf('standfirst') < spoken.indexOf('Body one'), spoken);
+    check('the body still follows it', spoken.includes('Body one.') && spoken.includes('Body three.'),
+          spoken);
+    check('and the cap applies to the body, not to the summary',
+          !spoken.includes('Body four.'), spoken);
+
+    // A summary repeated as the opening paragraph must not be said twice.
+    const repeated = item('r', 'A story', {
+        summary: 'The same opening line.',
+        paragraphs: ['The same opening line.', 'Then something new.'],
+        body: 'The same opening line. Then something new.',
+    });
+    const once = detailText(repeated, 3);
+    check('a summary repeated as the first paragraph is not read twice',
+          once.split('The same opening line').length - 1 === 1, once);
+    check('and the rest of the body survives that', once.includes('Then something new.'), once);
+    check('punctuation differences do not defeat the de-duplication',
+          detailText(item('r2', 't', {
+              summary: '"The same opening line".',
+              paragraphs: ['The same opening line.', 'New material.'],
+              body: '',
+          }), 3).toLowerCase().split('the same opening line').length - 1 === 1);
+
+    // App 36 truncates a synthesis request mid-word at 1200 characters, so the
+    // spoken passage stops on a sentence boundary well before that.
+    const verbose = item('v', 'A story', {
+        summary: 'Short standfirst.',
+        paragraphs: [Array.from({ length: 20 },
+            (_, i) => `Sentence number ${i} padded out to a realistic newswire length here.`).join(' ')],
+        body: '',
+    });
+    const bounded = detailText(verbose, 12);
+    check('a long passage stops on a sentence boundary under the budget',
+          bounded.length <= 1000 && /[.!?؟]$/.test(bounded.trim()),
+          [bounded.length, bounded.slice(-40)]);
+    check('and still leads with the summary',
+          bounded.startsWith('Short standfirst.'), bounded.slice(0, 40));
+    check('a summary alone is never truncated away',
+          detailText(item('v2', 't', { summary: 'Only this.', paragraphs: [], body: '' }), 3)
+          === 'Only this.');
 }
 
 console.log('\n6. Both languages are first class');
@@ -297,6 +360,36 @@ console.log('\n8. Bed rotation and duration estimates');
           [...seen].every(n => n >= 1 && n <= BED_COUNT), [...seen]);
     check('rotation is deterministic', bedIndexFor(0) === bedIndexFor(BED_COUNT));
     check('a negative index does not escape the range', bedIndexFor(-3) >= 1);
+
+    /*
+      Every bed ends up at the same level, whichever track it is.
+
+      The five were mastered up to 5 dB apart — bed1 at 0.398 against bed2 at
+      0.226 — so one `volume` for all of them is music that gets louder and
+      quieter as the bulletin moves between stories, for no reason a listener
+      can attribute to anything. Under a quiet anchor bed1 sat 7 dB below the
+      voice, which was part of "the voice is too low".
+    */
+    const beds = ['open', 'bed1', 'bed2', 'bed3', 'bed4'];
+    const trimmed = beds.map(b => BED_RMS[b] * bedTrimFor(b));
+    check('every bed is trimmed to the same level',
+          Math.max(...trimmed) / Math.min(...trimmed) < 1.02,
+          beds.map((b, i) => `${b}:${trimmed[i].toFixed(3)}`));
+    check('the loudest bed is turned down, not the quietest turned up',
+          bedTrimFor('bed1') < 1 && bedTrimFor('bed1') > 0.5, bedTrimFor('bed1'));
+    check('every bed that ships has a measured level',
+          beds.every(b => typeof BED_RMS[b] === 'number' && BED_RMS[b] > 0),
+          'measure it, do not estimate it');
+    check('an unknown bed is left alone rather than silenced',
+          bedTrimFor('bed9') === 1);
+    check('a trim can never push the element past full volume',
+          beds.every(b => bedVolumeFor({ kind: 'open', anchor: 'female', text: '', bed: true })
+                          * bedTrimFor(b) <= 1));
+    // The ducked bed against a voice normalised to TARGET_RMS.
+    const ducked = BED_REFERENCE_RMS * 0.12;
+    const under = 20 * Math.log10(TARGET_RMS / ducked);
+    check(`the bed sits ${under.toFixed(0)} dB under the anchor, where a newsroom puts it`,
+          under >= 13 && under <= 22, under);
 
     check('a longer line takes longer',
           estimateDurationMs('a'.repeat(200), 'en') > estimateDurationMs('a'.repeat(50), 'en'));
@@ -736,6 +829,85 @@ console.log('\n12. Reshaping a voice, so the male anchor is never removed');
     check('and peaks in the middle', Math.abs(hann(65)[32] - 1) < 1e-9);
     check('a degenerate window does not divide by zero',
           hann(1)[0] === 1 && hann(0).length === 0);
+
+    // ---- level ----------------------------------------------------------
+    /*
+      Reported as "the Arabic male voice is too low, and the female a little
+      low too". The shaping was not the cause — measured, it returns the level
+      it was given to within 0.0 dB. The PROVIDER is: Google's TTS comes back
+      at a peak of 0.41 and a voiced RMS of 0.10, eight decibels of headroom
+      left on the table, and an `<audio>` element can only turn that down.
+      Against a music bed ducked to 0.12 it was a duet rather than a bed.
+    */
+    const quiet = tone(200, 0.5);
+    for (let i = 0; i < quiet.length; i++) quiet[i] *= 0.24;      // ~ the provider's level
+    check('the provider level is genuinely low, which is the premise',
+          voicedRms(quiet) < TARGET_RMS * 0.6, voicedRms(quiet));
+
+    const lifted = normalizeLevel(Float32Array.from(quiet));
+    check('a quiet clip is brought up to the target',
+          Math.abs(voicedRms(lifted) - TARGET_RMS) / TARGET_RMS < 0.06,
+          voicedRms(lifted));
+    check('and never past the ceiling', peakOf(lifted) <= PEAK_CEILING + 1e-6, peakOf(lifted));
+
+    /*
+      Loudness first, peak as a backstop — and which of the two wins matters.
+
+      Peak normalisation ALONE is the wrong tool: speech has a high crest
+      factor, so two clips normalised to the same peak sit at audibly different
+      volumes and one loud consonant decides the answer for the whole line.
+      Real provider audio measures peak 0.41 against a voiced RMS of 0.10, a
+      crest of about four, and at those numbers the loudness term is the one
+      that binds — which is what makes the boost consistent from line to line.
+    */
+    const speech = Float32Array.from(quiet);
+    // Consonant peaks sized to the crest factor real provider audio measures —
+    // peak 0.41 over a voiced RMS of 0.10, so about four to one.
+    for (let i = 200; i < 260; i++) speech[i] = 0.48 * Math.sign(speech[i] || 1);
+    check('at a realistic crest factor the LOUDNESS term binds, not the peak',
+          TARGET_RMS / voicedRms(speech) < PEAK_CEILING / peakOf(speech),
+          [TARGET_RMS / voicedRms(speech), PEAK_CEILING / peakOf(speech)]);
+    check('so a real line is lifted to the target',
+          Math.abs(voicedRms(normalizeLevel(Float32Array.from(speech))) - TARGET_RMS)
+              / TARGET_RMS < 0.06);
+
+    // And the backstop genuinely is a backstop: one sample near full scale
+    // holds the gain down rather than clipping the line. Conservative on
+    // purpose — a quiet line is a complaint, a clipped one is a defect.
+    const spiky = Float32Array.from(quiet);
+    spiky[100] = 0.95;
+    check('a near-full-scale peak caps the gain instead of clipping',
+          levelGain(spiky) < 1.1 && peakOf(normalizeLevel(Float32Array.from(spiky)))
+              <= PEAK_CEILING + 1e-6,
+          levelGain(spiky));
+
+    // Silence between sentences must not count, or a clip with a long pause
+    // measures quiet and gets boosted until the words clip.
+    const withPause = new Float32Array(quiet.length * 2);
+    withPause.set(quiet, 0);
+    check('silence is not counted as part of the level',
+          Math.abs(voicedRms(withPause) - voicedRms(quiet)) / voicedRms(quiet) < 0.05,
+          [voicedRms(quiet), voicedRms(withPause)]);
+
+    check('the male anchor is aimed louder, to land at the same PERCEIVED level',
+          MALE_LOUDNESS_MAKEUP > 1 && MALE_LOUDNESS_MAKEUP <= 1.35, MALE_LOUDNESS_MAKEUP);
+    const male = normalizeLevel(Float32Array.from(quiet), TARGET_RMS * MALE_LOUDNESS_MAKEUP);
+    check('and still cannot clip', peakOf(male) <= PEAK_CEILING + 1e-6, peakOf(male));
+    check('a reshaped line ends up above a plain one',
+          voicedRms(male) > voicedRms(lifted), [voicedRms(lifted), voicedRms(male)]);
+
+    check('an already-loud clip is left alone rather than pushed further',
+          levelGain(normalizeLevel(Float32Array.from(quiet))) < 1.05);
+    check('silence does not divide by zero',
+          levelGain(new Float32Array(512)) === 1
+          && normalizeLevel(new Float32Array(512)).every(v => v === 0));
+
+    // The shaper must not change the level it was handed — measured at -0.0 dB
+    // on real provider audio, and asserted here so it stays that way.
+    const rmsIn = voicedRms(voice);
+    const rmsOut = voicedRms(timeScale(voice, MALE_RATIO, RATE));
+    check('time-scaling is level-neutral',
+          Math.abs(rmsOut - rmsIn) / rmsIn < 0.08, [rmsIn, rmsOut]);
 
     // ---- capability detection -------------------------------------------
     check('canShape is false without Web Audio', !canShape({}));
