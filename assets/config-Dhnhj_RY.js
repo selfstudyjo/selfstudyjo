@@ -1,0 +1,1 @@
+import{t as e}from"./index-DXF9Fui-.js";export{e as serviceRegistry};
