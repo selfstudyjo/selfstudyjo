@@ -111,6 +111,7 @@ const UI = {
         sourceServer: 'Self Study (any device)',
         buffering: 'Preparing audio…',
         serverVoice: 'Self Study voice service',
+        maleVoice: 'male voice', femaleVoice: 'female voice',
         noPairHelp: 'This device only has voices of one gender for this language, so the two presenters are being read by the Self Study voice service instead.',
         breaking: 'BREAKING', fresh: 'NEW',
     },
@@ -139,6 +140,7 @@ const UI = {
         sourceServer: 'خدمة سيلف ستدي (يعمل على كل الأجهزة)',
         buffering: 'جارٍ تجهيز الصوت…',
         serverVoice: 'خدمة سيلف ستدي الصوتية',
+        maleVoice: 'صوت رجل', femaleVoice: 'صوت امرأة',
         noPairHelp: 'لا يتوفر على هذا الجهاز سوى أصوات من جنس واحد لهذه اللغة، لذلك يقرأ المذيعان بصوت خدمة سيلف ستدي الصوتية (رجل وامرأة).',
         breaking: 'عاجل', fresh: 'جديد',
     },
@@ -173,6 +175,8 @@ const voices = reactive<{ female: VoiceLike | null; male: VoiceLike | null }>({
 const availableVoices = ref<VoiceLike[]>([]);
 /** Operator overrides from those pickers, cleared when the language changes. */
 const chosenVoice = reactive<{ female: string; male: string }>({ female: '', male: '' });
+/** The server voice each anchor last spoke with — displayed, so it is checkable. */
+const serverVoices = reactive<{ female: string; male: string }>({ female: '', male: '' });
 /** Consecutive synthesis failures, so a dead engine stops rather than silently skipping. */
 let failures = 0;
 
@@ -363,13 +367,35 @@ const missingVoice = computed(() =>
 const activeSource = computed<'device' | 'server'>(() => {
     if (speechSource.value === 'server') return 'server';
     if (speechSource.value === 'device') return 'device';
+    // The server failed and a device voice exists — keep the bulletin running
+    // rather than stopping on principle.
+    if (serverUnavailable.value && availableVoices.value.length) return 'device';
     if (!speechSupported.value || availableVoices.value.length === 0) return 'server';
-    // A device with Arabic voices is not necessarily a device that can staff a
-    // two-anchor bulletin: Edge ships Salma and Zariyah, both female, so the
-    // male presenter would be a woman. The server always has a real pair, so
-    // `auto` prefers it whenever the device cannot field one.
+
+    /*
+      ARABIC ALWAYS GOES TO THE SERVER.
+
+      Not a preference — three separate reports of the male anchor sounding
+      female all came back to device Arabic voices, and each had a different
+      cause: no Arabic voice at all, then two female voices and no male, then a
+      male voice too light to read as one. The device's Arabic line-up is a
+      lottery that varies by OS, browser, and which language packs happen to be
+      installed, and nothing here can measure it at runtime.
+
+      The server pair is measured and fixed: Zariyah at 208 Hz and Hamed at
+      113 Hz, an octave apart, identical on every device. For a two-anchor
+      bulletin that guarantee is worth more than saving a round trip, and the
+      audio is cached after the first play anyway.
+
+      English device voices stay in use when the device can field a real pair —
+      they are instant and they are usually right.
+    */
+    if (language.value === 'ar') return 'server';
     return devicePair.value ? 'device' : 'server';
 });
+
+/** Set after repeated server failures, so `auto` can fall back to the device. */
+const serverUnavailable = ref(false);
 
 /** Does the device have both a male and a female voice for this language? */
 const devicePair = computed(() =>
@@ -383,8 +409,14 @@ const sharingVoice = computed(() =>
 
 function voiceLabel(anchor: AnchorId): string {
     // Under the server engine the device's voice list is irrelevant — saying
-    // "no matching voice" there would be true and completely misleading.
-    if (usingServer.value) return t.value.serverVoice;
+    // "no matching voice" there would be true and completely misleading. Name
+    // the actual voice once one has spoken, so the reader can verify for
+    // themselves that the male anchor is on a male voice.
+    if (usingServer.value) {
+        return serverVoices[anchor]
+            ? `${serverVoices[anchor]} · ${anchor === 'male' ? t.value.maleVoice : t.value.femaleVoice}`
+            : t.value.serverVoice;
+    }
     const voice = voices[anchor];
     if (!voice) return t.value.noVoice;
     return sharingVoice.value ? `${voice.name} — ${t.value.sharedVoice}` : voice.name;
@@ -542,6 +574,11 @@ async function speakViaServer(segment: Segment, mine: number) {
         // The reader skipped, paused or stopped while this was synthesising.
         if (mine !== generation) return;
         serverSpeechError.value = '';
+        serverUnavailable.value = false;
+        // Record what actually spoke. Shown under the anchor, because "is آدم
+        // really a man?" was asked three times and the page could not answer
+        // it — the reader had no way to see which voice they were hearing.
+        serverVoices[segment.anchor] = clip.voice;
 
         audio.src = clip.url;
         audio.onended = () => {
@@ -568,6 +605,16 @@ async function speakViaServer(segment: Segment, mine: number) {
         serverSpeechError.value = err?.message || String(err);
         failures += 1;
         if (failures >= 3) {
+            // Hand back to the device if it has anything at all, rather than
+            // stopping. A wrong-sounding voice beats a silent newscast, and the
+            // notice says which is happening.
+            if (speechSource.value === 'auto' && availableVoices.value.length) {
+                serverUnavailable.value = true;
+                failures = 0;
+                buffering.value = false;
+                speakSegment(cursor.value);
+                return;
+            }
             error.value = serverSpeechError.value;
             stop();
             return;
@@ -768,6 +815,9 @@ watch(language, async () => {
     // which is the whole bug this page had. Clear first, then re-cast.
     chosenVoice.female = '';
     chosenVoice.male = '';
+    serverVoices.female = '';
+    serverVoices.male = '';
+    serverUnavailable.value = false;
     error.value = '';
     failures = 0;
     refreshVoices();
@@ -784,6 +834,7 @@ watch(() => [chosenVoice.female, chosenVoice.male], () => {
 
 watch(speechSource, () => {
     serverSpeechError.value = '';
+    serverUnavailable.value = false;
     error.value = '';
     failures = 0;
     if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
