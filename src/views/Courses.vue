@@ -39,12 +39,9 @@
           </select>
         </div>
         <div class="results-count">
-          <span v-if="useClientSidePagination">
-            ⚠️ Client-side pagination active
-          </span>
           Showing {{ displayedCourses.length }} of {{ filteredCourses.length }} courses
           <span v-if="searchQuery"> for "{{ searchQuery }}"</span>
-          <span v-else> (Page {{ currentPage }} of {{ totalPages }})</span>
+          <span v-if="totalPages > 1"> (Page {{ currentPage }} of {{ totalPages }})</span>
         </div>
       </div>
     </div>
@@ -205,18 +202,15 @@
       </div>
       <div class="pagination-info">
         Page {{ currentPage }} of {{ totalPages }} • {{ filteredCourses.length }} total courses
-        <span v-if="useClientSidePagination" class="client-side-warning">
-          (Client-side pagination active)
-        </span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { courseService, type Course, type CourseFilters, type CourseRegistration } from '@/services/course.service';
+import { courseService, type Course, type CourseRegistration } from '@/services/course.service';
 import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
 import Planet from '@/components/Planet.vue';
@@ -232,9 +226,6 @@ const searchQuery = ref('');
 const sortBy = ref('-date_added');
 const currentPage = ref(1);
 const pageSize = ref(6);
-const searchTimeout = ref<NodeJS.Timeout | null>(null);
-const debounceDelay = 500;
-const useClientSidePagination = ref(false);
 
 // Counts state
 const courseCounts = ref<Record<string, { lessons: number; comments: number }>>({});
@@ -436,59 +427,51 @@ const fetchCountsForDisplayedCourses = async (courses: Course[]) => {
   await Promise.all(pending.map(course => fetchCountsForCourse(course.external_course_id, baseUrl)));
 };
 
+/**
+ * Load the whole catalogue, once, and page it here.
+ *
+ * This used to ask app 19 for `page=1&page_size=6` and then measure the
+ * catalogue by what came back — six rows, so one page, so no pager, so 24
+ * courses looked like 6. The service does return the total in `count`, but it
+ * also ignores `search` and `ordering` entirely, so paging on the server would
+ * mean searching and sorting a six-row window of a set the user cannot reach.
+ * Both problems have the same answer: fetch everything, filter, sort and slice
+ * locally. `getAllCourses()` follows the pages if the service ever starts
+ * windowing by default.
+ */
 const fetchCourses = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const filters: CourseFilters = {
-      page: currentPage.value,
-      page_size: pageSize.value,
-      ordering: sortBy.value,
-    };
-    if (searchQuery.value.trim()) filters.search = searchQuery.value.trim();
-
-    const response = await courseService.getCourses(filters);
-    if (response.count !== undefined && response.results) {
-      useClientSidePagination.value = false;
-      allCourses.value = response.results;
-    } else {
-      useClientSidePagination.value = true;
-      const allResponse = await courseService.getCourses({});
-      allCourses.value = allResponse.results || [];
-    }
+    allCourses.value = await courseService.getAllCourses();
   } catch (err: any) {
-    useClientSidePagination.value = true;
-    try {
-      const allResponse = await courseService.getCourses({});
-      allCourses.value = allResponse.results || [];
-    } catch (fallbackError) {
-      error.value = err.message || 'Failed to load courses. Please try again.';
-      allCourses.value = [];
-    }
+    error.value = err.message || 'Failed to load courses. Please try again.';
+    allCourses.value = [];
   } finally {
     loading.value = false;
   }
 };
 
+// No debounce: the query filters an array that is already in memory, so there is
+// no request to hold back — and delaying only the page reset while the grid
+// filters instantly is what leaves a reader on page 3 of a two-page result.
 const handleSearchInput = () => {
-  if (searchTimeout.value) clearTimeout(searchTimeout.value);
-  searchTimeout.value = setTimeout(() => { performSearch(); }, debounceDelay);
+  performSearch();
 };
 
+// Searching and sorting are local — every course is already loaded, and the
+// service would ignore `search` and `ordering` anyway. Nothing here refetches.
 const performSearch = () => {
   currentPage.value = 1;
-  if (!useClientSidePagination.value) fetchCourses();
 };
 
 const clearSearch = () => {
   searchQuery.value = '';
   currentPage.value = 1;
-  fetchCourses();
 };
 
 const handleSortChange = () => {
   currentPage.value = 1;
-  if (!useClientSidePagination.value) fetchCourses();
 };
 
 const goToPage = (page: number) => {
@@ -525,8 +508,10 @@ const formatDate = (dateString?: string) => {
   }
 };
 
-watch(() => currentPage.value, () => {
-  if (!useClientSidePagination.value) fetchCourses();
+// A search that narrows the set to fewer pages must not leave the reader parked
+// on page 4 of 2, which renders as an empty grid with no way back.
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) currentPage.value = Math.max(1, pages);
 });
 
 watch(displayedCourses, (courses) => {
@@ -552,10 +537,6 @@ onMounted(async () => {
   if (canShowRegistration.value) {
     await loadUserRegistrations();
   }
-});
-
-onUnmounted(() => {
-  if (searchTimeout.value) clearTimeout(searchTimeout.value);
 });
 </script>
 

@@ -79,6 +79,9 @@ const dlog = (...args: any[]) => { if (DEBUG) console.log('[CourseService]', ...
 const dwarn = (...args: any[]) => { if (DEBUG) console.warn('[CourseService]', ...args); };
 const derr = (...args: any[]) => console.error('[CourseService]', ...args);
 
+/** Runaway guard on the page-follow loop below; 50 pages is far past any real catalogue. */
+const MAX_COURSE_PAGES = 50;
+
 class CourseService {
     private readonly APP_ID = parseInt(import.meta.env.VITE_COURSE_APP_ID || '19');
 
@@ -137,6 +140,52 @@ class CourseService {
         const endpoint = query ? `/courses/?${query}` : '/courses/';
         const response = await apiService.get<any>(url, endpoint);
         return normalizePaginatedResponse<Course>(response);
+    }
+
+    /**
+     * Every course, not one page of them.
+     *
+     * App 19 paginates only when asked, but when it does, `count` is the TOTAL
+     * and `results` is just the window — so a caller that measures the catalogue
+     * by `results.length` shows one page and believes that is all there is. That
+     * is exactly what the Courses page did. It also ignores `search` and
+     * `ordering` (it always sorts by `date_added`), so filtering and sorting have
+     * to happen over the whole set on this side, which means having the whole set.
+     *
+     * Pinned to the replica the first call resolved: every replica holds the same
+     * records, but re-picking mid-loop would page through a second snapshot and
+     * could hand back the same course twice or skip one.
+     */
+    async getAllCourses(baseUrl?: string): Promise<Course[]> {
+        const url = baseUrl || await this.getRandomCourseReplica();
+        if (!url) throw new Error('No course service replicas available');
+
+        const first = await this.getCourses({}, url);
+        const collected: Course[] = [...first.results];
+        const total = typeof first.count === 'number' ? first.count : collected.length;
+        const windowSize = collected.length;
+
+        if (windowSize > 0 && total > windowSize) {
+            const pages = Math.ceil(total / windowSize);
+            const capped = Math.min(pages, MAX_COURSE_PAGES);
+            if (capped < pages) dwarn(`Course list capped at ${capped} of ${pages} pages`);
+            for (let page = 2; page <= capped; page++) {
+                const next = await this.getCourses({ page, page_size: windowSize }, url);
+                if (!next.results.length) break;
+                collected.push(...next.results);
+            }
+        }
+
+        const seen = new Set<string>();
+        const unique = collected.filter(c => {
+            const key = String(c.external_course_id ?? c.id ?? '');
+            if (!key) return true;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        dlog(`getAllCourses -> ${unique.length} courses (count=${total})`);
+        return unique;
     }
 
     async getCourse(courseId: string, baseUrl?: string): Promise<Course> {

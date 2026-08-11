@@ -145,12 +145,6 @@
     -webkit-text-fill-color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65) !important;
 }
 
-/* Warning amber stays itself */
-.courses-page .client-side-warning {
-    color: var(--sfs-warning-text, #fcd34d) !important;
-    -webkit-text-fill-color: var(--sfs-warning-text, #fcd34d) !important;
-}
-
 /* Selection */
 .courses-page ::selection {
     background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
