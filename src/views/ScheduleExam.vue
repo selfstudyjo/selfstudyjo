@@ -291,11 +291,11 @@
     </div>
 
     <!-- Step 3/2: Select Date & Time (shared for both flows) -->
-    <div v-else-if="(!isReschedule && currentStep === 3) || (isReschedule && currentStep === 2)" class="step-content">
+    <div v-else-if="isDateStep" class="step-content">
       <div class="step-header">
         <h2>Select Date & Time</h2>
         <p>Choose an available time slot for your exam</p>
-        <div v-if="hasAppointmentOnSelectedDate && !isReschedule" class="date-warning">
+        <div v-if="hasActiveAppointmentOnSelectedDate && !isReschedule" class="date-warning">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -304,7 +304,42 @@
         </div>
       </div>
 
-      <div class="date-time-selector">
+      <!-- No proctor to ask. Only reachable when rescheduling an appointment
+           whose proctor has since been removed: without this the calendar sits
+           there with nothing bookable on any date and no explanation. -->
+      <div v-if="!selectedProctor" class="proctor-reselect">
+        <div class="date-warning">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>
+            {{ originalProctorMissing
+              ? 'The proctor for this appointment is no longer available. Choose another to continue.'
+              : 'Choose a proctor to see available dates and times.' }}
+          </span>
+        </div>
+        <div class="proctors-grid">
+          <div v-for="proctor in proctors" :key="proctor.external_id"
+               class="proctor-card"
+               @click="chooseProctorForReschedule(proctor)">
+            <div class="proctor-avatar">{{ proctor.username.charAt(0).toUpperCase() }}</div>
+            <div class="proctor-info">
+              <h4>{{ proctor.username }}</h4>
+              <p>{{ proctor.email }}</p>
+              <div class="proctor-status" :class="{ active: proctor.is_active }">
+                {{ proctor.is_active ? 'Active' : 'Inactive' }}
+              </div>
+            </div>
+          </div>
+          <div v-if="proctors.length === 0" class="no-slots">
+            <p>No proctors are available right now.</p>
+            <p>Please try again later or contact an administrator.</p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="date-time-selector">
         <!-- Date Selector -->
         <div class="date-selector">
           <h3>Select Date</h3>
@@ -343,11 +378,33 @@
               </div>
             </div>
           </div>
+
+          <!-- Say what the calendar is showing. A month with no green dates is
+               a normal answer (a proctor works a limited window), and without
+               this line it reads as the page having failed to load. -->
+          <div class="availability-note">
+            <span v-if="availabilityLoading">Checking {{ selectedProctor?.username }}'s availability…</span>
+            <span v-else-if="availabilityError" class="availability-note--error">
+              {{ availabilityError }}
+              <button type="button" class="link-btn" @click="retryAvailability">Retry</button>
+            </span>
+            <span v-else-if="bookableDatesInMonth > 0">
+              {{ selectedProctor?.username }} has {{ bookableDatesInMonth }}
+              bookable {{ bookableDatesInMonth === 1 ? 'date' : 'dates' }} in {{ currentMonth }}.
+            </span>
+            <span v-else class="availability-note--empty">
+              {{ selectedProctor?.username }} has no availability in {{ currentMonth }} — use
+              &lsaquo; and &rsaquo; to try another month.
+            </span>
+          </div>
         </div>
 
         <!-- Time Selector -->
         <div class="time-selector" v-if="selectedDate && (!hasActiveAppointmentOnSelectedDate || isReschedule)">
-          <h3>Available Time Slots</h3>
+          <h3>
+            Available Time Slots
+            <span v-if="slotsLoading" class="slots-refreshing">refreshing…</span>
+          </h3>
           <div class="time-slots">
             <div v-for="slot in availableTimeSlots" :key="slot.id"
                  class="time-slot" :class="{
@@ -360,12 +417,11 @@
                 {{ slot.is_available ? 'Available' : 'Unavailable' }}
               </div>
             </div>
-            <div v-if="availableTimeSlots.length === 0" class="no-slots">
-              <p>No available time slots for this date</p>
-              <p>Please select another date</p>
+            <div v-if="availableTimeSlots.length === 0 && !slotsLoading" class="no-slots">
+              <p>Every slot on this date has just been taken</p>
+              <p>Pick another date marked ✓ on the calendar</p>
             </div>
           </div>
-
         </div>
 
         <div v-else-if="selectedDate && hasActiveAppointmentOnSelectedDate && !isReschedule" class="time-selector placeholder error">
@@ -654,15 +710,28 @@ const currentDate = ref(new Date());
 const selectedDate = ref<string | null>(null);
 const selectedTimeSlot = ref<any>(null);
 const availableTimeSlots = ref<any[]>([]);
-const proctorAvailability = ref<AvailableDay[]>([]);
 const existingAppointment = ref<ExamAppointment | null>(null);
-const oldTimeSlotId = ref<string | null>(null);
+
+// The proctor's real availability for the months the calendar has shown, keyed
+// by `YYYY-MM-DD`. A date that is not in here is a date the proctor does not
+// work — which is what the calendar now paints, instead of marking every future
+// day green and only admitting there are no slots after it has been clicked.
+const availabilityByDate = ref<Record<string, AvailableDay>>({});
+const loadedMonths = ref<string[]>([]);
+const availabilityLoading = ref(false);
+const availabilityError = ref<string | null>(null);
+const slotsLoading = ref(false);
+// The appointment being rescheduled names a proctor who no longer exists.
+const originalProctorMissing = ref(false);
 
 // Computed properties
 const userId = computed(() => authStore.user?.id);
 const username = computed(() => authStore.user?.username);
 const isReschedule = computed(() => route.query.reschedule === 'true');
 const appointmentId = computed(() => route.query.appointmentId as string);
+const isDateStep = computed(() =>
+  (!isReschedule.value && currentStep.value === 3) || (isReschedule.value && currentStep.value === 2)
+);
 
 const canRescheduleAppointment = computed(() => {
   if (!existingAppointment.value) return false;
@@ -692,7 +761,11 @@ const hasActiveAppointmentOnSelectedDate = computed(() => {
 
 // Helper functions for date handling
 const formatDate = (date: Date | string): string => {
-  const d = new Date(date);
+  // A plain date string is already what we want. Round-tripping it through
+  // `new Date()` parses it as UTC midnight and hands back the previous day for
+  // anyone west of UTC — see the same note in proctor.service.ts.
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim())) return date.trim();
+  const d = date instanceof Date ? date : new Date(date);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -852,6 +925,10 @@ const currentMonth = computed(() => {
   return currentDate.value.toLocaleString('default', { month: 'long', year: 'numeric' });
 });
 
+const bookableDatesInMonth = computed(() =>
+  calendarDays.value.filter(day => day.isCurrentMonth && day.isAvailable && !day.isPast).length
+);
+
 // Lifecycle hooks
 onMounted(async () => {
   loading.value = true;
@@ -925,13 +1002,22 @@ async function loadExistingAppointment() {
       // Load the exam
       selectedExam.value = await examService.getExam(existingAppointment.value.exam);
 
-      // Load the proctor if exists
+      // Load the proctor if exists.
+      //
+      // A proctor that has since been removed answers 404 here, and this used
+      // to swallow it: `selectedProctor` stayed null, `loadProctorAvailability`
+      // returned on its first line without making a request, and the Date &
+      // Time step sat there with a calendar nobody could get slots out of and
+      // nothing on screen saying why. A live appointment on this platform points
+      // at exactly such a proctor. Say so, and let them pick another.
       if (existingAppointment.value.proctor_id) {
         try {
           selectedProctor.value = await proctorService.getProctor(existingAppointment.value.proctor_id);
         } catch (err) {
-          // ignore
+          originalProctorMissing.value = true;
         }
+      } else {
+        originalProctorMissing.value = true;
       }
 
       // For rescheduling, start at step 1 (show current appointment)
@@ -955,45 +1041,102 @@ async function loadProctors() {
   }
 }
 
-async function loadProctorAvailability() {
-  if (!selectedProctor.value || !selectedDate.value) return;
+const monthKey = (proctorId: string, when: Date) =>
+  `${proctorId}:${when.getFullYear()}-${when.getMonth()}`;
 
-  loading.value = true;
-  error.value = null;
+const slotsFrom = (day?: AvailableDay | null) =>
+  (day?.available_hours || []).map((hour: AvailableHour) => ({
+    id: hour.sync_id,
+    startTime: hour.start_time.substring(0, 5),
+    endTime: hour.end_time.substring(0, 5),
+    is_available: hour.is_available,
+    rawHour: hour,
+  }));
 
+/**
+ * Fetch the visible month's real availability, once per proctor per month.
+ *
+ * The calendar used to mark every date from today onwards as available, because
+ * `checkDateAvailability` asked nothing but "is this in the past?". The proctor
+ * on record works a 30-day window, so most of the green ✓ dates — today
+ * included, and every day of every later month — had nothing behind them, and
+ * the only way to find out was to click one and read "no available time slots".
+ * That is the whole of "the dates are all there and I cannot book any of them".
+ */
+async function loadMonthAvailability() {
+  const proctor = selectedProctor.value;
+  if (!proctor) return;
+
+  const key = monthKey(proctor.external_id, currentDate.value);
+  if (loadedMonths.value.includes(key)) return;
+
+  const year = currentDate.value.getFullYear();
+  const month = currentDate.value.getMonth();
+  const from = formatDate(new Date(year, month, 1));
+  const to = formatDate(new Date(year, month + 1, 0));
+
+  availabilityLoading.value = true;
+  availabilityError.value = null;
   try {
-    const availability = await proctorService.getProctorAvailabilityForDate(
-      selectedProctor.value.external_id,
-      selectedDate.value
-    );
-
-    proctorAvailability.value = availability ? [availability] : [];
-
-    if (availability && availability.available_hours && availability.available_hours.length > 0) {
-      availableTimeSlots.value = availability.available_hours
-        .map((hour: AvailableHour) => ({
-          id: hour.sync_id,
-          startTime: hour.start_time.substring(0, 5),
-          endTime: hour.end_time.substring(0, 5),
-          is_available: hour.is_available,
-          rawHour: hour
-        }));
-    } else {
-      availableTimeSlots.value = [];
-    }
+    const days = await proctorService.getProctorAvailability(proctor.external_id, from, to);
+    const merged = { ...availabilityByDate.value };
+    days.forEach(day => { merged[String(day.day).substring(0, 10)] = day; });
+    availabilityByDate.value = merged;
+    loadedMonths.value = [...loadedMonths.value, key];
   } catch (err: any) {
-    error.value = err.message || 'Failed to load available time slots';
+    // Not `error`: that swaps the whole step out for a full-page error, and a
+    // month that failed to load is recoverable by paging or retrying.
+    availabilityError.value = err.message || 'Could not load this proctor\'s availability.';
   } finally {
-    loading.value = false;
+    availabilityLoading.value = false;
+  }
+}
+
+/**
+ * Re-read the selected date so a slot somebody else booked in the last minute
+ * disappears before this student picks it.
+ *
+ * Deliberately on its own flag rather than the page-level `loading`, which is a
+ * `v-if` over the entire step — using it here tore the calendar down and rebuilt
+ * it on every single date click.
+ */
+async function refreshSlotsForSelectedDate() {
+  const proctor = selectedProctor.value;
+  const date = selectedDate.value;
+  if (!proctor || !date) return;
+
+  slotsLoading.value = true;
+  try {
+    const day = await proctorService.getProctorAvailabilityForDate(proctor.external_id, date);
+    if (selectedDate.value !== date) return; // the reader moved on while we waited
+    if (day) {
+      availabilityByDate.value = { ...availabilityByDate.value, [date]: day };
+    } else {
+      const without = { ...availabilityByDate.value };
+      delete without[date];
+      availabilityByDate.value = without;
+    }
+    availableTimeSlots.value = slotsFrom(day);
+    if (selectedTimeSlot.value &&
+        !availableTimeSlots.value.some(slot => slot.id === selectedTimeSlot.value.id)) {
+      selectedTimeSlot.value = null;
+    }
+  } catch {
+    // Keep whatever the month load gave us rather than blanking the panel.
+  } finally {
+    if (selectedDate.value === date) slotsLoading.value = false;
   }
 }
 
 // Helper methods
+/** Does the proctor actually have a bookable slot on this date? */
 function checkDateAvailability(date: string): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const checkDate = parseDate(date);
-  return checkDate >= today;
+  if (parseDate(date) < today) return false;
+
+  const day = availabilityByDate.value[date];
+  return !!day && day.is_available !== false && (day.available_hours?.length || 0) > 0;
 }
 
 function getScheduledDate(exam: Exam): string {
@@ -1029,19 +1172,35 @@ function selectExam(exam: Exam) {
 
 function selectProctor(proctor: ExamProctor) {
   selectedProctor.value = proctor;
-  // Reset date/time selection when proctor changes
+  // Reset date/time selection when proctor changes — and the availability with
+  // it, or the calendar would keep painting the previous proctor's working days.
   selectedDate.value = null;
   selectedTimeSlot.value = null;
   availableTimeSlots.value = [];
+  availabilityByDate.value = {};
+  loadedMonths.value = [];
+  availabilityError.value = null;
 }
 
 function selectDate(day: any) {
-  if (day.isAvailable && !day.isPast && (!isReschedule.value || !hasActiveAppointmentOnDate(day.date))) {
-    selectedDate.value = day.date;
-    selectedTimeSlot.value = null;
-    availableTimeSlots.value = [];
-    loadProctorAvailability();
-  }
+  if (!day.isAvailable || day.isPast) return;
+  // Was `!isReschedule || !hasActiveAppointmentOnDate(...)`, which short-circuits
+  // true for a NEW booking — so a date the calendar had greyed out as already
+  // taken was still selectable. The guard belongs on the new-booking side.
+  if (!isReschedule.value && hasActiveAppointmentOnDate(day.date)) return;
+
+  selectedDate.value = day.date;
+  selectedTimeSlot.value = null;
+  // Paint from the month we already fetched, then confirm against the service.
+  availableTimeSlots.value = slotsFrom(availabilityByDate.value[day.date]);
+  refreshSlotsForSelectedDate();
+}
+
+/** Reschedule with a proctor who has since been removed — see the template.
+ *  `selectProctor` clears the old availability; the watcher refetches it. */
+function chooseProctorForReschedule(proctor: ExamProctor) {
+  selectProctor(proctor);
+  originalProctorMissing.value = false;
 }
 
 function selectTimeSlot(slot: any) {
@@ -1075,6 +1234,8 @@ function nextStep() {
 
   error.value = null;
   currentStep.value++;
+  // Arriving on the date step loads that month's availability — see the watcher
+  // next to prevMonth/nextMonth, which is the single place that fetches it.
 }
 
 function prevStep() {
@@ -1086,21 +1247,24 @@ function prevStep() {
 function retryCurrentStep() {
   error.value = null;
 
-  if (!isReschedule.value) {
+  if (isDateStep.value) {
+    retryAvailability();
+  } else if (!isReschedule.value) {
     if (currentStep.value === 1) {
       loadExams();
     } else if (currentStep.value === 2) {
       loadProctors();
-    } else if (currentStep.value === 3 && selectedDate.value) {
-      loadProctorAvailability();
     }
-  } else {
-    if (currentStep.value === 1) {
-      loadExistingAppointment();
-    } else if (currentStep.value === 2 && selectedDate.value) {
-      loadProctorAvailability();
-    }
+  } else if (currentStep.value === 1) {
+    loadExistingAppointment();
   }
+}
+
+function retryAvailability() {
+  availabilityError.value = null;
+  loadedMonths.value = [];
+  loadMonthAvailability();
+  if (selectedDate.value) refreshSlotsForSelectedDate();
 }
 
 // Booking methods
@@ -1190,7 +1354,11 @@ async function handleReschedule(appointmentDateTime: Date) {
       const oldTimeStr = oldAppointmentDate.toTimeString().substring(0, 5);
 
       try {
-        const oldAvailability = await proctorService.getProctorAvailabilityForDate(
+        // The RAW day, taken slots included. `getProctorAvailabilityForDate`
+        // returns only bookable hours, and the hour being released is the one
+        // marked unavailable — so the find below never matched and the old slot
+        // stayed closed forever, quietly eating the proctor's calendar.
+        const oldAvailability = await proctorService.getProctorDayRaw(
           existingAppointment.value.proctor_id,
           oldDateStr
         );
@@ -1276,7 +1444,11 @@ async function confirmCancel() {
       const oldTimeStr = oldAppointmentDate.toTimeString().substring(0, 5);
 
       try {
-        const oldAvailability = await proctorService.getProctorAvailabilityForDate(
+        // The RAW day, taken slots included. `getProctorAvailabilityForDate`
+        // returns only bookable hours, and the hour being released is the one
+        // marked unavailable — so the find below never matched and the old slot
+        // stayed closed forever, quietly eating the proctor's calendar.
+        const oldAvailability = await proctorService.getProctorDayRaw(
           existingAppointment.value.proctor_id,
           oldDateStr
         );
@@ -1345,7 +1517,9 @@ function formatAppointmentDateTime(): string {
   }) + ` at ${selectedTimeSlot.value.startTime}`;
 }
 
-// Calendar navigation
+// Calendar navigation. The watcher below fetches the month that scrolls into
+// view — without it, paging to September shows a calendar of grey days whether
+// or not the proctor works then.
 function prevMonth() {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1);
 }
@@ -1353,6 +1527,10 @@ function prevMonth() {
 function nextMonth() {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1);
 }
+
+watch([currentDate, selectedProctor, isDateStep], () => {
+  if (isDateStep.value && selectedProctor.value) loadMonthAvailability();
+});
 
 // Navigation methods
 function cancelSchedule() {

@@ -626,6 +626,39 @@
 .schedule-exam-page .day-availability { color: var(--sfs-success-text, #6ee7b7); }
 .schedule-exam-page .day-appointment { color: var(--sfs-warning-text, #fdba74); }
 
+/* What the calendar is actually showing, under the calendar. */
+.schedule-exam-page .availability-note {
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--sx-text-mute);
+  text-align: center;
+}
+.schedule-exam-page .availability-note--empty { color: var(--sfs-warning-text, #fdba74); }
+.schedule-exam-page .availability-note--error { color: var(--sfs-danger-text, #fca5a5); }
+.schedule-exam-page .link-btn {
+  background: none;
+  border: none;
+  padding: 0 0 0 0.35rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--sfs-accent-text, #a5b4fc);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.schedule-exam-page .slots-refreshing {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--sx-text-mute);
+  font-style: italic;
+}
+.schedule-exam-page .proctor-reselect {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .schedule-exam-page .time-slots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

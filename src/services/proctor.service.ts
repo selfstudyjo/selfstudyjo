@@ -66,6 +66,9 @@ export interface UpdateAvailabilityRequest {
     is_available: boolean;
 }
 
+/** A slot starting sooner than this is no longer offerable. */
+const HOUR_LEAD_MINUTES = 60;
+
 class ProctorService {
     private readonly APP_ID = 21; // From .env VITE_PROCTOR_APP_ID
 
@@ -101,30 +104,40 @@ class ProctorService {
         }
     }
 
-    // Format date to YYYY-MM-DD
+    /**
+     * `YYYY-MM-DD` in the local calendar.
+     *
+     * A plain date string is returned untouched, and that is the whole point:
+     * `new Date('2026-08-15')` is parsed as UTC midnight, so re-formatting an
+     * already-plain date through it yields the 14th for every user west of UTC.
+     * The booking page then asked app 21 for the wrong day, the day it got back
+     * did not match the one it was looking for, and every single date on the
+     * calendar answered "no available time slots".
+     */
     private formatDate(date: Date | string): string {
-        const d = new Date(date);
+        if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim())) {
+            return date.trim();
+        }
+        const d = date instanceof Date ? date : new Date(date);
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
 
-    // Parse date string to Date object, handling timezone issues
-    private parseDate(dateStr: string): Date {
-        // If dateStr already includes time, parse directly
-        if (dateStr.includes('T')) {
-            return new Date(dateStr);
-        }
-        // If it's just a date string, create date at noon to avoid timezone issues
-        return new Date(`${dateStr}T12:00:00`);
-    }
-
-    // Compare two dates ignoring time
-    private areDatesEqual(date1: Date, date2: Date): boolean {
-        return date1.getFullYear() === date2.getFullYear() &&
-        date1.getMonth() === date2.getMonth() &&
-        date1.getDate() === date2.getDate();
+    /**
+     * The hours a student can still take on a given day: open, and not about to
+     * start. `new Date('2026-08-15T08:00:00')` has no zone, so it is parsed in
+     * local time — which is what a proctor's working hours are expressed in.
+     */
+    private bookableHours(dayIso: string, hours: AvailableHour[] = [],
+                          leadMinutes = HOUR_LEAD_MINUTES): AvailableHour[] {
+        const cutoff = new Date(Date.now() + leadMinutes * 60 * 1000);
+        return hours.filter(hour => {
+            if (!hour.is_available) return false;
+            const start = new Date(`${this.formatDate(dayIso)}T${hour.start_time}`);
+            return !isNaN(start.getTime()) && start >= cutoff;
+        });
     }
 
     // Get all proctors
@@ -156,143 +169,77 @@ class ProctorService {
         }
     }
 
-    // Get proctor availability for specific dates - FIXED VERSION
-    async getProctorAvailability(proctorId: string, startDate: string, endDate?: string): Promise<AvailableDay[]> {
+    /**
+     * Every day a proctor has on record between two dates, with its hours.
+     *
+     * One request, not thirty-one: `GET /available-days/` already nests
+     * `available_hours` in each day, so the old per-day `/available-hours/`
+     * follow-up was fetching what it had just been handed. The follow-up is kept
+     * only for a day that arrives without the nested list.
+     *
+     * `bookableOnly` (the default) drops hours somebody has taken and hours
+     * about to start. Pass `false` when you need the day exactly as stored —
+     * freeing a slot means finding an hour that is, by definition, not
+     * available, and filtering it out is why cancelling never released one.
+     */
+    async getProctorAvailability(proctorId: string, startDate: string, endDate?: string,
+                                 options: { bookableOnly?: boolean } = {}): Promise<AvailableDay[]> {
         const baseUrl = await this.getRandomProctorReplica();
         if (!baseUrl) {
             throw new Error('No proctor service replicas available');
         }
 
-        try {
-            const params = new URLSearchParams();
-            params.append('proctor_id', proctorId);
-            params.append('date_from', startDate);
-            if (endDate) {
-                params.append('date_to', endDate);
+        const bookableOnly = options.bookableOnly !== false;
+        const params = new URLSearchParams();
+        params.append('proctor_id', proctorId);
+        params.append('date_from', this.formatDate(startDate));
+        params.append('date_to', this.formatDate(endDate || startDate));
+
+        const response = await apiService.get<any>(baseUrl, `/available-days/?${params.toString()}`);
+        const days = normalizePaginatedResponse<AvailableDay>(response).results;
+
+        return Promise.all(days.map(async (day) => {
+            let hours = Array.isArray(day.available_hours) ? day.available_hours : null;
+            if (!hours) {
+                try {
+                    hours = await this.getAvailableHoursForDay(day.id, baseUrl);
+                } catch {
+                    hours = [];
+                }
             }
-
-            const endpoint = `/available-days/?${params.toString()}`;
-
-            const response = await apiService.get<any>(baseUrl, endpoint);
-            const days = normalizePaginatedResponse<AvailableDay>(response).results;
-
-            // Get hours for each day with proper filtering
-            const enrichedDays = await Promise.all(
-                days.map(async (day) => {
-                    try {
-                        const hours = await this.getAvailableHoursForDay(day.id);
-                        return {
-                            ...day,
-                            available_hours: hours.filter(hour => {
-                                // Only include hours that are marked as available
-                                const isHourAvailable = hour.is_available;
-
-                                // Check if the time slot is still valid (not in the past)
-                                const dayDate = this.parseDate(day.day);
-                                const hourStartTime = new Date(`${this.formatDate(dayDate)}T${hour.start_time}`);
-                                const now = new Date();
-
-                                // Allow slots that are at least 1 hour in the future
-                                const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-
-                                return isHourAvailable && hourStartTime >= oneHourFromNow;
-                            })
-                        };
-                    } catch (error) {
-                        return { ...day, available_hours: [] };
-                    }
-                })
-            );
-
-            return enrichedDays;
-        } catch (error) {
-            throw error;
-        }
+            return {
+                ...day,
+                available_hours: bookableOnly ? this.bookableHours(day.day, hours) : hours,
+            };
+        }));
     }
 
-    // Get proctor availability for a specific date only - NEW METHOD
+    /** One day's bookable slots, or null when the proctor has no record for it. */
     async getProctorAvailabilityForDate(proctorId: string, date: string): Promise<AvailableDay | null> {
-        const baseUrl = await this.getRandomProctorReplica();
-        if (!baseUrl) {
-            throw new Error('No proctor service replicas available');
-        }
-
-        try {
-            // Format the date properly
-            const formattedDate = this.formatDate(date);
-
-            const params = new URLSearchParams();
-            params.append('proctor_id', proctorId);
-            params.append('date_from', formattedDate);
-            params.append('date_to', formattedDate); // Same date for both to get only one day
-
-            const endpoint = `/available-days/?${params.toString()}`;
-
-            const response = await apiService.get<any>(baseUrl, endpoint);
-            const days = normalizePaginatedResponse<AvailableDay>(response).results;
-
-            if (days.length === 0) {
-                return null;
-            }
-
-            // Find the exact day matching our date
-            const targetDate = this.parseDate(date);
-            const matchingDay = days.find(day => {
-                const dayDate = this.parseDate(day.day);
-                return this.areDatesEqual(dayDate, targetDate);
-            });
-
-            if (!matchingDay) {
-                return null;
-            }
-
-            // Get hours for the specific day
-            try {
-                const hours = await this.getAvailableHoursForDay(matchingDay.id);
-                const enrichedDay = {
-                    ...matchingDay,
-                    available_hours: hours.filter(hour => {
-                        // Only include available hours
-                        const isHourAvailable = hour.is_available;
-
-                        // Check if the time slot is still valid (not in the past)
-                        const hourStartTime = new Date(`${this.formatDate(matchingDay.day)}T${hour.start_time}`);
-                        const now = new Date();
-
-                        // Allow slots that are at least 1 hour in the future
-                        const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-
-                        return isHourAvailable && hourStartTime >= oneHourFromNow;
-                    })
-                };
-
-                return enrichedDay;
-            } catch (error) {
-                return { ...matchingDay, available_hours: [] };
-            }
-        } catch (error) {
-            throw error;
-        }
+        const iso = this.formatDate(date);
+        const days = await this.getProctorAvailability(proctorId, iso, iso);
+        return days.find(day => this.formatDate(day.day) === iso) || null;
     }
 
-    // Get available hours for a specific day
-    async getAvailableHoursForDay(dayId: number): Promise<AvailableHour[]> {
-        const baseUrl = await this.getRandomProctorReplica();
-        if (!baseUrl) {
+    /**
+     * One day exactly as stored, taken slots included. This is what releasing a
+     * slot has to read: the hour being freed is the one marked unavailable.
+     */
+    async getProctorDayRaw(proctorId: string, date: string): Promise<AvailableDay | null> {
+        const iso = this.formatDate(date);
+        const days = await this.getProctorAvailability(proctorId, iso, iso, { bookableOnly: false });
+        return days.find(day => this.formatDate(day.day) === iso) || null;
+    }
+
+    /** Fallback for a day that arrived without its nested hours. Unfiltered. */
+    async getAvailableHoursForDay(dayId: number, baseUrl?: string): Promise<AvailableHour[]> {
+        const url = baseUrl || await this.getRandomProctorReplica();
+        if (!url) {
             throw new Error('No proctor service replicas available');
         }
 
-        try {
-            const endpoint = `/available-hours/?day_id=${dayId}`;
-
-            const response = await apiService.get<any>(baseUrl, endpoint);
-            const hours = normalizePaginatedResponse<AvailableHour>(response).results;
-
-            // Only return available hours
-            return hours.filter(hour => hour.is_available);
-        } catch (error) {
-            throw error;
-        }
+        const response = await apiService.get<any>(url, `/available-hours/?day_id=${dayId}`);
+        return normalizePaginatedResponse<AvailableHour>(response).results;
     }
 
     // Find available proctors for a specific date and time
