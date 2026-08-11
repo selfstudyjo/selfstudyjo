@@ -12,6 +12,8 @@ export interface LoginResponse {
     user_id: string;
     expires_at: string;
     requires_verification?: boolean;
+    /** App 15 already asked app 14 for a code — do not ask for a second one. */
+    otp_sent?: boolean;
     verification_domain?: string;
     user_profile_domain?: string;
     username?: string;

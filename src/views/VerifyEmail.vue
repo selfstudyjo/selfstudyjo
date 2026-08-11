@@ -144,8 +144,19 @@ onMounted(async () => {
   // the same way.
   await resolveEmail();
 
-  // Generate OTP automatically
-  generateOTP();
+  // Generate OTP automatically — unless one has just been sent on our behalf.
+  //
+  // App 15 asks app 14 for a code itself when it refuses an unverified login,
+  // so on that path this screen was ordering a second one within the same
+  // second. Two near-identical emails arrive, only the newer code is stored,
+  // and opening the one that came first gets "Invalid OTP code" for a code the
+  // user is reading correctly. There is a Resend button for the case where the
+  // first message really did not arrive.
+  if (authStore.verificationData?.otp_sent === true) {
+    deliveryWarning.value = '';
+  } else {
+    generateOTP();
+  }
 
   // Start timers
   startTimers();

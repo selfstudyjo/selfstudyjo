@@ -315,6 +315,11 @@ export const useAuthStore = defineStore('auth', () => {
                     // user did not register in this browser. App 15 started
                     // returning it with the 403 for exactly this.
                     email: response.email,
+                    // App 15 asks app 14 for a code itself on this path. When it
+                    // succeeded, the verify screen must NOT ask for a second one
+                    // — that is what put two codes in one inbox and killed the
+                    // one that arrived first.
+                    otp_sent: response.otp_sent === true,
                 };
                 return response;
             }
