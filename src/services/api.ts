@@ -36,6 +36,30 @@ export class ApiError extends Error {
 }
 
 /**
+ * A DRF-shaped validation body, rendered as one readable sentence.
+ *
+ * `{"email": ["Enter a valid email address."]}` carries no `error`, `message`
+ * or `detail` key, so it used to fall all the way through to
+ * `HTTP 400: BAD REQUEST` — which is what the OTP screen showed while the
+ * backend was saying precisely what was wrong with the request. Every ported
+ * service answers a rejected write in this shape, so this is not an OTP fix.
+ *
+ * `non_field_errors` loses its label, the way the admin console's
+ * `_flatten_errors` does it, because "non_field_errors: ..." is an
+ * implementation detail leaking into a sentence somebody has to read.
+ */
+function fieldErrors(data: any): string | null {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    const parts: string[] = [];
+    for (const [field, value] of Object.entries(data)) {
+        const text = Array.isArray(value) ? value.join(' ') : String(value);
+        if (!text) continue;
+        parts.push(field === 'non_field_errors' ? text : `${field}: ${text}`);
+    }
+    return parts.length ? parts.join(' — ') : null;
+}
+
+/**
  * Run a call against one replica of a service, moving to another if it fails.
  *
  * Newly worth doing as of 2026-08-06. Before then, failing over would have shown
@@ -154,6 +178,7 @@ export class ApiService {
         if (!response.ok) {
             throw new ApiError(
                 responseData.error || responseData.message || responseData.detail ||
+                fieldErrors(responseData) ||
                 (typeof responseData === 'string' ? responseData : `HTTP ${response.status}: ${response.statusText}`),
                                response.status,
                                responseData

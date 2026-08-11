@@ -653,6 +653,11 @@ function onNavClick() {
 }
 
 function handleSearchShortcut(event: KeyboardEvent) {
+  // `key` is not always there. A password manager filling a form, and some IME
+  // composition events, dispatch a keydown with no `key` — and this handler is
+  // on the document, so the TypeError it threw was uncaught and fired on the
+  // login and register screens, which is exactly where autofill happens.
+  if (!event.key) return;
   if (event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     focusSearch();

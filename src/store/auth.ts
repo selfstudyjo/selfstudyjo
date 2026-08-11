@@ -309,7 +309,12 @@ export const useAuthStore = defineStore('auth', () => {
                     user_id: response.user_id,
                     verification_domain: response.verification_domain,
                     user_profile_domain: response.user_profile_domain,
-                    username: credentials.username,
+                    username: response.username || credentials.username,
+                    // The verify screen needs the address to ask app 14 for a
+                    // code, and this is the only place it can learn it when the
+                    // user did not register in this browser. App 15 started
+                    // returning it with the 403 for exactly this.
+                    email: response.email,
                 };
                 return response;
             }

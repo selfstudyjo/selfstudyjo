@@ -8,7 +8,7 @@
           </svg>
         </div>
         <h1>Verify Your Email</h1>
-        <p>We've sent a 6-digit code to {{ userEmail }}</p>
+        <p>We've sent a 6-digit code to {{ userEmail || 'your email' }}</p>
       </div>
 
       <form @submit.prevent="handleVerify" class="verify-form">
@@ -31,6 +31,13 @@
 
         <div v-if="verificationError" class="alert alert-error">
           {{ verificationError }}
+        </div>
+
+        <!-- A 201 from app 14 means the code EXISTS, not that it was delivered.
+             Silently treating the two as the same is what let a replica with no
+             mail configuration look like a working signup. -->
+        <div v-if="deliveryWarning" class="alert alert-error">
+          {{ deliveryWarning }}
         </div>
 
         <div v-if="verificationSuccess" class="alert alert-success">
@@ -93,6 +100,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { notificationService } from '@/services/notification.service';
 import { subscriptionService, FREE_TRIAL_DAYS } from '@/services/subscription.service';
+import { userService } from '@/services/user.service';
 
 // Import the CSS file
 import '@/assets/css/verify-email.css';
@@ -103,6 +111,7 @@ const authStore = useAuthStore();
 const otp = reactive(Array(6).fill(''));
 const otpInputs = ref<HTMLInputElement[]>([]);
 const verificationError = ref('');
+const deliveryWarning = ref('');
 const verificationSuccess = ref(false);
 const timeLeft = ref(15 * 60); // 15 minutes in seconds
 const resendCooldown = ref(60); // 1 minute cooldown
@@ -126,12 +135,14 @@ const resendButtonText = computed(() => {
   return 'Resend Code';
 });
 
-onMounted(() => {
-  // Get user email from localStorage or auth store
-  const storedEmail = localStorage.getItem('verification_email') ||
-                     authStore.verificationData?.email ||
-                     'your email';
-  userEmail.value = storedEmail;
+onMounted(async () => {
+  // The address has to be resolved BEFORE the code is asked for. It used to
+  // fall back to the literal string 'your email', which is not an address:
+  // app 14 rejected every generate and every resend with
+  // `email: Enter a valid email address.`, and the screen rendered that as
+  // "HTTP 400: BAD REQUEST" and offered a Resend button that could only fail
+  // the same way.
+  await resolveEmail();
 
   // Generate OTP automatically
   generateOTP();
@@ -139,6 +150,58 @@ onMounted(() => {
   // Start timers
   startTimers();
 });
+
+/** A syntactic check only — the same one `Register.vue` applies to the field. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const currentUserId = (): string =>
+  localStorage.getItem('verification_user_id') ||
+  authStore.verificationData?.user_id ||
+  authStore.user?.id ||
+  '';
+
+/**
+ * Which address the code goes to.
+ *
+ * Registration puts it in localStorage, so that path was always fine. **Login**
+ * is the one that broke: somebody signing in on another device with an
+ * unverified account is sent here by the router guard, and this browser has
+ * never seen their address. App 15 now returns it with the 403, and app 13 is
+ * asked as the fallback — it is the service that owns the value, so a lookup by
+ * user_id always works where guessing never could.
+ */
+const resolveEmail = async () => {
+  const known = String(
+    localStorage.getItem('verification_email') ||
+    authStore.verificationData?.email ||
+    authStore.user?.email ||
+    ''
+  ).trim().toLowerCase();
+
+  if (EMAIL_RE.test(known)) {
+    userEmail.value = known;
+    return;
+  }
+
+  const userId = currentUserId();
+  if (userId) {
+    try {
+      const profile = await userService.getUserProfile(userId);
+      const email = String(profile?.email || '').trim().toLowerCase();
+      if (EMAIL_RE.test(email)) {
+        userEmail.value = email;
+        localStorage.setItem('verification_email', email);
+        return;
+      }
+    } catch (error) {
+      console.warn('Could not resolve the verification email from the profile service:', error);
+    }
+  }
+
+  // Left empty rather than filled with a placeholder, so every caller below has
+  // to notice it is missing instead of sending it to the OTP service.
+  userEmail.value = '';
+};
 
 onUnmounted(() => {
   if (timer) clearInterval(timer);
@@ -165,24 +228,47 @@ const startTimers = () => {
   }, 1000);
 };
 
+/**
+ * A 201 says the code was created. `email_sent: false` says it never left the
+ * building — a replica with no `EMAIL_HOST` / `DEFAULT_FROM_EMAIL` generates
+ * codes perfectly and delivers none of them. Both halves of the response were
+ * being thrown away here, so that failure looked exactly like a working signup
+ * from the browser and the only symptom was a user waiting for an email.
+ */
+const noteDelivery = (response: any) => {
+  if (response && response.email_sent === false) {
+    deliveryWarning.value = response.warning
+      || 'Your code was created but the email could not be sent. Please contact support.';
+    return;
+  }
+  deliveryWarning.value = '';
+};
+
 const generateOTP = async () => {
-  const userId = localStorage.getItem('verification_user_id') ||
-                authStore.verificationData?.user_id;
+  const userId = currentUserId();
   const username = localStorage.getItem('verification_username') ||
                   authStore.verificationData?.username ||
+                  authStore.user?.username ||
                   userEmail.value.split('@')[0];
 
-  if (!userId || !userEmail.value) {
+  if (!userId) {
     verificationError.value = 'Unable to generate OTP. Please try registering again.';
+    return;
+  }
+  if (!EMAIL_RE.test(userEmail.value)) {
+    verificationError.value = 'We could not work out which email address to send your code to. '
+      + 'Please sign in again, or register.';
     return;
   }
 
   try {
-    await authStore.generateOTP({
+    const response = await authStore.generateOTP({
       user_id: userId,
       email: userEmail.value,
       username: username,
     });
+    verificationError.value = '';
+    noteDelivery(response);
   } catch (error: any) {
     verificationError.value = error.message || 'Failed to generate OTP';
   }
@@ -321,14 +407,20 @@ const handleVerify = async () => {
 const resendCode = async () => {
   if (resendDisabled.value) return;
 
-  const userId = localStorage.getItem('verification_user_id') ||
-                authStore.verificationData?.user_id;
+  const userId = currentUserId();
   const username = localStorage.getItem('verification_username') ||
                   authStore.verificationData?.username ||
+                  authStore.user?.username ||
                   userEmail.value.split('@')[0];
 
-  if (!userId || !userEmail.value) {
-    verificationError.value = 'Unable to resend OTP';
+  // One more attempt at the address before giving up: somebody who lands here
+  // from a login has nothing in localStorage, and a Resend that cannot say
+  // where to send it is a button that can only ever fail.
+  if (!EMAIL_RE.test(userEmail.value)) await resolveEmail();
+
+  if (!userId || !EMAIL_RE.test(userEmail.value)) {
+    verificationError.value = 'Unable to resend OTP — we do not have a valid email address '
+      + 'for this account on this device. Please sign in again, or register.';
     return;
   }
 
@@ -343,13 +435,14 @@ const resendCode = async () => {
     startTimers();
 
     // Generate new OTP
-    await authStore.resendOTP({
+    const response = await authStore.resendOTP({
       user_id: userId,
       email: userEmail.value,
       username: username,
     });
 
     verificationError.value = '';
+    noteDelivery(response);
   } catch (error: any) {
     verificationError.value = error.message || 'Failed to resend OTP';
   }
