@@ -340,7 +340,7 @@
                 <h3 class="plan-title">{{ sub.subscription_type?.title || 'Unknown Plan' }}</h3>
                 <div class="plan-price">
                   <span class="price-amount">{{ sub.subscription_type?.price || 'Free' }}</span>
-                  <span class="price-period">/month</span>
+                  <span class="price-period">/year</span>
                 </div>
                 <p class="plan-description">{{ sub.subscription_type?.description || '' }}</p>
               </div>

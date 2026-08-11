@@ -368,12 +368,16 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
     },
 
     // -- Subscriptions (app 22) --------------------------------------------
+    // Both send this one, and they are not competing: the console sends it when
+    // an operator activates a paid plan, the app when a new account's 7-day free
+    // trial is created at email verification (`subscription.service.ts`). One
+    // subscription becoming active is one bell either way.
     'subscription.activated': {
         key: 'subscription.activated',
         category: 'subscription',
         priority: 'high',
         audience: 'user',
-        sentBy: ['console'],
+        sentBy: ['app', 'console'],
         params: ['plan', 'until'],
         title: 'Your subscription is active',
         message: 'The {plan} plan is now active on your account until {until}.',

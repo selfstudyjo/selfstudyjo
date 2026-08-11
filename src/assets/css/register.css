@@ -588,6 +588,13 @@
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
   box-shadow: 0 0 22px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
 }
+/* Good news, not a failure — the trial banner. Fill and ink together. */
+.alert-info {
+  color: var(--sfs-success-text, #a7f3d0);
+  background: rgb(var(--sfs-success-rgb, 16 185 129) / 0.12);
+  border-color: rgb(var(--sfs-success-rgb, 16 185 129) / 0.35);
+  box-shadow: 0 0 22px rgb(var(--sfs-success-rgb, 16 185 129) / 0.18);
+}
 .register-alert-close {
   width: 26px;
   height: 26px;

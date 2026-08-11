@@ -46,6 +46,44 @@ export interface UserSubscriptionStatus {
     reason?: string;
 }
 
+/**
+ * The 7-day free trial.
+ *
+ * The card on /plans is **static** — it is offered whether or not app 22's
+ * catalogue has ever heard of it — but the subscription it grants cannot be:
+ * `POST /subscriptions/` refuses a plan external_id it does not know, and every
+ * feature gate on the platform reads its feature list off the plan record. So
+ * the plan is created in app 22 lazily, the first time anybody activates a
+ * trial, under a **fixed external_id**.
+ *
+ * Fixed rather than minted is what makes that safe to run from a browser: app
+ * 22 derives a record's uid from its natural key, so two people registering at
+ * the same moment against two different replicas create the *same* record and
+ * the merge collapses them. A `uuid4()` here would leave two free plans and two
+ * cards.
+ */
+export const FREE_TRIAL_PLAN_ID = 'sfs-free-trial-7';
+export const FREE_TRIAL_DAYS = 7;
+export const FREE_TRIAL_PLAN_TITLE = 'Free Trial';
+export const FREE_TRIAL_PLAN_DESCRIPTION =
+    'Every feature on the platform, free for 7 days. One trial per account — no card, no payment.';
+/**
+ * The title stored on the *subscription* record, not on the plan.
+ *
+ * It is a second way of recognising a spent trial. Deleting a plan in app 22 is
+ * `SET_NULL` and not a cascade — a subscription outlives the plan it was bought
+ * on and reads back with `subscription_type: null` — so matching only on the
+ * plan id would hand a second trial to anybody whose plan record was removed.
+ */
+export const FREE_TRIAL_SUBSCRIPTION_TITLE = 'Free Trial (7 days)';
+
+/** True for a subscription that is (or was) this account's one free trial. */
+export function isFreeTrialSubscription(sub: Subscription | null | undefined): boolean {
+    if (!sub) return false;
+    if (sub.subscription_type?.external_id === FREE_TRIAL_PLAN_ID) return true;
+    return !sub.subscription_type && sub.title === FREE_TRIAL_SUBSCRIPTION_TITLE;
+}
+
 const SELECTED_SUB_KEY_PREFIX = 'selected_subscription_';
 const EXPIRY_NOTIFIED_KEY_PREFIX = 'sub_expiry_notified_';
 // Notify when a subscription expires within this window
@@ -66,6 +104,11 @@ const EXPIRY_EVENT = 'subscription.expiring';
 class SubscriptionService {
     // Per-user in-flight lock so concurrent calls collapse into one run.
     private _expiryRuns = new Map<string, Promise<void>>();
+    // The same shape for the trial, and here it is load-bearing rather than an
+    // optimisation: `createSubscription` mints a fresh external_id on every
+    // call, so two overlapping activations are two subscriptions, not one.
+    private _trialRuns = new Map<string, Promise<Subscription | null>>();
+    private _freePlanRun: Promise<SubscriptionType> | null = null;
 
     // ---------------------- Selected subscription persistence ----------------------
     /** Get user-selected subscription external_id (from localStorage). */
@@ -105,6 +148,18 @@ class SubscriptionService {
         }
     }
 
+    /** Every feature the platform sells. The free trial's card lists all of them. */
+    async getFeatures(): Promise<Feature[]> {
+        const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
+        if (!baseUrl) throw new Error('No subscription service replicas available');
+        try {
+            return await apiService.get<Feature[]>(baseUrl, '/features/');
+        } catch (error) {
+            console.error('Failed to get features:', error);
+            throw error;
+        }
+    }
+
     async getSubscriptionType(externalId: string): Promise<SubscriptionType> {
         const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
         if (!baseUrl) throw new Error('No subscription service replicas available');
@@ -136,6 +191,140 @@ class SubscriptionService {
             console.error('Failed to create subscription:', error);
             throw error;
         }
+    }
+
+    // ---------------------- Free trial ----------------------
+    /**
+     * The free-trial plan record in app 22, created on first use.
+     *
+     * Idempotent in three directions, because all three happen: two tabs (the
+     * in-flight lock), two users at once on one replica (the 400 on a duplicate
+     * external_id, read back rather than surfaced), and two replicas at once
+     * (the fixed external_id, collapsed by the merge).
+     */
+    async ensureFreeTrialPlan(): Promise<SubscriptionType> {
+        if (this._freePlanRun) return this._freePlanRun;
+        const run = this._doEnsureFreeTrialPlan()
+            .finally(() => { this._freePlanRun = null; });
+        this._freePlanRun = run;
+        return run;
+    }
+
+    private async _doEnsureFreeTrialPlan(): Promise<SubscriptionType> {
+        const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
+        if (!baseUrl) throw new Error('No subscription service replicas available');
+
+        const featureIds = (await this.getFeatures()).map(f => f.external_id);
+
+        let plan: SubscriptionType | null = null;
+        try {
+            plan = await apiService.get<SubscriptionType>(
+                baseUrl, `/subscription-types/${FREE_TRIAL_PLAN_ID}/`);
+        } catch (error: any) {
+            // A 404 is the catalogue saying it has never heard of this plan,
+            // which is the ordinary first-run case. Anything else is a real
+            // failure and must not be answered by creating a second copy.
+            if (error?.status !== 404) throw error;
+        }
+
+        if (!plan) {
+            try {
+                return await apiService.post<SubscriptionType>(baseUrl, '/subscription-types/', {
+                    external_id: FREE_TRIAL_PLAN_ID,
+                    title: FREE_TRIAL_PLAN_TITLE,
+                    description: FREE_TRIAL_PLAN_DESCRIPTION,
+                    price: '0.00',
+                    features: featureIds,
+                });
+            } catch (error: any) {
+                // 400 is `external_id already exists` — somebody got there first,
+                // here or on a peer that has since synced. Read it back.
+                if (error?.status !== 400) throw error;
+                return await this.getSubscriptionType(FREE_TRIAL_PLAN_ID);
+            }
+        }
+
+        // The promise is "every feature", so one added to the platform after the
+        // plan was minted has to join it. Written only when it actually differs:
+        // this runs on every activation and app 22 fans every write out to all
+        // of its peers on a background thread.
+        const listed = new Set((plan.features || []).map(f => f.external_id));
+        const isCurrent = listed.size === featureIds.length
+            && featureIds.every(id => listed.has(id));
+        if (isCurrent) return plan;
+
+        return await apiService.patch<SubscriptionType>(
+            baseUrl, `/subscription-types/${FREE_TRIAL_PLAN_ID}/`, { features: featureIds });
+    }
+
+    /**
+     * Has this account ever had the free trial? Expired counts — it is one per
+     * account for the life of the account, not one at a time.
+     */
+    async hasUsedFreeTrial(userId: string): Promise<boolean> {
+        try {
+            const subs = await this.getUserSubscriptions(userId);
+            return subs.some(isFreeTrialSubscription);
+        } catch (error) {
+            // Fail closed: an unreadable list must not read as "never had one"
+            // and hand out a second trial.
+            console.warn('Could not check free-trial history:', error);
+            return true;
+        }
+    }
+
+    /**
+     * Give this account its 7-day, all-features trial.
+     *
+     * Returns the subscription, or `null` when the account has already had one.
+     * Never call it as a gate on anything: the caller decides what to do when it
+     * throws, and every caller today treats a failure as "no trial yet", which
+     * the /plans card can still recover.
+     */
+    async activateFreeTrial(userId: string, username?: string): Promise<Subscription | null> {
+        if (!userId) return null;
+
+        const inFlight = this._trialRuns.get(userId);
+        if (inFlight) return inFlight;
+
+        const run = this._doActivateFreeTrial(userId, username)
+            .finally(() => { this._trialRuns.delete(userId); });
+        this._trialRuns.set(userId, run);
+        return run;
+    }
+
+    private async _doActivateFreeTrial(
+        userId: string,
+        username?: string
+    ): Promise<Subscription | null> {
+        const existing = await this.getUserSubscriptions(userId);
+        if (existing.some(isFreeTrialSubscription)) return null;
+
+        const plan = await this.ensureFreeTrialPlan();
+        const expires = new Date(Date.now() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
+        const created = await this.createSubscription({
+            title: FREE_TRIAL_SUBSCRIPTION_TITLE,
+            subscription_type: plan.external_id,
+            user_id: userId,
+            is_active: true,
+            expire_date: expires.toISOString(),
+        });
+
+        if (username) {
+            // Through the catalogue, so a trial reads exactly like the console's
+            // own "your subscription is active" rather than being a second
+            // wording for the same fact. `notify` never throws.
+            notificationService.notify('subscription.activated', {
+                to: username,
+                params: {
+                    plan: plan.title || FREE_TRIAL_PLAN_TITLE,
+                    until: expires.toLocaleDateString(),
+                },
+            });
+        }
+
+        return created;
     }
 
     // ---------------------- Non-expired subscription helpers ----------------------

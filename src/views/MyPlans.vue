@@ -321,7 +321,7 @@
                   </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
-                    <div class="plan-price">JOD {{ subscription.subscription_type?.price }}/month</div>
+                    <div class="plan-price">{{ priceLabel(subscription) }}</div>
                   </div>
                 </div>
 
@@ -419,7 +419,7 @@
                   </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
-                    <div class="plan-price">JOD {{ subscription.subscription_type?.price }}/month</div>
+                    <div class="plan-price">{{ priceLabel(subscription) }}</div>
                   </div>
                 </div>
 
@@ -552,7 +552,12 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { subscriptionService, type Subscription } from '@/services/subscription.service';
+import {
+  subscriptionService,
+  isFreeTrialSubscription,
+  FREE_TRIAL_DAYS,
+  type Subscription,
+} from '@/services/subscription.service';
 import { paymentService, type Payment } from '@/services/payment.service';
 
 const router = useRouter();
@@ -566,6 +571,19 @@ const allPayments = ref<Payment[]>([]);
 const cancellingPayment = ref<string | null>(null);
 const switchingTo = ref<string | null>(null);
 const currentActiveSubscription = ref<Subscription | null>(null);
+
+/**
+ * What was paid, and over what term.
+ *
+ * Plans are sold by the year — /plans says "/ year" — so this said "/month"
+ * about the same number the pricing page prices annually. The trial is neither:
+ * it is free, and it runs for days rather than for a term.
+ */
+const priceLabel = (subscription: Subscription): string => {
+  if (isFreeTrialSubscription(subscription)) return `Free · ${FREE_TRIAL_DAYS} days`;
+  const price = subscription.subscription_type?.price;
+  return price ? `JOD ${price}/year` : 'Free';
+};
 
 // Computed
 const pendingPayments = computed(() =>

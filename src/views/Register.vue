@@ -6,6 +6,15 @@
         <p>Join Self Study JO and start learning today</p>
       </div>
 
+      <!-- Arrived from the free card on /plans. Every new account gets the
+           trial, so this states what is about to happen rather than gating it. -->
+      <div v-if="cameForFreeTrial" class="register-alert alert-info">
+        <span>
+          🎁 Your <strong>{{ FREE_TRIAL_DAYS }}-day free trial</strong> — every feature unlocked —
+          starts as soon as you verify your email.
+        </span>
+      </div>
+
       <form @submit.prevent="handleRegister" class="register-form">
         <div class="register-form-row">
           <div class="register-form-group">
@@ -169,12 +178,18 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { FREE_TRIAL_DAYS } from '@/services/subscription.service';
 import '@/assets/css/register.css';
 
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+/** Set by the free card on /plans, which sends a visitor here rather than to
+ *  /payment — there is nothing to pay for, and nothing to sign in to yet. */
+const cameForFreeTrial = computed(() => route.query.plan === 'free');
 
 const form = reactive({
   username: '',

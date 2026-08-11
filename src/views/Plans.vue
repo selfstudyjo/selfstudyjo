@@ -63,24 +63,28 @@
     <!-- Plans Grid -->
     <div v-else class="plans-grid">
       <article
-        v-for="plan in plans"
+        v-for="plan in sortedPlans"
         :key="plan.external_id"
         :class="['plan-card', {
           'disabled': !canSelectPlan(plan.external_id),
-          'pending': hasPendingPaymentForPlan(plan.external_id)
+          'pending': hasPendingPaymentForPlan(plan.external_id),
+          'free': isFreePlan(plan.external_id)
         }]"
         @mousemove="handleCardMove"
       >
         <div v-if="hasPendingPaymentForPlan(plan.external_id)" class="pending-badge">
           ⏳ Pending
         </div>
+        <div v-else-if="isFreePlan(plan.external_id)" class="free-badge">
+          ✨ {{ FREE_TRIAL_DAYS }} days free
+        </div>
 
         <div class="plan-header">
           <h3 class="plan-title">{{ plan.title }}</h3>
           <div class="price">
-            <span class="currency">JOD</span>
-            <span class="amount">{{ plan.price }}</span>
-            <span class="period">/ month</span>
+            <span v-if="!isFreePlan(plan.external_id)" class="currency">JOD</span>
+            <span class="amount">{{ isFreePlan(plan.external_id) ? 'Free' : plan.price }}</span>
+            <span class="period">{{ periodLabel(plan.external_id) }}</span>
           </div>
         </div>
 
@@ -117,10 +121,17 @@
             v-else
             class="btn select-btn"
             @click="selectPlan(plan)"
+            :disabled="isFreePlan(plan.external_id) && activatingFreeTrial"
             type="button"
           >
-            <span class="btn-icon" aria-hidden="true">🚀</span>
-            <span>Select Plan</span>
+            <span class="btn-icon" aria-hidden="true">
+              {{ isFreePlan(plan.external_id) ? (activatingFreeTrial ? '⏳' : '🎁') : '🚀' }}
+            </span>
+            <span>
+              {{ isFreePlan(plan.external_id)
+                ? (activatingFreeTrial ? 'Starting...' : 'Start Free Trial')
+                : 'Select Plan' }}
+            </span>
           </button>
         </div>
       </article>
@@ -240,19 +251,31 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { subscriptionService, type SubscriptionType, type Subscription } from '@/services/subscription.service';
+import {
+  subscriptionService,
+  isFreeTrialSubscription,
+  FREE_TRIAL_PLAN_ID,
+  FREE_TRIAL_DAYS,
+  FREE_TRIAL_PLAN_TITLE,
+  FREE_TRIAL_PLAN_DESCRIPTION,
+  type SubscriptionType,
+  type Subscription,
+  type Feature,
+} from '@/services/subscription.service';
 import { paymentService, type Payment } from '@/services/payment.service';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const plans = ref<SubscriptionType[]>([]);
+const allFeatures = ref<Feature[]>([]);
 const userSubscriptions = ref<Subscription[]>([]);
 const allPayments = ref<Payment[]>([]);
 const pendingPayments = ref<Payment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const cancellingPayment = ref<string | null>(null);
+const activatingFreeTrial = ref(false);
 
 const fetchPlans = async () => {
   loading.value = true;
@@ -261,6 +284,17 @@ const fetchPlans = async () => {
   try {
     const subscriptionTypes = await subscriptionService.getSubscriptionTypes();
     plans.value = subscriptionTypes;
+
+    // The free card lists every feature on the platform, so it needs the
+    // catalogue rather than a plan's slice of it. A failure here costs the
+    // bullet list and nothing else, so it must not fail the page — and this
+    // runs again after every cancel and every activation, so it is fetched
+    // once rather than on each pass.
+    if (allFeatures.value.length === 0) {
+      subscriptionService.getFeatures()
+        .then(features => { allFeatures.value = features; })
+        .catch(err => console.warn('Could not load the feature list:', err));
+    }
 
     if (authStore.user?.id) {
       const [subscriptions, payments] = await Promise.all([
@@ -280,6 +314,58 @@ const fetchPlans = async () => {
   }
 };
 
+const isFreePlan = (planExternalId: string): boolean =>
+  planExternalId === FREE_TRIAL_PLAN_ID;
+
+/** `/ year` on a paid plan; the trial is not a year of anything. */
+const periodLabel = (planExternalId: string): string =>
+  isFreePlan(planExternalId) ? `/ ${FREE_TRIAL_DAYS} days` : '/ year';
+
+/**
+ * The free card is built here rather than read from app 22.
+ *
+ * It is always on the page — including before anybody has ever activated one,
+ * which is the moment the plan record does not exist yet
+ * (`ensureFreeTrialPlan()` mints it on first use). Rendering it from the
+ * catalogue would mean the offer appearing only after somebody had already
+ * taken it.
+ */
+const freePlanCard = computed<SubscriptionType>(() => ({
+  external_id: FREE_TRIAL_PLAN_ID,
+  title: FREE_TRIAL_PLAN_TITLE,
+  description: FREE_TRIAL_PLAN_DESCRIPTION,
+  price: '0.00',
+  features: allFeatures.value,
+}));
+
+const priceOf = (plan: SubscriptionType): number => {
+  // Prices arrive as strings — app 22 renders a DecimalField the way DRF did,
+  // so this is "19.90" and not 19.9. An unparseable one sorts last rather than
+  // to the front, where a NaN would otherwise put it.
+  const amount = Number.parseFloat(String(plan.price ?? ''));
+  return Number.isFinite(amount) ? amount : Number.POSITIVE_INFINITY;
+};
+
+/** Cheapest first, free at the head. */
+const sortedPlans = computed<SubscriptionType[]>(() => {
+  // Filter the real free-trial record out of the catalogue: once anybody has
+  // activated a trial the plan exists in app 22 and would otherwise render
+  // twice, beside the static card.
+  const paid = plans.value.filter(plan => !isFreePlan(plan.external_id));
+  return [freePlanCard.value, ...paid].sort((a, b) => {
+    const byPrice = priceOf(a) - priceOf(b);
+    if (byPrice !== 0) return byPrice;
+    // A paid plan can also be 0.00, so the trial is pinned ahead of one.
+    if (isFreePlan(a.external_id)) return -1;
+    if (isFreePlan(b.external_id)) return 1;
+    return String(a.title || '').localeCompare(String(b.title || ''));
+  });
+});
+
+/** One trial per account, for the life of the account — expired still counts. */
+const hasUsedFreeTrial = computed(() =>
+  userSubscriptions.value.some(isFreeTrialSubscription));
+
 const hasPendingPayment = computed(() => pendingPayments.value.length > 0);
 const pendingPayment = computed(() => pendingPayments.value[0] || null);
 const pendingPaymentPlan = computed(() => {
@@ -296,6 +382,13 @@ const canSelectPlan = (planExternalId: string): boolean => {
   // The click handler will redirect them to the login page.
   if (!authStore.isAuthenticated || !authStore.user?.id) {
     return true;
+  }
+
+  // The trial is governed by one question only. A pending payment on a paid
+  // plan does not block it — there is nothing to pay here, so "finish paying
+  // for the other one first" would be about a transaction that does not exist.
+  if (isFreePlan(planExternalId)) {
+    return !hasUsedFreeTrial.value;
   }
 
   const now = new Date();
@@ -315,6 +408,10 @@ const canSelectPlan = (planExternalId: string): boolean => {
 
 const getDisabledReason = (planExternalId: string): string => {
   // Only authenticated users can ever see this reason now.
+  if (isFreePlan(planExternalId)) {
+    return `You have already used your ${FREE_TRIAL_DAYS}-day free trial — it is one per account.`;
+  }
+
   const now = new Date();
   const hasActive = userSubscriptions.value.some(subscription => {
     const expireDate = new Date(subscription.expire_date);
@@ -353,7 +450,61 @@ const getPaymentRowClass = (status: string): string => {
   }
 };
 
+/**
+ * The free plan does not go to /payment, because there is nothing to pay.
+ *
+ * A visitor goes to `/register` rather than to `/login`: the offer is for a new
+ * account, and sending somebody who has none to a sign-in form is a dead end.
+ * The trial itself is created at email verification, for every new account —
+ * see `VerifyEmail.vue`. Activating from here is the path for somebody who
+ * already has an account and never got one (or whose activation failed at
+ * verification, which is best effort by design).
+ */
+const selectFreePlan = async () => {
+  if (!authStore.isAuthenticated || !authStore.user?.id) {
+    router.push({ path: '/register', query: { plan: 'free' } });
+    return;
+  }
+
+  if (hasUsedFreeTrial.value || activatingFreeTrial.value) return;
+
+  activatingFreeTrial.value = true;
+  try {
+    const created = await subscriptionService.activateFreeTrial(
+      authStore.user.id, authStore.user.username);
+
+    if (created) {
+      // The gates read the store's copy of the feature list, so refresh it
+      // before navigating or the tools stay locked until the next reload.
+      await Promise.allSettled([
+        authStore.loadUserFeatures(),
+        authStore.loadActiveSubscriptions(),
+      ]);
+      await fetchPlans();
+      alert(`Your ${FREE_TRIAL_DAYS}-day free trial is active. Every feature is unlocked until `
+        + `${new Date(created.expire_date).toLocaleDateString()}.`);
+      router.push('/my-plans');
+      return;
+    }
+
+    // `null` is the service refusing a second one. Re-read so the card
+    // disables itself rather than staying clickable and refusing again.
+    await fetchPlans();
+    alert(`You have already used your ${FREE_TRIAL_DAYS}-day free trial.`);
+  } catch (err: any) {
+    console.error('Failed to activate the free trial:', err);
+    alert(err?.message || 'Could not start your free trial. Please try again.');
+  } finally {
+    activatingFreeTrial.value = false;
+  }
+};
+
 const selectPlan = (plan: SubscriptionType) => {
+  if (isFreePlan(plan.external_id)) {
+    selectFreePlan();
+    return;
+  }
+
   // If the user is NOT authenticated, redirect to login page with a redirect
   // back to /plans so they return here after signing in.
   if (!authStore.isAuthenticated || !authStore.user?.id) {

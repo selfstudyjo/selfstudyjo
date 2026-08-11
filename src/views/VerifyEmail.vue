@@ -92,6 +92,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { notificationService } from '@/services/notification.service';
+import { subscriptionService, FREE_TRIAL_DAYS } from '@/services/subscription.service';
 
 // Import the CSS file
 import '@/assets/css/verify-email.css';
@@ -282,6 +283,18 @@ const handleVerify = async () => {
           params: { name: authStore.user?.first_name || username },
         });
       }
+
+      // Every new account gets the 7-day, all-features trial, and it starts
+      // here rather than at registration so the days are only ever spent by an
+      // account somebody actually owns.
+      //
+      // Not awaited and never allowed to throw: verification must not fail
+      // because app 22 is cold, and the trial has a recovery path that a
+      // verified email does not — the free card on /plans stays selectable for
+      // an account that never got one. It sends its own
+      // `subscription.activated` bell, so nothing is added here.
+      subscriptionService.activateFreeTrial(userId, username || undefined)
+        .catch(err => console.warn(`Free ${FREE_TRIAL_DAYS}-day trial activation failed:`, err));
 
       // Redirect after delay
       setTimeout(() => {

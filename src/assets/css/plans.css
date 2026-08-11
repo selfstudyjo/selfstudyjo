@@ -38,6 +38,9 @@
   --gradient-brand: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
   --gradient-primary-btn: linear-gradient(135deg, var(--sfs-info, #4ECDC4) 0%, var(--sfs-accent, #667eea) 100%);
   --gradient-warning: linear-gradient(135deg, var(--sfs-warning, #fbbf24) 0%, var(--sfs-warning, #f59e0b) 100%);
+  /* Both stops are the success hue — the badge's ink is `--sfs-on-success`, and
+     a second hue at one end is a second ink question nothing answers. */
+  --gradient-free: linear-gradient(135deg, var(--sfs-success, #10b981) 0%, var(--sfs-success, #059669) 100%);
 
   /* Shadows & cosmic glows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
@@ -440,6 +443,17 @@
   background: var(--gradient-warning);
 }
 
+/* The 7-day trial. Green rather than the aurora, so "free" reads at a glance
+   in a row of cards that are otherwise identical apart from a number. */
+.plan-card.free {
+  border-color: rgb(var(--sfs-success-rgb, 16 185 129) / 0.4);
+}
+
+.plan-card.free::before {
+  background: var(--gradient-free);
+}
+
+.free-badge,
 .pending-badge {
   position: absolute;
   top: var(--sp-md);
@@ -458,6 +472,14 @@
   box-shadow: 0 4px 16px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.4);
   white-space: nowrap;
   z-index: 2;
+}
+
+/* Its own fill, and therefore its own ink — the pair is decided together, or
+   the amber-on-amber failure the theme system documents arrives here. */
+.free-badge {
+  background: var(--gradient-free);
+  color: var(--sfs-on-success, #08261c);
+  box-shadow: 0 4px 16px rgb(var(--sfs-success-rgb, 16 185 129) / 0.4);
 }
 
 /* Card sections */
