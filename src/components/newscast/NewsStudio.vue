@@ -19,16 +19,20 @@
  *   centre  the lighting rig, the video wall, and the desk front
  *   right   ليلى at her desk, facing in
  *
- * Both anchors are always there. What changes when the rota moves is which of
- * the two is MOVING: the speaker's loop plays and the other sits on their still.
- * That is what a two-shot newsroom actually looks like, and it means the reader
- * can always see who is talking rather than having to infer it from a name plate.
+ * Both anchors are always there, and — since the listening loops arrived —
+ * both are always MOVING. What changes when the rota moves is which of the two
+ * is speaking: each presenter has a `speak` take and an `idle` take (them
+ * listening to the other), and the cut is between takes, not between motion and
+ * a photograph. That last part was the remaining tell: with one loop each, the
+ * presenter who was not reading sat frozen on a WebP for the whole story, and
+ * half the picture being a still is exactly what makes an automated bulletin
+ * look automated.
  *
  * WHERE THE GEOMETRY COMES FROM — none of it is guessed
  *
  * Every number in the CSS was measured off the supplied files:
  *
- *   anchor plate  916x2050 after the letterbox comes off  -> aspect 0.4468
+ *   anchor plate  2050 tall after the letterbox comes off  -> aspect 0.4468
  *   set plates    724 wide, all three, once their flat pad columns come off
  *   set column    137 + 268 + 383 = 788 tall, stacked
  *   side column   788 * 0.4468 = 352
@@ -39,40 +43,59 @@
  * because they are the same plate shape. 1.812 is within 1% of the 1408x768
  * the old stage used, which is why nothing else on the page had to move.
  *
+ * FOUR RENDERS, FOUR DIFFERENT FRAMINGS, ONE ROOM
+ *
+ * The four GIFs are 916x2260 and 962x2154 with assorted letterboxing, so not
+ * one of them is usable as supplied. Two corrections, both solved numerically:
+ *
+ *   1. Each LISTENING plate is matched to its own speaking plate by a scale and
+ *      offset search scored on the SET only — the middle third is masked out,
+ *      because the presenter is the one thing that legitimately differs between
+ *      the two clips. Blended, the result is sharp everywhere and the residual
+ *      is near-black, which is why an anchor does not jump on a handover.
+ *   2. The FEMALE pair is then lifted 26 column-px against the male. The two
+ *      renders sit at different heights in the room: correlating their row
+ *      gradients scores 0.047 as supplied and 0.442 lifted, and the desk, the
+ *      back counter and the warm desk lamp all come level together at that one
+ *      offset. Male is the reference because it needs no change and has the
+ *      least headroom left in its source. The set column lands within 5px of
+ *      both, which is 0.6% of the column.
+ *
+ * All four are forced to exactly 640x1432 rather than `-2`-rounded: their
+ * aspects differ by under 0.15%, and identical boxes are worth more than a
+ * rounding difference that would show as a 1px step at a seam.
+ *
  * WHY VIDEO AND NOT THE GIFs
  *
- * The two GIFs are 98.7 MB and 108 MB, 207 MB together. GitHub refuses anything
- * over 100 MB outright, and a public page could not serve either regardless.
- * Re-encoded to H.264 they are 314 KB and 236 KB — denoised first, because GIF
- * dither is what the encoder would otherwise spend its whole bitrate on — and
- * the stills are WebP at ~115 KB. The five set files are WebP at 46 KB. The
- * whole studio is 826 KB:
+ * The four GIFs are 97-110 MB each, 415 MB together. GitHub refuses anything
+ * over 100 MB outright and a public page could not serve them regardless.
+ * Re-encoded to H.264 they are 236-355 KB — denoised first, because GIF dither
+ * is what the encoder would otherwise spend its whole bitrate on — the two
+ * stills are WebP at 89 and 135 KB, and the three set plates are WebP at 46 KB
+ * together. The whole studio is 1.45 MB:
  *
- *   ffmpeg -i <gif> -vf "crop=916:2050:0:104,hqdn3d=4:3:6:4,scale=640:-2:flags=lanczos" \
+ *   ffmpeg -i <gif> -vf "crop=W:H:X:Y,hqdn3d=4:3:6:4,scale=640:1432:flags=lanczos" \
  *          -c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p -an -movflags +faststart <mp4>
- *
- * Both GIFs are cropped to the SAME box even though only the male one is
- * letterboxed. That is what makes the two side columns identical in shape; what
- * the female plate gives up is 104px of ceiling and 106px of desk front, which
- * is exactly what `object-fit: cover` would have taken anyway — only now it is
- * taken once, predictably, and those pixels are never shipped.
  *
  * THE STILL UNDERNEATH IS NOT A FALLBACK
  *
- * Each anchor's WebP sits behind their video at full opacity and the video
- * fades in on top. One arrangement covers four things: the first paint before
- * anything has buffered, the poster for a browser that refuses autoplay, the
- * sitting-but-not-speaking state, and `prefers-reduced-motion` — where the
- * loops are simply switched off and the studio still looks right.
+ * Each anchor's WebP sits behind their videos at full opacity and a video fades
+ * in on top. One arrangement covers the first paint before anything has
+ * buffered, the poster for a browser that refuses autoplay, and
+ * `prefers-reduced-motion` — where the loops are switched off and the studio
+ * still looks right. It is taken from the IDLE loop, because idle is what the
+ * page opens on and returns to between bulletins.
  */
 
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Radio, Volume2 } from 'lucide-vue-next';
 
 import maleStill from '@/assets/studio/anchor_male.webp';
-import maleLoop from '@/assets/studio/anchor_male.mp4';
+import maleSpeak from '@/assets/studio/anchor_male_speak.mp4';
+import maleIdle from '@/assets/studio/anchor_male_idle.mp4';
 import femaleStill from '@/assets/studio/anchor_female.webp';
-import femaleLoop from '@/assets/studio/anchor_female.mp4';
+import femaleSpeak from '@/assets/studio/anchor_female_speak.mp4';
+import femaleIdle from '@/assets/studio/anchor_female_idle.mp4';
 import setLamp from '@/assets/studio/set_lamp.webp';
 import setScreen from '@/assets/studio/set_screen.webp';
 import setTable from '@/assets/studio/set_table.webp';
@@ -111,6 +134,8 @@ const props = defineProps<{
     freshLabel?: string;
     fresh?: boolean;
     rtl: boolean;
+    /** BCP-47 tag for the studio clock — Arabic gets Arabic-Indic digits. */
+    locale?: string;
     shapedLabel?: string;
     /** The article picture, for the video wall. */
     articleImage?: string;
@@ -118,10 +143,14 @@ const props = defineProps<{
     screenSource?: string;
 }>();
 
-const ANCHORS: Record<AnchorId, { still: string; loop: string }> = {
-    male: { still: maleStill, loop: maleLoop },
-    female: { still: femaleStill, loop: femaleLoop },
+const ANCHORS: Record<AnchorId, { still: string; speak: string; idle: string }> = {
+    male: { still: maleStill, speak: maleSpeak, idle: maleIdle },
+    female: { still: femaleStill, speak: femaleSpeak, idle: femaleIdle },
 };
+
+/** The two takes each presenter has. `idle` is them listening, not a freeze. */
+type Take = 'idle' | 'speak';
+const TAKES: Take[] = ['idle', 'speak'];
 
 const info = computed<Record<AnchorId, AnchorInfo>>(() => ({
     male: props.male,
@@ -129,14 +158,29 @@ const info = computed<Record<AnchorId, AnchorInfo>>(() => ({
 }));
 
 /**
- * Which anchor's loop should be running, or null for a still studio.
+ * Which anchor is *speaking*, or null when nobody is.
  *
  * Only ever one. Two mouths moving at once is the single most obviously wrong
  * thing a two-anchor studio can do, and it is what a naive "play while the
- * bulletin is live" rule produces on every handover.
+ * bulletin is live" rule produces on every handover. The other presenter is
+ * NOT frozen — see `takeFor`.
  */
-const moving = computed<AnchorId | null>(() =>
+const talking = computed<AnchorId | null>(() =>
     props.speaking && props.anchor ? props.anchor : null);
+
+/**
+ * Which take is on camera for a given presenter.
+ *
+ * The whole point of shipping a second loop each: a newsroom two-shot has
+ * nobody holding still. Before, the presenter who was not reading sat on a
+ * WebP and the half of the screen they occupied was a photograph — which is
+ * exactly what makes an automated bulletin look automated, and it was worse
+ * than the old cutting-between-shots version because the frozen one was on
+ * screen the whole time rather than off it.
+ */
+function takeFor(side: AnchorId): Take {
+    return talking.value === side ? 'speak' : 'idle';
+}
 
 /**
  * A third-party picture that failed to load leaves the wall washed in nothing —
@@ -151,35 +195,91 @@ const wallImage = computed(() =>
         ? props.articleImage
         : '');
 
+/**
+ * ALL FOUR LOOPS RUN, ALL THE TIME. The visible one is chosen with opacity.
+ *
+ * Pausing the hidden take and starting it on the cut would be the obvious
+ * saving and it is the wrong trade twice over: a resumed video shows one
+ * frozen frame while the decoder catches up — right at the handover, the one
+ * moment a viewer is looking at that half of the screen — and the two takes
+ * would drift apart in time, so a presenter would visibly reset their posture
+ * whenever they stopped speaking. Left running, the cut lands mid-gesture in
+ * both takes, which is what a two-camera gallery actually looks like.
+ *
+ * The cost is four muted 640x1432 clips decoding at once. They are 236-355 KB
+ * each, fully buffered within a second, and hardware-decoded; `preload="auto"`
+ * on all four is less traffic than one photograph on most news sites.
+ */
 const videos = ref<Record<string, HTMLVideoElement | null>>({});
 
-function setVideo(name: AnchorId, element: unknown) {
-    videos.value[name] = (element as HTMLVideoElement) || null;
-    // Template refs are assigned during mount, which is AFTER the immediate
-    // watcher below has already run. Without this, a bulletin that is already
-    // playing when the component mounts sits on both stills.
-    if (element && moving.value === name) {
-        (element as HTMLVideoElement).play().catch(() => undefined);
-    }
-}
+/**
+ * Both presenters breathing on exactly the same 5.04s cycle reads as a
+ * screensaver. Nudging one take off the other's phase is one line and it is
+ * the difference between two people and two copies of one animation.
+ */
+const PHASE: Record<string, number> = {
+    'male-idle': 0, 'male-speak': 1.7,
+    'female-idle': 2.6, 'female-speak': 3.9,
+};
 
-watch(moving, (now, before) => {
-    if (before && before !== now) {
-        // Paused, not reset: a presenter who stops for a breath and starts
-        // again should pick up where they were, and rewinding to frame zero
-        // makes them twitch on every segment boundary.
-        videos.value[before]?.pause();
-    }
-    if (!now) return;
+function start(element: HTMLVideoElement, key: string) {
+    const offset = PHASE[key] ?? 0;
+    // `duration` is NaN until metadata lands, so seek when it is known rather
+    // than seeking to a point past the end and having the browser clamp to 0.
+    const seek = () => {
+        if (Number.isFinite(element.duration) && element.duration > offset) {
+            element.currentTime = offset;
+        }
+    };
+    if (element.readyState >= 1) seek();
+    else element.addEventListener('loadedmetadata', seek, { once: true });
     // Autoplay of a muted video is allowed everywhere, but a refusal is still a
     // rejected promise nobody sees — and the still underneath means a refusal
     // costs motion and nothing else.
-    videos.value[now]?.play().catch(() => undefined);
-}, { immediate: true });
+    element.play().catch(() => undefined);
+}
+
+function setVideo(side: AnchorId, take: Take, element: unknown) {
+    const key = `${side}-${take}`;
+    const video = (element as HTMLVideoElement) || null;
+    videos.value[key] = video;
+    // Template refs are assigned during mount, so this is where a loop first
+    // gets going; there is no watcher to do it, because none of them ever stop.
+    if (video) start(video, key);
+}
+
+onMounted(() => {
+    for (const [key, element] of Object.entries(videos.value)) {
+        if (element && element.paused) start(element, key);
+    }
+});
 
 onBeforeUnmount(() => {
     for (const element of Object.values(videos.value)) element?.pause();
 });
+
+/* -- studio clock ----------------------------------------------------
+   Furniture, and the cheapest authenticity there is: every rolling-news
+   channel has the time in the corner, and on a bulletin that is rebuilt every
+   hour it is genuinely informative rather than decorative. Ticks on the
+   minute-ish rather than the second, because the seconds are not shown and a
+   1Hz timer on a public page is a wakeful tab for no reason. */
+const clock = ref('');
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+function tick() {
+    try {
+        clock.value = new Intl.DateTimeFormat(props.locale || 'en', {
+            hour: '2-digit', minute: '2-digit',
+        }).format(new Date());
+    } catch {
+        clock.value = '';
+    }
+}
+
+watch(() => props.locale, tick, { immediate: true });
+onMounted(() => { tick(); clockTimer = setInterval(tick, 15_000); });
+onBeforeUnmount(() => clearInterval(clockTimer));
 </script>
 
 <template>
@@ -203,10 +303,16 @@ onBeforeUnmount(() => {
                          'col--dim': anchor !== null && anchor !== side,
                      }]">
                     <img class="col__still" :src="ANCHORS[side].still" alt="" draggable="false" />
+                    <!--
+                      Two takes, both running, cross-faded. `idle` is the
+                      presenter listening — not a still — which is what keeps
+                      the studio alive while the other one reads.
+                    -->
                     <video
-                        :ref="(element) => setVideo(side, element)"
-                        class="col__loop" :class="{ 'col__loop--on': moving === side }"
-                        :src="ANCHORS[side].loop"
+                        v-for="take in TAKES" :key="take"
+                        :ref="(element) => setVideo(side, take, element)"
+                        class="col__loop" :class="{ 'col__loop--on': takeFor(side) === take }"
+                        :src="ANCHORS[side][take]"
                         :poster="ANCHORS[side].still"
                         muted loop playsinline preload="auto" disablepictureinpicture
                     ></video>
@@ -257,6 +363,16 @@ onBeforeUnmount(() => {
             </div>
 
             <!--
+              The two column joins, softened. The three plates are separate
+              renders, so however well they are levelled the tone still steps
+              at the join and the eye reads three photographs rather than one
+              room. A narrow shadow either side of each seam is what a real set
+              has anyway — the upright between two desk pods — and it costs
+              nothing to draw.
+            -->
+            <span class="stage__joins" aria-hidden="true"></span>
+
+            <!--
               Vignette and scan sheen: it is a camera feed, not a photo. They
               go over the ROOM and under everything below, which is the whole
               reason the graphics are written after them — the bottom of the
@@ -275,6 +391,9 @@ onBeforeUnmount(() => {
                 </span>
                 <span v-if="kicker" class="bug__kicker">{{ kicker }}</span>
                 <span v-if="fresh && freshLabel" class="bug__fresh">{{ freshLabel }}</span>
+                <!-- `tabular-nums` in the CSS: without it the chip twitches
+                     wider and narrower as the digits change. -->
+                <span v-if="clock" class="bug__clock">{{ clock }}</span>
             </div>
 
             <!--
@@ -464,19 +583,22 @@ onBeforeUnmount(() => {
 
 .col__loop {
     opacity: 0;
-    /* A shade slower than a cut: the two shots are the same person in the same
-       chair, so this is a dissolve between stillness and motion rather than a
-       change of camera, and a hard switch reads as a dropped frame. */
-    transition: opacity 0.22s ease;
+    /* A dissolve, not a cut: the two takes are the same person in the same
+       chair a few degrees apart, so a hard switch reads as a dropped frame.
+       Slow enough to hide the difference in head position between takes and
+       fast enough that the mouth starts moving on the word. */
+    transition: opacity 0.3s ease;
 }
 
 .col__loop--on { opacity: 1; }
 
 /*
-  The presenter who is not reading is held a touch back — not dimmed to the
-  point of looking switched off, just far enough that the eye lands on the one
-  who is talking. Both faces stay fully legible, which is the whole point of
-  having both on camera.
+  The presenter who is not reading is held a touch back so the eye lands on the
+  one who is talking. Deliberately SLIGHT — 0.16, half what it was before the
+  listening loops existed. It had to do the whole job of saying "not this one"
+  when the other half of the screen was a frozen photograph; now that both
+  presenters are moving, the reader is identified by the mouth and the lit name
+  plate, and anything heavier just makes a lit studio look half switched off.
 
   Keyed on "is somebody ELSE reading" rather than on "is this one reading",
   because between bulletins nobody is and the difference matters: the second
@@ -489,8 +611,8 @@ onBeforeUnmount(() => {
     inset: 0;
     pointer-events: none;
     opacity: 0;
-    background: rgb(3 6 16 / 0.34);
-    transition: opacity 0.28s ease;
+    background: rgb(3 6 16 / 0.16);
+    transition: opacity 0.3s ease;
 }
 
 .col--dim::after { opacity: 1; }
@@ -613,11 +735,27 @@ onBeforeUnmount(() => {
 }
 
 /* -- stage treatment -------------------------------------------------- */
+.stage__joins,
 .stage__vignette,
 .stage__sheen {
     position: absolute;
     inset: 0;
     pointer-events: none;
+}
+
+/*
+  The seams, at 24.65% and 75.35% — the column boundaries. Each is a shadow
+  ~3.5% of the width, symmetric, darkest on the line itself. It reads as the
+  upright between two desk pods, which is a thing a real set has, and it does
+  the actual job: hiding the tonal step between three separately-rendered
+  plates that no amount of levelling removes.
+*/
+.stage__joins {
+    background:
+        linear-gradient(to right,
+            transparent 21.2%, rgb(0 0 0 / 0.30) 24.65%, transparent 28.1%),
+        linear-gradient(to right,
+            transparent 71.9%, rgb(0 0 0 / 0.30) 75.35%, transparent 78.8%);
 }
 
 .stage__vignette {
@@ -656,7 +794,8 @@ onBeforeUnmount(() => {
 
 .bug__live,
 .bug__kicker,
-.bug__fresh {
+.bug__fresh,
+.bug__clock {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -710,6 +849,14 @@ onBeforeUnmount(() => {
 .bug__fresh {
     background: var(--sfs-success, #3fae76);
     color: var(--sfs-on-success, #041a10);
+}
+
+.bug__clock {
+    background: rgb(0 0 0 / 0.5);
+    color: rgb(255 255 255 / 0.9);
+    /* Or the chip changes width as the digits do, twitching the whole row. */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
 }
 
 /* -- name plates ------------------------------------------------------ */
@@ -889,6 +1036,11 @@ onBeforeUnmount(() => {
     .plate { display: none; }
 
     .bug { max-width: 100%; }
+
+    /* Four chips wrap to two rows here, and the bug then covers a third of the
+       male's column. The clock is the one of the four that nothing depends on
+       and that the device already shows in its own status bar. */
+    .bug__clock { display: none; }
 }
 
 /* Shorter than it is narrow — a landscape phone, where the stage is a

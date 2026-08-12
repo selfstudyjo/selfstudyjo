@@ -1372,6 +1372,7 @@ onBeforeRouteLeave(() => {
             :fresh-label="t.fresh"
             :fresh="!!currentItem?.fresh"
             :rtl="rtl"
+            :locale="language"
             :shaped-label="t.shapedBadge"
             :article-image="currentItem?.image || ''"
             :screen-source="currentItem?.source_label || activeCategory?.source_label || ''"
