@@ -1,1 +1,0 @@
-import{t as e}from"./index-C_jtRgS8.js";export{e as serviceRegistry};
