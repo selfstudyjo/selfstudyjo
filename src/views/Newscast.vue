@@ -127,8 +127,6 @@ const UI = {
             + 'return automatically once the replica is fixed — one of them would otherwise '
             + 'be read in the wrong voice.',
         soloBadge: 'Single presenter',
-        screenImage: 'On screen', screenText: 'Now reading',
-        screenIdle: 'Studio standby',
         onAirVoices: 'On-air voices',
         shapedBadge: 'stand-in',
         shapedHelp: 'The voice service on this replica only has a female voice at the moment, '
@@ -167,8 +165,6 @@ const UI = {
             + 'النشرة بمذيع واحد. سيعود المذيعان تلقائيا بعد إصلاح الخادم — وإلا لقرأ أحدهما '
             + 'بصوت لا يخصه.',
         soloBadge: 'مذيع واحد',
-        screenImage: 'الصورة', screenText: 'يُقرأ الآن',
-        screenIdle: 'الاستوديو في وضع الانتظار',
         onAirVoices: 'أصوات النشرة',
         shapedBadge: 'صوت بديل',
         shapedHelp: 'لا يتوفر على خدمة الصوت في هذا الخادم سوى صوت أنثوي حاليا، لذلك يقرأ آدم '
@@ -1346,17 +1342,27 @@ onBeforeRouteLeave(() => {
         </header>
 
         <!-- Studio ------------------------------------------------------
-             One stage, cut between three shots. The camera is on whoever is
-             reading; between stories, and before the bulletin starts, it is on
-             the empty studio. See NewsStudio.vue for why that is video layered
-             over a still rather than the GIFs as they arrived.
+             One set in three columns, with BOTH presenters on camera for the
+             whole bulletin — `anchor` says whose turn it is and `speaking`
+             says whether they are actually talking, and between them they
+             decide which of the two loops is running. See NewsStudio.vue for
+             where the geometry comes from and for why the plates are video
+             layered over a still rather than the GIFs as they arrived.
         -->
         <NewsStudio
             :anchor="deskAnchor"
             :speaking="speakingAnchor !== null"
             :live="status === 'playing'"
-            :anchor-name="deskAnchor ? anchorNames[deskAnchor] : ''"
-            :voice-label="deskAnchor ? voiceLabel(deskAnchor) : ''"
+            :male="{
+                name: anchorNames.male,
+                voice: voiceLabel('male'),
+                shaped: shapedAnchor === 'male',
+            }"
+            :female="{
+                name: anchorNames.female,
+                voice: voiceLabel('female'),
+                shaped: shapedAnchor === 'female',
+            }"
             :headline="currentItem?.title || currentSegment?.text || ''"
             :kicker="activeCategory
                 ? `${categoryLabel(activeCategory)} · ${activeCategory.source_label}` : ''"
@@ -1366,14 +1372,9 @@ onBeforeRouteLeave(() => {
             :fresh-label="t.fresh"
             :fresh="!!currentItem?.fresh"
             :rtl="rtl"
-            :shaped-voice="deskAnchor !== null && deskAnchor === shapedAnchor"
             :shaped-label="t.shapedBadge"
             :article-image="currentItem?.image || ''"
-            :live-text="currentSegment?.text || ''"
-            :screen-image-label="t.screenImage"
-            :screen-text-label="t.screenText"
             :screen-source="currentItem?.source_label || activeCategory?.source_label || ''"
-            :screen-idle="t.screenIdle"
         >
             <template #ticker>
                 <NewsTicker :headlines="tickerLines" :rtl="rtl" :label="t.breaking">
