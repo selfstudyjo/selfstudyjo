@@ -99,6 +99,7 @@ import femaleIdle from '@/assets/studio/anchor_female_idle.mp4';
 import setLamp from '@/assets/studio/set_lamp.webp';
 import setScreen from '@/assets/studio/set_screen.webp';
 import setTable from '@/assets/studio/set_table.webp';
+import setDeck from '@/assets/studio/set_deck.webp';
 
 type AnchorId = 'male' | 'female';
 
@@ -360,16 +361,32 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 
                     <img class="set__plate" :src="setTable" alt="" draggable="false" />
                 </div>
-            </div>
 
-            <!--
-              The two column joins, dissolved rather than covered. See the CSS:
-              a shadow only draws a dark stripe where the cut is, and the cut is
-              still a cut underneath it. These actually blur the pixels either
-              side into each other.
-            -->
-            <span class="seam seam--left" aria-hidden="true"></span>
-            <span class="seam seam--right" aria-hidden="true"></span>
+                <!--
+                  The two column joins, dissolved rather than covered. See the
+                  CSS: a shadow only draws a dark stripe where the cut is, and
+                  the cut is still a cut underneath it. These blur the pixels
+                  either side into each other.
+
+                  Inside the room, and after the columns, so they share the
+                  room's coordinate space and paint over it — and so the deck
+                  below can in turn paint over THEM.
+                -->
+                <span class="seam seam--left" aria-hidden="true"></span>
+                <span class="seam seam--right" aria-hidden="true"></span>
+
+                <!--
+                  THE DESK FRONT, IN ONE PIECE, ACROSS ALL THREE COLUMNS.
+
+                  The same desk the three plates each show a third of, supplied
+                  as a single 1402x226 photograph — so over the bottom 29% of
+                  the stage there is no join to hide, because there is no join.
+                  Laid last, it covers the seam strips too, which is why they
+                  stop just above it.
+                -->
+                <img class="room__deck" :src="setDeck" alt="" aria-hidden="true"
+                     draggable="false" />
+            </div>
 
             <!--
               Vignette and scan sheen: it is a camera feed, not a photo. They
@@ -760,10 +777,16 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 */
 .seam {
     position: absolute;
-    /* Past the top and bottom for the same reason the mask exists sideways:
-       the blur must not stop where the picture is still visible. */
+    /* Past the top for the same reason the mask exists sideways: the blur must
+       not stop where the picture is still visible. */
     top: -2px;
-    bottom: -2px;
+    /* Stops just under the deck's opaque edge. Below that line there is no
+       join to hide — the deck is one photograph — so blurring on would be GPU
+       spent on pixels nobody sees, and `backdrop-filter` over four playing
+       videos is the expensive thing on this page. The deck is opaque from
+       24.78% up from the floor (28.81% tall, feathered over its top 14%), so
+       23% leaves the hard bottom end of the strip safely buried. */
+    bottom: 23%;
     width: 5%;
     transform: translateX(-50%);
     pointer-events: none;
@@ -807,6 +830,38 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 /* The column boundaries: 352/1428 and 1076/1428. */
 .seam--left  { left: 24.65%; }
 .seam--right { left: 75.35%; }
+
+/*
+  THE DESK FRONT — the best seam fix there is, which is not to have a seam.
+
+  Every number here was solved rather than chosen: sliding the photograph over
+  the assembled room and taking the best normalised correlation puts it at
+  98.53% of the width, 28.81% of the height, flush with the floor, scoring
+  0.919. That it lands exactly on the bottom edge is the fit agreeing with the
+  three plates, not a value anybody typed.
+
+  The top edge is FEATHERED, and that is the one part that is a judgement. The
+  deck's top is the back edge of the glass table, and the columns have their own
+  glass table a few pixels away; butted, that is a new horizontal seam traded for
+  two vertical ones. Faded over its top 14% the two tables melt together, and
+  since both are the same surface photographed from slightly different places,
+  the overlap reads as reflection rather than as a double edge.
+*/
+.room__deck {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 98.53%;
+    /* Height comes from the file's own 1402:226, so the desk can never be
+       stretched out of shape by a change to the stage. */
+    height: auto;
+    display: block;
+    pointer-events: none;
+
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 14%);
+}
 
 .stage__vignette,
 .stage__sheen {
