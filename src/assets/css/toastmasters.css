@@ -538,13 +538,8 @@
   z-index: 5;
 }
 
-.tm-avatar-wrap {
-  position: relative;
-  width: 100%; height: 100%;
-  overflow: hidden;
-}
-.tm-avatar-wrap :deep(svg),
-.tm-avatar-wrap svg { width: 100%; height: 100%; display: block; }
+/* The seat's picture is SpeakerMedia, which fills the tile from `inset: 0` —
+   the tile is the positioned ancestor, so there is no wrapper any more. */
 
 /* User self-tile */
 .tm-user-panel {
@@ -775,23 +770,10 @@
 }
 .tm-report-card p { color: var(--tm-text-soft); line-height: 1.6; }
 
-/* SVG mouth/nod animations */
-.tm-bot-svg .mouth-inside,
-.tm-bot-svg .lips-top,
-.tm-bot-svg .lips-bottom { transform-box: fill-box; transform-origin: center; }
-.tm-video-tile.speaking .tm-bot-svg .mouth-inside {
-  animation: tm-mouth 0.26s infinite alternate ease-in-out;
-}
-@keyframes tm-mouth {
-  0%   { transform: scaleY(0.6); }
-  50%  { transform: scaleY(3.5); }
-  100% { transform: scaleY(1.5); }
-}
-.tm-video-tile.speaking .tm-bot-svg { animation: tm-nod 2.4s infinite ease-in-out; }
-@keyframes tm-nod {
-  0%, 100% { transform: rotate(-0.8deg); }
-  50%      { transform: rotate(0.8deg); }
-}
+/* The six seats used to be drawn faces with a CSS-animated mouth and a nodding
+   head. They are filmed now — a still while listening, a looping clip while
+   speaking — so the mouth is in the footage and `tm-mouth` / `tm-nod` are gone
+   with the SVGs they moved. See src/components/cast/SpeakerMedia.vue. */
 
 /* -------------------------------------------------- *
  * 7. Results page (table & filters)
@@ -1266,9 +1248,9 @@
   .tm-btn-secondary:hover,
   .tm-btn-control:hover { transform: none !important; }
 
-  .tm-speaking-dot,
-  .tm-video-tile.speaking .tm-bot-svg,
-  .tm-video-tile.speaking .tm-bot-svg .mouth-inside { animation: none !important; }
+  /* SpeakerMedia carries its own reduced-motion rule for the idle drift, and
+     pauses the speaking clip in script — CSS cannot stop a video. */
+  .tm-speaking-dot { animation: none !important; }
 }
 
 @media (prefers-contrast: high) {

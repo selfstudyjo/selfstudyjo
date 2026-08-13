@@ -246,8 +246,8 @@
   border-color: var(--ji-success-2);
   box-shadow: 0 0 0 4px rgb(var(--sfs-success-rgb, 16 185 129) / 0.3), 0 0 40px rgb(var(--sfs-success-rgb, 16 185 129) / 0.55);
 }
-.ji-avatar-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.ji-avatar-wrap svg { width: 100%; height: 100%; display: block; }
+/* The interviewer's picture is SpeakerMedia, which fills the tile from
+   `inset: 0` — the tile is the positioned ancestor, so no wrapper is needed. */
 
 .ji-self { background: var(--sfs-space, #000); }
 .ji-user-video-wrap { position: absolute; inset: 0; overflow: hidden; }
@@ -291,12 +291,10 @@
   50% { transform: scale(1.6); box-shadow: 0 0 0 8px rgb(var(--sfs-success-rgb, 16 185 129) / 0); }
 }
 
-/* SVG speaking animation */
-.ji-bot-svg .mouth-inside { transform-box: fill-box; transform-origin: center; }
-.ji-video-tile.speaking .ji-bot-svg .mouth-inside { animation: ji-mouth 0.26s infinite alternate ease-in-out; }
-@keyframes ji-mouth { 0% { transform: scaleY(0.6);} 50% { transform: scaleY(3.5);} 100% { transform: scaleY(1.5);} }
-.ji-video-tile.speaking .ji-bot-svg { animation: ji-nod 2.4s infinite ease-in-out; }
-@keyframes ji-nod { 0%,100% { transform: rotate(-0.8deg);} 50% { transform: rotate(0.8deg);} }
+/* The interviewer used to be a drawn face with a CSS-animated mouth and a
+   nodding head. They are filmed now — one of six people, cast at random per
+   interview — so the mouth is in the footage and `ji-mouth` / `ji-nod` went with
+   the SVGs they moved. See src/components/cast/SpeakerMedia.vue. */
 
 /* Question box */
 .ji-question-box {

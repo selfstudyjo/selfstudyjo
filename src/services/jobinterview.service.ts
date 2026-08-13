@@ -37,6 +37,19 @@ export interface InterviewerCallBody {
     user_name?: string;
     question_number?: number;
     previous_qa?: QAPair[];
+    /**
+     * Who is conducting this one. The interviewer is cast at random from
+     * src/cast/actors.ts, so the name the AI introduces itself by has to come
+     * from here — app 27 shipped with one hardcoded persona per interview type
+     * ('Alex' for Technical, 'Rachel' for HR) and would otherwise greet the
+     * candidate as somebody other than the person on screen.
+     *
+     * Both are optional and app 27 falls back to those personas, because the two
+     * are deployed independently: a replica that has not pulled yet simply keeps
+     * saying Alex. Deploy app 27 before this frontend.
+     */
+    interviewer_name?: string;
+    interviewer_role?: string;
 }
 
 export interface EvaluateBody {

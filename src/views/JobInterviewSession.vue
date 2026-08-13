@@ -14,8 +14,23 @@
     <div class="ji-stage">
       <!-- Interviewer -->
       <div class="ji-video-tile ji-interviewer" :class="{ speaking: currentSpeaker === 'interviewer' }">
-        <div class="ji-avatar-wrap" v-html="interviewerSvg"></div>
-        <div class="ji-name-tag">{{ interviewerLabel }}</div>
+        <!--
+          The assets are square and this tile is 16/10, so 37.5% of the height
+          has to go somewhere. `align="0%"` takes all of it off the BOTTOM: the
+          window becomes the top 62.5% of the square, which cuts nothing from a
+          head that the square had not already cut, and gives away desk instead.
+          Measured, that is the only setting that works for all six -- Marcus and
+          James are close-ups whose hair reaches the top edge of their square, so
+          a centred `cover` (or anything above 0%) trims the crown off two of the
+          people who can be cast, one interview in three.
+        -->
+        <SpeakerMedia
+          :actor="interviewer.id"
+          :speaking="currentSpeaker === 'interviewer'"
+          align="0%"
+          :alt="interviewerTag"
+        />
+        <div class="ji-name-tag">{{ interviewerTag }}</div>
         <div class="ji-speaking-dot"></div>
       </div>
 
@@ -116,19 +131,27 @@ import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { jobInterviewService, type QAPair, type EvaluationResult } from '@/services/jobinterview.service';
+import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
+import {
+  INTERVIEWER_TITLES, actorById, castVoice, interviewerLabel, isActorId,
+  pickInterviewer, pitchFor, type InterviewType,
+} from '@/cast/actors';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 // ====== Config from pre-session ======
-interface Config { type: string; topic: string; qualifications: string; minutes: number; }
+interface Config {
+  type: string; topic: string; qualifications: string; minutes: number;
+  /** Which of the six conducts this interview; see `interviewer` below. */
+  interviewer?: string;
+}
 let cfg: Config = { type: 'Technical', topic: '', qualifications: '', minutes: 15 };
 try {
   const raw = sessionStorage.getItem('jobInterviewConfig');
   if (raw) cfg = JSON.parse(raw);
 } catch { /* ignore */ }
 
-const interviewType = cfg.type || 'Technical';
 const topic = cfg.topic || '';
 const qualifications = cfg.qualifications || '';
 const plannedMinutes = Math.max(3, Math.min(60, cfg.minutes || 15));
@@ -138,14 +161,29 @@ const maxQuestions = Math.max(4, Math.min(12, Math.round(plannedMinutes / 1.5)))
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'Candidate');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
 
-// ====== Interviewer persona / avatar ======
-const INTERVIEWER_MALE = `<svg viewBox="0 0 200 200" class="ji-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="ji-bg-m" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs><rect width="200" height="200" fill="url(#ji-bg-m)"/><path d="M 15 200 Q 20 150 65 140 L 135 140 Q 180 150 185 200 Z" fill="#1e293b"/><path d="M 82 140 L 100 168 L 118 140 Z" fill="#f8fafc"/><path d="M 95 168 L 105 168 L 110 200 L 90 200 Z" fill="#3b82f6"/><path d="M 88 122 L 88 144 Q 100 150 112 144 L 112 122 Z" fill="#d99770"/><path d="M 55 88 Q 55 38 100 36 Q 145 38 145 88 L 145 105 Q 140 75 100 70 Q 60 75 55 105 Z" fill="#1a0f08"/><ellipse cx="100" cy="88" rx="40" ry="48" fill="#e8a778"/><path d="M 72 78 Q 82 74 90 78" stroke="#1a0f08" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M 110 78 Q 118 74 128 78" stroke="#1a0f08" stroke-width="2.8" fill="none" stroke-linecap="round"/><g class="eye-l"><ellipse cx="81" cy="89" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="89" r="2.5" fill="#3d2818"/></g><g class="eye-r"><ellipse cx="119" cy="89" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="89" r="2.5" fill="#3d2818"/></g><g class="mouth-group"><path class="lips-top" d="M 88 121 Q 94 117 100 120 Q 106 117 112 121" stroke="#8a3838" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="124" rx="9" ry="2" fill="#4a1818"/><path class="lips-bottom" d="M 88 124 Q 100 132 112 124" stroke="#8a3838" stroke-width="2.2" fill="none" stroke-linecap="round"/></g></svg>`;
-const INTERVIEWER_FEMALE = `<svg viewBox="0 0 200 200" class="ji-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="ji-bg-f" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#14b8a6"/><stop offset="100%" stop-color="#134e4a"/></radialGradient></defs><rect width="200" height="200" fill="url(#ji-bg-f)"/><path d="M 35 200 Q 40 155 75 145 L 125 145 Q 160 155 165 200 Z" fill="#1e3a8a"/><path d="M 52 88 Q 52 36 100 34 Q 148 36 148 88 L 148 110 Q 142 90 100 60 Q 58 90 52 110 Z" fill="#5a3825"/><ellipse cx="100" cy="90" rx="38" ry="46" fill="#fbcfa6"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#1e3a8a"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#1e3a8a"/></g><g class="mouth-group"><path class="lips-top" d="M 89 123 Q 94 119 100 122 Q 106 119 111 123" stroke="#a85070" stroke-width="2" fill="#c97090" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="126" rx="8" ry="1.5" fill="#5a1530"/><path class="lips-bottom" d="M 89 126 Q 100 133 111 126" stroke="#a85070" stroke-width="2.3" fill="#c97090" stroke-linecap="round"/></g></svg>`;
+// ====== Interviewer persona ======
+/**
+ * The interviewer is a real face, cast at random for each interview.
+ *
+ * The choice is READ from the session config rather than made here, so that
+ * reloading the page mid-interview does not hand the candidate over to a
+ * different person halfway through: the config is what survives a reload, and
+ * who is conducting it is part of the setup like the topic and the duration. A
+ * config written before this existed re-casts here rather than rendering a
+ * blank tile.
+ *
+ * Deliberately not filtered by interview type. The two personas app 27 shipped
+ * with were a man for Technical and a woman for HR, and either title reads
+ * correctly on any of the six.
+ */
+const castId = cfg.interviewer || '';
+const interviewer = isActorId(castId) ? actorById(castId) : pickInterviewer();
 
+const interviewType: InterviewType = cfg.type === 'HR' ? 'HR' : 'Technical';
 const isHR = interviewType === 'HR';
-const interviewerName = isHR ? 'Rachel' : 'Alex';
-const interviewerLabel = computed(() => `${isHR ? '🤝' : '🛠️'} ${interviewerName} — ${isHR ? 'HR Manager' : 'Technical Interviewer'}`);
-const interviewerSvg = isHR ? INTERVIEWER_FEMALE : INTERVIEWER_MALE;
+const interviewerName = interviewer.name;
+const interviewerRole = INTERVIEWER_TITLES[interviewType].title;
+const interviewerTag = interviewerLabel(interviewer, interviewType);
 
 // ====== Local fallback questions (vary by number so they never repeat) ======
 const HR_FALLBACKS = [
@@ -218,18 +256,23 @@ let recordingLoopActive = false;
 let currentRecorder: MediaRecorder | null = null;
 let voices: SpeechSynthesisVoice[] = [];
 
-const MALE_RE = /\b(male|david|mark|guy|james|george|ryan|daniel|alex|fred|tom)\b/i;
-const FEMALE_RE = /\b(female|zira|hazel|samantha|karen|victoria|tessa|sara|emma|sophia|aria|jenny|rachel)\b/i;
-
 function loadVoices() { voices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('en')); }
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
-function pickVoice(): SpeechSynthesisVoice | null {
-  if (!voices.length) return null;
-  let cands = voices.filter(v => isHR ? (FEMALE_RE.test(v.name) && !MALE_RE.test(v.name)) : (MALE_RE.test(v.name) && !FEMALE_RE.test(v.name)));
-  if (cands.length === 0) cands = voices;
-  return cands[0];
+/**
+ * A voice for whoever was cast, chosen on THEIR gender rather than on the
+ * interview type.
+ *
+ * The old rule was "a female voice for HR, a male one for Technical", which was
+ * only ever right because the two personas were fixed. Now that there is a face
+ * on the tile, a mismatch is a man's face speaking in a woman's voice -- what
+ * the newscast was reported for four separate times -- so the fact that the
+ * browser had no voice of the right gender is carried into the pitch rather
+ * than dropped.
+ */
+function castInterviewerVoice() {
+  return castVoice(voices, interviewer.gender);
 }
 
 function speak(text: string): Promise<void> {
@@ -240,9 +283,9 @@ function speak(text: string): Promise<void> {
     currentSpeaker.value = 'interviewer';
     try { speechSynthesis.cancel(); } catch {}
     const u = new SpeechSynthesisUtterance(text);
-    const v = pickVoice();
-    if (v) u.voice = v;
-    u.pitch = isHR ? 1.05 : 0.95;
+    const cast = castInterviewerVoice();
+    if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
+    u.pitch = pitchFor(interviewer.gender, cast.matched);
     u.rate = 1.0;
     u.onend = () => { currentSpeaker.value = null; resolve(); };
     u.onerror = () => { currentSpeaker.value = null; resolve(); };
@@ -400,7 +443,8 @@ async function startInterview() {
   phase.value = 'intro';
   captionText.value = 'Interviewer is joining…';
   const intro = await jobInterviewService.callInterviewer({
-    stage: 'intro', interview_type: interviewType, topic, qualifications, user_name: userName.value
+    stage: 'intro', interview_type: interviewType, topic, qualifications, user_name: userName.value,
+    interviewer_name: interviewerName, interviewer_role: interviewerRole
   });
   await speak(intro || `Hello ${userName.value}, I'm ${interviewerName}. Let's begin.`);
 
@@ -426,6 +470,8 @@ async function askNextQuestion() {
     topic,
     qualifications,
     user_name: userName.value,
+    interviewer_name: interviewerName,
+    interviewer_role: interviewerRole,
     question_number: questionNumber.value,
     previous_qa: qaPairs.value
   });
@@ -480,7 +526,8 @@ async function endInterview() {
   captionText.value = 'Wrapping up the interview and preparing your feedback…';
 
   const closing = await jobInterviewService.callInterviewer({
-    stage: 'closing', interview_type: interviewType, topic, user_name: userName.value
+    stage: 'closing', interview_type: interviewType, topic, user_name: userName.value,
+    interviewer_name: interviewerName, interviewer_role: interviewerRole
   });
   await speak(closing || `Thank you ${userName.value}. I'll share some feedback now.`);
 

@@ -24,9 +24,15 @@
     </div>
 
     <div class="tm-bots-grid">
-      <div v-for="bot in BOTS" :key="bot.key" class="tm-video-tile" :class="{ speaking: currentSpeaker === bot.key }">
-        <div class="tm-avatar-wrap" v-html="bot.svg"></div>
-        <div class="tm-name-tag">{{ bot.label }}</div>
+      <div v-for="(seat, i) in SEATS" :key="seat.key" class="tm-video-tile" :class="{ speaking: currentSpeaker === seat.key }">
+        <!-- `phase` staggers the six idle drifts; in unison they read as a screensaver. -->
+        <SpeakerMedia
+          :actor="seat.actor"
+          :speaking="currentSpeaker === seat.key"
+          :phase="i * 1.7"
+          :alt="seatLabel(seat)"
+        />
+        <div class="tm-name-tag">{{ seatLabel(seat) }}</div>
         <div class="tm-speaking-dot"></div>
       </div>
     </div>
@@ -114,6 +120,8 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, reactive } from 'vue';
 import { paint } from '@/theme/contrast';
+import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
+import { SEATS, actorById, castVoice, pitchFor, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService } from '@/services/toastmasters.service';
@@ -148,16 +156,6 @@ const speakBtnLabel = computed(() => {
   };
   return m[userRole] || "🎤 I'm Ready to Speak";
 });
-
-// ═══════ BOT SVGs (same as original) ═══════
-const BOTS = [
-  { key: 'toastmaster', label: '🎙️ Marcus — Toastmaster', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-marcus" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-marcus)"/><path d="M 15 200 Q 20 150 65 140 L 135 140 Q 180 150 185 200 Z" fill="#1e293b"/><path d="M 82 140 L 100 168 L 118 140 Z" fill="#f8fafc"/><path d="M 95 168 L 105 168 L 110 200 L 90 200 Z" fill="#dc2626"/><path d="M 88 122 L 88 144 Q 100 150 112 144 L 112 122 Z" fill="#d99770"/><path d="M 55 88 Q 55 38 100 36 Q 145 38 145 88 L 145 105 Q 140 75 100 70 Q 60 75 55 105 Z" fill="#1a0f08"/><ellipse cx="100" cy="88" rx="40" ry="48" fill="#e8a778"/><path d="M 72 78 Q 82 74 90 78" stroke="#1a0f08" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M 110 78 Q 118 74 128 78" stroke="#1a0f08" stroke-width="2.8" fill="none" stroke-linecap="round"/><g class="eye-l"><ellipse cx="81" cy="89" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="89" r="2.5" fill="#3d2818"/></g><g class="eye-r"><ellipse cx="119" cy="89" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="89" r="2.5" fill="#3d2818"/></g><g class="mouth-group"><path class="lips-top" d="M 88 121 Q 94 117 100 120 Q 106 117 112 121" stroke="#8a3838" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="124" rx="9" ry="2" fill="#4a1818"/><path class="lips-bottom" d="M 88 124 Q 100 132 112 124" stroke="#8a3838" stroke-width="2.2" fill="none" stroke-linecap="round"/></g></svg>` },
-  { key: 'timer', label: '⏱️ Sara — Timer', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-sara" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#064e3b"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-sara)"/><path d="M 25 200 Q 30 130 60 100 L 140 100 Q 170 130 175 200 Z" fill="#a16236"/><path d="M 35 200 Q 40 155 75 145 L 125 145 Q 160 155 165 200 Z" fill="#10b981"/><path d="M 50 85 Q 50 38 100 35 Q 150 38 150 85 L 150 130 Q 145 95 138 80 Q 130 60 100 58 Q 70 60 62 80 Q 55 95 50 130 Z" fill="#a16236"/><ellipse cx="100" cy="90" rx="38" ry="46" fill="#fbcfa6"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#2c5b3e"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#2c5b3e"/></g><g class="mouth-group"><path class="lips-top" d="M 89 122 Q 94 118 100 121 Q 106 118 111 122" stroke="#c2185b" stroke-width="2.2" fill="#e91e63" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="125" rx="8" ry="1.5" fill="#5a1530"/><path class="lips-bottom" d="M 89 125 Q 100 133 111 125" stroke="#c2185b" stroke-width="2.5" fill="#e91e63" stroke-linecap="round"/></g></svg>` },
-  { key: 'ah', label: '🗣️ David — Ah-Counter', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-david" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#7c2d12"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-david)"/><path d="M 20 200 Q 25 150 70 142 L 130 142 Q 175 150 180 200 Z" fill="#475569"/><path d="M 56 80 Q 56 40 100 38 Q 144 40 144 80" fill="#2c1810"/><ellipse cx="100" cy="90" rx="40" ry="46" fill="#d49a6e"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#2c1810"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#2c1810"/></g><circle cx="81" cy="91" r="10" fill="none" stroke="#1e293b" stroke-width="2.2"/><circle cx="119" cy="91" r="10" fill="none" stroke="#1e293b" stroke-width="2.2"/><path d="M 91 91 L 109 91" stroke="#1e293b" stroke-width="2.2"/><g class="mouth-group"><ellipse class="mouth-inside" cx="100" cy="128" rx="8" ry="1.5" fill="#4a1818"/><path class="lips-bottom" d="M 89 128 Q 100 134 111 128" stroke="#7a3a3a" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>` },
-  { key: 'grammarian', label: '✍️ Emma — Grammarian', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-emma" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#ec4899"/><stop offset="100%" stop-color="#831843"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-emma)"/><path d="M 22 200 Q 28 150 68 142 L 132 142 Q 172 150 178 200 Z" fill="#f9a8d4"/><ellipse cx="100" cy="55" rx="56" ry="38" fill="#1a0f08"/><circle cx="100" cy="32" r="13" fill="#1a0f08"/><ellipse cx="100" cy="92" rx="37" ry="44" fill="#8b5a3c"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#3d2818"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#3d2818"/></g><g class="mouth-group"><path class="lips-top" d="M 88 123 Q 94 119 100 122 Q 106 119 112 123" stroke="#9d2050" stroke-width="2.2" fill="#c84076" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="126" rx="8" ry="1.5" fill="#5a1530"/><path class="lips-bottom" d="M 88 126 Q 100 134 112 126" stroke="#9d2050" stroke-width="2.5" fill="#c84076" stroke-linecap="round"/></g></svg>` },
-  { key: 'speechEval', label: '📋 Sophia — Speech Evaluator', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-sophia" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#14b8a6"/><stop offset="100%" stop-color="#134e4a"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-sophia)"/><path d="M 35 200 Q 40 155 75 145 L 125 145 Q 160 155 165 200 Z" fill="#1e3a8a"/><path d="M 52 88 Q 52 36 100 34 Q 148 36 148 88" fill="#d4a574"/><ellipse cx="100" cy="90" rx="38" ry="46" fill="#fbcfa6"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#1e3a8a"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#1e3a8a"/></g><g class="mouth-group"><path class="lips-top" d="M 89 123 Q 94 119 100 122 Q 106 119 111 123" stroke="#a85070" stroke-width="2" fill="#c97090" stroke-linecap="round"/><ellipse class="mouth-inside" cx="100" cy="126" rx="8" ry="1.5" fill="#5a1530"/><path class="lips-bottom" d="M 89 126 Q 100 133 111 126" stroke="#a85070" stroke-width="2.3" fill="#c97090" stroke-linecap="round"/></g></svg>` },
-  { key: 'generalEval', label: '🎯 James — General Evaluator', svg: `<svg viewBox="0 0 200 200" class="tm-bot-svg" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="bg-james" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#64748b"/><stop offset="100%" stop-color="#0f172a"/></radialGradient></defs><rect width="200" height="200" fill="url(#bg-james)"/><path d="M 15 200 Q 22 150 65 140 L 135 140 Q 178 150 185 200 Z" fill="#374151"/><path d="M 60 90 Q 60 50 100 48 Q 140 50 140 90" fill="#a8a29e"/><ellipse cx="100" cy="90" rx="40" ry="48" fill="#d4a382"/><g class="eye-l"><ellipse cx="81" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="81" cy="91" r="2.5" fill="#4a5568"/></g><g class="eye-r"><ellipse cx="119" cy="91" rx="5" ry="3.5" fill="#fff"/><circle cx="119" cy="91" r="2.5" fill="#4a5568"/></g><g class="mouth-group"><ellipse class="mouth-inside" cx="100" cy="128" rx="8" ry="1.5" fill="#4a1818"/><path class="lips-bottom" d="M 89 128 Q 100 133 111 128" stroke="#7a3a3a" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>` }
-];
 
 // ═══════ STATE ═══════
 const videoEl = ref<HTMLVideoElement>();
@@ -235,9 +233,10 @@ const blStats = {
 };
 
 const FILLER_WORDS = ['um','uh','ah','er','like','you know','basically','well','so','actually','literally','right','okay'];
-const BOT_GENDERS: Record<string, string> = { toastmaster:'male', timer:'female', ah:'male', grammarian:'female', speechEval:'female', generalEval:'male' };
-const MALE_RE = /\b(male|david|mark|guy|james|george|ryan|daniel|alex|fred|tom)\b/i;
-const FEMALE_RE = /\b(female|zira|hazel|samantha|karen|victoria|tessa|sara|emma|sophia|aria|jenny)\b/i;
+// Who is in each seat, and therefore what each one should sound like, comes from
+// the cast — it used to be a second copy of the same fact here, which agreed with
+// the pictures only by coincidence.
+const BOT_GENDERS = seatGenders();
 const FOCUS_STATES: Record<string, { color: string; label: string }> = {
   excellent:{color:'#059669',label:'✨ Excellent'}, focused:{color:'#10B981',label:'🎯 Focused'},
   attentive:{color:'#22C55E',label:'👀 Attentive'}, restless:{color:'#FBBF24',label:'😅 Restless'},
@@ -249,20 +248,43 @@ function loadVoices() { voices = speechSynthesis.getVoices().filter(v => v.lang?
 loadVoices();
 speechSynthesis.onvoiceschanged = loadVoices;
 
-function voiceFor(botKey: string): SpeechSynthesisVoice | null {
-  if (!voices.length) return null;
-  const gender = BOT_GENDERS[botKey];
-  let cands = voices.filter(v => gender === 'male' ? (MALE_RE.test(v.name) && !FEMALE_RE.test(v.name)) : (FEMALE_RE.test(v.name) && !MALE_RE.test(v.name)));
-  if (!cands.length) cands = voices;
-  const sameGenderBots = Object.entries(BOT_GENDERS).filter(([_, g]) => g === gender).map(([k]) => k);
-  const idx = sameGenderBots.indexOf(botKey);
-  return cands[idx % cands.length];
+/**
+ * The voice for one seat, and whether it is the right gender for the person on
+ * that tile.
+ *
+ * `seat` is the seat's position among the same-gender seats, so the three men
+ * do not all get the one male voice the browser has. `matched` is passed on to
+ * the pitch, because now that the tiles are photographs of actual people a
+ * mismatch is a man's face speaking in a woman's voice — a fault the newscast
+ * was reported for four times.
+ */
+function voiceFor(botKey: string) {
+  const gender = BOT_GENDERS[botKey] || 'male';
+  const sameGenderSeats = SEATS.filter(s => BOT_GENDERS[s.key] === gender).map(s => s.key);
+  const seat = Math.max(0, sameGenderSeats.indexOf(botKey));
+  return { gender, ...castVoice(voices, gender, seat) };
 }
+
+/** `🎙️ Marcus — Toastmaster`, or a plain label for the stand-in sample speaker. */
+function speakerLabel(botKey: string, fallback: string): string {
+  const seat = seatByKey(botKey);
+  return seat ? seatLabel(seat) : fallback;
+}
+
+/**
+ * The sample speech is delivered by whoever holds the Toastmaster seat, so the
+ * caption names them rather than saying "Marcus" in a string of its own — the
+ * face on that tile is the cast's business, not this view's.
+ */
+const sampleSpeakerCaption = (() => {
+  const seat = seatByKey('toastmaster');
+  return seat ? `${seat.emoji} ${actorById(seat.actor).name} (Sample)` : '🎙️ Sample Speaker';
+})();
 
 function speak(text: string, botKey: string): Promise<void> {
   return new Promise(resolve => {
     if (!text?.trim()) { resolve(); return; }
-    captionSpeaker.value = BOTS.find(b => b.key === botKey)?.label || 'System';
+    captionSpeaker.value = speakerLabel(botKey, 'System');
     captionText.value = text;
     // Skip TTS if user clicked skip intro
     if (didSkipIntro.value && !isSpeaking) { setTimeout(resolve, 80); return; }
@@ -271,9 +293,9 @@ function speak(text: string, botKey: string): Promise<void> {
     currentSpeaker.value = botKey;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const v = voiceFor(botKey);
-    if (v) u.voice = v;
-    u.pitch = ({toastmaster:0.95,ah:1.05,timer:1.1,grammarian:0.95,speechEval:1.0,generalEval:0.9} as any)[botKey] || 1.0;
+    const cast = voiceFor(botKey);
+    if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
+    u.pitch = pitchFor(cast.gender, cast.matched);
     u.onend = () => { currentSpeaker.value = null; resolve(); };
     u.onerror = () => { currentSpeaker.value = null; resolve(); };
     setTimeout(() => speechSynthesis.speak(u), 80);
@@ -284,14 +306,16 @@ function speak(text: string, botKey: string): Promise<void> {
 function speakForced(text: string, botKey: string): Promise<void> {
   return new Promise(resolve => {
     if (!text?.trim()) { resolve(); return; }
-    captionSpeaker.value = BOTS.find(b => b.key === botKey)?.label || '🎙️ Sample Speaker';
+    captionSpeaker.value = speakerLabel(botKey, '🎙️ Sample Speaker');
     captionText.value = text;
     currentSpeaker.value = botKey;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const v = voiceFor(botKey);
-    if (v) u.voice = v;
-    u.rate = 0.95; u.pitch = 0.92;
+    const cast = voiceFor(botKey);
+    if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
+    // A shade slower and lower than the same seat's ordinary delivery: this is a
+    // set-piece speech being performed, not a line of meeting business.
+    u.rate = 0.95; u.pitch = pitchFor(cast.gender, cast.matched) - 0.03;
     const t0 = Date.now();
     u.onend = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
     u.onerror = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
@@ -530,7 +554,7 @@ async function speakerIntroFlow() {
     await speakForced(intro2 || '', 'toastmaster');
     captionText.value = 'Preparing sample speech...';
     sampleSpeechText = await toastmastersService.callBot('sample-speech', {}) || 'Three years ago, I lost my job. I started a business that failed. But that failure taught me everything.';
-    captionSpeaker.value = '🎙️ Marcus (Sample)'; captionText.value = 'Listen carefully...';
+    captionSpeaker.value = sampleSpeakerCaption; captionText.value = 'Listen carefully...';
     await speakForced(sampleSpeechText, 'toastmaster');
     const ho = await toastmastersService.callBot('toastmaster', { stage: 'evalspeech_handover', user_name: userName.value });
     await speakForced(ho || '', 'toastmaster');

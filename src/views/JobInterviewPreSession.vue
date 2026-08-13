@@ -67,6 +67,7 @@ Example:
 <script setup lang="ts">
 import { reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { pickInterviewer } from '@/cast/actors';
 
 const router = useRouter();
 
@@ -99,7 +100,12 @@ function startSession() {
     type: form.type,
     topic: form.type === 'Technical' ? form.topic.trim() : 'HR / General',
     qualifications: form.qualifications.trim(),
-    minutes: Math.max(3, Math.min(60, form.minutes || 15))
+    minutes: Math.max(3, Math.min(60, form.minutes || 15)),
+    // Who conducts it is decided here, once, and travels in the config for the
+    // same reason the topic does: the session view is re-created by a reload,
+    // and re-casting there would swap the interviewer for a different person
+    // partway through an interview.
+    interviewer: pickInterviewer().id
   };
   sessionStorage.setItem('jobInterviewConfig', JSON.stringify(config));
   router.push({ path: '/job-interview/session' });
