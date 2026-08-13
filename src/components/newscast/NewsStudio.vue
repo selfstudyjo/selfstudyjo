@@ -363,14 +363,13 @@ onBeforeUnmount(() => clearInterval(clockTimer));
             </div>
 
             <!--
-              The two column joins, softened. The three plates are separate
-              renders, so however well they are levelled the tone still steps
-              at the join and the eye reads three photographs rather than one
-              room. A narrow shadow either side of each seam is what a real set
-              has anyway — the upright between two desk pods — and it costs
-              nothing to draw.
+              The two column joins, dissolved rather than covered. See the CSS:
+              a shadow only draws a dark stripe where the cut is, and the cut is
+              still a cut underneath it. These actually blur the pixels either
+              side into each other.
             -->
-            <span class="stage__joins" aria-hidden="true"></span>
+            <span class="seam seam--left" aria-hidden="true"></span>
+            <span class="seam seam--right" aria-hidden="true"></span>
 
             <!--
               Vignette and scan sheen: it is a camera feed, not a photo. They
@@ -734,28 +733,86 @@ onBeforeUnmount(() => clearInterval(clockTimer));
     text-overflow: ellipsis;
 }
 
-/* -- stage treatment -------------------------------------------------- */
-.stage__joins,
+/* -- the two column joins --------------------------------------------- */
+/*
+  WHY A BLUR AND NOT A SHADOW.
+
+  The three plates are separate renders. They are levelled to within 5px and
+  that is as far as the sources go: the tone still steps at each join, and the
+  desk edge, the back counter and the ceiling coving all arrive at the boundary
+  at very slightly different heights, because they are photographs of one room
+  taken from three places. The result is a visible vertical cut.
+
+  A shadow — which is what was here first — only paints a dark stripe ON the
+  cut. The cut is still a cut underneath it, and the stripe itself is a new
+  thing to notice: "why is there a dark band down the picture?"
+
+  `backdrop-filter` blurs the actual pixels behind the strip, so content from
+  the left plate is smeared into content from the right and the boundary stops
+  existing. A brightness step becomes a smooth ramp for free, because that is
+  what a blur does to a step. Two lines that nearly meet become one soft line.
+
+  THE MASK IS NOT OPTIONAL. A hard-edged blur strip solves one seam and creates
+  two new ones — the edges of the strip itself, where sharp meets blurred. The
+  mask ramps the blur in and out so it has no edge of its own, and it also hides
+  the artefact `backdrop-filter` leaves at its own boundary, where the blur
+  kernel runs out of backdrop to sample and smears the edge pixel instead.
+*/
+.seam {
+    position: absolute;
+    /* Past the top and bottom for the same reason the mask exists sideways:
+       the blur must not stop where the picture is still visible. */
+    top: -2px;
+    bottom: -2px;
+    width: 5%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 1;
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    /* A whisper of shade, feathered by the same mask. Lowering the local
+       contrast is what hides the residual the blur only ramps; it reads as the
+       upright between two desk pods, which is a thing a real set has. It is
+       also what carries the join on a browser with no `backdrop-filter`, where
+       this degrades to the shadow it replaced rather than to nothing. */
+    background: linear-gradient(to right,
+        transparent, rgb(0 0 0 / 0.07) 50%, transparent);
+
+    /*
+      THE MASK PROFILE IS THE WHOLE TRICK, and it took three goes to get right.
+
+      There are two different defects at a join and they want opposite things.
+      The CUT is one pixel wide and needs a strong blur. The TONE STEP is wide —
+      the male plate's lit newsroom meeting the centre's dark wall — and a strong
+      blur cannot ramp that without smearing so far that it reads as a smudge on
+      the lens, which is exactly what 4% at 10px did: it replaced a line nobody
+      would name with a 75px haze everybody would.
+
+      So the mask is not a plateau and not a simple ramp. It is full alpha on the
+      seam itself — killing the cut — falling to about a THIRD across the
+      shoulders, where the blurred backdrop composites over the sharp original at
+      partial strength. That averages the tone across a wide band while leaving
+      two thirds of the real detail untouched, so the picture never looks soft.
+    */
+    -webkit-mask-image: linear-gradient(to right,
+        transparent 0%, rgb(0 0 0 / 0.32) 30%, #000 50%,
+        rgb(0 0 0 / 0.32) 70%, transparent 100%);
+    mask-image: linear-gradient(to right,
+        transparent 0%, rgb(0 0 0 / 0.32) 30%, #000 50%,
+        rgb(0 0 0 / 0.32) 70%, transparent 100%);
+}
+
+/* The column boundaries: 352/1428 and 1076/1428. */
+.seam--left  { left: 24.65%; }
+.seam--right { left: 75.35%; }
+
 .stage__vignette,
 .stage__sheen {
     position: absolute;
     inset: 0;
     pointer-events: none;
-}
-
-/*
-  The seams, at 24.65% and 75.35% — the column boundaries. Each is a shadow
-  ~3.5% of the width, symmetric, darkest on the line itself. It reads as the
-  upright between two desk pods, which is a thing a real set has, and it does
-  the actual job: hiding the tonal step between three separately-rendered
-  plates that no amount of levelling removes.
-*/
-.stage__joins {
-    background:
-        linear-gradient(to right,
-            transparent 21.2%, rgb(0 0 0 / 0.30) 24.65%, transparent 28.1%),
-        linear-gradient(to right,
-            transparent 71.9%, rgb(0 0 0 / 0.30) 75.35%, transparent 78.8%);
 }
 
 .stage__vignette {
