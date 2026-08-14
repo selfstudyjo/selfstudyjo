@@ -202,6 +202,16 @@ const messages = ref<any[]>([]);
 const newMessage = ref('');
 const error = ref<string | null>(null);
 const lastSeenMessageId = ref<number | null>(null);
+/**
+ * The newest operator message this widget has ever been shown, as a timestamp.
+ * Forward only, and `null` until the first poll has seeded it.
+ *
+ * It is what makes the chime mean "a reply arrived" rather than "the set of ids
+ * differs from the set I had a moment ago" — the second is also true when the
+ * widget fails over to a replica that has not received the last reply, and again
+ * when it fails back. See the polling callback.
+ */
+const heardUpTo = ref<string | null>(null);
 const retryCount = ref(0);
 const retryTimeout = ref<number | null>(null);
 
@@ -236,6 +246,12 @@ async function initChat(attempt = 0) {
 
     const initialMessages = await getMessages(replicaUrl, room.id);
     messages.value = initialMessages;
+    // Seed the chime's mark from the history, before polling starts. Everything
+    // already in the conversation has been seen by definition; leaving it unset
+    // makes the first poll read the whole transcript as newly arrived.
+    heardUpTo.value = initialMessages.reduce(
+      (high: string, msg: any) => (msg.sender !== 'anonymous'
+        && String(msg.timestamp || '') > high ? String(msg.timestamp || '') : high), '');
 
     await markAdminMessagesAsSeen(replicaUrl, room.id);
 
@@ -282,16 +298,35 @@ function startPolling() {
       messages.value = newMessages;
 
       const previousIds = new Set(previousMessages.map(m => m.id));
-      const newIncomingMessages = newMessages.filter(
+      const incoming = newMessages.filter(
         msg => !previousIds.has(msg.id) && msg.sender !== 'anonymous'
       );
 
-      if (newIncomingMessages.length > 0) {
-        playNotificationSound();
+      // Two guards, and without them this rings at nothing rather regularly.
+      //
+      // `heardUpTo` is the newest operator message this widget has ever been
+      // shown, and it only moves forward. "New to the previous poll's set" is not
+      // the same as new: the widget pins one replica but fails over, and app 9
+      // replicates push-then-repair — so a poll can legitimately come back missing
+      // the last reply and the one after it re-offers it. Every one of those
+      // bounces used to chime.
+      //
+      // And the first callback for a room seeds the mark **silently**, because at
+      // that point the previous set is empty and the whole conversation reads as
+      // having just arrived: a chime per historical reply, on opening the widget.
+      const newestReply = newMessages.reduce(
+        (high, msg) => (msg.sender !== 'anonymous' && String(msg.timestamp || '') > high
+          ? String(msg.timestamp || '') : high), '');
+      const seeded = heardUpTo.value !== null;
+      const arrived = seeded && incoming.length > 0
+        && newestReply > (heardUpTo.value as string);
+      if (!seeded || newestReply > (heardUpTo.value as string)) {
+        heardUpTo.value = newestReply;
+      }
 
-        if (isOpen.value && !isMinimized.value) {
-          await markAdminMessagesAsSeen(currentReplicaUrl.value, currentRoom.value.id);
-        }
+      if (arrived) playNotificationSound();
+      if (incoming.length > 0 && isOpen.value && !isMinimized.value) {
+        await markAdminMessagesAsSeen(currentReplicaUrl.value, currentRoom.value.id);
       }
 
       scrollToBottom();

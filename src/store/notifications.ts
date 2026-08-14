@@ -9,19 +9,38 @@
 // nothing said so and the chime had nowhere to live. Now the component asks the
 // store to start and draws what it is given.
 //
-// Four decisions worth knowing:
+// Five decisions worth knowing:
 //
 // 1. **"Something new arrived" is not "the unread count went up."** Reading a
 //    notification on a phone while another one arrives leaves the count exactly
 //    where it was, and the bell would stay silent. So the poll compares
 //    `latest_id` — the newest notification in the inbox — and rings when that
-//    changes to something the tab has not seen. `latest_at` breaks the tie when
-//    two arrive between ticks.
-// 2. **The chime is unlocked by a user gesture, once.** Browsers refuse
-//    `audio.play()` that no interaction led to, and the refusal is a rejected
-//    promise rather than an error anyone sees — a chime that was never primed
-//    simply never sounds and looks like a broken feature. `primeAudio()` is
-//    wired to the first click of the session in `SideNav.vue`.
+//    changes to something the tab has not seen.
+//
+//    **And a changed `latest_id` is not enough either.** `latest_at` is a
+//    high-water mark that only ever moves forward, and a ring needs an id that is
+//    new *and* a timestamp past that mark. Everything below is a way the id
+//    changes with nothing having arrived, and every one of them used to ring:
+//
+//      - you delete the newest notification, so the next poll answers with the
+//        one behind it: a different id, and an older `created_at`;
+//      - the tab fails over to another replica whose tail is a moment behind, and
+//        then back again, so the id it was already told about arrives as "new";
+//      - a `dismiss` lands on the replica you are pinned to and not yet on its
+//        peers, so a pull re-offers the record you just got rid of.
+//
+//    Recording `latest_at` monotonically makes all three silent while a genuinely
+//    newer notification still rings, and it is persisted per user so a reload
+//    cannot re-arm what a reload has no business re-arming.
+// 2. **The chime is unlocked by a user gesture, once, on a CLONE.** Browsers
+//    refuse `audio.play()` that no interaction led to, and the refusal is a
+//    rejected promise rather than an error anyone sees — a chime that was never
+//    primed simply never sounds and looks like a broken feature. `primeAudio()` is
+//    wired to the first click of the session in `SideNav.vue`. It warms a clone
+//    because muting the real element, playing it, and unmuting it after the promise
+//    resolves is a race with the browser's audio thread: on several builds the
+//    unmute lands first and the first click anywhere in the app plays an audible
+//    fragment of the chime, which is itself a sound with no notification behind it.
 // 3. **It does not ring on the first load of a session.** Everything unread is
 //    "new" then, and a chime on sign-in is noise. Noise is what makes people
 //    turn notifications off.
@@ -31,6 +50,15 @@
 //    to guess, and it no longer refuses to delete a non-personal notification —
 //    that refusal was the reason the list filled up with announcements nobody
 //    could get rid of.
+// 5. **A deleted notification is remembered locally, so it cannot come back.**
+//    Replication is push-then-repair: the delete reaches the replica this tab is
+//    pinned to immediately and its peers a moment later, and a failover in between
+//    reads the record as still there. That is what "I deleted it and it kept
+//    reappearing until it was gone from all the replicas" was — nothing was
+//    broken, the browser was just believing whichever replica answered. So a
+//    dismissed id goes into a short-lived local tombstone set that filters every
+//    subsequent answer and discounts the badge. Ten minutes, which is thirty times
+//    the pull interval, after which convergence is not in question.
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
@@ -54,12 +82,26 @@ import type {
 const CHIME_URL = new URL('@/assets/audio/selfstudy_notification.mp3', import.meta.url).href;
 
 const SOUND_KEY = 'selfstudy.notifications.sound';
+/** Per user: the newest notification this browser has been told about. Persisted
+ *  so a reload cannot re-arm the chime for something already seen. */
+const HEARD_KEY = 'selfstudy.notifications.heard';
+/** Per user: ids this browser has dismissed and may still be offered by a replica
+ *  that has not applied the delete yet. */
+const TOMB_KEY = 'selfstudy.notifications.removed';
 
 /** How often the bell refreshes while the tab is in front. */
 const POLL_VISIBLE_MS = 25000;
 /** A hidden tab still polls — the chime is the reason it exists — but much less
  *  often, so twenty background tabs are not twenty pollers. */
 const POLL_HIDDEN_MS = 90000;
+
+/** How long a locally-deleted id is remembered. Thirty times the backend's pull
+ *  interval, so if the record is still being offered after this the problem is
+ *  replication and not this tab. */
+const TOMB_TTL_MS = 10 * 60 * 1000;
+/** Enough for a "clear all" on a large inbox; bounded so the entry cannot grow
+ *  without limit in a browser nobody ever closes. */
+const TOMB_MAX = 500;
 
 export const useNotificationStore = defineStore('notifications', () => {
     // State
@@ -83,10 +125,108 @@ export const useNotificationStore = defineStore('notifications', () => {
     let primed = false;
     let firstLoad = true;
     let lastSeenId = '';
+    /** A high-water mark, never a "last value". It only moves forward — see note
+     *  1 in the header for the three ways a backwards step rings at nothing. */
     let lastSeenAt = '';
+    /** id -> when it was dismissed here. See note 5. */
+    let removed = new Map<string, number>();
 
     // Local storage key
     const getStorageKey = (username: string) => `notifications_${username}`;
+
+    // -- Locally deleted ids -------------------------------------------------
+
+    function readRemoved(username: string) {
+        removed = new Map();
+        try {
+            const raw = localStorage.getItem(`${TOMB_KEY}.${username}`);
+            const parsed = raw ? JSON.parse(raw) : null;
+            const cutoff = Date.now() - TOMB_TTL_MS;
+            if (parsed && typeof parsed === 'object') {
+                for (const [id, at] of Object.entries(parsed as Record<string, number>)) {
+                    if (Number(at) > cutoff) removed.set(id, Number(at));
+                }
+            }
+        } catch {
+            // Private browsing, or a value some earlier version wrote. Starting
+            // empty is safe: the worst case is the old behaviour for ten minutes.
+        }
+    }
+
+    function writeRemoved(username: string) {
+        if (!username) return;
+        try {
+            const cutoff = Date.now() - TOMB_TTL_MS;
+            const kept = [...removed.entries()]
+                .filter(([, at]) => at > cutoff)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, TOMB_MAX);
+            removed = new Map(kept);
+            localStorage.setItem(`${TOMB_KEY}.${username}`,
+                                 JSON.stringify(Object.fromEntries(kept)));
+        } catch {
+            // The set still works for this tab; it just does not survive a reload.
+        }
+    }
+
+    function forget(ids: string[]) {
+        const at = Date.now();
+        for (const id of ids) if (id) removed.set(String(id), at);
+        writeRemoved(currentUsername.value);
+    }
+
+    function isRemoved(id: unknown): boolean {
+        const at = removed.get(String(id ?? ''));
+        if (at === undefined) return false;
+        if (at > Date.now() - TOMB_TTL_MS) return true;
+        removed.delete(String(id));
+        return false;
+    }
+
+    /** Drop anything this browser has deleted out of a server answer. */
+    function withoutRemoved(rows: NotificationResponse[]): NotificationResponse[] {
+        if (!removed.size) return rows;
+        return rows.filter(n => !isRemoved(n.notification_id));
+    }
+
+    /** How many live tombstones there are, for discounting a server count. */
+    function removedCount(): number {
+        const cutoff = Date.now() - TOMB_TTL_MS;
+        let live = 0;
+        for (const [id, at] of removed) {
+            if (at > cutoff) live += 1;
+            else removed.delete(id);
+        }
+        return live;
+    }
+
+    // -- What this browser has already been told about -----------------------
+
+    function readHeard(username: string) {
+        lastSeenId = '';
+        lastSeenAt = '';
+        try {
+            const raw = localStorage.getItem(`${HEARD_KEY}.${username}`);
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && typeof parsed === 'object') {
+                lastSeenId = String(parsed.id || '');
+                lastSeenAt = String(parsed.at || '');
+            }
+        } catch {
+            // Nothing to recover; firstLoad already keeps the next poll silent.
+        }
+    }
+
+    function writeHeard(username: string) {
+        if (!username) return;
+        try {
+            localStorage.setItem(`${HEARD_KEY}.${username}`,
+                                 JSON.stringify({ id: lastSeenId, at: lastSeenAt }));
+        } catch {
+            // Private browsing. The chime is simply re-armed on the next reload,
+            // which `firstLoad` makes silent anyway.
+        }
+    }
 
     // Computed
     const personalNotifications = computed(() => {
@@ -173,26 +313,32 @@ export const useNotificationStore = defineStore('notifications', () => {
      */
     function primeAudio() {
         if (primed) return;
+        primed = true;
         try {
             if (!chime) {
                 chime = new Audio(CHIME_URL);
                 chime.preload = 'auto';
             }
-            chime.muted = true;
-            const attempt = chime.play();
+            // A throwaway clone, silenced twice. The autoplay policy is scoped to
+            // the document rather than to one media element, so warming a clone
+            // buys the same permission — and it cannot leave the real chime
+            // half-played or unmuted mid-file. See note 2 in the header.
+            const warm = chime.cloneNode(true) as HTMLAudioElement;
+            warm.muted = true;
+            warm.volume = 0;
+            const drop = () => {
+                try {
+                    warm.pause();
+                    warm.src = '';
+                } catch {
+                    // The element is being discarded; nothing to do.
+                }
+            };
+            const attempt = warm.play();
             if (attempt && typeof attempt.then === 'function') {
-                attempt.then(() => {
-                    chime!.pause();
-                    chime!.currentTime = 0;
-                    chime!.muted = false;
-                    primed = true;
-                }).catch(() => {
-                    chime!.muted = false;
-                });
+                attempt.then(drop).catch(drop);
             } else {
-                chime.pause();
-                chime.muted = false;
-                primed = true;
+                drop();
             }
         } catch {
             chime = null;
@@ -217,16 +363,22 @@ export const useNotificationStore = defineStore('notifications', () => {
     /**
      * Whether this refresh should make a sound. Pure, and separated out because
      * every clause is a complaint somebody would otherwise make.
+     *
+     * The last two are the ones that were wrong. `latest_at` is compared
+     * **strictly greater than a high-water mark**, not merely "not older than the
+     * last value we happened to see": an id can be new to this tab while its
+     * record is older than something the tab has already been told about, which is
+     * what deleting the newest notification produces, and what a bounce between
+     * replicas produces. And an id this browser has itself deleted is never an
+     * arrival, however new the replica offering it thinks it is.
      */
     function shouldRing(count: { latest_id: string; latest_at: string; unread_count: number }): boolean {
         if (firstLoad) return false;
         if (!count.unread_count) return false;
         if (!count.latest_id) return false;
         if (count.latest_id === lastSeenId) return false;
-        // A record that predates what we have already seen is a replica catching
-        // up, not something new — the tab pins one replica, but a failover moves
-        // it and the newer replica may serve an older tail for a moment.
-        if (lastSeenAt && count.latest_at && count.latest_at < lastSeenAt) return false;
+        if (isRemoved(count.latest_id)) return false;
+        if (lastSeenAt && !(String(count.latest_at || '') > lastSeenAt)) return false;
         return true;
     }
 
@@ -235,6 +387,8 @@ export const useNotificationStore = defineStore('notifications', () => {
         currentUsername.value = username;
         firstLoad = true;
         stopPolling();
+        readHeard(username);
+        readRemoved(username);
         loadFromLocalStorage(username);
         fetchNotificationCount(username);
         schedule();
@@ -285,13 +439,19 @@ export const useNotificationStore = defineStore('notifications', () => {
                 pageSize.value
             );
 
+            // Anything this browser deleted is dropped before it reaches the
+            // list. Without this the record comes back the moment a poll lands on
+            // a replica the dismiss has not reached — which is the whole of "it
+            // deleted but kept reappearing".
+            const rows = withoutRemoved(response.results);
+
             if (currentPage.value === 1 || refresh) {
                 // Clear all notifications
-                notifications.value = response.results;
+                notifications.value = rows;
             } else {
                 // Append new notifications, avoiding duplicates
                 const existingIds = new Set(notifications.value.map(n => n.notification_id));
-                const newNotifications = response.results.filter(
+                const newNotifications = rows.filter(
                     n => !existingIds.has(n.notification_id)
                 );
                 notifications.value.push(...newNotifications);
@@ -324,13 +484,25 @@ export const useNotificationStore = defineStore('notifications', () => {
                 if (shouldRing(count)) ring();
                 if (count.latest_id) {
                     lastSeenId = count.latest_id;
-                    lastSeenAt = count.latest_at || lastSeenAt;
-                    latestTitle.value = count.latest_title || '';
+                    // Forward only. Taking the value as given lets a replica
+                    // whose tail is a moment behind lower the mark, and the return
+                    // to the up-to-date one then reads as an arrival.
+                    const at = String(count.latest_at || '');
+                    if (at > lastSeenAt) lastSeenAt = at;
+                    if (!isRemoved(count.latest_id)) {
+                        latestTitle.value = count.latest_title || '';
+                    }
+                    writeHeard(username);
                 }
                 firstLoad = false;
 
-                unreadCount.value = count.unread_count;
-                totalCount.value = count.total_count;
+                // The service counts what it holds, and it still holds what this
+                // browser deleted a moment ago on one replica out of three. Without
+                // the discount the badge sits above the list it belongs to, which
+                // reads as the delete not having worked.
+                const stale = removedCount();
+                unreadCount.value = Math.max(0, count.unread_count - stale);
+                totalCount.value = Math.max(0, count.total_count - stale);
                 currentUsername.value = username;
 
                 // Save to localStorage
@@ -352,8 +524,9 @@ export const useNotificationStore = defineStore('notifications', () => {
             // The bell counts everything the user can see, so it reads the
             // visible totals rather than the personal ones. Those two disagreeing
             // is why the badge used to sit at 3 over a list of eleven.
-            unreadCount.value = stats.unread_visible;
-            totalCount.value = stats.total_visible;
+            const stale = removedCount();
+            unreadCount.value = Math.max(0, stats.unread_visible - stale);
+            totalCount.value = Math.max(0, stats.total_visible - stale);
             generalCount.value = stats.total_general;
             groupCount.value = stats.total_group;
             currentUsername.value = username;
@@ -451,6 +624,10 @@ export const useNotificationStore = defineStore('notifications', () => {
 
         await notificationService.dismissNotification(notificationId, username);
 
+        // Remembered before the list is touched, so a poll that lands between the
+        // two - or on a replica that has not applied the dismiss - cannot put it
+        // back. See note 5 in the header.
+        forget([notificationId]);
         notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
 
         if (notification) {
@@ -475,6 +652,7 @@ export const useNotificationStore = defineStore('notifications', () => {
 
         const result = await notificationService.clearAll(target);
 
+        forget(notifications.value.map(n => n.notification_id));
         notifications.value = [];
         unreadCount.value = 0;
         totalCount.value = 0;
@@ -496,6 +674,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         await notificationService.deleteNotificationAsAdmin(notificationId);
 
         // Remove from local state for the current user immediately
+        forget([notificationId]);
         notifications.value = notifications.value.filter(n => n.notification_id !== notificationId);
 
         if (notification) {
@@ -544,6 +723,11 @@ export const useNotificationStore = defineStore('notifications', () => {
         latestTitle.value = '';
         lastSeenId = '';
         lastSeenAt = '';
+        // The tombstones stay in localStorage, keyed by username: this is a
+        // sign-out, and the next person to sign in on this browser reads their own
+        // set. Clearing the in-memory copy is what stops one account's deletions
+        // filtering another account's inbox.
+        removed = new Map();
         firstLoad = true;
         resetPagination();
     }

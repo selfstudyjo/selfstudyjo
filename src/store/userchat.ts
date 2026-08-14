@@ -13,15 +13,36 @@
 //    them at once, so a user in twenty conversations costs one request per tick
 //    rather than twenty. The tick slows down when the tab is hidden and stops
 //    entirely when the user logs out.
-// 2. **The chime is unlocked by a user gesture, once.** Browsers refuse
-//    `audio.play()` that no interaction led to, and the refusal is a rejected
-//    promise rather than an error anyone sees — so a chime that was never primed
-//    simply never sounds, silently, and looks like a broken feature. `primeAudio`
-//    is wired to the first click of the session.
+// 2. **The chime is unlocked by a user gesture, once, on a CLONE.** Browsers
+//    refuse `audio.play()` that no interaction led to, and the refusal is a
+//    rejected promise rather than an error anyone sees — so a chime that was never
+//    primed simply never sounds, silently, and looks like a broken feature.
+//    `primeAudio` is wired to the first click of the session. It warms a clone
+//    rather than the element that later rings, because playing the real one muted
+//    and then unmuting it races the browser's audio thread and plays an audible
+//    fragment on the first click anywhere in the app — a sound with no message
+//    behind it, which is the thing being fixed here.
 // 3. **It does not ring for everything.** Not for your own messages, not for a
 //    muted room, and not for the room you are currently reading with the window
 //    focused. A notification for something already on screen is noise, and noise
 //    is what makes people turn notifications off.
+// 4. **A rise in the count is not enough on its own; the room's own timestamp has
+//    to have moved too.** Replication is push-then-repair, so the count this tab
+//    is shown can legitimately go backwards and forwards without a single message
+//    being sent — and every one of those bounces used to ring:
+//
+//      - you open a room, `markLocallyRead` sets its count to 0 for a responsive
+//        badge, and the next poll comes back from a replica that has not applied
+//        the read mark yet. 3 > 0, so it rang — **every time you opened a chat**;
+//      - the same thing with the tab hidden, where the "do not ring for the room
+//        being read" clause does not apply at all;
+//      - a failover between replicas, where the other one's copy is a moment
+//        behind.
+//
+//    So each room remembers two things: the count at the last poll, which moves
+//    both ways, and the newest `last_message_at` it has **ever** been told about,
+//    which only moves forward. A ring needs both a higher count and a newer
+//    message. A stale replica can satisfy the first and never the second.
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
@@ -68,11 +89,18 @@ export const useUserChatStore = defineStore('userchat', () => {
 
     let timer: number | null = null;
     let currentUserId = '';
-    /** Per room, what we last saw. A rise here is what "a new message" means —
-     *  comparing the total alone would miss one room clearing while another
-     *  gained, which is exactly what happens when somebody reads one chat while
-     *  another is active. */
-    let seen = new Map<string, number>();
+    /**
+     * Per room, what we last saw. A rise is what "a new message" means —
+     * comparing the total alone would miss one room clearing while another
+     * gained, which is exactly what happens when somebody reads one chat while
+     * another is active.
+     *
+     * `n` is the count at the last poll and moves both ways. `ts` is the newest
+     * `last_message_at` ever seen for that room and only moves forward; it is what
+     * makes a lower `n` safe to record, so a replica that is briefly behind cannot
+     * be mistaken for an arrival. See note 4 in the header.
+     */
+    let seen = new Map<string, { n: number; ts: string }>();
     let firstLoad = true;
 
     function readSoundPreference(): boolean {
@@ -103,26 +131,36 @@ export const useUserChatStore = defineStore('userchat', () => {
      */
     function primeAudio() {
         if (primed) return;
+        primed = true;
         try {
             if (!chime) {
                 chime = new Audio(CHIME_URL);
                 chime.preload = 'auto';
             }
-            chime.muted = true;
-            const attempt = chime.play();
+            // A clone, silenced twice, and never the element that rings. The
+            // autoplay policy is scoped to the document rather than to one media
+            // element, so warming a throwaway buys the same permission — and it
+            // cannot leave the real chime half-played, unmuted, or seeked into the
+            // middle of the file. Muting the real one and unmuting it after the
+            // promise resolves is a race with the audio thread that plays an
+            // audible blip on the first click of the session, which is precisely
+            // "a sound with no message behind it".
+            const warm = chime.cloneNode(true) as HTMLAudioElement;
+            warm.muted = true;
+            warm.volume = 0;
+            const drop = () => {
+                try {
+                    warm.pause();
+                    warm.src = '';
+                } catch {
+                    // Nothing to do; the element is being discarded anyway.
+                }
+            };
+            const attempt = warm.play();
             if (attempt && typeof attempt.then === 'function') {
-                attempt.then(() => {
-                    chime!.pause();
-                    chime!.currentTime = 0;
-                    chime!.muted = false;
-                    primed = true;
-                }).catch(() => {
-                    chime!.muted = false;
-                });
+                attempt.then(drop).catch(drop);
             } else {
-                chime.pause();
-                chime.muted = false;
-                primed = true;
+                drop();
             }
         } catch {
             chime = null;
@@ -147,11 +185,13 @@ export const useUserChatStore = defineStore('userchat', () => {
     /**
      * Whether this refresh should make a sound.
      *
-     * Pure and separated out because the rule has four clauses and every one of
-     * them is a complaint somebody would otherwise make: do not ring on the first
-     * load of the session (everything unread is "new" then), do not ring for a
-     * muted room, do not ring for the room being read in a focused window, and
-     * only ring when a room's count has actually *risen*.
+     * Pure and separated out because every clause is a complaint somebody would
+     * otherwise make: do not ring on the first load of the session (everything
+     * unread is "new" then), do not ring for a muted room, do not ring for the
+     * room being read in a focused window, and only ring when a room's count has
+     * risen **and** its newest message is newer than any this tab has been told
+     * about. That last conjunction is the one that matters — see note 4 in the
+     * header for the three ways the count alone rings at nothing.
      */
     function shouldRing(next: UnreadSummary): boolean {
         if (firstLoad) return false;
@@ -159,9 +199,36 @@ export const useUserChatStore = defineStore('userchat', () => {
         for (const row of next.results || []) {
             if (row.muted) continue;
             if (readingNow && row.room_id === activeRoomId.value) continue;
-            if (row.unread > (seen.get(row.room_id) ?? 0)) return true;
+            const was = seen.get(row.room_id);
+            // A room this tab has never been told about: an unread message in it
+            // is somebody starting a conversation, which is exactly a new
+            // message. There is no earlier timestamp to compare against.
+            if (!was) {
+                if (row.unread > 0) return true;
+                continue;
+            }
+            if (row.unread > was.n && String(row.last_message_at || '') > was.ts) {
+                return true;
+            }
         }
         return false;
+    }
+
+    /** Fold this answer into what each room is known to be at. */
+    function record(next: UnreadSummary) {
+        const fresh = new Map<string, { n: number; ts: string }>();
+        for (const row of next.results || []) {
+            const was = seen.get(row.room_id);
+            const ts = String(row.last_message_at || '');
+            fresh.set(row.room_id, {
+                n: row.unread,
+                // Forward only, so a replica that is behind lowers the count
+                // without making the return to an up-to-date one look like an
+                // arrival.
+                ts: ts > (was?.ts || '') ? ts : (was?.ts || ''),
+            });
+        }
+        seen = fresh;
     }
 
     async function refresh(userId?: string): Promise<void> {
@@ -173,7 +240,7 @@ export const useUserChatStore = defineStore('userchat', () => {
             const next = await userChatService.unreadSummary(target);
             if (shouldRing(next)) ring();
 
-            seen = new Map((next.results || []).map(r => [r.room_id, r.unread]));
+            record(next);
             summary.value = next;
             totalUnread.value = (next.results || [])
                 .filter(r => !r.muted)
@@ -246,7 +313,11 @@ export const useUserChatStore = defineStore('userchat', () => {
     }
 
     function markLocallyRead(roomId: string) {
-        seen.set(roomId, 0);
+        // The count drops to zero for a responsive badge; `ts` is deliberately
+        // kept, and that is what stops the next poll from a replica that has not
+        // applied the read mark yet - which is most of them, for the next twenty
+        // seconds - from reading 3 > 0 and chiming at somebody for opening a chat.
+        seen.set(roomId, { n: 0, ts: seen.get(roomId)?.ts || '' });
         if (summary.value) {
             const row = summary.value.results?.find(r => r.room_id === roomId);
             if (row) row.unread = 0;
