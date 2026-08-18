@@ -172,6 +172,14 @@ export interface MatchReport {
     score: number | null;
     /** The original CV's score, so the panel can show what the pass bought. */
     baseline_score?: number | null;
+    /**
+     * What the backend actually altered ('headline', '3 skills', '1 role'), so the
+     * UI reports the change rather than asserting one. It is never empty: /ai/tailor
+     * falls back to a deterministic keyword pass rather than leaving a CV untouched.
+     */
+    changed?: string[];
+    /** False when no provider answered and the deterministic pass produced this. */
+    assisted?: boolean;
     coverage?: TailorCoverage;
     job_title?: string;
     seniority?: string;

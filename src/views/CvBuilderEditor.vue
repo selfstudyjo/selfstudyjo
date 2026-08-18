@@ -424,13 +424,22 @@
 
           <div class="row-actions">
             <button class="btn btn-ai" :disabled="tailorDisabled" @click="tailor(false)">
-              {{ tailoring ? 'Rewriting your CV…' : '⚡ Make my CV suit this job' }}
+              <span v-if="tailoring === 'inplace'" class="btn-spinner" aria-hidden="true"></span>
+              {{ tailoring === 'inplace' ? 'Tailoring your CV…' : '⚡ Make my CV suit this job' }}
             </button>
             <button class="btn btn-ghost" :disabled="tailorDisabled" @click="tailor(true)">
-              Tailor into a separate CV
+              <span v-if="tailoring === 'copy'" class="btn-spinner" aria-hidden="true"></span>
+              {{ tailoring === 'copy' ? 'Creating the tailored copy…' : 'Tailor into a separate CV' }}
             </button>
             <span class="hint inline">Tailoring into a copy keeps this CV as your general one.</span>
           </div>
+          <!-- A progress line as well as the button spinner: the button can scroll out
+               of view on a phone, and this is the one action here that takes seconds. -->
+          <p v-if="tailoring" class="tailor-progress" role="status" aria-live="polite">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            Reading the posting and rewriting your CV against it — this usually takes a
+            few seconds. Your CV is saved either way.
+          </p>
           <p v-if="coverage === 'full'" class="hint">
             Read the “Added to your CV” list before you apply and delete anything you cannot
             stand behind in an interview. Credentials — certifications, licences, degrees — are
@@ -846,7 +855,9 @@ const reviewing = ref(false);
 const review = ref<CvReview | null>(null);
 
 const jobDescription = ref('');
-const tailoring = ref(false);
+/** Which tailor button is running: 'inplace' | 'copy' | null. A plain boolean
+ *  put the spinner on both buttons at once. */
+const tailoring = ref<'inplace' | 'copy' | null>(null);
 const coverage = ref<TailorCoverage>('full');
 
 const coverageModes: { key: TailorCoverage; name: string; description: string }[] = [
@@ -856,8 +867,11 @@ const coverageModes: { key: TailorCoverage; name: string; description: string }[
     description: 'Rewrites and reorders what you already have. Claims nothing new.' },
 ];
 
+// Not gated on aiReady any more: /ai/tailor always tailors, falling back to a
+// keyword pass when no provider answers, so disabling the button on AI health
+// would hide a feature that works.
 const tailorDisabled = computed(() =>
-  tailoring.value || !aiReady.value || jobDescription.value.trim().length < 80);
+  !!tailoring.value || jobDescription.value.trim().length < 80);
 
 const voiceTranscript = ref('');
 const voiceNotes = ref('');
@@ -1145,7 +1159,7 @@ async function runReview() {
 
 async function tailor(asCopy: boolean) {
   if (dirty.value && !(await save())) return;
-  tailoring.value = true;
+  tailoring.value = asCopy ? 'copy' : 'inplace';
   try {
     const result = await cvBuilderService.tailorToJob(userId.value, {
       cv_id: cv.value!.id,
@@ -1164,16 +1178,19 @@ async function tailor(asCopy: boolean) {
     const report = result.match_report;
     const added = report?.added_keywords?.length || 0;
     const score = report?.score;
+    // `changed` is what the backend actually altered, so the toast can name it
+    // rather than claiming a rewrite that may not have happened.
+    const changed = report?.changed?.length ? ` Updated: ${report.changed.join(', ')}.` : '';
     showToast(added
       ? `Tailored — ${added} requirement${added === 1 ? '' : 's'} added${
-          score != null ? `, now a ${score}% match` : ''}. Review the “Added to your CV” list.`
+          score != null ? `, now a ${score}% match` : ''}.${changed} Review the “Added to your CV” list.`
       : (score != null
-          ? `Tailored — the AI rates this a ${score}% match. Check the gaps it listed.`
-          : 'CV tailored to that job description.'));
+          ? `Tailored — this is a ${score}% match against that posting.${changed}`
+          : `CV tailored to that job description.${changed}`));
   } catch (e: any) {
     showToast(e?.message || 'The CV could not be tailored.', 'error');
   } finally {
-    tailoring.value = false;
+    tailoring.value = null;
   }
 }
 
@@ -1418,6 +1435,32 @@ onBeforeRouteLeave(async () => {
 .btn-secondary { background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2); color: var(--sfs-text-muted, #c7d2fe); border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45); }
 .btn-ghost { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07); color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.85); border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14); }
 .btn-ai { background: linear-gradient(135deg, var(--sfs-accent-2, #a855f7), var(--sfs-accent-2, #ec4899)); color: var(--sfs-on-accent-2, #fff); }
+
+/* ── Busy indicator ─────────────────────────────────────────────
+   An inline spinner, sized in `em` so it tracks whatever font size the button it
+   sits in uses, and drawn with `currentColor` so it is legible on the gradient
+   button, on the ghost button and in all ten galaxies without naming a colour.
+   `flex-shrink: 0` because a button whose label grows to "Tailoring your CV…"
+   would otherwise squash the circle into an ellipse. */
+.btn-spinner {
+  display: inline-block; flex-shrink: 0;
+  width: 0.9em; height: 0.9em; vertical-align: -0.1em;
+  border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+  animation: cve-spin 0.7s linear infinite;
+}
+@keyframes cve-spin { to { transform: rotate(360deg); } }
+
+.tailor-progress {
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px 0 0; font-size: 0.85rem;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.75);
+}
+
+/* Someone who asked for less motion still needs to know it is working, so the
+   ring stays and only the rotation stops. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation: none; border-top-color: currentColor; opacity: 0.6; }
+}
 
 .icon-btn {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07); border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
