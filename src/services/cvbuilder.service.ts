@@ -188,12 +188,36 @@ export interface MatchReport {
     review_notes?: string[];
 }
 
+/**
+ * What `POST /api/cv/ai/from-job` produced.
+ *
+ * Not a MatchReport: there is nothing to score against, because the CV did not
+ * exist before the call. What the user needs instead is the list of blanks they
+ * have to fill in, which is why `placeholder_count` is computed by the backend
+ * from the record rather than taken from the model's own account of itself.
+ */
+export interface BuildReport {
+    job_title?: string;
+    seniority?: string;
+    required_keywords?: string[];
+    covered_keywords?: string[];
+    /** Certifications and licences the posting wants. Never written into the CV. */
+    missing_credentials?: string[];
+    placeholders?: string[];
+    next_steps?: string[];
+    /** Every `[bracketed]` gap actually left in the record. */
+    placeholder_fields?: string[];
+    placeholder_count?: number;
+}
+
 export interface JobTarget {
     job_description?: string;
     job_title?: string;
-    coverage?: TailorCoverage;
+    /** 'from_job' marks a CV the AI drafted from the posting rather than tailored. */
+    coverage?: TailorCoverage | 'from_job';
     tailored_at?: string;
     match_report?: MatchReport;
+    build_report?: BuildReport;
 }
 
 export type CvSectionKey =
@@ -224,7 +248,7 @@ export interface CvRecord {
     references: CvReference[];
     sections_order: CvSectionKey[];
     hidden_sections: CvSectionKey[];
-    source: 'manual' | 'upload' | 'voice' | 'paste' | string;
+    source: 'manual' | 'upload' | 'voice' | 'paste' | 'job' | string;
     source_file: { filename?: string; path?: string; bytes?: number; kind?: string };
     job_target: JobTarget;
     ai_notes: string[];
@@ -334,12 +358,26 @@ export interface CvReview {
     quick_wins: string[];
 }
 
+/**
+ * `available` is the honest capability, and the distinction from
+ * `keys_configured` is load-bearing: on 2026-08-18 every model id the backend
+ * named had been retired by its provider, and this object reported the service
+ * as healthy for the whole outage because it only counted keys. `models` is what
+ * lets a screen say which of the two problems it is.
+ */
 export interface AiProviderStatus {
     groq: number;
     openrouter: number;
     gemini: number;
     available: boolean;
+    keys_configured?: boolean;
     transcription: boolean;
+    models?: Record<string, { configured: string[]; live: string[]; retired: string[] }>;
+    last_error?: Record<string, { model: string; status: number; reason: string; at: number }>;
+    /** Only from `?probe=1`, which spends a real completion to find out. */
+    ok?: boolean;
+    error?: string;
+    seconds?: number;
 }
 
 export interface UploadResult {
@@ -395,9 +433,19 @@ class CvBuilderService {
         return apiService.get(baseUrl, '/health');
     }
 
-    async aiStatus(): Promise<AiProviderStatus> {
+    /**
+     * `probe` spends one real completion to find out whether the AI actually
+     * answers, instead of inferring it from the key count. Off by default: the
+     * dashboard asks on load, and paying for a completion on every page view is
+     * not worth it when the cheap answer is right almost always.
+     */
+    async aiStatus(probe = false): Promise<AiProviderStatus> {
         const baseUrl = await this.getBaseUrl();
-        return apiService.get(baseUrl, '/api/cv/ai/status');
+        // The path is a plain literal and the query is appended separately, so
+        // _contract.py can still read it off disk and check it against the real
+        // URL map. Interpolating the whole thing hides the path from that check.
+        const path = '/api/cv/ai/status';
+        return apiService.get(baseUrl, probe ? path + '?probe=1' : path);
     }
 
     async exportFormats(): Promise<Record<ExportFormat, { available: boolean; error?: string }>> {
@@ -563,6 +611,24 @@ class CvBuilderService {
         return apiService.post(baseUrl, '/api/cv/ai/tailor', payload, this.headers(userId));
     }
 
+    /**
+     * Draft a whole CV from a job advert - the "I have no CV yet" path.
+     *
+     * Distinct from `tailorToJob`, which reworks a CV that already exists. Here
+     * there is nothing to rework, so every fact about the user that `background`
+     * does not supply comes back as a `[bracketed]` placeholder for them to fill
+     * in. `build_report.placeholder_count` is how many.
+     */
+    async buildFromJob(userId: string, payload: {
+        job_description: string;
+        /** Free text about the candidate. Optional - without it the draft is a scaffold. */
+        background?: string;
+        title?: string; save?: boolean;
+    }): Promise<{ cv: CvRecord; saved: boolean; build_report: BuildReport; summary: CvSummary }> {
+        const baseUrl = await this.getBaseUrl();
+        return apiService.post(baseUrl, '/api/cv/ai/from-job', payload, this.headers(userId));
+    }
+
     async buildFromVoice(userId: string, payload: {
         transcript: string; notes?: string; title?: string;
         avatar?: AvatarKind; save?: boolean;
@@ -607,12 +673,17 @@ class CvBuilderService {
      * Download a CV. Renders server-side so the file matches the chosen template
      * exactly, then hands the browser a blob - which also keeps the service token
      * out of the URL bar and out of the browser's history.
+     *
+     * `filename` is the user's own name for the file. It is sanitised on the
+     * backend rather than here, because this client is not the only caller and a
+     * check that lives in one client is a check the next one does not have.
      */
     async download(
         userId: string,
         cvId: string,
         format: ExportFormat,
-        options: { cv?: Partial<CvRecord>; template?: string; accent_color?: string; font?: string } = {}
+        options: { cv?: Partial<CvRecord>; template?: string; accent_color?: string;
+                   font?: string; filename?: string } = {}
     ): Promise<{ blob: Blob; filename: string }> {
         const baseUrl = await this.getBaseUrl();
         const endpoint = cvId

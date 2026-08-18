@@ -25,12 +25,9 @@
         <button class="btn btn-ghost" :disabled="saving || !dirty" @click="save()">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button class="btn btn-primary" :disabled="!!downloading" @click="downloadCv('pdf')">
+        <button class="btn btn-primary" :disabled="!!downloading" @click="askDownload">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-          {{ downloading === 'pdf' ? 'Building…' : 'PDF' }}
-        </button>
-        <button class="btn btn-secondary" :disabled="!!downloading" @click="downloadCv('docx')">
-          {{ downloading === 'docx' ? 'Building…' : 'DOCX' }}
+          {{ downloading ? 'Building…' : 'Download' }}
         </button>
       </div>
     </header>
@@ -441,6 +438,42 @@
           </p>
         </div>
 
+        <!-- A CV the AI drafted from this posting, rather than one it tailored.
+             The gaps are the whole point of that feature, so they are stated here
+             where the posting is, not buried in the history. -->
+        <div v-if="buildReport" class="card">
+          <div class="card-head">
+            <h3>Drafted from this job ad</h3>
+            <span v-if="cv.job_target?.tailored_at" class="badge">
+              {{ formatDate(cv.job_target.tailored_at) }}
+            </span>
+          </div>
+          <p v-if="buildReport.placeholder_count" class="card-note">
+            <strong>{{ buildReport.placeholder_count }} detail{{ buildReport.placeholder_count === 1 ? '' : 's' }}
+            still in square brackets.</strong>
+            Nothing about your history was invented, so each one is a fact only you can supply.
+            Replace them all before you send this CV anywhere.
+          </p>
+          <p v-else class="card-note">
+            No blanks left. Read it through anyway — the bullets were written from the advert,
+            so they describe the job rather than what you actually did.
+          </p>
+          <div v-if="buildReport.placeholder_fields?.length" class="draft-gaps">
+            <span v-for="(gap, i) in buildReport.placeholder_fields" :key="i" class="draft-gap">
+              {{ gap }}
+            </span>
+          </div>
+          <div v-if="buildReport.missing_credentials?.length" class="match-block">
+            <h4>Credentials this role asks for</h4>
+            <p class="card-note">Never added for you — a certificate is checked.</p>
+            <ul><li v-for="(item, i) in buildReport.missing_credentials" :key="i">{{ item }}</li></ul>
+          </div>
+          <div v-if="buildReport.next_steps?.length" class="match-block">
+            <h4>What to do next</h4>
+            <ul><li v-for="(item, i) in buildReport.next_steps" :key="i">{{ item }}</li></ul>
+          </div>
+        </div>
+
         <div v-if="matchReport" class="card">
           <div class="card-head">
             <h3>Match report</h3>
@@ -684,11 +717,8 @@
             <span>{{ currentSpec?.description }}</span>
           </div>
           <div class="preview-bar-actions">
-            <button class="btn btn-primary btn-sm" :disabled="!!downloading" @click="downloadCv('pdf')">
-              {{ downloading === 'pdf' ? 'Building…' : 'Download PDF' }}
-            </button>
-            <button class="btn btn-secondary btn-sm" :disabled="!!downloading" @click="downloadCv('docx')">
-              {{ downloading === 'docx' ? 'Building…' : 'Download DOCX' }}
+            <button class="btn btn-primary btn-sm" :disabled="!!downloading" @click="askDownload">
+              {{ downloading ? 'Building…' : 'Download as…' }}
             </button>
           </div>
         </div>
@@ -716,6 +746,31 @@
       @cancel="studioOpen = false"
     />
 
+    <div v-if="downloadOpen" class="modal-backdrop" @click.self="downloadOpen = false">
+      <div class="modal">
+        <h3>Download this CV</h3>
+        <p>Rendered on the server from the template you can see, including edits you have not
+           saved. Name the file so you can tell this application from the next one.</p>
+        <label class="modal-field">
+          <span>File name</span>
+          <input ref="downloadNameInput" v-model="downloadName" type="text" maxlength="70"
+                 @keyup.enter="downloadCv('pdf')" />
+        </label>
+        <p class="modal-hint">Saves as <strong>{{ previewFilename }}</strong></p>
+        <div class="modal-actions">
+          <button class="btn btn-primary" :disabled="!!downloading" @click="downloadCv('pdf')">
+            {{ downloading === 'pdf' ? 'Building…' : 'Download PDF' }}
+          </button>
+          <button class="btn btn-secondary" :disabled="!!downloading" @click="downloadCv('docx')">
+            {{ downloading === 'docx' ? 'Building…' : 'Download DOCX' }}
+          </button>
+          <button class="btn btn-ghost" :disabled="!!downloading" @click="downloadOpen = false">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="toast" class="toast" :class="toastType">{{ toast }}</div>
   </div>
 
@@ -727,7 +782,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import CvPhotoStudio from '@/components/cvbuilder/CvPhotoStudio.vue';
@@ -736,7 +791,8 @@ import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
 import {
   blankEntry, cvBuilderService,
   type AvatarOption, type CvRecord, type CvSectionKey, type CvTemplate,
-  type CvPhotoEdit, type CvReview, type ExportFormat, type MatchReport,
+  type BuildReport, type CvPhotoEdit, type CvReview, type ExportFormat,
+  type MatchReport,
   type TailorCoverage,
 } from '@/services/cvbuilder.service';
 
@@ -764,6 +820,9 @@ const dirty = ref(false);
 const saving = ref(false);
 const savedAt = ref('');
 const downloading = ref<'' | ExportFormat>('');
+const downloadOpen = ref(false);
+const downloadName = ref('');
+const downloadNameInput = ref<HTMLInputElement | null>(null);
 const banner = ref('');
 const bannerType = ref<'info' | 'warn' | 'error'>('info');
 const toast = ref('');
@@ -815,6 +874,16 @@ const currentSpec = computed<CvTemplate | null>(() =>
 
 const matchReport = computed<MatchReport | null>(() =>
   (cv.value?.job_target?.match_report as MatchReport) || null);
+
+/**
+ * Present only on a CV the AI drafted from a posting (`/api/cv/ai/from-job`).
+ *
+ * Separate from `matchReport` because the two answer different questions: a match
+ * report scores a CV against a job, and there is nothing to score here - the CV
+ * came out of the job. What this one carries is the list of blanks.
+ */
+const buildReport = computed<BuildReport | null>(() =>
+  (cv.value?.job_target?.build_report as BuildReport) || null);
 
 const completeness = computed(() => {
   const record = cv.value;
@@ -1214,14 +1283,43 @@ function clearPhoto() {
 }
 
 // ── Download ──────────────────────────────────────────────────────────
+/**
+ * `\p{L}\p{N}` rather than `\w`, because JavaScript's `\w` is ASCII-only while the
+ * backend's Python one is Unicode-aware. With `\w` the preview of an Arabic name
+ * renders as empty while the file downloads with the name intact - the preview
+ * would be lying to exactly the users most likely to notice.
+ */
+const UNSAFE_IN_FILENAME = /[^\p{L}\p{N}_\s-]/gu;
+
+/** Mirrors export_filename() in the backend. A preview only - it sanitises again. */
+const previewFilename = computed(() => {
+  const extension = downloading.value || 'pdf';
+  const typed = downloadName.value.trim().replace(/\.(pdf|docx)$/i, '');
+  const cleaned = typed.replace(UNSAFE_IN_FILENAME, '').trim()
+    .replace(/\s+/g, '_').slice(0, 70);
+  if (cleaned) return `${cleaned}.${extension}`;
+  const fallback = (cv.value?.personal.full_name || cv.value?.title || 'cv')
+    .replace(UNSAFE_IN_FILENAME, '').trim().replace(/\s+/g, '_').slice(0, 70) || 'cv';
+  return `${fallback}_CV.${extension}`;
+});
+
+function askDownload() {
+  downloadName.value = cv.value?.title || '';
+  downloadOpen.value = true;
+  // Selected, not merely focused: the default is a name to replace.
+  void nextTick(() => downloadNameInput.value?.select());
+}
+
 async function downloadCv(format: ExportFormat) {
   downloading.value = format;
   try {
     // Send the in-memory record so the file includes edits the user can see but
     // has not saved - anything else would download a document they did not expect.
     const { blob, filename } = await cvBuilderService.download(
-      userId.value, cv.value!.id, format, { cv: cv.value! });
+      userId.value, cv.value!.id, format,
+      { cv: cv.value!, filename: downloadName.value.trim() });
     cvBuilderService.saveBlob(blob, filename);
+    downloadOpen.value = false;
   } catch (e: any) {
     showToast(e?.message || `The ${format.toUpperCase()} could not be built.`, 'error');
   } finally {
@@ -1636,6 +1734,51 @@ onBeforeRouteLeave(async () => {
 .preview-hint { margin-bottom: 14px; }
 
 /* ── Toast ──────────────────────────────────────────────────── */
+/* ── Download dialog ─────────────────────────────────────────── */
+/* This screen had no dialog before the named download, so the layer is new here
+   rather than shared. It matches CvBuilder.vue's so the two read as one product. */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 900; padding: 20px;
+  background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.62); backdrop-filter: blur(3px);
+  display: grid; place-items: center;
+}
+.modal {
+  background: var(--sfs-surface-2, #131327); border-radius: 14px; padding: 22px;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  max-width: 440px; width: 100%;
+}
+.modal h3 { font-size: 1.1rem; font-weight: 650; margin-bottom: 8px; }
+.modal p {
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
+  font-size: 0.88rem; line-height: 1.55; margin-bottom: 16px;
+}
+.modal-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.modal-field { display: block; margin-bottom: 12px; }
+.modal-field span {
+  display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 6px;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+}
+.modal-field input {
+  width: 100%; padding: 10px 12px; border-radius: 9px; font-size: 0.9rem;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+  color: var(--sfs-text, #fff);
+}
+.modal-field input:focus { outline: none; border-color: var(--sfs-accent, #667eea); }
+.modal-hint {
+  font-size: 0.8rem; margin-bottom: 16px; word-break: break-all;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+}
+.modal-hint strong { color: var(--sfs-text, #fff); font-weight: 600; }
+
+/* ── "Drafted from a job ad" gaps ────────────────────────────── */
+.draft-gaps { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 12px; }
+.draft-gap {
+  font-size: 0.8rem; padding: 4px 10px; border-radius: 999px;
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3);
+  color: var(--sfs-warning-text, #fbbf24);
+}
+
 .toast {
   position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
   padding: 12px 20px; border-radius: 10px; font-size: 0.87rem; z-index: 950;

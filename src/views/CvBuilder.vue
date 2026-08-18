@@ -144,6 +144,46 @@
           <p v-if="pasteError" class="path-error">{{ pasteError }}</p>
         </div>
       </article>
+
+      <!-- Job description -->
+      <article class="path-card">
+        <div class="path-icon job">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2zm-6 0h-4V4h4v2z"/></svg>
+        </div>
+        <h3>Start from the job you want</h3>
+        <p>No CV at all? Paste the advert and the AI writes a complete draft aimed at that
+           role — the right sections, the posting's skills, and real bullets you edit. Anything
+           it cannot know about you is left in <code>[brackets]</code> for you to fill in.</p>
+
+        <button v-if="!showJob" class="btn btn-secondary" @click="showJob = true">
+          Build from a job description
+        </button>
+
+        <div v-else class="path-paste">
+          <textarea v-model="jobText" rows="7"
+                    placeholder="Paste the full job advert — responsibilities, requirements, nice-to-haves…"></textarea>
+          <p class="hint">{{ jobText.trim().length }} characters
+             <span v-if="jobText.trim().length && jobText.trim().length < 80">
+               — paste a bit more; 80 is the minimum.</span>
+          </p>
+
+          <textarea v-model="jobBackground" rows="4"
+                    placeholder="Optional but worth 30 seconds: your name, where you have worked, how long, what you actually did. Whatever you write here becomes real content instead of a blank."></textarea>
+          <p class="hint">
+            Leave it empty and you get a scaffold to fill in. Nothing is ever invented about
+            you — no employer, date, degree or certificate the AI has not been told.
+          </p>
+
+          <div class="path-voice-actions">
+            <button class="btn btn-primary" :disabled="draftingJob || jobText.trim().length < 80"
+                    @click="buildFromJob">
+              {{ draftingJob ? 'Writing your draft…' : 'Draft my CV' }}
+            </button>
+            <button class="btn btn-ghost" @click="showJob = false">Cancel</button>
+          </div>
+          <p v-if="jobError" class="path-error">{{ jobError }}</p>
+        </div>
+      </article>
     </section>
 
     <!-- ═══ My CVs ═══ -->
@@ -194,12 +234,10 @@
           <div class="cv-card-actions">
             <button class="btn btn-primary btn-sm" @click="open(cv.id)">Open</button>
             <button class="btn btn-ghost btn-sm" :disabled="downloadingId === cv.id"
-                    @click="download(cv, 'pdf')">
-              {{ downloadingId === cv.id ? '…' : 'PDF' }}
+                    @click="askDownload(cv)">
+              {{ downloadingId === cv.id ? '…' : 'Download' }}
             </button>
-            <button class="btn btn-ghost btn-sm" :disabled="downloadingId === cv.id"
-                    @click="download(cv, 'docx')">DOCX</button>
-            <button class="btn btn-ghost btn-sm" @click="duplicate(cv)">Copy</button>
+            <button class="btn btn-ghost btn-sm" @click="askDuplicate(cv)">Copy</button>
             <button class="btn btn-danger btn-sm" @click="confirmDelete(cv)">Delete</button>
           </div>
         </article>
@@ -229,6 +267,57 @@
       </div>
     </section>
 
+    <!-- ═══ Download, with a name of the user's choosing ═══ -->
+    <div v-if="pendingDownload" class="modal-backdrop" @click.self="pendingDownload = null">
+      <div class="modal">
+        <h3>Download “{{ pendingDownload.title }}”</h3>
+        <p>Name the file. Six applications means six PDFs in one downloads folder, and every
+           one of them is called after you unless you say otherwise.</p>
+        <label class="modal-field">
+          <span>File name</span>
+          <input v-model="downloadName" type="text" maxlength="70"
+                 :placeholder="suggestedName(pendingDownload)"
+                 @keyup.enter="doDownload(downloadFormat)" />
+        </label>
+        <p class="modal-hint">
+          Saves as <strong>{{ previewFilename }}</strong>
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-primary" :disabled="!!downloadingId"
+                  @click="doDownload('pdf')">
+            {{ downloadingId && downloadFormat === 'pdf' ? 'Building…' : 'Download PDF' }}
+          </button>
+          <button class="btn btn-secondary" :disabled="!!downloadingId"
+                  @click="doDownload('docx')">
+            {{ downloadingId && downloadFormat === 'docx' ? 'Building…' : 'Download DOCX' }}
+          </button>
+          <button class="btn btn-ghost" :disabled="!!downloadingId"
+                  @click="pendingDownload = null">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Duplicate, with a name of the user's choosing ═══ -->
+    <div v-if="pendingCopy" class="modal-backdrop" @click.self="pendingCopy = null">
+      <div class="modal">
+        <h3>Copy “{{ pendingCopy.title }}”</h3>
+        <p>The copy is a separate CV — editing it never touches the original. Give it a name
+           you will recognise in the list.</p>
+        <label class="modal-field">
+          <span>Name for the copy</span>
+          <input ref="copyNameInput" v-model="copyName" type="text" maxlength="160"
+                 @keyup.enter="doDuplicate" />
+        </label>
+        <div class="modal-actions">
+          <button class="btn btn-primary" :disabled="copying || !copyName.trim()"
+                  @click="doDuplicate">
+            {{ copying ? 'Copying…' : 'Create the copy' }}
+          </button>
+          <button class="btn btn-ghost" :disabled="copying" @click="pendingCopy = null">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ Delete confirm ═══ -->
     <div v-if="pendingDelete" class="modal-backdrop" @click.self="pendingDelete = null">
       <div class="modal">
@@ -249,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
@@ -289,7 +378,22 @@ const pasteText = ref('');
 const parsing = ref(false);
 const pasteError = ref('');
 
+const showJob = ref(false);
+const jobText = ref('');
+const jobBackground = ref('');
+const draftingJob = ref(false);
+const jobError = ref('');
+
 const downloadingId = ref('');
+const pendingDownload = ref<CvSummary | null>(null);
+const downloadName = ref('');
+const downloadFormat = ref<ExportFormat>('pdf');
+
+const pendingCopy = ref<CvSummary | null>(null);
+const copyName = ref('');
+const copying = ref(false);
+const copyNameInput = ref<HTMLInputElement | null>(null);
+
 const pendingDelete = ref<CvSummary | null>(null);
 const deleting = ref(false);
 const toast = ref('');
@@ -322,7 +426,8 @@ function formatDate(value?: string) {
 
 function sourceLabel(source: string) {
   return ({ upload: 'Imported from a file', voice: 'Built by voice',
-            paste: 'Built from pasted text', manual: 'Written here' } as any)[source] || 'Written here';
+            paste: 'Built from pasted text', job: 'Drafted from a job advert',
+            manual: 'Written here' } as any)[source] || 'Written here';
 }
 
 function templateName(key: string) {
@@ -456,12 +561,70 @@ async function parsePasted() {
   }
 }
 
+// ── Job description ───────────────────────────────────────────────────
+async function buildFromJob() {
+  jobError.value = '';
+  draftingJob.value = true;
+  try {
+    const result = await cvBuilderService.buildFromJob(userId.value, {
+      job_description: jobText.value,
+      background: jobBackground.value,
+    });
+    const holes = result.build_report?.placeholder_count ?? 0;
+    showToast(holes
+      ? `Draft ready — ${holes} detail${holes === 1 ? '' : 's'} in brackets to fill in.`
+      : 'Draft ready — check every line before you send it.');
+    open(result.cv.id);
+  } catch (e: any) {
+    jobError.value = e?.message || 'A CV could not be drafted from that job description.';
+  } finally {
+    draftingJob.value = false;
+  }
+}
+
 // ── Card actions ──────────────────────────────────────────────────────
-async function download(cv: CvSummary, format: ExportFormat) {
+/**
+ * The name the backend would pick, so the dialog shows what it is replacing.
+ *
+ * `\p{L}\p{N}` rather than `\w`, because JavaScript's `\w` is ASCII-only while
+ * Python's is Unicode-aware. With `\w` the preview of an Arabic name renders as
+ * an empty string while the file actually downloads with the name intact - the
+ * preview would be lying to exactly the users most likely to notice.
+ */
+const UNSAFE_IN_FILENAME = /[^\p{L}\p{N}_\s-]/gu;
+
+function suggestedName(cv: CvSummary) {
+  const base = (cv.full_name || cv.title || 'cv').replace(UNSAFE_IN_FILENAME, '').trim();
+  return `${base.replace(/\s+/g, '_').slice(0, 70) || 'cv'}_CV`;
+}
+
+const previewFilename = computed(() => {
+  if (!pendingDownload.value) return '';
+  const typed = downloadName.value.trim().replace(/\.(pdf|docx)$/i, '');
+  // Mirrors export_filename() in the backend's utils/cvmodel.py. It is a preview
+  // only - the backend sanitises again, because this client is not its only caller.
+  const cleaned = typed.replace(UNSAFE_IN_FILENAME, '').trim().replace(/\s+/g, '_').slice(0, 70);
+  return `${cleaned || suggestedName(pendingDownload.value)}.${downloadFormat.value}`;
+});
+
+function askDownload(cv: CvSummary) {
+  pendingDownload.value = cv;
+  downloadFormat.value = 'pdf';
+  // Pre-filled with the CV's own title rather than left blank: the point is to
+  // tell six applications apart, and the title is usually already the distinction.
+  downloadName.value = cv.title || '';
+}
+
+async function doDownload(format: ExportFormat) {
+  const cv = pendingDownload.value;
+  if (!cv) return;
+  downloadFormat.value = format;
   downloadingId.value = cv.id;
   try {
-    const { blob, filename } = await cvBuilderService.download(userId.value, cv.id, format);
+    const { blob, filename } = await cvBuilderService.download(
+      userId.value, cv.id, format, { filename: downloadName.value.trim() });
     cvBuilderService.saveBlob(blob, filename);
+    pendingDownload.value = null;
   } catch (e: any) {
     showToast(e?.message || `The ${format.toUpperCase()} could not be built.`, 'error');
   } finally {
@@ -469,13 +632,27 @@ async function download(cv: CvSummary, format: ExportFormat) {
   }
 }
 
-async function duplicate(cv: CvSummary) {
+function askDuplicate(cv: CvSummary) {
+  pendingCopy.value = cv;
+  copyName.value = `${cv.title || 'My CV'} (copy)`;
+  // Selected rather than merely focused: the default is a name to replace, not
+  // one to append to.
+  void nextTick(() => copyNameInput.value?.select());
+}
+
+async function doDuplicate() {
+  const cv = pendingCopy.value;
+  if (!cv || !copyName.value.trim()) return;
+  copying.value = true;
   try {
-    await cvBuilderService.duplicateCv(userId.value, cv.id);
-    showToast('Copy created.');
+    const copy = await cvBuilderService.duplicateCv(userId.value, cv.id, copyName.value.trim());
+    pendingCopy.value = null;
+    showToast(`“${copy.title}” created.`);
     await reload();
   } catch (e: any) {
     showToast(e?.message || 'The CV could not be copied.', 'error');
+  } finally {
+    copying.value = false;
   }
 }
 
@@ -575,11 +752,17 @@ onMounted(async () => {
 }
 .path-icon.upload { background: linear-gradient(135deg, var(--sfs-accent, #3b82f6), var(--sfs-accent, #6366f1)); }
 .path-icon.voice { background: linear-gradient(135deg, var(--sfs-accent-2, #ec4899), var(--sfs-accent-2, #a855f7)); }
+.path-icon.job { background: linear-gradient(135deg, var(--sfs-warning, #f59e0b), var(--sfs-danger, #f43f5e)); color: var(--sfs-on-warning, #fff); }
 .path-icon.paste { background: linear-gradient(135deg, var(--sfs-info, #14b8a6), var(--sfs-info, #0ea5e9));   /* Its own ink. The base rule this shares with the other variants can only
      hold one `color`, and that one belongs to whichever variant came first —
      so an amber or green button inherited the ink meant for the indigo one.
      A fill decides its own ink. */
   color: var(--sfs-on-info, #fff);
+}
+.path-card code {
+  font-size: 0.82em; padding: 1px 5px; border-radius: 5px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  color: var(--sfs-text, #fff);
 }
 .path-card h3 { font-size: 1.06rem; font-weight: 650; margin-bottom: 6px; }
 .path-card p { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.6); font-size: 0.86rem; line-height: 1.55; margin-bottom: 14px; }
@@ -731,7 +914,28 @@ onMounted(async () => {
 }
 .modal h3 { font-size: 1.1rem; font-weight: 650; margin-bottom: 8px; }
 .modal p { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62); font-size: 0.88rem; line-height: 1.55; margin-bottom: 16px; }
-.modal-actions { display: flex; gap: 9px; }
+.modal-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+
+/* ── Named download / named copy ─────────────────────────────── */
+.modal-field { display: block; margin-bottom: 12px; }
+.modal-field span {
+  display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 6px;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
+}
+.modal-field input {
+  width: 100%; padding: 10px 12px; border-radius: 9px; font-size: 0.9rem;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+  color: var(--sfs-text, #fff);
+}
+.modal-field input:focus {
+  outline: none; border-color: var(--sfs-accent, #667eea);
+}
+.modal-hint {
+  font-size: 0.8rem; margin-bottom: 16px; word-break: break-all;
+  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+}
+.modal-hint strong { color: var(--sfs-text, #fff); font-weight: 600; }
 
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
