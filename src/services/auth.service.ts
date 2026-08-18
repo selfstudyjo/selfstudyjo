@@ -223,27 +223,25 @@ class AuthService {
                 }
             };
         } catch (error) {
-            // Fall back to external endpoints
-            try {
-                return await apiService.get<TokenValidationResponse>(
-                    baseUrl,
-                    `/api/external/tokens/validate/?token=${token}&check_expiry=true&check_active=true`
-                );
-            } catch (getError: any) {
-                try {
-                    return await apiService.post<TokenValidationResponse>(
-                        baseUrl,
-                        '/api/external/tokens/validate/',
-                        {
-                            token,
-                            check_expiry: true,
-                            check_active: true,
-                        }
-                    );
-                } catch (postError: any) {
-                    throw new Error('Token validation failed on all endpoints');
-                }
-            }
+            // One fallback, not two.
+            //
+            // `/api/verify-token/` answers from the replica's own store, so it
+            // says 401 for a token minted on another replica in the last pull
+            // interval - a real case, and the only reason this fallback exists.
+            // `/api/external/tokens/validate/` is the one route that will go and
+            // ask the peers.
+            //
+            // It serves GET and POST identically, so the POST that used to sit
+            // under this `catch` could only ever repeat the GET's answer. It was
+            // not free: each call makes the replica fan out to its peers, and on
+            // an expired token this cascade was three auth requests where one
+            // would do. Dropped rather than kept "just in case" - a retry that
+            // cannot return anything new is indistinguishable from a hang.
+            return await apiService.get<TokenValidationResponse>(
+                baseUrl,
+                `/api/external/tokens/validate/?token=${encodeURIComponent(token)}` +
+                '&check_expiry=true&check_active=true'
+            );
         }
     }
 
