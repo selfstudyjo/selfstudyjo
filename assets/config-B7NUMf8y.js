@@ -1,0 +1,1 @@
+import{t as e}from"./index-7pWMtxbp.js";export{e as serviceRegistry};
