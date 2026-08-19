@@ -1165,3 +1165,16 @@
   .start-exam-btn::before { display: none; }
   .loading-dots { animation: none; }
 }
+/* The "no appointment chosen" state's action row.
+ *
+ * This page is one appointment's page, so arriving without an `appointmentId` is a
+ * wrong address rather than a failure - see the note in ExamApproval.vue. The row
+ * exists so the single way out is a real target rather than a bare button hugging
+ * the paragraph above it. */
+.exam-approval-page .empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}

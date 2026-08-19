@@ -19,6 +19,23 @@
       <p>Loading exam details...</p>
     </div>
 
+    <!-- No appointment named.
+         Deliberately NOT the error state below: nothing failed, and offering
+         Retry for a missing query parameter is offering to fetch something that
+         was never asked for. This page is a single appointment's page, so the
+         only useful thing here is the way back to the list. -->
+    <div v-else-if="!appointmentId" class="error-container">
+      <div class="error-icon">📅</div>
+      <h3>No appointment chosen</h3>
+      <p>
+        This page shows one exam appointment, so it needs to know which one.
+        Open it from your exams list and it will carry the details through.
+      </p>
+      <div class="empty-actions">
+        <button @click="goBack" class="retry-btn">Go to My Exams</button>
+      </div>
+    </div>
+
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">❌</div>
@@ -431,7 +448,10 @@ function getTimerClass(timeMs: number): string {
 
 async function loadExamDetails() {
   if (!appointmentId.value) {
-    error.value = 'No appointment specified';
+    // The template has its own branch for this - see the note there. Setting
+    // `error` would render "Error Loading Exam" beside a Retry button for
+    // something that was never requested and cannot be retried.
+    error.value = null;
     return;
   }
 

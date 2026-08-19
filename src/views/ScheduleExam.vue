@@ -639,8 +639,12 @@
 
         <div class="success-actions">
           <button @click="goToExams" class="btn-primary">View My Exams</button>
+          <!-- Offered after a NEW booking too, now that the created appointment is
+               kept: this is the page with the room links and the countdown, so it
+               is the more useful of the two destinations. -->
+          <button v-if="bookedAppointment || existingAppointment"
+                  @click="goToAppointment" class="btn-secondary">View Appointment</button>
           <button v-if="!isReschedule" @click="closeSuccessModal" class="btn-secondary">Schedule Another</button>
-          <button v-else @click="goToAppointment" class="btn-secondary">View Appointment</button>
         </div>
       </div>
     </div>
@@ -736,6 +740,10 @@ const slotsLoading = ref(false);
 const originalProctorMissing = ref(false);
 // The booking landed but the hour could not be marked taken - see handleNewBooking.
 const slotReserveWarning = ref<string | null>(null);
+// The appointment this visit created, so the success modal can link to it. NOT the
+// same thing as `existingAppointment`, which is the one being rescheduled and is
+// null for a new booking.
+const bookedAppointment = ref<ExamAppointment | null>(null);
 
 // Computed properties
 const userId = computed(() => authStore.user?.id);
@@ -1364,8 +1372,13 @@ async function handleReschedule(appointmentDateTime: Date) {
     params: {
       exam: selectedExam.value?.title || 'your exam',
       when: appointmentDateTime.toLocaleString(),
+      // The NEW appointment's id. Rescheduling creates a new record and cancels
+      // the old one, so the old id would open a cancelled appointment.
+      appointmentId: newAppointment?.external_id || newAppointmentData.external_id,
     },
   });
+
+  bookedAppointment.value = newAppointment || null;
 
   // 3. Cancel the old appointment
   try {
@@ -1454,34 +1467,39 @@ async function handleNewBooking(appointmentDateTime: Date) {
       + 'Please tell your proctor so nobody else is given the same hour.';
   }
 
-  // An appointment sits at `can_start: false` until somebody approves it, and
-  // nothing told anybody it was waiting — a student turned up to an exam they
-  // could not start.
+  // The PROCTOR is told by `exam.service.ts`, from inside `createExamAppointment`,
+  // and that is the only notification a booking sends anybody but the student.
   //
-  // Only the operators here. The *proctor* is told by `exam.service.ts`, which
-  // has done it inside `createExamAppointment` all along and also covers the
-  // reschedule and cancel cases; notifying them from here as well would be two
-  // notifications for one booking.
-  notificationService.notifyAdmins('exam.appointment_requested', {
-    student: username.value,
-    exam: selectedExam.value?.title || 'an exam',
-    when: appointmentDateTime.toLocaleString(),
-  });
+  // There used to be a `notifyAdmins('exam.appointment_requested')` here as well,
+  // saying the appointment "needs approving before they can start" and linking to
+  // `/exam-approval`. All three parts of that were wrong: booking needs no
+  // approval (what remains is the proctor opening the room on the day, which is
+  // `can_start` and has its own notification); the link carried no
+  // `appointmentId`, so it led to a page that cannot render; and `/exam-approval`
+  // is the student's own view of their appointment, not a proctor's screen. Since
+  // the proctor on this platform is also an admin they received it too - two bells
+  // for one booking, and the wrong one led to a dead end.
 
-  // And the student's own durable copy. The confirmation modal is gone the moment
-  // they close the tab, and an exam appointment is a thing somebody comes back
-  // looking for - "when is my exam, and who is invigilating?" - which is exactly
-  // the shape of thing the bell is for. It also says out loud that the booking
-  // still needs approving, which is otherwise only visible as a greyed-out Start
-  // button days later.
+  // The student's own durable copy. The confirmation modal is gone the moment they
+  // close the tab, and an exam appointment is a thing somebody comes back looking
+  // for - "when is my exam, and who is invigilating?" - which is exactly what the
+  // bell is for. The link carries the id, because that page is one appointment's
+  // page and cannot render without one.
   notificationService.notify('exam.appointment_booked', {
     to: username.value || '',
     params: {
       exam: selectedExam.value?.title || 'your exam',
       when: appointmentDateTime.toLocaleString(),
       proctor: selectedProctor.value?.username || 'your proctor',
+      appointmentId: created?.external_id || appointmentData.external_id,
     },
   });
+
+  // Remember what was just created, so the success modal can link to it. Without
+  // this, `goToAppointment()` had nothing to name - `existingAppointment` is only
+  // set when RESCHEDULING - and fell through to /exams, which is why booking never
+  // led anywhere near the appointment page.
+  bookedAppointment.value = created || null;
 }
 
 // Cancel appointment methods
@@ -1634,9 +1652,25 @@ function goToExams() {
   router.push('/exams');
 }
 
+/**
+ * Open the appointment this visit produced.
+ *
+ * `bookedAppointment` first: on a reschedule it is the NEW record and the old one
+ * has just been cancelled, so opening `existingAppointment` would show a cancelled
+ * appointment. On a new booking it is the only id there is, and before it was kept
+ * this fell through to /exams - which is why booking never led to this page.
+ *
+ * The id is not optional. `/exam-approval` is a single appointment's page and
+ * answers "No appointment specified" without one, so there is deliberately no
+ * bare-path fallback: with no id, /exams is the honest destination.
+ */
 function goToAppointment() {
-  if (existingAppointment.value) {
-    router.push(`/exam-approval?appointmentId=${existingAppointment.value.external_id}`);
+  const appointment = bookedAppointment.value || existingAppointment.value;
+  if (appointment?.external_id) {
+    router.push({
+      path: '/exam-approval',
+      query: { appointmentId: appointment.external_id },
+    });
   } else {
     router.push('/exams');
   }

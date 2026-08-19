@@ -219,17 +219,26 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
     },
 
     // -- Exams (app 20) and proctoring (app 21) -----------------------------
-    'exam.appointment_requested': {
-        key: 'exam.appointment_requested',
-        category: 'exam',
-        priority: 'high',
-        audience: 'operator',
-        sentBy: ['app'],
-        params: ['student', 'exam', 'when'],
-        title: 'Exam appointment to approve',
-        message: '{student} asked to sit {exam} on {when}. It needs approving before they can start.',
-        link: '/exam-approval',
-    },
+    //
+    // There is deliberately NO `exam.appointment_requested`. It existed, was sent
+    // to every admin when a student booked, and was wrong in three ways at once:
+    //
+    //  * it asked for an approval that booking does not need. A booked appointment
+    //    is booked; what still has to happen is the proctor opening the room on the
+    //    day, which is `can_start` and is a different moment with a different
+    //    notification (`exam.appointment_approved`).
+    //  * its link was a bare `/exam-approval` with no `appointmentId`, and that
+    //    page cannot render without one - so the notification led to a dead end.
+    //  * `/exam-approval` is the STUDENT's view of their own appointment. The
+    //    proctor's screen is `/proctor-dashboard`. Because the proctor on this
+    //    platform is also an admin, they received this one as well as their own
+    //    correct notification - two bells for one booking, and the wrong one sent
+    //    them to a student's page that then failed to load.
+    //
+    // The proctor already gets `proctor.appointment_assigned` (below), sent by
+    // `exam.service.ts` inside `createExamAppointment`, which says what happened
+    // and points at `/proctor-dashboard`. That is the whole of "just notify the
+    // proctor".
     // There is deliberately no separate "your proctor let you in" event. This one
     // covers both edges - an operator approving the booking (console) and the
     // proctor flipping can_start on the day (app, from ProctorExamAppointment.vue)
@@ -241,8 +250,16 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         audience: 'user',
         sentBy: ['app', 'console'],
         params: ['exam', 'when'],
+        // Wording matched to selfstudyadmin/utils/notify.py, character for
+        // character. This event has two senders - the proctor flipping can_start
+        // and an operator approving from the console - so it must not describe
+        // either one of them, and the two copies must not drift.
         title: 'Your exam is approved',
         message: 'You are approved to sit {exam} on {when}. Be ready a few minutes early.',
+        // Deliberately `/exams` and not the appointment page: the console sends
+        // this one too and does not know the appointment id, and an event whose
+        // link only works for one of its two senders is worse than a general one.
+        // `/exams` carries a Start button for a cleared appointment anyway.
         link: '/exams',
     },
     'exam.appointment_rejected': {
@@ -312,16 +329,20 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         link: '/proctor-dashboard',
     },
 
+    // The link carries the appointmentId because `/exam-approval` is meaningless
+    // without one - it is a single appointment's page, and it answers "No
+    // appointment specified" when the query parameter is missing. Every link on
+    // this page's events is built the same way.
     'exam.appointment_booked': {
         key: 'exam.appointment_booked',
         category: 'exam',
         priority: 'normal',
         audience: 'user',
         sentBy: ['app'],
-        params: ['exam', 'when', 'proctor'],
+        params: ['exam', 'when', 'proctor', 'appointmentId'],
         title: 'Exam appointment booked',
-        message: 'You are booked to sit {exam} on {when} with {proctor}. It needs approving before you can start.',
-        link: '/exams',
+        message: 'You are booked to sit {exam} on {when} with {proctor}. Your proctor will open the room at the scheduled time.',
+        link: '/exam-approval?appointmentId={appointmentId}',
     },
     'exam.appointment_rescheduled': {
         key: 'exam.appointment_rescheduled',
@@ -329,10 +350,10 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         priority: 'normal',
         audience: 'user',
         sentBy: ['app'],
-        params: ['exam', 'when'],
+        params: ['exam', 'when', 'appointmentId'],
         title: 'Exam appointment moved',
         message: 'Your appointment to sit {exam} is now {when}.',
-        link: '/exams',
+        link: '/exam-approval?appointmentId={appointmentId}',
     },
     'exam.appointment_cancelled': {
         key: 'exam.appointment_cancelled',

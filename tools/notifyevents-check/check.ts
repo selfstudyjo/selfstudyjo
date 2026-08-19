@@ -137,12 +137,29 @@ console.log('\n3. Every link is a route the router can actually match');
     const concrete = (link: string) =>
         fill(link, Object.fromEntries(placeholdersIn(link).map(name => [name, 'sample-id'])));
 
+    // A query string is not part of the route path. `/exam-approval` is a single
+    // appointment's page and cannot render without `?appointmentId=`, so its
+    // events carry one - matching it against the router means matching the path.
+    const pathOf = (link: string) => link.split('?')[0].split('#')[0] || '/';
+
     const broken = specs
         .filter(s => s.link)
-        .map(s => ({ key: s.key, to: concrete(s.link!) }))
+        .map(s => ({ key: s.key, to: pathOf(concrete(s.link!)) }))
         .filter(({ to }) => !patterns.some(pattern => patternMatches(pattern, to)))
         .map(({ key, to }) => `${key} -> ${to}`);
     check('every event link points at a declared route', broken.length === 0, broken);
+
+    // A link that needs a parameter and does not declare it renders the
+    // placeholder name into the URL - `?appointmentId=appointmentId` - which is a
+    // page that loads and then reports the record missing. Worse than a dead link,
+    // because it looks like the record was deleted.
+    const undeclared = specs
+        .filter(s => s.link)
+        .flatMap(s => placeholdersIn(s.link!)
+            .filter(name => !s.params.includes(name))
+            .map(name => `${s.key} -> {${name}} is in the link but not in params`));
+    check('every placeholder in a link is a declared param', undeclared.length === 0,
+        undeclared);
 
     const relative = specs.filter(s => s.link && !s.link.startsWith('/')).map(s => s.key);
     check('every link is absolute — a relative one resolves against whatever page '
@@ -257,6 +274,38 @@ console.log('\n7. The admin console\'s copy of the catalogue agrees');
         const missing = consoleKeys.filter(key => !theirs.has(key));
         check('and the console carries every event marked sentBy console',
             missing.length === 0, missing);
+
+        // Same key, same words. Checking that the two catalogues agree on which
+        // events EXIST is only half of it: an event sent by both sides can read one
+        // way from the app and another from the console, which is the exact drift
+        // this catalogue was created to end ("Payment Approved" and "Your payment
+        // was approved" for one event, from two places).
+        //
+        // It is easy to reintroduce while trying to improve a wording, because the
+        // improvement is usually written from the point of view of ONE sender -
+        // "your proctor has cleared you" is wrong when an operator did it - and
+        // nothing on either side would have said so.
+        const drifted: string[] = [];
+        for (const spec of specs) {
+            if (!spec.sentBy.includes('console')) continue;
+            const block = py.match(
+                new RegExp(`'${spec.key.replace('.', '\\.')}':\\s*\\{([\\s\\S]*?)\\n    \\},`));
+            if (!block) continue;
+            const field = (name: string) => {
+                const m = block[1].match(new RegExp(`'${name}':\\s*'((?:[^'\\\\]|\\\\.)*)'`));
+                return m ? m[1].replace(/\\'/g, "'") : null;
+            };
+            const title = field('title');
+            const message = field('message');
+            if (title !== null && title !== spec.title) {
+                drifted.push(`${spec.key} title: app "${spec.title}" vs console "${title}"`);
+            }
+            if (message !== null && message !== spec.message) {
+                drifted.push(`${spec.key} message: app "${spec.message}" vs console "${message}"`);
+            }
+        }
+        check('and the wording of a shared event is identical in both',
+            drifted.length === 0, drifted);
     }
 }
 
@@ -284,6 +333,90 @@ console.log('\n8. The exam service catalogue agrees');
         const missing = serviceKeys.filter(key => !theirs.has(key));
         check('and app 20 carries every event marked sentBy service',
             missing.length === 0, missing);
+    }
+}
+
+console.log('\n9. A notification never sends anybody to the wrong page');
+{
+    // Two real bugs, both reported by a user, both of which every other check in
+    // this file passed straight through.
+    //
+    // 1. `/exam-approval` is ONE appointment's page. It reads `?appointmentId=`
+    //    and, without it, has nothing to render. An event linking to the bare path
+    //    is a notification that leads to a dead end.
+    // 2. That page is the STUDENT's view of their own appointment. The proctor's
+    //    screen is `/proctor-dashboard`. An `exam.appointment_requested` event once
+    //    pointed every admin there and asked them to approve a booking that needs
+    //    no approval - and because the proctor on this platform is also an admin,
+    //    they got it, on top of their own correct notification.
+
+    const NEEDS_AN_ID = ['/exam-approval', '/take-exam'];
+    const missingId = specs
+        .filter(s => s.link)
+        .filter(s => NEEDS_AN_ID.some(path => s.link!.split('?')[0] === path))
+        .filter(s => !/\{[a-zA-Z]*[Ii]d\}/.test(s.link!))
+        .map(s => `${s.key} -> ${s.link}`);
+    check('every link to a single-record page carries that record\'s id',
+        missingId.length === 0, missingId);
+
+    // A proctor's notification must never land on a student's page. Matched on the
+    // category rather than the key, so a new `proctor.*` event is covered the day
+    // it is added.
+    const STUDENT_ONLY = ['/exam-approval', '/take-exam', '/my-results', '/certificates'];
+    const misrouted = specs
+        .filter(s => s.category === 'proctor' && s.link)
+        .filter(s => STUDENT_ONLY.some(path => s.link!.split('?')[0] === path))
+        .map(s => `${s.key} -> ${s.link}`);
+    check('no proctor event points at a student-only page', misrouted.length === 0,
+        misrouted);
+
+    // And the reverse: the proctor's own screen is where a proctor event belongs.
+    const proctorEvents = specs.filter(s => s.category === 'proctor' && s.link);
+    check('every proctor event links to the proctor dashboard',
+        proctorEvents.every(s => s.link!.startsWith('/proctor-dashboard')),
+        proctorEvents.filter(s => !s.link!.startsWith('/proctor-dashboard'))
+            .map(s => `${s.key} -> ${s.link}`));
+
+    // The event that caused it is gone, and nothing sends it any more. Named
+    // explicitly because a catalogue entry can be deleted while a call site
+    // survives, and `notify()` only warns to the console for an unknown key.
+    check('the approval-request event is gone from the catalogue',
+        !EVENT_KEYS.includes('exam.appointment_requested'));
+    {
+        const roots = ['src/views', 'src/components', 'src/services', 'src/store'];
+        const files: string[] = [];
+        const walk = (dir: string) => {
+            let entries: string[];
+            try { entries = readdirSync(dir); } catch { return; }
+            for (const name of entries) {
+                const full = join(dir, name);
+                if (statSync(full).isDirectory()) walk(full);
+                else if (/\.(ts|vue)$/.test(name)) files.push(full);
+            }
+        };
+        for (const root of roots) walk(resolve(process.cwd(), root));
+        const senders = files.filter(f => {
+            // Comments out first. The note explaining WHY the event was removed
+            // quotes the call it removed, and a check that cannot tell prose from
+            // code would force that explanation to be deleted - which is how the
+            // reason for a decision gets lost.
+            const text = readFileSync(f, 'utf8')
+                .replace(/\/\*[\s\S]*?\*\//g, '')
+                .replace(/^[ 	]*\/\/.*$/gm, '');
+            return /notify(Admins)?\(\s*['"]exam\.appointment_requested['"]/.test(text);
+        });
+        check('and nothing still sends it', senders.length === 0, senders);
+    }
+
+    // Booking must tell the proctor exactly once. Both halves of that are in
+    // exam.service.ts (the proctor) and ScheduleExam.vue (the student), and the
+    // failure mode is two bells for one action.
+    {
+        const schedule = readFileSync(resolve(process.cwd(), 'src/views/ScheduleExam.vue'), 'utf8');
+        check('ScheduleExam does not notify a proctor directly - exam.service.ts does',
+            !/notify\(\s*['"]proctor\./.test(schedule));
+        check('and the student\'s booked notification passes an appointmentId',
+            /appointmentId:\s*created\?\./.test(schedule));
     }
 }
 
