@@ -708,7 +708,23 @@
   font-style: italic;
 }
 
+/* `position: static` is not decoration - it is the fix for a real outage.
+ *
+ * `.placeholder` is a bare, global class in roblox-tool.css (that file is loaded
+ * unscoped, and in production every page stylesheet is in one always-present
+ * bundle). It sets `position: absolute` with all four offsets at 0, so this panel
+ * was pulled out of the grid and stretched over `.step-content` - which is
+ * `position: relative` - putting the words "Please select a date to see available
+ * time slots" on top of the whole calendar. Every green day was unclickable and a
+ * click landed on the label instead. It read as "all the dates are disabled".
+ *
+ * The other rule is scoped now, so this is belt and braces: this panel is a grid
+ * ITEM and must stay in flow whatever any other stylesheet decides `.placeholder`
+ * means. Stated here rather than relied upon, because the failure is silent and
+ * the symptom points at the calendar rather than at the label. */
 .schedule-exam-page .time-selector.placeholder {
+  position: static;
+  inset: auto;
   display: flex;
   flex-direction: column;
   min-height: 280px;
