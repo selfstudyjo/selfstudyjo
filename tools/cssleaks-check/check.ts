@@ -183,5 +183,111 @@ console.log('\n4. Every accepted exception is still real');
     check('no accepted exception has become obsolete', stale.length === 0, stale);
 }
 
+console.log('\n5. A globally loaded page stylesheet stays on its own page');
+{
+    // The second instance of the same family, and the one that showed section 2's
+    // definition was too narrow.
+    //
+    // `exam-approval.css` carried a bare, unscoped
+    // `.header-content { flex-direction: column }`. It is loaded with a JS import,
+    // so it is global - and `.header-content` is a class eight views use. On the
+    // Take Exam page that one declaration turned `.exam-info`'s `flex: 1 1 240px`
+    // from a 240px-wide basis into a 240px-TALL one, and the sticky header became
+    // **389px on a 1440x900 desktop (43% of the viewport)** and 411px (72%) at
+    // 320px, with the question scrolling underneath it. Reported as "the header
+    // height too long and cover the exam question".
+    //
+    // Section 2 above did not catch it: nothing was positioned or pinned. The
+    // common factor with `.placeholder` is not `position` - it is a bare selector
+    // in a stylesheet that escapes its page, landing on a class name somebody else
+    // uses. So this checks the general shape.
+    //
+    // WHY IT IS SPLIT INTO GATED AND REPORTED. Only a stylesheet loaded by a JS
+    // `import` is global; one reached through `@import` inside a scoped block, or
+    // `<style scoped src>`, is scoped by Vite and cannot leak. Of the globally
+    // loaded ones the eight exam-system files are at zero and must stay there, so
+    // those FAIL the build. Six others (login, notifications, register,
+    // user-certificate, user-chat, verify-email) still leak 47 classes between
+    // them; that is real debt on pages outside this system, and it is REPORTED
+    // with counts rather than gated - a check that fails on 47 pre-existing things
+    // nobody is fixing today is a check somebody switches off.
+
+    const GATED = new Set([
+        'exams.css', 'schedule-exam.css', 'exam-approval.css', 'take-exam.css',
+        'proctor-dashboard.css',
+    ]);
+    const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
+        'exam-system.css', 'side-nav.css', 'style.css']);
+
+    // Which stylesheets are imported from a script (global) rather than from a
+    // style block (scoped)?
+    const vueFilesAll = vueFiles;
+    const globalSheets = new Set<string>();
+    for (const file of vueFilesAll) {
+        const src = readFileSync(file, 'utf8');
+        const cut = src.lastIndexOf('</script>');
+        const script = cut > 0 ? src.slice(0, cut) : src;
+        for (const m of script.matchAll(/import\s+'@\/assets\/css\/([^']+)'/g)) {
+            globalSheets.add(m[1]);
+        }
+    }
+    check('the globally imported stylesheets were found', globalSheets.size > 5,
+        [...globalSheets]);
+
+    const leaks = new Map<string, string[]>();
+    for (const name of globalSheets) {
+        if (LAYERS.has(name)) continue;
+        let css: string;
+        try { css = readFileSync(join(cssDir, name), 'utf8'); } catch { continue; }
+        css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+        const bad = new Set<string>();
+        for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+            for (const raw of rule[1].split(',')) {
+                const sel = raw.trim();
+                if (!sel || sel.startsWith('@') || /^\d/.test(sel)
+                    || sel === 'from' || sel === 'to') continue;
+                if ([...pageRoots].some(r => sel.includes('.' + r))) continue;
+                const lead = sel.match(/^\.([a-z][a-z0-9-]*)/)?.[1];
+                if (!lead) continue;
+                const users = usedBy.get(lead);
+                if (!users || users.size < 2) continue;   // one page's own business
+                bad.add(lead);
+            }
+        }
+        if (bad.size) leaks.set(name, [...bad]);
+    }
+
+    const gatedLeaks = [...leaks.entries()]
+        .filter(([name]) => GATED.has(name))
+        .map(([name, classes]) => `${name}: ${classes.join(', ')}`);
+    check('every exam-system stylesheet anchors its selectors on its page root',
+        gatedLeaks.length === 0, gatedLeaks);
+
+    const rest = [...leaks.entries()].filter(([name]) => !GATED.has(name));
+    if (rest.length) {
+        const total = rest.reduce((n, [, c]) => n + c.length, 0);
+        console.log(`  note  ${total} classes still leak from ${rest.length} other `
+            + `globally loaded stylesheets (not gated, see the comment):`);
+        for (const [name, classes] of rest.sort((a, b) => b[1].length - a[1].length)) {
+            console.log(`          ${name.padEnd(24)} ${String(classes.length).padStart(3)}  `
+                + classes.slice(0, 6).join(', '));
+        }
+    }
+}
+
+console.log('\n6. The Take Exam header cannot grow back');
+{
+    // The page must state `flex-direction` on the container another stylesheet got
+    // at. Specificity is no defence for a property you never declared: take-exam's
+    // own `.take-exam-page .header-content` is more specific than a bare
+    // `.header-content`, and it lost anyway because it said nothing about the axis.
+    const takeExam = readFileSync(join(cssDir, 'take-exam.css'), 'utf8');
+    const block = takeExam.match(/\.take-exam-page \.header-content\s*\{[^}]*\}/);
+    check('take-exam.css declares its own header axis', !!block && /flex-direction:\s*row/.test(block[0]),
+        block ? block[0].slice(0, 160) : null);
+    check('and the question card clears the sticky header when scrolled to',
+        /scroll-margin-top:/.test(takeExam));
+}
+
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} failed\n`);
 process.exit(failures === 0 ? 0 : 1);

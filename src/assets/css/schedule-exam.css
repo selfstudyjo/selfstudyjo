@@ -6,7 +6,7 @@
    No global * selectors — everything is scoped to .schedule-exam-page
    ============================================================= */
 
-.schedule-exam-page {
+.schedule-exam-page{
   /* ---------- design tokens (page-scoped) ---------- */
   --sx-text:        var(--sfs-text, #ffffff);
   --sx-text-soft:   var(--sfs-text-muted, #e8eaff);
@@ -71,7 +71,17 @@
 }
 
 /* readable shadow over galaxy */
-.schedule-exam-page :where(h1,h2,h3,h4,h5,p,span,li,label,a,button) {
+.schedule-exam-page :where(h1,
+.schedule-exam-page h2,
+.schedule-exam-page h3,
+.schedule-exam-page h4,
+.schedule-exam-page h5,
+.schedule-exam-page p,
+.schedule-exam-page span,
+.schedule-exam-page li,
+.schedule-exam-page label,
+.schedule-exam-page a,
+.schedule-exam-page button){
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
@@ -79,33 +89,33 @@
 .schedule-exam-page,
 .schedule-exam-page *,
 .schedule-exam-page *::before,
-.schedule-exam-page *::after { box-sizing: border-box; }
+.schedule-exam-page *::after{ box-sizing: border-box; }
 
 .schedule-exam-page,
 .schedule-exam-page [class*="container"],
 .schedule-exam-page [class*="card"],
-.schedule-exam-page [class*="content"] {
+.schedule-exam-page [class*="content"]{
   max-width: 100%;
 }
 
 /* keep button labels on one line */
 .schedule-exam-page button,
 .schedule-exam-page .back-btn,
-.schedule-exam-page .retry-btn { white-space: nowrap; }
+.schedule-exam-page .retry-btn{ white-space: nowrap; }
 
 /* =============================================================
    PAGE HEADER
    ============================================================= */
-.schedule-exam-page .page-header {
+.schedule-exam-page .page-header{
   margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
 }
-.schedule-exam-page .header-content {
+.schedule-exam-page .header-content{
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
 .schedule-exam-page .page-title,
-.schedule-exam-page .page-header h1 {
+.schedule-exam-page .page-header h1{
   font-size: clamp(1.5rem, 3.2vw, 2.25rem);
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -116,13 +126,13 @@
   -webkit-text-fill-color: transparent;
 }
 .schedule-exam-page .page-subtitle,
-.schedule-exam-page .page-header p {
+.schedule-exam-page .page-header p{
   font-size: clamp(0.9rem, 1.6vw, 1.05rem);
   color: var(--sx-text-mute);
   margin: 0;
 }
 
-.schedule-exam-page .back-btn {
+.schedule-exam-page .back-btn{
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
@@ -140,21 +150,21 @@
   -webkit-backdrop-filter: blur(10px);
   transition: all 0.25s var(--sx-ease);
 }
-.schedule-exam-page .back-btn:hover {
+.schedule-exam-page .back-btn:hover{
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
   transform: translateX(-3px);
   box-shadow: var(--sx-glow);
 }
-.schedule-exam-page .back-btn svg { width: 18px; height: 18px; }
+.schedule-exam-page .back-btn svg{ width: 18px; height: 18px; }
 
 /* =============================================================
    PROGRESS STEPS
    ============================================================= */
-.schedule-exam-page .progress-steps {
+.schedule-exam-page .progress-steps{
   margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
-.schedule-exam-page .steps-container {
+.schedule-exam-page .steps-container{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +173,7 @@
   flex-wrap: wrap;
   row-gap: 1rem;
 }
-.schedule-exam-page .step {
+.schedule-exam-page .step{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -173,7 +183,7 @@
   position: relative;
   z-index: 1;
 }
-.schedule-exam-page .step-number {
+.schedule-exam-page .step-number{
   width: 48px; height: 48px;
   border-radius: 50%;
   background: var(--sx-glass);
@@ -185,19 +195,19 @@
   backdrop-filter: blur(10px);
   transition: all 0.3s var(--sx-ease);
 }
-.schedule-exam-page .step.active .step-number {
+.schedule-exam-page .step.active .step-number{
   background: var(--sx-grad);
   color: var(--sfs-on-accent, #fff);
   border-color: transparent;
   transform: scale(1.08);
   box-shadow: 0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
 }
-.schedule-exam-page .step.completed .step-number {
+.schedule-exam-page .step.completed .step-number{
   background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 72 187 120) / 0.55) 0%, rgb(var(--sfs-success-rgb, 56 161 105) / 0.55) 100%);
   color: var(--sfs-text, #fff);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.4);
 }
-.schedule-exam-page .step-label {
+.schedule-exam-page .step-label{
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--sx-text-mute);
@@ -206,9 +216,9 @@
   line-height: 1.3;
   padding: 0 0.25rem;
 }
-.schedule-exam-page .step.active .step-label { color: var(--sfs-text, #fff); font-weight: 600; }
-.schedule-exam-page .step.completed .step-label { color: var(--sfs-success-text, #a7f3d0); }
-.schedule-exam-page .step-line {
+.schedule-exam-page .step.active .step-label{ color: var(--sfs-text, #fff); font-weight: 600; }
+.schedule-exam-page .step.completed .step-label{ color: var(--sfs-success-text, #a7f3d0); }
+.schedule-exam-page .step-line{
   flex: 1 1 30px;
   height: 2px;
   margin: 0 0.5rem;
@@ -220,7 +230,7 @@
 /* =============================================================
    STEP CONTENT — glass card
    ============================================================= */
-.schedule-exam-page .step-content {
+.schedule-exam-page .step-content{
   background: var(--sx-glass);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-xl);
@@ -233,23 +243,23 @@
   isolation: isolate;
 }
 
-.schedule-exam-page .step-header {
+.schedule-exam-page .step-header{
   text-align: center;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-.schedule-exam-page .step-header h2 {
+.schedule-exam-page .step-header h2{
   font-size: clamp(1.2rem, 2.4vw, 1.7rem);
   font-weight: 700;
   color: var(--sfs-text, #fff);
   margin-bottom: 0.35rem;
 }
-.schedule-exam-page .step-header p {
+.schedule-exam-page .step-header p{
   font-size: clamp(0.9rem, 1.5vw, 1rem);
   color: var(--sx-text-mute);
   margin: 0;
 }
 
-.schedule-exam-page .date-warning {
+.schedule-exam-page .date-warning{
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -263,19 +273,19 @@
   max-width: 700px;
   backdrop-filter: blur(10px);
 }
-.schedule-exam-page .date-warning svg { flex-shrink: 0; color: var(--sfs-warning-text, #ffaa66); }
+.schedule-exam-page .date-warning svg{ flex-shrink: 0; color: var(--sfs-warning-text, #ffaa66); }
 
 /* =============================================================
    EXAMS LIST
    ============================================================= */
-.schedule-exam-page .exams-list {
+.schedule-exam-page .exams-list{
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   max-width: 720px;
   margin: 0 auto clamp(1.25rem, 2.5vw, 2rem);
 }
-.schedule-exam-page .exam-option {
+.schedule-exam-page .exam-option{
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -290,25 +300,25 @@
   flex-wrap: wrap;
   row-gap: 0.5rem;
 }
-.schedule-exam-page .exam-option:hover:not(.disabled) {
+.schedule-exam-page .exam-option:hover:not(.disabled){
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
   transform: translateX(4px);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
 }
-.schedule-exam-page .exam-option.selected {
+.schedule-exam-page .exam-option.selected{
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
   background: var(--sx-grad-soft);
   box-shadow: var(--sx-glow);
 }
-.schedule-exam-page .exam-option.disabled {
+.schedule-exam-page .exam-option.disabled{
   opacity: 0.55;
   cursor: not-allowed;
   background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.06);
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.25);
 }
 
-.schedule-exam-page .exam-option-icon {
+.schedule-exam-page .exam-option-icon{
   width: 48px; height: 48px;
   border-radius: var(--sx-r-md);
   background: var(--sx-grad);
@@ -318,27 +328,27 @@
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
   box-shadow: 0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
-.schedule-exam-page .exam-option-icon.disabled {
+.schedule-exam-page .exam-option-icon.disabled{
   background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.4), rgb(var(--sfs-warning-rgb, 221 107 32) / 0.4));
   box-shadow: 0 6px 18px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
 }
-.schedule-exam-page .exam-option-details {
+.schedule-exam-page .exam-option-details{
   flex: 1 1 min(220px, 100%);
   min-width: 0;
 }
-.schedule-exam-page .exam-option-details h4 {
+.schedule-exam-page .exam-option-details h4{
   font-size: 1rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.25rem;
 }
-.schedule-exam-page .exam-option-details p {
+.schedule-exam-page .exam-option-details p{
   font-size: 0.85rem;
   color: var(--sx-text-mute);
   margin: 0;
 }
 
-.schedule-exam-page .exam-status {
+.schedule-exam-page .exam-status{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -349,25 +359,25 @@
   border-radius: 999px;
   backdrop-filter: blur(6px);
 }
-.schedule-exam-page .exam-status svg { width: 14px; height: 14px; }
-.schedule-exam-page .exam-status.passed {
+.schedule-exam-page .exam-status svg{ width: 14px; height: 14px; }
+.schedule-exam-page .exam-status.passed{
   background: var(--sx-success-bg);
   color: var(--sfs-success-text, #6ee7b7);
   border: 1px solid rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
-.schedule-exam-page .exam-status.scheduled {
+.schedule-exam-page .exam-status.scheduled{
   background: var(--sx-warning-bg);
   color: var(--sfs-warning-text, #fdba74);
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
 }
-.schedule-exam-page .exam-status.failed {
+.schedule-exam-page .exam-status.failed{
   background: var(--sx-danger-bg);
   color: var(--sfs-danger-text, #fca5a5);
   border: 1px solid rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
 }
 
-.schedule-exam-page .exam-option-check { flex-shrink: 0; }
-.schedule-exam-page .check-circle {
+.schedule-exam-page .exam-option-check{ flex-shrink: 0; }
+.schedule-exam-page .check-circle{
   width: 28px; height: 28px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 72 187 120) / 0.6), rgb(var(--sfs-success-rgb, 56 161 105) / 0.6));
@@ -377,7 +387,7 @@
   border: 1px solid rgb(var(--sfs-success-rgb, 72 187 120) / 0.5);
   box-shadow: var(--sx-glow-green);
 }
-.schedule-exam-page .status-tag {
+.schedule-exam-page .status-tag{
   display: inline-block;
   font-size: 0.65rem;
   font-weight: 700;
@@ -388,15 +398,15 @@
   white-space: nowrap;
   backdrop-filter: blur(6px);
 }
-.schedule-exam-page .status-tag.passed {
+.schedule-exam-page .status-tag.passed{
   background: var(--sx-success-bg); color: var(--sfs-success-text, #6ee7b7);
   border: 1px solid rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
-.schedule-exam-page .status-tag.scheduled {
+.schedule-exam-page .status-tag.scheduled{
   background: var(--sx-warning-bg); color: var(--sfs-warning-text, #fdba74);
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
 }
-.schedule-exam-page .status-tag.failed {
+.schedule-exam-page .status-tag.failed{
   background: var(--sx-danger-bg); color: var(--sfs-danger-text, #fca5a5);
   border: 1px solid rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
 }
@@ -404,13 +414,13 @@
 /* =============================================================
    PROCTOR GRID
    ============================================================= */
-.schedule-exam-page .proctors-grid {
+.schedule-exam-page .proctors-grid{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-.schedule-exam-page .proctor-card {
+.schedule-exam-page .proctor-card{
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -424,18 +434,18 @@
   flex-wrap: wrap;
   row-gap: 0.5rem;
 }
-.schedule-exam-page .proctor-card:hover {
+.schedule-exam-page .proctor-card:hover{
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
   transform: translateY(-3px);
   box-shadow: 0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
 }
-.schedule-exam-page .proctor-card.selected {
+.schedule-exam-page .proctor-card.selected{
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
   background: var(--sx-grad-soft);
   box-shadow: var(--sx-glow);
 }
-.schedule-exam-page .proctor-avatar {
+.schedule-exam-page .proctor-avatar{
   width: 56px; height: 56px;
   border-radius: var(--sx-r-md);
   background: var(--sx-grad);
@@ -447,22 +457,22 @@
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   box-shadow: 0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
-.schedule-exam-page .proctor-info {
+.schedule-exam-page .proctor-info{
   flex: 1 1 min(180px, 100%);
   min-width: 0;
 }
-.schedule-exam-page .proctor-info h4 {
+.schedule-exam-page .proctor-info h4{
   font-size: 1rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.2rem;
 }
-.schedule-exam-page .proctor-info p {
+.schedule-exam-page .proctor-info p{
   font-size: 0.85rem;
   color: var(--sx-text-mute);
   margin: 0 0 0.4rem;
 }
-.schedule-exam-page .proctor-status {
+.schedule-exam-page .proctor-status{
   display: inline-block;
   font-size: 0.7rem;
   font-weight: 700;
@@ -474,24 +484,24 @@
   color: var(--sfs-danger-text, #fca5a5);
   border: 1px solid rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
 }
-.schedule-exam-page .proctor-status.active {
+.schedule-exam-page .proctor-status.active{
   background: var(--sx-success-bg);
   color: var(--sfs-success-text, #6ee7b7);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
-.schedule-exam-page .proctor-check { flex-shrink: 0; }
+.schedule-exam-page .proctor-check{ flex-shrink: 0; }
 
 /* =============================================================
    DATE & TIME
    ============================================================= */
-.schedule-exam-page .date-time-selector {
+.schedule-exam-page .date-time-selector{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
 .schedule-exam-page .date-selector,
-.schedule-exam-page .time-selector {
+.schedule-exam-page .time-selector{
   background: var(--sx-glass);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-lg);
@@ -501,21 +511,21 @@
   min-width: 0;
 }
 .schedule-exam-page .date-selector h3,
-.schedule-exam-page .time-selector h3 {
+.schedule-exam-page .time-selector h3{
   font-size: 1rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 1rem;
 }
 
-.schedule-exam-page .calendar-container {
+.schedule-exam-page .calendar-container{
   background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 1rem;
   overflow-x: auto;
 }
-.schedule-exam-page .calendar-header {
+.schedule-exam-page .calendar-header{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -523,12 +533,12 @@
   margin-bottom: 0.85rem;
   flex-wrap: wrap;
 }
-.schedule-exam-page .current-month {
+.schedule-exam-page .current-month{
   font-size: 1rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
 }
-.schedule-exam-page .nav-btn {
+.schedule-exam-page .nav-btn{
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   background: var(--sx-glass);
@@ -540,21 +550,21 @@
   flex-shrink: 0;
   transition: all 0.2s var(--sx-ease);
 }
-.schedule-exam-page .nav-btn:hover {
+.schedule-exam-page .nav-btn:hover{
   background: var(--sx-grad);
   border-color: transparent;
   box-shadow: var(--sx-glow);
   transform: translateY(-1px);
 }
-.schedule-exam-page .nav-btn svg { width: 18px; height: 18px; }
+.schedule-exam-page .nav-btn svg{ width: 18px; height: 18px; }
 
-.schedule-exam-page .calendar-days {
+.schedule-exam-page .calendar-days{
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
   min-width: 260px;
 }
-.schedule-exam-page .day-header {
+.schedule-exam-page .day-header{
   text-align: center;
   font-size: 0.7rem;
   font-weight: 700;
@@ -563,7 +573,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.schedule-exam-page .calendar-day {
+.schedule-exam-page .calendar-day{
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -577,20 +587,20 @@
   position: relative;
   font-size: 0.85rem;
 }
-.schedule-exam-page .calendar-day:hover:not(.disabled):not(.has-appointment):not(.past) {
+.schedule-exam-page .calendar-day:hover:not(.disabled):not(.has-appointment):not(.past){
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
 }
-.schedule-exam-page .calendar-day.available {
+.schedule-exam-page .calendar-day.available{
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
   color: var(--sfs-success-text, #a7f3d0);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.3);
 }
-.schedule-exam-page .calendar-day.available:hover {
+.schedule-exam-page .calendar-day.available:hover{
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.22);
   box-shadow: var(--sx-glow-green);
 }
-.schedule-exam-page .calendar-day.selected {
+.schedule-exam-page .calendar-day.selected{
   background: var(--sx-grad);
   color: var(--sfs-on-accent, #fff);
   border-color: transparent;
@@ -598,45 +608,45 @@
   box-shadow: 0 0 20px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.6);
   z-index: 1;
 }
-.schedule-exam-page .calendar-day.today {
+.schedule-exam-page .calendar-day.today{
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
 }
-.schedule-exam-page .calendar-day.past {
+.schedule-exam-page .calendar-day.past{
   opacity: 0.3;
   cursor: not-allowed;
 }
-.schedule-exam-page .calendar-day.disabled {
+.schedule-exam-page .calendar-day.disabled{
   opacity: 0.4;
   cursor: not-allowed;
 }
-.schedule-exam-page .calendar-day.has-appointment {
+.schedule-exam-page .calendar-day.has-appointment{
   background: var(--sx-warning-bg);
   color: var(--sfs-warning-text, #fdba74);
   cursor: not-allowed;
   border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.4);
   border-style: dashed;
 }
-.schedule-exam-page .day-number { font-weight: 600; }
+.schedule-exam-page .day-number{ font-weight: 600; }
 .schedule-exam-page .day-availability,
-.schedule-exam-page .day-appointment {
+.schedule-exam-page .day-appointment{
   position: absolute;
   bottom: 3px;
   font-size: 0.55rem;
 }
-.schedule-exam-page .day-availability { color: var(--sfs-success-text, #6ee7b7); }
-.schedule-exam-page .day-appointment { color: var(--sfs-warning-text, #fdba74); }
+.schedule-exam-page .day-availability{ color: var(--sfs-success-text, #6ee7b7); }
+.schedule-exam-page .day-appointment{ color: var(--sfs-warning-text, #fdba74); }
 
 /* What the calendar is actually showing, under the calendar. */
-.schedule-exam-page .availability-note {
+.schedule-exam-page .availability-note{
   margin-top: 0.85rem;
   font-size: 0.8rem;
   line-height: 1.5;
   color: var(--sx-text-mute);
   text-align: center;
 }
-.schedule-exam-page .availability-note--empty { color: var(--sfs-warning-text, #fdba74); }
-.schedule-exam-page .availability-note--error { color: var(--sfs-danger-text, #fca5a5); }
-.schedule-exam-page .link-btn {
+.schedule-exam-page .availability-note--empty{ color: var(--sfs-warning-text, #fdba74); }
+.schedule-exam-page .availability-note--error{ color: var(--sfs-danger-text, #fca5a5); }
+.schedule-exam-page .link-btn{
   background: none;
   border: none;
   padding: 0 0 0 0.35rem;
@@ -646,25 +656,25 @@
   cursor: pointer;
   text-decoration: underline;
 }
-.schedule-exam-page .slots-refreshing {
+.schedule-exam-page .slots-refreshing{
   margin-left: 0.5rem;
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--sx-text-mute);
   font-style: italic;
 }
-.schedule-exam-page .proctor-reselect {
+.schedule-exam-page .proctor-reselect{
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.schedule-exam-page .time-slots {
+.schedule-exam-page .time-slots{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.65rem;
 }
-.schedule-exam-page .time-slot {
+.schedule-exam-page .time-slot{
   padding: 0.85rem;
   text-align: center;
   background: var(--sx-glass);
@@ -674,33 +684,33 @@
   backdrop-filter: blur(6px);
   transition: all 0.2s var(--sx-ease);
 }
-.schedule-exam-page .time-slot:hover:not(.unavailable) {
+.schedule-exam-page .time-slot:hover:not(.unavailable){
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
   transform: translateY(-2px);
 }
-.schedule-exam-page .time-slot.selected {
+.schedule-exam-page .time-slot.selected{
   background: var(--sx-grad);
   border-color: transparent;
   box-shadow: var(--sx-glow);
   transform: translateY(-2px);
 }
-.schedule-exam-page .time-slot.unavailable {
+.schedule-exam-page .time-slot.unavailable{
   opacity: 0.45;
   cursor: not-allowed;
   background: var(--sx-warning-bg);
   border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
 }
-.schedule-exam-page .slot-time {
+.schedule-exam-page .slot-time{
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin-bottom: 0.2rem;
 }
-.schedule-exam-page .slot-status { font-size: 0.7rem; font-weight: 600; }
-.schedule-exam-page .slot-status.available { color: var(--sfs-success-text, #6ee7b7); }
-.schedule-exam-page .slot-status.unavailable { color: var(--sfs-warning-text, #fdba74); }
-.schedule-exam-page .no-slots {
+.schedule-exam-page .slot-status{ font-size: 0.7rem; font-weight: 600; }
+.schedule-exam-page .slot-status.available{ color: var(--sfs-success-text, #6ee7b7); }
+.schedule-exam-page .slot-status.unavailable{ color: var(--sfs-warning-text, #fdba74); }
+.schedule-exam-page .no-slots{
   grid-column: 1 / -1;
   text-align: center;
   padding: 2rem;
@@ -722,18 +732,18 @@
  * ITEM and must stay in flow whatever any other stylesheet decides `.placeholder`
  * means. Stated here rather than relied upon, because the failure is silent and
  * the symptom points at the calendar rather than at the label. */
-.schedule-exam-page .time-selector.placeholder {
+.schedule-exam-page .time-selector.placeholder{
   position: static;
   inset: auto;
   display: flex;
   flex-direction: column;
   min-height: 280px;
 }
-.schedule-exam-page .time-selector.placeholder.error {
+.schedule-exam-page .time-selector.placeholder.error{
   background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.08);
   border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
 }
-.schedule-exam-page .placeholder-message {
+.schedule-exam-page .placeholder-message{
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -744,14 +754,14 @@
   padding: 1.5rem;
   font-style: italic;
 }
-.schedule-exam-page .placeholder-message .error-icon {
+.schedule-exam-page .placeholder-message .error-icon{
   font-size: 2.5rem;
   margin-bottom: 0.85rem;
   color: var(--sx-warning);
   filter: drop-shadow(0 0 12px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.5));
 }
 
-.schedule-exam-page .debug-info {
+.schedule-exam-page .debug-info{
   background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.5);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-sm);
@@ -764,8 +774,8 @@
 /* =============================================================
    APPOINTMENT CARD / DETAIL SECTIONS
    ============================================================= */
-.schedule-exam-page .current-appointment-details { margin-bottom: 1.5rem; }
-.schedule-exam-page .appointment-card {
+.schedule-exam-page .current-appointment-details{ margin-bottom: 1.5rem; }
+.schedule-exam-page .appointment-card{
   background: var(--sx-glass);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-xl);
@@ -775,14 +785,14 @@
   box-shadow: var(--sx-shadow);
   isolation: isolate;
 }
-.schedule-exam-page .appointment-header {
+.schedule-exam-page .appointment-header{
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
-.schedule-exam-page .appointment-icon {
+.schedule-exam-page .appointment-icon{
   width: 56px; height: 56px;
   border-radius: var(--sx-r-md);
   background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.4), rgb(var(--sfs-warning-rgb, 221 107 32) / 0.4));
@@ -793,32 +803,32 @@
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.4);
   box-shadow: 0 6px 22px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
 }
-.schedule-exam-page .appointment-title { flex: 1 1 220px; min-width: 0; }
-.schedule-exam-page .appointment-title h3 {
+.schedule-exam-page .appointment-title{ flex: 1 1 220px; min-width: 0; }
+.schedule-exam-page .appointment-title h3{
   font-size: clamp(1.1rem, 2vw, 1.4rem);
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.2rem;
 }
-.schedule-exam-page .appointment-title p {
+.schedule-exam-page .appointment-title p{
   font-size: 0.9rem;
   color: var(--sx-text-mute);
   margin: 0;
 }
 
-.schedule-exam-page .appointment-details {
+.schedule-exam-page .appointment-details{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
-.schedule-exam-page .detail-section h4 {
+.schedule-exam-page .detail-section h4{
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.75rem;
 }
-.schedule-exam-page .detail-grid {
+.schedule-exam-page .detail-grid{
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -827,7 +837,7 @@
   border-radius: var(--sx-r-md);
   padding: 0.85rem 1rem;
 }
-.schedule-exam-page .detail-item {
+.schedule-exam-page .detail-item{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -836,13 +846,13 @@
   border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
   flex-wrap: wrap;
 }
-.schedule-exam-page .detail-item:last-child { border-bottom: none; }
-.schedule-exam-page .detail-item .label {
+.schedule-exam-page .detail-item:last-child{ border-bottom: none; }
+.schedule-exam-page .detail-item .label{
   font-size: 0.85rem;
   color: var(--sx-text-mute);
   font-weight: 500;
 }
-.schedule-exam-page .detail-item .value {
+.schedule-exam-page .detail-item .value{
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
@@ -850,18 +860,18 @@
   max-width: 60%;
   word-break: break-word;
 }
-.schedule-exam-page .detail-item .value.scheduled    { color: var(--sfs-warning-text, #fdba74); }
+.schedule-exam-page .detail-item .value.scheduled{ color: var(--sfs-warning-text, #fdba74); }
 .schedule-exam-page .detail-item .value.in-progress,
-.schedule-exam-page .detail-item .value.inprogress   { color: var(--sfs-text-muted, #93c5fd); }
-.schedule-exam-page .detail-item .value.completed    { color: var(--sfs-success-text, #6ee7b7); }
+.schedule-exam-page .detail-item .value.inprogress{ color: var(--sfs-text-muted, #93c5fd); }
+.schedule-exam-page .detail-item .value.completed{ color: var(--sfs-success-text, #6ee7b7); }
 .schedule-exam-page .detail-item .value.takenbutfailed,
 .schedule-exam-page .detail-item .value.expired,
-.schedule-exam-page .detail-item .value.cancelled    { color: var(--sfs-danger-text, #fca5a5); }
-.schedule-exam-page .detail-item .value.noreservationyet { color: var(--sx-text-mute); }
-.schedule-exam-page .status-active { color: var(--sfs-success-text, #6ee7b7); font-weight: 700; }
+.schedule-exam-page .detail-item .value.cancelled{ color: var(--sfs-danger-text, #fca5a5); }
+.schedule-exam-page .detail-item .value.noreservationyet{ color: var(--sx-text-mute); }
+.schedule-exam-page .status-active{ color: var(--sfs-success-text, #6ee7b7); font-weight: 700; }
 
 .schedule-exam-page .reschedule-notice,
-.schedule-exam-page .reschedule-note {
+.schedule-exam-page .reschedule-note{
   display: flex;
   gap: 0.85rem;
   padding: 1rem;
@@ -872,14 +882,14 @@
   flex-wrap: wrap;
 }
 .schedule-exam-page .notice-icon,
-.schedule-exam-page .note-icon {
+.schedule-exam-page .note-icon{
   font-size: 1.5rem;
   flex-shrink: 0;
   filter: drop-shadow(0 0 8px rgb(var(--sfs-warning-rgb, 237 137 54) / 0.5));
 }
 .schedule-exam-page .notice-content,
-.schedule-exam-page .note-content { flex: 1 1 220px; min-width: 0; }
-.schedule-exam-page .notice-content h4 {
+.schedule-exam-page .note-content{ flex: 1 1 220px; min-width: 0; }
+.schedule-exam-page .notice-content h4{
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--sfs-warning-text, #fdba74);
@@ -887,15 +897,15 @@
 }
 .schedule-exam-page .notice-content ul,
 .schedule-exam-page .note-content ul,
-.schedule-exam-page .note-content p { color: var(--sx-text-mute); }
-.schedule-exam-page .notice-content ul { list-style: none; padding: 0; margin: 0; }
-.schedule-exam-page .notice-content li {
+.schedule-exam-page .note-content p{ color: var(--sx-text-mute); }
+.schedule-exam-page .notice-content ul{ list-style: none; padding: 0; margin: 0; }
+.schedule-exam-page .notice-content li{
   padding: 0.3rem 0 0.3rem 1.2rem;
   position: relative;
   font-size: 0.85rem;
   line-height: 1.5;
 }
-.schedule-exam-page .notice-content li::before {
+.schedule-exam-page .notice-content li::before{
   content: "•";
   position: absolute;
   left: 0;
@@ -906,19 +916,19 @@
 /* =============================================================
    BOOKING SUMMARY (final step)
    ============================================================= */
-.schedule-exam-page .booking-summary {
+.schedule-exam-page .booking-summary{
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
-.schedule-exam-page .current-appointment-section h3 {
+.schedule-exam-page .current-appointment-section h3{
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.85rem;
 }
-.schedule-exam-page .appointment-comparison {
+.schedule-exam-page .appointment-comparison{
   display: flex;
   align-items: stretch;
   gap: 1rem;
@@ -931,8 +941,8 @@
   row-gap: 1rem;
 }
 .schedule-exam-page .old-appointment,
-.schedule-exam-page .new-appointment { flex: 1 1 260px; min-width: 0; }
-.schedule-exam-page .comparison-label {
+.schedule-exam-page .new-appointment{ flex: 1 1 260px; min-width: 0; }
+.schedule-exam-page .comparison-label{
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -940,13 +950,13 @@
   color: var(--sx-text-mute);
   margin-bottom: 0.5rem;
 }
-.schedule-exam-page .appointment-detail {
+.schedule-exam-page .appointment-detail{
   background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 0.85rem 1rem;
 }
-.schedule-exam-page .arrow {
+.schedule-exam-page .arrow{
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--sx-accent);
@@ -955,7 +965,7 @@
   text-shadow: 0 0 14px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7);
 }
 
-.schedule-exam-page .summary-card {
+.schedule-exam-page .summary-card{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
@@ -965,8 +975,8 @@
   border-radius: var(--sx-r-lg);
   backdrop-filter: blur(12px);
 }
-.schedule-exam-page .summary-section { display: flex; flex-direction: column; gap: 0.5rem; }
-.schedule-exam-page .summary-section h3 {
+.schedule-exam-page .summary-section{ display: flex; flex-direction: column; gap: 0.5rem; }
+.schedule-exam-page .summary-section h3{
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
@@ -974,18 +984,18 @@
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--sx-border);
 }
-.schedule-exam-page .summary-item {
+.schedule-exam-page .summary-item{
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-.schedule-exam-page .summary-item .label {
+.schedule-exam-page .summary-item .label{
   font-size: 0.85rem;
   color: var(--sx-text-mute);
 }
-.schedule-exam-page .summary-item .value {
+.schedule-exam-page .summary-item .value{
   font-size: 0.9rem;
   color: var(--sfs-text, #fff);
   font-weight: 600;
@@ -994,28 +1004,28 @@
   word-break: break-word;
 }
 
-.schedule-exam-page .instructions-card {
+.schedule-exam-page .instructions-card{
   padding: 1.25rem;
   background: var(--sx-warning-bg);
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
   border-radius: var(--sx-r-lg);
   backdrop-filter: blur(10px);
 }
-.schedule-exam-page .instructions-card h3 {
+.schedule-exam-page .instructions-card h3{
   font-size: 1rem;
   font-weight: 600;
   color: var(--sfs-warning-text, #fdba74);
   margin: 0 0 0.85rem;
 }
-.schedule-exam-page .instructions-list { list-style: none; padding: 0; margin: 0; }
-.schedule-exam-page .instructions-list li {
+.schedule-exam-page .instructions-list{ list-style: none; padding: 0; margin: 0; }
+.schedule-exam-page .instructions-list li{
   padding: 0.4rem 0 0.4rem 1.6rem;
   position: relative;
   color: var(--sx-text-soft);
   font-size: 0.9rem;
   line-height: 1.6;
 }
-.schedule-exam-page .instructions-list li::before {
+.schedule-exam-page .instructions-list li::before{
   content: "⚡";
   position: absolute;
   left: 0;
@@ -1026,7 +1036,7 @@
 /* =============================================================
    STEP ACTIONS + BUTTONS
    ============================================================= */
-.schedule-exam-page .step-actions {
+.schedule-exam-page .step-actions{
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
@@ -1034,16 +1044,22 @@
   border-top: 1px solid var(--sx-border);
   flex-wrap: wrap;
 }
-.schedule-exam-page .action-buttons {
+.schedule-exam-page .action-buttons{
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 
 .schedule-exam-page :where(
-  .btn-cancel, .btn-back, .btn-next, .btn-confirm,
-  .btn-primary, .btn-secondary, .btn-danger, .retry-btn
-) {
+  .btn-cancel,
+.schedule-exam-page .btn-back,
+.schedule-exam-page .btn-next,
+.schedule-exam-page .btn-confirm,
+.schedule-exam-page .btn-primary,
+.schedule-exam-page .btn-secondary,
+.schedule-exam-page .btn-danger,
+.schedule-exam-page .retry-btn
+){
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1062,13 +1078,13 @@
 }
 
 .schedule-exam-page .btn-back,
-.schedule-exam-page .btn-secondary {
+.schedule-exam-page .btn-secondary{
   background: var(--sx-glass);
   color: var(--sx-text);
   border-color: var(--sx-border);
 }
 .schedule-exam-page .btn-back:hover,
-.schedule-exam-page .btn-secondary:hover {
+.schedule-exam-page .btn-secondary:hover{
   background: var(--sx-glass-2);
   border-color: var(--sx-border-2);
   transform: translateY(-2px);
@@ -1077,7 +1093,7 @@
 
 .schedule-exam-page .btn-next,
 .schedule-exam-page .btn-primary,
-.schedule-exam-page .retry-btn {
+.schedule-exam-page .retry-btn{
   background: var(--sx-grad);
   color: var(--sfs-on-accent, #fff);
   border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
@@ -1086,31 +1102,31 @@
 }
 .schedule-exam-page .btn-next:hover:not(:disabled),
 .schedule-exam-page .btn-primary:hover,
-.schedule-exam-page .retry-btn:hover {
+.schedule-exam-page .retry-btn:hover{
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
-.schedule-exam-page .btn-confirm {
+.schedule-exam-page .btn-confirm{
   background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 72 187 120) / 0.7), rgb(var(--sfs-success-rgb, 56 161 105) / 0.7));
   color: var(--sfs-text, #fff);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.45);
   box-shadow: 0 6px 22px rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
-.schedule-exam-page .btn-confirm:hover:not(:disabled) {
+.schedule-exam-page .btn-confirm:hover:not(:disabled){
   background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 72 187 120) / 0.9), rgb(var(--sfs-success-rgb, 56 161 105) / 0.9));
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgb(var(--sfs-success-rgb, 72 187 120) / 0.5);
 }
 
 .schedule-exam-page .btn-cancel,
-.schedule-exam-page .btn-danger {
+.schedule-exam-page .btn-danger{
   background: var(--sx-danger-bg);
   color: var(--sfs-danger-text, #fecaca);
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
 }
 .schedule-exam-page .btn-cancel:hover:not(:disabled),
-.schedule-exam-page .btn-danger:hover:not(:disabled) {
+.schedule-exam-page .btn-danger:hover:not(:disabled){
   color: var(--sfs-text, #fff);
   background: linear-gradient(135deg, rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5), rgb(var(--sfs-danger-rgb, 245 101 101) / 0.5));
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.6);
@@ -1120,7 +1136,7 @@
 
 .schedule-exam-page .btn-next:disabled,
 .schedule-exam-page .btn-confirm:disabled,
-.schedule-exam-page .btn-danger:disabled {
+.schedule-exam-page .btn-danger:disabled{
   opacity: 0.45;
   cursor: not-allowed;
   transform: none !important;
@@ -1128,13 +1144,13 @@
 }
 
 .schedule-exam-page .booking-loading,
-.schedule-exam-page .cancelling-loading {
+.schedule-exam-page .cancelling-loading{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
 .schedule-exam-page .booking-loading::after,
-.schedule-exam-page .cancelling-loading::after {
+.schedule-exam-page .cancelling-loading::after{
   content: "";
   width: 14px; height: 14px;
   border: 2px solid currentColor;
@@ -1147,7 +1163,7 @@
    MODALS
    ============================================================= */
 .schedule-exam-page .modal-overlay,
-body > .modal-overlay {
+body > .modal-overlay{
   position: fixed;
   inset: 0;
   background: rgb(var(--sfs-surface-rgb, 3 3 15) / 0.7);
@@ -1162,7 +1178,7 @@ body > .modal-overlay {
 }
 .schedule-exam-page .modal-content,
 .schedule-exam-page .success-modal,
-.schedule-exam-page .cancel-modal {
+.schedule-exam-page .cancel-modal{
   width: 100%;
   max-width: 560px;
   padding: clamp(1.25rem, 3vw, 2.25rem);
@@ -1179,7 +1195,7 @@ body > .modal-overlay {
 }
 
 .schedule-exam-page .success-icon,
-.schedule-exam-page .cancel-icon {
+.schedule-exam-page .cancel-icon{
   width: 76px; height: 76px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -1188,13 +1204,13 @@ body > .modal-overlay {
   border: 1px solid;
   backdrop-filter: blur(6px);
 }
-.schedule-exam-page .success-icon {
+.schedule-exam-page .success-icon{
   background: linear-gradient(135deg, rgb(var(--sfs-success-rgb, 72 187 120) / 0.4), rgb(var(--sfs-success-rgb, 56 161 105) / 0.4));
   color: var(--sfs-text, #fff);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.5);
   box-shadow: var(--sx-glow-green), 0 8px 28px rgb(var(--sfs-success-rgb, 72 187 120) / 0.4);
 }
-.schedule-exam-page .cancel-icon {
+.schedule-exam-page .cancel-icon{
   background: var(--sx-warning-bg);
   color: var(--sfs-warning-text, #fdba74);
   border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.45);
@@ -1202,21 +1218,21 @@ body > .modal-overlay {
 }
 
 .schedule-exam-page .success-modal h3,
-.schedule-exam-page .cancel-modal h3 {
+.schedule-exam-page .cancel-modal h3{
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: 700;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.5rem;
 }
 .schedule-exam-page .success-modal p,
-.schedule-exam-page .cancel-modal p {
+.schedule-exam-page .cancel-modal p{
   font-size: 0.95rem;
   color: var(--sx-text-mute);
   margin: 0 0 1.5rem;
 }
 
 .schedule-exam-page .success-details,
-.schedule-exam-page .cancel-details {
+.schedule-exam-page .cancel-details{
   background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.4);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
@@ -1224,7 +1240,7 @@ body > .modal-overlay {
   margin-bottom: 1.25rem;
   text-align: left;
 }
-.schedule-exam-page .cancel-warning {
+.schedule-exam-page .cancel-warning{
   padding: 0.85rem 1rem;
   background: var(--sx-warning-bg);
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
@@ -1232,22 +1248,22 @@ body > .modal-overlay {
   margin-bottom: 1.25rem;
   text-align: left;
 }
-.schedule-exam-page .cancel-warning p { color: var(--sfs-warning-text, #fdba74); font-size: 0.85rem; margin: 0; }
+.schedule-exam-page .cancel-warning p{ color: var(--sfs-warning-text, #fdba74); font-size: 0.85rem; margin: 0; }
 
 .schedule-exam-page .success-actions,
-.schedule-exam-page .cancel-actions {
+.schedule-exam-page .cancel-actions{
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 .schedule-exam-page .success-actions button,
-.schedule-exam-page .cancel-actions button { flex: 1 1 auto; }
+.schedule-exam-page .cancel-actions button{ flex: 1 1 auto; }
 
 /* =============================================================
    LOADING & ERROR STATES
    ============================================================= */
 .schedule-exam-page .loading-container,
-.schedule-exam-page .error-container {
+.schedule-exam-page .error-container{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1263,7 +1279,7 @@ body > .modal-overlay {
   box-shadow: var(--sx-shadow);
   min-height: 220px;
 }
-.schedule-exam-page .loading-spinner {
+.schedule-exam-page .loading-spinner{
   width: 56px; height: 56px;
   border-radius: 50%;
   border: 3px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
@@ -1275,23 +1291,23 @@ body > .modal-overlay {
   background: transparent;
   position: relative;
 }
-.schedule-exam-page .loading-container p {
+.schedule-exam-page .loading-container p{
   color: var(--sx-text-mute);
   font-size: 0.95rem;
 }
-.schedule-exam-page .error-container .error-icon {
+.schedule-exam-page .error-container .error-icon{
   font-size: 3rem;
   margin-bottom: 0.85rem;
   color: var(--sx-danger);
   filter: drop-shadow(0 0 14px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5));
 }
-.schedule-exam-page .error-container h3 {
+.schedule-exam-page .error-container h3{
   font-size: clamp(1.1rem, 2vw, 1.35rem);
   font-weight: 700;
   color: var(--sfs-text, #fff);
   margin: 0 0 0.4rem;
 }
-.schedule-exam-page .error-container p {
+.schedule-exam-page .error-container p{
   color: var(--sx-text-mute);
   margin: 0 0 1.25rem;
   max-width: 420px;
@@ -1310,8 +1326,13 @@ body > .modal-overlay {
 /* =============================================================
    FOCUS
    ============================================================= */
-.schedule-exam-page :where(button, a, [tabindex], .exam-option, .proctor-card,
-  .calendar-day, .time-slot):focus-visible {
+.schedule-exam-page :where(button,
+.schedule-exam-page a,
+.schedule-exam-page [tabindex],
+.schedule-exam-page .exam-option,
+.schedule-exam-page .proctor-card,
+.schedule-exam-page .calendar-day,
+.schedule-exam-page .time-slot):focus-visible{
   outline: 2px solid var(--sx-accent);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
@@ -1323,62 +1344,62 @@ body > .modal-overlay {
 
 /* ≥ 480px — phablet */
 @media (min-width: 480px) {
-  .schedule-exam-page .step-actions { flex-wrap: nowrap; }
+  .schedule-exam-page .step-actions{ flex-wrap: nowrap; }
 }
 
 /* ≥ 640px — small tablet */
 @media (min-width: 640px) {
-  .schedule-exam-page .proctors-grid {
+  .schedule-exam-page .proctors-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .schedule-exam-page .appointment-details {
+  .schedule-exam-page .appointment-details{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* ≥ 768px — tablet */
 @media (min-width: 768px) {
-  .schedule-exam-page .date-time-selector {
+  .schedule-exam-page .date-time-selector{
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-  .schedule-exam-page .summary-card {
+  .schedule-exam-page .summary-card{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .schedule-exam-page .step-label { font-size: 0.875rem; }
+  .schedule-exam-page .step-label{ font-size: 0.875rem; }
 }
 
 /* ≥ 1024px — laptop */
 @media (min-width: 1024px) {
-  .schedule-exam-page .appointment-details {
+  .schedule-exam-page .appointment-details{
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .schedule-exam-page .summary-card {
+  .schedule-exam-page .summary-card{
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .schedule-exam-page .proctors-grid {
+  .schedule-exam-page .proctors-grid{
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
 /* ≥ 1440px — desktop */
 @media (min-width: 1440px) {
-  .schedule-exam-page { max-width: 1500px; }
-  .schedule-exam-page .proctors-grid {
+  .schedule-exam-page{ max-width: 1500px; }
+  .schedule-exam-page .proctors-grid{
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   }
 }
 
 /* ≥ 1920px — full HD */
 @media (min-width: 1920px) {
-  .schedule-exam-page { max-width: 1700px; }
+  .schedule-exam-page{ max-width: 1700px; }
 }
 
 /* ≥ 2560px — TV / 4K */
 @media (min-width: 2560px) {
-  .schedule-exam-page { max-width: 2000px; }
-  .schedule-exam-page .step-number { width: 56px; height: 56px; font-size: 1.3rem; }
-  .schedule-exam-page .proctor-avatar { width: 64px; height: 64px; font-size: 1.6rem; }
-  .schedule-exam-page .calendar-days { gap: 6px; }
+  .schedule-exam-page{ max-width: 2000px; }
+  .schedule-exam-page .step-number{ width: 56px; height: 56px; font-size: 1.3rem; }
+  .schedule-exam-page .proctor-avatar{ width: 64px; height: 64px; font-size: 1.6rem; }
+  .schedule-exam-page .calendar-days{ gap: 6px; }
 }
 
 /* =============================================================
@@ -1386,14 +1407,14 @@ body > .modal-overlay {
    ============================================================= */
 @media (prefers-reduced-motion: reduce) {
   .schedule-exam-page *,
-  .schedule-exam-page *::before,
-  .schedule-exam-page *::after {
+.schedule-exam-page *::before,
+.schedule-exam-page *::after{
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
   .schedule-exam-page .loading-spinner,
-  .schedule-exam-page .booking-loading::after,
-  .schedule-exam-page .cancelling-loading::after { animation: none; }
+.schedule-exam-page .booking-loading::after,
+.schedule-exam-page .cancelling-loading::after{ animation: none; }
 }
 
 /* =============================================================
@@ -1401,12 +1422,12 @@ body > .modal-overlay {
    ============================================================= */
 @media (prefers-contrast: high) {
   .schedule-exam-page .step-content,
-  .schedule-exam-page .appointment-card,
-  .schedule-exam-page .modal-content,
-  .schedule-exam-page .success-modal,
-  .schedule-exam-page .cancel-modal,
-  .schedule-exam-page .loading-container,
-  .schedule-exam-page .error-container {
+.schedule-exam-page .appointment-card,
+.schedule-exam-page .modal-content,
+.schedule-exam-page .success-modal,
+.schedule-exam-page .cancel-modal,
+.schedule-exam-page .loading-container,
+.schedule-exam-page .error-container{
     border-color: var(--sfs-border-strong, #fff);
   }
 }
@@ -1422,7 +1443,7 @@ body > .modal-overlay {
  * legible in all ten galaxies rather than only in the default one.
  * ------------------------------------------------------------------------- */
 
-.schedule-exam-page .success-warning {
+.schedule-exam-page .success-warning{
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -1439,7 +1460,7 @@ body > .modal-overlay {
   overflow-wrap: anywhere;
 }
 
-.schedule-exam-page .success-warning__icon {
+.schedule-exam-page .success-warning__icon{
   flex: 0 0 auto;
   line-height: 1.5;
 }

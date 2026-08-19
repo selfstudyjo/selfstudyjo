@@ -5,11 +5,16 @@
     <div class="exam-header">
       <div class="header-content">
         <div class="exam-info">
-          <h1 class="exam-title">{{ exam?.title }}</h1>
-          <p class="exam-course">{{ exam?.course_name || exam?.course_id }}</p>
-          <div v-if="appointment" class="appointment-status">
-            <span class="status-badge" :class="appointment.appointment_status.toLowerCase().replace(/\s+/g, '-')">
-              {{ appointment.appointment_status }}
+          <h1 class="exam-title" :title="exam?.title">{{ exam?.title }}</h1>
+          <!-- Course and status on ONE line. They were two of the four bands that
+               made this sticky header 43% of the viewport on a desktop and 72% on
+               a small phone, with the question scrolling underneath it. -->
+          <div class="exam-meta-line">
+            <p class="exam-course">{{ exam?.course_name || exam?.course_id }}</p>
+            <span v-if="appointment" class="appointment-status">
+              <span class="status-badge" :class="appointment.appointment_status.toLowerCase().replace(/\s+/g, '-')">
+                {{ appointment.appointment_status }}
+              </span>
             </span>
           </div>
         </div>

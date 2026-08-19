@@ -3,7 +3,7 @@
    Mobile-first, fluid, fully transparent over the 3D background
    ============================================================ */
 
-:root {
+:root{
   /* Brand palette (aligned with global gradient #667eea → #764ba2) */
   --ea-primary: var(--sfs-accent-text, #818cf8);
   --ea-primary-2: var(--sfs-accent-2-text, #a78bfa);
@@ -40,7 +40,7 @@
 /* ============================================================
    ROOT — fully transparent so galaxy shows through
    ============================================================ */
-.exam-approval-page {
+.exam-approval-page{
   position: relative;
   z-index: 1;
   min-height: 100vh;
@@ -55,14 +55,14 @@
   overflow-x: hidden;
 }
 
-.exam-approval-page * {
+.exam-approval-page *{
   box-sizing: border-box;
 }
 
 /* ============================================================
    HEADER
    ============================================================ */
-.page-header {
+.exam-approval-page .page-header{
   position: relative;
   z-index: 2;
   max-width: 1400px;
@@ -70,14 +70,14 @@
   text-align: center;
 }
 
-.header-content {
+.exam-approval-page .header-content{
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: clamp(0.5rem, 1.5vw, 1rem);
 }
 
-.page-title {
+.exam-approval-page .page-title{
   margin: 0;
   font-size: clamp(1.5rem, 3.5vw, 2.5rem);
   font-weight: 800;
@@ -90,7 +90,7 @@
   padding-bottom: 0.6rem;
 }
 
-.page-title::after {
+.exam-approval-page .page-title::after{
   content: '';
   position: absolute;
   left: 50%;
@@ -102,7 +102,7 @@
   background: linear-gradient(90deg, transparent, var(--sfs-accent-soft, #818cf8), var(--sfs-accent-2, #a78bfa), transparent);
 }
 
-.page-subtitle {
+.exam-approval-page .page-subtitle{
   margin: 0;
   color: var(--ea-text-mute);
   font-size: clamp(0.85rem, 1.5vw, 1rem);
@@ -111,7 +111,7 @@
 /* ============================================================
    TIMER
    ============================================================ */
-.timer-display {
+.exam-approval-page .timer-display{
   margin-top: 0.5rem;
   padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1rem, 3vw, 1.75rem);
   background: var(--ea-glass-1);
@@ -124,7 +124,7 @@
   min-width: min(280px, 90vw);
 }
 
-.timer-label {
+.exam-approval-page .timer-label{
   display: block;
   margin-bottom: 0.4rem;
   color: var(--ea-text-mute);
@@ -134,7 +134,7 @@
   font-weight: 600;
 }
 
-.timer {
+.exam-approval-page .timer{
   display: block;
   font-size: clamp(1.1rem, 2.4vw, 1.6rem);
   font-weight: 700;
@@ -143,27 +143,27 @@
   text-shadow: 0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
 }
 
-.timer.ready {
+.exam-approval-page .timer.ready{
   background: linear-gradient(135deg, var(--sfs-info-text, #4ECDC4), var(--sfs-success-text, #48bb78));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.timer.warning {
+.exam-approval-page .timer.warning{
   color: var(--sfs-warning-text, #fbbf24);
   text-shadow: 0 0 24px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.5);
 }
 
-.timer.normal {
+.exam-approval-page .timer.normal{
   color: var(--ea-text);
 }
 
 /* ============================================================
    STATES — LOADING & ERROR
    ============================================================ */
-.loading-container,
-.error-container {
+.exam-approval-page .loading-container,
+.exam-approval-page .error-container{
   max-width: min(560px, 100%);
   margin: clamp(2rem, 6vw, 4rem) auto;
   padding: clamp(1.5rem, 4vw, 2.5rem);
@@ -176,7 +176,7 @@
   box-shadow: var(--ea-glow);
 }
 
-.loading-container .loading-spinner {
+.exam-approval-page .loading-container .loading-spinner{
   width: 56px;
   height: 56px;
   margin: 0 auto 1rem;
@@ -189,19 +189,19 @@
 
 @keyframes ea-spin { to { transform: rotate(360deg); } }
 
-.error-container .error-icon {
+.exam-approval-page .error-container .error-icon{
   font-size: clamp(2rem, 5vw, 3rem);
   margin-bottom: 0.75rem;
   filter: drop-shadow(0 0 16px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5));
 }
 
-.error-container h3 {
+.exam-approval-page .error-container h3{
   margin: 0 0 0.5rem;
   color: var(--ea-text);
   font-size: clamp(1.05rem, 2vw, 1.25rem);
 }
 
-.error-container p {
+.exam-approval-page .error-container p{
   color: var(--ea-text-mute);
   margin-bottom: 1.25rem;
 }
@@ -209,21 +209,21 @@
 /* ============================================================
    GRID LAYOUT
    ============================================================ */
-.approval-content {
+.exam-approval-page .approval-content{
   position: relative;
   z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-.approval-grid {
+.exam-approval-page .approval-grid{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(1rem, 2.2vw, 1.5rem);
 }
 
-.left-column,
-.right-column {
+.exam-approval-page .left-column,
+.exam-approval-page .right-column{
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 2vw, 1.25rem);
@@ -233,9 +233,9 @@
 /* ============================================================
    GLASS CARDS
    ============================================================ */
-.exam-info-card,
-.action-card,
-.proctor-card {
+.exam-approval-page .exam-info-card,
+.exam-approval-page .action-card,
+.exam-approval-page .proctor-card{
   position: relative;
   background: var(--ea-glass-2);
   backdrop-filter: blur(18px) saturate(140%);
@@ -247,15 +247,15 @@
   transition: transform var(--ea-normal), box-shadow var(--ea-normal), border-color var(--ea-normal);
 }
 
-.exam-info-card:hover,
-.action-card:hover,
-.proctor-card:hover {
+.exam-approval-page .exam-info-card:hover,
+.exam-approval-page .action-card:hover,
+.exam-approval-page .proctor-card:hover{
   transform: translateY(-2px);
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   box-shadow: var(--ea-glow-hover);
 }
 
-.card-header {
+.exam-approval-page .card-header{
   padding: clamp(0.9rem, 2vw, 1.25rem) clamp(1rem, 2.4vw, 1.5rem);
   border-bottom: 1px solid var(--ea-border);
   display: flex;
@@ -266,7 +266,7 @@
   background: linear-gradient(180deg, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04), rgb(var(--sfs-tint-rgb, 255 255 255) / 0));
 }
 
-.card-header h2 {
+.exam-approval-page .card-header h2{
   margin: 0;
   font-size: clamp(1rem, 1.9vw, 1.25rem);
   font-weight: 700;
@@ -274,11 +274,11 @@
   letter-spacing: -0.01em;
 }
 
-.card-body {
+.exam-approval-page .card-body{
   padding: clamp(1rem, 2.4vw, 1.5rem);
 }
 
-.card-footer {
+.exam-approval-page .card-footer{
   padding: clamp(1rem, 2.4vw, 1.5rem);
   border-top: 1px solid var(--ea-border);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.02);
@@ -287,9 +287,9 @@
 /* ============================================================
    STATUS BADGES
    ============================================================ */
-.exam-status,
-.room-status,
-.status-badge {
+.exam-approval-page .exam-status,
+.exam-approval-page .room-status,
+.exam-approval-page .status-badge{
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.75rem;
@@ -304,47 +304,47 @@
   color: var(--ea-text);
 }
 
-.exam-status.scheduled,
-.exam-status.confirmed,
-.exam-status.approved,
-.status-approved {
+.exam-approval-page .exam-status.scheduled,
+.exam-approval-page .exam-status.confirmed,
+.exam-approval-page .exam-status.approved,
+.exam-approval-page .status-approved{
   background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.15);
   border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.4);
   color: var(--sfs-info-text, #5eead4);
 }
 
-.exam-status.pending,
-.status-pending {
+.exam-approval-page .exam-status.pending,
+.exam-approval-page .status-pending{
   background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.15);
   border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.4);
   color: var(--sfs-warning-text, #fcd34d);
 }
 
-.exam-status.in-progress {
+.exam-approval-page .exam-status.in-progress{
   background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4);
   color: var(--sfs-text-muted, #c7d2fe);
 }
 
-.exam-status.completed {
+.exam-approval-page .exam-status.completed{
   background: rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.18);
   border-color: rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.4);
   color: var(--sfs-text-muted, #ddd6fe);
 }
 
-.exam-status.cancelled {
+.exam-approval-page .exam-status.cancelled{
   background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.15);
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.4);
   color: var(--sfs-danger-text, #fca5a5);
 }
 
-.room-status.entered {
+.exam-approval-page .room-status.entered{
   background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.15);
   border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.4);
   color: var(--sfs-info-text, #5eead4);
 }
 
-.room-status.not-entered {
+.exam-approval-page .room-status.not-entered{
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   border-color: var(--ea-border);
   color: var(--ea-text-mute);
@@ -353,27 +353,27 @@
 /* ============================================================
    INFO SECTIONS
    ============================================================ */
-.info-section,
-.instructions-section,
-.video-section,
-.requirements-section,
-.reschedule-section {
+.exam-approval-page .info-section,
+.exam-approval-page .instructions-section,
+.exam-approval-page .video-section,
+.exam-approval-page .requirements-section,
+.exam-approval-page .reschedule-section{
   margin-bottom: clamp(1rem, 2.2vw, 1.5rem);
 }
 
-.info-section:last-child,
-.instructions-section:last-child,
-.video-section:last-child,
-.requirements-section:last-child,
-.reschedule-section:last-child {
+.exam-approval-page .info-section:last-child,
+.exam-approval-page .instructions-section:last-child,
+.exam-approval-page .video-section:last-child,
+.exam-approval-page .requirements-section:last-child,
+.exam-approval-page .reschedule-section:last-child{
   margin-bottom: 0;
 }
 
-.info-section h3,
-.instructions-section h3,
-.video-section h3,
-.requirements-section h3,
-.reschedule-section h3 {
+.exam-approval-page .info-section h3,
+.exam-approval-page .instructions-section h3,
+.exam-approval-page .video-section h3,
+.exam-approval-page .requirements-section h3,
+.exam-approval-page .reschedule-section h3{
   margin: 0 0 0.8rem;
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
   font-weight: 700;
@@ -383,13 +383,13 @@
   gap: 0.5rem;
 }
 
-.info-grid {
+.exam-approval-page .info-grid{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.6rem;
 }
 
-.info-item {
+.exam-approval-page .info-item{
   position: relative;
   padding: 0.75rem 0.9rem;
   background: var(--ea-glass-1);
@@ -400,7 +400,7 @@
   overflow: hidden;
 }
 
-.info-item::before {
+.exam-approval-page .info-item::before{
   content: '';
   position: absolute;
   top: 0;
@@ -412,15 +412,15 @@
   transition: opacity var(--ea-fast);
 }
 
-.info-item:hover {
+.exam-approval-page .info-item:hover{
   transform: translateY(-1px);
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   background: var(--ea-glass-2);
 }
 
-.info-item:hover::before { opacity: 1; }
+.exam-approval-page .info-item:hover::before{ opacity: 1; }
 
-.info-label {
+.exam-approval-page .info-label{
   display: block;
   margin-bottom: 0.25rem;
   font-size: clamp(0.65rem, 1vw, 0.72rem);
@@ -430,7 +430,7 @@
   color: var(--ea-text-faint);
 }
 
-.info-value {
+.exam-approval-page .info-value{
   display: block;
   font-size: clamp(0.85rem, 1.4vw, 0.95rem);
   font-weight: 600;
@@ -441,7 +441,7 @@
 /* ============================================================
    INSTRUCTIONS
    ============================================================ */
-.instructions-content {
+.exam-approval-page .instructions-content{
   padding: clamp(0.85rem, 1.8vw, 1.1rem);
   background: var(--ea-glass-1);
   border: 1px solid var(--ea-border);
@@ -454,7 +454,7 @@
   overflow-y: auto;
 }
 
-.instructions-note {
+.exam-approval-page .instructions-note{
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
   background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.08);
@@ -464,29 +464,29 @@
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
 }
 
-.instructions-note p { margin: 0; }
-.instructions-note strong { color: var(--sfs-text-muted, #c7d2fe); }
+.exam-approval-page .instructions-note p{ margin: 0; }
+.exam-approval-page .instructions-note strong{ color: var(--sfs-text-muted, #c7d2fe); }
 
 /* ============================================================
    VIDEO
    ============================================================ */
-.video-container {
+.exam-approval-page .video-container{
   background: var(--ea-glass-1);
   border: 1px solid var(--ea-border);
   border-radius: var(--ea-radius);
   overflow: hidden;
 }
 
-.video-embed-wrapper { width: 100%; }
+.exam-approval-page .video-embed-wrapper{ width: 100%; }
 
-.video-embed-container {
+.exam-approval-page .video-embed-container{
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
   background: var(--sfs-space, #000);
 }
 
-.video-embed-container iframe {
+.exam-approval-page .video-embed-container iframe{
   position: absolute;
   inset: 0;
   width: 100%;
@@ -495,16 +495,16 @@
   display: block;
 }
 
-.video-embed-info {
+.exam-approval-page .video-embed-info{
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--ea-border);
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
   color: var(--ea-text-mute);
 }
 
-.video-embed-info p { margin: 0; }
+.exam-approval-page .video-embed-info p{ margin: 0; }
 
-.video-link-container {
+.exam-approval-page .video-link-container{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -513,7 +513,7 @@
   gap: 0.75rem;
 }
 
-.video-link-icon {
+.exam-approval-page .video-link-icon{
   width: 64px;
   height: 64px;
   display: flex;
@@ -525,21 +525,21 @@
   color: var(--sfs-text-muted, #c7d2fe);
 }
 
-.video-link-info { width: 100%; }
+.exam-approval-page .video-link-info{ width: 100%; }
 
-.video-link-info h4 {
+.exam-approval-page .video-link-info h4{
   margin: 0 0 0.4rem;
   color: var(--ea-text);
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
 }
 
-.video-link-info p {
+.exam-approval-page .video-link-info p{
   margin: 0 0 0.85rem;
   color: var(--ea-text-mute);
   font-size: clamp(0.8rem, 1.3vw, 0.9rem);
 }
 
-.video-external-link {
+.exam-approval-page .video-external-link{
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -555,7 +555,7 @@
   box-shadow: 0 4px 16px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 
-.video-external-link:hover {
+.exam-approval-page .video-external-link:hover{
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
@@ -563,14 +563,14 @@
 /* ============================================================
    ROOMS
    ============================================================ */
-.rooms-container {
+.exam-approval-page .rooms-container{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
   margin-bottom: clamp(1rem, 2vw, 1.4rem);
 }
 
-.room-section {
+.exam-approval-page .room-section{
   position: relative;
   padding: clamp(1rem, 2.2vw, 1.4rem);
   background: var(--ea-glass-1);
@@ -580,16 +580,16 @@
   min-width: 0;
 }
 
-.room-section.pc-room { border-left: 3px solid var(--sfs-info, #4ECDC4); }
-.room-section.mobile-room { border-left: 3px solid var(--sfs-accent-2, #a78bfa); }
+.exam-approval-page .room-section.pc-room{ border-left: 3px solid var(--sfs-info, #4ECDC4); }
+.exam-approval-page .room-section.mobile-room{ border-left: 3px solid var(--sfs-accent-2, #a78bfa); }
 
-.room-section:hover {
+.exam-approval-page .room-section:hover{
   transform: translateY(-2px);
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-.room-icon {
+.exam-approval-page .room-icon{
   width: 52px;
   height: 52px;
   display: flex;
@@ -602,19 +602,19 @@
   margin-bottom: 0.7rem;
 }
 
-.room-section h3 {
+.exam-approval-page .room-section h3{
   margin: 0 0 0.3rem;
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
   color: var(--ea-text);
 }
 
-.room-description {
+.exam-approval-page .room-description{
   margin: 0 0 0.85rem;
   color: var(--ea-text-mute);
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
 }
 
-.room-link {
+.exam-approval-page .room-link{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -633,13 +633,13 @@
   white-space: nowrap;
 }
 
-.room-link:hover {
+.exam-approval-page .room-link:hover{
   transform: translateY(-2px);
   background: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.4));
   box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
 }
 
-.room-instructions {
+.exam-approval-page .room-instructions{
   margin-top: 0.85rem;
   padding: 0.8rem 0.9rem;
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
@@ -648,26 +648,26 @@
   border-radius: var(--ea-radius-sm);
 }
 
-.room-instructions h4 {
+.exam-approval-page .room-instructions h4{
   margin: 0 0 0.4rem;
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
   color: var(--sfs-text-muted, #c7d2fe);
 }
 
-.room-instructions ul {
+.exam-approval-page .room-instructions ul{
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.room-instructions li {
+.exam-approval-page .room-instructions li{
   position: relative;
   padding: 0.2rem 0 0.2rem 1.1rem;
   color: var(--ea-text-mute);
   font-size: clamp(0.74rem, 1.2vw, 0.82rem);
 }
 
-.room-instructions li::before {
+.exam-approval-page .room-instructions li::before{
   content: '•';
   position: absolute;
   left: 0;
@@ -675,7 +675,7 @@
   font-weight: bold;
 }
 
-.no-rooms {
+.exam-approval-page .no-rooms{
   text-align: center;
   padding: clamp(1.25rem, 3vw, 2rem);
   background: var(--ea-glass-1);
@@ -683,29 +683,29 @@
   border-radius: var(--ea-radius);
 }
 
-.no-rooms-icon {
+.exam-approval-page .no-rooms-icon{
   font-size: clamp(2rem, 4vw, 2.75rem);
   margin-bottom: 0.5rem;
   opacity: 0.85;
 }
 
-.no-rooms h3 {
+.exam-approval-page .no-rooms h3{
   margin: 0 0 0.4rem;
   color: var(--ea-text);
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
 }
 
-.no-rooms p { margin: 0; color: var(--ea-text-mute); }
+.exam-approval-page .no-rooms p{ margin: 0; color: var(--ea-text-mute); }
 
 /* ============================================================
    REQUIREMENTS
    ============================================================ */
-.requirements-list {
+.exam-approval-page .requirements-list{
   display: grid;
   gap: 0.5rem;
 }
 
-.requirement-item {
+.exam-approval-page .requirement-item{
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -717,13 +717,13 @@
   min-width: 0;
 }
 
-.requirement-item:hover {
+.exam-approval-page .requirement-item:hover{
   transform: translateX(2px);
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
   background: var(--ea-glass-2);
 }
 
-.requirement-check {
+.exam-approval-page .requirement-check{
   flex-shrink: 0;
   width: 28px;
   height: 28px;
@@ -739,14 +739,14 @@
   transition: all var(--ea-fast);
 }
 
-.requirement-item.met .requirement-check {
+.exam-approval-page .requirement-item.met .requirement-check{
   background: linear-gradient(135deg, var(--sfs-info, #4ECDC4), var(--sfs-accent-soft, #818cf8));
   border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.6);
   color: var(--sfs-on-info, #fff);
   box-shadow: 0 0 14px rgb(var(--sfs-info-rgb, 78 205 196) / 0.45);
 }
 
-.requirement-text {
+.exam-approval-page .requirement-text{
   flex: 1;
   min-width: 0;
   font-size: clamp(0.8rem, 1.3vw, 0.9rem);
@@ -754,9 +754,9 @@
   line-height: 1.5;
 }
 
-.requirement-text strong { color: var(--ea-text); }
+.exam-approval-page .requirement-text strong{ color: var(--ea-text); }
 
-.important-note {
+.exam-approval-page .important-note{
   margin-top: 1rem;
   padding: 0.9rem 1rem;
   display: flex;
@@ -768,26 +768,26 @@
   border-radius: var(--ea-radius);
 }
 
-.note-icon {
+.exam-approval-page .note-icon{
   font-size: clamp(1.1rem, 1.8vw, 1.4rem);
   flex-shrink: 0;
 }
 
-.note-content { flex: 1; min-width: 0; }
+.exam-approval-page .note-content{ flex: 1; min-width: 0; }
 
-.note-content p {
+.exam-approval-page .note-content p{
   margin: 0;
   color: var(--sfs-warning-text, #fcd34d);
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
   line-height: 1.55;
 }
 
-.note-content strong { color: var(--sfs-warning-text, #fde68a); }
+.exam-approval-page .note-content strong{ color: var(--sfs-warning-text, #fde68a); }
 
 /* ============================================================
    RESCHEDULE
    ============================================================ */
-.reschedule-info {
+.exam-approval-page .reschedule-info{
   padding: 0.9rem 1rem;
   background: var(--ea-glass-1);
   border: 1px solid var(--ea-border);
@@ -797,13 +797,13 @@
   gap: 0.75rem;
 }
 
-.reschedule-info p {
+.exam-approval-page .reschedule-info p{
   margin: 0;
   color: var(--ea-text-mute);
   font-size: clamp(0.8rem, 1.3vw, 0.9rem);
 }
 
-.btn-reschedule {
+.exam-approval-page .btn-reschedule{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -821,7 +821,7 @@
   transition: transform var(--ea-fast), background var(--ea-fast), box-shadow var(--ea-fast);
 }
 
-.btn-reschedule:hover {
+.exam-approval-page .btn-reschedule:hover{
   transform: translateY(-2px);
   background: linear-gradient(135deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3), rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.3));
   box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
@@ -830,7 +830,7 @@
 /* ============================================================
    START EXAM BUTTON
    ============================================================ */
-.start-exam-btn {
+.exam-approval-page .start-exam-btn{
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -853,7 +853,7 @@
   transition: transform var(--ea-normal), box-shadow var(--ea-normal), opacity var(--ea-normal);
 }
 
-.start-exam-btn::before {
+.exam-approval-page .start-exam-btn::before{
   content: '';
   position: absolute;
   inset: 0;
@@ -862,17 +862,17 @@
   transition: transform 700ms ease;
 }
 
-.start-exam-btn.enabled:hover:not(:disabled) {
+.exam-approval-page .start-exam-btn.enabled:hover:not(:disabled){
   transform: translateY(-2px) scale(1.01);
   box-shadow: 0 12px 36px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.6);
 }
 
-.start-exam-btn.enabled:hover:not(:disabled)::before {
+.exam-approval-page .start-exam-btn.enabled:hover:not(:disabled)::before{
   transform: translateX(100%);
 }
 
-.start-exam-btn:disabled,
-.start-exam-btn.disabled {
+.exam-approval-page .start-exam-btn:disabled,
+.exam-approval-page .start-exam-btn.disabled{
   cursor: not-allowed;
   opacity: 0.55;
   filter: saturate(0.6);
@@ -880,13 +880,13 @@
   box-shadow: none;
 }
 
-.loading-text {
+.exam-approval-page .loading-text{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-.loading-dots {
+.exam-approval-page .loading-dots{
   display: inline-block;
   width: 14px;
   height: 14px;
@@ -896,7 +896,7 @@
   animation: ea-spin 0.8s linear infinite;
 }
 
-.waiting-message {
+.exam-approval-page .waiting-message{
   margin-top: 1rem;
   padding: 0.9rem 1rem;
   background: var(--ea-glass-1);
@@ -905,18 +905,18 @@
   text-align: center;
 }
 
-.waiting-icon {
+.exam-approval-page .waiting-icon{
   font-size: clamp(1.2rem, 2vw, 1.5rem);
   margin-bottom: 0.4rem;
 }
 
-.waiting-message p {
+.exam-approval-page .waiting-message p{
   margin: 0.3rem 0;
   color: var(--ea-text-mute);
   font-size: clamp(0.8rem, 1.3vw, 0.88rem);
 }
 
-.timer-note {
+.exam-approval-page .timer-note{
   font-size: clamp(0.72rem, 1.1vw, 0.8rem) !important;
   color: var(--ea-text-faint) !important;
   font-style: italic;
@@ -925,7 +925,7 @@
 /* ============================================================
    PROCTOR
    ============================================================ */
-.proctor-info {
+.exam-approval-page .proctor-info{
   display: flex;
   align-items: center;
   gap: 0.9rem;
@@ -937,7 +937,7 @@
   flex-wrap: wrap;
 }
 
-.proctor-avatar {
+.exam-approval-page .proctor-avatar{
   flex-shrink: 0;
   width: clamp(48px, 7vw, 64px);
   height: clamp(48px, 7vw, 64px);
@@ -952,30 +952,30 @@
   box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 
-.proctor-details {
+.exam-approval-page .proctor-details{
   flex: 1;
   min-width: 0;
 }
 
-.proctor-details h3 {
+.exam-approval-page .proctor-details h3{
   margin: 0 0 0.2rem;
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
   color: var(--ea-text);
 }
 
-.proctor-details > p {
+.exam-approval-page .proctor-details > p{
   margin: 0 0 0.4rem;
   color: var(--ea-text-mute);
   font-size: clamp(0.78rem, 1.3vw, 0.88rem);
 }
 
-.proctor-contact {
+.exam-approval-page .proctor-contact{
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
 
-.contact-item {
+.exam-approval-page .contact-item{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -983,9 +983,9 @@
   color: var(--ea-text-faint);
 }
 
-.contact-item svg { flex-shrink: 0; opacity: 0.85; }
+.exam-approval-page .contact-item svg{ flex-shrink: 0; opacity: 0.85; }
 
-.proctor-instructions {
+.exam-approval-page .proctor-instructions{
   padding: 0.9rem 1rem;
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
   border: 1px solid var(--ea-border);
@@ -993,19 +993,19 @@
   border-radius: var(--ea-radius-sm);
 }
 
-.proctor-instructions h4 {
+.exam-approval-page .proctor-instructions h4{
   margin: 0 0 0.5rem;
   font-size: clamp(0.85rem, 1.4vw, 0.95rem);
   color: var(--sfs-text-muted, #c7d2fe);
 }
 
-.proctor-instructions ul {
+.exam-approval-page .proctor-instructions ul{
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.proctor-instructions li {
+.exam-approval-page .proctor-instructions li{
   position: relative;
   padding: 0.25rem 0 0.25rem 1.25rem;
   color: var(--ea-text-mute);
@@ -1013,7 +1013,7 @@
   line-height: 1.5;
 }
 
-.proctor-instructions li::before {
+.exam-approval-page .proctor-instructions li::before{
   content: '→';
   position: absolute;
   left: 0;
@@ -1023,15 +1023,15 @@
 /* ============================================================
    BACK BUTTON / RETRY
    ============================================================ */
-.back-container {
+.exam-approval-page .back-container{
   max-width: 1400px;
   margin: clamp(1.5rem, 3vw, 2rem) auto 0;
   display: flex;
   justify-content: center;
 }
 
-.back-btn,
-.retry-btn {
+.exam-approval-page .back-btn,
+.exam-approval-page .retry-btn{
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1049,20 +1049,20 @@
   transition: transform var(--ea-fast), background var(--ea-fast), box-shadow var(--ea-fast);
 }
 
-.back-btn:hover,
-.retry-btn:hover {
+.exam-approval-page .back-btn:hover,
+.exam-approval-page .retry-btn:hover{
   transform: translateY(-2px);
   background: var(--ea-glass-3);
   box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
 }
 
-.retry-btn {
+.exam-approval-page .retry-btn{
   background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
   border-color: transparent;
   box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 
-.retry-btn:hover {
+.exam-approval-page .retry-btn:hover{
   box-shadow: 0 10px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55);
 }
 
@@ -1070,7 +1070,7 @@
    FOCUS STATES (galaxy-friendly)
    ============================================================ */
 .exam-approval-page a:focus-visible,
-.exam-approval-page button:focus-visible {
+.exam-approval-page button:focus-visible{
   outline: 2px solid var(--sfs-accent-soft, #818cf8);
   outline-offset: 2px;
   border-radius: var(--ea-radius);
@@ -1079,12 +1079,12 @@
 /* ============================================================
    SCROLLBAR (scoped to instructions)
    ============================================================ */
-.instructions-content::-webkit-scrollbar { width: 8px; }
-.instructions-content::-webkit-scrollbar-track {
+.exam-approval-page .instructions-content::-webkit-scrollbar{ width: 8px; }
+.exam-approval-page .instructions-content::-webkit-scrollbar-track{
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
   border-radius: 4px;
 }
-.instructions-content::-webkit-scrollbar-thumb {
+.exam-approval-page .instructions-content::-webkit-scrollbar-thumb{
   background: linear-gradient(135deg, var(--sfs-accent, #667eea), var(--sfs-accent-2, #764ba2));
   border-radius: 4px;
 }
@@ -1095,17 +1095,17 @@
 
 /* Phablet+ — slightly larger spacing, info grid 2 cols */
 @media (min-width: 480px) {
-  .info-grid {
+  .exam-approval-page .info-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* Tablet — rooms side-by-side */
 @media (min-width: 768px) {
-  .rooms-container {
+  .exam-approval-page .rooms-container{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .reschedule-info {
+  .exam-approval-page .reschedule-info{
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -1114,56 +1114,56 @@
 
 /* Desktop — split into 2 columns */
 @media (min-width: 1024px) {
-  .approval-grid {
+  .exam-approval-page .approval-grid{
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     align-items: start;
   }
-  .left-column,
-  .right-column {
+  .exam-approval-page .left-column,
+.exam-approval-page .right-column{
     position: sticky;
     top: 0;
   }
-  .left-column { position: static; }
+  .exam-approval-page .left-column{ position: static; }
 }
 
 /* Large desktop */
 @media (min-width: 1440px) {
-  .exam-approval-page {
+  .exam-approval-page{
     padding: 2rem 2.5rem;
   }
-  .approval-grid {
+  .exam-approval-page .approval-grid{
     gap: 1.75rem;
   }
 }
 
 /* Full HD */
 @media (min-width: 1920px) {
-  .approval-content,
-  .page-header,
-  .back-container {
+  .exam-approval-page .approval-content,
+.exam-approval-page .page-header,
+.exam-approval-page .back-container{
     max-width: 1700px;
   }
 }
 
 /* 4K / Ultra-wide */
 @media (min-width: 2560px) {
-  .exam-approval-page {
+  .exam-approval-page{
     padding: 2.5rem 3rem;
   }
-  .approval-content,
-  .page-header,
-  .back-container {
+  .exam-approval-page .approval-content,
+.exam-approval-page .page-header,
+.exam-approval-page .back-container{
     max-width: 2100px;
   }
-  .approval-grid { gap: 2rem; }
+  .exam-approval-page .approval-grid{ gap: 2rem; }
 }
 
 /* ============================================================
    REDUCED MOTION (in addition to global rule)
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .start-exam-btn::before { display: none; }
-  .loading-dots { animation: none; }
+  .exam-approval-page .start-exam-btn::before{ display: none; }
+  .exam-approval-page .loading-dots{ animation: none; }
 }
 /* The "no appointment chosen" state's action row.
  *
@@ -1171,7 +1171,7 @@
  * wrong address rather than a failure - see the note in ExamApproval.vue. The row
  * exists so the single way out is a real target rather than a bare button hugging
  * the paragraph above it. */
-.exam-approval-page .empty-actions {
+.exam-approval-page .empty-actions{
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;

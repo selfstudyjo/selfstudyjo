@@ -86,13 +86,37 @@
 
 /* =============================================================
    HEADER
+
+   A sticky header is not merely "above" the content: once the page scrolls, the
+   content passes UNDER it, so its height is permanently subtracted from the
+   usable viewport. Measured before this rewrite it was **389px on a 1440x900
+   desktop - 43% of the screen** - and 411px (72%) at 320px, where it hid 332px of
+   the question card and 67px of the first answer. That is the reported bug.
+
+   Two causes, and the first was not in this file at all:
+
+   1. `exam-approval.css` carried a BARE, unscoped
+      `.header-content { flex-direction: column }`. That file is loaded globally,
+      so it reached this page - and in a column, `.exam-info`'s `flex: 1 1 240px`
+      stops being a 240px-wide basis and becomes a **240px-tall** one. One
+      unscoped rule from another page, 240px of empty header. It is scoped now
+      (all 179 of its selectors), which took the header to 154px on its own.
+   2. The header still stacked into four bands: title, course, status, then a
+      timer and a question nav each with a label ABOVE it. Nothing here needed to
+      be vertical.
+
+   So the layout below is deliberately flat: one row on a wide screen, two on a
+   phone, and the timer and nav are horizontal with their labels inline. The
+   timer stays sticky and legible - it is the one thing a candidate must be able
+   to see at all times - and it is the reason this is a header rather than a
+   panel that scrolls away.
    ============================================================= */
 .take-exam-page .exam-header {
   position: sticky;
   top: 0;
   z-index: 50;
-  padding: var(--te-sp-md) var(--te-sp-lg);
-  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.55);
+  padding: var(--te-sp-sm) var(--te-sp-md);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.72);
   -webkit-backdrop-filter: var(--te-blur-strong);
   backdrop-filter: var(--te-blur-strong);
   border-bottom: 1px solid var(--te-border);
@@ -102,57 +126,99 @@
 
 .take-exam-page .header-content {
   display: flex;
+  /* `row`, stated explicitly. This is what a global `.header-content` from
+     another stylesheet turned to `column`, and the property this page never set
+     is exactly the one that got away from it. Specificity does not help with a
+     property you did not declare. */
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: var(--te-sp-md);
+  gap: var(--te-sp-sm) var(--te-sp-md);
   align-items: center;
   justify-content: space-between;
   max-width: 1600px;
   margin: 0 auto;
 }
 
-.take-exam-page .exam-info { flex: 1 1 240px; min-width: 0; }
+/* Grows, and is the part that gives way: the timer and the nav have fixed
+   content, the exam title does not. */
+.take-exam-page .exam-info {
+  flex: 1 1 14rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
 .take-exam-page .exam-title {
-  font-size: var(--te-fs-xl);
+  font-size: var(--te-fs-lg);
   font-weight: 700;
+  line-height: 1.25;
   color: var(--te-text);
-  margin: 0 0 4px;
-  background: linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-text-muted, #c7d2fe) 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0;
+  /* One line, truncated. An exam title can be sixty characters and it is not
+     what the candidate is reading - the question is. */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* The course and the status sit on ONE line together, which is where three of
+   the old four bands went. */
+/* `nowrap`, and the course is what truncates.
+ *
+ * Wrapping, this one line of text measured 49px on a 390px phone - the course on
+ * one row and the status pill on the next - against 20px for the title above it.
+ * Two lines of text in a sticky header is two lines taken off the question for
+ * the whole exam. */
+.take-exam-page .exam-meta-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--te-sp-xs);
+  min-width: 0;
+}
+
 .take-exam-page .exam-course {
   color: var(--te-text-mute);
-  font-size: var(--te-fs-sm);
+  font-size: var(--te-fs-xs);
   display: inline-flex;
   align-items: center;
-  gap: var(--te-sp-xs);
-  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.take-exam-page .exam-course::before { content: '\1F4DA'; flex: 0 0 auto; }
+
+/* Never the thing that gives way: a status pill has a fixed, short label, and
+   the course beside it is arbitrary length. */
+.take-exam-page .appointment-status {
+  display: inline-flex;
+  flex: 0 0 auto;
   margin: 0;
 }
-.take-exam-page .exam-course::before { content: '📚'; }
-
-.take-exam-page .appointment-status { margin-top: var(--te-sp-xs); }
 
 .take-exam-page .exam-controls {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--te-sp-lg);
+  gap: var(--te-sp-sm);
+  flex: 0 0 auto;
 }
 
-/* ---- timer ---- */
+/* ---- timer and question nav: horizontal, label inline ---- */
 .take-exam-page .timer-container,
 .take-exam-page .question-nav {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  min-width: 110px;
+  gap: var(--te-sp-xs);
+  min-width: 0;
 }
+
 .take-exam-page .timer-label,
 .take-exam-page .nav-label {
   font-size: var(--te-fs-xs);
@@ -160,37 +226,36 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .take-exam-page .timer {
-  font-size: var(--te-fs-xl);
+  font-size: var(--te-fs-lg);
   font-weight: 700;
-  padding: 8px 16px;
-  min-width: 110px;
+  padding: 4px 10px;
+  min-width: 5.5rem;
   text-align: center;
   border-radius: var(--te-r-md);
   background: var(--te-glass);
   color: var(--te-accent);
   border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
-  box-shadow: 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
   font-variant-numeric: tabular-nums;
   -webkit-backdrop-filter: var(--te-blur);
   backdrop-filter: var(--te-blur);
-  transition: all var(--te-t);
+  transition: color var(--te-t), background-color var(--te-t),
+              border-color var(--te-t);
 }
 .take-exam-page .timer.warning {
   color: var(--te-warn);
   border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
   background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.1);
-  box-shadow: 0 0 18px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.25);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .take-exam-page .timer.critical {
   color: var(--te-err);
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.5);
   background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12);
-  box-shadow: 0 0 24px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35);
   animation: pulse 0.7s ease-in-out infinite;
 }
 .take-exam-page .timer.ended {
@@ -200,20 +265,24 @@
   animation: none;
 }
 
+/* `nowrap`: three small controls that wrap turn a 40px row into an 80px one, and
+   this row is inside a sticky header where every pixel is taken off the question. */
 .take-exam-page .nav-controls {
   display: flex;
   align-items: center;
-  gap: var(--te-sp-sm);
-  flex-wrap: wrap;
+  gap: 4px;
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
 .take-exam-page .current-question {
-  font-size: var(--te-fs-lg);
+  font-size: var(--te-fs-sm);
   font-weight: 600;
   color: var(--te-text);
-  min-width: 56px;
+  min-width: 3.5rem;
   text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* =============================================================
@@ -456,6 +525,23 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--te-sp-lg);
   align-items: start;
+}
+
+/* Nothing the candidate is sent to may land under the sticky header.
+ *
+ * `scroll-margin-top` is what a browser honours for any programmatic or anchor
+ * scroll - `scrollIntoView`, `#fragment`, focus-driven scrolling, and the jump a
+ * screen reader makes. Without it the top of whatever is scrolled to sits behind
+ * the header, which on this page means the question number and the first line of
+ * the question itself.
+ *
+ * Generous rather than exact: the header is two rows on a phone and one on a
+ * desktop, and being 20px early is invisible while being 20px late hides a line
+ * of the question. */
+.take-exam-page .question-card,
+.take-exam-page .question-panel,
+.take-exam-page .answer-option {
+  scroll-margin-top: calc(var(--te-header-h, 5.5rem) + var(--te-sp-md));
 }
 
 /* =============================================================
@@ -1091,12 +1177,20 @@
 
 /* ≤ 480 : compact phones — single column, smaller paddings */
 @media (max-width: 480px) {
-  .take-exam-page .exam-header { padding: var(--te-sp-sm); }
-  .take-exam-page .header-content { gap: var(--te-sp-sm); }
+  .take-exam-page .exam-header { padding: 8px var(--te-sp-sm); }
+  .take-exam-page .header-content { gap: 6px var(--te-sp-sm); }
+  /* Two rows on a phone - title above, controls below - and the controls share
+     one line between them rather than stacking. */
+  .take-exam-page .exam-info { flex: 1 1 100%; }
   .take-exam-page .exam-controls { width: 100%; justify-content: space-between; gap: var(--te-sp-sm); }
   .take-exam-page .timer-container,
-  .take-exam-page .question-nav { min-width: 0; flex: 1 1 140px; }
-  .take-exam-page .timer { min-width: 90px; padding: 6px 10px; }
+  .take-exam-page .question-nav { min-width: 0; flex: 0 1 auto; }
+  .take-exam-page .timer { min-width: 4.75rem; padding: 3px 8px; }
+  /* The labels are what a narrow header cannot afford: "Time Remaining" beside a
+     countdown and "Question" beside "3 / 40" are both saying what is already
+     obvious, and together they cost a whole row. */
+  .take-exam-page .timer-label,
+  .take-exam-page .nav-label { display: none; }
 
   .take-exam-page .question-body { padding: var(--te-sp-md); }
   .take-exam-page .question-card .question-header,
