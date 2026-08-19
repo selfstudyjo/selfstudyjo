@@ -82,7 +82,7 @@
               </div>
 
               <div class="answers-container">
-                <div v-for="answer in currentQuestion?.answers" :key="answer.external_id"
+                <div v-for="answer in displayedAnswers" :key="answer.external_id"
                      class="answer-item"
                      :class="{
                        selected: selectedAnswer?.external_id === answer.external_id,
@@ -328,6 +328,7 @@ import { useAuthStore } from '@/store/auth';
 import { examService, passMarkOf, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { notificationService } from '@/services/notification.service';
 import { proctorService } from '@/services/proctor.service';
+import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
 
 // Import the CSS file
 import '@/assets/css/take-exam.css';
@@ -376,6 +377,35 @@ const currentQuestion = computed(() => {
     return null;
   }
   return validQuestions.value[currentQuestionIndex.value];
+});
+
+/**
+ * Per candidate, so two people sitting together do not see the same order.
+ *
+ * The user id rather than the appointment, so the review screen can reproduce
+ * exactly this order after submission - it knows the result's user_id and has no
+ * appointment reference. See attemptSeed().
+ */
+const answerSeed = computed(() =>
+  attemptSeed(authStore.user?.id, route.query.appointmentId as string));
+
+/**
+ * The current question's answers, in the order they are shown.
+ *
+ * Measured on the live exams: **70 of 89 questions had the correct answer
+ * first** - 79%, against a 70% pass mark - so the papers were passable without
+ * reading them. `shuffleAnswers` is a pure function of `(seed, questionId)`, so
+ * this computed can be re-evaluated as often as Vue likes and the order never
+ * moves: a `Math.random()` shuffle here would reshuffle on every selection, every
+ * timer tick and every re-render, walking the options around under the
+ * candidate's finger. See utils/examShuffle.ts.
+ *
+ * Marking is unaffected - `calculateCorrectAnswers` matches on `external_id`.
+ */
+const displayedAnswers = computed(() => {
+  const question = currentQuestion.value;
+  if (!question?.external_id) return [];
+  return shuffleAnswers(question.answers, question.external_id, answerSeed.value);
 });
 
 const selectedAnswer = computed(() => {

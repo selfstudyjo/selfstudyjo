@@ -33,7 +33,7 @@
           </div>
           <div class="answers">
             <div
-              v-for="answer in question.answers"
+              v-for="answer in answersOf(question)"
               :key="answer.external_id"
               class="answer"
               :class="{
@@ -56,6 +56,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { examService, type UserExamResult, type ExamQuestion, type ExamAnswer } from '@/services/exam.service';
+import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
 import { quizService, type UserQuizResult, type QuizQuestion, type QuizAnswer } from '@/services/quiz.service';
 
 const route = useRoute();
@@ -74,6 +75,25 @@ const error = ref('');
 const contentTitle = ref('');
 
 const resultType = type;
+
+/**
+ * A question's answers in the order the candidate actually saw them.
+ *
+ * Exams are shuffled per candidate (utils/examShuffle.ts, because 79% of the live
+ * questions had the correct answer first), and this screen has to reproduce that
+ * order or a candidate reviewing their paper sees the option they chose second
+ * sitting first. Same seed, same question id, same permutation.
+ *
+ * QUIZZES ARE LEFT ALONE, deliberately: `TakeQuiz.vue` renders them in stored
+ * order, and their live data is already well distributed (measured: 15/57/38/6
+ * across 119 questions). Shuffling only here would introduce exactly the
+ * mismatch this function exists to prevent.
+ */
+function answersOf(question: any) {
+  if (resultType !== 'exam') return question?.answers || [];
+  return shuffleAnswers(question?.answers, question?.external_id,
+                        attemptSeed((result.value as any)?.user_id));
+}
 
 onMounted(async () => {
   try {
