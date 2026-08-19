@@ -136,6 +136,11 @@ async function loadQuizResult() {
 }
 
 const scoreClass = computed(() => {
+  // The stored verdict wins — see the note in UserResults.vue. A literal 70 here
+  // disagreed with app 20 for any exam whose pass mark is not 70.
+  const verdict = String((result.value as any)?.result_status || '').toUpperCase();
+  if (verdict === 'PASSED') return 'pass';
+  if (verdict === 'FAILED') return 'fail';
   const score = result.value?.score || 0;
   if (score >= 70) return 'pass';
   if (score >= 50) return 'average';
@@ -160,6 +165,10 @@ function isAnswerSelected(question: any, answer: any): boolean {
 function goBack() {
   router.push('/my-results');
 }
+
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 </script>
 
 <!-- ===== scoped prevents style conflicts with global buttons ===== -->

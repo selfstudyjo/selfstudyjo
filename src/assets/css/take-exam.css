@@ -453,7 +453,7 @@
 
 .take-exam-page .content-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--te-sp-lg);
   align-items: start;
 }
@@ -1115,7 +1115,7 @@
 /* ≥ 768 : tablet */
 @media (min-width: 768px) {
   .take-exam-page .content-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

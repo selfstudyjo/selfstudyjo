@@ -82,13 +82,24 @@ export const RESERVED_CATEGORIES: NotificationCategory[] = ['ai', 'drawing', 'me
 /**
  * Which side creates an event.
  *
- * `app` is selfstudyjo, `console` is selfstudyadmin. It is checkable rather than
- * documentary: `npm run check:notifyevents` fails when a `console` event is
- * missing from `selfstudyadmin/utils/notify.py`, and when an `app` event is in
- * this file but nothing in `src/` ever sends it. A catalogue entry nobody sends
- * is worse than no entry — it reads like a feature that exists.
+ * `app` is selfstudyjo, `console` is selfstudyadmin, `service` is a backend
+ * emitting on its own. It is checkable rather than documentary:
+ * `npm run check:notifyevents` fails when a `console` event is missing from
+ * `selfstudyadmin/utils/notify.py`, when a `service` event is missing from
+ * `selfstudyexam/utils/notify.py`, and when an `app` event is in this file but
+ * nothing in `src/` ever sends it. A catalogue entry nobody sends is worse than
+ * no entry — it reads like a feature that exists.
+ *
+ * `service` exists because until 2026-08-19 every notification on this platform
+ * came from a *client*, so anything that happens with no browser present was
+ * silent — which is exactly the events a student cannot see happening. A
+ * certificate is now issued automatically by app 20 the moment somebody passes,
+ * and nobody clicked anything to cause it. Marking such an event `app` would be
+ * a lie the check would catch (nothing under `src/` sends it); leaving it out of
+ * the catalogue would put its wording back at the call site, which is what
+ * working rule 14 exists to prevent.
  */
-export type Sender = 'app' | 'console';
+export type Sender = 'app' | 'console' | 'service';
 
 /**
  * How loudly to render it, and nothing else — nothing suppresses a notification
@@ -219,6 +230,10 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         message: '{student} asked to sit {exam} on {when}. It needs approving before they can start.',
         link: '/exam-approval',
     },
+    // There is deliberately no separate "your proctor let you in" event. This one
+    // covers both edges - an operator approving the booking (console) and the
+    // proctor flipping can_start on the day (app, from ProctorExamAppointment.vue)
+    // - and a second event for the same moment would be two bells for one thing.
     'exam.appointment_approved': {
         key: 'exam.appointment_approved',
         category: 'exam',
@@ -297,13 +312,110 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         link: '/proctor-dashboard',
     },
 
+    'exam.appointment_booked': {
+        key: 'exam.appointment_booked',
+        category: 'exam',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['exam', 'when', 'proctor'],
+        title: 'Exam appointment booked',
+        message: 'You are booked to sit {exam} on {when} with {proctor}. It needs approving before you can start.',
+        link: '/exams',
+    },
+    'exam.appointment_rescheduled': {
+        key: 'exam.appointment_rescheduled',
+        category: 'exam',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['exam', 'when'],
+        title: 'Exam appointment moved',
+        message: 'Your appointment to sit {exam} is now {when}.',
+        link: '/exams',
+    },
+    'exam.appointment_cancelled': {
+        key: 'exam.appointment_cancelled',
+        category: 'exam',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['exam', 'when'],
+        title: 'Exam appointment cancelled',
+        message: 'Your appointment to sit {exam} on {when} has been cancelled. You can book another time.',
+        link: '/schedule-exam',
+    },
+    // The one reminder on the platform. It fires from the Exams page rather than
+    // from a scheduler, because nothing here has one (working rule 18) - so it is
+    // deduped per appointment per window, or it would re-send on every page load.
+    'exam.starting_soon': {
+        key: 'exam.starting_soon',
+        category: 'exam',
+        priority: 'urgent',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['exam', 'when'],
+        title: 'Your exam starts soon',
+        message: '{exam} starts at {when}. Be ready a few minutes early and check your room link.',
+        link: '/exams',
+    },
+    'exam.appointment_expired': {
+        key: 'exam.appointment_expired',
+        category: 'exam',
+        priority: 'high',
+        audience: 'user',
+        sentBy: ['service'],
+        params: ['exam', 'when'],
+        title: 'An exam appointment expired',
+        message: 'Your appointment to sit {exam} on {when} passed without the exam being started. You can book another time.',
+        link: '/schedule-exam',
+    },
+    'proctor.candidate_entered': {
+        key: 'proctor.candidate_entered',
+        category: 'proctor',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['service'],
+        params: ['student', 'exam', 'when'],
+        title: 'A candidate entered the exam room',
+        message: '{student} started {exam} at {when}.',
+        link: '/proctor-dashboard',
+    },
+    'proctor.appointment_expired': {
+        key: 'proctor.appointment_expired',
+        category: 'proctor',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['service'],
+        params: ['student', 'exam', 'when'],
+        title: 'An exam you were proctoring expired',
+        message: '{student} did not sit {exam}, which was set for {when}.',
+        link: '/proctor-dashboard',
+    },
+    'proctor.exam_submitted': {
+        key: 'proctor.exam_submitted',
+        category: 'proctor',
+        priority: 'normal',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['student', 'exam', 'score'],
+        title: 'A candidate finished their exam',
+        message: '{student} submitted {exam} and scored {score}.',
+        link: '/proctor-dashboard',
+    },
+
     // -- Certificates (app 24) ---------------------------------------------
+    // Both senders, and the second one is new: an operator still issues a course
+    // certificate by hand from the console, and app 20 now issues an EXAM
+    // certificate on its own the moment somebody passes - see
+    // selfstudyexam/utils/certificates.py. The wording has to serve both, so it
+    // does not claim who issued it.
     'certificate.issued': {
         key: 'certificate.issued',
         category: 'certificate',
         priority: 'high',
         audience: 'user',
-        sentBy: ['console'],
+        sentBy: ['console', 'service'],
         params: ['title'],
         title: 'You earned a certificate',
         message: 'Your certificate for {title} has been issued. You can view and download it now.',

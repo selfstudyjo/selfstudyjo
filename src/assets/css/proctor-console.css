@@ -1,0 +1,526 @@
+/* src/assets/css/proctor-console.css
+ *
+ * The proctor dashboard's new furniture: stat tiles, urgency groups, the
+ * candidate block, state flags and the collapsed reference ids.
+ *
+ * A separate file rather than more rules inside `ProctorDashboard.vue`'s
+ * `<style scoped>` block, for one reason that matters: that block is scoped, so
+ * every selector in it gains a `[data-v-…]` attribute, and it already carries a
+ * `@import` of `proctor-dashboard.css` - which means the imported file is
+ * *hoisted above* the block's own rules by CSS's `@import`-must-come-first rule
+ * and then gets scoped anyway. Adding a third layer of scoped overrides to that
+ * is how a screen ends up unpredictable. This is global, scoped by hand to
+ * `.proctor-dashboard`, and loaded from the script alongside `exam-system.css`.
+ *
+ * Every colour is a token with a fallback (working rule 12), so the console reads
+ * correctly in all ten galaxies rather than only in the default one. In
+ * particular a fill and its ink are always chosen together: `--sfs-on-danger` for
+ * text on the danger fill, `--sfs-danger-text` for danger-coloured text on a
+ * card. Those are two different colours and collapsing them is the usual way an
+ * accessible palette stops being one.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Stat tiles.
+ *
+ * Four numbers, and "needs attention" is deliberately first and the only one that
+ * can be coloured: a tile that shouts when it holds a zero teaches a proctor to
+ * ignore it.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .proctor-stats {
+  display: grid;
+  /* `auto-fit` with a `min()` floor, so four tiles on a laptop become two on a
+   * phone and one at 320px without a single breakpoint. The `100%` term is what
+   * stops the track being wider than the screen on the narrowest devices. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.proctor-dashboard .proctor-stat {
+  min-width: 0;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+.proctor-dashboard .proctor-stat__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--sfs-text, #e6e8f0);
+  /* Tabular figures so the tiles do not visibly re-flow as counts change. */
+  font-variant-numeric: tabular-nums;
+}
+
+.proctor-dashboard .proctor-stat__label {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+/* Only when it is non-zero - see the note above. */
+.proctor-dashboard .proctor-stat.urgent {
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.12);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.35);
+}
+
+.proctor-dashboard .proctor-stat.urgent .proctor-stat__value,
+.proctor-dashboard .proctor-stat.urgent .proctor-stat__label {
+  /* `-text`, not the raw hue: this is coloured TEXT on a wash of its own hue,
+   * which is the case `--sfs-danger-text` is derived for. */
+  color: var(--sfs-danger-text, #f87171);
+}
+
+/* ---------------------------------------------------------------------------
+ * Urgency groups.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .appointment-group {
+  margin-bottom: 2rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .appointment-group__header {
+  margin-bottom: 0.9rem;
+}
+
+.proctor-dashboard .appointment-group__title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--sfs-text, #e6e8f0);
+}
+
+.proctor-dashboard .appointment-group__count {
+  flex: 0 0 auto;
+  min-width: 1.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--sfs-text-muted, #a0aec0);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+}
+
+.proctor-dashboard .appointment-group__hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+.proctor-dashboard .appointment-group--urgent .appointment-group__title {
+  color: var(--sfs-danger-text, #f87171);
+}
+
+.proctor-dashboard .appointment-group--urgent .appointment-group__count {
+  color: var(--sfs-on-danger, #ffffff);
+  background: var(--sfs-danger, #f87171);
+}
+
+/* ---------------------------------------------------------------------------
+ * The card.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .appointment-card {
+  min-width: 0;
+  cursor: pointer;
+}
+
+/* The card is a button now (role/tabindex), so it needs a real focus ring - a
+ * keyboard user could previously tab to nothing on this page. */
+.proctor-dashboard .appointment-card:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-dashboard .appointment-card--live {
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.45);
+  box-shadow: 0 0 0 1px rgb(var(--sfs-success-rgb, 72 187 120) / 0.25);
+}
+
+.proctor-dashboard .appointment-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.proctor-dashboard .appointment-title h3 {
+  min-width: 0;
+  flex: 1 1 12rem;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.proctor-dashboard .appointment-title__tags {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * The live marker.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+  border: 1px solid rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
+}
+
+.proctor-dashboard .live-badge__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: proctor-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes proctor-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* The dot is the only motion on the page, and it carries no information the word
+ * "Live" does not - so it simply stops. `exam-system.css` also neutralises this
+ * globally; stating it here keeps the rule next to what it animates. */
+@media (prefers-reduced-motion: reduce) {
+  .proctor-dashboard .live-badge__dot { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+ * The candidate. This is what the card is ABOUT, so it leads.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .candidate {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  margin: 0.9rem 0;
+}
+
+.proctor-dashboard .candidate__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1rem;
+  /* A fill and its ink together: `--sfs-on-accent` is derived to be legible on
+   * `--sfs-accent` in every galaxy, including the four where the accent is bright
+   * enough that the convention flips to dark ink. */
+  color: var(--sfs-on-accent, #ffffff);
+  background: var(--sfs-accent, #667eea);
+}
+
+.proctor-dashboard .candidate__who {
+  min-width: 0;
+}
+
+.proctor-dashboard .candidate__name {
+  font-weight: 600;
+  color: var(--sfs-text, #e6e8f0);
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .candidate__when {
+  margin-top: 0.1rem;
+  font-size: 0.85rem;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+/* ---------------------------------------------------------------------------
+ * State flags.
+ *
+ * The three facts a proctor has to check before an exam and could previously only
+ * find by opening the appointment: is the candidate allowed to start, have they
+ * entered, and is there a room to send them to.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .appointment-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-width: 0;
+  margin-bottom: 0.9rem;
+}
+
+.proctor-dashboard .flag {
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .flag--on {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.14);
+}
+
+.proctor-dashboard .flag--off {
+  color: var(--sfs-text-muted, #a0aec0);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+}
+
+.proctor-dashboard .flag--warn {
+  color: var(--sfs-warning-text, #ed8936);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+ * Reference ids, collapsed.
+ *
+ * They have to stay - support work and every other service on the platform key
+ * on them - but they were the first thing on the card and the widest, and a
+ * 36-character uuid with no break point sets the min-content width of whatever
+ * holds it. Collapsed, quiet, and breakable.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .appointment-ids {
+  min-width: 0;
+  margin-top: 0.75rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+}
+
+.proctor-dashboard .appointment-ids > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sfs-text-muted, #a0aec0);
+  /* A summary is focusable, so it gets a ring like anything else. */
+  border-radius: 4px;
+}
+
+.proctor-dashboard .appointment-ids > summary:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-dashboard .appointment-ids .detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  min-width: 0;
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+}
+
+.proctor-dashboard .appointment-ids .detail-label {
+  flex: 0 0 auto;
+  min-width: 6rem;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+.proctor-dashboard .appointment-ids .detail-value {
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--sfs-text, #e6e8f0);
+}
+
+/* ---------------------------------------------------------------------------
+ * Small screens. A proctor invigilating from a phone is the normal case, not the
+ * edge one.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 30rem) {
+  .proctor-dashboard .proctor-stat {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .proctor-dashboard .proctor-stat__value {
+    font-size: 1.4rem;
+  }
+
+  .proctor-dashboard .appointment-ids .detail-label {
+    min-width: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The command bar (ProctorExamAppointment.vue).
+ *
+ * Who the candidate is, what state the appointment is in, and the one control
+ * with a clock attached to it - above the two detail columns rather than at the
+ * bottom of the second one.
+ * ------------------------------------------------------------------------- */
+
+.proctor-appointment .command-bar {
+  display: grid;
+  /* Three regions that collapse to one column on their own, no breakpoint: the
+   * action block keeps a usable width down to the narrowest phone. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: center;
+  gap: 1rem 1.5rem;
+  min-width: 0;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 16px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+}
+
+/* Warm, not alarming: waiting to be let in is the normal state of an appointment
+ * right up until the proctor is ready, so this must not read as an error. */
+.proctor-appointment .command-bar--waiting {
+  border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.08);
+}
+
+.proctor-appointment .command-bar__who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--sfs-on-accent, #ffffff);
+  background: var(--sfs-accent, #667eea);
+}
+
+.proctor-appointment .command-bar__id {
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--sfs-text, #e6e8f0);
+  overflow-wrap: anywhere;
+}
+
+.proctor-appointment .command-bar__exam {
+  font-size: 0.9rem;
+  color: var(--sfs-text, #e6e8f0);
+  overflow-wrap: break-word;
+}
+
+.proctor-appointment .command-bar__when {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+.proctor-appointment .command-bar__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__action {
+  min-width: 0;
+}
+
+.proctor-appointment .let-in-btn {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.proctor-appointment .let-in-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.proctor-appointment .let-in-btn:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-appointment .let-in-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Fill and ink chosen together, so the label stays legible in the four galaxies
+ * where a bright accent flips the convention to dark text. */
+.proctor-appointment .let-in-btn--allow {
+  color: var(--sfs-on-success, #ffffff);
+  background: var(--sfs-success, #48bb78);
+}
+
+/* Revoking is an ordinary, reversible operator action - not a destructive one -
+ * so it is a neutral button rather than a red one. Compare app 34's
+ * `paper_shares.permission`: a downgrade has to be easy and has to stick. */
+.proctor-appointment .let-in-btn--revoke {
+  color: var(--sfs-text, #e6e8f0);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+}
+
+.proctor-appointment .let-in-help {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+/* The flags are shared with the dashboard; the appointment page needs them too. */
+.proctor-appointment .flag {
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.proctor-appointment .flag--on {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.14);
+}
+
+.proctor-appointment .flag--warn {
+  color: var(--sfs-warning-text, #ed8936);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.14);
+}

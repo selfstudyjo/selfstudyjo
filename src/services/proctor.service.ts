@@ -78,7 +78,7 @@ class ProctorService {
 
     async getRandomProctorReplica(): Promise<string | null> {
         const replicas = await this.getProctorReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     // New method to check if user is a proctor

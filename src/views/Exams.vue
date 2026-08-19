@@ -378,9 +378,13 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { VideoEmbedService } from '@/utils/videoEmbed';
+import { notificationService } from '@/services/notification.service';
 
 // Import CSS
 import '@/assets/css/exams.css';
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -450,6 +454,10 @@ async function loadExams() {
 
       // Check for expired appointments and update if needed
       await checkAndUpdateExpiredAppointments(appointmentsData);
+
+      // And remind anybody whose exam is imminent. Deliberately after the expiry
+      // sweep, so a just-expired appointment is never reminded about.
+      remindAboutImminentExams(appointments.value);
     } else {
       // Clear user-specific data if not authenticated
       userResults.value = [];
@@ -460,6 +468,75 @@ async function loadExams() {
     error.value = err.message || 'Failed to load exams';
   } finally {
     loading.value = false;
+  }
+}
+
+/** How soon an exam has to be before it is worth ringing a bell about. */
+const REMINDER_WINDOW_HOURS = 24;
+const REMINDER_KEY = 'sfs.exam.reminded';
+
+/**
+ * Remind the student about an exam starting within the next day.
+ *
+ * There is no scheduler anywhere on this platform (working rule 18), so this
+ * fires from a page load - which means the *only* thing standing between it and
+ * a bell on every single visit is the dedupe below. Working rule 25 in one line:
+ * a notification needs an ARRIVAL, and "this appointment is still soon" is not
+ * one. So an appointment is remembered once it has been reminded about, keyed on
+ * its id AND its scheduled time, so a reschedule legitimately re-arms it while a
+ * reload does not.
+ *
+ * Stored per user, because a shared browser would otherwise silence one student's
+ * reminder because another had already had it.
+ */
+function remindAboutImminentExams(rows: ExamAppointment[]) {
+  try {
+    const me = authStore.user?.username;
+    if (!me) return;
+
+    const key = `${REMINDER_KEY}.${me}`;
+    let sent: Record<string, number> = {};
+    try {
+      sent = JSON.parse(localStorage.getItem(key) || '{}') || {};
+    } catch {
+      sent = {};
+    }
+
+    const now = Date.now();
+    const horizon = now + REMINDER_WINDOW_HOURS * 3600 * 1000;
+    let changed = false;
+
+    for (const row of rows || []) {
+      if (row.appointment_status !== 'Scheduled') continue;
+      const at = new Date(row.appointment_date).getTime();
+      if (!Number.isFinite(at) || at < now || at > horizon) continue;
+
+      // The time is part of the mark: a rescheduled appointment is a new arrival.
+      const mark = `${row.external_id}@${at}`;
+      if (sent[mark]) continue;
+
+      notificationService.notify('exam.starting_soon', {
+        to: me,
+        params: {
+          exam: row.exam_title || row.exam || 'your exam',
+          when: new Date(at).toLocaleString(),
+        },
+      });
+      sent[mark] = now;
+      changed = true;
+    }
+
+    if (changed) {
+      // Bounded, or this grows for the life of the browser. A mark older than a
+      // week cannot be for an appointment still inside a 24-hour window.
+      const week = 7 * 24 * 3600 * 1000;
+      const pruned = Object.fromEntries(
+        Object.entries(sent).filter(([, when]) => now - Number(when) < week)
+      );
+      localStorage.setItem(key, JSON.stringify(pruned));
+    }
+  } catch {
+    // A reminder is a nicety. It must never break the exams list.
   }
 }
 

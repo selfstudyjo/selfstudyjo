@@ -146,7 +146,7 @@
    -------------------------------------------------------- */
 .results-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(0.75rem, 1.6vw, 1.25rem);
 }
 
@@ -564,4 +564,48 @@
     border-color: var(--sfs-border-strong, #ffffff);
   }
   .tab-btn.active { outline: 2px solid var(--sfs-border-strong, #ffffff); }
+}
+/* ---------------------------------------------------------------------------
+ * The automatic certificate.
+ *
+ * App 20 issues an exam certificate the moment somebody passes, so a result card
+ * has to be able to say where that got to. `pending` is a normal state, not an
+ * error - app 24 may simply have been cold when the exam was submitted - so it is
+ * styled as information rather than as a warning.
+ *
+ * Both colours come from tokens, so this reads correctly in all ten galaxies
+ * (working rule 12). `--sfs-success-text` is already derived against its own
+ * wash, which is what the pill below is.
+ * ------------------------------------------------------------------------- */
+
+.user-results .certificate-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  /* The pill hugs its text instead of spanning the card: a full-width bar reads
+   * as a status for the whole result rather than a note about one artefact. */
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  /* A long localised string wraps inside the pill rather than escaping it. */
+  overflow-wrap: anywhere;
+}
+
+.user-results .certificate-note.issued {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+  border: 1px solid rgb(var(--sfs-success-rgb, 72 187 120) / 0.3);
+}
+
+.user-results .certificate-note.pending {
+  /* Deliberately the muted ink and the neutral tint, not an amber warning: this
+   * is "on its way", and nothing is wrong. */
+  color: var(--sfs-text-muted, #a0aec0);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
 }

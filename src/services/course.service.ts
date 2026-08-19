@@ -91,7 +91,7 @@ class CourseService {
 
     async getRandomCourseReplica(): Promise<string | null> {
         const replicas = await this.getCourseReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     /** Fetch ALL homeworks for a course (filter by course_id). */

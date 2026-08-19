@@ -629,6 +629,14 @@
           </div>
         </div>
 
+        <!-- The booking is real; only the slot reservation failed. Said here
+             rather than as an error, which would read as the exam not being
+             booked at all. -->
+        <div v-if="slotReserveWarning" class="success-warning">
+          <span class="success-warning__icon" aria-hidden="true">⚠️</span>
+          <span>{{ slotReserveWarning }}</span>
+        </div>
+
         <div class="success-actions">
           <button @click="goToExams" class="btn-primary">View My Exams</button>
           <button v-if="!isReschedule" @click="closeSuccessModal" class="btn-secondary">Schedule Another</button>
@@ -685,6 +693,9 @@ import { notificationService } from '@/services/notification.service';
 
 // Import the CSS file
 import '@/assets/css/schedule-exam.css';
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -723,6 +734,8 @@ const availabilityError = ref<string | null>(null);
 const slotsLoading = ref(false);
 // The appointment being rescheduled names a proctor who no longer exists.
 const originalProctorMissing = ref(false);
+// The booking landed but the hour could not be marked taken - see handleNewBooking.
+const slotReserveWarning = ref<string | null>(null);
 
 // Computed properties
 const userId = computed(() => authStore.user?.id);
@@ -1297,6 +1310,7 @@ async function confirmBooking() {
 
   bookingInProgress.value = true;
   error.value = null;
+  slotReserveWarning.value = null;
 
   try {
     const appointmentDateTime = new Date(`${selectedDate.value}T${selectedTimeSlot.value.startTime}:00`);
@@ -1343,6 +1357,16 @@ async function handleReschedule(appointmentDateTime: Date) {
 
   const newAppointment = await examService.createExamAppointment(newAppointmentData);
 
+  // The student's own copy of the new time. `exam.service.ts` tells the *proctor*
+  // inside createExamAppointment; this is the other half.
+  notificationService.notify('exam.appointment_rescheduled', {
+    to: username.value || '',
+    params: {
+      exam: selectedExam.value?.title || 'your exam',
+      when: appointmentDateTime.toLocaleString(),
+    },
+  });
+
   // 3. Cancel the old appointment
   try {
     await examService.cancelExamAppointment(existingAppointment.value.external_id);
@@ -1385,13 +1409,21 @@ async function handleReschedule(appointmentDateTime: Date) {
 }
 
 async function handleNewBooking(appointmentDateTime: Date) {
-  // Mark new time slot as unavailable
-  await proctorService.updateAvailability({
-    hour_sync_id: selectedTimeSlot.value.id,
-    is_available: false
-  });
-
-  // Create new appointment - MAKE SURE exam field is the external_id string
+  // Create the appointment FIRST, then close the slot.
+  //
+  // The other order closed the slot before the booking existed, so anything that
+  // failed in between — a cold replica, a validation error, a dropped
+  // connection — left the hour marked unavailable with no appointment against
+  // it. Nothing on the platform ever reopens such a slot: it is not on any
+  // appointment, so no cancel can release it, and the student is told the
+  // booking failed while the proctor quietly loses that hour for good. A handful
+  // of retries eats a proctor's whole week.
+  //
+  // Booked first, the failure modes swap places for the better: the worst case
+  // is now a real appointment whose slot is still shown as open, which is
+  // recoverable — the reserve step below is retried, and a double booking is
+  // visible to the proctor and to the student rather than being an hour that
+  // silently ceased to exist.
   const appointmentData = {
     external_id: `exam_appt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     user_id: userId.value,
@@ -1406,7 +1438,21 @@ async function handleNewBooking(appointmentDateTime: Date) {
     proctor_external_id: selectedProctor.value?.external_id
   };
 
-  await examService.createExamAppointment(appointmentData);
+  const created = await examService.createExamAppointment(appointmentData);
+
+  // Now reserve the hour. A failure here is reported rather than swallowed: the
+  // appointment stands, and leaving the slot open would let a second student
+  // book the same hour with nothing on either screen saying so.
+  try {
+    await proctorService.updateAvailability({
+      hour_sync_id: selectedTimeSlot.value.id,
+      is_available: false
+    });
+  } catch (err) {
+    slotReserveWarning.value =
+      'Your appointment is booked, but the time slot could not be marked as taken. '
+      + 'Please tell your proctor so nobody else is given the same hour.';
+  }
 
   // An appointment sits at `can_start: false` until somebody approves it, and
   // nothing told anybody it was waiting — a student turned up to an exam they
@@ -1420,6 +1466,21 @@ async function handleNewBooking(appointmentDateTime: Date) {
     student: username.value,
     exam: selectedExam.value?.title || 'an exam',
     when: appointmentDateTime.toLocaleString(),
+  });
+
+  // And the student's own durable copy. The confirmation modal is gone the moment
+  // they close the tab, and an exam appointment is a thing somebody comes back
+  // looking for - "when is my exam, and who is invigilating?" - which is exactly
+  // the shape of thing the bell is for. It also says out loud that the booking
+  // still needs approving, which is otherwise only visible as a greyed-out Start
+  // button days later.
+  notificationService.notify('exam.appointment_booked', {
+    to: username.value || '',
+    params: {
+      exam: selectedExam.value?.title || 'your exam',
+      when: appointmentDateTime.toLocaleString(),
+      proctor: selectedProctor.value?.username || 'your proctor',
+    },
   });
 }
 
@@ -1470,6 +1531,17 @@ async function confirmCancel() {
       }
     }
 
+    // The student's own copy. `exam.service.ts` tells the proctor from inside
+    // cancelExamAppointment; without this the person who cancelled has nothing
+    // in writing, which matters most when they cancelled by accident.
+    notificationService.notify('exam.appointment_cancelled', {
+      to: username.value || '',
+      params: {
+        exam: selectedExam.value?.title || existingAppointment.value?.exam_title || 'your exam',
+        when: formatAppointmentDateTimeOf(existingAppointment.value?.appointment_date),
+      },
+    });
+
     showCancelModal.value = false;
 
     // Show success message and redirect
@@ -1503,6 +1575,14 @@ function formatAppointmentTime(dateString?: string): string {
     minute: '2-digit',
     hour12: true
   });
+}
+
+/** An existing appointment's stored timestamp, as a sentence. */
+function formatAppointmentDateTimeOf(dateString?: string): string {
+  if (!dateString) return 'its scheduled time';
+  const date = parseDate(dateString);
+  if (isNaN(date.getTime())) return 'its scheduled time';
+  return date.toLocaleString();
 }
 
 function formatAppointmentDateTime(): string {

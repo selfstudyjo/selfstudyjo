@@ -669,11 +669,10 @@ class SubscriptionService {
 export const subscriptionService = new SubscriptionService();
 
 export async function getRandomSubscriptionReplica(): Promise<string | null> {
-    const replicas = await serviceRegistry.getServiceReplicas(
-        parseInt(import.meta.env.VITE_SUBSCRIPTIONS_APP_ID || '22'),
-                                                              'subscription'
-    );
-    return serviceRegistry.getRandomReplica(replicas);
+    // See the note in payment.service.ts: the appId is the pin.
+    const appId = parseInt(import.meta.env.VITE_SUBSCRIPTIONS_APP_ID || '22');
+    const replicas = await serviceRegistry.getServiceReplicas(appId, 'subscription');
+    return serviceRegistry.getRandomReplica(replicas, appId);
 }
 
 serviceRegistry.getRandomSubscriptionReplica = getRandomSubscriptionReplica;

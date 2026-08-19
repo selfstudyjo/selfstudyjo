@@ -218,7 +218,7 @@
 
 .approval-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1rem, 2.2vw, 1.5rem);
 }
 
@@ -385,7 +385,7 @@
 
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.6rem;
 }
 
@@ -565,7 +565,7 @@
    ============================================================ */
 .rooms-container {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
   margin-bottom: clamp(1rem, 2vw, 1.4rem);
 }

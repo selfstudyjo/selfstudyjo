@@ -137,7 +137,7 @@ class NotificationService {
 
     async getRandomNotificationReplica(): Promise<string | null> {
         const replicas = await this.getNotificationReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     /** The pinned replica, or a thrown error naming why there is none. */

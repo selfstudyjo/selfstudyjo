@@ -32,17 +32,39 @@
 
             <!-- Appointments List with Filters -->
             <div v-else>
+                <!-- Stat tiles. Four numbers a proctor is actually asked for,
+                     and "needs attention" is first because it is the only one
+                     that means somebody is waiting on them right now. -->
+                <div class="proctor-stats">
+                    <div class="proctor-stat" :class="{ urgent: needsAttention.length > 0 }">
+                        <div class="proctor-stat__value">{{ needsAttention.length }}</div>
+                        <div class="proctor-stat__label">Needs attention</div>
+                    </div>
+                    <div class="proctor-stat">
+                        <div class="proctor-stat__value">{{ todays.length }}</div>
+                        <div class="proctor-stat__label">Today</div>
+                    </div>
+                    <div class="proctor-stat">
+                        <div class="proctor-stat__value">{{ upcoming.length }}</div>
+                        <div class="proctor-stat__label">Upcoming</div>
+                    </div>
+                    <div class="proctor-stat">
+                        <div class="proctor-stat__value">{{ completedCount }}</div>
+                        <div class="proctor-stat__label">Completed</div>
+                    </div>
+                </div>
+
                 <!-- Filters Section -->
                 <div class="filters-section">
                     <div class="filters-header">
-                        <h2>Upcoming Exam Appointments</h2>
+                        <h2>Exam appointments</h2>
                         <div class="stats">
                             <span class="stat-item">
-                                <span class="stat-label">Total:</span>
+                                <span class="stat-label">Showing:</span>
                                 <span class="stat-value">{{ filteredAppointments.length }}</span>
                             </span>
                             <span class="stat-item">
-                                <span class="stat-label">Scheduled:</span>
+                                <span class="stat-label">Live:</span>
                                 <span class="stat-value">{{ scheduledCount }}</span>
                             </span>
                         </div>
@@ -112,78 +134,130 @@
                     </div>
                 </div>
 
-                <!-- Appointments Grid -->
-                <div class="appointments-list">
-                    <div
-                        v-for="appointment in filteredAppointments"
-                        :key="appointment.external_id"
-                        class="appointment-card"
-                        @click="viewAppointmentDetails(appointment.external_id)"
-                    >
-                        <div class="appointment-header">
-                            <div class="appointment-title">
-                                <h3>{{ appointment.exam_title || 'Exam' }}</h3>
-                                <span class="status-badge" :class="getStatusClass(appointment.appointment_status)">
-                                    {{ appointment.appointment_status }}
-                                </span>
-                            </div>
-                            <div class="appointment-meta">
-                                <span class="meta-item">
-                                    <span class="meta-icon">👤</span>
-                                    {{ appointment.username }}
-                                </span>
-                                <span class="meta-item">
-                                    <span class="meta-icon">📅</span>
-                                    {{ formatDate(appointment.appointment_date) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="appointment-details">
-                            <div class="detail-row">
-                                <span class="detail-label">User ID:</span>
-                                <span class="detail-value">{{ appointment.user_id }}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Appointment ID:</span>
-                                <span class="detail-value code">{{ appointment.external_id }}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Created:</span>
-                                <span class="detail-value">{{ formatDate(appointment.created_at) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="appointment-actions">
-                            <button
-                                class="view-btn"
-                                @click.stop="viewAppointmentDetails(appointment.external_id)"
-                            >
-                                View Details
-                            </button>
-                            <div class="room-links">
-                                <a
-                                    v-if="appointment.room_url_1"
-                                    :href="appointment.room_url_1"
-                                    target="_blank"
-                                    class="room-link"
-                                    @click.stop
-                                >
-                                    Room 1
-                                </a>
-                                <a
-                                    v-if="appointment.room_url_2"
-                                    :href="appointment.room_url_2"
-                                    target="_blank"
-                                    class="room-link"
-                                    @click.stop
-                                >
-                                    Room 2
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Appointments, grouped by what the proctor has to do about
+                     them rather than by date. See `groups` in the script: the old
+                     flat descending list buried today's exams under a page of
+                     last month's completed ones. -->
+                <div v-if="groups.length === 0" class="empty-state">
+                    <div class="empty-icon">&#128269;</div>
+                    <h3>Nothing matches those filters</h3>
+                    <p>{{ appointments.length }} appointment{{ appointments.length === 1 ? '' : 's' }} hidden by the filters above.</p>
+                    <button @click="clearFilters" class="retry-btn">Clear filters</button>
                 </div>
+
+                <section v-for="group in groups" :key="group.key"
+                         class="appointment-group"
+                         :class="{ 'appointment-group--urgent': group.key === 'attention' }">
+                    <header class="appointment-group__header">
+                        <h2 class="appointment-group__title">
+                            {{ group.title }}
+                            <span class="appointment-group__count">{{ group.rows.length }}</span>
+                        </h2>
+                        <p class="appointment-group__hint">{{ group.hint }}</p>
+                    </header>
+
+                    <div class="appointments-list">
+                        <article
+                            v-for="appointment in group.rows"
+                            :key="appointment.external_id"
+                            class="appointment-card"
+                            :class="{ 'appointment-card--live': isLiveNow(appointment) }"
+                            tabindex="0"
+                            role="button"
+                            @click="viewAppointmentDetails(appointment.external_id)"
+                            @keydown.enter="viewAppointmentDetails(appointment.external_id)"
+                            @keydown.space.prevent="viewAppointmentDetails(appointment.external_id)"
+                        >
+                            <div class="appointment-header">
+                                <div class="appointment-title">
+                                    <h3>{{ appointment.exam_title || 'Exam' }}</h3>
+                                    <div class="appointment-title__tags">
+                                        <span v-if="isLiveNow(appointment)" class="live-badge">
+                                            <span class="live-badge__dot" aria-hidden="true"></span>
+                                            Live
+                                        </span>
+                                        <span class="status-badge" :class="getStatusClass(appointment.appointment_status)">
+                                            {{ appointment.appointment_status }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- The candidate first and largest: a proctor
+                                 identifies an appointment by the person, never by
+                                 the uuid that used to lead this card. -->
+                            <div class="candidate">
+                                <div class="candidate__avatar" aria-hidden="true">
+                                    {{ (appointment.username || '?').charAt(0).toUpperCase() }}
+                                </div>
+                                <div class="candidate__who">
+                                    <div class="candidate__name">{{ appointment.username || 'Unknown candidate' }}</div>
+                                    <div class="candidate__when">{{ relativeWhen(appointment.appointment_date) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="appointment-flags">
+                                <span class="flag" :class="appointment.can_start ? 'flag--on' : 'flag--off'">
+                                    {{ appointment.can_start ? 'Allowed to start' : 'Not yet allowed to start' }}
+                                </span>
+                                <span v-if="appointment.is_entered" class="flag flag--on">Entered the room</span>
+                                <span v-if="!appointment.room_url_1 && !appointment.room_url_2"
+                                      class="flag flag--warn">No room link set</span>
+                            </div>
+
+                            <div class="appointment-actions">
+                                <button
+                                    class="view-btn"
+                                    @click.stop="viewAppointmentDetails(appointment.external_id)"
+                                >
+                                    {{ appointment.can_start ? 'Manage' : 'Open and let in' }}
+                                </button>
+                                <div class="room-links">
+                                    <a
+                                        v-if="appointment.room_url_1"
+                                        :href="appointment.room_url_1"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="room-link"
+                                        @click.stop
+                                    >
+                                        Room 1
+                                    </a>
+                                    <a
+                                        v-if="appointment.room_url_2"
+                                        :href="appointment.room_url_2"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="room-link"
+                                        @click.stop
+                                    >
+                                        Room 2
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- The ids stay, because support work and every other
+                                 service key on them - but at the bottom, quiet, and
+                                 breakable (see exam-system.css: a 36-character uuid
+                                 with no break point sets the width of its card). -->
+                            <details class="appointment-ids" @click.stop>
+                                <summary>Reference ids</summary>
+                                <div class="detail-row">
+                                    <span class="detail-label">Appointment</span>
+                                    <span class="detail-value code">{{ appointment.external_id }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Candidate</span>
+                                    <span class="detail-value code">{{ appointment.user_id }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Booked</span>
+                                    <span class="detail-value">{{ formatDate(appointment.created_at) }}</span>
+                                </div>
+                            </details>
+                        </article>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -194,6 +268,7 @@ import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, type ExamAppointment } from '@/services/exam.service';
+import { groupForProctor, isLiveNow, relativeWhen } from '@/utils/proctorQueue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -251,6 +326,25 @@ const scheduledCount = computed(() => {
         app.appointment_status === 'In Progress'
     ).length;
 });
+
+/* ---------------------------------------------------------------------------
+ * Grouping lives in utils/proctorQueue.ts - a plain module, so the whole
+ * ordering model is verifiable in node (`npm run check:proctorqueue`) and the
+ * check cannot drift from the screen. Same precedent as appNav.ts and
+ * drawEngine.ts. What stays here is only the wiring.
+ * ------------------------------------------------------------------------- */
+
+const groups = computed(() => groupForProctor(filteredAppointments.value));
+
+const rowsIn = (key: string) =>
+    groups.value.find(group => group.key === key)?.rows ?? [];
+
+const needsAttention = computed(() => rowsIn('attention'));
+const todays = computed(() => rowsIn('today'));
+const upcoming = computed(() => rowsIn('upcoming'));
+
+const completedCount = computed(() => filteredAppointments.value.filter(
+    app => app.appointment_status === 'Completed').length);
 
 const loadAppointments = async () => {
     if (!proctorData.value?.external_id) {
@@ -317,6 +411,13 @@ onMounted(() => {
         error.value = 'You are not authorized as a proctor';
     }
 });
+
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
+// The dashboard's own furniture: stat tiles, urgency groups, candidate block.
+// Global rather than in the scoped block below - see the file header.
+import '@/assets/css/proctor-console.css';
 </script>
 
 <style scoped>

@@ -53,7 +53,7 @@ class CertificateService {
 
     async getRandomCertificateReplica(): Promise<string | null> {
         const replicas = await this.getCertificateReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     // Get user certificates — reads directly from certificate replica (fast, denormalized)

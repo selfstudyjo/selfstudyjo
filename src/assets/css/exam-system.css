@@ -1,0 +1,485 @@
+/* src/assets/css/exam-system.css
+ *
+ * One stylesheet for the eight exam-system pages, and it fixes CAUSES rather
+ * than symptoms.
+ *
+ * The reported bug was "text outside div elements, mixed text and mixed
+ * elements". That is not a hundred separate mistakes in a hundred rules - it is
+ * three structural ones repeated across ~7,600 lines of page CSS, and every one
+ * of them is a container that cannot be narrower than its content:
+ *
+ * 1. **`grid-template-columns: repeat(N, 1fr)`.** A `1fr` track has an automatic
+ *    minimum of `min-content`, NOT zero. So the moment a cell holds something
+ *    that cannot wrap, the track is forced wider than its share and the row
+ *    overflows its card. 32 grid declarations across these eight stylesheets were
+ *    written that way, while `user-results.css` and `exam-approval.css` had
+ *    already been corrected to `minmax(0, 1fr)` - so the bug was understood and
+ *    the fix simply never carried across. Those 32 are corrected in place, in the
+ *    page stylesheets; see section 1 for why not from here.
+ *
+ * 2. **A flex child defaults to `min-width: auto`**, which is the same trap
+ *    wearing different clothes: `.detail-row { display: flex }` with a long value
+ *    in it pushes the label off one side.
+ *
+ * 3. **And the thing that cannot wrap is nearly always an id.** Every record on
+ *    this platform is addressed by a uuid4 or an `exam_appt_1779660457917_0tsn`
+ *    external_id, and these screens print them: appointment ids, user ids, exam
+ *    ids. A 36-character string with no space in it is unbreakable, so it sets
+ *    the min-content width of whatever holds it. `overflow-wrap: break-word` is
+ *    NOT enough for those - it only breaks at permitted points, and a uuid has
+ *    none. `anywhere` is what actually breaks them, and it is also what lets the
+ *    track shrink, because unlike `break-word` it is taken into account when
+ *    min-content is computed.
+ *
+ * Loaded AFTER each page's own stylesheet (the views import this second). Every
+ * rule here is ADDITIVE - it sets properties the page stylesheets never declared
+ * (`min-width`, `overflow-wrap`, `flex-wrap`, `max-width`) - so it needs to win
+ * nothing, and there is no inflated specificity anywhere in it. The only
+ * `!important` in the file is in the `prefers-reduced-motion` block, where
+ * overriding the pages' own animations is the entire point. That is what makes it
+ * safe in front of `review-results.css` and
+ * `user-results.css`, which are `<style scoped>` and therefore carry an extra
+ * `[data-v-…]` attribute's worth of specificity. Nothing here sets a colour:
+ * every visual token comes from `theme.css`, so all ten galaxies keep working
+ * (working rule 12).
+ *
+ * Responsiveness is handled by making the layouts *fluid* rather than by adding
+ * another breakpoint. The page stylesheets already carry ~70 media queries
+ * between them, almost all `max-width: 768px`; `responsive.css` scales the root
+ * font size, and everything below is written in `rem` and `minmax()` so it
+ * follows. The only new breakpoints are the two ends nothing covered: a 360px
+ * phone, where fixed padding ate a third of the width, and a very wide screen.
+ */
+
+/* ---------------------------------------------------------------------------
+ * 0. The scope. Every rule is confined to the eight exam-system roots, so this
+ *    file can never reach a page it was not written for.
+ * ------------------------------------------------------------------------- */
+
+.exams-page,
+.schedule-exam-page,
+.proctor-dashboard,
+.proctor-appointment,
+.exam-approval-page,
+.take-exam-page,
+.review-results,
+.user-results {
+  /* A page must never be the thing that scrolls sideways. If something inside is
+   * too wide, it is that element's problem to solve (and the rules below solve
+   * it) - a horizontally scrolling page hides the right-hand half of every card
+   * on a phone and is the single most common way this reads as broken. */
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* ---------------------------------------------------------------------------
+ * 1. Grid tracks may shrink - and the grid's children with them.
+ * ------------------------------------------------------------------------- */
+
+/* The `minmax(0, 1fr)` half of this is fixed IN THE PAGE STYLESHEETS rather than
+ * overridden from here - 32 declarations across the eight files, mechanically.
+ * That is deliberate: overriding a page's `grid-template-columns` from a shared
+ * file would also be redesigning its layout, and it would depend on load order
+ * against two stylesheets that are `<style scoped>` (which adds a `[data-v-…]`
+ * attribute and therefore a class's worth of specificity). Fixing the track
+ * where it is declared has neither problem.
+ *
+ * What is left for this file is the half a track fix cannot reach: an implicit
+ * track, and the grid's own children. */
+.exams-page [class*="grid"],
+.schedule-exam-page [class*="grid"],
+.proctor-dashboard [class*="grid"],
+.proctor-appointment [class*="grid"],
+.exam-approval-page [class*="grid"],
+.review-results [class*="grid"],
+.user-results [class*="grid"] {
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+/* A grid CHILD is itself a min-width: auto box - fixing the track is only half
+ * the job. */
+.exams-page > *,
+.schedule-exam-page > *,
+.proctor-dashboard > *,
+.proctor-appointment > *,
+.exam-approval-page > *,
+.take-exam-page > *,
+.review-results > *,
+.user-results > *,
+.exams-page [class*="grid"] > *,
+.schedule-exam-page [class*="grid"] > *,
+.proctor-dashboard [class*="grid"] > *,
+.proctor-appointment [class*="grid"] > *,
+.exam-approval-page [class*="grid"] > *,
+.review-results [class*="grid"] > *,
+.user-results [class*="grid"] > * {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Flex rows may shrink, and their labels keep their shape.
+ *
+ *    `.detail-row { display: flex }` with `<span class="label">` and
+ *    `<span class="value">` is the commonest pattern on these eight pages, and
+ *    the value is the part that is arbitrary length.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(.detail-row, .detail-item, .meta-item, .info-row),
+.schedule-exam-page :is(.detail-row, .detail-item, .meta-item),
+.proctor-dashboard :is(.detail-row, .meta-item, .stat-item),
+.proctor-appointment :is(.detail-row, .detail-item, .info-row),
+.exam-approval-page :is(.detail-row, .detail-item, .meta-item),
+.review-results :is(.detail-row, .meta-item),
+.user-results :is(.detail-row, .meta-item) {
+  min-width: 0;
+  /* Wrap rather than overflow. A label and a value that will not fit on one line
+   * belong on two - which is what happens on a phone whatever the desktop layout
+   * says, and the alternative is the value sitting outside the card. */
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.exams-page :is(.detail-row, .detail-item) > *,
+.schedule-exam-page :is(.detail-row, .detail-item) > *,
+.proctor-dashboard :is(.detail-row, .meta-item) > *,
+.proctor-appointment :is(.detail-row, .detail-item) > *,
+.exam-approval-page :is(.detail-row, .detail-item) > *,
+.review-results .detail-row > *,
+.user-results .detail-row > * {
+  min-width: 0;
+}
+
+/* A label is short and known; it should not be the thing that wraps. */
+.exams-page .label,
+.schedule-exam-page .label,
+.proctor-dashboard .detail-label,
+.proctor-appointment .label,
+.exam-approval-page .label,
+.review-results .label,
+.user-results .label {
+  flex: 0 0 auto;
+}
+
+/* The value takes the rest and breaks wherever it has to. */
+.exams-page .value,
+.schedule-exam-page .value,
+.proctor-dashboard .detail-value,
+.proctor-appointment .value,
+.exam-approval-page .value,
+.review-results .value,
+.user-results .value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Long text wraps, and an ID is long text with no break points.
+ *
+ *    `anywhere` rather than `break-word` on purpose - see the header. This is
+ *    what stops a uuid setting the width of the card that contains it.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(h1, h2, h3, h4, h5, p, span, li, td, th, label, .value),
+.schedule-exam-page :is(h1, h2, h3, h4, h5, p, span, li, td, th, label, .value),
+.proctor-dashboard :is(h1, h2, h3, h4, h5, p, span, li, td, th, label),
+.proctor-appointment :is(h1, h2, h3, h4, h5, p, span, li, td, th, label),
+.exam-approval-page :is(h1, h2, h3, h4, h5, p, span, li, td, th, label),
+.take-exam-page :is(h1, h2, h3, h4, h5, p, span, li, td, th, label),
+.review-results :is(h1, h2, h3, h4, h5, p, span, li, td, th, label),
+.user-results :is(h1, h2, h3, h4, h5, p, span, li, td, th, label) {
+  overflow-wrap: break-word;
+  /* Long words are allowed to hyphenate rather than leaving a ragged hole. */
+  hyphens: auto;
+}
+
+/* The ids themselves. These are the ones `break-word` cannot help with. */
+.exams-page :is(.code, .mono, .id, .user-cell-id, .appointment-id),
+.schedule-exam-page :is(.code, .mono, .id),
+.proctor-dashboard :is(.code, .mono, .id, .detail-value.code),
+.proctor-appointment :is(.code, .mono, .id),
+.exam-approval-page :is(.code, .mono, .id),
+.review-results :is(.code, .mono, .id),
+.user-results :is(.code, .mono, .id) {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  font-variant-ligatures: none;
+  /* An id is a reference, not prose: smaller and quieter than the label above it,
+   * so a 36-character uuid does not dominate a card whose subject is a person. */
+  font-size: 0.8em;
+  line-height: 1.45;
+}
+
+/* An email or a URL in a table cell, which is the other unbreakable string. */
+.proctor-dashboard :is(.proctor-info p, .room-link),
+.proctor-appointment :is(.room-url, .room-link),
+.schedule-exam-page .proctor-info p,
+.exam-approval-page .room-link {
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. Nothing that was told not to wrap may then overflow.
+ *
+ *    `white-space: nowrap` is right for a status pill and wrong for anything that
+ *    can be long. Where a page has used it, cap it with an ellipsis so the
+ *    failure mode is a truncated word rather than text crossing a border.
+ * ------------------------------------------------------------------------- */
+
+.exams-page [class*="badge"],
+.schedule-exam-page [class*="badge"],
+.proctor-dashboard [class*="badge"],
+.proctor-appointment [class*="badge"],
+.exam-approval-page [class*="badge"],
+.review-results [class*="badge"],
+.user-results [class*="badge"],
+.exams-page [class*="status-tag"],
+.schedule-exam-page [class*="status-tag"] {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* A pill is a shape; it must not be squeezed until its text touches the edge. */
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. Tables become readable on a phone instead of forcing the page wide.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(table, .table-wrap),
+.proctor-dashboard :is(table, .table-wrap),
+.proctor-appointment :is(table, .table-wrap),
+.exam-approval-page :is(table, .table-wrap),
+.user-results :is(table, .table-wrap) {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+/* A table that genuinely cannot fit scrolls INSIDE its own box, never taking the
+ * page with it. `-webkit-overflow-scrolling` keeps that usable on iOS. */
+.proctor-dashboard .table-scroll,
+.proctor-appointment .table-scroll,
+.exam-approval-page .table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. Media and embeds stay inside their container.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(img, video, iframe, svg),
+.schedule-exam-page :is(img, video, iframe, svg),
+.proctor-dashboard :is(img, video, iframe, svg),
+.proctor-appointment :is(img, video, iframe, svg),
+.exam-approval-page :is(img, video, iframe, svg),
+.take-exam-page :is(img, video, iframe, svg),
+.review-results :is(img, video, iframe, svg),
+.user-results :is(img, video, iframe, svg) {
+  max-width: 100%;
+}
+
+.exams-page :is(img, video),
+.take-exam-page :is(img, video),
+.review-results :is(img, video) {
+  height: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. Buttons and rows of buttons.
+ *
+ *    An action row is the other place things escape: three buttons with fixed
+ *    padding and no wrapping run straight out of a card on a narrow screen.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(.step-actions, .exam-actions, .appointment-actions, .action-buttons),
+.schedule-exam-page :is(.step-actions, .action-buttons, .success-actions, .modal-actions),
+.proctor-dashboard :is(.appointment-actions, .filter-actions, .room-links),
+.proctor-appointment :is(.actions, .action-buttons, .modal-actions),
+.exam-approval-page :is(.actions, .action-buttons, .modal-actions),
+.review-results .actions,
+.user-results .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.exams-page :is(button, .btn, [class*="-btn"]),
+.schedule-exam-page :is(button, .btn, [class*="-btn"]),
+.proctor-dashboard :is(button, .btn, [class*="-btn"]),
+.proctor-appointment :is(button, .btn, [class*="-btn"]),
+.exam-approval-page :is(button, .btn, [class*="-btn"]),
+.take-exam-page :is(button, .btn, [class*="-btn"]),
+.review-results :is(button, .btn, [class*="-btn"]),
+.user-results :is(button, .btn, [class*="-btn"]) {
+  max-width: 100%;
+  /* A button's label should not be broken mid-word; the button grows instead. */
+  overflow-wrap: normal;
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. Forms. A field wider than its container is the other half of "mixed
+ *    elements": an input at a default size overflows a narrow card, and a
+ *    `<select>` is worse because its intrinsic width comes from its options.
+ * ------------------------------------------------------------------------- */
+
+.exams-page :is(input, select, textarea),
+.schedule-exam-page :is(input, select, textarea),
+.proctor-dashboard :is(input, select, textarea),
+.proctor-appointment :is(input, select, textarea),
+.exam-approval-page :is(input, select, textarea),
+.take-exam-page :is(input, select, textarea),
+.review-results :is(input, select, textarea),
+.user-results :is(input, select, textarea) {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.proctor-dashboard .filter-group,
+.proctor-appointment .form-group,
+.exam-approval-page .form-group,
+.schedule-exam-page .form-group {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. The very small end. `responsive.css` scales the root font size; what it
+ *    cannot do is remove padding a page hardcoded in px.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 27.5rem) {           /* ~440px and below */
+  .exams-page,
+  .schedule-exam-page,
+  .proctor-dashboard,
+  .proctor-appointment,
+  .exam-approval-page,
+  .take-exam-page,
+  .review-results,
+  .user-results {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* One column, always. Below this width two columns of anything is two columns
+   * of unreadable. */
+  .exams-page :is(.appointment-detail-grid, .results-section, .exam-meta),
+  .schedule-exam-page :is(.detail-grid, .success-details, .summary-grid, .proctors-grid),
+  .proctor-dashboard :is(.filters-grid, .appointments-list),
+  .proctor-appointment :is(.detail-grid, .info-grid),
+  .exam-approval-page .detail-grid,
+  .review-results .result-meta,
+  .user-results .results-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* A label above its value reads better than a label beside a value that has
+   * two characters of room. */
+  .exams-page :is(.detail-row, .detail-item),
+  .schedule-exam-page :is(.detail-row, .detail-item),
+  .proctor-dashboard .detail-row,
+  .proctor-appointment :is(.detail-row, .detail-item),
+  .exam-approval-page :is(.detail-row, .detail-item) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* An action row becomes a stack of full-width buttons, which is also the only
+   * shape that gives a 44px touch target its width back. */
+  .exams-page :is(.step-actions, .appointment-actions) > *,
+  .schedule-exam-page :is(.step-actions, .success-actions, .modal-actions) > *,
+  .proctor-dashboard .appointment-actions > *,
+  .proctor-appointment :is(.actions, .modal-actions) > *,
+  .exam-approval-page :is(.actions, .modal-actions) > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. Touch. Straight from `responsive.css`'s reasoning: 44px targets, and a
+ *     16px minimum on a field because below that iOS zooms the page on focus and
+ *     never zooms back. Keyed on `pointer: coarse`, not on width - a tablet is
+ *     wide and still touched.
+ * ------------------------------------------------------------------------- */
+
+@media (pointer: coarse) {
+  .exams-page :is(button, .btn, [class*="-btn"], a.room-link),
+  .schedule-exam-page :is(button, .btn, [class*="-btn"], .calendar-day, .time-slot),
+  .proctor-dashboard :is(button, .btn, [class*="-btn"], a.room-link),
+  .proctor-appointment :is(button, .btn, [class*="-btn"]),
+  .exam-approval-page :is(button, .btn, [class*="-btn"]),
+  .take-exam-page :is(button, .btn, [class*="-btn"]),
+  .review-results :is(button, .btn, [class*="-btn"]),
+  .user-results :is(button, .btn, [class*="-btn"]) {
+    min-height: 2.75rem;
+  }
+
+  .exams-page :is(input, select, textarea),
+  .schedule-exam-page :is(input, select, textarea),
+  .proctor-dashboard :is(input, select, textarea),
+  .proctor-appointment :is(input, select, textarea),
+  .exam-approval-page :is(input, select, textarea),
+  .take-exam-page :is(input, select, textarea) {
+    font-size: max(1rem, 16px);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. The wide end. A laptop layout centred in the middle of a 4K screen at the
+ *     size of a postcard is the complaint `responsive.css` fixes globally; these
+ *     pages need their reading measure capped so a detail row is not two metres
+ *     of whitespace with a value at each end.
+ * ------------------------------------------------------------------------- */
+
+@media (min-width: 100rem) {
+  .schedule-exam-page .step-content,
+  .proctor-appointment .appointment-detail,
+  .exam-approval-page .approval-detail,
+  .review-results .result-detail {
+    max-width: 80rem;
+    margin-inline: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 12. Reduced motion. These pages spin loaders and pulse "live" badges.
+ * ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .exams-page *,
+  .schedule-exam-page *,
+  .proctor-dashboard *,
+  .proctor-appointment *,
+  .exam-approval-page *,
+  .take-exam-page *,
+  .review-results *,
+  .user-results * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 13. Print. A result and a certificate are the two things somebody prints, and
+ *     `--sfs-paper` exists precisely so a printed page is white with dark ink in
+ *     all ten galaxies.
+ * ------------------------------------------------------------------------- */
+
+@media print {
+  .review-results,
+  .user-results,
+  .exams-page {
+    background: var(--sfs-paper, #ffffff);
+    color: var(--sfs-on-paper, #111827);
+  }
+
+  .exams-page :is(.step-actions, .exam-actions, .appointment-actions),
+  .review-results .actions,
+  .user-results .actions {
+    display: none;
+  }
+}

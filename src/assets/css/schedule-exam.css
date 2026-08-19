@@ -406,7 +406,7 @@
    ============================================================= */
 .schedule-exam-page .proctors-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
@@ -486,7 +486,7 @@
    ============================================================= */
 .schedule-exam-page .date-time-selector {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
@@ -550,7 +550,7 @@
 
 .schedule-exam-page .calendar-days {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
   min-width: 260px;
 }
@@ -792,7 +792,7 @@
 
 .schedule-exam-page .appointment-details {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
@@ -941,7 +941,7 @@
 
 .schedule-exam-page .summary-card {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   padding: clamp(1rem, 2vw, 1.5rem);
   background: var(--sx-glass);
@@ -1313,20 +1313,20 @@ body > .modal-overlay {
 /* ≥ 640px — small tablet */
 @media (min-width: 640px) {
   .schedule-exam-page .proctors-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .schedule-exam-page .appointment-details {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* ≥ 768px — tablet */
 @media (min-width: 768px) {
   .schedule-exam-page .date-time-selector {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   .schedule-exam-page .summary-card {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .schedule-exam-page .step-label { font-size: 0.875rem; }
 }
@@ -1334,10 +1334,10 @@ body > .modal-overlay {
 /* ≥ 1024px — laptop */
 @media (min-width: 1024px) {
   .schedule-exam-page .appointment-details {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .schedule-exam-page .summary-card {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .schedule-exam-page .proctors-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1393,4 +1393,37 @@ body > .modal-overlay {
   .schedule-exam-page .error-container {
     border-color: var(--sfs-border-strong, #fff);
   }
+}
+/* ---------------------------------------------------------------------------
+ * "Booked, but the slot could not be reserved."
+ *
+ * Shown inside the SUCCESS modal, deliberately: the appointment is real and
+ * telling somebody their booking failed would be worse than the problem. See
+ * handleNewBooking in ScheduleExam.vue - the booking is created first and the
+ * hour reserved second, so this is the one remaining recoverable gap.
+ *
+ * Warning ink on a warning wash, both from tokens (working rule 12), so it stays
+ * legible in all ten galaxies rather than only in the default one.
+ * ------------------------------------------------------------------------- */
+
+.schedule-exam-page .success-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--sfs-warning-text, #ed8936);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.12);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.3);
+  /* The sentence is long and the modal is narrow on a phone. */
+  overflow-wrap: anywhere;
+}
+
+.schedule-exam-page .success-warning__icon {
+  flex: 0 0 auto;
+  line-height: 1.5;
 }

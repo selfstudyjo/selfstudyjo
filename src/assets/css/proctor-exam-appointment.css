@@ -191,13 +191,13 @@
 
 .details-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(20px, 3vw, 32px);
 }
 
 @media (min-width: 900px) {
   .details-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 28px;
   }
 }
@@ -319,14 +319,14 @@
 
 .rooms-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 24px;
 }
 
 @media (min-width: 640px) {
   .rooms-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

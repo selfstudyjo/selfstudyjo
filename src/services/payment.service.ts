@@ -267,11 +267,12 @@ export const paymentService = new PaymentService();
 
 // Add payment service to service registry
 export async function getRandomPaymentReplica(): Promise<string | null> {
-    const replicas = await serviceRegistry.getServiceReplicas(
-        parseInt(import.meta.env.VITE_PAYMENT_APP_ID || '23'),
-                                                              'payment'
-    );
-    return serviceRegistry.getRandomReplica(replicas);
+    // The appId is what pins this tab to one replica. Without it every call
+    // re-rolled the choice, so a read straight after a write was a coin flip on
+    // whether the write had replicated yet - see getRandomReplica in config.ts.
+    const appId = parseInt(import.meta.env.VITE_PAYMENT_APP_ID || '23');
+    const replicas = await serviceRegistry.getServiceReplicas(appId, 'payment');
+    return serviceRegistry.getRandomReplica(replicas, appId);
 }
 
 // Update service registry to include payment methods

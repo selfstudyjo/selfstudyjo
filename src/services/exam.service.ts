@@ -14,8 +14,27 @@ export interface Exam {
     exam_duration: number;
     exam_instructions: string;
     video_instructions_url: string;
+    /**
+     * The mark this exam is passed at, out of 100.
+     *
+     * It used to be a literal 70 inside TakeExam.vue and nowhere else, so the
+     * pass mark was a fact only one client knew - and app 20, which now issues
+     * the certificate, had no way to agree with it. A student could be shown a
+     * pass and get no certificate with nothing explaining the difference.
+     * Optional here only because a replica running an older build omits it;
+     * `passMarkOf()` supplies the same default app 20 does.
+     */
+    exam_pass_score?: number;
     date_added: string;
     questions?: ExamQuestion[];
+}
+
+/** The pass mark for an exam, agreeing with app 20's DEFAULT_PASS_SCORE. */
+export const DEFAULT_PASS_SCORE = 70;
+
+export function passMarkOf(exam?: Exam | null): number {
+    const given = Number(exam?.exam_pass_score);
+    return Number.isFinite(given) && given > 0 ? given : DEFAULT_PASS_SCORE;
 }
 
 export interface ExamQuestion {
@@ -43,6 +62,13 @@ export interface UserExamResult {
     date_taken: string;
     result_message?: string;
     result_status: 'PASSED' | 'FAILED';
+    /**
+     * Where app 20 got to with the automatic certificate: '' on an older record,
+     * 'pending' when it is owed, 'issued' when app 24 has it, 'not_required' for
+     * a fail. Read-only here - the frontend never sets it.
+     */
+    certificate_status?: 'pending' | 'issued' | 'not_required' | '';
+    certificate_id?: string;
     user_answers?: UserExamAnswer[];
 }
 
@@ -82,7 +108,7 @@ class ExamService {
 
     async getRandomExamReplica(): Promise<string | null> {
         const replicas = await this.getExamReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     private async enrichExamWithCourseName(exam: Exam): Promise<Exam> {

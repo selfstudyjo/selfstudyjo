@@ -320,11 +320,15 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { examService, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
+import { examService, passMarkOf, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { notificationService } from '@/services/notification.service';
+import { proctorService } from '@/services/proctor.service';
 
 // Import the CSS file
 import '@/assets/css/take-exam.css';
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -648,7 +652,10 @@ async function submitExamResults() {
   // Calculate score
   await calculateCorrectAnswers();
   const score = Math.round((correctAnswers.value / validQuestions.value.length) * 100);
-  const passingScore = 70;
+  // The exam's own mark, not a literal. App 20 issues the certificate against
+  // this same number, so a hardcoded one here is a student shown a pass who
+  // never gets a certificate — with nothing on either side explaining why.
+  const passingScore = passMarkOf(exam.value);
 
   // Generate unique external_id for the exam result
   const resultExternalId = `exam_result_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -732,6 +739,42 @@ async function submitExamResults() {
     exam: exam.value?.title || 'an exam',
     score: `${score}%`,
   });
+
+  // And the proctor who invigilated it. They are the person who has to know the
+  // candidate is finished — without this a proctor watching a room has no signal
+  // that the paper is in other than the candidate telling them, and the operator
+  // notification above goes to somebody who is not in the room.
+  notifyProctorOfSubmission(score);
+}
+
+/**
+ * Tell the invigilating proctor the paper is in. Best effort, and deliberately
+ * not awaited: the student's result is already saved and their screen is showing
+ * it, so nothing here may delay or fail that.
+ */
+async function notifyProctorOfSubmission(score: number) {
+  try {
+    const proctorId = appointment.value?.proctor_id;
+    if (!proctorId) return;
+    // The appointment carries `proctor_name` once enriched; fall back to asking
+    // app 21, because app 16 addresses people by username and not by id.
+    let proctorUsername = appointment.value?.proctor_name || '';
+    if (!proctorUsername) {
+      const proctor = await proctorService.getProctor(proctorId);
+      proctorUsername = proctor?.username || '';
+    }
+    if (!proctorUsername) return;
+    notificationService.notify('proctor.exam_submitted', {
+      to: proctorUsername,
+      params: {
+        student: authStore.user?.username || 'A candidate',
+        exam: exam.value?.title || 'an exam',
+        score: `${score}%`,
+      },
+    });
+  } catch {
+    // A proctor not being told must never surface on the candidate's results.
+  }
 }
 
 // Alternative approach if submitExam fails (called from submitExamResults)

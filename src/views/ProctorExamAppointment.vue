@@ -25,6 +25,63 @@
 
             <!-- Appointment Details -->
             <div v-else-if="appointment" class="appointment-details">
+                <!-- The command bar: who, when, and the one switch that matters.
+                     The `can_start` checkbox used to be the last control on the
+                     page, under a heading called "Proctor Controls", below two
+                     columns of ids - so the single most time-critical action in
+                     the whole exam system was the hardest thing on the screen to
+                     find. Everything below is unchanged and still authoritative;
+                     this is a shortcut to the part with a clock on it. -->
+                <section class="command-bar"
+                         :class="{ 'command-bar--waiting': !canStart }">
+                    <div class="command-bar__who">
+                        <div class="command-bar__avatar" aria-hidden="true">
+                            {{ (appointment.username || '?').charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="command-bar__id">
+                            <div class="command-bar__name">{{ appointment.username || 'Unknown candidate' }}</div>
+                            <div class="command-bar__exam">{{ appointment.exam_title || appointment.exam }}</div>
+                            <div class="command-bar__when">{{ formatDateTime(appointment.appointment_date) }}</div>
+                        </div>
+                    </div>
+
+                    <div class="command-bar__state">
+                        <span class="status-badge" :class="getStatusClass(appointment.appointment_status)">
+                            {{ appointment.appointment_status }}
+                        </span>
+                        <span v-if="appointment.is_entered" class="flag flag--on">In the room</span>
+                        <span v-if="!appointment.room_url_1 && !appointment.room_url_2"
+                              class="flag flag--warn">No room link set</span>
+                    </div>
+
+                    <div class="command-bar__action">
+                        <!-- A button, not a checkbox. The action is "let this person
+                             in", which is a decision with a moment attached, and a
+                             checkbox reads as a preference. It stays bound to the
+                             same `canStart` ref and the same handler, so the
+                             control further down the page agrees with it. -->
+                        <button
+                            type="button"
+                            class="let-in-btn"
+                            :class="canStart ? 'let-in-btn--revoke' : 'let-in-btn--allow'"
+                            :disabled="updating"
+                            @click="toggleCanStart"
+                        >
+                            <span v-if="updating">Saving…</span>
+                            <span v-else-if="canStart">Revoke permission to start</span>
+                            <span v-else>Let the candidate start</span>
+                        </button>
+                        <p class="let-in-help">
+                            <span v-if="canStart">
+                                They can start now. Revoking is allowed and takes effect immediately.
+                            </span>
+                            <span v-else>
+                                They cannot start until you allow it. Set a room link first.
+                            </span>
+                        </p>
+                    </div>
+                </section>
+
                 <div class="details-grid">
                     <!-- Left Column: Appointment Info -->
                     <div class="details-column">
@@ -538,6 +595,21 @@ const announceApproval = (wasAllowed: boolean) => {
     });
 };
 
+/**
+ * Flip `can_start` from the command bar.
+ *
+ * Deliberately routed through `updateCanStart` rather than duplicating its body:
+ * that function owns the optimistic-then-revert behaviour AND the false -> true
+ * edge test that decides whether the candidate gets a notification. A second
+ * copy would drift, and the way it would drift is silently sending a second bell
+ * or none at all.
+ */
+const toggleCanStart = async () => {
+    if (updating.value) return;
+    canStart.value = !canStart.value;
+    await updateCanStart();
+};
+
 // Update can_start status
 const updateCanStart = async () => {
     if (!appointment.value) return;
@@ -735,6 +807,12 @@ onMounted(() => {
         error.value = 'You are not authorized as a proctor';
     }
 });
+
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
+// The command bar's styles. Global, for the reason given in the file header.
+import '@/assets/css/proctor-console.css';
 </script>
 
 <style scoped>

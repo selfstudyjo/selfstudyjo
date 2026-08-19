@@ -42,11 +42,20 @@
           >
             <div class="result-header">
               <h3>{{ result.exam_title || result.exam }}</h3>
-              <span class="score" :class="getScoreClass(result.score)">{{ result.score }}%</span>
+              <span class="score" :class="getScoreClass(result.score, result.result_status)">{{ result.score }}%</span>
             </div>
             <p class="date">Taken: {{ formatDate(result.date_taken) }}</p>
             <p class="status" :class="result.result_status.toLowerCase()">
               {{ result.result_status }}
+            </p>
+            <!-- A pass now issues a certificate on its own (app 20). Saying so
+                 here is the difference between a student waiting for something
+                 and a student knowing where it is. `pending` is a real state, not
+                 an error: app 24 may simply have been cold. -->
+            <p v-if="certificateNote(result)" class="certificate-note"
+               :class="result.certificate_status">
+              <span aria-hidden="true">{{ result.certificate_status === 'issued' ? '🏆' : '⏳' }}</span>
+              {{ certificateNote(result) }}
             </p>
           </div>
         </div>
@@ -65,7 +74,7 @@
           >
             <div class="result-header">
               <h3>{{ result.quiz_title || result.quiz }}</h3>
-              <span class="score" :class="getScoreClass(result.score)">{{ result.score }}%</span>
+              <span class="score" :class="getScoreClass(result.score, result.result_status)">{{ result.score }}%</span>
             </div>
             <p class="date">Taken: {{ formatDate(result.date_taken) }}</p>
             <p class="status" :class="result.result_status.toLowerCase()">
@@ -242,15 +251,39 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-function getScoreClass(score: number) {
+/**
+ * How to colour a score.
+ *
+ * `result_status` is the authoritative verdict — app 20 stored it, and it was
+ * computed against that exam's own pass mark. Re-deriving pass/fail from a
+ * literal 70 here contradicted it for any exam with a different mark: a 75 on an
+ * exam passed at 85 rendered green and said "pass" beside a FAILED record.
+ * The bands are only the fallback, for a record with no status.
+ */
+function getScoreClass(score: number, status?: string) {
+  const verdict = String(status || '').toUpperCase();
+  if (verdict === 'PASSED') return 'pass';
+  if (verdict === 'FAILED') return 'fail';
   if (score >= 70) return 'pass';
   if (score >= 50) return 'average';
   return 'fail';
 }
 
+/** What to tell the student about the certificate their pass earned. */
+function certificateNote(result: any): string {
+  if (String(result?.result_status || '').toUpperCase() !== 'PASSED') return '';
+  if (result?.certificate_status === 'issued') return 'Certificate issued';
+  if (result?.certificate_status === 'pending') return 'Certificate is being issued';
+  return '';
+}
+
 function goToReview(type: 'exam' | 'quiz', resultId: string) {
   router.push(`/review-result/${type}/${resultId}`);
 }
+
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 </script>
 
 <style scoped src="@/assets/css/user-results.css"></style>

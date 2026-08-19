@@ -61,9 +61,10 @@ console.log('\n1. The catalogue is internally consistent');
     const badAudience = specs.filter(s => s.audience !== 'user' && s.audience !== 'operator').map(s => s.key);
     check('every event says who it is for', badAudience.length === 0, badAudience);
 
+    const SENDERS = ['app', 'console', 'service'];
     const badSender = specs
         .filter(s => !Array.isArray(s.sentBy) || !s.sentBy.length
-            || s.sentBy.some(who => who !== 'app' && who !== 'console'))
+            || s.sentBy.some(who => !SENDERS.includes(who)))
         .map(s => s.key);
     check('and who sends it', badSender.length === 0, badSender);
 
@@ -255,6 +256,33 @@ console.log('\n7. The admin console\'s copy of the catalogue agrees');
         const consoleKeys = specs.filter(s => s.sentBy.includes('console')).map(s => s.key);
         const missing = consoleKeys.filter(key => !theirs.has(key));
         check('and the console carries every event marked sentBy console',
+            missing.length === 0, missing);
+    }
+}
+
+console.log('\n8. The exam service catalogue agrees');
+{
+    // Same rule as the console above, for the third sender. app 20 emits the
+    // events that happen with no browser present - a certificate issued on a
+    // pass, an appointment that expired, a candidate entering the room - so it
+    // carries its own copy of their wording (working rule 20). Skip rather than
+    // pass when the sibling repo is absent: a check that cannot run must not
+    // report success.
+    const examSibling = resolve(process.cwd(), '..', 'selfstudyexam', 'utils', 'notify.py');
+    if (!existsSync(examSibling)) {
+        console.log('  skip  selfstudyexam is not checked out beside this repo');
+    } else {
+        const py = readFileSync(examSibling, 'utf8');
+        const theirs = new Set([...py.matchAll(/^\s*'([a-z]+\.[a-z0-9_]+)':\s*\{/gm)].map(m => m[1]));
+        check('the exam service declares some events', theirs.size > 0, theirs.size);
+
+        const unknown = [...theirs].filter(key => !EVENT_KEYS.includes(key));
+        check('every event app 20 sends exists in this catalogue',
+            unknown.length === 0, unknown);
+
+        const serviceKeys = specs.filter(s => s.sentBy.includes('service')).map(s => s.key);
+        const missing = serviceKeys.filter(key => !theirs.has(key));
+        check('and app 20 carries every event marked sentBy service',
             missing.length === 0, missing);
     }
 }

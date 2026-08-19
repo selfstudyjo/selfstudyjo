@@ -98,7 +98,7 @@ class QuizService {
 
     async getRandomQuizReplica(): Promise<string | null> {
         const replicas = await this.getQuizReplicas();
-        return serviceRegistry.getRandomReplica(replicas);
+        return serviceRegistry.getRandomReplica(replicas, this.APP_ID);
     }
 
     /**

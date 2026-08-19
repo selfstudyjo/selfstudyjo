@@ -353,6 +353,9 @@ import { VideoEmbedService } from '@/utils/videoEmbed';
 
 // Import CSS
 import '@/assets/css/exam-approval.css';
+// Structural + responsive fixes shared by the eight exam-system pages.
+// Imported AFTER the page stylesheet on purpose - see the header of the file.
+import '@/assets/css/exam-system.css';
 
 const route = useRoute();
 const router = useRouter();

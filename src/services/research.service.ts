@@ -423,7 +423,7 @@ class ResearchService {
     private async getBaseUrl(): Promise<string> {
         const appId = parseInt(import.meta.env.VITE_RESEARCH_FLOW_APP_ID || '28');
         const replicas = await serviceRegistry.getServiceReplicas(appId, 'researchflow');
-        const url = serviceRegistry.getRandomReplica(replicas);
+        const url = serviceRegistry.getRandomReplica(replicas, appId);
         if (!url) {
             throw new Error('Research Flow service is currently unavailable.');
         }
