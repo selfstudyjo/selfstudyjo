@@ -811,8 +811,6 @@ onMounted(() => {
 // Structural + responsive fixes shared by the eight exam-system pages.
 // Imported AFTER the page stylesheet on purpose - see the header of the file.
 import '@/assets/css/exam-system.css';
-// The command bar's styles. Global, for the reason given in the file header.
-import '@/assets/css/proctor-console.css';
 </script>
 
 <style scoped>

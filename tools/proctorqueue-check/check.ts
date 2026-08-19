@@ -18,9 +18,11 @@ import {
     ATTENTION_TRAIL_MS,
     LIVE_STATUSES,
     groupForProctor,
+    isClosed,
     isLiveNow,
     isSameDay,
     needsAttention,
+    primaryActionLabel,
     relativeWhen,
     type QueueRow,
 } from '../../src/utils/proctorQueue';
@@ -179,6 +181,46 @@ console.log('\n3. Grouping: the two invariants');
             groupForProctor(original, NOW);
             return original.map(r => r.external_id).join() === before;
         })());
+}
+
+console.log('\n5b. A closed appointment offers nothing to do');
+{
+    // Found in a screenshot: a Completed exam was rendering "Open and let in"
+    // beside "Not yet allowed to start". Both are meaningless once an exam is over
+    // - there is nothing left to permit - and together they read as the record
+    // being in the wrong state, which invites a proctor to reopen a paper that has
+    // already been marked.
+    const done = row('a', 'Completed', -48 * H);
+    const cancelled = row('b', 'Cancelled', +48 * H);
+    const expired = row('c', 'Expired', -48 * H);
+    const scheduled = row('d', 'Scheduled', +2 * H);
+    const inProgress = row('e', 'In Progress', -H, true);
+
+    check('a Completed appointment is closed', isClosed(done));
+    check('so is a Cancelled one', isClosed(cancelled));
+    check('and an Expired one', isClosed(expired));
+    check('a Scheduled one is NOT closed', !isClosed(scheduled));
+    check('nor is one In Progress', !isClosed(inProgress));
+
+    check('a closed appointment offers "View details", never "let in"',
+        primaryActionLabel(done) === 'View details', primaryActionLabel(done));
+    check('and so do the cancelled and expired ones',
+        primaryActionLabel(cancelled) === 'View details'
+        && primaryActionLabel(expired) === 'View details');
+    check('an open appointment nobody is let into yet says "Open and let in"',
+        primaryActionLabel(scheduled) === 'Open and let in',
+        primaryActionLabel(scheduled));
+    check('and one already let in says "Manage"',
+        primaryActionLabel(inProgress) === 'Manage', primaryActionLabel(inProgress));
+
+    // `can_start` is reset when an exam ends, so it cannot be the test - a closed
+    // appointment and one that has not started look identical through it.
+    check('closed is decided by STATUS, not by can_start',
+        isClosed(row('f', 'Completed', -H, true))
+        && primaryActionLabel(row('f', 'Completed', -H, true)) === 'View details');
+
+    check('every live status is treated as open',
+        LIVE_STATUSES.every(st => !isClosed(row('g', st, 0))), LIVE_STATUSES);
 }
 
 console.log('\n6. Dates');

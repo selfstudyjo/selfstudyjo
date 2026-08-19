@@ -732,3 +732,170 @@
   outline-offset: 2px;
   border-radius: var(--pa-radius-sm);
 }
+
+/* ===========================================================================
+ * The command bar.
+ *
+ * Moved here from the short-lived `proctor-console.css`, which was written for
+ * the dashboard's old class names and is gone: the dashboard now owns its whole
+ * appearance in `proctor-dashboard.css`, and a shared file holding one page's
+ * furniture plus another page's header was a file nobody could reason about.
+ *
+ * This block is unchanged apart from the move. It is appended AFTER this page's
+ * own rules on purpose, and every selector is anchored on `.proctor-appointment`.
+ * =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * The command bar (ProctorExamAppointment.vue).
+ *
+ * Who the candidate is, what state the appointment is in, and the one control
+ * with a clock attached to it - above the two detail columns rather than at the
+ * bottom of the second one.
+ * ------------------------------------------------------------------------- */
+
+.proctor-appointment .command-bar {
+  display: grid;
+  /* Three regions that collapse to one column on their own, no breakpoint: the
+   * action block keeps a usable width down to the narrowest phone. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: center;
+  gap: 1rem 1.5rem;
+  min-width: 0;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 16px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+}
+
+/* Warm, not alarming: waiting to be let in is the normal state of an appointment
+ * right up until the proctor is ready, so this must not read as an error. */
+.proctor-appointment .command-bar--waiting {
+  border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.08);
+}
+
+.proctor-appointment .command-bar__who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--sfs-on-accent, #ffffff);
+  background: var(--sfs-accent, #667eea);
+}
+
+.proctor-appointment .command-bar__id {
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--sfs-text, #e6e8f0);
+  overflow-wrap: anywhere;
+}
+
+.proctor-appointment .command-bar__exam {
+  font-size: 0.9rem;
+  color: var(--sfs-text, #e6e8f0);
+  overflow-wrap: break-word;
+}
+
+.proctor-appointment .command-bar__when {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+.proctor-appointment .command-bar__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.proctor-appointment .command-bar__action {
+  min-width: 0;
+}
+
+.proctor-appointment .let-in-btn {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.proctor-appointment .let-in-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.proctor-appointment .let-in-btn:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-appointment .let-in-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Fill and ink chosen together, so the label stays legible in the four galaxies
+ * where a bright accent flips the convention to dark text. */
+.proctor-appointment .let-in-btn--allow {
+  color: var(--sfs-on-success, #ffffff);
+  background: var(--sfs-success, #48bb78);
+}
+
+/* Revoking is an ordinary, reversible operator action - not a destructive one -
+ * so it is a neutral button rather than a red one. Compare app 34's
+ * `paper_shares.permission`: a downgrade has to be easy and has to stick. */
+.proctor-appointment .let-in-btn--revoke {
+  color: var(--sfs-text, #e6e8f0);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+}
+
+.proctor-appointment .let-in-help {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--sfs-text-muted, #a0aec0);
+}
+
+/* The flags are shared with the dashboard; the appointment page needs them too. */
+.proctor-appointment .flag {
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.proctor-appointment .flag--on {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.14);
+}
+
+.proctor-appointment .flag--warn {
+  color: var(--sfs-warning-text, #ed8936);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.14);
+}

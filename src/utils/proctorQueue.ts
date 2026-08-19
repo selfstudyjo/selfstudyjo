@@ -116,6 +116,27 @@ export function isLiveNow(row: QueueRow, now = new Date()): boolean {
 }
 
 /**
+ * Is this appointment closed - finished, cancelled or expired?
+ *
+ * A closed appointment has nothing left for a proctor to do, and saying otherwise
+ * is worse than saying nothing: a Completed exam was offering "Open and let in"
+ * beside "Not yet allowed to start", which invites a proctor to reopen a paper
+ * that has already been marked and reads as the record being in the wrong state.
+ * Derived from the status rather than from `can_start`, because `can_start` is set
+ * back to false when an exam finishes and is therefore identical on a closed
+ * appointment and one that has not started.
+ */
+export function isClosed(row: QueueRow): boolean {
+    return !isLive(row);
+}
+
+/** What the card's primary button should say. */
+export function primaryActionLabel(row: QueueRow): string {
+    if (isClosed(row)) return 'View details';
+    return row.can_start ? 'Manage' : 'Open and let in';
+}
+
+/**
  * Split a proctor's appointments into the four groups, in urgency order.
  *
  * Each row lands in exactly one group: a row claimed by an earlier group is

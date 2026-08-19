@@ -1,808 +1,919 @@
 /* src/assets/css/proctor-dashboard.css
-   Galaxy-themed Proctor Dashboard — glassmorphism, transparent, fully responsive.
-   Coexists with global style.css (.gradient-text, .glass-effect, scrollbars).
-   ========================================================================== */
+ *
+ * The whole appearance of the Proctor Dashboard, in one file, and it is the ONLY
+ * file that styles that page.
+ *
+ * WHY IT WAS REWRITTEN
+ *
+ * The page looked patchy and inconsistent, and the cause was not the design - it
+ * was that the design was not in charge. Sixteen of the page's 47 class names are
+ * also styled by other pages' GLOBAL stylesheets: `.retry-btn` by eight of them
+ * (exam-approval, payment, plans, runbook-details, runbooks, schedule-exam,
+ * take-quiz, user-certificate), `.error-icon` by seven, `.loading-spinner` by six,
+ * `.stat-value`, `.stat-label`, `.detail-row`, `.status-badge`, `.empty-state` and
+ * the rest by two or three each. Whichever file happened to load last won, on
+ * whichever properties it happened to set - so the page's own rules showed through
+ * in patches and every restyle was undone by the next page to define a button.
+ *
+ * So the markup is namespaced under `pd-` (see ProctorDashboard.vue) and this file
+ * is the only thing that can reach it. That is what makes the rest of this file
+ * worth writing: appearance is now decided in one place.
+ *
+ * HOW IT IS LOADED
+ *
+ * Globally, from the component's script, alongside `exam-system.css` - NOT with an
+ * `@import` inside `<style scoped>`, which is how it used to arrive. That mattered
+ * for a reason worth remembering: Vite inlines such an import and then applies the
+ * scope attribute to it, so every rule gained a `[data-v-…]` and therefore a
+ * class's worth of specificity over any global stylesheet. The page's own file
+ * outranked the shared layers meant to sit on top of it, which is exactly
+ * backwards. Every selector here is anchored on `.proctor-dashboard` by hand, so
+ * it needs no scoping and no specificity tricks.
+ *
+ * RULES THIS FILE FOLLOWS
+ *
+ *  * No colour literal without a `var(--sfs-*)` token in front of it (working
+ *    rule 12), so all ten galaxies work rather than only the default one. A fill
+ *    and its ink are always chosen together - `--sfs-on-accent` for text on the
+ *    accent, `--sfs-accent-text` for accent-coloured text on a card. Those are two
+ *    different colours in several galaxies and collapsing them is how an
+ *    accessible palette stops being one.
+ *  * Every layout is fluid: `minmax()`, `clamp()` and `auto-fit`, in `rem`, so
+ *    `responsive.css`'s fluid root size carries it. There are three breakpoints in
+ *    the whole file and none of them changes the design - they only drop
+ *    ornamentation that stops fitting.
+ *  * Nothing may be wider than its container. Every text holder can break, every
+ *    flex child has `min-width: 0`, and the id block - 36-character uuids with no
+ *    break point - uses `overflow-wrap: anywhere`, which unlike `break-word` is
+ *    counted when `min-content` is computed.
+ */
 
-/* ==========================================================================
-   THEME TOKENS
-   ========================================================================== */
-:root {
-  /* Brand-aligned accents */
-  --pd-brand-1: var(--sfs-accent, #667eea);
-  --pd-brand-2: var(--sfs-accent-2, #764ba2);
-  --pd-brand-grad: linear-gradient(135deg, var(--sfs-accent, #667eea) 0%, var(--sfs-accent-2, #764ba2) 100%);
+/* ---------------------------------------------------------------------------
+ * Local tokens. One place to retune the page, all derived from theme tokens so
+ * they follow the galaxy. `--pd-` rather than bare names, for the same reason
+ * the classes are prefixed.
+ * ------------------------------------------------------------------------- */
 
-  /* Glass surfaces — keep galaxy visible */
-  --pd-surface-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
-  --pd-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  --pd-surface-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --pd-surface-input: rgb(var(--sfs-shade-rgb, 10 12 30) / 0.35);
-
-  /* Borders & rings */
-  --pd-border: rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
-  --pd-border-hover: rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
-  --pd-border-focus: var(--sfs-accent-soft, #818cf8);
-
-  /* Typography on dark galaxy */
-  --pd-text: var(--sfs-text, #ffffff);
-  --pd-text-soft: var(--sfs-text-muted, #e8eaff);
-  --pd-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --pd-text-faint: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
-
-  /* Status colors (semantic, brand-friendly) */
-  --pd-info: var(--sfs-info, #0ea5e9);
-  --pd-success: var(--sfs-success, #48bb78);
-  --pd-warning: var(--sfs-warning-text, #ed8936);
-  --pd-danger: var(--sfs-danger-text, #fc8181);
-  --pd-accent: var(--sfs-accent-text, #818cf8);
-
-  /* Effects */
-  --pd-blur: blur(16px) saturate(140%);
-  --pd-blur-strong: blur(22px) saturate(160%);
-  --pd-shadow-card: 0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
-  --pd-shadow-hover: 0 12px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
-  --pd-shadow-text: 0 1px 2px rgb(var(--sfs-text-rgb, 0 0 0) / 0.6);
-  --pd-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Fluid spacing & type */
-  --pd-space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
-  --pd-space-sm: clamp(0.5rem, 1vw, 0.75rem);
-  --pd-space-md: clamp(0.75rem, 1.6vw, 1.25rem);
-  --pd-space-lg: clamp(1rem, 2.4vw, 2rem);
-  --pd-space-xl: clamp(1.5rem, 3.5vw, 3rem);
-
-  --pd-font-xs:  clamp(0.72rem, 1.4vw, 0.8rem);
-  --pd-font-sm:  clamp(0.82rem, 1.6vw, 0.92rem);
-  --pd-font-md:  clamp(0.92rem, 1.8vw, 1.05rem);
-  --pd-font-lg:  clamp(1.1rem, 2.4vw, 1.35rem);
-  --pd-font-xl:  clamp(1.35rem, 3vw, 1.75rem);
-  --pd-font-xxl: clamp(1.6rem, 4vw, 2.5rem);
-
-  --pd-r-sm: 10px;
-  --pd-r-md: 14px;
-  --pd-r-lg: 18px;
-  --pd-r-xl: 22px;
-}
-
-/* ==========================================================================
-   ROOT — TRANSPARENT, ABOVE GALAXY
-   ========================================================================== */
 .proctor-dashboard {
-  position: relative;
-  z-index: 1;
-  isolation: isolate;
-  width: 100%;
-  max-width: min(1280px, 96vw);
-  margin: 0 auto;
-  padding: var(--pd-space-lg) var(--pd-space-md);
-  min-height: 100vh;
-  min-height: 100dvh;
-  color: var(--pd-text);
-  background: transparent;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --pd-gap: clamp(0.75rem, 1.6vw, 1.25rem);
+  --pd-pad: clamp(0.9rem, 2vw, 1.4rem);
+  --pd-radius: 16px;
+  --pd-radius-sm: 10px;
+
+  /* Surfaces are a tint over the galaxy, so a card lifts off the 3D background
+   * in a dark theme and off the pale page in a light one. The tint deliberately
+   * does NOT flip - lifting is white in both modes; what flips is the ink. */
+  --pd-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.055);
+  --pd-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
+  --pd-line: rgb(var(--sfs-line-rgb, 255 255 255) / 0.13);
+  --pd-line-strong: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
+  --pd-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 8px 24px -12px rgb(0 0 0 / 0.35);
+
+  --pd-ink: var(--sfs-text, #e6e8f0);
+  --pd-ink-soft: var(--sfs-text-muted, #a0aec0);
+  --pd-ink-faint: var(--sfs-text-faint, #6b7280);
+
+  max-width: 100%;
+  padding: clamp(0.75rem, 2vw, 1.75rem);
+  color: var(--pd-ink);
 }
 
-.proctor-dashboard *,
-.proctor-dashboard *::before,
-.proctor-dashboard *::after {
-  box-sizing: border-box;
+/* ---------------------------------------------------------------------------
+ * Header
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-header {
+  margin-bottom: clamp(1rem, 2.5vw, 1.75rem);
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-header h1 {
+  margin: 0;
+  /* Fluid rather than stepped: a 767px and a 769px screen should not render the
+   * title at visibly different sizes. */
+  font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--pd-ink);
   overflow-wrap: break-word;
-  word-break: normal;
-  hyphens: none;
-  -webkit-hyphens: none;
 }
 
-/* ==========================================================================
-   ANIMATIONS
-   ========================================================================== */
-@keyframes pd-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+.proctor-dashboard .pd-whoami {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--pd-ink-soft);
+  /* An email has no break points and is the longest thing in the header. */
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .pd-content {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * States: loading, error, empty. One shape, three tones.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-loading,
+.proctor-dashboard .pd-error,
+.proctor-dashboard .pd-empty {
+  display: grid;
+  place-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: clamp(2rem, 6vw, 3.5rem) 1.25rem;
+  text-align: center;
+  background: var(--pd-surface);
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+}
+
+.proctor-dashboard .pd-loading p,
+.proctor-dashboard .pd-error p,
+.proctor-dashboard .pd-empty p {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 0.925rem;
+  line-height: 1.6;
+  color: var(--pd-ink-soft);
+}
+
+.proctor-dashboard .pd-empty h3,
+.proctor-dashboard .pd-error h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--pd-ink);
+}
+
+.proctor-dashboard .pd-empty__icon,
+.proctor-dashboard .pd-error__icon {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  line-height: 1;
+}
+
+.proctor-dashboard .pd-error {
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.08);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.28);
+}
+
+.proctor-dashboard .pd-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+  border-top-color: var(--sfs-accent, #667eea);
+  border-radius: 50%;
+  animation: pd-spin 0.9s linear infinite;
 }
 
 @keyframes pd-spin {
   to { transform: rotate(360deg); }
 }
 
-@keyframes pd-pulse {
-  0%, 100% { opacity: 0.85; }
-  50%      { opacity: 1; }
-}
+/* ---------------------------------------------------------------------------
+ * Buttons. One button, two tones - the page had four differently-shaped ones
+ * inherited from four different stylesheets.
+ * ------------------------------------------------------------------------- */
 
-/* ==========================================================================
-   HEADER
-   ========================================================================== */
-.dashboard-header {
-  position: relative;
-  margin-bottom: var(--pd-space-lg);
-  padding: var(--pd-space-lg);
-  background: var(--pd-surface-1);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-lg);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-  box-shadow: var(--pd-shadow-card);
-  overflow: hidden;
-  animation: pd-fade-up 0.5s ease-out both;
-}
-
-.dashboard-header::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 2px;
-  background: var(--pd-brand-grad);
-  opacity: 0.85;
-}
-
-.dashboard-header h1 {
-  font-size: var(--pd-font-xxl);
-  font-weight: 700;
-  margin: 0 0 var(--pd-space-xs);
-  background: var(--pd-brand-grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 0.3px;
+.proctor-dashboard .pd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  max-width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--pd-radius-sm);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
   line-height: 1.2;
-}
-
-.proctor-info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--pd-space-sm);
-  font-size: var(--pd-font-md);
-  color: var(--pd-text-soft);
-  text-shadow: var(--pd-shadow-text);
-}
-
-.proctor-info i { color: var(--pd-accent); }
-
-/* ==========================================================================
-   MAIN CONTENT PANEL
-   ========================================================================== */
-.dashboard-content {
-  position: relative;
-  padding: var(--pd-space-lg);
-  background: var(--pd-surface-1);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-lg);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-  box-shadow: var(--pd-shadow-card);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.dashboard-content::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25), transparent);
-}
-
-/* ==========================================================================
-   STATE PANELS — LOADING / ERROR / EMPTY
-   ========================================================================== */
-.loading-state,
-.error-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   text-align: center;
-  padding: var(--pd-space-xl) var(--pd-space-md);
-  background: var(--pd-surface-1);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-lg);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-  animation: pd-fade-up 0.4s ease-out both;
-}
-
-.error-state  { border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.3); }
-
-.loading-state .loading-spinner,
-.loading-spinner {
-  width: 56px;
-  height: 56px;
-  margin-bottom: var(--pd-space-md);
-  border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
-  border-top-color: var(--pd-brand-1);
-  border-right-color: var(--pd-brand-2);
-  border-radius: 50%;
-  animation: pd-spin 0.9s linear infinite;
-  box-shadow: 0 0 25px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
-}
-
-.error-icon  { font-size: clamp(48px, 8vw, 64px); color: var(--pd-danger); margin-bottom: var(--pd-space-md); filter: drop-shadow(0 0 14px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.4)); }
-.empty-icon  { font-size: clamp(56px, 9vw, 80px); color: var(--pd-text-faint); margin-bottom: var(--pd-space-md); opacity: 0.75; }
-
-.loading-state h3,
-.error-state h3,
-.empty-state h3 {
-  font-size: var(--pd-font-lg);
-  font-weight: 600;
-  color: var(--pd-text);
-  margin: 0 0 var(--pd-space-sm);
-  text-shadow: var(--pd-shadow-text);
-}
-
-.loading-state p,
-.error-state p,
-.empty-state p {
-  font-size: var(--pd-font-md);
-  color: var(--pd-text-muted);
-  max-width: 60ch;
-  margin: 0 0 var(--pd-space-md);
-  line-height: 1.6;
-}
-
-/* ==========================================================================
-   BUTTONS
-   ========================================================================== */
-.retry-btn,
-.view-btn,
-.room-link,
-.clear-filters-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--pd-space-sm);
-  min-height: 44px;
-  padding: 0.65rem 1.25rem;
-  font-size: var(--pd-font-sm);
-  font-weight: 600;
-  color: var(--sfs-on-accent, #ffffff);
-  background: var(--pd-brand-grad);
-  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
-  border-radius: var(--pd-r-md);
-  cursor: pointer;
   text-decoration: none;
-  transition: var(--pd-transition);
-  position: relative;
-  overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  box-shadow: 0 6px 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
-}
-
-.retry-btn::before,
-.view-btn::before,
-.room-link::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 -100%;
-  width: 100%;
-  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18), transparent);
-  transition: left 0.55s ease;
-}
-
-.retry-btn:hover,
-.view-btn:hover,
-.room-link:hover,
-.clear-filters-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--pd-shadow-hover);
-  color: var(--sfs-on-accent, #fff);
-  text-decoration: none;
-}
-
-/* The hover rule above is shared with .room-link, which is filled with a
-   brand gradient — so its single ink is --sfs-on-accent, and that is right
-   there. This button is glass, so on a light galaxy that ink is white on
-   near-white. It follows the page instead. */
-.clear-filters-btn:hover { color: var(--sfs-text, #fff); }
-
-.retry-btn:hover::before,
-.view-btn:hover::before,
-.room-link:hover::before {
-  left: 100%;
-}
-
-.retry-btn:active,
-.view-btn:active,
-.room-link:active,
-.clear-filters-btn:active { transform: translateY(0); }
-
-/* Room link variant — teal/success tone */
-.room-link {
-  background: linear-gradient(135deg, var(--sfs-info, #14b8a6) 0%, var(--sfs-success, #48bb78) 100%);
-  box-shadow: 0 6px 20px rgb(var(--sfs-success-rgb, 20 184 166) / 0.25);
-}
-.room-link:hover { box-shadow: 0 12px 32px rgb(var(--sfs-success-rgb, 20 184 166) / 0.35); }
-
-/* Clear filters — danger tone, subtler */
-.clear-filters-btn {
-  background: linear-gradient(135deg, rgb(var(--sfs-danger-rgb, 252 129 129) / 0.85), rgb(var(--sfs-warning-rgb, 237 137 54) / 0.85));
-  box-shadow: 0 6px 20px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.2);
-  white-space: nowrap;
-}
-.clear-filters-btn:hover { box-shadow: 0 12px 32px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.3); }
-
-/* ==========================================================================
-   APPOINTMENTS HEADER + STATS
-   ========================================================================== */
-.appointments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--pd-space-md);
-  margin-bottom: var(--pd-space-lg);
-  padding-bottom: var(--pd-space-md);
-  border-bottom: 1px solid var(--pd-border);
-}
-
-.appointments-header h2,
-.filters-header h2 {
-  display: flex;
-  align-items: center;
-  gap: var(--pd-space-sm);
-  margin: 0;
-  font-size: var(--pd-font-xl);
-  font-weight: 600;
-  color: var(--pd-text);
-  text-shadow: var(--pd-shadow-text);
-}
-
-.appointments-header h2 i { color: var(--pd-accent); }
-
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--pd-space-md);
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 110px;
-  padding: var(--pd-space-sm) var(--pd-space-md);
-  background: var(--pd-surface-2);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-md);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-  transition: var(--pd-transition);
-  flex: 1 1 auto;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--pd-border-hover);
-  box-shadow: 0 8px 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
-}
-
-.stat-label {
-  font-size: var(--pd-font-xs);
-  color: var(--pd-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
-}
-
-.stat-value {
-  font-size: var(--pd-font-xl);
-  font-weight: 700;
-  background: var(--pd-brand-grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ==========================================================================
-   FILTERS SECTION
-   ========================================================================== */
-.filters-section {
-  margin-bottom: var(--pd-space-lg);
-  padding: var(--pd-space-lg);
-  background: var(--pd-surface-1);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-lg);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-}
-
-.filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--pd-space-md);
-  margin-bottom: var(--pd-space-md);
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--pd-space-md);
-  align-items: end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.filter-group label {
-  font-size: var(--pd-font-sm);
-  font-weight: 500;
-  color: var(--pd-text-soft);
-}
-
-.filter-input {
-  width: 100%;
-  min-height: 44px;
-  padding: 0.65rem 0.85rem;
-  background: var(--pd-surface-input);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-sm);
-  color: var(--pd-text);
-  font-size: var(--pd-font-sm);
-  font-family: inherit;
-  transition: var(--pd-transition);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.filter-input::placeholder { color: var(--pd-text-faint); }
-
-.filter-input:hover { border-color: var(--pd-border-hover); }
-
-.filter-input:focus {
-  outline: none;
-  border-color: var(--pd-border-focus);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
-  background: rgb(var(--sfs-surface-rgb, 10 12 30) / 0.55);
-}
-
-/* Calendar/select indicator visibility on dark */
-.filter-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(0.95);
   cursor: pointer;
-  opacity: 0.8;
+  /* A label should not be broken mid-word; the button grows instead. */
+  overflow-wrap: normal;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+              transform 0.12s ease;
 }
 
-select.filter-input {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--pd-text-soft) 50%),
-    linear-gradient(135deg, var(--pd-text-soft) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
-  background-size: 6px 6px, 6px 6px;
-  background-repeat: no-repeat;
-  padding-right: 2.25rem;
-}
-
-select.filter-input option {
-  background: var(--sfs-surface-2, #14152b);
-  color: var(--pd-text);
-}
-
-.filter-actions {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-/* ==========================================================================
-   APPOINTMENTS LIST + CARDS
-   ========================================================================== */
-.appointments-list {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--pd-space-md);
-}
-
-.appointment-card {
-  position: relative;
-  padding: var(--pd-space-lg);
-  background: var(--pd-surface-2);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-md);
-  backdrop-filter: var(--pd-blur);
-  -webkit-backdrop-filter: var(--pd-blur);
-  cursor: pointer;
-  transition: var(--pd-transition);
-  overflow: hidden;
-  isolation: isolate;
-  animation: pd-fade-up 0.45s ease-out both;
-}
-
-.appointment-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 2px;
-  background: var(--pd-brand-grad);
-  opacity: 0.6;
-}
-
-.appointment-card:hover {
-  transform: translateY(-4px);
-  background: var(--pd-surface-3);
-  border-color: var(--pd-border-hover);
-  box-shadow: var(--pd-shadow-hover);
-}
-
-.appointment-card:nth-child(1) { animation-delay: 0.05s; }
-.appointment-card:nth-child(2) { animation-delay: 0.10s; }
-.appointment-card:nth-child(3) { animation-delay: 0.15s; }
-.appointment-card:nth-child(4) { animation-delay: 0.20s; }
-.appointment-card:nth-child(5) { animation-delay: 0.25s; }
-
-.appointment-header { margin-bottom: var(--pd-space-md); }
-
-.appointment-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: var(--pd-space-sm);
-  margin-bottom: var(--pd-space-sm);
-}
-
-.appointment-title h3 {
-  flex: 1 1 auto;
-  margin: 0;
-  font-size: var(--pd-font-lg);
-  font-weight: 600;
-  color: var(--pd-text);
-  text-shadow: var(--pd-shadow-text);
-  min-width: 0;
-}
-
-.appointment-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--pd-space-md);
-}
-
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: var(--pd-font-sm);
-  color: var(--pd-text-muted);
-}
-
-.meta-icon {
-  font-size: 1rem;
-  filter: drop-shadow(0 0 6px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4));
-}
-
-/* ==========================================================================
-   STATUS BADGES
-   ========================================================================== */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.85rem;
-  font-size: var(--pd-font-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border: 1px solid;
-  border-radius: 999px;
-  white-space: nowrap;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.status-scheduled    { color: var(--sfs-info-text, #5eead4); background: rgb(var(--sfs-success-rgb, 94 234 212) / 0.12); border-color: rgb(var(--sfs-success-rgb, 94 234 212) / 0.35); }
-.status-in-progress  { color: var(--sfs-warning-text, #fbbf24); background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.12); border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35); animation: pd-pulse 2.4s ease-in-out infinite; }
-.status-completed    { color: var(--sfs-text-muted, #93c5fd); background: rgb(var(--sfs-accent-rgb, 147 197 253) / 0.12); border-color: rgb(var(--sfs-accent-rgb, 147 197 253) / 0.35); }
-.status-cancelled    { color: var(--sfs-text-muted, #cbd5e1); background: rgb(var(--sfs-tint-rgb, 203 213 225) / 0.1); border-color: rgb(var(--sfs-line-rgb, 203 213 225) / 0.3); }
-.status-expired      { color: var(--sfs-danger-text, #fc8181); background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12); border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.35); }
-.status-pending      { color: var(--sfs-warning-text, #ed8936); background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.14); border-color: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.4); animation: pd-pulse 2s ease-in-out infinite; }
-.status-default      { color: var(--sfs-text-muted, #c4b5fd); background: rgb(var(--sfs-accent-rgb, 196 181 253) / 0.12); border-color: rgb(var(--sfs-accent-rgb, 196 181 253) / 0.35); }
-
-/* ==========================================================================
-   APPOINTMENT DETAIL ROWS
-   ========================================================================== */
-.appointment-details {
-  margin-bottom: var(--pd-space-md);
-  padding: var(--pd-space-md);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
-  border: 1px solid var(--pd-border);
-  border-radius: var(--pd-r-sm);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--pd-space-xs);
-  padding-bottom: var(--pd-space-sm);
-  margin-bottom: var(--pd-space-sm);
-  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
-}
-.detail-row:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
-
-.detail-label {
-  font-size: var(--pd-font-sm);
-  font-weight: 500;
-  color: var(--pd-text-muted);
-}
-
-.detail-value {
-  font-size: var(--pd-font-sm);
-  font-weight: 600;
-  color: var(--pd-text);
-  text-align: right;
-  max-width: 65%;
-  overflow-wrap: anywhere;
-}
-
-.detail-value.code {
-  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
-  padding: 0.3rem 0.65rem;
-  font-size: var(--pd-font-xs);
-  background: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.1);
-  color: var(--sfs-text-muted, #c7d2fe);
-  border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
-  border-radius: var(--pd-r-sm);
-  word-break: break-all;
-}
-
-/* ==========================================================================
-   ACTIONS ROW
-   ========================================================================== */
-.appointment-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--pd-space-md);
-  margin-top: var(--pd-space-md);
-  padding-top: var(--pd-space-md);
-  border-top: 1px solid var(--pd-border);
-}
-
-.room-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--pd-space-sm);
-}
-
-/* ==========================================================================
-   FOCUS STYLES
-   ========================================================================== */
-.proctor-dashboard a:focus-visible,
-.proctor-dashboard button:focus-visible,
-.proctor-dashboard .filter-input:focus-visible,
-.appointment-card:focus-visible {
-  outline: 2px solid var(--pd-border-focus);
+.proctor-dashboard .pd-btn:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
   outline-offset: 2px;
 }
 
-/* ==========================================================================
-   RESPONSIVE — mobile-first, 6 clean breakpoints
-   ========================================================================== */
-
-/* Phones: 480px and up */
-@media (min-width: 480px) {
-  .proctor-dashboard { padding: var(--pd-space-lg); }
-  .filters-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.proctor-dashboard .pd-btn:active {
+  transform: translateY(1px);
 }
 
-/* Tablets: 768px and up */
-@media (min-width: 768px) {
-  .filters-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .stat-item { min-width: 130px; }
+.proctor-dashboard .pd-btn--primary {
+  /* Fill and ink together: `--sfs-on-accent` is derived to stay legible on the
+   * accent in every galaxy, including the four whose accent is bright enough
+   * that the convention flips to dark ink. */
+  color: var(--sfs-on-accent, #ffffff);
+  background: var(--sfs-accent, #667eea);
 }
 
-/* Laptops: 1024px and up */
-@media (min-width: 1024px) {
-  .proctor-dashboard { max-width: min(1280px, 95vw); }
-  .filters-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-  .appointments-list { grid-template-columns: minmax(0, 1fr); }
+.proctor-dashboard .pd-btn--primary:hover {
+  background: color-mix(in srgb, var(--sfs-accent, #667eea) 88%, black);
 }
 
-/* Wide laptops / desktops: 1440px and up */
-@media (min-width: 1440px) {
-  .proctor-dashboard { max-width: min(1440px, 92vw); }
-  .appointments-list {
-    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
-    gap: var(--pd-space-lg);
+.proctor-dashboard .pd-btn--ghost {
+  color: var(--pd-ink);
+  background: var(--pd-surface-2);
+  border-color: var(--pd-line-strong);
+}
+
+.proctor-dashboard .pd-btn--ghost:hover {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+ * Stat tiles.
+ *
+ * `auto-fit` with a `min()` floor: four across on a laptop, two on a phone, one
+ * at 320px, with no breakpoint. The `100%` term is what stops a track being
+ * wider than the screen on the narrowest devices.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: var(--pd-gap);
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.proctor-dashboard .pd-stat {
+  min-width: 0;
+  padding: var(--pd-pad);
+  background: var(--pd-surface);
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+}
+
+.proctor-dashboard .pd-stat__value {
+  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--pd-ink);
+  /* Tabular figures, so the tiles do not visibly re-flow as counts change. */
+  font-variant-numeric: tabular-nums;
+}
+
+.proctor-dashboard .pd-stat__label {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  color: var(--pd-ink-soft);
+  overflow-wrap: break-word;
+}
+
+/* Only the "needs attention" tile can colour itself, and only when it is holding
+ * something. A tile that shouts while showing a zero teaches a proctor to ignore
+ * it, which costs exactly the alert it was added for. */
+.proctor-dashboard .pd-stat--urgent {
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.12);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.35);
+}
+
+.proctor-dashboard .pd-stat--urgent .pd-stat__value,
+.proctor-dashboard .pd-stat--urgent .pd-stat__label {
+  /* `-text`, not the raw hue: this is coloured TEXT on a wash of its own hue,
+   * which is the case `--sfs-danger-text` is derived against. */
+  color: var(--sfs-danger-text, #f87171);
+}
+
+/* ---------------------------------------------------------------------------
+ * Filters
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-filters {
+  min-width: 0;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--pd-pad);
+  background: var(--pd-surface);
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+}
+
+.proctor-dashboard .pd-filters__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+
+.proctor-dashboard .pd-filters__head h2 {
+  margin: 0;
+  min-width: 0;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
+  font-weight: 700;
+  color: var(--pd-ink);
+  overflow-wrap: break-word;
+}
+
+.proctor-dashboard .pd-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-tally__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.8rem;
+}
+
+.proctor-dashboard .pd-tally__label {
+  color: var(--pd-ink-soft);
+}
+
+.proctor-dashboard .pd-tally__value {
+  font-weight: 700;
+  color: var(--pd-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.proctor-dashboard .pd-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--pd-gap);
+  align-items: end;
+}
+
+.proctor-dashboard .pd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pd-ink-soft);
+  overflow-wrap: break-word;
+}
+
+.proctor-dashboard .pd-input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.4rem;
+  box-sizing: border-box;
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--sfs-field-text, #e6e8f0);
+  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  border: 1px solid var(--pd-line-strong);
+  border-radius: var(--pd-radius-sm);
+}
+
+.proctor-dashboard .pd-input:focus {
+  outline: none;
+  border-color: var(--sfs-accent, #667eea);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+}
+
+.proctor-dashboard .pd-filters__actions {
+  display: flex;
+  align-items: end;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-filters__actions .pd-btn {
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+ * Groups. The list is split by what the proctor has to DO - see
+ * utils/proctorQueue.ts - so each group needs a heading that says which is which
+ * without a legend.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-group {
+  min-width: 0;
+  margin-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+.proctor-dashboard .pd-group__head {
+  margin-bottom: 0.85rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-group__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(1rem, 0.92rem + 0.35vw, 1.15rem);
+  font-weight: 700;
+  color: var(--pd-ink);
+}
+
+.proctor-dashboard .pd-group__count {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--pd-ink-soft);
+  background: var(--pd-surface-2);
+}
+
+.proctor-dashboard .pd-group__hint {
+  margin: 0.25rem 0 0;
+  max-width: 60ch;
+  font-size: 0.825rem;
+  line-height: 1.5;
+  color: var(--pd-ink-soft);
+}
+
+.proctor-dashboard .pd-group--urgent .pd-group__title {
+  color: var(--sfs-danger-text, #f87171);
+}
+
+.proctor-dashboard .pd-group--urgent .pd-group__count {
+  color: var(--sfs-on-danger, #ffffff);
+  background: var(--sfs-danger, #f87171);
+}
+
+/* ---------------------------------------------------------------------------
+ * The cards.
+ *
+ * `auto-fill` with a 20rem floor: one column on a phone, two on a laptop, three
+ * or four on a wide screen, without a breakpoint deciding it.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--pd-gap);
+  align-items: start;
+}
+
+.proctor-dashboard .pd-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--pd-pad);
+  background: var(--pd-surface);
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease,
+              background-color 0.15s ease;
+}
+
+.proctor-dashboard .pd-card:hover {
+  background: var(--pd-surface-2);
+  border-color: var(--pd-line-strong);
+  transform: translateY(-2px);
+}
+
+/* The card is a button (role/tabindex), so it needs a real ring - before this a
+ * keyboard user could tab to nothing on the whole page. */
+.proctor-dashboard .pd-card:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-dashboard .pd-card--live {
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.45);
+  box-shadow: var(--pd-shadow),
+              0 0 0 1px rgb(var(--sfs-success-rgb, 72 187 120) / 0.25);
+}
+
+.proctor-dashboard .pd-card__head {
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-card__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-card__title h3 {
+  flex: 1 1 10rem;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.975rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--pd-ink);
+  overflow-wrap: break-word;
+}
+
+.proctor-dashboard .pd-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Status pills and the live marker.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-status,
+.proctor-dashboard .pd-live,
+.proctor-dashboard .pd-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding: 0.18rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+  /* nowrap keeps a pill a pill; the ellipsis is what stops it overflowing when
+   * the text is longer than the space (e.g. "No Reservation Yet" at 320px). */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.proctor-dashboard .pd-status--scheduled {
+  color: var(--sfs-info-text, #38bdf8);
+  background: rgb(var(--sfs-info-rgb, 56 189 248) / 0.14);
+  border-color: rgb(var(--sfs-info-rgb, 56 189 248) / 0.3);
+}
+
+.proctor-dashboard .pd-status--live {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.32);
+}
+
+.proctor-dashboard .pd-status--done {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.26);
+}
+
+.proctor-dashboard .pd-status--cancelled,
+.proctor-dashboard .pd-status--expired {
+  color: var(--sfs-danger-text, #f87171);
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.12);
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.28);
+}
+
+.proctor-dashboard .pd-status--pending,
+.proctor-dashboard .pd-status--default {
+  color: var(--pd-ink-soft);
+  background: var(--pd-surface-2);
+  border-color: var(--pd-line);
+}
+
+.proctor-dashboard .pd-live {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+  border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.proctor-dashboard .pd-live__dot {
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pd-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pd-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* ---------------------------------------------------------------------------
+ * The candidate. This is what the card is ABOUT, so it leads and it is the
+ * largest thing on it - the uuid used to be.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-who {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0.85rem 0;
+}
+
+.proctor-dashboard .pd-who__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--sfs-on-accent, #ffffff);
+  background: var(--sfs-accent, #667eea);
+}
+
+.proctor-dashboard .pd-who__text {
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-who__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--pd-ink);
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .pd-who__when {
+  margin-top: 0.1rem;
+  font-size: 0.825rem;
+  line-height: 1.4;
+  color: var(--pd-ink-soft);
+}
+
+/* ---------------------------------------------------------------------------
+ * State flags: the three facts that used to require opening the appointment.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+  margin-bottom: 0.85rem;
+}
+
+.proctor-dashboard .pd-flag {
+  border-radius: 6px;
+  /* A flag's label is a sentence fragment, not a word: it may wrap. */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .pd-flag--on {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.14);
+}
+
+.proctor-dashboard .pd-flag--off {
+  color: var(--pd-ink-soft);
+  background: var(--pd-surface-2);
+}
+
+.proctor-dashboard .pd-flag--warn {
+  color: var(--sfs-warning-text, #ed8936);
+  background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+ * Card actions. `margin-top: auto` is what makes the action row sit on the
+ * bottom edge of every card in a row regardless of how much text is above it -
+ * without it the buttons stagger and the grid looks broken.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.proctor-dashboard .pd-card__actions .pd-btn {
+  flex: 1 1 8rem;
+}
+
+.proctor-dashboard .pd-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.proctor-dashboard .pd-room {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--pd-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--sfs-accent-text, #a5b4fc);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
+  overflow-wrap: anywhere;
+}
+
+.proctor-dashboard .pd-room:hover {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+}
+
+.proctor-dashboard .pd-room:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Reference ids, collapsed.
+ *
+ * They have to stay - support work and every other service on the platform key
+ * on them - but a 36-character uuid with no break point sets the min-content
+ * width of whatever holds it, which is why it used to be the widest thing on the
+ * card and why the card overflowed.
+ * ------------------------------------------------------------------------- */
+
+.proctor-dashboard .pd-ids {
+  min-width: 0;
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--pd-line);
+}
+
+.proctor-dashboard .pd-ids > summary {
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pd-ink-soft);
+  list-style: none;
+}
+
+.proctor-dashboard .pd-ids > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A disclosure needs to look like one. `::before` rather than the native marker,
+ * so it can be positioned and rotated consistently across browsers. */
+.proctor-dashboard .pd-ids > summary::before {
+  content: '\25B8';
+  display: inline-block;
+  width: 1em;
+  transition: transform 0.15s ease;
+}
+
+.proctor-dashboard .pd-ids[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.proctor-dashboard .pd-ids > summary:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.proctor-dashboard .pd-ids__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+  min-width: 0;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.proctor-dashboard .pd-ids__label {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  color: var(--pd-ink-faint);
+}
+
+.proctor-dashboard .pd-ids__value {
+  flex: 1 1 10rem;
+  min-width: 0;
+  color: var(--pd-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* The ids themselves. `anywhere` and `break-all`, because `break-word` breaks
+ * only at permitted points and a uuid has none. */
+.proctor-dashboard .pd-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  font-variant-ligatures: none;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* ---------------------------------------------------------------------------
+ * Small screens. The layouts above are fluid, so these only drop ornament that
+ * has stopped fitting.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 30rem) {
+  .proctor-dashboard .pd-stat__label {
+    letter-spacing: 0.03em;
+  }
+
+  /* A label above its value, rather than beside a value with three characters
+   * of room. */
+  .proctor-dashboard .pd-ids__row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .proctor-dashboard .pd-ids__label {
+    min-width: 0;
+  }
+
+  /* Full-width actions: also the only shape that gives a 44px target its width
+   * back on a phone. */
+  .proctor-dashboard .pd-card__actions .pd-btn,
+  .proctor-dashboard .pd-rooms {
+    flex: 1 1 100%;
+  }
+
+  .proctor-dashboard .pd-room {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
-/* Full HD: 1920px and up */
-@media (min-width: 1920px) {
-  .proctor-dashboard { max-width: min(1700px, 88vw); }
-  .appointments-list {
-    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+/* ---------------------------------------------------------------------------
+ * Touch. Keyed on the pointer, not on width - a tablet is wide and still
+ * touched. 16px on a field because below that iOS zooms the page on focus and
+ * never zooms back, and the fix is the font size rather than user-scalable=no,
+ * which would take pinch-zoom away from everybody.
+ *
+ * `max(2.75rem, 44px)`, and the px term is the load-bearing half: `responsive.css`
+ * scales the ROOT font size fluidly, so on a 390px phone 1rem is about 15px and a
+ * `2.75rem` target measures 41px - under the 44px minimum, on exactly the devices
+ * the rule exists for. Measured, not assumed: every button and field on this page
+ * came out 41-43px before this. A touch target is one of the few things that must
+ * not scale with the type.
+ * ------------------------------------------------------------------------- */
+
+@media (pointer: coarse) {
+  .proctor-dashboard .pd-btn,
+  .proctor-dashboard .pd-room,
+  .proctor-dashboard .pd-ids > summary {
+    min-height: max(2.75rem, 44px);
+  }
+
+  .proctor-dashboard .pd-input {
+    min-height: max(2.75rem, 44px);
+    font-size: max(1rem, 16px);
+  }
+
+  /* No hover lift on a touch device: it fires on tap and reads as the card
+   * having moved under the finger. */
+  .proctor-dashboard .pd-card:hover {
+    transform: none;
   }
 }
 
-/* TV / 4K: 2560px and up */
-@media (min-width: 2560px) {
-  :root {
-    --pd-font-md: 1.15rem;
-    --pd-font-lg: 1.5rem;
-    --pd-font-xl: 1.95rem;
-    --pd-font-xxl: 2.75rem;
-  }
+/* ---------------------------------------------------------------------------
+ * Wide screens. A bounded measure, so a card row does not become a metre of
+ * whitespace with a name at each end.
+ * ------------------------------------------------------------------------- */
+
+@media (min-width: 100rem) {
   .proctor-dashboard {
-    max-width: min(2200px, 85vw);
-    padding: var(--pd-space-xl);
-  }
-  .appointments-list {
-    grid-template-columns: repeat(auto-fill, minmax(680px, 1fr));
-    gap: var(--pd-space-xl);
+    max-width: 100rem;
+    margin-inline: auto;
   }
 }
 
-/* Mobile-only stacking adjustments */
-@media (max-width: 639px) {
-  .appointments-header,
-  .filters-header { flex-direction: column; align-items: flex-start; }
-
-  .stats { width: 100%; }
-  .stat-item { min-width: calc(50% - var(--pd-space-sm)); align-items: flex-start; }
-
-  .appointment-meta { flex-direction: column; gap: var(--pd-space-sm); }
-
-  .appointment-actions { flex-direction: column; align-items: stretch; }
-  .appointment-actions .view-btn,
-  .appointment-actions .room-links { width: 100%; }
-  .room-links { justify-content: stretch; }
-  .room-link { flex: 1 1 auto; }
-
-  .detail-row { flex-direction: column; align-items: flex-start; }
-  .detail-value { text-align: left; max-width: 100%; }
-
-  .filter-actions { justify-content: stretch; }
-  .clear-filters-btn { width: 100%; }
-}
-
-/* Very small phones: 360px and below */
-@media (max-width: 360px) {
-  .stat-item { min-width: 100%; }
-}
-
-/* ==========================================================================
-   ACCESSIBILITY OVERRIDES
-   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .appointment-card,
-  .stat-item,
-  .retry-btn,
-  .view-btn,
-  .room-link,
-  .clear-filters-btn { transition: none; }
-
-  .appointment-card:hover,
-  .stat-item:hover,
-  .retry-btn:hover,
-  .view-btn:hover,
-  .room-link:hover,
-  .clear-filters-btn:hover { transform: none; }
-
-  .status-badge { animation: none; }
-  .loading-spinner { animation-duration: 1.6s; }
-}
-
-@media (prefers-contrast: high) {
-  .dashboard-header,
-  .dashboard-content,
-  .appointment-card,
-  .filters-section,
-  .stat-item {
-    background: rgb(var(--sfs-surface-rgb, 5 7 22) / 0.85);
-    border-color: var(--pd-text);
+  .proctor-dashboard .pd-spinner,
+  .proctor-dashboard .pd-live__dot {
+    animation: none;
   }
-  .status-badge,
-  .retry-btn,
-  .view-btn,
-  .room-link,
-  .clear-filters-btn { border-width: 2px; }
+
+  .proctor-dashboard .pd-card:hover {
+    transform: none;
+  }
 }

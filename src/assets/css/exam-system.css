@@ -414,7 +414,15 @@
   .take-exam-page :is(button, .btn, [class*="-btn"]),
   .review-results :is(button, .btn, [class*="-btn"]),
   .user-results :is(button, .btn, [class*="-btn"]) {
-    min-height: 2.75rem;
+    /* The px term is the load-bearing half, and `2.75rem` alone was wrong on
+     * every one of these eight pages.
+     *
+     * `responsive.css` scales the ROOT font size fluidly, so on a 390px phone
+     * 1rem is ~15.1px and `2.75rem` measures 41.5px - under the 44px minimum, on
+     * exactly the devices this block exists for. Measured, not assumed: every
+     * button on the proctor dashboard came out 41-42px. A touch target is one of
+     * the few things that must NOT scale with the type. */
+    min-height: max(2.75rem, 44px);
   }
 
   .exams-page :is(input, select, textarea),

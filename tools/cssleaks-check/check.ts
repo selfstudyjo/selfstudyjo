@@ -63,8 +63,7 @@ const ACCEPTED: Record<string, string> = {
 
 /** Stylesheets that are token or layout layers rather than one page's styles. */
 const NOT_A_PAGE = new Set([
-    'theme.css', 'responsive.css', 'default-layout.css',
-    'exam-system.css', 'proctor-console.css',
+    'theme.css', 'responsive.css', 'default-layout.css', 'exam-system.css',
 ]);
 
 const root = resolve(process.cwd());
