@@ -1,0 +1,1 @@
+import{t as e}from"./index-D_UlrPBz.js";export{e as serviceRegistry};
