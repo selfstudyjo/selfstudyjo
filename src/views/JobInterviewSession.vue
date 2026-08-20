@@ -188,7 +188,8 @@ import {
   questionCountFor, redoConfigFrom, type InterviewConfig,
 } from '@/utils/interviewSetup';
 import {
-  VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, mediaUnsupportedReason,
+  VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, hasVideoInput,
+  mediaUnsupportedReason,
 } from '@/utils/mediaDevices';
 
 const router = useRouter();
@@ -299,6 +300,13 @@ const report = reactive<EvaluationResult>({
 // they are opened, toggled and stopped independently. See initMedia().
 let audioStream: MediaStream | null = null;
 let videoStream: MediaStream | null = null;
+/**
+ * True when one stream carries both tracks, which is the normal case: the
+ * combined request is tried first because it is the one browsers grant.
+ * Stopping it twice would be harmless, but toggling the camera must not stop
+ * the microphone with it.
+ */
+let streamsAreShared = false;
 let startTime = 0;
 let timerInterval: any = null;
 let answerBuffer = '';
@@ -347,9 +355,12 @@ function speak(text: string): Promise<void> {
 // ====== Media ======
 function stopAllTracks() {
   audioStream?.getTracks().forEach(t => t.stop());
-  videoStream?.getTracks().forEach(t => t.stop());
+  // Only when it is a second, separate stream. With the combined request the
+  // two references are the same object and its tracks are already stopped.
+  if (!streamsAreShared) videoStream?.getTracks().forEach(t => t.stop());
   audioStream = null;
   videoStream = null;
+  streamsAreShared = false;
 }
 
 /**
@@ -358,15 +369,19 @@ function stopAllTracks() {
  * TWO calls, and that is the fix rather than a refactor. It used to ask for
  * `{video, audio}` in one `getUserMedia`, which resolves only if BOTH can be
  * opened — so a machine with a perfectly good microphone and a camera that was
- * unplugged, disabled in Windows privacy settings, or held by Teams got a
- * single `NotFoundError` and no microphone either. The interview could not be
- * started at all, and the message said permission had been denied on a
- * permission the user had granted.
+ * unplugged or held by Teams got a single `NotFoundError` and no microphone
+ * either, and the message blamed a permission the user had granted.
  *
- * The microphone is required (the answers are transcribed from it). The camera
- * is not: nothing reads the video track — it is shown to the candidate to make
- * the room feel like a room — so failing to get one must never stop an
- * interview.
+ * Splitting it unconditionally then broke the ordinary case, which is worse: a
+ * video-only follow-up is a separate permission request against a separately
+ * tracked device, so a browser that had already granted the pair either prompts
+ * again or answers `NotFoundError` for a camera that is plugged in and was
+ * working seconds earlier.
+ *
+ * `acquireInterviewMedia` therefore asks for BOTH first — the exact request
+ * that has always worked — and only falls back to asking separately when that
+ * fails. The microphone is required (the answers are transcribed from it); the
+ * camera is not, and failing to get one must never stop an interview.
  */
 async function initMedia(): Promise<boolean> {
   mediaError.value = '';
@@ -378,11 +393,16 @@ async function initMedia(): Promise<boolean> {
   if (unsupported) { mediaError.value = unsupported; return false; }
 
   const got = await acquireInterviewMedia(c => navigator.mediaDevices.getUserMedia(c));
+  streamsAreShared = got.combined;
 
   // The microphone is required, so a failure here stops the interview.
   if (!got.audio) {
     console.error('[media] microphone:', got.micError);
     mediaError.value = got.micError;
+    // Whatever the camera did is beside the point while there is no mic, and
+    // two red panels for one problem reads as two problems.
+    cameraError.value = '';
+    if (got.video) { got.video.getTracks().forEach(t => t.stop()); }
     return false;
   }
   audioStream = got.audio;
@@ -394,9 +414,22 @@ async function initMedia(): Promise<boolean> {
   // app holding it) is one the candidate can clear without losing the
   // interview they are in.
   videoStream = got.video;
-  cameraError.value = got.cameraError;
-  if (videoStream) await showCamera();
+  if (videoStream) {
+    await showCamera();
+  } else if (got.cameraError) {
+    // Ask the machine whether a camera exists before repeating the browser's
+    // claim that there is none. The two disagree often enough that saying "no
+    // camera was found" to somebody looking at their webcam is the single most
+    // unhelpful thing this page can do.
+    cameraError.value = await cameraFailureMessage(got.cameraRaw);
+  }
   return true;
+}
+
+/** The camera failure, re-described once we know whether a camera is there. */
+async function cameraFailureMessage(err: unknown): Promise<string> {
+  const present = await hasVideoInput(navigator.mediaDevices);
+  return describeMediaError(err, 'camera', present);
 }
 
 /** Put an open camera stream on screen. Never throws. */
@@ -426,13 +459,14 @@ async function enableCamera(opts: { announce: boolean }): Promise<boolean> {
   cameraError.value = '';
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({ video: VIDEO_CONSTRAINTS });
+    streamsAreShared = false;
     await showCamera();
     return true;
   } catch (e) {
     console.error('[media] camera:', e);
     videoStream = null;
     cameraEnabled.value = false;
-    cameraError.value = describeMediaError(e, 'camera');
+    cameraError.value = await cameraFailureMessage(e);
     // Announced only when the candidate asked for it by pressing the button.
     // On the automatic attempt at start-up it stays on the tile, because an
     // alert there would interrupt an interview over an optional device.

@@ -59,13 +59,34 @@ const ARTICLE: Record<MediaKind, string> = { microphone: 'a microphone', camera:
  * "permission denied" and is exactly why the report said the permission had
  * been granted and the app disagreed.
  */
-export function describeMediaError(err: unknown, kind: MediaKind): string {
+export function describeMediaError(
+    err: unknown,
+    kind: MediaKind,
+    /**
+     * Whether the machine actually has such a device, from {@link hasVideoInput}.
+     * `undefined`/`null` means nobody checked, or the check could not answer.
+     */
+    devicePresent?: boolean | null,
+): string {
     const device = kind === 'camera' ? 'camera' : 'microphone';
     switch (classifyMediaError(err)) {
         case 'denied':
             return `Access to your ${device} was blocked. Click the padlock (or camera) icon in `
                 + `the address bar, set ${device} access to Allow, then reload this page.`;
         case 'missing':
+            // The device IS there and the browser still said it could not find
+            // one. Telling somebody looking at their webcam that no camera was
+            // found is worse than saying nothing: it is confidently wrong, it
+            // sends them to a settings page that is already correct, and it
+            // hides the retry that usually fixes it. On Windows the capture
+            // backend opens the camera lazily and answers NotFoundError while
+            // another application still holds it.
+            if (devicePresent) {
+                return `Your ${device} is connected but the browser could not open it. That is `
+                    + `almost always another application still holding it — close Zoom, Teams, `
+                    + `Meet or any other tab using it and press the button again. Nothing else `
+                    + `about the interview is affected.`;
+            }
             return `No ${device} was found. Check that it is plugged in and enabled — on Windows, `
                 + `Settings › Privacy & security › ${kind === 'camera' ? 'Camera' : 'Microphone'} `
                 + `must also allow desktop apps to use it.`;
@@ -129,47 +150,115 @@ export interface MediaAcquisition<S = MediaStream> {
     audio: S | null;
     /** The camera. Null is fine — nothing reads this track. */
     video: S | null;
+    /** True when one stream carries both, so the caller stops it only once. */
+    combined: boolean;
     /** Why the microphone failed. Blocks the interview. */
     micError: string;
     /** Why the camera failed. Blocks nothing. */
     cameraError: string;
+    /**
+     * The raw rejections, kept so the caller can re-describe a failure once it
+     * has asked whether the device actually exists — which needs an await and
+     * so cannot happen in here without making every caller pay for it.
+     */
+    micRaw?: unknown;
+    cameraRaw?: unknown;
 }
 
 /**
- * Open the microphone, then — separately — the camera.
+ * Open the camera and microphone, preferring the ONE request that browsers
+ * actually grant.
  *
- * TWO calls, and the separation is the entire fix. Asking for
- * `{video: …, audio: …}` in one call resolves only if BOTH devices open, so a
- * machine with a working microphone and a camera that is unplugged, disabled in
- * Windows privacy settings, or held by Teams got a single rejection and no
- * microphone either — and the interview, whose only real requirement is the
- * microphone, could not be started at all.
+ * The order here is the whole of it, and it was got wrong once in each
+ * direction:
  *
- * Takes `getUserMedia` as an argument rather than reaching for `navigator`, so
- * the ordering and the never-lose-the-mic guarantee can be checked in node
- * (`npm run check:interview`) instead of being a property somebody has to
+ *  * The original code asked for `{audio, video}` and nothing else. That is the
+ *    request a browser remembers a grant for, and it works — right up until the
+ *    camera cannot open, at which point the single call rejects and the
+ *    MICROPHONE is lost with it. An interview whose only real requirement is
+ *    the microphone then could not start at all.
+ *
+ *  * Splitting it into audio-then-video fixed that and broke the ordinary case.
+ *    A video-only follow-up is a SEPARATE permission request against a
+ *    separately-tracked device: a browser that had happily granted the pair
+ *    prompts again, or — on Windows, where the camera is opened lazily by the
+ *    capture backend — simply answers `NotFoundError` for a camera that is
+ *    plugged in and was working a moment earlier.
+ *
+ * So: ask for both together first, exactly as before, and fall back to the
+ * split ONLY when that fails. The common path is byte-for-byte the request that
+ * has always worked, one prompt, one grant; the split is reached only when
+ * something was going to fail anyway, and there its job is to save the
+ * microphone.
+ *
+ * `getUserMedia` is an argument rather than a reach for `navigator`, so the
+ * ordering and the never-lose-the-mic guarantee are checkable in node
+ * (`npm run check:interview`) rather than being properties somebody has to
  * reproduce by unplugging a webcam.
  */
 export async function acquireInterviewMedia<S>(
     getUserMedia: (constraints: MediaStreamConstraints) => Promise<S>,
 ): Promise<MediaAcquisition<S>> {
-    let audio: S | null = null;
+    // 1. Both at once. The request the browser already has a grant for.
     try {
-        // Audio ONLY. No video key at all — a video constraint riding along
-        // here is what makes a camera fault a microphone fault.
-        audio = await getUserMedia({ audio: AUDIO_CONSTRAINTS });
-    } catch (err) {
-        return { audio: null, video: null, micError: describeMediaError(err, 'microphone'), cameraError: '' };
+        const both = await getUserMedia({ audio: AUDIO_CONSTRAINTS, video: VIDEO_CONSTRAINTS });
+        return { audio: both, video: both, combined: true, micError: '', cameraError: '' };
+    } catch {
+        // Deliberately not reported. Which device failed is not knowable from
+        // this rejection — a NotFoundError here means "one of the two", and
+        // guessing is how a working microphone got blamed on a camera. The two
+        // calls below find out for certain.
     }
 
+    // 2. The microphone alone. This is the one that decides whether there is an
+    //    interview, so it is asked in isolation and its answer is believed.
+    let audio: S | null = null;
+    let micError = '';
+    let micRaw: unknown;
+    try {
+        audio = await getUserMedia({ audio: AUDIO_CONSTRAINTS });
+    } catch (err) {
+        micRaw = err;
+        micError = describeMediaError(err, 'microphone');
+    }
+
+    // 3. The camera alone, whatever happened above. If the microphone failed
+    //    this costs one extra rejection and tells the caller which of the two
+    //    was really at fault.
     let video: S | null = null;
     let cameraError = '';
+    let cameraRaw: unknown;
     try {
         video = await getUserMedia({ video: VIDEO_CONSTRAINTS });
     } catch (err) {
-        // Recorded and returned, never thrown: the caller has a microphone and
-        // that is all an interview needs.
+        cameraRaw = err;
         cameraError = describeMediaError(err, 'camera');
     }
-    return { audio, video, micError: '', cameraError };
+
+    return { audio, video, combined: false, micError, cameraError, micRaw, cameraRaw };
+}
+
+/**
+ * Whether this machine has a camera at all.
+ *
+ * `null` when the question cannot be answered — an older browser, or an
+ * `enumerateDevices` that threw. Null is not "no": reporting "no camera found"
+ * on a failed enumeration is exactly the wrong answer to give somebody looking
+ * at their camera.
+ *
+ * Worth asking even before permission is granted: a browser hides device
+ * LABELS until then, but still reports one entry per device kind that exists,
+ * so `videoinput` presence is answerable.
+ */
+export async function hasVideoInput(
+    mediaDevices: { enumerateDevices?: () => Promise<{ kind: string }[]> } | undefined,
+): Promise<boolean | null> {
+    if (!mediaDevices?.enumerateDevices) return null;
+    try {
+        const devices = await mediaDevices.enumerateDevices();
+        if (!Array.isArray(devices) || devices.length === 0) return null;
+        return devices.some(d => d?.kind === 'videoinput');
+    } catch {
+        return null;
+    }
 }

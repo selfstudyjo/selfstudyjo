@@ -44,6 +44,7 @@ import {
     VIDEO_CONSTRAINTS,
     acquireInterviewMedia,
     classifyMediaError,
+    hasVideoInput,
     describeMediaError,
     mediaUnsupportedReason,
 } from '../../src/utils/mediaDevices';
@@ -370,66 +371,126 @@ console.log('\n8. Saying accurately why a device did not start');
         JSON.stringify(AUDIO_CONSTRAINTS) !== JSON.stringify(VIDEO_CONSTRAINTS));
 }
 
-console.log('\n9. A camera fault must never cost the microphone');
+console.log('\n9. Asking for the devices');
 {
-    // THE bug, reproduced: a machine with a working microphone whose camera is
-    // absent. Asked for together, the single getUserMedia call rejects and the
-    // interview cannot start; asked for separately, the mic survives.
+    const MIC = 'MIC' as unknown as MediaStream;
+    const CAM = 'CAM' as unknown as MediaStream;
+    const BOTH = 'BOTH' as unknown as MediaStream;
     const notFound = Object.assign(new Error('Requested device not found'), { name: 'NotFoundError' });
-    const calls: MediaStreamConstraints[] = [];
-    const noCamera = async (c: MediaStreamConstraints) => {
-        calls.push(c);
-        if (c.video) throw notFound;
-        return 'MIC' as unknown as MediaStream;
-    };
-
-    const got = await acquireInterviewMedia(noCamera);
-    check('the microphone is still acquired', got.audio === ('MIC' as unknown), got.audio);
-    check('nothing blocks the interview', got.micError === '', got.micError);
-    check('there is no camera', got.video === null);
-    check('and the reason is recorded for the tile', got.cameraError.length > 0);
-    check('the reason does not claim permission was denied',
-        !/permission|denied/i.test(got.cameraError), got.cameraError);
-
-    // The ordering, which is the property that makes the above true.
-    check('two calls were made, not one', calls.length === 2, calls.length);
-    check('the microphone was asked for first', !!calls[0].audio && !calls[0].video, calls[0]);
-    check('and the camera on its own afterwards', !!calls[1].video && !calls[1].audio, calls[1]);
-
-    // A camera that is present but held by Zoom -- the other common cause.
     const busy = Object.assign(new Error('Could not start video source'), { name: 'NotReadableError' });
-    const cameraBusy = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
-        if (c.video) throw busy;
-        return 'MIC' as unknown as MediaStream;
-    });
-    check('a busy camera also leaves the microphone working', cameraBusy.audio !== null);
-    check('and says which applications to close',
-        /Zoom|Teams/i.test(cameraBusy.cameraError), cameraBusy.cameraError);
+    const denied = Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
 
-    // Both present: the ordinary case must still work.
-    const both = await acquireInterviewMedia(async (c: MediaStreamConstraints) =>
-        (c.video ? 'CAM' : 'MIC') as unknown as MediaStream);
-    check('with both devices, both are returned',
-        both.audio === ('MIC' as unknown) && both.video === ('CAM' as unknown));
-    check('and nothing is reported', both.micError === '' && both.cameraError === '');
+    // The ordinary case, and the one a regression here breaks for everybody:
+    // ONE combined request, which is what a browser remembers a grant for.
+    // Asking for video separately is a second permission request against a
+    // separately tracked device -- it prompts again, or on Windows answers
+    // NotFoundError for a camera that is plugged in and working.
+    {
+        const calls: MediaStreamConstraints[] = [];
+        const got = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+            calls.push(c); return BOTH;
+        });
+        check('one call, not two, when both devices work', calls.length === 1, calls.length);
+        check('and it asks for both together',
+            !!calls[0].audio && !!calls[0].video, calls[0]);
+        check('the microphone is returned', got.audio === BOTH);
+        check('the camera is returned', got.video === BOTH);
+        check('and they are flagged as one shared stream', got.combined === true);
+        check('nothing is reported', got.micError === '' && got.cameraError === '');
+    }
 
-    // No microphone: this one DOES block, and must say so.
-    const micCalls: MediaStreamConstraints[] = [];
-    const noMic = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
-        micCalls.push(c);
-        throw notFound;
-    });
-    check('a missing microphone blocks', noMic.audio === null && noMic.micError.length > 0);
-    check('and the camera is not even attempted -- there is nothing to run',
-        micCalls.length === 1, micCalls.length);
-    check('no camera error is invented for it', noMic.cameraError === '', noMic.cameraError);
+    // THE bug the split exists for: a camera that cannot open must not cost the
+    // microphone. The combined call fails, so we fall back and ask separately.
+    {
+        const calls: MediaStreamConstraints[] = [];
+        const got = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+            calls.push(c);
+            if (c.video) throw notFound;
+            return MIC;
+        });
+        check('a camera fault falls back rather than failing', got.audio === MIC, got.audio);
+        check('the microphone survives it', got.micError === '', got.micError);
+        check('there is no camera', got.video === null);
+        check('the reason is recorded for the tile', got.cameraError.length > 0);
+        check('and the raw error is kept so it can be re-described',
+            got.cameraRaw === notFound);
+        check('the streams are not flagged shared', got.combined === false);
+        check('three calls: both, then mic alone, then camera alone',
+            calls.length === 3, calls.length);
+        check('the combined attempt came first',
+            !!calls[0].audio && !!calls[0].video, calls[0]);
+        check('then the microphone on its own',
+            !!calls[1].audio && !calls[1].video, calls[1]);
+        check('then the camera on its own',
+            !!calls[2].video && !calls[2].audio, calls[2]);
+    }
 
-    // A refused microphone is the one case that really is a permission problem.
-    const denied = await acquireInterviewMedia(async () => {
-        throw Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
-    });
-    check('a refused microphone says so, and points at the padlock',
-        /padlock/i.test(denied.micError), denied.micError);
+    // A camera held by Zoom -- the other common cause, same guarantee.
+    {
+        const got = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+            if (c.video) throw busy;
+            return MIC;
+        });
+        check('a busy camera also leaves the microphone working', got.audio === MIC);
+        check('and says which applications to close',
+            /Zoom|Teams/i.test(got.cameraError), got.cameraError);
+    }
+
+    // No microphone: this one really does block.
+    {
+        const got = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+            if (c.audio) throw notFound;
+            return CAM;
+        });
+        check('a missing microphone blocks', got.audio === null && got.micError.length > 0);
+        check('the camera is still reported so the caller can release it', got.video === CAM);
+    }
+
+    // Everything refused.
+    {
+        const got = await acquireInterviewMedia(async () => { throw denied; });
+        check('a refusal blocks and points at the padlock',
+            got.audio === null && /padlock/i.test(got.micError), got.micError);
+    }
+}
+
+console.log('\n9b. Never claim there is no camera when there is one');
+{
+    const notFound = { name: 'NotFoundError', message: 'Requested device not found' };
+
+    // The complaint, exactly: a connected camera, and the page insisting none
+    // was found and sending the user to a Windows settings page.
+    const present = describeMediaError(notFound, 'camera', true);
+    check('with a camera present, it does NOT say no camera was found',
+        !/no camera was found/i.test(present), present);
+    check('it does not send them to Windows privacy settings',
+        !/Privacy/i.test(present), present);
+    check('it says the camera is connected',
+        /connected/i.test(present), present);
+    check('and it points at the retry that usually fixes it',
+        /again/i.test(present), present);
+    check('and it reassures that the interview is unaffected',
+        /interview/i.test(present), present);
+
+    // When there genuinely is no camera, the original advice is still right.
+    check('with no camera, it does say so',
+        /no camera was found/i.test(describeMediaError(notFound, 'camera', false)));
+    // Unknown must behave like "we did not check", never like "there is none".
+    check('an unanswerable check does not assert there is no camera',
+        describeMediaError(notFound, 'camera', null)
+        === describeMediaError(notFound, 'camera', undefined));
+
+    // hasVideoInput's three answers.
+    const list = (kinds: string[]) => ({ enumerateDevices: async () => kinds.map(kind => ({ kind })) });
+    check('a videoinput is detected',
+        (await hasVideoInput(list(['audioinput', 'videoinput']))) === true);
+    check('none present is false',
+        (await hasVideoInput(list(['audioinput']))) === false);
+    check('an empty list is unknown, not false -- pre-permission browsers',
+        (await hasVideoInput(list([]))) === null);
+    check('a throwing enumerateDevices is unknown, not false',
+        (await hasVideoInput({ enumerateDevices: async () => { throw new Error('nope'); } })) === null);
+    check('no API at all is unknown', (await hasVideoInput(undefined)) === null);
 }
 
 console.log('\n10. The CV picker label');
