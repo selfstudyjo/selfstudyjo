@@ -49,7 +49,14 @@
         </div>
         <div class="ji-camera-off-overlay">
           <div class="ji-camera-off-avatar">{{ userInitial }}</div>
-          <div class="ji-camera-off-text">Camera Off</div>
+          <div class="ji-camera-off-text">{{ cameraBusy ? 'Starting camera…' : 'Camera Off' }}</div>
+          <!--
+            Said on the tile, not in an alert. The camera is optional, so its
+            failure must not interrupt anything — but it does have to be
+            explained, or "Camera Off" while the camera is plugged in reads as
+            the app being broken.
+          -->
+          <div class="ji-camera-note" v-if="cameraError && !cameraBusy">{{ cameraError }}</div>
         </div>
         <div class="ji-name-tag">👤 You ({{ userName }})</div>
         <div class="ji-self-status">
@@ -80,6 +87,25 @@
       <div>{{ currentAnswerText || (phase === 'answering' ? '🎙️ Listening… your words appear every ~3 seconds' : '—') }}</div>
     </div>
 
+    <!--
+      Only the microphone can stop an interview, so only the microphone gets a
+      blocking panel. It says what actually went wrong and offers the retry,
+      because the two commonest causes — the device held by another app, and
+      access blocked at the padlock — are both things the candidate fixes in
+      another window and comes straight back from.
+    -->
+    <div class="ji-media-error" v-if="mediaError && !reportVisible">
+      <div class="ji-media-error-title">🎤 Your microphone could not be started</div>
+      <p>{{ mediaError }}</p>
+      <p class="ji-media-error-hint">
+        A microphone is required — your spoken answers are transcribed. A camera is optional and
+        the interview runs perfectly without one.
+      </p>
+      <button @click="retryMicrophone" class="ji-btn-primary" :disabled="starting">
+        {{ starting ? 'Trying…' : '↻ Try Again' }}
+      </button>
+    </div>
+
     <!-- Controls -->
     <div class="ji-controls" v-if="!reportVisible">
       <button @click="startInterview" :disabled="phase !== 'idle' || starting" class="ji-btn-primary">
@@ -88,7 +114,14 @@
       <button @click="startAnswering" :disabled="phase !== 'awaiting'" class="ji-btn-success">🎤 Start Answering</button>
       <button @click="submitAnswer" :disabled="phase !== 'answering'" class="ji-btn-warning">✅ Submit Answer</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="ji-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
-      <button @click="toggleCamera" :disabled="!mediaReady" class="ji-btn-control" :class="{ off: !cameraEnabled }">{{ cameraEnabled ? '📹 Camera On' : '📷 Camera Off' }}</button>
+      <!--
+        Enabled as soon as the MICROPHONE is ready, not the camera. Pressing it
+        after a camera failure is a fresh attempt at opening one, which is what
+        makes "close Teams, then press it" work without leaving the interview.
+      -->
+      <button @click="toggleCamera" :disabled="!mediaReady || cameraBusy" class="ji-btn-control" :class="{ off: !cameraEnabled }">
+        {{ cameraBusy ? '⏳ Camera…' : cameraEnabled ? '📹 Camera On' : '📷 Turn Camera On' }}
+      </button>
       <button @click="endInterview" :disabled="phase === 'idle' || phase === 'processing'" class="ji-btn-secondary">⏹️ End Interview</button>
       <button @click="leave" class="ji-btn-danger">Leave</button>
     </div>
@@ -154,6 +187,9 @@ import {
   MAX_AVOID_QUESTIONS, clampMinutes, fallbackQuestion as fallbackQuestionFor,
   questionCountFor, redoConfigFrom, type InterviewConfig,
 } from '@/utils/interviewSetup';
+import {
+  VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, mediaUnsupportedReason,
+} from '@/utils/mediaDevices';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -238,7 +274,16 @@ const qaPairs = ref<QAPair[]>([]);
 
 const mediaReady = ref(false);
 const micEnabled = ref(true);
-const cameraEnabled = ref(true);
+// The camera starts OFF and is switched on only once a track is actually
+// running. It used to start true, so a machine with no camera showed a live
+// tile with a black rectangle in it rather than the "Camera Off" placeholder
+// that already existed for exactly this.
+const cameraEnabled = ref(false);
+const cameraBusy = ref(false);
+/** Why the microphone could not be opened. Blocks the interview. */
+const mediaError = ref('');
+/** Why the camera could not be opened. Does not block anything. */
+const cameraError = ref('');
 
 const timerDisplay = ref('00:00');
 const timeUp = ref(false);
@@ -250,7 +295,10 @@ const report = reactive<EvaluationResult>({
 });
 
 // Internal
-let mediaStream: MediaStream | null = null;
+// Two streams, not one: the microphone is required and the camera is not, so
+// they are opened, toggled and stopped independently. See initMedia().
+let audioStream: MediaStream | null = null;
+let videoStream: MediaStream | null = null;
 let startTime = 0;
 let timerInterval: any = null;
 let answerBuffer = '';
@@ -297,36 +345,128 @@ function speak(text: string): Promise<void> {
 }
 
 // ====== Media ======
+function stopAllTracks() {
+  audioStream?.getTracks().forEach(t => t.stop());
+  videoStream?.getTracks().forEach(t => t.stop());
+  audioStream = null;
+  videoStream = null;
+}
+
+/**
+ * The microphone, on its own, and then the camera, on its own.
+ *
+ * TWO calls, and that is the fix rather than a refactor. It used to ask for
+ * `{video, audio}` in one `getUserMedia`, which resolves only if BOTH can be
+ * opened — so a machine with a perfectly good microphone and a camera that was
+ * unplugged, disabled in Windows privacy settings, or held by Teams got a
+ * single `NotFoundError` and no microphone either. The interview could not be
+ * started at all, and the message said permission had been denied on a
+ * permission the user had granted.
+ *
+ * The microphone is required (the answers are transcribed from it). The camera
+ * is not: nothing reads the video track — it is shown to the candidate to make
+ * the room feel like a room — so failing to get one must never stop an
+ * interview.
+ */
 async function initMedia(): Promise<boolean> {
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-    });
-    if (videoEl.value) {
-      videoEl.value.srcObject = mediaStream;
-      await new Promise<void>(r => {
-        if (videoEl.value!.readyState >= 2) r();
-        else videoEl.value!.onloadedmetadata = () => videoEl.value!.play().then(() => r()).catch(() => r());
-      });
-    }
-    mediaReady.value = true;
-    return true;
-  } catch (e: any) {
-    alert('Camera/microphone permission denied: ' + (e?.message || e));
+  mediaError.value = '';
+  cameraError.value = '';
+
+  const unsupported = mediaUnsupportedReason(
+    navigator, typeof isSecureContext === 'undefined' ? true : isSecureContext,
+    location.origin);
+  if (unsupported) { mediaError.value = unsupported; return false; }
+
+  const got = await acquireInterviewMedia(c => navigator.mediaDevices.getUserMedia(c));
+
+  // The microphone is required, so a failure here stops the interview.
+  if (!got.audio) {
+    console.error('[media] microphone:', got.micError);
+    mediaError.value = got.micError;
     return false;
   }
+  audioStream = got.audio;
+  mediaReady.value = true;
+  micEnabled.value = true;
+
+  // The camera is not. A failure is a note on the tile and nothing more — and
+  // it is retryable from the Camera button, because the usual cause (another
+  // app holding it) is one the candidate can clear without losing the
+  // interview they are in.
+  videoStream = got.video;
+  cameraError.value = got.cameraError;
+  if (videoStream) await showCamera();
+  return true;
+}
+
+/** Put an open camera stream on screen. Never throws. */
+async function showCamera() {
+  if (!videoStream) { cameraEnabled.value = false; return; }
+  if (videoEl.value) {
+    videoEl.value.srcObject = videoStream;
+    // Bounded, and that matters: `onloadedmetadata` does not always fire for a
+    // track that opened but never produces frames (a covered or virtual
+    // camera), and an unbounded wait here would hang the start button on the
+    // one device that is optional.
+    await Promise.race([
+      new Promise<void>(r => {
+        if (videoEl.value!.readyState >= 2) r();
+        else videoEl.value!.onloadedmetadata = () => videoEl.value!.play().then(() => r()).catch(() => r());
+      }),
+      new Promise<void>(r => setTimeout(r, 3000)),
+    ]);
+  }
+  cameraEnabled.value = true;
+}
+
+/** Open the camera on demand, after it failed or was switched off. */
+async function enableCamera(opts: { announce: boolean }): Promise<boolean> {
+  if (videoStream) { setCameraTracks(true); return true; }
+  cameraBusy.value = true;
+  cameraError.value = '';
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: VIDEO_CONSTRAINTS });
+    await showCamera();
+    return true;
+  } catch (e) {
+    console.error('[media] camera:', e);
+    videoStream = null;
+    cameraEnabled.value = false;
+    cameraError.value = describeMediaError(e, 'camera');
+    // Announced only when the candidate asked for it by pressing the button.
+    // On the automatic attempt at start-up it stays on the tile, because an
+    // alert there would interrupt an interview over an optional device.
+    if (opts.announce) alert(cameraError.value);
+    return false;
+  } finally {
+    cameraBusy.value = false;
+  }
+}
+
+function setCameraTracks(on: boolean) {
+  cameraEnabled.value = on;
+  if (videoStream) videoStream.getVideoTracks().forEach(t => (t.enabled = on));
 }
 
 function toggleMic() {
   micEnabled.value = !micEnabled.value;
-  if (mediaStream) mediaStream.getAudioTracks().forEach(t => t.enabled = micEnabled.value);
+  if (audioStream) audioStream.getAudioTracks().forEach(t => (t.enabled = micEnabled.value));
   if (!micEnabled.value) stopCurrentRecording();
 }
 
-function toggleCamera() {
-  cameraEnabled.value = !cameraEnabled.value;
-  if (mediaStream) mediaStream.getVideoTracks().forEach(t => t.enabled = cameraEnabled.value);
+async function toggleCamera() {
+  if (cameraEnabled.value) { setCameraTracks(false); return; }
+  // Turning it back on after it failed is a fresh attempt, not a flag flip —
+  // which is what makes "close Teams and press it again" work mid-interview.
+  if (!videoStream) { await enableCamera({ announce: true }); return; }
+  setCameraTracks(true);
+}
+
+/** Ask for the microphone again after the candidate has fixed whatever it was. */
+async function retryMicrophone() {
+  if (starting.value) return;
+  mediaError.value = '';
+  await startInterview();
 }
 
 // ====== Whisper transcription ======
@@ -368,8 +508,8 @@ async function transcribeAudioBlob(blob: Blob): Promise<void> {
 
 async function recordOneChunk(durationMs: number): Promise<void> {
   return new Promise((resolve) => {
-    if (!mediaStream) { resolve(); return; }
-    const audioTracks = mediaStream.getAudioTracks();
+    if (!audioStream) { resolve(); return; }
+    const audioTracks = audioStream.getAudioTracks();
     if (audioTracks.length === 0) { resolve(); return; }
     const audioStream = new MediaStream(audioTracks);
     const mimeType = getPreferredMimeType();
@@ -435,12 +575,23 @@ function startTimer() {
 async function startInterview() {
   starting.value = true;
   startBtnText.value = '⏳ Setting up…';
-  captionText.value = 'Requesting camera and microphone…';
-  if (!(await initMedia())) { starting.value = false; startBtnText.value = '▶️ Start Interview'; return; }
+  captionSpeaker.value = 'System';
+  captionText.value = 'Requesting your microphone…';
+  if (!(await initMedia())) {
+    starting.value = false;
+    startBtnText.value = '▶️ Start Interview';
+    captionText.value = 'The interview cannot start without a microphone — see the message above.';
+    return;
+  }
   if (typeof MediaRecorder === 'undefined') {
-    alert('Your browser does not support audio recording. Please use Chrome, Edge, Firefox, or Safari.');
+    mediaError.value = 'This browser cannot record audio. Use Chrome, Edge, Firefox or Safari.';
     starting.value = false; startBtnText.value = '▶️ Start Interview'; return;
   }
+  // Said once, here, so a candidate with no camera is told the interview is
+  // fine rather than left reading a camera error and assuming it is not.
+  captionText.value = cameraError.value
+    ? 'Microphone ready. Continuing without a camera — that is fine, only your voice is assessed.'
+    : 'Microphone ready.';
   if (voices.length === 0) { await new Promise(r => setTimeout(r, 400)); loadVoices(); }
 
   phase.value = 'intro';
@@ -495,7 +646,7 @@ async function askNextQuestion() {
 
 function startAnswering() {
   if (!micEnabled.value) { alert('Please unmute your microphone first.'); return; }
-  if (!mediaStream) { alert('Microphone not initialized.'); return; }
+  if (!audioStream) { alert('Your microphone is not connected yet.'); return; }
   answerBuffer = '';
   currentAnswerText.value = '';
   isAnswering = true;
@@ -622,7 +773,7 @@ async function endInterview() {
     console.error('Save interview failed:', e);
   }
 
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  stopAllTracks();
 }
 
 function scoreClass(score: number): string {
@@ -692,7 +843,7 @@ onUnmounted(() => {
   recordingLoopActive = false;
   stopCurrentRecording();
   if (timerInterval) clearInterval(timerInterval);
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  stopAllTracks();
   try { speechSynthesis.cancel(); } catch {}
 });
 </script>

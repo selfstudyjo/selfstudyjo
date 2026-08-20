@@ -39,6 +39,14 @@ import {
     type DigestibleCv,
     type PastSession,
 } from '../../src/utils/interviewSetup';
+import {
+    AUDIO_CONSTRAINTS,
+    VIDEO_CONSTRAINTS,
+    acquireInterviewMedia,
+    classifyMediaError,
+    describeMediaError,
+    mediaUnsupportedReason,
+} from '../../src/utils/mediaDevices';
 
 let failures = 0;
 function check(label: string, ok: boolean, detail?: unknown) {
@@ -295,7 +303,136 @@ console.log('\n7. The CV the interviewer is handed');
         cvDigest(cv, 200).split('\n').every(l => l.length > 0));
 }
 
-console.log('\n8. The CV picker label');
+console.log('\n8. Saying accurately why a device did not start');
+{
+    // The reported bug: a machine with a working microphone and no usable
+    // camera was told "Camera/microphone permission denied: Requested device
+    // not found" -- and permission HAD been granted, so the message sent the
+    // user to the one setting that could not possibly help.
+    const notFound = { name: 'NotFoundError', message: 'Requested device not found' };
+    check('a missing device is not classified as a refusal',
+        classifyMediaError(notFound) === 'missing', classifyMediaError(notFound));
+    check('and the sentence does not mention permission at all',
+        !/permission|denied|blocked/i.test(describeMediaError(notFound, 'camera')),
+        describeMediaError(notFound, 'camera'));
+    check('it says the device was not found',
+        /no camera was found/i.test(describeMediaError(notFound, 'camera')));
+    check('and names where to look for it',
+        /privacy/i.test(describeMediaError(notFound, 'camera')));
+    // Chrome's raw message is what used to be appended after the words
+    // "permission denied", and is what made the report read as a contradiction.
+    check('the raw driver message is never relayed',
+        !describeMediaError(notFound, 'camera').includes('Requested device not found'));
+
+    check('a real refusal IS a refusal',
+        classifyMediaError({ name: 'NotAllowedError' }) === 'denied');
+    check('and points at the padlock',
+        /padlock/i.test(describeMediaError({ name: 'NotAllowedError' }, 'microphone')));
+
+    check('a device held by another app is `busy`',
+        classifyMediaError({ name: 'NotReadableError' }) === 'busy');
+    check('and names the applications to close',
+        /Zoom|Teams/i.test(describeMediaError({ name: 'NotReadableError' }, 'camera')));
+
+    check('over-tight constraints are their own case',
+        classifyMediaError({ name: 'OverconstrainedError' }) === 'constraints');
+    check('the older Chrome spellings are understood',
+        classifyMediaError({ name: 'PermissionDeniedError' }) === 'denied'
+        && classifyMediaError({ name: 'DevicesNotFoundError' }) === 'missing'
+        && classifyMediaError({ name: 'TrackStartError' }) === 'busy');
+    check('an unrecognised error is `unknown`, not silently a refusal',
+        classifyMediaError({ name: 'WhoKnowsError' }) === 'unknown');
+    check('and still produces a usable sentence',
+        describeMediaError({ name: 'WhoKnowsError' }, 'microphone').length > 40);
+    check('null does not throw', typeof describeMediaError(null, 'microphone') === 'string');
+    check('the microphone and the camera are worded differently',
+        describeMediaError(notFound, 'microphone') !== describeMediaError(notFound, 'camera'));
+
+    // An insecure origin hides navigator.mediaDevices entirely, so there is no
+    // exception to classify -- it reads as an unsupported browser.
+    check('an insecure origin is diagnosed as such',
+        /https/i.test(mediaUnsupportedReason({}, false, 'http://192.168.1.5:3000')));
+    check('and the origin is named',
+        mediaUnsupportedReason({}, false, 'http://192.168.1.5:3000').includes('192.168.1.5'));
+    check('a secure origin with no API blames the browser instead',
+        /browser/i.test(mediaUnsupportedReason({}, true)));
+    check('a working browser reports nothing',
+        mediaUnsupportedReason({ mediaDevices: { getUserMedia: () => {} } }, true) === '');
+
+    // Two separate constraint objects, because they are two separate
+    // getUserMedia calls -- and that split is the whole fix.
+    check('video is asked for as ideal, never exact',
+        !JSON.stringify(VIDEO_CONSTRAINTS).includes('exact')
+        && JSON.stringify(VIDEO_CONSTRAINTS).includes('ideal'));
+    check('audio asks for echo cancellation',
+        JSON.stringify(AUDIO_CONSTRAINTS).includes('echoCancellation'));
+    check('the two are separate, so neither call can fail the other',
+        JSON.stringify(AUDIO_CONSTRAINTS) !== JSON.stringify(VIDEO_CONSTRAINTS));
+}
+
+console.log('\n9. A camera fault must never cost the microphone');
+{
+    // THE bug, reproduced: a machine with a working microphone whose camera is
+    // absent. Asked for together, the single getUserMedia call rejects and the
+    // interview cannot start; asked for separately, the mic survives.
+    const notFound = Object.assign(new Error('Requested device not found'), { name: 'NotFoundError' });
+    const calls: MediaStreamConstraints[] = [];
+    const noCamera = async (c: MediaStreamConstraints) => {
+        calls.push(c);
+        if (c.video) throw notFound;
+        return 'MIC' as unknown as MediaStream;
+    };
+
+    const got = await acquireInterviewMedia(noCamera);
+    check('the microphone is still acquired', got.audio === ('MIC' as unknown), got.audio);
+    check('nothing blocks the interview', got.micError === '', got.micError);
+    check('there is no camera', got.video === null);
+    check('and the reason is recorded for the tile', got.cameraError.length > 0);
+    check('the reason does not claim permission was denied',
+        !/permission|denied/i.test(got.cameraError), got.cameraError);
+
+    // The ordering, which is the property that makes the above true.
+    check('two calls were made, not one', calls.length === 2, calls.length);
+    check('the microphone was asked for first', !!calls[0].audio && !calls[0].video, calls[0]);
+    check('and the camera on its own afterwards', !!calls[1].video && !calls[1].audio, calls[1]);
+
+    // A camera that is present but held by Zoom -- the other common cause.
+    const busy = Object.assign(new Error('Could not start video source'), { name: 'NotReadableError' });
+    const cameraBusy = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+        if (c.video) throw busy;
+        return 'MIC' as unknown as MediaStream;
+    });
+    check('a busy camera also leaves the microphone working', cameraBusy.audio !== null);
+    check('and says which applications to close',
+        /Zoom|Teams/i.test(cameraBusy.cameraError), cameraBusy.cameraError);
+
+    // Both present: the ordinary case must still work.
+    const both = await acquireInterviewMedia(async (c: MediaStreamConstraints) =>
+        (c.video ? 'CAM' : 'MIC') as unknown as MediaStream);
+    check('with both devices, both are returned',
+        both.audio === ('MIC' as unknown) && both.video === ('CAM' as unknown));
+    check('and nothing is reported', both.micError === '' && both.cameraError === '');
+
+    // No microphone: this one DOES block, and must say so.
+    const micCalls: MediaStreamConstraints[] = [];
+    const noMic = await acquireInterviewMedia(async (c: MediaStreamConstraints) => {
+        micCalls.push(c);
+        throw notFound;
+    });
+    check('a missing microphone blocks', noMic.audio === null && noMic.micError.length > 0);
+    check('and the camera is not even attempted -- there is nothing to run',
+        micCalls.length === 1, micCalls.length);
+    check('no camera error is invented for it', noMic.cameraError === '', noMic.cameraError);
+
+    // A refused microphone is the one case that really is a permission problem.
+    const denied = await acquireInterviewMedia(async () => {
+        throw Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
+    });
+    check('a refused microphone says so, and points at the padlock',
+        /padlock/i.test(denied.micError), denied.micError);
+}
+
+console.log('\n10. The CV picker label');
 {
     check('title and headline', cvLabel({ title: 'DevOps CV', headline: 'SRE' }) === 'DevOps CV — SRE');
     check('falls back to the name', cvLabel({ title: 'CV', full_name: 'Mahmoud' }) === 'CV — Mahmoud');
