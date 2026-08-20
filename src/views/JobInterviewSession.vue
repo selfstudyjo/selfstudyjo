@@ -4,6 +4,14 @@
       <div>
         <strong>💼 {{ interviewType }} Interview</strong>
         <span class="ji-badge" v-if="topic && interviewType === 'Technical'">{{ topic }}</span>
+        <!--
+          Both of these confirm something the candidate asked for and would
+          otherwise have no way to see: that the CV really did reach the
+          interviewer, and that this sitting is being treated as a redo rather
+          than as a fresh interview that will re-ask the same questions.
+        -->
+        <span class="ji-badge" v-if="cvTitle" :title="'The interviewer has read: ' + cvTitle">📄 CV attached</span>
+        <span class="ji-badge" v-if="attempt > 1" title="New questions — the interviewer knows what you have already been asked">🔁 Attempt {{ attempt }}</span>
       </div>
       <div class="ji-header-right">
         <span class="ji-q-counter" v-if="phase !== 'idle'">Q {{ Math.min(questionNumber, maxQuestions) }} / {{ maxQuestions }}</span>
@@ -104,23 +112,26 @@
       <div class="ji-report-card"><h3>🗣️ Communication</h3><p>{{ report.communication }}</p></div>
 
       <div class="ji-report-card">
-        <h3>💬 Questions, Your Answers & Model Answers ({{ qaPairs.length }})</h3>
+        <h3>💬 Question-by-question coaching ({{ qaPairs.length }})</h3>
+        <p class="ji-card-lead">
+          For each question: what you said, what was missing, what a strong answer sounds like,
+          and why the interviewer asked it.
+        </p>
         <div class="ji-qa-list">
-          <div v-for="(qa, i) in qaPairs" :key="i" class="ji-qa-item">
-            <div class="ji-qa-q">Q{{ i + 1 }}. {{ qa.question }}</div>
-            <div class="ji-qa-a"><span class="ji-qa-a-label">🗣️ Your answer:</span> {{ qa.answer || '(no answer captured)' }}</div>
-            <div class="ji-qa-model" v-if="qa.model_answer">
-              <span class="ji-qa-model-label">⭐ Model answer (for training):</span>
-              {{ qa.model_answer }}
-            </div>
-          </div>
+          <QaCoaching v-for="(qa, i) in qaPairs" :key="i" :qa="qa" :index="i" />
           <div v-if="qaPairs.length === 0" style="color:var(--ji-text-mute)">No questions were answered.</div>
         </div>
       </div>
 
       <div class="ji-controls">
         <button @click="$router.push('/job-interview/results')" class="ji-btn-primary">View All Results →</button>
-        <button @click="$router.push('/job-interview/pre-session')" class="ji-btn-secondary">Practice Again</button>
+        <!--
+          Straight back into the room with the same role, requirements and CV.
+          Re-typing a page of job requirements is the reason nobody practised the
+          same role twice; the interviewer is told what it has already asked.
+        -->
+        <button @click="redoSameInterview" class="ji-btn-success">🔁 Redo This Interview</button>
+        <button @click="editAndRedo" class="ji-btn-secondary">✏️ Change Details & Redo</button>
       </div>
     </div>
   </div>
@@ -130,23 +141,25 @@
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { jobInterviewService, type QAPair, type EvaluationResult } from '@/services/jobinterview.service';
+import {
+  jobInterviewService, type QACoaching, type QAPair, type EvaluationResult,
+} from '@/services/jobinterview.service';
 import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
+import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
 import {
   INTERVIEWER_TITLES, actorById, castVoice, interviewerLabel, isActorId,
   pickInterviewer, pitchFor, type InterviewType,
 } from '@/cast/actors';
+import {
+  MAX_AVOID_QUESTIONS, clampMinutes, fallbackQuestion as fallbackQuestionFor,
+  questionCountFor, redoConfigFrom, type InterviewConfig,
+} from '@/utils/interviewSetup';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 // ====== Config from pre-session ======
-interface Config {
-  type: string; topic: string; qualifications: string; minutes: number;
-  /** Which of the six conducts this interview; see `interviewer` below. */
-  interviewer?: string;
-}
-let cfg: Config = { type: 'Technical', topic: '', qualifications: '', minutes: 15 };
+let cfg: InterviewConfig = { type: 'Technical', topic: '', qualifications: '', minutes: 15 };
 try {
   const raw = sessionStorage.getItem('jobInterviewConfig');
   if (raw) cfg = JSON.parse(raw);
@@ -154,9 +167,19 @@ try {
 
 const topic = cfg.topic || '';
 const qualifications = cfg.qualifications || '';
-const plannedMinutes = Math.max(3, Math.min(60, cfg.minutes || 15));
+const plannedMinutes = clampMinutes(cfg.minutes);
 
-const maxQuestions = Math.max(4, Math.min(12, Math.round(plannedMinutes / 1.5)));
+// The CV the candidate attached, already rendered to text by the pre-session
+// page. Text rather than an id on purpose: the room is re-created by a reload,
+// and resolving it here would put a live interview behind app 33 being warm.
+const cvSummary = cfg.cvSummary || '';
+const cvTitle = cfg.cvTitle || '';
+// Which sitting this is, and what was asked in the earlier ones. Both only
+// affect which questions come out; neither can stop the interview.
+const attempt = Math.max(1, Math.round(Number(cfg.attempt) || 1));
+const avoidQuestions = (cfg.avoidQuestions || []).slice(0, MAX_AVOID_QUESTIONS);
+
+const maxQuestions = questionCountFor(plannedMinutes);
 
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'Candidate');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
@@ -180,42 +203,22 @@ const castId = cfg.interviewer || '';
 const interviewer = isActorId(castId) ? actorById(castId) : pickInterviewer();
 
 const interviewType: InterviewType = cfg.type === 'HR' ? 'HR' : 'Technical';
-const isHR = interviewType === 'HR';
 const interviewerName = interviewer.name;
 const interviewerRole = INTERVIEWER_TITLES[interviewType].title;
 const interviewerTag = interviewerLabel(interviewer, interviewType);
 
-// ====== Local fallback questions (vary by number so they never repeat) ======
-const HR_FALLBACKS = [
-  'Tell me about yourself and your professional background.',
-  'Why are you interested in this role and our company?',
-  'Describe a challenging situation at work and how you handled it.',
-  'What are your greatest strengths, and one area you are working to improve?',
-  'Tell me about a time you worked in a team to achieve a difficult goal.',
-  'Where do you see yourself in five years?',
-  'How do you handle pressure and competing deadlines?',
-  'Why should we hire you over other candidates?',
-  'Describe a time you received difficult feedback. How did you respond?',
-  'Do you have any questions for us?'
-];
-function techFallbacks(t: string) {
-  const r = t || 'this field';
-  return [
-    `Can you walk me through your hands-on experience related to ${r}?`,
-    `What core concepts should every ${r} professional master, and why?`,
-    `Describe the most difficult technical problem you solved involving ${r}.`,
-    `How do you approach debugging a complex, intermittent issue in ${r}?`,
-    `What best practices and design principles do you follow when working with ${r}?`,
-    `How do you keep your ${r} skills current with industry changes?`,
-    `Describe a project where you applied ${r} and the impact it had.`,
-    `What tools, frameworks or technologies do you rely on for ${r} work?`,
-    `How would you explain a complex ${r} concept to a non-technical stakeholder?`,
-    `Tell me about a trade-off decision you made in a ${r} project.`
-  ];
-}
+// ====== Local fallback questions ======
+/**
+ * Used only when app 27 itself is unreachable -- when it is up but its own AI
+ * providers are not, it falls back on its own (and rotates the same way).
+ *
+ * Rotated by `attempt`, which is what makes a redo a redo rather than a re-run
+ * of the identical twelve questions. The pools and the rotation live in
+ * src/utils/interviewSetup.ts so they can be checked without a browser
+ * (`npm run check:interview`).
+ */
 function fallbackQuestion(qnum: number): string {
-  const arr = isHR ? HR_FALLBACKS : techFallbacks(topic);
-  return arr[(qnum - 1) % arr.length];
+  return fallbackQuestionFor(interviewType, topic, qnum, attempt);
 }
 
 // ====== State ======
@@ -444,7 +447,8 @@ async function startInterview() {
   captionText.value = 'Interviewer is joining…';
   const intro = await jobInterviewService.callInterviewer({
     stage: 'intro', interview_type: interviewType, topic, qualifications, user_name: userName.value,
-    interviewer_name: interviewerName, interviewer_role: interviewerRole
+    interviewer_name: interviewerName, interviewer_role: interviewerRole,
+    cv_summary: cvSummary
   });
   await speak(intro || `Hello ${userName.value}, I'm ${interviewerName}. Let's begin.`);
 
@@ -473,7 +477,14 @@ async function askNextQuestion() {
     interviewer_name: interviewerName,
     interviewer_role: interviewerRole,
     question_number: questionNumber.value,
-    previous_qa: qaPairs.value
+    previous_qa: qaPairs.value,
+    // The CV rides along on every question, not just the intro: the model is
+    // stateless, so one mentioned in the greeting is forgotten by question three.
+    cv_summary: cvSummary,
+    // Earlier sittings' questions, plus this sitting's, so the interviewer does
+    // not re-ask something within the redo either.
+    avoid_questions: avoidQuestions,
+    attempt
   });
   currentQuestionText.value = (q && q.trim()) ? q.trim() : fallbackQuestion(questionNumber.value);
   await speak(currentQuestionText.value);
@@ -527,28 +538,39 @@ async function endInterview() {
 
   const closing = await jobInterviewService.callInterviewer({
     stage: 'closing', interview_type: interviewType, topic, user_name: userName.value,
-    interviewer_name: interviewerName, interviewer_role: interviewerRole
+    interviewer_name: interviewerName, interviewer_role: interviewerRole,
+    attempt
   });
   await speak(closing || `Thank you ${userName.value}. I'll share some feedback now.`);
 
   const duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
 
-  // Run evaluation + model answers in parallel
-  captionText.value = 'Generating feedback and model answers…';
-  const questions = qaPairs.value.map(qa => qa.question);
+  // Run evaluation + coaching in parallel
+  captionText.value = 'Generating feedback, model answers and coaching notes…';
 
-  const [evalResult, modelAnswers] = await Promise.all([
+  const [evalResult, coaching] = await Promise.all([
     jobInterviewService.evaluate({
-      interview_type: interviewType, topic, qualifications, qa_pairs: qaPairs.value
+      interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
+      qa_pairs: qaPairs.value
     }),
-    questions.length > 0
-      ? jobInterviewService.getModelAnswers({ interview_type: interviewType, topic, qualifications, questions })
-      : Promise.resolve([] as string[])
+    // The whole pair, not just the question: what the candidate SAID is what
+    // lets the coach say why their answer fell short rather than only describing
+    // a good one.
+    qaPairs.value.length > 0
+      ? jobInterviewService.getModelAnswers({
+          interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
+          qa_pairs: qaPairs.value
+        })
+      : Promise.resolve([] as QACoaching[])
   ]);
 
-  // Attach model answers to each Q&A
+  // Attach the coaching to each Q&A. `model_answer` is kept as a plain string
+  // alongside it, because that is the field every report written before today
+  // is stored with and the one an older client reads.
   qaPairs.value.forEach((qa, i) => {
-    qa.model_answer = modelAnswers[i] || '';
+    const entry = coaching[i];
+    qa.model_answer = entry?.model_answer || '';
+    qa.coaching = entry || undefined;
   });
 
   if (evalResult) {
@@ -580,6 +602,10 @@ async function endInterview() {
       interview_type: interviewType,
       topic,
       qualifications,
+      cv_id: cfg.cvId || '',
+      cv_title: cvTitle,
+      cv_summary: cvSummary,
+      attempt,
       planned_minutes: plannedMinutes,
       duration_seconds: duration,
       qa_pairs: qaPairs.value,   // includes model_answer now
@@ -605,6 +631,54 @@ function scoreClass(score: number): string {
 
 function leave() {
   router.push('/job-interview/results');
+}
+
+// ====== Practising again ======
+/**
+ * The interview that was just sat, as a config for sitting it again.
+ *
+ * Built from the CURRENT session rather than re-read from the service: the save
+ * happens on a background path and a redo pressed straight after the report
+ * appears must not depend on it having landed yet.
+ */
+function nextAttemptConfig() {
+  const asked = qaPairs.value.map(qa => qa.question).filter(Boolean);
+  return redoConfigFrom({
+    interview_type: interviewType,
+    topic,
+    qualifications,
+    planned_minutes: plannedMinutes,
+    attempt,
+    cv_id: cfg.cvId || '',
+    cv_title: cvTitle,
+    cv_summary: cvSummary,
+  }, {
+    // A different person each sitting, which is closer to the real thing than
+    // meeting the same interviewer six times.
+    interviewer: pickInterviewer().id,
+    // This sitting's questions first -- they are the ones a candidate would
+    // most obviously notice being asked again.
+    avoidQuestions: [...asked, ...avoidQuestions].slice(0, MAX_AVOID_QUESTIONS),
+  });
+}
+
+/** Straight back into the room, same setup, different questions. */
+async function redoSameInterview() {
+  sessionStorage.setItem('jobInterviewConfig', JSON.stringify(nextAttemptConfig()));
+  // Out of the room and back in, rather than a push to the path we are already
+  // on. This view reads its config once, at setup, and Vue Router reuses the
+  // instance for a same-path navigation -- so a plain push would leave the
+  // second interview running on the first one's state: same questions, expired
+  // timer, report still on screen. Leaving unmounts it, which is also what
+  // stops the camera and the speech synthesis.
+  await router.replace('/job-interview');
+  await router.push('/job-interview/session');
+}
+
+/** The same, but stopping at the form so the details can be changed first. */
+function editAndRedo() {
+  sessionStorage.setItem('jobInterviewPrefill', JSON.stringify(nextAttemptConfig()));
+  router.push('/job-interview/pre-session');
 }
 
 onMounted(() => {

@@ -395,6 +395,129 @@
   letter-spacing: 0.02em;
 }
 
+/* ---------------------------------------------------------------------------
+   Per-question coaching (components/jobinterview/QaCoaching.vue)
+
+   Three notes under each question -- feedback on what the candidate said, the
+   key points a strong answer needs, and why the question is asked. They are
+   deliberately three different washes rather than three headings in one block:
+   a candidate re-reading a report is looking for one of the three, and a wall
+   of prose is what the old single-paragraph "model answer" already was.
+
+   Every colour is a token with a literal fallback (working rule 12), and every
+   coloured text token is the `-text` variant -- these sit on a wash of their own
+   family, which is the harder backdrop in both light and dark galaxies and the
+   single thing that accounted for most of the light themes' contrast failures.
+   --------------------------------------------------------------------------- */
+.ji-qa-generic-note {
+  display: block;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ji-text-mute);
+}
+
+.ji-qa-note {
+  margin-top: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--ji-border);
+  border-radius: var(--ji-r-sm);
+  color: var(--ji-text-soft);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.ji-qa-note-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.02em;
+}
+.ji-qa-note ul {
+  margin: 0.15rem 0 0;
+  /* Room for the marker. `list-style-position: inside` would wrap the second
+     line under the bullet, which on a four-item list reads as one paragraph. */
+  padding-left: 1.15rem;
+  white-space: normal;
+}
+.ji-qa-note li { margin: 0.2rem 0; line-height: 1.5; }
+
+/* What the candidate actually said -- the only part of the report about them. */
+.ji-qa-feedback {
+  background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
+  border-color: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.28);
+  border-left: 3px solid var(--sfs-accent, #6366f1);
+}
+.ji-qa-feedback .ji-qa-note-label { color: var(--sfs-accent-text, #a5b4fc); }
+
+.ji-qa-points {
+  background: rgb(var(--sfs-info-rgb, 20 184 166) / 0.1);
+  border-color: rgb(var(--sfs-info-rgb, 20 184 166) / 0.28);
+  border-left: 3px solid var(--sfs-info, #14b8a6);
+}
+.ji-qa-points .ji-qa-note-label { color: var(--sfs-info-text, #5eead4); }
+
+.ji-qa-why {
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.1);
+  border-color: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.28);
+  border-left: 3px solid var(--ji-warn);
+}
+.ji-qa-why .ji-qa-note-label { color: var(--sfs-warning-text, #fcd34d); }
+
+/* Per-answer rating. Banded, not a gradient: a 6 and a 7 are the same advice. */
+.ji-qa-rating {
+  float: right;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.15);
+}
+/* Each fill states its own ink -- a shared base rule can only carry one
+   `color`, and it would be whichever variant was written first. */
+.ji-qa-rating.good { background: var(--sfs-success, #22c55e); color: var(--sfs-on-success, #fff); }
+.ji-qa-rating.mid  { background: var(--sfs-warning, #f59e0b); color: var(--sfs-on-warning, #fff); }
+.ji-qa-rating.low  { background: var(--sfs-danger, #ef4444);  color: var(--sfs-on-danger, #fff); }
+
+/* Which sitting a result was. Only shown from the second onwards -- a pill
+   reading "try 1" on every row is a column of noise. */
+.ji-attempt-pill {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.18);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.3);
+  color: var(--sfs-accent-text, #a5b4fc);
+  white-space: nowrap;
+}
+
+/* Says why the pre-session form arrived filled in. Without it the page looks
+   like it remembered something it should not have. */
+.ji-redo-banner {
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.1);
+  border: 1px solid rgb(var(--sfs-success-rgb, 34 197 94) / 0.28);
+  border-left: 3px solid var(--ji-success);
+  border-radius: var(--ji-r-sm);
+  color: var(--ji-text-soft);
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.ji-card-lead {
+  margin: -0.15rem 0 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ji-text-mute);
+}
+
 /* Results table */
 .ji-page h1 {
   margin-bottom: 1.5rem; font-size: clamp(1.5rem, 3vw + 0.5rem, 2.1rem); font-weight: 700;
