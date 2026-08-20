@@ -85,6 +85,13 @@
         <span v-if="phase === 'answering'" style="color:#34d399;font-size:.85rem">🎤 Recording (Whisper AI)</span>
       </h4>
       <div>{{ currentAnswerText || (phase === 'answering' ? '🎙️ Listening… your words appear every ~3 seconds' : '—') }}</div>
+      <!--
+        The caption reads "Listening…" whether the recorder is running or has
+        died, so a fault here has no natural symptom. Saying so is the whole
+        difference between a bug that gets reported and one that gets reported
+        as "it just sticks".
+      -->
+      <div class="ji-transcript-warning" v-if="recordingError">⚠️ {{ recordingError }}</div>
     </div>
 
     <!--
@@ -285,6 +292,16 @@ const cameraBusy = ref(false);
 const mediaError = ref('');
 /** Why the camera could not be opened. Does not block anything. */
 const cameraError = ref('');
+/**
+ * Why nothing is being transcribed.
+ *
+ * Surfaced because the failure mode here has no natural symptom: the caption
+ * says "Listening…" whether the recorder is running or has thrown, so a broken
+ * recording loop and a candidate who has not started talking look identical.
+ * That is how a ReferenceError on every chunk went unnoticed except as
+ * "it just sticks".
+ */
+const recordingError = ref('');
 
 const timerDisplay = ref('00:00');
 const timeUp = ref(false);
@@ -512,11 +529,29 @@ function getPreferredMimeType(): string {
   return '';
 }
 
+/**
+ * Consecutive failed transcriptions.
+ *
+ * Counted rather than reported one at a time: a single dropped chunk is normal
+ * on a flaky connection and re-reporting it every three seconds would be
+ * noise. Three in a row means it is not coming back on its own.
+ */
+let transcribeFailures = 0;
+const TRANSCRIBE_FAILURES_BEFORE_TELLING = 3;
+
+function noteTranscribeFailure(reason: string) {
+  transcribeFailures++;
+  if (transcribeFailures >= TRANSCRIBE_FAILURES_BEFORE_TELLING) {
+    recordingError.value = `Your speech is not being transcribed (${reason}). Keep answering — `
+      + `the interview continues — but this answer may be recorded as empty.`;
+  }
+}
+
 async function transcribeAudioBlob(blob: Blob): Promise<void> {
   if (blob.size < 1000) return;
   try {
     const baseUrl = await jobInterviewService.resolveBaseUrl();
-    if (!baseUrl) return;
+    if (!baseUrl) { noteTranscribeFailure('the transcription service is unreachable'); return; }
     const formData = new FormData();
     formData.append('audio', blob, 'audio.webm');
     const token = import.meta.env.VITE_AUTH_TOKEN;
@@ -528,15 +563,22 @@ async function transcribeAudioBlob(blob: Blob): Promise<void> {
     if (response.ok) {
       const result = await response.json();
       const text = (result.text || '').trim();
+      // A silent chunk legitimately transcribes to nothing, so an empty result
+      // is a success and must reset the counter — otherwise a candidate who
+      // pauses to think is told transcription is broken.
+      transcribeFailures = 0;
+      recordingError.value = '';
       if (text) {
         answerBuffer = (answerBuffer + ' ' + text).trim();
         currentAnswerText.value = answerBuffer;
       }
     } else {
       console.warn('[Whisper] HTTP', response.status);
+      noteTranscribeFailure(`the server answered ${response.status}`);
     }
   } catch (e: any) {
     console.error('[Whisper] error:', e?.message || e);
+    noteTranscribeFailure('the connection failed');
   }
 }
 
@@ -545,13 +587,18 @@ async function recordOneChunk(durationMs: number): Promise<void> {
     if (!audioStream) { resolve(); return; }
     const audioTracks = audioStream.getAudioTracks();
     if (audioTracks.length === 0) { resolve(); return; }
-    const audioStream = new MediaStream(audioTracks);
+    // NOT `audioStream`. That is the module-level stream this function reads two
+    // lines above, and a `const` of the same name puts the whole function body
+    // in its temporal dead zone — so both reads above throw
+    // "Cannot access 'audioStream' before initialization", every chunk, and the
+    // only symptom is the transcript box sitting on "Listening…" for ever.
+    const chunkStream = new MediaStream(audioTracks);
     const mimeType = getPreferredMimeType();
     let recorder: MediaRecorder;
     try {
       recorder = mimeType
-        ? new MediaRecorder(audioStream, { mimeType, audioBitsPerSecond: 64000 })
-        : new MediaRecorder(audioStream);
+        ? new MediaRecorder(chunkStream, { mimeType, audioBitsPerSecond: 64000 })
+        : new MediaRecorder(chunkStream);
     } catch { resolve(); return; }
     const chunks: Blob[] = [];
     let stopTimeoutId: any = null;
@@ -576,11 +623,19 @@ async function recordOneChunk(durationMs: number): Promise<void> {
 async function startContinuousRecording() {
   if (recordingLoopActive) return;
   recordingLoopActive = true;
-  while (isAnswering && micEnabled.value) {
-    await recordOneChunk(3500);
-    if (isAnswering) await new Promise(r => setTimeout(r, 50));
+  // try/finally, because the flag is a latch: without it one thrown chunk
+  // leaves `recordingLoopActive` true for the rest of the session and the
+  // `return` above then silently refuses every later answer. That is what
+  // turned a single ReferenceError into "the transcript never appears again",
+  // and it would have hidden any future fault the same way.
+  try {
+    while (isAnswering && micEnabled.value) {
+      await recordOneChunk(3500);
+      if (isAnswering) await new Promise(r => setTimeout(r, 50));
+    }
+  } finally {
+    recordingLoopActive = false;
   }
-  recordingLoopActive = false;
 }
 
 function stopCurrentRecording() {
@@ -683,11 +738,17 @@ function startAnswering() {
   if (!audioStream) { alert('Your microphone is not connected yet.'); return; }
   answerBuffer = '';
   currentAnswerText.value = '';
+  recordingError.value = '';
+  transcribeFailures = 0;
   isAnswering = true;
   phase.value = 'answering';
   captionSpeaker.value = 'You';
   captionText.value = '🎤 Answer now — your words appear below every ~3 seconds (Whisper AI).';
-  startContinuousRecording().catch(e => console.error('[Recording]', e));
+  startContinuousRecording().catch(e => {
+    console.error('[Recording]', e);
+    recordingError.value = 'Recording stopped unexpectedly. Press Submit Answer, then Start '
+      + 'Answering again — or type nothing and continue; the interview is not affected.';
+  });
 }
 
 async function submitAnswer() {

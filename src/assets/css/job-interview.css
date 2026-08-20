@@ -686,3 +686,16 @@
   .ji-controls > button { flex: 1 1 calc(50% - 0.25rem); padding: 0.6rem 0.85rem; font-size: 0.9rem; }
   .ji-timer-display { font-size: 1.1rem; }
 }
+/* A transcription fault, said in the transcript box. Warning weight, not
+   danger: the interview carries on, only the recording of this answer is at
+   risk. */
+.ji-transcript-warning {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.12);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3);
+  border-radius: var(--ji-r-sm);
+  color: var(--sfs-warning-text, #fcd34d);
+}
