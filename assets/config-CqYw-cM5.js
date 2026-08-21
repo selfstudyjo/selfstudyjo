@@ -1,0 +1,1 @@
+import{t as e}from"./index-CGSZ0stz.js";export{e as serviceRegistry};
