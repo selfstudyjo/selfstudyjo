@@ -16,9 +16,38 @@ import { serviceRegistry } from './config';
  * report renders exactly as it did before.
  */
 export interface QACoaching {
-    /** A strong answer to this question, in the first person. */
+    /**
+     * A strong answer to this question, in the first person -- SHORT.
+     *
+     * Two to four sentences, the way somebody would actually say it out loud.
+     * It used to be a paragraph of structural advice ("answer in layers: how
+     * long and in what settings, the two most relevant things...") because that
+     * is what the fallback produced whenever the AI could not be reached, and
+     * the fallback was reached constantly. A candidate cannot rehearse a
+     * paragraph about how to answer; they can rehearse an answer.
+     */
     model_answer: string;
-    /** What any strong answer to this question has to contain. */
+    /**
+     * The candidate's OWN answer, rewritten to be stronger.
+     *
+     * The single most useful thing in the report, and the thing a model answer
+     * cannot do: it keeps their content, their projects and their numbers, and
+     * fixes the structure, the hedging and the "we" that should be "I". Absent
+     * when they said nothing -- there is nothing to improve.
+     */
+    improved_answer?: string;
+    /** The one change that would most improve this answer. One line. */
+    fix?: string;
+    /**
+     * What any strong answer has to contain.
+     *
+     * Kept for records written before 2026-08-22, which stored it, and no
+     * longer requested: a generic checklist under every question is what the
+     * report looked like when the AI was unreachable, and it read as the AI
+     * having said the same thing about all ten answers.
+     *
+     * @deprecated Not produced for new interviews.
+     */
     key_points?: string[];
     /** What the interviewer is really assessing, and the usual mistake. */
     why?: string;
@@ -44,6 +73,17 @@ export interface QAPair {
     model_answer?: string;
     /** The full coaching block. Absent on sessions recorded before 2026-08-20. */
     coaching?: QACoaching;
+    /** How long the candidate spent answering. Purely informational. */
+    seconds?: number;
+    /**
+     * Whether the coaching for this question is still being written.
+     *
+     * The report is built DURING the interview -- each answer is coached the
+     * moment it is submitted rather than all of them at the end -- so a question
+     * can legitimately be on screen with nothing under it yet. Saying so is the
+     * difference between a report that is filling in and one that looks broken.
+     */
+    coaching_pending?: boolean;
 }
 
 export interface JobInterviewSession {
@@ -69,6 +109,19 @@ export interface JobInterviewSession {
     /** 1 for a first sitting, 2+ for a redo of the same role and requirements. */
     attempt?: number;
     planned_minutes: number;
+    /** How many questions the candidate asked for. Absent on older sessions. */
+    planned_questions?: number;
+    /**
+     * `in_progress` while the interview is running, `complete` once it has been
+     * evaluated.
+     *
+     * The session is now saved when the interview STARTS and updated after each
+     * answer, so a browser that dies at question seven leaves seven coached
+     * answers behind instead of nothing at all. Without this field a
+     * half-finished interview is indistinguishable from a finished one that
+     * scored zero.
+     */
+    status?: 'in_progress' | 'complete';
     duration_seconds: number;
     qa_pairs: QAPair[];
     transcript: string;
@@ -79,7 +132,35 @@ export interface JobInterviewSession {
     technical_assessment: string;
     communication: string;
     recommendation: string;
+    /** Three to five things to do before the next interview. */
+    action_plan?: string[];
+    /** The single best moment of the interview, quoted back. */
+    standout_moment?: string;
+    /** What would worry a real hiring manager. Empty when nothing would. */
+    red_flags?: string;
+    /** 0-100 per dimension, so a candidate can see WHERE the score came from. */
+    score_breakdown?: ScoreBreakdown;
     created_at: string;
+}
+
+/**
+ * Where the overall score came from.
+ *
+ * One number out of a hundred tells a candidate they did badly and nothing
+ * about what to practise. Five tell them their content was fine and their
+ * structure was not, which is a different evening's work.
+ */
+export interface ScoreBreakdown {
+    /** Was there a shape to the answers, or were they streams of thought? */
+    structure?: number;
+    /** Did they answer the question that was asked? */
+    relevance?: number;
+    /** Concrete detail, or generalities? */
+    depth?: number;
+    /** Clarity, pace, filler, hedging. */
+    communication?: number;
+    /** Results and numbers, or activity? */
+    impact?: number;
 }
 
 export interface InterviewerCallBody {
@@ -123,6 +204,41 @@ export interface InterviewerCallBody {
      * precisely when an un-rotated pool would hand back the identical interview.
      */
     attempt?: number;
+    /**
+     * Every question asked SO FAR IN THIS INTERVIEW.
+     *
+     * `previous_qa` only ever carried the last five, because it also carries the
+     * answers and the prompt has a budget -- so in a twelve-question interview
+     * the model was free to re-ask question two at question nine, and did,
+     * constantly. This is the questions alone, all of them, which costs almost
+     * nothing and is the single biggest cause of "the questions repeat".
+     */
+    asked_questions?: string[];
+    /**
+     * The area this question is supposed to cover, from the plan drawn up at
+     * the start of the interview.
+     *
+     * Telling a stateless model "ask something different" is advice; telling it
+     * "ask about incident response" is an instruction. This is what turns a
+     * generic anti-repeat prompt into an interview that covers ground on
+     * purpose.
+     */
+    focus?: string;
+    /** Different for every sitting, so identical settings are not one interview. */
+    session_seed?: number;
+}
+
+/** What the interview will cover, decided once at the start. */
+export interface QuestionPlanBody {
+    interview_type?: string;
+    topic?: string;
+    qualifications?: string;
+    cv_summary?: string;
+    /** How many areas to plan. One per question. */
+    count: number;
+    avoid_questions?: string[];
+    attempt?: number;
+    session_seed?: number;
 }
 
 export interface EvaluateBody {
@@ -155,6 +271,10 @@ export interface EvaluationResult {
     technical_assessment: string;
     communication: string;
     recommendation: string;
+    action_plan?: string[];
+    standout_moment?: string;
+    red_flags?: string;
+    score_breakdown?: ScoreBreakdown;
 }
 
 class JobInterviewService {
@@ -240,6 +360,62 @@ class JobInterviewService {
             return answers.map(a => ({ model_answer: String(a || '') }));
         } catch (e) {
             console.error('Model answers failed:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Coaching for ONE answer, asked for the moment it is submitted.
+     *
+     * The report used to be built entirely at the end: one evaluate call plus a
+     * coaching call per batch of three, all after the closing speech, which on
+     * two cold PythonAnywhere replicas is most of a minute of a spinner. The
+     * candidate has nothing to do during it and no idea whether it is working.
+     *
+     * Coaching is per question and does not depend on the questions after it, so
+     * there is no reason to wait: this is fired while the interviewer is asking
+     * the next question, and by the time the interview ends the only thing left
+     * is the overall evaluation. A single question is also the shape the AI
+     * handles most reliably -- one short answer inside the whole token budget is
+     * what stops a reply being truncated, which is what made every question in
+     * the report share one paragraph of generic advice.
+     *
+     * Never throws: a coaching call that fails leaves that question uncoached
+     * and the interview entirely unaffected, and `endInterview` retries whatever
+     * is still missing.
+     */
+    async coachOne(
+        body: Omit<ModelAnswersBody, 'qa_pairs' | 'questions'> & { qa: QAPair },
+    ): Promise<QACoaching | null> {
+        const { qa, ...rest } = body;
+        const coaching = await this.getModelAnswers({ ...rest, qa_pairs: [qa] });
+        return coaching[0] || null;
+    }
+
+    /**
+     * The areas this interview will cover, one per question, decided up front.
+     *
+     * Repetition was never really a prompt-wording problem. Each question was
+     * generated on its own, told only about the last five answers, by a model
+     * with no memory -- so on a technical interview it would open with "walk me
+     * through your experience", and then, four questions later, ask it again in
+     * different words. Asking for a PLAN first fixes the cause: every question
+     * then has ground of its own to cover and the model is not choosing a topic
+     * from nothing twelve times.
+     *
+     * Returns an empty list rather than throwing. The room asks its questions
+     * exactly as it used to when there is no plan, so a cold replica or an
+     * unreachable provider costs variety and never an interview.
+     */
+    async planQuestions(body: QuestionPlanBody): Promise<string[]> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            const r = await apiService.post<{ areas?: string[] }>(
+                baseUrl, `/api/jobinterview/bot/plan`, body);
+            const areas = Array.isArray(r.areas) ? r.areas : [];
+            return areas.map(a => String(a || '').trim()).filter(Boolean);
+        } catch (e) {
+            console.error('Question plan failed:', e);
             return [];
         }
     }

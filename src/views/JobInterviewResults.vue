@@ -26,6 +26,14 @@
             <td>
               {{ formatDate(s.created_at) }}
               <span class="ji-attempt-pill" v-if="(s.attempt || 1) > 1">try {{ s.attempt }}</span>
+              <!--
+                The session is written from the FIRST question now and updated
+                after every answer, so an abandoned interview is in this list
+                with real coaching in it. Without this pill it is
+                indistinguishable from a finished one that scored nothing.
+              -->
+              <span class="ji-progress-pill" v-if="s.status === 'in_progress'"
+                    title="This interview was not finished — the answers you did give are still coached">unfinished</span>
             </td>
             <td>{{ s.interview_type }}</td>
             <td>{{ s.topic }}</td>
@@ -74,12 +82,38 @@
         <div class="ji-report-grid">
           <div><strong>Type:</strong> {{ modalSession.interview_type }}</div>
           <div><strong>Topic:</strong> {{ modalSession.topic }}</div>
-          <div><strong>Planned:</strong> {{ modalSession.planned_minutes }} min</div>
+          <div><strong>Planned:</strong> {{ modalSession.planned_minutes }} min<span
+            v-if="modalSession.planned_questions"> · {{ modalSession.planned_questions }} questions</span></div>
           <div><strong>Duration:</strong> {{ Math.floor(modalSession.duration_seconds/60) }}m {{ modalSession.duration_seconds%60 }}s</div>
           <div><strong>Questions:</strong> {{ (modalSession.qa_pairs && modalSession.qa_pairs.length) || 0 }}</div>
           <div><strong>Score:</strong> {{ modalSession.score }}/100</div>
           <div v-if="(modalSession.attempt || 1) > 1"><strong>Attempt:</strong> #{{ modalSession.attempt }}</div>
           <div v-if="modalSession.cv_title"><strong>CV:</strong> {{ modalSession.cv_title }}</div>
+        </div>
+
+        <div class="ji-report-section" v-if="breakdownRows.length">
+          <h3>📊 Where the score came from</h3>
+          <div class="ji-bars">
+            <div class="ji-bar-row" v-for="row in breakdownRows" :key="row.key">
+              <span class="ji-bar-label">{{ row.label }}</span>
+              <span class="ji-bar-track"><span class="ji-bar-fill" :class="row.band" :style="{ width: row.value + '%' }"></span></span>
+              <span class="ji-bar-value">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ji-report-section ji-report-plan"
+             v-if="modalSession.action_plan && modalSession.action_plan.length">
+          <h3>🎯 Do this before your next interview</h3>
+          <ol class="ji-plan-list"><li v-for="(step, i) in modalSession.action_plan" :key="i">{{ step }}</li></ol>
+        </div>
+
+        <div class="ji-report-section ji-report-standout" v-if="modalSession.standout_moment">
+          <h3>🌟 Your strongest moment</h3><p>{{ modalSession.standout_moment }}</p>
+        </div>
+
+        <div class="ji-report-section ji-report-flags" v-if="modalSession.red_flags">
+          <h3>⚠️ What would worry a hiring manager</h3><p>{{ modalSession.red_flags }}</p>
         </div>
 
         <div class="ji-report-section"><h3>🏁 Recommendation</h3><p>{{ modalSession.recommendation || '—' }}</p></div>
@@ -102,8 +136,8 @@
         <div class="ji-report-section">
           <h3>💬 Question-by-question coaching</h3>
           <p class="ji-card-lead">
-            For each question: what you said, what was missing, what a strong answer sounds like,
-            and why the interviewer asked it.
+            For each question: what you said, your own answer rewritten to be stronger, a short
+            model answer you can rehearse, and why the interviewer asked it.
           </p>
           <div class="ji-qa-list">
             <QaCoaching
@@ -127,9 +161,11 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { jobInterviewService, type JobInterviewSession } from '@/services/jobinterview.service';
+import {
+  jobInterviewService, type JobInterviewSession, type ScoreBreakdown,
+} from '@/services/jobinterview.service';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
-import { askedQuestionsFrom, redoConfigFrom } from '@/utils/interviewSetup';
+import { askedQuestionsFrom, newSessionSeed, redoConfigFrom } from '@/utils/interviewSetup';
 import { pickInterviewer } from '@/cast/actors';
 
 const router = useRouter();
@@ -156,6 +192,36 @@ function scoreClass(score: number): string { return score >= 80 ? 'good' : score
 function viewReport(s: JobInterviewSession) { modalSession.value = s; }
 
 /**
+ * The score's five dimensions, for the open report.
+ *
+ * Same order and same labels as the session view's own panel -- they are two
+ * renderings of one thing, and a candidate comparing a fresh report against a
+ * saved one must not have to work out that "Depth" and "Detail" are the same
+ * row. Absent on every session recorded before 2026-08-22, and the panel simply
+ * does not render for those.
+ */
+const BREAKDOWN_LABELS: { key: keyof ScoreBreakdown; label: string }[] = [
+  { key: 'structure', label: 'Structure' },
+  { key: 'relevance', label: 'Answering the question' },
+  { key: 'depth', label: 'Depth and detail' },
+  { key: 'communication', label: 'Communication' },
+  { key: 'impact', label: 'Results and impact' },
+];
+
+const breakdownRows = computed(() => {
+  const breakdown = modalSession.value?.score_breakdown || {};
+  return BREAKDOWN_LABELS
+    .map(row => ({ ...row, value: Number(breakdown[row.key]) }))
+    .filter(row => Number.isFinite(row.value))
+    .map(row => ({
+      key: String(row.key),
+      label: row.label,
+      value: Math.max(0, Math.min(100, Math.round(row.value))),
+      band: scoreClass(row.value),
+    }));
+});
+
+/**
  * The config for sitting a past interview again.
  *
  * The avoid list is built from EVERY past sitting of the same role, not just
@@ -174,6 +240,10 @@ function nextAttemptConfig(s: JobInterviewSession) {
     {
       interviewer: pickInterviewer().id,
       avoidQuestions: askedQuestionsFrom(sameGround, { type: s.interview_type, topic: s.topic }),
+      // A new seed per sitting, or a redo differs only by the questions it was
+      // explicitly told to skip -- and that list is capped, so a candidate on
+      // their fifth attempt would start seeing the first one's questions again.
+      sessionSeed: newSessionSeed(),
     },
   );
 }

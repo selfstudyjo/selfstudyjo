@@ -26,15 +26,21 @@ import {
     MAX_QUESTIONS,
     MIN_MINUTES,
     MIN_QUESTIONS,
+    SECONDS_PER_QUESTION,
     askedQuestionsFrom,
     clampMinutes,
+    clampQuestionCount,
     cvDigest,
     cvLabel,
     fallbackQuestion,
+    minutesForQuestions,
+    newSessionSeed,
     normaliseQuestion,
     normaliseType,
+    plannedQuestionCount,
     questionCountFor,
     redoConfigFrom,
+    secondsPerAnswer,
     techFallbacks,
     type DigestibleCv,
     type PastSession,
@@ -62,18 +68,72 @@ console.log('\n1. Duration and question count');
     check('below the floor clamps up', clampMinutes(1) === MIN_MINUTES);
     check('above the ceiling clamps down', clampMinutes(999) === MAX_MINUTES);
 
-    check('the shortest interview is still worth four questions',
+    check('the shortest interview is worth two questions',
         questionCountFor(MIN_MINUTES) === MIN_QUESTIONS, questionCountFor(MIN_MINUTES));
     check('the longest is capped',
         questionCountFor(MAX_MINUTES) === MAX_QUESTIONS, questionCountFor(MAX_MINUTES));
     check('15 minutes is ten questions', questionCountFor(15) === 10, questionCountFor(15));
 
-    // The pools have to be at least as long as the longest interview, or a
-    // 60-minute sitting repeats a question with nothing having gone wrong.
+    // The pools have to be at least as long as the longest interview, or the
+    // longest sitting repeats a question with nothing having gone wrong -- on
+    // the one path that is reached precisely when something already has.
     check('the HR pool covers the longest interview', HR_FALLBACKS.length >= MAX_QUESTIONS,
         HR_FALLBACKS.length);
     check('the technical pool covers it too', techFallbacks('DevOps').length >= MAX_QUESTIONS,
         techFallbacks('DevOps').length);
+}
+
+console.log('\n1b. The candidate picks a question count and the minutes follow');
+{
+    // The direction is the change: nobody thinks "I would like fourteen minutes
+    // of interview", and the old four-question floor was only an artefact of a
+    // three-minute minimum divided by ninety seconds.
+    check('two questions is the floor, and it is reachable',
+        clampQuestionCount(2) === 2 && clampQuestionCount(1) === MIN_QUESTIONS,
+        clampQuestionCount(1));
+    check('one question is raised to the floor rather than accepted',
+        clampQuestionCount(1) === MIN_QUESTIONS, clampQuestionCount(1));
+    check('nonsense is the floor, not NaN', clampQuestionCount('abc') === MIN_QUESTIONS);
+    check('above the ceiling clamps down', clampQuestionCount(999) === MAX_QUESTIONS);
+
+    check('ninety seconds per answer', SECONDS_PER_QUESTION === 90);
+    check('two questions is three minutes', minutesForQuestions(2) === 3, minutesForQuestions(2));
+    check('six questions is nine minutes', minutesForQuestions(6) === 9, minutesForQuestions(6));
+    check('an odd count rounds UP, never down -- a plan that does not fit is not a plan',
+        minutesForQuestions(5) === 8, minutesForQuestions(5));
+    check('the longest plan is still inside the duration ceiling',
+        minutesForQuestions(MAX_QUESTIONS) <= MAX_MINUTES, minutesForQuestions(MAX_QUESTIONS));
+
+    // The round trip is what the form relies on: a count is turned into minutes
+    // and the room turns the minutes back into a count. Disagree, and a
+    // six-question interview quietly asks seven.
+    for (let n = MIN_QUESTIONS; n <= MAX_QUESTIONS; n++) {
+        const minutes = minutesForQuestions(n);
+        if (questionCountFor(minutes) !== n) {
+            check(`${n} questions -> ${minutes} min -> ${questionCountFor(minutes)} questions`,
+                false, { n, minutes });
+        }
+    }
+    check('every count survives the trip through minutes and back', true);
+
+    check('extra minutes become longer answers, not a longer silence at the end',
+        secondsPerAnswer(20, 6) === 200, secondsPerAnswer(20, 6));
+    check('and never SHORTER than ninety seconds, whatever the arithmetic says',
+        secondsPerAnswer(1, 20) === SECONDS_PER_QUESTION, secondsPerAnswer(1, 20));
+
+    // A config written before 2026-08-22 has no `questions`, and a redo of one
+    // must run at the length it did rather than jumping to the new floor.
+    check('a config with a count uses it', plannedQuestionCount({ questions: 5, minutes: 60 }) === 5);
+    check('a config without one falls back to the old duration-derived count',
+        plannedQuestionCount({ minutes: 15 }) === 10, plannedQuestionCount({ minutes: 15 }));
+    check('an empty config is not zero questions',
+        plannedQuestionCount({}) >= MIN_QUESTIONS, plannedQuestionCount({}));
+    check('neither is a null one', plannedQuestionCount(null) >= MIN_QUESTIONS);
+
+    const seeds = new Set(Array.from({ length: 200 }, () => newSessionSeed()));
+    check('session seeds are not all the same number', seeds.size > 190, seeds.size);
+    check('and none of them is zero -- zero means "no seed" to the room',
+        ![...seeds].some(seed => !seed));
 }
 
 console.log('\n2. Interview type');
@@ -88,7 +148,9 @@ console.log('\n2. Interview type');
 console.log('\n3. No fallback question repeats inside one interview');
 {
     // The property the rotation stride exists for. An offset sharing a factor
-    // with the pool length would pass at attempt 1 and fail at attempt 3.
+    // with the pool length would pass at attempt 1 and fail at attempt 3 -- and
+    // the stride was 5 against a pool of 12 until the pools grew to 20, where 5
+    // and 20 share a factor and attempts 1 and 5 would have been identical.
     for (const type of ['Technical', 'HR']) {
         for (let attempt = 1; attempt <= 30; attempt++) {
             const asked = new Set<string>();
@@ -100,6 +162,24 @@ console.log('\n3. No fallback question repeats inside one interview');
             if (attempt >= 3 && asked.size === MAX_QUESTIONS) break; // three is enough to print
         }
     }
+
+    // And it has to hold for EVERY seed, not for the ones an afternoon's
+    // testing happened to produce. The seed is added to the offset rather than
+    // multiplied into it precisely so that the stride stays coprime with the
+    // pool length whatever it is; a seed that multiplied would break this at
+    // one value in five and never at the value anybody tried.
+    let worstSeed: number | null = null;
+    for (let seed = 0; seed < 400; seed++) {
+        for (const type of ['Technical', 'HR']) {
+            const asked = new Set<string>();
+            for (let q = 1; q <= MAX_QUESTIONS; q++) {
+                asked.add(fallbackQuestion(type, 'DevOps', q, 3, seed));
+            }
+            if (asked.size !== MAX_QUESTIONS) worstSeed = seed;
+        }
+    }
+    check('400 session seeds, and none of them repeats a question in one sitting',
+        worstSeed === null, worstSeed);
 }
 
 console.log('\n4. A redo asks something else');
@@ -115,8 +195,20 @@ console.log('\n4. A redo asks something else');
     for (let attempt = 1; attempt <= MAX_QUESTIONS; attempt++) {
         openings.add(fallbackQuestion('HR', '', 1, attempt));
     }
-    check('twelve attempts give twelve distinct openings',
+    check(`${MAX_QUESTIONS} attempts give ${MAX_QUESTIONS} distinct openings`,
         openings.size === MAX_QUESTIONS, openings.size);
+
+    // The other half of "practise again", and the half that keeps working once
+    // the avoid list is full: it is capped at MAX_AVOID_QUESTIONS, so a
+    // candidate on their fifth sitting is no longer protected by it alone.
+    const bySeed = new Set<string>();
+    for (let seed = 1; seed <= MAX_QUESTIONS; seed++) {
+        bySeed.add(fallbackQuestion('Technical', 'DevOps', 1, 1, seed));
+    }
+    check('a new session seed alone opens differently, at the same attempt number',
+        bySeed.size === MAX_QUESTIONS, bySeed.size);
+    check('and a seed of zero is the un-seeded question, so old configs are unchanged',
+        fallbackQuestion('HR', '', 3, 2, 0) === fallbackQuestion('HR', '', 3, 2));
 
     check('it is a pure function -- a reload mid-interview gets the same question',
         fallbackQuestion('Technical', 'DevOps', 3, 4) === fallbackQuestion('Technical', 'DevOps', 3, 4));
@@ -179,6 +271,30 @@ console.log('\n5. Which questions a redo is told to avoid');
     check('a session with no questions is skipped',
         askedQuestionsFrom([{ interview_type: 'HR', topic: '', qa_pairs: null }],
             { type: 'HR', topic: '' }).length === 0);
+}
+
+console.log('\n6a. A redo carries the question count, and re-seeds');
+{
+    const past: PastSession = {
+        interview_type: 'Technical', topic: 'DevOps', qualifications: '5+ years Linux',
+        planned_minutes: 20, planned_questions: 5, attempt: 1,
+    };
+    const redo = redoConfigFrom(past, {});
+    check('the question count comes across', redo.questions === 5, redo.questions);
+    check('and the extra minutes the candidate bought come with it',
+        redo.minutes === 20, redo.minutes);
+    check('a session recorded before question counts existed derives one',
+        redoConfigFrom({ planned_minutes: 15 }, {}).questions === 10,
+        redoConfigFrom({ planned_minutes: 15 }, {}).questions);
+    check('a redo never runs shorter than its own question count needs',
+        (redoConfigFrom({ planned_minutes: 3, planned_questions: 10 }, {}).minutes ?? 0) >= 15,
+        redoConfigFrom({ planned_minutes: 3, planned_questions: 10 }, {}).minutes);
+
+    const seeds = new Set(Array.from({ length: 50 }, () => redoConfigFrom(past, {}).sessionSeed));
+    check('every redo gets a seed of its own -- the avoid list is capped and this is not',
+        seeds.size > 45, seeds.size);
+    check('an explicit seed is honoured, so a reload re-enters the same interview',
+        redoConfigFrom(past, { sessionSeed: 4242 }).sessionSeed === 4242);
 }
 
 console.log('\n6. What a redo carries over');

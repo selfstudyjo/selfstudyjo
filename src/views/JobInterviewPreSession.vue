@@ -92,11 +92,92 @@ Example:
           experience rather than from the role title alone.
         </p>
 
-        <label>Interview Duration (minutes) *</label>
-        <input type="number" v-model.number="form.minutes" :min="MIN_MINUTES" :max="MAX_MINUTES" required>
-        <p class="ji-hint">≈ {{ questionCountFor(form.minutes) }} questions.</p>
+        <!--
+          The candidate picks the number of QUESTIONS and the minutes follow.
 
-        <p class="ji-hint">⚠️ The next page will request camera & microphone permission. Your answers are transcribed by AI.</p>
+          It used to be the other way round: a duration box, and the question
+          count fell out of it at a ratio nobody was shown. Nobody thinks "I
+          would like fourteen minutes of interview" -- they think "let me
+          rehearse five questions" -- and the old floor of four questions was
+          itself only an artefact of a three-minute minimum divided by ninety
+          seconds.
+        -->
+        <label for="ji-question-count">How many questions? *</label>
+        <input id="ji-question-count" type="number" v-model.number="form.questions"
+               :min="MIN_QUESTIONS" :max="MAX_QUESTIONS" required>
+        <div class="ji-quick-picks">
+          <button type="button" v-for="n in QUICK_PICKS" :key="n"
+                  class="ji-quick-pick" :class="{ on: form.questions === n }"
+                  @click="pickQuestions(n)">{{ n }}</button>
+        </div>
+        <p class="ji-hint">
+          From {{ MIN_QUESTIONS }} to {{ MAX_QUESTIONS }}. Each answer is planned at
+          <strong>1 minute 30</strong> — so {{ questionCount }} questions is
+          <strong>{{ suggestedMinutes }} minutes</strong>.
+        </p>
+
+        <label for="ji-minutes">Total time (minutes)</label>
+        <input id="ji-minutes" type="number" v-model.number="form.minutes"
+               :min="suggestedMinutes" :max="MAX_MINUTES">
+        <p class="ji-hint">
+          <template v-if="extraMinutes > 0">
+            ⏱️ {{ extraMinutes }} extra minute{{ extraMinutes === 1 ? '' : 's' }} —
+            about <strong>{{ perAnswerLabel }}</strong> per answer instead of 1:30.
+          </template>
+          <template v-else>
+            Set from your question count. Raise it if you want longer than 1:30 to think and
+            answer; it cannot go below what {{ questionCount }} questions need.
+          </template>
+        </p>
+
+        <!--
+          The three ways to fix a sentence, said BEFORE the room rather than
+          discovered in it. A non-native speaker restarting a sentence is the
+          single commonest thing that happens in this feature, and until this
+          page said so the only evidence the answer could be edited at all was a
+          button that appeared while somebody was busy talking.
+        -->
+        <div class="ji-howto">
+          <h3>🎙️ Fixing what you said, while you say it</h3>
+          <p>
+            Your speech is transcribed live into an <strong>editable</strong> box. If you start a
+            sentence badly — which everybody does, and non-native speakers do more — you do not
+            have to live with it in your report.
+          </p>
+          <ul>
+            <li>
+              <strong>Just type.</strong> The transcript is an ordinary text box. Click into it and
+              correct anything at any time, even mid-answer.
+            </li>
+            <li>
+              <strong>Say “sorry”.</strong> One <em>sorry</em> deletes the last part of the sentence
+              — back to the previous comma. <em>“sorry sorry”</em> deletes the last two parts,
+              <em>“sorry sorry ignore”</em> the last three, and so on. It never wipes the whole
+              answer. Anything you say after the correction carries straight on.
+            </li>
+            <li>
+              <strong>Highlight and replace.</strong> Select the words that came out wrong, press
+              <em>✂️ Replace highlighted</em>, and keep talking — the new words land exactly where
+              the old ones were, not at the end.
+            </li>
+          </ul>
+          <p class="ji-howto-words">
+            Words that count as a correction:
+            <code>sorry</code> · <code>scratch that</code> · <code>ignore that</code> ·
+            <code>forget that</code> · <code>oops</code> · <code>correction</code> ·
+            <code>let me rephrase</code>
+          </p>
+          <label class="ji-inline-check">
+            <input type="checkbox" v-model="form.voiceEditing">
+            Let spoken corrections edit my answer
+          </label>
+          <p class="ji-hint">
+            Turn this off if your interview is about something where you would say those words for
+            real. You can still type and highlight, and you can switch it back on in the room.
+          </p>
+        </div>
+
+        <p class="ji-hint">⚠️ The next page will request camera &amp; microphone permission. Your answers are transcribed by AI.</p>
         <button type="submit" class="ji-btn-primary" :disabled="submitting">
           {{ submitting ? 'Preparing…' : 'Enter Interview Room →' }}
         </button>
@@ -106,15 +187,16 @@ Example:
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref, onMounted } from 'vue';
+import { reactive, computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { pickInterviewer } from '@/cast/actors';
 import { useAuthStore } from '@/store/auth';
 import { cvBuilderService, type CvSummary } from '@/services/cvbuilder.service';
 import { jobInterviewService } from '@/services/jobinterview.service';
 import {
-  MAX_MINUTES, MIN_MINUTES,
-  askedQuestionsFrom, clampMinutes, cvDigest, cvLabel, questionCountFor,
+  MAX_MINUTES, MAX_QUESTIONS, MIN_MINUTES, MIN_QUESTIONS,
+  askedQuestionsFrom, clampMinutes, clampQuestionCount, cvDigest, cvLabel,
+  minutesForQuestions, newSessionSeed, plannedQuestionCount, secondsPerAnswer,
   type InterviewConfig,
 } from '@/utils/interviewSetup';
 
@@ -126,12 +208,58 @@ const TYPE_INFO: Record<string, string> = {
   'HR': '🤝 A behavioral / soft-skills interview: motivation, teamwork, strengths, handling pressure, career goals.'
 };
 
+/**
+ * The counts worth one click.
+ *
+ * Six is the default because it is one real interview's worth at nine minutes:
+ * long enough to be a rehearsal rather than a sample, short enough to sit
+ * before work. Two is here because it is the floor and somebody wants it the
+ * evening before an interview.
+ */
+const QUICK_PICKS = [2, 4, 6, 8, 10, 12] as const;
+
 const form = reactive({
   type: 'Technical',
   topic: '',
   qualifications: '',
-  minutes: 15,
+  questions: 6,
+  minutes: minutesForQuestions(6),
   cvId: '',
+  voiceEditing: true,
+});
+
+const questionCount = computed(() => clampQuestionCount(form.questions));
+const suggestedMinutes = computed(() => minutesForQuestions(questionCount.value));
+/**
+ * Minutes bought on top of the plan.
+ *
+ * Clamped up rather than validated: a candidate who lowers the question count
+ * after raising the time should not be told off by a form, and a total below
+ * what the questions need is not a preference, it is a number that has gone
+ * stale.
+ */
+const totalMinutes = computed(() =>
+  Math.max(suggestedMinutes.value, clampMinutes(form.minutes)));
+const extraMinutes = computed(() => totalMinutes.value - suggestedMinutes.value);
+const perAnswerLabel = computed(() => {
+  const seconds = secondsPerAnswer(totalMinutes.value, questionCount.value);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+});
+
+/**
+ * Changing the count re-plans the time, and only upwards from the new floor.
+ *
+ * Extra minutes the candidate deliberately bought are KEPT when they add a
+ * question -- resetting the total to the bare plan every time the count moves
+ * would silently undo a choice they made two fields ago.
+ */
+function pickQuestions(n: number) {
+  form.questions = clampQuestionCount(n);
+  form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(form.minutes));
+}
+
+watch(() => form.questions, () => {
+  form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(form.minutes));
 });
 
 const cvs = ref<CvSummary[]>([]);
@@ -190,7 +318,9 @@ onMounted(async () => {
       form.type = prefill.type === 'HR' ? 'HR' : 'Technical';
       form.topic = prefill.type === 'HR' ? '' : (prefill.topic || '');
       form.qualifications = prefill.qualifications || '';
-      form.minutes = clampMinutes(prefill.minutes);
+      form.questions = plannedQuestionCount(prefill);
+      form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(prefill.minutes));
+      form.voiceEditing = prefill.voiceEditing !== false;
       form.cvId = prefill.cvId || '';
       carriedCvId = prefill.cvId || '';
       carriedCvSummary = prefill.cvSummary || '';
@@ -308,7 +438,13 @@ async function startSession() {
       type: form.type === 'HR' ? 'HR' : 'Technical',
       topic,
       qualifications: form.qualifications.trim(),
-      minutes: clampMinutes(form.minutes),
+      questions: questionCount.value,
+      minutes: totalMinutes.value,
+      // Minted once, here, and carried: the room re-derives its question plan
+      // after a reload, and a seed regenerated there would re-plan an interview
+      // somebody is halfway through. Same reasoning as the interviewer below.
+      sessionSeed: newSessionSeed(),
+      voiceEditing: form.voiceEditing,
       // Who conducts it is decided here, once, and travels in the config for the
       // same reason the topic does: the session view is re-created by a reload,
       // and re-casting there would swap the interviewer for a different person

@@ -37,6 +37,29 @@ export interface InterviewConfig {
     topic: string;
     qualifications: string;
     minutes: number;
+    /**
+     * How many questions the candidate asked to practise.
+     *
+     * The number of questions is the thing a candidate actually chooses -- "I
+     * have ten minutes" is not how anybody thinks about interview practice --
+     * and the duration is derived from it at {@link SECONDS_PER_QUESTION}. It is
+     * optional only because a config written before 2026-08-22 does not carry
+     * one; the room falls back to deriving it from `minutes`, which is exactly
+     * what it used to do.
+     */
+    questions?: number;
+    /**
+     * Makes two interviews with identical settings ask different questions.
+     *
+     * Without it the only thing varying between one candidate's Monday sitting
+     * and their Tuesday one is the avoid list, and the avoid list is capped --
+     * so a long enough history quietly stops protecting anything and the same
+     * opening comes back. The seed rotates the question PLAN as well, so the
+     * areas are covered in a different order even when every question is new.
+     */
+    sessionSeed?: number;
+    /** Whether spoken corrections ("sorry", "scratch that") edit the answer. */
+    voiceEditing?: boolean;
     /** Which of the six conducts it; see src/cast/actors.ts. */
     interviewer?: string;
     /** The CV the candidate attached, if any. */
@@ -56,6 +79,7 @@ export interface PastSession {
     topic?: string;
     qualifications?: string;
     planned_minutes?: number;
+    planned_questions?: number;
     attempt?: number;
     cv_id?: string;
     cv_title?: string;
@@ -65,9 +89,30 @@ export interface PastSession {
 }
 
 export const MIN_MINUTES = 3;
-export const MAX_MINUTES = 60;
-export const MIN_QUESTIONS = 4;
-export const MAX_QUESTIONS = 12;
+export const MAX_MINUTES = 120;
+
+/**
+ * The shortest interview worth sitting is TWO questions.
+ *
+ * Four was the old floor and it was derived rather than chosen -- it fell out of
+ * a three-minute minimum divided by ninety seconds. A candidate who wants to
+ * rehearse one opening and one follow-up before a real interview in ten minutes
+ * is the commonest use this feature has, and the old floor made them sit twice
+ * as long as they had.
+ */
+export const MIN_QUESTIONS = 2;
+export const MAX_QUESTIONS = 20;
+
+/**
+ * How long one answer is worth.
+ *
+ * Ninety seconds is the length of a good interview answer -- long enough for
+ * situation, action and result, short enough that the interviewer does not have
+ * to interrupt -- so it is also the right unit for planning practice. The whole
+ * duration is derived from it, which is why the candidate is asked for a number
+ * of questions and shown the minutes rather than the other way round.
+ */
+export const SECONDS_PER_QUESTION = 90;
 
 /**
  * How much of a CV the interviewer is given.
@@ -98,7 +143,72 @@ export function clampMinutes(minutes: unknown): number {
 /** The number of questions a given duration is worth. */
 export function questionCountFor(minutes: unknown): number {
     const m = clampMinutes(minutes);
-    return Math.max(MIN_QUESTIONS, Math.min(MAX_QUESTIONS, Math.round(m / 1.5)));
+    return clampQuestionCount(Math.round((m * 60) / SECONDS_PER_QUESTION));
+}
+
+/** A question count the room can actually run. */
+export function clampQuestionCount(count: unknown): number {
+    const n = Math.round(Number(count));
+    if (!Number.isFinite(n)) return MIN_QUESTIONS;
+    return Math.max(MIN_QUESTIONS, Math.min(MAX_QUESTIONS, n));
+}
+
+/**
+ * The shortest sensible interview for this many questions.
+ *
+ * Ninety seconds each and nothing added for the greeting or the sign-off: those
+ * are ten seconds of synthesised speech between questions, and padding the
+ * figure would make the minutes stop being a number the candidate can check
+ * against the count in their head. It is a FLOOR rather than a fixed value --
+ * `minutes` can be raised above it and never below, so "give me longer to
+ * think" is one field and "ask me more" is the other.
+ */
+export function minutesForQuestions(count: unknown): number {
+    const n = clampQuestionCount(count);
+    return clampMinutes(Math.ceil((n * SECONDS_PER_QUESTION) / 60));
+}
+
+/**
+ * The seconds each answer gets, once a candidate has bought extra time.
+ *
+ * Extra minutes are spread across the questions rather than banked at the end,
+ * because the point of asking for them is to have longer on each answer. Never
+ * below the ninety-second default: a candidate cannot make their own practice
+ * harder by accident, only by asking for fewer minutes than the plan needs,
+ * which the form refuses.
+ */
+export function secondsPerAnswer(minutes: unknown, count: unknown): number {
+    const n = clampQuestionCount(count);
+    const total = clampMinutes(minutes) * 60;
+    return Math.max(SECONDS_PER_QUESTION, Math.floor(total / n));
+}
+
+/**
+ * How many questions this config is for.
+ *
+ * `questions` when it carries one, and the old duration-derived count when it
+ * does not -- a session started before 2026-08-22, or a redo built from one,
+ * must run exactly as it used to rather than jumping to the new floor of two.
+ */
+export function plannedQuestionCount(
+    config: { questions?: unknown; minutes?: unknown } | null | undefined,
+): number {
+    const explicit = Number(config?.questions);
+    if (Number.isFinite(explicit) && explicit > 0) return clampQuestionCount(explicit);
+    return questionCountFor(config?.minutes);
+}
+
+/**
+ * A seed that is different for every sitting and stable within one.
+ *
+ * Not `Math.random()` at the point of use: the room re-derives the question plan
+ * after a reload, and a seed regenerated there would hand the candidate a
+ * different plan halfway through the interview they are already in. It is
+ * minted once, in the pre-session form, and travels in the config exactly as the
+ * interviewer and the topic do.
+ */
+export function newSessionSeed(): number {
+    return Math.floor(Math.random() * 1_000_000_000) + 1;
 }
 
 export function normaliseType(value: unknown): InterviewType {
@@ -174,15 +284,32 @@ export function askedQuestionsFrom(
  */
 export function redoConfigFrom(
     session: PastSession,
-    extra: { interviewer?: string; avoidQuestions?: string[]; minutes?: number } = {},
+    extra: {
+        interviewer?: string; avoidQuestions?: string[];
+        minutes?: number; questions?: number; sessionSeed?: number;
+        voiceEditing?: boolean;
+    } = {},
 ): InterviewConfig {
     const type = normaliseType(session.interview_type);
     const topic = String(session.topic ?? '').trim();
+    const questions = plannedQuestionCount({
+        questions: extra.questions ?? session.planned_questions,
+        minutes: extra.minutes ?? session.planned_minutes,
+    });
     return {
         type,
         topic: topic || (type === 'HR' ? 'HR / General' : ''),
         qualifications: String(session.qualifications ?? '').trim(),
-        minutes: clampMinutes(extra.minutes ?? session.planned_minutes),
+        minutes: Math.max(
+            minutesForQuestions(questions),
+            clampMinutes(extra.minutes ?? session.planned_minutes)),
+        questions,
+        // A NEW seed every sitting, and this is the half of "practise again"
+        // that keeps working once the avoid list is full: with the same seed a
+        // redo differs only by the questions it was explicitly told to skip, and
+        // that list is capped at MAX_AVOID_QUESTIONS.
+        sessionSeed: extra.sessionSeed ?? newSessionSeed(),
+        voiceEditing: extra.voiceEditing,
         interviewer: extra.interviewer,
         cvId: String(session.cv_id ?? '') || undefined,
         cvTitle: String(session.cv_title ?? '') || undefined,
@@ -197,9 +324,10 @@ export function redoConfigFrom(
 // ============ FALLBACK QUESTIONS ============
 
 /**
- * Twelve, not ten, and that is arithmetic rather than taste: `questionCountFor`
- * tops out at {@link MAX_QUESTIONS}, so a pool shorter than that repeats a
- * question inside a single 60-minute interview.
+ * Twenty, and that is arithmetic rather than taste: `clampQuestionCount` tops
+ * out at {@link MAX_QUESTIONS}, so a pool shorter than that repeats a question
+ * inside a single interview -- with nothing having gone wrong, on the one path
+ * that is reached precisely when something already has.
  */
 export const HR_FALLBACKS: readonly string[] = [
     'Tell me about yourself and your professional background.',
@@ -214,6 +342,14 @@ export const HR_FALLBACKS: readonly string[] = [
     'Tell me about a time you disagreed with a manager or a colleague. What did you do?',
     'Describe a decision you made with incomplete information.',
     'What kind of working environment brings out your best work?',
+    'Tell me about a time you had to say no to something you were asked to do.',
+    'Describe the biggest mistake you have made at work and what changed afterwards.',
+    'How do you decide what to do first when everything is urgent?',
+    'Tell me about a time you had to learn something difficult quickly.',
+    'Describe a time you improved the way your team worked, not just your own output.',
+    'What would your last manager say you need to be better at?',
+    'Tell me about a time you had to deliver bad news to someone senior.',
+    'What is the accomplishment you are most proud of, and why that one?',
 ];
 
 export function techFallbacks(topic: string): string[] {
@@ -231,18 +367,27 @@ export function techFallbacks(topic: string): string[] {
         `Tell me about a trade-off decision you made in a ${role} project.`,
         `How do you test and validate your work in a ${role} context?`,
         `Where do you think ${role} is heading over the next few years, and how are you preparing?`,
+        `Tell me about a ${role} decision you got wrong, and what you would do differently.`,
+        `How do you make sure your ${role} work is maintainable by somebody else?`,
+        `Walk me through how you would investigate a production problem in ${role} at 2am.`,
+        `What does 'good' look like in a ${role} deliverable, and how do you measure it?`,
+        `Describe something you automated or simplified in ${role} work, and what it saved.`,
+        `How do you handle a requirement in ${role} that you believe is technically wrong?`,
+        `What part of ${role} do you find hardest, and how do you compensate for it?`,
+        `Tell me about the largest scale you have worked at in ${role}, in real numbers.`,
     ];
 }
 
 /**
  * Coprime with the pool length, which is what makes the rotation work.
  *
- * The offset has to be coprime with 12 or successive attempts land on a subset
- * of the pool and the redo starts repeating early -- an offset of 4 would give
- * attempts 1 and 4 the identical interview. 5 walks the whole pool before
- * coming back, so a candidate gets twelve distinct openings before any repeat.
+ * The offset has to be coprime with 20 or successive attempts land on a subset
+ * of the pool and the redo starts repeating early -- an offset of 5 would give
+ * attempts 1 and 5 the identical interview, and 5 is exactly what this was when
+ * the pools were twelve long. 7 shares no factor with 20, so it walks the whole
+ * pool and a candidate gets twenty distinct openings before any repeat.
  */
-const ATTEMPT_STRIDE = 5;
+const ATTEMPT_STRIDE = 7;
 
 /**
  * The question to ask when the AI could not be reached.
@@ -254,12 +399,18 @@ const ATTEMPT_STRIDE = 5;
  * different question than the one they were part-way through answering.
  */
 export function fallbackQuestion(
-    type: unknown, topic: string, questionNumber: number, attempt = 1,
+    type: unknown, topic: string, questionNumber: number, attempt = 1, seed = 0,
 ): string {
     const pool = normaliseType(type) === 'HR' ? HR_FALLBACKS : techFallbacks(topic);
     const n = Math.max(1, Math.round(Number(questionNumber) || 1));
     const a = Math.max(1, Math.round(Number(attempt) || 1));
-    const offset = (a - 1) * ATTEMPT_STRIDE;
+    // The seed shifts where in the pool a sitting STARTS; the stride decides
+    // where it goes next. Adding it rather than multiplying keeps the stride's
+    // coprimality -- and therefore the no-repeat property inside one sitting --
+    // true for every seed rather than for most of them, which is the kind of
+    // thing that would pass a check on one afternoon's numbers.
+    const s = Math.abs(Math.round(Number(seed) || 0));
+    const offset = (a - 1) * ATTEMPT_STRIDE + s;
     const index = (n - 1 + offset) % pool.length;
     return pool[index];
 }

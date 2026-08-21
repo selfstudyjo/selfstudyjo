@@ -15,7 +15,7 @@
       </div>
       <div class="ji-header-right">
         <span class="ji-q-counter" v-if="phase !== 'idle'">Q {{ Math.min(questionNumber, maxQuestions) }} / {{ maxQuestions }}</span>
-        <span class="ji-timer-display" :class="{ over: timeUp }">{{ timerDisplay }}</span>
+        <span class="ji-timer-display" :class="{ over: timeUp }" :title="'Whole interview — ' + plannedMinutes + ' min planned'">{{ timerDisplay }}</span>
       </div>
     </div>
 
@@ -79,12 +79,85 @@
       <span>{{ captionText }}</span>
     </div>
 
-    <!-- Live answer transcript -->
-    <div class="ji-transcript-box" v-if="phase === 'answering' || currentAnswerText">
-      <h4>Your Answer
-        <span v-if="phase === 'answering'" style="color:#34d399;font-size:.85rem">🎤 Recording (Whisper AI)</span>
-      </h4>
-      <div>{{ currentAnswerText || (phase === 'answering' ? '🎙️ Listening… your words appear every ~3 seconds' : '—') }}</div>
+    <!--
+      The answer, EDITABLE while it is being spoken.
+
+      It was a read-only div, which is fine for a native speaker and useless for
+      anybody else: Whisper faithfully transcribes a false start, so the answer
+      that reached the report was the wrong sentence, the word "sorry", and then
+      the right sentence -- and the coach then marked the candidate down for
+      rambling. Three ways out, and they are three because they are used at
+      different moments: type in the box, say "sorry" to drop the last part, or
+      highlight a phrase and dictate over it. See src/utils/answerEditing.ts.
+    -->
+    <div class="ji-answer-box" v-if="phase === 'answering' || answer.text">
+      <div class="ji-answer-head">
+        <h4>
+          ✍️ Your answer
+          <span class="ji-answer-live" v-if="phase === 'answering'">🎤 transcribing…</span>
+        </h4>
+        <div class="ji-answer-meta">
+          <!--
+            The per-answer clock, not the interview one. A candidate has no way
+            to judge ninety seconds while thinking, and "you spoke for four
+            minutes" is a note in the report rather than something they can act
+            on at the time.
+          -->
+          <span class="ji-answer-clock" :class="answerClockClass" v-if="phase === 'answering'"
+                :title="'About ' + answerSeconds + 's is a strong answer'">{{ answerClock }}</span>
+          <span class="ji-answer-words">{{ answerWords }} words</span>
+        </div>
+      </div>
+
+      <textarea
+        ref="answerEl"
+        class="ji-answer-input"
+        :value="answer.text"
+        :readonly="phase !== 'answering' && phase !== 'awaiting'"
+        @input="onAnswerTyped"
+        @select="trackSelection"
+        @keyup="trackSelection"
+        @mouseup="trackSelection"
+        :placeholder="answerPlaceholder"
+        spellcheck="true"
+        rows="4"
+      ></textarea>
+
+      <div class="ji-answer-tools" v-if="phase === 'answering'">
+        <!--
+          `mousedown.prevent` keeps the focus in the textarea, and it is not
+          cosmetic: pressing a button blurs the field, and a browser that
+          collapses the selection on blur would disable this button between
+          mousedown and click -- so the click never fires and the one control
+          this whole feature is named after silently does nothing. Preventing
+          the focus change means there is no blur to collapse anything.
+        -->
+        <button type="button" class="ji-btn-tool" :disabled="!hasSelection"
+                @mousedown.prevent @click="replaceHighlighted"
+                title="Delete what you highlighted and carry on speaking in its place">
+          ✂️ Replace highlighted
+        </button>
+        <button type="button" class="ji-btn-tool" v-if="answer.caret !== null" @click="backToEnd">
+          ↦ Back to the end
+        </button>
+        <button type="button" class="ji-btn-tool" :disabled="!answer.text" @click="undoLastPart">
+          ↩︎ Undo last part
+        </button>
+        <button type="button" class="ji-btn-tool ji-btn-tool-danger" :disabled="!answer.text" @click="clearAnswer">
+          🗑️ Clear
+        </button>
+        <label class="ji-answer-toggle" title="Turn off if the interview is about a subject where you say these words for real">
+          <input type="checkbox" v-model="voiceEditing"> spoken corrections
+        </label>
+      </div>
+
+      <div class="ji-answer-caret" v-if="answer.caret !== null">
+        ▌ What you say next goes <strong>here</strong>: <em>{{ caretHintText }}</em>
+      </div>
+      <div class="ji-answer-hint" v-else-if="phase === 'answering' && voiceEditing">
+        Say <strong>“sorry”</strong> to delete the last part, <strong>“sorry sorry”</strong> for the
+        last two — or highlight a phrase and press <strong>Replace highlighted</strong>. You can also just type.
+      </div>
       <!--
         The caption reads "Listening…" whether the recorder is running or has
         died, so a fault here has no natural symptom. Saying so is the whole
@@ -92,6 +165,24 @@
         as "it just sticks".
       -->
       <div class="ji-transcript-warning" v-if="recordingError">⚠️ {{ recordingError }}</div>
+    </div>
+
+    <!--
+      The report is written DURING the interview, so the candidate is told so.
+
+      Without this line the coaching calls are invisible: the only evidence they
+      are happening is that the report appears quickly at the end, which is not
+      evidence of anything while you are waiting for it. It is also the one
+      place a stalled coaching call shows up at all.
+    -->
+    <div class="ji-live-report" v-if="phase !== 'idle' && !reportVisible">
+      <span class="ji-live-report-dot" :class="{ working: coachingInFlight > 0 }"></span>
+      <span v-if="qaPairs.length">
+        📋 Your report is being written as you go —
+        <strong>{{ coachedCount }}</strong> of {{ qaPairs.length }} answers coached<span
+          v-if="coachingInFlight">, {{ coachingInFlight }} in progress</span>.
+      </span>
+      <span v-else>📋 Your report starts building from your first answer — nothing waits until the end.</span>
     </div>
 
     <!--
@@ -145,6 +236,43 @@
         </div>
       </div>
 
+      <!--
+        Where the score came from. One number out of a hundred tells a candidate
+        they did badly and nothing about what to practise; five tell them their
+        content was fine and their structure was not, which is a different
+        evening's work. Absent on a replica a release behind, and the panel
+        simply does not render.
+      -->
+      <div class="ji-report-card" v-if="breakdownRows.length">
+        <h3>📊 Where the score came from</h3>
+        <div class="ji-bars">
+          <div class="ji-bar-row" v-for="row in breakdownRows" :key="row.key">
+            <span class="ji-bar-label">{{ row.label }}</span>
+            <span class="ji-bar-track"><span class="ji-bar-fill" :class="row.band" :style="{ width: row.value + '%' }"></span></span>
+            <span class="ji-bar-value">{{ row.value }}</span>
+          </div>
+        </div>
+        <p class="ji-card-lead">{{ weakestLine }}</p>
+      </div>
+
+      <!--
+        The most actionable thing in the report, so it is near the top rather
+        than under twelve questions of coaching. A candidate reads a report
+        once; what they need from it is the next evening's practice list.
+      -->
+      <div class="ji-report-card ji-report-plan" v-if="report.action_plan && report.action_plan.length">
+        <h3>🎯 Do this before your next interview</h3>
+        <ol class="ji-plan-list"><li v-for="(step, i) in report.action_plan" :key="i">{{ step }}</li></ol>
+      </div>
+
+      <div class="ji-report-card ji-report-standout" v-if="report.standout_moment">
+        <h3>🌟 Your strongest moment</h3><p>{{ report.standout_moment }}</p>
+      </div>
+
+      <div class="ji-report-card ji-report-flags" v-if="report.red_flags">
+        <h3>⚠️ What would worry a hiring manager</h3><p>{{ report.red_flags }}</p>
+      </div>
+
       <div class="ji-report-card"><h3>📝 Overall Summary</h3><p>{{ report.summary }}</p></div>
       <div class="ji-report-card"><h3>✅ Strengths</h3><p>{{ report.strengths }}</p></div>
       <div class="ji-report-card"><h3>📈 Areas to Improve</h3><p>{{ report.improvements }}</p></div>
@@ -154,8 +282,8 @@
       <div class="ji-report-card">
         <h3>💬 Question-by-question coaching ({{ qaPairs.length }})</h3>
         <p class="ji-card-lead">
-          For each question: what you said, what was missing, what a strong answer sounds like,
-          and why the interviewer asked it.
+          For each question: what you said, your own answer rewritten to be stronger, a short
+          model answer you can rehearse, and why the interviewer asked it.
         </p>
         <div class="ji-qa-list">
           <QaCoaching v-for="(qa, i) in qaPairs" :key="i" :qa="qa" :index="i" />
@@ -178,11 +306,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import {
-  jobInterviewService, type QACoaching, type QAPair, type EvaluationResult,
+  jobInterviewService, type QAPair, type EvaluationResult, type ScoreBreakdown,
 } from '@/services/jobinterview.service';
 import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
@@ -191,9 +319,15 @@ import {
   pickInterviewer, pitchFor, type InterviewType,
 } from '@/cast/actors';
 import {
-  MAX_AVOID_QUESTIONS, clampMinutes, fallbackQuestion as fallbackQuestionFor,
-  questionCountFor, redoConfigFrom, type InterviewConfig,
+  MAX_AVOID_QUESTIONS, MAX_QUESTIONS, clampMinutes,
+  fallbackQuestion as fallbackQuestionFor, newSessionSeed, normaliseQuestion,
+  plannedQuestionCount, redoConfigFrom, secondsPerAnswer,
+  type InterviewConfig,
 } from '@/utils/interviewSetup';
+import {
+  applyTranscript, caretHint, emptyAnswer, replaceSelection, resumeAtEnd,
+  setTypedText, undoSegments, wordCount, type AnswerState,
+} from '@/utils/answerEditing';
 import {
   VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, hasVideoInput,
   mediaUnsupportedReason,
@@ -223,7 +357,28 @@ const cvTitle = cfg.cvTitle || '';
 const attempt = Math.max(1, Math.round(Number(cfg.attempt) || 1));
 const avoidQuestions = (cfg.avoidQuestions || []).slice(0, MAX_AVOID_QUESTIONS);
 
-const maxQuestions = questionCountFor(plannedMinutes);
+/**
+ * Makes two interviews with identical settings different interviews.
+ *
+ * Read from the config rather than minted here, for the same reason the
+ * interviewer is: this view is re-created by a reload, and a seed regenerated
+ * on the way back in would re-plan the interview the candidate is halfway
+ * through. A config written before it existed gets one now, which is right --
+ * an old config being replayed is a fresh sitting.
+ */
+const sessionSeed = Number(cfg.sessionSeed) || newSessionSeed();
+
+/**
+ * How many questions, and how long each answer is worth.
+ *
+ * The candidate picks the COUNT now and the minutes are derived from it at
+ * ninety seconds each, which is the way round people actually think about
+ * interview practice. `plannedQuestionCount` falls back to the old
+ * minutes-derived figure for a config written before 2026-08-22, so a redo of
+ * an old interview runs at exactly the length it did.
+ */
+const maxQuestions = plannedQuestionCount(cfg);
+const answerSeconds = secondsPerAnswer(plannedMinutes, maxQuestions);
 
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'Candidate');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
@@ -262,7 +417,34 @@ const interviewerTag = interviewerLabel(interviewer, interviewType);
  * (`npm run check:interview`).
  */
 function fallbackQuestion(qnum: number): string {
-  return fallbackQuestionFor(interviewType, topic, qnum, attempt);
+  return fallbackQuestionFor(interviewType, topic, qnum, attempt, sessionSeed);
+}
+
+/** Two questions that differ only by punctuation are the same question. */
+function sameQuestion(a: string, b: string): boolean {
+  const left = normaliseQuestion(a);
+  const right = normaliseQuestion(b);
+  if (!left || !right) return false;
+  // Containment either way, because the commonest re-ask is the same question
+  // with a clause bolted on the front.
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+/**
+ * A local question this candidate has not been asked in this sitting.
+ *
+ * Reached when app 27 is unreachable, and also when a replica that has not
+ * pulled the anti-repeat work hands back something already asked. The rotation
+ * alone does not cover the second case: it guarantees distinct questions across
+ * the pool and says nothing about which ones the AI has already used. Walking
+ * the pool for an unasked one does.
+ */
+function unaskedFallback(qnum: number, asked: string[]): string {
+  for (let step = 0; step < MAX_QUESTIONS; step++) {
+    const candidate = fallbackQuestion(qnum + step);
+    if (!asked.some(prev => sameQuestion(prev, candidate))) return candidate;
+  }
+  return fallbackQuestion(qnum);
 }
 
 // ====== State ======
@@ -276,9 +458,38 @@ const currentSpeaker = ref<string | null>(null);
 const captionSpeaker = ref('System');
 const captionText = ref('Click "Start Interview" to begin.');
 const currentQuestionText = ref('');
-const currentAnswerText = ref('');
 const questionNumber = ref(0);
 const qaPairs = ref<QAPair[]>([]);
+
+/**
+ * The answer being given, and where the next spoken words land.
+ *
+ * One object rather than a string, because a caret is part of the answer's
+ * state the moment the candidate can highlight a phrase and dictate over it.
+ * The transformations live in src/utils/answerEditing.ts and every one of them
+ * takes the CURRENT text as an argument -- a module holding its own buffer would
+ * silently discard whatever was typed by hand between two chunks, which is the
+ * bug the old `answerBuffer` had waiting for it.
+ */
+const answer = ref<AnswerState>(emptyAnswer());
+const answerEl = ref<HTMLTextAreaElement>();
+/** Whether "sorry" and friends edit the answer. Off is a real choice — see below. */
+const voiceEditing = ref(cfg.voiceEditing !== false);
+const selection = ref<{ start: number; end: number }>({ start: 0, end: 0 });
+/** Seconds spent on the current answer, for the per-answer clock. */
+const answerElapsed = ref(0);
+
+/**
+ * The areas this interview is planned to cover, one per question.
+ *
+ * Empty is a supported state and the room behaves exactly as it used to in it:
+ * the plan is what stops a stateless model asking its most probable question
+ * three times, and losing it costs variety rather than an interview.
+ */
+const questionPlan = ref<string[]>([]);
+
+/** Coaching calls still in the air. Shown, because otherwise they are invisible. */
+const coachingInFlight = ref(0);
 
 const mediaReady = ref(false);
 const micEnabled = ref(true);
@@ -309,7 +520,8 @@ const timeUp = ref(false);
 const reportVisible = ref(false);
 const report = reactive<EvaluationResult>({
   score: 0, summary: '', strengths: '', improvements: '',
-  technical_assessment: '', communication: '', recommendation: ''
+  technical_assessment: '', communication: '', recommendation: '',
+  action_plan: [], standout_moment: '', red_flags: '', score_breakdown: {},
 });
 
 // Internal
@@ -326,11 +538,119 @@ let videoStream: MediaStream | null = null;
 let streamsAreShared = false;
 let startTime = 0;
 let timerInterval: any = null;
-let answerBuffer = '';
+let answerTimer: any = null;
+let answerStartedAt = 0;
 let isAnswering = false;
 let recordingLoopActive = false;
 let currentRecorder: MediaRecorder | null = null;
 let voices: SpeechSynthesisVoice[] = [];
+
+// ====== The answer editor ======
+//
+// Everything below is thin on purpose: the rules live in
+// src/utils/answerEditing.ts, which is a plain module with no Vue in it and a
+// check of its own (`npm run check:answeredit`). What is here is the wiring --
+// where the caret is, what is selected, and putting the textarea's own cursor
+// back where the candidate would expect it.
+
+const answerWords = computed(() => wordCount(answer.value.text));
+const caretHintText = computed(() => caretHint(answer.value));
+const hasSelection = computed(() => selection.value.end > selection.value.start);
+
+const answerClock = computed(() => {
+  const s = answerElapsed.value;
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+});
+
+/**
+ * Amber at the target, red half again past it.
+ *
+ * Banded rather than a countdown, and nothing is ever cut off: a hard stop on a
+ * practice answer would teach a candidate to rush, which is the opposite of the
+ * problem. The bands are the same advice a real interviewer's body language
+ * gives -- you are at time, you are well past it.
+ */
+const answerClockClass = computed(() => {
+  if (answerElapsed.value >= answerSeconds * 1.5) return 'over';
+  if (answerElapsed.value >= answerSeconds) return 'due';
+  return '';
+});
+
+const answerPlaceholder = computed(() => {
+  if (phase.value === 'answering') {
+    return 'Speak — your words appear here every few seconds. You can also type or correct '
+      + 'anything in this box while you talk.';
+  }
+  return '—';
+});
+
+/** Put the textarea's own cursor where the next dictated words will land. */
+async function syncCursor() {
+  const at = answer.value.caret;
+  if (at === null) return;
+  await nextTick();
+  const el = answerEl.value;
+  if (!el) return;
+  try { el.setSelectionRange(at, at); } catch { /* not focusable yet */ }
+}
+
+/** One transcribed chunk, with spoken corrections applied. */
+function applyChunk(text: string) {
+  answer.value = applyTranscript(answer.value, text, { voiceEditing: voiceEditing.value });
+  void syncCursor();
+}
+
+function onAnswerTyped(event: Event) {
+  const el = event.target as HTMLTextAreaElement;
+  answer.value = setTypedText(answer.value, el.value);
+}
+
+function trackSelection() {
+  const el = answerEl.value;
+  if (!el) return;
+  selection.value = { start: el.selectionStart ?? 0, end: el.selectionEnd ?? 0 };
+}
+
+/**
+ * Delete what is highlighted and dictate into the gap.
+ *
+ * The selection is read from the element rather than from `selection` at the
+ * moment of the click, because clicking the button can collapse a selection on
+ * some browsers before the handler runs -- and a button that silently does
+ * nothing on the one browser nobody tested is worse than no button.
+ */
+function replaceHighlighted() {
+  const el = answerEl.value;
+  const start = el?.selectionStart ?? selection.value.start;
+  const end = el?.selectionEnd ?? selection.value.end;
+  if (end <= start) return;
+  answer.value = replaceSelection(answer.value, start, end);
+  selection.value = { start: answer.value.caret ?? 0, end: answer.value.caret ?? 0 };
+  void syncCursor();
+  el?.focus();
+}
+
+function backToEnd() {
+  answer.value = resumeAtEnd(answer.value);
+}
+
+/**
+ * The button form of saying "sorry" — for anybody who would rather not.
+ *
+ * Through the module's own `undoSegments`, not a second implementation here:
+ * the anchor rule that stops an undo eating the half of the answer the
+ * candidate never touched lives there, and a copy of it in a component is a
+ * copy that is one refactor away from being wrong in only one of the two places
+ * this can be asked for.
+ */
+function undoLastPart() {
+  answer.value = undoSegments(answer.value, 1);
+  void syncCursor();
+}
+
+function clearAnswer() {
+  answer.value = emptyAnswer();
+}
 
 function loadVoices() { voices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('en')); }
 loadVoices();
@@ -568,10 +888,13 @@ async function transcribeAudioBlob(blob: Blob): Promise<void> {
       // pauses to think is told transcription is broken.
       transcribeFailures = 0;
       recordingError.value = '';
-      if (text) {
-        answerBuffer = (answerBuffer + ' ' + text).trim();
-        currentAnswerText.value = answerBuffer;
-      }
+      // Through the editor rather than straight onto a buffer: this is where a
+      // spoken "sorry" takes the last clause back, and where a chunk lands at
+      // the caret instead of at the end after a highlighted passage was
+      // replaced. Anything the candidate typed by hand in the meantime is in
+      // `answer` already and survives, which a private buffer would not have
+      // allowed.
+      if (text) applyChunk(text);
     } else {
       console.warn('[Whisper] HTTP', response.status);
       noteTranscribeFailure(`the server answered ${response.status}`);
@@ -646,6 +969,28 @@ function stopCurrentRecording() {
 }
 
 // ====== Timer ======
+/**
+ * The clock on the current answer.
+ *
+ * Separate from the interview timer and deliberately advisory -- nothing is cut
+ * off at the target. A candidate has no way to judge ninety seconds while
+ * thinking, and "you spoke for four minutes" is a line in the report rather
+ * than something they could have acted on at the time.
+ */
+function startAnswerTimer() {
+  answerStartedAt = Date.now();
+  answerElapsed.value = 0;
+  if (answerTimer) clearInterval(answerTimer);
+  answerTimer = setInterval(() => {
+    answerElapsed.value = Math.floor((Date.now() - answerStartedAt) / 1000);
+  }, 500);
+}
+
+function stopAnswerTimer() {
+  if (answerTimer) clearInterval(answerTimer);
+  answerTimer = null;
+}
+
 function startTimer() {
   startTime = Date.now();
   const limit = plannedMinutes * 60;
@@ -658,6 +1003,204 @@ function startTimer() {
       captionText.value = '⏰ Time is up — finish your current answer, then it will wrap up.';
     }
   }, 250);
+}
+
+// ====== The report, built while the interview runs ======
+//
+// The report used to be assembled entirely at the end: one evaluate call plus a
+// coaching call per batch of three, all fired after the closing speech. On two
+// cold PythonAnywhere replicas that is most of a minute of a spinner the
+// candidate can do nothing with and cannot tell is working.
+//
+// Nothing about coaching one answer depends on the answers after it, so there
+// was never a reason to wait. Each answer is coached the moment it is
+// submitted, while the interviewer is asking the next question -- and the
+// session is SAVED from the first question, so a browser that dies at question
+// seven leaves seven coached answers in the results list instead of nothing.
+// By the time the interview ends, the only thing still outstanding is the
+// overall evaluation.
+//
+// A single question per call is also the shape the AI handles most reliably.
+// The reported "every question has the same feedback" was a truncated reply:
+// ten questions in one call, cut off mid-array, no closing brace, and every
+// entry fell back to the same generic paragraph. One short answer inside the
+// whole token budget cannot fail that way.
+
+/**
+ * The id this interview is saved under, minted before the first save.
+ *
+ * `crypto.randomUUID` is not available on http origins or in older Safari, and
+ * an interview must not fail to be recorded over an id -- so there is a
+ * fallback, and it only has to be unique among one user's sessions.
+ */
+function newSessionId(): string {
+  try {
+    const c: any = globalThis.crypto;
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  } catch { /* fall through */ }
+  return `ji_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+const sessionId = newSessionId();
+const coachedCount = computed(() => qaPairs.value.filter(qa => qa.coaching).length);
+
+/**
+ * Everything asked so far, so the interviewer cannot ask it twice.
+ *
+ * The question currently on screen is included because it is NOT yet in
+ * `qaPairs` when the interview ends without it being answered -- and deduped,
+ * because it usually is: `submitAnswer` pushes the pair before the next
+ * question is asked, so the last question would otherwise be listed twice and
+ * spend prompt budget saying the same thing.
+ */
+function askedSoFar(): string[] {
+  const asked: string[] = [];
+  const seen = new Set<string>();
+  for (const question of [...qaPairs.value.map(qa => qa.question), currentQuestionText.value]) {
+    const key = normaliseQuestion(question);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    asked.push(question);
+  }
+  return asked;
+}
+
+const coachingJobs: Promise<unknown>[] = [];
+
+/** What every coaching and evaluation call needs to know about this interview. */
+function coachingContext() {
+  return {
+    interview_type: interviewType,
+    topic,
+    qualifications,
+    cv_summary: cvSummary,
+  };
+}
+
+/**
+ * Coach one answer, in the background.
+ *
+ * Never awaited by the interview and never allowed to throw into it: a coaching
+ * call that fails leaves that one question uncoached and `endInterview` picks
+ * it up in the catch-up pass. The candidate is never waiting on this.
+ */
+function coachAnswer(index: number) {
+  const qa = qaPairs.value[index];
+  if (!qa) return;
+  qa.coaching_pending = true;
+  coachingInFlight.value++;
+  const job = jobInterviewService
+    .coachOne({ ...coachingContext(), qa: { question: qa.question, answer: qa.answer } })
+    .then(entry => {
+      if (entry) {
+        qa.coaching = entry;
+        // Kept alongside as a plain string: it is the field every report
+        // written before 2026-08-20 is stored with and the one an older client
+        // reads.
+        qa.model_answer = entry.model_answer || '';
+      }
+    })
+    .catch(e => { console.error('Coaching failed for question', index + 1, e); })
+    .finally(() => {
+      qa.coaching_pending = false;
+      coachingInFlight.value--;
+      persistSoon();
+    });
+  coachingJobs.push(job);
+}
+
+/**
+ * The session as it stands, ready to be written.
+ *
+ * Built fresh each time rather than mutated, because it is sent from three
+ * places -- the start of the interview, after every answer, and at the end --
+ * and a shared object edited by whichever fired last is how a final report ends
+ * up saved with a half-filled score.
+ */
+function sessionPayload(status: 'in_progress' | 'complete') {
+  const duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+  const transcript = qaPairs.value
+    .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer || '(no answer)'}`)
+    .join('\n\n');
+  return {
+    id: sessionId,
+    user_id: authStore.user?.id || '',
+    username: authStore.user?.username || '',
+    user_full_name: `${authStore.user?.first_name || ''} ${authStore.user?.last_name || ''}`.trim()
+      || authStore.user?.username,
+    interview_type: interviewType,
+    topic,
+    qualifications,
+    cv_id: cfg.cvId || '',
+    cv_title: cvTitle,
+    cv_summary: cvSummary,
+    attempt,
+    planned_minutes: plannedMinutes,
+    planned_questions: maxQuestions,
+    status,
+    duration_seconds: duration,
+    qa_pairs: qaPairs.value,
+    transcript,
+    score: report.score,
+    summary: report.summary,
+    strengths: report.strengths,
+    improvements: report.improvements,
+    technical_assessment: report.technical_assessment,
+    communication: report.communication,
+    recommendation: report.recommendation,
+    action_plan: report.action_plan || [],
+    standout_moment: report.standout_moment || '',
+    red_flags: report.red_flags || '',
+    score_breakdown: report.score_breakdown || {},
+  };
+}
+
+let persistTimer: any = null;
+
+/**
+ * Writes are chained, never concurrent.
+ *
+ * They all carry the WHOLE session, so two in flight at once is a race whose
+ * loser wins: an `in_progress` write started before the report was finished can
+ * land after the `complete` one and put the record back into the unfinished
+ * pile with a half-filled score. Serialising them is one line and removes the
+ * whole class of problem -- and there is no throughput to lose, because the
+ * debounce means there is rarely more than one waiting.
+ */
+let persistChain: Promise<void> = Promise.resolve();
+
+/** Write the session. Never throws — a failed save must not stop an interview. */
+function persistNow(status: 'in_progress' | 'complete'): Promise<void> {
+  if (!authStore.user?.id) return persistChain;
+  persistChain = persistChain.then(async () => {
+    try {
+      await jobInterviewService.saveSession(sessionPayload(status));
+    } catch (e) {
+      console.error('Save interview failed:', e);
+    }
+  });
+  return persistChain;
+}
+
+/**
+ * Write the session shortly, coalescing whatever else asks in the meantime.
+ *
+ * Three coaching calls landing within a second of each other would otherwise be
+ * three full-session writes -- and each one fans out to every peer of app 27 on
+ * a background thread. Debounced, a burst is one write. Deliberately fire and
+ * forget: the interview never waits on it, and the next tick covers anything a
+ * dropped write missed.
+ */
+function persistSoon() {
+  if (phase.value === 'done') return;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    // Checked again here, not only on the way in: the debounce is a second and
+    // a half, which is long enough for the last answer to be submitted and the
+    // interview to finish in between.
+    if (phase.value !== 'done') void persistNow('in_progress');
+  }, 1500);
 }
 
 // ====== Flow ======
@@ -685,14 +1228,32 @@ async function startInterview() {
 
   phase.value = 'intro';
   captionText.value = 'Interviewer is joining…';
-  const intro = await jobInterviewService.callInterviewer({
-    stage: 'intro', interview_type: interviewType, topic, qualifications, user_name: userName.value,
-    interviewer_name: interviewerName, interviewer_role: interviewerRole,
-    cv_summary: cvSummary
-  });
+
+  // The greeting and the question plan at the same time, and the plan is never
+  // waited for on its own: it is what stops a stateless model asking its most
+  // probable question three times, and it takes about as long as the greeting.
+  // Sequenced, it would be a second cold start the candidate sits through
+  // before anybody says hello.
+  const [intro] = await Promise.all([
+    jobInterviewService.callInterviewer({
+      stage: 'intro', interview_type: interviewType, topic, qualifications,
+      user_name: userName.value,
+      interviewer_name: interviewerName, interviewer_role: interviewerRole,
+      cv_summary: cvSummary,
+    }),
+    jobInterviewService.planQuestions({
+      interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
+      count: maxQuestions, avoid_questions: avoidQuestions, attempt,
+      session_seed: sessionSeed,
+    }).then(areas => { questionPlan.value = areas; }),
+  ]);
   await speak(intro || `Hello ${userName.value}, I'm ${interviewerName}. Let's begin.`);
 
   startTimer();
+  // The record exists from here on, so an interview that is abandoned at
+  // question seven is seven coached answers in the results list rather than
+  // nothing at all. Fire and forget: nothing about the interview waits on it.
+  void persistNow('in_progress');
   startBtnText.value = '✓ Started';
   questionNumber.value = 1;
   await askNextQuestion();
@@ -705,9 +1266,10 @@ async function askNextQuestion() {
     return;
   }
   phase.value = 'processing';
-  currentAnswerText.value = '';
+  answer.value = emptyAnswer();
   captionSpeaker.value = interviewerName;
   captionText.value = 'Interviewer is thinking of the next question…';
+  const asked = askedSoFar();
   const q = await jobInterviewService.callInterviewer({
     stage: 'question',
     interview_type: interviewType,
@@ -721,12 +1283,30 @@ async function askNextQuestion() {
     // The CV rides along on every question, not just the intro: the model is
     // stateless, so one mentioned in the greeting is forgotten by question three.
     cv_summary: cvSummary,
-    // Earlier sittings' questions, plus this sitting's, so the interviewer does
-    // not re-ask something within the redo either.
+    // Earlier sittings' questions, so a redo is a redo rather than a re-run.
     avoid_questions: avoidQuestions,
+    // And THIS sitting's, all of them. `previous_qa` is capped at five on the
+    // service side because it carries the answers too, so in a twelve-question
+    // interview the model was free to re-ask question two at question nine --
+    // and did. This is the single biggest cause of the repetition.
+    asked_questions: asked,
+    // The area this question is meant to cover. Telling a stateless model "ask
+    // something different" is advice; telling it "ask about incident response"
+    // is an instruction.
+    focus: questionPlan.value[questionNumber.value - 1] || '',
+    session_seed: sessionSeed,
     attempt
   });
-  currentQuestionText.value = (q && q.trim()) ? q.trim() : fallbackQuestion(questionNumber.value);
+  const offered = (q && q.trim()) ? q.trim() : '';
+  // Last line of defence, and it is not redundant with the service's own check:
+  // app 27 and this bundle deploy independently, so a replica that has not
+  // pulled the anti-repeat work yet will happily hand back question two again.
+  // Client-side the only remedy left is the local pool, which is at least one
+  // the candidate has not heard in this sitting.
+  const repeated = offered && asked.some(prev => sameQuestion(prev, offered));
+  currentQuestionText.value = offered && !repeated
+    ? offered
+    : unaskedFallback(questionNumber.value, asked);
   await speak(currentQuestionText.value);
   phase.value = 'awaiting';
   captionSpeaker.value = 'System';
@@ -736,14 +1316,16 @@ async function askNextQuestion() {
 function startAnswering() {
   if (!micEnabled.value) { alert('Please unmute your microphone first.'); return; }
   if (!audioStream) { alert('Your microphone is not connected yet.'); return; }
-  answerBuffer = '';
-  currentAnswerText.value = '';
+  answer.value = emptyAnswer();
+  selection.value = { start: 0, end: 0 };
   recordingError.value = '';
   transcribeFailures = 0;
   isAnswering = true;
   phase.value = 'answering';
+  startAnswerTimer();
   captionSpeaker.value = 'You';
-  captionText.value = '🎤 Answer now — your words appear below every ~3 seconds (Whisper AI).';
+  captionText.value = `🎤 Answer now — aim for about ${answerSeconds} seconds. Your words appear `
+    + 'below; you can edit them, or say "sorry" to take the last part back.';
   startContinuousRecording().catch(e => {
     console.error('[Recording]', e);
     recordingError.value = 'Recording stopped unexpectedly. Press Submit Answer, then Start '
@@ -756,13 +1338,24 @@ async function submitAnswer() {
   isAnswering = false;
   phase.value = 'processing';
   stopCurrentRecording();
+  stopAnswerTimer();
   captionText.value = 'Finalizing your answer…';
+  // Long enough for the chunk that was mid-recording when Submit was pressed to
+  // come back from Whisper. It is the last second or two of what the candidate
+  // said, so losing it costs the end of every answer in the report.
   await new Promise(r => setTimeout(r, 1400));
 
   qaPairs.value.push({
     question: currentQuestionText.value,
-    answer: answerBuffer.trim()
+    answer: answer.value.text.trim(),
+    seconds: answerElapsed.value,
   });
+
+  // Coached NOW, while the interviewer asks the next question, rather than at
+  // the end with all the others. Not awaited: the candidate is never waiting on
+  // their report being written.
+  coachAnswer(qaPairs.value.length - 1);
+  persistSoon();
 
   questionNumber.value++;
   if (timeUp.value || questionNumber.value > maxQuestions) {
@@ -772,15 +1365,61 @@ async function submitAnswer() {
   }
 }
 
+/**
+ * Coaching that never arrived, filled in one last pass.
+ *
+ * Bounded, and that is the point: by the end most questions are already coached
+ * and this is a top-up for the one whose call failed, not the main path. Sent as
+ * one request for whatever is left rather than one each, because at this point
+ * the candidate IS waiting.
+ */
+async function fillMissingCoaching() {
+  const missing = qaPairs.value
+    .map((qa, i) => ({ qa, i }))
+    .filter(entry => !entry.qa.coaching);
+  if (!missing.length) return;
+
+  const coaching = await jobInterviewService.getModelAnswers({
+    ...coachingContext(),
+    qa_pairs: missing.map(entry => ({ question: entry.qa.question, answer: entry.qa.answer })),
+  });
+  missing.forEach((entry, k) => {
+    const got = coaching[k];
+    if (!got) return;
+    entry.qa.coaching = got;
+    entry.qa.model_answer = got.model_answer || '';
+  });
+}
+
+/** Whatever is in flight, but never for longer than this. */
+function settleWithin<T>(jobs: Promise<T>[], ms: number): Promise<unknown> {
+  if (!jobs.length) return Promise.resolve();
+  return Promise.race([
+    Promise.allSettled(jobs),
+    new Promise(resolve => setTimeout(resolve, ms)),
+  ]);
+}
+
 async function endInterview() {
   if (phase.value === 'done') return;
   isAnswering = false;
   stopCurrentRecording();
+  stopAnswerTimer();
   if (timerInterval) clearInterval(timerInterval);
   phase.value = 'processing';
   currentQuestionText.value = '';
   captionSpeaker.value = interviewerName;
   captionText.value = 'Wrapping up the interview and preparing your feedback…';
+
+  // The closing speech, the evaluation and any coaching still in the air, all at
+  // once. The evaluation is the one thing that genuinely cannot start earlier --
+  // it is a judgement on the whole interview -- so it is started here rather
+  // than after the interviewer has finished speaking, and the ten seconds of
+  // synthesised sign-off is time it no longer costs.
+  const evaluation = jobInterviewService.evaluate({
+    interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
+    qa_pairs: qaPairs.value,
+  });
 
   const closing = await jobInterviewService.callInterviewer({
     stage: 'closing', interview_type: interviewType, topic, user_name: userName.value,
@@ -789,84 +1428,41 @@ async function endInterview() {
   });
   await speak(closing || `Thank you ${userName.value}. I'll share some feedback now.`);
 
-  const duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+  captionText.value = 'Finishing your report…';
+  // Twenty seconds is one cold PythonAnywhere start. Past that the answer is not
+  // coming, and `fillMissingCoaching` covers whatever it was.
+  await settleWithin(coachingJobs, 20000);
+  await fillMissingCoaching();
 
-  // Run evaluation + coaching in parallel
-  captionText.value = 'Generating feedback, model answers and coaching notes…';
-
-  const [evalResult, coaching] = await Promise.all([
-    jobInterviewService.evaluate({
-      interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
-      qa_pairs: qaPairs.value
-    }),
-    // The whole pair, not just the question: what the candidate SAID is what
-    // lets the coach say why their answer fell short rather than only describing
-    // a good one.
-    qaPairs.value.length > 0
-      ? jobInterviewService.getModelAnswers({
-          interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
-          qa_pairs: qaPairs.value
-        })
-      : Promise.resolve([] as QACoaching[])
-  ]);
-
-  // Attach the coaching to each Q&A. `model_answer` is kept as a plain string
-  // alongside it, because that is the field every report written before today
-  // is stored with and the one an older client reads.
-  qaPairs.value.forEach((qa, i) => {
-    const entry = coaching[i];
-    qa.model_answer = entry?.model_answer || '';
-    qa.coaching = entry || undefined;
-  });
-
+  const evalResult = await evaluation;
   if (evalResult) {
     Object.assign(report, evalResult);
   } else {
     Object.assign(report, {
       score: 0,
-      summary: 'We could not generate AI feedback at this time, but your interview was recorded.',
+      summary: 'We could not generate AI feedback at this time, but your interview was recorded '
+        + 'and the per-question coaching below is still worth reading.',
       strengths: 'You participated in the full interview.',
       improvements: 'Try again later for detailed AI feedback.',
       technical_assessment: '—',
       communication: '—',
-      recommendation: 'Maybe'
+      recommendation: 'Maybe',
+      action_plan: [],
+      standout_moment: '',
+      red_flags: '',
+      score_breakdown: {},
     });
   }
 
   reportVisible.value = true;
   phase.value = 'done';
 
-  const transcript = qaPairs.value
-    .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer || '(no answer)'}`)
-    .join('\n\n');
-
-  try {
-    await jobInterviewService.saveSession({
-      user_id: authStore.user?.id || '',
-      username: authStore.user?.username || '',
-      user_full_name: `${authStore.user?.first_name || ''} ${authStore.user?.last_name || ''}`.trim() || authStore.user?.username,
-      interview_type: interviewType,
-      topic,
-      qualifications,
-      cv_id: cfg.cvId || '',
-      cv_title: cvTitle,
-      cv_summary: cvSummary,
-      attempt,
-      planned_minutes: plannedMinutes,
-      duration_seconds: duration,
-      qa_pairs: qaPairs.value,   // includes model_answer now
-      transcript,
-      score: report.score,
-      summary: report.summary,
-      strengths: report.strengths,
-      improvements: report.improvements,
-      technical_assessment: report.technical_assessment,
-      communication: report.communication,
-      recommendation: report.recommendation
-    });
-  } catch (e) {
-    console.error('Save interview failed:', e);
-  }
+  // The last write, and the one that flips the record out of `in_progress`.
+  // `persistSoon` refuses to fire once the phase is `done`, so a coaching call
+  // landing a moment after this cannot overwrite the finished report with a
+  // half-filled one.
+  if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+  await persistNow('complete');
 
   stopAllTracks();
 }
@@ -874,6 +1470,48 @@ async function endInterview() {
 function scoreClass(score: number): string {
   return score >= 80 ? 'good' : score >= 60 ? 'mid' : 'low';
 }
+
+/** The five dimensions, in a fixed order, skipping any the coach did not send. */
+const BREAKDOWN_LABELS: { key: keyof ScoreBreakdown; label: string }[] = [
+  { key: 'structure', label: 'Structure' },
+  { key: 'relevance', label: 'Answering the question' },
+  { key: 'depth', label: 'Depth and detail' },
+  { key: 'communication', label: 'Communication' },
+  { key: 'impact', label: 'Results and impact' },
+];
+
+const breakdownRows = computed(() => {
+  const breakdown = report.score_breakdown || {};
+  return BREAKDOWN_LABELS
+    .map(row => ({ ...row, value: Number(breakdown[row.key]) }))
+    .filter(row => Number.isFinite(row.value))
+    .map(row => ({
+      key: String(row.key),
+      label: row.label,
+      value: Math.max(0, Math.min(100, Math.round(row.value))),
+      band: scoreClass(row.value),
+    }));
+});
+
+/**
+ * The one line a candidate reads off a bar chart.
+ *
+ * Five bars are a diagnosis and nobody reads a diagnosis; naming the lowest one
+ * is what turns it into an instruction. Silent when the spread is small, because
+ * "your weakest area is 78" is noise.
+ */
+const weakestLine = computed(() => {
+  const rows = breakdownRows.value;
+  if (rows.length < 2) return '';
+  const sorted = [...rows].sort((a, b) => a.value - b.value);
+  const worst = sorted[0];
+  const best = sorted[sorted.length - 1];
+  if (best.value - worst.value < 10) {
+    return 'Evenly balanced — no single area is holding the score back.';
+  }
+  return `Your weakest area is ${worst.label.toLowerCase()} (${worst.value}). `
+    + `That is where practice buys the most.`;
+});
 
 function leave() {
   router.push('/job-interview/results');
@@ -894,6 +1532,7 @@ function nextAttemptConfig() {
     topic,
     qualifications,
     planned_minutes: plannedMinutes,
+    planned_questions: maxQuestions,
     attempt,
     cv_id: cfg.cvId || '',
     cv_title: cvTitle,
@@ -902,6 +1541,13 @@ function nextAttemptConfig() {
     // A different person each sitting, which is closer to the real thing than
     // meeting the same interviewer six times.
     interviewer: pickInterviewer().id,
+    questions: maxQuestions,
+    minutes: plannedMinutes,
+    // A FRESH seed, and this is the half of "practise again" that keeps working
+    // once the avoid list is full: with the same seed a redo differs only by the
+    // questions it was explicitly told to skip, and that list is capped.
+    sessionSeed: newSessionSeed(),
+    voiceEditing: voiceEditing.value,
     // This sitting's questions first -- they are the ones a candidate would
     // most obviously notice being asked again.
     avoidQuestions: [...asked, ...avoidQuestions].slice(0, MAX_AVOID_QUESTIONS),
@@ -937,6 +1583,8 @@ onUnmounted(() => {
   isAnswering = false;
   recordingLoopActive = false;
   stopCurrentRecording();
+  stopAnswerTimer();
+  if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
   if (timerInterval) clearInterval(timerInterval);
   stopAllTracks();
   try { speechSynthesis.cancel(); } catch {}

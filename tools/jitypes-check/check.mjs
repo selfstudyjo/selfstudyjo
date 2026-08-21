@@ -29,6 +29,7 @@ const OWNED = [
     'src/services/jobinterview.service.ts',
     'src/utils/interviewSetup.ts',
     'src/utils/mediaDevices.ts',
+    'src/utils/answerEditing.ts',
 ];
 
 /**

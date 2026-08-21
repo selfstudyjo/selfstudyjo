@@ -305,17 +305,17 @@
 .ji-question-label { font-size: 0.8rem; font-weight: 700; color: var(--sfs-text-muted, #c7d2fe); margin-bottom: 0.35rem; letter-spacing: 0.03em; }
 .ji-question-text { font-size: 1.1rem; font-weight: 600; line-height: 1.5; color: var(--sfs-text, #fff); }
 
-/* Caption + transcript */
-.ji-caption-box, .ji-transcript-box {
+/* Caption. The transcript box that used to share these rules is gone -- it is an
+   editable field now, and its rules are with the rest of the answer editor at
+   the foot of this file. */
+.ji-caption-box {
   padding: 1rem; margin-bottom: 1rem;
   background: var(--ji-glass); border: 1px solid var(--ji-border);
   border-radius: var(--ji-r-md); color: var(--ji-text-soft);
   -webkit-backdrop-filter: var(--ji-blur-soft); backdrop-filter: var(--ji-blur-soft);
+  min-height: 56px;
 }
-.ji-caption-box { min-height: 56px; }
 .ji-caption-box strong { color: var(--sfs-success-text, #c7f9ec); margin-right: 0.5rem; }
-.ji-transcript-box { max-height: 200px; overflow-y: auto; }
-.ji-transcript-box h4 { margin-bottom: 0.5rem; color: var(--sfs-success-text, #c7f9ec); font-size: 0.95rem; font-weight: 600; }
 
 /* Controls */
 .ji-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin: 1rem 0; }
@@ -698,4 +698,309 @@
   border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3);
   border-radius: var(--ji-r-sm);
   color: var(--sfs-warning-text, #fcd34d);
+}
+
+/* ===========================================================================
+   THE ANSWER EDITOR
+
+   The live transcript stopped being a read-only div on 2026-08-22: a candidate
+   can type in it, delete the last clause by saying "sorry", or highlight a
+   phrase and dictate over it. See src/utils/answerEditing.ts.
+
+   Every colour is a token with a literal fallback (working rule 12), and every
+   coloured text token is the `-text` variant -- these sit on a wash of their own
+   family, which is the harder backdrop in both light and dark galaxies.
+   =========================================================================== */
+.ji-answer-box {
+  padding: 1rem; margin-bottom: 1rem;
+  background: var(--ji-glass); border: 1px solid var(--ji-border);
+  border-radius: var(--ji-r-md);
+  -webkit-backdrop-filter: var(--ji-blur-soft); backdrop-filter: var(--ji-blur-soft);
+}
+.ji-answer-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem;
+}
+.ji-answer-head h4 {
+  margin: 0; font-size: 0.95rem; font-weight: 600;
+  color: var(--sfs-success-text, #c7f9ec);
+}
+.ji-answer-live { margin-left: 0.5rem; font-size: 0.8rem; color: var(--sfs-success-text, #86efac); }
+.ji-answer-meta { display: flex; align-items: baseline; gap: 0.65rem; font-size: 0.8rem; }
+.ji-answer-words { color: var(--ji-text-mute); white-space: nowrap; }
+
+/* Banded, not a countdown, and nothing is ever cut off: a hard stop on a
+   practice answer teaches a candidate to rush, which is the opposite of the
+   problem. Each band states its own ink -- a shared base rule can only carry
+   one `color`, and it would be whichever variant was written first. */
+.ji-answer-clock {
+  padding: 0.05rem 0.5rem; border-radius: 999px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  color: var(--ji-text-soft);
+  border: 1px solid var(--ji-border);
+}
+.ji-answer-clock.due {
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.18);
+  border-color: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35);
+  color: var(--sfs-warning-text, #fcd34d);
+}
+.ji-answer-clock.over {
+  background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.18);
+  border-color: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35);
+  color: var(--sfs-danger-text, #fca5a5);
+}
+
+.ji-answer-input {
+  display: block; width: 100%; min-height: 6.5rem;
+  padding: 0.75rem 0.85rem;
+  font: inherit; line-height: 1.6;
+  /* Never below 16px: below that iOS zooms the page on focus and never zooms
+     back, and this is the one field on the page somebody edits on a phone. */
+  font-size: max(1rem, 16px);
+  resize: vertical;
+  color: var(--ji-text);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.45);
+  border: 1px solid var(--ji-border-2);
+  border-radius: var(--ji-r-sm);
+  transition: border-color var(--ji-t-fast), box-shadow var(--ji-t-fast);
+}
+.ji-answer-input::placeholder { color: var(--ji-text-dim); }
+.ji-answer-input:focus {
+  outline: none;
+  border-color: var(--ji-accent);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 99 102 241) / 0.25);
+}
+.ji-answer-input[readonly] { opacity: 0.75; }
+
+.ji-answer-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.ji-btn-tool {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--ji-text-soft);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border: 1px solid var(--ji-border-2);
+  border-radius: var(--ji-r-sm);
+  cursor: pointer;
+  transition: background var(--ji-t-fast), border-color var(--ji-t-fast);
+}
+.ji-btn-tool:hover:not(:disabled) {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
+  border-color: var(--ji-accent);
+}
+.ji-btn-tool:disabled { opacity: 0.45; cursor: not-allowed; }
+.ji-btn-tool-danger { color: var(--sfs-danger-text, #fca5a5); }
+.ji-btn-tool-danger:hover:not(:disabled) { border-color: var(--sfs-danger-text, #ef4444); }
+
+.ji-answer-toggle {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  margin-left: auto; font-size: 0.8rem; color: var(--ji-text-mute);
+  cursor: pointer; white-space: nowrap;
+}
+
+/* Where the next dictated words will land. Shown because a caret that is
+   invisible is a caret that makes the next sentence appear in what looks like
+   the wrong place. */
+.ji-answer-caret {
+  margin-top: 0.6rem; padding: 0.5rem 0.7rem;
+  font-size: 0.82rem; line-height: 1.5;
+  background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.12);
+  border: 1px dashed rgb(var(--sfs-accent-rgb, 99 102 241) / 0.4);
+  border-radius: var(--ji-r-sm);
+  color: var(--sfs-accent-text, #a5b4fc);
+}
+.ji-answer-hint {
+  margin-top: 0.55rem; font-size: 0.8rem; line-height: 1.5; color: var(--ji-text-mute);
+}
+
+/* The report is written during the interview, so the candidate is told so. */
+.ji-live-report {
+  display: flex; align-items: center; gap: 0.55rem;
+  margin: 0 0 1rem; padding: 0.55rem 0.8rem;
+  font-size: 0.85rem; line-height: 1.5;
+  background: rgb(var(--sfs-info-rgb, 20 184 166) / 0.1);
+  border: 1px solid rgb(var(--sfs-info-rgb, 20 184 166) / 0.25);
+  border-radius: var(--ji-r-sm);
+  color: var(--sfs-info-text, #5eead4);
+}
+.ji-live-report-dot {
+  flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--sfs-info, #14b8a6);
+}
+.ji-live-report-dot.working { animation: ji-live-pulse 1.4s ease-in-out infinite; }
+@keyframes ji-live-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ji-live-report-dot.working { animation: none; opacity: 1; }
+}
+
+/* ===========================================================================
+   THE REPORT: score breakdown, action plan, and the two prose panels
+   =========================================================================== */
+.ji-bars { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.35rem; }
+.ji-bar-row {
+  display: grid;
+  /* `minmax(0, ...)`, not `1fr`. A `1fr` track cannot go below its own
+     min-content, so one unwrappable label pushes the row wider than the card --
+     the same trap the exam screens documented at length. */
+  grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) 2.5rem;
+  align-items: center; gap: 0.6rem;
+}
+.ji-bar-label { font-size: 0.85rem; color: var(--ji-text-soft); overflow-wrap: anywhere; }
+.ji-bar-track {
+  height: 0.55rem; border-radius: 999px; overflow: hidden;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+}
+.ji-bar-fill { display: block; height: 100%; border-radius: 999px; }
+.ji-bar-fill.good { background: var(--sfs-success, #22c55e); }
+.ji-bar-fill.mid  { background: var(--sfs-warning, #f59e0b); }
+.ji-bar-fill.low  { background: var(--sfs-danger, #ef4444); }
+.ji-bar-value {
+  font-size: 0.82rem; font-weight: 700; text-align: right;
+  font-variant-numeric: tabular-nums; color: var(--ji-text-soft);
+}
+
+.ji-report-plan { border-left: 3px solid var(--sfs-info, #14b8a6); }
+.ji-report-plan h3 { color: var(--sfs-info-text, #5eead4); }
+.ji-plan-list { margin: 0.35rem 0 0; padding-left: 1.35rem; }
+.ji-plan-list li { margin: 0.3rem 0; line-height: 1.6; color: var(--ji-text-soft); }
+
+.ji-report-standout { border-left: 3px solid var(--sfs-success, #22c55e); }
+.ji-report-standout h3 { color: var(--sfs-success-text, #86efac); }
+.ji-report-flags { border-left: 3px solid var(--ji-warn); }
+.ji-report-flags h3 { color: var(--sfs-warning-text, #fcd34d); }
+
+/* Their own answer, rewritten. The most useful block in the report, so it is
+   the one with a fill of its own rather than a heading in a shared box. */
+.ji-qa-improved {
+  margin-top: 0.6rem; padding: 0.65rem 0.85rem;
+  background: rgb(var(--sfs-info-rgb, 20 184 166) / 0.12);
+  border: 1px solid rgb(var(--sfs-info-rgb, 20 184 166) / 0.3);
+  border-left: 3px solid var(--sfs-info, #14b8a6);
+  border-radius: var(--ji-r-sm);
+  color: var(--ji-text-soft); line-height: 1.55; white-space: pre-wrap;
+}
+.ji-qa-improved-label {
+  display: block; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em;
+  margin-bottom: 0.25rem; color: var(--sfs-info-text, #5eead4);
+}
+
+.ji-qa-fix {
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.1);
+  border-color: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.28);
+  border-left: 3px solid var(--ji-warn);
+}
+.ji-qa-fix .ji-qa-note-label { color: var(--sfs-warning-text, #fcd34d); }
+
+/* A question whose coaching call has not come back yet. Only ever seen during
+   a live interview, and only because the report is now written as you go. */
+.ji-qa-pending {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-style: dashed;
+  color: var(--ji-text-mute);
+}
+.ji-qa-pending .ji-qa-note-label { color: var(--ji-text-mute); }
+
+.ji-qa-secs { margin-left: 0.35rem; font-size: 0.78rem; color: var(--ji-text-dim); }
+
+/* Kept only for records written before 2026-08-22. Folded, because it is a
+   checklist that used to be the headline and is now history. */
+.ji-qa-legacy { margin-top: 0.6rem; font-size: 0.82rem; color: var(--ji-text-mute); }
+.ji-qa-legacy summary { cursor: pointer; }
+.ji-qa-legacy ul { margin: 0.35rem 0 0; padding-left: 1.15rem; }
+.ji-qa-legacy li { margin: 0.15rem 0; line-height: 1.5; }
+
+/* An interview that was never finished. It is in the list because the session
+   is saved from the first question now, and it must not read as a real result
+   that scored nothing. */
+.ji-progress-pill {
+  display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem;
+  font-size: 0.7rem; font-weight: 700; border-radius: 999px; white-space: nowrap;
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.18);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3);
+  color: var(--sfs-warning-text, #fcd34d);
+}
+
+/* ===========================================================================
+   PRE-SESSION: question count, and how to correct yourself
+   =========================================================================== */
+.ji-quick-picks { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+/* Two classes, not one. `.ji-form-card button` sets `width: 100%` and a
+   1.5rem top margin for the submit button -- one class plus an element beats
+   one class, so a plain `.ji-quick-pick` would render six full-width blocks
+   stacked down the page with a gap between each. This is the same shape as the
+   exam pages' `.header-content` leak: a page that shares a generic selector has
+   to state the properties it depends on rather than styling the element and
+   hoping. */
+.ji-quick-picks .ji-quick-pick {
+  width: auto; margin-top: 0;
+  min-width: 2.75rem; padding: 0.35rem 0.6rem;
+  font-weight: 700; font-size: 0.88rem;
+  color: var(--ji-text-soft);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border: 1px solid var(--ji-border-2);
+  border-radius: var(--ji-r-sm);
+  cursor: pointer;
+  transition: background var(--ji-t-fast), border-color var(--ji-t-fast);
+}
+.ji-quick-picks .ji-quick-pick:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16); }
+/* The fill states its own ink -- deriving one from the other is how a primary
+   control ends up with dark text on a deep accent in nine galaxies out of ten. */
+.ji-quick-picks .ji-quick-pick.on {
+  background: var(--sfs-accent, #6366f1);
+  border-color: var(--sfs-accent, #6366f1);
+  color: var(--sfs-on-accent, #ffffff);
+}
+
+.ji-howto {
+  margin: 1.25rem 0 0.5rem; padding: 1rem 1.1rem;
+  background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.28);
+  border-left: 3px solid var(--sfs-accent, #6366f1);
+  border-radius: var(--ji-r-md);
+}
+.ji-howto h3 {
+  margin: 0 0 0.5rem; font-size: 0.98rem; font-weight: 700;
+  color: var(--sfs-accent-text, #a5b4fc);
+}
+.ji-howto p { margin: 0 0 0.6rem; line-height: 1.6; color: var(--ji-text-soft); font-size: 0.9rem; }
+.ji-howto ul { margin: 0 0 0.6rem; padding-left: 1.2rem; }
+.ji-howto li { margin: 0.35rem 0; line-height: 1.6; color: var(--ji-text-soft); font-size: 0.9rem; }
+.ji-howto-words { font-size: 0.84rem; color: var(--ji-text-mute); }
+.ji-howto code {
+  padding: 0.05rem 0.35rem; border-radius: 6px;
+  font-size: 0.82em;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  border: 1px solid var(--ji-border);
+  color: var(--ji-text-soft);
+}
+/* `.ji-form-card label` is a block with its own margins; this one is an inline
+   checkbox row inside the how-to panel, so it has to say so at the same
+   specificity rather than hope about source order. */
+.ji-howto .ji-inline-check {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin: 0.25rem 0 0; font-size: 0.88rem; font-weight: 600;
+  color: var(--ji-text-soft); cursor: pointer;
+}
+.ji-howto .ji-inline-check input { width: auto; margin: 0; }
+
+@media (pointer: coarse) {
+  /* 44px, and `max()` because responsive.css scales the root font size -- a
+     plain 2.75rem measures 41.5px on a 390px phone, under the minimum, on
+     exactly the devices this rule exists for. */
+  .ji-btn-tool, .ji-quick-picks .ji-quick-pick { min-height: max(2.75rem, 44px); }
+  .ji-answer-input { font-size: max(1rem, 16px); }
+}
+
+@media (max-width: 560px) {
+  .ji-bar-row { grid-template-columns: minmax(0, 1fr) 2.5rem; }
+  /* The label takes the whole first row on a phone; the track and the number
+     stay together underneath, which is the pairing that carries the meaning. */
+  .ji-bar-label { grid-column: 1 / -1; }
+  .ji-answer-toggle { margin-left: 0; }
 }

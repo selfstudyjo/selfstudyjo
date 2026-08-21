@@ -10,12 +10,22 @@
 // not fill in. That is precisely the bug this whole change exists to fix, so
 // shipping a second version of it would be poor.
 //
-// Three shapes have to render, and all three exist in the live data:
+// Four shapes have to render, and all four exist in the live data:
 //
-//   * a session recorded today, with the full coaching block;
+//   * a session recorded today: a SHORT model answer, the candidate's own answer
+//     rewritten, one thing to fix, and feedback on what they actually said;
+//   * a session recorded between 2026-08-20 and 2026-08-22, carrying the
+//     four-bullet "what a strong answer must include" checklist that the report
+//     no longer asks for -- it must still render for somebody re-reading an old
+//     report, folded rather than as the headline;
 //   * a session recorded before 2026-08-20, carrying `model_answer` alone;
 //   * a question answered while no AI provider could be reached, whose guidance
 //     is generic and must SAY it is generic rather than pass as a model answer.
+//
+// And one that only exists mid-interview: a question whose coaching call has not
+// come back yet. The report is written as the interview runs now, so a question
+// can legitimately be on screen with nothing under it -- and "nothing under it"
+// is exactly what a broken report looks like, so it has to say which it is.
 
 import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
@@ -35,14 +45,36 @@ async function render(qa: QAPair, index = 0): Promise<string> {
 const full: QAPair = {
     question: 'How do you approach debugging an intermittent failure?',
     answer: 'I look at the logs and try to reproduce it.',
+    seconds: 74,
     model_answer: 'I start by pinning down what is actually varying.',
     coaching: {
         model_answer: 'I start by pinning down what is actually varying.',
-        key_points: ['Reproduce it before changing anything', 'Say what you check first',
-                     'Explain how you verified the fix'],
+        improved_answer: 'I start by pinning down what is actually varying, then I reproduce it.',
+        fix: 'Say what you check first, and how you verified the fix.',
         why: 'Intermittent bugs test method rather than knowledge.',
         feedback: 'You named logs, which is right, but stopped before saying how you narrow it down.',
         rating: 6,
+        generic: false,
+    },
+};
+
+/**
+ * A record from the two days when the report asked for a checklist.
+ *
+ * It is not produced any more -- a generic four-bullet list under every question
+ * is what the report looked like when the AI was unreachable, and it read as the
+ * coach having said the same thing about all ten answers. But somebody
+ * re-reading a report they have already read must not find a section missing.
+ */
+const checklistEra: QAPair = {
+    question: 'Walk me through your experience with Terraform.',
+    answer: 'I have used it for three years.',
+    coaching: {
+        model_answer: 'I have run Terraform across about 40 modules for three years.',
+        key_points: ['Scope and scale, with numbers', 'One problem you owned end to end'],
+        why: 'The interviewer is calibrating how much of the role you have already done.',
+        feedback: 'Three years is a start; the scale is missing.',
+        rating: 5,
         generic: false,
     },
 };
@@ -59,12 +91,20 @@ const generic: QAPair = {
     model_answer: 'Open with a one-sentence definition, then the mechanism.',
     coaching: {
         model_answer: 'Open with a one-sentence definition, then the mechanism.',
-        key_points: ['Plain-language definition first', 'Then the mechanism'],
+        improved_answer: '',
+        fix: 'Get past the definition to the mechanism and the trade-off.',
         why: 'This tests depth.',
-        feedback: 'AI feedback was unavailable for this answer.',
+        feedback: 'The AI coach could not be reached for this answer.',
         rating: null,
         generic: true,
     },
+};
+
+/** Mid-interview: this answer has been submitted and its coaching is still out. */
+const pending: QAPair = {
+    question: 'Tell me about a time you disagreed with a manager.',
+    answer: 'We disagreed about the release date.',
+    coaching_pending: true,
 };
 
 async function main() {
@@ -75,12 +115,13 @@ async function main() {
         check('the question text is there', html.includes('intermittent failure'));
         check('what the candidate said is there', html.includes('I look at the logs'));
         check('the model answer is there', html.includes('pinning down what is actually varying'));
-        check('every key point is rendered, not just the first',
-            html.includes('Reproduce it before changing anything')
-            && html.includes('Say what you check first')
-            && html.includes('Explain how you verified the fix'));
-        check('the key points are a list, not a run-on paragraph',
-            (html.match(/<li[ >]/g) || []).length === 3, (html.match(/<li[ >]/g) || []).length);
+        check('their own answer, rewritten, is there -- the most useful block in the report',
+            html.includes('Your answer, made stronger')
+            && html.includes('then I reproduce it'), html);
+        check('the one thing to change is there',
+            html.includes('The one thing to change')
+            && html.includes('how you verified the fix'));
+        check('how long they spoke for is shown', html.includes('74s'));
         check('why the question is asked is there', html.includes('test method rather than knowledge'));
         check('the feedback on their own answer is there',
             html.includes('stopped before saying how you narrow it down'));
@@ -88,8 +129,47 @@ async function main() {
         check('a 6 is banded mid, not good', html.includes('ji-qa-rating mid'), html);
         check('a real model answer is not labelled as a stand-in',
             !html.includes('could not be reached for this question'));
-        check('and it is headed as a model answer',
-            html.includes('A strong answer sounds like this'));
+        check('and it is headed as a SHORT model answer -- the checklist that used to '
+            + 'sit under it is gone',
+            html.includes('A strong answer, short')
+            && !html.includes('What a strong answer must include'), html);
+        check('nothing is pending on a coached question',
+            !html.includes('Coaching this answer'));
+    }
+
+    console.log('\n1b. A record from the two days the report asked for a checklist');
+    {
+        const html = await render(checklistEra);
+        check('it renders', html.includes('Terraform'));
+        check('the model answer is the headline', html.includes('about 40 modules'));
+        check('the checklist is kept rather than dropped -- a report already read must '
+            + 'not lose a section',
+            html.includes('Scope and scale, with numbers'), html);
+        check('but it is folded away, not the headline it used to be',
+            html.includes('<details') && html.includes('Checklist saved with this answer'), html);
+        check('and the old heading is not printed anywhere',
+            !html.includes('What a strong answer must include'));
+    }
+
+    console.log('\n1c. Mid-interview, before the coaching call has come back');
+    {
+        const html = await render(pending);
+        check('the question and the answer are already on screen',
+            html.includes('disagreed with a manager') && html.includes('the release date'));
+        check('and it says the coaching is being written rather than showing nothing',
+            html.includes('Coaching this answer'), html);
+        check('no empty model-answer block in the meantime',
+            !html.includes('A strong answer, short'));
+
+        // A session saved between the answer and the coaching landing carries the
+        // flag on a record that will never be coached again. A spinner for ever
+        // is worse than the section being absent.
+        const stale = await render({
+            question: 'Q?', answer: 'A.', coaching_pending: true,
+            coaching: { model_answer: 'A real answer.' },
+        });
+        check('a stored record with the flag still set shows its coaching, not a spinner',
+            stale.includes('A real answer.') && !stale.includes('Coaching this answer'), stale);
     }
 
     console.log('\n2. A session recorded before the coaching existed');
@@ -112,11 +192,15 @@ async function main() {
         const html = await render(generic);
         check('it is headed as guidance, not as a model answer',
             html.includes('How to answer this kind of question')
-            && !html.includes('A strong answer sounds like this'));
+            && !html.includes('A strong answer, short'));
         check('and it says outright that the coach could not be reached',
             html.includes('could not be reached for this question'));
         check('a null rating shows no pill', !html.includes('ji-qa-rating'), html);
-        check('the key points still render', html.includes('Plain-language definition first'));
+        check('there is no "your answer, made stronger" block -- with no AI there is '
+            + 'nothing to make it stronger with, and echoing their own words back under '
+            + 'that heading is worse than leaving it out',
+            !html.includes('Your answer, made stronger'), html);
+        check('the one thing to change still renders', html.includes('the mechanism and the trade-off'));
     }
 
     console.log('\n4. The edges');
@@ -127,10 +211,14 @@ async function main() {
 
         const empty = await render({
             question: 'Q?', answer: 'A.',
-            coaching: { model_answer: '', key_points: [], why: '', feedback: '', rating: null },
+            coaching: {
+                model_answer: '', key_points: [], why: '', feedback: '', rating: null,
+                improved_answer: '', fix: '',
+            },
         });
         check('a coaching block with nothing in it renders no empty sections',
-            !empty.includes('ji-qa-model') && !empty.includes('ji-qa-note'), empty);
+            !empty.includes('ji-qa-model') && !empty.includes('ji-qa-note')
+            && !empty.includes('ji-qa-improved'), empty);
         check('but the question and answer still render',
             empty.includes('Q1.') && empty.includes('A.'));
 
@@ -142,6 +230,8 @@ async function main() {
         });
         check('blank key points are dropped',
             (ragged.match(/<li[ >]/g) || []).length === 1, ragged);
+        check('an answer with no seconds recorded prints no stray dot',
+            !(await render({ question: 'Q?', answer: 'A.' })).includes('ji-qa-secs'));
 
         const zero = await render({
             question: 'Q?', answer: 'A.',
@@ -161,11 +251,15 @@ async function main() {
         const nasty = await render({
             question: '<img src=x onerror=alert(1)>',
             answer: '</div><script>alert(2)</script>',
-            coaching: { model_answer: '<b>bold</b>', key_points: ['<i>x</i>'] },
+            coaching: {
+                model_answer: '<b>bold</b>', key_points: ['<i>x</i>'],
+                improved_answer: '<u>improved</u>', fix: '<em>fix</em>',
+            },
         });
         check('nothing the AI or the candidate wrote renders as markup',
             !nasty.includes('<img src=x') && !nasty.includes('<script>')
-            && !nasty.includes('<b>bold</b>') && !nasty.includes('<i>x</i>'), nasty);
+            && !nasty.includes('<b>bold</b>') && !nasty.includes('<i>x</i>')
+            && !nasty.includes('<u>improved</u>') && !nasty.includes('<em>fix</em>'), nasty);
     }
 
     console.log(failures === 0
