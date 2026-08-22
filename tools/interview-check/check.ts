@@ -33,6 +33,7 @@ import {
     cvDigest,
     cvLabel,
     fallbackQuestion,
+    isWholeQuestion,
     minutesForQuestions,
     newSessionSeed,
     normaliseQuestion,
@@ -218,6 +219,52 @@ console.log('\n4. A redo asks something else');
         typeof fallbackQuestion('HR', '', 1, 0) === 'string' && !!fallbackQuestion('HR', '', 1, 0));
     check('a blank topic still reads as a question',
         fallbackQuestion('Technical', '', 1, 1).includes('this field'));
+}
+
+console.log('\n4b. Half a question is not a question');
+{
+    // Reported from the room: the interviewer greeted somebody with
+    //   "Hi Mahmoud, welcome to a"
+    // and asked
+    //   "Can you detail a specific instance where you designed and executed a"
+    // Neither was a speech problem. The second is the STORED question text,
+    // rendered again in the report afterwards -- it is a reasoning model
+    // running out of tokens mid-sentence and the fragment being served as
+    // though it were whole.
+    check('THE reported fragment is refused',
+        !isWholeQuestion('Can you detail a specific instance where you designed and executed a'));
+    check('so is the reported greeting fragment',
+        !isWholeQuestion('Hi Mahmoud, welcome to a'));
+
+    check('a whole question passes', isWholeQuestion('What is idempotency?'));
+    check('so does one that ends on a full stop',
+        isWholeQuestion('Walk me through your last incident.'));
+    check('and a short but complete one -- a character floor alone refused this',
+        isWholeQuestion('A proper question?'));
+    check('and an Arabic one, which a rule tuned on English prose would refuse',
+        isWholeQuestion('ما هي خبرتك؟'));
+    check('a quoted question is unwrapped before it is judged',
+        isWholeQuestion('"What did you automate?"'));
+    check('and a curly-quoted one', isWholeQuestion('\u201cWhat did you automate?\u201d'));
+
+    check('nothing is not a question', !isWholeQuestion(''));
+    check('nor is whitespace', !isWholeQuestion('   '));
+    check('nor undefined', !isWholeQuestion(undefined));
+    check('nor two words with a full stop', !isWholeQuestion('Tell me.'));
+    check('nor a sentence with no terminator at all',
+        !isWholeQuestion('Tell me about your experience with Kubernetes'));
+
+    // Every local fallback must pass its own test, or the remedy for a
+    // truncated question would itself be discarded.
+    for (const type of ['Technical', 'HR']) {
+        for (let q = 1; q <= MAX_QUESTIONS; q++) {
+            const question = fallbackQuestion(type, 'DevOps', q, 1);
+            if (!isWholeQuestion(question)) {
+                check(`fallback ${type} #${q} is a whole question`, false, question);
+            }
+        }
+    }
+    check('every fallback question in both pools passes the same test', true);
 }
 
 console.log('\n5. Which questions a redo is told to avoid');

@@ -320,8 +320,8 @@ import {
 } from '@/cast/actors';
 import {
   MAX_AVOID_QUESTIONS, MAX_QUESTIONS, clampMinutes,
-  fallbackQuestion as fallbackQuestionFor, newSessionSeed, normaliseQuestion,
-  plannedQuestionCount, redoConfigFrom, secondsPerAnswer,
+  fallbackQuestion as fallbackQuestionFor, isWholeQuestion, newSessionSeed,
+  normaliseQuestion, plannedQuestionCount, redoConfigFrom, secondsPerAnswer,
   type InterviewConfig,
 } from '@/utils/interviewSetup';
 import {
@@ -671,6 +671,65 @@ function castInterviewerVoice() {
   return castVoice(voices, interviewer.gender);
 }
 
+/**
+ * Chrome silently stops speaking after about fifteen seconds.
+ *
+ * `pause()` + `resume()` on a timer resets its internal clock, and it is the
+ * documented workaround -- the Newscast has carried it since the day that page
+ * shipped, for exactly the same reason. This room did not, so any question
+ * longer than a couple of sentences was cut off mid-word and, worse, `onend`
+ * often never arrived: the interviewer simply stopped and the room sat there.
+ *
+ * Nine seconds, comfortably inside the fifteen.
+ */
+let speechKeepAlive: number | null = null;
+
+/**
+ * The utterance currently being spoken, held so the garbage collector cannot
+ * take it.
+ *
+ * Chrome and Safari have both shipped versions that collect a
+ * `SpeechSynthesisUtterance` whose only reference is inside the speech queue,
+ * and the symptom is exactly the one reported here: speech stops part-way
+ * through a sentence, with no error and often no `onend`. Keeping a reference
+ * alive until it settles is the standard workaround and costs one variable.
+ */
+let speaking: SpeechSynthesisUtterance | null = null;
+
+function startSpeechKeepAlive() {
+  stopSpeechKeepAlive();
+  speechKeepAlive = window.setInterval(() => {
+    try {
+      if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        speechSynthesis.resume();
+      }
+    } catch { /* a browser that refuses this is a browser that does not need it */ }
+  }, 9000);
+}
+
+function stopSpeechKeepAlive() {
+  if (speechKeepAlive !== null) {
+    window.clearInterval(speechKeepAlive);
+    speechKeepAlive = null;
+  }
+}
+
+/**
+ * How long to wait for `onend` before giving up on it.
+ *
+ * Speech at rate 1.0 runs at roughly 14 characters a second, so this is the
+ * time the text should take plus a wide margin. It exists because the failure
+ * being fixed here has two halves: Chrome cuts the speech off, AND sometimes
+ * never fires `onend` -- and a promise that never settles is an interview that
+ * never reaches the next question. The keepalive above should make this
+ * unreachable; it is here because "should" is not a guarantee and the cost of
+ * being wrong is a frozen room.
+ */
+function speechTimeoutMs(text: string): number {
+  return Math.min(90000, Math.max(8000, text.length * 120 + 5000));
+}
+
 function speak(text: string): Promise<void> {
   return new Promise(resolve => {
     if (!text?.trim()) { resolve(); return; }
@@ -678,14 +737,53 @@ function speak(text: string): Promise<void> {
     captionText.value = text;
     currentSpeaker.value = 'interviewer';
     try { speechSynthesis.cancel(); } catch {}
+
+    let settled = false;
+    let watchdog: any = null;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      if (watchdog) clearTimeout(watchdog);
+      // Tear down only what is still OURS. `speak()` cancels whatever is
+      // playing on the way in, and that cancellation reaches the previous
+      // utterance as an `error` event -- which can land after the next one has
+      // already started. Unguarded, the old utterance's cleanup stops the new
+      // one's keepalive and clears the speaking indicator underneath it, and
+      // the symptom is the interviewer going quiet part-way through the very
+      // next sentence: the bug this whole change is about, reintroduced by its
+      // own fix.
+      if (speaking === u) {
+        speaking = null;
+        stopSpeechKeepAlive();
+        currentSpeaker.value = null;
+      }
+      resolve();
+    };
+
     const u = new SpeechSynthesisUtterance(text);
     const cast = castInterviewerVoice();
     if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
     u.pitch = pitchFor(interviewer.gender, cast.matched);
     u.rate = 1.0;
-    u.onend = () => { currentSpeaker.value = null; resolve(); };
-    u.onerror = () => { currentSpeaker.value = null; resolve(); };
-    setTimeout(() => { try { speechSynthesis.speak(u); } catch { resolve(); } }, 80);
+    u.onend = finish;
+    u.onerror = finish;
+
+    setTimeout(() => {
+      if (settled) return;
+      try {
+        speaking = u;
+        speechSynthesis.speak(u);
+        startSpeechKeepAlive();
+        watchdog = setTimeout(() => {
+          // `onend` never came. Stop whatever is still going rather than
+          // leaving it to talk over the next question.
+          try { speechSynthesis.cancel(); } catch {}
+          finish();
+        }, speechTimeoutMs(text));
+      } catch {
+        finish();
+      }
+    }, 80);
   });
 }
 
@@ -1247,7 +1345,19 @@ async function startInterview() {
       session_seed: sessionSeed,
     }).then(areas => { questionPlan.value = areas; }),
   ]);
-  await speak(intro || `Hello ${userName.value}, I'm ${interviewerName}. Let's begin.`);
+  // "Hi Mahmoud, welcome to a" was the other half of the report, and it is the
+  // first thing a candidate hears. A greeting that stops mid-word reads as the
+  // interviewer having frozen; the canned one below is a worse greeting and a
+  // far better first impression. Same test as a question -- three words and a
+  // terminator -- which a greeting passes and a fragment does not.
+  const spokenIntro = intro && isWholeQuestion(intro)
+    ? intro
+    : `Hello ${userName.value}, I'm ${interviewerName}. Thanks for joining this `
+      + `${interviewType} interview. Let's begin.`;
+  if (intro && intro !== spokenIntro) {
+    console.warn('[interview] discarding a truncated greeting:', intro);
+  }
+  await speak(spokenIntro);
 
   startTimer();
   // The record exists from here on, so an interview that is abandoned at
@@ -1298,13 +1408,23 @@ async function askNextQuestion() {
     attempt
   });
   const offered = (q && q.trim()) ? q.trim() : '';
-  // Last line of defence, and it is not redundant with the service's own check:
-  // app 27 and this bundle deploy independently, so a replica that has not
-  // pulled the anti-repeat work yet will happily hand back question two again.
-  // Client-side the only remedy left is the local pool, which is at least one
-  // the candidate has not heard in this sitting.
+  // Two last lines of defence, and neither is redundant with the service's own
+  // checks: app 27 and this bundle deploy independently, and app 27 is several
+  // replicas that are deployed one at a time.
+  //
+  //  * a repeat -- a replica that has not pulled the anti-repeat work will
+  //    happily hand back question two again;
+  //  * a FRAGMENT -- "Can you detail a specific instance where you designed and
+  //    executed a", which is a reasoning model running out of tokens mid
+  //    sentence. It is unanswerable, it is read aloud, and it is stored and
+  //    shown again in the report as something the interviewer asked.
+  //
+  // In both cases the remedy is the local pool: a real question the candidate
+  // has not been asked beats a broken one from a better source.
   const repeated = offered && asked.some(prev => sameQuestion(prev, offered));
-  currentQuestionText.value = offered && !repeated
+  const truncated = offered && !isWholeQuestion(offered);
+  if (truncated) console.warn('[interview] discarding a truncated question:', offered);
+  currentQuestionText.value = offered && !repeated && !truncated
     ? offered
     : unaskedFallback(questionNumber.value, asked);
   await speak(currentQuestionText.value);
@@ -1426,7 +1546,11 @@ async function endInterview() {
     interviewer_name: interviewerName, interviewer_role: interviewerRole,
     attempt
   });
-  await speak(closing || `Thank you ${userName.value}. I'll share some feedback now.`);
+  const spokenClosing = closing && isWholeQuestion(closing)
+    ? closing
+    : `Thank you ${userName.value}. That concludes our interview — I'll share some `
+      + `feedback now.`;
+  await speak(spokenClosing);
 
   captionText.value = 'Finishing your report…';
   // Twenty seconds is one cold PythonAnywhere start. Past that the answer is not
@@ -1584,6 +1708,7 @@ onUnmounted(() => {
   recordingLoopActive = false;
   stopCurrentRecording();
   stopAnswerTimer();
+  stopSpeechKeepAlive();
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
   if (timerInterval) clearInterval(timerInterval);
   stopAllTracks();

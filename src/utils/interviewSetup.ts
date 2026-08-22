@@ -415,6 +415,47 @@ export function fallbackQuestion(
     return pool[index];
 }
 
+// ============ A WHOLE QUESTION ============
+
+/**
+ * The shortest thing that can be a real interview question.
+ *
+ * WORDS, with characters only as a floor under them. A character count alone
+ * refuses two perfectly good questions: "A proper question?" is eighteen
+ * characters, and Arabic writes a whole one in twelve -- so a rule tuned on
+ * English prose rejects the language half this platform serves.
+ */
+export const MIN_QUESTION_WORDS = 3;
+export const MIN_QUESTION_CHARS = 10;
+
+/** What a finished sentence ends with, including the Arabic marks. */
+const QUESTION_TERMINATORS = '?.!\u061f\u06d4';
+
+/**
+ * Whether this is a question a candidate could actually answer.
+ *
+ * Reported from the room: the interviewer greeted somebody with "Hi Mahmoud,
+ * welcome to a" and asked "Can you detail a specific instance where you
+ * designed and executed a". Neither was a speech-synthesis problem -- the second
+ * is the stored question text, which the report renders again afterwards under
+ * a heading saying the interviewer asked it. It is what a reasoning model does
+ * inside a small token budget: it thinks, the allowance runs out, and the
+ * visible content is a fragment returned as though it were whole.
+ *
+ * App 27 refuses to serve one now. This is the same rule on this side of the
+ * wire, and it is not redundant: a deploy is per-replica, so a question can
+ * still come from a worker running the previous build, and the cost of showing
+ * a fragment is far higher than the cost of asking a local question instead.
+ * Two copies, no shared package -- working rule 10, exactly as with
+ * `fallbackQuestion` above.
+ */
+export function isWholeQuestion(text: unknown): boolean {
+    const stripped = String(text ?? '').trim().replace(/^["'\u201c\u2018]+|["'\u201d\u2019]+$/g, '').trim();
+    if (stripped.length < MIN_QUESTION_CHARS) return false;
+    if (stripped.split(/\s+/).filter(Boolean).length < MIN_QUESTION_WORDS) return false;
+    return QUESTION_TERMINATORS.includes(stripped[stripped.length - 1]);
+}
+
 // ============ CV DIGEST ============
 
 /** Only the parts of a CV record this module reads. Mirrors cvbuilder.service.ts. */
