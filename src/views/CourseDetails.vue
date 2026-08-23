@@ -176,6 +176,34 @@
                       <p class="lesson-date">Added {{ formatDate(lesson.date_added) }}</p>
 
                       <div class="lesson-links">
+                        <!--
+                          The lesson's runbook, when one has been written for it.
+
+                          A router-link rather than an <a href>, and no
+                          target="_blank": this is a page inside the app, and the
+                          same rule linkify.ts follows — an internal destination
+                          stays in the tab, an external one does not.
+
+                          It leads the row on purpose. A runbook is the step-by-
+                          step version of the lesson, so it is what somebody
+                          working through the material wants first; the reading
+                          material and the source code are references beside it.
+                        -->
+                        <router-link
+                          v-if="lesson.runbook"
+                          :to="`/runbooks/${lesson.runbook.id}`"
+                          class="lesson-link lesson-link--runbook"
+                          :title="lesson.runbook.title"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            <line x1="9" y1="7" x2="16" y2="7"></line>
+                            <line x1="9" y1="11" x2="16" y2="11"></line>
+                          </svg>
+                          Runbook
+                        </router-link>
+
                         <a v-if="lesson.reading_url" :href="lesson.reading_url" target="_blank" rel="noopener" class="lesson-link">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -371,6 +399,7 @@ import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { courseService, type Course, type Lesson, type Comment, type Homework, type CourseRegistration } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
+import { runbookService, type Runbook } from '@/services/runbook.service';
 import { userService, type UserProfile } from '@/services/user.service';
 import { notificationService } from '@/services/notification.service';
 import { useAuthStore } from '@/store/auth';
@@ -393,6 +422,7 @@ const lessons = ref<(Lesson & {
   quiz?: Quiz;
   hasHomework: boolean;
   homeworkCount: number;
+  runbook?: Runbook;
 })[]>([]);
 const comments = ref<(Comment & { user_profile?: UserProfile })[]>([]);
 const loading = ref(false);
@@ -601,6 +631,26 @@ const fetchCourseData = async () => {
       console.error('[CourseDetails] Failed loading homeworks:', err);
     }
 
+    // ---------- RUNBOOKS ----------
+    //
+    // One request for the whole course, keyed by lesson. Asked per lesson this
+    // would be twenty round trips against a replica whose first answer of the
+    // day takes ~20 seconds, to decide whether to draw a link.
+    //
+    // ONLY FOR SOMEBODY WHO CAN OPEN ONE. `/runbooks/:id` carries
+    // `requiredFeatures: ['runbook_feature']`, so without it the guard bounces
+    // the click — and a button that goes nowhere reads as broken rather than as
+    // locked. The sidebar hides its Runbooks entry on exactly the same flag, so
+    // this is the behaviour a user already sees everywhere else. It also skips
+    // the request entirely for most visitors.
+    let runbooksByLessonId = new Map<string, Runbook>();
+    if (authStore.hasRunbookAccess) {
+      // Never throws — see the service. A course page must not fail to render
+      // because app 17 is cold; the links simply do not appear.
+      runbooksByLessonId = await runbookService.getRunbooksByLesson(courseId);
+      log('Runbooks by lesson:', Array.from(runbooksByLessonId.keys()));
+    }
+
     // ---------- Build final lessons array ----------
     lessons.value = fetchedLessons.map(lesson => {
       const quiz = quizzesByLessonId.get(lesson.external_lesson_id);
@@ -610,7 +660,8 @@ const fetchCourseData = async () => {
         hasQuiz: !!quiz,
         quiz,
         hasHomework: lessonHomeworks.length > 0,
-        homeworkCount: lessonHomeworks.length
+        homeworkCount: lessonHomeworks.length,
+        runbook: runbooksByLessonId.get(lesson.external_lesson_id)
       };
     });
 
@@ -956,6 +1007,28 @@ onUnmounted(() => {
      so an amber or green button inherited the ink meant for the indigo one.
      A fill decides its own ink. */
   color: var(--sfs-on-danger, #fff);
+}
+
+/*
+  The runbook link. It reuses `.lesson-link` for its geometry and only states
+  the accent, so it sits in the same row as Reading Material and Source Code
+  and is still recognisably a different kind of destination — internal, and the
+  one thing in that row written for this lesson specifically.
+
+  A fill and its ink are set together (working rule 12): `--sfs-accent-wash`
+  decides the surface, `--sfs-accent-text` the text on it. Deriving only one of
+  them is how a coloured pill ends up with near-invisible text in the light
+  galaxies, which is the single largest cause of that in this app's history.
+*/
+.lesson-link--runbook {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+  color: var(--sfs-accent-text, #667eea);
+  font-weight: 600;
+}
+
+.lesson-link--runbook:hover {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.24);
 }
 
 .btn-spinner-lg {

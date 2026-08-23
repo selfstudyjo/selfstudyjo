@@ -1,10 +1,19 @@
-import { apiService, ApiError } from './api';
+import { apiService, ApiError, withReplicas } from './api';
 import { serviceRegistry } from './config';
 
 export interface Runbook {
     id: number;
     sync_id: string;
     title: string;
+    /**
+     * The course and lesson this runbook documents, as app 17 stores them —
+     * `external_course_id` and `external_lesson_id`, the same strings the course
+     * service uses. Both are `''` on a runbook nobody linked, which is most of
+     * the older ones, so treat an empty string as "not linked" rather than
+     * assuming the field is absent.
+     */
+    course_id?: string;
+    lesson_id?: string;
     sections?: RunBookSection[];
 }
 
@@ -30,17 +39,73 @@ export interface RunbookListResponse {
 export class RunbookService {
     private appId = parseInt(import.meta.env.VITE_RUNBOOK_APP_ID || '17');
 
+    /**
+     * One replica, PINNED for the life of the tab.
+     *
+     * This used to be a bare `Math.random()` over the replica list, which is a
+     * different thing wearing the same name: it re-picked on every single call.
+     * `ServiceRegistry.getRandomReplica` spreads load on the first call and then
+     * reuses that choice, and the reuse is the part that matters — replication
+     * here is push-then-repair, so re-picking gives a coin flip on whether a
+     * write has reached the replica now being read, and the user sees "I saved
+     * it and it did not save".
+     *
+     * That was working rule 31 in this service: the pin is implemented in the
+     * registry and only exists when a caller passes the `appId`, and nine
+     * services each wrote their own wrapper that left it off. Nothing here is
+     * new machinery — `getRandomRunbookReplica()` has existed in config.ts all
+     * along and this method simply was not using it.
+     */
     async getRandomReplica(): Promise<string> {
-        try {
-            const replicas = await serviceRegistry.getServiceReplicas(this.appId, 'runbook');
-            if (!replicas || replicas.length === 0) {
-                throw new Error('No runbook replicas available');
-            }
-            const randomIndex = Math.floor(Math.random() * replicas.length);
-            return replicas[randomIndex];
-        } catch (error) {
-            throw error;
+        const replica = await serviceRegistry.getRandomRunbookReplica();
+        if (!replica) {
+            throw new Error('No runbook replicas available');
         }
+        return replica;
+    }
+
+    /**
+     * Every runbook belonging to a course, keyed by the lesson it documents.
+     *
+     * WHY ONE REQUEST AND NOT ONE PER LESSON. A course page renders ten or
+     * twenty lesson cards and each one wants to know whether a runbook exists
+     * for it. Asked per lesson that is twenty round trips against a
+     * PythonAnywhere replica whose first answer of the day takes ~20 seconds,
+     * for a link. App 17's list route filters on `course_id`, so it is one.
+     *
+     * WHY IT NEVER THROWS. This decorates a lesson card. A course page must not
+     * fail to render, or a lesson fail to be readable, because the runbook
+     * service is cold — exactly the trade `notify()` makes. The caller gets an
+     * empty map and the buttons simply do not appear.
+     *
+     * A lesson with several runbooks keeps the FIRST by id, which is the oldest:
+     * the card has room for one link, and picking the newest would move the
+     * destination under a returning reader every time somebody adds one.
+     */
+    async getRunbooksByLesson(courseId: string): Promise<Map<string, Runbook>> {
+        const byLesson = new Map<string, Runbook>();
+        if (!courseId) return byLesson;
+        try {
+            const rows = await withReplicas(this.appId, 'runbook', (base) =>
+                apiService.get<any>(
+                    base, `/runbooks/?course_id=${encodeURIComponent(courseId)}`));
+            const list: Runbook[] = Array.isArray(rows)
+                ? rows
+                : (rows && Array.isArray(rows.results) ? rows.results : []);
+            // Ascending by id so "first wins" means the oldest, whatever order
+            // the replica answered in.
+            list.slice()
+                .sort((a, b) => (a.id || 0) - (b.id || 0))
+                .forEach(runbook => {
+                    const lessonId = (runbook.lesson_id || '').trim();
+                    if (!lessonId || byLesson.has(lessonId)) return;
+                    byLesson.set(lessonId, runbook);
+                });
+        } catch {
+            // Deliberately silent. See above: an absent link is a far better
+            // outcome than a course page that will not load.
+        }
+        return byLesson;
     }
 
     async getAllRunbooks(): Promise<Runbook[]> {
