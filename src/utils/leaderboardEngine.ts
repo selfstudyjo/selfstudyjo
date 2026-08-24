@@ -193,9 +193,22 @@ export function inRange(
  * One attempt per assessment
  * ------------------------------------------------------------------ */
 
+/**
+ * The separator inside a composite key.
+ *
+ * A NUL rather than a space or a dash: an exam's `external_id` is
+ * operator-supplied and app 20 does not forbid punctuation in one, so any
+ * printable separator could appear inside a component and let two different
+ * keys collide. Written as an escape rather than as a literal control character
+ * so this file stays plain ASCII — a stray NUL in the source makes `grep` treat
+ * it as a binary file and silently stop printing matches, which is exactly how
+ * it was found.
+ */
+const SEP = '\u0000';
+
 /** The dedupe key. Not a string any caller outside this file ever sees. */
 function attemptKey(event: LeaderboardEvent): string {
-    return [event.userId, event.kind, event.subjectId].join(' ');
+    return [event.userId, event.kind, event.subjectId].join(SEP);
 }
 
 /**
@@ -658,6 +671,24 @@ export interface SubjectRow {
  * learner per subject, so the two agree today — stating it in learners is what
  * keeps it true if the dedupe is ever relaxed, and it is the number a reader
  * assumes they are being shown anyway.
+ *
+ * **A subject nothing can name is left out, not labelled.** This used to fall
+ * back to the string "Untitled", and on live data the result was a chart whose
+ * rows read `Untitled 9`, `Untitled 7`, `Untitled 6` — six bars, five of them
+ * indistinguishable. That is worse than a shorter chart in every way: it carries
+ * no information, it looks like a rendering fault, and it invites the reader to
+ * distrust the figures beside it.
+ *
+ * The reasoning it replaces was wrong rather than unlucky. "An assessment nothing
+ * else names is counted without being named — the board needs to know a learner
+ * passed *an* exam far more than which one" is a fair argument about the
+ * *ranking*, where a subject name is never printed, and it does not survive being
+ * carried over to a chart whose category axis IS the name. A count with no label
+ * is not a data point.
+ *
+ * A name learned from ANY event for that subject names the whole row, so this is
+ * as generous as it can be: only a subject that no record anywhere identifies is
+ * dropped.
  */
 export function topSubjects(
     events: readonly LeaderboardEvent[],
@@ -668,24 +699,28 @@ export function topSubjects(
     const rows = new Map<string, Working>();
     for (const event of events) {
         if (!kinds.includes(event.kind) || !event.subjectId) continue;
-        const key = [event.kind, event.subjectId].join(' ');
+        const key = [event.kind, event.subjectId].join(SEP);
         let row = rows.get(key);
         if (!row) {
             row = {
                 subjectId: event.subjectId, kind: event.kind,
-                name: event.subjectName || 'Untitled',
+                // Deliberately empty rather than a placeholder: there is no
+                // string here that would be safe to render.
+                name: '',
                 learners: 0, passed: 0, averageScore: 0,
                 people: new Set<string>(), scores: [],
             };
             rows.set(key, row);
         }
-        if (event.subjectName) row.name = event.subjectName;
+        const named = String(event.subjectName ?? '').trim();
+        if (named) row.name = named;
         row.people.add(event.userId);
         if (event.passed) row.passed += 1;
         const score = Number(event.score);
         if (typeof event.score === 'number' && Number.isFinite(score)) row.scores.push(score);
     }
     return [...rows.values()]
+        .filter(row => row.name !== '')
         .map(row => ({
             subjectId: row.subjectId, kind: row.kind, name: row.name,
             learners: row.people.size, passed: row.passed,

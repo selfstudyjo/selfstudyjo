@@ -569,8 +569,47 @@ console.log('\n10. Most studied');
             ev({ kind: 'exam', subjectId: 'same', subjectName: 'A' }),
             ev({ kind: 'quiz', subjectId: 'same', subjectName: 'B' }),
         ], ['exam', 'quiz']).length === 2);
-    check('a subject nothing names is labelled rather than blank',
-        topSubjects([ev({ subjectName: undefined })], ['exam'])[0].name === 'Untitled');
+    /*
+      THE BUG THIS BLOCK EXISTS FOR.
+
+      `topSubjects` used to fall back to the string "Untitled", and on live data
+      the chart came out as `Untitled 9`, `Untitled 7`, `Untitled 6`,
+      `Web Technologies 6`, `Untitled 5`, `Untitled 2` - five of six rows
+      indistinguishable, which reads as a rendering fault rather than as data.
+
+      The cause was that a result record carries no title at all: app 20's
+      `user_exam_result` has `exam` and no `exam_title`, and `/exams/` is off
+      limits here because it ships `is_correct`. So an unnamed subject is now
+      DROPPED, and the names that do exist are resolved from the certificates -
+      section 17.
+    */
+    check('a subject nothing names is dropped, not labelled',
+        topSubjects([ev({ subjectName: undefined })], ['exam']).length === 0);
+    check('nor is a blank or whitespace-only name allowed through',
+        topSubjects([
+            ev({ subjectId: 'a', subjectName: '' }),
+            ev({ subjectId: 'b', subjectName: '   ' }),
+        ], ['exam']).length === 0);
+    /* Comment-stripped, because the paragraphs retracting the placeholder
+       naturally quote it. Same reason `code()` exists at the top of this file. */
+    check('no placeholder subject name survives in code',
+        !/Untitled/.test(code('src/utils/leaderboardEngine.ts'))
+        && !/Untitled/.test(code('src/views/Leaderboard.vue')));
+    /*
+      One named event names the whole row. A subject is usually seen several
+      times - a result and a certificate - and only some of those carry a title,
+      so dropping on the FIRST unnamed sighting would throw away a subject the
+      data does identify.
+    */
+    check('a name on any one event names the subject',
+        topSubjects([
+            ev({ userId: 'a', subjectId: 'e9', subjectName: undefined }),
+            ev({ userId: 'b', subjectId: 'e9', subjectName: 'Web Technologies' }),
+            ev({ userId: 'c', subjectId: 'e9', subjectName: undefined }),
+        ], ['exam']).map(subject => subject.name + ':' + subject.learners).join()
+        === 'Web Technologies:3');
+    check('a padded name is stored trimmed',
+        topSubjects([ev({ subjectName: '  Databases  ' })], ['exam'])[0].name === 'Databases');
 
     // Same reason as the board: re-derived on every filter change, so it must
     // not reshuffle. Two subjects with identical counts are ordered by name.
@@ -879,6 +918,41 @@ console.log('\n16. The data layer reads what it should, and not what it should n
         /answered:\s*true/.test(service) && /answered:\s*false/.test(service));
     check('and the view distinguishes a total failure from an empty platform',
         /allFailed/.test(service) && /allFailed/.test(source('src/views/Leaderboard.vue')));
+}
+
+/* ================================================================== */
+console.log('\n17. Where a subject name can honestly come from');
+{
+    const service = code('src/services/leaderboard.service.ts');
+
+    /*
+      An exam certificate carries `exam_name` and is keyed on the same `exam_id`
+      the results use, and app 20 issues one automatically on a pass - so every
+      exam anybody has passed is named from data already fetched, with no extra
+      request and nothing leaked. That is the only reason the chart has labels at
+      all, so it is asserted rather than left for whoever next wonders why the
+      map exists.
+    */
+    check('exam names are resolved from the exam certificates',
+        /examTitles/.test(service) && /exam_name/.test(service));
+    check('course names come from the course records and their certificates',
+        /course_name/.test(service) && /courseTitles/.test(service));
+    check('a result title field is still preferred when a replica sends one',
+        /exam_title/.test(service));
+    // Still true, and still the point: naming must not cost the answer key.
+    check('and none of it fetches the exam or quiz collections',
+        !/['"`]\/exams\//.test(service) && !/['"`]\/quizzes\//.test(service));
+
+    /*
+      A quiz cannot be named by anything that does not also ship its answers, so
+      the caption is derived from what is actually plotted rather than written by
+      hand - the same correction as the activity caption that claimed "per week"
+      while the buckets were nine days.
+    */
+    const view = source('src/views/Leaderboard.vue');
+    check('the Most studied caption is derived, not hardcoded',
+        /subjectsSubtitle/.test(view)
+        && !/Distinct learners who took each assessment/.test(view));
 }
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} failed\n`);

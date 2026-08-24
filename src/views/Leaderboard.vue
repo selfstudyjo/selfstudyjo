@@ -290,13 +290,13 @@
         <section v-if="subjects.length" class="lb-charts lb-charts--single" aria-label="Most studied">
           <LeaderboardChart
             title="Most studied"
-            subtitle="Distinct learners who took each assessment or completed each course."
+            :subtitle="subjectsSubtitle"
             :badge="WINDOW_LABEL[win]"
             kind="bar"
             :labels="subjects.map(subject => subject.name)"
             :values="subjects.map(subject => subject.learners)"
             :emphasis="0"
-            category-label="Assessment or course"
+            category-label="Exam or course"
             value-label="Learners"
             :height="Math.max(200, subjects.length * 42 + 48)"
             empty-text="Nothing was studied in this period."
@@ -674,8 +674,42 @@ const topBandIndex = computed(() => {
     return counts.filter(count => count === peak).length === 1 ? counts.indexOf(peak) : null;
 });
 
+/*
+  Only named subjects reach this chart, and its caption says what that leaves.
+
+  `topSubjects` drops a subject nothing can name — see its own note; the short
+  version is that the first version labelled them "Untitled" and the live chart
+  came out as five identical rows. In practice that means **exams and courses**:
+  an exam is named by the certificate its pass issued, a course by app 19 or by
+  its certificate, and a quiz by nothing that does not also ship an answer key.
+
+  `quiz` stays in the list deliberately. It costs nothing while no quiz can be
+  named, and the day a `quiz_title` lands on the result record or a safe listing
+  exists, quizzes appear here with no change to this file.
+*/
 const subjects = computed(() =>
     topSubjects(board.value.events, ['exam', 'quiz', 'course_certificate'], 6));
+
+/**
+ * The caption, worded from what is actually plotted rather than from what was
+ * asked for.
+ *
+ * A chart headed "each assessment" that lists no quizzes is a chart that has
+ * misled the reader about its own scope — the same class of small wrongness as
+ * the activity caption that claimed "per week" while the buckets were nine days.
+ */
+const subjectsSubtitle = computed(() => {
+    const kinds = new Set(subjects.value.map(subject => subject.kind));
+    // Singular, because it reads "per exam and course" - "per exams and
+    // courses" is what a template built by concatenation gives you and it is
+    // the kind of small wrongness that makes a page feel machine-written.
+    const parts: string[] = [];
+    if (kinds.has('exam')) parts.push('exam');
+    if (kinds.has('quiz')) parts.push('quiz');
+    if (kinds.has('course_certificate')) parts.push('course');
+    const what = parts.length ? parts.join(' and ') : 'exam and course';
+    return `Distinct learners per ${what}. Anything the platform cannot name is left out.`;
+});
 
 const pointsDelta = computed(() =>
     delta(board.value.totals.points, board.value.previousTotals?.points ?? null));

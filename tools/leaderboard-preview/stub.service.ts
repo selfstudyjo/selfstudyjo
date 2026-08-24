@@ -9,16 +9,35 @@
  * on demand: the board is only as interesting as whatever the platform happens
  * to hold today, and two cold PythonAnywhere replicas take ~20s to say so.
  *
- * Only the network is stubbed. The real view, the real stylesheet, the real
- * chart component and the real engine are all exercised, which is the point —
- * a preview built from a second copy of the markup would prove nothing about
- * the page anybody visits.
+ * **ONLY THE NETWORK IS STUBBED, AND THAT IS NOT A DETAIL.**
  *
- * The data is deliberately awkward rather than tidy: a name long enough to test
- * wrapping, a name that is one word, an Arabic name, a learner with only a
- * failure, exact point ties, a retake that must not double-count, and a course
- * title long enough to set a bar chart's width if the label were allowed to.
+ * The first version of this file handed the view finished `LeaderboardEvent`s
+ * with titles already on them. Production sends no such thing — app 20's
+ * `user_exam_result` carries an `exam` id and no `exam_title` — so the preview
+ * was exercising its own sample data, and a chart reading `Untitled 9`,
+ * `Untitled 7`, `Untitled 6` shipped past a green check *and* a screenshot
+ * because the stub was kinder than the platform.
+ *
+ * So it now fakes the four HTTP payloads **in the shape each service really
+ * answers** and calls the real `flattenSources` to turn them into events. Every
+ * line of name resolution, date parsing and pass/fail interpretation the live
+ * page runs, this preview runs too. The rule generalises, and app 23's identity
+ * e2e learned it the same way: a fake that models the happy path faithfully is
+ * the most convincing kind of wrong.
+ *
+ * The data is deliberately awkward: a 41-character name, a one-word name, an
+ * Arabic name, exact point ties, a retake that must not double-count, a learner
+ * with nothing but a failure, an exam nobody has ever passed (so nothing names
+ * it), an undated record, and a title long enough to set a bar chart's width if
+ * the label were allowed to.
  */
+/*
+  A RELATIVE path on purpose. This folder aliases `@/services/leaderboard.service`
+  to this file, so importing the real flattening through the alias would resolve
+  straight back here — a module importing itself. The relative path steps around
+  the alias and reaches the genuine article.
+*/
+import { flattenSources } from '../../src/services/leaderboard.service';
 import type { LeaderboardEvent } from '@/utils/leaderboardEngine';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -42,24 +61,17 @@ const NAMES = [
     'Zaina Amer', 'Bashar Nimri', 'Reem Qaddoumi', 'Adam Saif', 'Julia Hourani',
 ];
 
-const EXAMS = [
+const EXAMS: [string, string][] = [
     ['e-net', 'Computer Networks and Internet Protocols — Final Assessment'],
     ['e-db', 'Database Systems'],
     ['e-sec', 'Information Security Fundamentals'],
     ['e-os', 'Operating Systems'],
-    ['e-web', 'Web Engineering'],
+    ['e-web', 'Web Technologies'],
 ];
 
-const QUIZZES = [
-    ['q-1', 'Subnetting basics'],
-    ['q-2', 'SQL joins'],
-    ['q-3', 'Hashing and salting'],
-    ['q-4', 'Process scheduling'],
-    ['q-5', 'HTTP verbs'],
-    ['q-6', 'CSS layout'],
-];
+const QUIZZES = ['q-1', 'q-2', 'q-3', 'q-4', 'q-5', 'q-6'];
 
-const COURSES = [
+const COURSES: [string, string][] = [
     ['c-net', 'CS471 Computer Networks'],
     ['c-db', 'CS331 Databases'],
     ['c-sec', 'CS455 Security'],
@@ -71,6 +83,8 @@ export interface SourceReport {
     events: LeaderboardEvent[];
 }
 
+const iso = (ms: number) => new Date(ms).toISOString();
+
 export async function loadAchievements(): Promise<SourceReport> {
     /*
       `?empty=1` and `?down=1` render the two states a real deployment is most
@@ -81,93 +95,128 @@ export async function loadAchievements(): Promise<SourceReport> {
     */
     const flags = new URLSearchParams(location.search);
     if (flags.has('down')) {
-        const none = { 'Exam results': false, 'Quiz results': false,
-            'Exam certificates': false, 'Course certificates': false };
-        return { answered: none, allFailed: true, events: [] };
+        return {
+            answered: {
+                'Exam results': false, 'Quiz results': false,
+                'Exam certificates': false, 'Course certificates': false,
+            },
+            allFailed: true, events: [],
+        };
     }
     if (flags.has('empty')) {
         return {
-            answered: { 'Exam results': true, 'Quiz results': true,
-                'Exam certificates': true, 'Course certificates': true },
+            answered: {
+                'Exam results': true, 'Quiz results': true,
+                'Exam certificates': true, 'Course certificates': true,
+            },
             allFailed: false, events: [],
         };
     }
 
     seed = 20260824;
     const now = Date.now();
-    const events: LeaderboardEvent[] = [];
+
+    /*
+      Exactly the fields each serializer emits, and no more.
+
+      `user_exam_result` is external_id, user_id, username, exam, score,
+      date_taken, the two result_* fields and the certificate pair. **No title.**
+      An exam's name reaches the page only through its certificate, which is what
+      `flattenSources` resolves — so a stub that added one here would be hiding
+      the whole problem this file exists to expose.
+    */
+    const examResults: any[] = [];
+    const quizResults: any[] = [];
+    const examCerts: any[] = [];
+    const courseCerts: any[] = [];
 
     NAMES.forEach((name, index) => {
-        const userId = `u-${index}`;
-        // Every third learner has a picture, roughly matching the live ratio —
-        // 29 of 38 profiles carry no image, so initials are the common case and
-        // must be what the layout is tuned for.
-        const avatarUrl = index % 3 === 0 ? '' : '';
-        const busy = 1 + Math.floor(random() * 5);
+        const user_id = `u-${index}`;
 
-        for (let n = 0; n < busy; n++) {
-            const [id, title] = EXAMS[Math.floor(random() * EXAMS.length)];
+        for (let n = 0; n < 1 + Math.floor(random() * 5); n++) {
+            const [exam, examName] = EXAMS[Math.floor(random() * EXAMS.length)];
             const score = Math.round(35 + random() * 65);
             const at = now - Math.floor(random() * 200) * DAY - DAY;
-            events.push({
-                kind: 'exam', userId, name, avatarUrl,
-                subjectId: id, subjectName: title,
-                score, passed: score >= 70, at,
+            examResults.push({
+                external_id: `r-${user_id}-${n}`, user_id, username: name,
+                exam, score, date_taken: iso(at),
+                result_status: score >= 70 ? 'PASSED' : 'FAILED',
             });
             // A retake of the same exam, which the engine must collapse to one.
             if (random() > 0.7) {
-                events.push({
-                    kind: 'exam', userId, name, avatarUrl,
-                    subjectId: id, subjectName: title,
-                    score: Math.round(35 + random() * 65),
-                    passed: false, at: at + 3 * DAY,
+                examResults.push({
+                    external_id: `r-${user_id}-${n}-again`, user_id, username: name,
+                    exam, score: Math.round(35 + random() * 65),
+                    date_taken: iso(at + 3 * DAY), result_status: 'FAILED',
                 });
             }
+            // App 20 issues one automatically on a pass, and it is the only thing
+            // that names the exam.
             if (score >= 70) {
-                events.push({
-                    kind: 'exam_certificate', userId, name, avatarUrl,
-                    subjectId: id, subjectName: title,
-                    score: null, passed: true, at: at + DAY,
+                examCerts.push({
+                    certificate_id: `ec-${user_id}-${n}`, user_id,
+                    user_full_name: name, user_image_url: '',
+                    exam_id: exam, exam_name: examName,
+                    taken_date: iso(at + DAY), created_at: iso(at + DAY),
                 });
             }
         }
 
         for (let n = 0; n < Math.floor(random() * 6); n++) {
-            const [id, title] = QUIZZES[Math.floor(random() * QUIZZES.length)];
+            const quiz = QUIZZES[Math.floor(random() * QUIZZES.length)];
             const score = Math.round(40 + random() * 60);
-            events.push({
-                kind: 'quiz', userId, name, avatarUrl,
-                subjectId: id, subjectName: title,
-                score, passed: score >= 70,
-                at: now - Math.floor(random() * 120) * DAY - DAY,
+            // Nothing anywhere names a quiz without also shipping its answer key,
+            // so quizzes are correctly absent from the Most studied chart.
+            quizResults.push({
+                external_id: `qr-${user_id}-${n}`, user_id, username: name,
+                quiz, score,
+                date_taken: iso(now - Math.floor(random() * 120) * DAY - DAY),
+                result_status: score >= 70 ? 'PASSED' : 'FAILED',
             });
         }
 
         if (random() > 0.6) {
-            const [id, title] = COURSES[Math.floor(random() * COURSES.length)];
-            events.push({
-                kind: 'course_certificate', userId, name, avatarUrl,
-                subjectId: id, subjectName: title,
-                score: null, passed: true,
-                at: now - Math.floor(random() * 150) * DAY - DAY,
+            const [course, courseName] = COURSES[Math.floor(random() * COURSES.length)];
+            courseCerts.push({
+                certificate_id: `cc-${user_id}`, user_id,
+                user_full_name: name, user_image_url: '',
+                course_id: course, course_name: courseName,
                 hours: 12 + Math.floor(random() * 30),
+                date: iso(now - Math.floor(random() * 150) * DAY - DAY),
             });
         }
     });
 
     // A learner with nothing but a failure, who must not appear on the board.
-    events.push({
-        kind: 'exam', userId: 'u-nil', name: 'Nobody Ranked',
-        subjectId: 'e-net', subjectName: EXAMS[0][1],
-        score: 31, passed: false, at: now - 5 * DAY,
+    examResults.push({
+        external_id: 'r-nil', user_id: 'u-nil', username: 'Nobody Ranked',
+        exam: 'e-net', score: 31, date_taken: iso(now - 5 * DAY),
+        result_status: 'FAILED',
+    });
+
+    /*
+      An exam nobody has ever passed, so no certificate exists to name it. It has
+      to be counted in the totals and left off the Most studied chart — the case
+      that separates "drop the unnamed" from "label the unnamed".
+    */
+    examResults.push({
+        external_id: 'r-nameless', user_id: 'u-1', username: NAMES[1],
+        exam: 'e-nameless', score: 44, date_taken: iso(now - 9 * DAY),
+        result_status: 'FAILED',
     });
 
     // An undated record, which may only ever appear under All time.
-    events.push({
-        kind: 'quiz', userId: 'u-0', name: 'Aya Nasser',
-        subjectId: 'q-undated', subjectName: 'A quiz with no date',
-        score: 88, passed: true, at: Number.NaN,
+    quizResults.push({
+        external_id: 'qr-undated', user_id: 'u-0', username: 'Aya Nasser',
+        quiz: 'q-undated', score: 88, date_taken: '', result_status: 'PASSED',
     });
+
+    /*
+      App 19's side of the course-title path. `flattenSources` prefers a
+      certificate's own `course_name` and falls back to this, so both halves are
+      exercised.
+    */
+    const courseTitles = new Map<string, string>(COURSES);
 
     return {
         answered: {
@@ -175,6 +224,8 @@ export async function loadAchievements(): Promise<SourceReport> {
             'Exam certificates': true, 'Course certificates': true,
         },
         allFailed: false,
-        events,
+        events: flattenSources({
+            examResults, quizResults, examCerts, courseCerts, courseTitles,
+        }),
     };
 }

@@ -16,12 +16,18 @@ import type { Achievement, LeaderboardEvent } from '@/utils/leaderboardEngine';
  * whole collection onto a page that needs **no account at all** would widen that
  * from "a candidate mid-exam" to "anybody on the internet, in one request".
  *
- * So exam and quiz titles come from the certificates, which carry `exam_name`
- * and `course_name` already denormalised, and from app 19's `/courses/`, which
- * is a light list with no questions in it. An assessment nothing else names is
- * counted without being named — the board needs to know a learner passed *an*
- * exam far more than it needs to print which one, and a missing title costs a
- * label while the alternative costs the question bank.
+ * So titles come from the certificates, which carry `exam_name` and
+ * `course_name` already denormalised and are keyed on the same ids the results
+ * use, and from app 19's `/courses/`, which is a light list with no questions in
+ * it. An **exam certificate is issued automatically on a pass**, so that names
+ * every exam anybody has passed, for free.
+ *
+ * Two things it still cannot name, and the page must not pretend otherwise: an
+ * exam nobody has ever passed, and a **quiz** — no certificate is issued for one
+ * and `/quizzes/` nests answers exactly as `/exams/` does. `topSubjects` drops an
+ * unnamed subject rather than labelling it, because the first version did label
+ * it and the live chart came out as five rows of "Untitled". A count with no
+ * label is not a data point; the note on `topSubjects` has the full retraction.
  *
  * **Every read is a plain collection GET with no `user_id`.** Those routes were
  * already list routes and are guarded by the shared service token like
@@ -140,8 +146,23 @@ async function courseTitles(): Promise<Map<string, string>> {
     return titles;
 }
 
+/**
+ * Exam and quiz results, named from `titles` where they can be.
+ *
+ * **A result record carries no title of its own.** `user_exam_result` in app 20's
+ * serializer is `external_id`, `user_id`, `username`, `exam`, `score`,
+ * `date_taken`, the two `result_*` fields and the certificate pair — and nothing
+ * else. `exam_title` exists only because `exam.service.ts` fetches each exam and
+ * grafts it on, which this page will not do (see the header).
+ *
+ * The field is still read first, so a replica that ever starts sending one is
+ * believed; `titles` is the fallback and, today, the only thing that names an
+ * exam at all.
+ */
 function assessmentEvents(
-    rows: readonly any[], kind: Extract<Achievement, 'exam' | 'quiz'>,
+    rows: readonly any[],
+    kind: Extract<Achievement, 'exam' | 'quiz'>,
+    titles: Map<string, string>,
 ): LeaderboardEvent[] {
     const subjectField = kind === 'exam' ? 'exam' : 'quiz';
     const titleField = kind === 'exam' ? 'exam_title' : 'quiz_title';
@@ -160,7 +181,8 @@ function assessmentEvents(
             // under the name their certificate prints.
             name: String(row?.username || '').trim(),
             subjectId,
-            subjectName: String(row?.[titleField] || '').trim() || undefined,
+            subjectName: String(row?.[titleField] || '').trim()
+                || titles.get(subjectId) || undefined,
             score: value,
             passed: passed(row?.result_status, value),
             at: stamp(row?.date_taken),
@@ -177,21 +199,74 @@ function assessmentEvents(
  * every one of those decisions and a service that pre-deduped would be a second
  * place the dedupe rule lives.
  */
-export async function loadAchievements(): Promise<SourceReport> {
-    const [examResults, quizResults, examCerts, courseCerts, titles] = await Promise.all([
-        collection<any>(EXAM_APP_ID, 'exam', '/user-exam-results/'),
-        collection<any>(EXAM_APP_ID, 'exam', '/user-quiz-results/'),
-        collection<any>(CERTIFICATE_APP_ID, 'certificate', '/exam-certificates/'),
-        collection<any>(CERTIFICATE_APP_ID, 'certificate', '/course-certificates/'),
-        courseTitles(),
-    ]);
+/** The four raw collections, exactly as the services answer them. */
+export interface RawSources {
+    examResults: readonly any[];
+    quizResults: readonly any[];
+    examCerts: readonly any[];
+    courseCerts: readonly any[];
+    /** course_id to title, from app 19. Certificates top it up below. */
+    courseTitles: Map<string, string>;
+}
+
+/**
+ * Raw rows in, `LeaderboardEvent[]` out. No network.
+ *
+ * Split out from `loadAchievements` **so the preview harness cannot bypass it**.
+ * `tools/leaderboard-preview/` stubs the service, and if the flattening lived
+ * inside the fetch then the harness would be testing its own sample data rather
+ * than this code — which is precisely how the "Untitled" chart got past a green
+ * check and a screenshot: the stub handed the view a title that production never
+ * sends. Now the stub fakes the HTTP rows and this function is the real one.
+ */
+export function flattenSources(raw: RawSources): LeaderboardEvent[] {
+    /*
+      NAMING AN EXAM WITHOUT ASKING APP 20 WHAT IT IS CALLED.
+
+      A result record has no title (see `assessmentEvents`) and `/exams/` is off
+      limits on a page that needs no account, because it serialises every
+      question with `is_correct`. So the names come from data already in hand:
+      **an exam certificate carries `exam_name` and is keyed on the same
+      `exam_id` the results use.** App 20 issues one automatically on a pass, so
+      every exam anybody has passed is named for free, with no extra request and
+      nothing leaked.
+
+      What this cannot name is an exam nobody has ever passed, and a **quiz** —
+      no certificate is issued for one and `/quizzes/` nests answers exactly as
+      `/exams/` does. Those subjects are dropped by `topSubjects` rather than
+      labelled, which is why the chart is titled for exams and courses.
+
+      `course_name` off a course certificate is folded into the same course map,
+      because a certificate names a course whose own record app 19 might not have
+      answered for.
+    */
+    // A COPY, not the caller's map. Topping up an input in place would make a
+    // second call with the same map see the first call's additions - harmless
+    // today because every caller builds a fresh one, and the kind of coupling
+    // that is only ever discovered by the bug it causes.
+    const titles = new Map(raw.courseTitles);
+    const examTitles = new Map<string, string>();
+    for (const cert of raw.examCerts) {
+        const id = String(cert?.exam_id || '').trim();
+        const name = String(cert?.exam_name || '').trim();
+        if (id && name && !examTitles.has(id)) examTitles.set(id, name);
+    }
+    for (const cert of raw.courseCerts) {
+        const id = String(cert?.course_id || '').trim();
+        const name = String(cert?.course_name || '').trim();
+        if (id && name && !titles.has(id)) titles.set(id, name);
+    }
 
     const events: LeaderboardEvent[] = [
-        ...assessmentEvents(examResults.rows, 'exam'),
-        ...assessmentEvents(quizResults.rows, 'quiz'),
+        ...assessmentEvents(raw.examResults, 'exam', examTitles),
+        // Nothing on the platform names a quiz without also shipping its answer
+        // key, so this map is deliberately empty rather than absent: the code
+        // path is identical, and the day a `quiz_title` appears on the record or
+        // a safe listing exists, one map is all that has to change.
+        ...assessmentEvents(raw.quizResults, 'quiz', new Map()),
     ];
 
-    for (const cert of examCerts.rows) {
+    for (const cert of raw.examCerts) {
         const userId = String(cert?.user_id || '').trim();
         const subjectId = String(cert?.exam_id || '').trim();
         if (!userId || !subjectId) continue;
@@ -201,7 +276,8 @@ export async function loadAchievements(): Promise<SourceReport> {
             name: String(cert?.user_full_name || '').trim(),
             avatarUrl: String(cert?.user_image_url || '').trim() || undefined,
             subjectId,
-            subjectName: String(cert?.exam_name || '').trim() || undefined,
+            subjectName: String(cert?.exam_name || '').trim()
+                || examTitles.get(subjectId) || undefined,
             score: null,
             // A certificate exists because somebody passed. An expired one is
             // still an achievement that happened — `is_valid` is about whether it
@@ -213,7 +289,7 @@ export async function loadAchievements(): Promise<SourceReport> {
         });
     }
 
-    for (const cert of courseCerts.rows) {
+    for (const cert of raw.courseCerts) {
         const userId = String(cert?.user_id || '').trim();
         const subjectId = String(cert?.course_id || '').trim();
         if (!userId || !subjectId) continue;
@@ -233,6 +309,26 @@ export async function loadAchievements(): Promise<SourceReport> {
         });
     }
 
+    return events;
+}
+
+/**
+ * Every achievement on the platform, as one flat list.
+ *
+ * The four reads run in parallel and none of them can fail the page. What comes
+ * back is raw — retakes included, unwindowed, unranked — because the engine owns
+ * every one of those decisions and a service that pre-deduped would be a second
+ * place the dedupe rule lives.
+ */
+export async function loadAchievements(): Promise<SourceReport> {
+    const [examResults, quizResults, examCerts, courseCerts, titles] = await Promise.all([
+        collection<any>(EXAM_APP_ID, 'exam', '/user-exam-results/'),
+        collection<any>(EXAM_APP_ID, 'exam', '/user-quiz-results/'),
+        collection<any>(CERTIFICATE_APP_ID, 'certificate', '/exam-certificates/'),
+        collection<any>(CERTIFICATE_APP_ID, 'certificate', '/course-certificates/'),
+        courseTitles(),
+    ]);
+
     const answered = {
         'Exam results': examResults.answered,
         'Quiz results': quizResults.answered,
@@ -243,6 +339,12 @@ export async function loadAchievements(): Promise<SourceReport> {
     return {
         answered,
         allFailed: Object.values(answered).every(ok => !ok),
-        events,
+        events: flattenSources({
+            examResults: examResults.rows,
+            quizResults: quizResults.rows,
+            examCerts: examCerts.rows,
+            courseCerts: courseCerts.rows,
+            courseTitles: titles,
+        }),
     };
 }
