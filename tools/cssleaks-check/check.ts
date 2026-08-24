@@ -215,6 +215,12 @@ console.log('\n5. A globally loaded page stylesheet stays on its own page');
     const GATED = new Set([
         'exams.css', 'schedule-exam.css', 'exam-approval.css', 'take-exam.css',
         'proctor-dashboard.css',
+        // The leaderboard is a NEW globally loaded page stylesheet, so it starts
+        // at zero and is gated from the first commit. Every selector in it is
+        // `lb-`-prefixed, a namespace no other view uses, which is what makes a
+        // globally loaded sheet safe. Debt is only tolerable where it predates
+        // the check.
+        'leaderboard.css',
     ]);
     const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
         'exam-system.css', 'side-nav.css', 'style.css']);

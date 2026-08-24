@@ -61,7 +61,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python' | 'newscast';
+    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -308,6 +308,22 @@ const LAB_PYTHON: NavEntry = { to: '/labs/python', text: 'Python Compiler', icon
 const MY_CERTIFICATES: NavEntry = { to: '/certificates', text: 'My Certificates', icon: 'certificate', keywords: 'credentials badges diplomas awarded mine' };
 const ALL_CERTIFICATES: NavEntry = { to: '/all-certificates', text: 'All Certificates', icon: 'allCertificates', keywords: 'credentials badges diplomas everyone verify public', requires: 'public' };
 
+/*
+  The leaderboard (public).
+
+  `requires: 'public'` rather than the default 'auth' — the same level as the
+  Newscast, Courses, Exams, Plans and All Certificates, and NOT the level of
+  Drawing Papers and Messages, which are ungated but still need an account. A
+  signed-out visitor sees the whole board.
+
+  It is deliberately NOT pinned. `pinnedEntries()` already carries Home and the
+  Newscast, and everything pinned is space taken from every sidebar on every
+  page of the platform; a third row is a cost paid on ~19 applications to save
+  one click on a page that is also listed under Learn and reachable from the
+  search. The Newscast earned its pin because it was *reported* as unfindable.
+*/
+const LEADERBOARD: NavEntry = { to: '/leaderboard', text: 'Leaderboard', icon: 'leaderboard', keywords: 'ranking ranks top learners points scores standings league table podium leaders stats dashboard public', requires: 'public' };
+
 // -- Results -------------------------------------------------------------
 const MY_RESULTS: NavEntry = { to: '/my-results', text: 'My Results', icon: 'results', keywords: 'scores grades marks exam quiz history' };
 
@@ -389,7 +405,7 @@ export const APP_SECTIONS: AppSection[] = [
         match: ['/exams', '/schedule-exam', '/exam-approval', '/take-exam', '/my-results', '/review-result'],
         home: '/exams',
         items: [EXAMS, SCHEDULE_EXAM, EXAM_APPROVAL, MY_RESULTS],
-        related: [MY_CERTIFICATES, COURSES, PROCTOR_DASHBOARD],
+        related: [MY_CERTIFICATES, LEADERBOARD, COURSES, PROCTOR_DASHBOARD],
     },
     {
         id: 'certificates',
@@ -399,7 +415,7 @@ export const APP_SECTIONS: AppSection[] = [
         match: ['/certificates', '/all-certificates', '/certificate'],
         home: '/certificates',
         items: [MY_CERTIFICATES, ALL_CERTIFICATES],
-        related: [COURSES, EXAMS],
+        related: [LEADERBOARD, COURSES, EXAMS],
     },
     {
         id: 'billing',
@@ -546,6 +562,22 @@ export const APP_SECTIONS: AppSection[] = [
         related: [NOTIFICATIONS, DRAW, PROFILE],
     },
     {
+        id: 'leaderboard',
+        title: 'Leaderboard',
+        subtitle: 'Who is ahead across the platform',
+        icon: 'leaderboard',
+        match: ['/leaderboard'],
+        home: '/leaderboard',
+        items: [LEADERBOARD],
+        /*
+          Every one of these is reachable signed out, which matters more here
+          than on most sections: this is one of the two applications a visitor
+          can land on with no account, so its way onward must not be a list of
+          entries that vanish for them. `check:appnav` asserts it.
+        */
+        related: [COURSES, EXAMS, ALL_CERTIFICATES, PLANS],
+    },
+    {
         id: 'newscast',
         title: 'Newscast',
         subtitle: 'World news, read to you hourly',
@@ -557,7 +589,7 @@ export const APP_SECTIONS: AppSection[] = [
         // section than on any other: it is the one application a visitor can
         // land on without an account, so its way onward must not be a wall of
         // entries that vanish for them.
-        related: [COURSES, ALL_CERTIFICATES, PLANS],
+        related: [COURSES, ALL_CERTIFICATES, LEADERBOARD, PLANS],
     },
     {
         id: 'proctor',
@@ -595,7 +627,7 @@ export const APP_SECTIONS: AppSection[] = [
 export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
-        { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES] },
+        { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
         { label: 'Tools', items: [DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },

@@ -140,3 +140,9 @@ vite.config.ts.timestamp-*
 
 # Output of tools/photomask-check
 tools/photomask-check/dist/
+
+# Output of tools/leaderboard-preview (screenshots and the throwaway Chrome
+# profile shoot.mjs launches). Generated artefacts, regenerated on demand with
+# `node tools/leaderboard-preview/shoot.mjs`; ~25 PNGs per run is not something
+# to carry in the repo.
+tools/leaderboard-preview/shots/

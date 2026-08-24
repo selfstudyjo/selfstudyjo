@@ -408,6 +408,12 @@ const icons: Record<IconName, any> = {
     h('path', { d: 'M12 13.2V21' }),
   ]),
 
+  // A podium rather than a trophy: the page is a ranking of people, and three
+  // stepped columns say "first, second, third" at 20px where a cup says
+  // "winner" and nothing about the other 200 rows.
+  leaderboard: filled('LeaderboardIcon',
+    'M4 13h4v8H4v-8zm6-9h4v17h-4V4zm6 5h4v12h-4V9z'),
+
   ai: filled('AIIcon',
     'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-10H8v2h2v-2zm6 0h-2v2h2v-2zm-6 4H8v2h2v-2zm6 0h-2v2h2v-2z'),
   research: filled('ResearchFlowIcon',

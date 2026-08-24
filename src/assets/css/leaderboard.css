@@ -1,0 +1,1192 @@
+/* =====================================================================
+   The public leaderboard — src/views/Leaderboard.vue
+
+   LOADED GLOBALLY, AND EVERY SELECTOR IS NAMESPACED FOR IT
+
+   This file is reached with a JS `import` rather than `<style scoped src>`,
+   because the chart card is its own component and a scoped sheet would not
+   reach it. A globally loaded page stylesheet is a PLATFORM stylesheet in
+   production — every page's CSS is concatenated into one always-present file —
+   which is how `roblox-tool.css`'s bare `.placeholder { inset: 0 }` ended up
+   covering the Schedule Exam calendar and making booking impossible.
+
+   So every selector here is prefixed `lb-`, a namespace no other view uses.
+   `npm run check:cssleaks` accepts a globally loaded sheet on exactly that
+   condition, and this file is in its gated set, so it must stay at zero.
+
+   THE CHART PALETTE, WHICH IS MEASURED RATHER THAN CHOSEN
+
+   Every chart on this page spends ONE hue. That is not minimalism; it is what
+   the numbers allow. Running each galaxy's accent trio through the OKLab/CVD
+   separation checks:
+
+     galaxy        accent+accent2      accent+accent3      accent2+accent3
+     andromeda     ok                  ok                  ok
+     orion         ok                  FAIL (normal 9.0)   ok
+     sombrero      ok                  FAIL (normal 7.2)   ok
+     whirlpool     FAIL (12.1)         FAIL (14.1)         ok
+     pinwheel      ok                  ok                  FAIL (12.7)
+     triangulum    FAIL (CVD 0.8)      ok                  ok
+     sunflower     FAIL (CVD 2.6)      FAIL (9.5)          floor
+     cartwheel     FAIL (CVD 3.0)      ok                  ok
+     dawn          FAIL (CVD 0.6)      FAIL (CVD 0.6)      FAIL (CVD 5.3)
+     silver        FAIL (10.5)         FAIL (12.8)         FAIL (CVD 4.4)
+
+   No pair is safe in all ten, and Triangulum's accent and accent-2 are ΔE 0.8
+   apart under deuteranopia — literally the same colour to a deuteranope. That
+   is not a flaw in the galaxies: three accents chosen to sit together
+   harmoniously is the OPPOSITE of a categorical palette, which needs maximum
+   separation. So the page never encodes identity with colour. Charts carry
+   magnitude and emphasis, the axis carries any ordering, and `--sfs-accent` is
+   the only series colour — measured at 3.74:1 (Triangulum) to 10.74:1
+   (Sunflower) against the card, so clear of the 3:1 mark floor everywhere.
+
+   Status hues appear only as badges with a word beside them, never as a series.
+
+   Fluid rather than broken into breakpoints: `clamp()` for type and spacing and
+   `minmax(min(100%, …), 1fr)` for the grids, so `responsive.css`'s fluid root
+   size carries the range and new rules are needed only at the two ends nothing
+   else covers.
+   ===================================================================== */
+
+.lb-page {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.1rem, 2.4vw, 1.9rem);
+    padding: clamp(1rem, 2.5vw, 2rem);
+    max-width: 96rem;
+    margin: 0 auto;
+    width: 100%;
+    color: var(--sfs-text, #e8ecff);
+}
+
+/* Screen-reader-only, for the things the eye reads from position or shape. */
+.lb-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * Masthead
+ * ------------------------------------------------------------------ */
+
+.lb-masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.lb-masthead__text { min-width: min(100%, 18rem); }
+
+.lb-masthead__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.lb-live {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--sfs-success, #34d399);
+    box-shadow: 0 0 0 0.2rem rgb(var(--sfs-success-rgb, 52 211 153) / 0.22);
+}
+
+.lb-live--stale {
+    background: var(--sfs-warning, #fbbf24);
+    box-shadow: 0 0 0 0.2rem rgb(var(--sfs-warning-rgb, 251 191 36) / 0.22);
+}
+
+.lb-masthead__title {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.6vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-masthead__lede {
+    margin: 0.5rem 0 0;
+    max-width: 44rem;
+    font-size: clamp(0.9rem, 1.4vw, 1.02rem);
+    line-height: 1.55;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-refresh,
+.lb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    /* A touch target is one of the few things that must not scale with the type:
+       `responsive.css` moves the root, so 2.75rem measures 41.5px on a 390px
+       phone — under the minimum, on exactly the device the rule exists for. */
+    min-height: max(2.75rem, 44px);
+    padding: 0 1.1rem;
+    border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+    border-radius: 0.7rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text, #e8ecff);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.lb-refresh:hover:not(:disabled),
+.lb-btn:hover {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    border-color: var(--sfs-border-accent, rgba(102, 126, 234, 0.5));
+}
+
+.lb-refresh:disabled { opacity: 0.6; cursor: progress; }
+
+.lb-refresh:focus-visible,
+.lb-btn:focus-visible,
+.lb-segmented__btn:focus-visible,
+.lb-search input:focus-visible,
+.lb-select select:focus-visible {
+    outline: 2px solid var(--sfs-focus, #a5b4fc);
+    outline-offset: 2px;
+}
+
+.lb-refresh__spin {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    border: 2px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+    border-top-color: var(--sfs-accent, #667eea);
+}
+
+.lb-refresh__spin.is-spinning { animation: lb-spin 720ms linear infinite; }
+
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------------------------ *
+ * The filter row — one row, above everything it scopes
+ * ------------------------------------------------------------------ */
+
+.lb-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem;
+    border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+    border-radius: 0.9rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+}
+
+.lb-segmented {
+    display: inline-flex;
+    padding: 0.2rem;
+    gap: 0.2rem;
+    border-radius: 0.7rem;
+    background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
+}
+
+.lb-segmented__btn {
+    min-height: max(2.25rem, 38px);
+    padding: 0 0.85rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: var(--sfs-text-muted, #a9b1d6);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease;
+}
+
+.lb-segmented__btn:hover { color: var(--sfs-text, #e8ecff); }
+
+.lb-segmented__btn.is-active {
+    /* The fill and its ink decided together — the fill is what picks the ink. */
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+}
+
+.lb-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 12rem;
+    min-width: min(100%, 11rem);
+    padding: 0 0.7rem;
+    min-height: max(2.75rem, 44px);
+    border: 1px solid var(--sfs-field-border, rgba(255, 255, 255, 0.16));
+    border-radius: 0.7rem;
+    background: var(--sfs-field, rgba(255, 255, 255, 0.06));
+}
+
+.lb-search__icon {
+    display: inline-flex;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: none;
+    color: var(--sfs-field-text, #e8ecff);
+    /* 16px floor: below it iOS zooms the page on focus and never zooms back,
+       and the fix is the font size, not `user-scalable=no`. */
+    font: inherit;
+    font-size: max(1rem, 16px);
+}
+
+.lb-search input::placeholder { color: var(--sfs-placeholder, #8b90ad); }
+.lb-search input:focus { outline: none; }
+
+.lb-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: max(2.75rem, 44px);
+    padding: 0 0.7rem;
+    border: 1px solid var(--sfs-field-border, rgba(255, 255, 255, 0.16));
+    border-radius: 0.7rem;
+    background: var(--sfs-field, rgba(255, 255, 255, 0.06));
+}
+
+.lb-select__label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-select select {
+    border: 0;
+    background: none;
+    color: var(--sfs-field-text, #e8ecff);
+    font: inherit;
+    font-size: max(0.9rem, 16px);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.lb-select select:focus { outline: none; }
+
+.lb-filters__count {
+    margin: 0 0 0 auto;
+    padding-right: 0.3rem;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* ------------------------------------------------------------------ *
+ * Notices
+ * ------------------------------------------------------------------ */
+
+.lb-notice {
+    margin: 0;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--sfs-warning-border, rgba(251, 191, 36, 0.42));
+    border-radius: 0.8rem;
+    background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.12);
+    color: var(--sfs-warning-text, #fbbf24);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.lb-error {
+    padding: clamp(1.4rem, 4vw, 2.6rem);
+    border: 1px solid var(--sfs-danger-border, rgba(248, 113, 113, 0.42));
+    border-radius: 1rem;
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.1);
+    text-align: center;
+}
+
+.lb-error h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+    color: var(--sfs-danger-text, #f87171);
+}
+
+.lb-error p {
+    margin: 0 auto 1.1rem;
+    max-width: 34rem;
+    color: var(--sfs-text-muted, #a9b1d6);
+    line-height: 1.55;
+}
+
+.lb-body {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.1rem, 2.4vw, 1.9rem);
+    transition: opacity 200ms ease;
+}
+
+/* Refetch keeps the frame: no skeleton flash, no layout jump. */
+.lb-body.is-refetching { opacity: 0.55; }
+
+.lb-skeleton {
+    border-radius: 1rem;
+    background: linear-gradient(
+        90deg,
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05),
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.11),
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05)
+    );
+    background-size: 200% 100%;
+    animation: lb-shimmer 1.4s ease-in-out infinite;
+}
+
+.lb-skeleton--hero { height: 9rem; }
+.lb-skeleton--row { height: 12rem; }
+.lb-skeleton--block { height: 20rem; }
+
+@keyframes lb-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Hero figure and the KPI row
+ * ------------------------------------------------------------------ */
+
+.lb-summary {
+    display: grid;
+    gap: clamp(0.7rem, 1.6vw, 1.1rem);
+    grid-template-columns: minmax(min(100%, 15rem), 20rem) 1fr;
+    align-items: stretch;
+}
+
+@media (max-width: 60rem) {
+    .lb-summary { grid-template-columns: 1fr; }
+}
+
+.lb-hero,
+.lb-kpi,
+.lb-meterCard,
+.lb-boardCard,
+.lb-chart,
+.lb-explain,
+.lb-empty {
+    border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+    border-radius: 1rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+}
+
+.lb-hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    background:
+        linear-gradient(
+            135deg,
+            rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2),
+            rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04)
+        );
+}
+
+.lb-hero__label {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* The one hero figure on the page. Same sans as everything else — a display or
+   serif face here reads as off-brand decoration — and PROPORTIONAL figures:
+   `tabular-nums` gives every digit the width of a zero, which makes a number
+   like 121 look loose at display sizes. */
+.lb-hero__value {
+    margin: 0;
+    font-size: clamp(3rem, 7vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--sfs-text, #e8ecff);
+    font-variant-numeric: proportional-nums;
+}
+
+.lb-hero__meta { margin: 0.35rem 0 0; font-size: 0.86rem; }
+
+.lb-hero__note { color: var(--sfs-text-muted, #a9b1d6); }
+
+.lb-delta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.lb-delta.is-up { color: var(--sfs-success-text, #34d399); }
+.lb-delta.is-down { color: var(--sfs-danger-text, #f87171); }
+
+.lb-delta__vs {
+    font-weight: 500;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-kpis {
+    display: grid;
+    gap: clamp(0.7rem, 1.6vw, 1.1rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+}
+
+.lb-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    padding: clamp(0.9rem, 2vw, 1.25rem);
+}
+
+.lb-kpi__label {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-kpi__value {
+    margin: 0;
+    font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--sfs-text, #e8ecff);
+    font-variant-numeric: proportional-nums;
+}
+
+.lb-kpi__foot {
+    margin: auto 0 0;
+    font-size: 0.78rem;
+    min-height: 1.1rem;
+}
+
+.lb-kpi__hint { color: var(--sfs-text-faint, #9c9ca0); }
+
+/* ------------------------------------------------------------------ *
+ * The meter — one ratio against a limit
+ * ------------------------------------------------------------------ */
+
+.lb-meterCard { padding: clamp(1rem, 2.2vw, 1.4rem); }
+
+.lb-meterCard__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.lb-meterCard__head h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-meterCard__value {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+    font-variant-numeric: proportional-nums;
+}
+
+.lb-meterCard__of {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* The unfilled track is a lighter step of the SAME ramp, so state reads across
+   the whole bar rather than only where the fill stops. */
+.lb-meter {
+    height: 0.6rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    overflow: hidden;
+}
+
+.lb-meter__fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--sfs-accent, #667eea);
+    transition: width 320ms ease;
+}
+
+.lb-meter--row { height: 0.4rem; min-width: 4rem; }
+
+.lb-meterCard__note {
+    margin: 0.7rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+/* ------------------------------------------------------------------ *
+ * The podium
+ * ------------------------------------------------------------------ */
+
+.lb-podium {
+    display: grid;
+    gap: clamp(0.7rem, 1.6vw, 1.1rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    align-items: end;
+}
+
+.lb-podium__slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: clamp(1.1rem, 2.4vw, 1.6rem) 1rem;
+    border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+    border-radius: 1rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    text-align: center;
+}
+
+/* First place is lifted, not recoloured. Colour is spent on the data. */
+.lb-podium__slot--1 {
+    border-color: var(--sfs-border-accent, rgba(102, 126, 234, 0.5));
+    background:
+        linear-gradient(
+            160deg,
+            rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22),
+            rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05)
+        );
+    box-shadow: 0 1.1rem 2.4rem rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+}
+
+@media (min-width: 60rem) {
+    .lb-podium__slot--1 { transform: translateY(-0.7rem); }
+}
+
+.lb-podium__rank { margin: 0; }
+
+.lb-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.9rem;
+    height: 1.9rem;
+    padding: 0 0.4rem;
+    border-radius: 0.6rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text-muted, #a9b1d6);
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The top three carry a filled chip. Each fill names its own ink rather than
+   inheriting the page's, which is what stops a light galaxy inverting it. */
+.lb-medal--1 {
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+}
+
+.lb-medal--2 {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.42);
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-medal--3 {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.24);
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    overflow: hidden;
+    /* One uniform treatment rather than a hue per learner. A colour keyed on a
+       name is decoration that fights ten galaxies, and it encodes an identity
+       that collides — the rank and the name are what the eye scans. */
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.lb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.lb-avatar--lg {
+    width: clamp(3.4rem, 8vw, 4.4rem);
+    height: clamp(3.4rem, 8vw, 4.4rem);
+    font-size: 1.15rem;
+    border: 2px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
+}
+
+.lb-podium__name {
+    margin: 0;
+    /* A long name must wrap rather than set the card's width. */
+    overflow-wrap: anywhere;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-podium__points {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-variant-numeric: proportional-nums;
+}
+
+.lb-podium__facts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem 0.8rem;
+    margin: 0.2rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-podium__facts span {
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+    font-variant-numeric: tabular-nums;
+}
+
+.lb-podium__crown {
+    width: 2.2rem;
+    height: 0.2rem;
+    margin: 0.2rem 0 0;
+    border-radius: 999px;
+    background: var(--sfs-accent, #667eea);
+}
+
+/* ------------------------------------------------------------------ *
+ * Charts
+ * ------------------------------------------------------------------ */
+
+.lb-charts {
+    display: grid;
+    gap: clamp(0.7rem, 1.6vw, 1.1rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+
+.lb-charts--single { grid-template-columns: 1fr; }
+
+.lb-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin: 0;
+    padding: clamp(1rem, 2.2vw, 1.4rem);
+}
+
+.lb-chart__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.7rem;
+}
+
+.lb-chart__titles { min-width: 0; }
+
+.lb-chart__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-chart__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-chart__badge {
+    flex: 0 0 auto;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* The wrapper owns the height and it includes the axis band, so the card never
+   grows a tiny nested scrollbar for its own tick labels. */
+.lb-chart__plot { position: relative; width: 100%; min-width: 0; }
+
+.lb-chart__plot canvas { width: 100% !important; height: 100% !important; }
+
+.lb-chart__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 2.6rem 1rem;
+    text-align: center;
+    color: var(--sfs-text-muted, #a9b1d6);
+    font-size: 0.88rem;
+}
+
+.lb-chart__emptyMark,
+.lb-empty__mark {
+    width: 2.4rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+}
+
+.lb-chart__empty p { margin: 0; }
+
+.lb-chart__table {
+    border-top: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+    padding-top: 0.6rem;
+    font-size: 0.84rem;
+}
+
+.lb-chart__table summary {
+    cursor: pointer;
+    min-height: max(2rem, 32px);
+    display: flex;
+    align-items: center;
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-weight: 600;
+}
+
+.lb-chart__table summary:focus-visible {
+    outline: 2px solid var(--sfs-focus, #a5b4fc);
+    outline-offset: 2px;
+    border-radius: 0.3rem;
+}
+
+.lb-chart__table table {
+    width: 100%;
+    margin-top: 0.5rem;
+    border-collapse: collapse;
+}
+
+.lb-chart__table th,
+.lb-chart__table td {
+    padding: 0.4rem 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text, #e8ecff);
+    overflow-wrap: anywhere;
+}
+
+.lb-chart__table thead th {
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-chart__table td { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ *
+ * The ranking table
+ * ------------------------------------------------------------------ */
+
+.lb-boardCard { padding: clamp(1rem, 2.2vw, 1.4rem); }
+
+.lb-boardCard__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+}
+
+.lb-boardCard__head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-boardCard__head p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* The table is allowed its own horizontal scroll on a narrow screen; the PAGE
+   is not. Columns drop out at the two breakpoints below before this bites. */
+.lb-tableWrap { width: 100%; overflow-x: auto; }
+
+.lb-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+}
+
+.lb-table thead th {
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--sfs-text-faint, #9c9ca0);
+    border-bottom: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
+}
+
+.lb-table tbody td {
+    padding: 0.6rem;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text, #e8ecff);
+    vertical-align: middle;
+}
+
+.lb-table tbody tr:last-child td { border-bottom: 0; }
+
+.lb-table tbody tr { transition: background 140ms ease; }
+
+.lb-table tbody tr:hover {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.07);
+}
+
+.lb-table__rank {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.lb-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.lb-num--lead { font-weight: 700; font-size: 1rem; }
+
+.lb-dash { color: var(--sfs-text-faint, #9c9ca0); }
+
+.lb-move {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.12rem;
+    padding: 0.1rem 0.32rem;
+    border-radius: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.lb-move.is-up {
+    background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.16);
+    color: var(--sfs-success-text, #34d399);
+}
+
+.lb-move.is-down {
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.14);
+    color: var(--sfs-danger-text, #f87171);
+}
+
+/*
+   NEW is neutral, not a status.
+
+   It reads "the previous period has nothing to compare against", which is
+   neither good nor bad — and the up and down arrows beside it already spend the
+   success and danger hues on direction, which is the one legitimate status use
+   here. A third coloured chip in the same column would make all three look like
+   grades.
+*/
+.lb-move.is-new {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text-muted, #a9b1d6);
+    letter-spacing: 0.04em;
+}
+
+.lb-who {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.lb-who__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.lb-who__name {
+    font-weight: 600;
+    line-height: 1.3;
+    /* A name is untrusted-length data. `anywhere` rather than `break-word`
+       because the latter breaks only at permitted points and is not counted
+       when `min-content` is computed, so it neither wraps an unbroken string
+       nor lets the column shrink. */
+    overflow-wrap: anywhere;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-who__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.45rem;
+    font-size: 0.72rem;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-chip {
+    padding: 0.08rem 0.34rem;
+    border-radius: 0.35rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/*
+   A distinction wears the accent, not the warning hue.
+
+   Amber was the first choice, for gold-star reasons, and it is wrong: on every
+   other screen of this platform amber means caution, so an accolade rendered in
+   it reads as a flag against the learner's name. The status palette is reserved
+   for state — good, warning, serious, critical — and a distinction is an
+   attribute, so it takes the brand hue like the avatar chip beside it.
+*/
+.lb-chip--star {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.lb-noMatch,
+.lb-more {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.4rem 1rem 0.3rem;
+    text-align: center;
+}
+
+.lb-noMatch p,
+.lb-more p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* ------------------------------------------------------------------ *
+ * Empty state
+ * ------------------------------------------------------------------ */
+
+.lb-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    padding: clamp(2rem, 6vw, 3.6rem) 1.2rem;
+    text-align: center;
+}
+
+.lb-empty h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-empty p {
+    margin: 0;
+    max-width: 32rem;
+    line-height: 1.55;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+/* ------------------------------------------------------------------ *
+ * How points work
+ * ------------------------------------------------------------------ */
+
+.lb-explain {
+    display: grid;
+    gap: clamp(1rem, 2.4vw, 2rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    padding: clamp(1.1rem, 2.4vw, 1.6rem);
+}
+
+.lb-explain h2 {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-points {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.lb-points th,
+.lb-points td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.09);
+    color: var(--sfs-text, #e8ecff);
+}
+
+.lb-points th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-points td {
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.lb-points__zero th,
+.lb-points__zero td { color: var(--sfs-text-faint, #9c9ca0); }
+
+.lb-rules {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--sfs-text-muted, #a9b1d6);
+}
+
+.lb-rules strong { color: var(--sfs-text, #e8ecff); }
+
+.lb-foot {
+    padding: 0 0.3rem 0.6rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--sfs-text-faint, #9c9ca0);
+}
+
+.lb-foot p { margin: 0; }
+
+/* ------------------------------------------------------------------ *
+ * Column shedding, then the two ends nothing else covers
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 62rem) {
+    .lb-hide-md { display: none; }
+}
+
+@media (max-width: 42rem) {
+    .lb-hide-sm { display: none; }
+    .lb-filters__count { margin-left: 0; width: 100%; }
+}
+
+/* A ~440px phone: the filter row's controls each take a whole line rather than
+   wrapping into 3rem stubs. */
+@media (max-width: 27.5rem) {
+    .lb-segmented { width: 100%; }
+    .lb-segmented__btn { flex: 1 1 0; padding: 0 0.4rem; }
+    .lb-search,
+    .lb-select { flex: 1 1 100%; }
+}
+
+/* A television: bounded and centred, with an inset because most TVs overscan
+   and clip the outer edge of the picture. */
+@media (min-width: 120rem) and (pointer: coarse) {
+    .lb-page { max-width: 110rem; padding-inline: 3%; }
+}
+
+@media (pointer: coarse) {
+    .lb-table tbody td { padding-block: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lb-skeleton,
+    .lb-refresh__spin.is-spinning { animation: none !important; }
+    .lb-meter__fill,
+    .lb-table tbody tr,
+    .lb-body { transition: none !important; }
+    .lb-podium__slot--1 { transform: none !important; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Print
+ *
+ * Scoped to `@media print` on purpose, and worth knowing why: the colour codemod
+ * treats a print block as speaking for PAPER and not for the screen, and reading
+ * one as a screen rule is what marked whole components as light islands and left
+ * their white text unconverted. Nothing here leaks back.
+ * ------------------------------------------------------------------ */
+
+@media print {
+    .lb-page {
+        background: var(--sfs-paper, #ffffff);
+        color: var(--sfs-on-paper, #10131c);
+        max-width: none;
+        padding: 0;
+    }
+
+    .lb-refresh,
+    .lb-filters,
+    .lb-more,
+    .lb-noMatch { display: none; }
+
+    .lb-hero,
+    .lb-kpi,
+    .lb-meterCard,
+    .lb-boardCard,
+    .lb-chart,
+    .lb-explain,
+    .lb-podium__slot {
+        background: var(--sfs-paper, #ffffff);
+        color: var(--sfs-on-paper, #10131c);
+        border-color: var(--sfs-paper-border, rgba(0, 0, 0, 0.16));
+        box-shadow: none;
+    }
+
+    /* The plot is kept rather than swapped for the table twin, and that is a
+       correction rather than a preference: a closed `<details>` is hidden by the
+       user agent with `content-visibility`, which a print rule cannot reliably
+       force open — so "hide the canvas, show the table" would print a chart card
+       containing nothing at all. A reader who wants the figures on paper opens
+       the disclosure first, and it prints with them. */
+    .lb-chart__table { border-top: 0; }
+    .lb-chart__table summary { color: var(--sfs-on-paper-muted, #4a5061); }
+}

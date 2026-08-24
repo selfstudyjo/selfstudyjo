@@ -76,6 +76,11 @@ import DrawShared from '../views/DrawShared.vue';
 // alongside Drawing Papers and Messages, which need an account.
 import Newscast from '../views/Newscast.vue';
 
+// Leaderboard — public like the Newscast: `requiresAuth: false`, no
+// subscription and no feature flag, so a signed-out visitor sees the whole
+// board. It reads the exam and certificate services and writes nothing.
+import Leaderboard from '../views/Leaderboard.vue';
+
 // Network Simulator (gated by lab_feature)
 import NetworkSimulator from '../views/NetworkSimulator.vue';
 import NetworkSimulatorStudio from '../views/NetworkSimulatorStudio.vue';
@@ -186,6 +191,12 @@ const routes = [
                 name: 'AllUsersCertificates',
                 component: AllUsersCertificates,
                 meta: { title: 'All Certificates', requiresAuth: false }
+            },
+            {
+                path: 'leaderboard',
+                name: 'Leaderboard',
+                component: Leaderboard,
+                meta: { title: 'Leaderboard', requiresAuth: false }
             },
             {
                 path: 'exams',
