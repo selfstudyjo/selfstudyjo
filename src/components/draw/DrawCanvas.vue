@@ -29,7 +29,7 @@
     />
 
     <div v-if="readonly" class="readonly-badge">
-      <span class="dot" /> View only
+      <span class="dot" /> {{ $t('View only') }}
     </div>
   </div>
 </template>

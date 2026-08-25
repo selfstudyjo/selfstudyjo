@@ -8,15 +8,15 @@
         <button
           type="button"
           class="uc-icon-btn home"
-          aria-label="Back to the dashboard"
-          title="Back to the dashboard"
+          :aria-label="$t('Back to the dashboard')"
+          :title="$t('Back to the dashboard')"
           @click="$emit('home')"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.8V20a1 1 0 001 1h12a1 1 0 001-1V9.8"/><path d="M9.5 21v-6h5v6"/></svg>
         </button>
 
         <h1>
-          Messages
+          {{ $t('Messages') }}
           <span v-if="totalUnread > 0" class="total">{{ totalUnread > 99 ? '99+' : totalUnread }}</span>
         </h1>
 
@@ -35,7 +35,7 @@
 
           <button type="button" class="new-btn" @click="$emit('new-chat')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            <span>New</span>
+            <span>{{ $t('New') }}</span>
           </button>
         </div>
       </div>
@@ -45,8 +45,8 @@
         <input
           :value="modelValue"
           type="text"
-          placeholder="Search conversations…"
-          aria-label="Search conversations"
+          :placeholder="$t('Search conversations…')"
+          :aria-label="$t('Search conversations')"
           autocomplete="off"
           @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         />
@@ -54,7 +54,7 @@
           v-if="modelValue"
           type="button"
           class="clear"
-          aria-label="Clear search"
+          :aria-label="$t('Clear search')"
           @click="$emit('update:modelValue', '')"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -65,21 +65,21 @@
     <div class="list uc-scroll">
       <template v-if="loading">
         <div v-for="n in 6" :key="n" class="skeleton" aria-hidden="true"></div>
-        <p class="uc-sr-only">Loading your conversations</p>
+        <p class="uc-sr-only">{{ $t('Loading your conversations') }}</p>
       </template>
 
       <div v-else-if="!rooms.length && !modelValue" class="uc-empty">
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
-        <strong>No conversations yet</strong>
-        <span>Start one with a classmate or a teacher — it is free with your account.</span>
+        <strong>{{ $t('No conversations yet') }}</strong>
+        <span>{{ $t('Start one with a classmate or a teacher — it is free with your account.') }}</span>
         <button type="button" class="new-btn wide" @click="$emit('new-chat')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span>New message</span>
+          <span>{{ $t('New message') }}</span>
         </button>
       </div>
 
       <p v-else-if="!rooms.length" class="uc-empty terse">
-        Nothing matches “{{ modelValue }}”.
+        {{ $t('Nothing matches “{v0}”.', { v0: modelValue }) }}
       </p>
 
       <RoomListItem
@@ -163,7 +163,7 @@ h1 {
   color: var(--uc-text);
 }
 
-.home { flex: 0 0 34px; margin-left: -6px; }
+.home { flex: 0 0 34px; margin-inline-start: -6px; }
 
 .total {
   padding: 2px 8px;

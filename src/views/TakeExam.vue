@@ -20,11 +20,11 @@
         </div>
         <div class="exam-controls">
           <div class="timer-container">
-            <div class="timer-label">Time Remaining</div>
+            <div class="timer-label">{{ $t('Time Remaining') }}</div>
             <div class="timer" :class="timerClass">{{ formatTime(timeRemaining) }}</div>
           </div>
           <div class="question-nav">
-            <div class="nav-label">Question</div>
+            <div class="nav-label">{{ $t('Question') }}</div>
             <div class="nav-controls">
               <button @click="prevQuestion" :disabled="currentQuestionIndex === 0 || examSubmitted" class="nav-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -46,15 +46,15 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading exam...</p>
+      <p>{{ $t('Loading exam...') }}</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">❌</div>
-      <h3>Error Loading Exam</h3>
+      <h3>{{ $t('Error Loading Exam') }}</h3>
       <p>{{ error }}</p>
-      <button @click="loadExam" class="retry-btn">Retry</button>
+      <button @click="loadExam" class="retry-btn">{{ $t('Retry') }}</button>
     </div>
 
     <!-- Main Content -->
@@ -64,9 +64,9 @@
         <div class="question-panel">
           <div class="question-card">
             <div class="question-header">
-              <h3 class="question-number">Question {{ currentQuestionIndex + 1 }}</h3>
+              <h3 class="question-number">{{ $t('Question {v0}', { v0: currentQuestionIndex + 1 }) }}</h3>
               <div class="question-meta">
-                <span class="question-score">{{ currentQuestion?.score }} points</span>
+                <span class="question-score">{{ $t('{v0} points', { v0: currentQuestion?.score }) }}</span>
                 <button @click="toggleFlag" class="flag-btn" :class="{ flagged: isQuestionFlagged(currentQuestion?.external_id) }" :disabled="examSubmitted">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M14 4L18 8V20L14 16H6L4 20V4L6 8H14Z" :fill="isQuestionFlagged(currentQuestion?.external_id) ? '#f56565' : 'none'" stroke="#f56565" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -107,16 +107,16 @@
             <div class="question-footer">
               <div class="navigation-buttons">
                 <button @click="prevQuestion" :disabled="currentQuestionIndex === 0 || examSubmitted" class="nav-btn secondary">
-                  Previous
+                  {{ $t('Previous') }}
                 </button>
                 <div class="question-counter">
-                  Question {{ currentQuestionIndex + 1 }} of {{ validQuestions.length }}
+                  {{ $t('Question {v0} of {v1}', { v0: currentQuestionIndex + 1, v1: validQuestions.length }) }}
                 </div>
                 <button v-if="currentQuestionIndex < validQuestions.length - 1"
                         @click="nextQuestion"
                         :disabled="examSubmitted"
                         class="nav-btn primary">
-                  Next
+                  {{ $t('Next') }}
                 </button>
                 <button v-else-if="!examSubmitted"
                         @click="confirmSubmit"
@@ -134,7 +134,7 @@
           <!-- Overview -->
           <div class="overview-card">
             <div class="card-header">
-              <h3>Questions</h3>
+              <h3>{{ $t('Questions') }}</h3>
               <div class="stats">
                 <span class="answered">{{ answeredCount }}</span>/<span class="total">{{ validQuestions.length }}</span>
               </div>
@@ -157,15 +157,15 @@
             <div class="legend">
               <div class="legend-item">
                 <div class="legend-dot current"></div>
-                <span>Current</span>
+                <span>{{ $t('Current') }}</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot answered"></div>
-                <span>Answered</span>
+                <span>{{ $t('Answered') }}</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot flagged"></div>
-                <span>Flagged</span>
+                <span>{{ $t('Flagged') }}</span>
               </div>
             </div>
           </div>
@@ -173,23 +173,23 @@
           <!-- Summary -->
           <div class="summary-card">
             <div class="card-header">
-              <h3>Summary</h3>
+              <h3>{{ $t('Summary') }}</h3>
             </div>
             <div class="summary-content">
               <div class="summary-item">
-                <span class="label">Time Left:</span>
+                <span class="label">{{ $t('Time Left:') }}</span>
                 <span class="value" :class="{ warning: timeRemaining < 300000 }">{{ formatTime(timeRemaining) }}</span>
               </div>
               <div class="summary-item">
-                <span class="label">Answered:</span>
+                <span class="label">{{ $t('Answered:') }}</span>
                 <span class="value">{{ answeredCount }}</span>
               </div>
               <div class="summary-item">
-                <span class="label">Flagged:</span>
+                <span class="label">{{ $t('Flagged:') }}</span>
                 <span class="value">{{ flaggedCount }}</span>
               </div>
               <div v-if="examSubmitted" class="summary-item">
-                <span class="label">Score:</span>
+                <span class="label">{{ $t('Score:') }}</span>
                 <span class="value score" :class="examResult?.result_status?.toLowerCase()">
                   {{ examResult?.score }}%
                 </span>
@@ -200,17 +200,17 @@
           <!-- Actions -->
           <div class="actions-card">
             <div class="card-header">
-              <h3>Actions</h3>
+              <h3>{{ $t('Actions') }}</h3>
             </div>
             <div class="actions-content">
               <button v-if="!examSubmitted" @click="clearAnswer" :disabled="!selectedAnswer" class="action-btn secondary">
-                Clear Answer
+                {{ $t('Clear Answer') }}
               </button>
               <button v-if="examSubmitted" @click="toggleCorrectAnswers" class="action-btn primary">
                 {{ showCorrectAnswers ? 'Hide Answers' : 'Show Answers' }}
               </button>
               <button v-if="examSubmitted" @click="goToExams" class="action-btn success">
-                Finish
+                {{ $t('Finish') }}
               </button>
             </div>
           </div>
@@ -218,7 +218,7 @@
           <!-- Flagged Questions -->
           <div v-if="flaggedCount > 0" class="flagged-card">
             <div class="card-header">
-              <h3>Flagged Questions</h3>
+              <h3>{{ $t('Flagged Questions') }}</h3>
             </div>
             <div class="flagged-questions">
               <button v-for="index in flaggedQuestionIndices"
@@ -238,32 +238,32 @@
     <div v-if="showSubmitModal" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
-          <h3>Submit Exam</h3>
+          <h3>{{ $t('Submit Exam') }}</h3>
           <button @click="showSubmitModal = false" class="close-btn">×</button>
         </div>
         <div class="modal-body">
           <div class="modal-icon">⚠️</div>
-          <h4>Are you sure you want to submit?</h4>
+          <h4>{{ $t('Are you sure you want to submit?') }}</h4>
           <div class="summary">
             <div class="summary-row">
-              <span>Total Questions:</span>
+              <span>{{ $t('Total Questions:') }}</span>
               <span>{{ validQuestions.length }}</span>
             </div>
             <div class="summary-row">
-              <span>Answered:</span>
+              <span>{{ $t('Answered:') }}</span>
               <span>{{ answeredCount }}</span>
             </div>
             <div class="summary-row">
-              <span>Unanswered:</span>
+              <span>{{ $t('Unanswered:') }}</span>
               <span>{{ validQuestions.length - answeredCount }}</span>
             </div>
           </div>
           <div class="warning-text">
-            You cannot change your answers after submission.
+            {{ $t('You cannot change your answers after submission.') }}
           </div>
         </div>
         <div class="modal-footer">
-          <button @click="showSubmitModal = false" class="btn-cancel">Cancel</button>
+          <button @click="showSubmitModal = false" class="btn-cancel">{{ $t('Cancel') }}</button>
           <button @click="submitExam" :disabled="submitting" class="btn-submit">
             {{ submitting ? 'Submitting...' : 'Submit Exam' }}
           </button>
@@ -275,7 +275,7 @@
     <div v-if="showResultsModal" class="modal-overlay">
       <div class="modal results-modal">
         <div class="modal-header">
-          <h3>Exam Completed</h3>
+          <h3>{{ $t('Exam Completed') }}</h3>
         </div>
         <div class="modal-body">
           <div class="result-icon" :class="examResult?.result_status?.toLowerCase()">
@@ -287,21 +287,21 @@
           <div class="score-display">
             <div class="score-circle" :class="examResult?.result_status?.toLowerCase()">
               <span class="score-value">{{ examResult?.score }}%</span>
-              <span class="score-label">Score</span>
+              <span class="score-label">{{ $t('Score') }}</span>
             </div>
           </div>
 
           <div class="result-details">
             <div class="detail">
-              <span>Correct Answers:</span>
+              <span>{{ $t('Correct Answers:') }}</span>
               <span>{{ correctAnswers }} / {{ validQuestions.length }}</span>
             </div>
             <div class="detail">
-              <span>Time Spent:</span>
+              <span>{{ $t('Time Spent:') }}</span>
               <span>{{ formatTime(timeSpent) }}</span>
             </div>
             <div class="detail">
-              <span>Appointment Status:</span>
+              <span>{{ $t('Appointment Status:') }}</span>
               <span class="status-badge" :class="appointment?.appointment_status?.toLowerCase().replace(/\s+/g, '-')">
                 {{ appointment?.appointment_status }}
               </span>
@@ -310,10 +310,10 @@
         </div>
         <div class="modal-footer">
           <button @click="showResultsModal = false; showCorrectAnswers = true;" class="btn-review">
-            Review Answers
+            {{ $t('Review Answers') }}
           </button>
           <button @click="goToExams" class="btn-finish">
-            Back to Exams
+            {{ $t('Back to Exams') }}
           </button>
         </div>
       </div>

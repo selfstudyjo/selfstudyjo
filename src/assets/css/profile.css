@@ -318,7 +318,7 @@
 
 .profile-stat-item:hover {
   border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
-  padding-left: var(--pp-sp-sm);
+  padding-inline-start: var(--pp-sp-sm);
 }
 
 .profile-stat-label {
@@ -330,7 +330,7 @@
   color: var(--pp-text);
   font-size: var(--pp-fs-md);
   font-weight: 500;
-  text-align: right;
+  text-align: end;
 }
 
 .profile-stat-value .verified {
@@ -424,7 +424,7 @@
     calc(100% - 12px) calc(50% - 2px);
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
-  padding-right: 36px;
+  padding-inline-end: 36px;
 }
 
 .profile-form-group select option {
@@ -466,7 +466,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   padding: 4px 10px;
   font-size: var(--pp-fs-xs);
   color: var(--pp-accent-cyan);
@@ -616,7 +616,7 @@
 }
 
 .profile-detail-item:last-child { border-bottom: none; }
-.profile-detail-item:hover { padding-left: var(--pp-sp-sm); }
+.profile-detail-item:hover { padding-inline-start: var(--pp-sp-sm); }
 
 .profile-detail-label {
   font-size: var(--pp-fs-sm);

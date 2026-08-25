@@ -1,15 +1,15 @@
 <template>
   <div class="research-collab-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconCollab /> Collaboration</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconCollab /> {{ $t('Collaboration') }}</h1>
     </div>
 
     <div class="rf-section rf-collab-send">
-      <h2 class="rf-section-title"><RfIconSend /> Send Collaboration Request</h2>
+      <h2 class="rf-section-title"><RfIconSend /> {{ $t('Send Collaboration Request') }}</h2>
       <div class="rf-collab-form">
         <select v-model="selectedProjectId" class="rf-select">
-          <option value="">Select a project...</option>
+          <option value="">{{ $t('Select a project...') }}</option>
           <option v-for="p in availableProjects" :key="p.id" :value="p.id">
             {{ p.title }} ({{ p.access_level }})
           </option>
@@ -23,31 +23,31 @@
 
     <div class="rf-tabs">
       <button :class="['rf-tab', { active: activeTab === 'received' }]" @click="activeTab = 'received'">
-        <RfIconInbox /> Received ({{ receivedRequests.length }})
+        <RfIconInbox /> {{ $t('Received ({v0})', { v0: receivedRequests.length }) }}
       </button>
       <button :class="['rf-tab', { active: activeTab === 'sent' }]" @click="activeTab = 'sent'">
-        <RfIconSend /> My Requests ({{ sentRequests.length }})
+        <RfIconSend /> {{ $t('My Requests ({v0})', { v0: sentRequests.length }) }}
       </button>
       <button :class="['rf-tab', { active: activeTab === 'pending' }]" @click="activeTab = 'pending'">
-        <RfIconTime /> Pending ({{ pendingRequests.length }})
+        <RfIconTime /> {{ $t('Pending ({v0})', { v0: pendingRequests.length }) }}
       </button>
       <button :class="['rf-tab', { active: activeTab === 'approved' }]" @click="activeTab = 'approved'">
-        <RfIconCheck /> Approved ({{ approvedRequests.length }})
+        <RfIconCheck /> {{ $t('Approved ({v0})', { v0: approvedRequests.length }) }}
       </button>
       <button :class="['rf-tab', { active: activeTab === 'rejected' }]" @click="activeTab = 'rejected'">
-        <RfIconClose /> Rejected ({{ rejectedRequests.length }})
+        <RfIconClose /> {{ $t('Rejected ({v0})', { v0: rejectedRequests.length }) }}
       </button>
     </div>
 
     <div class="rf-filters">
-      <input v-model="tabSearch" type="text" class="rf-input" placeholder="Search requests..." />
+      <input v-model="tabSearch" type="text" class="rf-input" :placeholder="$t('Search requests...')" />
     </div>
 
     <div v-if="loading" class="rf-loading"><div class="rf-spinner"></div></div>
 
     <div v-else class="rf-collab-list">
       <div v-if="displayedRequests.length === 0" class="rf-empty">
-        <p>No requests in this category.</p>
+        <p>{{ $t('No requests in this category.') }}</p>
       </div>
       <div v-for="req in displayedRequests" :key="req.id" class="rf-collab-card">
         <div class="rf-collab-card-header">
@@ -56,13 +56,13 @@
         </div>
         <p class="rf-collab-message">{{ req.message }}</p>
         <div class="rf-collab-meta">
-          <span>From: {{ req.requester_id === userId ? 'You' : req.requester_id.substring(0, 8) + '...' }}</span>
-          <span>To: {{ req.recipient_id === userId ? 'You' : req.recipient_id.substring(0, 8) + '...' }}</span>
+          <span>{{ $t('From: {v0}', { v0: req.requester_id === userId ? 'You' : req.requester_id.substring(0, 8) + '...' }) }}</span>
+          <span>{{ $t('To: {v0}', { v0: req.recipient_id === userId ? 'You' : req.recipient_id.substring(0, 8) + '...' }) }}</span>
           <span>{{ formatDate(req.created_at) }}</span>
         </div>
         <div v-if="req.status === 'pending' && req.recipient_id === userId" class="rf-collab-card-actions">
-          <button class="rf-btn rf-btn-sm rf-btn-success" @click="respondTo(req.id, 'approve')"><RfIconCheck /> Approve</button>
-          <button class="rf-btn rf-btn-sm rf-btn-danger" @click="respondTo(req.id, 'reject')"><RfIconClose /> Reject</button>
+          <button class="rf-btn rf-btn-sm rf-btn-success" @click="respondTo(req.id, 'approve')"><RfIconCheck /> {{ $t('Approve') }}</button>
+          <button class="rf-btn rf-btn-sm rf-btn-danger" @click="respondTo(req.id, 'reject')"><RfIconClose /> {{ $t('Reject') }}</button>
         </div>
       </div>
     </div>

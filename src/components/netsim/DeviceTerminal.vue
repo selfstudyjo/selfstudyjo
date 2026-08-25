@@ -8,8 +8,8 @@
       </select>
       <span class="ns-terminal-mode">{{ modeLabel }}</span>
       <div class="ns-terminal-actions">
-        <button class="ns-icon-btn" title="Clear the screen" @click="store.clearCli(deviceId)"><DeviceIcon name="trash" :size="13" /></button>
-        <button class="ns-icon-btn" title="Copy the whole session" @click="copyAll"><DeviceIcon name="copy" :size="13" /></button>
+        <button class="ns-icon-btn" :title="$t('Clear the screen')" @click="store.clearCli(deviceId)"><DeviceIcon name="trash" :size="13" /></button>
+        <button class="ns-icon-btn" :title="$t('Copy the whole session')" @click="copyAll"><DeviceIcon name="copy" :size="13" /></button>
       </div>
     </header>
 

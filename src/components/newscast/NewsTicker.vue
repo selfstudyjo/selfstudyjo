@@ -75,7 +75,7 @@ const hasHeadlines = computed(() => props.headlines.length > 0);
                 </span>
             </div>
             <div v-else class="ticker__empty">
-                <slot name="empty">No headlines yet.</slot>
+                <slot name="empty">{{ $t('No headlines yet.') }}</slot>
             </div>
         </div>
     </div>

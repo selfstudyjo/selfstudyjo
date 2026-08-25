@@ -39,7 +39,7 @@
           <p v-if="personal.headline" class="cv-side-headline">{{ personal.headline }}</p>
 
           <template v-if="contact.length">
-            <h3 class="cv-side-heading">Contact</h3>
+            <h3 class="cv-side-heading">{{ $t('Contact') }}</h3>
             <p v-for="item in contact" :key="item.key" class="cv-side-line">{{ item.value }}</p>
           </template>
 
@@ -87,7 +87,7 @@
       </template>
 
       <p v-if="!mainSections.length && !sidebarSections.length" class="cv-empty">
-        Nothing to show yet. Fill in the editor and this preview updates as you type.
+        {{ $t('Nothing to show yet. Fill in the editor and this preview updates as you type.') }}
       </p>
     </div>
   </div>
@@ -441,7 +441,7 @@ const CvSectionBody = defineComponent({
 .cv-plain-header .cv-headline { font-size: 1rem; color: var(--sfs-accent-text, #374151); margin-top: 2px; }
 .cv-plain-header .cv-contact { font-size: 0.78rem; color: var(--sfs-text-faint, #4b5563); margin-top: 6px; }
 .cv-plain-header .cv-photo { margin-bottom: 10px; }
-.cv-plain-header.centred .cv-photo { margin-left: auto; margin-right: auto; }
+.cv-plain-header.centred .cv-photo { margin-inline-start: auto; margin-inline-end: auto; }
 
 .cv-sep { margin: 0 7px; opacity: 0.6; }
 
@@ -515,20 +515,20 @@ const CvSectionBody = defineComponent({
 }
 
 /* Everything under an entry's title is shifted right of it. */
-.cv-section-body :deep(.cv-entry-body) { padding-left: var(--cv-indent-entry); }
+.cv-section-body :deep(.cv-entry-body) { padding-inline-start: var(--cv-indent-entry); }
 .cv-section-body :deep(.cv-entry-meta) {
   font-size: 0.79rem; color: var(--sfs-text-faint, #6b7280); font-style: italic;
 }
 .cv-section-body :deep(.cv-text) {
-  margin: 3px 0; text-align: left; overflow-wrap: break-word;
+  margin: 3px 0; text-align: start; overflow-wrap: break-word;
 }
 
 .cv-section-body :deep(.cv-bullets) {
   margin: 4px 0 0;
-  padding-left: var(--cv-indent-bullet);
+  padding-inline-start: var(--cv-indent-bullet);
   list-style: disc outside;
 }
-.cv-section-body :deep(.cv-bullets li) { margin-bottom: 3px; padding-left: 0.12em; }
+.cv-section-body :deep(.cv-bullets li) { margin-bottom: 3px; padding-inline-start: 0.12em; }
 .cv-section-body :deep(.cv-bullets li::marker) {
   color: var(--cv-accent); font-size: 0.92em;
 }
@@ -544,7 +544,7 @@ const CvSectionBody = defineComponent({
    publications) have no entry title to hang under, so the list carries the entry
    indent itself and lines up with the bullets in the sections that do. */
 .cv-section-body > :deep(.cv-bullets) {
-  padding-left: calc(var(--cv-indent-entry) + var(--cv-indent-bullet));
+  padding-inline-start: calc(var(--cv-indent-entry) + var(--cv-indent-bullet));
 }
 
 .cv-empty { padding: 40px 26px; text-align: center; color: var(--sfs-text-muted, #9ca3af); font-size: 0.9rem; }

@@ -169,25 +169,60 @@ export interface CastVoice {
      * substituted silently instead of saying what it had done.
      */
     matched: boolean;
+    /**
+     * False when the device has no voice for this LANGUAGE at all.
+     *
+     * A different and much worse condition than `matched: false`, and keeping
+     * them apart is the whole reason this field exists.
+     *
+     * `matched: false` is cosmetic -- the wrong gender, compensated with a pitch
+     * shift. `languageAvailable: false` means the room cannot speak: there is no
+     * Arabic voice on a stock Windows install and no Chinese one on many Linux
+     * builds, so the interviewer would be silent. The caller must NOT substitute
+     * a voice from another language, because an explicitly assigned
+     * `utterance.voice` overrides `utterance.lang` -- an English engine handed
+     * Arabic characters reads them with English phonetics, which is noise rather
+     * than an accent, and was reported on the newscast as "it reads mixed
+     * words". It must either leave `utterance.voice` unset and let the platform
+     * match on `lang` (which often reaches an OS voice `getVoices()` never
+     * listed) or hand the line to app 36's server engine.
+     */
+    languageAvailable: boolean;
 }
 
 /**
- * An English voice for a speaker of the given gender.
+ * A voice for a speaker of the given gender, in the given language.
  *
  * `seat` spreads the six around the available voices, so a meeting is not read
  * by one voice wearing six name tags. Where the browser has no voice of the
  * right gender at all -- common: a stock Windows install has two English voices
  * and one is Zira -- a voice is still returned, because the alternative is a
  * silent meeting, and `matched: false` tells the caller to compensate.
+ *
+ * Where it has no voice for the LANGUAGE, `voice` is null and
+ * `languageAvailable` is false. See that field: those two cases want completely
+ * different handling and used to be indistinguishable, because this function
+ * filtered on a hardcoded `'en'` and therefore could not tell "this device has
+ * no English voice" (rare) from "this device has no Arabic voice" (usual).
+ *
+ * The prefix match is deliberately loose: `ar-EG`, `ar-SA`, `zh-CN` and `zh-TW`
+ * are all usable voices for `ar` / `zh`, and an exact-tag rule would find none
+ * of them and leave the reader in silence.
  */
-export function castVoice(voices: VoiceLike[], gender: Gender, seat = 0): CastVoice {
-    const english = voices.filter(v => (v.lang || '').toLowerCase().startsWith('en'));
-    if (!english.length) return { voice: null, matched: false };
+export function castVoice(
+    voices: VoiceLike[],
+    gender: Gender,
+    seat = 0,
+    locale = 'en',
+): CastVoice {
+    const prefix = (locale || 'en').toLowerCase().split('-')[0];
+    const inLanguage = voices.filter(v => (v.lang || '').toLowerCase().startsWith(prefix));
+    if (!inLanguage.length) return { voice: null, matched: false, languageAvailable: false };
 
-    const wanted = english.filter(v => genderOf(v) === gender);
-    const pool = wanted.length ? wanted : english;
+    const wanted = inLanguage.filter(v => genderOf(v) === gender);
+    const pool = wanted.length ? wanted : inLanguage;
     const index = ((seat % pool.length) + pool.length) % pool.length;
-    return { voice: pool[index], matched: wanted.length > 0 };
+    return { voice: pool[index], matched: wanted.length > 0, languageAvailable: true };
 }
 
 /**

@@ -1,35 +1,34 @@
 <template>
   <div class="research-aiwriter-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconAI /> AI Research Writer</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconAI /> {{ $t('AI Research Writer') }}</h1>
     </div>
 
     <div class="rf-tabs">
       <button :class="['rf-tab', { active: tab === 'mine' }]" @click="tab = 'mine'">
-        <RfIconList /> My AI Researches ({{ researches.length }})
+        <RfIconList /> {{ $t('My AI Researches ({v0})', { v0: researches.length }) }}
       </button>
       <button :class="['rf-tab', { active: tab === 'new' }]" @click="tab = 'new'">
-        <RfIconAdd /> Start a New Research
+        <RfIconAdd /> {{ $t('Start a New Research') }}
       </button>
       <button :class="['rf-tab', { active: tab === 'types' }]" @click="tab = 'types'">
-        <RfIconBook /> Compare Research Types
+        <RfIconBook /> {{ $t('Compare Research Types') }}
       </button>
     </div>
 
     <!-- ================= MY RESEARCHES ================= -->
     <div v-if="tab === 'mine'">
       <div v-if="loading" class="rf-loading">
-        <div class="rf-spinner"></div><p>Loading your researches…</p>
+        <div class="rf-spinner"></div><p>{{ $t('Loading your researches…') }}</p>
       </div>
 
       <div v-else-if="researches.length === 0" class="rf-empty">
-        <p>You have not started an AI research yet.</p>
+        <p>{{ $t('You have not started an AI research yet.') }}</p>
         <p class="rf-hint">
-          The writer builds a full thesis structure for you — plan, chapters, references — and
-          exports it as a Word document or a PDF.
+          {{ $t('The writer builds a full thesis structure for you — plan, chapters, references — and exports it as a Word document or a PDF.') }}
         </p>
-        <button class="rf-btn rf-btn-primary" @click="tab = 'new'"><RfIconAdd /> Start a New Research</button>
+        <button class="rf-btn rf-btn-primary" @click="tab = 'new'"><RfIconAdd /> {{ $t('Start a New Research') }}</button>
       </div>
 
       <div v-else class="rf-research-grid">
@@ -47,20 +46,20 @@
             <div class="rf-progress-fill" :style="{ width: `${item.progress?.percent || 0}%` }"></div>
           </div>
           <div class="rf-research-card-stats">
-            <span>{{ item.progress?.generated || 0 }} / {{ item.progress?.total || 0 }} sections</span>
-            <span>{{ (item.progress?.words || 0).toLocaleString() }} words</span>
-            <span>~{{ item.progress?.estimated_pages || 0 }} pages</span>
+            <span>{{ $t('{v0} / {v1} sections', { v0: item.progress?.generated || 0, v1: item.progress?.total || 0 }) }}</span>
+            <span>{{ $t('{v0} words', { v0: (item.progress?.words || 0).toLocaleString() }) }}</span>
+            <span>{{ $t('~{v0} pages', { v0: item.progress?.estimated_pages || 0 }) }}</span>
           </div>
 
           <div class="rf-research-card-meta">
             <span v-if="item.field"><RfIconTag /> {{ item.field }}</span>
-            <span><RfIconLibrary /> {{ item.source_count }} sources</span>
+            <span><RfIconLibrary /> {{ $t('{v0} sources', { v0: item.source_count }) }}</span>
             <span><RfIconTime /> {{ formatDate(item.updated_at) }}</span>
           </div>
 
           <div class="rf-research-card-actions" @click.stop>
             <button class="rf-btn rf-btn-xs rf-btn-primary" @click="$router.push(`/research/ai-writer/${item.id}`)">
-              <RfIconEdit /> Open
+              <RfIconEdit /> {{ $t('Open') }}
             </button>
             <button class="rf-btn rf-btn-xs rf-btn-secondary"
                     :disabled="!item.progress?.generated || exportingId === item.id"
@@ -80,17 +79,16 @@
 
     <!-- ================= NEW RESEARCH ================= -->
     <div v-else-if="tab === 'new'" class="rf-section">
-      <h2 class="rf-section-title"><RfIconAdd /> Start a New Research</h2>
+      <h2 class="rf-section-title"><RfIconAdd /> {{ $t('Start a New Research') }}</h2>
 
       <div v-if="!aiAvailable && typesLoaded" class="rf-alert rf-alert-error">
         <RfIconWarning />
-        <div>No AI provider is configured on this server, so plans and chapters cannot be
-          generated. Ask an administrator to set <code>GROQ_API_KEYS</code>,
-          <code>OPENROUTER_API_KEYS</code> or <code>GEMINI_API_KEYS</code>.</div>
+        <div>{{ $t('No AI provider is configured on this server, so plans and chapters cannot be generated. Ask an administrator to set') }} <code>GROQ_API_KEYS</code>,
+          <code>OPENROUTER_API_KEYS</code> {{ $t('or') }} <code>GEMINI_API_KEYS</code>.</div>
       </div>
 
       <!-- Type selection -->
-      <label class="rf-filter-legend"><RfIconBook /> Research type <span class="rf-required">*</span></label>
+      <label class="rf-filter-legend"><RfIconBook /> {{ $t('Research type') }} <span class="rf-required">*</span></label>
       <div class="rf-type-grid">
         <div v-for="t in types" :key="t.key"
              class="rf-type-card" :class="{ selected: draft.research_type === t.key }"
@@ -99,10 +97,10 @@
           <p class="rf-type-card-level">{{ t.level }}</p>
           <p class="rf-type-card-goal">{{ t.goal }}</p>
           <ul class="rf-type-card-facts">
-            <li><strong>Length:</strong> {{ t.page_range }}</li>
-            <li><strong>Chapters:</strong> {{ t.sections.filter(s => s.kind === 'chapter').length }}</li>
-            <li><strong>Originality:</strong> {{ t.originality }}</li>
-            <li><strong>Theory:</strong> {{ t.theory }}</li>
+            <li><strong>{{ $t('Length:') }}</strong> {{ t.page_range }}</li>
+            <li><strong>{{ $t('Chapters:') }}</strong> {{ t.sections.filter(s => s.kind === 'chapter').length }}</li>
+            <li><strong>{{ $t('Originality:') }}</strong> {{ t.originality }}</li>
+            <li><strong>{{ $t('Theory:') }}</strong> {{ t.theory }}</li>
           </ul>
         </div>
       </div>
@@ -110,102 +108,102 @@
       <!-- Structure preview -->
       <div v-if="selectedType" class="rf-structure-preview">
         <h3 class="rf-subsection-title">
-          Document structure — {{ selectedType.label }}
+          {{ $t('Document structure — {v0}', { v0: selectedType.label }) }}
           <span class="rf-structure-sub">
-            {{ selectedType.section_count }} sections · ~{{ selectedType.estimated_words.toLocaleString() }} words
+            {{ $t('{v0} sections · ~{v1} words', { v0: selectedType.section_count, v1: selectedType.estimated_words.toLocaleString() }) }}
           </span>
         </h3>
         <ol class="rf-structure-list">
           <li v-for="s in selectedType.sections" :key="s.key">
             <span class="rf-structure-num">{{ s.number ? `Chapter ${s.number}` : 'Front matter' }}</span>
             <span class="rf-structure-title">{{ s.title }}</span>
-            <span class="rf-structure-words">~{{ s.word_target }} words</span>
+            <span class="rf-structure-words">{{ $t('~{v0} words', { v0: s.word_target }) }}</span>
           </li>
         </ol>
       </div>
 
       <!-- Core fields -->
       <div class="rf-form-group">
-        <label class="rf-label">Research topic <span class="rf-required">*</span></label>
+        <label class="rf-label">{{ $t('Research topic') }} <span class="rf-required">*</span></label>
         <textarea v-model="draft.topic" class="rf-input rf-textarea" rows="3"
           placeholder="Describe what you want to research. Be as specific as you can — the plan quality depends on it. e.g. The effect of hand-gesture controlled exergames on wrist flexibility in post-stroke rehabilitation among adults in Jordan."></textarea>
       </div>
 
       <div class="rf-form-row">
         <div class="rf-form-group" style="flex: 2;">
-          <label class="rf-label">Working title <span class="rf-optional">(optional — AI will propose one)</span></label>
-          <input v-model="draft.title" class="rf-input" placeholder="Leave blank to let the AI write the title" />
+          <label class="rf-label">{{ $t('Working title') }} <span class="rf-optional">{{ $t('(optional — AI will propose one)') }}</span></label>
+          <input v-model="draft.title" class="rf-input" :placeholder="$t('Leave blank to let the AI write the title')" />
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Field of study</label>
-          <input v-model="draft.field" class="rf-input" placeholder="e.g. Human-Computer Interaction" />
-        </div>
-      </div>
-
-      <div class="rf-form-row">
-        <div class="rf-form-group">
-          <label class="rf-label">Your name</label>
-          <input v-model="draft.author_name" class="rf-input" placeholder="Appears on the title page" />
-        </div>
-        <div class="rf-form-group">
-          <label class="rf-label">University</label>
-          <input v-model="draft.university" class="rf-input" placeholder="e.g. University of Jordan" />
-        </div>
-        <div class="rf-form-group">
-          <label class="rf-label">Department</label>
-          <input v-model="draft.department" class="rf-input" placeholder="e.g. Department of Computer Science" />
+          <label class="rf-label">{{ $t('Field of study') }}</label>
+          <input v-model="draft.field" class="rf-input" :placeholder="$t('e.g. Human-Computer Interaction')" />
         </div>
       </div>
 
       <div class="rf-form-row">
         <div class="rf-form-group">
-          <label class="rf-label">Degree programme</label>
-          <input v-model="draft.degree_program" class="rf-input" placeholder="e.g. MSc in Computer Science" />
+          <label class="rf-label">{{ $t('Your name') }}</label>
+          <input v-model="draft.author_name" class="rf-input" :placeholder="$t('Appears on the title page')" />
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Supervisor</label>
-          <input v-model="draft.supervisor" class="rf-input" placeholder="e.g. Prof. A. Rahman" />
+          <label class="rf-label">{{ $t('University') }}</label>
+          <input v-model="draft.university" class="rf-input" :placeholder="$t('e.g. University of Jordan')" />
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Submission year</label>
+          <label class="rf-label">{{ $t('Department') }}</label>
+          <input v-model="draft.department" class="rf-input" :placeholder="$t('e.g. Department of Computer Science')" />
+        </div>
+      </div>
+
+      <div class="rf-form-row">
+        <div class="rf-form-group">
+          <label class="rf-label">{{ $t('Degree programme') }}</label>
+          <input v-model="draft.degree_program" class="rf-input" :placeholder="$t('e.g. MSc in Computer Science')" />
+        </div>
+        <div class="rf-form-group">
+          <label class="rf-label">{{ $t('Supervisor') }}</label>
+          <input v-model="draft.supervisor" class="rf-input" :placeholder="$t('e.g. Prof. A. Rahman')" />
+        </div>
+        <div class="rf-form-group">
+          <label class="rf-label">{{ $t('Submission year') }}</label>
           <input v-model.number="draft.submission_year" class="rf-input" type="number" />
         </div>
       </div>
 
       <div class="rf-form-row">
         <div class="rf-form-group">
-          <label class="rf-label">Writing language</label>
+          <label class="rf-label">{{ $t('Writing language') }}</label>
           <select v-model="draft.language" class="rf-input">
             <option v-for="l in WRITING_LANGUAGES" :key="l" :value="l">{{ l }}</option>
           </select>
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Citation style</label>
+          <label class="rf-label">{{ $t('Citation style') }}</label>
           <select v-model="draft.citation_style" class="rf-input">
             <option v-for="s in CITATION_STYLES" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>
         <div class="rf-form-group" style="flex: 2;">
-          <label class="rf-label">Keywords <span class="rf-optional">(comma separated)</span></label>
-          <input v-model="draft.keywords" class="rf-input" placeholder="gesture recognition, rehabilitation, exergame" />
+          <label class="rf-label">{{ $t('Keywords') }} <span class="rf-optional">{{ $t('(comma separated)') }}</span></label>
+          <input v-model="draft.keywords" class="rf-input" :placeholder="$t('gesture recognition, rehabilitation, exergame')" />
         </div>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Draft research questions <span class="rf-optional">(optional)</span></label>
+        <label class="rf-label">{{ $t('Draft research questions') }} <span class="rf-optional">{{ $t('(optional)') }}</span></label>
         <textarea v-model="draft.research_questions_draft" class="rf-input rf-textarea" rows="2"
           placeholder="If you already have questions in mind, put them here and the AI will refine them."></textarea>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Anything else the AI should know <span class="rf-optional">(optional)</span></label>
+        <label class="rf-label">{{ $t('Anything else the AI should know') }} <span class="rf-optional">{{ $t('(optional)') }}</span></label>
         <textarea v-model="draft.notes" class="rf-input rf-textarea" rows="2"
           placeholder="Constraints, available data, required methods, supervisor preferences…"></textarea>
       </div>
 
       <label class="rf-checkbox">
         <input type="checkbox" v-model="draft.use_library" />
-        <span>Use my saved research library as the source list ({{ librarySize }} papers)</span>
+        <span>{{ $t('Use my saved research library as the source list ({v0} papers)', { v0: librarySize }) }}</span>
       </label>
 
       <div v-if="createError" class="rf-alert rf-alert-error">{{ createError }}</div>
@@ -215,20 +213,19 @@
           <RfIconAI /> {{ creating ? 'Generating your research plan…' : 'Create research and generate plan' }}
         </button>
         <p v-if="creating" class="rf-hint">
-          The AI is writing the problem statement, research gap, questions, methodology and chapter
-          outline. This usually takes 20–60 seconds.
+          {{ $t('The AI is writing the problem statement, research gap, questions, methodology and chapter outline. This usually takes 20–60 seconds.') }}
         </p>
       </div>
     </div>
 
     <!-- ================= COMPARE TYPES ================= -->
     <div v-else-if="tab === 'types'" class="rf-section">
-      <h2 class="rf-section-title"><RfIconBook /> Research Type Comparison</h2>
+      <h2 class="rf-section-title"><RfIconBook /> {{ $t('Research Type Comparison') }}</h2>
       <div class="rf-table-wrap">
         <table class="rf-compare-table">
           <thead>
             <tr>
-              <th>Feature</th>
+              <th>{{ $t('Feature') }}</th>
               <th v-for="t in types" :key="t.key">{{ t.label }}</th>
             </tr>
           </thead>
@@ -238,15 +235,15 @@
               <td v-for="t in types" :key="t.key">{{ (t as any)[row.field] }}</td>
             </tr>
             <tr>
-              <th scope="row">Sections generated</th>
+              <th scope="row">{{ $t('Sections generated') }}</th>
               <td v-for="t in types" :key="t.key">{{ t.section_count }}</td>
             </tr>
             <tr>
-              <th scope="row">Target word count</th>
+              <th scope="row">{{ $t('Target word count') }}</th>
               <td v-for="t in types" :key="t.key">~{{ t.estimated_words.toLocaleString() }}</td>
             </tr>
             <tr>
-              <th scope="row">Suggested references</th>
+              <th scope="row">{{ $t('Suggested references') }}</th>
               <td v-for="t in types" :key="t.key">{{ t.reference_target }}+</td>
             </tr>
           </tbody>

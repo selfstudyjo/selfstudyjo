@@ -9,6 +9,7 @@
 
 import { apiService } from './api';
 import { serviceRegistry } from './config';
+import { aiLanguageHeaders } from '@/i18n/runtime';
 
 // ============ RECORD SHAPES ============
 // These mirror utils/cvmodel.py. The backend normalises whatever it is sent, so
@@ -429,9 +430,23 @@ class CvBuilderService {
         this.baseUrlPromise = null;
     }
 
+    /**
+     * `X-User-ID`, plus the language the reader wants their CV written in.
+     *
+     * The language rides on EVERY call to this service rather than only on the
+     * AI ones, and that is safe here in a way it is not platform-wide: app 33
+     * lists `X-SFS-Language` in its `allow_headers`, so the preflight passes.
+     * (A custom header absent from that list makes the browser fail the whole
+     * request, not just drop the header — which is why `ApiService.getHeaders()`
+     * deliberately does not set this globally. See the note there.)
+     *
+     * Every call rather than only the AI ones because this is the one helper
+     * every method here already goes through, and a per-method decision is a
+     * per-method chance to get it wrong. The non-AI routes ignore it.
+     */
     private headers(userId: string): Record<string, string> {
         if (!userId) throw new Error('You need to be signed in to use the CV Builder.');
-        return { 'X-User-ID': String(userId) };
+        return { 'X-User-ID': String(userId), ...aiLanguageHeaders() };
     }
 
     // ============ HEALTH ============

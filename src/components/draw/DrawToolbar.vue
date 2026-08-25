@@ -32,7 +32,7 @@
           :title="colour"
           @click="update({ stroke: colour })"
         />
-        <label class="swatch custom" :class="{ disabled: readonly }" title="Any colour">
+        <label class="swatch custom" :class="{ disabled: readonly }" :title="$t('Any colour')">
           <input
             type="color"
             :value="modelValue.stroke"
@@ -48,13 +48,13 @@
 
     <!-- Fill -->
     <div class="group">
-      <span class="field-label">Fill</span>
+      <span class="field-label">{{ $t('Fill') }}</span>
       <div class="swatches">
         <button
           class="swatch none"
           :class="{ active: modelValue.fill === 'transparent' }"
           :disabled="readonly"
-          title="No fill"
+          :title="$t('No fill')"
           @click="update({ fill: 'transparent' })"
         />
         <button
@@ -91,22 +91,22 @@
 
     <!-- History and viewport -->
     <div class="group">
-      <button class="icon-btn" :disabled="readonly || !canUndo" title="Undo (Ctrl Z)"
+      <button class="icon-btn" :disabled="readonly || !canUndo" :title="$t('Undo (Ctrl Z)')"
               @click="$emit('undo')">↶</button>
-      <button class="icon-btn" :disabled="readonly || !canRedo" title="Redo (Ctrl Shift Z)"
+      <button class="icon-btn" :disabled="readonly || !canRedo" :title="$t('Redo (Ctrl Shift Z)')"
               @click="$emit('redo')">↷</button>
-      <button class="icon-btn" title="Zoom out" @click="$emit('zoom-out')">−</button>
-      <button class="icon-btn wide" title="Fit to screen (Ctrl 0)" @click="$emit('fit')">
+      <button class="icon-btn" :title="$t('Zoom out')" @click="$emit('zoom-out')">−</button>
+      <button class="icon-btn wide" :title="$t('Fit to screen (Ctrl 0)')" @click="$emit('fit')">
         {{ Math.round(zoom * 100) }}%
       </button>
-      <button class="icon-btn" title="Zoom in" @click="$emit('zoom-in')">+</button>
+      <button class="icon-btn" :title="$t('Zoom in')" @click="$emit('zoom-in')">+</button>
     </div>
 
     <div class="divider" />
 
     <div class="group">
-      <button class="icon-btn danger" :disabled="readonly" title="Clear the page"
-              @click="$emit('clear')">Clear</button>
+      <button class="icon-btn danger" :disabled="readonly" :title="$t('Clear the page')"
+              @click="$emit('clear')">{{ $t('Clear') }}</button>
     </div>
   </div>
 </template>
@@ -354,7 +354,7 @@ defineExpose({ tools });
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--sfs-accent-text, #334155);
-  text-align: right;
+  text-align: end;
 }
 
 .icon-btn {

@@ -1,30 +1,30 @@
 <template>
     <div class="payment-container">
       <div class="header">
-        <h1 class="title">Complete Your Purchase</h1>
-        <p class="subtitle">Select payment method and complete your subscription</p>
+        <h1 class="title">{{ $t('Complete Your Purchase') }}</h1>
+        <p class="subtitle">{{ $t('Select payment method and complete your subscription') }}</p>
       </div>
 
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner"></div>
-        <p>Loading payment options...</p>
+        <p>{{ $t('Loading payment options...') }}</p>
       </div>
 
       <div v-else-if="error" class="error-container">
         <div class="error-icon">⚠️</div>
-        <h3>Payment Error</h3>
+        <h3>{{ $t('Payment Error') }}</h3>
         <p>{{ error }}</p>
-        <button @click="initializePayment" class="retry-btn">Try Again</button>
+        <button @click="initializePayment" class="retry-btn">{{ $t('Try Again') }}</button>
       </div>
 
       <div v-else class="payment-content">
         <!-- Plan Summary -->
         <div class="plan-summary">
-          <h3>Plan Summary</h3>
+          <h3>{{ $t('Plan Summary') }}</h3>
           <div class="summary-card">
             <div class="summary-header">
               <h4>{{ selectedPlan.title }}</h4>
-              <div class="plan-price">JOD {{ selectedPlan.price }}</div>
+              <div class="plan-price">{{ $t('JOD {v0}', { v0: selectedPlan.price }) }}</div>
             </div>
             <p class="plan-description">{{ selectedPlan.description }}</p>
           </div>
@@ -38,14 +38,14 @@
               @click="activeTab = 'bank'"
             >
               <span class="tab-icon">🏦</span>
-              Bank Transfer
+              {{ $t('Bank Transfer') }}
             </button>
             <button
               :class="['tab-btn', { 'active': activeTab === 'cliq' }]"
               @click="activeTab = 'cliq'"
             >
               <span class="tab-icon">💳</span>
-              Cliq Transfer
+              {{ $t('Cliq Transfer') }}
             </button>
           </div>
 
@@ -54,8 +54,8 @@
             <div v-if="activeTab === 'bank'" class="accounts-list">
               <div v-if="bankAccounts.length === 0" class="no-accounts">
                 <div class="no-accounts-icon">🏦</div>
-                <h4>No Bank Accounts Available</h4>
-                <p>Please check back later or use Cliq transfer</p>
+                <h4>{{ $t('No Bank Accounts Available') }}</h4>
+                <p>{{ $t('Please check back later or use Cliq transfer') }}</p>
               </div>
 
               <div
@@ -77,15 +77,15 @@
 
                 <div class="account-details">
                   <div class="detail-row">
-                    <span class="detail-label">Account Holder:</span>
+                    <span class="detail-label">{{ $t('Account Holder:') }}</span>
                     <span class="detail-value">{{ account.full_name }}</span>
                   </div>
                   <div class="detail-row">
-                    <span class="detail-label">Branch:</span>
+                    <span class="detail-label">{{ $t('Branch:') }}</span>
                     <span class="detail-value">{{ account.branch }}, {{ account.city }}, {{ account.country }}</span>
                   </div>
                   <div class="detail-row">
-                    <span class="detail-label">Address:</span>
+                    <span class="detail-label">{{ $t('Address:') }}</span>
                     <span class="detail-value">{{ account.street_address }}</span>
                   </div>
                 </div>
@@ -96,8 +96,8 @@
             <div v-else class="accounts-list">
               <div v-if="cliqAccounts.length === 0" class="no-accounts">
                 <div class="no-accounts-icon">💳</div>
-                <h4>No Cliq Accounts Available</h4>
-                <p>Please check back later or use Bank transfer</p>
+                <h4>{{ $t('No Cliq Accounts Available') }}</h4>
+                <p>{{ $t('Please check back later or use Bank transfer') }}</p>
               </div>
 
               <div
@@ -119,7 +119,7 @@
 
                 <div class="account-details">
                   <div class="detail-row">
-                    <span class="detail-label">Status:</span>
+                    <span class="detail-label">{{ $t('Status:') }}</span>
                     <span :class="['status', account.is_active ? 'active' : 'inactive']">
                       {{ account.is_active ? 'Active' : 'Inactive' }}
                     </span>
@@ -132,27 +132,27 @@
 
         <!-- Payment Summary -->
         <div class="payment-summary">
-          <h3>Payment Summary</h3>
+          <h3>{{ $t('Payment Summary') }}</h3>
           <div class="summary-details">
             <div class="summary-row">
-              <span>Plan:</span>
+              <span>{{ $t('Plan:') }}</span>
               <span>{{ selectedPlan.title }}</span>
             </div>
             <div class="summary-row">
-              <span>Price:</span>
-              <span>JOD {{ selectedPlan.price }}</span>
+              <span>{{ $t('Price:') }}</span>
+              <span>{{ $t('JOD {v0}', { v0: selectedPlan.price }) }}</span>
             </div>
             <div class="summary-row">
-              <span>Payment Method:</span>
+              <span>{{ $t('Payment Method:') }}</span>
               <span>{{ activeTab === 'bank' ? 'Bank Transfer' : 'Cliq Transfer' }}</span>
             </div>
             <div class="summary-row" v-if="selectedBankAccount || selectedCliqAccount">
-              <span>Selected Account:</span>
+              <span>{{ $t('Selected Account:') }}</span>
               <span>{{ getSelectedAccountName() }}</span>
             </div>
             <div class="summary-row total">
-              <span>Total Amount:</span>
-              <span>JOD {{ selectedPlan.price }}</span>
+              <span>{{ $t('Total Amount:') }}</span>
+              <span>{{ $t('JOD {v0}', { v0: selectedPlan.price }) }}</span>
             </div>
           </div>
 
@@ -161,7 +161,7 @@
               class="btn back-btn"
               @click="goBack"
             >
-              ← Back to Plans
+              {{ $t('← Back to Plans') }}
             </button>
             <button
               class="btn pay-btn"

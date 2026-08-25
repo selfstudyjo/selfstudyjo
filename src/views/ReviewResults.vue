@@ -1,25 +1,25 @@
 <template>
   <div class="review-results">
     <div class="review-header">
-      <h1>Review {{ resultType === 'exam' ? 'Exam' : 'Quiz' }}</h1>
-      <button class="back-btn" @click="goBack">Back to Results</button>
+      <h1>{{ $t('Review {v0}', { v0: resultType === 'exam' ? 'Exam' : 'Quiz' }) }}</h1>
+      <button class="back-btn" @click="goBack">{{ $t('Back to Results') }}</button>
     </div>
 
-    <div v-if="loading" class="loading">Loading...</div>
+    <div v-if="loading" class="loading">{{ $t('Loading...') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
       <div class="result-summary">
         <!-- Now shows the real title from the exam/quiz data -->
         <h2>{{ contentTitle }}</h2>
         <p class="score">
-          Score: <strong :class="scoreClass">{{ result?.score }}%</strong>
+          {{ $t('Score:') }} <strong :class="scoreClass">{{ result?.score }}%</strong>
           ({{ result?.result_status }})
         </p>
-        <p>Date: {{ formatDate(result?.date_taken) }}</p>
+        <p>{{ $t('Date: {v0}', { v0: formatDate(result?.date_taken) }) }}</p>
       </div>
 
       <div class="questions-review">
-        <h3>Questions</h3>
+        <h3>{{ $t('Questions') }}</h3>
         <div
           v-for="(question, index) in questions"
           :key="question.external_id"
@@ -29,7 +29,7 @@
           <div class="question-header">
             <span class="q-num">Q{{ index + 1 }}.</span>
             <span class="q-text">{{ question.text }}</span>
-            <span class="q-score">{{ question.score }} pts</span>
+            <span class="q-score">{{ $t('{v0} pts', { v0: question.score }) }}</span>
           </div>
           <div class="answers">
             <div
@@ -42,8 +42,8 @@
               }"
             >
               <span class="answer-text">{{ answer.text }}</span>
-              <span v-if="answer.is_correct" class="correct-badge">Correct</span>
-              <span v-else-if="isAnswerSelected(question, answer) && !answer.is_correct" class="wrong-badge">Your answer</span>
+              <span v-if="answer.is_correct" class="correct-badge">{{ $t('Correct') }}</span>
+              <span v-else-if="isAnswerSelected(question, answer) && !answer.is_correct" class="wrong-badge">{{ $t('Your answer') }}</span>
             </div>
           </div>
         </div>

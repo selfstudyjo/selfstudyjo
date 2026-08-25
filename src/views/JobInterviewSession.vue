@@ -2,7 +2,7 @@
   <div class="ji-meeting-room">
     <div class="ji-meeting-header">
       <div>
-        <strong>💼 {{ interviewType }} Interview</strong>
+        <strong>{{ $t('💼 {v0} Interview', { v0: interviewType }) }}</strong>
         <span class="ji-badge" v-if="topic && interviewType === 'Technical'">{{ topic }}</span>
         <!--
           Both of these confirm something the candidate asked for and would
@@ -10,8 +10,8 @@
           interviewer, and that this sitting is being treated as a redo rather
           than as a fresh interview that will re-ask the same questions.
         -->
-        <span class="ji-badge" v-if="cvTitle" :title="'The interviewer has read: ' + cvTitle">📄 CV attached</span>
-        <span class="ji-badge" v-if="attempt > 1" title="New questions — the interviewer knows what you have already been asked">🔁 Attempt {{ attempt }}</span>
+        <span class="ji-badge" v-if="cvTitle" :title="'The interviewer has read: ' + cvTitle">{{ $t('📄 CV attached') }}</span>
+        <span class="ji-badge" v-if="attempt > 1" :title="$t('New questions — the interviewer knows what you have already been asked')">{{ $t('🔁 Attempt {v0}', { v0: attempt }) }}</span>
       </div>
       <div class="ji-header-right">
         <span class="ji-q-counter" v-if="phase !== 'idle'">Q {{ Math.min(questionNumber, maxQuestions) }} / {{ maxQuestions }}</span>
@@ -58,7 +58,7 @@
           -->
           <div class="ji-camera-note" v-if="cameraError && !cameraBusy">{{ cameraError }}</div>
         </div>
-        <div class="ji-name-tag">👤 You ({{ userName }})</div>
+        <div class="ji-name-tag">{{ $t('👤 You ({v0})', { v0: userName }) }}</div>
         <div class="ji-self-status">
           <span class="ji-status-icon" :class="{ muted: !micEnabled }">{{ micEnabled ? '🎤' : '🔇' }}</span>
           <span class="ji-status-icon" :class="{ muted: !cameraEnabled }">{{ cameraEnabled ? '📹' : '📷' }}</span>
@@ -69,7 +69,7 @@
 
     <!-- Current question -->
     <div class="ji-question-box" v-if="currentQuestionText">
-      <div class="ji-question-label">❓ Interviewer asks:</div>
+      <div class="ji-question-label">{{ $t('❓ Interviewer asks:') }}</div>
       <div class="ji-question-text">{{ currentQuestionText }}</div>
     </div>
 
@@ -93,8 +93,8 @@
     <div class="ji-answer-box" v-if="phase === 'answering' || answer.text">
       <div class="ji-answer-head">
         <h4>
-          ✍️ Your answer
-          <span class="ji-answer-live" v-if="phase === 'answering'">🎤 transcribing…</span>
+          {{ $t('✍️ Your answer') }}
+          <span class="ji-answer-live" v-if="phase === 'answering'">{{ $t('🎤 transcribing…') }}</span>
         </h4>
         <div class="ji-answer-meta">
           <!--
@@ -105,7 +105,7 @@
           -->
           <span class="ji-answer-clock" :class="answerClockClass" v-if="phase === 'answering'"
                 :title="'About ' + answerSeconds + 's is a strong answer'">{{ answerClock }}</span>
-          <span class="ji-answer-words">{{ answerWords }} words</span>
+          <span class="ji-answer-words">{{ $t('{v0} words', { v0: answerWords }) }}</span>
         </div>
       </div>
 
@@ -134,29 +134,28 @@
         -->
         <button type="button" class="ji-btn-tool" :disabled="!hasSelection"
                 @mousedown.prevent @click="replaceHighlighted"
-                title="Delete what you highlighted and carry on speaking in its place">
-          ✂️ Replace highlighted
+                :title="$t('Delete what you highlighted and carry on speaking in its place')">
+          {{ $t('✂️ Replace highlighted') }}
         </button>
         <button type="button" class="ji-btn-tool" v-if="answer.caret !== null" @click="backToEnd">
-          ↦ Back to the end
+          {{ $t('↦ Back to the end') }}
         </button>
         <button type="button" class="ji-btn-tool" :disabled="!answer.text" @click="undoLastPart">
-          ↩︎ Undo last part
+          {{ $t('↩︎ Undo last part') }}
         </button>
         <button type="button" class="ji-btn-tool ji-btn-tool-danger" :disabled="!answer.text" @click="clearAnswer">
-          🗑️ Clear
+          {{ $t('🗑️ Clear') }}
         </button>
-        <label class="ji-answer-toggle" title="Turn off if the interview is about a subject where you say these words for real">
-          <input type="checkbox" v-model="voiceEditing"> spoken corrections
+        <label class="ji-answer-toggle" :title="$t('Turn off if the interview is about a subject where you say these words for real')">
+          <input type="checkbox" v-model="voiceEditing"> {{ $t('spoken corrections') }}
         </label>
       </div>
 
       <div class="ji-answer-caret" v-if="answer.caret !== null">
-        ▌ What you say next goes <strong>here</strong>: <em>{{ caretHintText }}</em>
+        {{ $t('▌ What you say next goes') }} <strong>{{ $t('here') }}</strong>: <em>{{ caretHintText }}</em>
       </div>
       <div class="ji-answer-hint" v-else-if="phase === 'answering' && voiceEditing">
-        Say <strong>“sorry”</strong> to delete the last part, <strong>“sorry sorry”</strong> for the
-        last two — or highlight a phrase and press <strong>Replace highlighted</strong>. You can also just type.
+        {{ $t('Say') }} <strong>{{ $t('“sorry”') }}</strong> {{ $t('to delete the last part,') }} <strong>{{ $t('“sorry sorry”') }}</strong> {{ $t('for the last two — or highlight a phrase and press') }} <strong>{{ $t('Replace highlighted') }}</strong>{{ $t('. You can also just type.') }}
       </div>
       <!--
         The caption reads "Listening…" whether the recorder is running or has
@@ -178,11 +177,11 @@
     <div class="ji-live-report" v-if="phase !== 'idle' && !reportVisible">
       <span class="ji-live-report-dot" :class="{ working: coachingInFlight > 0 }"></span>
       <span v-if="qaPairs.length">
-        📋 Your report is being written as you go —
-        <strong>{{ coachedCount }}</strong> of {{ qaPairs.length }} answers coached<span
-          v-if="coachingInFlight">, {{ coachingInFlight }} in progress</span>.
+        {{ $t('📋 Your report is being written as you go —') }}
+        <strong>{{ coachedCount }}</strong> {{ $t('of {v0} answers coached', { v0: qaPairs.length }) }}<span
+          v-if="coachingInFlight">{{ $t(', {v0} in progress', { v0: coachingInFlight }) }}</span>.
       </span>
-      <span v-else>📋 Your report starts building from your first answer — nothing waits until the end.</span>
+      <span v-else>{{ $t('📋 Your report starts building from your first answer — nothing waits until the end.') }}</span>
     </div>
 
     <!--
@@ -193,11 +192,10 @@
       another window and comes straight back from.
     -->
     <div class="ji-media-error" v-if="mediaError && !reportVisible">
-      <div class="ji-media-error-title">🎤 Your microphone could not be started</div>
+      <div class="ji-media-error-title">{{ $t('🎤 Your microphone could not be started') }}</div>
       <p>{{ mediaError }}</p>
       <p class="ji-media-error-hint">
-        A microphone is required — your spoken answers are transcribed. A camera is optional and
-        the interview runs perfectly without one.
+        {{ $t('A microphone is required — your spoken answers are transcribed. A camera is optional and the interview runs perfectly without one.') }}
       </p>
       <button @click="retryMicrophone" class="ji-btn-primary" :disabled="starting">
         {{ starting ? 'Trying…' : '↻ Try Again' }}
@@ -209,8 +207,8 @@
       <button @click="startInterview" :disabled="phase !== 'idle' || starting" class="ji-btn-primary">
         {{ startBtnText }}
       </button>
-      <button @click="startAnswering" :disabled="phase !== 'awaiting'" class="ji-btn-success">🎤 Start Answering</button>
-      <button @click="submitAnswer" :disabled="phase !== 'answering'" class="ji-btn-warning">✅ Submit Answer</button>
+      <button @click="startAnswering" :disabled="phase !== 'awaiting'" class="ji-btn-success">{{ $t('🎤 Start Answering') }}</button>
+      <button @click="submitAnswer" :disabled="phase !== 'answering'" class="ji-btn-warning">{{ $t('✅ Submit Answer') }}</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="ji-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
       <!--
         Enabled as soon as the MICROPHONE is ready, not the camera. Pressing it
@@ -220,18 +218,18 @@
       <button @click="toggleCamera" :disabled="!mediaReady || cameraBusy" class="ji-btn-control" :class="{ off: !cameraEnabled }">
         {{ cameraBusy ? '⏳ Camera…' : cameraEnabled ? '📹 Camera On' : '📷 Turn Camera On' }}
       </button>
-      <button @click="endInterview" :disabled="phase === 'idle' || phase === 'processing'" class="ji-btn-secondary">⏹️ End Interview</button>
-      <button @click="leave" class="ji-btn-danger">Leave</button>
+      <button @click="endInterview" :disabled="phase === 'idle' || phase === 'processing'" class="ji-btn-secondary">{{ $t('⏹️ End Interview') }}</button>
+      <button @click="leave" class="ji-btn-danger">{{ $t('Leave') }}</button>
     </div>
 
     <!-- Report -->
     <div class="ji-reports-panel" v-if="reportVisible">
-      <h2>📋 Interview Feedback Report</h2>
+      <h2>{{ $t('📋 Interview Feedback Report') }}</h2>
 
       <div class="ji-score-card">
         <div class="ji-score-circle" :class="scoreClass(report.score)">{{ report.score }}<span>/100</span></div>
         <div class="ji-recommendation">
-          <div class="ji-rec-label">Recommendation</div>
+          <div class="ji-rec-label">{{ $t('Recommendation') }}</div>
           <div class="ji-rec-value">{{ report.recommendation || '—' }}</div>
         </div>
       </div>
@@ -244,7 +242,7 @@
         simply does not render.
       -->
       <div class="ji-report-card" v-if="breakdownRows.length">
-        <h3>📊 Where the score came from</h3>
+        <h3>{{ $t('📊 Where the score came from') }}</h3>
         <div class="ji-bars">
           <div class="ji-bar-row" v-for="row in breakdownRows" :key="row.key">
             <span class="ji-bar-label">{{ row.label }}</span>
@@ -261,51 +259,53 @@
         once; what they need from it is the next evening's practice list.
       -->
       <div class="ji-report-card ji-report-plan" v-if="report.action_plan && report.action_plan.length">
-        <h3>🎯 Do this before your next interview</h3>
+        <h3>{{ $t('🎯 Do this before your next interview') }}</h3>
         <ol class="ji-plan-list"><li v-for="(step, i) in report.action_plan" :key="i">{{ step }}</li></ol>
       </div>
 
       <div class="ji-report-card ji-report-standout" v-if="report.standout_moment">
-        <h3>🌟 Your strongest moment</h3><p>{{ report.standout_moment }}</p>
+        <h3>{{ $t('🌟 Your strongest moment') }}</h3><p>{{ report.standout_moment }}</p>
       </div>
 
       <div class="ji-report-card ji-report-flags" v-if="report.red_flags">
-        <h3>⚠️ What would worry a hiring manager</h3><p>{{ report.red_flags }}</p>
+        <h3>{{ $t('⚠️ What would worry a hiring manager') }}</h3><p>{{ report.red_flags }}</p>
       </div>
 
-      <div class="ji-report-card"><h3>📝 Overall Summary</h3><p>{{ report.summary }}</p></div>
-      <div class="ji-report-card"><h3>✅ Strengths</h3><p>{{ report.strengths }}</p></div>
-      <div class="ji-report-card"><h3>📈 Areas to Improve</h3><p>{{ report.improvements }}</p></div>
+      <div class="ji-report-card"><h3>{{ $t('📝 Overall Summary') }}</h3><p>{{ report.summary }}</p></div>
+      <div class="ji-report-card"><h3>{{ $t('✅ Strengths') }}</h3><p>{{ report.strengths }}</p></div>
+      <div class="ji-report-card"><h3>{{ $t('📈 Areas to Improve') }}</h3><p>{{ report.improvements }}</p></div>
       <div class="ji-report-card"><h3>🧠 {{ interviewType === 'HR' ? 'Competency Assessment' : 'Technical Assessment' }}</h3><p>{{ report.technical_assessment }}</p></div>
-      <div class="ji-report-card"><h3>🗣️ Communication</h3><p>{{ report.communication }}</p></div>
+      <div class="ji-report-card"><h3>{{ $t('🗣️ Communication') }}</h3><p>{{ report.communication }}</p></div>
 
       <div class="ji-report-card">
-        <h3>💬 Question-by-question coaching ({{ qaPairs.length }})</h3>
+        <h3>{{ $t('💬 Question-by-question coaching ({v0})', { v0: qaPairs.length }) }}</h3>
         <p class="ji-card-lead">
-          For each question: what you said, your own answer rewritten to be stronger, a short
-          model answer you can rehearse, and why the interviewer asked it.
+          {{ $t('For each question: what you said, your own answer rewritten to be stronger, a short model answer you can rehearse, and why the interviewer asked it.') }}
         </p>
         <div class="ji-qa-list">
           <QaCoaching v-for="(qa, i) in qaPairs" :key="i" :qa="qa" :index="i" />
-          <div v-if="qaPairs.length === 0" style="color:var(--ji-text-mute)">No questions were answered.</div>
+          <div v-if="qaPairs.length === 0" style="color:var(--ji-text-mute)">{{ $t('No questions were answered.') }}</div>
         </div>
       </div>
 
       <div class="ji-controls">
-        <button @click="$router.push('/job-interview/results')" class="ji-btn-primary">View All Results →</button>
+        <button @click="$router.push('/job-interview/results')" class="ji-btn-primary">{{ $t('View All Results →') }}</button>
         <!--
           Straight back into the room with the same role, requirements and CV.
           Re-typing a page of job requirements is the reason nobody practised the
           same role twice; the interviewer is told what it has already asked.
         -->
-        <button @click="redoSameInterview" class="ji-btn-success">🔁 Redo This Interview</button>
-        <button @click="editAndRedo" class="ji-btn-secondary">✏️ Change Details & Redo</button>
+        <button @click="redoSameInterview" class="ji-btn-success">{{ $t('🔁 Redo This Interview') }}</button>
+        <button @click="editAndRedo" class="ji-btn-secondary">{{ $t('✏️ Change Details & Redo') }}</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { aiLanguage, aiLanguageHeaders, localeId, locale as activeLocale } from '@/i18n/runtime';
+import { planSpeech, describe as describeSpeech } from '@/utils/roomSpeech';
+import { newsService } from '@/services/news.service';
 import { ref, computed, nextTick, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
@@ -316,7 +316,7 @@ import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
 import {
   INTERVIEWER_TITLES, actorById, castVoice, interviewerLabel, isActorId,
-  pickInterviewer, pitchFor, type InterviewType,
+  pickInterviewer, type InterviewType,
 } from '@/cast/actors';
 import {
   MAX_AVOID_QUESTIONS, MAX_QUESTIONS, clampMinutes,
@@ -652,7 +652,26 @@ function clearAnswer() {
   answer.value = emptyAnswer();
 }
 
-function loadVoices() { voices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('en')); }
+/*
+ * EVERY voice the device has, not just the English ones.
+ *
+ * This used to filter `startsWith('en')`, which was correct while the room was
+ * English-only and became the reason it went silent in Arabic: the filter ran
+ * once at mount, so switching language could not bring an Arabic voice back
+ * even on a machine that had one. `planSpeech` does the filtering now, per
+ * line, against the current locale — and it is the only thing that knows a
+ * wrong-language voice must never be cast.
+ */
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  // `getVoices()` is EMPTY on the first call in every browser — the list is
+  // populated asynchronously and `voiceschanged` is what says so, sometimes
+  // more than once. So the server probe has to run again each time the list
+  // moves: asked before the voices arrive, every language looks unavailable and
+  // the room would reach for the network on a machine that can speak perfectly
+  // well. The Newscast documents the same trap.
+  void checkServerVoice();
+}
 loadVoices();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
@@ -668,7 +687,34 @@ if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = lo
  * than dropped.
  */
 function castInterviewerVoice() {
-  return castVoice(voices, interviewer.gender);
+  return planSpeech(voices, localeId.value, interviewer.gender, 0, serverVoiceAvailable.value);
+}
+
+/**
+ * Can app 36 voice a gendered pair in this language?
+ *
+ * Asked ONCE per session rather than per line: the answer cannot change
+ * mid-interview, and a probe per sentence is a round trip per sentence against
+ * a PythonAnywhere replica whose first answer of the day takes ~20 seconds.
+ * Asked at all only when the device has no voice for the language, because on a
+ * machine that does the server is never reached and the question is free to
+ * leave unanswered.
+ */
+const serverVoiceAvailable = ref(false);
+
+async function checkServerVoice(): Promise<void> {
+  if (castVoice(voices, interviewer.gender, 0, localeId.value).languageAvailable) {
+    serverVoiceAvailable.value = false;
+    return;
+  }
+  try {
+    const caps = await newsService.speechCapabilities();
+    serverVoiceAvailable.value = !!caps?.languages?.[localeId.value]?.paired;
+  } catch {
+    // A silent interviewer is worse than an unshaped one, and `planSpeech`
+    // falls through to the platform route on its own. Nothing to report.
+    serverVoiceAvailable.value = false;
+  }
 }
 
 /**
@@ -726,17 +772,81 @@ function stopSpeechKeepAlive() {
  * unreachable; it is here because "should" is not a guarantee and the cost of
  * being wrong is a frozen room.
  */
+/**
+ * What the reader is actually hearing, shown in the room.
+ *
+ * "Is the interviewer really on a voice for my language?" is a question a
+ * listener cannot answer by listening — on the newscast it was asked three
+ * separate times and the page could not say. It is also the only way to tell
+ * "this device has no Chinese voice" apart from "the speech is broken", which
+ * from a chair are the same thing.
+ */
+const voiceLabel = ref('');
+
+/**
+ * Play one MP3 from the server engine, and resolve when it has finished.
+ *
+ * Resolves rather than rejects on every failure, for the reason in `speak`'s
+ * own comment: a rejection here is an interview that never reaches the next
+ * question. The object URL is revoked on the way out — a twelve-question
+ * interview otherwise holds twelve decoded clips for the life of the tab.
+ */
+function playClip(url: string): Promise<void> {
+  return new Promise(resolve => {
+    let done = false;
+    const finishOnce = () => {
+      if (done) return;
+      done = true;
+      try { URL.revokeObjectURL(url); } catch { /* not ours to revoke */ }
+      resolve();
+    };
+    try {
+      const audio = new Audio(url);
+      audio.onended = finishOnce;
+      audio.onerror = finishOnce;
+      serverClip = audio;
+      void audio.play().catch(finishOnce);
+    } catch {
+      finishOnce();
+    }
+  });
+}
+
+/**
+ * The clip currently playing, so ending the interview can stop it.
+ *
+ * `speechSynthesis.cancel()` does not reach an `<audio>` element, so without
+ * this the interviewer goes on talking over whatever page the candidate opens
+ * next — the same bug the Newscast documents for `speechSynthesis` itself, one
+ * mechanism along.
+ */
+let serverClip: HTMLAudioElement | null = null;
+
+function stopServerClip(): void {
+  try { serverClip?.pause(); } catch { /* already gone */ }
+  serverClip = null;
+}
+
 function speechTimeoutMs(text: string): number {
   return Math.min(90000, Math.max(8000, text.length * 120 + 5000));
 }
 
 function speak(text: string): Promise<void> {
-  return new Promise(resolve => {
+  // The executor is `async` because the server route below awaits a network
+  // fetch. That is normally an anti-pattern — a throw inside an async executor
+  // is swallowed rather than rejecting the promise — and it is safe here
+  // precisely because nothing in this function is allowed to reject: every
+  // path, including every failure, goes through `finish()` and resolves. A
+  // rejected `speak()` would leave the interview waiting for a question that
+  // is never asked.
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async resolve => {
     if (!text?.trim()) { resolve(); return; }
     captionSpeaker.value = interviewerName;
     captionText.value = text;
     currentSpeaker.value = 'interviewer';
     try { speechSynthesis.cancel(); } catch {}
+    stopServerClip();
 
     let settled = false;
     let watchdog: any = null;
@@ -760,11 +870,55 @@ function speak(text: string): Promise<void> {
       resolve();
     };
 
+    const plan = castInterviewerVoice();
+
+    /*
+     * THE SERVER ROUTE. Reached only when the device has no voice for this
+     * language at all — a stock Windows install has none for Arabic, and many
+     * Linux and Android builds have none for Chinese.
+     *
+     * App 36's `/api/news/tts/` is a measured neural pair per language, and it
+     * is reused here rather than reimplemented: it is already deployed, its
+     * voices are already F0-checked, and the alternative for a candidate on
+     * such a machine is a silent interviewer. It is named `news` because that
+     * is the service that grew it; the endpoint itself is general.
+     *
+     * Failure falls through to the platform route rather than aborting. The
+     * clip is a network round trip on a page where somebody is waiting, and
+     * "no sound for this one question" is recoverable where "the interview
+     * stopped" is not.
+     */
+    if (plan.route === 'server') {
+        try {
+            const clip = await newsService.speech(
+                text, localeId.value, interviewer.gender, 1, '', false);
+            voiceLabel.value = `${clip.voice} · ${clip.provider}`;
+            await playClip(clip.url);
+            finish();
+            return;
+        } catch {
+            // Nothing to report to the candidate: they are mid-answer, and the
+            // caption already carries the text they would have heard.
+        }
+    }
+
     const u = new SpeechSynthesisUtterance(text);
-    const cast = castInterviewerVoice();
-    if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
-    u.pitch = pitchFor(interviewer.gender, cast.matched);
+    if (plan.voice) u.voice = plan.voice as SpeechSynthesisVoice;
+    /*
+     * `lang` is set WHETHER OR NOT a voice was cast, and that is the fix for
+     * "the interviewer is silent in Arabic".
+     *
+     * With no voice assigned, `lang` is the only thing telling the platform
+     * what language the text is in — and an unassigned voice plus a correct
+     * `lang` frequently reaches an OS voice that `getVoices()` never listed.
+     * With a voice assigned it is set to that VOICE's own lang rather than the
+     * locale's, because asking for `zh-CN` while casting a `zh-TW` voice is a
+     * mismatch some engines resolve by ignoring the voice.
+     */
+    u.lang = plan.lang;
+    u.pitch = plan.pitch;
     u.rate = 1.0;
+    voiceLabel.value = describeSpeech(plan, activeLocale.value.nativeName);
     u.onend = finish;
     u.onerror = finish;
 
@@ -778,6 +932,7 @@ function speak(text: string): Promise<void> {
           // `onend` never came. Stop whatever is still going rather than
           // leaving it to talk over the next question.
           try { speechSynthesis.cancel(); } catch {}
+          stopServerClip();
           finish();
         }, speechTimeoutMs(text));
       } catch {
@@ -972,10 +1127,21 @@ async function transcribeAudioBlob(blob: Blob): Promise<void> {
     if (!baseUrl) { noteTranscribeFailure('the transcription service is unreachable'); return; }
     const formData = new FormData();
     formData.append('audio', blob, 'audio.webm');
+    formData.append('language', aiLanguage());
     const token = import.meta.env.VITE_AUTH_TOKEN;
     const response = await fetch(`${baseUrl}/api/jobinterview/transcribe`, {
       method: 'POST',
-      headers: { 'Authorization': `Token ${token}` },
+      headers: {
+        'Authorization': `Token ${token}`,
+      // The language the answer is being SPOKEN in, so Whisper transcribes it
+      // rather than transliterating it. Sent as a form field as well as a
+      // header: this is a multipart upload, and `language.py` reads the body
+      // first — but `request.get_json(silent=True)` sees nothing in a multipart
+      // request, so the header is what actually carries it here. Both are sent
+      // so that neither the service nor a future proxy has to be the one that
+      // works.
+        ...aiLanguageHeaders(),
+      },
       body: formData
     });
     if (response.ok) {
@@ -1713,6 +1879,7 @@ onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
   stopAllTracks();
   try { speechSynthesis.cancel(); } catch {}
+  stopServerClip();
 });
 </script>
 

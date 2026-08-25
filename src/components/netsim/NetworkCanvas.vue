@@ -180,14 +180,14 @@
     <div v-if="!topology.devices.length" class="ns-empty">
       <div class="ns-empty-inner">
         <DeviceIcon name="layers" :size="52" />
-        <h3>Your canvas is empty</h3>
-        <p>Drag a device from the palette on the left, load a template, or ask the AI to build a network for you.</p>
+        <h3>{{ $t('Your canvas is empty') }}</h3>
+        <p>{{ $t('Drag a device from the palette on the left, load a template, or ask the AI to build a network for you.') }}</p>
         <div class="ns-empty-actions">
           <button class="ns-btn primary" @click="emit('request-template')">
-            <DeviceIcon name="grid" :size="16" /> Start from a template
+            <DeviceIcon name="grid" :size="16" /> {{ $t('Start from a template') }}
           </button>
           <button class="ns-btn ghost" @click="emit('request-ai')">
-            <DeviceIcon name="sparkles" :size="16" /> Generate with AI
+            <DeviceIcon name="sparkles" :size="16" /> {{ $t('Generate with AI') }}
           </button>
         </div>
       </div>
@@ -195,15 +195,15 @@
 
     <!-- ── zoom controls ── -->
     <div class="ns-canvas-controls">
-      <button class="ns-zoom-btn" title="Zoom in" @click="zoomBy(1.2)">+</button>
-      <button class="ns-zoom-btn" title="Zoom out" @click="zoomBy(1 / 1.2)">−</button>
-      <button class="ns-zoom-btn wide" title="Fit to view" @click="fitToView">Fit</button>
+      <button class="ns-zoom-btn" :title="$t('Zoom in')" @click="zoomBy(1.2)">+</button>
+      <button class="ns-zoom-btn" :title="$t('Zoom out')" @click="zoomBy(1 / 1.2)">−</button>
+      <button class="ns-zoom-btn wide" :title="$t('Fit to view')" @click="fitToView">{{ $t('Fit') }}</button>
       <span class="ns-zoom-value">{{ Math.round(zoom * 100) }}%</span>
     </div>
 
     <div v-if="store.pendingConnection" class="ns-connect-hint">
       <DeviceIcon name="cable" :size="15" />
-      Click the second device to complete the cable — press <kbd>Esc</kbd> to cancel
+      {{ $t('Click the second device to complete the cable — press') }} <kbd>{{ $t('Esc') }}</kbd> {{ $t('to cancel') }}
     </div>
   </div>
 </template>

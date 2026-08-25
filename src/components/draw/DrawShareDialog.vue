@@ -1,34 +1,34 @@
 <template>
   <div class="overlay" @click.self="$emit('close')">
-    <div class="dialog" role="dialog" aria-label="Share this paper">
+    <div class="dialog" role="dialog" :aria-label="$t('Share this paper')">
       <header>
         <div>
-          <h2>Share “{{ paper.title }}”</h2>
-          <p class="sub">Only people you add can open this paper.</p>
+          <h2>{{ $t('Share “{v0}”', { v0: paper.title }) }}</h2>
+          <p class="sub">{{ $t('Only people you add can open this paper.') }}</p>
         </div>
-        <button class="close" aria-label="Close" @click="$emit('close')">×</button>
+        <button class="close" :aria-label="$t('Close')" @click="$emit('close')">×</button>
       </header>
 
       <!-- Add someone -->
       <section class="block">
-        <label class="label" for="draw-share-search">Add a person</label>
+        <label class="label" for="draw-share-search">{{ $t('Add a person') }}</label>
         <div class="search-row">
           <input
             id="draw-share-search"
             v-model="query"
             class="input"
             type="text"
-            placeholder="Search by username, name or email"
+            :placeholder="$t('Search by username, name or email')"
             autocomplete="off"
             @input="onSearch"
           >
-          <select v-model="permission" class="select" aria-label="Permission">
-            <option value="read">Can view</option>
-            <option value="write">Can edit</option>
+          <select v-model="permission" class="select" :aria-label="$t('Permission')">
+            <option value="read">{{ $t('Can view') }}</option>
+            <option value="write">{{ $t('Can edit') }}</option>
           </select>
         </div>
 
-        <p v-if="searching" class="hint">Searching…</p>
+        <p v-if="searching" class="hint">{{ $t('Searching…') }}</p>
         <ul v-else-if="candidates.length" class="results">
           <li v-for="person in candidates" :key="person.user_id || person.username">
             <div class="who">
@@ -41,19 +41,19 @@
               </div>
             </div>
             <button class="btn small" :disabled="busy" @click="add(person)">
-              Add as {{ permission === 'write' ? 'editor' : 'viewer' }}
+              {{ $t('Add as {v0}', { v0: permission === 'write' ? 'editor' : 'viewer' }) }}
             </button>
           </li>
         </ul>
         <p v-else-if="query.trim().length >= 2" class="hint">
-          Nobody matches “{{ query.trim() }}”.
+          {{ $t('Nobody matches “{v0}”.', { v0: query.trim() }) }}
         </p>
       </section>
 
       <!-- Who has access -->
       <section class="block">
         <div class="block-head">
-          <span class="label">Who has access</span>
+          <span class="label">{{ $t('Who has access') }}</span>
           <span class="count">{{ shares.length + 1 }}</span>
         </div>
 
@@ -65,10 +65,10 @@
               </span>
               <div class="who-text">
                 <strong>{{ paper.owner_username || 'Owner' }}</strong>
-                <small>Owner — can edit, share and delete</small>
+                <small>{{ $t('Owner — can edit, share and delete') }}</small>
               </div>
             </div>
-            <span class="pill owner">Owner</span>
+            <span class="pill owner">{{ $t('Owner') }}</span>
           </li>
 
           <li v-for="row in shares" :key="row.user_id">
@@ -91,11 +91,11 @@
                 :aria-label="`Permission for ${row.username}`"
                 @change="change(row, ($event.target as HTMLSelectElement).value as 'read' | 'write')"
               >
-                <option value="read">Can view</option>
-                <option value="write">Can edit</option>
+                <option value="read">{{ $t('Can view') }}</option>
+                <option value="write">{{ $t('Can edit') }}</option>
               </select>
               <button class="btn ghost small" :disabled="busy" @click="revoke(row)">
-                Remove
+                {{ $t('Remove') }}
               </button>
             </div>
           </li>
@@ -105,35 +105,33 @@
       <!-- Link access -->
       <section class="block">
         <div class="block-head">
-          <span class="label">Anyone with the link</span>
+          <span class="label">{{ $t('Anyone with the link') }}</span>
         </div>
         <div class="link-row">
           <select v-model="linkAccess" class="select" :disabled="busy"
-                  aria-label="Link access" @change="applyLink">
-            <option value="none">No link — private</option>
-            <option value="read">Anyone with the link can view</option>
-            <option value="write">Anyone with the link can edit</option>
+                  :aria-label="$t('Link access')" @change="applyLink">
+            <option value="none">{{ $t('No link — private') }}</option>
+            <option value="read">{{ $t('Anyone with the link can view') }}</option>
+            <option value="write">{{ $t('Anyone with the link can edit') }}</option>
           </select>
         </div>
 
         <div v-if="linkAccess !== 'none' && linkToken" class="link-box">
           <input class="input mono" type="text" readonly :value="shareUrl"
-                 aria-label="Share link" @focus="($event.target as HTMLInputElement).select()">
+                 :aria-label="$t('Share link')" @focus="($event.target as HTMLInputElement).select()">
           <button class="btn small" @click="copy">{{ copied ? 'Copied' : 'Copy' }}</button>
-          <button class="btn ghost small" :disabled="busy" title="Invalidate the old link and make a new one"
-                  @click="rotate">New link</button>
+          <button class="btn ghost small" :disabled="busy" :title="$t('Invalidate the old link and make a new one')"
+                  @click="rotate">{{ $t('New link') }}</button>
         </div>
         <p v-if="linkAccess !== 'none'" class="warn">
-          Anyone holding this link can open the paper without signing in.
-          Turning the link off or making a new one stops the old one working
-          immediately.
+          {{ $t('Anyone holding this link can open the paper without signing in. Turning the link off or making a new one stops the old one working immediately.') }}
         </p>
       </section>
 
       <p v-if="error" class="error">{{ error }}</p>
 
       <footer>
-        <button class="btn ghost" @click="$emit('close')">Done</button>
+        <button class="btn ghost" @click="$emit('close')">{{ $t('Done') }}</button>
       </footer>
     </div>
   </div>

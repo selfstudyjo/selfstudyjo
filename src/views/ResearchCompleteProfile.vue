@@ -1,83 +1,83 @@
 <template>
   <div class="research-complete-profile-page">
     <div class="rf-page-header">
-      <button v-if="isEditing" class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconProfile /> {{ isEditing ? 'Edit' : 'Complete' }} Your Researcher Profile</h1>
+      <button v-if="isEditing" class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconProfile /> {{ $t('{v0} Your Researcher Profile', { v0: isEditing ? 'Edit' : 'Complete' }) }}</h1>
       <p class="rf-subtitle">{{ isEditing ? 'Update your researcher profile information' : 'Set up your researcher profile to start using Research Flow' }}</p>
     </div>
 
     <div class="rf-section rf-profile-form-section">
       <div class="rf-form-group">
-        <label class="rf-label">User ID</label>
+        <label class="rf-label">{{ $t('User ID') }}</label>
         <input :value="userId" class="rf-input rf-input-disabled" disabled />
       </div>
 
       <div class="rf-form-row">
         <div class="rf-form-group">
-          <label class="rf-label">First Name</label>
-          <input v-model="form.first_name" class="rf-input" placeholder="First name" />
+          <label class="rf-label">{{ $t('First Name') }}</label>
+          <input v-model="form.first_name" class="rf-input" :placeholder="$t('First name')" />
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Last Name</label>
-          <input v-model="form.last_name" class="rf-input" placeholder="Last name" />
+          <label class="rf-label">{{ $t('Last Name') }}</label>
+          <input v-model="form.last_name" class="rf-input" :placeholder="$t('Last name')" />
         </div>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Email</label>
-        <input v-model="form.email" class="rf-input" type="email" placeholder="Email" />
+        <label class="rf-label">{{ $t('Email') }}</label>
+        <input v-model="form.email" class="rf-input" type="email" :placeholder="$t('Email')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Username</label>
-        <input v-model="form.username" class="rf-input" placeholder="Username" />
+        <label class="rf-label">{{ $t('Username') }}</label>
+        <input v-model="form.username" class="rf-input" :placeholder="$t('Username')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">University *</label>
-        <input v-model="form.university" class="rf-input" placeholder="e.g., MIT, Stanford..." />
+        <label class="rf-label">{{ $t('University *') }}</label>
+        <input v-model="form.university" class="rf-input" :placeholder="$t('e.g., MIT, Stanford...')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Institution</label>
-        <input v-model="form.institution" class="rf-input" placeholder="Research institution..." />
+        <label class="rf-label">{{ $t('Institution') }}</label>
+        <input v-model="form.institution" class="rf-input" :placeholder="$t('Research institution...')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Department</label>
-        <input v-model="form.department" class="rf-input" placeholder="e.g., Computer Science..." />
+        <label class="rf-label">{{ $t('Department') }}</label>
+        <input v-model="form.department" class="rf-input" :placeholder="$t('e.g., Computer Science...')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Bio</label>
+        <label class="rf-label">{{ $t('Bio') }}</label>
         <textarea v-model="form.bio" class="rf-textarea" placeholder="Tell us about yourself and your research..." rows="4"></textarea>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Research Interests (comma separated)</label>
-        <input v-model="form.interestsStr" class="rf-input" placeholder="AI, Machine Learning, Data Science" />
+        <label class="rf-label">{{ $t('Research Interests (comma separated)') }}</label>
+        <input v-model="form.interestsStr" class="rf-input" :placeholder="$t('AI, Machine Learning, Data Science')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">ORCID ID</label>
+        <label class="rf-label">{{ $t('ORCID ID') }}</label>
         <input v-model="form.orcid_id" class="rf-input" placeholder="0000-0000-0000-0000" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Google Scholar ID</label>
-        <input v-model="form.google_scholar_id" class="rf-input" placeholder="Google Scholar profile ID" />
+        <label class="rf-label">{{ $t('Google Scholar ID') }}</label>
+        <input v-model="form.google_scholar_id" class="rf-input" :placeholder="$t('Google Scholar profile ID')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Website</label>
-        <input v-model="form.website" class="rf-input" type="url" placeholder="https://..." />
+        <label class="rf-label">{{ $t('Website') }}</label>
+        <input v-model="form.website" class="rf-input" type="url" :placeholder="$t('https://...')" />
       </div>
 
       <div class="rf-form-actions">
         <button class="rf-btn rf-btn-primary rf-btn-lg" @click="saveProfile" :disabled="!form.university || saving">
           {{ saving ? 'Saving...' : isEditing ? 'Update Profile' : 'Create Profile' }}
         </button>
-        <button v-if="isEditing" class="rf-btn rf-btn-secondary" @click="$router.push('/research')">Cancel</button>
+        <button v-if="isEditing" class="rf-btn rf-btn-secondary" @click="$router.push('/research')">{{ $t('Cancel') }}</button>
       </div>
 
       <div v-if="errorMsg" class="rf-error-msg">{{ errorMsg }}</div>

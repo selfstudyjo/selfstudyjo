@@ -1,8 +1,8 @@
 <template>
   <div class="exams-page">
     <div class="page-header">
-      <h1 class="page-title">Exams</h1>
-      <p class="page-subtitle">View and schedule your exams</p>
+      <h1 class="page-title">{{ $t('Exams') }}</h1>
+      <p class="page-subtitle">{{ $t('View and schedule your exams') }}</p>
     </div>
 
     <!-- Search Bar -->
@@ -12,14 +12,14 @@
         <input
           type="text"
           v-model="searchQuery"
-          placeholder="Search exams by title or course..."
+          :placeholder="$t('Search exams by title or course...')"
           class="search-input"
         />
         <button
           v-if="searchQuery"
           @click="searchQuery = ''"
           class="search-clear"
-          aria-label="Clear search"
+          :aria-label="$t('Clear search')"
         >
           ✕
         </button>
@@ -29,30 +29,30 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading exams...</p>
+      <p>{{ $t('Loading exams...') }}</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">❌</div>
-      <h3>Error Loading Exams</h3>
+      <h3>{{ $t('Error Loading Exams') }}</h3>
       <p>{{ error }}</p>
-      <button @click="loadExams" class="retry-btn">Retry</button>
+      <button @click="loadExams" class="retry-btn">{{ $t('Retry') }}</button>
     </div>
 
     <!-- Empty State (no exams at all) -->
     <div v-else-if="exams.length === 0" class="empty-container">
       <div class="empty-icon">📝</div>
-      <h3>No Exams Available</h3>
-      <p>There are no exams available at the moment.</p>
+      <h3>{{ $t('No Exams Available') }}</h3>
+      <p>{{ $t('There are no exams available at the moment.') }}</p>
     </div>
 
     <!-- Empty Search State -->
     <div v-else-if="filteredExams.length === 0" class="empty-container">
       <div class="empty-icon">🔍</div>
-      <h3>No Matching Exams</h3>
-      <p>No exams match your search "{{ searchQuery }}".</p>
-      <button @click="searchQuery = ''" class="retry-btn">Clear Search</button>
+      <h3>{{ $t('No Matching Exams') }}</h3>
+      <p>{{ $t('No exams match your search "{v0}".', { v0: searchQuery }) }}</p>
+      <button @click="searchQuery = ''" class="retry-btn">{{ $t('Clear Search') }}</button>
     </div>
 
     <!-- Exams List -->
@@ -67,7 +67,7 @@
             <div class="exam-icon">📚</div>
             <div class="exam-title-section">
               <h3 class="exam-title">{{ exam.title }}</h3>
-              <p class="exam-course">Course: {{ exam.course_name || exam.course_id }}</p>
+              <p class="exam-course">{{ $t('Course: {v0}', { v0: exam.course_name || exam.course_id }) }}</p>
             </div>
             <div v-if="isAuthenticated" class="exam-status" :class="getExamStatusClass(exam)">
               {{ getExamStatus(exam) }}
@@ -76,34 +76,34 @@
 
           <div class="exam-details">
             <div class="detail-row">
-              <span class="detail-label">Duration:</span>
-              <span class="detail-value">{{ exam.exam_duration }} minutes</span>
+              <span class="detail-label">{{ $t('Duration:') }}</span>
+              <span class="detail-value">{{ $t('{v0} minutes', { v0: exam.exam_duration }) }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Instructions:</span>
+              <span class="detail-label">{{ $t('Instructions:') }}</span>
               <span class="detail-value truncated">{{ exam.exam_instructions }}</span>
             </div>
 
             <!-- Show times taken only for authenticated users -->
             <div v-if="isAuthenticated" class="detail-row">
-              <span class="detail-label">Times Taken:</span>
+              <span class="detail-label">{{ $t('Times Taken:') }}</span>
               <span class="detail-value">{{ getExamAttempts(exam) }}</span>
             </div>
 
             <!-- Display latest score if user has taken exam -->
             <div v-if="isAuthenticated && getLatestUserResult(exam)?.result_status === 'PASSED'" class="score-display">
-              <span class="score-label">Your Latest Score:</span>
+              <span class="score-label">{{ $t('Your Latest Score:') }}</span>
               <span class="score-value passed">{{ getLatestUserResult(exam)?.score }}%</span>
             </div>
 
             <div v-else-if="isAuthenticated && getLatestUserResult(exam)?.result_status === 'FAILED'" class="score-display">
-              <span class="score-label">Your Latest Score:</span>
+              <span class="score-label">{{ $t('Your Latest Score:') }}</span>
               <span class="score-value failed">{{ getLatestUserResult(exam)?.score }}%</span>
             </div>
 
             <!-- Display next appointment if scheduled -->
             <div v-if="isAuthenticated && getActiveAppointment(exam)" class="appointment-info">
-              <div class="appointment-label">Next Appointment:</div>
+              <div class="appointment-label">{{ $t('Next Appointment:') }}</div>
               <div class="appointment-details">
                 <div class="appointment-date">
                   {{ formatDate(getActiveAppointment(exam)?.appointment_date) }}
@@ -118,7 +118,7 @@
           <div class="exam-actions">
             <!-- View exam details button -->
             <button @click="viewExamDetails(exam)" class="btn-view">
-              <span>View Details</span>
+              <span>{{ $t('View Details') }}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M15 12L12 15M12 15L9 12M12 15V9M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -129,7 +129,7 @@
             <template v-if="isAuthenticated">
               <template v-if="getLatestUserResult(exam)?.result_status === 'PASSED'">
                 <button class="btn-completed" disabled>
-                  <span>Completed</span>
+                  <span>{{ $t('Completed') }}</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -144,7 +144,7 @@
                     @click="startExam(exam)"
                     class="btn-start"
                   >
-                    <span>Start Exam</span>
+                    <span>{{ $t('Start Exam') }}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M14.752 11.168L9.192 7.108C8.892 6.9 8.5 7.1 8.5 7.44V16.56C8.5 16.9 8.892 17.1 9.192 16.892L14.752 12.832C15.068 12.6 15.068 12.4 14.752 12.168Z"
                             fill="currentColor"/>
@@ -155,7 +155,7 @@
                     @click="viewAppointment(exam)"
                     class="btn-scheduled"
                   >
-                    <span>View Appointment</span>
+                    <span>{{ $t('View Appointment') }}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -177,7 +177,7 @@
             <template v-else>
               <!-- For non-authenticated users, show login to schedule button -->
               <button @click="goToLogin" class="btn-schedule">
-                <span>Login to Schedule</span>
+                <span>{{ $t('Login to Schedule') }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -198,31 +198,31 @@
         </div>
         <div class="modal-body">
           <div class="exam-detail-section">
-            <h4>Exam Information</h4>
+            <h4>{{ $t('Exam Information') }}</h4>
             <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">Course:</span>
+                <span class="detail-label">{{ $t('Course:') }}</span>
                 <span class="detail-value">{{ selectedExam.course_name || selectedExam.course_id }}</span>
               </div>
               <div class="detail-item">
-                <span class="detail-label">Duration:</span>
-                <span class="detail-value">{{ selectedExam.exam_duration }} minutes</span>
+                <span class="detail-label">{{ $t('Duration:') }}</span>
+                <span class="detail-value">{{ $t('{v0} minutes', { v0: selectedExam.exam_duration }) }}</span>
               </div>
               <div v-if="isAuthenticated" class="detail-item">
-                <span class="detail-label">Status:</span>
+                <span class="detail-label">{{ $t('Status:') }}</span>
                 <span class="detail-value" :class="getExamStatusClass(selectedExam)">
                   {{ getExamStatus(selectedExam) }}
                 </span>
               </div>
               <div v-if="isAuthenticated" class="detail-item">
-                <span class="detail-label">Times Taken:</span>
+                <span class="detail-label">{{ $t('Times Taken:') }}</span>
                 <span class="detail-value">{{ getExamAttempts(selectedExam) }}</span>
               </div>
             </div>
           </div>
 
           <div class="exam-detail-section">
-            <h4>Instructions</h4>
+            <h4>{{ $t('Instructions') }}</h4>
             <div class="instructions-content">
               {{ selectedExam.exam_instructions }}
             </div>
@@ -230,7 +230,7 @@
 
           <!-- Video Instructions with Embed -->
           <div v-if="selectedExam.video_instructions_url" class="exam-detail-section">
-            <h4>Video Instructions</h4>
+            <h4>{{ $t('Video Instructions') }}</h4>
             <div class="video-container">
               <div v-if="videoEmbed.canEmbed" class="video-embed-wrapper">
                 <div class="video-embed-container">
@@ -241,41 +241,41 @@
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
-                    title="Exam Instructions Video"
+                    :title="$t('Exam Instructions Video')"
                     referrerpolicy="strict-origin-when-cross-origin"
                   ></iframe>
                 </div>
               </div>
               <div v-else class="video-link-container">
-                <p>Watch the video instructions:</p>
+                <p>{{ $t('Watch the video instructions:') }}</p>
                 <a :href="selectedExam.video_instructions_url" target="_blank" class="video-external-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M10 16.5L16 12L10 7.5V16.5ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"
                           fill="currentColor"/>
                   </svg>
-                  Watch Video Instructions
+                  {{ $t('Watch Video Instructions') }}
                 </a>
               </div>
             </div>
           </div>
 
           <div v-if="isAuthenticated && getLatestUserResult(selectedExam)" class="exam-detail-section">
-            <h4>Your Latest Results</h4>
+            <h4>{{ $t('Your Latest Results') }}</h4>
             <div class="results-section">
               <div class="result-item">
-                <span class="result-label">Score:</span>
+                <span class="result-label">{{ $t('Score:') }}</span>
                 <span class="result-value" :class="getLatestUserResult(selectedExam)?.result_status?.toLowerCase()">
                   {{ getLatestUserResult(selectedExam)?.score }}%
                 </span>
               </div>
               <div class="result-item">
-                <span class="result-label">Status:</span>
+                <span class="result-label">{{ $t('Status:') }}</span>
                 <span class="result-value" :class="getLatestUserResult(selectedExam)?.result_status?.toLowerCase()">
                   {{ getLatestUserResult(selectedExam)?.result_status }}
                 </span>
               </div>
               <div class="result-item">
-                <span class="result-label">Date Taken:</span>
+                <span class="result-label">{{ $t('Date Taken:') }}</span>
                 <span class="result-value">
                   {{ formatDate(getLatestUserResult(selectedExam)?.date_taken) }}
                 </span>
@@ -285,24 +285,24 @@
 
           <!-- Show active appointment details -->
           <div v-if="isAuthenticated && getActiveAppointment(selectedExam)" class="exam-detail-section">
-            <h4>Active Appointment Details</h4>
+            <h4>{{ $t('Active Appointment Details') }}</h4>
             <div class="appointment-detail-grid">
               <div class="detail-item">
-                <span class="detail-label">Date:</span>
+                <span class="detail-label">{{ $t('Date:') }}</span>
                 <span class="detail-value">{{ formatDate(getActiveAppointment(selectedExam)?.appointment_date) }}</span>
               </div>
               <div class="detail-item">
-                <span class="detail-label">Status:</span>
+                <span class="detail-label">{{ $t('Status:') }}</span>
                 <span class="detail-value" :class="getAppointmentStatusClass(getActiveAppointment(selectedExam))">
                   {{ getActiveAppointment(selectedExam)?.appointment_status }}
                 </span>
               </div>
               <div v-if="getActiveAppointment(selectedExam)?.proctor_name" class="detail-item">
-                <span class="detail-label">Proctor:</span>
+                <span class="detail-label">{{ $t('Proctor:') }}</span>
                 <span class="detail-value">{{ getActiveAppointment(selectedExam)?.proctor_name }}</span>
               </div>
               <div v-if="getActiveAppointment(selectedExam)?.can_start" class="detail-item">
-                <span class="detail-label">Can Start:</span>
+                <span class="detail-label">{{ $t('Can Start:') }}</span>
                 <span class="detail-value">{{ getActiveAppointment(selectedExam)?.can_start ? 'Yes' : 'No' }}</span>
               </div>
             </div>
@@ -310,7 +310,7 @@
 
           <!-- Show historical appointments if any -->
           <div v-if="isAuthenticated && getHistoricalAppointments(selectedExam).length > 0" class="exam-detail-section">
-            <h4>Appointment History</h4>
+            <h4>{{ $t('Appointment History') }}</h4>
             <div class="history-container">
               <div v-for="appointment in getHistoricalAppointments(selectedExam)" :key="appointment.external_id" class="history-item">
                 <div class="history-date">{{ formatDate(appointment.appointment_date) }}</div>
@@ -323,19 +323,19 @@
 
           <!-- Reschedule and Cancel options if available -->
           <div v-if="isAuthenticated && (canRescheduleAppointment(selectedExam) || canCancelAppointment(selectedExam))" class="exam-detail-section">
-            <h4>Manage Appointment</h4>
+            <h4>{{ $t('Manage Appointment') }}</h4>
             <div class="appointment-management">
               <div v-if="canRescheduleAppointment(selectedExam)" class="management-option">
                 <div class="option-icon">🔄</div>
                 <div class="option-details">
-                  <h5>Reschedule Exam</h5>
-                  <p>You can reschedule your exam appointment up to 2 days before the scheduled time.</p>
+                  <h5>{{ $t('Reschedule Exam') }}</h5>
+                  <p>{{ $t('You can reschedule your exam appointment up to 2 days before the scheduled time.') }}</p>
                   <button @click="rescheduleExam(selectedExam)" class="btn-reschedule">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M12 8V12M12 12V16M12 12H16M12 12H8M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Reschedule Exam
+                    {{ $t('Reschedule Exam') }}
                   </button>
                 </div>
               </div>
@@ -343,14 +343,14 @@
               <div v-if="canCancelAppointment(selectedExam)" class="management-option">
                 <div class="option-icon">❌</div>
                 <div class="option-details">
-                  <h5>Cancel Appointment</h5>
-                  <p>Cancel your exam appointment. The time slot will be freed for other students.</p>
+                  <h5>{{ $t('Cancel Appointment') }}</h5>
+                  <p>{{ $t('Cancel your exam appointment. The time slot will be freed for other students.') }}</p>
                   <button @click="cancelExam(selectedExam)" class="btn-cancel-appointment">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M19 7L18.1327 19.1425C18.0579 20.1891 17.187 21 16.1378 21H7.86224C6.81296 21 5.94208 20.1891 5.86732 19.1425L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Cancel Appointment
+                    {{ $t('Cancel Appointment') }}
                   </button>
                 </div>
               </div>
@@ -358,13 +358,13 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button @click="selectedExam = null" class="btn-secondary">Close</button>
+          <button @click="selectedExam = null" class="btn-secondary">{{ $t('Close') }}</button>
           <button v-if="isAuthenticated && shouldShowScheduleButton(selectedExam)"
                   @click="scheduleExam(selectedExam)" class="btn-primary">
             {{ getScheduleButtonText(selectedExam) }}
           </button>
           <button v-else-if="!isAuthenticated" @click="goToLogin" class="btn-primary">
-            Login to Schedule
+            {{ $t('Login to Schedule') }}
           </button>
         </div>
       </div>

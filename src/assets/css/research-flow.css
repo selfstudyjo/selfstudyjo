@@ -102,7 +102,7 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
-  margin-right: 0.4rem;
+  margin-inline-end: 0.4rem;
 }
 .rf-icon-wrap svg,
 .rf-page-title svg,
@@ -113,8 +113,8 @@
   vertical-align: middle;
   flex-shrink: 0;
 }
-.rf-btn svg { margin-right: 4px; }
-.rf-project-meta svg { display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.75; }
+.rf-btn svg { margin-inline-end: 4px; }
+.rf-project-meta svg { display: inline-block; vertical-align: middle; margin-inline-end: 4px; opacity: 0.75; }
 .rf-project-meta span { display: inline-flex; align-items: center; gap: 4px; }
 
 .rf-card-icon {
@@ -757,7 +757,7 @@
   height: 44px;
   border: 3px solid var(--rf-border);
   border-top-color: var(--rf-accent);
-  border-right-color: var(--rf-accent-2);
+  border-inline-end-color: var(--rf-accent-2);
   border-radius: 50%;
   animation: rf-spin 0.8s linear infinite;
   margin: 0 auto 1rem;
@@ -1788,8 +1788,8 @@
   color: var(--rf-text);
   animation: fadeInUp 0.3s ease both;
 }
-.rf-toast-ok  { border-left: 4px solid var(--sfs-success, #34d399); }
-.rf-toast-err { border-left: 4px solid var(--sfs-danger, #f87171); }
+.rf-toast-ok  { border-inline-start: 4px solid var(--sfs-success, #34d399); }
+.rf-toast-err { border-inline-start: 4px solid var(--sfs-danger, #f87171); }
 
 .rf-link-btn {
   padding: 0;
@@ -1838,14 +1838,14 @@
 .rf-relevance {
   margin: 0.55rem 0;
   padding: 0.55rem 0.8rem;
-  border-left: 3px solid var(--rf-accent);
+  border-inline-start: 3px solid var(--rf-accent);
   background: var(--rf-glass);
   border-radius: 0 8px 8px 0;
   font-size: 0.88em;
   line-height: 1.6;
 }
 .rf-card-flag { margin-bottom: 0.6rem; }
-.rf-card-unverified { border-left: 3px solid rgb(var(--sfs-warning-rgb, 251 191 36) / 0.55); }
+.rf-card-unverified { border-inline-start: 3px solid rgb(var(--sfs-warning-rgb, 251 191 36) / 0.55); }
 .rf-fallback-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
 
 /* =============================================================
@@ -1995,7 +1995,7 @@
 .rf-type-card-title { margin: 0 0 0.2rem; font-size: 1.1em; font-weight: 700; color: var(--rf-text); }
 .rf-type-card-level { margin: 0 0 0.6rem; font-size: 0.8em; color: var(--rf-accent); text-transform: uppercase; letter-spacing: 0.06em; }
 .rf-type-card-goal  { margin: 0 0 0.75rem; font-size: 0.86em; line-height: 1.6; color: var(--rf-text-mute); }
-.rf-type-card-facts { margin: 0; padding-left: 1.1rem; font-size: 0.82em; line-height: 1.8; color: var(--rf-text-dim); }
+.rf-type-card-facts { margin: 0; padding-inline-start: 1.1rem; font-size: 0.82em; line-height: 1.8; color: var(--rf-text-dim); }
 .rf-type-card-facts strong { color: var(--rf-text-soft); }
 
 /* --- Structure preview --- */
@@ -2006,8 +2006,8 @@
   border: 1px solid var(--rf-border);
   border-radius: var(--rf-r-md);
 }
-.rf-structure-sub { margin-left: 0.6rem; font-size: 0.8em; font-weight: 400; color: var(--rf-text-dim); }
-.rf-structure-list { margin: 0; padding-left: 1.3rem; }
+.rf-structure-sub { margin-inline-start: 0.6rem; font-size: 0.8em; font-weight: 400; color: var(--rf-text-dim); }
+.rf-structure-list { margin: 0; padding-inline-start: 1.3rem; }
 .rf-structure-list li {
   display: flex;
   flex-wrap: wrap;
@@ -2032,7 +2032,7 @@
 .rf-compare-table td {
   padding: 0.7rem 0.9rem;
   border: 1px solid var(--rf-border);
-  text-align: left;
+  text-align: start;
   vertical-align: top;
   line-height: 1.6;
 }
@@ -2075,19 +2075,19 @@
 }
 .rf-plan-block { margin-bottom: 1.15rem; }
 .rf-plan-block p { margin: 0; font-size: 0.9em; line-height: 1.75; color: var(--rf-text-mute); }
-.rf-plan-ul { margin: 0; padding-left: 1.25rem; font-size: 0.9em; line-height: 1.85; color: var(--rf-text-mute); }
+.rf-plan-ul { margin: 0; padding-inline-start: 1.25rem; font-size: 0.9em; line-height: 1.85; color: var(--rf-text-mute); }
 .rf-plan-search-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
 
 .rf-def-list { margin: 0; font-size: 0.9em; }
 .rf-def-list dt { margin-top: 0.6rem; font-weight: 700; color: var(--rf-text-soft); }
-.rf-def-list dd { margin: 0.15rem 0 0; padding-left: 0; line-height: 1.7; color: var(--rf-text-mute); }
+.rf-def-list dd { margin: 0.15rem 0 0; padding-inline-start: 0; line-height: 1.7; color: var(--rf-text-mute); }
 
-.rf-outline-list { margin: 0; padding-left: 1.25rem; }
+.rf-outline-list { margin: 0; padding-inline-start: 1.25rem; }
 .rf-outline-list li { margin-bottom: 0.85rem; }
 .rf-outline-list strong { color: var(--rf-text); font-size: 0.95em; }
 .rf-outline-list p { margin: 0.25rem 0 0; font-size: 0.88em; line-height: 1.7; color: var(--rf-text-mute); }
 
-.rf-risk-list { margin: 0; padding-left: 1.25rem; font-size: 0.88em; line-height: 1.8; color: var(--rf-text-mute); }
+.rf-risk-list { margin: 0; padding-inline-start: 1.25rem; font-size: 0.88em; line-height: 1.8; color: var(--rf-text-mute); }
 .rf-risk-list strong { color: var(--rf-text-soft); }
 
 /* --- Section cards --- */
@@ -2165,7 +2165,7 @@
 .rf-source-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
 
 /* --- References --- */
-.rf-reference-list { margin: 0; padding-left: 1.4rem; }
+.rf-reference-list { margin: 0; padding-inline-start: 1.4rem; }
 .rf-reference-list li {
   margin-bottom: 0.8rem;
   font-size: 0.88em;

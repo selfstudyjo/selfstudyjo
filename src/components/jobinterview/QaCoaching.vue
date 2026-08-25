@@ -6,7 +6,7 @@
     </div>
 
     <div class="ji-qa-a">
-      <span class="ji-qa-a-label">🗣️ Your answer:</span>
+      <span class="ji-qa-a-label">{{ $t('🗣️ Your answer:') }}</span>
       {{ qa.answer || '(no answer captured)' }}
       <span class="ji-qa-secs" v-if="qa.seconds">· {{ qa.seconds }}s</span>
     </div>
@@ -18,8 +18,8 @@
       like the AI failed -- which is exactly what this whole change is about.
     -->
     <div class="ji-qa-note ji-qa-pending" v-if="pending">
-      <span class="ji-qa-note-label">⏳ Coaching this answer…</span>
-      The coach is writing feedback for this question now. It will appear here.
+      <span class="ji-qa-note-label">{{ $t('⏳ Coaching this answer…') }}</span>
+      {{ $t('The coach is writing feedback for this question now. It will appear here.') }}
     </div>
 
     <template v-else>
@@ -27,7 +27,7 @@
            of the report that is about them; the model answer is the same for
            anybody who was asked this question. -->
       <div class="ji-qa-note ji-qa-feedback" v-if="coaching.feedback">
-        <span class="ji-qa-note-label">📌 Feedback on your answer</span>
+        <span class="ji-qa-note-label">{{ $t('📌 Feedback on your answer') }}</span>
         {{ coaching.feedback }}
       </div>
 
@@ -38,7 +38,7 @@
         they could actually have said.
       -->
       <div class="ji-qa-improved" v-if="coaching.improved_answer">
-        <span class="ji-qa-improved-label">✨ Your answer, made stronger</span>
+        <span class="ji-qa-improved-label">{{ $t('✨ Your answer, made stronger') }}</span>
         {{ coaching.improved_answer }}
       </div>
 
@@ -61,19 +61,17 @@
              tailored model answer is what made every question in this report
              look like it had the same answer. -->
         <span class="ji-qa-generic-note" v-if="coaching.generic">
-          The AI coach could not be reached for this question, so this is the shape a strong
-          answer has rather than one written for you. Re-running the interview when the service
-          is back produces a tailored answer and feedback on what you actually said.
+          {{ $t('The AI coach could not be reached for this question, so this is the shape a strong answer has rather than one written for you. Re-running the interview when the service is back produces a tailored answer and feedback on what you actually said.') }}
         </span>
       </div>
 
       <div class="ji-qa-note ji-qa-fix" v-if="coaching.fix">
-        <span class="ji-qa-note-label">🔧 The one thing to change</span>
+        <span class="ji-qa-note-label">{{ $t('🔧 The one thing to change') }}</span>
         {{ coaching.fix }}
       </div>
 
       <div class="ji-qa-note ji-qa-why" v-if="coaching.why">
-        <span class="ji-qa-note-label">🎯 Why they ask this</span>
+        <span class="ji-qa-note-label">{{ $t('🎯 Why they ask this') }}</span>
         {{ coaching.why }}
       </div>
 
@@ -84,7 +82,7 @@
         again -- so it renders, folded, rather than disappearing.
       -->
       <details class="ji-qa-legacy" v-if="keyPoints.length">
-        <summary>Checklist saved with this answer</summary>
+        <summary>{{ $t('Checklist saved with this answer') }}</summary>
         <ul><li v-for="(point, i) in keyPoints" :key="i">{{ point }}</li></ul>
       </details>
     </template>

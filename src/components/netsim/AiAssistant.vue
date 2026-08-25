@@ -3,10 +3,10 @@
     <header class="ns-ai-head">
       <span class="ns-ai-avatar"><DeviceIcon name="sparkles" :size="17" /></span>
       <div>
-        <h4>AI Network Tutor</h4>
+        <h4>{{ $t('AI Network Tutor') }}</h4>
         <p>{{ ready ? 'Connected to Self Study AI · sees your live topology' : 'Connecting to the AI service…' }}</p>
       </div>
-      <button class="ns-icon-btn" title="Clear the conversation" @click="clearChat"><DeviceIcon name="trash" :size="14" /></button>
+      <button class="ns-icon-btn" :title="$t('Clear the conversation')" @click="clearChat"><DeviceIcon name="trash" :size="14" /></button>
     </header>
 
     <div class="ns-ai-quick">
@@ -22,12 +22,12 @@
 
     <div ref="scrollEl" class="ns-ai-thread">
       <div v-if="!messages.length" class="ns-ai-welcome">
-        <p><strong>Ask anything about networking</strong> — I can see every device, address, VLAN, route and ACL on your canvas, plus the last simulation run.</p>
+        <p><strong>{{ $t('Ask anything about networking') }}</strong> {{ $t('— I can see every device, address, VLAN, route and ACL on your canvas, plus the last simulation run.') }}</p>
         <ul>
-          <li>“Why can PC-A not reach the server?”</li>
-          <li>“Build me a campus network with redundant uplinks.”</li>
-          <li>“Explain what my trunk is actually doing, using my devices.”</li>
-          <li>“Review my design like a senior engineer would.”</li>
+          <li>{{ $t('“Why can PC-A not reach the server?”') }}</li>
+          <li>{{ $t('“Build me a campus network with redundant uplinks.”') }}</li>
+          <li>{{ $t('“Explain what my trunk is actually doing, using my devices.”') }}</li>
+          <li>{{ $t('“Review my design like a senior engineer would.”') }}</li>
         </ul>
       </div>
 
@@ -36,26 +36,26 @@
         <div v-if="m.role === 'assistant'" class="ns-ai-content" v-html="renderMd(m.content)"></div>
         <div v-else class="ns-ai-content plain">{{ m.content }}</div>
         <div v-if="m.spec" class="ns-ai-spec">
-          <span><strong>{{ m.spec.devices.length }}</strong> devices · <strong>{{ m.spec.links?.length || 0 }}</strong> links ready to build</span>
+          <span><strong>{{ m.spec.devices.length }}</strong> {{ $t('devices ·') }} <strong>{{ m.spec.links?.length || 0 }}</strong> {{ $t('links ready to build') }}</span>
           <div class="ns-btn-row tight">
-            <button class="ns-btn primary sm" @click="applySpec(m.spec, 'replace')">Build on canvas</button>
-            <button class="ns-btn ghost sm" @click="applySpec(m.spec, 'merge')">Add to existing</button>
+            <button class="ns-btn primary sm" @click="applySpec(m.spec, 'replace')">{{ $t('Build on canvas') }}</button>
+            <button class="ns-btn ghost sm" @click="applySpec(m.spec, 'merge')">{{ $t('Add to existing') }}</button>
           </div>
         </div>
       </div>
 
       <div v-if="busy" class="ns-ai-msg assistant">
-        <div class="ns-ai-role">Tutor</div>
+        <div class="ns-ai-role">{{ $t('Tutor') }}</div>
         <div class="ns-ai-typing"><span></span><span></span><span></span></div>
       </div>
     </div>
 
     <div class="ns-ai-input">
       <div class="ns-ai-mode">
-        <button :class="['ns-mode-btn', { active: mode === 'ask' }]" @click="mode = 'ask'" title="Explain and teach">Teach</button>
-        <button :class="['ns-mode-btn', { active: mode === 'generate' }]" @click="mode = 'generate'" title="Generate a topology">Build</button>
-        <button :class="['ns-mode-btn', { active: mode === 'review' }]" @click="mode = 'review'" title="Design review">Review</button>
-        <button :class="['ns-mode-btn', { active: mode === 'fix' }]" @click="mode = 'fix'" title="Troubleshoot a symptom">Fix</button>
+        <button :class="['ns-mode-btn', { active: mode === 'ask' }]" @click="mode = 'ask'" :title="$t('Explain and teach')">{{ $t('Teach') }}</button>
+        <button :class="['ns-mode-btn', { active: mode === 'generate' }]" @click="mode = 'generate'" :title="$t('Generate a topology')">{{ $t('Build') }}</button>
+        <button :class="['ns-mode-btn', { active: mode === 'review' }]" @click="mode = 'review'" :title="$t('Design review')">{{ $t('Review') }}</button>
+        <button :class="['ns-mode-btn', { active: mode === 'fix' }]" @click="mode = 'fix'" :title="$t('Troubleshoot a symptom')">{{ $t('Fix') }}</button>
       </div>
       <textarea
         v-model="draft"

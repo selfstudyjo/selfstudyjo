@@ -2,18 +2,17 @@
   <div class="netsim-learn">
     <header class="ns-learn-hero">
       <div>
-        <router-link class="ns-back-link" to="/network-simulator">← Network Simulator</router-link>
-        <h1>Learn networking by building it</h1>
+        <router-link class="ns-back-link" to="/network-simulator">{{ $t('← Network Simulator') }}</router-link>
+        <h1>{{ $t('Learn networking by building it') }}</h1>
         <p>
-          {{ TOTAL_LESSONS }} lessons across {{ TRACKS.length }} tracks, roughly {{ Math.round(TOTAL_MINUTES / 60) }} hours of
-          work. Every task is checked against your live simulated network — not against a multiple-choice answer.
+          {{ $t('{v0} lessons across {v1} tracks, roughly {v2} hours of work. Every task is checked against your live simulated network — not against a multiple-choice answer.', { v0: TOTAL_LESSONS, v1: TRACKS.length, v2: Math.round(TOTAL_MINUTES / 60) }) }}
         </p>
       </div>
       <div v-if="progress" class="ns-learn-progress">
         <div class="ns-ring lg" :style="{ '--pct': completionPct }"><span>{{ completionPct }}%</span></div>
         <div>
           <strong>{{ progress.completedLessons.length }} / {{ TOTAL_LESSONS }}</strong>
-          <p>{{ progress.xp }} XP · {{ progress.badges.length }} badges</p>
+          <p>{{ $t('{v0} XP · {v1} badges', { v0: progress.xp, v1: progress.badges.length }) }}</p>
         </div>
       </div>
     </header>
@@ -57,7 +56,7 @@
               </div>
               <div class="ns-lesson-tags">
                 <em class="ns-diff" :class="l.difficulty">{{ l.difficulty }}</em>
-                <em>{{ l.minutes }} min</em>
+                <em>{{ $t('{v0} min', { v0: l.minutes }) }}</em>
                 <em v-for="ly in l.layers" :key="ly" class="ns-layer-pill" :style="{ background: layerColor(ly) + '22', color: layerColor(ly) }">L{{ ly }}</em>
               </div>
               <span v-if="isDone(l.id)" class="ns-lesson-check"><DeviceIcon name="check" :size="14" /></span>
@@ -67,12 +66,12 @@
             <div v-show="expanded === l.id" class="ns-lesson-detail">
               <div class="ns-lesson-cols">
                 <div class="ns-lesson-col">
-                  <h5>You will be able to</h5>
+                  <h5>{{ $t('You will be able to') }}</h5>
                   <ul class="ns-objectives">
                     <li v-for="(o, i) in l.objectives" :key="i">{{ o }}</li>
                   </ul>
 
-                  <h5>Tasks checked in the studio</h5>
+                  <h5>{{ $t('Tasks checked in the studio') }}</h5>
                   <ol class="ns-task-preview">
                     <li v-for="t in l.tasks" :key="t.id">{{ t.text }}</li>
                   </ol>
@@ -88,7 +87,7 @@
                 </div>
 
                 <aside class="ns-lesson-col terms">
-                  <h5>Key terms</h5>
+                  <h5>{{ $t('Key terms') }}</h5>
                   <dl>
                     <template v-for="k in l.keyTerms" :key="k.term">
                       <dt>{{ k.term }}</dt><dd>{{ k.meaning }}</dd>
@@ -101,7 +100,7 @@
                 <div class="ns-theory" v-html="renderMd(l.theory)"></div>
 
                 <div v-if="l.quiz?.length" class="ns-quiz">
-                  <h5>Check your understanding</h5>
+                  <h5>{{ $t('Check your understanding') }}</h5>
                   <div v-for="(q, qi) in l.quiz" :key="qi" class="ns-quiz-q">
                     <p class="ns-quiz-text">{{ qi + 1 }}. {{ q.q }}</p>
                     <button
@@ -126,11 +125,11 @@
         <!-- ════════════ AI quiz generator ════════════ -->
         <section class="ns-ai-quiz">
           <div class="ns-section-head">
-            <h2><DeviceIcon name="sparkles" :size="18" /> Practice questions on any topic</h2>
-            <p class="ns-section-sub">The AI tutor writes exam-style questions and explains every answer.</p>
+            <h2><DeviceIcon name="sparkles" :size="18" /> {{ $t('Practice questions on any topic') }}</h2>
+            <p class="ns-section-sub">{{ $t('The AI tutor writes exam-style questions and explains every answer.') }}</p>
           </div>
           <div class="ns-btn-row">
-            <input v-model="quizTopic" class="ns-inline-input grow" placeholder="e.g. VLSM, trunking, OSPF cost, NAT overload" @keydown.enter="makeQuiz" />
+            <input v-model="quizTopic" class="ns-inline-input grow" :placeholder="$t('e.g. VLSM, trunking, OSPF cost, NAT overload')" @keydown.enter="makeQuiz" />
             <button class="ns-btn primary sm" :disabled="quizBusy || !quizTopic.trim()" @click="makeQuiz">
               {{ quizBusy ? 'Writing…' : 'Generate 5 questions' }}
             </button>

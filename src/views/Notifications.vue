@@ -1,7 +1,7 @@
 <template>
   <div class="notifications-container">
     <div class="notifications-header">
-      <h1>Notifications</h1>
+      <h1>{{ $t('Notifications') }}</h1>
       <div class="header-actions">
         <button
           class="btn-mark-all-read"
@@ -11,7 +11,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
           </svg>
-          Mark All as Read
+          {{ $t('Mark All as Read') }}
         </button>
         <button
           class="btn-clear-all"
@@ -21,7 +21,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
           </svg>
-          Clear All
+          {{ $t('Clear All') }}
         </button>
         <button
           class="btn-sound"
@@ -47,7 +47,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
           </svg>
-          Refresh
+          {{ $t('Refresh') }}
         </button>
       </div>
     </div>
@@ -59,15 +59,13 @@
     -->
     <div v-if="confirmingClear" class="clear-confirm">
       <p>
-        Clear all {{ allUserNotifications.length }} notifications? The ones sent
-        to you are deleted for good. Announcements are removed from your list and
-        stay in everybody else's.
+        {{ $t('Clear all {v0} notifications? The ones sent to you are deleted for good. Announcements are removed from your list and stay in everybody else\'s.', { v0: allUserNotifications.length }) }}
       </p>
       <button class="confirm-yes" @click="clearAll" :disabled="clearing">
         {{ clearing ? 'Clearing…' : 'Yes, clear all' }}
       </button>
       <button class="confirm-no" @click="confirmingClear = false" :disabled="clearing">
-        Cancel
+        {{ $t('Cancel') }}
       </button>
     </div>
 
@@ -76,23 +74,23 @@
     <div class="stats-summary">
       <div class="stat-card">
         <div class="stat-value">{{ totalCount }}</div>
-        <div class="stat-label">Total</div>
+        <div class="stat-label">{{ $t('Total') }}</div>
       </div>
       <div class="stat-card unread">
         <div class="stat-value">{{ unreadCount }}</div>
-        <div class="stat-label">Unread</div>
+        <div class="stat-label">{{ $t('Unread') }}</div>
       </div>
       <div class="stat-card general">
         <div class="stat-value">{{ generalCount }}</div>
-        <div class="stat-label">General</div>
+        <div class="stat-label">{{ $t('General') }}</div>
       </div>
       <div class="stat-card group">
         <div class="stat-value">{{ groupCount }}</div>
-        <div class="stat-label">Group</div>
+        <div class="stat-label">{{ $t('Group') }}</div>
       </div>
       <div class="stat-card user-info">
         <div class="stat-value">{{ currentUser }}</div>
-        <div class="stat-label">Current User</div>
+        <div class="stat-label">{{ $t('Current User') }}</div>
       </div>
     </div>
 
@@ -103,35 +101,35 @@
           :class="{ active: activeFilter === 'all' }"
           @click="setFilter('all')"
         >
-          All ({{ allUserNotifications.length }})
+          {{ $t('All ({v0})', { v0: allUserNotifications.length }) }}
         </button>
         <button
           class="filter-tab"
           :class="{ active: activeFilter === 'unread' }"
           @click="setFilter('unread')"
         >
-          Unread ({{ unreadNotifications.length }})
+          {{ $t('Unread ({v0})', { v0: unreadNotifications.length }) }}
         </button>
         <button
           class="filter-tab"
           :class="{ active: activeFilter === 'personal' }"
           @click="setFilter('personal')"
         >
-          Personal ({{ personalNotifications.length }})
+          {{ $t('Personal ({v0})', { v0: personalNotifications.length }) }}
         </button>
         <button
           class="filter-tab"
           :class="{ active: activeFilter === 'general' }"
           @click="setFilter('general')"
         >
-          General ({{ generalNotifications.length }})
+          {{ $t('General ({v0})', { v0: generalNotifications.length }) }}
         </button>
         <button
           class="filter-tab"
           :class="{ active: activeFilter === 'group' }"
           @click="setFilter('group')"
         >
-          Group ({{ groupNotifications.length }})
+          {{ $t('Group ({v0})', { v0: groupNotifications.length }) }}
         </button>
       </div>
     </div>
@@ -139,7 +137,7 @@
     <div class="notifications-list">
       <div v-if="loading && filteredNotifications.length === 0" class="loading-state">
         <div class="notifications-spinner"></div>
-        <p>Loading your notifications...</p>
+        <p>{{ $t('Loading your notifications...') }}</p>
       </div>
 
       <div v-else-if="filteredNotifications.length === 0" class="empty-state">
@@ -165,7 +163,7 @@
         >
           <div class="notification-header">
             <div class="notification-type notification-tags">
-              <span v-if="!notification.read" class="unread-dot" aria-label="Unread"></span>
+              <span v-if="!notification.read" class="unread-dot" :aria-label="$t('Unread')"></span>
               <span :class="['type-badge', notification.notification_type]">
                 {{ notification.notification_type.toUpperCase() }}
               </span>
@@ -201,13 +199,13 @@
 
             <div class="notification-meta">
               <span class="sender">
-                From: <strong>{{ notification.sender }}</strong>
+                {{ $t('From:') }} <strong>{{ notification.sender }}</strong>
               </span>
               <span v-if="notification.notification_type === 'personal'" class="recipient">
-                To: <strong>{{ notification.recipient }}</strong>
+                {{ $t('To:') }} <strong>{{ notification.recipient }}</strong>
               </span>
               <span v-else-if="notification.notification_type === 'group'" class="recipient">
-                Group: <strong>{{ notification.recipient }}</strong>
+                {{ $t('Group:') }} <strong>{{ notification.recipient }}</strong>
               </span>
             </div>
           </div>
@@ -225,21 +223,21 @@
               @click="markAsRead(notification.notification_id)"
               :disabled="busyId === notification.notification_id"
             >
-              Mark as Read
+              {{ $t('Mark as Read') }}
             </button>
             <button
               v-if="notification.link"
               class="btn-view-link"
               @click="openLink(notification)"
             >
-              View
+              {{ $t('View') }}
             </button>
             <button
               class="btn-delete"
               @click="deleteNotification(notification)"
               :disabled="busyId === notification.notification_id"
             >
-              Delete
+              {{ $t('Delete') }}
             </button>
 
             <!-- Action buttons (Approve / Ignore) for the payment pair, which
@@ -260,7 +258,7 @@
               v-else-if="getActions(notification).length > 0"
               class="action-handled-info"
             >
-              ✓ Handled
+              {{ $t('✓ Handled') }}
             </span>
           </div>
         </div>
@@ -268,19 +266,19 @@
 
       <div v-if="loading && filteredNotifications.length > 0" class="loading-more">
         <div class="notifications-spinner small"></div>
-        Loading more notifications...
+        {{ $t('Loading more notifications...') }}
       </div>
 
       <div v-if="hasMore && !loading && filteredNotifications.length > 0" class="load-more">
         <button @click="loadMore" class="btn-load-more">
-          Load More
+          {{ $t('Load More') }}
         </button>
       </div>
     </div>
 
     <div v-if="error" class="error-message">
       <p>⚠️ {{ error }}</p>
-      <button @click="refreshNotifications" class="btn-retry">Retry</button>
+      <button @click="refreshNotifications" class="btn-retry">{{ $t('Retry') }}</button>
     </div>
   </div>
 </template>

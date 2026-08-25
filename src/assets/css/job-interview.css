@@ -143,7 +143,7 @@
 .ji-type-info {
   margin: 0.75rem 0 1rem; padding: 0.85rem 1rem; font-size: 0.9rem; line-height: 1.55;
   color: var(--sfs-info-text, #cffafe); background: rgb(var(--sfs-success-rgb, 45 212 191) / 0.12);
-  border: 1px solid rgb(var(--sfs-success-rgb, 45 212 191) / 0.3); border-left: 3px solid var(--ji-accent-2);
+  border: 1px solid rgb(var(--sfs-success-rgb, 45 212 191) / 0.3); border-inline-start: 3px solid var(--ji-accent-2);
   border-radius: var(--ji-r-sm);
 }
 .ji-hint { margin: 0.6rem 0 1rem; font-size: 0.85rem; color: var(--ji-text-mute); }
@@ -191,7 +191,7 @@
   color: var(--sfs-text, #fff); }
 .ji-btn-control:hover:not(:disabled) { background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.75); border-color: var(--ji-accent); transform: translateY(-1px); }
 .ji-btn-control.off { background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.18); border-color: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.55); color: var(--sfs-danger-text, #fecaca); }
-.ji-btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; min-height: 36px; margin-right: 0.35rem; }
+.ji-btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; min-height: 36px; margin-inline-end: 0.35rem; }
 .ji-btn-primary:disabled, .ji-btn-success:disabled, .ji-btn-warning:disabled,
 .ji-btn-danger:disabled, .ji-btn-secondary:disabled, .ji-btn-control:disabled {
   opacity: 0.5; cursor: not-allowed; filter: none; transform: none;
@@ -213,7 +213,7 @@
 }
 .ji-header-right { display: flex; align-items: center; gap: 0.75rem; }
 .ji-badge {
-  display: inline-block; margin-left: 0.5rem; padding: 0.2rem 0.6rem;
+  display: inline-block; margin-inline-start: 0.5rem; padding: 0.2rem 0.6rem;
   font-size: 0.78rem; font-weight: 600; color: var(--sfs-on-accent, #fff); background: var(--ji-grad);
   border-radius: 999px; box-shadow: 0 4px 12px rgb(var(--sfs-accent-rgb, 99 102 241) / 0.35);
 }
@@ -300,7 +300,7 @@
 .ji-question-box {
   padding: 1rem 1.2rem; margin-bottom: 1rem;
   background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.12); border: 1px solid rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
-  border-left: 4px solid var(--ji-accent); border-radius: var(--ji-r-md);
+  border-inline-start: 4px solid var(--ji-accent); border-radius: var(--ji-r-md);
 }
 .ji-question-label { font-size: 0.8rem; font-weight: 700; color: var(--sfs-text-muted, #c7d2fe); margin-bottom: 0.35rem; letter-spacing: 0.03em; }
 .ji-question-text { font-size: 1.1rem; font-weight: 600; line-height: 1.5; color: var(--sfs-text, #fff); }
@@ -315,7 +315,7 @@
   -webkit-backdrop-filter: var(--ji-blur-soft); backdrop-filter: var(--ji-blur-soft);
   min-height: 56px;
 }
-.ji-caption-box strong { color: var(--sfs-success-text, #c7f9ec); margin-right: 0.5rem; }
+.ji-caption-box strong { color: var(--sfs-success-text, #c7f9ec); margin-inline-end: 0.5rem; }
 
 /* Controls */
 .ji-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin: 1rem 0; }
@@ -372,7 +372,7 @@
 }
 .ji-qa-q { font-weight: 700; color: var(--sfs-text-muted, #c7d2fe); margin-bottom: 0.35rem; }
 .ji-qa-a { color: var(--ji-text-soft); line-height: 1.55; white-space: pre-wrap; }
-.ji-qa-a-label { font-weight: 700; color: var(--ji-text-mute); margin-right: 0.25rem; }
+.ji-qa-a-label { font-weight: 700; color: var(--ji-text-mute); margin-inline-end: 0.25rem; }
 
 /* Model answer (training) block */
 .ji-qa-model {
@@ -380,7 +380,7 @@
   padding: 0.65rem 0.85rem;
   background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.1);
   border: 1px solid rgb(var(--sfs-success-rgb, 34 197 94) / 0.28);
-  border-left: 3px solid var(--ji-success);
+  border-inline-start: 3px solid var(--ji-success);
   border-radius: var(--ji-r-sm);
   color: var(--ji-text-soft);
   line-height: 1.55;
@@ -448,28 +448,28 @@
 .ji-qa-feedback {
   background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
   border-color: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.28);
-  border-left: 3px solid var(--sfs-accent, #6366f1);
+  border-inline-start: 3px solid var(--sfs-accent, #6366f1);
 }
 .ji-qa-feedback .ji-qa-note-label { color: var(--sfs-accent-text, #a5b4fc); }
 
 .ji-qa-points {
   background: rgb(var(--sfs-info-rgb, 20 184 166) / 0.1);
   border-color: rgb(var(--sfs-info-rgb, 20 184 166) / 0.28);
-  border-left: 3px solid var(--sfs-info, #14b8a6);
+  border-inline-start: 3px solid var(--sfs-info, #14b8a6);
 }
 .ji-qa-points .ji-qa-note-label { color: var(--sfs-info-text, #5eead4); }
 
 .ji-qa-why {
   background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.1);
   border-color: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.28);
-  border-left: 3px solid var(--ji-warn);
+  border-inline-start: 3px solid var(--ji-warn);
 }
 .ji-qa-why .ji-qa-note-label { color: var(--sfs-warning-text, #fcd34d); }
 
 /* Per-answer rating. Banded, not a gradient: a 6 and a 7 are the same advice. */
 .ji-qa-rating {
-  float: right;
-  margin-left: 0.5rem;
+  float: inline-end;
+  margin-inline-start: 0.5rem;
   padding: 0.1rem 0.55rem;
   font-size: 0.75rem;
   font-weight: 800;
@@ -486,7 +486,7 @@
    reading "try 1" on every row is a column of noise. */
 .ji-attempt-pill {
   display: inline-block;
-  margin-left: 0.4rem;
+  margin-inline-start: 0.4rem;
   padding: 0.05rem 0.45rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -504,7 +504,7 @@
   padding: 0.8rem 1rem;
   background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.1);
   border: 1px solid rgb(var(--sfs-success-rgb, 34 197 94) / 0.28);
-  border-left: 3px solid var(--ji-success);
+  border-inline-start: 3px solid var(--ji-success);
   border-radius: var(--ji-r-sm);
   color: var(--ji-text-soft);
   line-height: 1.55;
@@ -525,7 +525,7 @@
   padding: 1rem 1.15rem;
   background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.1);
   border: 1px solid rgb(var(--sfs-danger-rgb, 239 68 68) / 0.32);
-  border-left: 3px solid var(--ji-danger);
+  border-inline-start: 3px solid var(--ji-danger);
   border-radius: var(--ji-r-sm);
   color: var(--ji-text-soft);
   line-height: 1.55;
@@ -589,7 +589,7 @@
   -webkit-backdrop-filter: var(--ji-blur-soft); backdrop-filter: var(--ji-blur-soft);
 }
 .ji-table { width: 100%; min-width: 720px; border-collapse: collapse; color: var(--ji-text); }
-.ji-table th, .ji-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--ji-border); vertical-align: middle; }
+.ji-table th, .ji-table td { padding: 1rem; text-align: start; border-bottom: 1px solid var(--ji-border); vertical-align: middle; }
 .ji-table th {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06); font-weight: 600; font-size: 0.78rem;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--ji-text-soft);
@@ -674,7 +674,7 @@
 .ji-transcript-block {
   max-height: 220px; overflow-y: auto; padding: 1rem;
   background: var(--ji-glass); border: 1px solid var(--ji-border);
-  border-left: 3px solid var(--ji-accent); border-radius: var(--ji-r-sm);
+  border-inline-start: 3px solid var(--ji-accent); border-radius: var(--ji-r-sm);
   line-height: 1.7; color: var(--ji-text-soft); white-space: pre-wrap;
 }
 
@@ -725,7 +725,7 @@
   margin: 0; font-size: 0.95rem; font-weight: 600;
   color: var(--sfs-success-text, #c7f9ec);
 }
-.ji-answer-live { margin-left: 0.5rem; font-size: 0.8rem; color: var(--sfs-success-text, #86efac); }
+.ji-answer-live { margin-inline-start: 0.5rem; font-size: 0.8rem; color: var(--sfs-success-text, #86efac); }
 .ji-answer-meta { display: flex; align-items: baseline; gap: 0.65rem; font-size: 0.8rem; }
 .ji-answer-words { color: var(--ji-text-mute); white-space: nowrap; }
 
@@ -797,7 +797,7 @@
 
 .ji-answer-toggle {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  margin-left: auto; font-size: 0.8rem; color: var(--ji-text-mute);
+  margin-inline-start: auto; font-size: 0.8rem; color: var(--ji-text-mute);
   cursor: pointer; white-space: nowrap;
 }
 
@@ -861,18 +861,18 @@
 .ji-bar-fill.mid  { background: var(--sfs-warning, #f59e0b); }
 .ji-bar-fill.low  { background: var(--sfs-danger, #ef4444); }
 .ji-bar-value {
-  font-size: 0.82rem; font-weight: 700; text-align: right;
+  font-size: 0.82rem; font-weight: 700; text-align: end;
   font-variant-numeric: tabular-nums; color: var(--ji-text-soft);
 }
 
-.ji-report-plan { border-left: 3px solid var(--sfs-info, #14b8a6); }
+.ji-report-plan { border-inline-start: 3px solid var(--sfs-info, #14b8a6); }
 .ji-report-plan h3 { color: var(--sfs-info-text, #5eead4); }
-.ji-plan-list { margin: 0.35rem 0 0; padding-left: 1.35rem; }
+.ji-plan-list { margin: 0.35rem 0 0; padding-inline-start: 1.35rem; }
 .ji-plan-list li { margin: 0.3rem 0; line-height: 1.6; color: var(--ji-text-soft); }
 
-.ji-report-standout { border-left: 3px solid var(--sfs-success, #22c55e); }
+.ji-report-standout { border-inline-start: 3px solid var(--sfs-success, #22c55e); }
 .ji-report-standout h3 { color: var(--sfs-success-text, #86efac); }
-.ji-report-flags { border-left: 3px solid var(--ji-warn); }
+.ji-report-flags { border-inline-start: 3px solid var(--ji-warn); }
 .ji-report-flags h3 { color: var(--sfs-warning-text, #fcd34d); }
 
 /* Their own answer, rewritten. The most useful block in the report, so it is
@@ -881,7 +881,7 @@
   margin-top: 0.6rem; padding: 0.65rem 0.85rem;
   background: rgb(var(--sfs-info-rgb, 20 184 166) / 0.12);
   border: 1px solid rgb(var(--sfs-info-rgb, 20 184 166) / 0.3);
-  border-left: 3px solid var(--sfs-info, #14b8a6);
+  border-inline-start: 3px solid var(--sfs-info, #14b8a6);
   border-radius: var(--ji-r-sm);
   color: var(--ji-text-soft); line-height: 1.55; white-space: pre-wrap;
 }
@@ -893,7 +893,7 @@
 .ji-qa-fix {
   background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.1);
   border-color: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.28);
-  border-left: 3px solid var(--ji-warn);
+  border-inline-start: 3px solid var(--ji-warn);
 }
 .ji-qa-fix .ji-qa-note-label { color: var(--sfs-warning-text, #fcd34d); }
 
@@ -906,20 +906,20 @@
 }
 .ji-qa-pending .ji-qa-note-label { color: var(--ji-text-mute); }
 
-.ji-qa-secs { margin-left: 0.35rem; font-size: 0.78rem; color: var(--ji-text-dim); }
+.ji-qa-secs { margin-inline-start: 0.35rem; font-size: 0.78rem; color: var(--ji-text-dim); }
 
 /* Kept only for records written before 2026-08-22. Folded, because it is a
    checklist that used to be the headline and is now history. */
 .ji-qa-legacy { margin-top: 0.6rem; font-size: 0.82rem; color: var(--ji-text-mute); }
 .ji-qa-legacy summary { cursor: pointer; }
-.ji-qa-legacy ul { margin: 0.35rem 0 0; padding-left: 1.15rem; }
+.ji-qa-legacy ul { margin: 0.35rem 0 0; padding-inline-start: 1.15rem; }
 .ji-qa-legacy li { margin: 0.15rem 0; line-height: 1.5; }
 
 /* An interview that was never finished. It is in the list because the session
    is saved from the first question now, and it must not read as a real result
    that scored nothing. */
 .ji-progress-pill {
-  display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem;
+  display: inline-block; margin-inline-start: 0.4rem; padding: 0.05rem 0.45rem;
   font-size: 0.7rem; font-weight: 700; border-radius: 999px; white-space: nowrap;
   background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.18);
   border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.3);
@@ -961,7 +961,7 @@
   margin: 1.25rem 0 0.5rem; padding: 1rem 1.1rem;
   background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.1);
   border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.28);
-  border-left: 3px solid var(--sfs-accent, #6366f1);
+  border-inline-start: 3px solid var(--sfs-accent, #6366f1);
   border-radius: var(--ji-r-md);
 }
 .ji-howto h3 {
@@ -969,7 +969,7 @@
   color: var(--sfs-accent-text, #a5b4fc);
 }
 .ji-howto p { margin: 0 0 0.6rem; line-height: 1.6; color: var(--ji-text-soft); font-size: 0.9rem; }
-.ji-howto ul { margin: 0 0 0.6rem; padding-left: 1.2rem; }
+.ji-howto ul { margin: 0 0 0.6rem; padding-inline-start: 1.2rem; }
 .ji-howto li { margin: 0.35rem 0; line-height: 1.6; color: var(--ji-text-soft); font-size: 0.9rem; }
 .ji-howto-words { font-size: 0.84rem; color: var(--ji-text-mute); }
 .ji-howto code {
@@ -1002,5 +1002,5 @@
   /* The label takes the whole first row on a phone; the track and the number
      stay together underneath, which is the pairing that carries the meaning. */
   .ji-bar-label { grid-column: 1 / -1; }
-  .ji-answer-toggle { margin-left: 0; }
+  .ji-answer-toggle { margin-inline-start: 0; }
 }

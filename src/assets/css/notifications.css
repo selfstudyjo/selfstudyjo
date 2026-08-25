@@ -237,16 +237,16 @@
   opacity: 0.8;
 }
 
-.stat-card.unread     { border-left: 3px solid var(--np-personal); }
+.stat-card.unread     { border-inline-start: 3px solid var(--np-personal); }
 .stat-card.unread::before     { background: linear-gradient(90deg, var(--np-personal), transparent); }
 
-.stat-card.general    { border-left: 3px solid var(--np-general); }
+.stat-card.general    { border-inline-start: 3px solid var(--np-general); }
 .stat-card.general::before    { background: linear-gradient(90deg, var(--np-general), transparent); }
 
-.stat-card.group      { border-left: 3px solid var(--np-group); }
+.stat-card.group      { border-inline-start: 3px solid var(--np-group); }
 .stat-card.group::before      { background: linear-gradient(90deg, var(--np-group), transparent); }
 
-.stat-card.user-info  { border-left: 3px solid var(--np-user); }
+.stat-card.user-info  { border-inline-start: 3px solid var(--np-user); }
 .stat-card.user-info::before  { background: linear-gradient(90deg, var(--np-user), transparent); }
 
 .stat-value {
@@ -369,7 +369,7 @@
   height: 56px;
   border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top-color: var(--np-brand-1);
-  border-right-color: var(--np-brand-2);
+  border-inline-end-color: var(--np-brand-2);
   border-radius: 50%;
   animation: np-spin 1s linear infinite;
   filter: drop-shadow(0 0 12px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4));
@@ -428,9 +428,9 @@
 
 .notification-card:last-child { border-bottom: none; }
 
-.notification-card.personal { border-left: 3px solid var(--np-personal); }
-.notification-card.general  { border-left: 3px solid var(--np-general); }
-.notification-card.group    { border-left: 3px solid var(--np-group); }
+.notification-card.personal { border-inline-start: 3px solid var(--np-personal); }
+.notification-card.general  { border-inline-start: 3px solid var(--np-general); }
+.notification-card.group    { border-inline-start: 3px solid var(--np-group); }
 
 .notification-card.unread {
   background: linear-gradient(90deg, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.1), transparent 60%);

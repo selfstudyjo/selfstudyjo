@@ -1,29 +1,29 @@
 <template>
   <div class="research-library-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconLibrary /> My Research Library</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconLibrary /> {{ $t('My Research Library') }}</h1>
     </div>
 
     <div class="rf-tabs">
       <button :class="['rf-tab', { active: activeTab === 'openalex' }]" @click="activeTab = 'openalex'">
-        <RfIconGlobe /> OpenAlex Library ({{ importedPapers.length }})
+        <RfIconGlobe /> {{ $t('OpenAlex Library ({v0})', { v0: importedPapers.length }) }}
       </button>
       <button :class="['rf-tab', { active: activeTab === 'local' }]" @click="activeTab = 'local'">
-        <RfIconFolder /> Local Projects ({{ savedLocalProjects.length }})
+        <RfIconFolder /> {{ $t('Local Projects ({v0})', { v0: savedLocalProjects.length }) }}
       </button>
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Loading library...</p>
+      <p>{{ $t('Loading library...') }}</p>
     </div>
 
     <div v-else-if="activeTab === 'openalex'">
       <div v-if="importedPapers.length === 0" class="rf-empty">
-        <p>No papers in your OpenAlex library yet.</p>
+        <p>{{ $t('No papers in your OpenAlex library yet.') }}</p>
         <button class="rf-btn rf-btn-primary" @click="$router.push('/research/import-openalex')">
-          Import from OpenAlex
+          {{ $t('Import from OpenAlex') }}
         </button>
       </div>
       <div v-else class="rf-library-grid">
@@ -32,16 +32,16 @@
           <p class="rf-library-meta">
             <span v-if="paper.publication_year"><RfIconCalendar /> {{ paper.publication_year }}</span>
             <span v-if="paper.venue"><RfIconLibrary /> {{ paper.venue }}</span>
-            <span v-if="paper.citation_count"><RfIconCitation /> {{ paper.citation_count }} citations</span>
-            <span v-if="paper.open_access"><RfIconOpenAccess /> Open Access</span>
+            <span v-if="paper.citation_count"><RfIconCitation /> {{ $t('{v0} citations', { v0: paper.citation_count }) }}</span>
+            <span v-if="paper.open_access"><RfIconOpenAccess /> {{ $t('Open Access') }}</span>
           </p>
-          <p v-if="paper.doi" class="rf-library-doi">DOI: {{ paper.doi }}</p>
+          <p v-if="paper.doi" class="rf-library-doi">{{ $t('DOI: {v0}', { v0: paper.doi }) }}</p>
           <div class="rf-keywords" v-if="paper.keywords && paper.keywords.length">
             <span v-for="kw in paper.keywords" :key="kw" class="rf-keyword-badge">{{ kw }}</span>
           </div>
           <div class="rf-library-actions">
             <button v-if="paper.url" class="rf-btn rf-btn-sm rf-btn-primary" @click="openExternal(paper.url)">
-              <RfIconLink /> View Paper
+              <RfIconLink /> {{ $t('View Paper') }}
             </button>
             <button v-if="paper.work_key && paper.has_pdf"
                     class="rf-btn rf-btn-sm rf-btn-success"
@@ -50,7 +50,7 @@
               <RfIconDownload /> {{ downloadingId === paper.id ? 'Fetching…' : 'Download PDF' }}
             </button>
             <button class="rf-btn rf-btn-sm rf-btn-danger" @click="removePaper(paper.id)">
-              <RfIconDelete /> Remove
+              <RfIconDelete /> {{ $t('Remove') }}
             </button>
           </div>
         </div>
@@ -59,8 +59,8 @@
 
     <div v-else-if="activeTab === 'local'">
       <div v-if="savedLocalProjects.length === 0" class="rf-empty">
-        <p>No saved local projects yet.</p>
-        <button class="rf-btn rf-btn-primary" @click="$router.push('/research/search')">Search Projects</button>
+        <p>{{ $t('No saved local projects yet.') }}</p>
+        <button class="rf-btn rf-btn-primary" @click="$router.push('/research/search')">{{ $t('Search Projects') }}</button>
       </div>
       <div v-else class="rf-library-grid">
         <div v-for="paper in savedLocalProjects" :key="paper.id" class="rf-library-card">
@@ -71,10 +71,10 @@
           </p>
           <div class="rf-library-actions">
             <button v-if="paper.local_project_id" class="rf-btn rf-btn-sm rf-btn-primary" @click="$router.push(`/research/project/${paper.local_project_id}`)">
-              <RfIconFolder /> View Project
+              <RfIconFolder /> {{ $t('View Project') }}
             </button>
             <button class="rf-btn rf-btn-sm rf-btn-danger" @click="removePaper(paper.id)">
-              <RfIconDelete /> Remove
+              <RfIconDelete /> {{ $t('Remove') }}
             </button>
           </div>
         </div>

@@ -1,23 +1,23 @@
 <template>
   <div class="research-project-details-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.back()"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconFile /> Project Details</h1>
+      <button class="rf-back-btn" @click="$router.back()"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconFile /> {{ $t('Project Details') }}</h1>
       <span v-if="userRole" :class="['rf-role-badge', `rf-role-${userRole}`]">
-        <template v-if="userRole === 'owner'"><RfIconCrown /> Owner</template>
-        <template v-else-if="userRole === 'collaborator'"><RfIconEdit /> Editor</template>
-        <template v-else><RfIconEye /> Viewer</template>
+        <template v-if="userRole === 'owner'"><RfIconCrown /> {{ $t('Owner') }}</template>
+        <template v-else-if="userRole === 'collaborator'"><RfIconEdit /> {{ $t('Editor') }}</template>
+        <template v-else><RfIconEye /> {{ $t('Viewer') }}</template>
       </span>
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Loading project...</p>
+      <p>{{ $t('Loading project...') }}</p>
     </div>
 
     <div v-else-if="!project" class="rf-empty">
-      <p>Project not found or you don't have access.</p>
-      <button class="rf-btn rf-btn-primary" @click="$router.push('/research')">Back to Research Flow</button>
+      <p>{{ $t('Project not found or you don\'t have access.') }}</p>
+      <button class="rf-btn rf-btn-primary" @click="$router.push('/research')">{{ $t('Back to Research Flow') }}</button>
     </div>
 
     <div v-else class="rf-detail-layout">
@@ -32,38 +32,38 @@
         </div>
         <p class="rf-detail-desc">{{ project.description }}</p>
         <div class="rf-detail-meta-grid">
-          <div class="rf-meta-item" v-if="project.publication_year"><strong>Year:</strong> {{ project.publication_year }}</div>
-          <div class="rf-meta-item" v-if="project.venue"><strong>Venue:</strong> {{ project.venue }}</div>
+          <div class="rf-meta-item" v-if="project.publication_year"><strong>{{ $t('Year:') }}</strong> {{ project.publication_year }}</div>
+          <div class="rf-meta-item" v-if="project.venue"><strong>{{ $t('Venue:') }}</strong> {{ project.venue }}</div>
           <div class="rf-meta-item" v-if="project.doi"><strong>DOI:</strong> {{ project.doi }}</div>
-          <div class="rf-meta-item"><strong>Views:</strong> {{ project.views }}</div>
-          <div class="rf-meta-item"><strong>Downloads:</strong> {{ project.downloads }}</div>
-          <div class="rf-meta-item"><strong>Citations:</strong> {{ project.citation_count }}</div>
-          <div class="rf-meta-item"><strong>Created:</strong> {{ formatDate(project.created_at) }}</div>
+          <div class="rf-meta-item"><strong>{{ $t('Views:') }}</strong> {{ project.views }}</div>
+          <div class="rf-meta-item"><strong>{{ $t('Downloads:') }}</strong> {{ project.downloads }}</div>
+          <div class="rf-meta-item"><strong>{{ $t('Citations:') }}</strong> {{ project.citation_count }}</div>
+          <div class="rf-meta-item"><strong>{{ $t('Created:') }}</strong> {{ formatDate(project.created_at) }}</div>
         </div>
         <div class="rf-keywords" v-if="project.keywords?.length">
           <span v-for="kw in project.keywords" :key="kw" class="rf-keyword-badge">{{ kw }}</span>
         </div>
 
         <div v-if="canEdit" class="rf-edit-section">
-          <button v-if="!showEditForm" class="rf-btn rf-btn-primary" @click="openEditForm"><RfIconEdit /> Edit Project</button>
+          <button v-if="!showEditForm" class="rf-btn rf-btn-primary" @click="openEditForm"><RfIconEdit /> {{ $t('Edit Project') }}</button>
           <div v-if="showEditForm" class="rf-edit-form">
-            <h3>Edit Project</h3>
+            <h3>{{ $t('Edit Project') }}</h3>
             <div class="rf-form-group">
-              <label class="rf-label">Title</label>
-              <input v-model="editForm.title" class="rf-input" placeholder="Title" />
+              <label class="rf-label">{{ $t('Title') }}</label>
+              <input v-model="editForm.title" class="rf-input" :placeholder="$t('Title')" />
             </div>
             <div class="rf-form-group">
-              <label class="rf-label">Description</label>
+              <label class="rf-label">{{ $t('Description') }}</label>
               <textarea v-model="editForm.description" class="rf-textarea" placeholder="Description" rows="4"></textarea>
             </div>
             <div class="rf-form-row">
               <div class="rf-form-group">
-                <label class="rf-label">Publication Year</label>
-                <input v-model.number="editForm.publication_year" class="rf-input" type="number" placeholder="Year" />
+                <label class="rf-label">{{ $t('Publication Year') }}</label>
+                <input v-model.number="editForm.publication_year" class="rf-input" type="number" :placeholder="$t('Year')" />
               </div>
               <div class="rf-form-group">
-                <label class="rf-label">Venue</label>
-                <input v-model="editForm.venue" class="rf-input" placeholder="Venue/Journal" />
+                <label class="rf-label">{{ $t('Venue') }}</label>
+                <input v-model="editForm.venue" class="rf-input" :placeholder="$t('Venue/Journal')" />
               </div>
             </div>
             <div class="rf-form-group">
@@ -71,30 +71,30 @@
               <input v-model="editForm.doi" class="rf-input" placeholder="DOI" />
             </div>
             <div class="rf-form-group">
-              <label class="rf-label">Keywords (comma separated)</label>
-              <input v-model="editForm.keywordsStr" class="rf-input" placeholder="Keywords" />
+              <label class="rf-label">{{ $t('Keywords (comma separated)') }}</label>
+              <input v-model="editForm.keywordsStr" class="rf-input" :placeholder="$t('Keywords')" />
             </div>
             <div class="rf-form-row">
               <div class="rf-form-group">
-                <label class="rf-label">Access Level</label>
+                <label class="rf-label">{{ $t('Access Level') }}</label>
                 <select v-model="editForm.access_level" class="rf-select">
-                  <option value="public">Public</option>
-                  <option value="team">Team</option>
-                  <option value="private">Private</option>
+                  <option value="public">{{ $t('Public') }}</option>
+                  <option value="team">{{ $t('Team') }}</option>
+                  <option value="private">{{ $t('Private') }}</option>
                 </select>
               </div>
               <div class="rf-form-group">
-                <label class="rf-label">Status</label>
+                <label class="rf-label">{{ $t('Status') }}</label>
                 <select v-model="editForm.status" class="rf-select">
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="under_review">Under Review</option>
+                  <option value="draft">{{ $t('Draft') }}</option>
+                  <option value="published">{{ $t('Published') }}</option>
+                  <option value="under_review">{{ $t('Under Review') }}</option>
                 </select>
               </div>
             </div>
             <div class="rf-edit-actions">
               <button class="rf-btn rf-btn-primary" @click="saveEdit" :disabled="saving">{{ saving ? 'Saving...' : 'Save Changes' }}</button>
-              <button class="rf-btn rf-btn-secondary" @click="showEditForm = false">Cancel</button>
+              <button class="rf-btn rf-btn-secondary" @click="showEditForm = false">{{ $t('Cancel') }}</button>
             </div>
           </div>
         </div>
@@ -102,19 +102,19 @@
 
       <!-- Files -->
       <div class="rf-section rf-detail-files">
-        <h2 class="rf-section-title"><RfIconFile /> Research Files ({{ files.length }})</h2>
+        <h2 class="rf-section-title"><RfIconFile /> {{ $t('Research Files ({v0})', { v0: files.length }) }}</h2>
 
         <div v-if="canEdit" class="rf-upload-form">
-          <h3><RfIconUpload /> Upload New File</h3>
+          <h3><RfIconUpload /> {{ $t('Upload New File') }}</h3>
           <input type="file" ref="fileInputRef" class="rf-input" @change="onFileSelect" />
-          <input v-model="uploadDesc" class="rf-input" placeholder="File description" style="margin-top: 8px;" />
-          <input v-model="uploadVersion" class="rf-input" placeholder="Version (e.g., v1.0)" style="margin-top: 8px;" />
+          <input v-model="uploadDesc" class="rf-input" :placeholder="$t('File description')" style="margin-top: 8px;" />
+          <input v-model="uploadVersion" class="rf-input" :placeholder="$t('Version (e.g., v1.0)')" style="margin-top: 8px;" />
           <button class="rf-btn rf-btn-primary" @click="doUpload" :disabled="!selectedFile || uploading" style="margin-top: 8px;">
             {{ uploading ? 'Uploading...' : 'Upload File' }}
           </button>
         </div>
 
-        <div v-if="files.length === 0" class="rf-empty-sm"><p>No files uploaded yet.</p></div>
+        <div v-if="files.length === 0" class="rf-empty-sm"><p>{{ $t('No files uploaded yet.') }}</p></div>
         <div v-else class="rf-files-list">
           <div v-for="file in files" :key="file.id" class="rf-file-card">
             <div class="rf-file-info">
@@ -123,8 +123,8 @@
               <span class="rf-file-desc" v-if="file.description">{{ file.description }}</span>
             </div>
             <div class="rf-file-actions" v-if="canViewFiles">
-              <button class="rf-btn rf-btn-xs rf-btn-primary" @click="openFileInNewTab(file)"><RfIconLink /> Open</button>
-              <button class="rf-btn rf-btn-xs rf-btn-secondary" @click="downloadFileToDevice(file)"><RfIconDownload /> Download</button>
+              <button class="rf-btn rf-btn-xs rf-btn-primary" @click="openFileInNewTab(file)"><RfIconLink /> {{ $t('Open') }}</button>
+              <button class="rf-btn rf-btn-xs rf-btn-secondary" @click="downloadFileToDevice(file)"><RfIconDownload /> {{ $t('Download') }}</button>
               <button v-if="canEdit" class="rf-btn rf-btn-xs rf-btn-danger" @click="removeFile(file.id)"><RfIconDelete /></button>
             </div>
           </div>
@@ -133,14 +133,14 @@
 
       <!-- Comments -->
       <div class="rf-section rf-detail-comments">
-        <h2 class="rf-section-title"><RfIconComment /> Comments ({{ comments.length }})</h2>
+        <h2 class="rf-section-title"><RfIconComment /> {{ $t('Comments ({v0})', { v0: comments.length }) }}</h2>
 
         <div v-if="canComment" class="rf-comment-form">
           <textarea v-model="newComment" class="rf-textarea" placeholder="Add a comment..." rows="3"></textarea>
-          <button class="rf-btn rf-btn-primary" @click="postComment" :disabled="!newComment.trim()" style="margin-top: 8px;">Post Comment</button>
+          <button class="rf-btn rf-btn-primary" @click="postComment" :disabled="!newComment.trim()" style="margin-top: 8px;">{{ $t('Post Comment') }}</button>
         </div>
 
-        <div v-if="comments.length === 0" class="rf-empty-sm"><p>No comments yet. Be the first to comment!</p></div>
+        <div v-if="comments.length === 0" class="rf-empty-sm"><p>{{ $t('No comments yet. Be the first to comment!') }}</p></div>
         <div v-else class="rf-comments-list">
           <div v-for="comment in comments" :key="comment.id" class="rf-comment-card">
             <div class="rf-comment-header">
@@ -150,15 +150,15 @@
             <div v-if="editingCommentId === comment.id" class="rf-comment-edit">
               <textarea v-model="editCommentText" class="rf-textarea" rows="2"></textarea>
               <div class="rf-comment-edit-actions">
-                <button class="rf-btn rf-btn-xs rf-btn-primary" @click="saveCommentEdit(comment.id)">Save</button>
-                <button class="rf-btn rf-btn-xs rf-btn-secondary" @click="editingCommentId = ''">Cancel</button>
+                <button class="rf-btn rf-btn-xs rf-btn-primary" @click="saveCommentEdit(comment.id)">{{ $t('Save') }}</button>
+                <button class="rf-btn rf-btn-xs rf-btn-secondary" @click="editingCommentId = ''">{{ $t('Cancel') }}</button>
               </div>
             </div>
             <div v-else>
               <p class="rf-comment-text">{{ comment.content }}</p>
               <div v-if="comment.author_id === userId" class="rf-comment-actions">
-                <button class="rf-btn rf-btn-xs rf-btn-outline" @click="startEditComment(comment)"><RfIconEdit /> Edit</button>
-                <button class="rf-btn rf-btn-xs rf-btn-danger" @click="removeComment(comment.id)"><RfIconDelete /> Delete</button>
+                <button class="rf-btn rf-btn-xs rf-btn-outline" @click="startEditComment(comment)"><RfIconEdit /> {{ $t('Edit') }}</button>
+                <button class="rf-btn rf-btn-xs rf-btn-danger" @click="removeComment(comment.id)"><RfIconDelete /> {{ $t('Delete') }}</button>
               </div>
             </div>
           </div>
@@ -167,8 +167,8 @@
 
       <!-- Request Collaboration -->
       <div v-if="showCollabSection" class="rf-section rf-detail-collab">
-        <h2 class="rf-section-title"><RfIconCollab /> Request Collaboration</h2>
-        <p style="margin-bottom: 10px; color: var(--rf-text-muted);">Send a request to the project owner to join as a collaborator.</p>
+        <h2 class="rf-section-title"><RfIconCollab /> {{ $t('Request Collaboration') }}</h2>
+        <p style="margin-bottom: 10px; color: var(--rf-text-muted);">{{ $t('Send a request to the project owner to join as a collaborator.') }}</p>
         <textarea v-model="collabMessage" class="rf-textarea" placeholder="Enter your message to the project owner..." rows="3"></textarea>
         <button class="rf-btn rf-btn-primary" @click="requestCollab" :disabled="!collabMessage.trim() || requestingCollab" style="margin-top: 8px;">
           {{ requestingCollab ? 'Sending...' : 'Send Collaboration Request' }}
@@ -177,13 +177,13 @@
 
       <!-- Team -->
       <div class="rf-section rf-detail-team">
-        <h2 class="rf-section-title"><RfIconPeople /> Team Members ({{ team.length }})</h2>
-        <div v-if="team.length === 0" class="rf-empty-sm"><p>No team members.</p></div>
+        <h2 class="rf-section-title"><RfIconPeople /> {{ $t('Team Members ({v0})', { v0: team.length }) }}</h2>
+        <div v-if="team.length === 0" class="rf-empty-sm"><p>{{ $t('No team members.') }}</p></div>
         <div v-else class="rf-team-list">
           <div v-for="member in team" :key="member.id" class="rf-team-card">
             <span class="rf-team-user">{{ member.user_id === userId ? 'You' : member.user_id.substring(0, 12) + '...' }}</span>
             <span :class="['rf-badge', `rf-badge-${member.role}`]">{{ member.role }}</span>
-            <span v-if="member.can_edit" class="rf-badge rf-badge-edit">Can Edit</span>
+            <span v-if="member.can_edit" class="rf-badge rf-badge-edit">{{ $t('Can Edit') }}</span>
           </div>
         </div>
       </div>

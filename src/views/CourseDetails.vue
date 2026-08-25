@@ -2,7 +2,7 @@
   <div class="course-details-page">
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p class="loading-text">Loading course details...</p>
+      <p class="loading-text">{{ $t('Loading course details...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
@@ -13,10 +13,10 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h3 class="error-title">Unable to load course</h3>
+      <h3 class="error-title">{{ $t('Unable to load course') }}</h3>
       <p class="error-message">{{ error }}</p>
-      <button class="retry-btn" @click="fetchCourseData">Try Again</button>
-      <router-link to="/courses" class="back-btn" style="margin-top: 0.75rem;">Back to Courses</router-link>
+      <button class="retry-btn" @click="fetchCourseData">{{ $t('Try Again') }}</button>
+      <router-link to="/courses" class="back-btn" style="margin-top: 0.75rem;">{{ $t('Back to Courses') }}</router-link>
     </div>
 
     <div v-else-if="course" class="course-content-wrapper">
@@ -25,7 +25,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          Courses
+          {{ $t('Courses') }}
         </router-link>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-current">{{ course.title }}</span>
@@ -45,8 +45,8 @@
 
           <div class="course-info">
             <div class="course-meta">
-              <span class="course-badge">Course</span>
-              <span class="course-date">Added {{ formatDate(course.date_added) }}</span>
+              <span class="course-badge">{{ $t('Course') }}</span>
+              <span class="course-date">{{ $t('Added {v0}', { v0: formatDate(course.date_added) }) }}</span>
             </div>
 
             <h1 class="course-title">{{ course.title }}</h1>
@@ -59,7 +59,7 @@
                 </svg>
                 <div class="stat-content">
                   <span class="stat-number">{{ lessons.length }}</span>
-                  <span class="stat-label">Lessons</span>
+                  <span class="stat-label">{{ $t('Lessons') }}</span>
                 </div>
               </div>
 
@@ -69,7 +69,7 @@
                 </svg>
                 <div class="stat-content">
                   <span class="stat-number">{{ comments.length }}</span>
-                  <span class="stat-label">Comments</span>
+                  <span class="stat-label">{{ $t('Comments') }}</span>
                 </div>
               </div>
             </div>
@@ -129,14 +129,14 @@
                       <path d="M12 20h9"></path>
                       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
-                    Lessons
+                    {{ $t('Lessons') }}
                   </h2>
                   <span class="section-count">{{ lessons.length }}</span>
                 </div>
 
                 <div class="lessons-list">
                   <div v-if="lessons.length === 0" class="empty-lessons">
-                    <p>No lessons available for this course yet.</p>
+                    <p>{{ $t('No lessons available for this course yet.') }}</p>
                   </div>
 
                   <div
@@ -157,7 +157,7 @@
                               <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
                               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
                             </svg>
-                            <span>Take Quiz</span>
+                            <span>{{ $t('Take Quiz') }}</span>
                           </div>
 
                           <div v-if="lesson.hasHomework" class="lesson-badge homework-badge" @click="navigateToHomework(lesson)">
@@ -168,12 +168,12 @@
                               <line x1="16" y1="17" x2="8" y2="17"></line>
                               <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
-                            <span>Homework ({{ lesson.homeworkCount }})</span>
+                            <span>{{ $t('Homework ({v0})', { v0: lesson.homeworkCount }) }}</span>
                           </div>
                         </div>
                       </div>
 
-                      <p class="lesson-date">Added {{ formatDate(lesson.date_added) }}</p>
+                      <p class="lesson-date">{{ $t('Added {v0}', { v0: formatDate(lesson.date_added) }) }}</p>
 
                       <div class="lesson-links">
                         <!--
@@ -201,7 +201,7 @@
                             <line x1="9" y1="7" x2="16" y2="7"></line>
                             <line x1="9" y1="11" x2="16" y2="11"></line>
                           </svg>
-                          Runbook
+                          {{ $t('Runbook') }}
                         </router-link>
 
                         <a v-if="lesson.reading_url" :href="lesson.reading_url" target="_blank" rel="noopener" class="lesson-link">
@@ -210,7 +210,7 @@
                             <polyline points="15 3 21 3 21 9"></polyline>
                             <line x1="10" y1="14" x2="21" y2="3"></line>
                           </svg>
-                          Reading Material
+                          {{ $t('Reading Material') }}
                         </a>
 
                         <a v-if="lesson.source_code_url" :href="lesson.source_code_url" target="_blank" rel="noopener" class="lesson-link">
@@ -218,7 +218,7 @@
                             <polyline points="16 18 22 12 16 6"></polyline>
                             <polyline points="8 6 2 12 8 18"></polyline>
                           </svg>
-                          Source Code
+                          {{ $t('Source Code') }}
                         </a>
                       </div>
                     </div>
@@ -232,16 +232,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    Comments
+                    {{ $t('Comments') }}
                   </h2>
                   <span class="section-count">{{ comments.length }}</span>
                 </div>
 
                 <div class="add-comment-form">
                   <div class="form-header">
-                    <h3 class="form-title">Add a Comment</h3>
+                    <h3 class="form-title">{{ $t('Add a Comment') }}</h3>
                     <p class="form-subtitle" v-if="!authStore.user">
-                      Please <router-link :to="loginLink">login</router-link> to comment
+                      {{ $t('Please') }} <router-link :to="loginLink">{{ $t('login') }}</router-link> {{ $t('to comment') }}
                     </p>
                   </div>
                   <form v-if="authStore.user" @submit.prevent="submitComment">
@@ -287,7 +287,7 @@
                     <div class="form-actions">
                       <button type="submit" class="submit-btn" :disabled="!newComment.trim() || submittingComment">
                         <span v-if="submittingComment" class="btn-loading"></span>
-                        <span v-else>Post Comment</span>
+                        <span v-else>{{ $t('Post Comment') }}</span>
                       </button>
                     </div>
                   </form>
@@ -295,7 +295,7 @@
 
                 <div class="comments-list">
                   <div v-if="comments.length === 0" class="empty-comments">
-                    <p>No comments yet. Be the first to share your thoughts!</p>
+                    <p>{{ $t('No comments yet. Be the first to share your thoughts!') }}</p>
                   </div>
 
                   <div v-for="comment in comments" :key="comment.external_comment_id" class="comment-card">
@@ -334,7 +334,7 @@
                           class="action-btn delete-btn"
                           @click="deleteComment(comment.external_comment_id)"
                           :disabled="deletingCommentId === comment.external_comment_id"
-                          aria-label="Delete comment"
+                          :aria-label="$t('Delete comment')"
                         >
                           <span v-if="deletingCommentId === comment.external_comment_id" class="btn-loading"></span>
                           <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -378,7 +378,7 @@
                       <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                       <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                     </svg>
-                    About
+                    {{ $t('About') }}
                   </h2>
                 </div>
 

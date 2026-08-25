@@ -2,9 +2,9 @@
   <div class="ns-lesson-panel">
     <div v-if="!lesson" class="ns-lesson-empty">
       <DeviceIcon name="book" :size="30" />
-      <h4>No lesson attached</h4>
-      <p>Pick a lesson from the Learn hub and the studio will check your work against the live network as you build it.</p>
-      <router-link class="ns-btn primary sm" to="/network-simulator/learn">Browse the curriculum</router-link>
+      <h4>{{ $t('No lesson attached') }}</h4>
+      <p>{{ $t('Pick a lesson from the Learn hub and the studio will check your work against the live network as you build it.') }}</p>
+      <router-link class="ns-btn primary sm" to="/network-simulator/learn">{{ $t('Browse the curriculum') }}</router-link>
     </div>
 
     <template v-else>
@@ -20,22 +20,22 @@
       </header>
 
       <div class="ns-lesson-meta">
-        <span>{{ lesson.minutes }} min</span>
+        <span>{{ $t('{v0} min', { v0: lesson.minutes }) }}</span>
         <span>{{ lesson.difficulty }}</span>
-        <span>Layers {{ lesson.layers.join(', ') }}</span>
+        <span>{{ $t('Layers {v0}', { v0: lesson.layers.join(', ') }) }}</span>
       </div>
 
       <nav class="ns-subtabs">
-        <button :class="['ns-subtab', { active: view === 'tasks' }]" @click="view = 'tasks'">Tasks</button>
-        <button :class="['ns-subtab', { active: view === 'theory' }]" @click="view = 'theory'">Theory</button>
-        <button v-if="lesson.commands?.length" :class="['ns-subtab', { active: view === 'commands' }]" @click="view = 'commands'">Commands</button>
-        <button v-if="lesson.quiz?.length" :class="['ns-subtab', { active: view === 'quiz' }]" @click="view = 'quiz'">Quiz</button>
+        <button :class="['ns-subtab', { active: view === 'tasks' }]" @click="view = 'tasks'">{{ $t('Tasks') }}</button>
+        <button :class="['ns-subtab', { active: view === 'theory' }]" @click="view = 'theory'">{{ $t('Theory') }}</button>
+        <button v-if="lesson.commands?.length" :class="['ns-subtab', { active: view === 'commands' }]" @click="view = 'commands'">{{ $t('Commands') }}</button>
+        <button v-if="lesson.quiz?.length" :class="['ns-subtab', { active: view === 'quiz' }]" @click="view = 'quiz'">{{ $t('Quiz') }}</button>
       </nav>
 
       <!-- ── tasks ── -->
       <div v-if="view === 'tasks'" class="ns-lesson-body">
         <button class="ns-btn primary block" @click="store.checkLesson()">
-          <DeviceIcon name="check" :size="15" /> Check my work
+          <DeviceIcon name="check" :size="15" /> {{ $t('Check my work') }}
         </button>
 
         <ol class="ns-task-list">
@@ -47,23 +47,23 @@
             <div>
               <p class="ns-task-text">{{ t.text }}</p>
               <p v-if="resultFor(t.id)" class="ns-task-msg">{{ resultFor(t.id)!.message }}</p>
-              <p v-if="t.hint && !resultFor(t.id)?.ok" class="ns-task-hint">Hint: {{ t.hint }}</p>
+              <p v-if="t.hint && !resultFor(t.id)?.ok" class="ns-task-hint">{{ $t('Hint: {v0}', { v0: t.hint }) }}</p>
             </div>
           </li>
         </ol>
 
         <div v-if="lesson.starterTemplateId" class="ns-btn-row tight">
           <button class="ns-btn ghost sm" @click="loadStarter">
-            <DeviceIcon name="grid" :size="13" /> Load the starter topology
+            <DeviceIcon name="grid" :size="13" /> {{ $t('Load the starter topology') }}
           </button>
         </div>
 
         <div v-if="store.lessonScore >= 100" class="ns-lesson-done">
           <DeviceIcon name="award" :size="20" />
           <div>
-            <strong>Lesson complete</strong>
-            <p>Every task was verified against your running network — not a multiple-choice answer.</p>
-            <button v-if="next" class="ns-btn primary sm" @click="goNext">Next: {{ next.title }}</button>
+            <strong>{{ $t('Lesson complete') }}</strong>
+            <p>{{ $t('Every task was verified against your running network — not a multiple-choice answer.') }}</p>
+            <button v-if="next" class="ns-btn primary sm" @click="goNext">{{ $t('Next: {v0}', { v0: next.title }) }}</button>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@
         </ul>
         <div class="ns-theory" v-html="renderMd(lesson.theory)"></div>
         <div class="ns-terms">
-          <h5>Key terms</h5>
+          <h5>{{ $t('Key terms') }}</h5>
           <dl>
             <template v-for="k in lesson.keyTerms" :key="k.term">
               <dt>{{ k.term }}</dt><dd>{{ k.meaning }}</dd>

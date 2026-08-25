@@ -1,9 +1,9 @@
 <template>
     <div class="proctor-dashboard">
         <div class="pd-header">
-            <h1>Proctor Dashboard</h1>
+            <h1>{{ $t('Proctor Dashboard') }}</h1>
             <p v-if="proctorData" class="pd-whoami">
-                Welcome, {{ proctorData.username }} ({{ proctorData.email }})
+                {{ $t('Welcome, {v0} ({v1})', { v0: proctorData.username, v1: proctorData.email }) }}
             </p>
         </div>
 
@@ -11,7 +11,7 @@
             <!-- Loading State -->
             <div v-if="loading" class="pd-loading">
                 <div class="pd-spinner"></div>
-                <p>Loading appointments...</p>
+                <p>{{ $t('Loading appointments...') }}</p>
             </div>
 
             <!-- Error State -->
@@ -19,15 +19,15 @@
                 <div class="pd-error__icon">❌</div>
                 <p>{{ error }}</p>
                 <button @click="loadAppointments" class="pd-btn pd-btn--primary">
-                    Try Again
+                    {{ $t('Try Again') }}
                 </button>
             </div>
 
             <!-- Empty State -->
             <div v-else-if="appointments.length === 0" class="pd-empty">
                 <div class="pd-empty__icon">📅</div>
-                <h3>No Appointments Yet</h3>
-                <p>You don't have any exam appointments assigned to you.</p>
+                <h3>{{ $t('No Appointments Yet') }}</h3>
+                <p>{{ $t('You don\'t have any exam appointments assigned to you.') }}</p>
             </div>
 
             <!-- Appointments List with Filters -->
@@ -38,33 +38,33 @@
                 <div class="pd-stats">
                     <div class="pd-stat" :class="{ 'pd-stat--urgent': needsAttention.length > 0 }">
                         <div class="pd-stat__value">{{ needsAttention.length }}</div>
-                        <div class="pd-stat__label">Needs attention</div>
+                        <div class="pd-stat__label">{{ $t('Needs attention') }}</div>
                     </div>
                     <div class="pd-stat">
                         <div class="pd-stat__value">{{ todays.length }}</div>
-                        <div class="pd-stat__label">Today</div>
+                        <div class="pd-stat__label">{{ $t('Today') }}</div>
                     </div>
                     <div class="pd-stat">
                         <div class="pd-stat__value">{{ upcoming.length }}</div>
-                        <div class="pd-stat__label">Upcoming</div>
+                        <div class="pd-stat__label">{{ $t('Upcoming') }}</div>
                     </div>
                     <div class="pd-stat">
                         <div class="pd-stat__value">{{ completedCount }}</div>
-                        <div class="pd-stat__label">Completed</div>
+                        <div class="pd-stat__label">{{ $t('Completed') }}</div>
                     </div>
                 </div>
 
                 <!-- Filters Section -->
                 <div class="pd-filters">
                     <div class="pd-filters__head">
-                        <h2>Exam appointments</h2>
+                        <h2>{{ $t('Exam appointments') }}</h2>
                         <div class="pd-tally">
                             <span class="pd-tally__item">
-                                <span class="pd-tally__label">Showing:</span>
+                                <span class="pd-tally__label">{{ $t('Showing:') }}</span>
                                 <span class="pd-tally__value">{{ filteredAppointments.length }}</span>
                             </span>
                             <span class="pd-tally__item">
-                                <span class="pd-tally__label">Live:</span>
+                                <span class="pd-tally__label">{{ $t('Live:') }}</span>
                                 <span class="pd-tally__value">{{ scheduledCount }}</span>
                             </span>
                         </div>
@@ -72,42 +72,42 @@
 
                     <div class="pd-filters__grid">
                         <div class="pd-field">
-                            <label for="searchUsername">Username</label>
+                            <label for="searchUsername">{{ $t('Username') }}</label>
                             <input
                                 id="searchUsername"
                                 v-model="filters.username"
                                 type="text"
-                                placeholder="Filter by username"
+                                :placeholder="$t('Filter by username')"
                                 class="pd-input"
                             />
                         </div>
 
                         <div class="pd-field">
-                            <label for="searchExamTitle">Exam Title</label>
+                            <label for="searchExamTitle">{{ $t('Exam Title') }}</label>
                             <input
                                 id="searchExamTitle"
                                 v-model="filters.examTitle"
                                 type="text"
-                                placeholder="Filter by exam title"
+                                :placeholder="$t('Filter by exam title')"
                                 class="pd-input"
                             />
                         </div>
 
                         <div class="pd-field">
-                            <label for="statusFilter">Status</label>
+                            <label for="statusFilter">{{ $t('Status') }}</label>
                             <select id="statusFilter" v-model="filters.status" class="pd-input">
-                                <option value="">All Statuses</option>
-                                <option value="Scheduled">Scheduled</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Expired">Expired</option>
-                                <option value="No Reservation Yet">No Reservation Yet</option>
+                                <option value="">{{ $t('All Statuses') }}</option>
+                                <option value="Scheduled">{{ $t('Scheduled') }}</option>
+                                <option value="In Progress">{{ $t('In Progress') }}</option>
+                                <option value="Completed">{{ $t('Completed') }}</option>
+                                <option value="Cancelled">{{ $t('Cancelled') }}</option>
+                                <option value="Expired">{{ $t('Expired') }}</option>
+                                <option value="No Reservation Yet">{{ $t('No Reservation Yet') }}</option>
                             </select>
                         </div>
 
                         <div class="pd-field">
-                            <label for="dateFrom">From Date</label>
+                            <label for="dateFrom">{{ $t('From Date') }}</label>
                             <input
                                 id="dateFrom"
                                 v-model="filters.dateFrom"
@@ -117,7 +117,7 @@
                         </div>
 
                         <div class="pd-field">
-                            <label for="dateTo">To Date</label>
+                            <label for="dateTo">{{ $t('To Date') }}</label>
                             <input
                                 id="dateTo"
                                 v-model="filters.dateTo"
@@ -128,7 +128,7 @@
 
                         <div class="pd-filters__actions">
                             <button @click="clearFilters" class="pd-btn pd-btn--ghost">
-                                Clear Filters
+                                {{ $t('Clear Filters') }}
                             </button>
                         </div>
                     </div>
@@ -140,9 +140,9 @@
                      last month's completed ones. -->
                 <div v-if="groups.length === 0" class="pd-empty">
                     <div class="pd-empty__icon">&#128269;</div>
-                    <h3>Nothing matches those filters</h3>
-                    <p>{{ appointments.length }} appointment{{ appointments.length === 1 ? '' : 's' }} hidden by the filters above.</p>
-                    <button @click="clearFilters" class="pd-btn pd-btn--primary">Clear filters</button>
+                    <h3>{{ $t('Nothing matches those filters') }}</h3>
+                    <p>{{ $t('{v0} appointment{v1} hidden by the filters above.', { v0: appointments.length, v1: appointments.length === 1 ? '' : 's' }) }}</p>
+                    <button @click="clearFilters" class="pd-btn pd-btn--primary">{{ $t('Clear filters') }}</button>
                 </div>
 
                 <section v-for="group in groups" :key="group.key"
@@ -174,7 +174,7 @@
                                     <div class="pd-card__tags">
                                         <span v-if="isLiveNow(appointment)" class="pd-live">
                                             <span class="pd-live__dot" aria-hidden="true"></span>
-                                            Live
+                                            {{ $t('Live') }}
                                         </span>
                                         <span class="pd-status" :class="getStatusClass(appointment.appointment_status)">
                                             {{ appointment.appointment_status }}
@@ -207,9 +207,9 @@
                                       :class="appointment.can_start ? 'pd-flag--on' : 'pd-flag--off'">
                                     {{ appointment.can_start ? 'Allowed to start' : 'Not yet allowed to start' }}
                                 </span>
-                                <span v-if="appointment.is_entered" class="pd-flag pd-flag--on">Entered the room</span>
+                                <span v-if="appointment.is_entered" class="pd-flag pd-flag--on">{{ $t('Entered the room') }}</span>
                                 <span v-if="!isClosed(appointment) && !appointment.room_url_1 && !appointment.room_url_2"
-                                      class="pd-flag pd-flag--warn">No room link set</span>
+                                      class="pd-flag pd-flag--warn">{{ $t('No room link set') }}</span>
                             </div>
 
                             <div class="pd-card__actions">
@@ -228,7 +228,7 @@
                                         class="pd-room"
                                         @click.stop
                                     >
-                                        Room 1
+                                        {{ $t('Room 1') }}
                                     </a>
                                     <a
                                         v-if="appointment.room_url_2"
@@ -238,7 +238,7 @@
                                         class="pd-room"
                                         @click.stop
                                     >
-                                        Room 2
+                                        {{ $t('Room 2') }}
                                     </a>
                                 </div>
                             </div>
@@ -248,17 +248,17 @@
                                  breakable (see exam-system.css: a 36-character uuid
                                  with no break point sets the width of its card). -->
                             <details class="pd-ids" @click.stop>
-                                <summary>Reference ids</summary>
+                                <summary>{{ $t('Reference ids') }}</summary>
                                 <div class="pd-ids__row">
-                                    <span class="pd-ids__label">Appointment</span>
+                                    <span class="pd-ids__label">{{ $t('Appointment') }}</span>
                                     <span class="pd-ids__value pd-mono">{{ appointment.external_id }}</span>
                                 </div>
                                 <div class="pd-ids__row">
-                                    <span class="pd-ids__label">Candidate</span>
+                                    <span class="pd-ids__label">{{ $t('Candidate') }}</span>
                                     <span class="pd-ids__value pd-mono">{{ appointment.user_id }}</span>
                                 </div>
                                 <div class="pd-ids__row">
-                                    <span class="pd-ids__label">Booked</span>
+                                    <span class="pd-ids__label">{{ $t('Booked') }}</span>
                                     <span class="pd-ids__value">{{ formatDate(appointment.created_at) }}</span>
                                 </div>
                             </details>

@@ -3,7 +3,7 @@
     <!-- ════════════════ toolbar ════════════════ -->
     <header class="ns-toolbar">
       <div class="ns-tb-group project">
-        <router-link class="ns-icon-btn" to="/network-simulator" title="Back to projects">
+        <router-link class="ns-icon-btn" to="/network-simulator" :title="$t('Back to projects')">
           <DeviceIcon name="folder" :size="16" />
         </router-link>
         <div class="ns-project-name">
@@ -11,11 +11,11 @@
             v-model="projectName"
             class="ns-project-input"
             spellcheck="false"
-            placeholder="Untitled network"
+            :placeholder="$t('Untitled network')"
             @change="renameProject"
           />
           <span class="ns-project-sub">
-            <span v-if="store.dirty" class="ns-dot-dirty" title="Unsaved changes"></span>
+            <span v-if="store.dirty" class="ns-dot-dirty" :title="$t('Unsaved changes')"></span>
             {{ store.dirty ? 'unsaved changes' : (store.lastSavedAt ? `saved ${relTime(store.lastSavedAt)}` : 'not saved yet') }}
           </span>
         </div>
@@ -25,10 +25,10 @@
         <button class="ns-tb-btn primary" :disabled="store.saving" @click="store.saveProject()">
           <DeviceIcon name="save" :size="15" /> <span>{{ store.saving ? 'Saving…' : 'Save' }}</span>
         </button>
-        <button class="ns-tb-btn" :disabled="!store.canUndo" title="Undo (Ctrl+Z)" @click="store.undo()">
+        <button class="ns-tb-btn" :disabled="!store.canUndo" :title="$t('Undo (Ctrl+Z)')" @click="store.undo()">
           <DeviceIcon name="undo" :size="15" />
         </button>
-        <button class="ns-tb-btn" :disabled="!store.canRedo" title="Redo (Ctrl+Shift+Z)" @click="store.redo()">
+        <button class="ns-tb-btn" :disabled="!store.canRedo" :title="$t('Redo (Ctrl+Shift+Z)')" @click="store.redo()">
           <DeviceIcon name="redo" :size="15" />
         </button>
       </div>
@@ -49,11 +49,11 @@
         <button class="ns-tb-btn accent" :disabled="store.running" @click="store.runFullSimulation()">
           <DeviceIcon name="play" :size="15" /> <span>{{ store.running ? 'Running…' : 'Run simulation' }}</span>
         </button>
-        <button class="ns-tb-btn" title="Reset MAC/ARP/NAT tables" @click="store.resetSimulation()">
-          <DeviceIcon name="undo" :size="15" /> <span class="hide-sm">Reset</span>
+        <button class="ns-tb-btn" :title="$t('Reset MAC/ARP/NAT tables')" @click="store.resetSimulation()">
+          <DeviceIcon name="undo" :size="15" /> <span class="hide-sm">{{ $t('Reset') }}</span>
         </button>
-        <button class="ns-tb-btn" title="Tidy the layout" @click="store.runAutoLayout()">
-          <DeviceIcon name="magic" :size="15" /> <span class="hide-sm">Layout</span>
+        <button class="ns-tb-btn" :title="$t('Tidy the layout')" @click="store.runAutoLayout()">
+          <DeviceIcon name="magic" :size="15" /> <span class="hide-sm">{{ $t('Layout') }}</span>
         </button>
       </div>
 
@@ -62,16 +62,16 @@
           <DeviceIcon :name="store.errorCount ? 'alert' : 'check'" :size="14" />
           {{ store.errorCount }}/{{ store.warningCount }}
         </span>
-        <button class="ns-tb-btn" title="Template library" @click="modal = 'templates'">
+        <button class="ns-tb-btn" :title="$t('Template library')" @click="modal = 'templates'">
           <DeviceIcon name="grid" :size="15" />
         </button>
-        <button class="ns-tb-btn" title="Subnet calculator" @click="modal = 'subnet'">
+        <button class="ns-tb-btn" :title="$t('Subnet calculator')" @click="modal = 'subnet'">
           <DeviceIcon name="ip" :size="15" />
         </button>
-        <button class="ns-tb-btn" title="Import / export JSON" @click="modal = 'io'">
+        <button class="ns-tb-btn" :title="$t('Import / export JSON')" @click="modal = 'io'">
           <DeviceIcon name="download" :size="15" />
         </button>
-        <button class="ns-tb-btn" :class="{ active: rightTab === 'ai' }" title="AI tutor" @click="rightTab = 'ai'">
+        <button class="ns-tb-btn" :class="{ active: rightTab === 'ai' }" :title="$t('AI tutor')" @click="rightTab = 'ai'">
           <DeviceIcon name="sparkles" :size="15" />
         </button>
       </div>
@@ -98,10 +98,10 @@
         <section class="ns-dock" :class="{ collapsed: dockCollapsed }">
           <nav class="ns-dock-tabs">
             <button :class="['ns-dock-tab', { active: dockTab === 'sim' }]" @click="openDock('sim')">
-              Simulation
+              {{ $t('Simulation') }}
               <span v-if="store.errorCount" class="ns-count bad">{{ store.errorCount }}</span>
             </button>
-            <button :class="['ns-dock-tab', { active: dockTab === 'cli' }]" @click="openDock('cli')">Terminal</button>
+            <button :class="['ns-dock-tab', { active: dockTab === 'cli' }]" @click="openDock('cli')">{{ $t('Terminal') }}</button>
             <button class="ns-dock-collapse" :title="dockCollapsed ? 'Expand' : 'Collapse'" @click="dockCollapsed = !dockCollapsed">
               {{ dockCollapsed ? '▲' : '▼' }}
             </button>
@@ -114,7 +114,7 @@
               @change-device="terminalDeviceId = $event"
             />
             <div v-else class="ns-dock-empty">
-              <p>Select a device to open its terminal, or double-click one on the canvas.</p>
+              <p>{{ $t('Select a device to open its terminal, or double-click one on the canvas.') }}</p>
             </div>
           </div>
         </section>
@@ -122,10 +122,10 @@
 
       <div class="ns-right">
         <nav class="ns-right-tabs">
-          <button :class="['ns-right-tab', { active: rightTab === 'props' }]" @click="rightTab = 'props'">Configure</button>
-          <button :class="['ns-right-tab', { active: rightTab === 'inspect' }]" @click="rightTab = 'inspect'">Inspect</button>
+          <button :class="['ns-right-tab', { active: rightTab === 'props' }]" @click="rightTab = 'props'">{{ $t('Configure') }}</button>
+          <button :class="['ns-right-tab', { active: rightTab === 'inspect' }]" @click="rightTab = 'inspect'">{{ $t('Inspect') }}</button>
           <button :class="['ns-right-tab', { active: rightTab === 'ai' }]" @click="rightTab = 'ai'">AI</button>
-          <button :class="['ns-right-tab', { active: rightTab === 'lesson' }]" @click="rightTab = 'lesson'">Lesson</button>
+          <button :class="['ns-right-tab', { active: rightTab === 'lesson' }]" @click="rightTab = 'lesson'">{{ $t('Lesson') }}</button>
         </nav>
         <div class="ns-right-body">
           <PropertiesPanel v-if="rightTab === 'props'" @open-terminal="openTerminalFor" />
@@ -141,10 +141,10 @@
       <!-- templates -->
       <div v-if="modal === 'templates'" class="ns-modal wide">
         <header>
-          <h3>Template library</h3>
+          <h3>{{ $t('Template library') }}</h3>
           <button class="ns-icon-btn" @click="modal = null"><DeviceIcon name="close" :size="16" /></button>
         </header>
-        <p class="ns-modal-sub">Each template is a working, correct network — load one and start breaking it. That is how you learn fastest.</p>
+        <p class="ns-modal-sub">{{ $t('Each template is a working, correct network — load one and start breaking it. That is how you learn fastest.') }}</p>
         <div class="ns-template-grid">
           <button v-for="t in TOPOLOGY_TEMPLATES" :key="t.id" class="ns-template-card" @click="pickTemplate(t.id)">
             <span class="ns-template-icon"><DeviceIcon :name="t.icon" :size="24" /></span>
@@ -161,12 +161,12 @@
       <!-- encyclopedia -->
       <div v-else-if="modal === 'encyclopedia'" class="ns-modal wide">
         <header>
-          <h3>Device encyclopedia</h3>
+          <h3>{{ $t('Device encyclopedia') }}</h3>
           <button class="ns-icon-btn" @click="modal = null"><DeviceIcon name="close" :size="16" /></button>
         </header>
         <div class="ns-search inline">
           <DeviceIcon name="search" :size="14" />
-          <input v-model="encySearch" placeholder="Search devices, tags, protocols…" spellcheck="false" />
+          <input v-model="encySearch" :placeholder="$t('Search devices, tags, protocols…')" spellcheck="false" />
         </div>
         <div class="ns-ency-list">
           <article v-for="t in encyResults" :key="t.id" class="ns-ency-item">
@@ -174,9 +174,9 @@
               <span class="ns-ency-icon" :style="{ color: t.accent }"><DeviceIcon :name="t.icon" :size="22" /></span>
               <div>
                 <h4>{{ t.name }}</h4>
-                <p>Layer {{ t.layer }} · {{ t.role }} · since {{ t.year }} · {{ t.ports.reduce((n, p) => n + p.count, 0) }} ports</p>
+                <p>{{ $t('Layer {v0} · {v1} · since {v2} · {v3} ports', { v0: t.layer, v1: t.role, v2: t.year, v3: t.ports.reduce((n, p) => n + p.count, 0) }) }}</p>
               </div>
-              <button class="ns-btn ghost sm" @click="addAtCentre(t.id); modal = null">Add to canvas</button>
+              <button class="ns-btn ghost sm" @click="addAtCentre(t.id); modal = null">{{ $t('Add to canvas') }}</button>
             </header>
             <p class="ns-blurb">{{ t.blurb }}</p>
             <ul><li v-for="(l, i) in t.learn" :key="i">{{ l }}</li></ul>
@@ -188,37 +188,37 @@
       <!-- subnet calculator -->
       <div v-else-if="modal === 'subnet'" class="ns-modal">
         <header>
-          <h3>Subnet calculator</h3>
+          <h3>{{ $t('Subnet calculator') }}</h3>
           <button class="ns-icon-btn" @click="modal = null"><DeviceIcon name="close" :size="16" /></button>
         </header>
         <div class="ns-field-grid">
-          <label>IP address<input v-model="calcIp" spellcheck="false" placeholder="192.168.10.37" /></label>
-          <label>Mask or prefix<input v-model="calcMask" spellcheck="false" placeholder="255.255.255.0 or 24" /></label>
+          <label>{{ $t('IP address') }}<input v-model="calcIp" spellcheck="false" placeholder="192.168.10.37" /></label>
+          <label>{{ $t('Mask or prefix') }}<input v-model="calcMask" spellcheck="false" :placeholder="$t('255.255.255.0 or 24')" /></label>
         </div>
         <table v-if="calc" class="ns-table mono">
           <tbody>
-            <tr><th>Network</th><td>{{ calc.network }}/{{ calc.prefix }}</td></tr>
-            <tr><th>Mask</th><td>{{ calc.mask }}</td></tr>
-            <tr><th>Wildcard</th><td>{{ calc.wildcard }}</td></tr>
-            <tr><th>Broadcast</th><td>{{ calc.broadcast }}</td></tr>
-            <tr><th>Usable range</th><td>{{ calc.firstHost }} – {{ calc.lastHost }}</td></tr>
-            <tr><th>Usable hosts</th><td>{{ calc.hosts.toLocaleString() }}</td></tr>
-            <tr><th>Class / scope</th><td>{{ calc.class }} · {{ calc.scope }}</td></tr>
+            <tr><th>{{ $t('Network') }}</th><td>{{ calc.network }}/{{ calc.prefix }}</td></tr>
+            <tr><th>{{ $t('Mask') }}</th><td>{{ calc.mask }}</td></tr>
+            <tr><th>{{ $t('Wildcard') }}</th><td>{{ calc.wildcard }}</td></tr>
+            <tr><th>{{ $t('Broadcast') }}</th><td>{{ calc.broadcast }}</td></tr>
+            <tr><th>{{ $t('Usable range') }}</th><td>{{ calc.firstHost }} – {{ calc.lastHost }}</td></tr>
+            <tr><th>{{ $t('Usable hosts') }}</th><td>{{ calc.hosts.toLocaleString() }}</td></tr>
+            <tr><th>{{ $t('Class / scope') }}</th><td>{{ calc.class }} · {{ calc.scope }}</td></tr>
           </tbody>
         </table>
-        <p v-else class="ns-muted">Enter a valid IPv4 address to see the breakdown.</p>
+        <p v-else class="ns-muted">{{ $t('Enter a valid IPv4 address to see the breakdown.') }}</p>
 
         <div class="ns-sub-block">
-          <h5>Split into equal subnets</h5>
-          <label class="ns-field">New prefix
+          <h5>{{ $t('Split into equal subnets') }}</h5>
+          <label class="ns-field">{{ $t('New prefix') }}
             <input type="number" min="1" max="32" v-model.number="splitPrefix" />
           </label>
           <div v-if="splits.length" class="ns-split-list">
             <div v-for="(s, i) in splits.slice(0, 32)" :key="i">
               <code>{{ s.network }}/{{ s.prefix }}</code>
-              <span>{{ s.firstHost }}–{{ s.lastHost }} · {{ s.hosts }} hosts · bcast {{ s.broadcast }}</span>
+              <span>{{ $t('{v0}–{v1} · {v2} hosts · bcast {v3}', { v0: s.firstHost, v1: s.lastHost, v2: s.hosts, v3: s.broadcast }) }}</span>
             </div>
-            <p v-if="splits.length > 32" class="ns-muted sm">…and {{ splits.length - 32 }} more.</p>
+            <p v-if="splits.length > 32" class="ns-muted sm">{{ $t('…and {v0} more.', { v0: splits.length - 32 }) }}</p>
           </div>
         </div>
       </div>
@@ -226,27 +226,26 @@
       <!-- import / export -->
       <div v-else-if="modal === 'io'" class="ns-modal">
         <header>
-          <h3>Import &amp; export</h3>
+          <h3>{{ $t('Import & export') }}</h3>
           <button class="ns-icon-btn" @click="modal = null"><DeviceIcon name="close" :size="16" /></button>
         </header>
         <div class="ns-btn-row tight">
-          <button class="ns-btn ghost sm" @click="copyJson"><DeviceIcon name="copy" :size="13" /> Copy topology JSON</button>
-          <button class="ns-btn ghost sm" @click="downloadJson"><DeviceIcon name="download" :size="13" /> Download .json</button>
+          <button class="ns-btn ghost sm" @click="copyJson"><DeviceIcon name="copy" :size="13" /> {{ $t('Copy topology JSON') }}</button>
+          <button class="ns-btn ghost sm" @click="downloadJson"><DeviceIcon name="download" :size="13" /> {{ $t('Download .json') }}</button>
           <label class="ns-btn ghost sm file">
-            <DeviceIcon name="upload" :size="13" /> Load from file
+            <DeviceIcon name="upload" :size="13" /> {{ $t('Load from file') }}
             <input type="file" accept=".json,application/json" @change="onFile" />
           </label>
         </div>
-        <label class="ns-field block">Paste topology JSON
+        <label class="ns-field block">{{ $t('Paste topology JSON') }}
           <textarea v-model="importText" rows="10" spellcheck="false" placeholder='{ "name": "...", "devices": [...], "links": [...] }'></textarea>
         </label>
         <div class="ns-btn-row tight">
-          <button class="ns-btn primary sm" :disabled="!importText.trim()" @click="doImport">Import</button>
-          <button class="ns-btn ghost sm" @click="importText = store.exportJson()">Fill with current topology</button>
+          <button class="ns-btn primary sm" :disabled="!importText.trim()" @click="doImport">{{ $t('Import') }}</button>
+          <button class="ns-btn ghost sm" @click="importText = store.exportJson()">{{ $t('Fill with current topology') }}</button>
         </div>
         <p class="ns-muted sm">
-          Topologies are stored as JSON in <code>{{ storage.repo }}</code>. The same format is what the AI generator produces,
-          so anything you export can be edited by hand and re-imported.
+          {{ $t('Topologies are stored as JSON in') }} <code>{{ storage.repo }}</code>{{ $t('. The same format is what the AI generator produces, so anything you export can be edited by hand and re-imported.') }}
         </p>
       </div>
     </div>

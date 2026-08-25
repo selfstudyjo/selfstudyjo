@@ -2,7 +2,7 @@
   <aside class="panel">
     <header>
       <h2>{{ isDirect ? 'Conversation' : 'Group' }}</h2>
-      <button type="button" class="uc-icon-btn" aria-label="Close details" @click="$emit('close')">
+      <button type="button" class="uc-icon-btn" :aria-label="$t('Close details')" @click="$emit('close')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </header>
@@ -21,7 +21,7 @@
             v-model="nameDraft"
             type="text"
             maxlength="120"
-            aria-label="Group name"
+            :aria-label="$t('Group name')"
             @blur="saveName"
             @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
           />
@@ -30,8 +30,8 @@
             type="text"
             maxlength="500"
             class="topic-input"
-            placeholder="Add a topic…"
-            aria-label="Topic"
+            :placeholder="$t('Add a topic…')"
+            :aria-label="$t('Topic')"
             @blur="saveTopic"
             @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
           />
@@ -45,8 +45,8 @@
       <label class="toggle">
         <input type="checkbox" :checked="room.muted" @change="$emit('mute', !room.muted)" />
         <span>
-          <strong>Mute this conversation</strong>
-          <small>No chime and no notification email. The messages still arrive.</small>
+          <strong>{{ $t('Mute this conversation') }}</strong>
+          <small>{{ $t('No chime and no notification email. The messages still arrive.') }}</small>
         </span>
       </label>
 
@@ -59,7 +59,7 @@
       -->
       <section v-if="media.length" class="media-section">
         <div class="section-head">
-          <h4>Shared pictures</h4>
+          <h4>{{ $t('Shared pictures') }}</h4>
           <span class="count">{{ media.length }}</span>
         </div>
         <div class="media-grid">
@@ -87,7 +87,7 @@
             type="button"
             class="link"
             @click="$emit('add-member')"
-          >Add</button>
+          >{{ $t('Add') }}</button>
         </div>
 
         <ul class="members">
@@ -102,9 +102,9 @@
             <span class="who">
               <span class="name">
                 {{ person.username || 'Unknown user' }}
-                <em v-if="person.user_id === userId">(you)</em>
+                <em v-if="person.user_id === userId">{{ $t('(you)') }}</em>
               </span>
-              <span v-if="onlineIds.has(person.user_id)" class="online">online</span>
+              <span v-if="onlineIds.has(person.user_id)" class="online">{{ $t('online') }}</span>
               <span v-else-if="person.full_name" class="full">{{ person.full_name }}</span>
             </span>
 
@@ -118,12 +118,12 @@
             <div v-if="canManage(person)" class="row-actions">
               <select
                 :value="person.role"
-                aria-label="Role"
+                :aria-label="$t('Role')"
                 @change="$emit('role', person.user_id, ($event.target as HTMLSelectElement).value)"
               >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-                <option v-if="myRole === 'owner'" value="owner">Owner</option>
+                <option value="member">{{ $t('Member') }}</option>
+                <option value="admin">{{ $t('Admin') }}</option>
+                <option v-if="myRole === 'owner'" value="owner">{{ $t('Owner') }}</option>
               </select>
               <button
                 type="button"
@@ -139,21 +139,21 @@
       </section>
 
       <section v-if="room.created_at" class="facts">
-        <p><span>Started</span> {{ formatDate(room.created_at) }}</p>
-        <p v-if="room.created_by_username"><span>By</span> {{ room.created_by_username }}</p>
-        <p v-if="room.message_count !== undefined"><span>Messages</span> {{ room.message_count }}</p>
+        <p><span>{{ $t('Started') }}</span> {{ formatDate(room.created_at) }}</p>
+        <p v-if="room.created_by_username"><span>{{ $t('By') }}</span> {{ room.created_by_username }}</p>
+        <p v-if="room.message_count !== undefined"><span>{{ $t('Messages') }}</span> {{ room.message_count }}</p>
       </section>
     </div>
 
     <footer>
       <button type="button" class="uc-danger-btn" @click="$emit('leave')">
-        Leave this conversation
+        {{ $t('Leave this conversation') }}
       </button>
       <!-- Delete is the owner's alone, and it is destructive for everybody in the
            room rather than just for them — so it is separated from Leave and
            labelled with what it actually does. -->
       <button v-if="myRole === 'owner'" type="button" class="uc-danger-btn solid" @click="$emit('delete')">
-        Delete for everyone
+        {{ $t('Delete for everyone') }}
       </button>
     </footer>
   </aside>
@@ -255,7 +255,7 @@ function formatDate(value?: string) {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  border-left: 1px solid var(--uc-border);
+  border-inline-start: 1px solid var(--uc-border);
   background: rgb(var(--sfs-surface-rgb, 10 12 30) / 0.88);
   backdrop-filter: var(--uc-blur-strong);
   -webkit-backdrop-filter: var(--uc-blur-strong);

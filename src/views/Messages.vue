@@ -25,11 +25,11 @@
           <div class="uc-placeholder-mark" aria-hidden="true">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
           </div>
-          <h2>Pick a conversation</h2>
-          <p>Or start a new one. Messages, pictures and voice notes, free with your account.</p>
+          <h2>{{ $t('Pick a conversation') }}</h2>
+          <p>{{ $t('Or start a new one. Messages, pictures and voice notes, free with your account.') }}</p>
           <button type="button" class="uc-placeholder-btn" @click="showNewChat = true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New message
+            {{ $t('New message') }}
           </button>
         </div>
 
@@ -135,34 +135,34 @@
       @contextmenu.prevent="menu.open = false"
     >
       <ul class="menu" :style="{ top: `${menu.y}px`, left: `${menu.x}px` }" @click.stop>
-        <li><button type="button" @click="startReply">Reply</button></li>
+        <li><button type="button" @click="startReply">{{ $t('Reply') }}</button></li>
         <li v-if="menu.message?.kind === 'text'">
-          <button type="button" @click="copyText">Copy text</button>
+          <button type="button" @click="copyText">{{ $t('Copy text') }}</button>
         </li>
         <li v-if="canEdit(menu.message)">
-          <button type="button" @click="startEdit">Edit</button>
+          <button type="button" @click="startEdit">{{ $t('Edit') }}</button>
         </li>
         <li v-if="canDelete(menu.message)">
-          <button type="button" class="danger" @click="deleteMessage">Delete</button>
+          <button type="button" class="danger" @click="deleteMessage">{{ $t('Delete') }}</button>
         </li>
       </ul>
     </div>
 
     <!-- Inline edit -->
     <div v-if="editing" class="backdrop" @click.self="editing = null">
-      <div class="edit-dialog" role="dialog" aria-modal="true" aria-label="Edit message">
-        <h3>Edit message</h3>
+      <div class="edit-dialog" role="dialog" aria-modal="true" :aria-label="$t('Edit message')">
+        <h3>{{ $t('Edit message') }}</h3>
         <textarea v-model="editDraft" rows="4" aria-label="Message text"></textarea>
         <div class="edit-actions">
-          <button type="button" class="ghost" @click="editing = null">Cancel</button>
-          <button type="button" class="primary" :disabled="!editDraft.trim()" @click="saveEdit">Save</button>
+          <button type="button" class="ghost" @click="editing = null">{{ $t('Cancel') }}</button>
+          <button type="button" class="primary" :disabled="!editDraft.trim()" @click="saveEdit">{{ $t('Save') }}</button>
         </div>
       </div>
     </div>
 
     <!-- Full-size picture -->
     <div v-if="lightbox" class="lightbox" @click="lightbox = ''">
-      <button type="button" class="lightbox-close" aria-label="Close picture">
+      <button type="button" class="lightbox-close" :aria-label="$t('Close picture')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
       <img :src="lightbox" alt="" @click.stop />
@@ -1126,7 +1126,7 @@ watch(() => route.params.roomId, value => {
 .menu button {
   display: block;
   width: 100%;
-  text-align: left;
+  text-align: start;
   padding: 8px 12px;
   border: 0;
   border-radius: var(--uc-r-xs);

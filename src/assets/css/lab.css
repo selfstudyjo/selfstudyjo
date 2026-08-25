@@ -261,7 +261,7 @@
   margin-bottom: var(--space-md);
   border: 3px solid transparent;
   border-top-color: var(--lab-secondary);
-  border-right-color: var(--lab-accent);
+  border-inline-end-color: var(--lab-accent);
   border-bottom-color: var(--lab-primary);
   border-radius: 50%;
   animation: lab-spin 1s linear infinite;
@@ -349,7 +349,7 @@
 
 .student-info {
   display: inline-block;
-  margin-left: var(--space-xs);
+  margin-inline-start: var(--space-xs);
   padding: 4px 12px;
   font-size: var(--font-xs);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
@@ -391,7 +391,7 @@
   align-items: center;
   gap: var(--space-xs);
   align-self: center;
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: 0 var(--space-md);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--font-xs, 0.75rem);
@@ -491,7 +491,7 @@
   gap: var(--space-sm);
   max-height: 320px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-inline-end: 4px;
   margin-bottom: var(--space-md);
 }
 
@@ -753,8 +753,8 @@
 .results-table td {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--font-sm);
-  text-align: left;
-  border-right: 1px solid var(--glass-border);
+  text-align: start;
+  border-inline-end: 1px solid var(--glass-border);
 }
 
 .results-table th {
@@ -763,7 +763,7 @@
 }
 
 .results-table th:last-child,
-.results-table td:last-child { border-right: none; }
+.results-table td:last-child { border-inline-end: none; }
 
 .results-table tbody tr {
   border-bottom: 1px solid var(--glass-border);
@@ -836,7 +836,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: var(--space-sm);
+  margin-inline-start: var(--space-sm);
   font-size: var(--font-xs);
   color: var(--lab-warning);
 }
@@ -876,7 +876,7 @@
 
 .welcome-line {
   margin-bottom: 4px;
-  padding-left: 4px;
+  padding-inline-start: 4px;
   color: var(--lab-success);
 }
 
@@ -955,14 +955,14 @@
   display: inline-block;
   width: 8px;
   height: 14px;
-  margin-left: 2px;
+  margin-inline-start: 2px;
   background: var(--lab-success);
   vertical-align: middle;
   animation: lab-cursor 1s infinite;
 }
 
 .running-indicator {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--lab-warning);
 }
 
@@ -1003,7 +1003,7 @@
   min-height: 44px;
   padding: var(--space-sm);
   font-size: var(--font-xs);
-  text-align: left;
+  text-align: start;
   color: var(--term-text);
   background: var(--glass-1);
   border: 1px solid var(--glass-border);
@@ -1249,7 +1249,7 @@
   padding: var(--space-md);
   background: var(--glass-3);
   border: 1px solid var(--glass-border);
-  border-left: 4px solid var(--lab-info);
+  border-inline-start: 4px solid var(--lab-info);
   border-radius: var(--r-md);
   backdrop-filter: var(--blur-strong);
   -webkit-backdrop-filter: var(--blur-strong);
@@ -1257,10 +1257,10 @@
   animation: lab-slide-in 0.3s ease;
 }
 
-.toast.success { border-left-color: var(--lab-success); }
-.toast.error   { border-left-color: var(--lab-danger); }
-.toast.warning { border-left-color: var(--lab-warning); }
-.toast.info    { border-left-color: var(--lab-info); }
+.toast.success { border-inline-start-color: var(--lab-success); }
+.toast.error   { border-inline-start-color: var(--lab-danger); }
+.toast.warning { border-inline-start-color: var(--lab-warning); }
+.toast.info    { border-inline-start-color: var(--lab-info); }
 
 .toast i {
   margin-top: 2px;
@@ -1415,7 +1415,7 @@
   .sql-sidebar {
     padding: 0 var(--space-lg) 0 0;
     border-bottom: none;
-    border-right: 1px solid var(--glass-border);
+    border-inline-end: 1px solid var(--glass-border);
   }
   .python-container {
     grid-template-columns: 2fr 1fr;

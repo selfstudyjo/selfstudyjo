@@ -1,4 +1,5 @@
 // src/services/ai.service.ts – uses VITE_AI_APP_ID for the Gemini AI service
+import { aiLanguageHeaders } from '@/i18n/runtime';
 interface Replica {
   replica_url: string;
 }
@@ -59,6 +60,10 @@ class AiService {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Token ${this.authToken}`,
+        // The reader's language, so the assistant answers in it. App 27's CORS
+        // is `CORS(app)` with no header allow-list, so a custom header is safe
+        // there — see `aiLanguageHeaders` for why it is not set globally.
+        ...aiLanguageHeaders(),
       },
       body: JSON.stringify({
         model: this.model,

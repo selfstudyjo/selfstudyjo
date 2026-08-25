@@ -1,21 +1,21 @@
 <template>
   <div class="research-researchers-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconPeople /> Researchers</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconPeople /> {{ $t('Researchers') }}</h1>
     </div>
 
     <div class="rf-filters">
-      <input v-model="searchQuery" type="text" class="rf-input" placeholder="Search researchers..." />
+      <input v-model="searchQuery" type="text" class="rf-input" :placeholder="$t('Search researchers...')" />
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Loading researchers...</p>
+      <p>{{ $t('Loading researchers...') }}</p>
     </div>
 
     <div v-else-if="filteredResearchers.length === 0" class="rf-empty">
-      <p>No researchers found.</p>
+      <p>{{ $t('No researchers found.') }}</p>
     </div>
 
     <div v-else class="rf-researchers-grid">
@@ -32,13 +32,13 @@
           {{ getDisplayName(researcher) }}
         </h3>
         <p v-if="isCurrentUser(researcher.user_id)" class="rf-researcher-you-badge">
-          (You)
+          {{ $t('(You)') }}
         </p>
         <p class="rf-researcher-uni" v-if="researcher.university"><RfIconUniversity /> {{ researcher.university }}</p>
         <p class="rf-researcher-dept" v-if="researcher.department"><RfIconLibrary /> {{ researcher.department }}</p>
         <div class="rf-researcher-stats">
-          <span><RfIconFolder /> {{ getProjectCount(researcher.user_id) }} projects</span>
-          <span><RfIconFollowers /> {{ getFollowerCount(researcher.user_id) }} followers</span>
+          <span><RfIconFolder /> {{ $t('{v0} projects', { v0: getProjectCount(researcher.user_id) }) }}</span>
+          <span><RfIconFollowers /> {{ $t('{v0} followers', { v0: getFollowerCount(researcher.user_id) }) }}</span>
         </div>
         <!-- Only show follow button if NOT current user -->
         <button

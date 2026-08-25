@@ -136,6 +136,35 @@ export class ApiService {
         headers['Accept'] = 'application/json';
         headers['Origin'] = window.location.origin;
 
+        /*
+         * THE LANGUAGE IS DELIBERATELY *NOT* SET HERE, AND THAT IS WORTH
+         * KNOWING BEFORE SOMEBODY ADDS IT.
+         * ============================================================
+         *
+         * The obvious place for "which language should the answer be in" is
+         * exactly here, next to `Authorization` — one line, every call, nothing
+         * to forget. It was written here first and it would have taken the whole
+         * platform down.
+         *
+         * `X-SFS-Language` is a custom header, so it is never a CORS-simple one:
+         * every request carrying it triggers a preflight, and a browser FAILS
+         * THE ENTIRE REQUEST — not just the header — if the server's
+         * `Access-Control-Allow-Headers` does not list it. Twenty of this
+         * platform's backends declare an explicit `allow_headers` list. Setting
+         * it here means every screen on the platform stops working against every
+         * one of those twenty until all twenty have been deployed, and the
+         * frontend deploys independently.
+         *
+         * So the language travels only where it is actually needed and only to
+         * services that accept it: `aiLanguageHeaders()` in `i18n/runtime.ts`,
+         * spent by the AI-facing services (apps 27, 33, 36). Everything else on
+         * the platform stores and returns records, which have no language.
+         *
+         * Same class of bug as `X-Paper-Link` on app 34: a header the browser
+         * was not told is allowed does not arrive, and here it does worse than
+         * not arrive.
+         */
+
         return headers;
     }
 

@@ -4,7 +4,7 @@
       v-if="isMobile && !sidebarVisible"
       class="mobile-toggle"
       @click="openSidebar"
-      aria-label="Open navigation menu"
+      :aria-label="$t('Open navigation menu')"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
         <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z" fill="currentColor"/>
@@ -29,8 +29,8 @@
             <component :is="icons[activeSection.icon]" />
           </div>
           <div class="app-badge-text">
-            <span class="app-badge-title">{{ activeSection.title }}</span>
-            <span class="app-badge-sub">{{ activeSection.subtitle }}</span>
+            <span class="app-badge-title">{{ $t(activeSection.title) }}</span>
+            <span class="app-badge-sub">{{ $t(activeSection.subtitle) }}</span>
           </div>
         </router-link>
 
@@ -40,7 +40,7 @@
               <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
             </svg>
           </div>
-          <span class="logo-text">Self Study JO</span>
+          <span class="logo-text">{{ $t('Self Study JO') }}</span>
         </div>
 
         <button
@@ -74,7 +74,7 @@
             type="text"
             class="search-input"
             :placeholder="searchPlaceholder"
-            aria-label="Search navigation"
+            :aria-label="$t('Search navigation')"
             autocomplete="off"
             spellcheck="false"
             @keydown.down.prevent="moveHighlight(1)"
@@ -86,7 +86,7 @@
             v-if="searchQuery"
             class="search-clear"
             type="button"
-            aria-label="Clear search"
+            :aria-label="$t('Clear search')"
             @click="clearSearch"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
@@ -103,7 +103,7 @@
         v-else
         class="rail-search-btn"
         type="button"
-        aria-label="Search navigation"
+        :aria-label="$t('Search navigation')"
         @click="focusSearch"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -134,11 +134,11 @@
           class="nav-item nav-home"
           :class="{ 'active': currentPath === entry.to }"
           :aria-current="currentPath === entry.to ? 'page' : undefined"
-          :title="isCollapsed ? entry.text : undefined"
+          :title="isCollapsed ? $t(entry.text) : undefined"
           @click="onNavClick"
         >
           <div class="nav-icon"><component :is="icons[entry.icon]" /></div>
-          <span class="nav-text">{{ entry.text }}</span>
+          <span class="nav-text">{{ $t(entry.text) }}</span>
         </router-link>
 
         <template v-for="group in renderGroups.scoped" :key="group.key">
@@ -151,15 +151,15 @@
             class="nav-item"
             :class="{ 'active': row.entry.to === activeItemPath, 'highlighted': row.index === highlightIndex }"
             :aria-current="row.entry.to === activeItemPath ? 'page' : undefined"
-            :title="isCollapsed ? row.entry.text : undefined"
+            :title="isCollapsed ? $t(row.entry.text) : undefined"
             @click="onNavClick"
           >
             <div class="nav-icon"><component :is="icons[row.entry.icon]" /></div>
-            <span class="nav-text"><span v-for="(part, i) in matchParts(row.entry.text, terms)" :key="i" :class="{ 'nav-text-match': part.match }">{{ part.text }}</span></span>
+            <span class="nav-text"><span v-for="(part, i) in matchParts($t(row.entry.text), terms)" :key="i" :class="{ 'nav-text-match': part.match }">{{ part.text }}</span></span>
             <span
               v-if="badgeCount(row.entry) > 0"
               class="notification-badge"
-              :aria-label="`${badgeCount(row.entry)} unread`"
+              :aria-label="$tc('{n} unread', badgeCount(row.entry))"
             >
               {{ badgeCount(row.entry) > 99 ? '99+' : badgeCount(row.entry) }}
             </span>
@@ -177,11 +177,11 @@
           class="nav-item nav-more"
           type="button"
           :aria-expanded="showAllApps"
-          :title="isCollapsed ? 'All applications' : undefined"
+          :title="isCollapsed ? $t('All applications') : undefined"
           @click="showAllApps = !showAllApps"
         >
           <div class="nav-icon"><component :is="icons.grid" /></div>
-          <span class="nav-text">All applications</span>
+          <span class="nav-text">{{ $t('All applications') }}</span>
           <svg class="nav-more-chevron" :class="{ 'open': showAllApps }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6" />
           </svg>
@@ -197,15 +197,15 @@
             class="nav-item"
             :class="{ 'active': row.entry.to === activeItemPath, 'highlighted': row.index === highlightIndex }"
             :aria-current="row.entry.to === activeItemPath ? 'page' : undefined"
-            :title="isCollapsed ? row.entry.text : undefined"
+            :title="isCollapsed ? $t(row.entry.text) : undefined"
             @click="onNavClick"
           >
             <div class="nav-icon"><component :is="icons[row.entry.icon]" /></div>
-            <span class="nav-text"><span v-for="(part, i) in matchParts(row.entry.text, terms)" :key="i" :class="{ 'nav-text-match': part.match }">{{ part.text }}</span></span>
+            <span class="nav-text"><span v-for="(part, i) in matchParts($t(row.entry.text), terms)" :key="i" :class="{ 'nav-text-match': part.match }">{{ part.text }}</span></span>
             <span
               v-if="badgeCount(row.entry) > 0"
               class="notification-badge"
-              :aria-label="`${badgeCount(row.entry)} unread`"
+              :aria-label="$tc('{n} unread', badgeCount(row.entry))"
             >
               {{ badgeCount(row.entry) > 99 ? '99+' : badgeCount(row.entry) }}
             </span>
@@ -213,7 +213,7 @@
         </template>
 
         <p v-if="searchQuery && !visibleItems.length" class="nav-empty">
-          No pages match “{{ searchQuery }}”
+          {{ $t('No pages match “{v0}”', { v0: searchQuery }) }}
         </p>
       </nav>
 
@@ -224,6 +224,7 @@
           something a visitor should have to sign in for, and the login page
           is one of the screens most worth being able to read.
         -->
+        <LanguagePicker :collapsed="isCollapsed" />
         <ThemePicker :collapsed="isCollapsed" />
 
         <template v-if="isAuthenticated">
@@ -248,14 +249,14 @@
                 class="notification-summary"
                 @click.stop="goToNotifications"
                 v-if="displayCount > 0"
-                :aria-label="`${displayCount} unread notifications`"
+                :aria-label="$tc('{n} unread notifications', displayCount)"
               >
                 <span class="notification-icon">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
                   </svg>
                 </span>
-                <span class="notification-count">{{ displayCount }} unread</span>
+                <span class="notification-count">{{ $t('{v0} unread', { v0: displayCount }) }}</span>
               </div>
             </div>
           </div>
@@ -265,7 +266,7 @@
                 <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
               </svg>
             </div>
-            <span v-if="!isCollapsed">Logout</span>
+            <span v-if="!isCollapsed">{{ $t('Logout') }}</span>
           </button>
         </template>
         <template v-else>
@@ -275,7 +276,7 @@
                 <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z" fill="currentColor"/>
               </svg>
             </div>
-            <span v-if="!isCollapsed">Login</span>
+            <span v-if="!isCollapsed">{{ $t('Login') }}</span>
           </router-link>
         </template>
       </div>
@@ -300,6 +301,8 @@ import { useAuthStore } from '@/store/auth';
 import { useNotificationStore } from '@/store/notifications';
 import { useUserChatStore } from '@/store/userchat';
 import ThemePicker from '@/components/ThemePicker.vue';
+import LanguagePicker from '@/components/LanguagePicker.vue';
+import { useI18n } from '@/i18n/runtime';
 import { getProxiedImageUrl, addCacheBuster } from '@/utils/imageUtils';
 import {
   activePath,
@@ -541,6 +544,18 @@ const access = computed<Access>(() => ({
 }));
 
 const currentPath = computed(() => route.path);
+/**
+ * The registry is English and the sidebar is not.
+ *
+ * `t` is used in two different jobs here and they must not be confused: it
+ * DISPLAYS a label, and it is handed to `navLayout` so the SEARCH also matches
+ * the translated text. `appNav.ts` still returns its own English entries — the
+ * component decides what is rendered, which is what lets `check:appnav` go on
+ * asserting reachability against the English labels while the reader sees
+ * Arabic.
+ */
+const { t } = useI18n();
+
 const activeSection = computed(() => resolveSection(currentPath.value, access.value));
 
 /**
@@ -561,6 +576,7 @@ const terms = computed(() => searchTerms(searchQuery.value));
 
 const layout = computed(() => navLayout({
   section: activeSection.value,
+  translate: t,
   access: access.value,
   query: searchQuery.value,
   showAllApps: showAllApps.value,
@@ -583,7 +599,7 @@ const renderGroups = computed(() => {
   let index = 0;
   const decorate = (groups: NavGroup[], prefix: string) => groups.map(group => ({
     key: `${prefix}-${group.label}`,
-    label: group.label,
+    label: t(group.label),
     items: group.items.map(entry => ({
       key: `${prefix}-${group.label}-${entry.to}`,
       entry,
@@ -607,7 +623,9 @@ const activeItemPath = computed(() =>
 );
 
 const searchPlaceholder = computed(() =>
-  activeSection.value ? `Search ${activeSection.value.title} & all apps…` : 'Search pages…'
+  activeSection.value
+    ? t('Search {app} & all apps…', { app: t(activeSection.value.title) })
+    : t('Search pages…')
 );
 
 const displayCount = computed(() => notificationStore.unreadCount);

@@ -3,15 +3,15 @@
     <!-- Header Section -->
     <div class="page-header glass-effect">
       <div class="header-content">
-        <h1 class="page-title">Explore Courses</h1>
-        <p class="page-subtitle">Expand your knowledge with our curated courses</p>
+        <h1 class="page-title">{{ $t('Explore Courses') }}</h1>
+        <p class="page-subtitle">{{ $t('Expand your knowledge with our curated courses') }}</p>
       </div>
       <div class="header-actions">
         <div class="search-container">
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search courses..."
+            :placeholder="$t('Search courses...')"
             class="search-input"
             @keyup.enter="performSearch"
             @input="handleSearchInput"
@@ -30,18 +30,18 @@
     <div class="filters-section">
       <div class="filters-container">
         <div class="filter-group">
-          <label for="sortBy" class="filter-label">Sort by:</label>
+          <label for="sortBy" class="filter-label">{{ $t('Sort by:') }}</label>
           <select id="sortBy" v-model="sortBy" class="filter-select" @change="handleSortChange">
-            <option value="-date_added">Newest First</option>
-            <option value="date_added">Oldest First</option>
-            <option value="title">Title (A-Z)</option>
-            <option value="-title">Title (Z-A)</option>
+            <option value="-date_added">{{ $t('Newest First') }}</option>
+            <option value="date_added">{{ $t('Oldest First') }}</option>
+            <option value="title">{{ $t('Title (A-Z)') }}</option>
+            <option value="-title">{{ $t('Title (Z-A)') }}</option>
           </select>
         </div>
         <div class="results-count">
-          Showing {{ displayedCourses.length }} of {{ filteredCourses.length }} courses
-          <span v-if="searchQuery"> for "{{ searchQuery }}"</span>
-          <span v-if="totalPages > 1"> (Page {{ currentPage }} of {{ totalPages }})</span>
+          {{ $t('Showing {v0} of {v1} courses', { v0: displayedCourses.length, v1: filteredCourses.length }) }}
+          <span v-if="searchQuery"> {{ $t('for "{v0}"', { v0: searchQuery }) }}</span>
+          <span v-if="totalPages > 1"> {{ $t('(Page {v0} of {v1})', { v0: currentPage, v1: totalPages }) }}</span>
         </div>
       </div>
     </div>
@@ -49,7 +49,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p class="loading-text">Loading courses...</p>
+      <p class="loading-text">{{ $t('Loading courses...') }}</p>
     </div>
 
     <!-- Error State -->
@@ -61,9 +61,9 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h3 class="error-title">Unable to load courses</h3>
+      <h3 class="error-title">{{ $t('Unable to load courses') }}</h3>
       <p class="error-message">{{ error }}</p>
-      <button class="retry-btn" @click="fetchCourses">Try Again</button>
+      <button class="retry-btn" @click="fetchCourses">{{ $t('Try Again') }}</button>
     </div>
 
     <!-- Empty State -->
@@ -77,11 +77,11 @@
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
       </div>
-      <h3 class="empty-title">No courses found</h3>
+      <h3 class="empty-title">{{ $t('No courses found') }}</h3>
       <p class="empty-message">
         {{ searchQuery ? `No courses found for "${searchQuery}". Try different keywords.` : 'No courses available at the moment' }}
       </p>
-      <button v-if="searchQuery" class="clear-search-btn" @click="clearSearch">Clear Search</button>
+      <button v-if="searchQuery" class="clear-search-btn" @click="clearSearch">{{ $t('Clear Search') }}</button>
     </div>
 
     <!-- Courses Grid -->
@@ -139,7 +139,7 @@
         <div class="course-content">
           <div class="course-header">
             <h3 class="course-title">{{ course.title || 'Untitled Course' }}</h3>
-            <span class="course-badge">Course</span>
+            <span class="course-badge">{{ $t('Course') }}</span>
           </div>
           <p class="course-description">
             {{ truncateDescription(course.description) }}
@@ -151,20 +151,20 @@
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
               <span v-if="countsLoading[course.external_course_id]" class="count-loading">...</span>
-              <span v-else>{{ courseCounts[course.external_course_id]?.lessons ?? course.lessons_count ?? 0 }} lessons</span>
+              <span v-else>{{ $t('{v0} lessons', { v0: courseCounts[course.external_course_id]?.lessons ?? course.lessons_count ?? 0 }) }}</span>
             </div>
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
               <span v-if="countsLoading[course.external_course_id]" class="count-loading">...</span>
-              <span v-else>{{ courseCounts[course.external_course_id]?.comments ?? course.comments_count ?? 0 }} comments</span>
+              <span v-else>{{ $t('{v0} comments', { v0: courseCounts[course.external_course_id]?.comments ?? course.comments_count ?? 0 }) }}</span>
             </div>
           </div>
           <div class="course-footer">
-            <span class="course-date">Added {{ formatDate(course.date_added) }}</span>
+            <span class="course-date">{{ $t('Added {v0}', { v0: formatDate(course.date_added) }) }}</span>
             <button class="view-course-btn">
-              View Details
+              {{ $t('View Details') }}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
@@ -181,7 +181,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          Previous
+          {{ $t('Previous') }}
         </button>
         <div class="page-numbers">
           <button
@@ -194,14 +194,14 @@
           <span v-if="showEllipsis" class="page-ellipsis">...</span>
         </div>
         <button class="pagination-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
-          Next
+          {{ $t('Next') }}
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
       </div>
       <div class="pagination-info">
-        Page {{ currentPage }} of {{ totalPages }} • {{ filteredCourses.length }} total courses
+        {{ $t('Page {v0} of {v1} • {v2} total courses', { v0: currentPage, v1: totalPages, v2: filteredCourses.length }) }}
       </div>
     </div>
   </div>

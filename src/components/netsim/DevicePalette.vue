@@ -6,22 +6,22 @@
         <input
           v-model="query"
           type="text"
-          placeholder="Search 60+ devices…"
+          :placeholder="$t('Search 60+ devices…')"
           spellcheck="false"
           @keydown.escape="query = ''"
         />
-        <button v-if="query" class="ns-search-clear" title="Clear" @click="query = ''">
+        <button v-if="query" class="ns-search-clear" :title="$t('Clear')" @click="query = ''">
           <DeviceIcon name="close" :size="13" />
         </button>
       </div>
-      <p class="ns-palette-hint">Drag onto the canvas, or click to drop it in the centre.</p>
+      <p class="ns-palette-hint">{{ $t('Drag onto the canvas, or click to drop it in the centre.') }}</p>
     </div>
 
     <div class="ns-palette-body">
       <template v-if="query">
         <div class="ns-palette-group open">
           <div class="ns-group-head static">
-            <span class="ns-group-title">{{ results.length }} match{{ results.length === 1 ? '' : 'es' }}</span>
+            <span class="ns-group-title">{{ $t('{v0} match{v1}', { v0: results.length, v1: results.length === 1 ? '' : 'es' }) }}</span>
           </div>
           <div class="ns-device-list">
             <button
@@ -82,10 +82,10 @@
 
     <div class="ns-palette-foot">
       <button class="ns-btn ghost block" @click="emit('open-templates')">
-        <DeviceIcon name="grid" :size="15" /> Template library
+        <DeviceIcon name="grid" :size="15" /> {{ $t('Template library') }}
       </button>
       <button class="ns-btn ghost block" @click="emit('open-encyclopedia')">
-        <DeviceIcon name="book" :size="15" /> Device encyclopedia
+        <DeviceIcon name="book" :size="15" /> {{ $t('Device encyclopedia') }}
       </button>
     </div>
   </aside>

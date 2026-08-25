@@ -2,8 +2,8 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
-        <h1>Welcome Back</h1>
-        <p>Sign in to your Self Study JO account</p>
+        <h1>{{ $t('Welcome Back') }}</h1>
+        <p>{{ $t('Sign in to your Self Study JO account') }}</p>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
@@ -15,13 +15,13 @@
         </div>
 
         <div class="form-group">
-          <label for="username">Username</label>
+          <label for="username">{{ $t('Username') }}</label>
           <input
             id="username"
             v-model="form.username"
             type="text"
             required
-            placeholder="Enter your username"
+            :placeholder="$t('Enter your username')"
             :class="{ 'error': errors.username }"
             autocomplete="username"
             :disabled="authStore.loading"
@@ -30,14 +30,14 @@
         </div>
 
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="password">{{ $t('Password') }}</label>
           <div class="password-input">
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               required
-              placeholder="Enter your password"
+              :placeholder="$t('Enter your password')"
               :class="{ 'error': errors.password }"
               autocomplete="current-password"
               :disabled="authStore.loading"
@@ -63,15 +63,15 @@
         <button type="submit" class="login-btn btn-primary" :disabled="authStore.loading">
           <span v-if="authStore.loading">
             <span class="spinner"></span>
-            Signing In...
+            {{ $t('Signing In...') }}
           </span>
-          <span v-else>Sign In</span>
+          <span v-else>{{ $t('Sign In') }}</span>
         </button>
 
         <div class="login-footer">
           <p>
-            Don't have an account?
-            <router-link :to="registerLink" class="link">Sign up</router-link>
+            {{ $t('Don\'t have an account?') }}
+            <router-link :to="registerLink" class="link">{{ $t('Sign up') }}</router-link>
           </p>
         </div>
       </form>
@@ -198,7 +198,7 @@ onMounted(() => {
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   vertical-align: middle;
-  margin-right: 6px;
+  margin-inline-end: 6px;
 }
 
 @keyframes spin {

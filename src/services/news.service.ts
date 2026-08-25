@@ -26,7 +26,30 @@ import { serviceRegistry } from './config';
 
 export const NEWS_APP_ID = parseInt(import.meta.env.VITE_NEWS_APP_ID || '36');
 
+/**
+ * The languages there are BULLETINS in.
+ *
+ * Airflow scrapes RT and Al Jazeera in Arabic and English, so those are the two
+ * a reader can pick a bulletin from. Adding a third means new DAGs in the `dags`
+ * repo and a source that publishes in that language — not a wider type here.
+ */
 export type NewsLanguage = 'ar' | 'en';
+
+/**
+ * The languages this service can SPEAK, which is a different and larger set.
+ *
+ * `/api/news/tts/` is a general endpoint: it is named `news` because that is
+ * the service that grew it, and it is what the Job Interview room and the
+ * Toastmasters meeting reach for when the DEVICE has no voice for the reader's
+ * language — a stock Windows install has none for Arabic and many Linux builds
+ * have none for Chinese. App 36's `VOICES` table carries a measured, gendered
+ * neural pair for all three.
+ *
+ * Kept as a separate type rather than widening `NewsLanguage`, because the two
+ * answer different questions and a single type would make "there is a Chinese
+ * bulletin" expressible when there is not.
+ */
+export type SpeechLanguage = 'ar' | 'en' | 'zh';
 
 export interface NewsLanguageInfo {
     code: NewsLanguage;
@@ -200,7 +223,7 @@ class NewsService {
      */
     async speech(
         text: string,
-        language: NewsLanguage,
+        language: SpeechLanguage,
         anchor: 'female' | 'male',
         rate = 1,
         voice = '',

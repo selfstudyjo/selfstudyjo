@@ -1,6 +1,6 @@
 <template>
   <header class="head">
-    <button type="button" class="back uc-icon-btn" aria-label="Back to conversations" @click="$emit('back')">
+    <button type="button" class="back uc-icon-btn" :aria-label="$t('Back to conversations')" @click="$emit('back')">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
 
@@ -23,12 +23,12 @@
             {{ typingLabel }}
           </span>
           <template v-else-if="room.kind === 'direct'">
-            <span v-if="otherOnline" class="online">Online</span>
+            <span v-if="otherOnline" class="online">{{ $t('Online') }}</span>
             <span v-else>{{ room.topic || 'Direct message' }}</span>
           </template>
           <template v-else>
             {{ memberCount }} {{ memberCount === 1 ? 'person' : 'people' }}
-            <span v-if="onlineCount > 0" class="online"> · {{ onlineCount }} online</span>
+            <span v-if="onlineCount > 0" class="online"> {{ $t('· {v0} online', { v0: onlineCount }) }}</span>
           </template>
         </span>
       </span>
@@ -48,16 +48,16 @@
       <button
         type="button"
         class="uc-icon-btn home"
-        aria-label="Back to the dashboard"
-        title="Back to the dashboard"
+        :aria-label="$t('Back to the dashboard')"
+        :title="$t('Back to the dashboard')"
         @click="$emit('home')"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.8V20a1 1 0 001 1h12a1 1 0 001-1V9.8"/><path d="M9.5 21v-6h5v6"/></svg>
       </button>
 
-      <span v-if="room.muted" class="muted-chip" title="Notifications are muted for this conversation">
+      <span v-if="room.muted" class="muted-chip" :title="$t('Notifications are muted for this conversation')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.5-1.9L20.1 5.7 17.8 8l-2.3-2.3-1.4 1.4L16.4 9.4l-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>
-        <span>Muted</span>
+        <span>{{ $t('Muted') }}</span>
       </span>
 
       <button
@@ -155,7 +155,7 @@ const name = computed(() => displayName(props.room, props.userId));
   background: none;
   font: inherit;
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background var(--uc-t-fast);
 }

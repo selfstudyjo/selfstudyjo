@@ -164,7 +164,7 @@
   height: clamp(48px, 8vw, 70px);
   border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.06);
   border-top-color: var(--uc-accent);
-  border-right-color: var(--uc-accent-2);
+  border-inline-end-color: var(--uc-accent-2);
   border-radius: 50%;
   animation: uc-spin 1.1s linear infinite;
   margin-bottom: var(--uc-sp-md);
@@ -317,7 +317,7 @@
   border: 1px solid var(--uc-border-strong);
   border-radius: var(--uc-r-md);
   box-shadow: var(--uc-shadow-hover), var(--uc-glow-brand);
-  text-align: left;
+  text-align: start;
 }
 
 .share-menu-title {
@@ -364,7 +364,7 @@
   border: 1px solid var(--uc-border);
   border-radius: var(--uc-r-sm);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: background var(--uc-t-fast),
               border-color var(--uc-t-fast),
               transform var(--uc-t-fast);

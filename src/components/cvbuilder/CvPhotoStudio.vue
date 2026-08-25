@@ -1,16 +1,15 @@
 <template>
   <div class="ps-backdrop" @click.self="cancel">
-    <div class="ps-modal" role="dialog" aria-modal="true" aria-label="Photo studio">
+    <div class="ps-modal" role="dialog" aria-modal="true" :aria-label="$t('Photo studio')">
       <header class="ps-head">
-        <h3>Profile picture</h3>
-        <button class="ps-x" @click="cancel" aria-label="Close">×</button>
+        <h3>{{ $t('Profile picture') }}</h3>
+        <button class="ps-x" @click="cancel" :aria-label="$t('Close')">×</button>
       </header>
 
       <!-- ═══ No image yet: choose a source ═══ -->
       <div v-if="!sourceImage && !cameraOn" class="ps-choose">
         <p class="ps-lead">
-          Start from a photo you already have, or take one now. You can reframe it and change its
-          background in the next step — nothing is saved until you press Apply.
+          {{ $t('Start from a photo you already have, or take one now. You can reframe it and change its background in the next step — nothing is saved until you press Apply.') }}
         </p>
         <div class="ps-choose-grid">
           <label class="ps-choice">
@@ -18,16 +17,16 @@
             <span class="ps-choice-ico">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
             </span>
-            <strong>Upload a photo</strong>
-            <small>PNG, JPG or WEBP</small>
+            <strong>{{ $t('Upload a photo') }}</strong>
+            <small>{{ $t('PNG, JPG or WEBP') }}</small>
           </label>
 
           <button class="ps-choice" @click="startCamera">
             <span class="ps-choice-ico">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4zM9 4l-1.83 2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.17L15 4H9zm3 14a6 6 0 110-12 6 6 0 010 12z"/></svg>
             </span>
-            <strong>Take a photo</strong>
-            <small>Use your camera</small>
+            <strong>{{ $t('Take a photo') }}</strong>
+            <small>{{ $t('Use your camera') }}</small>
           </button>
         </div>
         <p v-if="error" class="ps-error">{{ error }}</p>
@@ -44,20 +43,19 @@
           </div>
         </div>
         <p class="ps-hint">
-          Fill the circle with your head and shoulders, look at the lens, and keep the light in
-          front of you. A plain wall behind you makes the background swap far cleaner.
+          {{ $t('Fill the circle with your head and shoulders, look at the lens, and keep the light in front of you. A plain wall behind you makes the background swap far cleaner.') }}
         </p>
         <div class="ps-camera-actions">
           <button class="ps-btn ps-btn-primary" :disabled="!cameraReady" @click="capture">
             {{ cameraReady ? 'Capture' : 'Starting camera…' }}
           </button>
           <button v-if="cameraDevices.length > 1" class="ps-btn ps-btn-ghost" @click="switchCamera">
-            Switch camera
+            {{ $t('Switch camera') }}
           </button>
           <label class="ps-check">
-            <input type="checkbox" v-model="cameraMirrored" /> Mirror preview
+            <input type="checkbox" v-model="cameraMirrored" /> {{ $t('Mirror preview') }}
           </label>
-          <button class="ps-btn ps-btn-ghost" @click="stopCamera">Cancel</button>
+          <button class="ps-btn ps-btn-ghost" @click="stopCamera">{{ $t('Cancel') }}</button>
         </div>
         <p v-if="error" class="ps-error">{{ error }}</p>
       </div>
@@ -74,44 +72,44 @@
               <span class="ps-guide-face"></span>
               <span class="ps-guide-eyes"></span>
             </div>
-            <span v-if="masking" class="ps-working">working…</span>
+            <span v-if="masking" class="ps-working">{{ $t('working…') }}</span>
           </div>
-          <p class="ps-drag-hint">Drag the picture to move it · scroll to zoom</p>
+          <p class="ps-drag-hint">{{ $t('Drag the picture to move it · scroll to zoom') }}</p>
           <label class="ps-check">
-            <input type="checkbox" v-model="showGuide" /> Show framing guide
+            <input type="checkbox" v-model="showGuide" /> {{ $t('Show framing guide') }}
           </label>
         </div>
 
         <div class="ps-controls">
           <!-- Framing -->
           <section class="ps-group">
-            <h4>Position &amp; size</h4>
+            <h4>{{ $t('Position & size') }}</h4>
             <label class="ps-slider">
-              <span>Zoom <em>{{ edit.zoom.toFixed(2) }}×</em></span>
+              <span>{{ $t('Zoom') }} <em>{{ edit.zoom.toFixed(2) }}×</em></span>
               <input type="range" min="0.5" max="4" step="0.01" v-model.number="edit.zoom" />
             </label>
             <label class="ps-slider">
-              <span>Straighten <em>{{ edit.rotation.toFixed(0) }}°</em></span>
+              <span>{{ $t('Straighten') }} <em>{{ edit.rotation.toFixed(0) }}°</em></span>
               <input type="range" min="-20" max="20" step="0.5" v-model.number="edit.rotation" />
             </label>
             <div class="ps-row">
               <label class="ps-check">
-                <input type="checkbox" v-model="edit.mirrored" /> Flip horizontally
+                <input type="checkbox" v-model="edit.mirrored" /> {{ $t('Flip horizontally') }}
               </label>
-              <button class="ps-btn ps-btn-ghost ps-btn-xs" @click="centreFrame">Re-centre</button>
+              <button class="ps-btn ps-btn-ghost ps-btn-xs" @click="centreFrame">{{ $t('Re-centre') }}</button>
             </div>
             <div class="ps-nudge">
-              <span>Nudge</span>
-              <button @click="nudge(0, -0.02)" aria-label="Up">↑</button>
-              <button @click="nudge(-0.02, 0)" aria-label="Left">←</button>
-              <button @click="nudge(0.02, 0)" aria-label="Right">→</button>
-              <button @click="nudge(0, 0.02)" aria-label="Down">↓</button>
+              <span>{{ $t('Nudge') }}</span>
+              <button @click="nudge(0, -0.02)" :aria-label="$t('Up')">↑</button>
+              <button @click="nudge(-0.02, 0)" :aria-label="$t('Left')">←</button>
+              <button @click="nudge(0.02, 0)" :aria-label="$t('Right')">→</button>
+              <button @click="nudge(0, 0.02)" :aria-label="$t('Down')">↓</button>
             </div>
           </section>
 
           <!-- Background -->
           <section class="ps-group">
-            <h4>Background</h4>
+            <h4>{{ $t('Background') }}</h4>
             <div class="ps-seg">
               <button v-for="option in BACKGROUND_STYLES" :key="option.key"
                       :class="{ active: edit.background_style === option.key }"
@@ -124,64 +122,59 @@
                         class="ps-swatch" :class="{ active: edit.background === preset.value }"
                         :style="{ background: preset.value }" :title="preset.name"
                         @click="setBackground(preset.value)"></button>
-                <label class="ps-swatch-custom" title="Custom colour">
+                <label class="ps-swatch-custom" :title="$t('Custom colour')">
                   <input type="color" :value="edit.background || '#F1F5F9'"
                          @input="setBackground(($event.target as HTMLInputElement).value.toUpperCase())" />
                 </label>
               </div>
 
               <label class="ps-slider">
-                <span>How much to replace <em>{{ Math.round(edit.tolerance) }}</em></span>
+                <span>{{ $t('How much to replace') }} <em>{{ Math.round(edit.tolerance) }}</em></span>
                 <input type="range" min="0" max="140" step="1" v-model.number="edit.tolerance" />
               </label>
               <label class="ps-slider">
-                <span>Edge softness <em>{{ edit.feather.toFixed(0) }}px</em></span>
+                <span>{{ $t('Edge softness') }} <em>{{ $t('{v0}px', { v0: edit.feather.toFixed(0) }) }}</em></span>
                 <input type="range" min="0" max="10" step="0.5" v-model.number="edit.feather" />
               </label>
               <label class="ps-slider">
-                <span>Protect the person <em>{{ Math.round(edit.protect * 100) }}%</em></span>
+                <span>{{ $t('Protect the person') }} <em>{{ Math.round(edit.protect * 100) }}%</em></span>
                 <input type="range" min="0" max="1" step="0.02" v-model.number="edit.protect" />
               </label>
 
               <label class="ps-check">
                 <input type="checkbox" v-model="showMask" />
-                Highlight what will be replaced
+                {{ $t('Highlight what will be replaced') }}
               </label>
 
               <p class="ps-note">
-                The area inside the protected zone is never touched, so your face stays intact
-                whatever the other sliders say. If part of you is being cut out, raise
-                <em>Protect the person</em> or lower <em>How much to replace</em>.
+                {{ $t('The area inside the protected zone is never touched, so your face stays intact whatever the other sliders say. If part of you is being cut out, raise') }}
+                <em>{{ $t('Protect the person') }}</em> {{ $t('or lower') }} <em>{{ $t('How much to replace') }}</em>.
               </p>
               <p v-if="busyBackground" class="ps-warn">
-                The background in this photo is busy rather than a plain wall, so the swap will
-                look patchy. A photo against a single-colour wall gives a much cleaner result —
-                or leave the background as it is.
+                {{ $t('The background in this photo is busy rather than a plain wall, so the swap will look patchy. A photo against a single-colour wall gives a much cleaner result — or leave the background as it is.') }}
               </p>
             </template>
             <p v-else class="ps-note">
-              Keeping the photo exactly as taken. Choose a colour or gradient to replace whatever
-              is behind you.
+              {{ $t('Keeping the photo exactly as taken. Choose a colour or gradient to replace whatever is behind you.') }}
             </p>
           </section>
 
           <!-- Source -->
           <section class="ps-group">
-            <h4>Picture</h4>
+            <h4>{{ $t('Picture') }}</h4>
             <div class="ps-row wrap">
               <label class="ps-btn ps-btn-ghost ps-btn-xs ps-file">
-                Choose another
+                {{ $t('Choose another') }}
                 <input type="file" accept="image/png,image/jpeg,image/webp" @change="onFile" />
               </label>
-              <button class="ps-btn ps-btn-ghost ps-btn-xs" @click="startCamera">Retake</button>
+              <button class="ps-btn ps-btn-ghost ps-btn-xs" @click="startCamera">{{ $t('Retake') }}</button>
               <button v-if="canReloadOriginal" class="ps-btn ps-btn-ghost ps-btn-xs"
                       :disabled="loadingOriginal" @click="reloadOriginal">
                 {{ loadingOriginal ? 'Loading…' : 'Reframe the original' }}
               </button>
             </div>
             <p v-if="fromEditedCopy" class="ps-note">
-              You are editing the version already on your CV. “Reframe the original” goes back to
-              the untouched upload, which keeps the quality.
+              {{ $t('You are editing the version already on your CV. “Reframe the original” goes back to the untouched upload, which keeps the quality.') }}
             </p>
           </section>
         </div>
@@ -189,7 +182,7 @@
 
       <footer v-if="sourceImage && !cameraOn" class="ps-foot">
         <p v-if="error" class="ps-error ps-error-inline">{{ error }}</p>
-        <button class="ps-btn ps-btn-ghost" @click="cancel">Cancel</button>
+        <button class="ps-btn ps-btn-ghost" @click="cancel">{{ $t('Cancel') }}</button>
         <button class="ps-btn ps-btn-primary" :disabled="applying" @click="apply">
           {{ applying ? 'Applying…' : 'Apply to my CV' }}
         </button>
@@ -875,7 +868,7 @@ onBeforeUnmount(() => {
 .ps-check input { width: 15px; height: 15px; accent-color: var(--sfs-accent-2, #8b5cf6); }
 
 .ps-nudge { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-.ps-nudge span { font-size: 0.78rem; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); margin-right: 3px; }
+.ps-nudge span { font-size: 0.78rem; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); margin-inline-end: 3px; }
 .ps-nudge button {
   width: 28px; height: 28px; border-radius: 7px; cursor: pointer;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07); color: var(--sfs-text, #fff);
@@ -939,7 +932,7 @@ onBeforeUnmount(() => {
   padding: 14px 18px; border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.09); flex-wrap: wrap;
 }
 .ps-error { color: var(--sfs-danger-text, #fca5a5); font-size: 0.83rem; line-height: 1.5; margin-top: 10px; }
-.ps-error-inline { margin: 0; margin-right: auto; flex: 1 1 200px; }
+.ps-error-inline { margin: 0; margin-inline-end: auto; flex: 1 1 200px; }
 
 @media (max-width: 760px) {
   .ps-edit { grid-template-columns: 1fr; }

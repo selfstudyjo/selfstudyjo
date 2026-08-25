@@ -1,6 +1,6 @@
 <template>
   <div class="user-results">
-    <h1>My Results</h1>
+    <h1>{{ $t('My Results') }}</h1>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -9,21 +9,21 @@
         :class="{ active: activeTab === 'exams' }"
         @click="activeTab = 'exams'"
       >
-        Exam Results
+        {{ $t('Exam Results') }}
       </button>
       <button
         class="tab-btn"
         :class="{ active: activeTab === 'quizzes' }"
         @click="activeTab = 'quizzes'"
       >
-        Quiz Results
+        {{ $t('Quiz Results') }}
       </button>
       <button
         class="tab-btn"
         :class="{ active: activeTab === 'chart' }"
         @click="activeTab = 'chart'"
       >
-        Line Chart
+        {{ $t('Line Chart') }}
       </button>
     </div>
 
@@ -31,8 +31,8 @@
     <div class="tab-content">
       <!-- Exam Results -->
       <div v-if="activeTab === 'exams'" class="exam-results">
-        <div v-if="loading.exams" class="loading">Loading exam results...</div>
-        <div v-else-if="examResults.length === 0" class="empty">No exam results yet.</div>
+        <div v-if="loading.exams" class="loading">{{ $t('Loading exam results...') }}</div>
+        <div v-else-if="examResults.length === 0" class="empty">{{ $t('No exam results yet.') }}</div>
         <div v-else class="results-grid">
           <div
             v-for="result in examResults"
@@ -44,7 +44,7 @@
               <h3>{{ result.exam_title || result.exam }}</h3>
               <span class="score" :class="getScoreClass(result.score, result.result_status)">{{ result.score }}%</span>
             </div>
-            <p class="date">Taken: {{ formatDate(result.date_taken) }}</p>
+            <p class="date">{{ $t('Taken: {v0}', { v0: formatDate(result.date_taken) }) }}</p>
             <p class="status" :class="result.result_status.toLowerCase()">
               {{ result.result_status }}
             </p>
@@ -63,8 +63,8 @@
 
       <!-- Quiz Results -->
       <div v-if="activeTab === 'quizzes'" class="quiz-results">
-        <div v-if="loading.quizzes" class="loading">Loading quiz results...</div>
-        <div v-else-if="quizResults.length === 0" class="empty">No quiz results yet.</div>
+        <div v-if="loading.quizzes" class="loading">{{ $t('Loading quiz results...') }}</div>
+        <div v-else-if="quizResults.length === 0" class="empty">{{ $t('No quiz results yet.') }}</div>
         <div v-else class="results-grid">
           <div
             v-for="result in quizResults"
@@ -76,7 +76,7 @@
               <h3>{{ result.quiz_title || result.quiz }}</h3>
               <span class="score" :class="getScoreClass(result.score, result.result_status)">{{ result.score }}%</span>
             </div>
-            <p class="date">Taken: {{ formatDate(result.date_taken) }}</p>
+            <p class="date">{{ $t('Taken: {v0}', { v0: formatDate(result.date_taken) }) }}</p>
             <p class="status" :class="result.result_status.toLowerCase()">
               {{ result.result_status }}
             </p>
@@ -88,13 +88,13 @@
       <div v-if="activeTab === 'chart'" class="chart-tab">
         <div class="chart-filters">
           <label>
-            <input type="radio" value="exams" v-model="chartType" /> Exams
+            <input type="radio" value="exams" v-model="chartType" /> {{ $t('Exams') }}
           </label>
           <label>
-            <input type="radio" value="quizzes" v-model="chartType" /> Quizzes
+            <input type="radio" value="quizzes" v-model="chartType" /> {{ $t('Quizzes') }}
           </label>
           <select v-model="selectedFilterId" v-if="filterOptions.length">
-            <option value="">All</option>
+            <option value="">{{ $t('All') }}</option>
             <option v-for="opt in filterOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
@@ -103,7 +103,7 @@
         <div class="chart-container">
           <canvas ref="chartCanvas"></canvas>
         </div>
-        <p v-if="!chartData.length" class="empty">No data to display</p>
+        <p v-if="!chartData.length" class="empty">{{ $t('No data to display') }}</p>
       </div>
     </div>
   </div>

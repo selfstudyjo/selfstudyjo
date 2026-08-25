@@ -9,8 +9,8 @@
           </svg>
         </div>
         <div>
-          <h1>CV Builder</h1>
-          <p>Import, dictate, tailor and download a professional CV — every version saved to your account.</p>
+          <h1>{{ $t('CV Builder') }}</h1>
+          <p>{{ $t('Import, dictate, tailor and download a professional CV — every version saved to your account.') }}</p>
         </div>
       </div>
       <div class="cvb-header-actions">
@@ -23,32 +23,32 @@
 
     <!-- ═══ Service problems worth stating plainly ═══ -->
     <div v-if="serviceWarning" class="cvb-banner warn">
-      <strong>Heads up:</strong> {{ serviceWarning }}
+      <strong>{{ $t('Heads up:') }}</strong> {{ serviceWarning }}
     </div>
     <div v-if="error" class="cvb-banner error">
       {{ error }}
-      <button class="banner-retry" @click="reload">Retry</button>
+      <button class="banner-retry" @click="reload">{{ $t('Retry') }}</button>
     </div>
 
     <!-- ═══ Stats ═══ -->
     <section v-if="dashboard" class="cvb-stats">
       <div class="stat">
         <span class="stat-value">{{ dashboard.stats.total }}</span>
-        <span class="stat-label">CVs</span>
+        <span class="stat-label">{{ $t('CVs') }}</span>
       </div>
       <div class="stat">
         <span class="stat-value">{{ dashboard.stats.tailored }}</span>
-        <span class="stat-label">Tailored to a job</span>
+        <span class="stat-label">{{ $t('Tailored to a job') }}</span>
       </div>
       <div class="stat">
         <span class="stat-value">{{ dashboard.stats.average_completeness }}%</span>
-        <span class="stat-label">Average completeness</span>
+        <span class="stat-label">{{ $t('Average completeness') }}</span>
       </div>
       <div class="stat">
         <span class="stat-value">
           {{ dashboard.stats.best_match_score !== null ? dashboard.stats.best_match_score + '%' : '—' }}
         </span>
-        <span class="stat-label">Best job match</span>
+        <span class="stat-label">{{ $t('Best job match') }}</span>
       </div>
     </section>
 
@@ -59,9 +59,8 @@
         <div class="path-icon upload">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
         </div>
-        <h3>Upload your current CV</h3>
-        <p>PDF or DOCX. The AI reads it, pulls out every role, date and skill, and hands you an
-           editable CV you can then enhance.</p>
+        <h3>{{ $t('Upload your current CV') }}</h3>
+        <p>{{ $t('PDF or DOCX. The AI reads it, pulls out every role, date and skill, and hands you an editable CV you can then enhance.') }}</p>
 
         <label class="path-drop" :class="{ dragging }"
                @dragover.prevent="dragging = true"
@@ -69,8 +68,8 @@
                @drop.prevent="onDrop">
           <input ref="fileInput" type="file" accept=".pdf,.docx,.txt" @change="onFilePicked" />
           <span v-if="!uploading">
-            <strong>Choose a file</strong> or drop it here
-            <em>PDF, DOCX or TXT · up to 12 MB</em>
+            <strong>{{ $t('Choose a file') }}</strong> {{ $t('or drop it here') }}
+            <em>{{ $t('PDF, DOCX or TXT · up to 12 MB') }}</em>
           </span>
           <span v-else class="path-progress">
             <span class="spinner"></span>
@@ -80,7 +79,7 @@
 
         <p v-if="uploadError" class="path-error">{{ uploadError }}</p>
         <details v-if="uploadText" class="path-details">
-          <summary>See the text we read from your file ({{ uploadText.split(/\s+/).length }} words)</summary>
+          <summary>{{ $t('See the text we read from your file ({v0} words)', { v0: uploadText.split(/\s+/).length }) }}</summary>
           <pre>{{ uploadText.slice(0, 4000) }}</pre>
         </details>
       </article>
@@ -92,12 +91,11 @@
             <path d="M12 14a3 3 0 003-3V5a3 3 0 00-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.92V21h2v-3.08A7 7 0 0019 11h-2z"/>
           </svg>
         </div>
-        <h3>Build it by talking</h3>
-        <p>No CV to start from? Describe your experience out loud for a minute or two and the AI
-           writes the whole thing. Add a photo and pick a template afterwards.</p>
+        <h3>{{ $t('Build it by talking') }}</h3>
+        <p>{{ $t('No CV to start from? Describe your experience out loud for a minute or two and the AI writes the whole thing. Add a photo and pick a template afterwards.') }}</p>
 
         <button v-if="!showVoice" class="btn btn-secondary" @click="showVoice = true">
-          Start the voice builder
+          {{ $t('Start the voice builder') }}
         </button>
 
         <div v-else class="path-voice">
@@ -112,9 +110,9 @@
                     @click="buildFromVoice">
               {{ buildingVoice ? 'Writing your CV…' : 'Build my CV' }}
             </button>
-            <button class="btn btn-ghost" @click="showVoice = false">Cancel</button>
+            <button class="btn btn-ghost" @click="showVoice = false">{{ $t('Cancel') }}</button>
             <span v-if="voiceTranscript.trim().length < 60" class="path-note">
-              Keep going — about 60 characters of speech is the minimum.
+              {{ $t('Keep going — about 60 characters of speech is the minimum.') }}
             </span>
           </div>
           <p v-if="voiceError" class="path-error">{{ voiceError }}</p>
@@ -126,11 +124,10 @@
         <div class="path-icon paste">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0S9.6.84 9.18 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zm-7 0a1 1 0 110 2 1 1 0 010-2zm7 18H5V4h2v3h10V4h2v16z"/></svg>
         </div>
-        <h3>Paste text instead</h3>
-        <p>Already have your history written down — in an email, a LinkedIn export, a note? Paste
-           it and the AI structures it the same way.</p>
+        <h3>{{ $t('Paste text instead') }}</h3>
+        <p>{{ $t('Already have your history written down — in an email, a LinkedIn export, a note? Paste it and the AI structures it the same way.') }}</p>
 
-        <button v-if="!showPaste" class="btn btn-secondary" @click="showPaste = true">Paste CV text</button>
+        <button v-if="!showPaste" class="btn btn-secondary" @click="showPaste = true">{{ $t('Paste CV text') }}</button>
         <div v-else class="path-paste">
           <textarea v-model="pasteText" rows="7"
                     placeholder="Paste your CV or career history here…"></textarea>
@@ -139,7 +136,7 @@
                     @click="parsePasted">
               {{ parsing ? 'Reading it…' : 'Build from this text' }}
             </button>
-            <button class="btn btn-ghost" @click="showPaste = false">Cancel</button>
+            <button class="btn btn-ghost" @click="showPaste = false">{{ $t('Cancel') }}</button>
           </div>
           <p v-if="pasteError" class="path-error">{{ pasteError }}</p>
         </div>
@@ -150,28 +147,25 @@
         <div class="path-icon job">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2zm-6 0h-4V4h4v2z"/></svg>
         </div>
-        <h3>Start from the job you want</h3>
-        <p>No CV at all? Paste the advert and the AI writes a complete draft aimed at that
-           role — the right sections, the posting's skills, and real bullets you edit. Anything
-           it cannot know about you is left in <code>[brackets]</code> for you to fill in.</p>
+        <h3>{{ $t('Start from the job you want') }}</h3>
+        <p>{{ $t('No CV at all? Paste the advert and the AI writes a complete draft aimed at that role — the right sections, the posting\'s skills, and real bullets you edit. Anything it cannot know about you is left in') }} <code>[brackets]</code> {{ $t('for you to fill in.') }}</p>
 
         <button v-if="!showJob" class="btn btn-secondary" @click="showJob = true">
-          Build from a job description
+          {{ $t('Build from a job description') }}
         </button>
 
         <div v-else class="path-paste">
           <textarea v-model="jobText" rows="7"
                     placeholder="Paste the full job advert — responsibilities, requirements, nice-to-haves…"></textarea>
-          <p class="hint">{{ jobText.trim().length }} characters
+          <p class="hint">{{ $t('{v0} characters', { v0: jobText.trim().length }) }}
              <span v-if="jobText.trim().length && jobText.trim().length < 80">
-               — paste a bit more; 80 is the minimum.</span>
+               {{ $t('— paste a bit more; 80 is the minimum.') }}</span>
           </p>
 
           <textarea v-model="jobBackground" rows="4"
                     placeholder="Optional but worth 30 seconds: your name, where you have worked, how long, what you actually did. Whatever you write here becomes real content instead of a blank."></textarea>
           <p class="hint">
-            Leave it empty and you get a scaffold to fill in. Nothing is ever invented about
-            you — no employer, date, degree or certificate the AI has not been told.
+            {{ $t('Leave it empty and you get a scaffold to fill in. Nothing is ever invented about you — no employer, date, degree or certificate the AI has not been told.') }}
           </p>
 
           <div class="path-voice-actions">
@@ -179,7 +173,7 @@
                     @click="buildFromJob">
               {{ draftingJob ? 'Writing your draft…' : 'Draft my CV' }}
             </button>
-            <button class="btn btn-ghost" @click="showJob = false">Cancel</button>
+            <button class="btn btn-ghost" @click="showJob = false">{{ $t('Cancel') }}</button>
           </div>
           <p v-if="jobError" class="path-error">{{ jobError }}</p>
         </div>
@@ -189,20 +183,19 @@
     <!-- ═══ My CVs ═══ -->
     <section class="cvb-list">
       <div class="list-head">
-        <h2>My CVs <span v-if="cvs.length" class="count">{{ cvs.length }}</span></h2>
+        <h2>{{ $t('My CVs') }} <span v-if="cvs.length" class="count">{{ cvs.length }}</span></h2>
         <div class="list-tools">
-          <input v-model="search" type="search" placeholder="Search by title, name or role…" />
+          <input v-model="search" type="search" :placeholder="$t('Search by title, name or role…')" />
           <button class="btn btn-ghost" :disabled="loading" @click="reload">
             {{ loading ? 'Loading…' : 'Refresh' }}
           </button>
         </div>
       </div>
 
-      <div v-if="loading && !cvs.length" class="list-empty">Loading your CVs…</div>
+      <div v-if="loading && !cvs.length" class="list-empty">{{ $t('Loading your CVs…') }}</div>
 
       <div v-else-if="!cvs.length" class="list-empty">
-        <p>You have no CVs yet. Upload one, dictate one, or start from blank — all three end up in
-           the same editor.</p>
+        <p>{{ $t('You have no CVs yet. Upload one, dictate one, or start from blank — all three end up in the same editor.') }}</p>
       </div>
 
       <div v-else class="cv-grid">
@@ -210,7 +203,7 @@
           <div class="cv-card-top" :style="{ background: cv.accent_color || accentFor(cv.template) }">
             <span class="cv-card-template">{{ templateName(cv.template) }}</span>
             <span v-if="cv.tailored_to_job" class="cv-card-badge">
-              Tailored{{ cv.match_score !== null ? ` · ${cv.match_score}%` : '' }}
+              {{ $t('Tailored{v0}', { v0: cv.match_score !== null ? ` · ${cv.match_score}%` : '' }) }}
             </span>
           </div>
 
@@ -223,22 +216,21 @@
               <div class="cv-card-meter-fill" :style="{ width: cv.completeness + '%' }"></div>
             </div>
             <p class="cv-card-stats">
-              {{ cv.completeness }}% complete · {{ cv.experience_count }} role{{ cv.experience_count === 1 ? '' : 's' }}
-              · {{ cv.skill_count }} skill{{ cv.skill_count === 1 ? '' : 's' }} · {{ cv.words }} words
+              {{ $t('{v0}% complete · {v1} role{v2} · {v3} skill{v4} · {v5} words', { v0: cv.completeness, v1: cv.experience_count, v2: cv.experience_count === 1 ? '' : 's', v3: cv.skill_count, v4: cv.skill_count === 1 ? '' : 's', v5: cv.words }) }}
             </p>
             <p class="cv-card-updated">
-              {{ sourceLabel(cv.source) }} · updated {{ formatDate(cv.updated_at) }}
+              {{ $t('{v0} · updated {v1}', { v0: sourceLabel(cv.source), v1: formatDate(cv.updated_at) }) }}
             </p>
           </div>
 
           <div class="cv-card-actions">
-            <button class="btn btn-primary btn-sm" @click="open(cv.id)">Open</button>
+            <button class="btn btn-primary btn-sm" @click="open(cv.id)">{{ $t('Open') }}</button>
             <button class="btn btn-ghost btn-sm" :disabled="downloadingId === cv.id"
                     @click="askDownload(cv)">
               {{ downloadingId === cv.id ? '…' : 'Download' }}
             </button>
-            <button class="btn btn-ghost btn-sm" @click="askDuplicate(cv)">Copy</button>
-            <button class="btn btn-danger btn-sm" @click="confirmDelete(cv)">Delete</button>
+            <button class="btn btn-ghost btn-sm" @click="askDuplicate(cv)">{{ $t('Copy') }}</button>
+            <button class="btn btn-danger btn-sm" @click="confirmDelete(cv)">{{ $t('Delete') }}</button>
           </div>
         </article>
       </div>
@@ -246,9 +238,8 @@
 
     <!-- ═══ Templates gallery ═══ -->
     <section v-if="templates.length" class="cvb-templates">
-      <h2>Templates</h2>
-      <p class="section-sub">Every template renders identically in PDF and DOCX. You can switch
-         template on any CV at any time — it never changes your content.</p>
+      <h2>{{ $t('Templates') }}</h2>
+      <p class="section-sub">{{ $t('Every template renders identically in PDF and DOCX. You can switch template on any CV at any time — it never changes your content.') }}</p>
       <div class="tpl-grid">
         <article v-for="tpl in templates" :key="tpl.key" class="tpl-card">
           <div class="tpl-thumb" :class="`tpl-${tpl.layout}`" :style="{ '--tpl-accent': tpl.accent }">
@@ -270,17 +261,16 @@
     <!-- ═══ Download, with a name of the user's choosing ═══ -->
     <div v-if="pendingDownload" class="modal-backdrop" @click.self="pendingDownload = null">
       <div class="modal">
-        <h3>Download “{{ pendingDownload.title }}”</h3>
-        <p>Name the file. Six applications means six PDFs in one downloads folder, and every
-           one of them is called after you unless you say otherwise.</p>
+        <h3>{{ $t('Download “{v0}”', { v0: pendingDownload.title }) }}</h3>
+        <p>{{ $t('Name the file. Six applications means six PDFs in one downloads folder, and every one of them is called after you unless you say otherwise.') }}</p>
         <label class="modal-field">
-          <span>File name</span>
+          <span>{{ $t('File name') }}</span>
           <input v-model="downloadName" type="text" maxlength="70"
                  :placeholder="suggestedName(pendingDownload)"
                  @keyup.enter="doDownload(downloadFormat)" />
         </label>
         <p class="modal-hint">
-          Saves as <strong>{{ previewFilename }}</strong>
+          {{ $t('Saves as') }} <strong>{{ previewFilename }}</strong>
         </p>
         <div class="modal-actions">
           <button class="btn btn-primary" :disabled="!!downloadingId"
@@ -292,7 +282,7 @@
             {{ downloadingId && downloadFormat === 'docx' ? 'Building…' : 'Download DOCX' }}
           </button>
           <button class="btn btn-ghost" :disabled="!!downloadingId"
-                  @click="pendingDownload = null">Cancel</button>
+                  @click="pendingDownload = null">{{ $t('Cancel') }}</button>
         </div>
       </div>
     </div>
@@ -300,11 +290,10 @@
     <!-- ═══ Duplicate, with a name of the user's choosing ═══ -->
     <div v-if="pendingCopy" class="modal-backdrop" @click.self="pendingCopy = null">
       <div class="modal">
-        <h3>Copy “{{ pendingCopy.title }}”</h3>
-        <p>The copy is a separate CV — editing it never touches the original. Give it a name
-           you will recognise in the list.</p>
+        <h3>{{ $t('Copy “{v0}”', { v0: pendingCopy.title }) }}</h3>
+        <p>{{ $t('The copy is a separate CV — editing it never touches the original. Give it a name you will recognise in the list.') }}</p>
         <label class="modal-field">
-          <span>Name for the copy</span>
+          <span>{{ $t('Name for the copy') }}</span>
           <input ref="copyNameInput" v-model="copyName" type="text" maxlength="160"
                  @keyup.enter="doDuplicate" />
         </label>
@@ -313,7 +302,7 @@
                   @click="doDuplicate">
             {{ copying ? 'Copying…' : 'Create the copy' }}
           </button>
-          <button class="btn btn-ghost" :disabled="copying" @click="pendingCopy = null">Cancel</button>
+          <button class="btn btn-ghost" :disabled="copying" @click="pendingCopy = null">{{ $t('Cancel') }}</button>
         </div>
       </div>
     </div>
@@ -321,14 +310,13 @@
     <!-- ═══ Delete confirm ═══ -->
     <div v-if="pendingDelete" class="modal-backdrop" @click.self="pendingDelete = null">
       <div class="modal">
-        <h3>Delete this CV?</h3>
-        <p>“{{ pendingDelete.title }}” will be removed from your CV Builder. This cannot be undone
-           from here.</p>
+        <h3>{{ $t('Delete this CV?') }}</h3>
+        <p>{{ $t('“{v0}” will be removed from your CV Builder. This cannot be undone from here.', { v0: pendingDelete.title }) }}</p>
         <div class="modal-actions">
           <button class="btn btn-danger" :disabled="deleting" @click="doDelete">
             {{ deleting ? 'Deleting…' : 'Delete' }}
           </button>
-          <button class="btn btn-ghost" @click="pendingDelete = null">Cancel</button>
+          <button class="btn btn-ghost" @click="pendingDelete = null">{{ $t('Cancel') }}</button>
         </div>
       </div>
     </div>
@@ -721,7 +709,7 @@ onMounted(async () => {
 .cvb-banner.warn { background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.12); border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35); color: var(--sfs-warning-text, #fcd34d); }
 .cvb-banner.error { background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.12); border: 1px solid rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35); color: var(--sfs-danger-text, #fca5a5); }
 .banner-retry {
-  margin-left: auto; background: transparent; border: 1px solid currentColor;
+  margin-inline-start: auto; background: transparent; border: 1px solid currentColor;
   color: inherit; padding: 4px 12px; border-radius: 7px; cursor: pointer; font-size: 0.8rem;
 }
 
@@ -816,7 +804,7 @@ onMounted(async () => {
 .list-head h2 { font-size: 1.24rem; font-weight: 650; }
 .count {
   font-size: 0.78rem; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1); padding: 2px 9px;
-  border-radius: 20px; margin-left: 7px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  border-radius: 20px; margin-inline-start: 7px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
 }
 .list-tools { display: flex; gap: 9px; align-items: center; }
 .list-tools input {
@@ -898,7 +886,7 @@ onMounted(async () => {
 .tpl-card p { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55); font-size: 0.79rem; line-height: 1.5; margin-bottom: 9px; }
 .tpl-tag {
   display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09); color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65); margin-right: 6px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09); color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65); margin-inline-end: 6px;
 }
 .tpl-tag.safe { background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.15); color: var(--sfs-success-text, #86efac); }
 .tpl-best { font-size: 0.72rem; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.4); }

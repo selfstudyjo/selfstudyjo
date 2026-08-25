@@ -2,8 +2,8 @@
   <div class="plans-container">
     <!-- Header -->
     <header class="header">
-      <h1 class="title">Choose Your Plan</h1>
-      <p class="subtitle">Unlock your learning potential with the perfect plan tailored for your journey</p>
+      <h1 class="title">{{ $t('Choose Your Plan') }}</h1>
+      <p class="subtitle">{{ $t('Unlock your learning potential with the perfect plan tailored for your journey') }}</p>
     </header>
 
     <!-- Pending Payment Banner -->
@@ -11,24 +11,24 @@
       <div class="banner-content">
         <div class="banner-icon" aria-hidden="true">⏳</div>
         <div class="banner-text">
-          <h3>Payment Pending</h3>
-          <p>You have a pending payment for the <strong>{{ pendingPaymentPlan?.title }}</strong> plan.</p>
+          <h3>{{ $t('Payment Pending') }}</h3>
+          <p>{{ $t('You have a pending payment for the') }} <strong>{{ pendingPaymentPlan?.title }}</strong> {{ $t('plan.') }}</p>
           <div class="banner-details">
             <span class="detail-item">
-              Amount: <strong>JOD {{ pendingPayment?.amount }}</strong>
+              {{ $t('Amount:') }} <strong>{{ $t('JOD {v0}', { v0: pendingPayment?.amount }) }}</strong>
             </span>
             <span class="detail-item">
-              Status: <span class="status pending">{{ pendingPayment?.status }}</span>
+              {{ $t('Status:') }} <span class="status pending">{{ pendingPayment?.status }}</span>
             </span>
             <span class="detail-item">
-              Created: {{ formatDate(pendingPayment?.created_at || '') }}
+              {{ $t('Created: {v0}', { v0: formatDate(pendingPayment?.created_at || '') }) }}
             </span>
           </div>
         </div>
         <div class="banner-actions">
           <button @click="viewPaymentDetails" class="btn view-payment-btn" type="button">
             <span class="btn-icon" aria-hidden="true">🔍</span>
-            <span>View Details</span>
+            <span>{{ $t('View Details') }}</span>
           </button>
           <button
             @click="cancelPayment(pendingPayment?.external_id || '')"
@@ -46,17 +46,17 @@
     <!-- Loading -->
     <div v-if="loading" class="loading-container" role="status" aria-live="polite">
       <div class="loading-spinner" aria-hidden="true"></div>
-      <p class="loading-text">Loading plans...</p>
+      <p class="loading-text">{{ $t('Loading plans...') }}</p>
     </div>
 
     <!-- Error -->
     <div v-else-if="error" class="error-container" role="alert">
       <div class="error-icon" aria-hidden="true">⚠️</div>
-      <h3 class="error-title">Unable to load plans</h3>
+      <h3 class="error-title">{{ $t('Unable to load plans') }}</h3>
       <p class="error-message">{{ error }}</p>
       <button @click="fetchPlans" class="btn retry-btn" type="button">
         <span class="btn-icon" aria-hidden="true">🔄</span>
-        <span>Try Again</span>
+        <span>{{ $t('Try Again') }}</span>
       </button>
     </div>
 
@@ -73,10 +73,10 @@
         @mousemove="handleCardMove"
       >
         <div v-if="hasPendingPaymentForPlan(plan.external_id)" class="pending-badge">
-          ⏳ Pending
+          {{ $t('⏳ Pending') }}
         </div>
         <div v-else-if="isFreePlan(plan.external_id)" class="free-badge">
-          ✨ {{ FREE_TRIAL_DAYS }} days free
+          {{ $t('✨ {v0} days free', { v0: FREE_TRIAL_DAYS }) }}
         </div>
 
         <div class="plan-header">
@@ -93,7 +93,7 @@
         </div>
 
         <div class="plan-features">
-          <h4 class="features-title">What's included</h4>
+          <h4 class="features-title">{{ $t('What\'s included') }}</h4>
           <ul class="features-list">
             <li
               v-for="feature in plan.features"
@@ -139,7 +139,7 @@
 
     <!-- Current Subscriptions -->
     <section v-if="userSubscriptions.length > 0" class="current-subscriptions">
-      <h3 class="subscriptions-title">Your Current Subscriptions</h3>
+      <h3 class="subscriptions-title">{{ $t('Your Current Subscriptions') }}</h3>
       <div class="subscriptions-list">
         <div
           v-for="subscription in userSubscriptions"
@@ -149,20 +149,20 @@
           <div class="subscription-info">
             <h4 class="subscription-name">{{ subscription.title }}</h4>
             <p class="subscription-status">
-              <span>Status:</span>
+              <span>{{ $t('Status:') }}</span>
               <span :class="['status', subscription.is_active ? 'active' : 'inactive']">
                 {{ subscription.is_active ? 'Active' : 'Inactive' }}
               </span>
             </p>
             <p class="subscription-expiry">
-              <span>Expires:</span>
+              <span>{{ $t('Expires:') }}</span>
               <span>{{ formatDate(subscription.expire_date) }}</span>
             </p>
           </div>
           <div class="subscription-actions">
             <router-link :to="`/my-plans`" class="btn view-details-btn">
               <span class="btn-icon" aria-hidden="true">📄</span>
-              <span>View Details</span>
+              <span>{{ $t('View Details') }}</span>
             </router-link>
           </div>
         </div>
@@ -171,16 +171,16 @@
 
     <!-- Payment History -->
     <section v-if="allPayments.length > 0" class="all-payments-section">
-      <h3 class="payments-title">Payment History</h3>
+      <h3 class="payments-title">{{ $t('Payment History') }}</h3>
       <div class="payments-table" role="table">
         <div class="table-header" role="row">
-          <div class="header-cell" role="columnheader">Payment ID</div>
-          <div class="header-cell" role="columnheader">Plan</div>
-          <div class="header-cell" role="columnheader">Amount</div>
-          <div class="header-cell" role="columnheader">Method</div>
-          <div class="header-cell" role="columnheader">Status</div>
-          <div class="header-cell" role="columnheader">Date</div>
-          <div class="header-cell" role="columnheader">Actions</div>
+          <div class="header-cell" role="columnheader">{{ $t('Payment ID') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Plan') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Amount') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Method') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Status') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Date') }}</div>
+          <div class="header-cell" role="columnheader">{{ $t('Actions') }}</div>
         </div>
 
         <div class="table-body">
@@ -192,41 +192,41 @@
             role="row"
           >
             <div class="table-cell" role="cell">
-              <span class="cell-label">Payment ID</span>
+              <span class="cell-label">{{ $t('Payment ID') }}</span>
               <span class="cell-value payment-id">{{ truncateId(payment.external_id) }}</span>
             </div>
             <div class="table-cell" role="cell">
-              <span class="cell-label">Plan</span>
+              <span class="cell-label">{{ $t('Plan') }}</span>
               <span class="cell-value plan-name">{{ getPlanTitle(payment.subscription_id) }}</span>
             </div>
             <div class="table-cell" role="cell">
-              <span class="cell-label">Amount</span>
-              <span class="cell-value payment-amount">JOD {{ payment.amount }}</span>
+              <span class="cell-label">{{ $t('Amount') }}</span>
+              <span class="cell-value payment-amount">{{ $t('JOD {v0}', { v0: payment.amount }) }}</span>
             </div>
             <div class="table-cell" role="cell">
-              <span class="cell-label">Method</span>
+              <span class="cell-label">{{ $t('Method') }}</span>
               <span class="cell-value payment-method">{{ payment.payment_method }}</span>
             </div>
             <div class="table-cell" role="cell">
-              <span class="cell-label">Status</span>
+              <span class="cell-label">{{ $t('Status') }}</span>
               <span :class="['status', payment.status.toLowerCase()]">
                 {{ payment.status }}
               </span>
             </div>
             <div class="table-cell" role="cell">
-              <span class="cell-label">Date</span>
+              <span class="cell-label">{{ $t('Date') }}</span>
               <span class="cell-value payment-date">{{ formatDate(payment.created_at) }}</span>
             </div>
             <div class="table-cell actions" role="cell">
-              <span class="cell-label">Actions</span>
+              <span class="cell-label">{{ $t('Actions') }}</span>
               <button
                 class="btn view-details-btn"
                 @click="viewPaymentDetailsById(payment.external_id)"
                 type="button"
-                aria-label="View payment details"
+                :aria-label="$t('View payment details')"
               >
                 <span class="btn-icon" aria-hidden="true">👁️</span>
-                <span>View</span>
+                <span>{{ $t('View') }}</span>
               </button>
               <button
                 v-if="payment.status === 'PENDING'"
@@ -235,7 +235,7 @@
                 :disabled="cancellingPayment === payment.external_id"
                 :title="cancellingPayment === payment.external_id ? 'Cancelling...' : 'Cancel payment'"
                 type="button"
-                aria-label="Cancel payment"
+                :aria-label="$t('Cancel payment')"
               >
                 {{ cancellingPayment === payment.external_id ? '⏳' : '✕' }}
               </button>

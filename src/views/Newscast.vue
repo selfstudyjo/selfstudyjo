@@ -42,6 +42,8 @@
  */
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+
+import { localeId } from '@/i18n/runtime';
 import { onBeforeRouteLeave } from 'vue-router';
 import {
     Radio, Play, Pause, SkipForward, SkipBack, Square, Volume2, VolumeX,
@@ -172,13 +174,68 @@ const UI = {
             + 'بعد إصلاح الخادم.',
         breaking: 'عاجل', fresh: 'جديد',
     },
+    /*
+     * Chinese — the page's own chrome only.
+     *
+     * There is no Chinese BULLETIN and this entry does not imply one: Airflow
+     * scrapes RT and Al Jazeera in Arabic and English, so those are the two the
+     * category picker offers. What this gives a Chinese reader is a Chinese
+     * page around whichever bulletin they choose, which is the honest version
+     * of "the Newscast supports Chinese" — the alternative was an English page
+     * with an English bulletin, on the one screen that needs no account at all.
+     */
+    zh: {
+        dir: 'ltr', title: '新闻播报', subtitle: '国际新闻，每小时为你播报',
+        language: '语言', category: '分类', play: '开始播报',
+        pause: '暂停', resume: '继续', stop: '结束', next: '下一条',
+        previous: '上一条', refresh: '刷新', loading: '正在加载新闻……',
+        noCategories: '还没有发布任何新闻。每小时的抓取任务可能没有运行。',
+        empty: '此分类目前没有新闻。', onAir: '直播中', ready: '就绪',
+        updated: '更新于', stories: '条', running: '播报时长',
+        readDetail: '播报详细内容', headlinesOnly: '仅播报头条',
+        speed: '速度', muted: '音乐已关闭', unmuted: '音乐已开启',
+        openOriginal: '打开原文', rundown: '播报顺序',
+        unsupported: '此浏览器无法朗读文字。下方的头条仍然是实时的。',
+        sharedVoice: '唯一可用的语音',
+        noVoice: '没有匹配的语音',
+        voices: '语音',
+        autoVoice: '自动',
+        noVoiceHelp: '此设备没有安装相应语言的语音，因此新闻由 Self Study 语音服务朗读。'
+            + '无需安装任何东西。',
+        speechFailed: '语音合成停止响应。请重试，或更换语音来源。',
+        source: '语音来自', sourceAuto: '自动', sourceDevice: '此设备',
+        sourceServer: 'Self Study（任意设备可用）',
+        buffering: '正在准备音频……',
+        serverVoice: 'Self Study 语音服务',
+        maleVoice: '男声', femaleVoice: '女声',
+        noPairHelp: '此设备只有单一性别的语音，因此两位主播改由 Self Study 语音服务朗读。',
+        soloHelp: '此副本上的语音服务目前只能生成一个声音，因此本次播报由一位主播完成。'
+            + '副本修复后会自动恢复两位主播 —— 否则其中一位会被用错性别的声音朗读。',
+        soloBadge: '单人播报',
+        onAirVoices: '在播语音',
+        shapedBadge: '替代声音',
+        shapedHelp: '此副本上的语音服务目前只有女声，因此 Adam 使用一个调整到他音域的替代声音朗读。'
+            + '他仍然保留自己的位置，副本修复后会自动恢复他本来的声音。',
+        breaking: '突发', fresh: '最新',
+    },
 } as const;
 
 /* ------------------------------------------------------------------ *
  * State
  * ------------------------------------------------------------------ */
 
-const language = ref<LanguageCode>('en');
+/**
+ * The BULLETIN's language — which set of scraped stories to read.
+ *
+ * Opens on the site language when there are bulletins in it, and on English
+ * otherwise: an Arabic reader arriving on this page wants Arabic news, and a
+ * Chinese one has no Chinese news to want. Only the OPENING value, so the
+ * category picker still switches it freely — somebody reading the site in
+ * Arabic is perfectly entitled to listen to the English bulletin.
+ */
+const language = ref<LanguageCode>(
+    (localeId.value === 'ar' || localeId.value === 'en') ? localeId.value : 'en',
+);
 const languages = ref<NewsLanguageInfo[]>([]);
 const categories = ref<NewsCategory[]>([]);
 const activeKey = ref('');
@@ -253,7 +310,19 @@ let shapedSource: AudioBufferSourceNode | null = null;
  */
 const shapedBuffers = new Map<string, AudioBuffer>();
 
-const t = computed(() => UI[language.value]);
+/**
+ * The page's own chrome, in the SITE's language — not the bulletin's.
+ *
+ * These are two different questions and they used to be one, which is why an
+ * Arabic reader listening to the English bulletin got English buttons: `UI` was
+ * indexed by `language`, the bulletin selector. Switching the story language
+ * should change the stories, not the controls.
+ *
+ * Falls back to the bulletin language for a site language `UI` has no entry
+ * for, which cannot happen today (all three are present) and is the right
+ * behaviour if a fourth locale is added before its newscast strings are.
+ */
+const t = computed(() => UI[localeId.value as keyof typeof UI] ?? UI[language.value]);
 const rtl = computed(() => isRtl(language.value));
 const anchorNames = computed(() => ANCHOR_NAMES[language.value]);
 
@@ -1320,7 +1389,7 @@ onBeforeRouteLeave(() => {
                 <label class="picker">
                     <span class="picker__label"><Languages :size="14" /> {{ t.language }}</span>
                     <select v-model="language" class="picker__select">
-                        <option value="en">English</option>
+                        <option value="en">{{ $t('English') }}</option>
                         <option value="ar">العربية</option>
                     </select>
                 </label>

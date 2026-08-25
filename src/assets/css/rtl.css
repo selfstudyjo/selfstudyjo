@@ -1,0 +1,292 @@
+/**
+ * What `dir="rtl"` cannot do on its own.
+ *
+ * Loaded LAST, after every page stylesheet, because its whole job is to correct
+ * declarations those files have already made. Everything here is scoped to
+ * `[dir='rtl']` on the root, so in the other two languages this file costs one
+ * failed selector match per rule and changes nothing.
+ *
+ * ============================================================
+ * WHAT IS NOT IN HERE, AND WHY THAT IS THE POINT
+ * ============================================================
+ *
+ * There is no `margin-right` here undoing a `margin-left` there, and there must
+ * never be. `tools/i18n-wrap/logical.mjs` converted 324 declarations across 41
+ * stylesheets and 76 scoped blocks to `margin-inline-start` and friends, which
+ * are the SAME declaration in both directions — so a spacing decision lives in
+ * one place and a rule written next year is right in both languages without
+ * anybody thinking about it. A mirror sheet is the alternative and it rots: two
+ * places per decision, and the second one is invisible until a reader who
+ * cannot report in English notices.
+ *
+ * So this file holds only the four kinds of thing a logical property cannot
+ * express:
+ *
+ *   1. absolute positioning, where `inset-inline-start` is not a safe rewrite
+ *      of `left` (see `logical.mjs` — the `left: 50%; translateX(-50%)`
+ *      centring pattern breaks);
+ *   2. geometry: transforms and glyphs that point somewhere;
+ *   3. subtrees that MUST NOT mirror — code, canvases, and the newscast set;
+ *   4. bidi isolation, which is a class of bug the other two languages simply
+ *      do not have.
+ */
+
+/* ------------------------------------------------------------------ *
+ * 1. The sidebar
+ * ------------------------------------------------------------------ */
+
+/*
+ * `side-nav.css` pins the rail with `left: 0`, and the content beside it is
+ * already offset with `margin-inline-start`, so that half flipped for free.
+ * This is the other half.
+ *
+ * The mobile drawer is the interesting one: it is parked off-screen with
+ * `transform: translateX(-100%)` and slid in. A transform is geometry and does
+ * not flip, so without this the drawer on an Arabic phone slides in from the
+ * left — over the rail it is supposed to be replacing — and the backdrop
+ * covers the wrong half of the screen.
+ */
+[dir='rtl'] .sidebar {
+    left: auto;
+    right: 0;
+}
+
+[dir='rtl'] .sidebar.mobile-hidden,
+[dir='rtl'] .sidebar.is-closed {
+    transform: translateX(100%);
+}
+
+/* The collapse handle and the mobile toggle both sit on the rail's inner edge. */
+[dir='rtl'] .collapse-btn,
+[dir='rtl'] .sidebar-toggle,
+[dir='rtl'] .mobile-menu-btn {
+    left: auto;
+    right: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ *
+ * 2. Glyphs and transforms that point somewhere
+ * ------------------------------------------------------------------ */
+
+/*
+ * An arrow is a direction, not a decoration.
+ *
+ * "Back" points at the way out and "Next" points at the way on, and in Arabic
+ * both of those are the other way round — so a chevron that is not mirrored is
+ * a button whose icon contradicts its label. CSS cannot rewrite an SVG path,
+ * but it can mirror the box, and for a symmetrical-in-the-other-axis glyph
+ * (every chevron, caret, arrow and triangle in this app) that is exactly right.
+ *
+ * Applied by class rather than to every `svg`, because most icons here are NOT
+ * directional — a bell, a camera, a user, a bin — and mirroring those is a
+ * subtle wrongness nobody can name. `.sfs-flip` is the opt-in and
+ * `.sfs-noflip` is the escape hatch for a directional-looking icon that must
+ * not move.
+ */
+[dir='rtl'] .sfs-flip,
+[dir='rtl'] .nav-arrow,
+[dir='rtl'] .chevron,
+[dir='rtl'] .back-arrow {
+    transform: scaleX(-1);
+}
+
+[dir='rtl'] .sfs-noflip {
+    transform: none;
+}
+
+/*
+ * A slider fills from its start edge. `input[type=range]` gets that right on
+ * its own from `dir`; a hand-built meter whose fill is a `width` on a child
+ * does too, because block layout starts at the inline start. What does NOT is
+ * a fill positioned with `left: 0`, so those name themselves.
+ */
+[dir='rtl'] .progress-fill,
+[dir='rtl'] .meter__fill,
+[dir='rtl'] .lb-meter__fill,
+[dir='rtl'] .bar-fill {
+    left: auto;
+    right: 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * 3. Subtrees that must not mirror
+ * ------------------------------------------------------------------ */
+
+/*
+ * CODE IS NOT RIGHT-TO-LEFT, and this is the single most valuable rule in the
+ * file.
+ *
+ * A shell command, a SQL statement, a Python function and a JSON document are
+ * left-to-right in every language on earth. Rendered in an RTL context they do
+ * not merely look odd: the bidi algorithm reorders the punctuation, so
+ * `ls -la /var/log | grep error` renders with the pipe and the flags moved and
+ * a student copying it gets a command that does not run. This platform is a
+ * study platform whose labs are SQL, Linux and Python — the Labs page, the
+ * runbooks, the AI chat's code blocks and the Roblox tool are most of what an
+ * Arabic-reading student is here for.
+ */
+[dir='rtl'] pre,
+[dir='rtl'] code,
+[dir='rtl'] samp,
+[dir='rtl'] kbd,
+[dir='rtl'] .hljs,
+[dir='rtl'] .code-block,
+[dir='rtl'] .terminal,
+[dir='rtl'] .lab-output,
+[dir='rtl'] .cm-editor,
+[dir='rtl'] .monaco-editor {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+}
+
+/*
+ * A canvas has no `dir`, so nothing here reaches inside one — the chart decides
+ * its own layout from the `rtl` flag its config carries (see
+ * `LeaderboardChart.vue`). What this stops is the canvas's own BOX being
+ * mirrored relative to the axis labels its config just placed, which reads as
+ * the plot area having come loose from its axis.
+ */
+[dir='rtl'] canvas {
+    direction: ltr;
+}
+
+/*
+ * The newscast set. It already pins itself `direction: ltr` and says at length
+ * why — the three columns are photographs of one room, so mirroring puts both
+ * presenters facing off the edge of the screen and breaks the desk at both
+ * joins. This is belt and braces at the page level, because that file's rule is
+ * on `.stage__room` and a future wrapper is one careless `direction: inherit`
+ * away from undoing it.
+ */
+[dir='rtl'] .stage,
+[dir='rtl'] .stage__room {
+    direction: ltr;
+}
+
+/* ------------------------------------------------------------------ *
+ * 4. Bidi isolation
+ * ------------------------------------------------------------------ */
+
+/*
+ * A LATIN RUN INSIDE ARABIC TEXT NEEDS ISOLATING, AND THIS IS A CLASS OF BUG
+ * THE OTHER TWO LANGUAGES DO NOT HAVE AT ALL.
+ *
+ * The Unicode bidi algorithm resolves a run's direction from its neighbours, so
+ * neutral characters — a dot, a slash, a colon, a hyphen, a bracket, a digit —
+ * take the direction of whatever surrounds them. Inside an Arabic paragraph
+ * that means:
+ *
+ *   - `sfscertificate1.pythonanywhere.com` renders with its dots relocated;
+ *   - a uuid renders with its hyphens in the wrong places, and this platform
+ *     prints uuids on the certificate, payment and appointment screens;
+ *   - `19.90 JOD` can render as `JOD 19.90` with the decimal point moved;
+ *   - `v1.2.3` becomes `1.2.3v`.
+ *
+ * None of it raises, none of it is a layout problem, and every one of them is a
+ * value somebody may be asked to read back over the phone or type into a form.
+ *
+ * `unicode-bidi: isolate` fixes it by making the run its own bidi paragraph, so
+ * it is laid out on its own terms and merely *placed* by the surrounding text.
+ * `plaintext` goes one better for content whose direction is not known ahead of
+ * time — a chat message, a comment, a notification — by deciding from the
+ * first strong character in the string itself. That is why user-written content
+ * gets `plaintext` and machine identifiers get `isolate`.
+ */
+[dir='rtl'] .sfs-ltr,
+[dir='rtl'] .user-cell-id,
+[dir='rtl'] .record-id,
+[dir='rtl'] .external-id,
+[dir='rtl'] .uuid,
+[dir='rtl'] time,
+[dir='rtl'] .cert-id,
+[dir='rtl'] .amount,
+[dir='rtl'] .price {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+}
+
+/*
+ * Content somebody else wrote, in a language nobody here chose.
+ *
+ * `plaintext` reads the direction out of the string, so an Arabic message in a
+ * mostly-English thread renders right-to-left and an English message in an
+ * Arabic thread renders left-to-right — each on its own terms, in the same
+ * list, with no per-message attribute and nothing to guess. This applies in
+ * BOTH directions, which is why it is the one block here not scoped to
+ * `[dir='rtl']`: a mixed thread is mixed whichever language the interface is
+ * in, and an Arabic message in an English page is mangled by exactly the same
+ * algorithm.
+ */
+.sfs-bidi,
+.message-text,
+.msg-body,
+.notification-message,
+.comment-text,
+.bubble__text {
+    unicode-bidi: plaintext;
+}
+
+/*
+ * A field whose CONTENT is not prose.
+ *
+ * An email address, a URL, a phone number or a password typed into an RTL
+ * field puts the caret on the right and reorders the punctuation as it is
+ * typed, which is unusable rather than untidy — the reader watches their own
+ * address rearrange itself. The input types say what they hold, so no class is
+ * needed and nothing has to be remembered at the call site.
+ */
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='url'],
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] input[type='number'],
+[dir='rtl'] input[inputmode='numeric'],
+[dir='rtl'] input.sfs-ltr,
+[dir='rtl'] textarea.sfs-ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+/*
+ * ...but the PLACEHOLDER of such a field is prose, and it is in the reader's
+ * language. Left in the LTR field above it is right-aligned into the far
+ * corner, away from where the reader is looking.
+ */
+[dir='rtl'] input[type='email']::placeholder,
+[dir='rtl'] input[type='url']::placeholder,
+[dir='rtl'] input[type='tel']::placeholder,
+[dir='rtl'] input[type='password']::placeholder {
+    direction: rtl;
+    text-align: right;
+}
+
+/* ------------------------------------------------------------------ *
+ * 5. Two odds and ends worth having
+ * ------------------------------------------------------------------ */
+
+/*
+ * The scrollbar's corner and the shadow direction are the only two places a
+ * mirrored page still looks assembled from the wrong side. Shadows are light,
+ * and light does not move when a language does — so this deliberately does
+ * NOT flip them. It is here as a note rather than a rule, because "flip the
+ * shadows too" is the obvious next change and it is wrong.
+ */
+
+/*
+ * Arabic script has taller ascenders and descenders than Latin at the same
+ * nominal size, so a line height tuned on English clips the diacritics off the
+ * top of a heading. This is the one typographic concession in the file and it
+ * is deliberately small: a blanket font-size bump would break every layout the
+ * 320px-to-4K work in `responsive.css` measured.
+ */
+[dir='rtl'] {
+    line-height: 1.7;
+}
+
+[dir='rtl'] h1,
+[dir='rtl'] h2,
+[dir='rtl'] h3 {
+    line-height: 1.45;
+}

@@ -1,7 +1,7 @@
 <template>
   <div class="board">
     <header class="board-head">
-      <button class="back" title="Back to papers" @click="leave">←</button>
+      <button class="back" :title="$t('Back to papers')" @click="leave">←</button>
 
       <div class="title-block">
         <input
@@ -9,7 +9,7 @@
           v-model="title"
           class="title-input"
           maxlength="200"
-          aria-label="Paper title"
+          :aria-label="$t('Paper title')"
           @blur="renameIfChanged"
           @keydown.enter="($event.target as HTMLInputElement).blur()"
         >
@@ -35,14 +35,14 @@
       </div>
 
       <div class="head-actions">
-        <span v-if="permission === 'read'" class="pill view">View only</span>
-        <span v-else-if="permission === 'write'" class="pill edit">Can edit</span>
+        <span v-if="permission === 'read'" class="pill view">{{ $t('View only') }}</span>
+        <span v-else-if="permission === 'write'" class="pill edit">{{ $t('Can edit') }}</span>
 
         <button v-if="canAdminister" class="btn ghost" @click="showShare = true">
-          Share<template v-if="paper?.share_count"> · {{ paper.share_count }}</template>
+          {{ $t('Share') }}<template v-if="paper?.share_count"> · {{ paper.share_count }}</template>
         </button>
-        <button class="btn ghost" title="Save a copy to my papers" @click="duplicate">
-          Duplicate
+        <button class="btn ghost" :title="$t('Save a copy to my papers')" @click="duplicate">
+          {{ $t('Duplicate') }}
         </button>
       </div>
     </header>
@@ -61,16 +61,15 @@
       @zoom-out="canvas?.zoomOut()"
     />
 
-    <div v-if="loading" class="state">Opening the paper…</div>
+    <div v-if="loading" class="state">{{ $t('Opening the paper…') }}</div>
 
     <div v-else-if="loadError" class="state error">
       <h2>{{ loadError }}</h2>
       <p v-if="denied">
-        This paper is private, or it is no longer shared with you. Ask whoever owns
-        it to share it again.
+        {{ $t('This paper is private, or it is no longer shared with you. Ask whoever owns it to share it again.') }}
       </p>
       <button class="btn primary" @click="$router.push({ name: 'DrawPapers' })">
-        Back to my papers
+        {{ $t('Back to my papers') }}
       </button>
     </div>
 
@@ -106,12 +105,11 @@
 
     <div v-if="confirmClear" class="overlay" @click.self="confirmClear = false">
       <div class="dialog">
-        <h2>Clear this paper?</h2>
-        <p>Everything drawn on it will be erased, for everyone. Undo can bring it back
-          while this tab stays open.</p>
+        <h2>{{ $t('Clear this paper?') }}</h2>
+        <p>{{ $t('Everything drawn on it will be erased, for everyone. Undo can bring it back while this tab stays open.') }}</p>
         <footer>
-          <button class="btn ghost" @click="confirmClear = false">Cancel</button>
-          <button class="btn danger" @click="clearPage">Clear the paper</button>
+          <button class="btn ghost" @click="confirmClear = false">{{ $t('Cancel') }}</button>
+          <button class="btn danger" @click="clearPage">{{ $t('Clear the paper') }}</button>
         </footer>
       </div>
     </div>
@@ -692,7 +690,7 @@ async function leave() {
   place-items: center;
   width: 29px;
   height: 29px;
-  margin-left: -7px;
+  margin-inline-start: -7px;
   border-radius: 50%;
   border: 2px solid var(--sfs-border-strong, #fff);
   color: var(--sfs-text, #fff);
@@ -700,7 +698,7 @@ async function leave() {
   font-weight: 700;
   cursor: default;
 }
-.face:first-child { margin-left: 0; }
+.face:first-child { margin-inline-start: 0; }
 .face.more { background: var(--sfs-accent, #64748b); }
 
 .head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }

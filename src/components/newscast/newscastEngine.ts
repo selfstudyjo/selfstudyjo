@@ -565,11 +565,46 @@ const KNOWN_GENDER: Record<string, 'female' | 'male'> = {
     aaron: 'male', matthew: 'male', justin: 'male', william: 'male',
     liam: 'male', christopher: 'male', eric: 'male', roger: 'male',
     steffan: 'male', george: 'male', james: 'male',
+    // Chinese.
+    //
+    // Added when the platform gained a Chinese interface. There is no Chinese
+    // BULLETIN — Airflow scrapes RT and Al Jazeera in Arabic and English only —
+    // so nothing on the newscast casts one of these. They are here because
+    // `castVoice` in `cast/actors.ts` imports `genderOf` from this file rather
+    // than keeping a second copy of the table (see the note above it), and the
+    // Job Interview room and the Toastmasters meeting DO speak Chinese.
+    //
+    // The gender is not guessable from the romanisation by any rule an
+    // English-tuned hint list would apply, which is why every one is listed:
+    // `Yunxi`, `Yunjian`, `Yunyang` and `Yunfeng` are all MALE and share the
+    // `Yun` prefix; `Xiaoxiao`, `Xiaoyi`, `Xiaochen` and `Xiaohan` are all
+    // FEMALE and share `Xiao`. A substring guess finds nothing in any of them
+    // and casts at random — which in a one-speaker room means the interviewer's
+    // gender changes between questions.
+    xiaoxiao: 'female', xiaoyi: 'female', xiaochen: 'female', xiaohan: 'female',
+    xiaomeng: 'female', xiaomo: 'female', xiaoqiu: 'female', xiaorui: 'female',
+    xiaoshuang: 'female', xiaoyan: 'female', xiaoyou: 'female', xiaozhen: 'female',
+    huihui: 'female', yaoyao: 'female', hanhan: 'female', yating: 'female',
+    hsiaochen: 'female', hsiaoyu: 'female', tingting: 'female', liliang: 'female',
+    yunxi: 'male', yunjian: 'male', yunyang: 'male', yunfeng: 'male',
+    yunhao: 'male', yunye: 'male', yunze: 'male', yunxia: 'male',
+    kangkang: 'male', yunjhe: 'male', zhiwei: 'male',
 };
 
-/** Split a voice name into lowercase words, so `ali` cannot match `Australia`. */
+/**
+ * Split a voice name into lowercase words, so `ali` cannot match `Australia`.
+ *
+ * The class admits CJK as well as Latin and Arabic. Without it a voice named
+ * entirely in its own script splits into nothing and the table above can never
+ * match it — and `getVoices()` really does return both spellings depending on
+ * the platform: `Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)` on
+ * Windows, and names carrying Han characters on some Android builds.
+ */
 function words(name: string): string[] {
-    return (name || '').toLowerCase().split(/[^a-z؀-ۿ]+/).filter(Boolean);
+    return (name || '')
+        .toLowerCase()
+        .split(/[^a-z؀-ۿ㐀-䶿一-鿿]+/)
+        .filter(Boolean);
 }
 
 /**

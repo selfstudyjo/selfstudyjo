@@ -5,21 +5,21 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
         </svg>
-        Back to Runbooks
+        {{ $t('Back to Runbooks') }}
       </button>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner"></div>
-        <p>Loading runbook...</p>
+        <p>{{ $t('Loading runbook...') }}</p>
       </div>
 
       <!-- Error State -->
       <div v-else-if="error" class="error-container">
         <div class="error-icon">⚠️</div>
-        <h3>Failed to load runbook</h3>
+        <h3>{{ $t('Failed to load runbook') }}</h3>
         <p>{{ error }}</p>
-        <button @click="fetchRunbook" class="retry-btn">Try Again</button>
+        <button @click="fetchRunbook" class="retry-btn">{{ $t('Try Again') }}</button>
       </div>
 
       <!-- Runbook Content -->
@@ -30,7 +30,7 @@
             <h1 class="runbook-title">{{ runbook.title }}</h1>
             <div class="runbook-meta">
               <span class="section-count">
-                {{ runbook.sections?.length || 0 }} steps
+                {{ $t('{v0} steps', { v0: runbook.sections?.length || 0 }) }}
               </span>
             </div>
           </div>
@@ -64,7 +64,7 @@
                 class="code-block-container"
               >
                 <div class="code-block-header">
-                  <span class="code-label">Code</span>
+                  <span class="code-label">{{ $t('Code') }}</span>
                   <button
                     @click.stop="copyCode(section.content, section.id)"
                     class="copy-btn"
@@ -87,8 +87,8 @@
         <!-- Empty Sections State -->
         <div v-if="!loading && runbook.sections?.length === 0" class="empty-sections">
           <div class="empty-icon">📝</div>
-          <h3>No steps available</h3>
-          <p>This runbook doesn't have any steps yet.</p>
+          <h3>{{ $t('No steps available') }}</h3>
+          <p>{{ $t('This runbook doesn\'t have any steps yet.') }}</p>
         </div>
       </div>
     </div>

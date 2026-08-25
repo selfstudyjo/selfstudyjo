@@ -9,7 +9,13 @@ import router from './router'
 import './assets/css/theme.css'
 import './assets/css/responsive.css'
 import './style.css'
+// Loaded after every page stylesheet on purpose: it corrects what a
+// left-to-right layout gets wrong once the document flips, and it can only do
+// that from in front. See the file's own header.
+import './assets/css/rtl.css'
 import { bootstrapTheme } from './theme/apply'
+import { bootstrapLocale } from './i18n/apply'
+import { i18n, initLocale } from './i18n/runtime'
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -45,8 +51,18 @@ if ('serviceWorker' in navigator) {
 // fallback, so this failing would render the old palette rather than nothing.
 bootstrapTheme()
 
+// Applied in the same breath and for the same reason: `dir` on <html> is the
+// only thing that mirrors a layout, so a page that paints left-to-right and
+// then flips has moved everything the reader was about to click.
+bootstrapLocale()
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
+app.use(i18n)
 app.use(router)
+
+// Brings the reactive locale into line with what `bootstrapLocale()` already
+// wrote onto the document, rather than applying it a second time.
+initLocale()
 app.mount('#app')

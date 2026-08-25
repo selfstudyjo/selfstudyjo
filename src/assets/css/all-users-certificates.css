@@ -349,7 +349,7 @@
   margin-bottom: clamp(18px, 3vw, 24px);
   border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
   border-top-color: var(--acc-1);
-  border-right-color: var(--acc-2);
+  border-inline-end-color: var(--acc-2);
   border-radius: 50%;
   animation: ac-spin 1.2s linear infinite;
 }
@@ -849,7 +849,7 @@
   color: var(--text-1);
   font-weight: 600;
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

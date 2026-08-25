@@ -2,8 +2,8 @@
 <template>
   <div class="ai-chat-container">
     <div class="chat-header">
-      <h1>AI Chat Assistant</h1>
-      <p>Ask me anything about your courses, labs, or general knowledge</p>
+      <h1>{{ $t('AI Chat Assistant') }}</h1>
+      <p>{{ $t('Ask me anything about your courses, labs, or general knowledge') }}</p>
     </div>
 
     <div class="messages-container" ref="messagesContainer">

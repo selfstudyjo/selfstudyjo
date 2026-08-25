@@ -1,14 +1,14 @@
 <template>
   <div class="research-researcher-profile-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.back()"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconProfile /> Researcher Profile</h1>
+      <button class="rf-back-btn" @click="$router.back()"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconProfile /> {{ $t('Researcher Profile') }}</h1>
     </div>
 
     <div v-if="loading" class="rf-loading"><div class="rf-spinner"></div></div>
 
     <div v-else-if="!profile" class="rf-empty">
-      <p>Researcher profile not found.</p>
+      <p>{{ $t('Researcher profile not found.') }}</p>
     </div>
 
     <div v-else class="rf-profile-layout">
@@ -35,15 +35,15 @@
 
       <div class="rf-tabs">
         <button :class="['rf-tab', { active: activeTab === 'projects' }]" @click="activeTab = 'projects'">
-          <RfIconFolder /> Projects ({{ researcherProjects.length }})
+          <RfIconFolder /> {{ $t('Projects ({v0})', { v0: researcherProjects.length }) }}
         </button>
         <button :class="['rf-tab', { active: activeTab === 'about' }]" @click="activeTab = 'about'">
-          <RfIconProfile /> About
+          <RfIconProfile /> {{ $t('About') }}
         </button>
       </div>
 
       <div v-if="activeTab === 'projects'" class="rf-section">
-        <div v-if="researcherProjects.length === 0" class="rf-empty"><p>No projects yet.</p></div>
+        <div v-if="researcherProjects.length === 0" class="rf-empty"><p>{{ $t('No projects yet.') }}</p></div>
         <div v-else class="rf-projects-grid">
           <div v-for="project in researcherProjects" :key="project.id" class="rf-project-card">
             <h3 class="rf-project-title">{{ project.title }}</h3>
@@ -56,7 +56,7 @@
             <div class="rf-keywords" v-if="project.keywords?.length">
               <span v-for="kw in project.keywords" :key="kw" class="rf-keyword-badge">{{ kw }}</span>
             </div>
-            <button class="rf-btn rf-btn-sm rf-btn-primary" @click="$router.push(`/research/project/${project.id}`)">View Project</button>
+            <button class="rf-btn rf-btn-sm rf-btn-primary" @click="$router.push(`/research/project/${project.id}`)">{{ $t('View Project') }}</button>
           </div>
         </div>
       </div>
@@ -64,11 +64,11 @@
       <div v-if="activeTab === 'about'" class="rf-section rf-about-section">
         <div class="rf-about-grid">
           <div class="rf-about-item" v-if="profile.bio">
-            <h3>Bio</h3>
+            <h3>{{ $t('Bio') }}</h3>
             <p>{{ profile.bio }}</p>
           </div>
           <div class="rf-about-item" v-if="profile.research_interests?.length">
-            <h3>Research Interests</h3>
+            <h3>{{ $t('Research Interests') }}</h3>
             <div class="rf-keywords">
               <span v-for="interest in profile.research_interests" :key="interest" class="rf-keyword-badge">{{ interest }}</span>
             </div>
@@ -82,11 +82,11 @@
             <p>{{ profile.google_scholar_id }}</p>
           </div>
           <div class="rf-about-item" v-if="profile.website">
-            <h3>Website</h3>
+            <h3>{{ $t('Website') }}</h3>
             <a :href="profile.website" target="_blank" class="rf-link">{{ profile.website }}</a>
           </div>
           <div class="rf-about-item">
-            <h3>Joined</h3>
+            <h3>{{ $t('Joined') }}</h3>
             <p>{{ formatDate(profile.created_at) }}</p>
           </div>
         </div>

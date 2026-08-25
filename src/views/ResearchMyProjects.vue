@@ -2,57 +2,57 @@
   <div class="research-myprojects-page">
     <div class="rf-page-header">
       <button class="rf-back-btn" @click="$router.push('/research')">
-        <RfIconBack /> Back
+        <RfIconBack /> {{ $t('Back') }}
       </button>
-      <h1 class="rf-page-title"><RfIconFolder /> My Projects</h1>
+      <h1 class="rf-page-title"><RfIconFolder /> {{ $t('My Projects') }}</h1>
     </div>
 
     <div class="rf-project-stats">
       <div class="rf-pstat">
         <span class="rf-pstat-val">{{ filteredProjects.length }}</span>
-        <span class="rf-pstat-label">Total</span>
+        <span class="rf-pstat-label">{{ $t('Total') }}</span>
       </div>
       <div class="rf-pstat">
         <span class="rf-pstat-val">{{ publishedCount }}</span>
-        <span class="rf-pstat-label">Published</span>
+        <span class="rf-pstat-label">{{ $t('Published') }}</span>
       </div>
       <div class="rf-pstat">
         <span class="rf-pstat-val">{{ draftCount }}</span>
-        <span class="rf-pstat-label">Draft</span>
+        <span class="rf-pstat-label">{{ $t('Draft') }}</span>
       </div>
       <div class="rf-pstat">
         <span class="rf-pstat-val">{{ reviewCount }}</span>
-        <span class="rf-pstat-label">Under Review</span>
+        <span class="rf-pstat-label">{{ $t('Under Review') }}</span>
       </div>
     </div>
 
     <div class="rf-filters">
-      <input v-model="searchQuery" type="text" class="rf-input" placeholder="Search my projects..." />
+      <input v-model="searchQuery" type="text" class="rf-input" :placeholder="$t('Search my projects...')" />
       <select v-model="statusFilter" class="rf-select">
-        <option value="">All Statuses</option>
-        <option value="draft">Draft</option>
-        <option value="published">Published</option>
-        <option value="under_review">Under Review</option>
+        <option value="">{{ $t('All Statuses') }}</option>
+        <option value="draft">{{ $t('Draft') }}</option>
+        <option value="published">{{ $t('Published') }}</option>
+        <option value="under_review">{{ $t('Under Review') }}</option>
       </select>
       <select v-model="accessFilter" class="rf-select">
-        <option value="">All Access</option>
-        <option value="public">Public</option>
-        <option value="team">Team</option>
-        <option value="private">Private</option>
+        <option value="">{{ $t('All Access') }}</option>
+        <option value="public">{{ $t('Public') }}</option>
+        <option value="team">{{ $t('Team') }}</option>
+        <option value="private">{{ $t('Private') }}</option>
       </select>
       <button class="rf-btn rf-btn-primary" @click="$router.push('/research/create-project')">
-        <RfIconAdd /> New Project
+        <RfIconAdd /> {{ $t('New Project') }}
       </button>
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Loading projects...</p>
+      <p>{{ $t('Loading projects...') }}</p>
     </div>
 
     <div v-else-if="filteredProjects.length === 0" class="rf-empty">
-      <p>No projects found. Create your first project!</p>
-      <button class="rf-btn rf-btn-primary" @click="$router.push('/research/create-project')">Create Project</button>
+      <p>{{ $t('No projects found. Create your first project!') }}</p>
+      <button class="rf-btn rf-btn-primary" @click="$router.push('/research/create-project')">{{ $t('Create Project') }}</button>
     </div>
 
     <div v-else class="rf-projects-grid">
@@ -64,17 +64,17 @@
         <p class="rf-project-desc">{{ truncate(project.description, 120) }}</p>
         <div class="rf-project-meta">
           <span v-if="project.publication_year"><RfIconCalendar /> {{ project.publication_year }}</span>
-          <span><RfIconFile /> {{ getFileCount(project.id) }} files</span>
-          <span><RfIconEye /> {{ project.views }} views</span>
-          <span><RfIconPeople /> {{ getTeamCount(project.id) }} members</span>
-          <span><RfIconDownload /> {{ project.downloads }} downloads</span>
+          <span><RfIconFile /> {{ $t('{v0} files', { v0: getFileCount(project.id) }) }}</span>
+          <span><RfIconEye /> {{ $t('{v0} views', { v0: project.views }) }}</span>
+          <span><RfIconPeople /> {{ $t('{v0} members', { v0: getTeamCount(project.id) }) }}</span>
+          <span><RfIconDownload /> {{ $t('{v0} downloads', { v0: project.downloads }) }}</span>
         </div>
         <div class="rf-keywords" v-if="project.keywords && project.keywords.length">
           <span v-for="kw in project.keywords" :key="kw" class="rf-keyword-badge">{{ kw }}</span>
         </div>
         <div class="rf-project-card-actions">
           <button class="rf-btn rf-btn-sm rf-btn-primary" @click="$router.push(`/research/project/${project.id}`)">
-            View Project
+            {{ $t('View Project') }}
           </button>
           <span :class="['rf-access-badge', `rf-access-${project.access_level}`]">{{ project.access_level }}</span>
         </div>

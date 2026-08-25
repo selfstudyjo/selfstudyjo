@@ -477,9 +477,9 @@
   height: 72px;
   border: 4px solid transparent;
   border-top-color: var(--sfs-accent, #667eea);
-  border-right-color: var(--sfs-accent-2, #764ba2);
+  border-inline-end-color: var(--sfs-accent-2, #764ba2);
   border-bottom-color: var(--te-accent);
-  border-left-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
+  border-inline-start-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
   border-radius: 50%;
   animation: spin 1.2s linear infinite;
   margin-bottom: var(--te-sp-lg);
@@ -1024,7 +1024,7 @@
   border-radius: var(--te-r-md);
   padding: var(--te-sp-md);
   margin: var(--te-sp-md) 0;
-  text-align: left;
+  text-align: start;
 }
 .take-exam-page .summary-row {
   display: flex;
@@ -1116,7 +1116,7 @@
   border-radius: var(--te-r-md);
   padding: var(--te-sp-md);
   margin-top: var(--te-sp-md);
-  text-align: left;
+  text-align: start;
 }
 .take-exam-page .result-details .detail {
   display: flex;

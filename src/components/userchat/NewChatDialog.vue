@@ -3,24 +3,24 @@
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="new-chat-title">
       <header>
         <h2 id="new-chat-title">{{ mode === 'direct' ? 'New message' : 'New group' }}</h2>
-        <button type="button" class="icon-btn" aria-label="Close" @click="$emit('close')">
+        <button type="button" class="icon-btn" :aria-label="$t('Close')" @click="$emit('close')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </header>
 
       <div class="uc-tabs">
         <button :class="{ on: mode === 'direct' }" type="button" @click="mode = 'direct'">
-          One to one
+          {{ $t('One to one') }}
         </button>
         <button :class="{ on: mode === 'group' }" type="button" @click="mode = 'group'">
-          Group
+          {{ $t('Group') }}
         </button>
       </div>
 
       <div class="body">
         <label v-if="mode === 'group'" class="field">
-          <span>Group name</span>
-          <input v-model="groupName" type="text" maxlength="120" placeholder="e.g. Physics revision" />
+          <span>{{ $t('Group name') }}</span>
+          <input v-model="groupName" type="text" maxlength="120" :placeholder="$t('e.g. Physics revision')" />
         </label>
 
         <label class="field">
@@ -31,11 +31,11 @@
               ref="searchBox"
               v-model="query"
               type="text"
-              placeholder="Search by name or username…"
+              :placeholder="$t('Search by name or username…')"
               autocomplete="off"
               @input="onSearch"
             />
-            <span v-if="searching" class="uc-spinner" aria-label="Searching"></span>
+            <span v-if="searching" class="uc-spinner" :aria-label="$t('Searching')"></span>
           </div>
         </label>
 
@@ -60,10 +60,10 @@
             </button>
           </li>
           <li v-if="!searching && query.trim().length >= 2 && !visibleResults.length" class="uc-empty">
-            Nobody matches “{{ query }}”.
+            {{ $t('Nobody matches “{v0}”.', { v0: query }) }}
           </li>
           <li v-else-if="!query.trim()" class="uc-empty">
-            Type at least two letters to find somebody.
+            {{ $t('Type at least two letters to find somebody.') }}
           </li>
         </ul>
       </div>
@@ -71,7 +71,7 @@
       <footer>
         <p v-if="error" class="uc-error">{{ error }}</p>
         <div class="uc-dialog-actions">
-          <button type="button" class="ghost" @click="$emit('close')">Cancel</button>
+          <button type="button" class="ghost" @click="$emit('close')">{{ $t('Cancel') }}</button>
           <button type="button" class="primary" :disabled="!canSubmit || working" @click="submit">
             {{ working ? 'Opening…' : (mode === 'direct' ? 'Start chat' : 'Create group') }}
           </button>
@@ -258,7 +258,7 @@ h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-te
 
 .search { position: relative; display: flex; align-items: center; }
 .search svg { position: absolute; left: 11px; color: var(--uc-text-dim); pointer-events: none; }
-.search input { padding-left: 34px; padding-right: 34px; }
+.search input { padding-inline-start: 34px; padding-inline-end: 34px; }
 .uc-spinner {
   position: absolute; right: 11px;
   width: 13px; height: 13px;
@@ -282,7 +282,7 @@ h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-te
 .person {
   display: flex; align-items: center; gap: 11px; width: 100%;
   padding: 8px; border: 0; border-radius: var(--uc-r-xs);
-  background: none; color: inherit; font: inherit; cursor: pointer; text-align: left;
+  background: none; color: inherit; font: inherit; cursor: pointer; text-align: start;
   transition: background var(--uc-t-fast);
 }
 .person:hover { background: var(--uc-surface); }

@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
+import { aiLanguageHeaders } from '@/i18n/runtime';
 
 /**
  * What the report shows under a question, beyond the model answer itself.
@@ -310,7 +311,8 @@ class JobInterviewService {
             const r = await apiService.post<{ text: string }>(
                 baseUrl,
                 `/api/jobinterview/bot/interviewer`,
-                body
+                body,
+                aiLanguageHeaders()
             );
             return r.text;
         } catch (e) {
@@ -325,7 +327,8 @@ class JobInterviewService {
             return await apiService.post<EvaluationResult>(
                 baseUrl,
                 `/api/jobinterview/bot/evaluate`,
-                body
+                body,
+                aiLanguageHeaders()
             );
         } catch (e) {
             console.error('Evaluate failed:', e);
@@ -351,7 +354,8 @@ class JobInterviewService {
             const r = await apiService.post<{ answers?: string[]; coaching?: QACoaching[] }>(
                 baseUrl,
                 `/api/jobinterview/bot/model-answers`,
-                body
+                body,
+                aiLanguageHeaders()
             );
             if (Array.isArray(r.coaching) && r.coaching.length) {
                 return r.coaching.slice(0, expected || r.coaching.length);
@@ -411,7 +415,7 @@ class JobInterviewService {
         try {
             const baseUrl = await this.getBaseUrl();
             const r = await apiService.post<{ areas?: string[] }>(
-                baseUrl, `/api/jobinterview/bot/plan`, body);
+                baseUrl, `/api/jobinterview/bot/plan`, body, aiLanguageHeaders());
             const areas = Array.isArray(r.areas) ? r.areas : [];
             return areas.map(a => String(a || '').trim()).filter(Boolean);
         } catch (e) {
@@ -422,7 +426,7 @@ class JobInterviewService {
 
     async saveSession(data: Partial<JobInterviewSession>): Promise<{ success: boolean; id: string }> {
         const baseUrl = await this.getBaseUrl();
-        return await apiService.post(baseUrl, '/api/jobinterview/sessions', data);
+        return await apiService.post(baseUrl, '/api/jobinterview/sessions', data, aiLanguageHeaders());
     }
 
     async getUserSessions(userId: string): Promise<JobInterviewSession[]> {

@@ -310,7 +310,7 @@
   border-radius: 50%;
   border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
   border-top-color: var(--sfs-accent, #667eea);
-  border-right-color: var(--sfs-accent-2, #764ba2);
+  border-inline-end-color: var(--sfs-accent-2, #764ba2);
   animation: spin 1s linear infinite;
   box-shadow: 0 0 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4),
               0 0 60px rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.25);

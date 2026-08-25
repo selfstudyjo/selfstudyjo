@@ -3,16 +3,16 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Initializing lab environment...</p>
+      <p>{{ $t('Initializing lab environment...') }}</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
       <i class="fas fa-exclamation-triangle"></i>
-      <h3>Unable to Access Labs</h3>
+      <h3>{{ $t('Unable to Access Labs') }}</h3>
       <p>{{ error }}</p>
       <button class="btn btn-secondary" @click="initializeLab">
-        <i class="fas fa-redo"></i> Try Again
+        <i class="fas fa-redo"></i> {{ $t('Try Again') }}
       </button>
     </div>
 
@@ -23,10 +23,10 @@
          the link goes where it can actually be fixed. -->
     <div v-else-if="!hasLabAccess" class="no-access-state">
       <i class="fas fa-flask"></i>
-      <h3>No Lab Access</h3>
-      <p>Your plan doesn't include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.</p>
+      <h3>{{ $t('No Lab Access') }}</h3>
+      <p>{{ $t('Your plan doesn\'t include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.') }}</p>
       <router-link to="/plans" class="btn btn-primary">
-        <i class="fas fa-crown"></i> View Plans
+        <i class="fas fa-crown"></i> {{ $t('View Plans') }}
       </router-link>
     </div>
 
@@ -56,7 +56,7 @@
       <div v-if="activeTab === 'sql'" class="tab-content">
         <div class="sql-container">
           <div class="sql-sidebar">
-            <h4><i class="fas fa-table"></i> Database Tables</h4>
+            <h4><i class="fas fa-table"></i> {{ $t('Database Tables') }}</h4>
             <div class="tables-list">
               <div v-for="table in sqlTables" :key="table" class="table-item">
                 <i class="fas fa-table"></i>
@@ -68,12 +68,12 @@
             </div>
 
             <div class="sql-instructions">
-              <h5><i class="fas fa-lightbulb"></i> Quick Tips</h5>
+              <h5><i class="fas fa-lightbulb"></i> {{ $t('Quick Tips') }}</h5>
               <ul>
-                <li>Use <code>SELECT * FROM table_name;</code> to view all data</li>
-                <li>Use <code>DESCRIBE table_name;</code> to see table structure</li>
-                <li>End each query with a semicolon (;)</li>
-                <li>Try: <code>SELECT * FROM sqlite_master WHERE type='table';</code></li>
+                <li>{{ $t('Use') }} <code>SELECT * FROM table_name;</code> {{ $t('to view all data') }}</li>
+                <li>{{ $t('Use') }} <code>DESCRIBE table_name;</code> {{ $t('to see table structure') }}</li>
+                <li>{{ $t('End each query with a semicolon (;)') }}</li>
+                <li>{{ $t('Try:') }} <code>SELECT * FROM sqlite_master WHERE type='table';</code></li>
               </ul>
             </div>
           </div>
@@ -81,13 +81,13 @@
           <div class="sql-main">
             <div class="sql-editor">
               <div class="editor-header">
-                <h4><i class="fas fa-edit"></i> SQL Query Editor</h4>
+                <h4><i class="fas fa-edit"></i> {{ $t('SQL Query Editor') }}</h4>
                 <div class="editor-actions">
                   <button class="btn btn-sm" @click="formatSQL">
-                    <i class="fas fa-align-left"></i> Format
+                    <i class="fas fa-align-left"></i> {{ $t('Format') }}
                   </button>
                   <button class="btn btn-sm" @click="clearSQL">
-                    <i class="fas fa-trash"></i> Clear
+                    <i class="fas fa-trash"></i> {{ $t('Clear') }}
                   </button>
                 </div>
               </div>
@@ -102,7 +102,7 @@
                 <div class="editor-footer">
                   <div class="query-info">
                     <span v-if="lastSQLQuery">
-                      Last query: {{ lastSQLQuery.substring(0, 50) }}...
+                      {{ $t('Last query: {v0}...', { v0: lastSQLQuery.substring(0, 50) }) }}
                     </span>
                   </div>
                   <button
@@ -119,10 +119,10 @@
 
             <div class="sql-results">
               <div class="results-header">
-                <h4><i class="fas fa-poll"></i> Results</h4>
+                <h4><i class="fas fa-poll"></i> {{ $t('Results') }}</h4>
                 <div class="results-info">
                   <span v-if="sqlResults">
-                    {{ sqlResults.length }} row(s) returned
+                    {{ $t('{v0} row(s) returned', { v0: sqlResults.length }) }}
                   </span>
                 </div>
               </div>
@@ -130,7 +130,7 @@
                 <div v-if="sqlError" class="error-message">
                   <i class="fas fa-exclamation-circle"></i>
                   <div>
-                    <strong>SQL Error:</strong> {{ sqlError }}
+                    <strong>{{ $t('SQL Error:') }}</strong> {{ sqlError }}
                   </div>
                 </div>
 
@@ -155,7 +155,7 @@
 
                 <div v-else class="empty-results">
                   <i class="fas fa-database"></i>
-                  <p>No results yet. Run a query to see results here.</p>
+                  <p>{{ $t('No results yet. Run a query to see results here.') }}</p>
                 </div>
               </div>
             </div>
@@ -171,21 +171,21 @@
             <div class="terminal-header">
               <div class="terminal-title">
                 <i class="fas fa-terminal"></i>
-                Linux Terminal - {{ username }}@lab-server
+                {{ $t('Linux Terminal - {v0}@lab-server', { v0: username }) }}
                 <span class="terminal-status" v-if="runningProcess">
-                  <i class="fas fa-spinner fa-spin"></i> Process running...
+                  <i class="fas fa-spinner fa-spin"></i> {{ $t('Process running...') }}
                 </span>
               </div>
               <div class="terminal-actions">
-                <button class="btn btn-sm" @click="clearTerminal" title="Clear terminal">
-                  <i class="fas fa-broom"></i> Clear
+                <button class="btn btn-sm" @click="clearTerminal" :title="$t('Clear terminal')">
+                  <i class="fas fa-broom"></i> {{ $t('Clear') }}
                 </button>
                 <button class="btn btn-sm btn-danger" @click="killProcess"
-                        :disabled="!runningProcess" title="Stop current process">
-                  <i class="fas fa-stop"></i> Stop
+                        :disabled="!runningProcess" :title="$t('Stop current process')">
+                  <i class="fas fa-stop"></i> {{ $t('Stop') }}
                 </button>
-                <button class="btn btn-sm" @click="copyTerminalContent" title="Copy terminal content">
-                  <i class="fas fa-copy"></i> Copy
+                <button class="btn btn-sm" @click="copyTerminalContent" :title="$t('Copy terminal content')">
+                  <i class="fas fa-copy"></i> {{ $t('Copy') }}
                 </button>
               </div>
             </div>
@@ -194,9 +194,9 @@
             <div class="terminal-content" ref="terminalContent" @click="focusCommandInput">
               <!-- Welcome message -->
               <div v-if="terminalLines.length === 0" class="terminal-welcome">
-                <div class="welcome-line">🌐 Welcome to Linux Terminal Lab!</div>
-                <div class="welcome-line">📁 Type 'help' for available commands</div>
-                <div class="welcome-line">💡 Press ↑/↓ for command history • Tab for auto-completion</div>
+                <div class="welcome-line">{{ $t('🌐 Welcome to Linux Terminal Lab!') }}</div>
+                <div class="welcome-line">{{ $t('📁 Type \'help\' for available commands') }}</div>
+                <div class="welcome-line">{{ $t('💡 Press ↑/↓ for command history • Tab for auto-completion') }}</div>
                 <div class="welcome-separator">──────────────────────────────────────────────</div>
               </div>
 
@@ -208,7 +208,7 @@
 
               <!-- Current Command Input Line -->
               <div class="terminal-input-line">
-                <span class="input-prompt">{{ username }}@lab-server:~$</span>
+                <span class="input-prompt">{{ $t('{v0}@lab-server:~$', { v0: username }) }}</span>
                 <div class="input-wrapper">
                   <input
                     v-model="currentCommand"
@@ -239,32 +239,32 @@
             <!-- Terminal Help Section -->
             <div class="terminal-help">
               <div class="help-header">
-                <i class="fas fa-bolt"></i> Quick Commands (Click to insert)
+                <i class="fas fa-bolt"></i> {{ $t('Quick Commands (Click to insert)') }}
               </div>
               <div class="commands-grid">
-                <button class="cmd-btn" @click="insertCommand('pwd')" title="Print working directory">
-                  <code>pwd</code> Current directory
+                <button class="cmd-btn" @click="insertCommand('pwd')" :title="$t('Print working directory')">
+                  <code>pwd</code> {{ $t('Current directory') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('ls -la')" title="List files with details">
-                  <code>ls -la</code> List files
+                <button class="cmd-btn" @click="insertCommand('ls -la')" :title="$t('List files with details')">
+                  <code>ls -la</code> {{ $t('List files') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('whoami')" title="Display current user">
-                  <code>whoami</code> Current user
+                <button class="cmd-btn" @click="insertCommand('whoami')" :title="$t('Display current user')">
+                  <code>whoami</code> {{ $t('Current user') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('date')" title="Show current date and time">
-                  <code>date</code> Date & time
+                <button class="cmd-btn" @click="insertCommand('date')" :title="$t('Show current date and time')">
+                  <code>date</code> {{ $t('Date & time') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('mkdir test_folder')" title="Create directory">
-                  <code>mkdir</code> Create folder
+                <button class="cmd-btn" @click="insertCommand('mkdir test_folder')" :title="$t('Create directory')">
+                  <code>mkdir</code> {{ $t('Create folder') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('touch file.txt')" title="Create empty file">
-                  <code>touch</code> Create file
+                <button class="cmd-btn" @click="insertCommand('touch file.txt')" :title="$t('Create empty file')">
+                  <code>touch</code> {{ $t('Create file') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('echo Hello from terminal')" title="Print text">
-                  <code>echo</code> Print text
+                <button class="cmd-btn" @click="insertCommand('echo Hello from terminal')" :title="$t('Print text')">
+                  <code>echo</code> {{ $t('Print text') }}
                 </button>
-                <button class="cmd-btn" @click="insertCommand('clear')" title="Clear terminal">
-                  <code>clear</code> Clear screen
+                <button class="cmd-btn" @click="insertCommand('clear')" :title="$t('Clear terminal')">
+                  <code>clear</code> {{ $t('Clear screen') }}
                 </button>
               </div>
             </div>
@@ -277,13 +277,13 @@
         <div class="python-container">
           <div class="python-editor">
             <div class="editor-header">
-              <h4><i class="fas fa-code"></i> Python Code Editor</h4>
+              <h4><i class="fas fa-code"></i> {{ $t('Python Code Editor') }}</h4>
               <div class="editor-actions">
                 <button class="btn btn-sm" @click="insertPythonTemplate">
-                  <i class="fas fa-file-code"></i> Template
+                  <i class="fas fa-file-code"></i> {{ $t('Template') }}
                 </button>
                 <button class="btn btn-sm" @click="clearPythonCode">
-                  <i class="fas fa-trash"></i> Clear
+                  <i class="fas fa-trash"></i> {{ $t('Clear') }}
                 </button>
               </div>
             </div>
@@ -297,7 +297,7 @@
               ></textarea>
               <div class="editor-footer">
                 <div class="code-info">
-                  <span>{{ pythonCode.length }} characters</span>
+                  <span>{{ $t('{v0} characters', { v0: pythonCode.length }) }}</span>
                 </div>
                 <button
                   class="btn btn-primary"
@@ -313,10 +313,10 @@
 
           <div class="python-output">
             <div class="output-header">
-              <h4><i class="fas fa-terminal"></i> Output</h4>
+              <h4><i class="fas fa-terminal"></i> {{ $t('Output') }}</h4>
               <div class="output-actions">
                 <button class="btn btn-sm" @click="clearPythonOutput">
-                  <i class="fas fa-trash"></i> Clear
+                  <i class="fas fa-trash"></i> {{ $t('Clear') }}
                 </button>
               </div>
             </div>
@@ -324,7 +324,7 @@
               <div v-if="pythonError" class="error-message">
                 <i class="fas fa-exclamation-circle"></i>
                 <div>
-                  <strong>Python Error:</strong>
+                  <strong>{{ $t('Python Error:') }}</strong>
                   <pre>{{ pythonError }}</pre>
                 </div>
               </div>
@@ -335,24 +335,24 @@
 
               <div v-else class="empty-output">
                 <i class="fas fa-code"></i>
-                <p>Run your Python code to see output here.</p>
+                <p>{{ $t('Run your Python code to see output here.') }}</p>
               </div>
             </div>
 
             <div class="python-templates">
-              <h5><i class="fas fa-lightbulb"></i> Quick Examples</h5>
+              <h5><i class="fas fa-lightbulb"></i> {{ $t('Quick Examples') }}</h5>
               <div class="templates-grid">
                 <button class="template-btn" @click="insertPythonExample('hello')">
-                  Hello World
+                  {{ $t('Hello World') }}
                 </button>
                 <button class="template-btn" @click="insertPythonExample('loop')">
-                  For Loop
+                  {{ $t('For Loop') }}
                 </button>
                 <button class="template-btn" @click="insertPythonExample('function')">
-                  Function
+                  {{ $t('Function') }}
                 </button>
                 <button class="template-btn" @click="insertPythonExample('file')">
-                  File I/O
+                  {{ $t('File I/O') }}
                 </button>
               </div>
             </div>

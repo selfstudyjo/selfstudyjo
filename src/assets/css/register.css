@@ -441,7 +441,7 @@
   letter-spacing: 0.4px;
   color: var(--rg-text-mute);
   min-width: 52px;
-  text-align: right;
+  text-align: end;
 }
 
 /* -------------------------------------------------------------
@@ -632,7 +632,7 @@
   border-top: 1px solid var(--rg-glass-border);
 }
 .register-footer p { margin: 0; }
-.register-footer .register-link { margin-left: 0.35rem; }
+.register-footer .register-link { margin-inline-start: 0.35rem; }
 
 /* -------------------------------------------------------------
   17. Focus rings (accessibility)

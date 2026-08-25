@@ -720,7 +720,26 @@ console.log('\n13. The page is public, and says so in both places');
       not render one at all.
     */
     const view = source('src/views/Leaderboard.vue');
-    const template = view.slice(0, view.indexOf('<script'));
+    const rawTemplate = view.slice(0, view.indexOf('<script'));
+    /*
+     * Translated COPY is not a data binding, and telling them apart is what
+     * this strip is for.
+     *
+     * These two checks look for `userId` or `email` inside a `{{ }}`, on the
+     * reasoning that the page's prose is plain text and anything interpolated
+     * is data. That stopped being true when the templates were wrapped for
+     * i18n: the sentence promising the reader that no email is published is now
+     * `{{ $t('… no account id, no email, and no list of …') }}`, so the check
+     * matched its own reassurance copy and failed on a page that renders no
+     * email at all.
+     *
+     * So every `$t('…')` string literal is removed before the test. What is
+     * left is the expressions — which is exactly what the check was always
+     * about, and is now what it actually reads.
+     */
+    const template = rawTemplate
+        .replace(/\$tc?\(\s*'(?:[^'\\]|\\.)*'/g, '$t(')
+        .replace(/\$tc?\(\s*"(?:[^"\\]|\\.)*"/g, '$t(');
     check('the template never renders a user id',
         !/\{\{[^}]*userId[^}]*\}\}/.test(template) && !/user_id/.test(template));
     /* An email must not be RENDERED. The word itself is on the page, in the

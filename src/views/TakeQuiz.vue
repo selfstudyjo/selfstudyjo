@@ -15,10 +15,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
-            Back to Course
+            {{ $t('Back to Course') }}
           </router-link>
           <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">Quiz: {{ quiz.title }}</span>
+          <span class="breadcrumb-current">{{ $t('Quiz: {v0}', { v0: quiz.title }) }}</span>
         </div>
 
         <div class="quiz-info">
@@ -29,14 +29,14 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>Time: {{ formatTime(remainingTime) }}</span>
+              <span>{{ $t('Time: {v0}', { v0: formatTime(remainingTime) }) }}</span>
             </div>
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
-              <span>Questions: {{ quiz.questions?.length || 0 }}</span>
+              <span>{{ $t('Questions: {v0}', { v0: quiz.questions?.length || 0 }) }}</span>
             </div>
           </div>
         </div>
@@ -60,16 +60,16 @@
           <div class="result-score">
             <div class="score-display">
               <span class="score-value">{{ formattedScore }}%</span>
-              <span class="score-label">Your Score</span>
+              <span class="score-label">{{ $t('Your Score') }}</span>
             </div>
           </div>
           <p class="result-message">{{ quizResult?.result_message || '' }}</p>
           <div class="result-actions">
             <button class="btn-primary" @click="returnToCourse">
-              Return to Course
+              {{ $t('Return to Course') }}
             </button>
             <button v-if="quizResult?.result_status === 'FAILED'" class="btn-secondary" @click="retakeQuiz">
-              Retake Quiz
+              {{ $t('Retake Quiz') }}
             </button>
           </div>
         </div>
@@ -78,7 +78,7 @@
       <!-- Quiz Instructions -->
       <div v-else-if="!quizStarted" class="quiz-instructions">
         <div class="instructions-card">
-          <h2 class="instructions-title">Quiz Instructions</h2>
+          <h2 class="instructions-title">{{ $t('Quiz Instructions') }}</h2>
           <div class="instructions-content">
             <p>{{ quiz.description }}</p>
             <div class="instructions-list">
@@ -87,36 +87,36 @@
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                <span>Time Limit: {{ quiz.quiz_duration }} minutes</span>
+                <span>{{ $t('Time Limit: {v0} minutes', { v0: quiz.quiz_duration }) }}</span>
               </div>
               <div class="instruction-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 20h9"></path>
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                 </svg>
-                <span>Total Questions: {{ quiz.questions?.length || 0 }}</span>
+                <span>{{ $t('Total Questions: {v0}', { v0: quiz.questions?.length || 0 }) }}</span>
               </div>
               <div class="instruction-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
-                <span>Passing Score: 70%</span>
+                <span>{{ $t('Passing Score: 70%') }}</span>
               </div>
               <div class="instruction-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                 </svg>
-                <span>Flag questions to review later</span>
+                <span>{{ $t('Flag questions to review later') }}</span>
               </div>
             </div>
           </div>
           <div class="instructions-actions">
             <button class="btn-primary" @click="startQuiz">
-              Start Quiz
+              {{ $t('Start Quiz') }}
             </button>
             <button class="btn-secondary" @click="returnToCourse">
-              Return to Course
+              {{ $t('Return to Course') }}
             </button>
           </div>
         </div>
@@ -146,7 +146,7 @@
             </div>
 
             <div class="question-navigation">
-              <h3 class="nav-title">Questions</h3>
+              <h3 class="nav-title">{{ $t('Questions') }}</h3>
               <div class="question-grid">
                 <button
                   v-for="(question, index) in quiz.questions"
@@ -176,7 +176,7 @@
                   <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
                   <line x1="4" y1="22" x2="4" y2="15"></line>
                 </svg>
-                Flagged ({{ flaggedQuestions.size }})
+                {{ $t('Flagged ({v0})', { v0: flaggedQuestions.size }) }}
               </h3>
               <div v-if="flaggedQuestions.size > 0" class="flagged-list">
                 <button
@@ -188,7 +188,7 @@
                   Q{{ getQuestionNumber(questionId) + 1 }}
                 </button>
               </div>
-              <p v-else class="no-flagged">No flagged questions</p>
+              <p v-else class="no-flagged">{{ $t('No flagged questions') }}</p>
             </div>
 
             <div class="sidebar-actions">
@@ -198,7 +198,7 @@
                 @click="submitQuiz"
               >
                 <span v-if="submitting" class="btn-loading"></span>
-                <span v-else>Submit Quiz</span>
+                <span v-else>{{ $t('Submit Quiz') }}</span>
               </button>
             </div>
           </div>
@@ -208,7 +208,7 @@
             <!-- Question Header -->
             <div class="question-header">
               <div class="question-counter">
-                Question {{ currentQuestionIndex + 1 }} of {{ quiz.questions?.length || 0 }}
+                {{ $t('Question {v0} of {v1}', { v0: currentQuestionIndex + 1, v1: quiz.questions?.length || 0 }) }}
               </div>
               <div class="question-actions">
                 <button
@@ -229,7 +229,7 @@
             <div class="question-text">
               <h2>{{ currentQuestion.text }}</h2>
               <div class="question-score">
-                <span class="score-badge">Score: {{ currentQuestion.score }} points</span>
+                <span class="score-badge">{{ $t('Score: {v0} points', { v0: currentQuestion.score }) }}</span>
               </div>
             </div>
 
@@ -255,13 +255,13 @@
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                       <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
-                    Correct Answer
+                    {{ $t('Correct Answer') }}
                   </span>
                 </div>
               </div>
 
               <div v-if="!currentQuestion.answers || currentQuestion.answers.length === 0" class="no-answers">
-                <p>No answers available for this question.</p>
+                <p>{{ $t('No answers available for this question.') }}</p>
               </div>
             </div>
 
@@ -275,7 +275,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
-                Previous
+                {{ $t('Previous') }}
               </button>
 
               <button
@@ -292,7 +292,7 @@
             <!-- Quiz Progress -->
             <div class="quiz-progress">
               <div class="progress-info">
-                <span>Progress: {{ currentQuestionIndex + 1 }}/{{ quiz.questions?.length || 0 }}</span>
+                <span>{{ $t('Progress: {v0}/{v1}', { v0: currentQuestionIndex + 1, v1: quiz.questions?.length || 0 }) }}</span>
                 <span>{{ Math.round(((currentQuestionIndex + 1) / (quiz.questions?.length || 1)) * 100) }}%</span>
               </div>
               <div class="progress-bar">
@@ -316,13 +316,13 @@
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <h3 class="error-title">Unable to load quiz</h3>
+      <h3 class="error-title">{{ $t('Unable to load quiz') }}</h3>
       <p class="error-message">{{ error }}</p>
       <button class="retry-btn" @click="loadQuiz">
-        Try Again
+        {{ $t('Try Again') }}
       </button>
       <button class="back-btn" @click="returnToCourse">
-        Back to Course
+        {{ $t('Back to Course') }}
       </button>
     </div>
   </div>

@@ -2,10 +2,10 @@
   <div class="tm-meeting-room">
     <div class="tm-meeting-header">
       <div>
-        <strong>🎭 Role:</strong>
+        <strong>{{ $t('🎭 Role:') }}</strong>
         <span class="tm-badge" :style="paint(roleBadgeColor)">{{ userRole }}</span>
         <template v-if="userRole==='Speaker'">
-          <strong style="margin-left:.75rem">📍 Topic:</strong> <span>{{ displayTopic }}</span>
+          <strong style="margin-left:.75rem">{{ $t('📍 Topic:') }}</strong> <span>{{ displayTopic }}</span>
           <span class="tm-badge">{{ speechType }}</span>
         </template>
       </div>
@@ -19,8 +19,8 @@
 
     <!-- Role task info -->
     <div v-if="roleTaskInfo && userRole!=='Speaker'" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#e0e7ff;padding:12px 18px;border-radius:10px;margin-bottom:12px;font-size:.92rem;line-height:1.5;border:1px solid #4338ca">
-      <strong>🎭 Your Role:</strong> {{ userRole }}<br>
-      <strong>📋 Task:</strong> {{ roleTaskInfo }}
+      <strong>{{ $t('🎭 Your Role:') }}</strong> {{ userRole }}<br>
+      <strong>{{ $t('📋 Task:') }}</strong> {{ roleTaskInfo }}
     </div>
 
     <div class="tm-bots-grid">
@@ -41,13 +41,13 @@
       <div class="tm-video-tile self" :class="{ 'camera-off': !cameraEnabled, speaking: currentSpeaker === 'self' }">
         <div class="tm-user-video-wrap">
           <video ref="videoEl" autoplay muted playsinline></video>
-          <div class="tm-face-box" ref="faceBoxEl"><div class="tm-face-box-label" ref="faceBoxLabelEl">face</div></div>
+          <div class="tm-face-box" ref="faceBoxEl"><div class="tm-face-box-label" ref="faceBoxLabelEl">{{ $t('face') }}</div></div>
         </div>
         <div class="tm-camera-off-overlay">
           <div class="tm-camera-off-avatar">{{ userInitial }}</div>
-          <div class="tm-camera-off-text">Camera Off</div>
+          <div class="tm-camera-off-text">{{ $t('Camera Off') }}</div>
         </div>
-        <div class="tm-name-tag">👤 You ({{ userName }}) — <strong>{{ userRole }}</strong></div>
+        <div class="tm-name-tag">{{ $t('👤 You ({v0}) —', { v0: userName }) }} <strong>{{ userRole }}</strong></div>
         <div class="tm-speaking-dot"></div>
         <div class="tm-self-status">
           <span class="tm-status-icon" :class="{ muted: !micEnabled }">{{ micEnabled ? '🎤' : '🔇' }}</span>
@@ -57,10 +57,10 @@
         <div class="tm-focus-badge" v-if="focusBadgeText" :style="paint(focusBadgeColor)">{{ focusBadgeText }}</div>
         <div class="tm-cam-debug" v-if="cameraAnalysisActive">
           <div><strong>AI:</strong> {{ detectionMethod }}</div>
-          <div><strong>Frames:</strong> {{ dbgFrames }}</div>
-          <div><strong>Face:</strong> {{ dbgVisibility }}%</div>
-          <div><strong>Mic:</strong> {{ recordingStatus }}</div>
-          <div v-if="chunksProcessed > 0"><strong>Chunks:</strong> {{ chunksProcessed }}</div>
+          <div><strong>{{ $t('Frames:') }}</strong> {{ dbgFrames }}</div>
+          <div><strong>{{ $t('Face:') }}</strong> {{ dbgVisibility }}%</div>
+          <div><strong>{{ $t('Mic:') }}</strong> {{ recordingStatus }}</div>
+          <div v-if="chunksProcessed > 0"><strong>{{ $t('Chunks:') }}</strong> {{ chunksProcessed }}</div>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@
     </div>
 
     <div class="tm-transcript-box">
-      <h4>Your Live Transcript <span v-if="isSpeakingRef" style="color:#10b981;font-size:.85rem">🎤 Recording (Whisper AI)</span></h4>
+      <h4>{{ $t('Your Live Transcript') }} <span v-if="isSpeakingRef" style="color:#10b981;font-size:.85rem">{{ $t('🎤 Recording (Whisper AI)') }}</span></h4>
       <div>{{ liveTranscript || (isSpeakingRef ? '🎙️ Listening... transcription appears every ~3 seconds' : '—') }}</div>
     </div>
 
@@ -79,24 +79,24 @@
       <button @click="startMeeting" :disabled="startBtnDisabled" class="tm-btn-primary">{{ startBtnText }}</button>
       <button v-if="showSkipIntro" @click="doSkipIntro" :disabled="didSkipIntro" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipIntro ? '⏩ Skipped' : '⏩ Skip Intro' }}</button>
       <button @click="userSpeak" :disabled="speakBtnDisabled" class="tm-btn-success">{{ speakBtnLabel }}</button>
-      <button @click="userFinish" :disabled="finishBtnDisabled" class="tm-btn-warning">✋ I'm Done</button>
+      <button @click="userFinish" :disabled="finishBtnDisabled" class="tm-btn-warning">{{ $t('✋ I\'m Done') }}</button>
       <button v-if="showSkipReports" @click="doSkipReports" :disabled="didSkipReports" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipReports ? '⏩ Skipped' : '⏩ Skip Reports' }}</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="tm-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
       <button @click="toggleCamera" :disabled="!mediaReady" class="tm-btn-control" :class="{ off: !cameraEnabled }">{{ cameraEnabled ? '📹 Camera On' : '📷 Camera Off' }}</button>
-      <button @click="doLeave" class="tm-btn-danger">Leave</button>
+      <button @click="doLeave" class="tm-btn-danger">{{ $t('Leave') }}</button>
     </div>
 
     <div class="tm-reports-panel" v-if="reportsVisible">
-      <h2>📋 Meeting Reports</h2>
+      <h2>{{ $t('📋 Meeting Reports') }}</h2>
       <div v-if="reports.roleEval && userRole!=='Speaker'" class="tm-report-card">
-        <h3>🎭 {{ userRole }} Role Evaluation</h3><p>{{ reports.roleEval }}</p>
+        <h3>{{ $t('🎭 {v0} Role Evaluation', { v0: userRole }) }}</h3><p>{{ reports.roleEval }}</p>
       </div>
-      <div class="tm-report-card"><h3>⏱️ Timer Report</h3><p>{{ reports.timer }}</p></div>
+      <div class="tm-report-card"><h3>{{ $t('⏱️ Timer Report') }}</h3><p>{{ reports.timer }}</p></div>
       <div class="tm-report-card">
-        <h3>🗣️ Ah-Counter Report</h3>
+        <h3>{{ $t('🗣️ Ah-Counter Report') }}</h3>
         <p>{{ reports.ah }}</p>
         <div v-if="sortedFillers.length > 0" class="tm-filler-section">
-          <div class="tm-filler-section-title">📊 Filler Word Breakdown ({{ totalFillerCount }} total):</div>
+          <div class="tm-filler-section-title">{{ $t('📊 Filler Word Breakdown ({v0} total):', { v0: totalFillerCount }) }}</div>
           <div class="tm-filler-chips">
             <span v-for="[word, count] in sortedFillers" :key="word" class="tm-filler-chip">
               <span class="tm-filler-word">"{{ word }}"</span>
@@ -105,23 +105,25 @@
           </div>
         </div>
         <div v-else-if="reportsVisible && !reports.ah.includes('⏳')" class="tm-filler-empty">
-          ✨ Zero filler words — outstanding clarity!
+          {{ $t('✨ Zero filler words — outstanding clarity!') }}
         </div>
       </div>
-      <div class="tm-report-card"><h3>✍️ Grammarian Report</h3><p>{{ reports.gram }}</p></div>
-      <div class="tm-report-card"><h3>📋 Speech Evaluator Report</h3><p>{{ reports.speechEval }}</p></div>
-      <div class="tm-report-card"><h3>🎯 General Evaluator Report</h3><p>{{ reports.generalEval }}</p></div>
-      <div class="tm-report-card"><h3>📹 Body Language Analysis</h3><p style="white-space:pre-wrap">{{ reports.bodyLang }}</p></div>
-      <button @click="doLeave" class="tm-btn-primary">View All Results →</button>
+      <div class="tm-report-card"><h3>{{ $t('✍️ Grammarian Report') }}</h3><p>{{ reports.gram }}</p></div>
+      <div class="tm-report-card"><h3>{{ $t('📋 Speech Evaluator Report') }}</h3><p>{{ reports.speechEval }}</p></div>
+      <div class="tm-report-card"><h3>{{ $t('🎯 General Evaluator Report') }}</h3><p>{{ reports.generalEval }}</p></div>
+      <div class="tm-report-card"><h3>{{ $t('📹 Body Language Analysis') }}</h3><p style="white-space:pre-wrap">{{ reports.bodyLang }}</p></div>
+      <button @click="doLeave" class="tm-btn-primary">{{ $t('View All Results →') }}</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { aiLanguage, aiLanguageHeaders, localeId } from '@/i18n/runtime';
+import { planSpeech } from '@/utils/roomSpeech';
 import { ref, computed, onUnmounted, reactive } from 'vue';
 import { paint } from '@/theme/contrast';
 import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
-import { SEATS, actorById, castVoice, pitchFor, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
+import { SEATS, actorById, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService } from '@/services/toastmasters.service';
@@ -244,7 +246,19 @@ const FOCUS_STATES: Record<string, { color: string; label: string }> = {
   away_briefly:{color:'#EF4444',label:'🚶 Away'}, absent:{color:'#7C2D12',label:'❌ Absent'}
 };
 
-function loadVoices() { voices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('en')); }
+/*
+ * EVERY voice the device has, not just the English ones.
+ *
+ * This filtered `startsWith('en')`, which was correct while the meeting was
+ * English-only and became the reason it fell silent in Arabic: the filter ran
+ * once at mount, so switching language could not bring an Arabic voice back
+ * even on a machine that had one. `planSpeech` filters per line against the
+ * current locale instead — and it is the only thing that knows a
+ * wrong-language voice must never be cast, because an assigned
+ * `utterance.voice` overrides `utterance.lang` and an English engine handed
+ * Arabic characters produces noise rather than an accent.
+ */
+function loadVoices() { voices = speechSynthesis.getVoices(); }
 loadVoices();
 speechSynthesis.onvoiceschanged = loadVoices;
 
@@ -262,7 +276,10 @@ function voiceFor(botKey: string) {
   const gender = BOT_GENDERS[botKey] || 'male';
   const sameGenderSeats = SEATS.filter(s => BOT_GENDERS[s.key] === gender).map(s => s.key);
   const seat = Math.max(0, sameGenderSeats.indexOf(botKey));
-  return { gender, ...castVoice(voices, gender, seat) };
+  // `seat` still spreads the six around whatever voices exist, so the three men
+  // are not all read by the one male voice the browser has — that property is
+  // per language now rather than English-only.
+  return { gender, ...planSpeech(voices, localeId.value, gender, seat, false) };
 }
 
 /** `🎙️ Marcus — Toastmaster`, or a plain label for the stand-in sample speaker. */
@@ -295,7 +312,12 @@ function speak(text: string, botKey: string): Promise<void> {
     const u = new SpeechSynthesisUtterance(text);
     const cast = voiceFor(botKey);
     if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
-    u.pitch = pitchFor(cast.gender, cast.matched);
+    // Set whether or not a voice was cast. With none assigned, `lang` is the
+    // only thing telling the platform what language the text is in — and an
+    // unassigned voice with a correct `lang` frequently reaches an OS voice
+    // that `getVoices()` never listed at all.
+    u.lang = cast.lang;
+    u.pitch = cast.pitch;
     u.onend = () => { currentSpeaker.value = null; resolve(); };
     u.onerror = () => { currentSpeaker.value = null; resolve(); };
     setTimeout(() => speechSynthesis.speak(u), 80);
@@ -313,9 +335,10 @@ function speakForced(text: string, botKey: string): Promise<void> {
     const u = new SpeechSynthesisUtterance(text);
     const cast = voiceFor(botKey);
     if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
+    u.lang = cast.lang;
     // A shade slower and lower than the same seat's ordinary delivery: this is a
     // set-piece speech being performed, not a line of meeting business.
-    u.rate = 0.95; u.pitch = pitchFor(cast.gender, cast.matched) - 0.03;
+    u.rate = 0.95; u.pitch = cast.pitch - 0.03;
     const t0 = Date.now();
     u.onend = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
     u.onerror = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
@@ -405,9 +428,20 @@ async function transcribeAudioBlob(blob: Blob, chunkIndex: number): Promise<void
     if (!baseUrl) return;
     const formData = new FormData();
     formData.append('audio', blob, 'audio.webm');
+    formData.append('language', aiLanguage());
     const token = import.meta.env.VITE_AUTH_TOKEN;
     const response = await fetch(`${baseUrl}/api/toastmasters/transcribe`, {
-      method: 'POST', headers: { 'Authorization': `Token ${token}` }, body: formData
+      method: 'POST', headers: {
+   'Authorization': `Token ${token}`,
+ // The language the answer is being SPOKEN in, so Whisper transcribes it
+ // rather than transliterating it. Sent as a form field as well as a
+ // header: this is a multipart upload, and `language.py` reads the body
+ // first — but `request.get_json(silent=True)` sees nothing in a multipart
+ // request, so the header is what actually carries it here. Both are sent
+ // so that neither the service nor a future proxy has to be the one that
+ // works.
+   ...aiLanguageHeaders(),
+ }, body: formData
     });
     if (response.ok) {
       const result = await response.json();

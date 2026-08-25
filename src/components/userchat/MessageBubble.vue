@@ -39,8 +39,8 @@
           <button
             type="button"
             class="quick-btn"
-            title="Reply"
-            aria-label="Reply to this message"
+            :title="$t('Reply')"
+            :aria-label="$t('Reply to this message')"
             @click="$emit('reply', message)"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v5"/></svg>
@@ -58,8 +58,8 @@
           <button
             type="button"
             class="quick-btn"
-            title="More"
-            aria-label="More actions"
+            :title="$t('More')"
+            :aria-label="$t('More actions')"
             @click="$emit('menu', message, $event)"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
@@ -105,7 +105,7 @@
                 :alt="message.text || 'Shared picture'"
                 class="full"
               />
-              <div v-if="!full && !mediaError" class="uc-spinner" aria-label="Loading picture"></div>
+              <div v-if="!full && !mediaError" class="uc-spinner" :aria-label="$t('Loading picture')"></div>
               <p v-if="mediaError" class="media-error">{{ mediaError }}</p>
             </div>
             <RichText
@@ -172,19 +172,19 @@
             the bubble's tooltip.
           -->
           <div v-if="showFoot" class="foot">
-            <span v-if="message.edited" class="edited">edited</span>
+            <span v-if="message.edited" class="edited">{{ $t('edited') }}</span>
             <time :datetime="message.created_at">{{ time }}</time>
 
-            <span v-if="status === 'sending'" class="tick" title="Sending">
+            <span v-if="status === 'sending'" class="tick" :title="$t('Sending')">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9" opacity=".4"/><path d="M12 7v5l3 2"/></svg>
             </span>
             <button v-else-if="status === 'failed'" class="retry" type="button" @click="$emit('retry', message)">
-              Not sent · retry
+              {{ $t('Not sent · retry') }}
             </button>
-            <span v-else-if="status === 'read'" class="tick read" title="Read">
+            <span v-else-if="status === 'read'" class="tick read" :title="$t('Read')">
               <svg width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9.6l4 4L14 4.4"/><path d="M9 13.6l0.6 0.6L21.5 2.8"/></svg>
             </span>
-            <span v-else-if="status === 'sent'" class="tick" title="Sent">
+            <span v-else-if="status === 'sent'" class="tick" :title="$t('Sent')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
             </span>
           </div>
@@ -536,10 +536,10 @@ onBeforeUnmount(() => {
   join). A single message therefore gets one tail and three round corners, and a
   run of five reads as one shape with a tail at the end.
 */
-.row.theirs .bubble { border-bottom-left-radius: var(--uc-tail); }
-.row.theirs:not(.run-first) .bubble { border-top-left-radius: var(--uc-tail); }
-.row.mine .bubble { border-bottom-right-radius: var(--uc-tail); }
-.row.mine:not(.run-first) .bubble { border-top-right-radius: var(--uc-tail); }
+.row.theirs .bubble { border-end-start-radius: var(--uc-tail); }
+.row.theirs:not(.run-first) .bubble { border-start-start-radius: var(--uc-tail); }
+.row.mine .bubble { border-end-end-radius: var(--uc-tail); }
+.row.mine:not(.run-first) .bubble { border-start-end-radius: var(--uc-tail); }
 
 .bubble.pending { opacity: 0.68; }
 .bubble.failed {
@@ -552,11 +552,11 @@ onBeforeUnmount(() => {
 .quote {
   display: block;
   width: 100%;
-  text-align: left;
+  text-align: start;
   margin: 0 0 6px;
   padding: 5px 9px;
   border: 0;
-  border-left: 3px solid var(--uc-brand-soft);
+  border-inline-start: 3px solid var(--uc-brand-soft);
   border-radius: var(--uc-r-xs);
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.22);
   color: inherit;
@@ -565,7 +565,7 @@ onBeforeUnmount(() => {
   transition: background var(--uc-t-fast);
 }
 .quote:hover { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.32); }
-.row.mine .quote { border-left-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
+.row.mine .quote { border-inline-start-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
 .row.mine .quote:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
 .quote-who { display: block; font-size: var(--uc-fs-xs); font-weight: 700; }
 .quote-text {

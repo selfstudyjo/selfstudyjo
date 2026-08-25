@@ -1,53 +1,53 @@
 <template>
   <div class="tm-page">
     <div class="tm-form-card">
-      <h1>🎯 Prepare Your Session</h1>
-      <p>Choose your role and configure today's session.</p>
+      <h1>{{ $t('🎯 Prepare Your Session') }}</h1>
+      <p>{{ $t('Choose your role and configure today\'s session.') }}</p>
       <form @submit.prevent="startSession">
 
-        <label>Your Role *</label>
+        <label>{{ $t('Your Role *') }}</label>
         <select v-model="form.role" @change="updateRole" required>
-          <option value="Speaker">🎤 Speaker — Deliver a speech</option>
-          <option value="Toastmaster">🎙️ Toastmaster — Host the meeting</option>
-          <option value="Timer">⏱️ Timer — Track speech duration</option>
-          <option value="Ah-Counter">🗣️ Ah-Counter — Count filler words</option>
-          <option value="Grammarian">✍️ Grammarian — Analyze language &amp; grammar</option>
-          <option value="Speech Evaluator">📋 Speech Evaluator — Evaluate a speech</option>
-          <option value="General Evaluator">🎯 General Evaluator — Overall meeting feedback</option>
+          <option value="Speaker">{{ $t('🎤 Speaker — Deliver a speech') }}</option>
+          <option value="Toastmaster">{{ $t('🎙️ Toastmaster — Host the meeting') }}</option>
+          <option value="Timer">{{ $t('⏱️ Timer — Track speech duration') }}</option>
+          <option value="Ah-Counter">{{ $t('🗣️ Ah-Counter — Count filler words') }}</option>
+          <option value="Grammarian">{{ $t('✍️ Grammarian — Analyze language & grammar') }}</option>
+          <option value="Speech Evaluator">{{ $t('📋 Speech Evaluator — Evaluate a speech') }}</option>
+          <option value="General Evaluator">{{ $t('🎯 General Evaluator — Overall meeting feedback') }}</option>
         </select>
 
         <div class="tm-type-info" v-html="roleInfo"></div>
 
         <div v-if="showSpeechType">
-          <label>Speech Type *</label>
+          <label>{{ $t('Speech Type *') }}</label>
           <select v-model="form.type" @change="updateType" required>
-            <option value="Prepared Speech">Prepared Speech</option>
-            <option value="Table Topics (Impromptu)">Table Topics (Impromptu)</option>
-            <option value="Ice Breaker">Ice Breaker (First Speech)</option>
-            <option value="Evaluation Speech">Evaluation Speech</option>
-            <option value="Inspirational Speech">Inspirational Speech</option>
-            <option value="Persuasive Speech">Persuasive Speech</option>
+            <option value="Prepared Speech">{{ $t('Prepared Speech') }}</option>
+            <option value="Table Topics (Impromptu)">{{ $t('Table Topics (Impromptu)') }}</option>
+            <option value="Ice Breaker">{{ $t('Ice Breaker (First Speech)') }}</option>
+            <option value="Evaluation Speech">{{ $t('Evaluation Speech') }}</option>
+            <option value="Inspirational Speech">{{ $t('Inspirational Speech') }}</option>
+            <option value="Persuasive Speech">{{ $t('Persuasive Speech') }}</option>
           </select>
           <div class="tm-type-info" v-if="typeInfo" v-html="typeInfo"></div>
         </div>
 
         <div v-if="needsTopic">
-          <label>Speech Topic / Title *</label>
-          <input v-model="form.topic" placeholder="e.g., The Power of Daily Habits" :required="needsTopic">
+          <label>{{ $t('Speech Topic / Title *') }}</label>
+          <input v-model="form.topic" :placeholder="$t('e.g., The Power of Daily Habits')" :required="needsTopic">
         </div>
 
         <div class="tm-row">
           <div>
-            <label>Min Duration (min)</label>
+            <label>{{ $t('Min Duration (min)') }}</label>
             <input type="number" v-model.number="form.min_time" min="1" max="60" required>
           </div>
           <div>
-            <label>Max Duration (min)</label>
+            <label>{{ $t('Max Duration (min)') }}</label>
             <input type="number" v-model.number="form.max_time" min="1" max="60" required>
           </div>
         </div>
 
-        <p class="tm-hint">⚠️ The next page will request camera and microphone permission.</p>
+        <p class="tm-hint">{{ $t('⚠️ The next page will request camera and microphone permission.') }}</p>
         <button type="submit" class="tm-btn-primary">
           {{ form.role === 'Speaker' ? 'Join Meeting →' : `Practice ${form.role} Role →` }}
         </button>

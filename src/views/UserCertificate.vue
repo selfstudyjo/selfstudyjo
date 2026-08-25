@@ -2,18 +2,18 @@
   <div class="certificate-details">
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p class="loading-text">Accessing certificate data ...</p>
+      <p class="loading-text">{{ $t('Accessing certificate data ...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
       <div class="error-icon">⚠️</div>
-      <h3>Signal interference</h3>
+      <h3>{{ $t('Signal interference') }}</h3>
       <p>{{ error }}</p>
       <div class="error-actions">
         <button @click="fetchCertificate" class="retry-btn">
-          <span>Re‑establish connection</span>
+          <span>{{ $t('Re‑establish connection') }}</span>
         </button>
-        <button @click="goBack" class="back-btn">Return to command centre</button>
+        <button @click="goBack" class="back-btn">{{ $t('Return to command centre') }}</button>
       </div>
     </div>
 
@@ -30,12 +30,12 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12C3 13.66 4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.35C15.11 18.56 15.08 18.78 15.08 19C15.08 20.61 16.39 21.92 18 21.92C19.61 21.92 20.92 20.61 20.92 19C20.92 17.39 19.61 16.08 18 16.08Z" fill="currentColor"/>
               </svg>
-              <span>Share achievement</span>
+              <span>{{ $t('Share achievement') }}</span>
             </button>
 
             <transition name="uc-pop">
               <div v-if="shareMenuOpen" class="share-menu" role="menu">
-                <p class="share-menu-title">Share your achievement</p>
+                <p class="share-menu-title">{{ $t('Share your achievement') }}</p>
                 <p class="share-menu-preview">{{ shareMessage }}</p>
 
                 <div class="share-menu-actions">
@@ -62,7 +62,7 @@
                         <path d="M6 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/>
                       </svg>
                     </span>
-                    <span>More apps</span>
+                    <span>{{ $t('More apps') }}</span>
                   </button>
 
                   <button class="share-option is-copy" role="menuitem" @click="copyShareMessage">
@@ -71,7 +71,7 @@
                         <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"/>
                       </svg>
                     </span>
-                    <span>Copy post</span>
+                    <span>{{ $t('Copy post') }}</span>
                   </button>
                 </div>
               </div>
@@ -82,14 +82,14 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
             </svg>
-            <span>Copy link</span>
+            <span>{{ $t('Copy link') }}</span>
           </button>
 
           <button @click="printCertificate" class="print-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M19 8h-1V3H6v5H5a3 3 0 0 0-3 3v6h4v3h12v-3h4v-6a3 3 0 0 0-3-3ZM8 5h8v3H8V5Zm8 14H8v-4h8v4Zm3-6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>
             </svg>
-            <span>Print</span>
+            <span>{{ $t('Print') }}</span>
           </button>
         </div>
       </div>
@@ -100,13 +100,13 @@
           <!-- Issuer -->
           <header class="cert-brand">
             <span class="brand-mark">★</span>
-            <span class="brand-name">Self Study JO</span>
-            <span class="brand-sub">Official Certification Authority</span>
+            <span class="brand-name">{{ $t('Self Study JO') }}</span>
+            <span class="brand-sub">{{ $t('Official Certification Authority') }}</span>
           </header>
 
           <!-- Title -->
           <div class="cert-title">
-            <h1>Certificate of {{ certificateType === 'course' ? 'Completion' : 'Achievement' }}</h1>
+            <h1>{{ $t('Certificate of {v0}', { v0: certificateType === 'course' ? 'Completion' : 'Achievement' }) }}</h1>
             <div class="cert-ribbon" aria-hidden="true">
               <span class="ribbon-line"></span>
               <span class="ribbon-center">🌠</span>
@@ -116,7 +116,7 @@
 
           <!-- Recipient -->
           <section class="cert-recipient">
-            <p class="cert-lead">This is to certify that</p>
+            <p class="cert-lead">{{ $t('This is to certify that') }}</p>
 
             <div class="recipient-avatar">
               <img
@@ -134,18 +134,18 @@
 
             <span class="verified-badge">
               <span class="badge-icon">★</span>
-              <span class="badge-text">Verified</span>
+              <span class="badge-text">{{ $t('Verified') }}</span>
             </span>
           </section>
 
           <!-- Award -->
           <section class="cert-award">
             <p class="cert-lead">
-              has successfully {{ certificateType === 'course' ? 'completed the course' : 'passed the examination' }}
+              {{ $t('has successfully {v0}', { v0: certificateType === 'course' ? 'completed the course' : 'passed the examination' }) }}
             </p>
             <h3 class="award-title">{{ mainTitle }}</h3>
             <p v-if="certificateType === 'exam' && certificate?.course_name" class="award-sub">
-              as part of the course <strong>{{ certificate.course_name }}</strong>
+              {{ $t('as part of the course') }} <strong>{{ certificate.course_name }}</strong>
             </p>
           </section>
 
@@ -162,17 +162,17 @@
             </div>
 
             <div class="fact" v-if="certificate?.expire_date">
-              <span class="fact-label">Valid until</span>
+              <span class="fact-label">{{ $t('Valid until') }}</span>
               <span class="fact-value">{{ formatDate(certificate.expire_date) }}</span>
             </div>
 
             <div class="fact" v-if="certificate?.hours">
-              <span class="fact-label">Study hours</span>
+              <span class="fact-label">{{ $t('Study hours') }}</span>
               <span class="fact-value">{{ certificate.hours }} h</span>
             </div>
 
             <div class="fact">
-              <span class="fact-label">Status</span>
+              <span class="fact-label">{{ $t('Status') }}</span>
               <span class="fact-value">
                 <span class="status-badge" :class="statusClass">{{ statusText }}</span>
               </span>
@@ -184,15 +184,15 @@
             <div class="footer-block">
               <span class="footer-value">{{ formatDate(certificate?.created_at || new Date().toISOString()) }}</span>
               <span class="footer-rule" aria-hidden="true"></span>
-              <span class="footer-label">Date of issue</span>
+              <span class="footer-label">{{ $t('Date of issue') }}</span>
             </div>
 
             <div class="cert-seal" aria-hidden="true">
               <div class="seal">
                 <div class="seal-inner">
                   <div class="seal-star">★</div>
-                  <div class="seal-text">Certified</div>
-                  <div class="seal-org">Self Study JO</div>
+                  <div class="seal-text">{{ $t('Certified') }}</div>
+                  <div class="seal-org">{{ $t('Self Study JO') }}</div>
                 </div>
               </div>
             </div>
@@ -200,7 +200,7 @@
             <div class="footer-block">
               <code class="footer-value cert-id">{{ certificate?.certificate_id }}</code>
               <span class="footer-rule" aria-hidden="true"></span>
-              <span class="footer-label">Certificate ID</span>
+              <span class="footer-label">{{ $t('Certificate ID') }}</span>
             </div>
           </footer>
 

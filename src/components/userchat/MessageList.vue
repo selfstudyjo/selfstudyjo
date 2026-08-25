@@ -5,16 +5,16 @@
         <!-- ---------------------------------------------------- older -->
         <div class="older">
           <p v-if="loadingOlder" class="older-note">
-            <span class="uc-spinner" aria-hidden="true"></span> Loading earlier messages…
+            <span class="uc-spinner" aria-hidden="true"></span> {{ $t('Loading earlier messages…') }}
           </p>
           <button
             v-else-if="hasMore"
             type="button"
             class="older-btn"
             @click="$emit('scroll-top')"
-          >Load earlier messages</button>
+          >{{ $t('Load earlier messages') }}</button>
           <p v-else-if="messages.length" class="older-note faint">
-            This is the beginning of the conversation.
+            {{ $t('This is the beginning of the conversation.') }}
           </p>
         </div>
 
@@ -69,8 +69,8 @@
           <div class="empty-mark" aria-hidden="true">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
           </div>
-          <strong>No messages yet</strong>
-          <span>Say hello — messages, pictures and voice notes.</span>
+          <strong>{{ $t('No messages yet') }}</strong>
+          <span>{{ $t('Say hello — messages, pictures and voice notes.') }}</span>
         </div>
       </div>
     </div>
@@ -86,7 +86,7 @@
         @click="scrollToBottom(true)"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        <span v-if="missedCount > 0">{{ missedCount > 99 ? '99+' : missedCount }} new</span>
+        <span v-if="missedCount > 0">{{ $t('{v0} new', { v0: missedCount > 99 ? '99+' : missedCount }) }}</span>
       </button>
     </transition>
   </div>
@@ -443,8 +443,8 @@ defineExpose({ scrollToBottom, captureScroll, jumpTo });
   background-size: 220% 100%;
   animation: shimmer 1.4s infinite;
 }
-.ghost.in { align-self: flex-start; border-bottom-left-radius: var(--uc-tail); margin-left: 35px; }
-.ghost.out { align-self: flex-end; border-bottom-right-radius: var(--uc-tail); }
+.ghost.in { align-self: flex-start; border-end-start-radius: var(--uc-tail); margin-inline-start: 35px; }
+.ghost.out { align-self: flex-end; border-end-end-radius: var(--uc-tail); }
 @keyframes shimmer { to { background-position: -220% 0; } }
 
 /* --------------------------------------------------------------- empty */

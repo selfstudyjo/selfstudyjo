@@ -7,12 +7,11 @@
       <div class="lb-masthead__text">
         <p class="lb-masthead__eyebrow">
           <span class="lb-live" :class="{ 'lb-live--stale': !!error }" aria-hidden="true"></span>
-          Open leaderboard
+          {{ $t('Open leaderboard') }}
         </p>
-        <h1 class="lb-masthead__title">Self Study Leaderboard</h1>
+        <h1 class="lb-masthead__title">{{ $t('Self Study Leaderboard') }}</h1>
         <p class="lb-masthead__lede">
-          Every exam passed, quiz cleared and certificate earned across the platform,
-          ranked. No account needed — this page is public.
+          {{ $t('Every exam passed, quiz cleared and certificate earned across the platform, ranked. No account needed — this page is public.') }}
         </p>
       </div>
 
@@ -30,8 +29,8 @@
     <!-- ---------------------------------------------------------------- -->
     <!-- One filter row, above everything it scopes                        -->
     <!-- ---------------------------------------------------------------- -->
-    <section class="lb-filters" aria-label="Filter the board">
-      <div class="lb-segmented" role="group" aria-label="Period">
+    <section class="lb-filters" :aria-label="$t('Filter the board')">
+      <div class="lb-segmented" role="group" :aria-label="$t('Period')">
         <button
           v-for="option in WINDOWS"
           :key="option"
@@ -56,18 +55,18 @@
         <input
           v-model="query"
           type="search"
-          placeholder="Find a learner"
-          aria-label="Find a learner"
+          :placeholder="$t('Find a learner')"
+          :aria-label="$t('Find a learner')"
         />
       </label>
 
       <label class="lb-select">
-        <span class="lb-select__label">Sort</span>
-        <select v-model="sortKey" aria-label="Sort the board by">
-          <option value="points">Points</option>
-          <option value="certificates">Certificates</option>
-          <option value="averageScore">Average score</option>
-          <option value="lastActiveAt">Most recent</option>
+        <span class="lb-select__label">{{ $t('Sort') }}</span>
+        <select v-model="sortKey" :aria-label="$t('Sort the board by')">
+          <option value="points">{{ $t('Points') }}</option>
+          <option value="certificates">{{ $t('Certificates') }}</option>
+          <option value="averageScore">{{ $t('Average score') }}</option>
+          <option value="lastActiveAt">{{ $t('Most recent') }}</option>
         </select>
       </label>
 
@@ -77,21 +76,19 @@
         platform, and nothing was counted.
       -->
       <p v-if="!error" class="lb-filters__count" aria-live="polite">
-        {{ visibleRows.length.toLocaleString() }}
-        of {{ board.rows.length.toLocaleString() }} ranked
+        {{ $t('{v0} of {v1} ranked', { v0: visibleRows.length.toLocaleString(), v1: board.rows.length.toLocaleString() }) }}
       </p>
     </section>
 
     <!-- A source that did not answer is named, never rounded into the total. -->
     <p v-if="partialSources.length && !loading" class="lb-notice" role="status">
-      Showing a partial board — {{ partialSources.join(' and ') }}
-      did not answer. A replica is probably still waking up; try Refresh in a moment.
+      {{ $t('Showing a partial board — {v0} did not answer. A replica is probably still waking up; try Refresh in a moment.', { v0: partialSources.join(' and ') }) }}
     </p>
 
     <div v-if="error" class="lb-error" role="alert">
-      <h2>The board could not be loaded</h2>
+      <h2>{{ $t('The board could not be loaded') }}</h2>
       <p>{{ error }}</p>
-      <button type="button" class="lb-btn" @click="load">Try again</button>
+      <button type="button" class="lb-btn" @click="load">{{ $t('Try again') }}</button>
     </div>
 
     <!--
@@ -120,20 +117,18 @@
         <div class="lb-empty">
           <span class="lb-empty__mark" aria-hidden="true"></span>
           <template v-if="win === 'all'">
-            <h2>The board is empty</h2>
+            <h2>{{ $t('The board is empty') }}</h2>
             <p>
-              Nothing has been earned across the platform yet. The first exam passed,
-              quiz cleared or certificate issued will appear here.
+              {{ $t('Nothing has been earned across the platform yet. The first exam passed, quiz cleared or certificate issued will appear here.') }}
             </p>
           </template>
           <template v-else>
-            <h2>Nothing ranked for this period</h2>
+            <h2>{{ $t('Nothing ranked for this period') }}</h2>
             <p>
-              No exam, quiz or certificate was earned in the last
-              {{ WINDOW_DAYS[win] }} days. Try a longer period.
+              {{ $t('No exam, quiz or certificate was earned in the last {v0} days. Try a longer period.', { v0: WINDOW_DAYS[win] }) }}
             </p>
             <button type="button" class="lb-btn" @click="win = 'all'">
-              Show all time
+              {{ $t('Show all time') }}
             </button>
           </template>
         </div>
@@ -143,9 +138,9 @@
         <!-- ------------------------------------------------------------ -->
         <!-- The headline, and the four numbers under it                   -->
         <!-- ------------------------------------------------------------ -->
-        <section class="lb-summary" aria-label="Platform totals">
+        <section class="lb-summary" :aria-label="$t('Platform totals')">
           <div class="lb-hero">
-            <p class="lb-hero__label">Points earned · {{ WINDOW_LABEL[win].toLowerCase() }}</p>
+            <p class="lb-hero__label">{{ $t('Points earned · {v0}', { v0: WINDOW_LABEL[win].toLowerCase() }) }}</p>
             <p class="lb-hero__value">{{ compact(board.totals.points) }}</p>
             <p class="lb-hero__meta">
               <span
@@ -155,11 +150,10 @@
               >
                 <span aria-hidden="true">{{ pointsDelta >= 0 ? '▲' : '▼' }}</span>
                 {{ compact(Math.abs(pointsDelta)) }}
-                <span class="lb-delta__vs">vs previous {{ WINDOW_DAYS[win] }} days</span>
+                <span class="lb-delta__vs">{{ $t('vs previous {v0} days', { v0: WINDOW_DAYS[win] }) }}</span>
               </span>
               <span v-else class="lb-hero__note">
-                across {{ board.totals.learners.toLocaleString() }}
-                {{ board.totals.learners === 1 ? 'learner' : 'learners' }}
+                {{ $t('across {v0} {v1}', { v0: board.totals.learners.toLocaleString(), v1: board.totals.learners === 1 ? 'learner' : 'learners' }) }}
               </span>
             </p>
           </div>
@@ -186,14 +180,13 @@
         <!-- ------------------------------------------------------------ -->
         <!-- Pass rate: one ratio against a limit, so a meter             -->
         <!-- ------------------------------------------------------------ -->
-        <section class="lb-meterCard" aria-label="Pass rate">
+        <section class="lb-meterCard" :aria-label="$t('Pass rate')">
           <div class="lb-meterCard__head">
-            <h2>Pass rate</h2>
+            <h2>{{ $t('Pass rate') }}</h2>
             <p class="lb-meterCard__value">
               {{ (board.totals.passRate * 100).toFixed(1) }}%
               <span class="lb-meterCard__of">
-                {{ board.totals.assessmentsPassed.toLocaleString() }}
-                of {{ board.totals.assessmentsTaken.toLocaleString() }} assessments
+                {{ $t('{v0} of {v1} assessments', { v0: board.totals.assessmentsPassed.toLocaleString(), v1: board.totals.assessmentsTaken.toLocaleString() }) }}
               </span>
             </p>
           </div>
@@ -208,15 +201,14 @@
             <span class="lb-meter__fill" :style="{ width: (board.totals.passRate * 100) + '%' }"></span>
           </div>
           <p class="lb-meterCard__note">
-            Counted over each learner's best attempt at each assessment, so a
-            retake never appears twice.
+            {{ $t('Counted over each learner\'s best attempt at each assessment, so a retake never appears twice.') }}
           </p>
         </section>
 
         <!-- ------------------------------------------------------------ -->
         <!-- The podium                                                    -->
         <!-- ------------------------------------------------------------ -->
-        <section v-if="podium.length" class="lb-podium" aria-label="Top three learners">
+        <section v-if="podium.length" class="lb-podium" :aria-label="$t('Top three learners')">
           <article
             v-for="(row, index) in podium"
             :key="row.userId"
@@ -227,7 +219,7 @@
               <span class="lb-medal" :class="`lb-medal--${row.rank}`" aria-hidden="true">
                 {{ row.rank }}
               </span>
-              <span class="lb-sr">Rank {{ row.rank }}</span>
+              <span class="lb-sr">{{ $t('Rank {v0}', { v0: row.rank }) }}</span>
             </p>
             <div class="lb-avatar lb-avatar--lg">
               <img
@@ -241,7 +233,7 @@
               <span v-else aria-hidden="true">{{ initialsOf(row.name) }}</span>
             </div>
             <h3 class="lb-podium__name">{{ row.name }}</h3>
-            <p class="lb-podium__points">{{ row.points.toLocaleString() }} pts</p>
+            <p class="lb-podium__points">{{ $t('{v0} pts', { v0: row.points.toLocaleString() }) }}</p>
             <ul class="lb-podium__facts">
               <li>
                 <span>{{ row.examsPassed }}</span>
@@ -251,7 +243,7 @@
                 <span>{{ row.certificates }}</span>
                 {{ row.certificates === 1 ? 'credential' : 'credentials' }}
               </li>
-              <li v-if="row.averageScore > 0"><span>{{ row.averageScore }}</span> avg</li>
+              <li v-if="row.averageScore > 0"><span>{{ row.averageScore }}</span> {{ $t('avg') }}</li>
             </ul>
             <p v-if="index === 0" class="lb-podium__crown" aria-hidden="true"></p>
           </article>
@@ -260,9 +252,9 @@
         <!-- ------------------------------------------------------------ -->
         <!-- Charts                                                        -->
         <!-- ------------------------------------------------------------ -->
-        <section class="lb-charts" aria-label="Trends">
+        <section class="lb-charts" :aria-label="$t('Trends')">
           <LeaderboardChart
-            title="Achievements over time"
+            :title="$t('Achievements over time')"
             :subtitle="activitySubtitle"
             kind="area"
             :labels="activity.map(point => point.label)"
@@ -274,7 +266,7 @@
           />
 
           <LeaderboardChart
-            title="Score distribution"
+            :title="$t('Score distribution')"
             subtitle="Best attempt per learner per assessment. The pass mark is 70."
             kind="column"
             :labels="distribution.map(bucket => bucket.label)"
@@ -287,9 +279,9 @@
           />
         </section>
 
-        <section v-if="subjects.length" class="lb-charts lb-charts--single" aria-label="Most studied">
+        <section v-if="subjects.length" class="lb-charts lb-charts--single" :aria-label="$t('Most studied')">
           <LeaderboardChart
-            title="Most studied"
+            :title="$t('Most studied')"
             :subtitle="subjectsSubtitle"
             :badge="WINDOW_LABEL[win]"
             kind="bar"
@@ -306,28 +298,27 @@
         <!-- ------------------------------------------------------------ -->
         <!-- The board                                                     -->
         <!-- ------------------------------------------------------------ -->
-        <section class="lb-boardCard" aria-label="Full ranking">
+        <section class="lb-boardCard" :aria-label="$t('Full ranking')">
           <div class="lb-boardCard__head">
-            <h2>The ranking</h2>
+            <h2>{{ $t('The ranking') }}</h2>
             <p>{{ WINDOW_LABEL[win] }}</p>
           </div>
 
           <div class="lb-tableWrap">
             <table class="lb-table">
               <caption class="lb-sr">
-                Learners ranked by points. Rank is always the points rank, whatever
-                the table is sorted by.
+                {{ $t('Learners ranked by points. Rank is always the points rank, whatever the table is sorted by.') }}
               </caption>
               <thead>
                 <tr>
                   <th scope="col" class="lb-table__rank">#</th>
-                  <th scope="col">Learner</th>
-                  <th scope="col" class="lb-num">Points</th>
-                  <th scope="col" class="lb-num lb-hide-sm">Exams</th>
-                  <th scope="col" class="lb-num lb-hide-sm">Quizzes</th>
-                  <th scope="col" class="lb-num lb-hide-md">Credentials</th>
-                  <th scope="col" class="lb-num lb-hide-md">Avg score</th>
-                  <th scope="col" class="lb-hide-md">Progress</th>
+                  <th scope="col">{{ $t('Learner') }}</th>
+                  <th scope="col" class="lb-num">{{ $t('Points') }}</th>
+                  <th scope="col" class="lb-num lb-hide-sm">{{ $t('Exams') }}</th>
+                  <th scope="col" class="lb-num lb-hide-sm">{{ $t('Quizzes') }}</th>
+                  <th scope="col" class="lb-num lb-hide-md">{{ $t('Credentials') }}</th>
+                  <th scope="col" class="lb-num lb-hide-md">{{ $t('Avg score') }}</th>
+                  <th scope="col" class="lb-hide-md">{{ $t('Progress') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -348,8 +339,8 @@
                     <span
                       v-else-if="row.movement === null && board.previousTotals"
                       class="lb-move is-new"
-                      title="Not ranked in the previous period"
-                    >NEW</span>
+                      :title="$t('Not ranked in the previous period')"
+                    >{{ $t('NEW') }}</span>
                   </td>
 
                   <td>
@@ -384,7 +375,7 @@
                   <td class="lb-num lb-hide-md">{{ row.certificates }}</td>
                   <td class="lb-num lb-hide-md">
                     <span v-if="row.averageScore > 0">{{ row.averageScore }}</span>
-                    <span v-else class="lb-dash" aria-label="no scored assessment">—</span>
+                    <span v-else class="lb-dash" :aria-label="$t('no scored assessment')">—</span>
                   </td>
                   <td class="lb-hide-md">
                     <div
@@ -404,17 +395,16 @@
           </div>
 
           <div v-if="!visibleRows.length" class="lb-noMatch">
-            <p>No learner matches “{{ query }}”.</p>
-            <button type="button" class="lb-btn" @click="query = ''">Clear the search</button>
+            <p>{{ $t('No learner matches “{v0}”.', { v0: query }) }}</p>
+            <button type="button" class="lb-btn" @click="query = ''">{{ $t('Clear the search') }}</button>
           </div>
 
           <div v-if="pagedRows.length < visibleRows.length" class="lb-more">
             <button type="button" class="lb-btn" @click="shown += PAGE">
-              Show {{ Math.min(PAGE, visibleRows.length - pagedRows.length) }} more
+              {{ $t('Show {v0} more', { v0: Math.min(PAGE, visibleRows.length - pagedRows.length) }) }}
             </button>
             <p>
-              Showing {{ pagedRows.length.toLocaleString() }}
-              of {{ visibleRows.length.toLocaleString() }}
+              {{ $t('Showing {v0} of {v1}', { v0: pagedRows.length.toLocaleString(), v1: visibleRows.length.toLocaleString() }) }}
             </p>
           </div>
         </section>
@@ -422,29 +412,29 @@
         <!-- ------------------------------------------------------------ -->
         <!-- How the scoring works, printed rather than assumed             -->
         <!-- ------------------------------------------------------------ -->
-        <section class="lb-explain" aria-label="How points work">
+        <section class="lb-explain" :aria-label="$t('How points work')">
           <div class="lb-explain__col">
-            <h2>How points work</h2>
+            <h2>{{ $t('How points work') }}</h2>
             <table class="lb-points">
               <tbody>
                 <tr>
-                  <th scope="row">Exam passed</th>
+                  <th scope="row">{{ $t('Exam passed') }}</th>
                   <td>{{ POINTS.examPassed }}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Quiz passed</th>
+                  <th scope="row">{{ $t('Quiz passed') }}</th>
                   <td>{{ POINTS.quizPassed }}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Course certificate</th>
+                  <th scope="row">{{ $t('Course certificate') }}</th>
                   <td>{{ POINTS.courseCertificate }}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Distinction · best attempt {{ DISTINCTION_SCORE }} or above</th>
+                  <th scope="row">{{ $t('Distinction · best attempt {v0} or above', { v0: DISTINCTION_SCORE }) }}</th>
                   <td>+{{ POINTS.distinction }}</td>
                 </tr>
                 <tr class="lb-points__zero">
-                  <th scope="row">Exam certificate</th>
+                  <th scope="row">{{ $t('Exam certificate') }}</th>
                   <td>{{ POINTS.examCertificate }}</td>
                 </tr>
               </tbody>
@@ -452,33 +442,22 @@
           </div>
 
           <div class="lb-explain__col">
-            <h2>The rules behind it</h2>
+            <h2>{{ $t('The rules behind it') }}</h2>
             <ul class="lb-rules">
               <li>
-                <strong>One attempt each.</strong> Only your best attempt at any exam
-                or quiz counts, so re-sitting something you have already passed does
-                not move you up.
+                <strong>{{ $t('One attempt each.') }}</strong> {{ $t('Only your best attempt at any exam or quiz counts, so re-sitting something you have already passed does not move you up.') }}
               </li>
               <li>
-                <strong>An exam certificate is worth nothing.</strong> It is issued
-                automatically for a pass, and the pass already earned the points —
-                scoring both would pay twice for one achievement. It is still counted
-                as a credential.
+                <strong>{{ $t('An exam certificate is worth nothing.') }}</strong> {{ $t('It is issued automatically for a pass, and the pass already earned the points — scoring both would pay twice for one achievement. It is still counted as a credential.') }}
               </li>
               <li>
-                <strong>Failures stay on the record.</strong> They earn nothing and
-                they count towards the pass rate, which is the only way that figure
-                means anything.
+                <strong>{{ $t('Failures stay on the record.') }}</strong> {{ $t('They earn nothing and they count towards the pass rate, which is the only way that figure means anything.') }}
               </li>
               <li>
-                <strong>Equal points share a rank.</strong> Two learners on the same
-                total are both shown at the same number, and the next learner takes
-                the rank after both of them.
+                <strong>{{ $t('Equal points share a rank.') }}</strong> {{ $t('Two learners on the same total are both shown at the same number, and the next learner takes the rank after both of them.') }}
               </li>
               <li>
-                <strong>No identifiers are published.</strong> The board shows the
-                name a learner's own certificates carry, their totals, and nothing
-                else — no account id, no email, and no list of what anybody failed.
+                <strong>{{ $t('No identifiers are published.') }}</strong> {{ $t('The board shows the name a learner\'s own certificates carry, their totals, and nothing else — no account id, no email, and no list of what anybody failed.') }}
               </li>
             </ul>
           </div>
@@ -486,9 +465,7 @@
 
         <footer class="lb-foot">
           <p>
-            Built from {{ sourceCount }} of 4 public collections across the exam and
-            certificate services. Figures are recomputed in the browser each time
-            this page is opened.
+            {{ $t('Built from {v0} of 4 public collections across the exam and certificate services. Figures are recomputed in the browser each time this page is opened.', { v0: sourceCount }) }}
           </p>
         </footer>
       </template>

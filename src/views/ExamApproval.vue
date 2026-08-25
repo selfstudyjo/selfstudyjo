@@ -2,10 +2,10 @@
   <div class="exam-approval-page">
     <div class="page-header">
       <div class="header-content">
-        <h1 class="page-title">Exam Approval</h1>
-        <p class="page-subtitle">Review instructions and get ready for your exam</p>
+        <h1 class="page-title">{{ $t('Exam Approval') }}</h1>
+        <p class="page-subtitle">{{ $t('Review instructions and get ready for your exam') }}</p>
         <div class="timer-display" v-if="appointment">
-          <div class="timer-label">Exam starts in:</div>
+          <div class="timer-label">{{ $t('Exam starts in:') }}</div>
           <div class="timer" :class="getTimerClass(timeUntilStart)">
             {{ formatTimeRemaining(timeUntilStart) }}
           </div>
@@ -16,7 +16,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading exam details...</p>
+      <p>{{ $t('Loading exam details...') }}</p>
     </div>
 
     <!-- No appointment named.
@@ -26,22 +26,21 @@
          only useful thing here is the way back to the list. -->
     <div v-else-if="!appointmentId" class="error-container">
       <div class="error-icon">📅</div>
-      <h3>No appointment chosen</h3>
+      <h3>{{ $t('No appointment chosen') }}</h3>
       <p>
-        This page shows one exam appointment, so it needs to know which one.
-        Open it from your exams list and it will carry the details through.
+        {{ $t('This page shows one exam appointment, so it needs to know which one. Open it from your exams list and it will carry the details through.') }}
       </p>
       <div class="empty-actions">
-        <button @click="goBack" class="retry-btn">Go to My Exams</button>
+        <button @click="goBack" class="retry-btn">{{ $t('Go to My Exams') }}</button>
       </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">❌</div>
-      <h3>Error Loading Exam</h3>
+      <h3>{{ $t('Error Loading Exam') }}</h3>
       <p>{{ error }}</p>
-      <button @click="loadExamDetails" class="retry-btn">Retry</button>
+      <button @click="loadExamDetails" class="retry-btn">{{ $t('Retry') }}</button>
     </div>
 
     <!-- Main Content -->
@@ -59,40 +58,40 @@
 
             <div class="card-body">
               <div class="info-section">
-                <h3>Exam Information</h3>
+                <h3>{{ $t('Exam Information') }}</h3>
                 <div class="info-grid">
                   <div class="info-item">
-                    <div class="info-label">Course</div>
+                    <div class="info-label">{{ $t('Course') }}</div>
                     <div class="info-value">{{ exam.course_name || exam.course_id }}</div>
                   </div>
                   <div class="info-item">
-                    <div class="info-label">Duration</div>
-                    <div class="info-value">{{ exam.exam_duration }} minutes</div>
+                    <div class="info-label">{{ $t('Duration') }}</div>
+                    <div class="info-value">{{ $t('{v0} minutes', { v0: exam.exam_duration }) }}</div>
                   </div>
                   <div class="info-item">
-                    <div class="info-label">Scheduled Time</div>
+                    <div class="info-label">{{ $t('Scheduled Time') }}</div>
                     <div class="info-value">{{ formatDateTime(appointment.appointment_date) }}</div>
                   </div>
                   <div class="info-item">
-                    <div class="info-label">Proctor</div>
+                    <div class="info-label">{{ $t('Proctor') }}</div>
                     <div class="info-value">{{ appointment.proctor_name || appointment.proctor_id || 'Not assigned' }}</div>
                   </div>
                 </div>
               </div>
 
               <div class="instructions-section">
-                <h3>Exam Instructions</h3>
+                <h3>{{ $t('Exam Instructions') }}</h3>
                 <div class="instructions-content">
                   {{ exam.exam_instructions }}
                 </div>
                 <div class="instructions-note">
-                  <p><strong>Important:</strong> Please read the full exam instructions carefully before starting your exam.</p>
+                  <p><strong>{{ $t('Important:') }}</strong> {{ $t('Please read the full exam instructions carefully before starting your exam.') }}</p>
                 </div>
               </div>
 
               <!-- Video Instructions with Embed -->
               <div v-if="exam.video_instructions_url" class="video-section">
-                <h3>Video Instructions</h3>
+                <h3>{{ $t('Video Instructions') }}</h3>
                 <div class="video-container">
                   <div v-if="videoEmbed.canEmbed" class="video-embed-wrapper">
                     <div class="video-embed-container">
@@ -103,12 +102,12 @@
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen
-                        title="Exam Instructions Video"
+                        :title="$t('Exam Instructions Video')"
                         referrerpolicy="strict-origin-when-cross-origin"
                       ></iframe>
                     </div>
                     <div class="video-embed-info">
-                      <p>Watch the full video instructions before starting your exam.</p>
+                      <p>{{ $t('Watch the full video instructions before starting your exam.') }}</p>
                     </div>
                   </div>
                   <div v-else class="video-link-container">
@@ -119,14 +118,14 @@
                       </svg>
                     </div>
                     <div class="video-link-info">
-                      <h4>Video Instructions</h4>
-                      <p>This video cannot be embedded. Please watch it in a new tab.</p>
+                      <h4>{{ $t('Video Instructions') }}</h4>
+                      <p>{{ $t('This video cannot be embedded. Please watch it in a new tab.') }}</p>
                       <a :href="exam.video_instructions_url" target="_blank" class="video-external-link">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <path d="M18 13V19C18 20.1 17.1 21 16 21H5C3.89 21 3 20.1 3 19V8C3 6.9 3.89 6 5 6H11M15 3H21V9M10 14L21 3"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Watch Full Video Instructions
+                        {{ $t('Watch Full Video Instructions') }}
                       </a>
                     </div>
                   </div>
@@ -140,7 +139,7 @@
         <div class="right-column">
           <div class="action-card">
             <div class="card-header">
-              <h2>Exam Rooms Setup</h2>
+              <h2>{{ $t('Exam Rooms Setup') }}</h2>
               <div class="room-status" :class="appointment.is_entered ? 'entered' : 'not-entered'">
                 {{ appointment.is_entered ? 'Entered' : 'Not Entered' }}
               </div>
@@ -157,22 +156,22 @@
                             fill="currentColor"/>
                     </svg>
                   </div>
-                  <h3>PC/Laptop Room</h3>
-                  <p class="room-description">For taking the exam and sharing your screen</p>
+                  <h3>{{ $t('PC/Laptop Room') }}</h3>
+                  <p class="room-description">{{ $t('For taking the exam and sharing your screen') }}</p>
                   <a :href="appointment.room_url_1" target="_blank" class="room-link pc-link">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                       <path d="M18 13V19C18 20.1 17.1 21 16 21H5C3.89 21 3 20.1 3 19V8C3 6.9 3.89 6 5 6H11M15 3H21V9M10 14L21 3"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Join PC Room
+                    {{ $t('Join PC Room') }}
                   </a>
                   <div class="room-instructions">
-                    <h4>Instructions:</h4>
+                    <h4>{{ $t('Instructions:') }}</h4>
                     <ul>
-                      <li>Join from your PC or laptop</li>
-                      <li>Enable screen sharing</li>
-                      <li>Keep this room open during exam</li>
-                      <li>This is where you'll take the exam</li>
+                      <li>{{ $t('Join from your PC or laptop') }}</li>
+                      <li>{{ $t('Enable screen sharing') }}</li>
+                      <li>{{ $t('Keep this room open during exam') }}</li>
+                      <li>{{ $t('This is where you\'ll take the exam') }}</li>
                     </ul>
                   </div>
                 </div>
@@ -185,22 +184,22 @@
                             fill="currentColor"/>
                     </svg>
                   </div>
-                  <h3>Mobile Room</h3>
-                  <p class="room-description">For proctor to monitor your office environment</p>
+                  <h3>{{ $t('Mobile Room') }}</h3>
+                  <p class="room-description">{{ $t('For proctor to monitor your office environment') }}</p>
                   <a :href="appointment.room_url_2" target="_blank" class="room-link mobile-link">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                       <path d="M18 13V19C18 20.1 17.1 21 16 21H5C3.89 21 3 20.1 3 19V8C3 6.9 3.89 6 5 6H11M15 3H21V9M10 14L21 3"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Join Mobile Room
+                    {{ $t('Join Mobile Room') }}
                   </a>
                   <div class="room-instructions">
-                    <h4>Instructions:</h4>
+                    <h4>{{ $t('Instructions:') }}</h4>
                     <ul>
-                      <li>Join from your mobile device</li>
-                      <li>Enable camera and microphone</li>
-                      <li>Point camera to show your office</li>
-                      <li>Keep this room open during exam</li>
+                      <li>{{ $t('Join from your mobile device') }}</li>
+                      <li>{{ $t('Enable camera and microphone') }}</li>
+                      <li>{{ $t('Point camera to show your office') }}</li>
+                      <li>{{ $t('Keep this room open during exam') }}</li>
                     </ul>
                   </div>
                 </div>
@@ -209,74 +208,74 @@
               <!-- No Rooms Available -->
               <div v-else class="no-rooms">
                 <div class="no-rooms-icon">🚫</div>
-                <h3>No Rooms Available</h3>
-                <p>Exam rooms will be assigned by your proctor.</p>
+                <h3>{{ $t('No Rooms Available') }}</h3>
+                <p>{{ $t('Exam rooms will be assigned by your proctor.') }}</p>
               </div>
 
               <!-- Updated Requirements Checklist -->
               <div class="requirements-section">
-                <h3>System Requirements</h3>
+                <h3>{{ $t('System Requirements') }}</h3>
                 <div class="requirements-list">
                   <div class="requirement-item" :class="{ 'met': checkRequirement('camera') }">
                     <div class="requirement-check">
                       <span v-if="checkRequirement('camera')">✓</span>
                       <span v-else>•</span>
                     </div>
-                    <div class="requirement-text">Webcam enabled on both devices</div>
+                    <div class="requirement-text">{{ $t('Webcam enabled on both devices') }}</div>
                   </div>
                   <div class="requirement-item" :class="{ 'met': checkRequirement('microphone') }">
                     <div class="requirement-check">
                       <span v-if="checkRequirement('microphone')">✓</span>
                       <span v-else>•</span>
                     </div>
-                    <div class="requirement-text">Microphone enabled on both devices</div>
+                    <div class="requirement-text">{{ $t('Microphone enabled on both devices') }}</div>
                   </div>
                   <div class="requirement-item" :class="{ 'met': checkRequirement('internet') }">
                     <div class="requirement-check">
                       <span v-if="checkRequirement('internet')">✓</span>
                       <span v-else>•</span>
                     </div>
-                    <div class="requirement-text">Stable internet connection on both devices</div>
+                    <div class="requirement-text">{{ $t('Stable internet connection on both devices') }}</div>
                   </div>
                   <div class="requirement-item" :class="{ 'met': checkRequirement('browser') }">
                     <div class="requirement-check">
                       <span v-if="checkRequirement('browser')">✓</span>
                       <span v-else>•</span>
                     </div>
-                    <div class="requirement-text">Modern browser (Chrome, Firefox, Edge) on both devices</div>
+                    <div class="requirement-text">{{ $t('Modern browser (Chrome, Firefox, Edge) on both devices') }}</div>
                   </div>
                   <div class="requirement-item">
                     <div class="requirement-check">•</div>
-                    <div class="requirement-text"><strong>Join from two rooms:</strong> one room from your mobile (for proctor) and one room from your PC/laptop (for exam and screen sharing)</div>
+                    <div class="requirement-text"><strong>{{ $t('Join from two rooms:') }}</strong> {{ $t('one room from your mobile (for proctor) and one room from your PC/laptop (for exam and screen sharing)') }}</div>
                   </div>
                   <div class="requirement-item">
                     <div class="requirement-check">•</div>
-                    <div class="requirement-text"><strong>Mobile camera setup:</strong> Open the mobile room on your mobile device, enable camera, and point it to show your entire office/room so the proctor can monitor your environment</div>
+                    <div class="requirement-text"><strong>{{ $t('Mobile camera setup:') }}</strong> {{ $t('Open the mobile room on your mobile device, enable camera, and point it to show your entire office/room so the proctor can monitor your environment') }}</div>
                   </div>
                   <div class="requirement-item">
                     <div class="requirement-check">•</div>
-                    <div class="requirement-text"><strong>Screen sharing:</strong> From the PC/laptop room, enable screen sharing so the proctor can see your exam screen</div>
+                    <div class="requirement-text"><strong>{{ $t('Screen sharing:') }}</strong> {{ $t('From the PC/laptop room, enable screen sharing so the proctor can see your exam screen') }}</div>
                   </div>
                 </div>
                 <div class="important-note">
                   <div class="note-icon">⚠️</div>
                   <div class="note-content">
-                    <p><strong>Important:</strong> You must read the full Exam Instructions and watch the complete Video Instructions before starting your exam. Failure to follow these instructions may result in exam disqualification.</p>
+                    <p><strong>{{ $t('Important:') }}</strong> {{ $t('You must read the full Exam Instructions and watch the complete Video Instructions before starting your exam. Failure to follow these instructions may result in exam disqualification.') }}</p>
                   </div>
                 </div>
               </div>
 
               <!-- Reschedule Option -->
               <div v-if="canRescheduleAppointment" class="reschedule-section">
-                <h3>Need to Reschedule?</h3>
+                <h3>{{ $t('Need to Reschedule?') }}</h3>
                 <div class="reschedule-info">
-                  <p>You can reschedule your exam up to 2 days before the scheduled time.</p>
+                  <p>{{ $t('You can reschedule your exam up to 2 days before the scheduled time.') }}</p>
                   <button @click="rescheduleExam" class="btn-reschedule">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M12 8V12M12 12V16M12 12H16M12 12H8M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Reschedule Exam
+                    {{ $t('Reschedule Exam') }}
                   </button>
                 </div>
               </div>
@@ -293,7 +292,7 @@
                 </span>
                 <span v-else class="loading-text">
                   <span class="loading-dots"></span>
-                  Starting Exam
+                  {{ $t('Starting Exam') }}
                 </span>
                 <svg v-if="appointment.can_start && !startingExam" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -302,8 +301,8 @@
 
               <div v-if="!appointment.can_start" class="waiting-message">
                 <div class="waiting-icon">⏰</div>
-                <p>The "Start Exam" button will be enabled when your proctor gives permission.</p>
-                <p class="timer-note">You can start the exam up to 30 minutes before your scheduled time.</p>
+                <p>{{ $t('The "Start Exam" button will be enabled when your proctor gives permission.') }}</p>
+                <p class="timer-note">{{ $t('You can start the exam up to 30 minutes before your scheduled time.') }}</p>
               </div>
             </div>
           </div>
@@ -311,7 +310,7 @@
           <!-- Proctor Information -->
           <div v-if="appointment.proctor_id" class="proctor-card">
             <div class="card-header">
-              <h2>Proctor Information</h2>
+              <h2>{{ $t('Proctor Information') }}</h2>
             </div>
             <div class="card-body">
               <div class="proctor-info">
@@ -320,27 +319,27 @@
                 </div>
                 <div class="proctor-details">
                   <h3>{{ appointment.proctor_name || appointment.proctor_id }}</h3>
-                  <p>Your exam proctor</p>
+                  <p>{{ $t('Your exam proctor') }}</p>
                   <div class="proctor-contact">
                     <div class="contact-item">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z"
                               fill="currentColor"/>
                       </svg>
-                      <span>Email on request</span>
+                      <span>{{ $t('Email on request') }}</span>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="proctor-instructions">
-                <h4>Proctor Instructions</h4>
+                <h4>{{ $t('Proctor Instructions') }}</h4>
                 <ul>
-                  <li>The proctor will monitor both your mobile camera feed and PC screen</li>
-                  <li>Keep both rooms open throughout the entire exam</li>
-                  <li>Follow all instructions provided by the proctor</li>
-                  <li>The proctor may pause or terminate the exam if rules are violated</li>
-                  <li>Ensure your mobile camera shows your entire workspace</li>
-                  <li>Do not disable screen sharing on your PC during the exam</li>
+                  <li>{{ $t('The proctor will monitor both your mobile camera feed and PC screen') }}</li>
+                  <li>{{ $t('Keep both rooms open throughout the entire exam') }}</li>
+                  <li>{{ $t('Follow all instructions provided by the proctor') }}</li>
+                  <li>{{ $t('The proctor may pause or terminate the exam if rules are violated') }}</li>
+                  <li>{{ $t('Ensure your mobile camera shows your entire workspace') }}</li>
+                  <li>{{ $t('Do not disable screen sharing on your PC during the exam') }}</li>
                 </ul>
               </div>
             </div>
@@ -355,7 +354,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Back to Exams
+        {{ $t('Back to Exams') }}
       </button>
     </div>
   </div>

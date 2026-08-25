@@ -8,21 +8,21 @@
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z"/></svg>
           </div>
           <div>
-            <h1>Roblox Animation Studio</h1>
-            <p class="header-subtitle">Create, preview & export Lua animation scripts for Roblox</p>
+            <h1>{{ $t('Roblox Animation Studio') }}</h1>
+            <p class="header-subtitle">{{ $t('Create, preview & export Lua animation scripts for Roblox') }}</p>
           </div>
         </div>
         <div class="header-actions">
           <div class="tool-tabs-header">
-            <button :class="['tool-tab-btn',{active:activeTool==='animations'}]" @click="switchTool('animations')">🎬 Animations</button>
-            <button :class="['tool-tab-btn',{active:activeTool==='design'}]" @click="switchTool('design')">🎨 Part Designer</button>
+            <button :class="['tool-tab-btn',{active:activeTool==='animations'}]" @click="switchTool('animations')">{{ $t('🎬 Animations') }}</button>
+            <button :class="['tool-tab-btn',{active:activeTool==='design'}]" @click="switchTool('design')">{{ $t('🎨 Part Designer') }}</button>
           </div>
           <template v-if="activeTool==='animations'">
             <button class="btn-secondary" @click="showCustomRequest=true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              Custom Animation
+              {{ $t('Custom Animation') }}
             </button>
-            <button v-if="isAdmin" class="btn-secondary admin-btn" @click="showAdminCreate=true">⚙️ Add Animation</button>
+            <button v-if="isAdmin" class="btn-secondary admin-btn" @click="showAdminCreate=true">{{ $t('⚙️ Add Animation') }}</button>
             <select v-model="selectedCharacter" class="character-select" @change="updateCharacter">
               <option v-for="c in characters" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
@@ -35,11 +35,11 @@
     <div v-show="activeTool==='animations'" class="roblox-content">
       <div class="animations-panel">
         <div class="panel-header">
-          <h2>Animations <span class="count">({{ filteredSystemAnims.length + filteredMyAnims.length }})</span></h2>
-          <div v-if="loadingAnimations" class="loading-bar">Loading…</div>
+          <h2>{{ $t('Animations') }} <span class="count">({{ filteredSystemAnims.length + filteredMyAnims.length }})</span></h2>
+          <div v-if="loadingAnimations" class="loading-bar">{{ $t('Loading…') }}</div>
           <div class="search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input v-model="searchQuery" type="text" placeholder="Search…" class="search-input"/>
+            <input v-model="searchQuery" type="text" :placeholder="$t('Search…')" class="search-input"/>
           </div>
           <div class="filter-tags">
             <button v-for="cat in dynamicCategories" :key="cat" :class="['filter-tag',{active:selectedCategory===cat}]" @click="selectedCategory=selectedCategory===cat?'':cat">{{ cat }}</button>
@@ -48,23 +48,23 @@
 
         <!-- My Animations -->
         <template v-if="filteredMyAnims.length">
-          <div class="section-divider"><h3>🤖 My Animations</h3><span class="section-count">{{ filteredMyAnims.length }}</span></div>
+          <div class="section-divider"><h3>{{ $t('🤖 My Animations') }}</h3><span class="section-count">{{ filteredMyAnims.length }}</span></div>
           <div class="animations-grid">
             <div v-for="a in filteredMyAnims" :key="a.id" :class="['animation-card',{selected:currentAnim?.id===a.id}]" @click="selectAnimation(a)">
               <div class="card-preview" :style="{background:a.color||'#333'}"><span>{{ a.icon||'🤖' }}</span></div>
-              <div class="card-info"><h4>{{ a.name }}</h4><span class="card-category">{{ a.category }}</span><span class="card-badge mine">Mine</span><button class="card-delete" @click.stop="deleteMyAnimation(a.id)">✕</button></div>
+              <div class="card-info"><h4>{{ a.name }}</h4><span class="card-category">{{ a.category }}</span><span class="card-badge mine">{{ $t('Mine') }}</span><button class="card-delete" @click.stop="deleteMyAnimation(a.id)">✕</button></div>
             </div>
           </div>
         </template>
 
         <!-- Library -->
-        <div class="section-divider"><h3>📚 Library</h3><span class="section-count">{{ filteredSystemAnims.length }}</span></div>
+        <div class="section-divider"><h3>{{ $t('📚 Library') }}</h3><span class="section-count">{{ filteredSystemAnims.length }}</span></div>
         <div class="animations-grid">
           <div v-for="a in filteredSystemAnims" :key="a.id" :class="['animation-card',{selected:currentAnim?.id===a.id}]" @click="selectAnimation(a)">
             <div class="card-preview" :style="{background:a.color||'#333'}"><span>{{ a.icon||'🎬' }}</span></div>
             <div class="card-info"><h4>{{ a.name }}</h4><span class="card-category">{{ a.category }}</span><button v-if="isAdmin&&a.created_by!=='system'" class="card-delete" @click.stop="deleteAnimationAdmin(a.id)">✕</button></div>
           </div>
-          <div v-if="!loadingAnimations&&!filteredSystemAnims.length" class="empty-grid"><p>No animations found</p></div>
+          <div v-if="!loadingAnimations&&!filteredSystemAnims.length" class="empty-grid"><p>{{ $t('No animations found') }}</p></div>
         </div>
       </div>
 
@@ -79,28 +79,28 @@
                 <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
               </button>
               <button class="ctrl-btn" @click="resetAnimation"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
-              <div class="speed-control"><label>Speed:</label><input type="range" min="0.1" max="3" step="0.1" v-model.number="animSpeed"/><span>{{ animSpeed.toFixed(1) }}x</span></div>
+              <div class="speed-control"><label>{{ $t('Speed:') }}</label><input type="range" min="0.1" max="3" step="0.1" v-model.number="animSpeed"/><span>{{ animSpeed.toFixed(1) }}x</span></div>
             </div>
           </div>
           <div ref="threeContainer" class="three-container">
-            <div v-if="!currentAnim" class="placeholder"><svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z"/></svg><p>Select an animation to preview</p></div>
+            <div v-if="!currentAnim" class="placeholder"><svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z"/></svg><p>{{ $t('Select an animation to preview') }}</p></div>
           </div>
         </div>
 
         <div v-if="currentAnim" class="details-section">
           <div class="details-tabs">
-            <button :class="['tab',{active:activeTab==='info'}]" @click="activeTab='info'">Info</button>
-            <button :class="['tab',{active:activeTab==='code'}]" @click="activeTab='code'">Lua Code</button>
-            <button :class="['tab',{active:activeTab==='steps'}]" @click="activeTab='steps'">How to Apply</button>
+            <button :class="['tab',{active:activeTab==='info'}]" @click="activeTab='info'">{{ $t('Info') }}</button>
+            <button :class="['tab',{active:activeTab==='code'}]" @click="activeTab='code'">{{ $t('Lua Code') }}</button>
+            <button :class="['tab',{active:activeTab==='steps'}]" @click="activeTab='steps'">{{ $t('How to Apply') }}</button>
           </div>
           <div v-if="activeTab==='info'" class="tab-content">
             <div class="info-grid">
-              <div class="info-item"><label>Animation</label><span>{{ currentAnim.name }}</span></div>
-              <div class="info-item"><label>Category</label><span>{{ currentAnim.category }}</span></div>
-              <div class="info-item"><label>Type</label><span>{{ currentAnim.looping?'Looping':'One-shot' }}</span></div>
-              <div class="info-item"><label>Duration</label><span>{{ currentAnim.duration }}s</span></div>
-              <div class="info-item full-width"><label>Description</label><span>{{ currentAnim.description }}</span></div>
-              <div class="info-item full-width"><label>Best For</label><span>{{ currentAnim.bestFor }}</span></div>
+              <div class="info-item"><label>{{ $t('Animation') }}</label><span>{{ currentAnim.name }}</span></div>
+              <div class="info-item"><label>{{ $t('Category') }}</label><span>{{ currentAnim.category }}</span></div>
+              <div class="info-item"><label>{{ $t('Type') }}</label><span>{{ currentAnim.looping?'Looping':'One-shot' }}</span></div>
+              <div class="info-item"><label>{{ $t('Duration') }}</label><span>{{ currentAnim.duration }}s</span></div>
+              <div class="info-item full-width"><label>{{ $t('Description') }}</label><span>{{ currentAnim.description }}</span></div>
+              <div class="info-item full-width"><label>{{ $t('Best For') }}</label><span>{{ currentAnim.bestFor }}</span></div>
             </div>
           </div>
           <div v-if="activeTab==='code'" class="tab-content">
@@ -113,38 +113,38 @@
             </div>
           </div>
         </div>
-        <div v-else class="empty-details"><div class="empty-details-content"><h3>Select an Animation</h3><p>Choose from the library or create with AI.</p></div></div>
+        <div v-else class="empty-details"><div class="empty-details-content"><h3>{{ $t('Select an Animation') }}</h3><p>{{ $t('Choose from the library or create with AI.') }}</p></div></div>
       </div>
     </div>
 
     <!-- ═══ DESIGN TAB ═══ -->
     <div v-show="activeTool==='design'" class="roblox-content design-content">
       <div class="design-panel-left">
-        <div class="panel-header"><h2>Part Designer</h2><button class="btn-secondary" @click="openDesignAI">🤖 AI Generate</button></div>
+        <div class="panel-header"><h2>{{ $t('Part Designer') }}</h2><button class="btn-secondary" @click="openDesignAI">{{ $t('🤖 AI Generate') }}</button></div>
 
         <div class="design-form">
-          <div class="form-group"><label>Model Name</label><input v-model="designName" type="text" placeholder="My Model"/></div>
-          <div class="form-group"><label>Description</label><textarea v-model="designDesc" rows="2" placeholder="Describe…"></textarea></div>
-          <div class="form-group"><label>Global Behavior Script (Lua)</label><textarea v-model="designLua" rows="2" class="code-textarea" placeholder="-- Optional"></textarea></div>
-          <div class="form-group"><label>Model Animation Script (Lua)</label><textarea v-model="modelAnimScript" rows="2" class="code-textarea" placeholder="-- Animate the whole model"></textarea></div>
+          <div class="form-group"><label>{{ $t('Model Name') }}</label><input v-model="designName" type="text" :placeholder="$t('My Model')"/></div>
+          <div class="form-group"><label>{{ $t('Description') }}</label><textarea v-model="designDesc" rows="2" placeholder="Describe…"></textarea></div>
+          <div class="form-group"><label>{{ $t('Global Behavior Script (Lua)') }}</label><textarea v-model="designLua" rows="2" class="code-textarea" placeholder="-- Optional"></textarea></div>
+          <div class="form-group"><label>{{ $t('Model Animation Script (Lua)') }}</label><textarea v-model="modelAnimScript" rows="2" class="code-textarea" placeholder="-- Animate the whole model"></textarea></div>
 
           <!-- Animation picker for model -->
           <div class="anim-picker-section">
-            <label>🎬 Model Animation (from library)</label>
+            <label>{{ $t('🎬 Model Animation (from library)') }}</label>
             <div class="anim-picker-row">
               <select v-model="modelAnimPick" @change="applyModelAnim">
-                <option value="">-- None --</option>
+                <option value="">{{ $t('-- None --') }}</option>
                 <optgroup label="Library"><option v-for="a in allSystemAnimations" :key="a.id" :value="a.id">{{ a.icon }} {{ a.name }}</option></optgroup>
                 <optgroup v-if="myAnimations.length" label="My Animations"><option v-for="a in myAnimations" :key="'m'+a.id" :value="'my-'+a.id">🤖 {{ a.name }}</option></optgroup>
               </select>
-              <button v-if="modelAnimScript" class="anim-clear-btn" @click="modelAnimScript='';modelAnimPick=''">Clear</button>
+              <button v-if="modelAnimScript" class="anim-clear-btn" @click="modelAnimScript='';modelAnimPick=''">{{ $t('Clear') }}</button>
             </div>
           </div>
         </div>
 
         <!-- Parts Tree -->
         <div class="parts-list-section">
-          <div class="parts-list-header"><h3>Parts Tree ({{ totalPartCount }})</h3><button class="btn-secondary btn-sm" @click="addRootPart">+ Root Part</button></div>
+          <div class="parts-list-header"><h3>{{ $t('Parts Tree ({v0})', { v0: totalPartCount }) }}</h3><button class="btn-secondary btn-sm" @click="addRootPart">{{ $t('+ Root Part') }}</button></div>
           <div class="parts-list">
             <div v-for="fp in flatPartsList" :key="fp.part._uid"
                  :class="['part-list-item',{active:selectedUid===fp.part._uid}]"
@@ -165,8 +165,8 @@
                 <span>{{ fp.part.shape }} · {{ fp.part.material }}</span>
               </div>
               <div class="part-list-actions">
-                <button class="mini-btn" @click.stop="addChildPart(fp.part)" title="Add child">+</button>
-                <button class="mini-btn danger" @click.stop="removePart(fp.part._uid||'')" title="Remove">✕</button>
+                <button class="mini-btn" @click.stop="addChildPart(fp.part)" :title="$t('Add child')">+</button>
+                <button class="mini-btn danger" @click.stop="removePart(fp.part._uid||'')" :title="$t('Remove')">✕</button>
               </div>
             </div>
           </div>
@@ -174,52 +174,52 @@
 
         <!-- Selected Part Editor -->
         <div v-if="editPart" class="part-editor">
-          <h3>Edit: {{ editPart.name }}</h3>
-          <div class="form-group"><label>Name</label><input v-model="editPart.name" type="text"/></div>
+          <h3>{{ $t('Edit: {v0}', { v0: editPart.name }) }}</h3>
+          <div class="form-group"><label>{{ $t('Name') }}</label><input v-model="editPart.name" type="text"/></div>
           <div class="form-row">
-            <div class="form-group"><label>Shape</label><select v-model="editPart.shape"><option v-for="s in shapes" :key="s" :value="s">{{ s }}</option></select></div>
-            <div class="form-group"><label>Material</label><select v-model="editPart.material"><option v-for="m in materialList" :key="m" :value="m">{{ m }}</option></select></div>
+            <div class="form-group"><label>{{ $t('Shape') }}</label><select v-model="editPart.shape"><option v-for="s in shapes" :key="s" :value="s">{{ s }}</option></select></div>
+            <div class="form-group"><label>{{ $t('Material') }}</label><select v-model="editPart.material"><option v-for="m in materialList" :key="m" :value="m">{{ m }}</option></select></div>
           </div>
           <div class="form-row triple">
-            <div class="form-group"><label>Size X</label><input v-model.number="editPart.size.x" type="number" min="0.1" step="0.5"/></div>
-            <div class="form-group"><label>Size Y</label><input v-model.number="editPart.size.y" type="number" min="0.1" step="0.5"/></div>
-            <div class="form-group"><label>Size Z</label><input v-model.number="editPart.size.z" type="number" min="0.1" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Size X') }}</label><input v-model.number="editPart.size.x" type="number" min="0.1" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Size Y') }}</label><input v-model.number="editPart.size.y" type="number" min="0.1" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Size Z') }}</label><input v-model.number="editPart.size.z" type="number" min="0.1" step="0.5"/></div>
           </div>
           <div class="form-row triple">
-            <div class="form-group"><label>Pos X</label><input v-model.number="editPart.position.x" type="number" step="0.5"/></div>
-            <div class="form-group"><label>Pos Y</label><input v-model.number="editPart.position.y" type="number" step="0.5"/></div>
-            <div class="form-group"><label>Pos Z</label><input v-model.number="editPart.position.z" type="number" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Pos X') }}</label><input v-model.number="editPart.position.x" type="number" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Pos Y') }}</label><input v-model.number="editPart.position.y" type="number" step="0.5"/></div>
+            <div class="form-group"><label>{{ $t('Pos Z') }}</label><input v-model.number="editPart.position.z" type="number" step="0.5"/></div>
           </div>
           <div class="form-row triple">
-            <div class="form-group"><label>Rot X°</label><input v-model.number="editPart.rotation.x" type="number" step="5"/></div>
-            <div class="form-group"><label>Rot Y°</label><input v-model.number="editPart.rotation.y" type="number" step="5"/></div>
-            <div class="form-group"><label>Rot Z°</label><input v-model.number="editPart.rotation.z" type="number" step="5"/></div>
+            <div class="form-group"><label>{{ $t('Rot X°') }}</label><input v-model.number="editPart.rotation.x" type="number" step="5"/></div>
+            <div class="form-group"><label>{{ $t('Rot Y°') }}</label><input v-model.number="editPart.rotation.y" type="number" step="5"/></div>
+            <div class="form-group"><label>{{ $t('Rot Z°') }}</label><input v-model.number="editPart.rotation.z" type="number" step="5"/></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Color</label><input v-model="editPart.color" type="color"/></div>
-            <div class="form-group"><label>Transparency</label><input v-model.number="editPart.transparency" type="range" min="0" max="1" step="0.05"/><span class="range-val">{{ editPart.transparency.toFixed(2) }}</span></div>
+            <div class="form-group"><label>{{ $t('Color') }}</label><input v-model="editPart.color" type="color"/></div>
+            <div class="form-group"><label>{{ $t('Transparency') }}</label><input v-model.number="editPart.transparency" type="range" min="0" max="1" step="0.05"/><span class="range-val">{{ editPart.transparency.toFixed(2) }}</span></div>
           </div>
           <div class="form-row">
-            <label class="checkbox-label"><input type="checkbox" v-model="editPart.anchored"/> Anchored</label>
-            <label class="checkbox-label"><input type="checkbox" v-model="editPart.canCollide"/> CanCollide</label>
+            <label class="checkbox-label"><input type="checkbox" v-model="editPart.anchored"/> {{ $t('Anchored') }}</label>
+            <label class="checkbox-label"><input type="checkbox" v-model="editPart.canCollide"/> {{ $t('CanCollide') }}</label>
           </div>
           <div class="form-row">
-            <label class="checkbox-label kill-label"><input type="checkbox" v-model="editPart.killOnTouch"/> 💀 Kill Player on Touch</label>
+            <label class="checkbox-label kill-label"><input type="checkbox" v-model="editPart.killOnTouch"/> {{ $t('💀 Kill Player on Touch') }}</label>
           </div>
 
           <!-- Per-part animation picker -->
           <div class="anim-picker-section">
-            <label>🎬 Part Animation</label>
+            <label>{{ $t('🎬 Part Animation') }}</label>
             <div class="anim-picker-row">
               <select v-model="partAnimPick" @change="applyPartAnim">
-                <option value="">-- None --</option>
+                <option value="">{{ $t('-- None --') }}</option>
                 <optgroup label="Library"><option v-for="a in allSystemAnimations" :key="a.id" :value="a.id">{{ a.icon }} {{ a.name }}</option></optgroup>
                 <optgroup v-if="myAnimations.length" label="My Animations"><option v-for="a in myAnimations" :key="'m'+a.id" :value="'my-'+a.id">🤖 {{ a.name }}</option></optgroup>
               </select>
-              <button v-if="editPart.animationScript" class="anim-clear-btn" @click="editPart.animationScript='';partAnimPick=''">Clear</button>
+              <button v-if="editPart.animationScript" class="anim-clear-btn" @click="editPart.animationScript='';partAnimPick=''">{{ $t('Clear') }}</button>
             </div>
             <details v-if="editPart.animationScript" class="anim-script-preview">
-              <summary>View script</summary>
+              <summary>{{ $t('View script') }}</summary>
               <pre>{{ editPart.animationScript }}</pre>
             </details>
           </div>
@@ -228,18 +228,18 @@
         <!-- Actions -->
         <div class="design-actions">
           <button class="btn-primary" @click="saveDesignToBackend" :disabled="savingDesign">{{ savingDesign?'Saving…':'💾 Save' }}</button>
-          <button v-if="currentDesignId" class="btn-secondary" @click="downloadZip">📦 ZIP</button>
-          <button v-if="currentDesignId" class="btn-secondary" @click="downloadRbxm">📥 RBXM</button>
-          <button v-if="currentDesignId" class="btn-secondary" @click="downloadLua">📄 Lua</button>
-          <button class="btn-secondary" @click="resetDesign">🔄 New</button>
+          <button v-if="currentDesignId" class="btn-secondary" @click="downloadZip">{{ $t('📦 ZIP') }}</button>
+          <button v-if="currentDesignId" class="btn-secondary" @click="downloadRbxm">{{ $t('📥 RBXM') }}</button>
+          <button v-if="currentDesignId" class="btn-secondary" @click="downloadLua">{{ $t('📄 Lua') }}</button>
+          <button class="btn-secondary" @click="resetDesign">{{ $t('🔄 New') }}</button>
         </div>
 
         <!-- Saved -->
         <div v-if="savedDesigns.length" class="saved-designs">
-          <h3>My Saved Designs</h3>
+          <h3>{{ $t('My Saved Designs') }}</h3>
           <div class="design-list">
             <div v-for="d in savedDesigns" :key="d.id" :class="['design-list-item',{active:currentDesignId===d.id}]" @click="loadDesign(d)">
-              <div class="design-list-info"><strong>{{ d.name }}</strong><span>{{ countParts(d.parts) }} parts</span></div>
+              <div class="design-list-info"><strong>{{ d.name }}</strong><span>{{ $t('{v0} parts', { v0: countParts(d.parts) }) }}</span></div>
               <div class="design-list-actions">
                 <button class="mini-btn" @click.stop="downloadDesignById(d.id,'rbxm')">📥</button>
                 <button class="mini-btn danger" @click.stop="deleteDesignById(d.id)">🗑️</button>
@@ -251,22 +251,22 @@
 
       <!-- Right: 3D + Code -->
       <div class="design-panel-right">
-        <div class="preview-header"><h3>{{ designName||'Preview' }} <span class="count">({{ totalPartCount }} parts)</span></h3></div>
+        <div class="preview-header"><h3>{{ designName||'Preview' }} <span class="count">{{ $t('({v0} parts)', { v0: totalPartCount }) }}</span></h3></div>
         <div ref="designThreeContainer" class="three-container design-three"></div>
         <div class="design-info-panel">
           <div class="details-tabs">
-            <button :class="['tab',{active:designTab==='lua'}]" @click="designTab='lua'">Lua Code</button>
-            <button :class="['tab',{active:designTab==='steps'}]" @click="designTab='steps'">How to Import</button>
+            <button :class="['tab',{active:designTab==='lua'}]" @click="designTab='lua'">{{ $t('Lua Code') }}</button>
+            <button :class="['tab',{active:designTab==='steps'}]" @click="designTab='steps'">{{ $t('How to Import') }}</button>
           </div>
           <div v-if="designTab==='lua'" class="tab-content">
-            <div class="code-header"><span class="code-lang">Lua</span><button class="copy-btn" @click="copyText(generatedDesignLua)">Copy</button></div>
+            <div class="code-header"><span class="code-lang">Lua</span><button class="copy-btn" @click="copyText(generatedDesignLua)">{{ $t('Copy') }}</button></div>
             <pre class="code-block design-code"><code>{{ generatedDesignLua }}</code></pre>
           </div>
           <div v-if="designTab==='steps'" class="tab-content">
             <div class="steps-list">
-              <div class="step"><div class="step-number">1</div><div class="step-content"><h4>Import RBXM (Recommended)</h4><p>Save → 📥 RBXM → In Studio: File → Import from File → select .rbxm. All parts, scripts, kill zones, animations included.</p></div></div>
-              <div class="step"><div class="step-number">2</div><div class="step-content"><h4>Lua Script</h4><p>📄 Lua → paste into ServerScriptService Script → F5 to create → stop, delete script, save.</p></div></div>
-              <div class="step"><div class="step-number">3</div><div class="step-content"><h4>ZIP Package</h4><p>📦 ZIP → contains RBXM + Lua + README.</p></div></div>
+              <div class="step"><div class="step-number">1</div><div class="step-content"><h4>{{ $t('Import RBXM (Recommended)') }}</h4><p>{{ $t('Save → 📥 RBXM → In Studio: File → Import from File → select .rbxm. All parts, scripts, kill zones, animations included.') }}</p></div></div>
+              <div class="step"><div class="step-number">2</div><div class="step-content"><h4>{{ $t('Lua Script') }}</h4><p>{{ $t('📄 Lua → paste into ServerScriptService Script → F5 to create → stop, delete script, save.') }}</p></div></div>
+              <div class="step"><div class="step-number">3</div><div class="step-content"><h4>{{ $t('ZIP Package') }}</h4><p>{{ $t('📦 ZIP → contains RBXM + Lua + README.') }}</p></div></div>
             </div>
           </div>
         </div>
@@ -277,48 +277,48 @@
     <!-- Custom Animation -->
     <div v-if="showCustomRequest" class="modal-overlay" @click.self="showCustomRequest=false">
       <div class="modal-content">
-        <div class="modal-header"><h3>Custom Animation</h3><button class="close-btn" @click="showCustomRequest=false">&times;</button></div>
+        <div class="modal-header"><h3>{{ $t('Custom Animation') }}</h3><button class="close-btn" @click="showCustomRequest=false">&times;</button></div>
         <div class="modal-body">
-          <p class="modal-description">Describe the animation. AI generates the Lua code and saves to your library.</p>
+          <p class="modal-description">{{ $t('Describe the animation. AI generates the Lua code and saves to your library.') }}</p>
           <textarea v-model="customDesc" placeholder="A part that spins while bobbing up and down…" rows="4" class="custom-textarea"></textarea>
           <div class="custom-options">
-            <label class="option-group"><span>Part:</span><select v-model="customPartType"><option value="Part">Part</option><option value="SpherePart">Sphere</option><option value="CylinderPart">Cylinder</option></select></label>
-            <label class="option-group"><span>Loop:</span><select v-model="customLooping"><option :value="true">Yes</option><option :value="false">No</option></select></label>
-            <label class="option-group"><span>Duration:</span><input type="number" v-model.number="customDuration" min="0.5" max="30" step="0.5"/></label>
+            <label class="option-group"><span>{{ $t('Part:') }}</span><select v-model="customPartType"><option value="Part">{{ $t('Part') }}</option><option value="SpherePart">{{ $t('Sphere') }}</option><option value="CylinderPart">{{ $t('Cylinder') }}</option></select></label>
+            <label class="option-group"><span>{{ $t('Loop:') }}</span><select v-model="customLooping"><option :value="true">{{ $t('Yes') }}</option><option :value="false">{{ $t('No') }}</option></select></label>
+            <label class="option-group"><span>{{ $t('Duration:') }}</span><input type="number" v-model.number="customDuration" min="0.5" max="30" step="0.5"/></label>
           </div>
           <div v-if="customError" class="custom-error">⚠️ {{ customError }}</div>
         </div>
-        <div class="modal-footer"><button class="btn-secondary" @click="showCustomRequest=false">Cancel</button><button class="btn-primary" @click="requestCustomAnim" :disabled="customLoading||!customDesc.trim()"><span v-if="customLoading" class="spinner"></span>{{ customLoading?'Generating…':'Generate' }}</button></div>
+        <div class="modal-footer"><button class="btn-secondary" @click="showCustomRequest=false">{{ $t('Cancel') }}</button><button class="btn-primary" @click="requestCustomAnim" :disabled="customLoading||!customDesc.trim()"><span v-if="customLoading" class="spinner"></span>{{ customLoading?'Generating…':'Generate' }}</button></div>
       </div>
     </div>
 
     <!-- Admin Create -->
     <div v-if="showAdminCreate" class="modal-overlay" @click.self="showAdminCreate=false">
       <div class="modal-content wide-modal">
-        <div class="modal-header"><h3>⚙️ Add to Library</h3><button class="close-btn" @click="showAdminCreate=false">&times;</button></div>
+        <div class="modal-header"><h3>{{ $t('⚙️ Add to Library') }}</h3><button class="close-btn" @click="showAdminCreate=false">&times;</button></div>
         <div class="modal-body">
-          <div class="form-row"><div class="form-group"><label>Name</label><input v-model="admF.name" type="text"/></div><div class="form-group"><label>Category</label><select v-model="admF.category"><option v-for="c in allCats" :key="c" :value="c">{{ c }}</option></select></div></div>
-          <div class="form-row"><div class="form-group"><label>Icon</label><input v-model="admF.icon" type="text" maxlength="4"/></div><div class="form-group"><label>Duration</label><input v-model.number="admF.duration" type="number" min="0.5" step="0.5"/></div></div>
-          <div class="form-group"><label>Description</label><textarea v-model="admF.description" rows="2"></textarea></div>
-          <div class="form-group"><label>Best For</label><input v-model="admF.bestFor" type="text"/></div>
-          <div class="form-group"><label>Lua Code</label><textarea v-model="admF.luaCode" rows="8" class="code-textarea"></textarea></div>
-          <div class="form-group"><label>Preview Params JSON</label><textarea v-model="admF.paramsJson" rows="3" class="code-textarea" placeholder='{"type":"spin","axis":"y","speed":2}'></textarea></div>
+          <div class="form-row"><div class="form-group"><label>{{ $t('Name') }}</label><input v-model="admF.name" type="text"/></div><div class="form-group"><label>{{ $t('Category') }}</label><select v-model="admF.category"><option v-for="c in allCats" :key="c" :value="c">{{ c }}</option></select></div></div>
+          <div class="form-row"><div class="form-group"><label>{{ $t('Icon') }}</label><input v-model="admF.icon" type="text" maxlength="4"/></div><div class="form-group"><label>{{ $t('Duration') }}</label><input v-model.number="admF.duration" type="number" min="0.5" step="0.5"/></div></div>
+          <div class="form-group"><label>{{ $t('Description') }}</label><textarea v-model="admF.description" rows="2"></textarea></div>
+          <div class="form-group"><label>{{ $t('Best For') }}</label><input v-model="admF.bestFor" type="text"/></div>
+          <div class="form-group"><label>{{ $t('Lua Code') }}</label><textarea v-model="admF.luaCode" rows="8" class="code-textarea"></textarea></div>
+          <div class="form-group"><label>{{ $t('Preview Params JSON') }}</label><textarea v-model="admF.paramsJson" rows="3" class="code-textarea" placeholder='{"type":"spin","axis":"y","speed":2}'></textarea></div>
           <div v-if="admError" class="custom-error">⚠️ {{ admError }}</div>
         </div>
-        <div class="modal-footer"><button class="btn-secondary" @click="showAdminCreate=false">Cancel</button><button class="btn-primary" @click="adminSave" :disabled="admSaving">{{ admSaving?'Saving…':'Save' }}</button></div>
+        <div class="modal-footer"><button class="btn-secondary" @click="showAdminCreate=false">{{ $t('Cancel') }}</button><button class="btn-primary" @click="adminSave" :disabled="admSaving">{{ admSaving?'Saving…':'Save' }}</button></div>
       </div>
     </div>
 
     <!-- AI Design -->
     <div v-if="showDesignAI" class="modal-overlay" @click.self="showDesignAI=false">
       <div class="modal-content">
-        <div class="modal-header"><h3>🤖 AI Part Generator</h3><button class="close-btn" @click="showDesignAI=false">&times;</button></div>
+        <div class="modal-header"><h3>{{ $t('🤖 AI Part Generator') }}</h3><button class="close-btn" @click="showDesignAI=false">&times;</button></div>
         <div class="modal-body">
-          <p class="modal-description">Describe what to build. AI creates it with hierarchy (root + children), proper shapes and materials. All parts anchored.</p>
+          <p class="modal-description">{{ $t('Describe what to build. AI creates it with hierarchy (root + children), proper shapes and materials. All parts anchored.') }}</p>
           <textarea v-model="dAIDesc" rows="4" class="custom-textarea" placeholder="e.g. a red sports car with wheels, headlights, spoiler&#10;e.g. a medieval castle tower with windows&#10;e.g. a glowing sword"></textarea>
           <div v-if="dAIError" class="custom-error">⚠️ {{ dAIError }}</div>
         </div>
-        <div class="modal-footer"><button class="btn-secondary" @click="showDesignAI=false">Cancel</button><button class="btn-primary" @click="execDesignAI" :disabled="dAILoading||!dAIDesc.trim()"><span v-if="dAILoading" class="spinner"></span>{{ dAILoading?'Generating…':'Generate' }}</button></div>
+        <div class="modal-footer"><button class="btn-secondary" @click="showDesignAI=false">{{ $t('Cancel') }}</button><button class="btn-primary" @click="execDesignAI" :disabled="dAILoading||!dAIDesc.trim()"><span v-if="dAILoading" class="spinner"></span>{{ dAILoading?'Generating…':'Generate' }}</button></div>
       </div>
     </div>
 

@@ -2,8 +2,8 @@
   <div class="runbooks-container">
     <!-- Header -->
     <div class="runbooks-header">
-      <h1 class="runbooks-title">Runbooks</h1>
-      <p class="runbooks-subtitle">Step-by-step guides and tutorials</p>
+      <h1 class="runbooks-title">{{ $t('Runbooks') }}</h1>
+      <p class="runbooks-subtitle">{{ $t('Step-by-step guides and tutorials') }}</p>
 
       <!-- Search and Filter -->
       <div class="search-filter-container">
@@ -14,11 +14,11 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search runbooks..."
+            :placeholder="$t('Search runbooks...')"
             class="search-input"
             @input="handleSearch"
           />
-          <button v-if="searchQuery" @click="clearSearch" class="clear-search-btn" title="Clear search">
+          <button v-if="searchQuery" @click="clearSearch" class="clear-search-btn" :title="$t('Clear search')">
             &times;
           </button>
         </div>
@@ -28,23 +28,23 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading runbooks...</p>
+      <p>{{ $t('Loading runbooks...') }}</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <div class="error-icon">⚠️</div>
-      <h3>Failed to load runbooks</h3>
+      <h3>{{ $t('Failed to load runbooks') }}</h3>
       <p>{{ error }}</p>
-      <button @click="fetchRunbooks" class="retry-btn">Try Again</button>
+      <button @click="fetchRunbooks" class="retry-btn">{{ $t('Try Again') }}</button>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="filteredRunbooks.length === 0" class="empty-state">
       <div class="empty-icon">📚</div>
-      <h3>No runbooks found</h3>
-      <p v-if="searchQuery">Try a different search term</p>
-      <p v-else>No runbooks available at the moment</p>
+      <h3>{{ $t('No runbooks found') }}</h3>
+      <p v-if="searchQuery">{{ $t('Try a different search term') }}</p>
+      <p v-else>{{ $t('No runbooks available at the moment') }}</p>
     </div>
 
     <!-- Runbooks Grid -->
@@ -64,13 +64,13 @@
             <h3 class="runbook-title">{{ runbook.title }}</h3>
             <div class="runbook-meta">
               <span class="section-count">
-                {{ runbook.sections?.length || 0 }} steps
+                {{ $t('{v0} steps', { v0: runbook.sections?.length || 0 }) }}
               </span>
             </div>
           </div>
         </div>
         <div class="runbook-card-footer">
-          <span class="view-details">View Details →</span>
+          <span class="view-details">{{ $t('View Details →') }}</span>
         </div>
       </div>
     </div>

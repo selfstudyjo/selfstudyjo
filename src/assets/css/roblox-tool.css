@@ -173,7 +173,7 @@
 /* ─── Animations Panel (Left) ─── */
 .roblox-tool .animations-panel{
   background: rgb(var(--sfs-surface-rgb, 20 20 45) / 0.9);
-  border-right: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
+  border-inline-end: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
   overflow-y: auto;
   max-height: calc(100vh - 90px);
 }
@@ -323,7 +323,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 20px;
+  padding-inline-end: 20px;
 }
 
 .roblox-tool .card-category{
@@ -885,7 +885,7 @@
 
   .roblox-tool .animations-panel{
     max-height: 50vh;
-    border-right: none;
+    border-inline-end: none;
     border-bottom: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
   }
 
@@ -1001,7 +1001,7 @@
   color: var(--sfs-text-muted, #c084fc);
   padding: 1px 5px;
   border-radius: 4px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 .roblox-tool .card-badge.mine{
@@ -1035,7 +1035,7 @@
 
 .roblox-tool .design-panel-left{
   background: rgb(var(--sfs-surface-rgb, 20 20 45) / 0.9);
-  border-right: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
+  border-inline-end: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
   overflow-y: auto;
   max-height: calc(100vh - 90px);
   padding: 16px;
@@ -1281,7 +1281,7 @@
 
   .roblox-tool .design-panel-left{
     max-height: none;
-    border-right: none;
+    border-inline-end: none;
     border-bottom: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
   }
 
@@ -1393,7 +1393,7 @@
 .roblox-tool .part-anim-indicator{
   font-size: 0.6rem;
   color: var(--sfs-success-text, #10b981);
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 /* ═══ Part Editor ═══ */
@@ -1514,7 +1514,7 @@
 
 .roblox-tool .tree-item.active{
   background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.2);
-  border-left: 2px solid var(--sfs-accent, #6366f1);
+  border-inline-start: 2px solid var(--sfs-accent, #6366f1);
 }
 
 .roblox-tool .tree-toggle{
@@ -1602,6 +1602,6 @@
 }
 
 .roblox-tool .tree-children{
-  border-left: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
-  margin-left: 12px;
+  border-inline-start: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.15);
+  margin-inline-start: 12px;
 }

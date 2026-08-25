@@ -30,13 +30,13 @@
         values, and it is why no chart here needs a number on every mark.
       -->
       <details class="lb-chart__table">
-        <summary>Show the numbers</summary>
+        <summary>{{ $t('Show the numbers') }}</summary>
         <table>
           <thead>
             <tr>
               <th scope="col">{{ categoryLabel }}</th>
               <th scope="col">{{ valueLabel }}</th>
-              <th scope="col">Share</th>
+              <th scope="col">{{ $t('Share') }}</th>
             </tr>
           </thead>
           <tbody>

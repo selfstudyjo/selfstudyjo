@@ -83,7 +83,7 @@ withDefaults(defineProps<{
   background: var(--uc-panel);
   backdrop-filter: var(--uc-blur);
   -webkit-backdrop-filter: var(--uc-blur);
-  border-right: 1px solid var(--uc-border);
+  border-inline-end: 1px solid var(--uc-border);
 }
 
 /*
@@ -134,7 +134,7 @@ withDefaults(defineProps<{
 
   .uc-shell { grid-template-columns: minmax(0, 1fr); }
 
-  .pane-sidebar { border-right: 0; }
+  .pane-sidebar { border-inline-end: 0; }
   .pane-main { display: none; }
 
   .thread-open .pane-sidebar { display: none; }

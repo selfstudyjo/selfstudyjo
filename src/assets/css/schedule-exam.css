@@ -657,7 +657,7 @@
   text-decoration: underline;
 }
 .schedule-exam-page .slots-refreshing{
-  margin-left: 0.5rem;
+  margin-inline-start: 0.5rem;
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--sx-text-mute);
@@ -856,7 +856,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--sfs-text, #fff);
-  text-align: right;
+  text-align: end;
   max-width: 60%;
   word-break: break-word;
 }
@@ -999,7 +999,7 @@
   font-size: 0.9rem;
   color: var(--sfs-text, #fff);
   font-weight: 600;
-  text-align: right;
+  text-align: end;
   max-width: 60%;
   word-break: break-word;
 }
@@ -1238,7 +1238,7 @@ body > .modal-overlay{
   border-radius: var(--sx-r-md);
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
-  text-align: left;
+  text-align: start;
 }
 .schedule-exam-page .cancel-warning{
   padding: 0.85rem 1rem;
@@ -1246,7 +1246,7 @@ body > .modal-overlay{
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.35);
   border-radius: var(--sx-r-md);
   margin-bottom: 1.25rem;
-  text-align: left;
+  text-align: start;
 }
 .schedule-exam-page .cancel-warning p{ color: var(--sfs-warning-text, #fdba74); font-size: 0.85rem; margin: 0; }
 
@@ -1284,7 +1284,7 @@ body > .modal-overlay{
   border-radius: 50%;
   border: 3px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
   border-top-color: var(--sfs-accent-soft, #818cf8);
-  border-right-color: var(--sfs-accent-2, #a78bfa);
+  border-inline-end-color: var(--sfs-accent-2, #a78bfa);
   margin-bottom: 1rem;
   animation: spin 0.9s linear infinite;
   box-shadow: 0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
@@ -1450,7 +1450,7 @@ body > .modal-overlay{
   margin: 1rem 0 0;
   padding: 0.75rem 0.9rem;
   border-radius: 10px;
-  text-align: left;
+  text-align: start;
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--sfs-warning-text, #ed8936);

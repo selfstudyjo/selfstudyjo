@@ -527,7 +527,7 @@
 .period {
   font-size: var(--fs-sm);
   color: var(--text-tertiary);
-  margin-left: 4px;
+  margin-inline-start: 4px;
   font-weight: 500;
 }
 
@@ -983,7 +983,7 @@
   color: var(--aurora-cyan);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  text-align: left;
+  text-align: start;
 }
 
 .table-body {
@@ -1040,7 +1040,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-right: var(--sp-sm);
+  margin-inline-end: var(--sp-sm);
 }
 
 .cell-value {
@@ -1119,13 +1119,13 @@
     margin-bottom: var(--sp-sm);
     border: 1px solid var(--glass-border);
     border-radius: var(--r-md);
-    border-left: 3px solid var(--glass-border);
+    border-inline-start: 3px solid var(--glass-border);
   }
 
-  .table-row.pending-row  { border-left-color: var(--clr-warning); }
-  .table-row.paid-row     { border-left-color: var(--clr-success); }
-  .table-row.verified-row { border-left-color: var(--clr-info); }
-  .table-row.rejected-row { border-left-color: var(--clr-danger); }
+  .table-row.pending-row  { border-inline-start-color: var(--clr-warning); }
+  .table-row.paid-row     { border-inline-start-color: var(--clr-success); }
+  .table-row.verified-row { border-inline-start-color: var(--clr-info); }
+  .table-row.rejected-row { border-inline-start-color: var(--clr-danger); }
 
   .table-row::before { display: none; }
 
@@ -1152,7 +1152,7 @@
   }
 
   .cell-value {
-    text-align: right;
+    text-align: end;
     flex: 1;
   }
 

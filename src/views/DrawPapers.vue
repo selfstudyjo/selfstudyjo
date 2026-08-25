@@ -2,21 +2,19 @@
   <div class="papers">
     <header class="page-head">
       <div>
-        <h1>Drawing papers</h1>
+        <h1>{{ $t('Drawing papers') }}</h1>
         <p>
-          A shared whiteboard for lessons, diagrams and working through a problem.
-          Papers are private until you share them — free with your account, no
-          subscription needed.
+          {{ $t('A shared whiteboard for lessons, diagrams and working through a problem. Papers are private until you share them — free with your account, no subscription needed.') }}
         </p>
       </div>
       <button class="btn primary" :disabled="creating" @click="showCreate = true">
-        <span>＋</span> New paper
+        <span>＋</span> {{ $t('New paper') }}
       </button>
     </header>
 
     <div v-if="error" class="banner error">
       {{ error }}
-      <button class="link" @click="load">Try again</button>
+      <button class="link" @click="load">{{ $t('Try again') }}</button>
     </div>
 
     <div v-if="loading" class="grid">
@@ -27,14 +25,14 @@
       <!-- Mine -->
       <section>
         <div class="section-head">
-          <h2>My papers</h2>
+          <h2>{{ $t('My papers') }}</h2>
           <span class="count">{{ mine.length }}</span>
         </div>
 
         <div v-if="!mine.length" class="empty">
-          <p><strong>No papers yet.</strong></p>
-          <p>Open a blank paper and start drawing — pen, shapes, text and sticky notes.</p>
-          <button class="btn primary" @click="showCreate = true">Create your first paper</button>
+          <p><strong>{{ $t('No papers yet.') }}</strong></p>
+          <p>{{ $t('Open a blank paper and start drawing — pen, shapes, text and sticky notes.') }}</p>
+          <button class="btn primary" @click="showCreate = true">{{ $t('Create your first paper') }}</button>
         </div>
 
         <div v-else class="grid">
@@ -47,23 +45,22 @@
             <div class="card-body">
               <h3>{{ paper.title }}</h3>
               <p class="meta">
-                {{ paper.element_count || 0 }} item{{ paper.element_count === 1 ? '' : 's' }}
-                · edited {{ ago(paper.last_edited_at) }}
+                {{ $t('{v0} item{v1} · edited {v2}', { v0: paper.element_count || 0, v1: paper.element_count === 1 ? '' : 's', v2: ago(paper.last_edited_at) }) }}
               </p>
               <div class="tags">
                 <span v-if="paper.share_count" class="tag">
-                  Shared with {{ paper.share_count }}
+                  {{ $t('Shared with {v0}', { v0: paper.share_count }) }}
                 </span>
                 <span v-if="paper.link_access !== 'none'" class="tag link-tag">
-                  Link: {{ paper.link_access === 'write' ? 'can edit' : 'can view' }}
+                  {{ $t('Link: {v0}', { v0: paper.link_access === 'write' ? 'can edit' : 'can view' }) }}
                 </span>
                 <span v-if="!paper.share_count && paper.link_access === 'none'"
-                      class="tag quiet">Private</span>
+                      class="tag quiet">{{ $t('Private') }}</span>
               </div>
             </div>
             <div class="card-actions" @click.stop>
-              <button class="icon" title="Duplicate" @click="duplicate(paper)">⧉</button>
-              <button class="icon danger" title="Delete" @click="confirmDelete = paper">🗑</button>
+              <button class="icon" :title="$t('Duplicate')" @click="duplicate(paper)">⧉</button>
+              <button class="icon danger" :title="$t('Delete')" @click="confirmDelete = paper">🗑</button>
             </div>
           </article>
         </div>
@@ -72,7 +69,7 @@
       <!-- Shared with me -->
       <section v-if="shared.length">
         <div class="section-head">
-          <h2>Shared with me</h2>
+          <h2>{{ $t('Shared with me') }}</h2>
           <span class="count">{{ shared.length }}</span>
         </div>
         <div class="grid">
@@ -80,12 +77,12 @@
                    @click="open(paper)">
             <div class="preview" :class="`bg-${paper.background}`">
               <img v-if="thumbnails[paper.paper_id]" :src="thumbnails[paper.paper_id]" alt="">
-              <span v-else class="preview-empty">Blank</span>
+              <span v-else class="preview-empty">{{ $t('Blank') }}</span>
             </div>
             <div class="card-body">
               <h3>{{ paper.title }}</h3>
               <p class="meta">
-                {{ paper.owner_username || 'Someone' }} · edited {{ ago(paper.last_edited_at) }}
+                {{ $t('{v0} · edited {v1}', { v0: paper.owner_username || 'Someone', v1: ago(paper.last_edited_at) }) }}
               </p>
               <div class="tags">
                 <span class="tag" :class="paper.my_permission === 'write' ? 'edit-tag' : 'view-tag'">
@@ -101,16 +98,16 @@
     <!-- Create -->
     <div v-if="showCreate" class="overlay" @click.self="showCreate = false">
       <form class="dialog" @submit.prevent="create">
-        <h2>New paper</h2>
+        <h2>{{ $t('New paper') }}</h2>
 
         <label class="field">
-          <span>Title</span>
+          <span>{{ $t('Title') }}</span>
           <input v-model="draft.title" class="input" type="text" maxlength="200"
-                 placeholder="Algebra — week 3" autofocus>
+                 :placeholder="$t('Algebra — week 3')" autofocus>
         </label>
 
         <label class="field">
-          <span>Paper</span>
+          <span>{{ $t('Paper') }}</span>
           <div class="chips">
             <button v-for="option in BACKGROUNDS" :key="option.value" type="button"
                     class="chip" :class="{ active: draft.background === option.value }"
@@ -121,7 +118,7 @@
         </label>
 
         <label class="field">
-          <span>Size</span>
+          <span>{{ $t('Size') }}</span>
           <div class="chips">
             <button v-for="option in SIZES" :key="option.label" type="button"
                     class="chip" :class="{ active: draft.width === option.width }"
@@ -134,7 +131,7 @@
         <p v-if="createError" class="inline-error">{{ createError }}</p>
 
         <footer>
-          <button type="button" class="btn ghost" @click="showCreate = false">Cancel</button>
+          <button type="button" class="btn ghost" @click="showCreate = false">{{ $t('Cancel') }}</button>
           <button type="submit" class="btn primary" :disabled="creating">
             {{ creating ? 'Creating…' : 'Create and open' }}
           </button>
@@ -145,13 +142,12 @@
     <!-- Delete -->
     <div v-if="confirmDelete" class="overlay" @click.self="confirmDelete = null">
       <div class="dialog">
-        <h2>Delete “{{ confirmDelete.title }}”?</h2>
+        <h2>{{ $t('Delete “{v0}”?', { v0: confirmDelete.title }) }}</h2>
         <p class="dialog-text">
-          This removes the paper and everything drawn on it, for everyone it is shared
-          with. It cannot be undone.
+          {{ $t('This removes the paper and everything drawn on it, for everyone it is shared with. It cannot be undone.') }}
         </p>
         <footer>
-          <button class="btn ghost" @click="confirmDelete = null">Keep it</button>
+          <button class="btn ghost" @click="confirmDelete = null">{{ $t('Keep it') }}</button>
           <button class="btn danger" :disabled="busy" @click="destroy">
             {{ busy ? 'Deleting…' : 'Delete paper' }}
           </button>

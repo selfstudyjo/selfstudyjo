@@ -292,7 +292,7 @@ img, video, svg, canvas {
 @media print {
   .default-layout { background: var(--sfs-paper, #ffffff); color: var(--sfs-on-paper, #000000); }
   .app-container > .main-content {
-    margin-left: 0 !important;
+    margin-inline-start: 0 !important;
     padding: 0;
     color: #000;
   }

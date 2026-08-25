@@ -1,73 +1,73 @@
 <template>
   <div class="research-create-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconAdd /> Create New Project</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconAdd /> {{ $t('Create New Project') }}</h1>
     </div>
 
     <div class="rf-section rf-create-form">
-      <h2 class="rf-section-title">Basic Information</h2>
+      <h2 class="rf-section-title">{{ $t('Basic Information') }}</h2>
 
       <div class="rf-form-group">
-        <label class="rf-label">Title *</label>
-        <input v-model="form.title" class="rf-input" placeholder="Project title" required />
+        <label class="rf-label">{{ $t('Title *') }}</label>
+        <input v-model="form.title" class="rf-input" :placeholder="$t('Project title')" required />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Description *</label>
+        <label class="rf-label">{{ $t('Description *') }}</label>
         <textarea v-model="form.description" class="rf-textarea" placeholder="Project description..." rows="5" required></textarea>
       </div>
 
       <div class="rf-form-row">
         <div class="rf-form-group">
-          <label class="rf-label">Publication Year</label>
+          <label class="rf-label">{{ $t('Publication Year') }}</label>
           <input v-model.number="form.publication_year" class="rf-input" type="number" placeholder="2025" />
         </div>
         <div class="rf-form-group">
-          <label class="rf-label">Venue/Journal</label>
-          <input v-model="form.venue" class="rf-input" placeholder="e.g., Nature, IEEE..." />
+          <label class="rf-label">{{ $t('Venue/Journal') }}</label>
+          <input v-model="form.venue" class="rf-input" :placeholder="$t('e.g., Nature, IEEE...')" />
         </div>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">DOI (Optional)</label>
-        <input v-model="form.doi" class="rf-input" placeholder="10.1234/example" />
+        <label class="rf-label">{{ $t('DOI (Optional)') }}</label>
+        <input v-model="form.doi" class="rf-input" :placeholder="$t('10.1234/example')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Keywords (comma separated)</label>
-        <input v-model="form.keywordsStr" class="rf-input" placeholder="AI, Machine Learning, Deep Learning" />
+        <label class="rf-label">{{ $t('Keywords (comma separated)') }}</label>
+        <input v-model="form.keywordsStr" class="rf-input" :placeholder="$t('AI, Machine Learning, Deep Learning')" />
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Access Control *</label>
+        <label class="rf-label">{{ $t('Access Control *') }}</label>
         <select v-model="form.access_level" class="rf-select">
-          <option value="public">Public - Anyone can view</option>
-          <option value="team">Team - Only team members</option>
-          <option value="private">Private - Only you</option>
+          <option value="public">{{ $t('Public - Anyone can view') }}</option>
+          <option value="team">{{ $t('Team - Only team members') }}</option>
+          <option value="private">{{ $t('Private - Only you') }}</option>
         </select>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Status</label>
+        <label class="rf-label">{{ $t('Status') }}</label>
         <select v-model="form.status" class="rf-select">
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="under_review">Under Review</option>
+          <option value="draft">{{ $t('Draft') }}</option>
+          <option value="published">{{ $t('Published') }}</option>
+          <option value="under_review">{{ $t('Under Review') }}</option>
         </select>
       </div>
 
       <div class="rf-form-group">
-        <label class="rf-label">Upload File (Optional)</label>
+        <label class="rf-label">{{ $t('Upload File (Optional)') }}</label>
         <input type="file" ref="fileInput" class="rf-input" @change="onFileSelect" />
-        <input v-model="fileDescription" class="rf-input" placeholder="File description" style="margin-top: 8px;" />
+        <input v-model="fileDescription" class="rf-input" :placeholder="$t('File description')" style="margin-top: 8px;" />
       </div>
 
       <div class="rf-form-actions">
         <button class="rf-btn rf-btn-primary rf-btn-lg" @click="createProject" :disabled="!form.title || !form.description || creating">
           {{ creating ? 'Creating...' : 'Create Project' }}
         </button>
-        <button class="rf-btn rf-btn-secondary" @click="$router.push('/research')">Cancel</button>
+        <button class="rf-btn rf-btn-secondary" @click="$router.push('/research')">{{ $t('Cancel') }}</button>
       </div>
 
       <div v-if="errorMsg" class="rf-error-msg">{{ errorMsg }}</div>

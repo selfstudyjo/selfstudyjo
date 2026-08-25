@@ -6,7 +6,7 @@
       :class="{ 'has-unread': unreadCount > 0 }"
       @click="toggleChat"
       :disabled="isReconnecting"
-      aria-label="Open chat"
+      :aria-label="$t('Open chat')"
     >
       <svg v-if="!isOpen" class="chat-icon" viewBox="0 0 24 24">
         <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
@@ -28,18 +28,18 @@
         <div class="chat-header" @click="isMinimized = false">
           <div class="header-left">
             <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected, reconnecting: isReconnecting }"></div>
-            <h3>SelfStudy Support</h3>
-            <span v-if="isConnected" class="status-text">Online</span>
-            <span v-else-if="isReconnecting" class="status-text reconnecting-text">Reconnecting...</span>
-            <span v-else class="status-text offline-text">Offline</span>
+            <h3>{{ $t('SelfStudy Support') }}</h3>
+            <span v-if="isConnected" class="status-text">{{ $t('Online') }}</span>
+            <span v-else-if="isReconnecting" class="status-text reconnecting-text">{{ $t('Reconnecting...') }}</span>
+            <span v-else class="status-text offline-text">{{ $t('Offline') }}</span>
           </div>
           <div class="header-right">
-            <button class="header-btn" @click.stop="isMinimized = !isMinimized" aria-label="Minimize chat">
+            <button class="header-btn" @click.stop="isMinimized = !isMinimized" :aria-label="$t('Minimize chat')">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M19 13H5v-2h14v2z"/>
               </svg>
             </button>
-            <button class="header-btn" @click.stop="closeChat" aria-label="Close chat">
+            <button class="header-btn" @click.stop="closeChat" :aria-label="$t('Close chat')">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
               </svg>
@@ -54,7 +54,7 @@
             <!-- Loading State -->
             <div v-if="isLoading" class="loading-messages">
               <div class="loading-spinner"></div>
-              <p>Connecting to chat...</p>
+              <p>{{ $t('Connecting to chat...') }}</p>
             </div>
 
             <!-- Error State -->
@@ -71,9 +71,9 @@
             <!-- Welcome Message -->
             <div v-if="!isLoading && !error && messages.length === 0 && chatInitialized" class="welcome-message">
               <div class="welcome-icon">💬</div>
-              <h4>Welcome to SelfStudy Support</h4>
-              <p>We're here to help! Ask us anything about courses, progress, or technical issues.</p>
-              <p class="response-time">Typical response time: 2-5 minutes</p>
+              <h4>{{ $t('Welcome to SelfStudy Support') }}</h4>
+              <p>{{ $t('We\'re here to help! Ask us anything about courses, progress, or technical issues.') }}</p>
+              <p class="response-time">{{ $t('Typical response time: 2-5 minutes') }}</p>
             </div>
 
             <!-- Messages List -->
@@ -90,9 +90,9 @@
               >
                 <div class="message-bubble">
                   <div class="message-sender">
-                    <span v-if="message.sender === 'system'" class="sender-system">🤖 System</span>
-                    <span v-else-if="message.sender === 'admin'" class="sender-admin">👨‍🏫 Support</span>
-                    <span v-else class="sender-user">You</span>
+                    <span v-if="message.sender === 'system'" class="sender-system">{{ $t('🤖 System') }}</span>
+                    <span v-else-if="message.sender === 'admin'" class="sender-admin">{{ $t('👨‍🏫 Support') }}</span>
+                    <span v-else class="sender-user">{{ $t('You') }}</span>
                   </div>
                   <!--
                     Support replies are where a link matters most: an operator
@@ -134,14 +134,14 @@
                 type="submit"
                 :disabled="!newMessage.trim() || isLoading || !isConnected"
                 class="send-btn"
-                aria-label="Send message"
+                :aria-label="$t('Send message')"
               >
                 <svg viewBox="0 0 24 24" width="20" height="20">
                   <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
               </button>
             </form>
-            <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
+            <p class="input-hint">{{ $t('Press Enter to send, Shift+Enter for new line') }}</p>
           </div>
         </div>
 
@@ -149,7 +149,7 @@
         <div v-else class="chat-minimized">
           <div class="minimized-content">
             <div class="status-indicator" :class="{ online: isConnected, offline: !isConnected, reconnecting: isReconnecting }"></div>
-            <span class="minimized-text">SelfStudy Support</span>
+            <span class="minimized-text">{{ $t('SelfStudy Support') }}</span>
             <span v-if="unreadCount > 0" class="minimized-badge">
               {{ unreadCount }}
             </span>
@@ -905,13 +905,13 @@ onUnmounted(() => {
 .message-outgoing .message-bubble {
   background: var(--cb-gradient);
   color: var(--cb-text-on-primary);
-  border-bottom-right-radius: 0.35rem;
+  border-end-end-radius: 0.35rem;
   border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .message-incoming .message-bubble {
-  border-bottom-left-radius: 0.35rem;
+  border-end-start-radius: 0.35rem;
 }
 
 .message-sender {
@@ -938,7 +938,7 @@ onUnmounted(() => {
   font-size: 0.65rem;
   margin-top: 0.25rem;
   opacity: 0.75;
-  text-align: right;
+  text-align: end;
   color: inherit;
 }
 

@@ -16,6 +16,7 @@ import type { Topology, ValidationIssue, SimEvent, Hop, PacketTrace, Device } fr
 import type { AiTopologySpec } from '@/netsim/topology';
 import { DEVICE_TYPES } from '@/netsim/devices';
 import { maskToPrefix } from '@/netsim/ip';
+import { aiLanguageHeaders } from '@/i18n/runtime';
 
 export interface AiMessage {
     role: 'system' | 'user' | 'assistant';
@@ -206,6 +207,10 @@ class NetSimAiService {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Token ${this.authToken}`,
+                        // The reader's language, so the assistant answers in it. App 27's CORS
+                        // is `CORS(app)` with no header allow-list, so a custom header is safe
+                        // there — see `aiLanguageHeaders` for why it is not set globally.
+                        ...aiLanguageHeaders(),
                     },
                     body: JSON.stringify({
                         model: this.model,

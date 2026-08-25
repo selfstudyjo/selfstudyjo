@@ -2,8 +2,8 @@
   <div class="ns-inspector">
     <div v-if="!trace" class="ns-inspector-empty">
       <DeviceIcon name="layers" :size="30" />
-      <h4>No packet captured yet</h4>
-      <p>Run a ping, request DHCP, resolve a name or fetch a page. Every hop is captured with its real headers, so you can watch the encapsulation change layer by layer.</p>
+      <h4>{{ $t('No packet captured yet') }}</h4>
+      <p>{{ $t('Run a ping, request DHCP, resolve a name or fetch a page. Every hop is captured with its real headers, so you can watch the encapsulation change layer by layer.') }}</p>
     </div>
 
     <template v-else>
@@ -34,17 +34,17 @@
       </div>
 
       <div class="ns-hop-controls">
-        <button class="ns-icon-btn" title="Previous hop" @click="store.stepHop(-1)"><span>‹</span></button>
+        <button class="ns-icon-btn" :title="$t('Previous hop')" @click="store.stepHop(-1)"><span>‹</span></button>
         <button class="ns-icon-btn" :title="store.animating ? 'Pause' : 'Play the whole trace'" @click="store.animating ? store.stopAnimation() : store.playTrace()">
           <DeviceIcon :name="store.animating ? 'pause' : 'play'" :size="14" />
         </button>
-        <button class="ns-icon-btn" title="Next hop" @click="store.stepHop(1)"><span>›</span></button>
-        <span class="ns-hop-counter">hop {{ store.activeHopIndex + 1 }} / {{ trace.hops.length }}</span>
+        <button class="ns-icon-btn" :title="$t('Next hop')" @click="store.stepHop(1)"><span>›</span></button>
+        <span class="ns-hop-counter">{{ $t('hop {v0} / {v1}', { v0: store.activeHopIndex + 1, v1: trace.hops.length }) }}</span>
         <label class="ns-speed">
-          speed
+          {{ $t('speed') }}
           <input type="range" min="0.25" max="3" step="0.25" v-model.number="store.animationSpeed" />
         </label>
-        <span class="ns-latency">{{ hop?.cumulativeLatencyMs ?? 0 }} ms</span>
+        <span class="ns-latency">{{ $t('{v0} ms', { v0: hop?.cumulativeLatencyMs ?? 0 }) }}</span>
       </div>
 
       <!-- ── what happened at this hop ── -->
@@ -70,7 +70,7 @@
       <!-- ── layer stack ── -->
       <div class="ns-layer-stack">
         <div class="ns-layer-legend">
-          <span>Encapsulation — top of the stack is the application, bottom is bits on the medium</span>
+          <span>{{ $t('Encapsulation — top of the stack is the application, bottom is bits on the medium') }}</span>
         </div>
         <div
           v-for="l in hop?.pdu.layers || []"
@@ -91,7 +91,7 @@
             <table class="ns-field-table">
               <tbody>
                 <tr v-for="(f, i) in l.fields" :key="i" :class="{ hinted: !!f.hint }">
-                  <th>{{ f.label }}<em v-if="f.bits"> · {{ f.bits }} bits</em></th>
+                  <th>{{ f.label }}<em v-if="f.bits"> {{ $t('· {v0} bits', { v0: f.bits }) }}</em></th>
                   <td>
                     <code>{{ f.value }}</code>
                     <p v-if="f.hint" class="ns-field-hint">{{ f.hint }}</p>
@@ -105,9 +105,9 @@
 
       <!-- ── frame summary ── -->
       <div v-if="hop" class="ns-frame-summary">
-        <div><span>Protocol stack</span><strong>{{ hop.pdu.stack.join(' → ') }}</strong></div>
-        <div><span>Frame size</span><strong>{{ hop.pdu.sizeBytes }} bytes</strong></div>
-        <div v-if="hop.pdu.vlan !== undefined"><span>VLAN tag</span><strong>{{ hop.pdu.vlan }}</strong></div>
+        <div><span>{{ $t('Protocol stack') }}</span><strong>{{ hop.pdu.stack.join(' → ') }}</strong></div>
+        <div><span>{{ $t('Frame size') }}</span><strong>{{ $t('{v0} bytes', { v0: hop.pdu.sizeBytes }) }}</strong></div>
+        <div v-if="hop.pdu.vlan !== undefined"><span>{{ $t('VLAN tag') }}</span><strong>{{ hop.pdu.vlan }}</strong></div>
         <div v-if="hop.pdu.ttl !== undefined"><span>TTL</span><strong>{{ hop.pdu.ttl }}</strong></div>
       </div>
     </template>

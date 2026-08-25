@@ -7,16 +7,13 @@
       </div>
       <div class="vr-meta">
         <span v-if="recording">{{ elapsedLabel }}</span>
-        <span v-if="wordCount">{{ wordCount }} words</span>
-        <span v-if="pendingChunks" class="vr-pending">transcribing {{ pendingChunks }}…</span>
+        <span v-if="wordCount">{{ $t('{v0} words', { v0: wordCount }) }}</span>
+        <span v-if="pendingChunks" class="vr-pending">{{ $t('transcribing {v0}…', { v0: pendingChunks }) }}</span>
       </div>
     </div>
 
     <p class="vr-hint">
-      Speak naturally, as if answering “tell me about your career”. Cover each job title and
-      employer, roughly when you were there, what you actually did and anything you improved
-      with a number. Then your education, skills and languages. You can pause and resume —
-      nothing is sent until you stop.
+      {{ $t('Speak naturally, as if answering “tell me about your career”. Cover each job title and employer, roughly when you were there, what you actually did and anything you improved with a number. Then your education, skills and languages. You can pause and resume — nothing is sent until you stop.') }}
     </p>
 
     <div class="vr-level" v-if="recording">
@@ -32,15 +29,15 @@
       </button>
       <button v-else class="vr-btn vr-btn-stop" @click="stop">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-        Stop
+        {{ $t('Stop') }}
       </button>
 
-      <button v-if="editableTranscript && !recording" class="vr-btn vr-btn-ghost" @click="clear">Clear</button>
+      <button v-if="editableTranscript && !recording" class="vr-btn vr-btn-ghost" @click="clear">{{ $t('Clear') }}</button>
       <span v-if="error" class="vr-error">{{ error }}</span>
     </div>
 
     <div class="vr-transcript-wrap">
-      <label>Transcript <span class="vr-editable">— editable, fix anything the microphone got wrong</span></label>
+      <label>{{ $t('Transcript') }} <span class="vr-editable">{{ $t('— editable, fix anything the microphone got wrong') }}</span></label>
       <textarea
         v-model="editableTranscript"
         class="vr-transcript"
@@ -51,12 +48,12 @@
     </div>
 
     <div class="vr-notes-wrap">
-      <label>Anything else to add <span class="vr-editable">— optional</span></label>
+      <label>{{ $t('Anything else to add') }} <span class="vr-editable">{{ $t('— optional') }}</span></label>
       <input
         v-model="notes"
         class="vr-notes"
         type="text"
-        placeholder="e.g. targeting a DevOps role in Dubai, available from October"
+        :placeholder="$t('e.g. targeting a DevOps role in Dubai, available from October')"
         @input="$emit('update:notes', notes)"
       />
     </div>
@@ -64,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import { aiLanguage } from '@/i18n/runtime';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { cvBuilderService } from '@/services/cvbuilder.service';
 
@@ -152,7 +150,12 @@ async function transcribeChunk(blob: Blob) {
   if (blob.size < 1200) return;
   pendingChunks.value++;
   try {
-    const text = await cvBuilderService.transcribe(props.userId, blob);
+    // The language the speaker is DICTATING in. Left at the service's `'en'`
+    // default, Whisper does not fail on Arabic or Chinese — it transliterates
+    // phonetically, so the CV is then built from a Latin approximation of what
+    // was said and the "nothing is invented about you" promise is quietly
+    // broken by the transcription rather than by the model.
+    const text = await cvBuilderService.transcribe(props.userId, blob, aiLanguage());
     appendText(text);
   } catch (e: any) {
     // One failed chunk must not stop the recording; surface it and keep going.

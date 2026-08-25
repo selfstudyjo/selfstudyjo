@@ -2,40 +2,39 @@
   <div class="register-container">
     <div class="register-card">
       <div class="register-header">
-        <h1>Create Account</h1>
-        <p>Join Self Study JO and start learning today</p>
+        <h1>{{ $t('Create Account') }}</h1>
+        <p>{{ $t('Join Self Study JO and start learning today') }}</p>
       </div>
 
       <!-- Arrived from the free card on /plans. Every new account gets the
            trial, so this states what is about to happen rather than gating it. -->
       <div v-if="cameForFreeTrial" class="register-alert alert-info">
         <span>
-          🎁 Your <strong>{{ FREE_TRIAL_DAYS }}-day free trial</strong> — every feature unlocked —
-          starts as soon as you verify your email.
+          {{ $t('🎁 Your') }} <strong>{{ $t('{v0}-day free trial', { v0: FREE_TRIAL_DAYS }) }}</strong> {{ $t('— every feature unlocked — starts as soon as you verify your email.') }}
         </span>
       </div>
 
       <form @submit.prevent="handleRegister" class="register-form">
         <div class="register-form-row">
           <div class="register-form-group">
-            <label for="firstName">First Name</label>
+            <label for="firstName">{{ $t('First Name') }}</label>
             <input
               id="firstName"
               v-model="form.first_name"
               type="text"
-              placeholder="John"
+              :placeholder="$t('John')"
               :class="{ 'error': errors.first_name }"
             />
             <div v-if="errors.first_name" class="register-error-message">{{ errors.first_name }}</div>
           </div>
 
           <div class="register-form-group">
-            <label for="lastName">Last Name</label>
+            <label for="lastName">{{ $t('Last Name') }}</label>
             <input
               id="lastName"
               v-model="form.last_name"
               type="text"
-              placeholder="Doe"
+              :placeholder="$t('Doe')"
               :class="{ 'error': errors.last_name }"
             />
             <div v-if="errors.last_name" class="register-error-message">{{ errors.last_name }}</div>
@@ -43,14 +42,14 @@
         </div>
 
         <div class="register-form-group">
-          <label for="username">Username *</label>
+          <label for="username">{{ $t('Username *') }}</label>
           <div class="register-input-with-validation">
             <input
               id="username"
               v-model="form.username"
               type="text"
               required
-              placeholder="johndoe"
+              :placeholder="$t('johndoe')"
               @blur="validateUsername"
               :class="{ 'error': errors.username, 'valid': usernameValid }"
             />
@@ -65,14 +64,14 @@
         </div>
 
         <div class="register-form-group">
-          <label for="email">Email *</label>
+          <label for="email">{{ $t('Email *') }}</label>
           <div class="register-input-with-validation">
             <input
               id="email"
               v-model="form.email"
               type="email"
               required
-              placeholder="john@example.com"
+              :placeholder="$t('john@example.com')"
               @blur="validateEmail"
               :class="{ 'error': errors.email, 'valid': emailValid }"
             />
@@ -87,14 +86,14 @@
         </div>
 
         <div class="register-form-group">
-          <label for="password">Password *</label>
+          <label for="password">{{ $t('Password *') }}</label>
           <div class="register-password-input">
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               required
-              placeholder="Create a strong password"
+              :placeholder="$t('Create a strong password')"
               :class="{ 'error': errors.password }"
             />
             <button type="button" class="register-password-toggle" @click="showPassword = !showPassword">
@@ -109,14 +108,14 @@
         </div>
 
         <div class="register-form-group">
-          <label for="confirmPassword">Confirm Password *</label>
+          <label for="confirmPassword">{{ $t('Confirm Password *') }}</label>
           <div class="register-password-input">
             <input
               id="confirmPassword"
               v-model="confirmPassword"
               :type="showConfirmPassword ? 'text' : 'password'"
               required
-              placeholder="Confirm your password"
+              :placeholder="$t('Confirm your password')"
               :class="{ 'error': errors.confirmPassword }"
             />
             <button type="button" class="register-password-toggle" @click="showConfirmPassword = !showConfirmPassword">
@@ -127,11 +126,11 @@
         </div>
 
         <div class="register-form-group">
-          <label for="gender">Gender</label>
+          <label for="gender">{{ $t('Gender') }}</label>
           <select id="gender" v-model="form.gender" class="register-select-input">
-            <option value="">Select gender</option>
-            <option value="M">Male</option>
-            <option value="F">Female</option>
+            <option value="">{{ $t('Select gender') }}</option>
+            <option value="M">{{ $t('Male') }}</option>
+            <option value="F">{{ $t('Female') }}</option>
           </select>
         </div>
 
@@ -148,19 +147,19 @@
             required
           />
           <label for="terms">
-            I agree to the <a href="#" class="register-link">Terms of Service</a> and <a href="#" class="register-link">Privacy Policy</a>
+            {{ $t('I agree to the') }} <a href="#" class="register-link">{{ $t('Terms of Service') }}</a> {{ $t('and') }} <a href="#" class="register-link">{{ $t('Privacy Policy') }}</a>
           </label>
         </div>
 
         <button type="submit" class="register-btn register-btn-primary" :disabled="authStore.loading || !acceptedTerms">
-          <span v-if="authStore.loading">Creating Account...</span>
-          <span v-else>Create Account</span>
+          <span v-if="authStore.loading">{{ $t('Creating Account...') }}</span>
+          <span v-else>{{ $t('Create Account') }}</span>
         </button>
 
         <div class="register-footer">
           <p>
-            Already have an account?
-            <router-link to="/login" class="register-link">Sign in</router-link>
+            {{ $t('Already have an account?') }}
+            <router-link to="/login" class="register-link">{{ $t('Sign in') }}</router-link>
           </p>
         </div>
       </form>

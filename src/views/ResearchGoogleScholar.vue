@@ -1,38 +1,34 @@
 <template>
   <div class="research-scholar-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconScholar /> Google Scholar Search</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconScholar /> {{ $t('Google Scholar Search') }}</h1>
     </div>
 
     <div class="rf-alert rf-alert-info">
       <RfIconWarning />
       <div>
-        <strong>How this works.</strong>
-        Google Scholar has no public API, so this page does two things instead. It builds the exact
-        Scholar query a professional searcher would run — open it to see the real Scholar results —
-        and it uses AI to suggest the literature that search should surface. Every suggestion is
-        then checked against OpenAlex. Items marked <em>Verified</em> have confirmed bibliographic
-        data; items marked <em>Unverified</em> are search leads to confirm yourself before citing.
+        <strong>{{ $t('How this works.') }}</strong>
+        {{ $t('Google Scholar has no public API, so this page does two things instead. It builds the exact Scholar query a professional searcher would run — open it to see the real Scholar results — and it uses AI to suggest the literature that search should surface. Every suggestion is then checked against OpenAlex. Items marked') }} <em>{{ $t('Verified') }}</em> {{ $t('have confirmed bibliographic data; items marked') }} <em>{{ $t('Unverified') }}</em> {{ $t('are search leads to confirm yourself before citing.') }}
       </div>
     </div>
 
     <!-- ============ SEARCH ============ -->
     <div class="rf-section">
-      <h2 class="rf-section-title"><RfIconSearch /> Search</h2>
+      <h2 class="rf-section-title"><RfIconSearch /> {{ $t('Search') }}</h2>
 
       <div class="rf-search-bar">
         <input
           v-model="form.q"
           class="rf-input rf-search-input"
-          placeholder="Enter your research topic, e.g. python games development for education"
+          :placeholder="$t('Enter your research topic, e.g. python games development for education')"
           @keyup.enter="runSearch"
         />
         <button class="rf-btn rf-btn-primary rf-search-go" @click="runSearch" :disabled="!form.q.trim() || searching">
           <RfIconSearch /> {{ searching ? 'Searching…' : 'Search' }}
         </button>
       </div>
-      <p class="rf-hint">Keywords are the only required field.</p>
+      <p class="rf-hint">{{ $t('Keywords are the only required field.') }}</p>
 
       <button class="rf-filters-toggle" @click="showFilters = !showFilters">
         <RfIconFilter /> {{ showFilters ? 'Hide filters' : 'Show filters' }}
@@ -41,15 +37,15 @@
       <div v-show="showFilters" class="rf-filters-panel">
         <div class="rf-form-row">
           <div class="rf-form-group">
-            <label class="rf-label">From year</label>
+            <label class="rf-label">{{ $t('From year') }}</label>
             <input v-model="form.from_year" class="rf-input" type="number" placeholder="2020" />
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">To year</label>
+            <label class="rf-label">{{ $t('To year') }}</label>
             <input v-model="form.to_year" class="rf-input" type="number" :placeholder="String(currentYear)" />
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Results</label>
+            <label class="rf-label">{{ $t('Results') }}</label>
             <select v-model.number="form.limit" class="rf-input">
               <option :value="5">5</option>
               <option :value="10">10</option>
@@ -61,57 +57,57 @@
 
         <div class="rf-form-row">
           <div class="rf-form-group">
-            <label class="rf-label">Authors</label>
-            <input v-model="form.authors" class="rf-input" placeholder="e.g. Funabiki, Anggraini" />
+            <label class="rf-label">{{ $t('Authors') }}</label>
+            <input v-model="form.authors" class="rf-input" :placeholder="$t('e.g. Funabiki, Anggraini')" />
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">University / institution</label>
-            <input v-model="form.university" class="rf-input" placeholder="e.g. Okayama University" />
+            <label class="rf-label">{{ $t('University / institution') }}</label>
+            <input v-model="form.university" class="rf-input" :placeholder="$t('e.g. Okayama University')" />
           </div>
         </div>
 
         <div class="rf-form-row">
           <div class="rf-form-group">
-            <label class="rf-label">Language</label>
+            <label class="rf-label">{{ $t('Language') }}</label>
             <select v-model="form.language" class="rf-input">
-              <option value="">Any language</option>
+              <option value="">{{ $t('Any language') }}</option>
               <option v-for="l in LANGUAGES" :key="l.code" :value="l.name">{{ l.name }}</option>
             </select>
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Scholar interface language</label>
+            <label class="rf-label">{{ $t('Scholar interface language') }}</label>
             <select v-model="form.hl" class="rf-input">
               <option v-for="l in LANGUAGES" :key="l.code" :value="l.code">{{ l.name }}</option>
             </select>
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Publication type</label>
+            <label class="rf-label">{{ $t('Publication type') }}</label>
             <select v-model="form.publication_type" class="rf-input">
-              <option value="">Any type</option>
-              <option value="journal article">Journal article</option>
-              <option value="conference paper">Conference paper</option>
-              <option value="review">Review</option>
-              <option value="book chapter">Book chapter</option>
-              <option value="thesis">Thesis</option>
+              <option value="">{{ $t('Any type') }}</option>
+              <option value="journal article">{{ $t('Journal article') }}</option>
+              <option value="conference paper">{{ $t('Conference paper') }}</option>
+              <option value="review">{{ $t('Review') }}</option>
+              <option value="book chapter">{{ $t('Book chapter') }}</option>
+              <option value="thesis">{{ $t('Thesis') }}</option>
             </select>
           </div>
         </div>
 
         <div class="rf-form-row">
           <div class="rf-form-group" style="flex: 2;">
-            <label class="rf-label">Exclude work about</label>
-            <input v-model="form.exclude" class="rf-input" placeholder="e.g. video game addiction" />
+            <label class="rf-label">{{ $t('Exclude work about') }}</label>
+            <input v-model="form.exclude" class="rf-input" :placeholder="$t('e.g. video game addiction')" />
           </div>
         </div>
 
         <div class="rf-checkbox-row">
           <label class="rf-checkbox">
             <input type="checkbox" v-model="form.reviews_only" />
-            <span>Review articles only</span>
+            <span>{{ $t('Review articles only') }}</span>
           </label>
           <label class="rf-checkbox">
             <input type="checkbox" v-model="form.verify" />
-            <span><RfIconVerified /> Verify results against OpenAlex (recommended)</span>
+            <span><RfIconVerified /> {{ $t('Verify results against OpenAlex (recommended)') }}</span>
           </label>
         </div>
       </div>
@@ -119,13 +115,13 @@
 
     <!-- ============ ALWAYS-AVAILABLE SCHOLAR LINK ============ -->
     <div v-if="scholarUrl" class="rf-section rf-scholar-links">
-      <h2 class="rf-section-title"><RfIconLink /> Open on Google Scholar</h2>
+      <h2 class="rf-section-title"><RfIconLink /> {{ $t('Open on Google Scholar') }}</h2>
       <div class="rf-scholar-url-box">
         <code class="rf-scholar-url">{{ response?.primary_scholar_url || scholarUrl }}</code>
         <div class="rf-scholar-url-actions">
           <a class="rf-btn rf-btn-sm rf-btn-primary"
              :href="response?.primary_scholar_url || scholarUrl" target="_blank" rel="noopener noreferrer">
-            <RfIconLink /> Open search
+            <RfIconLink /> {{ $t('Open search') }}
           </a>
           <button class="rf-btn rf-btn-sm rf-btn-secondary" @click="copy(response?.primary_scholar_url || scholarUrl)">
             {{ copied ? 'Copied' : 'Copy URL' }}
@@ -134,17 +130,17 @@
       </div>
 
       <div v-if="response?.alternative_scholar_urls?.length" class="rf-alt-queries">
-        <h3 class="rf-subsection-title">Alternative searches</h3>
+        <h3 class="rf-subsection-title">{{ $t('Alternative searches') }}</h3>
         <div v-for="alt in response.alternative_scholar_urls" :key="alt.url" class="rf-alt-query">
           <span class="rf-alt-query-text">{{ alt.query }}</span>
           <a class="rf-btn rf-btn-xs rf-btn-ghost" :href="alt.url" target="_blank" rel="noopener noreferrer">
-            Open <RfIconArrowRight />
+            {{ $t('Open') }} <RfIconArrowRight />
           </a>
         </div>
       </div>
 
       <div v-if="response?.search_strategy" class="rf-strategy">
-        <h3 class="rf-subsection-title">Search strategy</h3>
+        <h3 class="rf-subsection-title">{{ $t('Search strategy') }}</h3>
         <p>{{ response.search_strategy }}</p>
       </div>
 
@@ -156,12 +152,12 @@
     <!-- ============ STATE ============ -->
     <div v-if="searching" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Building the search and checking results against OpenAlex…</p>
-      <p class="rf-hint">This takes longer than a normal search because every suggestion is verified.</p>
+      <p>{{ $t('Building the search and checking results against OpenAlex…') }}</p>
+      <p class="rf-hint">{{ $t('This takes longer than a normal search because every suggestion is verified.') }}</p>
     </div>
 
     <div v-else-if="errorMessage" class="rf-alert rf-alert-error">
-      <strong>Search failed.</strong> {{ errorMessage }}
+      <strong>{{ $t('Search failed.') }}</strong> {{ errorMessage }}
     </div>
 
     <div v-else-if="response?.error" class="rf-alert rf-alert-warn">
@@ -171,10 +167,10 @@
     <!-- ============ RESULTS ============ -->
     <div v-if="!searching && results.length" class="rf-section">
       <div class="rf-results-header">
-        <h2 class="rf-section-title"><RfIconStats /> {{ results.length }} suggested papers</h2>
+        <h2 class="rf-section-title"><RfIconStats /> {{ $t('{v0} suggested papers', { v0: results.length }) }}</h2>
         <span class="rf-results-sub">
-          <span class="rf-badge-verified"><RfIconVerified /> {{ response?.meta?.verified_count || 0 }} verified</span>
-          <span class="rf-badge-unverified">{{ response?.meta?.unverified_count || 0 }} unverified</span>
+          <span class="rf-badge-verified"><RfIconVerified /> {{ $t('{v0} verified', { v0: response?.meta?.verified_count || 0 }) }}</span>
+          <span class="rf-badge-unverified">{{ $t('{v0} unverified', { v0: response?.meta?.unverified_count || 0 }) }}</span>
         </span>
       </div>
 
@@ -185,12 +181,12 @@
              class="rf-openalex-card" :class="{ 'rf-card-unverified': !paper.verified }">
           <div class="rf-card-flag">
             <span v-if="paper.verified" class="rf-badge-verified">
-              <RfIconVerified /> Verified in OpenAlex
-              <template v-if="paper.match_score"> · {{ Math.round(paper.match_score * 100) }}% title match</template>
+              <RfIconVerified /> {{ $t('Verified in OpenAlex') }}
+              <template v-if="paper.match_score"> {{ $t('· {v0}% title match', { v0: Math.round(paper.match_score * 100) }) }}</template>
             </span>
             <span v-else class="rf-badge-unverified">
-              <RfIconWarning /> Unverified suggestion
-              <template v-if="paper.confidence"> · AI confidence: {{ paper.confidence }}</template>
+              <RfIconWarning /> {{ $t('Unverified suggestion') }}
+              <template v-if="paper.confidence"> {{ $t('· AI confidence: {v0}', { v0: paper.confidence }) }}</template>
             </span>
           </div>
 
@@ -199,19 +195,19 @@
           <div class="rf-openalex-meta">
             <span v-if="paper.publication_year || paper.year"><RfIconCalendar /> {{ paper.publication_year || paper.year }}</span>
             <span v-if="paper.venue"><RfIconLibrary /> {{ paper.venue }}</span>
-            <span v-if="paper.citation_count"><RfIconCitation /> {{ paper.citation_count }} citations</span>
-            <span v-if="paper.is_oa" class="rf-badge-oa"><RfIconOpenAccess /> Open access</span>
-            <span v-if="paper.has_pdf" class="rf-badge-pdf"><RfIconDownload /> PDF available</span>
+            <span v-if="paper.citation_count"><RfIconCitation /> {{ $t('{v0} citations', { v0: paper.citation_count }) }}</span>
+            <span v-if="paper.is_oa" class="rf-badge-oa"><RfIconOpenAccess /> {{ $t('Open access') }}</span>
+            <span v-if="paper.has_pdf" class="rf-badge-pdf"><RfIconDownload /> {{ $t('PDF available') }}</span>
           </div>
 
           <div class="rf-openalex-authors" v-if="paper.author_names?.length">
-            <strong>Authors:</strong> {{ paper.author_names.slice(0, 8).join(', ') }}
+            <strong>{{ $t('Authors:') }}</strong> {{ paper.author_names.slice(0, 8).join(', ') }}
           </div>
           <div class="rf-openalex-authors" v-else-if="paper.authors || paper.first_author">
-            <strong>Authors:</strong> {{ paper.authors || paper.first_author }}
+            <strong>{{ $t('Authors:') }}</strong> {{ paper.authors || paper.first_author }}
           </div>
 
-          <p v-if="paper.relevance" class="rf-relevance"><strong>Why it matters:</strong> {{ paper.relevance }}</p>
+          <p v-if="paper.relevance" class="rf-relevance"><strong>{{ $t('Why it matters:') }}</strong> {{ paper.relevance }}</p>
           <p v-if="paper.abstract" class="rf-openalex-abstract">{{ truncate(paper.abstract, 300) }}</p>
           <p v-if="!paper.verified && paper.verification_note" class="rf-hint rf-hint-warn">
             {{ paper.verification_note }}
@@ -221,7 +217,7 @@
 
           <div class="rf-openalex-actions">
             <a class="rf-btn rf-btn-sm rf-btn-secondary" :href="paper.scholar_url" target="_blank" rel="noopener noreferrer">
-              <RfIconScholar /> Find on Scholar
+              <RfIconScholar /> {{ $t('Find on Scholar') }}
             </a>
 
             <button v-if="paper.verified" class="rf-btn rf-btn-sm rf-btn-primary"
@@ -241,7 +237,7 @@
 
             <a v-if="paper.landing_page_url" class="rf-btn rf-btn-sm rf-btn-ghost"
                :href="paper.landing_page_url" target="_blank" rel="noopener noreferrer">
-              <RfIconLink /> View paper
+              <RfIconLink /> {{ $t('View paper') }}
             </a>
           </div>
         </div>

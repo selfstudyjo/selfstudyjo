@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
+import { aiLanguageHeaders } from '@/i18n/runtime';
 
 export interface ToastmastersSession {
     id: string;
@@ -69,8 +70,7 @@ class ToastmastersService {
             const r = await apiService.post<{ text: string }>(
                 baseUrl,
                 `/api/toastmasters/bot/${endpoint}`,
-                body
-            );
+                body, aiLanguageHeaders());
             return r.text;
         } catch (e) {
             console.error(`Bot ${endpoint} failed:`, e);
@@ -84,8 +84,7 @@ class ToastmastersService {
             const r = await apiService.post<{ text: string }>(
                 baseUrl,
                 `/api/toastmasters/bot/evaluate-role`,
-                body
-            );
+                body, aiLanguageHeaders());
             return r.text;
         } catch (e) {
             console.error('Role evaluation failed:', e);
@@ -99,8 +98,7 @@ class ToastmastersService {
             const r = await apiService.post<{ text: string }>(
                 baseUrl,
                 `/api/toastmasters/bot/generate-role-task`,
-                body
-            );
+                body, aiLanguageHeaders());
             return r.text;
         } catch (e) {
             console.error('Role task generation failed:', e);
@@ -110,7 +108,7 @@ class ToastmastersService {
 
     async saveSession(data: Partial<ToastmastersSession>): Promise<{ success: boolean; id: string }> {
         const baseUrl = await this.getBaseUrl();
-        return await apiService.post(baseUrl, '/api/toastmasters/sessions', data);
+        return await apiService.post(baseUrl, '/api/toastmasters/sessions', data, aiLanguageHeaders());
     }
 
     async getUserSessions(userId: string): Promise<ToastmastersSession[]> {

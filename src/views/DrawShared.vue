@@ -2,7 +2,7 @@
   <div class="shared">
     <div v-if="loading" class="panel">
       <div class="spinner" />
-      <h1>Opening the shared paper…</h1>
+      <h1>{{ $t('Opening the shared paper…') }}</h1>
     </div>
 
     <div v-else class="panel error">
@@ -10,9 +10,9 @@
       <p>{{ detail }}</p>
       <div class="actions">
         <button class="btn primary" @click="$router.push({ name: 'DrawPapers' })">
-          My papers
+          {{ $t('My papers') }}
         </button>
-        <button class="btn ghost" @click="retry">Try again</button>
+        <button class="btn ghost" @click="retry">{{ $t('Try again') }}</button>
       </div>
     </div>
   </div>

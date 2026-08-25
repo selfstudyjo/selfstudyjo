@@ -74,7 +74,7 @@
   background: var(--sn-glass-bg);
   -webkit-backdrop-filter: var(--sn-glass-blur);
   backdrop-filter: var(--sn-glass-blur);
-  border-right: 1px solid var(--sn-glass-border);
+  border-inline-end: 1px solid var(--sn-glass-border);
   box-shadow: var(--sn-shadow);
   z-index: 100;
   overflow: hidden auto;
@@ -428,7 +428,7 @@
   width: 100%;
   margin-top: 0.6rem;
   font-family: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
   border: 1px dashed var(--sn-glass-border-hover) !important;
@@ -677,13 +677,13 @@
 .app-container > .main-content {
   flex: 1 1 auto;
   min-width: 0;
-  margin-left: var(--sn-w-expanded);
+  margin-inline-start: var(--sn-w-expanded);
   transition: margin-left var(--sn-t-base);
 }
 
 /* default = collapsed/rail → 72px margin */
 .sidebar.collapsed ~ .main-content {
-  margin-left: var(--sn-w-collapsed);
+  margin-inline-start: var(--sn-w-collapsed);
 }
 
 /* kill old galaxy-dimming overlay if any */
@@ -760,12 +760,12 @@
   /* content flush by default, leave room for FAB */
   .app-container > .main-content,
   .sidebar.collapsed ~ .main-content {
-    margin-left: 0;
+    margin-inline-start: 0;
     padding-top: 4.5rem;
   }
   /* SHIFT content when drawer opens */
   .sidebar.active ~ .main-content {
-    margin-left: var(--sn-mobile-w);
+    margin-inline-start: var(--sn-mobile-w);
   }
 }
 
@@ -844,6 +844,6 @@
 }
 
 @media (prefers-contrast: high) {
-  .sidebar { background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85); border-right: 2px solid var(--sfs-border-strong, #fff); }
+  .sidebar { background: rgb(var(--sfs-surface-rgb, 0 0 5) / 0.85); border-inline-end: 2px solid var(--sfs-border-strong, #fff); }
   .nav-item.active { border-color: var(--sfs-border-strong, #fff); }
 }

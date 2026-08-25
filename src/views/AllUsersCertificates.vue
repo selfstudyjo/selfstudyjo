@@ -1,8 +1,8 @@
 <template>
   <div class="all-certificates">
     <div class="header">
-      <h1>All Certificates</h1>
-      <p>Browse all course and exam certificates</p>
+      <h1>{{ $t('All Certificates') }}</h1>
+      <p>{{ $t('Browse all course and exam certificates') }}</p>
     </div>
 
     <div class="tabs-container">
@@ -11,14 +11,14 @@
           :class="['tab', { active: activeTab === 'exams' }]"
           @click="activeTab = 'exams'"
         >
-          Exam Certificates
+          {{ $t('Exam Certificates') }}
           <span class="tab-badge">{{ examCertificates.length }}</span>
         </button>
         <button
           :class="['tab', { active: activeTab === 'courses' }]"
           @click="activeTab = 'courses'"
         >
-          Course Certificates
+          {{ $t('Course Certificates') }}
           <span class="tab-badge">{{ courseCertificates.length }}</span>
         </button>
       </div>
@@ -29,7 +29,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search by user, course, exam..."
+          :placeholder="$t('Search by user, course, exam...')"
           class="search-input"
         />
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="search-icon">
@@ -39,19 +39,19 @@
 
       <div class="filter-controls">
         <select v-model="statusFilter" class="filter-select">
-          <option value="">All Status</option>
-          <option value="valid">Valid</option>
-          <option value="expired">Expired</option>
+          <option value="">{{ $t('All Status') }}</option>
+          <option value="valid">{{ $t('Valid') }}</option>
+          <option value="expired">{{ $t('Expired') }}</option>
         </select>
         <select v-model="sortBy" class="filter-select">
-          <option value="date">Sort by Date</option>
-          <option value="user">Sort by User</option>
+          <option value="date">{{ $t('Sort by Date') }}</option>
+          <option value="user">{{ $t('Sort by User') }}</option>
         </select>
         <div class="view-toggle">
           <button
             :class="['view-btn', { active: viewMode === 'grid' }]"
             @click="viewMode = 'grid'"
-            title="Grid view"
+            :title="$t('Grid view')"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <rect x="4" y="4" width="5" height="5" fill="currentColor"/>
@@ -68,7 +68,7 @@
           <button
             :class="['view-btn', { active: viewMode === 'list' }]"
             @click="viewMode = 'list'"
-            title="List view"
+            :title="$t('List view')"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <rect x="4" y="4" width="16" height="3" fill="currentColor"/>
@@ -83,14 +83,14 @@
 
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading certificates...</p>
+      <p>{{ $t('Loading certificates...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
       <div class="error-icon">⚠️</div>
-      <h3>Error Loading Certificates</h3>
+      <h3>{{ $t('Error Loading Certificates') }}</h3>
       <p>{{ error }}</p>
-      <button @click="fetchAllCertificates" class="retry-btn">Try Again</button>
+      <button @click="fetchAllCertificates" class="retry-btn">{{ $t('Try Again') }}</button>
     </div>
 
     <div v-else class="certificates-container">
@@ -98,20 +98,20 @@
       <div v-if="activeTab === 'exams'" class="tab-content">
         <div v-if="filteredExamCertificates.length === 0" class="empty-state">
           <div class="empty-icon">📝</div>
-          <h3>No Exam Certificates Found</h3>
-          <p v-if="searchQuery">Try adjusting your search criteria</p>
-          <p v-else>No exam certificates have been issued yet</p>
+          <h3>{{ $t('No Exam Certificates Found') }}</h3>
+          <p v-if="searchQuery">{{ $t('Try adjusting your search criteria') }}</p>
+          <p v-else>{{ $t('No exam certificates have been issued yet') }}</p>
         </div>
 
         <!-- List View -->
         <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
-            <div class="header-cell user">User</div>
-            <div class="header-cell exam">Exam</div>
-            <div class="header-cell date">Taken Date</div>
-            <div class="header-cell expiry">Expiry Date</div>
-            <div class="header-cell status">Status</div>
-            <div class="header-cell actions">Actions</div>
+            <div class="header-cell user">{{ $t('User') }}</div>
+            <div class="header-cell exam">{{ $t('Exam') }}</div>
+            <div class="header-cell date">{{ $t('Taken Date') }}</div>
+            <div class="header-cell expiry">{{ $t('Expiry Date') }}</div>
+            <div class="header-cell status">{{ $t('Status') }}</div>
+            <div class="header-cell actions">{{ $t('Actions') }}</div>
           </div>
 
           <div class="table-body">
@@ -126,7 +126,7 @@
                     <img
                       v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
                       :src="getProxiedImageUrl(getCertUserImage(certificate))"
-                      alt="User Avatar"
+                      :alt="$t('User Avatar')"
                       class="avatar-image-small"
                       @error="handleAvatarError(certificate.certificate_id)"
                     />
@@ -164,7 +164,7 @@
                   @click="viewCertificate(certificate.certificate_id, 'exam')"
                   class="action-btn view"
                 >
-                  View
+                  {{ $t('View') }}
                 </button>
               </div>
             </div>
@@ -177,21 +177,21 @@
                 @click="currentPage--"
                 class="pagination-btn"
               >
-                Previous
+                {{ $t('Previous') }}
               </button>
               <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                {{ $t('Page {v0} of {v1}', { v0: currentPage, v1: totalPages }) }}
               </span>
               <button
                 :disabled="currentPage === totalPages"
                 @click="currentPage++"
                 class="pagination-btn"
               >
-                Next
+                {{ $t('Next') }}
               </button>
             </div>
             <div class="total-count">
-              Showing {{ filteredExamCertificates.length }} of {{ examCertificates.length }} certificates
+              {{ $t('Showing {v0} of {v1} certificates', { v0: filteredExamCertificates.length, v1: examCertificates.length }) }}
             </div>
           </div>
         </div>
@@ -208,7 +208,7 @@
                 <img
                   v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
                   :src="getProxiedImageUrl(getCertUserImage(certificate))"
-                  alt="User Avatar"
+                  :alt="$t('User Avatar')"
                   class="avatar-image"
                   @error="handleAvatarError(certificate.certificate_id)"
                 />
@@ -225,11 +225,11 @@
               <div class="certificate-title">{{ getExamNameFromCert(certificate) }}</div>
               <div class="certificate-meta">
                 <div class="meta-item">
-                  <span class="meta-label">Taken:</span>
+                  <span class="meta-label">{{ $t('Taken:') }}</span>
                   <span class="meta-value">{{ formatDate(certificate.taken_date) }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">Expires:</span>
+                  <span class="meta-label">{{ $t('Expires:') }}</span>
                   <span class="meta-value">{{ formatDate(certificate.expire_date) }}</span>
                 </div>
               </div>
@@ -244,7 +244,7 @@
                 @click="viewCertificate(certificate.certificate_id, 'exam')"
                 class="action-btn view"
               >
-                View Certificate
+                {{ $t('View Certificate') }}
               </button>
             </div>
           </div>
@@ -255,21 +255,21 @@
                 @click="currentPage--"
                 class="pagination-btn"
               >
-                Previous
+                {{ $t('Previous') }}
               </button>
               <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                {{ $t('Page {v0} of {v1}', { v0: currentPage, v1: totalPages }) }}
               </span>
               <button
                 :disabled="currentPage === totalPages"
                 @click="currentPage++"
                 class="pagination-btn"
               >
-                Next
+                {{ $t('Next') }}
               </button>
             </div>
             <div class="total-count">
-              Showing {{ filteredExamCertificates.length }} of {{ examCertificates.length }} certificates
+              {{ $t('Showing {v0} of {v1} certificates', { v0: filteredExamCertificates.length, v1: examCertificates.length }) }}
             </div>
           </div>
         </div>
@@ -279,19 +279,19 @@
       <div v-else class="tab-content">
         <div v-if="filteredCourseCertificates.length === 0" class="empty-state">
           <div class="empty-icon">🎓</div>
-          <h3>No Course Certificates Found</h3>
-          <p v-if="searchQuery">Try adjusting your search criteria</p>
-          <p v-else>No course certificates have been issued yet</p>
+          <h3>{{ $t('No Course Certificates Found') }}</h3>
+          <p v-if="searchQuery">{{ $t('Try adjusting your search criteria') }}</p>
+          <p v-else>{{ $t('No course certificates have been issued yet') }}</p>
         </div>
 
         <!-- List View -->
         <div v-else-if="viewMode === 'list'" class="certificates-table">
           <div class="table-header">
-            <div class="header-cell user">User</div>
-            <div class="header-cell course">Course</div>
-            <div class="header-cell date">Completion Date</div>
-            <div class="header-cell hours">Hours</div>
-            <div class="header-cell actions">Actions</div>
+            <div class="header-cell user">{{ $t('User') }}</div>
+            <div class="header-cell course">{{ $t('Course') }}</div>
+            <div class="header-cell date">{{ $t('Completion Date') }}</div>
+            <div class="header-cell hours">{{ $t('Hours') }}</div>
+            <div class="header-cell actions">{{ $t('Actions') }}</div>
           </div>
 
           <div class="table-body">
@@ -306,7 +306,7 @@
                     <img
                       v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
                       :src="getProxiedImageUrl(getCertUserImage(certificate))"
-                      alt="User Avatar"
+                      :alt="$t('User Avatar')"
                       class="avatar-image-small"
                       @error="handleAvatarError(certificate.certificate_id)"
                     />
@@ -330,7 +330,7 @@
               </div>
 
               <div class="table-cell hours">
-                {{ certificate.hours }} hours
+                {{ $t('{v0} hours', { v0: certificate.hours }) }}
               </div>
 
               <div class="table-cell actions">
@@ -338,7 +338,7 @@
                   @click="viewCertificate(certificate.certificate_id, 'course')"
                   class="action-btn view"
                 >
-                  View
+                  {{ $t('View') }}
                 </button>
               </div>
             </div>
@@ -351,21 +351,21 @@
                 @click="currentPage--"
                 class="pagination-btn"
               >
-                Previous
+                {{ $t('Previous') }}
               </button>
               <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                {{ $t('Page {v0} of {v1}', { v0: currentPage, v1: totalPages }) }}
               </span>
               <button
                 :disabled="currentPage === totalPages"
                 @click="currentPage++"
                 class="pagination-btn"
               >
-                Next
+                {{ $t('Next') }}
               </button>
             </div>
             <div class="total-count">
-              Showing {{ filteredCourseCertificates.length }} of {{ courseCertificates.length }} certificates
+              {{ $t('Showing {v0} of {v1} certificates', { v0: filteredCourseCertificates.length, v1: courseCertificates.length }) }}
             </div>
           </div>
         </div>
@@ -382,7 +382,7 @@
                 <img
                   v-if="getCertUserImage(certificate) && !avatarErrors[certificate.certificate_id]"
                   :src="getProxiedImageUrl(getCertUserImage(certificate))"
-                  alt="User Avatar"
+                  :alt="$t('User Avatar')"
                   class="avatar-image"
                   @error="handleAvatarError(certificate.certificate_id)"
                 />
@@ -399,12 +399,12 @@
               <div class="certificate-title">{{ getCourseNameFromCert(certificate) }}</div>
               <div class="certificate-meta">
                 <div class="meta-item">
-                  <span class="meta-label">Completed:</span>
+                  <span class="meta-label">{{ $t('Completed:') }}</span>
                   <span class="meta-value">{{ formatDate(certificate.date) }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">Hours:</span>
-                  <span class="meta-value">{{ certificate.hours }} hours</span>
+                  <span class="meta-label">{{ $t('Hours:') }}</span>
+                  <span class="meta-value">{{ $t('{v0} hours', { v0: certificate.hours }) }}</span>
                 </div>
               </div>
             </div>
@@ -413,7 +413,7 @@
                 @click="viewCertificate(certificate.certificate_id, 'course')"
                 class="action-btn view"
               >
-                View Certificate
+                {{ $t('View Certificate') }}
               </button>
             </div>
           </div>
@@ -424,21 +424,21 @@
                 @click="currentPage--"
                 class="pagination-btn"
               >
-                Previous
+                {{ $t('Previous') }}
               </button>
               <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                {{ $t('Page {v0} of {v1}', { v0: currentPage, v1: totalPages }) }}
               </span>
               <button
                 :disabled="currentPage === totalPages"
                 @click="currentPage++"
                 class="pagination-btn"
               >
-                Next
+                {{ $t('Next') }}
               </button>
             </div>
             <div class="total-count">
-              Showing {{ filteredCourseCertificates.length }} of {{ courseCertificates.length }} certificates
+              {{ $t('Showing {v0} of {v1} certificates', { v0: filteredCourseCertificates.length, v1: courseCertificates.length }) }}
             </div>
           </div>
         </div>

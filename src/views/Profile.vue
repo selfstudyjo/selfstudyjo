@@ -3,8 +3,8 @@
     <div class="profile-container">
       <!-- Header -->
       <div class="profile-header">
-        <h1 class="profile-title">Profile Settings</h1>
-        <p class="profile-subtitle">Manage your account information and preferences</p>
+        <h1 class="profile-title">{{ $t('Profile Settings') }}</h1>
+        <p class="profile-subtitle">{{ $t('Manage your account information and preferences') }}</p>
       </div>
 
       <!-- Main Content -->
@@ -12,7 +12,7 @@
         <!-- Left Column - Profile Picture -->
         <div class="profile-left">
           <div class="profile-card">
-            <h2 class="profile-card-title">Profile Picture</h2>
+            <h2 class="profile-card-title">{{ $t('Profile Picture') }}</h2>
 
             <div class="avatar-container">
               <ProfileAvatar
@@ -32,7 +32,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Upload a JPG, PNG, or GIF image (max 5MB)
+                {{ $t('Upload a JPG, PNG, or GIF image (max 5MB)') }}
               </p>
             </div>
 
@@ -41,7 +41,7 @@
               <div class="profile-progress-bar">
                 <div class="profile-progress-fill" :style="{ width: `${uploadProgress}%` }"></div>
               </div>
-              <div class="profile-progress-text">Uploading: {{ uploadProgress }}%</div>
+              <div class="profile-progress-text">{{ $t('Uploading: {v0}%', { v0: uploadProgress }) }}</div>
             </div>
 
             <!-- Upload error -->
@@ -52,22 +52,22 @@
 
           <!-- Account Stats -->
           <div class="profile-card">
-            <h2 class="profile-card-title">Account Information</h2>
+            <h2 class="profile-card-title">{{ $t('Account Information') }}</h2>
             <div class="account-stats">
               <div class="profile-stat-item">
-                <div class="profile-stat-label">Member Since</div>
+                <div class="profile-stat-label">{{ $t('Member Since') }}</div>
                 <div class="profile-stat-value">
                   {{ formatDate(profileData.date_joined) }}
                 </div>
               </div>
               <div class="profile-stat-item">
-                <div class="profile-stat-label">Last Updated</div>
+                <div class="profile-stat-label">{{ $t('Last Updated') }}</div>
                 <div class="profile-stat-value">
                   {{ formatDate(profileData.last_updated) }}
                 </div>
               </div>
               <div class="profile-stat-item">
-                <div class="profile-stat-label">Email Status</div>
+                <div class="profile-stat-label">{{ $t('Email Status') }}</div>
                 <div class="profile-stat-value">
                   <span :class="profileData.is_email_verified ? 'verified' : 'unverified'">
                     {{ profileData.is_email_verified ? 'Verified' : 'Unverified' }}
@@ -83,7 +83,7 @@
           <!-- Profile Information Form -->
           <div class="profile-card">
             <div class="profile-card-header">
-              <h2 class="profile-card-title">Personal Information</h2>
+              <h2 class="profile-card-title">{{ $t('Personal Information') }}</h2>
               <button
                 v-if="!isEditing"
                 @click="startEditing"
@@ -93,14 +93,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Edit
+                {{ $t('Edit') }}
               </button>
             </div>
 
             <form v-if="isEditing" @submit.prevent="updateProfile" class="profile-form">
               <div class="profile-form-grid">
                 <div class="profile-form-group">
-                  <label for="username">Username</label>
+                  <label for="username">{{ $t('Username') }}</label>
                   <input
                     id="username"
                     v-model="editData.username"
@@ -112,13 +112,13 @@
                     {{ fieldErrors.username }}
                   </div>
                   <div v-if="usernameAvailable !== null" class="availability-message">
-                    <span v-if="usernameAvailable" class="available">✓ Available</span>
-                    <span v-else class="unavailable">✗ Username already taken</span>
+                    <span v-if="usernameAvailable" class="available">{{ $t('✓ Available') }}</span>
+                    <span v-else class="unavailable">{{ $t('✗ Username already taken') }}</span>
                   </div>
                 </div>
 
                 <div class="profile-form-group">
-                  <label for="email">Email Address</label>
+                  <label for="email">{{ $t('Email Address') }}</label>
                   <input
                     id="email"
                     v-model="editData.email"
@@ -130,19 +130,19 @@
                     {{ fieldErrors.email }}
                   </div>
                   <div v-if="emailAvailable !== null" class="availability-message">
-                    <span v-if="emailAvailable" class="available">✓ Available</span>
-                    <span v-else class="unavailable">✗ Email already registered</span>
+                    <span v-if="emailAvailable" class="available">{{ $t('✓ Available') }}</span>
+                    <span v-else class="unavailable">{{ $t('✗ Email already registered') }}</span>
                   </div>
                   <div v-if="profileData.is_email_verified" class="profile-verified-badge">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
-                    Email Verified
+                    {{ $t('Email Verified') }}
                   </div>
                 </div>
 
                 <div class="profile-form-group">
-                  <label for="firstName">First Name</label>
+                  <label for="firstName">{{ $t('First Name') }}</label>
                   <input
                     id="firstName"
                     v-model="editData.first_name"
@@ -151,7 +151,7 @@
                 </div>
 
                 <div class="profile-form-group">
-                  <label for="lastName">Last Name</label>
+                  <label for="lastName">{{ $t('Last Name') }}</label>
                   <input
                     id="lastName"
                     v-model="editData.last_name"
@@ -160,11 +160,11 @@
                 </div>
 
                 <div class="profile-form-group">
-                  <label for="gender">Gender</label>
+                  <label for="gender">{{ $t('Gender') }}</label>
                   <select id="gender" v-model="editData.gender">
-                    <option value="">Select Gender</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
+                    <option value="">{{ $t('Select Gender') }}</option>
+                    <option value="M">{{ $t('Male') }}</option>
+                    <option value="F">{{ $t('Female') }}</option>
                   </select>
                 </div>
               </div>
@@ -175,7 +175,7 @@
                   @click="cancelEditing"
                   class="profile-btn profile-btn-secondary"
                 >
-                  Cancel
+                  {{ $t('Cancel') }}
                 </button>
                 <button
                   type="submit"
@@ -183,7 +183,7 @@
                   class="profile-btn profile-btn-primary"
                 >
                   <span v-if="isUpdating" class="profile-loading"></span>
-                  Save Changes
+                  {{ $t('Save Changes') }}
                 </button>
               </div>
             </form>
@@ -192,38 +192,38 @@
             <div v-else class="profile-details">
               <div class="profile-detail-grid">
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">Username</div>
+                  <div class="profile-detail-label">{{ $t('Username') }}</div>
                   <div class="profile-detail-value">{{ profileData.username }}</div>
                 </div>
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">Email</div>
+                  <div class="profile-detail-label">{{ $t('Email') }}</div>
                   <div class="profile-detail-value">
                     {{ profileData.email }}
                     <span v-if="profileData.is_email_verified" class="profile-verified-badge">
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
-                      Verified
+                      {{ $t('Verified') }}
                     </span>
                   </div>
                 </div>
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">First Name</div>
+                  <div class="profile-detail-label">{{ $t('First Name') }}</div>
                   <div class="profile-detail-value">{{ profileData.first_name || 'Not set' }}</div>
                 </div>
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">Last Name</div>
+                  <div class="profile-detail-label">{{ $t('Last Name') }}</div>
                   <div class="profile-detail-value">{{ profileData.last_name || 'Not set' }}</div>
                 </div>
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">Gender</div>
+                  <div class="profile-detail-label">{{ $t('Gender') }}</div>
                   <div class="profile-detail-value">
                     {{ profileData.gender === 'M' ? 'Male' :
                        profileData.gender === 'F' ? 'Female' : 'Not set' }}
                   </div>
                 </div>
                 <div class="profile-detail-item">
-                  <div class="profile-detail-label">User ID</div>
+                  <div class="profile-detail-label">{{ $t('User ID') }}</div>
                   <div class="profile-detail-value small">{{ profileData.user_id }}</div>
                 </div>
               </div>
@@ -232,10 +232,10 @@
 
           <!-- Change Password Form -->
           <div class="profile-card">
-            <h2 class="profile-card-title">Change Password</h2>
+            <h2 class="profile-card-title">{{ $t('Change Password') }}</h2>
             <form @submit.prevent="handleChangePassword" class="password-form">
               <div class="profile-form-group">
-                <label for="currentPassword">Current Password</label>
+                <label for="currentPassword">{{ $t('Current Password') }}</label>
                 <input
                   id="currentPassword"
                   v-model="passwordData.current_password"
@@ -248,7 +248,7 @@
               </div>
 
               <div class="profile-form-group">
-                <label for="newPassword">New Password</label>
+                <label for="newPassword">{{ $t('New Password') }}</label>
                 <input
                   id="newPassword"
                   v-model="passwordData.new_password"
@@ -259,12 +259,12 @@
                   {{ passwordErrors.new_password }}
                 </div>
                 <div class="password-hint">
-                  Password must be at least 8 characters long
+                  {{ $t('Password must be at least 8 characters long') }}
                 </div>
               </div>
 
               <div class="profile-form-group">
-                <label for="confirmPassword">Confirm New Password</label>
+                <label for="confirmPassword">{{ $t('Confirm New Password') }}</label>
                 <input
                   id="confirmPassword"
                   v-model="passwordData.confirm_password"
@@ -283,7 +283,7 @@
                   class="profile-btn profile-btn-primary"
                 >
                   <span v-if="isChangingPassword" class="profile-loading"></span>
-                  Change Password
+                  {{ $t('Change Password') }}
                 </button>
               </div>
             </form>
@@ -295,17 +295,17 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.86-.833-2.632 0L4.282 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              Danger Zone
+              {{ $t('Danger Zone') }}
             </h2>
             <p class="danger-warning">
-              Once you delete your account, there is no going back. Please be certain.
+              {{ $t('Once you delete your account, there is no going back. Please be certain.') }}
             </p>
             <button
               @click="showDeleteConfirmation = true"
               class="profile-btn profile-btn-danger"
               type="button"
             >
-              Delete Account
+              {{ $t('Delete Account') }}
             </button>
           </div>
         </div>
@@ -315,20 +315,19 @@
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirmation" class="profile-modal-overlay">
       <div class="profile-modal">
-        <h3 class="profile-modal-title">Delete Account</h3>
+        <h3 class="profile-modal-title">{{ $t('Delete Account') }}</h3>
         <p class="profile-modal-text">
-          Are you sure you want to delete your account? This action cannot be undone.
-          All your data will be permanently removed.
+          {{ $t('Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently removed.') }}
         </p>
 
         <div class="profile-modal-form">
           <div class="profile-form-group">
-            <label for="deletePassword">Confirm your password to delete account</label>
+            <label for="deletePassword">{{ $t('Confirm your password to delete account') }}</label>
             <input
               id="deletePassword"
               v-model="deletePassword"
               type="password"
-              placeholder="Enter your current password"
+              :placeholder="$t('Enter your current password')"
               :class="{ 'error': deleteError }"
             />
             <div v-if="deleteError" class="profile-error-message">
@@ -343,7 +342,7 @@
             @click="showDeleteConfirmation = false"
             class="profile-btn profile-btn-secondary"
           >
-            Cancel
+            {{ $t('Cancel') }}
           </button>
           <button
             type="button"
@@ -352,7 +351,7 @@
             class="profile-btn profile-btn-danger"
           >
             <span v-if="isDeletingAccount" class="profile-loading"></span>
-            Delete Account
+            {{ $t('Delete Account') }}
           </button>
         </div>
       </div>

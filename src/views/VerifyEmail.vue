@@ -7,8 +7,8 @@
             <path d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 11L4 6H20ZM20 18H4V8L12 13L20 8V18Z" fill="currentColor"/>
           </svg>
         </div>
-        <h1>Verify Your Email</h1>
-        <p>We've sent a 6-digit code to {{ userEmail || 'your email' }}</p>
+        <h1>{{ $t('Verify Your Email') }}</h1>
+        <p>{{ $t('We\'ve sent a 6-digit code to {v0}', { v0: userEmail || 'your email' }) }}</p>
       </div>
 
       <form @submit.prevent="handleVerify" class="verify-form">
@@ -41,15 +41,15 @@
         </div>
 
         <div v-if="verificationSuccess" class="alert alert-success">
-          Email verified successfully! Redirecting...
+          {{ $t('Email verified successfully! Redirecting...') }}
         </div>
 
         <div class="verification-info">
           <p v-if="timeLeft > 0">
-            Code expires in {{ formattedTime }}
+            {{ $t('Code expires in {v0}', { v0: formattedTime }) }}
           </p>
           <p v-else class="expired">
-            Code has expired
+            {{ $t('Code has expired') }}
           </p>
         </div>
 
@@ -59,8 +59,8 @@
             class="btn btn-primary"
             :disabled="authStore.loading || !isOtpComplete || timeLeft <= 0"
           >
-            <span v-if="authStore.loading">Verifying...</span>
-            <span v-else>Verify Email</span>
+            <span v-if="authStore.loading">{{ $t('Verifying...') }}</span>
+            <span v-else>{{ $t('Verify Email') }}</span>
           </button>
 
           <button
@@ -75,9 +75,9 @@
 
         <div class="alternative">
           <p>
-            Didn't receive the code?
+            {{ $t('Didn\'t receive the code?') }}
             <button type="button" class="link" @click="changeEmail">
-              Change email address
+              {{ $t('Change email address') }}
             </button>
           </p>
         </div>

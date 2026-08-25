@@ -186,11 +186,11 @@
               rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22),
               rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.22));
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
-  border-bottom-right-radius: 6px;
+  border-end-end-radius: 6px;
 }
 
 .ai-chat-container .message.assistant-message .message-content {
-  border-bottom-left-radius: 6px;
+  border-end-start-radius: 6px;
 }
 
 .ai-chat-container .message-content:hover {
@@ -237,12 +237,12 @@
 
 .ai-chat-container .markdown-body ul,
 .ai-chat-container .markdown-body ol {
-  padding-left: 1.4em;
+  padding-inline-start: 1.4em;
   margin: 0 0 var(--aic-sp-sm);
 }
 
 .ai-chat-container .markdown-body blockquote {
-  border-left: 3px solid var(--aic-accent-soft);
+  border-inline-start: 3px solid var(--aic-accent-soft);
   padding: var(--aic-sp-xs) var(--aic-sp-md);
   margin: var(--aic-sp-sm) 0;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
@@ -294,7 +294,7 @@
 .ai-chat-container .markdown-body td {
   padding: 0.5em 0.75em;
   border: 1px solid var(--aic-glass-border);
-  text-align: left;
+  text-align: start;
 }
 .ai-chat-container .markdown-body th {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);

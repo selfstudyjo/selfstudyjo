@@ -1,34 +1,34 @@
 <template>
   <div class="tm-page">
-    <h1>📊 My Toastmasters Results</h1>
+    <h1>{{ $t('📊 My Toastmasters Results') }}</h1>
     <div class="tm-filters">
-      <input v-model="filters.topic" placeholder="🔍 Filter by topic…">
+      <input v-model="filters.topic" :placeholder="$t('🔍 Filter by topic…')">
       <select v-model="filters.type">
-        <option value="">All Types</option>
-        <option>Prepared Speech</option><option>Table Topics (Impromptu)</option>
-        <option>Ice Breaker</option><option>Evaluation Speech</option>
-        <option>Inspirational Speech</option><option>Persuasive Speech</option>
+        <option value="">{{ $t('All Types') }}</option>
+        <option>{{ $t('Prepared Speech') }}</option><option>{{ $t('Table Topics (Impromptu)') }}</option>
+        <option>{{ $t('Ice Breaker') }}</option><option>{{ $t('Evaluation Speech') }}</option>
+        <option>{{ $t('Inspirational Speech') }}</option><option>{{ $t('Persuasive Speech') }}</option>
       </select>
       <select v-model="filters.role">
-        <option value="">All Roles</option>
-        <option value="Speaker">Speaker</option>
-        <option value="Toastmaster">Toastmaster</option>
-        <option value="Timer">Timer</option>
-        <option value="Ah-Counter">Ah-Counter</option>
-        <option value="Grammarian">Grammarian</option>
-        <option value="Speech Evaluator">Speech Evaluator</option>
-        <option value="General Evaluator">General Evaluator</option>
+        <option value="">{{ $t('All Roles') }}</option>
+        <option value="Speaker">{{ $t('Speaker') }}</option>
+        <option value="Toastmaster">{{ $t('Toastmaster') }}</option>
+        <option value="Timer">{{ $t('Timer') }}</option>
+        <option value="Ah-Counter">{{ $t('Ah-Counter') }}</option>
+        <option value="Grammarian">{{ $t('Grammarian') }}</option>
+        <option value="Speech Evaluator">{{ $t('Speech Evaluator') }}</option>
+        <option value="General Evaluator">{{ $t('General Evaluator') }}</option>
       </select>
       <select v-model="filters.sort">
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="score">Highest score</option>
+        <option value="newest">{{ $t('Newest first') }}</option>
+        <option value="oldest">{{ $t('Oldest first') }}</option>
+        <option value="score">{{ $t('Highest score') }}</option>
       </select>
     </div>
 
     <div class="tm-table-wrap">
       <table class="tm-table">
-        <thead><tr><th>Date</th><th>Role</th><th>Topic</th><th>Type</th><th>Duration</th><th>Fillers</th><th>Score</th><th></th></tr></thead>
+        <thead><tr><th>{{ $t('Date') }}</th><th>{{ $t('Role') }}</th><th>{{ $t('Topic') }}</th><th>{{ $t('Type') }}</th><th>{{ $t('Duration') }}</th><th>{{ $t('Fillers') }}</th><th>{{ $t('Score') }}</th><th></th></tr></thead>
         <tbody>
           <tr v-for="s in filtered" :key="s.id">
             <td>{{ formatDate(s.created_at) }}</td>
@@ -38,7 +38,7 @@
             <td>{{ Math.floor(s.duration_seconds/60) }}m {{ s.duration_seconds%60 }}s</td>
             <td>{{ s.total_fillers }}</td>
             <td><span :class="['tm-score-pill', scoreClass(s.overall_score)]">{{ s.overall_score }}</span></td>
-            <td><button @click="viewReport(s)" class="tm-btn-sm tm-btn-primary">📄 View</button></td>
+            <td><button @click="viewReport(s)" class="tm-btn-sm tm-btn-primary">{{ $t('📄 View') }}</button></td>
           </tr>
           <tr v-if="filtered.length === 0"><td colspan="8" style="text-align:center;padding:2rem;color:#64748b">{{ loading ? 'Loading...' : 'No sessions yet.' }}</td></tr>
         </tbody>
@@ -49,7 +49,7 @@
     <div v-if="modalSession" class="tm-modal" @click.self="modalSession = null">
       <div class="tm-modal-content">
         <div class="tm-report-header">
-          <h2>Report: {{ modalSession.topic }}</h2>
+          <h2>{{ $t('Report: {v0}', { v0: modalSession.topic }) }}</h2>
           <button @click="modalSession = null" class="tm-modal-close">✕</button>
         </div>
         <div class="tm-report-user-banner">
@@ -60,29 +60,29 @@
           </div>
         </div>
         <div class="tm-report-grid">
-          <div><strong>Role:</strong> <span :style="roleBadgeStyle(modalSession.user_role || 'Speaker')">{{ modalSession.user_role || 'Speaker' }}</span></div>
-          <div><strong>Type:</strong> {{ modalSession.speech_type || '—' }}</div>
-          <div><strong>Target:</strong> {{ modalSession.min_time }}–{{ modalSession.max_time }} min</div>
-          <div><strong>Duration:</strong> {{ Math.floor(modalSession.duration_seconds/60) }}m {{ modalSession.duration_seconds%60 }}s</div>
-          <div><strong>Fillers:</strong> {{ modalSession.total_fillers }}</div>
-          <div><strong>Score:</strong> {{ modalSession.overall_score }}/100</div>
+          <div><strong>{{ $t('Role:') }}</strong> <span :style="roleBadgeStyle(modalSession.user_role || 'Speaker')">{{ modalSession.user_role || 'Speaker' }}</span></div>
+          <div><strong>{{ $t('Type:') }}</strong> {{ modalSession.speech_type || '—' }}</div>
+          <div><strong>{{ $t('Target:') }}</strong> {{ $t('{v0}–{v1} min', { v0: modalSession.min_time, v1: modalSession.max_time }) }}</div>
+          <div><strong>{{ $t('Duration:') }}</strong> {{ Math.floor(modalSession.duration_seconds/60) }}m {{ modalSession.duration_seconds%60 }}s</div>
+          <div><strong>{{ $t('Fillers:') }}</strong> {{ modalSession.total_fillers }}</div>
+          <div><strong>{{ $t('Score:') }}</strong> {{ modalSession.overall_score }}/100</div>
         </div>
-        <div class="tm-report-section"><h3>📝 Topic</h3><p>{{ modalSession.topic }}</p></div>
-        <div class="tm-report-section"><h3>📚 Word of the Day</h3><p>{{ modalSession.word_of_the_day || '—' }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('📝 Topic') }}</h3><p>{{ modalSession.topic }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('📚 Word of the Day') }}</h3><p>{{ modalSession.word_of_the_day || '—' }}</p></div>
 
         <!-- ROLE EVALUATION (for non-Speaker roles) -->
         <div class="tm-report-section" v-if="modalSession.role_evaluation_report && (modalSession.user_role || 'Speaker') !== 'Speaker'">
-          <h3>🎭 {{ modalSession.user_role }} Role Evaluation</h3>
+          <h3>{{ $t('🎭 {v0} Role Evaluation', { v0: modalSession.user_role }) }}</h3>
           <p>{{ modalSession.role_evaluation_report }}</p>
         </div>
 
-        <div class="tm-report-section"><h3>⏱️ Timer Report</h3><p>{{ modalSession.timer_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('⏱️ Timer Report') }}</h3><p>{{ modalSession.timer_report || '—' }}</p></div>
 
         <div class="tm-report-section">
-          <h3>🗣️ Ah-Counter Report</h3>
+          <h3>{{ $t('🗣️ Ah-Counter Report') }}</h3>
           <p>{{ modalSession.ah_counter_report || '—' }}</p>
           <div v-if="modalFillerEntries.length > 0" class="tm-filler-section">
-            <div class="tm-filler-section-title">📊 Filler Word Breakdown ({{ modalSession.total_fillers }} total):</div>
+            <div class="tm-filler-section-title">{{ $t('📊 Filler Word Breakdown ({v0} total):', { v0: modalSession.total_fillers }) }}</div>
             <div class="tm-filler-chips">
               <span v-for="[word, count] in modalFillerEntries" :key="word" class="tm-filler-chip">
                 <span class="tm-filler-word">"{{ word }}"</span>
@@ -91,33 +91,33 @@
             </div>
           </div>
           <div v-else class="tm-filler-empty">
-            ✨ Zero filler words — outstanding clarity!
+            {{ $t('✨ Zero filler words — outstanding clarity!') }}
           </div>
         </div>
 
-        <div class="tm-report-section"><h3>✍️ Grammarian Report</h3><p>{{ modalSession.grammarian_report || '—' }}</p></div>
-        <div class="tm-report-section"><h3>📋 Speech Evaluator Report</h3><p>{{ modalSession.speech_evaluator_report || '—' }}</p></div>
-        <div class="tm-report-section"><h3>🎯 General Evaluator Report</h3><p>{{ modalSession.general_evaluator_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('✍️ Grammarian Report') }}</h3><p>{{ modalSession.grammarian_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('📋 Speech Evaluator Report') }}</h3><p>{{ modalSession.speech_evaluator_report || '—' }}</p></div>
+        <div class="tm-report-section"><h3>{{ $t('🎯 General Evaluator Report') }}</h3><p>{{ modalSession.general_evaluator_report || '—' }}</p></div>
         <div class="tm-report-section">
-          <h3>📹 Body Language Analysis</h3>
+          <h3>{{ $t('📹 Body Language Analysis') }}</h3>
           <div class="tm-bl-grid">
-            <div><strong>Engagement:</strong> {{ modalSession.body_language_data?.engagement_score || 0 }}/100</div>
-            <div><strong>Face Visible:</strong> {{ modalSession.body_language_data?.face_visibility_percent || 0 }}%</div>
-            <div><strong>Looking Forward:</strong> {{ modalSession.body_language_data?.looking_forward_percent || 0 }}%</div>
-            <div><strong>Centered:</strong> {{ modalSession.body_language_data?.centered_percent || 0 }}%</div>
+            <div><strong>{{ $t('Engagement:') }}</strong> {{ modalSession.body_language_data?.engagement_score || 0 }}/100</div>
+            <div><strong>{{ $t('Face Visible:') }}</strong> {{ modalSession.body_language_data?.face_visibility_percent || 0 }}%</div>
+            <div><strong>{{ $t('Looking Forward:') }}</strong> {{ modalSession.body_language_data?.looking_forward_percent || 0 }}%</div>
+            <div><strong>{{ $t('Centered:') }}</strong> {{ modalSession.body_language_data?.centered_percent || 0 }}%</div>
           </div>
           <p style="margin-top:.75rem">{{ modalSession.body_language_advice || '—' }}</p>
         </div>
         <div class="tm-report-section" v-if="modalSession.sample_speech_text">
-          <h3>🎤 Sample Speech</h3>
+          <h3>{{ $t('🎤 Sample Speech') }}</h3>
           <div class="tm-transcript-block">{{ modalSession.sample_speech_text }}</div>
         </div>
         <div class="tm-report-section">
-          <h3>📜 Your Full Transcript</h3>
+          <h3>{{ $t('📜 Your Full Transcript') }}</h3>
           <div class="tm-transcript-block">{{ modalSession.transcript || '(no transcript)' }}</div>
         </div>
         <div style="padding:1.25rem 2rem;display:flex;gap:1rem;justify-content:flex-end">
-          <button @click="modalSession = null" class="tm-btn-secondary">Close</button>
+          <button @click="modalSession = null" class="tm-btn-secondary">{{ $t('Close') }}</button>
         </div>
       </div>
     </div>

@@ -18,7 +18,7 @@
     >
       <span class="tp-trigger-swatch" :style="swatchStyle(themeStore.theme)" aria-hidden="true"></span>
       <span v-if="!collapsed" class="tp-trigger-text">
-        <span class="tp-trigger-label">Theme</span>
+        <span class="tp-trigger-label">{{ $t('Theme') }}</span>
         <span class="tp-trigger-name">{{ themeStore.theme.name }}</span>
       </span>
     </button>
@@ -36,13 +36,12 @@
         <div class="tp-panel" ref="panel" tabindex="-1" @keydown="onKeydown">
           <header class="tp-head">
             <div>
-              <h2 id="tp-title" class="tp-title">Choose your galaxy</h2>
+              <h2 id="tp-title" class="tp-title">{{ $t('Choose your galaxy') }}</h2>
               <p class="tp-sub">
-                Ten palettes. Text colour is worked out from whatever it sits on, so
-                every one stays readable.
+                {{ $t('Ten palettes. Text colour is worked out from whatever it sits on, so every one stays readable.') }}
               </p>
             </div>
-            <button class="tp-close" type="button" aria-label="Close" @click="open = false">
+            <button class="tp-close" type="button" :aria-label="$t('Close')" @click="open = false">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
@@ -54,7 +53,7 @@
             no obvious "make it light" among them is the one thing a list like
             this gets wrong, and it is the switch most people look for first.
           -->
-          <div class="tp-modes" role="group" aria-label="Appearance">
+          <div class="tp-modes" role="group" :aria-label="$t('Appearance')">
             <button
               v-for="m in (['dark', 'light'] as const)"
               :key="m"
@@ -403,7 +402,7 @@ watch(open, async isOpen => {
   background: var(--c-surface);
   color: var(--c-text);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 

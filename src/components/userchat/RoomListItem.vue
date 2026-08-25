@@ -30,7 +30,7 @@
     </span>
 
     <span class="room-tail">
-      <span v-if="room.muted" class="muted-icon" title="Muted" aria-label="Muted">
+      <span v-if="room.muted" class="muted-icon" :title="$t('Muted')" :aria-label="$t('Muted')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.5-1.9L20.1 5.7 17.8 8l-2.3-2.3-1.4 1.4L16.4 9.4l-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>
       </span>
       <span v-if="unreadCount > 0" class="room-badge">
@@ -107,7 +107,7 @@ const previewText = computed(() => {
   border-radius: var(--uc-r-md);
   background: none;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   font: inherit;
   color: var(--uc-text);
   transition: background var(--uc-t-fast), border-color var(--uc-t-fast);

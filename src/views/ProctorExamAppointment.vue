@@ -2,16 +2,16 @@
     <div class="proctor-appointment">
         <div class="appointment-header">
             <button class="back-btn" @click="goBack">
-                ← Back to Dashboard
+                {{ $t('← Back to Dashboard') }}
             </button>
-            <h1>Exam Appointment Details</h1>
+            <h1>{{ $t('Exam Appointment Details') }}</h1>
         </div>
 
         <div class="appointment-content">
             <!-- Loading State -->
             <div v-if="loading" class="loading-state">
                 <div class="loading-spinner"></div>
-                <p>Loading appointment details...</p>
+                <p>{{ $t('Loading appointment details...') }}</p>
             </div>
 
             <!-- Error State -->
@@ -19,7 +19,7 @@
                 <div class="error-icon">❌</div>
                 <p>{{ error }}</p>
                 <button @click="loadAppointmentDetails" class="retry-btn">
-                    Try Again
+                    {{ $t('Try Again') }}
                 </button>
             </div>
 
@@ -49,9 +49,9 @@
                         <span class="status-badge" :class="getStatusClass(appointment.appointment_status)">
                             {{ appointment.appointment_status }}
                         </span>
-                        <span v-if="appointment.is_entered" class="flag flag--on">In the room</span>
+                        <span v-if="appointment.is_entered" class="flag flag--on">{{ $t('In the room') }}</span>
                         <span v-if="!appointment.room_url_1 && !appointment.room_url_2"
-                              class="flag flag--warn">No room link set</span>
+                              class="flag flag--warn">{{ $t('No room link set') }}</span>
                     </div>
 
                     <div class="command-bar__action">
@@ -67,16 +67,16 @@
                             :disabled="updating"
                             @click="toggleCanStart"
                         >
-                            <span v-if="updating">Saving…</span>
-                            <span v-else-if="canStart">Revoke permission to start</span>
-                            <span v-else>Let the candidate start</span>
+                            <span v-if="updating">{{ $t('Saving…') }}</span>
+                            <span v-else-if="canStart">{{ $t('Revoke permission to start') }}</span>
+                            <span v-else>{{ $t('Let the candidate start') }}</span>
                         </button>
                         <p class="let-in-help">
                             <span v-if="canStart">
-                                They can start now. Revoking is allowed and takes effect immediately.
+                                {{ $t('They can start now. Revoking is allowed and takes effect immediately.') }}
                             </span>
                             <span v-else>
-                                They cannot start until you allow it. Set a room link first.
+                                {{ $t('They cannot start until you allow it. Set a room link first.') }}
                             </span>
                         </p>
                     </div>
@@ -86,10 +86,10 @@
                     <!-- Left Column: Appointment Info -->
                     <div class="details-column">
                         <div class="details-section">
-                            <h2>Appointment Information</h2>
+                            <h2>{{ $t('Appointment Information') }}</h2>
                             <div class="info-card">
                                 <div class="info-row">
-                                    <span class="info-label">Status:</span>
+                                    <span class="info-label">{{ $t('Status:') }}</span>
                                     <span class="info-value">
                                         <span class="status-badge" :class="getStatusClass(appointment.appointment_status)">
                                             {{ appointment.appointment_status }}
@@ -97,23 +97,23 @@
                                     </span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Appointment ID:</span>
+                                    <span class="info-label">{{ $t('Appointment ID:') }}</span>
                                     <span class="info-value code">{{ appointment.external_id }}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Exam:</span>
+                                    <span class="info-label">{{ $t('Exam:') }}</span>
                                     <span class="info-value">{{ appointment.exam_title || appointment.exam }}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Appointment Date:</span>
+                                    <span class="info-label">{{ $t('Appointment Date:') }}</span>
                                     <span class="info-value">{{ formatDateTime(appointment.appointment_date) }}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Created:</span>
+                                    <span class="info-label">{{ $t('Created:') }}</span>
                                     <span class="info-value">{{ formatDateTime(appointment.created_at) }}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Proctor ID:</span>
+                                    <span class="info-label">{{ $t('Proctor ID:') }}</span>
                                     <span class="info-value">{{ appointment.proctor_id || 'Not assigned' }}</span>
                                 </div>
                             </div>
@@ -122,22 +122,22 @@
                         <!-- Exam Rooms - UPDATED FOR EDITING -->
                         <div class="details-section">
                             <div class="section-header">
-                                <h2>Exam Rooms</h2>
+                                <h2>{{ $t('Exam Rooms') }}</h2>
                                 <button
                                     v-if="isEditingRooms"
                                     class="save-rooms-btn"
                                     @click="saveRoomUrls"
                                     :disabled="savingRooms"
                                 >
-                                    <span v-if="savingRooms">Saving...</span>
-                                    <span v-else>Save Rooms</span>
+                                    <span v-if="savingRooms">{{ $t('Saving...') }}</span>
+                                    <span v-else>{{ $t('Save Rooms') }}</span>
                                 </button>
                                 <button
                                     v-else
                                     class="edit-rooms-btn"
                                     @click="startEditingRooms"
                                 >
-                                    Edit Rooms
+                                    {{ $t('Edit Rooms') }}
                                 </button>
                             </div>
 
@@ -146,23 +146,23 @@
                                 <div class="room-card">
                                     <div class="room-header">
                                         <span class="room-icon">🔗</span>
-                                        <h3>Room 1</h3>
-                                        <span v-if="appointment.room_url_1" class="room-status">Active</span>
-                                        <span v-else class="room-status inactive">Not Set</span>
+                                        <h3>{{ $t('Room 1') }}</h3>
+                                        <span v-if="appointment.room_url_1" class="room-status">{{ $t('Active') }}</span>
+                                        <span v-else class="room-status inactive">{{ $t('Not Set') }}</span>
                                     </div>
 
                                     <div v-if="isEditingRooms" class="room-edit">
                                         <div class="input-group">
-                                            <label for="room1">Room 1 URL:</label>
+                                            <label for="room1">{{ $t('Room 1 URL:') }}</label>
                                             <input
                                                 type="url"
                                                 id="room1"
                                                 v-model="roomUrl1"
-                                                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                                                :placeholder="$t('https://meet.google.com/xxx-xxxx-xxx')"
                                                 class="url-input"
                                             />
                                             <div class="input-help">
-                                                Enter the video conference URL (Zoom, Google Meet, etc.)
+                                                {{ $t('Enter the video conference URL (Zoom, Google Meet, etc.)') }}
                                             </div>
                                         </div>
                                         <div class="room-actions">
@@ -172,14 +172,14 @@
                                                 @click="clearRoomUrl(1)"
                                                 :disabled="savingRooms"
                                             >
-                                                Clear
+                                                {{ $t('Clear') }}
                                             </button>
                                             <button
                                                 class="test-btn"
                                                 @click="testRoomUrl(roomUrl1, 1)"
                                                 :disabled="!roomUrl1 || savingRooms"
                                             >
-                                                Test Link
+                                                {{ $t('Test Link') }}
                                             </button>
                                         </div>
                                     </div>
@@ -193,7 +193,7 @@
                                             {{ formatRoomUrl(appointment.room_url_1) }}
                                         </a>
                                         <div v-else class="no-url">
-                                            No room URL set
+                                            {{ $t('No room URL set') }}
                                         </div>
                                         <div class="view-actions">
                                             <button
@@ -201,14 +201,14 @@
                                                 class="copy-btn"
                                                 @click="copyToClipboard(appointment.room_url_1)"
                                             >
-                                                Copy
+                                                {{ $t('Copy') }}
                                             </button>
                                             <button
                                                 v-if="appointment.room_url_1"
                                                 class="test-btn"
                                                 @click="testRoomUrl(appointment.room_url_1, 1)"
                                             >
-                                                Test
+                                                {{ $t('Test') }}
                                             </button>
                                         </div>
                                     </div>
@@ -218,23 +218,23 @@
                                 <div class="room-card">
                                     <div class="room-header">
                                         <span class="room-icon">🔗</span>
-                                        <h3>Room 2</h3>
-                                        <span v-if="appointment.room_url_2" class="room-status">Active</span>
-                                        <span v-else class="room-status inactive">Not Set</span>
+                                        <h3>{{ $t('Room 2') }}</h3>
+                                        <span v-if="appointment.room_url_2" class="room-status">{{ $t('Active') }}</span>
+                                        <span v-else class="room-status inactive">{{ $t('Not Set') }}</span>
                                     </div>
 
                                     <div v-if="isEditingRooms" class="room-edit">
                                         <div class="input-group">
-                                            <label for="room2">Room 2 URL:</label>
+                                            <label for="room2">{{ $t('Room 2 URL:') }}</label>
                                             <input
                                                 type="url"
                                                 id="room2"
                                                 v-model="roomUrl2"
-                                                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                                                :placeholder="$t('https://meet.google.com/xxx-xxxx-xxx')"
                                                 class="url-input"
                                             />
                                             <div class="input-help">
-                                                Optional: Backup room or monitoring room
+                                                {{ $t('Optional: Backup room or monitoring room') }}
                                             </div>
                                         </div>
                                         <div class="room-actions">
@@ -244,14 +244,14 @@
                                                 @click="clearRoomUrl(2)"
                                                 :disabled="savingRooms"
                                             >
-                                                Clear
+                                                {{ $t('Clear') }}
                                             </button>
                                             <button
                                                 class="test-btn"
                                                 @click="testRoomUrl(roomUrl2, 2)"
                                                 :disabled="!roomUrl2 || savingRooms"
                                             >
-                                                Test Link
+                                                {{ $t('Test Link') }}
                                             </button>
                                         </div>
                                     </div>
@@ -265,7 +265,7 @@
                                             {{ formatRoomUrl(appointment.room_url_2) }}
                                         </a>
                                         <div v-else class="no-url">
-                                            No room URL set
+                                            {{ $t('No room URL set') }}
                                         </div>
                                         <div class="view-actions">
                                             <button
@@ -273,14 +273,14 @@
                                                 class="copy-btn"
                                                 @click="copyToClipboard(appointment.room_url_2)"
                                             >
-                                                Copy
+                                                {{ $t('Copy') }}
                                             </button>
                                             <button
                                                 v-if="appointment.room_url_2"
                                                 class="test-btn"
                                                 @click="testRoomUrl(appointment.room_url_2, 2)"
                                             >
-                                                Test
+                                                {{ $t('Test') }}
                                             </button>
                                         </div>
                                     </div>
@@ -288,21 +288,21 @@
 
                                 <div v-if="!appointment.room_url_1 && !appointment.room_url_2 && !isEditingRooms" class="no-rooms">
                                     <span class="no-rooms-icon">🚫</span>
-                                    <p>No rooms assigned yet</p>
+                                    <p>{{ $t('No rooms assigned yet') }}</p>
                                     <button class="add-room-btn" @click="startEditingRooms">
-                                        Add Rooms
+                                        {{ $t('Add Rooms') }}
                                     </button>
                                 </div>
                             </div>
 
                             <div v-if="isEditingRooms" class="rooms-tips">
-                                <h4>Tips for Room URLs:</h4>
+                                <h4>{{ $t('Tips for Room URLs:') }}</h4>
                                 <ul>
-                                    <li>Use a secure video conferencing service (Google Meet, Zoom, etc.)</li>
-                                    <li>Room 1 is the main exam room</li>
-                                    <li>Room 2 is optional for backup or monitoring</li>
-                                    <li>Make sure the student has access to the room</li>
-                                    <li>Test the links before saving</li>
+                                    <li>{{ $t('Use a secure video conferencing service (Google Meet, Zoom, etc.)') }}</li>
+                                    <li>{{ $t('Room 1 is the main exam room') }}</li>
+                                    <li>{{ $t('Room 2 is optional for backup or monitoring') }}</li>
+                                    <li>{{ $t('Make sure the student has access to the room') }}</li>
+                                    <li>{{ $t('Test the links before saving') }}</li>
                                 </ul>
                             </div>
                         </div>
@@ -312,7 +312,7 @@
                     <div class="details-column">
                         <!-- User Information -->
                         <div class="details-section">
-                            <h2>Student Information</h2>
+                            <h2>{{ $t('Student Information') }}</h2>
                             <div class="user-card">
                                 <div class="user-header">
                                     <div class="user-avatar">
@@ -320,25 +320,25 @@
                                     </div>
                                     <div class="user-info">
                                         <h3>{{ appointment.username }}</h3>
-                                        <p class="user-id">ID: {{ appointment.user_id }}</p>
+                                        <p class="user-id">{{ $t('ID: {v0}', { v0: appointment.user_id }) }}</p>
                                     </div>
                                 </div>
                                 <div class="user-details">
                                     <div class="detail-item">
                                         <span class="detail-icon">👤</span>
-                                        <span class="detail-text">Username: {{ appointment.username }}</span>
+                                        <span class="detail-text">{{ $t('Username: {v0}', { v0: appointment.username }) }}</span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="detail-icon">🆔</span>
-                                        <span class="detail-text">User ID: {{ appointment.user_id }}</span>
+                                        <span class="detail-text">{{ $t('User ID: {v0}', { v0: appointment.user_id }) }}</span>
                                     </div>
                                     <div class="detail-item" v-if="appointment.is_entered">
                                         <span class="detail-icon">⏱️</span>
-                                        <span class="detail-text">Entered: {{ formatDateTime(appointment.entered_datetime || '') }}</span>
+                                        <span class="detail-text">{{ $t('Entered: {v0}', { v0: formatDateTime(appointment.entered_datetime || '') }) }}</span>
                                     </div>
                                     <div class="detail-item" v-if="appointment.exam_time">
                                         <span class="detail-icon">⏰</span>
-                                        <span class="detail-text">Exam Time: {{ appointment.exam_time }} minutes</span>
+                                        <span class="detail-text">{{ $t('Exam Time: {v0} minutes', { v0: appointment.exam_time }) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -346,10 +346,10 @@
 
                         <!-- Proctor Controls -->
                         <div class="details-section">
-                            <h2>Proctor Controls</h2>
+                            <h2>{{ $t('Proctor Controls') }}</h2>
                             <div class="controls-card">
                                 <div class="control-group">
-                                    <h3>Exam Control</h3>
+                                    <h3>{{ $t('Exam Control') }}</h3>
                                     <div class="control-item">
                                         <label class="control-label">
                                             <input
@@ -358,26 +358,25 @@
                                                 @change="updateCanStart"
                                                 :disabled="updating"
                                             />
-                                            <span>Allow Student to Start Exam</span>
+                                            <span>{{ $t('Allow Student to Start Exam') }}</span>
                                         </label>
                                         <p class="control-help">
-                                            When checked, the student will be able to start the exam.
-                                            Make sure rooms are set and you're ready to proctor.
+                                            {{ $t('When checked, the student will be able to start the exam. Make sure rooms are set and you\'re ready to proctor.') }}
                                         </p>
                                     </div>
 
                                     <div class="control-item" v-if="appointment.is_entered">
                                         <label class="control-label">
-                                            <span class="entered-status">✅ Student has entered the exam</span>
+                                            <span class="entered-status">{{ $t('✅ Student has entered the exam') }}</span>
                                         </label>
                                         <p class="control-help">
-                                            Student entered at: {{ formatDateTime(appointment.entered_datetime || '') }}
+                                            {{ $t('Student entered at: {v0}', { v0: formatDateTime(appointment.entered_datetime || '') }) }}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="control-group">
-                                    <h3>Status Management</h3>
+                                    <h3>{{ $t('Status Management') }}</h3>
                                     <div class="status-buttons">
                                         <button
                                             v-for="status in availableStatuses"
@@ -394,7 +393,7 @@
                                         </button>
                                     </div>
                                     <p class="status-help">
-                                        Current: <strong>{{ appointment.appointment_status }}</strong>
+                                        {{ $t('Current:') }} <strong>{{ appointment.appointment_status }}</strong>
                                     </p>
                                 </div>
 
@@ -404,15 +403,15 @@
                                         @click="saveAllChanges"
                                         :disabled="!hasChanges || updating"
                                     >
-                                        <span v-if="updating">Saving...</span>
-                                        <span v-else>Save All Changes</span>
+                                        <span v-if="updating">{{ $t('Saving...') }}</span>
+                                        <span v-else>{{ $t('Save All Changes') }}</span>
                                     </button>
                                     <button
                                         class="refresh-btn"
                                         @click="loadAppointmentDetails"
                                         :disabled="updating"
                                     >
-                                        Refresh
+                                        {{ $t('Refresh') }}
                                     </button>
                                 </div>
                             </div>

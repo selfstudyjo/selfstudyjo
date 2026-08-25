@@ -3,18 +3,18 @@
     <!-- ═══ Header ═══ -->
     <header class="cve-head">
       <div class="cve-head-left">
-        <button class="icon-btn" title="Back to my CVs" @click="goBack">
+        <button class="icon-btn" :title="$t('Back to my CVs')" @click="goBack">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
         </button>
         <div class="cve-title-wrap">
-          <input v-model="cv.title" class="cve-title" placeholder="CV title" @input="markDirty" />
+          <input v-model="cv.title" class="cve-title" :placeholder="$t('CV title')" @input="markDirty" />
           <p class="cve-sub">
             <span class="meter" :title="`${completeness}% complete`">
               <span class="meter-fill" :style="{ width: completeness + '%' }"></span>
             </span>
-            {{ completeness }}% complete · {{ wordCount }} words
+            {{ $t('{v0}% complete · {v1} words', { v0: completeness, v1: wordCount }) }}
             <span v-if="cv.job_target?.match_report?.score != null" class="pill">
-              {{ cv.job_target.match_report.score }}% job match
+              {{ $t('{v0}% job match', { v0: cv.job_target.match_report.score }) }}
             </span>
             <span class="save-state" :class="saveState">{{ saveLabel }}</span>
           </p>
@@ -52,20 +52,20 @@
       <section v-show="activeTab === 'content'" class="cve-panel">
         <div class="card">
           <div class="card-head">
-            <h3>Personal details</h3>
+            <h3>{{ $t('Personal details') }}</h3>
           </div>
           <div class="grid-2">
-            <label class="field"><span>Full name</span>
-              <input v-model="cv.personal.full_name" @input="markDirty" placeholder="Layla Haddad" /></label>
-            <label class="field"><span>Professional title</span>
-              <input v-model="cv.personal.headline" @input="markDirty" placeholder="Senior Backend Engineer" /></label>
-            <label class="field"><span>Email</span>
+            <label class="field"><span>{{ $t('Full name') }}</span>
+              <input v-model="cv.personal.full_name" @input="markDirty" :placeholder="$t('Layla Haddad')" /></label>
+            <label class="field"><span>{{ $t('Professional title') }}</span>
+              <input v-model="cv.personal.headline" @input="markDirty" :placeholder="$t('Senior Backend Engineer')" /></label>
+            <label class="field"><span>{{ $t('Email') }}</span>
               <input v-model="cv.personal.email" @input="markDirty" type="email" /></label>
-            <label class="field"><span>Phone</span>
+            <label class="field"><span>{{ $t('Phone') }}</span>
               <input v-model="cv.personal.phone" @input="markDirty" /></label>
-            <label class="field"><span>Location</span>
-              <input v-model="cv.personal.location" @input="markDirty" placeholder="Amman, Jordan" /></label>
-            <label class="field"><span>Website</span>
+            <label class="field"><span>{{ $t('Location') }}</span>
+              <input v-model="cv.personal.location" @input="markDirty" :placeholder="$t('Amman, Jordan')" /></label>
+            <label class="field"><span>{{ $t('Website') }}</span>
               <input v-model="cv.personal.website" @input="markDirty" /></label>
             <label class="field"><span>LinkedIn</span>
               <input v-model="cv.personal.linkedin" @input="markDirty" /></label>
@@ -76,7 +76,7 @@
 
         <div class="card">
           <div class="card-head">
-            <h3>Professional summary</h3>
+            <h3>{{ $t('Professional summary') }}</h3>
             <button class="btn btn-ai btn-sm" :disabled="busySection === 'summary' || !aiReady"
                     @click="rewrite('summary')">
               {{ busySection === 'summary' ? 'Rewriting…' : '✨ Improve with AI' }}
@@ -84,20 +84,19 @@
           </div>
           <textarea v-model="cv.personal.summary" rows="5" @input="markDirty"
                     placeholder="Three or four sentences: your seniority, your specialism, and the two things you are best at."></textarea>
-          <p class="hint">{{ (cv.personal.summary || '').length }} characters. Recruiters read this
-             first and often only this.</p>
+          <p class="hint">{{ $t('{v0} characters. Recruiters read this first and often only this.', { v0: (cv.personal.summary || '').length }) }}</p>
         </div>
 
         <!-- Experience -->
         <div class="card">
           <div class="card-head">
-            <h3>Experience <span class="badge">{{ cv.experience.length }}</span></h3>
+            <h3>{{ $t('Experience') }} <span class="badge">{{ cv.experience.length }}</span></h3>
             <div class="card-head-actions">
               <button class="btn btn-ai btn-sm" :disabled="busySection === 'experience' || !aiReady || !cv.experience.length"
                       @click="rewrite('experience')">
                 {{ busySection === 'experience' ? 'Rewriting…' : '✨ Improve all bullets' }}
               </button>
-              <button class="btn btn-ghost btn-sm" @click="addEntry('experience')">+ Add role</button>
+              <button class="btn btn-ghost btn-sm" @click="addEntry('experience')">{{ $t('+ Add role') }}</button>
             </div>
           </div>
 
@@ -105,21 +104,21 @@
             <div class="entry-head">
               <span class="entry-index">{{ i + 1 }}</span>
               <div class="entry-move">
-                <button class="icon-btn sm" :disabled="i === 0" title="Move up" @click="move('experience', i, -1)">↑</button>
-                <button class="icon-btn sm" :disabled="i === cv.experience.length - 1" title="Move down" @click="move('experience', i, 1)">↓</button>
-                <button class="icon-btn sm danger" title="Remove" @click="removeEntry('experience', i)">×</button>
+                <button class="icon-btn sm" :disabled="i === 0" :title="$t('Move up')" @click="move('experience', i, -1)">↑</button>
+                <button class="icon-btn sm" :disabled="i === cv.experience.length - 1" :title="$t('Move down')" @click="move('experience', i, 1)">↓</button>
+                <button class="icon-btn sm danger" :title="$t('Remove')" @click="removeEntry('experience', i)">×</button>
               </div>
             </div>
             <div class="grid-2">
-              <label class="field"><span>Job title</span>
+              <label class="field"><span>{{ $t('Job title') }}</span>
                 <input v-model="entry.role" @input="markDirty" /></label>
-              <label class="field"><span>Company</span>
+              <label class="field"><span>{{ $t('Company') }}</span>
                 <input v-model="entry.company" @input="markDirty" /></label>
-              <label class="field"><span>Location</span>
+              <label class="field"><span>{{ $t('Location') }}</span>
                 <input v-model="entry.location" @input="markDirty" /></label>
-              <label class="field"><span>Dates</span>
+              <label class="field"><span>{{ $t('Dates') }}</span>
                 <div class="date-row">
-                  <input v-model="entry.start" @input="markDirty" placeholder="Mar 2021" />
+                  <input v-model="entry.start" @input="markDirty" :placeholder="$t('Mar 2021')" />
                   <input v-model="entry.end" @input="markDirty" :disabled="entry.current"
                          :placeholder="entry.current ? 'Present' : 'Feb 2024'" />
                 </div>
@@ -127,24 +126,23 @@
             </div>
             <label class="check">
               <input type="checkbox" v-model="entry.current" @change="markDirty" />
-              I still work here
+              {{ $t('I still work here') }}
             </label>
-            <label class="field"><span>What you achieved — one per line</span>
+            <label class="field"><span>{{ $t('What you achieved — one per line') }}</span>
               <textarea :value="linesOf(entry.bullets)" rows="4" @input="setLines(entry, 'bullets', $event)"
                         placeholder="Led migration of the payments monolith to 11 services, cutting p95 latency from 820ms to 310ms"></textarea>
             </label>
-            <label class="field"><span>Tools and technologies — comma separated</span>
+            <label class="field"><span>{{ $t('Tools and technologies — comma separated') }}</span>
               <input :value="(entry.tech || []).join(', ')" @input="setList(entry, 'tech', $event)" /></label>
           </div>
-          <p v-if="!cv.experience.length" class="empty-note">No roles yet. Add one, or import a CV
-             and the AI fills this in for you.</p>
+          <p v-if="!cv.experience.length" class="empty-note">{{ $t('No roles yet. Add one, or import a CV and the AI fills this in for you.') }}</p>
         </div>
 
         <!-- Education -->
         <div class="card">
           <div class="card-head">
-            <h3>Education <span class="badge">{{ cv.education.length }}</span></h3>
-            <button class="btn btn-ghost btn-sm" @click="addEntry('education')">+ Add</button>
+            <h3>{{ $t('Education') }} <span class="badge">{{ cv.education.length }}</span></h3>
+            <button class="btn btn-ghost btn-sm" @click="addEntry('education')">{{ $t('+ Add') }}</button>
           </div>
           <div v-for="(entry, i) in cv.education" :key="entry.id || i" class="entry">
             <div class="entry-head">
@@ -156,17 +154,17 @@
               </div>
             </div>
             <div class="grid-2">
-              <label class="field"><span>Qualification</span>
+              <label class="field"><span>{{ $t('Qualification') }}</span>
                 <input v-model="entry.degree" @input="markDirty" placeholder="BSc" /></label>
-              <label class="field"><span>Field of study</span>
-                <input v-model="entry.field" @input="markDirty" placeholder="Computer Science" /></label>
-              <label class="field"><span>Institution</span>
+              <label class="field"><span>{{ $t('Field of study') }}</span>
+                <input v-model="entry.field" @input="markDirty" :placeholder="$t('Computer Science')" /></label>
+              <label class="field"><span>{{ $t('Institution') }}</span>
                 <input v-model="entry.institution" @input="markDirty" /></label>
-              <label class="field"><span>Grade</span>
-                <input v-model="entry.grade" @input="markDirty" placeholder="Very Good / 3.6 GPA" /></label>
-              <label class="field"><span>From</span>
+              <label class="field"><span>{{ $t('Grade') }}</span>
+                <input v-model="entry.grade" @input="markDirty" :placeholder="$t('Very Good / 3.6 GPA')" /></label>
+              <label class="field"><span>{{ $t('From') }}</span>
                 <input v-model="entry.start" @input="markDirty" /></label>
-              <label class="field"><span>To</span>
+              <label class="field"><span>{{ $t('To') }}</span>
                 <input v-model="entry.end" @input="markDirty" /></label>
             </div>
           </div>
@@ -175,20 +173,20 @@
         <!-- Skills -->
         <div class="card">
           <div class="card-head">
-            <h3>Skills</h3>
+            <h3>{{ $t('Skills') }}</h3>
             <div class="card-head-actions">
               <button class="btn btn-ai btn-sm" :disabled="busySection === 'skills' || !aiReady || !cv.skills.length"
                       @click="rewrite('skills')">
                 {{ busySection === 'skills' ? 'Grouping…' : '✨ Regroup with AI' }}
               </button>
-              <button class="btn btn-ghost btn-sm" @click="addEntry('skills')">+ Add group</button>
+              <button class="btn btn-ghost btn-sm" @click="addEntry('skills')">{{ $t('+ Add group') }}</button>
             </div>
           </div>
           <div v-for="(group, i) in cv.skills" :key="i" class="entry entry-tight">
             <div class="grid-skill">
-              <label class="field"><span>Group name — optional</span>
-                <input v-model="group.category" @input="markDirty" placeholder="Languages" /></label>
-              <label class="field"><span>Skills — comma separated</span>
+              <label class="field"><span>{{ $t('Group name — optional') }}</span>
+                <input v-model="group.category" @input="markDirty" :placeholder="$t('Languages')" /></label>
+              <label class="field"><span>{{ $t('Skills — comma separated') }}</span>
                 <input :value="(group.items || []).join(', ')" @input="setList(group, 'items', $event)" /></label>
               <button class="icon-btn sm danger" @click="removeEntry('skills', i)">×</button>
             </div>
@@ -198,8 +196,8 @@
         <!-- Projects -->
         <div class="card">
           <div class="card-head">
-            <h3>Projects <span class="badge">{{ cv.projects.length }}</span></h3>
-            <button class="btn btn-ghost btn-sm" @click="addEntry('projects')">+ Add</button>
+            <h3>{{ $t('Projects') }} <span class="badge">{{ cv.projects.length }}</span></h3>
+            <button class="btn btn-ghost btn-sm" @click="addEntry('projects')">{{ $t('+ Add') }}</button>
           </div>
           <div v-for="(entry, i) in cv.projects" :key="entry.id || i" class="entry">
             <div class="entry-head">
@@ -207,14 +205,14 @@
               <button class="icon-btn sm danger" @click="removeEntry('projects', i)">×</button>
             </div>
             <div class="grid-2">
-              <label class="field"><span>Name</span><input v-model="entry.name" @input="markDirty" /></label>
-              <label class="field"><span>Link</span><input v-model="entry.link" @input="markDirty" /></label>
+              <label class="field"><span>{{ $t('Name') }}</span><input v-model="entry.name" @input="markDirty" /></label>
+              <label class="field"><span>{{ $t('Link') }}</span><input v-model="entry.link" @input="markDirty" /></label>
             </div>
-            <label class="field"><span>Description</span>
+            <label class="field"><span>{{ $t('Description') }}</span>
               <textarea v-model="entry.description" rows="2" @input="markDirty"></textarea></label>
-            <label class="field"><span>Highlights — one per line</span>
+            <label class="field"><span>{{ $t('Highlights — one per line') }}</span>
               <textarea :value="linesOf(entry.bullets)" rows="2" @input="setLines(entry, 'bullets', $event)"></textarea></label>
-            <label class="field"><span>Tech — comma separated</span>
+            <label class="field"><span>{{ $t('Tech — comma separated') }}</span>
               <input :value="(entry.tech || []).join(', ')" @input="setList(entry, 'tech', $event)" /></label>
           </div>
         </div>
@@ -223,14 +221,14 @@
         <div class="grid-2 gap">
           <div class="card">
             <div class="card-head">
-              <h3>Certifications <span class="badge">{{ cv.certifications.length }}</span></h3>
-              <button class="btn btn-ghost btn-sm" @click="addEntry('certifications')">+ Add</button>
+              <h3>{{ $t('Certifications') }} <span class="badge">{{ cv.certifications.length }}</span></h3>
+              <button class="btn btn-ghost btn-sm" @click="addEntry('certifications')">{{ $t('+ Add') }}</button>
             </div>
             <div v-for="(entry, i) in cv.certifications" :key="entry.id || i" class="entry entry-tight">
               <div class="grid-3">
-                <label class="field"><span>Name</span><input v-model="entry.name" @input="markDirty" /></label>
-                <label class="field"><span>Issuer</span><input v-model="entry.issuer" @input="markDirty" /></label>
-                <label class="field"><span>Year</span><input v-model="entry.date" @input="markDirty" /></label>
+                <label class="field"><span>{{ $t('Name') }}</span><input v-model="entry.name" @input="markDirty" /></label>
+                <label class="field"><span>{{ $t('Issuer') }}</span><input v-model="entry.issuer" @input="markDirty" /></label>
+                <label class="field"><span>{{ $t('Year') }}</span><input v-model="entry.date" @input="markDirty" /></label>
                 <button class="icon-btn sm danger" @click="removeEntry('certifications', i)">×</button>
               </div>
             </div>
@@ -238,13 +236,13 @@
 
           <div class="card">
             <div class="card-head">
-              <h3>Languages <span class="badge">{{ cv.languages.length }}</span></h3>
-              <button class="btn btn-ghost btn-sm" @click="addEntry('languages')">+ Add</button>
+              <h3>{{ $t('Languages') }} <span class="badge">{{ cv.languages.length }}</span></h3>
+              <button class="btn btn-ghost btn-sm" @click="addEntry('languages')">{{ $t('+ Add') }}</button>
             </div>
             <div v-for="(entry, i) in cv.languages" :key="i" class="entry entry-tight">
               <div class="grid-3">
-                <label class="field"><span>Language</span><input v-model="entry.name" @input="markDirty" /></label>
-                <label class="field"><span>Level</span>
+                <label class="field"><span>{{ $t('Language') }}</span><input v-model="entry.name" @input="markDirty" /></label>
+                <label class="field"><span>{{ $t('Level') }}</span>
                   <select v-model="entry.level" @change="markDirty">
                     <option value="">—</option>
                     <option v-for="level in LANG_LEVELS" :key="level" :value="level">{{ level }}</option>
@@ -258,30 +256,30 @@
 
         <!-- Extras -->
         <div class="card">
-          <div class="card-head"><h3>Extras</h3></div>
-          <label class="field"><span>Interests — comma separated</span>
+          <div class="card-head"><h3>{{ $t('Extras') }}</h3></div>
+          <label class="field"><span>{{ $t('Interests — comma separated') }}</span>
             <input :value="(cv.interests || []).join(', ')" @input="setList(cv, 'interests', $event)" /></label>
 
           <div class="sub-head">
-            <h4>Awards <span class="badge">{{ cv.awards.length }}</span></h4>
-            <button class="btn btn-ghost btn-sm" @click="addEntry('awards')">+ Add</button>
+            <h4>{{ $t('Awards') }} <span class="badge">{{ cv.awards.length }}</span></h4>
+            <button class="btn btn-ghost btn-sm" @click="addEntry('awards')">{{ $t('+ Add') }}</button>
           </div>
           <div v-for="(entry, i) in cv.awards" :key="entry.id || i" class="grid-3 row-gap">
-            <label class="field"><span>Award</span><input v-model="entry.name" @input="markDirty" /></label>
-            <label class="field"><span>Issuer</span><input v-model="entry.issuer" @input="markDirty" /></label>
-            <label class="field"><span>Year</span><input v-model="entry.date" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Award') }}</span><input v-model="entry.name" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Issuer') }}</span><input v-model="entry.issuer" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Year') }}</span><input v-model="entry.date" @input="markDirty" /></label>
             <button class="icon-btn sm danger" @click="removeEntry('awards', i)">×</button>
           </div>
 
           <div class="sub-head">
-            <h4>Volunteering <span class="badge">{{ cv.volunteering.length }}</span></h4>
-            <button class="btn btn-ghost btn-sm" @click="addEntry('volunteering')">+ Add</button>
+            <h4>{{ $t('Volunteering') }} <span class="badge">{{ cv.volunteering.length }}</span></h4>
+            <button class="btn btn-ghost btn-sm" @click="addEntry('volunteering')">{{ $t('+ Add') }}</button>
           </div>
           <div v-for="(entry, i) in cv.volunteering" :key="entry.id || i" class="entry entry-tight">
             <div class="grid-3">
-              <label class="field"><span>Role</span><input v-model="entry.role" @input="markDirty" /></label>
-              <label class="field"><span>Organisation</span><input v-model="entry.organisation" @input="markDirty" /></label>
-              <label class="field"><span>Dates</span>
+              <label class="field"><span>{{ $t('Role') }}</span><input v-model="entry.role" @input="markDirty" /></label>
+              <label class="field"><span>{{ $t('Organisation') }}</span><input v-model="entry.organisation" @input="markDirty" /></label>
+              <label class="field"><span>{{ $t('Dates') }}</span>
                 <div class="date-row">
                   <input v-model="entry.start" @input="markDirty" placeholder="2020" />
                   <input v-model="entry.end" @input="markDirty" placeholder="2022" />
@@ -289,18 +287,18 @@
               </label>
               <button class="icon-btn sm danger" @click="removeEntry('volunteering', i)">×</button>
             </div>
-            <label class="field"><span>What you did — one per line</span>
+            <label class="field"><span>{{ $t('What you did — one per line') }}</span>
               <textarea :value="linesOf(entry.bullets)" rows="2" @input="setLines(entry, 'bullets', $event)"></textarea></label>
           </div>
 
           <div class="sub-head">
-            <h4>References <span class="badge">{{ cv.references.length }}</span></h4>
-            <button class="btn btn-ghost btn-sm" @click="addEntry('references')">+ Add</button>
+            <h4>{{ $t('References') }} <span class="badge">{{ cv.references.length }}</span></h4>
+            <button class="btn btn-ghost btn-sm" @click="addEntry('references')">{{ $t('+ Add') }}</button>
           </div>
           <div v-for="(entry, i) in cv.references" :key="entry.id || i" class="grid-3 row-gap">
-            <label class="field"><span>Name</span><input v-model="entry.name" @input="markDirty" /></label>
-            <label class="field"><span>Title & company</span><input v-model="entry.title" @input="markDirty" /></label>
-            <label class="field"><span>Email</span><input v-model="entry.email" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Name') }}</span><input v-model="entry.name" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Title & company') }}</span><input v-model="entry.title" @input="markDirty" /></label>
+            <label class="field"><span>{{ $t('Email') }}</span><input v-model="entry.email" @input="markDirty" /></label>
             <button class="icon-btn sm danger" @click="removeEntry('references', i)">×</button>
           </div>
         </div>
@@ -309,31 +307,28 @@
       <!-- ══════════════════════ AI ASSIST ══════════════════════ -->
       <section v-show="activeTab === 'ai'" class="cve-panel">
         <div v-if="!aiReady" class="card warn-card">
-          <h3>AI is unavailable on this replica</h3>
-          <p>No AI provider key is configured on the CV Builder service, so enhancing, reviewing and
-             tailoring cannot run right now. Editing, templates and downloads all still work.</p>
+          <h3>{{ $t('AI is unavailable on this replica') }}</h3>
+          <p>{{ $t('No AI provider key is configured on the CV Builder service, so enhancing, reviewing and tailoring cannot run right now. Editing, templates and downloads all still work.') }}</p>
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Rewrite the whole CV</h3></div>
+          <div class="card-head"><h3>{{ $t('Rewrite the whole CV') }}</h3></div>
           <p class="card-note">
-            The AI sharpens your wording, turns responsibilities into achievements and fixes the
-            grammar. It will not add a job, a date, a degree or a metric you did not write — if it
-            appears to, treat that as a bug and tell us.
+            {{ $t('The AI sharpens your wording, turns responsibilities into achievements and fixes the grammar. It will not add a job, a date, a degree or a metric you did not write — if it appears to, treat that as a bug and tell us.') }}
           </p>
           <div class="grid-2">
-            <label class="field"><span>Tone</span>
+            <label class="field"><span>{{ $t('Tone') }}</span>
               <select v-model="enhanceTone">
-                <option value="professional">Professional — the default</option>
-                <option value="concise">Concise — cut every spare word</option>
-                <option value="impact">Impact-first — lead with outcomes</option>
-                <option value="academic">Academic — formal and precise</option>
+                <option value="professional">{{ $t('Professional — the default') }}</option>
+                <option value="concise">{{ $t('Concise — cut every spare word') }}</option>
+                <option value="impact">{{ $t('Impact-first — lead with outcomes') }}</option>
+                <option value="academic">{{ $t('Academic — formal and precise') }}</option>
               </select>
             </label>
-            <label class="field"><span>Target role — optional</span>
-              <input v-model="enhanceTarget" placeholder="Senior DevOps Engineer" /></label>
+            <label class="field"><span>{{ $t('Target role — optional') }}</span>
+              <input v-model="enhanceTarget" :placeholder="$t('Senior DevOps Engineer')" /></label>
           </div>
-          <label class="field"><span>Anything specific to change — optional</span>
+          <label class="field"><span>{{ $t('Anything specific to change — optional') }}</span>
             <textarea v-model="enhanceInstructions" rows="3"
                       placeholder="Play down the support work, emphasise the Kubernetes migration, keep it to one page."></textarea></label>
           <div class="row-actions">
@@ -341,15 +336,14 @@
               {{ enhancing ? 'Rewriting your CV…' : '✨ Enhance this CV' }}
             </button>
             <button class="btn btn-ghost" :disabled="enhancing || !aiReady" @click="enhance(true)">
-              Enhance into a copy
+              {{ $t('Enhance into a copy') }}
             </button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Get it reviewed</h3></div>
-          <p class="card-note">A recruiter-style critique. It changes nothing — it tells you what a
-             screener would notice in the 30 seconds they spend.</p>
+          <div class="card-head"><h3>{{ $t('Get it reviewed') }}</h3></div>
+          <p class="card-note">{{ $t('A recruiter-style critique. It changes nothing — it tells you what a screener would notice in the 30 seconds they spend.') }}</p>
           <div class="row-actions">
             <button class="btn btn-secondary" :disabled="reviewing || !aiReady" @click="runReview">
               {{ reviewing ? 'Reading it…' : 'Review my CV' }}
@@ -365,17 +359,17 @@
 
             <div class="review-cols">
               <div v-if="review.strengths?.length">
-                <h4>Working well</h4>
+                <h4>{{ $t('Working well') }}</h4>
                 <ul><li v-for="(item, i) in review.strengths" :key="i">{{ item }}</li></ul>
               </div>
               <div v-if="review.quick_wins?.length">
-                <h4>Quick wins</h4>
+                <h4>{{ $t('Quick wins') }}</h4>
                 <ul><li v-for="(item, i) in review.quick_wins" :key="i">{{ item }}</li></ul>
               </div>
             </div>
 
             <div v-if="review.issues?.length" class="review-issues">
-              <h4>Issues</h4>
+              <h4>{{ $t('Issues') }}</h4>
               <div v-for="(issue, i) in review.issues" :key="i" class="review-issue">
                 <span class="review-issue-section">{{ issue.section }}</span>
                 <p class="review-issue-problem">{{ issue.problem }}</p>
@@ -384,14 +378,14 @@
             </div>
 
             <div v-if="review.ats_notes?.length" class="review-ats">
-              <h4>ATS notes</h4>
+              <h4>{{ $t('ATS notes') }}</h4>
               <ul><li v-for="(item, i) in review.ats_notes" :key="i">{{ item }}</li></ul>
             </div>
           </div>
         </div>
 
         <div v-if="sectionNotes.length" class="card">
-          <div class="card-head"><h3>What the AI changed</h3></div>
+          <div class="card-head"><h3>{{ $t('What the AI changed') }}</h3></div>
           <ul class="notes"><li v-for="(note, i) in sectionNotes" :key="i">{{ note }}</li></ul>
         </div>
       </section>
@@ -399,18 +393,15 @@
       <!-- ══════════════════ JOB DESCRIPTION ══════════════════ -->
       <section v-show="activeTab === 'job'" class="cve-panel">
         <div class="card">
-          <div class="card-head"><h3>Match this CV to a job</h3></div>
+          <div class="card-head"><h3>{{ $t('Match this CV to a job') }}</h3></div>
           <p class="card-note">
-            Paste the job description and the AI rewrites the CV to answer it — writing the
-            posting's required skills, tools and technologies into your skills section and into
-            the roles where that work belongs, then rewriting your summary and headline to target
-            the title. Everything it adds is listed below for you to review.
+            {{ $t('Paste the job description and the AI rewrites the CV to answer it — writing the posting\'s required skills, tools and technologies into your skills section and into the roles where that work belongs, then rewriting your summary and headline to target the title. Everything it adds is listed below for you to review.') }}
           </p>
           <textarea v-model="jobDescription" rows="12" class="jd"
                     placeholder="Paste the full job description here — responsibilities, requirements, nice-to-haves."></textarea>
-          <p class="hint">{{ jobDescription.trim().length }} characters
+          <p class="hint">{{ $t('{v0} characters', { v0: jobDescription.trim().length }) }}
              <span v-if="jobDescription.trim().length && jobDescription.trim().length < 80">
-               — paste a bit more; 80 is the minimum.</span>
+               {{ $t('— paste a bit more; 80 is the minimum.') }}</span>
           </p>
 
           <div class="coverage-picker">
@@ -431,19 +422,16 @@
               <span v-if="tailoring === 'copy'" class="btn-spinner" aria-hidden="true"></span>
               {{ tailoring === 'copy' ? 'Creating the tailored copy…' : 'Tailor into a separate CV' }}
             </button>
-            <span class="hint inline">Tailoring into a copy keeps this CV as your general one.</span>
+            <span class="hint inline">{{ $t('Tailoring into a copy keeps this CV as your general one.') }}</span>
           </div>
           <!-- A progress line as well as the button spinner: the button can scroll out
                of view on a phone, and this is the one action here that takes seconds. -->
           <p v-if="tailoring" class="tailor-progress" role="status" aria-live="polite">
             <span class="btn-spinner" aria-hidden="true"></span>
-            Reading the posting and rewriting your CV against it — this usually takes a
-            few seconds. Your CV is saved either way.
+            {{ $t('Reading the posting and rewriting your CV against it — this usually takes a few seconds. Your CV is saved either way.') }}
           </p>
           <p v-if="coverage === 'full'" class="hint">
-            Read the “Added to your CV” list before you apply and delete anything you cannot
-            stand behind in an interview. Credentials — certifications, licences, degrees — are
-            never added for you, because they are checked.
+            {{ $t('Read the “Added to your CV” list before you apply and delete anything you cannot stand behind in an interview. Credentials — certifications, licences, degrees — are never added for you, because they are checked.') }}
           </p>
         </div>
 
@@ -452,20 +440,17 @@
              where the posting is, not buried in the history. -->
         <div v-if="buildReport" class="card">
           <div class="card-head">
-            <h3>Drafted from this job ad</h3>
+            <h3>{{ $t('Drafted from this job ad') }}</h3>
             <span v-if="cv.job_target?.tailored_at" class="badge">
               {{ formatDate(cv.job_target.tailored_at) }}
             </span>
           </div>
           <p v-if="buildReport.placeholder_count" class="card-note">
-            <strong>{{ buildReport.placeholder_count }} detail{{ buildReport.placeholder_count === 1 ? '' : 's' }}
-            still in square brackets.</strong>
-            Nothing about your history was invented, so each one is a fact only you can supply.
-            Replace them all before you send this CV anywhere.
+            <strong>{{ $t('{v0} detail{v1} still in square brackets.', { v0: buildReport.placeholder_count, v1: buildReport.placeholder_count === 1 ? '' : 's' }) }}</strong>
+            {{ $t('Nothing about your history was invented, so each one is a fact only you can supply. Replace them all before you send this CV anywhere.') }}
           </p>
           <p v-else class="card-note">
-            No blanks left. Read it through anyway — the bullets were written from the advert,
-            so they describe the job rather than what you actually did.
+            {{ $t('No blanks left. Read it through anyway — the bullets were written from the advert, so they describe the job rather than what you actually did.') }}
           </p>
           <div v-if="buildReport.placeholder_fields?.length" class="draft-gaps">
             <span v-for="(gap, i) in buildReport.placeholder_fields" :key="i" class="draft-gap">
@@ -473,34 +458,34 @@
             </span>
           </div>
           <div v-if="buildReport.missing_credentials?.length" class="match-block">
-            <h4>Credentials this role asks for</h4>
-            <p class="card-note">Never added for you — a certificate is checked.</p>
+            <h4>{{ $t('Credentials this role asks for') }}</h4>
+            <p class="card-note">{{ $t('Never added for you — a certificate is checked.') }}</p>
             <ul><li v-for="(item, i) in buildReport.missing_credentials" :key="i">{{ item }}</li></ul>
           </div>
           <div v-if="buildReport.next_steps?.length" class="match-block">
-            <h4>What to do next</h4>
+            <h4>{{ $t('What to do next') }}</h4>
             <ul><li v-for="(item, i) in buildReport.next_steps" :key="i">{{ item }}</li></ul>
           </div>
         </div>
 
         <div v-if="matchReport" class="card">
           <div class="card-head">
-            <h3>Match report</h3>
+            <h3>{{ $t('Match report') }}</h3>
             <span v-if="cv.job_target?.tailored_at" class="badge">
-              tailored {{ formatDate(cv.job_target.tailored_at) }}
+              {{ $t('tailored {v0}', { v0: formatDate(cv.job_target.tailored_at) }) }}
             </span>
           </div>
 
           <div class="match-top">
             <div class="review-score" :class="scoreClass(matchReport.score)">
               <span class="review-score-value">{{ matchReport.score ?? '—' }}</span>
-              <span class="review-score-label">% match</span>
+              <span class="review-score-label">{{ $t('% match') }}</span>
             </div>
             <div class="match-title">
               <h4>{{ matchReport.job_title || 'This role' }}</h4>
               <p v-if="matchReport.seniority">{{ matchReport.seniority }}</p>
               <p v-if="matchReport.baseline_score != null" class="match-delta">
-                was {{ matchReport.baseline_score }}%
+                {{ $t('was {v0}%', { v0: matchReport.baseline_score }) }}
                 <span v-if="matchReport.score != null && matchReport.score > matchReport.baseline_score"
                       class="up">▲ +{{ matchReport.score - matchReport.baseline_score }}</span>
               </p>
@@ -509,7 +494,7 @@
 
           <div class="kw-groups">
             <div v-if="matchReport.added_keywords?.length">
-              <h4>Added to your CV — review these</h4>
+              <h4>{{ $t('Added to your CV — review these') }}</h4>
               <div class="kws">
                 <span v-for="(kw, i) in matchReport.added_keywords" :key="i" class="kw added">{{ kw }}</span>
               </div>
@@ -518,47 +503,45 @@
                   <span v-if="item.section" class="added-where">{{ item.section }}</span>{{ item.detail }}
                 </li>
               </ul>
-              <p class="hint">Open the editor tabs and delete anything here you could not defend in
-                 an interview — you are the last check on this list.</p>
+              <p class="hint">{{ $t('Open the editor tabs and delete anything here you could not defend in an interview — you are the last check on this list.') }}</p>
             </div>
             <div v-if="matchReport.matched_keywords?.length">
-              <h4>Already evidenced</h4>
+              <h4>{{ $t('Already evidenced') }}</h4>
               <div class="kws">
                 <span v-for="(kw, i) in matchReport.matched_keywords" :key="i" class="kw good">{{ kw }}</span>
               </div>
             </div>
             <div v-if="matchReport.missing_keywords?.length">
-              <h4>Still missing — only you can add these</h4>
+              <h4>{{ $t('Still missing — only you can add these') }}</h4>
               <div class="kws">
                 <span v-for="(kw, i) in matchReport.missing_keywords" :key="i" class="kw bad">{{ kw }}</span>
               </div>
-              <p class="hint">Certifications, licences and degrees are never written in for you
-                 because employers verify them. Add any you genuinely hold in the editor.</p>
+              <p class="hint">{{ $t('Certifications, licences and degrees are never written in for you because employers verify them. Add any you genuinely hold in the editor.') }}</p>
             </div>
           </div>
 
           <div v-if="matchReport.review_notes?.length" class="review-warn">
-            <h4>Confirm before you send this</h4>
+            <h4>{{ $t('Confirm before you send this') }}</h4>
             <ul><li v-for="(item, i) in matchReport.review_notes" :key="i">{{ item }}</li></ul>
           </div>
 
           <div class="review-cols">
             <div v-if="matchReport.strengths?.length">
-              <h4>Why you fit</h4>
+              <h4>{{ $t('Why you fit') }}</h4>
               <ul><li v-for="(item, i) in matchReport.strengths" :key="i">{{ item }}</li></ul>
             </div>
             <div v-if="matchReport.gaps?.length">
-              <h4>Gaps</h4>
+              <h4>{{ $t('Gaps') }}</h4>
               <ul><li v-for="(item, i) in matchReport.gaps" :key="i">{{ item }}</li></ul>
             </div>
           </div>
 
           <div v-if="matchReport.actions?.length" class="review-ats">
-            <h4>What to do about it</h4>
+            <h4>{{ $t('What to do about it') }}</h4>
             <ul><li v-for="(item, i) in matchReport.actions" :key="i">{{ item }}</li></ul>
           </div>
           <div v-if="matchReport.ats_notes?.length" class="review-ats">
-            <h4>ATS notes</h4>
+            <h4>{{ $t('ATS notes') }}</h4>
             <ul><li v-for="(item, i) in matchReport.ats_notes" :key="i">{{ item }}</li></ul>
           </div>
         </div>
@@ -567,11 +550,10 @@
       <!-- ══════════════════════ VOICE ══════════════════════ -->
       <section v-show="activeTab === 'voice'" class="cve-panel">
         <div class="card">
-          <div class="card-head"><h3>Add to this CV by talking</h3></div>
+          <div class="card-head"><h3>{{ $t('Add to this CV by talking') }}</h3></div>
           <p class="card-note">
-            Dictate the experience you want on this CV. The AI rewrites the CV from what you say —
-            so use this when you want to rebuild the content, not to add a single line.
-            <strong>Your current content will be replaced</strong>, or use “as a new CV” to keep it.
+            {{ $t('Dictate the experience you want on this CV. The AI rewrites the CV from what you say — so use this when you want to rebuild the content, not to add a single line.') }}
+            <strong>{{ $t('Your current content will be replaced') }}</strong>{{ $t(', or use “as a new CV” to keep it.') }}
           </p>
           <CvVoiceRecorder v-model="voiceTranscript" :notes-value="voiceNotes" :user-id="userId"
                            @update:notes="voiceNotes = $event" />
@@ -582,7 +564,7 @@
             </button>
             <button class="btn btn-ghost" :disabled="voiceBusy || !aiReady || voiceTranscript.trim().length < 60"
                     @click="buildFromVoice(false)">
-              Replace this CV's content
+              {{ $t('Replace this CV\'s content') }}
             </button>
           </div>
         </div>
@@ -591,7 +573,7 @@
       <!-- ══════════════════════ DESIGN ══════════════════════ -->
       <section v-show="activeTab === 'design'" class="cve-panel">
         <div class="card">
-          <div class="card-head"><h3>Template</h3></div>
+          <div class="card-head"><h3>{{ $t('Template') }}</h3></div>
           <div class="tpl-picker">
             <button v-for="tpl in templates" :key="tpl.key"
                     :class="['tpl-option', { active: cv.template === tpl.key }]"
@@ -602,28 +584,28 @@
               </span>
               <strong>{{ tpl.name }}</strong>
               <small>{{ tpl.best_for }}</small>
-              <em v-if="tpl.ats_safe" class="ats">ATS-safe</em>
+              <em v-if="tpl.ats_safe" class="ats">{{ $t('ATS-safe') }}</em>
             </button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Colour & type</h3></div>
+          <div class="card-head"><h3>{{ $t('Colour & type') }}</h3></div>
           <div class="swatches">
             <button v-for="accent in accents" :key="accent.value"
                     :class="['swatch', { active: cv.accent_color === accent.value }]"
                     :style="{ background: accent.value }" :title="accent.name"
                     @click="setAccent(accent.value)"></button>
             <button class="swatch reset" :class="{ active: !cv.accent_color }"
-                    title="Use the template's own colour" @click="setAccent('')">auto</button>
+                    :title="$t('Use the template\'s own colour')" @click="setAccent('')">{{ $t('auto') }}</button>
             <label class="swatch-custom">
               <input type="color" :value="cv.accent_color || currentSpec?.accent || '#4F46E5'"
                      @input="setAccent(($event.target as HTMLInputElement).value.toUpperCase())" />
-              custom
+              {{ $t('custom') }}
             </label>
           </div>
           <div class="grid-2">
-            <label class="field"><span>Font</span>
+            <label class="field"><span>{{ $t('Font') }}</span>
               <select v-model="cv.font" @change="markDirty">
                 <option v-for="font in fonts" :key="font.key" :value="font.key">{{ font.name }}</option>
               </select>
@@ -632,17 +614,15 @@
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Profile picture</h3></div>
+          <div class="card-head"><h3>{{ $t('Profile picture') }}</h3></div>
           <p class="card-note">
-            Optional. Some markets expect a photo, others screen it out — if you are unsure, leave
-            the avatar or turn the photo off. Pick a default avatar and it is used in the PDF and
-            DOCX exactly as you see it here.
+            {{ $t('Optional. Some markets expect a photo, others screen it out — if you are unsure, leave the avatar or turn the photo off. Pick a default avatar and it is used in the PDF and DOCX exactly as you see it here.') }}
           </p>
 
           <div class="photo-row">
             <div class="photo-current" :class="`shape-${cv.photo.shape}`">
               <img v-if="photoPreview" :src="photoPreview" alt="" />
-              <span v-else>none</span>
+              <span v-else>{{ $t('none') }}</span>
             </div>
 
             <div class="photo-controls">
@@ -653,19 +633,18 @@
                 </button>
                 <button v-if="!cv.photo.data_url" class="btn btn-ghost btn-sm" :disabled="photoBusy"
                         @click="openStudio()">
-                  Take a photo
+                  {{ $t('Take a photo') }}
                 </button>
                 <button v-if="cv.photo.data_url" class="btn btn-ghost btn-sm" @click="clearPhoto">
-                  Remove photo
+                  {{ $t('Remove photo') }}
                 </button>
               </div>
               <p class="hint">
-                Upload or take a photo, drag it to centre your face, and swap the background for a
-                professional colour. Your face is never removed — only the area around you.
+                {{ $t('Upload or take a photo, drag it to centre your face, and swap the background for a professional colour. Your face is never removed — only the area around you.') }}
               </p>
 
               <div class="avatar-picker">
-                <span class="avatar-label">Or use a default avatar</span>
+                <span class="avatar-label">{{ $t('Or use a default avatar') }}</span>
                 <div class="avatars">
                   <button v-for="avatar in avatars" :key="avatar.key"
                           :class="['avatar-option', { active: !cv.photo.data_url && cv.photo.avatar === avatar.key }]"
@@ -676,36 +655,34 @@
               </div>
 
               <div class="photo-flags">
-                <label class="field inline-field"><span>Shape</span>
+                <label class="field inline-field"><span>{{ $t('Shape') }}</span>
                   <select v-model="cv.photo.shape" @change="markDirty">
-                    <option value="circle">Circle</option>
-                    <option value="rounded">Rounded</option>
-                    <option value="square">Square</option>
+                    <option value="circle">{{ $t('Circle') }}</option>
+                    <option value="rounded">{{ $t('Rounded') }}</option>
+                    <option value="square">{{ $t('Square') }}</option>
                   </select>
                 </label>
                 <label class="check">
                   <input type="checkbox" v-model="cv.photo.show" @change="markDirty" />
-                  Show a picture on the CV
+                  {{ $t('Show a picture on the CV') }}
                 </label>
               </div>
               <p v-if="photoError" class="path-error">{{ photoError }}</p>
               <p v-if="currentSpec?.photo === 'none'" class="hint">
-                The {{ currentSpec.name }} template never prints a picture — pick another template
-                if you want one shown.
+                {{ $t('The {v0} template never prints a picture — pick another template if you want one shown.', { v0: currentSpec.name }) }}
               </p>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Sections</h3></div>
-          <p class="card-note">Drag-free ordering: move a section up or down, or hide it. Hidden
-             sections keep their content — they just do not print.</p>
+          <div class="card-head"><h3>{{ $t('Sections') }}</h3></div>
+          <p class="card-note">{{ $t('Drag-free ordering: move a section up or down, or hide it. Hidden sections keep their content — they just do not print.') }}</p>
           <ul class="section-order">
             <li v-for="(key, i) in cv.sections_order" :key="key"
                 :class="{ hidden: cv.hidden_sections.includes(key), empty: !hasContent(key) }">
               <span class="so-name">{{ sectionTitles[key] || key }}</span>
-              <span v-if="!hasContent(key)" class="so-empty">empty</span>
+              <span v-if="!hasContent(key)" class="so-empty">{{ $t('empty') }}</span>
               <span class="so-actions">
                 <button class="icon-btn sm" :disabled="i === 0" @click="moveSection(i, -1)">↑</button>
                 <button class="icon-btn sm" :disabled="i === cv.sections_order.length - 1" @click="moveSection(i, 1)">↓</button>
@@ -732,8 +709,7 @@
           </div>
         </div>
         <p class="hint preview-hint">
-          The download is rendered on the server from this same template, so the file matches what
-          you see here. Unsaved edits are included in the download.
+          {{ $t('The download is rendered on the server from this same template, so the file matches what you see here. Unsaved edits are included in the download.') }}
         </p>
         <CvPreview :cv="cv" :spec="currentSpec" :section-titles="sectionTitles" :avatars="avatars" />
       </section>
@@ -757,15 +733,14 @@
 
     <div v-if="downloadOpen" class="modal-backdrop" @click.self="downloadOpen = false">
       <div class="modal">
-        <h3>Download this CV</h3>
-        <p>Rendered on the server from the template you can see, including edits you have not
-           saved. Name the file so you can tell this application from the next one.</p>
+        <h3>{{ $t('Download this CV') }}</h3>
+        <p>{{ $t('Rendered on the server from the template you can see, including edits you have not saved. Name the file so you can tell this application from the next one.') }}</p>
         <label class="modal-field">
-          <span>File name</span>
+          <span>{{ $t('File name') }}</span>
           <input ref="downloadNameInput" v-model="downloadName" type="text" maxlength="70"
                  @keyup.enter="downloadCv('pdf')" />
         </label>
-        <p class="modal-hint">Saves as <strong>{{ previewFilename }}</strong></p>
+        <p class="modal-hint">{{ $t('Saves as') }} <strong>{{ previewFilename }}</strong></p>
         <div class="modal-actions">
           <button class="btn btn-primary" :disabled="!!downloading" @click="downloadCv('pdf')">
             {{ downloading === 'pdf' ? 'Building…' : 'Download PDF' }}
@@ -774,7 +749,7 @@
             {{ downloading === 'docx' ? 'Building…' : 'Download DOCX' }}
           </button>
           <button class="btn btn-ghost" :disabled="!!downloading" @click="downloadOpen = false">
-            Cancel
+            {{ $t('Cancel') }}
           </button>
         </div>
       </div>
@@ -785,8 +760,8 @@
 
   <div v-else class="cve-loading">
     <p v-if="loadError" class="load-error">{{ loadError }}</p>
-    <p v-else>Loading your CV…</p>
-    <button v-if="loadError" class="btn btn-ghost" @click="goBack">Back to my CVs</button>
+    <p v-else>{{ $t('Loading your CV…') }}</p>
+    <button v-if="loadError" class="btn btn-ghost" @click="goBack">{{ $t('Back to my CVs') }}</button>
   </div>
 </template>
 
@@ -1481,7 +1456,7 @@ onBeforeRouteLeave(async () => {
 .cve-banner.warn { background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.12); border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.32); color: var(--sfs-warning-text, #fcd34d); }
 .cve-banner.error { background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.12); border: 1px solid rgb(var(--sfs-danger-rgb, 239 68 68) / 0.32); color: var(--sfs-danger-text, #fca5a5); }
 .banner-x {
-  margin-left: auto; background: none; border: none; color: inherit;
+  margin-inline-start: auto; background: none; border: none; color: inherit;
   font-size: 1.2rem; cursor: pointer; line-height: 1;
 }
 
@@ -1522,7 +1497,7 @@ onBeforeRouteLeave(async () => {
 .card-note strong { color: var(--sfs-warning-text, #fcd34d); }
 .badge {
   font-size: 0.72rem; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1); padding: 1px 8px;
-  border-radius: 20px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65); margin-left: 6px;
+  border-radius: 20px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65); margin-inline-start: 6px;
 }
 
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 11px; }
@@ -1602,13 +1577,13 @@ onBeforeRouteLeave(async () => {
   color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); margin-bottom: 7px;
 }
 .review-cols ul, .review-ats ul, .notes {
-  padding-left: 17px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78); font-size: 0.86rem; line-height: 1.6;
+  padding-inline-start: 17px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78); font-size: 0.86rem; line-height: 1.6;
 }
 .review-cols li, .review-ats li, .notes li { margin-bottom: 4px; }
 
 .review-issues { margin-top: 16px; }
 .review-issue {
-  border-left: 2px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.55); padding: 3px 0 3px 11px; margin-bottom: 11px;
+  border-inline-start: 2px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.55); padding: 3px 0 3px 11px; margin-bottom: 11px;
 }
 .review-issue-section {
   font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
@@ -1623,7 +1598,7 @@ onBeforeRouteLeave(async () => {
 .match-title p { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55); font-size: 0.84rem; }
 
 .match-delta { margin-top: 3px; font-size: 0.78rem; }
-.match-delta .up { color: var(--sfs-success-text, #86efac); font-weight: 700; margin-left: 4px; }
+.match-delta .up { color: var(--sfs-success-text, #86efac); font-weight: 700; margin-inline-start: 4px; }
 
 .kw-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .kws { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1637,12 +1612,12 @@ onBeforeRouteLeave(async () => {
 }
 
 .added-list {
-  margin-top: 9px; padding-left: 17px;
+  margin-top: 9px; padding-inline-start: 17px;
   color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.76); font-size: 0.83rem; line-height: 1.55;
 }
 .added-list li { margin-bottom: 4px; }
 .added-where {
-  display: inline-block; margin-right: 6px;
+  display: inline-block; margin-inline-end: 6px;
   font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--sfs-text-muted, #c4b5fd);
 }
@@ -1658,7 +1633,7 @@ onBeforeRouteLeave(async () => {
   color: var(--sfs-warning-text, #fcd34d); margin-bottom: 7px;
 }
 .review-warn ul {
-  padding-left: 17px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.82); font-size: 0.86rem; line-height: 1.6;
+  padding-inline-start: 17px; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.82); font-size: 0.86rem; line-height: 1.6;
 }
 .review-warn li { margin-bottom: 4px; }
 
@@ -1669,7 +1644,7 @@ onBeforeRouteLeave(async () => {
 }
 .coverage-option {
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2); border: 1.5px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
-  border-radius: 11px; padding: 11px 12px; cursor: pointer; text-align: left;
+  border-radius: 11px; padding: 11px 12px; cursor: pointer; text-align: start;
   color: inherit; font: inherit;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
@@ -1684,7 +1659,7 @@ onBeforeRouteLeave(async () => {
 .tpl-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 11px; }
 .tpl-option {
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2); border: 1.5px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
-  border-radius: 11px; padding: 10px; cursor: pointer; text-align: left;
+  border-radius: 11px; padding: 10px; cursor: pointer; text-align: start;
   color: var(--sfs-text, #fff); font-family: inherit; transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .tpl-option:hover { transform: translateY(-2px); border-color: rgb(var(--sfs-accent-2-rgb, 139 92 246) / 0.5); }
@@ -1772,7 +1747,7 @@ onBeforeRouteLeave(async () => {
   gap: 14px; flex-wrap: wrap; margin-bottom: 6px;
 }
 .preview-bar-left strong { font-size: 0.98rem; }
-.preview-bar-left span { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); font-size: 0.83rem; margin-left: 9px; }
+.preview-bar-left span { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); font-size: 0.83rem; margin-inline-start: 9px; }
 .preview-bar-actions { display: flex; gap: 8px; }
 .preview-hint { margin-bottom: 14px; }
 

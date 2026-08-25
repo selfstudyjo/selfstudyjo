@@ -1,19 +1,19 @@
 <template>
   <div class="research-openalex-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconGlobe /> Import from OpenAlex</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconGlobe /> {{ $t('Import from OpenAlex') }}</h1>
     </div>
 
     <!-- ============ SEARCH ============ -->
     <div class="rf-section rf-openalex-search">
-      <h2 class="rf-section-title"><RfIconSearch /> Search Academic Papers</h2>
+      <h2 class="rf-section-title"><RfIconSearch /> {{ $t('Search Academic Papers') }}</h2>
 
       <div class="rf-search-bar">
         <input
           v-model="form.q"
           class="rf-input rf-search-input"
-          placeholder="Enter your research keywords, e.g. hand gesture rehabilitation exergame"
+          :placeholder="$t('Enter your research keywords, e.g. hand gesture rehabilitation exergame')"
           @keyup.enter="runSearch(1)"
         />
         <button class="rf-btn rf-btn-primary rf-search-go" @click="runSearch(1)" :disabled="!form.q.trim() || searching">
@@ -21,8 +21,7 @@
         </button>
       </div>
       <p class="rf-hint">
-        Keywords are the only required field. Every filter below is optional — add them only when
-        you want to narrow the results.
+        {{ $t('Keywords are the only required field. Every filter below is optional — add them only when you want to narrow the results.') }}
       </p>
 
       <button class="rf-filters-toggle" @click="showFilters = !showFilters">
@@ -33,14 +32,14 @@
       <div v-show="showFilters" class="rf-filters-panel">
         <!-- Year -->
         <div class="rf-filter-group">
-          <label class="rf-filter-legend"><RfIconCalendar /> Publication year</label>
+          <label class="rf-filter-legend"><RfIconCalendar /> {{ $t('Publication year') }}</label>
           <div class="rf-form-row">
             <div class="rf-form-group">
-              <label class="rf-label">From</label>
+              <label class="rf-label">{{ $t('From') }}</label>
               <input v-model="form.from_year" class="rf-input" type="number" placeholder="2020" min="1600" :max="currentYear" />
             </div>
             <div class="rf-form-group">
-              <label class="rf-label">To</label>
+              <label class="rf-label">{{ $t('To') }}</label>
               <input v-model="form.to_year" class="rf-input" type="number" :placeholder="String(currentYear)" min="1600" :max="currentYear" />
             </div>
           </div>
@@ -48,10 +47,10 @@
 
         <!-- Keywords -->
         <div class="rf-filter-group">
-          <label class="rf-filter-legend"><RfIconTag /> Keywords</label>
+          <label class="rf-filter-legend"><RfIconTag /> {{ $t('Keywords') }}</label>
           <TokenPicker
             entity="keywords"
-            placeholder="Type a topic keyword, e.g. computer vision"
+            :placeholder="$t('Type a topic keyword, e.g. computer vision')"
             :selected="selected.keywords"
             @add="t => addToken('keywords', t)"
             @remove="i => selected.keywords.splice(i, 1)"
@@ -61,10 +60,10 @@
 
         <!-- Authors -->
         <div class="rf-filter-group">
-          <label class="rf-filter-legend"><RfIconPeople /> Authors</label>
+          <label class="rf-filter-legend"><RfIconPeople /> {{ $t('Authors') }}</label>
           <TokenPicker
             entity="authors"
-            placeholder="Type an author name"
+            :placeholder="$t('Type an author name')"
             :selected="selected.authors"
             @add="t => addToken('authors', t)"
             @remove="i => selected.authors.splice(i, 1)"
@@ -74,10 +73,10 @@
 
         <!-- University / institution -->
         <div class="rf-filter-group">
-          <label class="rf-filter-legend"><RfIconUniversity /> University / institution</label>
+          <label class="rf-filter-legend"><RfIconUniversity /> {{ $t('University / institution') }}</label>
           <TokenPicker
             entity="institutions"
-            placeholder="Type a university name"
+            :placeholder="$t('Type a university name')"
             :selected="selected.institutions"
             @add="t => addToken('institutions', t)"
             @remove="i => selected.institutions.splice(i, 1)"
@@ -88,45 +87,45 @@
         <!-- Scalars -->
         <div class="rf-form-row">
           <div class="rf-form-group">
-            <label class="rf-label">Language</label>
+            <label class="rf-label">{{ $t('Language') }}</label>
             <select v-model="form.language" class="rf-input">
-              <option value="">Any language</option>
+              <option value="">{{ $t('Any language') }}</option>
               <option v-for="l in LANGUAGES" :key="l.code" :value="l.code">{{ l.name }}</option>
             </select>
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Publication type</label>
+            <label class="rf-label">{{ $t('Publication type') }}</label>
             <select v-model="form.type" class="rf-input">
-              <option value="">Any type</option>
+              <option value="">{{ $t('Any type') }}</option>
               <option v-for="t in WORK_TYPES" :key="t" :value="t">{{ prettyType(t) }}</option>
             </select>
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Search in</label>
+            <label class="rf-label">{{ $t('Search in') }}</label>
             <select v-model="form.search_field" class="rf-input">
-              <option value="title_abstract">Title and abstract</option>
-              <option value="title">Title only</option>
-              <option value="fulltext">Full text</option>
+              <option value="title_abstract">{{ $t('Title and abstract') }}</option>
+              <option value="title">{{ $t('Title only') }}</option>
+              <option value="fulltext">{{ $t('Full text') }}</option>
             </select>
           </div>
         </div>
 
         <div class="rf-form-row">
           <div class="rf-form-group">
-            <label class="rf-label">Sort by</label>
+            <label class="rf-label">{{ $t('Sort by') }}</label>
             <select v-model="form.sort" class="rf-input">
-              <option value="">Relevance</option>
-              <option value="cited_by_count:desc">Most cited</option>
-              <option value="publication_date:desc">Newest first</option>
-              <option value="publication_date:asc">Oldest first</option>
+              <option value="">{{ $t('Relevance') }}</option>
+              <option value="cited_by_count:desc">{{ $t('Most cited') }}</option>
+              <option value="publication_date:desc">{{ $t('Newest first') }}</option>
+              <option value="publication_date:asc">{{ $t('Oldest first') }}</option>
             </select>
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Minimum citations</label>
+            <label class="rf-label">{{ $t('Minimum citations') }}</label>
             <input v-model="form.min_citations" class="rf-input" type="number" min="0" placeholder="0" />
           </div>
           <div class="rf-form-group">
-            <label class="rf-label">Results per page</label>
+            <label class="rf-label">{{ $t('Results per page') }}</label>
             <select v-model.number="form.per_page" class="rf-input">
               <option :value="10">10</option>
               <option :value="25">25</option>
@@ -138,20 +137,20 @@
         <div class="rf-checkbox-row">
           <label class="rf-checkbox">
             <input type="checkbox" v-model="form.has_pdf" />
-            <span><RfIconDownload /> PDF linked only</span>
+            <span><RfIconDownload /> {{ $t('PDF linked only') }}</span>
           </label>
           <label class="rf-checkbox">
             <input type="checkbox" v-model="form.is_oa" />
-            <span><RfIconOpenAccess /> Open access only</span>
+            <span><RfIconOpenAccess /> {{ $t('Open access only') }}</span>
           </label>
           <label class="rf-checkbox">
             <input type="checkbox" v-model="form.has_doi" />
-            <span><RfIconLink /> Has a DOI</span>
+            <span><RfIconLink /> {{ $t('Has a DOI') }}</span>
           </label>
         </div>
 
         <div class="rf-filters-actions">
-          <button class="rf-btn rf-btn-sm rf-btn-secondary" @click="resetFilters">Clear all filters</button>
+          <button class="rf-btn rf-btn-sm rf-btn-secondary" @click="resetFilters">{{ $t('Clear all filters') }}</button>
         </div>
       </div>
     </div>
@@ -159,38 +158,36 @@
     <!-- ============ STATE ============ -->
     <div v-if="searching" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Searching OpenAlex…</p>
+      <p>{{ $t('Searching OpenAlex…') }}</p>
     </div>
 
     <div v-else-if="errorMessage" class="rf-alert rf-alert-error">
-      <strong>Search failed.</strong> {{ errorMessage }}
+      <strong>{{ $t('Search failed.') }}</strong> {{ errorMessage }}
     </div>
 
     <div v-else-if="hasSearched && results.length === 0" class="rf-empty">
-      <p>No papers matched this search.</p>
-      <p class="rf-hint">Try removing a filter, widening the year range, or searching the full text
-        instead of just the title and abstract.</p>
+      <p>{{ $t('No papers matched this search.') }}</p>
+      <p class="rf-hint">{{ $t('Try removing a filter, widening the year range, or searching the full text instead of just the title and abstract.') }}</p>
     </div>
 
     <!-- ============ RESULTS ============ -->
     <div v-else-if="results.length > 0" class="rf-section">
       <div class="rf-results-header">
         <h2 class="rf-section-title">
-          <RfIconStats /> {{ meta.count.toLocaleString() }} paper{{ meta.count === 1 ? '' : 's' }} found
+          <RfIconStats /> {{ $t('{v0} paper{v1} found', { v0: meta.count.toLocaleString(), v1: meta.count === 1 ? '' : 's' }) }}
         </h2>
         <span class="rf-results-sub">
-          Showing {{ firstIndex }}–{{ lastIndex }} · page {{ meta.page }} of {{ meta.total_pages }}
+          {{ $t('Showing {v0}–{v1} · page {v2} of {v3}', { v0: firstIndex, v1: lastIndex, v2: meta.page, v3: meta.total_pages }) }}
         </span>
       </div>
 
       <div v-if="appliedChips.length" class="rf-applied-filters">
-        <span class="rf-applied-label">Filters:</span>
+        <span class="rf-applied-label">{{ $t('Filters:') }}</span>
         <span v-for="chip in appliedChips" :key="chip" class="rf-chip">{{ chip }}</span>
       </div>
 
       <p v-if="meta.truncated" class="rf-hint rf-hint-warn">
-        OpenAlex allows paging through the first 10,000 results only. Narrow the search with filters
-        to reach the rest.
+        {{ $t('OpenAlex allows paging through the first 10,000 results only. Narrow the search with filters to reach the rest.') }}
       </p>
 
       <div class="rf-openalex-grid">
@@ -200,20 +197,20 @@
           <div class="rf-openalex-meta">
             <span v-if="paper.publication_year"><RfIconCalendar /> {{ paper.publication_year }}</span>
             <span v-if="paper.venue"><RfIconLibrary /> {{ paper.venue }}</span>
-            <span v-if="paper.citation_count"><RfIconCitation /> {{ paper.citation_count }} citations</span>
-            <span v-if="paper.is_oa" class="rf-badge-oa"><RfIconOpenAccess /> Open access</span>
-            <span v-if="paper.has_pdf" class="rf-badge-pdf"><RfIconDownload /> PDF available</span>
+            <span v-if="paper.citation_count"><RfIconCitation /> {{ $t('{v0} citations', { v0: paper.citation_count }) }}</span>
+            <span v-if="paper.is_oa" class="rf-badge-oa"><RfIconOpenAccess /> {{ $t('Open access') }}</span>
+            <span v-if="paper.has_pdf" class="rf-badge-pdf"><RfIconDownload /> {{ $t('PDF available') }}</span>
             <span v-if="paper.type">{{ prettyType(paper.type) }}</span>
-            <span v-if="paper.is_retracted" class="rf-badge-danger">Retracted</span>
+            <span v-if="paper.is_retracted" class="rf-badge-danger">{{ $t('Retracted') }}</span>
           </div>
 
           <div class="rf-openalex-authors" v-if="paper.author_names.length">
-            <strong>Authors:</strong> {{ authorLine(paper) }}
+            <strong>{{ $t('Authors:') }}</strong> {{ authorLine(paper) }}
           </div>
           <div class="rf-openalex-authors" v-if="paper.institutions.length">
-            <strong>Institutions:</strong>
+            <strong>{{ $t('Institutions:') }}</strong>
             {{ paper.institutions.slice(0, 3).map(i => i.name).join(', ') }}
-            <span v-if="paper.institutions.length > 3">+{{ paper.institutions.length - 3 }} more</span>
+            <span v-if="paper.institutions.length > 3">{{ $t('+{v0} more', { v0: paper.institutions.length - 3 }) }}</span>
           </div>
 
           <p v-if="paper.abstract" class="rf-openalex-abstract">
@@ -247,7 +244,7 @@
 
             <a v-if="paper.landing_page_url" class="rf-btn rf-btn-sm rf-btn-secondary"
                :href="paper.landing_page_url" target="_blank" rel="noopener noreferrer">
-              <RfIconLink /> View paper
+              <RfIconLink /> {{ $t('View paper') }}
             </a>
 
             <a v-if="paper.doi_url && paper.doi_url !== paper.landing_page_url"
@@ -268,7 +265,7 @@
             <div class="rf-fallback-links">
               <a v-for="(url, i) in pdfFallback[paper.id].urls" :key="url"
                  :href="url" target="_blank" rel="noopener noreferrer" class="rf-link-btn">
-                Open PDF source {{ i + 1 }}
+                {{ $t('Open PDF source {v0}', { v0: i + 1 }) }}
               </a>
             </div>
           </div>
@@ -276,11 +273,11 @@
       </div>
 
       <div class="rf-pagination">
-        <button class="rf-btn rf-btn-sm" :disabled="meta.page <= 1 || searching" @click="runSearch(1)">« First</button>
-        <button class="rf-btn rf-btn-sm" :disabled="meta.page <= 1 || searching" @click="runSearch(meta.page - 1)">Previous</button>
-        <span class="rf-page-info">Page {{ meta.page }} of {{ meta.total_pages }}</span>
-        <button class="rf-btn rf-btn-sm" :disabled="meta.page >= meta.total_pages || searching" @click="runSearch(meta.page + 1)">Next</button>
-        <button class="rf-btn rf-btn-sm" :disabled="meta.page >= meta.total_pages || searching" @click="runSearch(meta.total_pages)">Last »</button>
+        <button class="rf-btn rf-btn-sm" :disabled="meta.page <= 1 || searching" @click="runSearch(1)">{{ $t('« First') }}</button>
+        <button class="rf-btn rf-btn-sm" :disabled="meta.page <= 1 || searching" @click="runSearch(meta.page - 1)">{{ $t('Previous') }}</button>
+        <span class="rf-page-info">{{ $t('Page {v0} of {v1}', { v0: meta.page, v1: meta.total_pages }) }}</span>
+        <button class="rf-btn rf-btn-sm" :disabled="meta.page >= meta.total_pages || searching" @click="runSearch(meta.page + 1)">{{ $t('Next') }}</button>
+        <button class="rf-btn rf-btn-sm" :disabled="meta.page >= meta.total_pages || searching" @click="runSearch(meta.total_pages)">{{ $t('Last »') }}</button>
       </div>
     </div>
 

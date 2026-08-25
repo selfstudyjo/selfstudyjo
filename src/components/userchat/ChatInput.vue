@@ -4,10 +4,10 @@
     <div v-if="replyTo" class="strip">
       <span class="strip-rail" aria-hidden="true"></span>
       <div class="strip-body">
-        <span class="strip-who">Replying to {{ replyTo.sender_username || 'someone' }}</span>
+        <span class="strip-who">{{ $t('Replying to {v0}', { v0: replyTo.sender_username || 'someone' }) }}</span>
         <span class="strip-text">{{ replyPreview }}</span>
       </div>
-      <button type="button" class="uc-icon-btn small" aria-label="Cancel reply" @click="$emit('cancel-reply')">
+      <button type="button" class="uc-icon-btn small" :aria-label="$t('Cancel reply')" @click="$emit('cancel-reply')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
@@ -23,15 +23,15 @@
       <div class="strip-body">
         <span class="strip-who">{{ pending.name }}</span>
         <span class="strip-text">
-          <template v-if="pending.state === 'uploading'">Uploading…</template>
+          <template v-if="pending.state === 'uploading'">{{ $t('Uploading…') }}</template>
           <span v-else-if="pending.state === 'error'" class="err">{{ pending.error }}</span>
           <template v-else>
             {{ humanSize(pending.storedBytes) }}
-            <span v-if="pending.savedPercent > 4" class="saved">· {{ pending.savedPercent }}% smaller</span>
+            <span v-if="pending.savedPercent > 4" class="saved">{{ $t('· {v0}% smaller', { v0: pending.savedPercent }) }}</span>
           </template>
         </span>
       </div>
-      <button type="button" class="uc-icon-btn small" aria-label="Discard attachment" @click="$emit('discard')">
+      <button type="button" class="uc-icon-btn small" :aria-label="$t('Discard attachment')" @click="$emit('discard')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
@@ -41,10 +41,10 @@
       <span class="rec-dot" aria-hidden="true"></span>
       <span class="rec-time">{{ formatDuration(recordElapsed) }}</span>
       <div class="rec-level"><span :style="{ transform: `scaleX(${recordLevel})` }"></span></div>
-      <button type="button" class="rec-cancel" @click="cancelRecording">Cancel</button>
+      <button type="button" class="rec-cancel" @click="cancelRecording">{{ $t('Cancel') }}</button>
       <button type="button" class="rec-stop" @click="finishRecording">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4z"/></svg>
-        Send
+        {{ $t('Send') }}
       </button>
     </div>
 
@@ -58,7 +58,7 @@
           type="button"
           class="uc-icon-btn"
           :class="{ on: showEmoji }"
-          aria-label="Insert an emoji"
+          :aria-label="$t('Insert an emoji')"
           :aria-expanded="showEmoji"
           :disabled="busy"
           @click="toggleEmoji"
@@ -69,7 +69,7 @@
         <button
           type="button"
           class="uc-icon-btn"
-          aria-label="Attach a picture"
+          :aria-label="$t('Attach a picture')"
           :disabled="busy"
           @click="fileInput?.click()"
         >
@@ -92,7 +92,7 @@
         v-if="!draft.trim() && !pending"
         type="button"
         class="uc-icon-btn mic"
-        aria-label="Record a voice note"
+        :aria-label="$t('Record a voice note')"
         :disabled="busy"
         @click="beginRecording"
       >
@@ -102,7 +102,7 @@
         v-else
         type="submit"
         class="send"
-        aria-label="Send message"
+        :aria-label="$t('Send message')"
         :disabled="busy || (!draft.trim() && !canSendAttachment)"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -117,7 +117,7 @@
         which matters the moment somebody wants one in the middle of a
         sentence.
       -->
-      <div v-if="showEmoji" ref="emojiPanel" class="emoji" role="dialog" aria-label="Emoji">
+      <div v-if="showEmoji" ref="emojiPanel" class="emoji" role="dialog" :aria-label="$t('Emoji')">
         <button
           v-for="glyph in EMOJI"
           :key="glyph"
@@ -434,7 +434,7 @@ defineExpose({ focus: () => input.value?.focus() });
 
 /* Matches the transcript's own measure, so the send button lines up with the
    right edge of the bubbles rather than with the edge of the window. */
-.composer > * { max-width: 1080px; margin-left: auto; margin-right: auto; }
+.composer > * { max-width: 1080px; margin-inline-start: auto; margin-inline-end: auto; }
 
 .uc-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
@@ -639,6 +639,6 @@ defineExpose({ focus: () => input.value?.focus() });
 .uc-icon-btn.small { width: 26px; height: 26px; flex: 0 0 26px; }
 
 @media (max-width: 768px) {
-  .composer { padding-left: 10px; padding-right: 10px; }
+  .composer { padding-inline-start: 10px; padding-inline-end: 10px; }
 }
 </style>

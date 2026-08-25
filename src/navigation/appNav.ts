@@ -176,14 +176,45 @@ export function searchTerms(query: string): string[] {
     return normalize(query).split(' ').filter(Boolean);
 }
 
-/** Label, keywords and the path itself, so "netsim" and "network simulator" both find it. */
-export function haystack(entry: NavEntry): string {
-    return normalize(`${entry.text} ${entry.keywords || ''} ${entry.to.replace(/[/-]/g, ' ')}`);
+/**
+ * A function that turns one of this registry's English strings into the
+ * reader's language, or leaves it alone.
+ *
+ * Passed IN rather than imported, so this module stays plain and node-loadable
+ * — the same reason icons are named here and drawn in the component. The
+ * component supplies `t` from `i18n/runtime`; `check:appnav` supplies identity
+ * and therefore keeps testing exactly the behaviour that shipped before this
+ * existed.
+ */
+export type Translate = (text: string) => string;
+
+const identity: Translate = text => text;
+
+/**
+ * Label, keywords and the path itself, so "netsim" and "network simulator" both
+ * find it — plus the TRANSLATED label, which is the whole reason this takes a
+ * translator.
+ *
+ * The English is kept in the haystack rather than replaced, and that is
+ * deliberate on two counts. The `keywords` in this file are English and are
+ * where most of the search's value lives (`netsim`, `iban`, `whisper`,
+ * `openalex`) — translating 27 keyword lists would be a large amount of work to
+ * make the search worse, because those are the words a developer or an operator
+ * types. And a reader of any language may know a page by its English name from a
+ * screenshot, a colleague or a URL. So both are searchable, and the only thing
+ * that changes per language is what is DISPLAYED.
+ */
+export function haystack(entry: NavEntry, t: Translate = identity): string {
+    const translated = t(entry.text);
+    const also = translated === entry.text ? '' : ` ${translated}`;
+    return normalize(
+        `${entry.text}${also} ${entry.keywords || ''} ${entry.to.replace(/[/-]/g, ' ')}`,
+    );
 }
 
-export function entryMatches(entry: NavEntry, terms: string[]): boolean {
+export function entryMatches(entry: NavEntry, terms: string[], t: Translate = identity): boolean {
     if (!terms.length) return true;
-    const hay = haystack(entry);
+    const hay = haystack(entry, t);
     return terms.every(term => hay.includes(term));
 }
 
@@ -244,10 +275,10 @@ export function pruneGroups(groups: NavGroup[], access: Access): NavGroup[] {
 }
 
 /** Filter already-pruned groups by a search query, dropping the empties. */
-export function filterGroups(groups: NavGroup[], terms: string[]): NavGroup[] {
+export function filterGroups(groups: NavGroup[], terms: string[], t: Translate = identity): NavGroup[] {
     if (!terms.length) return groups;
     return groups
-        .map(group => ({ label: group.label, items: group.items.filter(item => entryMatches(item, terms)) }))
+        .map(group => ({ label: group.label, items: group.items.filter(item => entryMatches(item, terms, t)) }))
         .filter(group => group.items.length > 0);
 }
 
@@ -703,6 +734,16 @@ export interface NavLayoutOptions {
     query: string;
     /** The "All applications" disclosure, only consulted when the query is empty. */
     showAllApps: boolean;
+    /**
+     * How to render one of this registry's labels in the reader's language.
+     *
+     * Only ever used to widen the search haystack — `navLayout` returns the
+     * registry's own entries untouched, so the component decides what to
+     * DISPLAY. Keeping those two apart is what lets `check:appnav` go on
+     * asserting reachability against the English labels while the sidebar shows
+     * Arabic.
+     */
+    translate?: Translate;
 }
 
 /**
@@ -732,19 +773,20 @@ export interface NavLayout {
  */
 export function navLayout(options: NavLayoutOptions): NavLayout {
     const { section, access, query, showAllApps } = options;
+    const t = options.translate ?? identity;
     const terms = searchTerms(query);
     const global = globalGroups(access);
 
-    if (!section) return { scoped: filterGroups(global, terms), extra: [] };
+    if (!section) return { scoped: filterGroups(global, terms, t), extra: [] };
 
-    const scoped = filterGroups(sectionGroups(section, access), terms);
+    const scoped = filterGroups(sectionGroups(section, access), terms, t);
 
     if (!terms.length) return { scoped, extra: showAllApps ? global : [] };
 
     // Searching from inside an application: never show a page twice, and label
     // the rest so it is obvious the hit is somewhere other than where you are.
     const shown = new Set(flatten(scoped).map(item => item.to));
-    const elsewhere = flatten(filterGroups(global, terms)).filter(item => !shown.has(item.to));
+    const elsewhere = flatten(filterGroups(global, terms, t)).filter(item => !shown.has(item.to));
     return { scoped, extra: elsewhere.length ? [{ label: 'All applications', items: elsewhere }] : [] };
 }
 

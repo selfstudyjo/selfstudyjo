@@ -1,20 +1,20 @@
 <template>
   <div class="user-certificates">
     <div class="header">
-      <h1>My Certificates</h1>
-      <p>View all your course and exam certificates</p>
+      <h1>{{ $t('My Certificates') }}</h1>
+      <p>{{ $t('View all your course and exam certificates') }}</p>
     </div>
 
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Loading certificates...</p>
+      <p>{{ $t('Loading certificates...') }}</p>
     </div>
 
     <div v-else-if="error" class="error-container">
       <div class="error-icon">⚠️</div>
-      <h3>Error Loading Certificates</h3>
+      <h3>{{ $t('Error Loading Certificates') }}</h3>
       <p>{{ error }}</p>
-      <button @click="fetchCertificates" class="retry-btn">Try Again</button>
+      <button @click="fetchCertificates" class="retry-btn">{{ $t('Try Again') }}</button>
     </div>
 
     <div v-else class="certificates-container">
@@ -24,14 +24,14 @@
           :class="{ active: activeTab === 'course' }"
           @click="activeTab = 'course'"
         >
-          Course Certificates <span class="badge">{{ courseCertificates.length }}</span>
+          {{ $t('Course Certificates') }} <span class="badge">{{ courseCertificates.length }}</span>
         </button>
         <button
           class="tab-btn"
           :class="{ active: activeTab === 'exam' }"
           @click="activeTab = 'exam'"
         >
-          Exam Certificates <span class="badge">{{ examCertificates.length }}</span>
+          {{ $t('Exam Certificates') }} <span class="badge">{{ examCertificates.length }}</span>
         </button>
       </div>
 
@@ -48,7 +48,7 @@
             v-if="searchQuery"
             @click="searchQuery = ''"
             class="search-clear"
-            aria-label="Clear search"
+            :aria-label="$t('Clear search')"
           >
             ✕
           </button>
@@ -57,15 +57,15 @@
 
       <section class="certificates-section" v-if="activeTab === 'course'">
         <div class="section-header">
-          <h2>Course Certificates</h2>
+          <h2>{{ $t('Course Certificates') }}</h2>
           <span class="badge">{{ filteredCourseCertificates.length }}</span>
         </div>
 
         <div v-if="filteredCourseCertificates.length === 0" class="empty-state">
           <div class="empty-icon">📜</div>
-          <h3>No Course Certificates Found</h3>
-          <p v-if="searchQuery">Try adjusting your search</p>
-          <p v-else>Complete courses to earn certificates</p>
+          <h3>{{ $t('No Course Certificates Found') }}</h3>
+          <p v-if="searchQuery">{{ $t('Try adjusting your search') }}</p>
+          <p v-else>{{ $t('Complete courses to earn certificates') }}</p>
         </div>
 
         <div v-else class="certificates-grid">
@@ -79,25 +79,25 @@
               <div class="certificate-icon course">🎓</div>
               <div class="certificate-info">
                 <h3>{{ getCourseNameFromCert(certificate) }}</h3>
-                <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
+                <p class="certificate-id">{{ $t('ID: {v0}...', { v0: certificate.certificate_id.slice(0, 8) }) }}</p>
               </div>
             </div>
             <div class="certificate-details">
               <div class="detail-item">
-                <span class="label">Completion Date:</span>
+                <span class="label">{{ $t('Completion Date:') }}</span>
                 <span class="value">{{ formatDate(certificate.date) }}</span>
               </div>
               <div class="detail-item">
-                <span class="label">Hours Completed:</span>
-                <span class="value">{{ certificate.hours }} hours</span>
+                <span class="label">{{ $t('Hours Completed:') }}</span>
+                <span class="value">{{ $t('{v0} hours', { v0: certificate.hours }) }}</span>
               </div>
               <div class="detail-item">
-                <span class="label">Status:</span>
-                <span class="status-badge valid">Valid</span>
+                <span class="label">{{ $t('Status:') }}</span>
+                <span class="status-badge valid">{{ $t('Valid') }}</span>
               </div>
             </div>
             <div class="certificate-actions">
-              <button class="view-btn">View Details</button>
+              <button class="view-btn">{{ $t('View Details') }}</button>
             </div>
           </div>
         </div>
@@ -105,15 +105,15 @@
 
       <section class="certificates-section" v-else>
         <div class="section-header">
-          <h2>Exam Certificates</h2>
+          <h2>{{ $t('Exam Certificates') }}</h2>
           <span class="badge">{{ filteredExamCertificates.length }}</span>
         </div>
 
         <div v-if="filteredExamCertificates.length === 0" class="empty-state">
           <div class="empty-icon">📝</div>
-          <h3>No Exam Certificates Found</h3>
-          <p v-if="searchQuery">Try adjusting your search</p>
-          <p v-else>Pass exams to earn certificates</p>
+          <h3>{{ $t('No Exam Certificates Found') }}</h3>
+          <p v-if="searchQuery">{{ $t('Try adjusting your search') }}</p>
+          <p v-else>{{ $t('Pass exams to earn certificates') }}</p>
         </div>
 
         <div v-else class="certificates-grid">
@@ -129,27 +129,27 @@
               </div>
               <div class="certificate-info">
                 <h3>{{ getExamNameFromCert(certificate) }}</h3>
-                <p class="certificate-id">ID: {{ certificate.certificate_id.slice(0, 8) }}...</p>
+                <p class="certificate-id">{{ $t('ID: {v0}...', { v0: certificate.certificate_id.slice(0, 8) }) }}</p>
               </div>
             </div>
             <div class="certificate-details">
               <div class="detail-item">
-                <span class="label">Taken Date:</span>
+                <span class="label">{{ $t('Taken Date:') }}</span>
                 <span class="value">{{ formatDate(certificate.taken_date) }}</span>
               </div>
               <div class="detail-item">
-                <span class="label">Expiry Date:</span>
+                <span class="label">{{ $t('Expiry Date:') }}</span>
                 <span class="value">{{ formatDate(certificate.expire_date) }}</span>
               </div>
               <div class="detail-item">
-                <span class="label">Status:</span>
+                <span class="label">{{ $t('Status:') }}</span>
                 <span class="status-badge" :class="{ valid: isExamValid(certificate), expired: !isExamValid(certificate) }">
                   {{ isExamValid(certificate) ? 'Valid' : 'Expired' }}
                 </span>
               </div>
             </div>
             <div class="certificate-actions">
-              <button class="view-btn">View Details</button>
+              <button class="view-btn">{{ $t('View Details') }}</button>
             </div>
           </div>
         </div>

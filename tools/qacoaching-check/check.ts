@@ -31,6 +31,7 @@ import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import QaCoaching from '../../src/components/jobinterview/QaCoaching.vue';
 import type { QAPair } from '../../src/services/jobinterview.service';
+import { i18n } from '../../src/i18n/runtime';
 
 let failures = 0;
 function check(label: string, ok: boolean, detail?: unknown) {
@@ -38,8 +39,25 @@ function check(label: string, ok: boolean, detail?: unknown) {
     console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${label}${ok ? '' : '  ' + JSON.stringify(detail)}`);
 }
 
+/**
+ * Render the card, with the i18n plugin installed.
+ *
+ * `app.use(i18n)` is not optional and its absence is not a subtle failure: `$t`
+ * is a global property published by that plugin, so without it every template
+ * in the app throws `_ctx.$t is not a function` at render time. This check found
+ * that within a minute of the templates being wrapped, which is the point of
+ * rendering a real component rather than inspecting its source.
+ *
+ * It also means this check now covers something new for free: the card renders
+ * in ENGLISH here, because no locale is selected and an untranslated key falls
+ * back to its own English text. So the assertions below — which are all about
+ * what text is and is not on the card — keep testing exactly what they tested
+ * before the app had three languages.
+ */
 async function render(qa: QAPair, index = 0): Promise<string> {
-    return renderToString(createSSRApp(QaCoaching as any, { qa, index }));
+    const app = createSSRApp(QaCoaching as any, { qa, index });
+    app.use(i18n);
+    return renderToString(app);
 }
 
 const full: QAPair = {

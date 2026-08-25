@@ -1,8 +1,8 @@
 <template>
   <div class="research-search-page">
     <div class="rf-page-header">
-      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> Back</button>
-      <h1 class="rf-page-title"><RfIconSearch /> Search Projects</h1>
+      <button class="rf-back-btn" @click="$router.push('/research')"><RfIconBack /> {{ $t('Back') }}</button>
+      <h1 class="rf-page-title"><RfIconSearch /> {{ $t('Search Projects') }}</h1>
     </div>
 
     <div class="rf-filters">
@@ -10,30 +10,30 @@
         v-model="searchQuery"
         type="text"
         class="rf-input"
-        placeholder="Search by title, description, keywords, owner..."
+        :placeholder="$t('Search by title, description, keywords, owner...')"
         @keyup.enter="handleSearch"
       />
       <input
         v-model="yearFilter"
         type="text"
         class="rf-input rf-input-sm"
-        placeholder="Year"
+        :placeholder="$t('Year')"
       />
       <select v-model="accessFilter" class="rf-select">
-        <option value="all">All Access</option>
-        <option value="public">Public</option>
-        <option value="team">Team</option>
+        <option value="all">{{ $t('All Access') }}</option>
+        <option value="public">{{ $t('Public') }}</option>
+        <option value="team">{{ $t('Team') }}</option>
       </select>
-      <button class="rf-btn rf-btn-primary" @click="handleSearch"><RfIconSearch /> Search</button>
+      <button class="rf-btn rf-btn-primary" @click="handleSearch"><RfIconSearch /> {{ $t('Search') }}</button>
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Searching projects...</p>
+      <p>{{ $t('Searching projects...') }}</p>
     </div>
 
     <div v-else-if="searchResults.length === 0 && hasSearched" class="rf-empty">
-      <p>No projects found matching your criteria.</p>
+      <p>{{ $t('No projects found matching your criteria.') }}</p>
     </div>
 
     <div v-else class="rf-projects-grid">
@@ -51,8 +51,8 @@
         <p class="rf-project-desc">{{ truncate(project.description, 150) }}</p>
         <div class="rf-project-meta">
           <span v-if="project.publication_year"><RfIconCalendar /> {{ project.publication_year }}</span>
-          <span><RfIconEye /> {{ project.views }} views</span>
-          <span><RfIconDownload /> {{ project.downloads }} downloads</span>
+          <span><RfIconEye /> {{ $t('{v0} views', { v0: project.views }) }}</span>
+          <span><RfIconDownload /> {{ $t('{v0} downloads', { v0: project.downloads }) }}</span>
           <span><RfIconProfile /> {{ getOwnerName(project.owner_id) }}</span>
         </div>
         <div class="rf-keywords" v-if="project.keywords && project.keywords.length">
@@ -60,7 +60,7 @@
         </div>
 
         <div v-if="canAccessProject(project) && projectFiles[project.id]?.length" class="rf-file-downloads">
-          <span class="rf-files-label"><RfIconFile /> Files:</span>
+          <span class="rf-files-label"><RfIconFile /> {{ $t('Files:') }}</span>
           <button
             v-for="file in projectFiles[project.id]"
             :key="file.id"
@@ -73,7 +73,7 @@
 
         <div class="rf-project-card-actions">
           <button class="rf-btn rf-btn-sm rf-btn-primary" @click="$router.push(`/research/project/${project.id}`)">
-            View Project
+            {{ $t('View Project') }}
           </button>
           <button
             v-if="canAccessProject(project)"
@@ -88,9 +88,9 @@
     </div>
 
     <div v-if="pagination.total_pages > 1" class="rf-pagination">
-      <button class="rf-btn rf-btn-sm" :disabled="!pagination.previous" @click="goToPage(pagination.current_page - 1)">Previous</button>
-      <span class="rf-page-info">Page {{ pagination.current_page }} of {{ pagination.total_pages }} ({{ pagination.count }} results)</span>
-      <button class="rf-btn rf-btn-sm" :disabled="!pagination.next" @click="goToPage(pagination.current_page + 1)">Next</button>
+      <button class="rf-btn rf-btn-sm" :disabled="!pagination.previous" @click="goToPage(pagination.current_page - 1)">{{ $t('Previous') }}</button>
+      <span class="rf-page-info">{{ $t('Page {v0} of {v1} ({v2} results)', { v0: pagination.current_page, v1: pagination.total_pages, v2: pagination.count }) }}</span>
+      <button class="rf-btn rf-btn-sm" :disabled="!pagination.next" @click="goToPage(pagination.current_page + 1)">{{ $t('Next') }}</button>
     </div>
   </div>
 </template>

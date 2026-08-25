@@ -340,7 +340,7 @@
 }
 
 .alternative .link {
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
   padding: 0.15rem 0.25rem;
   background: none;
   border: none;
@@ -364,7 +364,7 @@
   border-radius: var(--ve-radius-md);
   font-size: clamp(0.8rem, 1.5vw, 0.9rem);
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   border: 1px solid var(--ve-border);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -375,7 +375,7 @@
   color: var(--ve-text-err);
   background: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.12);
   border-color: rgb(var(--sfs-danger-rgb, 252 129 129) / 0.32);
-  border-left: 4px solid var(--sfs-danger, #fc8181);
+  border-inline-start: 4px solid var(--sfs-danger, #fc8181);
   box-shadow: 0 6px 20px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.18);
 }
 
@@ -383,7 +383,7 @@
   color: var(--ve-text-ok);
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.32);
-  border-left: 4px solid var(--sfs-success, #48bb78);
+  border-inline-start: 4px solid var(--sfs-success, #48bb78);
   box-shadow: 0 6px 20px rgb(var(--sfs-success-rgb, 72 187 120) / 0.18);
 }
 

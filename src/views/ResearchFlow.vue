@@ -3,14 +3,14 @@
     <div class="rf-header">
       <h1 class="rf-title">
         <span class="rf-icon-wrap"><ResearchIcon /></span>
-        Research Flow
+        {{ $t('Research Flow') }}
       </h1>
-      <p class="rf-subtitle">Manage your research projects, collaborate with peers, and explore academic papers</p>
+      <p class="rf-subtitle">{{ $t('Manage your research projects, collaborate with peers, and explore academic papers') }}</p>
     </div>
 
     <div v-if="loading" class="rf-loading">
       <div class="rf-spinner"></div>
-      <p>Loading Research Flow...</p>
+      <p>{{ $t('Loading Research Flow...') }}</p>
     </div>
 
     <div v-else class="rf-grid">
@@ -35,24 +35,24 @@
     <div v-if="dashboardData" class="rf-stats-section">
       <h2 class="rf-section-title">
         <span class="rf-icon-wrap"><StatsIcon /></span>
-        Quick Stats
+        {{ $t('Quick Stats') }}
       </h2>
       <div class="rf-stats-grid">
         <div class="rf-stat-card">
           <div class="rf-stat-value">{{ dashboardData.stats.research_files }}</div>
-          <div class="rf-stat-label">Research Files</div>
+          <div class="rf-stat-label">{{ $t('Research Files') }}</div>
         </div>
         <div class="rf-stat-card">
           <div class="rf-stat-value">{{ dashboardData.stats.collaborations }}</div>
-          <div class="rf-stat-label">Collaborations</div>
+          <div class="rf-stat-label">{{ $t('Collaborations') }}</div>
         </div>
         <div class="rf-stat-card">
           <div class="rf-stat-value">{{ dashboardData.stats.total_views }}</div>
-          <div class="rf-stat-label">Total Views</div>
+          <div class="rf-stat-label">{{ $t('Total Views') }}</div>
         </div>
         <div class="rf-stat-card">
           <div class="rf-stat-value">{{ dashboardData.stats.downloads }}</div>
-          <div class="rf-stat-label">Downloads</div>
+          <div class="rf-stat-label">{{ $t('Downloads') }}</div>
         </div>
       </div>
     </div>

@@ -290,7 +290,7 @@
 
 .lb-filters__count {
     margin: 0 0 0 auto;
-    padding-right: 0.3rem;
+    padding-inline-end: 0.3rem;
     font-size: 0.82rem;
     font-variant-numeric: tabular-nums;
     color: var(--sfs-text-muted, #a9b1d6);
@@ -808,7 +808,7 @@
 .lb-chart__table th,
 .lb-chart__table td {
     padding: 0.4rem 0.5rem;
-    text-align: left;
+    text-align: start;
     border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
     color: var(--sfs-text, #e8ecff);
     overflow-wrap: anywhere;
@@ -863,7 +863,7 @@
 
 .lb-table thead th {
     padding: 0.5rem 0.6rem;
-    text-align: left;
+    text-align: start;
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -895,7 +895,7 @@
     white-space: nowrap;
 }
 
-.lb-num { text-align: right; font-variant-numeric: tabular-nums; }
+.lb-num { text-align: end; font-variant-numeric: tabular-nums; }
 
 .lb-num--lead { font-weight: 700; font-size: 1rem; }
 
@@ -1067,13 +1067,13 @@
 }
 
 .lb-points th {
-    text-align: left;
+    text-align: start;
     font-weight: 500;
     color: var(--sfs-text-muted, #a9b1d6);
 }
 
 .lb-points td {
-    text-align: right;
+    text-align: end;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -1115,7 +1115,7 @@
 
 @media (max-width: 42rem) {
     .lb-hide-sm { display: none; }
-    .lb-filters__count { margin-left: 0; width: 100%; }
+    .lb-filters__count { margin-inline-start: 0; width: 100%; }
 }
 
 /* A ~440px phone: the filter row's controls each take a whole line rather than

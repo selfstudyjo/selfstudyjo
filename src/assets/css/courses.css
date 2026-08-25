@@ -382,7 +382,7 @@
     height: clamp(36px, 8vw, 48px);
     border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
     border-top: 3px solid var(--galaxy-accent);
-    border-right: 3px solid var(--galaxy-accent-2);
+    border-inline-end: 3px solid var(--galaxy-accent-2);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: clamp(12px, 2vw, 16px);
@@ -587,7 +587,7 @@
     font-size: var(--font-xs);
     font-weight: 700;
     white-space: nowrap;
-    margin-left: clamp(4px, 2vw, 12px);
+    margin-inline-start: clamp(4px, 2vw, 12px);
     align-self: flex-start;
     box-shadow: 0 4px 12px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
     letter-spacing: 0.04em;

@@ -240,7 +240,7 @@
   width: 64px; height: 64px;
   border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
   border-top-color: var(--mp-grad-1);
-  border-right-color: var(--mp-grad-2);
+  border-inline-end-color: var(--mp-grad-2);
   border-radius: 50%;
   animation: mp-spin 1s linear infinite;
 }
@@ -506,7 +506,7 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  text-align: right;
+  text-align: end;
 }
 .currency {
   font-size: var(--mp-fs-sm);
@@ -564,7 +564,7 @@
   font-size: var(--mp-fs-sm);
   color: var(--mp-text-soft);
   font-weight: 600;
-  text-align: right;
+  text-align: end;
   max-width: 65%;
   overflow-wrap: anywhere;
 }
@@ -597,7 +597,7 @@
 }
 .step {
   position: relative;
-  padding-left: 1.1em;
+  padding-inline-start: 1.1em;
   color: var(--mp-text-soft);
   margin-bottom: 6px;
   font-size: var(--mp-fs-sm);
@@ -711,7 +711,7 @@
 .check-icon { font-size: 1rem; flex-shrink: 0; }
 
 /* Plan header (subscription card) */
-.plan-header { width: 100%; text-align: left; margin-top: 4px; }
+.plan-header { width: 100%; text-align: start; margin-top: 4px; }
 .plan-title {
   font-size: var(--mp-fs-lg);
   font-weight: 600;
@@ -740,7 +740,7 @@
   flex: 1;
   height: 1px;
   background: linear-gradient(90deg, var(--mp-border), transparent);
-  margin-left: var(--mp-xs);
+  margin-inline-start: var(--mp-xs);
 }
 .features-list { list-style: none; padding: 0; margin: 0; }
 .feature-item {
@@ -950,7 +950,7 @@
   font-size: var(--mp-fs-sm);
   color: var(--mp-text-soft);
   font-weight: 500;
-  text-align: right;
+  text-align: end;
   overflow-wrap: anywhere;
 }
 .amount-value {
@@ -1010,7 +1010,7 @@
     justify-content: center;
   }
   .cell-label { display: none; }
-  .cell-value { text-align: left; }
+  .cell-value { text-align: start; }
 }
 
 /* ============================================================

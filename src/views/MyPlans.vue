@@ -5,30 +5,30 @@
         <div class="header-content">
           <div class="header-text">
             <h1 class="main-title">
-              <span class="title-gradient">My Learning Plans</span>
+              <span class="title-gradient">{{ $t('My Learning Plans') }}</span>
             </h1>
-            <p class="subtitle">Manage your subscriptions and track your learning journey</p>
+            <p class="subtitle">{{ $t('Manage your subscriptions and track your learning journey') }}</p>
           </div>
           <div class="header-stats">
             <div class="stat-item">
               <div class="stat-icon">📚</div>
               <div class="stat-info">
                 <div class="stat-value">{{ activeSubscriptions.length + inactiveSubscriptions.length }}</div>
-                <div class="stat-label">Total Plans</div>
+                <div class="stat-label">{{ $t('Total Plans') }}</div>
               </div>
             </div>
             <div class="stat-item">
               <div class="stat-icon">⏳</div>
               <div class="stat-info">
                 <div class="stat-value">{{ pendingPayments.length }}</div>
-                <div class="stat-label">Pending</div>
+                <div class="stat-label">{{ $t('Pending') }}</div>
               </div>
             </div>
             <div class="stat-item">
               <div class="stat-icon">✅</div>
               <div class="stat-info">
                 <div class="stat-value">{{ paidPayments.length }}</div>
-                <div class="stat-label">Verified</div>
+                <div class="stat-label">{{ $t('Verified') }}</div>
               </div>
             </div>
           </div>
@@ -42,17 +42,17 @@
           <div class="spinner-container">
             <div class="spinner"></div>
           </div>
-          <p class="loading-text">Loading your learning dashboard...</p>
+          <p class="loading-text">{{ $t('Loading your learning dashboard...') }}</p>
         </div>
 
         <!-- Error State -->
         <div v-else-if="error" class="error-state">
           <div class="error-card">
             <div class="error-icon">⚠️</div>
-            <h3>Unable to Load Plans</h3>
+            <h3>{{ $t('Unable to Load Plans') }}</h3>
             <p>{{ error }}</p>
             <button @click="fetchPlans" class="modern-btn primary-btn">
-              Try Again
+              {{ $t('Try Again') }}
             </button>
           </div>
         </div>
@@ -61,10 +61,10 @@
         <div v-else-if="subscriptions.length === 0 && pendingPayments.length === 0 && paidPayments.length === 0" class="empty-state">
           <div class="empty-card">
             <div class="empty-icon">📚</div>
-            <h3>No Learning Plans Yet</h3>
-            <p>Start your educational journey by exploring our premium plans</p>
+            <h3>{{ $t('No Learning Plans Yet') }}</h3>
+            <p>{{ $t('Start your educational journey by exploring our premium plans') }}</p>
             <router-link to="/plans" class="modern-btn primary-btn">
-              Browse Learning Plans
+              {{ $t('Browse Learning Plans') }}
             </router-link>
           </div>
         </div>
@@ -77,14 +77,14 @@
               <div class="header-main">
                 <h2 class="section-title">
                   <span class="title-icon pending-icon">⏳</span>
-                  Pending Payments
+                  {{ $t('Pending Payments') }}
                   <span class="badge pending-badge">{{ pendingPayments.length }}</span>
                 </h2>
-                <p class="section-subtitle">Complete these payments to activate your subscriptions</p>
+                <p class="section-subtitle">{{ $t('Complete these payments to activate your subscriptions') }}</p>
               </div>
               <div class="progress-tracker">
                 <div class="progress-label">
-                  <span>{{ pendingPayments.length }} of {{ allPayments.length }} pending</span>
+                  <span>{{ $t('{v0} of {v1} pending', { v0: pendingPayments.length, v1: allPayments.length }) }}</span>
                 </div>
                 <div class="progress-bar">
                   <div class="progress-fill" :style="{ width: (pendingPayments.length / allPayments.length * 100) + '%' }"></div>
@@ -102,7 +102,7 @@
                 <div class="card-header">
                   <div class="status-badge pending">
                     <span class="badge-dot"></span>
-                    PENDING
+                    {{ $t('PENDING') }}
                   </div>
                   <div class="payment-amount">
                     <span class="currency">JOD</span>
@@ -113,39 +113,39 @@
                 <div class="card-body">
                   <div class="payment-info">
                     <div class="info-row">
-                      <span class="info-label">Payment ID:</span>
+                      <span class="info-label">{{ $t('Payment ID:') }}</span>
                       <span class="info-value">{{ payment.external_id }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Plan:</span>
+                      <span class="info-label">{{ $t('Plan:') }}</span>
                       <span class="info-value plan-name">{{ getPlanTitle(payment.subscription_id) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Method:</span>
+                      <span class="info-label">{{ $t('Method:') }}</span>
                       <span class="info-value method-tag">{{ formatPaymentMethod(payment.payment_method) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Created:</span>
+                      <span class="info-label">{{ $t('Created:') }}</span>
                       <span class="info-value">{{ formatDateTime(payment.created_at) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Expires:</span>
+                      <span class="info-label">{{ $t('Expires:') }}</span>
                       <span class="info-value">{{ formatDateTime(payment.expires_at) }}</span>
                     </div>
                   </div>
 
                   <div class="payment-instructions">
                     <div class="instructions-header">
-                      <h4>Payment Instructions</h4>
+                      <h4>{{ $t('Payment Instructions') }}</h4>
                     </div>
                     <div class="instructions-content">
                       <div v-if="payment.payment_method === 'IBAN'" class="instructions">
-                        <p class="step">1. Transfer <strong>JOD {{ payment.amount }}</strong> to:</p>
+                        <p class="step">{{ $t('1. Transfer') }} <strong>{{ $t('JOD {v0}', { v0: payment.amount }) }}</strong> {{ $t('to:') }}</p>
                         <div class="account-details">
                           <div class="detail-item">
                             <span class="detail-icon">🏦</span>
                             <div class="detail-content">
-                              <span class="detail-label">Bank</span>
+                              <span class="detail-label">{{ $t('Bank') }}</span>
                               <span class="detail-value">{{ payment.bank_account?.bank_name }}</span>
                             </div>
                           </div>
@@ -159,19 +159,19 @@
                         </div>
                       </div>
                       <div v-else class="instructions">
-                        <p class="step">1. Send <strong>JOD {{ payment.amount }}</strong> via Cliq to:</p>
+                        <p class="step">{{ $t('1. Send') }} <strong>{{ $t('JOD {v0}', { v0: payment.amount }) }}</strong> {{ $t('via Cliq to:') }}</p>
                         <div class="account-details">
                           <div class="detail-item">
                             <span class="detail-icon">👤</span>
                             <div class="detail-content">
-                              <span class="detail-label">Username</span>
+                              <span class="detail-label">{{ $t('Username') }}</span>
                               <span class="detail-value">@{{ payment.cliq_account?.username }}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                       <div class="reference-section">
-                        <span class="reference-label">Reference Number:</span>
+                        <span class="reference-label">{{ $t('Reference Number:') }}</span>
                         <code class="reference-code">{{ payment.reference || payment.external_id }}</code>
                       </div>
                     </div>
@@ -182,7 +182,7 @@
                   <div class="countdown-timer">
                     <div class="timer-header">
                       <span class="timer-icon">⏰</span>
-                      <span class="timer-text">Expires in {{ getTimeRemaining(payment.expires_at) }}</span>
+                      <span class="timer-text">{{ $t('Expires in {v0}', { v0: getTimeRemaining(payment.expires_at) }) }}</span>
                     </div>
                     <div class="progress-bar time-bar">
                       <div
@@ -193,7 +193,7 @@
                   </div>
                   <div class="action-buttons">
                     <button @click="copyPaymentDetails(payment)" class="modern-btn secondary-btn">
-                      📋 Copy Details
+                      {{ $t('📋 Copy Details') }}
                     </button>
                     <button
                       @click="cancelPayment(payment.external_id)"
@@ -213,7 +213,7 @@
             <div class="section-header">
               <h2 class="section-title">
                 <span class="title-icon verified-icon">✅</span>
-                Verified Payments
+                {{ $t('Verified Payments') }}
                 <span class="badge verified-badge">{{ paidPayments.length }}</span>
               </h2>
             </div>
@@ -239,40 +239,40 @@
                 <div class="card-body">
                   <div class="payment-info">
                     <div class="info-row">
-                      <span class="info-label">Payment ID:</span>
+                      <span class="info-label">{{ $t('Payment ID:') }}</span>
                       <span class="info-value">{{ payment.external_id }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Plan:</span>
+                      <span class="info-label">{{ $t('Plan:') }}</span>
                       <span class="info-value plan-name">{{ getPlanTitle(payment.subscription_id) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Method:</span>
+                      <span class="info-label">{{ $t('Method:') }}</span>
                       <span class="info-value method-tag">{{ formatPaymentMethod(payment.payment_method) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Date:</span>
+                      <span class="info-label">{{ $t('Date:') }}</span>
                       <span class="info-value">{{ formatDateTime(payment.created_at) }}</span>
                     </div>
                   </div>
 
                   <div v-if="payment.status === 'VERIFIED'" class="verification-badge">
                     <span class="check-icon">✓</span>
-                    Subscription successfully created
+                    {{ $t('Subscription successfully created') }}
                   </div>
                 </div>
 
                 <div class="card-footer">
                   <div class="action-buttons">
                     <button @click="viewPaymentDetails(payment)" class="modern-btn secondary-btn">
-                      View Details
+                      {{ $t('View Details') }}
                     </button>
                     <button
                       v-if="payment.status === 'PAID'"
                       class="modern-btn outline-btn"
                       @click="contactAdmin"
                     >
-                      📞 Contact Admin
+                      {{ $t('📞 Contact Admin') }}
                     </button>
                   </div>
                 </div>
@@ -285,11 +285,11 @@
             <div class="section-header">
               <h2 class="section-title">
                 <span class="title-icon active-icon">🚀</span>
-                Active Subscriptions
+                {{ $t('Active Subscriptions') }}
                 <span class="badge active-badge">{{ activeSubscriptions.length }}</span>
               </h2>
               <p v-if="activeSubscriptions.length > 1" class="section-subtitle">
-                You have multiple active subscriptions. Click "Use This Plan" to switch between them.
+                {{ $t('You have multiple active subscriptions. Click "Use This Plan" to switch between them.') }}
               </p>
             </div>
 
@@ -298,7 +298,7 @@
               <div class="banner-content">
                 <span class="banner-icon">⭐</span>
                 <div class="banner-text">
-                  <span class="banner-label">Currently Active:</span>
+                  <span class="banner-label">{{ $t('Currently Active:') }}</span>
                   <strong class="banner-plan">{{ currentActiveSubscription.subscription_type?.title || currentActiveSubscription.title }}</strong>
                 </div>
               </div>
@@ -314,10 +314,10 @@
                 <div class="card-header">
                   <div class="status-badge active">
                     <span class="badge-dot"></span>
-                    ACTIVE
+                    {{ $t('ACTIVE') }}
                   </div>
                   <div v-if="isCurrentActive(subscription)" class="current-indicator">
-                    ⭐ IN USE
+                    {{ $t('⭐ IN USE') }}
                   </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
@@ -328,25 +328,25 @@
                 <div class="card-body">
                   <div class="subscription-info">
                     <div class="info-row">
-                      <span class="info-label">Plan Type:</span>
+                      <span class="info-label">{{ $t('Plan Type:') }}</span>
                       <span class="info-value">{{ subscription.subscription_type?.title || 'N/A' }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Subscription ID:</span>
+                      <span class="info-label">{{ $t('Subscription ID:') }}</span>
                       <span class="info-value">{{ subscription.external_id }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Created:</span>
+                      <span class="info-label">{{ $t('Created:') }}</span>
                       <span class="info-value">{{ formatDate(subscription.created_date) }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Expires:</span>
+                      <span class="info-label">{{ $t('Expires:') }}</span>
                       <span class="info-value">{{ formatDate(subscription.expire_date) }}</span>
                     </div>
                   </div>
 
                   <div class="features-section">
-                    <h4 class="features-title">Included Features</h4>
+                    <h4 class="features-title">{{ $t('Included Features') }}</h4>
                     <ul class="features-list">
                       <li
                         v-for="feature in subscription.subscription_type?.features"
@@ -388,7 +388,7 @@
                       {{ switchingTo === subscription.external_id ? 'Activating...' : '✨ Use This Plan' }}
                     </button>
                     <span v-else class="modern-btn success-btn disabled-look">
-                      ⭐ Currently Active
+                      {{ $t('⭐ Currently Active') }}
                     </span>
                   </div>
                 </div>
@@ -401,7 +401,7 @@
             <div class="section-header">
               <h2 class="section-title">
                 <span class="title-icon expired-icon">📅</span>
-                Previous Subscriptions
+                {{ $t('Previous Subscriptions') }}
                 <span class="badge expired-badge">{{ inactiveSubscriptions.length }}</span>
               </h2>
             </div>
@@ -415,7 +415,7 @@
                 <div class="card-header">
                   <div class="status-badge expired">
                     <span class="badge-dot"></span>
-                    EXPIRED
+                    {{ $t('EXPIRED') }}
                   </div>
                   <div class="plan-header">
                     <h3 class="plan-title">{{ subscription.title }}</h3>
@@ -426,11 +426,11 @@
                 <div class="card-body">
                   <div class="subscription-info">
                     <div class="info-row">
-                      <span class="info-label">Subscription ID:</span>
+                      <span class="info-label">{{ $t('Subscription ID:') }}</span>
                       <span class="info-value">{{ subscription.external_id }}</span>
                     </div>
                     <div class="info-row">
-                      <span class="info-label">Duration:</span>
+                      <span class="info-label">{{ $t('Duration:') }}</span>
                       <span class="info-value">{{ formatDate(subscription.created_date) }} - {{ formatDate(subscription.expire_date) }}</span>
                     </div>
                   </div>
@@ -456,20 +456,20 @@
             <div class="section-header">
               <h2 class="section-title">
                 <span class="title-icon history-icon">📊</span>
-                Payment History
+                {{ $t('Payment History') }}
                 <span class="badge history-badge">{{ allPayments.length }}</span>
               </h2>
             </div>
 
             <div class="history-table">
               <div class="table-header">
-                <div class="header-cell">Payment ID</div>
-                <div class="header-cell">Plan</div>
-                <div class="header-cell">Amount</div>
-                <div class="header-cell">Method</div>
-                <div class="header-cell">Status</div>
-                <div class="header-cell">Date</div>
-                <div class="header-cell">Actions</div>
+                <div class="header-cell">{{ $t('Payment ID') }}</div>
+                <div class="header-cell">{{ $t('Plan') }}</div>
+                <div class="header-cell">{{ $t('Amount') }}</div>
+                <div class="header-cell">{{ $t('Method') }}</div>
+                <div class="header-cell">{{ $t('Status') }}</div>
+                <div class="header-cell">{{ $t('Date') }}</div>
+                <div class="header-cell">{{ $t('Actions') }}</div>
               </div>
 
               <div class="table-body">
@@ -481,31 +481,31 @@
                 >
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Payment ID:</span>
+                      <span class="cell-label">{{ $t('Payment ID:') }}</span>
                       <span class="cell-value">{{ payment.external_id }}</span>
                     </div>
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Plan:</span>
+                      <span class="cell-label">{{ $t('Plan:') }}</span>
                       <span class="cell-value">{{ getPlanTitle(payment.subscription_id) }}</span>
                     </div>
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Amount:</span>
-                      <span class="cell-value amount-value">JOD {{ payment.amount }}</span>
+                      <span class="cell-label">{{ $t('Amount:') }}</span>
+                      <span class="cell-value amount-value">{{ $t('JOD {v0}', { v0: payment.amount }) }}</span>
                     </div>
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Method:</span>
+                      <span class="cell-label">{{ $t('Method:') }}</span>
                       <span class="cell-value">{{ payment.payment_method }}</span>
                     </div>
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Status:</span>
+                      <span class="cell-label">{{ $t('Status:') }}</span>
                       <span :class="['status-tag', payment.status.toLowerCase()]">
                         {{ payment.status }}
                       </span>
@@ -513,7 +513,7 @@
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      <span class="cell-label">Date:</span>
+                      <span class="cell-label">{{ $t('Date:') }}</span>
                       <span class="cell-value">{{ formatDateTime(payment.created_at) }}</span>
                     </div>
                   </div>
@@ -523,7 +523,7 @@
                         <button
                           class="action-btn view-btn"
                           @click="viewPaymentDetails(payment)"
-                          title="View Details"
+                          :title="$t('View Details')"
                         >
                           👁️
                         </button>
@@ -532,7 +532,7 @@
                           @click="cancelPayment(payment.external_id)"
                           class="action-btn cancel-btn"
                           :disabled="cancellingPayment === payment.external_id"
-                          title="Cancel Payment"
+                          :title="$t('Cancel Payment')"
                         >
                           {{ cancellingPayment === payment.external_id ? '⏳' : '❌' }}
                         </button>
@@ -969,7 +969,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .success-btn {

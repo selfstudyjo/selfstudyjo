@@ -3,12 +3,12 @@
     <!-- Welcome Header -->
     <div class="welcome-header glass-effect">
       <div class="header-content">
-        <h1>Welcome back, {{ username }}!</h1>
-        <p class="subtitle">Track your learning progress and achievements</p>
+        <h1>{{ $t('Welcome back, {v0}!', { v0: username }) }}</h1>
+        <p class="subtitle">{{ $t('Track your learning progress and achievements') }}</p>
       </div>
       <div class="stats-badge">
         <span class="badge-count">{{ registeredCoursesCount }}</span>
-        <span class="badge-label">Courses</span>
+        <span class="badge-label">{{ $t('Courses') }}</span>
       </div>
     </div>
 
@@ -23,10 +23,10 @@
                 <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <h2>My Courses</h2>
+            <h2>{{ $t('My Courses') }}</h2>
             <span class="card-count">{{ registeredCoursesCount }}</span>
           </div>
-          <p class="card-subtitle">Courses you're currently enrolled in</p>
+          <p class="card-subtitle">{{ $t('Courses you\'re currently enrolled in') }}</p>
         </div>
         
         <div class="courses-list">
@@ -41,8 +41,8 @@
                 <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="#94A3B8" stroke-width="1.5"/>
               </svg>
             </div>
-            <p class="empty-text">No courses enrolled yet</p>
-            <router-link to="/courses" class="empty-action">Browse Courses</router-link>
+            <p class="empty-text">{{ $t('No courses enrolled yet') }}</p>
+            <router-link to="/courses" class="empty-action">{{ $t('Browse Courses') }}</router-link>
           </div>
           <div v-else>
             <router-link 
@@ -59,7 +59,7 @@
                 </div>
                 <div class="course-info">
                   <h3 class="course-title">{{ courseDetails[course.course_external_id || course.course]?.title || 'Loading...' }}</h3>
-                  <p class="course-date">Registered: {{ formatDate(course.date_registered) }}</p>
+                  <p class="course-date">{{ $t('Registered: {v0}', { v0: formatDate(course.date_registered) }) }}</p>
                 </div>
                 <div class="course-arrow">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -81,22 +81,22 @@
                 <path d="M9 12L11 14L15 10M12 2C13.3132 2 14.6136 2.25866 15.8268 2.7612C17.0401 3.26375 18.1425 4.00035 19.0711 4.92893C19.9997 5.85752 20.7362 6.95991 21.2388 8.17317C21.7413 9.38642 22 10.6868 22 12C22 13.3132 21.7413 14.6136 21.2388 15.8268C20.7362 17.0401 19.9997 18.1425 19.0711 19.0711C18.1425 19.9997 17.0401 20.7362 15.8268 21.2388C14.6136 21.7413 13.3132 22 12 22C10.6868 22 9.38642 21.7413 8.17317 21.2388C6.95991 20.7362 5.85752 19.9997 4.92893 19.0711C4.00035 18.1425 3.26375 17.0401 2.7612 15.8268C2.25866 14.6136 2 13.3132 2 12C2 9.34784 3.05357 6.8043 4.92893 4.92893C6.8043 3.05357 9.34784 2 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h2>Certificates</h2>
+            <h2>{{ $t('Certificates') }}</h2>
             <span class="card-count">{{ totalCertificatesCount }}</span>
           </div>
-          <p class="card-subtitle">Your earned certificates</p>
+          <p class="card-subtitle">{{ $t('Your earned certificates') }}</p>
         </div>
         
         <div class="certificates-grid">
           <!-- Exam Certificates -->
           <div class="certificate-section">
-            <h3 class="section-title">Exam Certificates</h3>
+            <h3 class="section-title">{{ $t('Exam Certificates') }}</h3>
             <div v-if="loading.examCertificates" class="loading-placeholder">
               <div class="placeholder-item small"></div>
               <div class="placeholder-item small"></div>
             </div>
             <div v-else-if="examCertificates.length === 0" class="empty-state small">
-              <p class="empty-text">No exam certificates yet</p>
+              <p class="empty-text">{{ $t('No exam certificates yet') }}</p>
             </div>
             <div v-else class="certificate-list">
               <router-link 
@@ -135,13 +135,13 @@
 
           <!-- Course Certificates -->
           <div class="certificate-section">
-            <h3 class="section-title">Course Certificates</h3>
+            <h3 class="section-title">{{ $t('Course Certificates') }}</h3>
             <div v-if="loading.courseCertificates" class="loading-placeholder">
               <div class="placeholder-item small"></div>
               <div class="placeholder-item small"></div>
             </div>
             <div v-else-if="courseCertificates.length === 0" class="empty-state small">
-              <p class="empty-text">No course certificates yet</p>
+              <p class="empty-text">{{ $t('No course certificates yet') }}</p>
             </div>
             <div v-else class="certificate-list">
               <router-link 
@@ -187,10 +187,10 @@
                 <path d="M8.5 12.5L10.5 14.5L15.5 9.5M12 3C13.1819 3 14.3522 3.23279 15.4442 3.68508C16.5361 4.13738 17.5282 4.80031 18.364 5.63604C19.1997 6.47177 19.8626 7.46392 20.3149 8.55585C20.7672 9.64778 21 10.8181 21 12C21 13.1819 20.7672 14.3522 20.3149 15.4442C19.8626 16.5361 19.1997 17.5282 18.364 18.364C17.5282 19.1997 16.5361 19.8626 15.4442 20.3149C14.3522 20.7672 13.1819 21 12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 9.61305 3.94821 7.32387 5.63604 5.63604C7.32387 3.94821 9.61305 3 12 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h2>Quiz Results</h2>
+            <h2>{{ $t('Quiz Results') }}</h2>
             <span class="card-count">{{ quizResults.length }}</span>
           </div>
-          <p class="card-subtitle">Your recent quiz performance</p>
+          <p class="card-subtitle">{{ $t('Your recent quiz performance') }}</p>
         </div>
         
         <div class="quiz-results">
@@ -205,7 +205,7 @@
                 <path d="M8.5 12.5L10.5 14.5L15.5 9.5M12 3C13.1819 3 14.3522 3.23279 15.4442 3.68508C16.5361 4.13738 17.5282 4.80031 18.364 5.63604C19.1997 6.47177 19.8626 7.46392 20.3149 8.55585C20.7672 9.64778 21 10.8181 21 12C21 13.1819 20.7672 14.3522 20.3149 15.4442C19.8626 16.5361 19.1997 17.5282 18.364 18.364C17.5282 19.1997 16.5361 19.8626 15.4442 20.3149C14.3522 20.7672 13.1819 21 12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 9.61305 3.94821 7.32387 5.63604 5.63604C7.32387 3.94821 9.61305 3 12 3Z" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <p class="empty-text">No quiz results yet</p>
+            <p class="empty-text">{{ $t('No quiz results yet') }}</p>
           </div>
           <div v-else>
             <div v-for="quiz in quizResults.slice(0, 5)" :key="quiz.external_id" class="quiz-item">
@@ -239,10 +239,10 @@
                 <path d="M12 14L12 20M9 21H15M19 13C19 15.2091 17.2091 17 15 17H9C6.79086 17 5 15.2091 5 13V7C5 4.79086 6.79086 3 9 3H15C17.2091 3 19 4.79086 19 7V13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <h2>Assigned Homeworks</h2>
+            <h2>{{ $t('Assigned Homeworks') }}</h2>
             <span class="card-count">{{ totalHomeworksCount }}</span>
           </div>
-          <p class="card-subtitle">Homework for your enrolled courses</p>
+          <p class="card-subtitle">{{ $t('Homework for your enrolled courses') }}</p>
         </div>
         
         <div class="homeworks-list">
@@ -257,7 +257,7 @@
                 <path d="M12 14L12 20M9 21H15M19 13C19 15.2091 17.2091 17 15 17H9C6.79086 17 5 15.2091 5 13V7C5 4.79086 6.79086 3 9 3H15C17.2091 3 19 4.79086 19 7V13Z" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
-            <p class="empty-text">No homeworks assigned</p>
+            <p class="empty-text">{{ $t('No homeworks assigned') }}</p>
           </div>
           <div v-else>
             <router-link 
@@ -304,15 +304,15 @@
                 <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h2>Active Subscriptions</h2>
+            <h2>{{ $t('Active Subscriptions') }}</h2>
             <span class="card-status" :class="{ active: activeSubscriptions.length > 0 }">
               {{ activeSubscriptions.length > 0 ? `${activeSubscriptions.length} Active` : 'None' }}
             </span>
           </div>
           <p class="card-subtitle">
-            All your currently active subscription plans
+            {{ $t('All your currently active subscription plans') }}
             <span v-if="combinedFeaturesCount > 0" class="combined-features-hint">
-              · {{ combinedFeaturesCount }} combined feature{{ combinedFeaturesCount > 1 ? 's' : '' }}
+              {{ $t('· {v0} combined feature{v1}', { v0: combinedFeaturesCount, v1: combinedFeaturesCount > 1 ? 's' : '' }) }}
             </span>
           </p>
         </div>
@@ -327,8 +327,8 @@
                 <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="#94A3B8" stroke-width="1.5"/>
               </svg>
             </div>
-            <p class="empty-text">No active subscription</p>
-            <router-link to="/plans" class="empty-action">View Plans</router-link>
+            <p class="empty-text">{{ $t('No active subscription') }}</p>
+            <router-link to="/plans" class="empty-action">{{ $t('View Plans') }}</router-link>
           </div>
           <div v-else class="active-subscriptions-list">
             <div
@@ -347,7 +347,7 @@
 
               <div class="subscription-features">
                 <h4 class="features-title">
-                  Features included
+                  {{ $t('Features included') }}
                   <span v-if="sub.subscription_type?.features?.length" class="features-count">
                     ({{ sub.subscription_type.features.length }})
                   </span>
@@ -367,18 +367,18 @@
                     v-if="!sub.subscription_type?.features || sub.subscription_type.features.length === 0"
                     class="feature-item feature-empty"
                   >
-                    <span>No features attached to this plan</span>
+                    <span>{{ $t('No features attached to this plan') }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="subscription-meta">
                 <div class="meta-item">
-                  <span class="meta-label">Plan Name</span>
+                  <span class="meta-label">{{ $t('Plan Name') }}</span>
                   <span class="meta-value">{{ sub.title }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">Expires</span>
+                  <span class="meta-label">{{ $t('Expires') }}</span>
                   <span class="meta-value">{{ formatDate(sub.expire_date) }}</span>
                 </div>
               </div>
@@ -709,7 +709,7 @@ onMounted(async () => {
   font-size: 12px;
   font-weight: 500;
   color: var(--sfs-accent-text, #64748b);
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 .feature-empty {
@@ -720,6 +720,6 @@ onMounted(async () => {
 .combined-features-hint {
   color: var(--sfs-accent-text, #64748b);
   font-size: 12px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 </style>

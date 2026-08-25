@@ -213,7 +213,7 @@
   height: 56px;
   border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   border-top-color: var(--sfs-accent-soft, #818cf8);
-  border-right-color: var(--sfs-accent-2, #c084fc);
+  border-inline-end-color: var(--sfs-accent-2, #c084fc);
   border-radius: 50%;
   animation: spin 1.1s linear infinite;
   box-shadow: 0 0 24px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
@@ -404,7 +404,7 @@
   font-size: 0.9rem;
   color: var(--ex-text);
   font-weight: 600;
-  text-align: right;
+  text-align: end;
   word-break: break-word;
   overflow-wrap: anywhere;
   max-width: 65%;
@@ -746,7 +746,7 @@
 
 .exams-page .detail-grid .detail-value,
 .exams-page .appointment-detail-grid .detail-value {
-  text-align: left;
+  text-align: start;
   max-width: 100%;
   font-size: 0.95rem;
   color: var(--ex-text);
