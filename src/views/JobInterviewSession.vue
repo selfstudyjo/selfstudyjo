@@ -20,27 +20,29 @@
     </div>
 
     <div class="ji-stage">
-      <!-- Interviewer -->
-      <div class="ji-video-tile ji-interviewer" :class="{ speaking: currentSpeaker === 'interviewer' }">
-        <!--
-          The assets are square and this tile is 16/10, so 37.5% of the height
-          has to go somewhere. `align="0%"` takes all of it off the BOTTOM: the
-          window becomes the top 62.5% of the square, which cuts nothing from a
-          head that the square had not already cut, and gives away desk instead.
-          Measured, that is the only setting that works for all six -- Marcus and
-          James are close-ups whose hair reaches the top edge of their square, so
-          a centred `cover` (or anything above 0%) trims the crown off two of the
-          people who can be cast, one interview in three.
-        -->
-        <SpeakerMedia
-          :actor="interviewer.id"
-          :speaking="currentSpeaker === 'interviewer'"
-          align="0%"
-          :alt="interviewerTag"
-        />
-        <div class="ji-name-tag">{{ interviewerTag }}</div>
-        <div class="ji-speaking-dot"></div>
-      </div>
+      <!--
+        The interviewer.
+
+        Built in 3D rather than played back — see `stage3d/figures.ts`. The
+        framing problem the filmed version had here is simply gone with it: the
+        assets were square and this tile is 16/10, so 37.5% of the height had to
+        be thrown away and the crop that worked for four of the six cast people
+        cut the crown off the other two. A camera has no crop; it has a target
+        and a focal length, and the same shot is correct at every tile shape.
+      -->
+      <PersonStage
+        class="ji-stage3d"
+        :seats="stageSeats"
+        :speaking="currentSpeaker === 'interviewer' ? 'interviewer' : null"
+        :energy="speechEnergy"
+        grid-class="ji-stage3d-grid"
+        tile-class="ji-video-tile ji-interviewer"
+      >
+        <template #tile>
+          <div class="ji-name-tag">{{ interviewerTag }}</div>
+          <div class="ji-speaking-dot"></div>
+        </template>
+      </PersonStage>
 
       <!-- User -->
       <div class="ji-video-tile ji-self" :class="{ 'camera-off': !cameraEnabled, speaking: phase === 'answering' }">
@@ -304,7 +306,12 @@
 
 <script setup lang="ts">
 import { aiLanguage, aiLanguageHeaders, localeId, locale as activeLocale, t } from '@/i18n/runtime';
-import { planSpeech, describe as describeSpeech } from '@/utils/roomSpeech';
+import {
+  NO_SERVER, deviceCanSpeak, describe as describeSpeech, planSpeech,
+  serverVoicesFor, type ServerVoices,
+} from '@/utils/roomSpeech';
+import { createSpeechAudio } from '@/utils/speechAudio';
+import { shapeRatio } from '@/components/newscast/voiceShaper';
 import { newsService } from '@/services/news.service';
 import { ref, computed, nextTick, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -312,10 +319,10 @@ import { useAuthStore } from '@/store/auth';
 import {
   jobInterviewService, type QAPair, type EvaluationResult, type ScoreBreakdown,
 } from '@/services/jobinterview.service';
-import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
+import PersonStage from '@/components/stage3d/PersonStage.vue';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
 import {
-  INTERVIEWER_TITLES, actorById, castVoice, interviewerLabel, isActorId,
+  INTERVIEWER_TITLES, actorById, interviewerLabel, isActorId,
   pickInterviewer, type InterviewType,
 } from '@/cast/actors';
 import {
@@ -686,8 +693,19 @@ if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = lo
  * than dropped.
  */
 function castInterviewerVoice() {
-  return planSpeech(voices, localeId.value, interviewer.gender, 0, serverVoiceAvailable.value);
+  return planSpeech(
+    voices, localeId.value, interviewer.gender, 0, serverVoices.value, speechAudio.capable);
 }
+
+/**
+ * The seat list the 3D stage wants. One person, but the same shape the meeting
+ * uses so both rooms drive one component.
+ */
+const stageSeats = computed(() => [{
+  key: 'interviewer',
+  figure: interviewer.id,
+  label: interviewerTag,
+}]);
 
 /**
  * Can app 36 voice a gendered pair in this language?
@@ -699,21 +717,56 @@ function castInterviewerVoice() {
  * machine that does the server is never reached and the question is free to
  * leave unanswered.
  */
-const serverVoiceAvailable = ref(false);
+const serverVoices = ref<ServerVoices>(NO_SERVER);
 
 async function checkServerVoice(): Promise<void> {
-  if (castVoice(voices, interviewer.gender, 0, localeId.value).languageAvailable) {
-    serverVoiceAvailable.value = false;
-    return;
-  }
+  if (deviceCanSpeak(voices, localeId.value)) { serverVoices.value = NO_SERVER; return; }
   try {
-    const caps = await newsService.speechCapabilities();
-    serverVoiceAvailable.value = !!caps?.languages?.[localeId.value]?.paired;
+    serverVoices.value = serverVoicesFor(await newsService.speechCapabilities(), localeId.value);
   } catch {
     // A silent interviewer is worse than an unshaped one, and `planSpeech`
     // falls through to the platform route on its own. Nothing to report.
-    serverVoiceAvailable.value = false;
+    serverVoices.value = NO_SERVER;
   }
+}
+
+/**
+ * ASKING THE WRONG QUESTION IS WHY ARABIC WAS SILENT HERE TOO.
+ *
+ * This used to read `caps.languages[locale].paired` — "does app 36 have a male
+ * AND a female voice for this language" — and treat `false` as "the server
+ * cannot help". App 36's replica has been missing `edge-tts` for some time, so
+ * the single-voice fallback provider is in charge and `paired` is false for
+ * every language; the room therefore turned down a perfectly good Arabic voice
+ * and fell through to a platform route that says nothing on a machine with no
+ * Arabic voice installed. `serverVoicesFor` answers the question that matters —
+ * can it speak this language at all — and the gender is dealt with separately,
+ * by reshaping the audio. See `roomSpeech.ts`.
+ */
+
+/**
+ * Every server clip goes through Web Audio, which is also the fix for "the
+ * voice is too low".
+ *
+ * It was `new Audio(url)`, and an `<audio>` element cannot raise a level —
+ * `volume` only goes down — so the interviewer was stuck at whatever the
+ * provider felt like, about eight decibels below where it should be. The same
+ * graph reports {@link speechEnergy}, which is what moves the mouth on the real
+ * waveform. See `utils/speechAudio.ts`.
+ */
+const speechAudio = createSpeechAudio();
+
+/** How loud the interviewer is right now, 0…1. Drives the 3D mouth. */
+const speechEnergy = ref(0);
+let energyTimer: number | null = null;
+
+function trackEnergy(live: boolean) {
+  if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
+  if (!live) { speechEnergy.value = 0; return; }
+  // `speechSynthesis` exposes no audio at all, so the device route gets a
+  // nominal figure and the syllable model in `figures.ts` carries the movement.
+  if (!speechAudio.capable) { speechEnergy.value = 0.7; return; }
+  energyTimer = window.setInterval(() => { speechEnergy.value = speechAudio.energy(); }, 40);
 }
 
 /**
@@ -783,47 +836,29 @@ function stopSpeechKeepAlive() {
 const voiceLabel = ref('');
 
 /**
- * Play one MP3 from the server engine, and resolve when it has finished.
+ * Play one line from the server engine, and resolve when it has finished.
  *
  * Resolves rather than rejects on every failure, for the reason in `speak`'s
  * own comment: a rejection here is an interview that never reaches the next
- * question. The object URL is revoked on the way out — a twelve-question
- * interview otherwise holds twelve decoded clips for the life of the tab.
+ * question. `speechAudio` is what levels it — the raw clip is far too quiet —
+ * and what measures it, which is what moves the interviewer's mouth.
  */
-function playClip(url: string): Promise<void> {
-  return new Promise(resolve => {
-    let done = false;
-    const finishOnce = () => {
-      if (done) return;
-      done = true;
-      try { URL.revokeObjectURL(url); } catch { /* not ours to revoke */ }
-      resolve();
-    };
-    try {
-      const audio = new Audio(url);
-      audio.onended = finishOnce;
-      audio.onerror = finishOnce;
-      serverClip = audio;
-      void audio.play().catch(finishOnce);
-    } catch {
-      finishOnce();
-    }
-  });
+function playClip(url: string, ratio: number): Promise<void> {
+  trackEnergy(true);
+  return speechAudio.play(url, ratio).finally(() => trackEnergy(false));
 }
 
 /**
- * The clip currently playing, so ending the interview can stop it.
+ * Stop whatever the server engine is playing.
  *
- * `speechSynthesis.cancel()` does not reach an `<audio>` element, so without
- * this the interviewer goes on talking over whatever page the candidate opens
- * next — the same bug the Newscast documents for `speechSynthesis` itself, one
- * mechanism along.
+ * `speechSynthesis.cancel()` does not reach Web Audio, so without this the
+ * interviewer goes on talking over whatever page the candidate opens next — the
+ * same bug the Newscast documents for `speechSynthesis` itself, one mechanism
+ * along.
  */
-let serverClip: HTMLAudioElement | null = null;
-
 function stopServerClip(): void {
-  try { serverClip?.pause(); } catch { /* already gone */ }
-  serverClip = null;
+  speechAudio.stop();
+  trackEnergy(false);
 }
 
 function speechTimeoutMs(text: string): number {
@@ -864,6 +899,7 @@ function speak(text: string): Promise<void> {
       if (speaking === u) {
         speaking = null;
         stopSpeechKeepAlive();
+        trackEnergy(false);
         currentSpeaker.value = null;
       }
       resolve();
@@ -890,9 +926,19 @@ function speak(text: string): Promise<void> {
     if (plan.route === 'server') {
         try {
             const clip = await newsService.speech(
-                text, localeId.value, interviewer.gender, 1, '', false);
-            voiceLabel.value = `${clip.voice} · ${clip.provider}`;
-            await playClip(clip.url);
+                text, localeId.value, interviewer.gender, 1, '', plan.allowAnyVoice);
+            voiceLabel.value = describeSpeech(
+                plan, activeLocale.value.nativeName, `${clip.voice} · ${clip.provider}`);
+            /*
+              Branch on the MISMATCH, not on the ratio. `shapeRatio` answers 1
+              for a direction it has no honest ratio for, and reading that 1 as
+              "nothing to correct" plays the wrong voice — the original bug
+              arriving through the door built to stop it.
+            */
+            const mismatched = !!clip.gender && clip.gender !== interviewer.gender;
+            const ratio = mismatched && plan.shapeTo
+                ? shapeRatio(clip.gender, plan.shapeTo) : 1;
+            await playClip(clip.url, ratio);
             finish();
             return;
         } catch {
@@ -927,6 +973,7 @@ function speak(text: string): Promise<void> {
         speaking = u;
         speechSynthesis.speak(u);
         startSpeechKeepAlive();
+        trackEnergy(true);
         watchdog = setTimeout(() => {
           // `onend` never came. Stop whatever is still going rather than
           // leaving it to talk over the next question.
@@ -1468,6 +1515,10 @@ function persistSoon() {
 
 // ====== Flow ======
 async function startInterview() {
+  // Primed inside the gesture. An `AudioContext` created outside a click starts
+  // `suspended`, and every clip on it is then silently ignored — no error, no
+  // event, an interviewer that never makes a sound.
+  speechAudio.prime();
   starting.value = true;
   startBtnText.value = '⏳ Setting up…';
   captionSpeaker.value = 'System';
@@ -1879,6 +1930,7 @@ onUnmounted(() => {
   stopAllTracks();
   try { speechSynthesis.cancel(); } catch {}
   stopServerClip();
+  speechAudio.dispose();
 });
 </script>
 

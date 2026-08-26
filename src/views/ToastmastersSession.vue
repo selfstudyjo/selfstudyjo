@@ -23,19 +23,25 @@
       <strong>{{ $t('📋 Task:') }}</strong> {{ roleTaskInfo }}
     </div>
 
-    <div class="tm-bots-grid">
-      <div v-for="(seat, i) in SEATS" :key="seat.key" class="tm-video-tile" :class="{ speaking: currentSpeaker === seat.key }">
-        <!-- `phase` staggers the six idle drifts; in unison they read as a screensaver. -->
-        <SpeakerMedia
-          :actor="seat.actor"
-          :speaking="currentSpeaker === seat.key"
-          :phase="i * 1.7"
-          :alt="seatLabel(seat)"
-        />
-        <div class="tm-name-tag">{{ seatLabel(seat) }}</div>
+    <!--
+      The six seats. One canvas behind the whole grid, one camera per tile —
+      see `PersonStage.vue` for why it is not six canvases, and `figures.ts`
+      for why they are not six video loops any more. The grid class is this
+      page's own, so every breakpoint in `toastmasters.css` still decides the
+      layout and the stage measures whatever it decided.
+    -->
+    <PersonStage
+      :seats="stageSeats"
+      :speaking="currentSpeaker"
+      :energy="speechEnergy"
+      grid-class="tm-bots-grid"
+      tile-class="tm-video-tile"
+    >
+      <template #tile="{ seat }">
+        <div class="tm-name-tag">{{ seat.label }}</div>
         <div class="tm-speaking-dot"></div>
-      </div>
-    </div>
+      </template>
+    </PersonStage>
 
     <div class="tm-user-panel">
       <div class="tm-video-tile self" :class="{ 'camera-off': !cameraEnabled, speaking: currentSpeaker === 'self' }">
@@ -146,6 +152,19 @@
       <button @click="doLeave" class="tm-btn-danger">{{ $t('Leave') }}</button>
     </div>
 
+    <!--
+      Which voice is actually speaking.
+
+      A diagnostic rather than a caption, and it earns its line: "the bots are
+      silent in Arabic" and "this machine has no Arabic voice installed" are
+      indistinguishable from a chair, and the newscast was asked the same
+      question three separate times before it grew the same label. It appears
+      only once something has spoken.
+    -->
+    <p v-if="voiceLabel" class="tm-voice-note sfs-bidi">
+      <span aria-hidden="true">🔊</span> {{ voiceLabel }}
+    </p>
+
     <div class="tm-reports-panel" v-if="reportsVisible">
       <h2>{{ $t('📋 Meeting Reports') }}</h2>
       <div v-if="reports.roleEval && userRole!=='Speaker'" class="tm-report-card">
@@ -178,9 +197,15 @@
 </template>
 
 <script setup lang="ts">
-import { aiLanguage, aiLanguageHeaders, localeId, t } from '@/i18n/runtime';
-import { planSpeech } from '@/utils/roomSpeech';
-import { ref, computed, onUnmounted, reactive, nextTick } from 'vue';
+import { aiLanguage, aiLanguageHeaders, localeId, locale as activeLocale, t } from '@/i18n/runtime';
+import {
+    NO_SERVER, deviceCanSpeak, describe as describeSpeech, planSpeech,
+    serverVoicesFor, type ServerVoices,
+} from '@/utils/roomSpeech';
+import { shapeRatio } from '@/components/newscast/voiceShaper';
+import { createSpeechAudio } from '@/utils/speechAudio';
+import { newsService } from '@/services/news.service';
+import { ref, computed, onUnmounted, reactive, nextTick, watch } from 'vue';
 // The transcript editor. Reused from the Job Interview room rather than
 // reimplemented -- see `answer` below and `npm run check:answeredit`.
 import {
@@ -188,7 +213,7 @@ import {
     replaceSelection, resumeAtEnd, setTypedText, caretHint, wordCount,
 } from '@/utils/answerEditing';
 import { paint } from '@/theme/contrast';
-import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
+import PersonStage from '@/components/stage3d/PersonStage.vue';
 import { SEATS, actorById, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
@@ -373,8 +398,15 @@ const FOCUS_STATES: Record<string, { color: string; label: string }> = {
  * `utterance.voice` overrides `utterance.lang` and an English engine handed
  * Arabic characters produces noise rather than an accent.
  */
-function loadVoices() { voices = speechSynthesis.getVoices(); }
-loadVoices();
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  // `getVoices()` is EMPTY on the first call in every browser and
+  // `voiceschanged` is what says the list has arrived, sometimes more than
+  // once. The server probe has to run again each time it moves: asked before
+  // the voices land, every language looks unavailable and the room would reach
+  // for the network on a machine that speaks perfectly well.
+  void checkServerVoices();
+}
 speechSynthesis.onvoiceschanged = loadVoices;
 
 /**
@@ -394,7 +426,113 @@ function voiceFor(botKey: string) {
   // `seat` still spreads the six around whatever voices exist, so the three men
   // are not all read by the one male voice the browser has — that property is
   // per language now rather than English-only.
-  return { gender, ...planSpeech(voices, localeId.value, gender, seat, false) };
+  return {
+    gender,
+    ...planSpeech(voices, localeId.value, gender, seat, serverVoices.value, speechAudio.capable),
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * THE SERVER VOICE, WHICH IS WHY THIS ROOM WAS SILENT IN ARABIC
+ * ------------------------------------------------------------------ *
+ *
+ * `planSpeech` was called with a hardcoded `false` for "can app 36 speak this
+ * language", so the meeting NEVER reached the server engine. On any machine
+ * with no Arabic voice installed — which is a stock Windows install, i.e. most
+ * of them — all six seats fell straight through to the platform route and said
+ * nothing at all. Nothing was wrong with the backend; it was never called.
+ *
+ * Asked ONCE per language rather than per line: the answer cannot change
+ * mid-meeting, and a probe per sentence is a round trip per sentence against a
+ * PythonAnywhere replica whose first answer of the day takes ~20 seconds. Asked
+ * at all only when the device has no voice for the language, because on a
+ * machine that does the server is never reached and the question is free to
+ * leave unanswered.
+ */
+const serverVoices = ref<ServerVoices>(NO_SERVER);
+
+async function checkServerVoices(): Promise<void> {
+  if (deviceCanSpeak(voices, localeId.value)) { serverVoices.value = NO_SERVER; return; }
+  try {
+    serverVoices.value = serverVoicesFor(await newsService.speechCapabilities(), localeId.value);
+  } catch {
+    // A silent seat is worse than an unshaped one and `planSpeech` falls
+    // through to the platform route on its own. Nothing to report here.
+    serverVoices.value = NO_SERVER;
+  }
+}
+
+// The language can be changed from the sidebar mid-meeting, and the answer for
+// Arabic is not the answer for English.
+watch(localeId, () => { void checkServerVoices(); });
+
+/**
+ * Every server clip goes through Web Audio, and that is also the fix for "the
+ * voice is too low".
+ *
+ * The provider hands back audio around eight decibels below where it should be
+ * and an `<audio>` element cannot take that back — `volume` only goes down. It
+ * is levelled and compressed on the way out, and the same graph is what reports
+ * {@link speechEnergy}, so the mouths on the tiles move on the real waveform.
+ * See `utils/speechAudio.ts`.
+ */
+const speechAudio = createSpeechAudio();
+
+/**
+ * How loud the current speaker is, 0…1. Drives the 3D mouths.
+ *
+ * A live reading while a server clip is playing. `speechSynthesis` exposes no
+ * audio whatsoever, so on the device route this is a nominal figure and the
+ * syllable model in `figures.ts` carries the movement — good rather than
+ * excellent, and indistinguishable at tile size.
+ */
+const speechEnergy = ref(0);
+let energyTimer: number | null = null;
+
+/**
+ * What the reader is actually hearing, shown under the controls.
+ *
+ * "Is this seat really on an Arabic voice?" is a question a listener cannot
+ * answer by listening, and it is the only way to tell "this device has no
+ * Arabic voice" apart from "the meeting is broken" — which from a chair are the
+ * same thing. The newscast was asked it three times before it grew the same
+ * caption.
+ */
+const voiceLabel = ref('');
+
+/**
+ * The six seats, as the 3D stage wants them.
+ *
+ * The figure id comes off the seat rather than being listed again: the face on
+ * the tile, the name in the caption and the gender that casts the voice are
+ * three views of one person, and a second list is how they drift apart.
+ */
+const stageSeats = computed(() => SEATS.map(seat => ({
+  key: seat.key,
+  figure: seat.actor,
+  label: seatLabel(seat),
+})));
+
+/*
+  The first voice load happens HERE rather than beside `loadVoices` itself.
+
+  It reaches `serverVoices` and, through `voiceFor`, `speechAudio` — both
+  `const`s declared below the function. `<script setup>` runs top to bottom, so
+  calling it at the point of definition is a temporal-dead-zone `ReferenceError`
+  on every load of the room rather than a race that shows up occasionally.
+*/
+loadVoices();
+
+function trackEnergy(live: boolean) {
+  if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
+  if (!live) { speechEnergy.value = 0; return; }
+  if (!speechAudio.capable) { speechEnergy.value = 0.7; return; }
+  // 40 ms rather than an animation frame: this feeds a value the renderer
+  // smooths anyway, and a `setInterval` keeps running while the tab is
+  // throttled, where a rAF stops and would leave a mouth frozen open.
+  energyTimer = window.setInterval(() => {
+    speechEnergy.value = speechAudio.energy();
+  }, 40);
 }
 
 /** `🎙️ Marcus — Toastmaster`, or a plain label for the stand-in sample speaker. */
@@ -485,7 +623,13 @@ function speechTimeoutMs(text: string): number {
  * have been the one case still being cut off.
  */
 function say(text: string, botKey: string, force: boolean): Promise<void> {
-  return new Promise(resolve => {
+  // The executor is `async` because the server route below awaits a fetch.
+  // That is normally an anti-pattern — a throw inside one is swallowed rather
+  // than rejecting — and it is safe here precisely because nothing in this
+  // function is allowed to reject: every path, including every failure, goes
+  // through `done()` and resolves. A rejected `say()` is a meeting that stops.
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async resolve => {
     if (!text?.trim()) { resolve(); return; }
     captionSpeaker.value = speakerLabel(botKey, force ? t('🎙️ Sample Speaker') : t('System'));
     captionText.value = text;
@@ -496,10 +640,51 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
     }
     currentSpeaker.value = botKey;
     speechSynthesis.cancel();
+    speechAudio.stop();
+
+    const plan = voiceFor(botKey);
+
+    /*
+      THE SERVER ROUTE. Reached only when the device has no voice for this
+      language at all — a stock Windows install has none for Arabic, and many
+      Linux and Android builds have none for Chinese.
+
+      `allowAnyVoice` is the room telling app 36 it may hand over a voice of the
+      other gender, which the backend otherwise refuses; `shapeTo` is the room
+      undertaking to put it back into the right register on the way to the
+      speakers. Those two travel together on purpose — asking for a wrong-gender
+      voice without correcting it is the silent substitution that the refusal
+      exists to prevent (working rule 21).
+
+      Failure falls through to the platform route rather than aborting: "this
+      one line had no sound" is recoverable, "the meeting stopped" is not.
+    */
+    if (plan.route === 'server') {
+      const started = Date.now();
+      try {
+        const clip = await newsService.speech(
+          text, localeId.value, plan.gender, force ? 0.95 : 1, '', plan.allowAnyVoice);
+        voiceLabel.value = describeSpeech(plan, activeLocale.value.nativeName, clip.voice);
+        const mismatched = !!clip.gender && clip.gender !== plan.gender;
+        const ratio = mismatched && plan.shapeTo ? shapeRatio(clip.gender, plan.shapeTo) : 1;
+        trackEnergy(true);
+        await speechAudio.play(clip.url, ratio);
+        trackEnergy(false);
+        if (force) sampleSpeechDuration = Math.floor((Date.now() - started) / 1000);
+        currentSpeaker.value = null;
+        resolve();
+        return;
+      } catch {
+        trackEnergy(false);
+        // Nothing to tell the room: the caption already carries the line, and
+        // the platform route below is a real chance of being heard.
+      }
+    }
 
     const u = new SpeechSynthesisUtterance(text);
     speaking = u;
-    const cast = voiceFor(botKey);
+    const cast = plan;
+    voiceLabel.value = describeSpeech(plan, activeLocale.value.nativeName);
     if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
     // Set whether or not a voice was cast. With none assigned, `lang` is the
     // only thing telling the platform what language the text is in -- and an
@@ -519,6 +704,7 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
       settled = true;
       if (watchdog) clearTimeout(watchdog);
       stopSpeechKeepAlive();
+      trackEnergy(false);
       speaking = null;
       if (force) sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000);
       currentSpeaker.value = null;
@@ -530,6 +716,7 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
     setTimeout(() => {
       speechSynthesis.speak(u);
       startSpeechKeepAlive();
+      trackEnergy(true);
       watchdog = setTimeout(() => {
         // `onend` never came. Stop whatever is still queued and carry on rather
         // than leaving the room waiting on a promise that will not settle.
@@ -844,12 +1031,19 @@ function doLeave() {
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();
   stopSpeechKeepAlive();
+  speechAudio.stop();
+  trackEnergy(false);
   router.push('/toastmasters/results');
 }
 
 // ═══════ MAIN FLOW ═══════
 
 async function startMeeting() {
+  // Primed inside the gesture that starts the meeting. An `AudioContext`
+  // created outside a click starts `suspended` and every clip played on it is
+  // silently ignored — no error, no event, a meeting that runs in complete
+  // silence. Same reason the chimes elsewhere are primed on first click.
+  speechAudio.prime();
   startBtnDisabled.value = true; startBtnText.value = t('⏳ Setting up…');
   showSkipIntro.value = true; didSkipIntro.value = false;
   captionText.value = t('Requesting the microphone…');
@@ -1131,6 +1325,11 @@ onUnmounted(() => {
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();
   stopSpeechKeepAlive();
+  // The clip is an `AudioBufferSourceNode`, and `speechSynthesis.cancel()` does
+  // not reach one — without this the bots go on talking over whatever page the
+  // student opens next.
+  trackEnergy(false);
+  speechAudio.dispose();
 });
 </script>
 

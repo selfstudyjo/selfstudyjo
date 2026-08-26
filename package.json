@@ -36,9 +36,13 @@
     "audit": "npm run audit:pairs && npm run audit:ink && npm run audit:contrast",
     "i18n:wrap": "node tools/i18n-wrap/wrap.mjs",
     "i18n:logical": "node tools/i18n-wrap/logical.mjs",
-    "i18n:where": "node tools/i18n-wrap/where.mjs"
+    "i18n:where": "node tools/i18n-wrap/where.mjs",
+    "audit:rtl": "node tools/rtl-audit/audit.mjs",
+    "preview:cast": "vite --config tools/cast-preview/vite.config.ts",
+    "build:cast-preview": "vite build --config tools/cast-preview/vite.config.ts"
   },
   "dependencies": {
+    "@babylonjs/core": "^8.56.2",
     "chart.js": "^4.5.1",
     "highlight.js": "^11.11.1",
     "lucide-vue-next": "^0.562.0",

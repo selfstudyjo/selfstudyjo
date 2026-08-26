@@ -1,32 +1,25 @@
 /**
  * The six people who appear in the Toastmasters meeting room and conduct the
- * mock job interviews.
+ * mock job interviews — as ROLES, not as appearances.
  *
- * They used to be hand-drawn SVG faces with a CSS-animated mouth. They are now
- * filmed: an idle photograph for a seat that is listening, and a looping clip
- * for the one that is speaking. Two things about that are load-bearing:
+ * They were hand-drawn SVG faces once, then filmed media (an idle WebP and a
+ * looping MP4 each), and they are now built in 3D at runtime. Through all
+ * three, this file has held the same thing: who sits where, what each seat is
+ * called, and how a voice is cast for them.
  *
- * * **Both assets of a speaker are cut to the SAME square.** The supplied files
- *   were not: 1950x1064 clips against stills from 586x293 to 865x517, framed
- *   differently from each other. Cropped independently -- which is what
- *   `object-fit: cover` does on its own -- the person changes size and position
- *   the instant they stop talking, and a video tile that does that reads as
- *   broken rather than as a cut. The square each pair shares was solved
- *   numerically (see `_tmwork/analyze.py` in the workspace root, kept out of the
- *   repo) and every output is exactly {@link TILE_PX} square, which is what lets
- *   the six be laid out as one interchangeable grid.
+ * **What they LOOK like lives in `stage3d/figures.ts`**, and their names and
+ * genders are imported from there rather than restated. That split is the point
+ * of this rewrite: a name on a tile, the gender that casts the voice and the
+ * face being rendered are three views of one person, and the previous version
+ * kept the first two here and the third in a pair of asset files. A cast that
+ * agrees with its pictures only by coincidence is one that stops agreeing the
+ * first time somebody is recast — which is the same argument `seatGenders()`
+ * has always made about the session view's old private `BOT_GENDERS` map, one
+ * level up.
  *
- * * **The speaking clips loop, and the loop was built rather than found.** None
- *   of the six sources loops: each ends on a frame two to five times more
- *   different from its first frame than two consecutive frames are. A speaking
- *   loop runs for as long as the person talks, so that would jump several times
- *   per answer.
- *
- * This module is plain -- no Vue, no DOM, no asset imports -- for the same
- * reason `appNav.ts`, `linkify.ts` and `newscastEngine.ts` are: it is the half
- * that can be checked in node, by `npm run check:actors`. Asset URLs are
- * resolved in {@link ./actorAssets} and file NAMES are named here, exactly as
- * `appNav.ts` names an icon that the component draws.
+ * This module is plain — no Vue, no DOM, no asset imports — for the same reason
+ * `appNav.ts`, `linkify.ts` and `newscastEngine.ts` are: it is the half that
+ * can be checked in node, by `npm run check:actors`.
  */
 
 // One table of voice names, not two. Which voice is male and which is female
@@ -36,31 +29,34 @@
 // once in both its lists, cancelled to zero, and got cast at random. A second
 // copy here is how that happens again.
 import { genderOf, type VoiceLike } from '@/components/newscast/newscastEngine';
+import { FIGURES, type Gender as FigureGender } from '@/stage3d/figures';
 
 export type ActorId = 'marcus' | 'sara' | 'david' | 'emma' | 'sophia' | 'james';
-export type Gender = 'male' | 'female';
-
-/** Every asset, of both kinds, is this square. `check:actors` reads the files. */
-export const TILE_PX = 512;
+export type Gender = FigureGender;
 
 export interface Actor {
     id: ActorId;
     /** Shown on the tile, and spoken by the interviewer when introducing themself. */
     name: string;
     gender: Gender;
-    /** Filenames under `src/assets/actors/`, resolved by `actorAssets.ts`. */
-    idleFile: string;
-    speakFile: string;
 }
 
-export const ACTORS: readonly Actor[] = [
-    { id: 'marcus', name: 'Marcus', gender: 'male', idleFile: 'marcus_idle.webp', speakFile: 'marcus_speak.mp4' },
-    { id: 'sara', name: 'Sara', gender: 'female', idleFile: 'sara_idle.webp', speakFile: 'sara_speak.mp4' },
-    { id: 'david', name: 'David', gender: 'male', idleFile: 'david_idle.webp', speakFile: 'david_speak.mp4' },
-    { id: 'emma', name: 'Emma', gender: 'female', idleFile: 'emma_idle.webp', speakFile: 'emma_speak.mp4' },
-    { id: 'sophia', name: 'Sophia', gender: 'female', idleFile: 'sophia_idle.webp', speakFile: 'sophia_speak.mp4' },
-    { id: 'james', name: 'James', gender: 'male', idleFile: 'james_idle.webp', speakFile: 'james_speak.mp4' },
-];
+/**
+ * Derived from the 3D cast rather than written out again.
+ *
+ * `figures.ts` also holds the two newscast anchors, who are deliberately NOT
+ * meeting seats — a reader who uses both products should not be interviewed by
+ * the person who read them the news — so the six are named here and looked up
+ * there. A figure that disappears from `figures.ts` therefore fails the build
+ * here rather than rendering an empty tile.
+ */
+const MEETING_IDS: readonly ActorId[] = ['marcus', 'sara', 'david', 'emma', 'sophia', 'james'];
+
+export const ACTORS: readonly Actor[] = MEETING_IDS.map(id => {
+    const figure = FIGURES.find(f => f.id === id);
+    if (!figure) throw new Error(`figures.ts has no entry for actor ${id}`);
+    return { id, name: figure.name, gender: figure.gender };
+});
 
 const BY_ID = new Map<ActorId, Actor>(ACTORS.map(a => [a.id, a]));
 

@@ -246,8 +246,16 @@
   border-color: var(--ji-success-2);
   box-shadow: 0 0 0 4px rgb(var(--sfs-success-rgb, 16 185 129) / 0.3), 0 0 40px rgb(var(--sfs-success-rgb, 16 185 129) / 0.55);
 }
-/* The interviewer's picture is SpeakerMedia, which fills the tile from
-   `inset: 0` — the tile is the positioned ancestor, so no wrapper is needed. */
+/*
+  The interviewer is drawn by `PersonStage`, which puts one WebGL canvas behind
+  one tile. Both wrappers are plain blocks: the component's own box IS the grid
+  cell `.ji-stage` gave it, and the tile inside carries `.ji-video-tile`, so the
+  aspect ratio, the border and the speaking glow above are all still doing the
+  work. The canvas is measured against the wrapper, so it lines up with the tile
+  by construction rather than by a rule that has to agree with one.
+*/
+.ji-stage3d,
+.ji-stage3d-grid { display: block; }
 
 .ji-self { background: var(--sfs-space, #000); }
 .ji-user-video-wrap { position: absolute; inset: 0; overflow: hidden; }

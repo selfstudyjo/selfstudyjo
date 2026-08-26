@@ -121,6 +121,19 @@
 .register-background-shapes {
   position: absolute;
   inset: 0;
+  /*
+    The blurred blobs inside this are deliberately hung off the edges — that is
+    what makes them read as light spilling in rather than as three circles on a
+    page — so the box has to clip them. Without it they extend the scrollable
+    area by up to 75px and the page acquires a sideways scrollbar it has no use
+    for, which on a phone is the difference between a form that feels solid and
+    one that slides about under a thumb.
+
+    Reported by `npm run audit:rtl` in both languages, so it is not an RTL
+    fault; it is simply the sort of thing only a measurement finds.
+  */
+  overflow: hidden;
+  pointer-events: none;
 }
 .register-shape {
   position: absolute;

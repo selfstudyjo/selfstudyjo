@@ -743,7 +743,6 @@ const RTL_ALLOWED_ORPHANS: Record<string, string> = {
     'sfs-flip': 'opt-in mirror for a directional glyph',
     'sfs-noflip': 'the escape hatch back out of it',
     'sfs-ltr': 'pin a machine identifier left-to-right',
-    'sfs-bidi': 'isolate user-written content of unknown direction',
     'uuid': 'bidi isolation for an id printed in prose',
     'record-id': 'as above',
     'external-id': 'as above',

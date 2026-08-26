@@ -1,0 +1,510 @@
+/**
+ * WHO the people are, HOW they are proportioned, and HOW they move.
+ *
+ * This is the half of the 3D cast that has no Babylon in it — no engine, no
+ * mesh, no DOM — for exactly the reason `appNav.ts`, `linkify.ts`,
+ * `drawEngine.ts` and `newscastEngine.ts` are plain: it is the half that can be
+ * driven in node, by `npm run check:actors`, and every mistake in it is one
+ * nobody can see by looking at a still frame.
+ *
+ * ============================================================
+ * WHY THERE ARE NO PICTURES ANY MORE
+ * ============================================================
+ *
+ * The six meeting seats, the interviewer and the two anchors used to be filmed
+ * media: an idle WebP and a looping MP4 each, re-encoded from GIFs that were
+ * 97–110 MB apiece. It worked, and it had three faults that no amount of
+ * re-cutting fixes:
+ *
+ *  1. **A clip is a fixed performance.** Somebody who is "speaking" is playing
+ *     back a loop that has nothing to do with the sentence being spoken, so the
+ *     mouth stops when the loop wraps and carries on after the anchor has
+ *     finished. Every viewer reads that as a video of somebody else with audio
+ *     laid over it, which is exactly what it was.
+ *  2. **The framing is baked in.** The plates had to be solved numerically
+ *     against each other — scale-and-offset searches, a 26px lift of one pair
+ *     against another, seam strips with masked `backdrop-filter` to dissolve
+ *     the joins between three photographs of "one" room. All of that is
+ *     geometry a renderer does for free and exactly.
+ *  3. **They cannot react.** No eye contact, no gesture on a stressed word, no
+ *     turn toward the co-presenter at a handover, and no relationship at all to
+ *     the amplitude of the audio actually playing.
+ *
+ * The cast is built at runtime now and animated against the speech itself —
+ * against the real waveform when the line came from the server engine (see
+ * `speechAudio.ts`), and against a syllable model when it came from the
+ * device's own synthesiser, which exposes no audio to read.
+ *
+ * ============================================================
+ * WHAT LIVES HERE
+ * ============================================================
+ *
+ *  * {@link FIGURES} and {@link ANCHOR_FIGURES} — the eight people, as data.
+ *  * {@link proportionsFor} — one table of body measurements, in metres, so a
+ *    figure is scaled rather than modelled twice.
+ *  * the movement functions — pure `(time, phase, energy) => number`. Pure,
+ *    because "does the mouth ever stick open", "do all six blink together" and
+ *    "does a silent figure mouth anything" are questions with exact answers,
+ *    and a check can ask them over an hour of simulated time in a millisecond
+ *    of real time.
+ *
+ * Every function takes `t` in SECONDS and a per-figure `phase`, and not one of
+ * them reads a clock. Two figures given different phases can never fall into
+ * step — the lesson the newscast learned when both anchors breathed on the same
+ * 5.04 s cycle and the studio read as a screensaver.
+ */
+
+export type Gender = 'male' | 'female';
+
+/** Every hairstyle the builder knows how to make. */
+export type HairStyle = 'crop' | 'fade' | 'wave' | 'bob' | 'long' | 'bun';
+
+export interface Outfit {
+    /** Jacket / blazer shell. */
+    jacket: string;
+    /** Shirt or blouse under it. */
+    shirt: string;
+    /** Tie, scarf or lapel pin — the one saturated colour a person carries. */
+    accent: string;
+}
+
+export interface FigureSpec {
+    id: string;
+    /** On the name plate, and spoken by the interviewer introducing themself. */
+    name: string;
+    gender: Gender;
+    /** Base albedo of the skin. */
+    skin: string;
+    /** Hair, brows and lashes. */
+    hair: string;
+    hairStyle: HairStyle;
+    /** Iris. */
+    eye: string;
+    outfit: Outfit;
+    /**
+     * 0 slight … 1 broad. Scales shoulder width, neck and waist — the three
+     * measurements that actually distinguish two bodies at this distance.
+     */
+    build: number;
+    /** Standing height in metres. Everything else is derived from it. */
+    height: number;
+    /**
+     * Seconds of offset into every idle cycle this person runs.
+     *
+     * NOT decoration. Six figures breathing, blinking and shifting weight on
+     * one clock is the single most obvious way a room of rendered people reads
+     * as a screensaver, and it is the fault the newscast shipped first with
+     * only two of them.
+     *
+     * DISTINCT IS NOT ENOUGH: they also have to be SPREAD. The first set was
+     * 0, 1.7, 2.6, 3.9, 5.1, 6.4 — eight distinct numbers, two of which land a
+     * tenth of a second apart once they are taken modulo the 4.6-second breath
+     * cycle, which is close enough to read as two people breathing together.
+     * These are 0.6 apart across the whole cycle, and `check:actors` asserts
+     * the spacing rather than merely the distinctness.
+     */
+    phase: number;
+}
+
+/**
+ * The cast, in the order the meeting seats them.
+ *
+ * The ids and names are unchanged from the filmed version and must stay that
+ * way: app 27's prompts introduce each role by name ("Hi, I'm Emma"), the
+ * session bodies key on the seat, and the results screens store them.
+ */
+export const FIGURES: readonly FigureSpec[] = [
+    {
+        id: 'marcus', name: 'Marcus', gender: 'male',
+        skin: '#8d5a3b', hair: '#1b1310', hairStyle: 'fade', eye: '#4a2f1d',
+        outfit: { jacket: '#26304a', shirt: '#eef2f8', accent: '#b8323c' },
+        build: 0.72, height: 1.82, phase: 0,
+    },
+    {
+        id: 'sara', name: 'Sara', gender: 'female',
+        skin: '#c88f68', hair: '#241713', hairStyle: 'long', eye: '#3b2416',
+        outfit: { jacket: '#5b2f52', shirt: '#f6eef4', accent: '#d98a3a' },
+        build: 0.34, height: 1.68, phase: 1.2,
+    },
+    {
+        id: 'david', name: 'David', gender: 'male',
+        skin: '#e0b191', hair: '#6b4426', hairStyle: 'crop', eye: '#3f6079',
+        outfit: { jacket: '#333a44', shirt: '#e8eef5', accent: '#3f7fbf' },
+        build: 0.58, height: 1.78, phase: 2.4,
+    },
+    {
+        id: 'emma', name: 'Emma', gender: 'female',
+        skin: '#efc4a4', hair: '#8a5a2b', hairStyle: 'bob', eye: '#4d6b45',
+        outfit: { jacket: '#2f4a54', shirt: '#fbf3ea', accent: '#c9556b' },
+        build: 0.3, height: 1.66, phase: 3.6,
+    },
+    {
+        id: 'sophia', name: 'Sophia', gender: 'female',
+        skin: '#6f4630', hair: '#120c0a', hairStyle: 'bun', eye: '#33201a',
+        outfit: { jacket: '#3c2f56', shirt: '#f2eef8', accent: '#e0a13c' },
+        build: 0.38, height: 1.71, phase: 0.6,
+    },
+    {
+        id: 'james', name: 'James', gender: 'male',
+        skin: '#f0cbaa', hair: '#3a2a1c', hairStyle: 'wave', eye: '#5a6b4a',
+        outfit: { jacket: '#3a4152', shirt: '#eaf0f6', accent: '#4a9c7d' },
+        build: 0.64, height: 1.86, phase: 1.8,
+    },
+];
+
+/**
+ * The two anchors.
+ *
+ * Separate from the meeting cast rather than reusing two of them: a bulletin
+ * and a mock interview are different products, and a reader who uses both
+ * should not have the news read to them by the person who interviewed them
+ * yesterday. The names are the ones the Newscast already puts on the plates.
+ */
+export const ANCHOR_FIGURES: readonly FigureSpec[] = [
+    {
+        id: 'anchorFemale', name: 'Layla', gender: 'female',
+        skin: '#d09a70', hair: '#1a1210', hairStyle: 'long', eye: '#3a2417',
+        outfit: { jacket: '#7d1f3d', shirt: '#f8f1f3', accent: '#e8c169' },
+        build: 0.33, height: 1.70, phase: 3.0,
+    },
+    {
+        id: 'anchorMale', name: 'Adam', gender: 'male',
+        skin: '#b07a4f', hair: '#15100e', hairStyle: 'crop', eye: '#3b2618',
+        outfit: { jacket: '#1d2740', shirt: '#f3f7fb', accent: '#9b1f2e' },
+        build: 0.66, height: 1.80, phase: 4.2,
+    },
+];
+
+const BY_ID = new Map<string, FigureSpec>(
+    [...FIGURES, ...ANCHOR_FIGURES].map(f => [f.id, f]));
+
+export function isFigureId(id: string): boolean {
+    return BY_ID.has(id);
+}
+
+/**
+ * Throws rather than returning undefined.
+ *
+ * A seat with no figure is an empty tile in a grid of six, and an `undefined`
+ * threaded into the builder crashes three call frames away from the typo.
+ */
+export function figureById(id: string): FigureSpec {
+    const found = BY_ID.get(id);
+    if (!found) throw new Error(`unknown figure: ${id}`);
+    return found;
+}
+
+/* ------------------------------------------------------------------ *
+ * Proportions
+ * ------------------------------------------------------------------ */
+
+/**
+ * One body, in metres.
+ *
+ * Everything is a FRACTION of standing height rather than an absolute, so a
+ * 1.66 m figure and a 1.86 m one are the same person scaled — which is what
+ * makes six of them read as six people rather than as six models of differing
+ * quality. The ratios are ordinary anatomical canon (head ≈ 1/7.5 of height,
+ * shoulder span ≈ 1/4) rather than anything invented here.
+ */
+export interface Proportions {
+    headRadius: number;
+    /** Head centre above the ground. */
+    headY: number;
+    neckRadius: number;
+    neckY: number;
+    shoulderY: number;
+    shoulderHalfWidth: number;
+    chestDepth: number;
+    waistY: number;
+    waistHalfWidth: number;
+    hipY: number;
+    upperArm: number;
+    foreArm: number;
+    /** Radius of the upper arm at the shoulder. */
+    armRadius: number;
+    handLength: number;
+}
+
+export const NOMINAL_HEIGHT = 1.75;
+
+/**
+ * `build` widens the frame without lengthening it.
+ *
+ * Two figures of the same height differ at the shoulders, the neck and the
+ * waist and almost nowhere else that reads from three metres away. Applying it
+ * to LENGTH as well is what produces the "one model at different scales" look,
+ * which is worse than no variation at all.
+ */
+export function proportionsFor(spec: FigureSpec): Proportions {
+    const h = spec.height;
+    const k = h / NOMINAL_HEIGHT;
+    const broad = 0.86 + spec.build * 0.30;          // 0.86 … 1.16
+    const female = spec.gender === 'female';
+
+    return {
+        /*
+          Half the HEIGHT of a head, and it was 15% too small.
+
+          At 0.098 the head came out 9.3 into standing height; anatomical canon
+          is between seven and eight, and the difference is exactly the thing
+          that made the first renders read as a small head on a broad body. Every
+          feature is derived from this one number, so the face scaled with it and
+          nothing else had to move.
+        */
+        headRadius: 0.112 * k * (female ? 0.97 : 1),
+        headY: 0.932 * h,
+        neckRadius: 0.044 * k * (0.90 + spec.build * 0.24),
+        neckY: 0.868 * h,
+        shoulderY: 0.818 * h,
+        /*
+          Shoulder span is a QUARTER of standing height on a broad male frame,
+          and this reads narrower than that on purpose. The first render came
+          out as two busts with pot-shaped bodies: at 0.116 the span was 0.44 m
+          against a 0.13 m head, and while that ratio is anatomically right it
+          is wrong for the shot, because the deltoids and the jacket add to the
+          silhouette and the head does not. What the eye reads as "correct" here
+          is closer to three head-widths than three and a half.
+        */
+        shoulderHalfWidth: 0.104 * h * broad * (female ? 0.93 : 1),
+        chestDepth: 0.082 * h * (female ? 0.97 : 1) * (0.92 + spec.build * 0.20),
+        waistY: 0.620 * h,
+        waistHalfWidth: 0.082 * h * (female ? 0.86 : 0.98) * (0.90 + spec.build * 0.24),
+        hipY: 0.530 * h,
+        upperArm: 0.172 * h,
+        foreArm: 0.157 * h,
+        armRadius: 0.032 * h * (0.90 + spec.build * 0.26),
+        handLength: 0.108 * h,
+    };
+}
+
+/* ------------------------------------------------------------------ *
+ * Movement
+ *
+ * Every function below is pure and deterministic: `(t, phase, …) => number`.
+ * None keeps state, none reads a clock, and none uses `Math.random()` — so a
+ * check can run a figure through an hour of simulated time and assert the mouth
+ * never sticks, the eyes always reopen, and a silent figure never mouths
+ * anything at all.
+ * ------------------------------------------------------------------ */
+
+/** Deterministic 0..1 from an integer. Only ever used to space events out. */
+export function hash01(n: number): number {
+    let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b);
+    x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
+    return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
+}
+
+/** Smoothstep, clamped. */
+export function smooth(edge0: number, edge1: number, x: number): number {
+    if (edge1 === edge0) return x < edge0 ? 0 : 1;
+    const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+}
+
+export function clamp01(x: number): number {
+    return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+/**
+ * Breathing. 0 at rest, 1 at the top of an inhale.
+ *
+ * Drives the chest scale and a small lift of the shoulders, and it is the
+ * cheapest single thing that stops a figure reading as a statue. It is applied
+ * even under `prefers-reduced-motion`, at a reduced amplitude: somebody who has
+ * asked for less motion has not asked to be shown a corpse.
+ */
+export const BREATH_PERIOD = 4.6;
+
+export function breath(t: number, phase = 0): number {
+    return 0.5 - 0.5 * Math.cos((2 * Math.PI * (t + phase)) / BREATH_PERIOD);
+}
+
+/**
+ * Idle sway — the weight shift and micro-drift of somebody sitting still.
+ *
+ * Incommensurable periods, so the pose never exactly repeats. Radians for the
+ * head, metres for the body, and both tiny: the whole range is under two
+ * degrees and under a centimetre, which is below "something is moving" and
+ * above "this is a photograph".
+ */
+export interface Sway {
+    /** Head yaw, radians. */
+    headYaw: number;
+    /** Head pitch, radians. */
+    headPitch: number;
+    /** Head roll, radians. */
+    headRoll: number;
+    /** Torso lateral drift, metres. */
+    lean: number;
+}
+
+export function sway(t: number, phase = 0): Sway {
+    const u = t + phase;
+    return {
+        // 0.032 rad at the extreme, which is 1.8 degrees — the file says "under
+        // two degrees" and `check:actors` holds it to that. At 0.030 + 0.012 it
+        // was 2.4, which is not much and was not what the comment claimed.
+        headYaw: 0.022 * Math.sin(u * 0.37) + 0.010 * Math.sin(u * 0.91 + 1.3),
+        headPitch: 0.018 * Math.sin(u * 0.53 + 0.7) + 0.008 * Math.sin(u * 1.27),
+        headRoll: 0.014 * Math.sin(u * 0.29 + 2.1),
+        lean: 0.006 * Math.sin(u * 0.23 + 0.4),
+    };
+}
+
+/* ---- blinking ---- */
+
+/** Lid down and up. The human average is 100–150 ms. */
+export const BLINK_MS = 130;
+/**
+ * Shortest and longest gap between blinks, in seconds.
+ *
+ * These are a CONTRACT, not a hint, and the first version broke it. It placed
+ * one blink per `BLINK_MAX_GAP` slot at an offset of up to
+ * `MIN + 0.85 * (MAX - MIN)` = 5.8 s — so a blink late in one slot and one early
+ * in the next could be 0.6 s apart, which is a double blink rather than two
+ * blinks. Bounding the offset by `MAX - MIN` is what makes the guarantee hold:
+ * consecutive blinks are then at least `MIN` and at most `2 * MAX - MIN` apart.
+ *
+ * A 4.6 s slot puts the rate near thirteen a minute, which is inside the human
+ * range of ten to twenty at rest.
+ */
+export const BLINK_MIN_GAP = 2.0;
+export const BLINK_MAX_GAP = 4.6;
+
+/**
+ * How closed the eyelids are at `t`. 0 fully open, 1 fully shut.
+ *
+ * The schedule is DERIVED from the time rather than stored, so it costs no
+ * state, it is seekable — a check can ask about t = 3600 s without simulating
+ * an hour — and two figures with different phases never blink together. A room
+ * where six people blink in unison is uncanny in a way that is hard to name and
+ * impossible to miss.
+ */
+export function blink(t: number, phase = 0): number {
+    const u = t + phase * 7.3;
+    const slot = Math.floor(u / BLINK_MAX_GAP);
+    let closed = 0;
+    // This slot and the one before it: a blink landing near a slot boundary
+    // would otherwise be cut in half.
+    for (let s = slot - 1; s <= slot; s++) {
+        // Offset bounded by (MAX - MIN), so the gap between consecutive blinks
+        // is bounded too. See the constants.
+        const at = s * BLINK_MAX_GAP
+            + (BLINK_MAX_GAP - BLINK_MIN_GAP) * hash01(s * 2654435761);
+        const dt = u - at;
+        const dur = BLINK_MS / 1000;
+        if (dt < 0 || dt > dur) continue;
+        // Down fast, up slower. That asymmetry is what a blink looks like.
+        const x = dt / dur;
+        const shape = x < 0.42 ? smooth(0, 0.42, x) : 1 - smooth(0.42, 1, x);
+        if (shape > closed) closed = shape;
+    }
+    return clamp01(closed);
+}
+
+/* ---- speech ---- */
+
+/**
+ * How far the jaw is open at `t` while speaking. 0 shut … 1 wide.
+ *
+ * `energy` is the loudness of the audio right now, 0…1. When the line came from
+ * the server engine that is a real reading off an `AnalyserNode` — see
+ * `speechAudio.ts` — and the mouth genuinely tracks the words. When it came
+ * from the device's own `speechSynthesis`, which exposes no audio whatsoever,
+ * the caller passes a nominal energy and the syllable model below carries it.
+ *
+ * The model is three incommensurable rates around 4 Hz, which is roughly the
+ * syllable rate of connected speech in every language this platform serves,
+ * under a slower phrase envelope so the mouth rests at clause boundaries. One
+ * sine at one rate is the thing that reads as a puppet.
+ *
+ * **`energy <= 0` returns exactly 0.** A figure who is not speaking must not
+ * mouth anything, and "almost closed" is visible from across a room: it reads
+ * as chewing.
+ */
+export function jawOpen(t: number, phase = 0, energy = 1): number {
+    if (!(energy > 0)) return 0;
+    const u = (t + phase * 3.1) * 2 * Math.PI;
+    const syllable =
+        0.50 * Math.sin(u * 4.10)
+        + 0.28 * Math.sin(u * 6.70 + 1.1)
+        + 0.16 * Math.sin(u * 9.30 + 2.4);
+    // Half-wave rectified: a jaw does not open past shut in the other direction.
+    const open = Math.max(0, syllable);
+    const phrase = 0.62 + 0.38 * Math.max(0, Math.sin((t + phase) * 0.83));
+    return clamp01(open * phrase * Math.min(1, energy) * 1.25);
+}
+
+/**
+ * How spread the lips are. 0 rounded … 1 wide.
+ *
+ * Two mouth shapes is not phoneme-accurate lip sync and is not pretending to
+ * be — that needs the text, a phonemiser per language, and timing marks the Web
+ * Speech API does not provide. What it buys is that the mouth is not a hinge: a
+ * jaw that only opens and shuts reads as a nutcracker, and one more degree of
+ * freedom moving at a different rate is most of the way to reading as speech.
+ */
+export function lipSpread(t: number, phase = 0, energy = 1): number {
+    if (!(energy > 0)) return 0.12;
+    const u = (t + phase * 5.7) * 2 * Math.PI;
+    return clamp01(0.5 + 0.42 * Math.sin(u * 2.9 + 0.6) * Math.min(1, energy));
+}
+
+/**
+ * Eyebrow lift while speaking. 0 rest … 1 raised.
+ *
+ * Stress lands on the brow before it lands anywhere else, so this is what makes
+ * a talking figure look like it means the sentence. Deliberately slow — a brow
+ * tracking the syllable rate is a cartoon.
+ */
+export function browRaise(t: number, phase = 0, energy = 1): number {
+    if (!(energy > 0)) return 0.06 * breath(t, phase);
+    const u = t + phase * 2.3;
+    return clamp01(0.18 + 0.5 * Math.max(0, Math.sin(u * 1.31 + 0.9))
+        * Math.min(1, energy));
+}
+
+/**
+ * The small nod on a stressed word, in radians of extra pitch.
+ *
+ * ADDED to the idle sway rather than replacing it, so a speaking figure keeps
+ * drifting like a person instead of switching to a different animation.
+ */
+export function headEmphasis(t: number, phase = 0, energy = 1): number {
+    if (!(energy > 0)) return 0;
+    const u = t + phase * 1.9;
+    return 0.045 * Math.sin(u * 2.7 + 0.5) * Math.min(1, energy)
+        + 0.020 * Math.sin(u * 1.1);
+}
+
+/**
+ * Hand gesture amplitude. 0 hands at rest … 1 mid-gesture.
+ *
+ * Somebody who talks with their face and not their hands is the last tell, and
+ * the one that survives every other improvement. `since` is seconds since this
+ * line started: it ramps in over a second so hands do not snap up on the first
+ * syllable, and it returns exactly 0 the moment the line ends so nobody is left
+ * frozen mid-point.
+ */
+export function gesture(t: number, phase = 0, energy = 1, since = 999): number {
+    if (!(energy > 0)) return 0;
+    const ramp = smooth(0, 1.1, since);
+    const u = t + phase * 4.4;
+    const wave = 0.5 + 0.5 * Math.sin(u * 1.17 + 0.3);
+    return clamp01(ramp * wave * Math.min(1, energy));
+}
+
+/**
+ * Smoothing for a live amplitude reading.
+ *
+ * An `AnalyserNode`'s RMS jitters far faster than a jaw can move, so feeding it
+ * in raw produces a flutter rather than speech. Attack is fast and release is
+ * slow, which is how a mouth behaves: it opens on the consonant and closes over
+ * the vowel's tail.
+ */
+export function followEnergy(previous: number, target: number, dt: number): number {
+    const tau = target > previous ? 0.035 : 0.11;
+    const a = 1 - Math.exp(-Math.max(0, dt) / tau);
+    return previous + (target - previous) * a;
+}

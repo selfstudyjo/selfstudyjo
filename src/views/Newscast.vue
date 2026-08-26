@@ -63,6 +63,9 @@ import {
     canShape, normalizeLevel, shapeRatio, timeScale,
 } from '@/components/newscast/voiceShaper';
 import {
+    COMPRESSOR_RATIO, COMPRESSOR_THRESHOLD_DB, VOICE_MAKEUP,
+} from '@/utils/speechAudio';
+import {
     ApiError,
 } from '@/services/api';
 import {
@@ -302,6 +305,31 @@ const webAudioReady = ref(canShape());
 
 let audioContext: AudioContext | null = null;
 let shapedSource: AudioBufferSourceNode | null = null;
+/**
+ * Where a voice clip is plugged in, and what it passes through on the way out.
+ *
+ * `source -> compressor -> makeup -> analyser -> destination`, and each stage
+ * is there for a reason the page was reported for:
+ *
+ *  * **the compressor and the makeup gain** are the second half of "the Self
+ *    Study voice is too quiet", and the half `normalizeLevel` cannot do.
+ *    Levelling takes a clip to `TARGET_RMS` unless a peak would clip first, and
+ *    for real speech the peak is what binds — a crest factor around four means
+ *    one consonant decides the gain for the whole line and the average sits far
+ *    below the ceiling. There is no more loudness available from a gain; there
+ *    is a great deal available from reducing the crest, which is what every
+ *    broadcaster does to a voice and why a radio announcer sounds present at a
+ *    volume where a raw recording sounds distant. See `utils/speechAudio.ts`,
+ *    which uses the same numbers for the two rooms.
+ *
+ *  * **the analyser** is what the 3D anchors' mouths move on. Without it they
+ *    would be animated by a syllable model that has never heard the audio,
+ *    which is the difference between good lip movement and a mouth that closes
+ *    in the gaps between words because there genuinely is no audio in them.
+ */
+let voiceInput: AudioNode | null = null;
+let voiceAnalyser: AnalyserNode | null = null;
+let voiceProbe: Float32Array | null = null;
 /**
  * Reshaped audio, keyed by clip and ratio.
  *
@@ -798,10 +826,63 @@ function ensureAudioContext(): AudioContext | null {
     const Ctor = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!Ctor) return null;
     audioContext = new Ctor() as AudioContext;
+
+    const compressor = audioContext.createDynamicsCompressor();
+    compressor.threshold.value = COMPRESSOR_THRESHOLD_DB;
+    compressor.knee.value = 10;
+    compressor.ratio.value = COMPRESSOR_RATIO;
+    // Fast enough to catch a plosive, slow enough not to chop the front off a
+    // word; the release is long enough that it does not breathe between
+    // syllables, which is the artefact that sounds like a bad compressor.
+    compressor.attack.value = 0.004;
+    compressor.release.value = 0.18;
+
+    const makeup = audioContext.createGain();
+    makeup.gain.value = VOICE_MAKEUP;
+
+    voiceAnalyser = audioContext.createAnalyser();
+    // 1024 is ~21 ms at 48 kHz — one reading per frame, over about the shortest
+    // span in which a mouth position means anything.
+    voiceAnalyser.fftSize = 1024;
+    voiceAnalyser.smoothingTimeConstant = 0.4;
+    voiceProbe = new Float32Array(voiceAnalyser.fftSize);
+
+    compressor.connect(makeup);
+    makeup.connect(voiceAnalyser);
+    voiceAnalyser.connect(audioContext.destination);
+    voiceInput = compressor;
+
     return audioContext;
 }
 
+/**
+ * How loud the anchor is right now, 0…1. Drives the 3D mouths.
+ *
+ * Polled on an interval rather than read from the render loop, because the
+ * renderer is inside the stage and this is a Vue prop. 40 ms is well under a
+ * frame at 30 fps and the renderer smooths it anyway.
+ */
+const anchorEnergy = ref(0);
+let energyTimer: number | null = null;
+
+function trackEnergy(live: boolean) {
+    if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
+    if (!live) { anchorEnergy.value = 0; return; }
+    // `speechSynthesis` exposes no audio at all, and neither does the `<audio>`
+    // fallback path, so both get a nominal figure and the syllable model in
+    // `figures.ts` carries the movement.
+    if (!webAudioReady.value) { anchorEnergy.value = 0.7; return; }
+    energyTimer = window.setInterval(() => {
+        if (!voiceAnalyser || !voiceProbe || !shapedSource) { anchorEnergy.value = 0; return; }
+        voiceAnalyser.getFloatTimeDomainData(voiceProbe as Float32Array<ArrayBuffer>);
+        let total = 0;
+        for (let i = 0; i < voiceProbe.length; i++) total += voiceProbe[i] * voiceProbe[i];
+        anchorEnergy.value = Math.max(0, Math.min(1, Math.sqrt(total / voiceProbe.length) / 0.34));
+    }, 40);
+}
+
 function stopShaped() {
+    trackEnergy(false);
     if (!shapedSource) return;
     shapedSource.onended = null;
     try { shapedSource.stop(); } catch { /* already finished */ }
@@ -863,14 +944,18 @@ async function speakDecoded(clip: SpeechClip, ratio: number, mine: number) {
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.playbackRate.value = ratio;
-    source.connect(context.destination);
+    // Through the compressor, never straight at the destination: that is where
+    // the last ten decibels come from. See `ensureAudioContext`.
+    source.connect(voiceInput || context.destination);
     source.onended = () => {
+        trackEnergy(false);
         if (mine !== generation || status.value !== 'playing') return;
         failures = 0;
         advance();
     };
     shapedSource = source;
     source.start();
+    trackEnergy(true);
     buffering.value = false;
     prefetch(cursor.value + 1);
 }
@@ -1411,16 +1496,18 @@ onBeforeRouteLeave(() => {
         </header>
 
         <!-- Studio ------------------------------------------------------
-             One set in three columns, with BOTH presenters on camera for the
-             whole bulletin — `anchor` says whose turn it is and `speaking`
-             says whether they are actually talking, and between them they
-             decide which of the two loops is running. See NewsStudio.vue for
-             where the geometry comes from and for why the plates are video
-             layered over a still rather than the GIFs as they arrived.
+             One room, rendered, with BOTH presenters on camera for the whole
+             bulletin. `anchor` says whose turn it is, `speaking` says whether
+             they are actually talking, and `energy` is how loud they are right
+             now — which is what opens the mouth, so it closes in the gaps
+             between words because there genuinely is no audio in them. See
+             NewsStudio.vue for what the ten image files used to be doing and
+             why none of it is needed once there is a scene.
         -->
         <NewsStudio
             :anchor="deskAnchor"
             :speaking="speakingAnchor !== null"
+            :energy="anchorEnergy"
             :live="status === 'playing'"
             :male="{
                 name: anchorNames.male,

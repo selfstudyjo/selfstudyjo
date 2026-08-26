@@ -208,6 +208,49 @@
 }
 
 /*
+ * THE SUPPORT CHAT WIDGET (app 9), which is on every page of the platform.
+ *
+ * `ChatBox.vue` pins it `position: fixed; bottom; right`, so in Arabic it stays
+ * in the bottom-right corner while everything else has moved — and on a tablet
+ * that is not merely inconsistent, it lands ON the sidebar: the collapsed rail
+ * is 72px wide at the right-hand edge from 1024px up, and the launcher overlaps
+ * it by 56px. Measured, not inferred — `npm run audit:rtl` reports it as a
+ * FIXED OVERLAP on every one of the eight public routes at 1024px, and the
+ * English run is clean.
+ *
+ * The window hangs off the launcher with `right: 0`, so it has to move with it,
+ * and its own mobile rule nudges it 0.25rem past the edge to buy width.
+ *
+ * The CONTENT of the widget is not touched. It is a chat transcript: the
+ * bubbles are laid out by `dir` on the page like any other list, and the
+ * messages themselves get `unicode-bidi: plaintext` further down, which is what
+ * lets an Arabic reply and an English one sit in the same thread.
+ */
+[dir='rtl'] .chat-wrapper {
+    right: auto;
+    left: clamp(0.75rem, 1.6vw, 1.75rem);
+}
+
+[dir='rtl'] .chat-window {
+    right: auto;
+    left: 0;
+}
+
+@media (max-width: 480px) {
+    [dir='rtl'] .chat-window {
+        right: auto;
+        left: -0.25rem;
+    }
+}
+
+@media (min-width: 2560px) {
+    [dir='rtl'] .chat-wrapper {
+        right: auto;
+        left: clamp(1.5rem, 1vw, 2.5rem);
+    }
+}
+
+/*
  * A toast is pinned to a screen corner rather than to content, so it follows
  * the reading direction: an Arabic reader's eye finishes a line on the left,
  * which is where a notification should appear. Both files already collapse the
@@ -319,17 +362,41 @@
 }
 
 /*
- * The newscast set. It already pins itself `direction: ltr` and says at length
- * why — the three columns are photographs of one room, so mirroring puts both
- * presenters facing off the edge of the screen and breaks the desk at both
- * joins. This is belt and braces at the page level, because that file's rule is
- * on `.stage__room` and a future wrapper is one careless `direction: inherit`
- * away from undoing it.
+ * THE NEWSCAST SET IS A PLACE, NOT A PARAGRAPH.
+ *
+ * It pins itself `direction: ltr` and says at length why. When the set was three
+ * photographs the reason was that mirroring put both presenters facing off the
+ * edge of the picture and broke the desk at both joins; now that it is a
+ * rendered room the reason is the same one from the other end — آدم sits
+ * screen-right and the desk, the wall and the lighting are built around that, so
+ * a mirrored page would put the two anchors in each other's seats while the
+ * plates that name them stayed put.
+ *
+ * This is belt and braces at the page level, because that rule lives inside a
+ * scoped component stylesheet and a future wrapper is one careless
+ * `direction: inherit` away from undoing it.
+ *
+ * `.stage__canvas` is named as well as the stage. A canvas has no `dir` and
+ * nothing here reaches inside one — what this stops is its BOX being mirrored
+ * relative to the overlays pinned on top of it, which would read as the name
+ * plates having come loose from the presenters.
  */
 [dir='rtl'] .studio__stage,
-[dir='rtl'] .stage__room {
+[dir='rtl'] .stage__canvas {
     direction: ltr;
 }
+
+/*
+ * THE 3D CAST'S GRID DOES *NOT* GET THIS TREATMENT, AND THAT IS DELIBERATE.
+ *
+ * The meeting's six tiles and the interviewer's one are laid out by
+ * `toastmasters.css` and `job-interview.css`, and they SHOULD mirror: they are a
+ * list of participants, which reads right-to-left in Arabic like any other list.
+ * `PersonStage` sets each camera's viewport from its tile's measured rectangle,
+ * so the renderer follows whatever the stylesheet decided and needs no rule
+ * here at all. That is the whole reason the viewports are measured rather than
+ * computed — see the component.
+ */
 
 /* ------------------------------------------------------------------ *
  * 4. Bidi isolation
@@ -368,10 +435,34 @@
 [dir='rtl'] time,
 [dir='rtl'] .cert-id,
 [dir='rtl'] .amount,
+[dir='rtl'] .currency,
+[dir='rtl'] .period,
+[dir='rtl'] .course-date,
 [dir='rtl'] .price {
     direction: ltr;
     unicode-bidi: isolate;
     display: inline-block;
+}
+
+/*
+ * A PRICE IS THREE ELEMENTS, AND ISOLATING THEM ONE BY ONE IS NOT ENOUGH.
+ *
+ * The Plans page renders `JOD` `10.00` `/ year` as three sibling spans. Each of
+ * them isolated is still three isolated runs that the ALGORITHM is free to
+ * order, and inside an Arabic card it ordered them right-to-left: what a reader
+ * saw was `JOD10.00 / year` with the currency and the amount transposed and the
+ * period ahead of both. Every part was individually correct.
+ *
+ * The container has to be the isolate, so the whole price is laid out on its own
+ * terms and merely PLACED by the Arabic around it.
+ */
+[dir='rtl'] .price,
+[dir='rtl'] .plan-price {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.15rem;
 }
 
 /*
@@ -391,7 +482,47 @@
 .msg-body,
 .notification-message,
 .rf-comment-text,
-.bubble__text {
+.bubble__text,
+/*
+ * TEXT THAT CAME OUT OF A RECORD BELONGS HERE TOO, and it was the last thing
+ * on the platform still being mangled.
+ *
+ * Since the data grew three languages (`$td`), a course title, a plan
+ * description or a lesson name is Arabic when there is an Arabic translation
+ * and ENGLISH when there is not — and `$td`'s fallback means the second case is
+ * normal rather than exceptional. So a card in an Arabic list routinely holds an
+ * English paragraph, and an English paragraph in an RTL container has its
+ * trailing full stop moved to the front: what a reader saw on the free-trial
+ * plan was ".no payment" at the start of the last line.
+ *
+ * `plaintext` reads the direction out of the string itself, so a translated
+ * card and an untranslated one are each laid out correctly in the same grid,
+ * with nothing to guess and no per-record attribute. Not scoped to
+ * `[dir='rtl']`, for the same reason the block above is not: an Arabic title in
+ * an English list is mangled by exactly the same algorithm.
+ */
+.course-title,
+.course-description,
+.plan-title,
+.plan-description,
+.lesson-title,
+.runbook-title,
+.section-title,
+.exam-title,
+.quiz-title,
+/*
+ * ...and their text-bearing children.
+ *
+ * `unicode-bidi` acts on an element's own INLINE content. A wrapper whose text
+ * lives in a `<p>` inside it starts a new bidi paragraph at that `<p>`, so the
+ * rule on the wrapper reaches nothing at all — which is exactly what happened
+ * on the Plans page: `.plan-description` is a `div` around a `p`, the rule
+ * applied to the div, and the free-trial paragraph still rendered with its full
+ * stop moved to the front of the last line.
+ */
+.plan-description p,
+.course-description p,
+.section-content p {
     unicode-bidi: plaintext;
 }
 

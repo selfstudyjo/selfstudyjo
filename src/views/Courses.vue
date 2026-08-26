@@ -211,7 +211,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 // A record's own text, in the reader's language. `$td` is the template global;
 // `$td_` is the same thing for a script block, where `$td` is undefined.
-import { t, td as $td_, tdMatches, tdSort } from '@/i18n/runtime';
+import { rel, t, td as $td_, tdMatches, tdSort } from '@/i18n/runtime';
 import { useRouter } from 'vue-router';
 import { courseService, type Course, type CourseRegistration } from '@/services/course.service';
 import { notificationService } from '@/services/notification.service';
@@ -497,22 +497,27 @@ const truncateDescription = (description: string, maxLength: number = 100) => {
   return trimmed.length > maxLength ? trimmed.substring(0, maxLength) + '...' : trimmed;
 };
 
+/**
+ * "5 months ago", in the reader's language.
+ *
+ * This used to be a hand-rolled English ladder — `${n} days ago`,
+ * `${n} weeks ago` — and it was one of the more visible things wrong with the
+ * Arabic pages. Two faults, and the second is the interesting one:
+ *
+ *  * the words were never translated, so an Arabic course card read
+ *    "أضيف 5 months ago";
+ *  * and the phrase then went through the bidi algorithm inside Arabic prose,
+ *    which moved the DIGIT to the end. What a reader actually saw was
+ *    "months ago 5", i.e. the number detached from the unit it belongs to.
+ *
+ * `rel()` is `Intl.RelativeTimeFormat` in the current locale, which gets the
+ * words, the plural form and the digit order right in all three languages —
+ * and it is what the rest of the platform already uses.
+ */
 const formatDate = (dateString?: string) => {
-  if (!dateString) return 'Recently';
-  try {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  } catch {
-    return 'Recently';
-  }
+  if (!dateString) return t('Recently');
+  const value = rel(dateString);
+  return value || t('Recently');
 };
 
 // A search that narrows the set to fewer pages must not leave the reader parked

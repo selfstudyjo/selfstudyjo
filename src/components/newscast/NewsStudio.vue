@@ -1,110 +1,69 @@
-<script setup lang="ts">
-/**
- * The studio — one set, three columns, both presenters on camera the whole time.
- *
- * WHAT CHANGED, AND WHY THE OLD SHAPE HAD TO GO
- *
- * The first studio was six FULL-STAGE shots — an empty room, ليلى at the desk,
- * آدم at the desk — and the bulletin cut between them like a gallery. It read
- * well and it had one flaw that no amount of tuning fixes: for the whole of
- * every story, one of the two presenters was not in the programme. A viewer
- * watching a handover saw one person vanish and another appear in the same
- * chair. Worse, it made every voice problem invisible — the four separate
- * reports of "the man sounds like a woman" all happened while the man was, for
- * most of the bulletin, not on screen to be looked at.
- *
- * The set is now three plates that join into one continuous room:
- *
- *   left    آدم at his desk, facing in
- *   centre  the lighting rig, the video wall, and the desk front
- *   right   ليلى at her desk, facing in
- *
- * Both anchors are always there, and — since the listening loops arrived —
- * both are always MOVING. What changes when the rota moves is which of the two
- * is speaking: each presenter has a `speak` take and an `idle` take (them
- * listening to the other), and the cut is between takes, not between motion and
- * a photograph. That last part was the remaining tell: with one loop each, the
- * presenter who was not reading sat frozen on a WebP for the whole story, and
- * half the picture being a still is exactly what makes an automated bulletin
- * look automated.
- *
- * WHERE THE GEOMETRY COMES FROM — none of it is guessed
- *
- * Every number in the CSS was measured off the supplied files:
- *
- *   anchor plate  2050 tall after the letterbox comes off  -> aspect 0.4468
- *   set plates    724 wide, all three, once their flat pad columns come off
- *   set column    137 + 268 + 383 = 788 tall, stacked
- *   side column   788 * 0.4468 = 352
- *   the stage     352 + 724 + 352 = 1428 x 788  ->  1.812
- *
- * So the three columns are one grid row — equal height by construction, not by
- * a rule that has to be maintained — and the two side columns are equal width
- * because they are the same plate shape. 1.812 is within 1% of the 1408x768
- * the old stage used, which is why nothing else on the page had to move.
- *
- * FOUR RENDERS, FOUR DIFFERENT FRAMINGS, ONE ROOM
- *
- * The four GIFs are 916x2260 and 962x2154 with assorted letterboxing, so not
- * one of them is usable as supplied. Two corrections, both solved numerically:
- *
- *   1. Each LISTENING plate is matched to its own speaking plate by a scale and
- *      offset search scored on the SET only — the middle third is masked out,
- *      because the presenter is the one thing that legitimately differs between
- *      the two clips. Blended, the result is sharp everywhere and the residual
- *      is near-black, which is why an anchor does not jump on a handover.
- *   2. The FEMALE pair is then lifted 26 column-px against the male. The two
- *      renders sit at different heights in the room: correlating their row
- *      gradients scores 0.047 as supplied and 0.442 lifted, and the desk, the
- *      back counter and the warm desk lamp all come level together at that one
- *      offset. Male is the reference because it needs no change and has the
- *      least headroom left in its source. The set column lands within 5px of
- *      both, which is 0.6% of the column.
- *
- * All four are forced to exactly 640x1432 rather than `-2`-rounded: their
- * aspects differ by under 0.15%, and identical boxes are worth more than a
- * rounding difference that would show as a 1px step at a seam.
- *
- * WHY VIDEO AND NOT THE GIFs
- *
- * The four GIFs are 97-110 MB each, 415 MB together. GitHub refuses anything
- * over 100 MB outright and a public page could not serve them regardless.
- * Re-encoded to H.264 they are 236-355 KB — denoised first, because GIF dither
- * is what the encoder would otherwise spend its whole bitrate on — the two
- * stills are WebP at 89 and 135 KB, and the three set plates are WebP at 46 KB
- * together. The whole studio is 1.45 MB:
- *
- *   ffmpeg -i <gif> -vf "crop=W:H:X:Y,hqdn3d=4:3:6:4,scale=640:1432:flags=lanczos" \
- *          -c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p -an -movflags +faststart <mp4>
- *
- * THE STILL UNDERNEATH IS NOT A FALLBACK
- *
- * Each anchor's WebP sits behind their videos at full opacity and a video fades
- * in on top. One arrangement covers the first paint before anything has
- * buffered, the poster for a browser that refuses autoplay, and
- * `prefers-reduced-motion` — where the loops are switched off and the studio
- * still looks right. It is taken from the IDLE loop, because idle is what the
- * page opens on and returns to between bulletins.
- */
+<!--
+  The studio — one room, two anchors, and a video wall between them.
 
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  ============================================================
+  WHAT THIS USED TO BE, AND WHY IT IS NOT THAT ANY MORE
+  ============================================================
+
+  Ten files: two anchor stills, four anchor loops and four plates of a "set"
+  that were three photographs of three different rooms. Most of this component
+  was the arithmetic of making those three photographs look like one place —
+
+    * each LISTENING plate matched to its speaking plate by a scale-and-offset
+      search scored on the set only, with the middle third masked out;
+    * the female pair lifted 26 column-pixels against the male, because the two
+      renders sat at different heights in "the" room;
+    * two masked `backdrop-filter` strips to DISSOLVE the column joins, tuned
+      until the luminance gradient at the seam measured 1.15x the picture's own
+      rather than 20.6x;
+    * a separately-photographed desk front laid across the bottom 29%, because
+      that was the only way to hide the seam where the eye rests.
+
+  Every one of those was solving, in image space, a problem that does not exist
+  in a scene. There is one room now, the anchors are in it, and the desk is one
+  object: the joins cannot be visible because there are no joins, and the
+  columns cannot come apart when `max-height` squeezes the stage because there
+  are no columns.
+
+  The half that no amount of image work could ever have bought is the motion.
+  A loop is a fixed performance: the mouth stopped when it wrapped and carried
+  on after the anchor had finished, which every viewer reads as a video of
+  somebody else with audio laid over it. The anchors are animated against the
+  ACTUAL WAVEFORM of the clip playing (see `utils/speechAudio.ts`), they blink
+  on human intervals, they breathe, and the one who is not reading turns and
+  looks at the one who is.
+
+  ============================================================
+  WHAT THIS COMPONENT STILL OWNS
+  ============================================================
+
+  Everything with words on it. The on-air bug, the two name plates, the lower
+  third, the progress bar and the ticker strip are DOM, exactly as they were:
+  they are text, so they belong in the document where they can be translated,
+  selected, read by a screen reader and coloured by the theme. Only the room is
+  drawn.
+
+  The plates are pinned from {@link PLATE_X} rather than from a percentage in
+  the stylesheet. The old pair — 12.33% and 87.67% — were the midpoints of two
+  photographic plates written down a second time, correct for exactly as long
+  as nobody moved anything.
+
+  MALE IS SCREEN-RIGHT AND FEMALE IS SCREEN-LEFT, which is the other way round
+  from the photographed set. It is decided once, in `layout.ts`, and both the
+  renderer and these plates read it from there.
+-->
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import { Radio, Volume2 } from 'lucide-vue-next';
 
-import maleStill from '@/assets/studio/anchor_male.webp';
-import maleSpeak from '@/assets/studio/anchor_male_speak.mp4';
-import maleIdle from '@/assets/studio/anchor_male_idle.mp4';
-import femaleStill from '@/assets/studio/anchor_female.webp';
-import femaleSpeak from '@/assets/studio/anchor_female_speak.mp4';
-import femaleIdle from '@/assets/studio/anchor_female_idle.mp4';
-import setLamp from '@/assets/studio/set_lamp.webp';
-import setScreen from '@/assets/studio/set_screen.webp';
-import setTable from '@/assets/studio/set_table.webp';
-import setDeck from '@/assets/studio/set_deck.webp';
+import { PLATE_X } from '@/stage3d/layout';
+import { hasWebGL } from '@/stage3d/loader';
+import type { StudioStage } from '@/stage3d/studioStage';
 
 type AnchorId = 'male' | 'female';
 
-/** Left to right, which is also the order the two columns are drawn in. */
-const SIDES: AnchorId[] = ['male', 'female'];
+/** Left to right, which is also the order the plates are drawn in. */
+const SIDES: AnchorId[] = ['female', 'male'];
 
 /** Everything the plate under one presenter needs. */
 interface AnchorInfo {
@@ -118,8 +77,16 @@ interface AnchorInfo {
 const props = defineProps<{
     /** Whose turn it is, or null between bulletins. Both stay on camera either way. */
     anchor: AnchorId | null;
-    /** Is that person actually talking right now? Drives still vs loop. */
+    /** Is that person actually talking right now? */
     speaking: boolean;
+    /**
+     * How loud they are, 0…1.
+     *
+     * A live reading off the clip that is playing, which is what makes the
+     * mouth open on the words. Absent, the syllable model in `figures.ts`
+     * carries it — see `jawOpen`.
+     */
+    energy?: number;
     /** On air, as opposed to cued up and ready. */
     live: boolean;
     male: AnchorInfo;
@@ -144,119 +111,92 @@ const props = defineProps<{
     screenSource?: string;
 }>();
 
-const ANCHORS: Record<AnchorId, { still: string; speak: string; idle: string }> = {
-    male: { still: maleStill, speak: maleSpeak, idle: maleIdle },
-    female: { still: femaleStill, speak: femaleSpeak, idle: femaleIdle },
-};
-
-/** The two takes each presenter has. `idle` is them listening, not a freeze. */
-type Take = 'idle' | 'speak';
-const TAKES: Take[] = ['idle', 'speak'];
-
 const info = computed<Record<AnchorId, AnchorInfo>>(() => ({
     male: props.male,
     female: props.female,
 }));
 
+/* ---- the renderer ---------------------------------------------------- */
+
+const stageEl = ref<HTMLElement | null>(null);
+const canvasEl = ref<HTMLCanvasElement | null>(null);
 /**
- * Which anchor is *speaking*, or null when nobody is.
+ * `shallowRef`, not `ref`.
  *
- * Only ever one. Two mouths moving at once is the single most obviously wrong
- * thing a two-anchor studio can do, and it is what a naive "play while the
- * bulletin is live" rule produces on every handover. The other presenter is
- * NOT frozen — see `takeFor`.
+ * The stage owns a Babylon scene with tens of thousands of objects in it, and a
+ * deep reactive proxy over that is not slow, it is fatal — Vue would walk the
+ * whole graph on creation and then intercept every property access the render
+ * loop makes, sixty times a second.
  */
-const talking = computed<AnchorId | null>(() =>
-    props.speaking && props.anchor ? props.anchor : null);
+const stage = shallowRef<StudioStage | null>(null);
+const supported = ref(true);
+/** True once the renderer is up. Until then the flat backdrop stands in. */
+const ready = ref(false);
 
-/**
- * Which take is on camera for a given presenter.
- *
- * The whole point of shipping a second loop each: a newsroom two-shot has
- * nobody holding still. Before, the presenter who was not reading sat on a
- * WebP and the half of the screen they occupied was a photograph — which is
- * exactly what makes an automated bulletin look automated, and it was worse
- * than the old cutting-between-shots version because the frozen one was on
- * screen the whole time rather than off it.
- */
-function takeFor(side: AnchorId): Take {
-    return talking.value === side ? 'speak' : 'idle';
-}
+let observer: ResizeObserver | null = null;
 
-/**
- * A third-party picture that failed to load leaves the wall washed in nothing —
- * a dark rectangle where the ident used to be, which reads as the wall being
- * broken rather than as a missing photo. Remember the miss and fall back to the
- * ident, which is what the wall shows between stories anyway.
- */
-const failedImage = ref('');
+onMounted(async () => {
+    supported.value = hasWebGL();
+    if (!supported.value || !canvasEl.value || !stageEl.value) return;
 
-const wallImage = computed(() =>
-    props.articleImage && props.articleImage !== failedImage.value
-        ? props.articleImage
-        : '');
+    // Dynamic, and this is what keeps Babylon out of every other route's
+    // bundle. `hasWebGL()` above is deliberately synchronous and dependency-
+    // free so the fallback can be decided without downloading the renderer to
+    // find out it cannot run.
+    const { createStudioStage } = await import('@/stage3d/studioStage');
+    if (!canvasEl.value || !stageEl.value) return;       // unmounted mid-download
 
-/**
- * ALL FOUR LOOPS RUN, ALL THE TIME. The visible one is chosen with opacity.
- *
- * Pausing the hidden take and starting it on the cut would be the obvious
- * saving and it is the wrong trade twice over: a resumed video shows one
- * frozen frame while the decoder catches up — right at the handover, the one
- * moment a viewer is looking at that half of the screen — and the two takes
- * would drift apart in time, so a presenter would visibly reset their posture
- * whenever they stopped speaking. Left running, the cut lands mid-gesture in
- * both takes, which is what a two-camera gallery actually looks like.
- *
- * The cost is four muted 640x1432 clips decoding at once. They are 236-355 KB
- * each, fully buffered within a second, and hardware-decoded; `preload="auto"`
- * on all four is less traffic than one photograph on most news sites.
- */
-const videos = ref<Record<string, HTMLVideoElement | null>>({});
+    stage.value = await createStudioStage(canvasEl.value, { hostEl: stageEl.value });
+    ready.value = true;
+    push();
 
-/**
- * Both presenters breathing on exactly the same 5.04s cycle reads as a
- * screensaver. Nudging one take off the other's phase is one line and it is
- * the difference between two people and two copies of one animation.
- */
-const PHASE: Record<string, number> = {
-    'male-idle': 0, 'male-speak': 1.7,
-    'female-idle': 2.6, 'female-speak': 3.9,
-};
-
-function start(element: HTMLVideoElement, key: string) {
-    const offset = PHASE[key] ?? 0;
-    // `duration` is NaN until metadata lands, so seek when it is known rather
-    // than seeking to a point past the end and having the browser clamp to 0.
-    const seek = () => {
-        if (Number.isFinite(element.duration) && element.duration > offset) {
-            element.currentTime = offset;
-        }
-    };
-    if (element.readyState >= 1) seek();
-    else element.addEventListener('loadedmetadata', seek, { once: true });
-    // Autoplay of a muted video is allowed everywhere, but a refusal is still a
-    // rejected promise nobody sees — and the still underneath means a refusal
-    // costs motion and nothing else.
-    element.play().catch(() => undefined);
-}
-
-function setVideo(side: AnchorId, take: Take, element: unknown) {
-    const key = `${side}-${take}`;
-    const video = (element as HTMLVideoElement) || null;
-    videos.value[key] = video;
-    // Template refs are assigned during mount, so this is where a loop first
-    // gets going; there is no watcher to do it, because none of them ever stop.
-    if (video) start(video, key);
-}
-
-onMounted(() => {
-    for (const [key, element] of Object.entries(videos.value)) {
-        if (element && element.paused) start(element, key);
-    }
+    observer = new ResizeObserver(() => stage.value?.resize());
+    observer.observe(stageEl.value);
 });
 
 onBeforeUnmount(() => {
-    for (const element of Object.values(videos.value)) element?.pause();
+    observer?.disconnect();
+    observer = null;
+    // Releases the WebGL context immediately. Left to the collector, a reader
+    // who opens the Newscast three times in a session is three contexts closer
+    // to the browser killing somebody else's canvas.
+    stage.value?.dispose();
+    stage.value = null;
+});
+
+/** Everything the stage needs, pushed in one place so nothing can be forgotten. */
+function push(): void {
+    const active = stage.value;
+    if (!active) return;
+    active.setSpeaking(props.speaking ? props.anchor : null, props.energy ?? 0.7);
+    active.setLive(props.live);
+    active.setScreen({
+        image: props.articleImage || '',
+        title: props.headline,
+        kicker: props.screenSource || props.kicker,
+        rtl: props.rtl,
+    });
+}
+
+watch(() => [props.anchor, props.speaking, props.energy] as const, () => {
+    stage.value?.setSpeaking(props.speaking ? props.anchor : null, props.energy ?? 0.7);
+});
+watch(() => props.live, live => stage.value?.setLive(live));
+/*
+  The wall is only redrawn when what is ON it changes.
+
+  Not on every prop tick: drawing it means a 1024x576 canvas pass and a texture
+  upload, and the headline prop changes on every segment while the picture
+  changes once per story. Keyed on the tuple so a story with no picture still
+  refreshes its title card when the headline moves.
+*/
+watch(() => [props.articleImage, props.headline, props.screenSource, props.rtl] as const, () => {
+    stage.value?.setScreen({
+        image: props.articleImage || '',
+        title: props.headline,
+        kicker: props.screenSource || props.kicker,
+        rtl: props.rtl,
+    });
 });
 
 /* -- studio clock ----------------------------------------------------
@@ -285,117 +225,36 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 
 <template>
     <section class="studio" :class="{ 'studio--live': live }" :dir="rtl ? 'rtl' : 'ltr'">
-        <div class="studio__stage">
+        <div class="studio__stage" ref="stageEl">
             <!--
-              THE ROOM — the three columns, and nothing that carries text.
-
-              It is a separate box from the stage so that the whole set scales
-              as ONE picture: it holds the set's own aspect and the stage clips
-              it, which is `object-fit: cover` applied to a grid. See the CSS.
+              The room. One canvas, one scene: the cyclorama, the rig, the desk,
+              the video wall and both anchors. Everything below it in this
+              template is an overlay ON the picture, which is why the vignette
+              and the sheen come first and the graphics after — the bottom of
+              the vignette is black at 55% and would otherwise be sitting on top
+              of the name plates it exists to make readable.
             -->
-            <div class="stage__room">
-                <!--
-                  LEFT is آدم and RIGHT is ليلى. Both columns are the same
-                  markup; all that differs is which plate and which name.
-                -->
-                <div v-for="side in SIDES" :key="side"
-                     class="col col--anchor"
-                     :class="[`col--${side}`, {
-                         'col--dim': anchor !== null && anchor !== side,
-                     }]">
-                    <img class="col__still" :src="ANCHORS[side].still" alt="" draggable="false" />
-                    <!--
-                      Two takes, both running, cross-faded. `idle` is the
-                      presenter listening — not a still — which is what keeps
-                      the studio alive while the other one reads.
-                    -->
-                    <video
-                        v-for="take in TAKES" :key="take"
-                        :ref="(element) => setVideo(side, take, element)"
-                        class="col__loop" :class="{ 'col__loop--on': takeFor(side) === take }"
-                        :src="ANCHORS[side][take]"
-                        :poster="ANCHORS[side].still"
-                        muted loop playsinline preload="auto" disablepictureinpicture
-                    ></video>
-                </div>
+            <canvas
+                v-if="supported" ref="canvasEl" class="stage__canvas"
+                aria-hidden="true"
+            ></canvas>
 
-                <!--
-                  CENTRE — the set. Three static plates in one column: the
-                  lighting rig, the video wall, the desk front. Their rows are
-                  in the plates' own proportions (137 / 268 / 383), so the join
-                  lines land where the photograph put them.
-                -->
-                <div class="col col--set">
-                    <img class="set__plate" :src="setLamp" alt="" draggable="false" />
+            <!--
+              No WebGL — OR the renderer has not finished arriving.
 
-                    <div class="wall">
-                        <img class="wall__ident" :src="setScreen" alt="" draggable="false" />
-
-                        <!--
-                          The picture goes on the wall, whole — contained, never
-                          cropped, because the point of putting it up is that
-                          the viewer sees the photograph the newsroom filed. A
-                          news photo is 16:9 or 4:3 and the wall is nearly 3:1,
-                          so there is always slack at the sides; it is filled by
-                          the same photo blurred, which is what a real video
-                          wall does with an off-shape source and is the only
-                          thing that stops the ident showing through beside it.
-                        -->
-                        <transition name="wall">
-                            <div v-if="wallImage" :key="wallImage" class="wall__feed">
-                                <img class="wall__wash" :src="wallImage" alt="" aria-hidden="true"
-                                     referrerpolicy="no-referrer" />
-                                <span class="wall__scrim" aria-hidden="true"></span>
-                                <img class="wall__photo" :src="wallImage" alt=""
-                                     loading="lazy" referrerpolicy="no-referrer"
-                                     @error="failedImage = wallImage" />
-                                <span v-if="screenSource" class="wall__strap">
-                                    <span class="wall__strapFlag"></span>
-                                    <span class="wall__strapText">{{ screenSource }}</span>
-                                </span>
-                            </div>
-                        </transition>
-
-                        <span class="wall__scan" aria-hidden="true"></span>
-                    </div>
-
-                    <img class="set__plate" :src="setTable" alt="" draggable="false" />
-                </div>
-
-                <!--
-                  The two column joins, dissolved rather than covered. See the
-                  CSS: a shadow only draws a dark stripe where the cut is, and
-                  the cut is still a cut underneath it. These blur the pixels
-                  either side into each other.
-
-                  Inside the room, and after the columns, so they share the
-                  room's coordinate space and paint over it — and so the deck
-                  below can in turn paint over THEM.
-                -->
-                <span class="seam seam--left" aria-hidden="true"></span>
-                <span class="seam seam--right" aria-hidden="true"></span>
-
-                <!--
-                  THE DESK FRONT, IN ONE PIECE, ACROSS ALL THREE COLUMNS.
-
-                  The same desk the three plates each show a third of, supplied
-                  as a single 1402x226 photograph — so over the bottom 29% of
-                  the stage there is no join to hide, because there is no join.
-                  Laid last, it covers the seam strips too, which is why they
-                  stop just above it.
-                -->
-                <img class="room__deck" :src="setDeck" alt="" aria-hidden="true"
-                     draggable="false" />
+              Both get the same lit gradient, and covering the second case is
+              the point: the Babylon chunk is the largest thing this app ships
+              and building the scene compiles a dozen PBR shaders, so on a cold
+              cache or a slow machine there are a few seconds during which the
+              canvas is genuinely empty. Left uncovered that is a black
+              rectangle where the studio should be, which reads as broken rather
+              than as loading — and the audio is unaffected either way, because
+              it never depended on the picture.
+            -->
+            <div v-if="!supported || !ready" class="stage__flat" aria-hidden="true">
+                <span class="stage__flatGlow"></span>
             </div>
 
-            <!--
-              Vignette and scan sheen: it is a camera feed, not a photo. They
-              go over the ROOM and under everything below, which is the whole
-              reason the graphics are written after them — the bottom of the
-              vignette is black at 55% and it would otherwise be sitting on top
-              of the name plates, dimming the one caption they exist to make
-              readable.
-            -->
             <span class="stage__vignette" aria-hidden="true"></span>
             <span class="stage__sheen" aria-hidden="true"></span>
 
@@ -420,18 +279,18 @@ onBeforeUnmount(() => clearInterval(clockTimer));
               cue as to which of them is talking that is not just watching for a
               moving mouth.
 
-              Pinned to the STAGE rather than dropped inside its column, even
-              though a column is exactly where it belongs visually. The room is
-              clipped top and bottom whenever `max-height` bites, and a plate
-              riding inside it goes down with the ship — straight behind the
-              lower third, which is the one place it cannot be read. Its column
-              is a fixed share of the width, so `left` reaches the same spot.
+              `left` comes from the same constant the renderer places the anchor
+              with, so the plate cannot drift off the person it names. The
+              camera is HORIZONTAL-fov-fixed precisely so that constant stays
+              true when `max-height` makes the stage squatter than its ratio.
             -->
             <div v-for="side in SIDES" :key="`plate-${side}`"
-                 class="plate" :class="[`plate--${side}`, {
+                 class="plate"
+                 :class="{
                      'plate--on': anchor === side,
                      'plate--dim': anchor !== null && anchor !== side,
-                 }]"
+                 }"
+                 :style="{ left: `${PLATE_X[side] * 100}%` }"
                  :dir="rtl ? 'rtl' : 'ltr'">
                 <span class="plate__name">{{ info[side].name }}</span>
                 <span class="plate__voice">
@@ -490,379 +349,62 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 .studio__stage {
     position: relative;
     width: 100%;
-    /* 352 + 724 + 352 by 788 — the three plates at their measured sizes.
-       Reserving the box by ratio means the page does not jump when the first
-       plate decodes. */
+    /* The set's own aspect. Reserving the box by ratio means the page does not
+       jump when the renderer arrives. */
     aspect-ratio: 1428 / 788;
     /* ...but not at the cost of the transport. At full ratio on a laptop the
        stage is ~740px and the play button is below the fold, which on a page
-       whose entire purpose is "press play" is the wrong trade. Capped, the set
-       loses a little ceiling and a little desk front — closer to how a gallery
-       would frame it anyway. */
+       whose entire purpose is "press play" is the wrong trade. Capped, the
+       camera loses a strip of ceiling and a strip of floor — closer to how a
+       gallery would frame it anyway, and it costs nothing horizontally because
+       the camera's fov is HORIZONTAL-fixed. */
     max-height: min(68vh, 44rem);
     overflow: hidden;
     background: var(--sfs-overlay, #05070f);
-}
-
-/*
-  THE WHOLE SET SCALES AS ONE PICTURE.
-
-  The room carries the set's own aspect and the stage clips it, which is
-  `object-fit: cover` for a grid — and it is not a nicety. The stage is capped
-  at `max-height`, so on most laptops it is shorter than the ratio asks for.
-  Let the columns absorb that individually and they absorb it DIFFERENTLY: the
-  anchors are `cover` so they crop, the set plates are `fill` so they squash,
-  and the desk that runs through all three columns steps by ~20px at both
-  seams. One continuous room stops reading as one room.
-
-  Scaled and clipped as a unit, every column loses exactly the same strip of
-  ceiling and floor, so the desk line cannot come apart however short the stage
-  gets.
-*/
-.stage__room {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    transform: translateY(-50%);
-    aspect-ratio: 1428 / 788;
-
-    display: grid;
-    /* The measured plate widths, as ratios. Equal column HEIGHT is then a
-       property of the grid — one row — rather than a rule somebody has to
-       maintain, and the two side columns are equal because they are literally
-       the same plate shape. */
-    grid-template-columns: 352fr 724fr 352fr;
-    /* Needed even though the room's height is definite: the anchor columns
-       hold nothing but absolutely positioned children, so an `auto` row
-       measures them at zero and the set column — whose rows are `fr` — then
-       has nothing to resolve against. */
-    grid-template-rows: minmax(0, 1fr);
-
     /*
-      THE SET DOES NOT MIRROR, EVER.
+      NOT MIRRORED, EVER.
 
-      These are photographs of one room: آدم is lit from the left and faces
-      right, ليلى is lit from the right and faces left, and the desk runs
-      continuously through the middle plate. Let the grid follow `dir` and an
-      Arabic bulletin swaps the two columns, so both presenters face off the
-      edge of the screen and the desk breaks at both joins. A set is not a
-      paragraph. The overlays that carry TEXT set their own direction — see the
-      `:dir` bindings in the template.
+      The set is a place, not a paragraph: آدم sits screen-right and the desk,
+      the wall and the lighting are built around that. Following `dir` would put
+      the whole room in a mirror — which for a photographed set broke the desk
+      at both joins, and for a rendered one simply puts the presenters in the
+      wrong seats, contradicting the plates that name them. The overlays that
+      carry TEXT set their own direction; see the `:dir` bindings above.
     */
     direction: ltr;
 }
 
-.col {
-    position: relative;
-    min-width: 0;
-    overflow: hidden;
-}
-
-/*
-  Placed by number, not by source order. The two anchor columns come out of one
-  `v-for` so their markup is written once, which puts them adjacent in the DOM —
-  and the set belongs BETWEEN them. Explicit tracks are safe here precisely
-  because the grid is forced `ltr` above: in an `rtl` grid, column 1 is the
-  rightmost one and this would silently mirror the room.
-
-  THE ROW HAS TO BE PINNED TOO, and leaving it out does not misplace anything —
-  it collapses the anchors to nothing. Source order is male, female, set while
-  column order is male, set, female, so by the time the set is placed the
-  auto-placement cursor has already passed column 2. Sparse flow never steps
-  backwards, so the set is given an IMPLICIT second row; that row then takes the
-  height, the explicit `1fr` row is left with 0.015625px, and the two anchor
-  columns render as two black rectangles the exact width they should be. The
-  stage looks like the images failed to load, and every one of them is present,
-  decoded and correct.
-*/
-.col { grid-row: 1; }
-
-.col--male   { grid-column: 1; }
-.col--set    { grid-column: 2; }
-.col--female { grid-column: 3; }
-
-/* -- the two anchor columns ------------------------------------------ */
-.col__still,
-.col__loop {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    /* `cover`, never `fill`: the column is within a fraction of a percent of
-       the plate's own aspect at the natural stage size, so nothing is cropped
-       there — and when `max-height` shortens the stage, losing a strip of
-       ceiling is the right answer and stretching a person is not. */
-    object-fit: cover;
-    display: block;
-}
-
-.col__loop {
-    opacity: 0;
-    /* A dissolve, not a cut: the two takes are the same person in the same
-       chair a few degrees apart, so a hard switch reads as a dropped frame.
-       Slow enough to hide the difference in head position between takes and
-       fast enough that the mouth starts moving on the word. */
-    transition: opacity 0.3s ease;
-}
-
-.col__loop--on { opacity: 1; }
-
-/*
-  The presenter who is not reading is held a touch back so the eye lands on the
-  one who is talking. Deliberately SLIGHT — 0.16, half what it was before the
-  listening loops existed. It had to do the whole job of saying "not this one"
-  when the other half of the screen was a frozen photograph; now that both
-  presenters are moving, the reader is identified by the mouth and the lit name
-  plate, and anything heavier just makes a lit studio look half switched off.
-
-  Keyed on "is somebody ELSE reading" rather than on "is this one reading",
-  because between bulletins nobody is and the difference matters: the second
-  spelling darkens BOTH columns whenever there is no reader, so the page opens
-  on a studio that looks switched off.
-*/
-.col--anchor::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0;
-    background: rgb(3 6 16 / 0.16);
-    transition: opacity 0.3s ease;
-}
-
-.col--dim::after { opacity: 1; }
-
-/* -- the set column --------------------------------------------------- */
-.col--set {
-    display: grid;
-    /* The plates' own heights. */
-    grid-template-rows: 137fr 268fr 383fr;
-}
-
-.set__plate,
-.wall__ident {
-    width: 100%;
-    height: 100%;
-    /* `fill` here, and this is the one place it is right: the three plates were
-       cut from one photograph and their join lines only stay joined if all
-       three are scaled identically. `cover` would centre-crop each one
-       independently and the desk would step at both seams as soon as
-       `max-height` squeezed the stage. Stretching a photograph of a wall by a
-       few percent is invisible; a broken desk is not. */
-    object-fit: fill;
-    display: block;
-}
-
-/* -- the video wall --------------------------------------------------- */
-.wall {
-    position: relative;
-    overflow: hidden;
-}
-
-/*
-  The lit glass, measured off the plate: the wall runs to both edges of the
-  724-wide crop, starts 4px down and ends 15px up from a 268-tall plate.
-  Percentages rather than pixels, because the plate renders anywhere from
-  ~360px wide on a phone to ~1000px on a bounded 4K shell.
-*/
-.wall__feed {
-    position: absolute;
-    top: 1.6%;
-    bottom: 5.5%;
-    left: 0.8%;
-    right: 0.8%;
-    overflow: hidden;
-}
-
-.wall__wash,
-.wall__photo {
+.stage__canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     display: block;
+    /* Nothing in the room is interactive; every control on this page is DOM. */
+    pointer-events: none;
 }
 
-.wall__wash {
-    object-fit: cover;
-    /* Scale first: a blur samples outside its own box and would otherwise
-       leave a pale halo against the bezel, which reads as a backlight fault. */
-    transform: scale(1.18);
-    filter: blur(14px) brightness(0.5) saturate(1.3);
-}
-
-.wall__scrim {
+/* -- no WebGL --------------------------------------------------------- */
+.stage__flat {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgb(3 9 22 / 0.34), rgb(3 9 22 / 0.5));
+    background:
+        radial-gradient(120% 90% at 50% 8%, rgb(30 52 104 / 0.55), transparent 62%),
+        linear-gradient(180deg, #0b1730 0%, #060b18 62%, #04070f 100%);
 }
 
-.wall__photo {
-    /* Whole, never cropped — the requirement, and the reason the wash exists. */
-    object-fit: contain;
-}
-
-.wall__scan {
+.stage__flatGlow {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.3;
-    background: repeating-linear-gradient(
-        to bottom, rgb(255 255 255 / 0.05) 0 1px, transparent 1px 3px);
+    inset-inline: 8%;
+    bottom: 22%;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, transparent,
+        rgb(var(--sfs-accent-rgb, 102 126 234) / 0.85), transparent);
+    box-shadow: 0 0 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55);
 }
 
-/* A cross-fade, not a cut: both frames are absolutely positioned and so both
-   occupy the glass while it runs, which is what stops the ident flashing
-   through for a frame between two stories. */
-.wall-enter-active, .wall-leave-active { transition: opacity 0.35s ease; }
-.wall-enter-from, .wall-leave-to { opacity: 0; }
-
-.wall__strap {
-    position: absolute;
-    left: 1.6%;
-    bottom: 4%;
-    display: flex;
-    align-items: stretch;
-    max-width: 60%;
-    border-radius: 0.15em;
-    overflow: hidden;
-    background: rgb(255 255 255 / 0.94);
-}
-
-.wall__strapFlag {
-    flex: 0 0 auto;
-    width: 0.34rem;
-    background: var(--sfs-danger, #d24b5a);
-}
-
-.wall__strapText {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 0.22em 0.55em;
-    font-size: clamp(0.45rem, 0.72vw, 0.66rem);
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: rgb(12 18 34);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* -- the two column joins --------------------------------------------- */
-/*
-  WHY A BLUR AND NOT A SHADOW.
-
-  The three plates are separate renders. They are levelled to within 5px and
-  that is as far as the sources go: the tone still steps at each join, and the
-  desk edge, the back counter and the ceiling coving all arrive at the boundary
-  at very slightly different heights, because they are photographs of one room
-  taken from three places. The result is a visible vertical cut.
-
-  A shadow — which is what was here first — only paints a dark stripe ON the
-  cut. The cut is still a cut underneath it, and the stripe itself is a new
-  thing to notice: "why is there a dark band down the picture?"
-
-  `backdrop-filter` blurs the actual pixels behind the strip, so content from
-  the left plate is smeared into content from the right and the boundary stops
-  existing. A brightness step becomes a smooth ramp for free, because that is
-  what a blur does to a step. Two lines that nearly meet become one soft line.
-
-  THE MASK IS NOT OPTIONAL. A hard-edged blur strip solves one seam and creates
-  two new ones — the edges of the strip itself, where sharp meets blurred. The
-  mask ramps the blur in and out so it has no edge of its own, and it also hides
-  the artefact `backdrop-filter` leaves at its own boundary, where the blur
-  kernel runs out of backdrop to sample and smears the edge pixel instead.
-*/
-.seam {
-    position: absolute;
-    /* Past the top for the same reason the mask exists sideways: the blur must
-       not stop where the picture is still visible. */
-    top: -2px;
-    /* Stops just under the deck's opaque edge. Below that line there is no
-       join to hide — the deck is one photograph — so blurring on would be GPU
-       spent on pixels nobody sees, and `backdrop-filter` over four playing
-       videos is the expensive thing on this page. The deck is opaque from
-       24.78% up from the floor (28.81% tall, feathered over its top 14%), so
-       23% leaves the hard bottom end of the strip safely buried. */
-    bottom: 23%;
-    width: 5%;
-    transform: translateX(-50%);
-    pointer-events: none;
-    z-index: 1;
-
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-
-    /* A whisper of shade, feathered by the same mask. Lowering the local
-       contrast is what hides the residual the blur only ramps; it reads as the
-       upright between two desk pods, which is a thing a real set has. It is
-       also what carries the join on a browser with no `backdrop-filter`, where
-       this degrades to the shadow it replaced rather than to nothing. */
-    background: linear-gradient(to right,
-        transparent, rgb(0 0 0 / 0.07) 50%, transparent);
-
-    /*
-      THE MASK PROFILE IS THE WHOLE TRICK, and it took three goes to get right.
-
-      There are two different defects at a join and they want opposite things.
-      The CUT is one pixel wide and needs a strong blur. The TONE STEP is wide —
-      the male plate's lit newsroom meeting the centre's dark wall — and a strong
-      blur cannot ramp that without smearing so far that it reads as a smudge on
-      the lens, which is exactly what 4% at 10px did: it replaced a line nobody
-      would name with a 75px haze everybody would.
-
-      So the mask is not a plateau and not a simple ramp. It is full alpha on the
-      seam itself — killing the cut — falling to about a THIRD across the
-      shoulders, where the blurred backdrop composites over the sharp original at
-      partial strength. That averages the tone across a wide band while leaving
-      two thirds of the real detail untouched, so the picture never looks soft.
-    */
-    -webkit-mask-image: linear-gradient(to right,
-        transparent 0%, rgb(0 0 0 / 0.32) 30%, #000 50%,
-        rgb(0 0 0 / 0.32) 70%, transparent 100%);
-    mask-image: linear-gradient(to right,
-        transparent 0%, rgb(0 0 0 / 0.32) 30%, #000 50%,
-        rgb(0 0 0 / 0.32) 70%, transparent 100%);
-}
-
-/* The column boundaries: 352/1428 and 1076/1428. */
-.seam--left  { left: 24.65%; }
-.seam--right { left: 75.35%; }
-
-/*
-  THE DESK FRONT — the best seam fix there is, which is not to have a seam.
-
-  Every number here was solved rather than chosen: sliding the photograph over
-  the assembled room and taking the best normalised correlation puts it at
-  98.53% of the width, 28.81% of the height, flush with the floor, scoring
-  0.919. That it lands exactly on the bottom edge is the fit agreeing with the
-  three plates, not a value anybody typed.
-
-  The top edge is FEATHERED, and that is the one part that is a judgement. The
-  deck's top is the back edge of the glass table, and the columns have their own
-  glass table a few pixels away; butted, that is a new horizontal seam traded for
-  two vertical ones. Faded over its top 14% the two tables melt together, and
-  since both are the same surface photographed from slightly different places,
-  the overlap reads as reflection rather than as a double edge.
-*/
-.room__deck {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 98.53%;
-    /* Height comes from the file's own 1402:226, so the desk can never be
-       stretched out of shape by a change to the stage. */
-    height: auto;
-    display: block;
-    pointer-events: none;
-
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%);
-    mask-image: linear-gradient(to bottom, transparent 0%, #000 14%);
-}
-
+/* -- camera feel ------------------------------------------------------ */
 .stage__vignette,
 .stage__sheen {
     position: absolute;
@@ -872,36 +414,25 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 
 .stage__vignette {
     background:
-        radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.42) 100%),
-        linear-gradient(to bottom, rgb(0 0 0 / 0.28) 0%, transparent 22%,
-                        transparent 58%, rgb(0 0 0 / 0.55) 100%);
+        radial-gradient(120% 90% at 50% 42%, transparent 52%, rgb(0 0 0 / 0.55) 100%);
 }
 
 .stage__sheen {
-    opacity: 0.5;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgb(255 255 255 / 0.025) 0 1px,
-        transparent 1px 3px);
-    mix-blend-mode: overlay;
+    background: linear-gradient(180deg,
+        rgb(255 255 255 / 0.05) 0%, transparent 22%, transparent 78%,
+        rgb(0 0 0 / 0.22) 100%);
 }
 
-/* -- on-air bug ------------------------------------------------------ */
-/*
-  Back in the corner. The old stage had a monitor in each top corner and the
-  bug had to sit centred between them; the wall is in the middle of the set
-  now, so the corner is free and the corner is where a bug goes.
-*/
+/* -- the on-air bug --------------------------------------------------- */
 .bug {
     position: absolute;
-    top: 0;
-    inset-inline-start: 0;
+    top: clamp(0.5rem, 1.4vw, 0.9rem);
+    inset-inline-start: clamp(0.5rem, 1.4vw, 0.9rem);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
-    padding: clamp(0.5rem, 1.4vw, 0.9rem);
-    max-width: 60%;
+    gap: 0.35rem;
+    max-width: 70%;
 }
 
 .bug__live,
@@ -910,44 +441,44 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 .bug__clock {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.22rem 0.5rem;
-    border-radius: 0.3rem;
-    font-size: clamp(0.58rem, 1.05vw, 0.72rem);
+    gap: 0.3rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.28rem;
+    font-size: clamp(0.55rem, 1.05vw, 0.72rem);
     font-weight: 800;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
+    white-space: nowrap;
 }
 
 .bug__live {
     background: rgb(0 0 0 / 0.55);
-    color: rgb(255 255 255 / 0.82);
-    border: 1px solid rgb(255 255 255 / 0.16);
+    color: rgb(255 255 255 / 0.78);
 }
 
 .bug__live--on {
     background: var(--sfs-danger, #d24b5a);
     color: var(--sfs-on-danger, #ffffff);
-    border-color: transparent;
 }
 
 .bug__dot {
-    width: 0.44rem;
-    height: 0.44rem;
+    width: 0.45rem;
+    height: 0.45rem;
     border-radius: 50%;
     background: currentColor;
-    opacity: 0.55;
+    opacity: 0.6;
 }
 
 .bug__live--on .bug__dot {
     opacity: 1;
-    animation: onair 1.4s ease-in-out infinite;
+    animation: bug-pulse 1.4s ease-in-out infinite;
 }
 
-@keyframes onair {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: 0.35; transform: scale(0.82); }
+@keyframes bug-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.35); opacity: 0.55; }
 }
 
 .bug__kicker {
@@ -973,10 +504,10 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 
 /* -- name plates ------------------------------------------------------ */
 /*
-  Centred on their own column — 12.33% and 87.67% are the midpoints of the two
-  352/1428 side tracks, so a plate sits under its presenter without being a
-  child of the column. Centring is also the one placement that needs no thought
-  about direction: the columns do not mirror but the text inside them does.
+  Centred on their presenter. `left` is an inline style from `PLATE_X`, which
+  is the same constant the renderer places the anchor with — the pair of
+  percentages that used to live here were the midpoints of two photographic
+  plates, written down a second time and true only until something moved.
 
   Clear of the lower third: the strap's gradient reaches ~30% up the stage, and
   a name plate inside it is a name plate nobody can read.
@@ -992,15 +523,12 @@ onBeforeUnmount(() => clearInterval(clockTimer));
     border-radius: 0.3rem;
     border-bottom: 2px solid rgb(255 255 255 / 0.22);
     background: rgb(0 0 0 / 0.55);
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
-    max-width: 22%;
+    max-width: 26%;
     text-align: center;
     transition: opacity 0.28s ease, border-color 0.28s ease, background 0.28s ease;
 }
-
-/* The midpoint of each side track: 352/2 / 1428 and 1 - that. */
-.plate--male   { left: 12.33%; }
-.plate--female { left: 87.67%; }
 
 .plate--dim { opacity: 0.6; }
 
@@ -1118,8 +646,7 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 
   Reported the first time round as "the face of the anchor does not appear
   because of the labels": the voice ID is the longest string on the page and at
-  200px of stage height it parked across a presenter's chin. There are two
-  plates now, in columns a third the width, so it is worse rather than better.
+  200px of stage height it parked across a presenter's chin.
 
   The names stay — a broadcast always has room for a name plate. The voice goes
   to the chip row under the transport, where it has a whole line to itself. It
@@ -1131,27 +658,26 @@ onBeforeUnmount(() => clearInterval(clockTimer));
     .plate {
         bottom: clamp(2.2rem, 6vw, 3.4rem);
         padding: 0.18rem 0.4rem;
+        max-width: 30%;
     }
 }
 
 @media (max-width: 760px) {
     .third { padding-block: 0.45rem; }
-    .third__text { -webkit-line-clamp: 2; line-clamp: 2; }
-    .wall__strap { display: none; }
 }
 
 @media (max-width: 560px) {
-    /* Under a phone's width the plates are wider than the columns holding
-       them, so they overlap the set and each other. The presenters are on
-       camera, which is the thing that matters; who is speaking is carried by
-       the moving mouth and by the chip row below. */
+    /* Under a phone's width the plates are wider than the space between the
+       presenters, so they overlap the wall and each other. Both anchors are on
+       camera, which is what matters; who is speaking is carried by the moving
+       mouth and by the chip row below. */
     .plate { display: none; }
 
     .bug { max-width: 100%; }
 
-    /* Four chips wrap to two rows here, and the bug then covers a third of the
-       male's column. The clock is the one of the four that nothing depends on
-       and that the device already shows in its own status bar. */
+    /* Four chips wrap to two rows here and the bug then covers a third of the
+       picture. The clock is the one of the four that nothing depends on and
+       that the device already shows in its own status bar. */
     .bug__clock { display: none; }
 }
 
@@ -1162,10 +688,8 @@ onBeforeUnmount(() => clearInterval(clockTimer));
 }
 
 @media (prefers-reduced-motion: reduce) {
-    /* The stills carry the whole design on their own — this is exactly the
-       case the layered still was built for. */
-    .col__loop { display: none; }
+    /* The renderer scales its own idle amplitudes down rather than freezing —
+       see `loader.ts`. This is only the DOM half. */
     .bug__live--on .bug__dot { animation: none; }
-    .wall-enter-active, .wall-leave-active { transition: none; }
 }
 </style>

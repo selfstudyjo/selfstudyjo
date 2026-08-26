@@ -146,3 +146,13 @@ tools/photomask-check/dist/
 # `node tools/leaderboard-preview/shoot.mjs`; ~25 PNGs per run is not something
 # to carry in the repo.
 tools/leaderboard-preview/shots/
+
+# Output of tools/rtl-audit — the same, one set per language. 48 PNGs a run.
+tools/rtl-audit/shots-ar/
+tools/rtl-audit/shots-en/
+
+# Output of tools/cast-preview — the built preview and its screenshots. Ten
+# PNGs a run, regenerated with `npm run build:cast-preview && node
+# tools/cast-preview/shoot.mjs`.
+tools/cast-preview/dist/
+tools/cast-preview/shots/

@@ -635,6 +635,13 @@ const learning: Catalogue = {
     'Test the links before saving': '保存前请先测试链接',
     'Test': '测试',
     'Test Link': '测试链接',
+    'Recently': '最近',
+    'Untitled Course': '未命名课程',
+    'No description available': '暂无描述',
+    'No description available.': '暂无描述。',
+    'Unenroll from "{v0}"?': '要退出“{v0}”吗？',
+    'Unknown Plan': '未知方案',
+    'Untitled Homework': '未命名作业',
 };
 
 export default learning;

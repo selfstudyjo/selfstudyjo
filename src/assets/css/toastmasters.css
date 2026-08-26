@@ -538,8 +538,13 @@
   z-index: 5;
 }
 
-/* The seat's picture is SpeakerMedia, which fills the tile from `inset: 0` —
-   the tile is the positioned ancestor, so there is no wrapper any more. */
+/*
+  The six seats are drawn by `PersonStage`: one WebGL canvas behind the whole
+  grid, one camera per tile. The component owns `.tm-bots-grid` now, so every
+  breakpoint below still decides the layout and the renderer measures whatever
+  it decided — including the reflow to two columns on a phone, which needs no
+  change on the 3D side at all.
+*/
 
 /* User self-tile */
 .tm-user-panel {
@@ -1398,4 +1403,21 @@
   .tm-bots-grid,
   .tm-user-panel,
   .tm-modal-close { display: none !important; }
+}
+/*
+  Which voice actually spoke.
+
+  Small, quiet and under the controls: it is a diagnostic, not a caption, and
+  the question it answers ("is this really an Arabic voice, or is my machine
+  simply silent?") is one a listener cannot answer by listening. `sfs-bidi` on
+  the element is what keeps a Latin voice name from having its punctuation
+  reordered inside an Arabic sentence.
+*/
+.tm-meeting-room .tm-voice-note {
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.78rem;
+  color: var(--tm-text-mute);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }

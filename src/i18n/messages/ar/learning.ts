@@ -651,6 +651,13 @@ const learning: Catalogue = {
     'Test the links before saving': 'اختبر الروابط قبل الحفظ',
     'Test': 'اختبار',
     'Test Link': 'اختبار الرابط',
+    'Recently': 'مؤخراً',
+    'Untitled Course': 'دورة بدون عنوان',
+    'No description available': 'لا يوجد وصف متاح',
+    'No description available.': 'لا يوجد وصف متاح.',
+    'Unenroll from "{v0}"?': 'إلغاء التسجيل من "{v0}"؟',
+    'Unknown Plan': 'خطة غير معروفة',
+    'Untitled Homework': 'واجب بدون عنوان',
 };
 
 export default learning;
