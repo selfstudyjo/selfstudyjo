@@ -303,7 +303,7 @@
 </template>
 
 <script setup lang="ts">
-import { aiLanguage, aiLanguageHeaders, localeId, locale as activeLocale } from '@/i18n/runtime';
+import { aiLanguage, aiLanguageHeaders, localeId, locale as activeLocale, t } from '@/i18n/runtime';
 import { planSpeech, describe as describeSpeech } from '@/utils/roomSpeech';
 import { newsService } from '@/services/news.service';
 import { ref, computed, nextTick, reactive, onMounted, onUnmounted } from 'vue';
@@ -578,8 +578,7 @@ const answerClockClass = computed(() => {
 
 const answerPlaceholder = computed(() => {
   if (phase.value === 'answering') {
-    return 'Speak — your words appear here every few seconds. You can also type or correct '
-      + 'anything in this box while you talk.';
+    return t('Speak — your words appear here every few seconds. You can also type or correct anything in this box while you talk.');
   }
   return '—';
 });
@@ -1264,7 +1263,7 @@ function startTimer() {
     if (el >= limit && !timeUp.value) {
       timeUp.value = true;
       captionSpeaker.value = 'System';
-      captionText.value = '⏰ Time is up — finish your current answer, then it will wrap up.';
+      captionText.value = t('⏰ Time is up — finish your current answer, then it will wrap up.');
     }
   }, 250);
 }
@@ -1472,11 +1471,11 @@ async function startInterview() {
   starting.value = true;
   startBtnText.value = '⏳ Setting up…';
   captionSpeaker.value = 'System';
-  captionText.value = 'Requesting your microphone…';
+  captionText.value = t('Requesting your microphone…');
   if (!(await initMedia())) {
     starting.value = false;
     startBtnText.value = '▶️ Start Interview';
-    captionText.value = 'The interview cannot start without a microphone — see the message above.';
+    captionText.value = t('The interview cannot start without a microphone — see the message above.');
     return;
   }
   if (typeof MediaRecorder === 'undefined') {
@@ -1491,7 +1490,7 @@ async function startInterview() {
   if (voices.length === 0) { await new Promise(r => setTimeout(r, 400)); loadVoices(); }
 
   phase.value = 'intro';
-  captionText.value = 'Interviewer is joining…';
+  captionText.value = t('Interviewer is joining…');
 
   // The greeting and the question plan at the same time, and the plan is never
   // waited for on its own: it is what stops a stateless model asking its most
@@ -1544,7 +1543,7 @@ async function askNextQuestion() {
   phase.value = 'processing';
   answer.value = emptyAnswer();
   captionSpeaker.value = interviewerName;
-  captionText.value = 'Interviewer is thinking of the next question…';
+  captionText.value = t('Interviewer is thinking of the next question…');
   const asked = askedSoFar();
   const q = await jobInterviewService.callInterviewer({
     stage: 'question',
@@ -1596,12 +1595,12 @@ async function askNextQuestion() {
   await speak(currentQuestionText.value);
   phase.value = 'awaiting';
   captionSpeaker.value = 'System';
-  captionText.value = 'Click "Start Answering" when you are ready to respond.';
+  captionText.value = t('Click "Start Answering" when you are ready to respond.');
 }
 
 function startAnswering() {
-  if (!micEnabled.value) { alert('Please unmute your microphone first.'); return; }
-  if (!audioStream) { alert('Your microphone is not connected yet.'); return; }
+  if (!micEnabled.value) { alert(t('Please unmute your microphone first.')); return; }
+  if (!audioStream) { alert(t('Your microphone is not connected yet.')); return; }
   answer.value = emptyAnswer();
   selection.value = { start: 0, end: 0 };
   recordingError.value = '';
@@ -1625,7 +1624,7 @@ async function submitAnswer() {
   phase.value = 'processing';
   stopCurrentRecording();
   stopAnswerTimer();
-  captionText.value = 'Finalizing your answer…';
+  captionText.value = t('Finalizing your answer…');
   // Long enough for the chunk that was mid-recording when Submit was pressed to
   // come back from Whisper. It is the last second or two of what the candidate
   // said, so losing it costs the end of every answer in the report.
@@ -1695,7 +1694,7 @@ async function endInterview() {
   phase.value = 'processing';
   currentQuestionText.value = '';
   captionSpeaker.value = interviewerName;
-  captionText.value = 'Wrapping up the interview and preparing your feedback…';
+  captionText.value = t('Wrapping up the interview and preparing your feedback…');
 
   // The closing speech, the evaluation and any coaching still in the air, all at
   // once. The evaluation is the one thing that genuinely cannot start earlier --
@@ -1718,7 +1717,7 @@ async function endInterview() {
       + `feedback now.`;
   await speak(spokenClosing);
 
-  captionText.value = 'Finishing your report…';
+  captionText.value = t('Finishing your report…');
   // Twenty seconds is one cold PythonAnywhere start. Past that the answer is not
   // coming, and `fillMissingCoaching` covers whatever it was.
   await settleWithin(coachingJobs, 20000);

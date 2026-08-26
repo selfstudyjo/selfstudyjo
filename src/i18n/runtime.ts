@@ -54,6 +54,10 @@ import {
 import {
     DEFAULT_LOCALE_ID, LOCALES, getLocale, type Locale, type LocaleId,
 } from './locales';
+import {
+    field as recordField, matches as recordMatches, byField as byRecordField,
+    type Translatable,
+} from './records';
 
 import ar from './messages/ar';
 import zh from './messages/zh';
@@ -130,6 +134,50 @@ export function tc(key: string, count: number, params?: Params): string {
     return translate(current.value, key, { n: count, ...params }, count);
 }
 
+/* ------------------------------------------------------------------ *
+ * A RECORD's own text
+ * ------------------------------------------------------------------ */
+
+/*
+ * `$td(course, 'title')` -- "translate data".
+ *
+ * The retraction of a comment that used to sit a few lines below this one, in
+ * `aiLanguageHeaders`: it said that "everything else on the platform stores and
+ * returns records, and a record has no language". True of a RECORD, and never
+ * true of the TEXT ON one -- a course title, a lesson name, a plan, an exam
+ * question are all written by the platform for a reader to read. Every backend
+ * that holds such text now carries `utils/translations.py` and answers with a
+ * `translations` map beside the English.
+ *
+ * A separate global from `$t` on purpose, and the difference is worth being able
+ * to see at a glance in a template: `$t` takes a KEY out of a catalogue this
+ * repo ships, `$td` takes a RECORD that arrived over the network. A missing
+ * catalogue entry is a gap in our own work; a missing translation on a record is
+ * something an operator has not typed yet. They are reported differently, fixed
+ * by different people, and conflating them would make the coverage number in
+ * `check:i18n` mean nothing.
+ *
+ * Reactive, so switching language re-renders every title on the page without a
+ * refetch -- the record already carries all three.
+ */
+export function td(record: Translatable | null | undefined, name = 'title'): string {
+    return recordField(record, name, current.value);
+}
+
+/** Does this record match a filter box, in ANY language it carries? See `records.ts`. */
+export function tdMatches(
+    record: Translatable | null | undefined,
+    names: readonly string[],
+    query: string,
+): boolean {
+    return recordMatches(record, names, query);
+}
+
+/** A comparator over the DISPLAYED text, in the reader's own collation. */
+export function tdSort<T extends Translatable>(name = 'title') {
+    return byRecordField<T>(name, current.value);
+}
+
 /** A number, in the reader's digits. See `formatNumber` for when NOT to use it. */
 export function n(value: number, options?: Intl.NumberFormatOptions): string {
     return formatNumber(current.value, value, options);
@@ -177,7 +225,12 @@ export function aiLanguage(): LocaleId {
  * and the network simulator's assistant (app 27), the job interview and
  * Toastmasters rooms (app 27), the CV Builder (app 33) and the newscast's
  * speech (app 36). Everything else on the platform stores and returns records,
- * and a record has no language.
+ * and a record does not have to be ASKED for a language: the services holding
+ * reader-facing text answer with all three at once and `$td` picks (see
+ * `records.ts`). That is why this header is still only on three services rather
+ * than becoming the platform-wide mechanism -- a record's text is the same in
+ * every request, so sending it once costs no preflight anywhere and needs no
+ * backend redeployed in step with this bundle.
  *
  * `language.py` on those services reads the request BODY first and this second,
  * so a call with a real reason to override — the newscast asking for an Arabic
@@ -191,7 +244,7 @@ export function aiLanguageHeaders(): Record<string, string> {
 /** Everything a `<script setup>` block needs, in one call. */
 export function useI18n() {
     return {
-        t, tc, n, d, rel, money,
+        t, tc, n, d, rel, money, td, tdMatches, tdSort,
         locale, localeId, isRtl, dir,
         locales: LOCALES,
         setLocale,
@@ -218,6 +271,9 @@ export const i18n = {
         g.$d = d;
         g.$rel = rel;
         g.$money = money;
+        // `$td` is a record's own text, where `$t` is a catalogue key. Kept
+        // visibly distinct in templates -- see `td` above for why.
+        g.$td = td;
         // Properties rather than functions, so a template reads `$rtl` and not
         // `$rtl()`. Defined as getters so they stay reactive.
         Object.defineProperty(g, '$rtl', { get: () => isRtl.value, configurable: true });
@@ -237,6 +293,7 @@ declare module 'vue' {
         $d: typeof d;
         $rel: typeof rel;
         $money: typeof money;
+        $td: typeof td;
         $rtl: boolean;
         $dir: 'ltr' | 'rtl';
         $locale: Locale;

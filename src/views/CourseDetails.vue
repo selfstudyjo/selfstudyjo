@@ -28,7 +28,7 @@
           {{ $t('Courses') }}
         </router-link>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">{{ course.title }}</span>
+        <span class="breadcrumb-current">{{ $td(course) }}</span>
       </div>
 
       <div class="course-content">
@@ -36,7 +36,7 @@
           <div class="course-image-container">
             <Planet
               :imageUrl="course.image_url"
-              :courseName="course.title"
+              :courseName="$td(course)"
               :width="planetSize"
               :height="planetSize"
             />
@@ -49,7 +49,7 @@
               <span class="course-date">{{ $t('Added {v0}', { v0: formatDate(course.date_added) }) }}</span>
             </div>
 
-            <h1 class="course-title">{{ course.title }}</h1>
+            <h1 class="course-title">{{ $td(course) }}</h1>
 
             <div class="course-stats">
               <div class="stat-item">
@@ -146,7 +146,7 @@
                   >
                     <div class="lesson-info">
                       <div class="lesson-header">
-                        <h3 class="lesson-title">{{ lesson.title }}</h3>
+                        <h3 class="lesson-title">{{ $td(lesson) }}</h3>
                         <div class="lesson-badges">
                           <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -383,7 +383,7 @@
                 </div>
 
                 <div class="description-content">
-                  <p>{{ course.description || 'No description available.' }}</p>
+                  <p>{{ $td(course, 'description') || $t('No description available.') }}</p>
                 </div>
               </section>
             </div>

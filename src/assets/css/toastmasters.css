@@ -723,12 +723,117 @@
 .tm-caption-box { min-height: 60px; }
 .tm-caption-box strong { color: var(--sfs-text-muted, #c7d2fe); margin-inline-end: 0.5rem; }
 
-.tm-transcript-box { max-height: 200px; overflow-y: auto; }
+/* ============================================================
+   THE LIVE TRANSCRIPT, WHICH IS NOW AN EDITOR
+
+   It was a 200px scrolling box holding read-only text. A textarea inside a box
+   with `max-height` and `overflow-y: auto` is unusable -- the box scrolls, the
+   field scrolls, and dragging to select a phrase scrolls whichever one the
+   pointer happens to be over. So the cap is gone and the field owns its own
+   height and its own `resize`.
+
+   Mirrors `.ji-answer-*` in job-interview.css deliberately: the two rooms offer
+   the same three ways to correct a transcript, so they should not look like two
+   different features. Every colour is a token, so all ten galaxies work.
+   ============================================================ */
 .tm-transcript-box h4 {
-  margin-bottom: 0.5rem;
+  margin: 0;
   color: var(--sfs-text-muted, #c7d2fe);
   font-size: 0.95rem;
   font-weight: 600;
+}
+.tm-transcript-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem;
+}
+.tm-transcript-live {
+  margin-inline-start: 0.5rem; font-size: 0.8rem;
+  color: var(--sfs-success-text, #86efac);
+}
+.tm-transcript-words {
+  font-size: 0.8rem; color: var(--tm-text-mute); white-space: nowrap;
+}
+
+.tm-transcript-input {
+  display: block; width: 100%; min-height: 6.5rem;
+  padding: 0.75rem 0.85rem;
+  font: inherit; line-height: 1.6;
+  /* Never below 16px: below that iOS zooms the page on focus and never zooms
+     back, and this is the one field in the meeting somebody edits on a phone
+     while talking. */
+  font-size: max(1rem, 16px);
+  resize: vertical;
+  color: var(--tm-text);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.45);
+  border: 1px solid var(--tm-border-2);
+  border-radius: var(--tm-r-sm);
+  transition: border-color var(--tm-t-fast, 0.15s), box-shadow var(--tm-t-fast, 0.15s);
+  /* A transcript is what the speaker said, in a language this stylesheet does
+     not know: `plaintext` reads the direction out of the string itself, so an
+     Arabic speech renders right-to-left inside an English interface and an
+     English one renders left-to-right inside an Arabic interface. */
+  unicode-bidi: plaintext;
+}
+.tm-transcript-input::placeholder { color: var(--tm-text-dim); }
+.tm-transcript-input:focus {
+  outline: none;
+  border-color: var(--tm-accent);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+}
+.tm-transcript-input[readonly] { opacity: 0.75; }
+
+.tm-transcript-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.tm-btn-tool {
+  /* 44px on a touch device: `responsive.css` scales the root font size, so
+     2.75rem measures ~41px on a 390px phone -- under the minimum, on exactly
+     the devices the rule exists for. */
+  min-height: max(2.2rem, 34px);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--tm-text-soft);
+  background: var(--tm-glass-2);
+  border: 1px solid var(--tm-border-2);
+  border-radius: var(--tm-r-sm);
+  cursor: pointer;
+  transition: background var(--tm-t-fast, 0.15s), border-color var(--tm-t-fast, 0.15s);
+}
+.tm-btn-tool:hover:not(:disabled) {
+  background: var(--tm-glass-3);
+  border-color: var(--tm-accent);
+}
+.tm-btn-tool:disabled { opacity: 0.45; cursor: not-allowed; }
+.tm-btn-tool-danger { color: var(--sfs-danger-text, #fca5a5); }
+.tm-btn-tool-danger:hover:not(:disabled) { border-color: var(--sfs-danger-text, #ef4444); }
+
+.tm-transcript-toggle {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  margin-inline-start: auto; font-size: 0.8rem; color: var(--tm-text-mute);
+  cursor: pointer; white-space: nowrap;
+}
+
+/* Where the next dictated words will land. Shown because a caret that is
+   invisible is a caret that makes the next sentence appear in what looks like
+   the wrong place. */
+.tm-transcript-caret {
+  margin-top: 0.6rem; padding: 0.5rem 0.7rem;
+  font-size: 0.82rem; line-height: 1.5;
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+  border: 1px dashed rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+  border-radius: var(--tm-r-sm);
+  color: var(--sfs-accent-text, #a5b4fc);
+}
+.tm-transcript-hint {
+  margin-top: 0.55rem; font-size: 0.8rem; line-height: 1.5; color: var(--tm-text-mute);
+}
+
+@media (max-width: 600px) {
+  /* The toggle's `margin-inline-start: auto` pushes it onto its own line at this
+     width, which is right -- but it then sits alone against the far edge, so it
+     is returned to the flow instead. */
+  .tm-transcript-toggle { margin-inline-start: 0; }
 }
 
 /* Controls */

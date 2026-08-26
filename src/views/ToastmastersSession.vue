@@ -70,9 +70,68 @@
       <span>{{ captionText }}</span>
     </div>
 
+    <!--
+      THE LIVE TRANSCRIPT IS EDITABLE.
+
+      It was a read-only div, and a read-only transcript is a report marked on
+      words the speaker did not mean to say: Whisper transcribes a false start
+      faithfully, so a restarted sentence reached the Grammarian and the
+      Ah-Counter complete with the restart and the word "sorry" - and they duly
+      reported rambling, and filler words nobody used. Three ways out, the same
+      three the Job Interview room offers, because they are used at different
+      moments: type in the box, say "sorry" to drop the last part, or highlight a
+      phrase and dictate over it. See src/utils/answerEditing.ts.
+    -->
     <div class="tm-transcript-box">
-      <h4>{{ $t('Your Live Transcript') }} <span v-if="isSpeakingRef" style="color:#10b981;font-size:.85rem">{{ $t('🎤 Recording (Whisper AI)') }}</span></h4>
-      <div>{{ liveTranscript || (isSpeakingRef ? '🎙️ Listening... transcription appears every ~3 seconds' : '—') }}</div>
+      <div class="tm-transcript-head">
+        <h4>
+          {{ $t('Your Live Transcript') }}
+          <span v-if="isSpeakingRef" class="tm-transcript-live">{{ $t('🎤 Recording (Whisper AI)') }}</span>
+        </h4>
+        <span class="tm-transcript-words">{{ $t('{v0} words', { v0: transcriptWords }) }}</span>
+      </div>
+
+      <textarea
+        ref="transcriptEl"
+        class="tm-transcript-input"
+        :value="answer.text"
+        :readonly="!isSpeakingRef && !answer.text"
+        @input="onTranscriptTyped"
+        @select="trackSelection"
+        @keyup="trackSelection"
+        @mouseup="trackSelection"
+        :placeholder="transcriptPlaceholder"
+        spellcheck="true"
+        rows="4"
+      ></textarea>
+
+      <div class="tm-transcript-tools" v-if="isSpeakingRef">
+        <button type="button" class="tm-btn-tool" :disabled="!hasSelection"
+                @mousedown.prevent @click="replaceHighlighted"
+                :title="$t('Delete what you highlighted and carry on speaking in its place')">
+          {{ $t('✂️ Replace highlighted') }}
+        </button>
+        <button type="button" class="tm-btn-tool" v-if="answer.caret !== null" @click="backToEnd">
+          {{ $t('⇥ Back to the end') }}
+        </button>
+        <button type="button" class="tm-btn-tool" :disabled="!answer.text" @click="undoLastPart">
+          {{ $t('↩︎ Undo last part') }}
+        </button>
+        <button type="button" class="tm-btn-tool tm-btn-tool-danger" :disabled="!answer.text" @click="clearTranscript">
+          {{ $t('🗑️ Clear') }}
+        </button>
+        <label class="tm-transcript-toggle"
+               :title="$t('Turn off if the speech is about a subject where you say these words for real')">
+          <input type="checkbox" v-model="voiceEditing"> {{ $t('spoken corrections') }}
+        </label>
+      </div>
+
+      <div class="tm-transcript-caret" v-if="answer.caret !== null">
+        {{ $t('▌ What you say next goes') }} <strong>{{ $t('here') }}</strong>: <em>{{ caretHintText }}</em>
+      </div>
+      <div class="tm-transcript-hint" v-else-if="isSpeakingRef && voiceEditing">
+        {{ $t('Say') }} <strong>{{ $t('“sorry”') }}</strong> {{ $t('to delete the last part,') }} <strong>{{ $t('“sorry sorry”') }}</strong> {{ $t('for the last two — or highlight a phrase and press') }} <strong>{{ $t('Replace highlighted') }}</strong>{{ $t('. You can also just type.') }}
+      </div>
     </div>
 
     <div class="tm-controls">
@@ -82,7 +141,8 @@
       <button @click="userFinish" :disabled="finishBtnDisabled" class="tm-btn-warning">{{ $t('✋ I\'m Done') }}</button>
       <button v-if="showSkipReports" @click="doSkipReports" :disabled="didSkipReports" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipReports ? '⏩ Skipped' : '⏩ Skip Reports' }}</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="tm-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
-      <button @click="toggleCamera" :disabled="!mediaReady" class="tm-btn-control" :class="{ off: !cameraEnabled }">{{ cameraEnabled ? '📹 Camera On' : '📷 Camera Off' }}</button>
+      <button @click="toggleCamera" :disabled="!mediaReady || !cameraAvailable" class="tm-btn-control" :class="{ off: !cameraEnabled }"
+              :title="cameraAvailable ? '' : $t('No camera on this device — the meeting runs on the microphone alone')">{{ cameraEnabled ? '📹 Camera On' : '📷 Camera Off' }}</button>
       <button @click="doLeave" class="tm-btn-danger">{{ $t('Leave') }}</button>
     </div>
 
@@ -118,9 +178,15 @@
 </template>
 
 <script setup lang="ts">
-import { aiLanguage, aiLanguageHeaders, localeId } from '@/i18n/runtime';
+import { aiLanguage, aiLanguageHeaders, localeId, t } from '@/i18n/runtime';
 import { planSpeech } from '@/utils/roomSpeech';
-import { ref, computed, onUnmounted, reactive } from 'vue';
+import { ref, computed, onUnmounted, reactive, nextTick } from 'vue';
+// The transcript editor. Reused from the Job Interview room rather than
+// reimplemented -- see `answer` below and `npm run check:answeredit`.
+import {
+    type AnswerState, emptyAnswer, applyTranscript, undoSegments,
+    replaceSelection, resumeAtEnd, setTypedText, caretHint, wordCount,
+} from '@/utils/answerEditing';
 import { paint } from '@/theme/contrast';
 import SpeakerMedia from '@/components/cast/SpeakerMedia.vue';
 import { SEATS, actorById, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
@@ -149,14 +215,22 @@ const roleBadgeColor = ROLE_COLORS[userRole] || '#4f46e5';
 
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'You');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
+/*
+ * The label on the one button the speaker presses.
+ *
+ * A `computed` reading `t()`, so it re-renders when the language changes -- the
+ * role keys are the meeting's own vocabulary and stay as they are (they are what
+ * the backend is sent), and only the label is translated.
+ */
 const speakBtnLabel = computed(() => {
-  if (userRole === 'Speaker') return "🎤 I'm Ready to Speak";
+  const ready = t('🎤 I am ready to speak');
+  if (userRole === 'Speaker') return ready;
   const m: Record<string, string> = {
-    Toastmaster: '🎙️ Start Hosting', Timer: '⏱️ Timer Report',
-    'Ah-Counter': '🗣️ Ah-Counter Report', Grammarian: '✍️ Grammarian Report',
-    'Speech Evaluator': '📋 Deliver Eval', 'General Evaluator': '🎯 General Eval',
+    Toastmaster: t('🎙️ Start hosting'), Timer: t('⏱️ Timer report'),
+    'Ah-Counter': t('🗣️ Ah-Counter report'), Grammarian: t('✍️ Grammarian report'),
+    'Speech Evaluator': t('📋 Deliver evaluation'), 'General Evaluator': t('🎯 General evaluation'),
   };
-  return m[userRole] || "🎤 I'm Ready to Speak";
+  return m[userRole] || ready;
 });
 
 // ═══════ STATE ═══════
@@ -167,15 +241,57 @@ const faceBoxLabelEl = ref<HTMLDivElement>();
 const displayTopic = ref(initialTopic);
 const currentSpeaker = ref<string | null>(null);
 const captionSpeaker = ref('System');
-const captionText = ref('Click "Start Meeting" to begin.');
-const liveTranscript = ref('');
+const captionText = ref(t('Click "Start Meeting" to begin.'));
+
+/*
+ * THE TRANSCRIPT IS EDITABLE, AND IT IS THE SOURCE OF TRUTH.
+ *
+ * It was `let transcript = ''` with chunks appended to it and a read-only
+ * `liveTranscript` ref mirroring it onto the page. That is fine for a native
+ * speaker of the meeting's language and useless for anybody else, which is most
+ * of this platform's readers: Whisper transcribes a false start faithfully, so
+ * what reached the Grammarian, the Ah-Counter and both Evaluators was the wrong
+ * sentence, the word "sorry", and then the right sentence — and the reports then
+ * marked the speaker down for rambling and for filler words they did not use.
+ *
+ * The Job Interview room solved this already, so this reuses its module rather
+ * than growing a second copy: `answerEditing.ts` is plain (no Vue), has its own
+ * check (`npm run check:answeredit`), and owns all three ways out — type in the
+ * box, say "sorry" to drop the last part, or highlight a phrase and dictate
+ * over it.
+ *
+ * The important half is that there is now ONE string rather than a buffer and a
+ * display. Everything downstream — the filler count, the word count, all five
+ * reports and the saved session — reads `speechText()`. Had the edit landed only
+ * on the ref, the speaker would have corrected the text on screen and been
+ * marked on the original, which is worse than not offering the edit at all.
+ */
+const answer = ref<AnswerState>(emptyAnswer());
+const selection = ref({ start: 0, end: 0 });
+const voiceEditing = ref(true);
+const transcriptEl = ref<HTMLTextAreaElement>();
+
+/** The words the meeting will actually be judged on. */
+function speechText(): string {
+  return answer.value.text;
+}
 const startBtnDisabled = ref(false);
-const startBtnText = ref('▶️ Start Meeting');
+const startBtnText = ref(t('▶️ Start Meeting'));
 const speakBtnDisabled = ref(true);
 const finishBtnDisabled = ref(true);
 const mediaReady = ref(false);
 const micEnabled = ref(true);
 const cameraEnabled = ref(true);
+/*
+ * Whether this machine gave us a camera at all.
+ *
+ * Distinct from `cameraEnabled`, which is the speaker's own choice, and the
+ * distinction matters in two places: the toggle is disabled rather than merely
+ * off (a button that cannot work should say so), and the body-language report
+ * says "no camera" rather than reporting 0% engagement, which reads as a
+ * damning assessment of somebody who never had a camera to look at.
+ */
+const cameraAvailable = ref(true);
 const lightGreen = ref(false);
 const lightYellow = ref(false);
 const lightRed = ref(false);
@@ -209,7 +325,6 @@ const totalFillerCount = computed(() => Object.values(fillerCounts.value).reduce
 
 // Internals
 let mediaStream: MediaStream | null = null;
-let transcript = '';
 let isSpeaking = false;
 let startTime = 0;
 let timerInterval: any = null;
@@ -295,69 +410,235 @@ function speakerLabel(botKey: string, fallback: string): string {
  */
 const sampleSpeakerCaption = (() => {
   const seat = seatByKey('toastmaster');
-  return seat ? `${seat.emoji} ${actorById(seat.actor).name} (Sample)` : '🎙️ Sample Speaker';
+  return seat ? `${seat.emoji} ${actorById(seat.actor).name} (${t('Sample')})` : t('🎙️ Sample Speaker');
 })();
 
-function speak(text: string, botKey: string): Promise<void> {
+/*
+ * CHROME SILENTLY STOPS SPEAKING AFTER ABOUT FIFTEEN SECONDS.
+ *
+ * `pause()` + `resume()` on a timer resets its internal clock, and it is the
+ * documented workaround. The Newscast has carried it since the day that page
+ * shipped and the Job Interview room was given it after the same bug was
+ * reported there; this room never had it, and it is the room where it hurts
+ * most — a sample speech and five evaluator reports are the longest utterances
+ * on the platform, so every one of them was cut off mid-word.
+ *
+ * The second half is worse than the truncation: when Chrome does this, `onend`
+ * frequently never arrives. Every step of this meeting awaits `speak()`, so a
+ * promise that never settles is a meeting that stops dead with the caption still
+ * reading as though somebody were talking. That is the "it just sticks" report.
+ *
+ * Nine seconds, comfortably inside the fifteen.
+ */
+let speechKeepAlive: number | null = null;
+
+/*
+ * The utterance being spoken, held so the garbage collector cannot take it.
+ *
+ * Chrome and Safari have both shipped versions that collect a
+ * `SpeechSynthesisUtterance` whose only reference is inside the speech queue,
+ * and the symptom is the same one: speech stops part-way through, with no error
+ * and often no `onend`. One variable, and it removes a whole class of report.
+ */
+let speaking: SpeechSynthesisUtterance | null = null;
+
+function startSpeechKeepAlive() {
+  stopSpeechKeepAlive();
+  speechKeepAlive = window.setInterval(() => {
+    try {
+      if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        speechSynthesis.resume();
+      }
+    } catch { /* a browser that refuses this is a browser that does not need it */ }
+  }, 9000);
+}
+
+function stopSpeechKeepAlive() {
+  if (speechKeepAlive !== null) {
+    window.clearInterval(speechKeepAlive);
+    speechKeepAlive = null;
+  }
+}
+
+/*
+ * How long to wait for `onend` before giving up on it.
+ *
+ * Speech runs at roughly 14 characters a second, so this is the time the text
+ * should take plus a wide margin. The keepalive above should make it
+ * unreachable; it is here because "should" is not a guarantee and the cost of
+ * being wrong is a meeting nobody can finish. Capped, because a bot that returns
+ * a wall of text must not be able to hang the room for ten minutes either.
+ */
+function speechTimeoutMs(text: string): number {
+  return Math.min(120000, Math.max(8000, text.length * 120 + 5000));
+}
+
+/*
+ * One `speak` implementation with a `force` flag, rather than two.
+ *
+ * `speak` and `speakForced` differed in three lines — the skip check, the
+ * caption fallback and a slightly slower delivery — and were otherwise the same
+ * forty lines twice. That mattered once the keepalive and the watchdog arrived:
+ * added to one and not the other, the sample speech (the single longest
+ * utterance in the meeting, and the one delivered through `speakForced`) would
+ * have been the one case still being cut off.
+ */
+function say(text: string, botKey: string, force: boolean): Promise<void> {
   return new Promise(resolve => {
     if (!text?.trim()) { resolve(); return; }
-    captionSpeaker.value = speakerLabel(botKey, 'System');
+    captionSpeaker.value = speakerLabel(botKey, force ? t('🎙️ Sample Speaker') : t('System'));
     captionText.value = text;
-    // Skip TTS if user clicked skip intro
-    if (didSkipIntro.value && !isSpeaking) { setTimeout(resolve, 80); return; }
-    // Skip TTS if user clicked skip reports
-    if (didSkipReports.value && reportsVisible.value) { setTimeout(resolve, 80); return; }
+    if (!force) {
+      // Skip requested: show the line, say nothing, move on.
+      if (didSkipIntro.value && !isSpeaking) { setTimeout(resolve, 80); return; }
+      if (didSkipReports.value && reportsVisible.value) { setTimeout(resolve, 80); return; }
+    }
     currentSpeaker.value = botKey;
     speechSynthesis.cancel();
+
     const u = new SpeechSynthesisUtterance(text);
+    speaking = u;
     const cast = voiceFor(botKey);
     if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
     // Set whether or not a voice was cast. With none assigned, `lang` is the
-    // only thing telling the platform what language the text is in — and an
-    // unassigned voice with a correct `lang` frequently reaches an OS voice
-    // that `getVoices()` never listed at all.
+    // only thing telling the platform what language the text is in -- and an
+    // unassigned voice with a correct `lang` frequently reaches an OS voice that
+    // `getVoices()` never listed at all.
     u.lang = cast.lang;
-    u.pitch = cast.pitch;
-    u.onend = () => { currentSpeaker.value = null; resolve(); };
-    u.onerror = () => { currentSpeaker.value = null; resolve(); };
-    setTimeout(() => speechSynthesis.speak(u), 80);
+    u.pitch = force ? cast.pitch - 0.03 : cast.pitch;
+    // A shade slower for a set-piece speech being performed, rather than a line
+    // of meeting business.
+    if (force) u.rate = 0.95;
+
+    const t0 = Date.now();
+    let watchdog: any = null;
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      if (watchdog) clearTimeout(watchdog);
+      stopSpeechKeepAlive();
+      speaking = null;
+      if (force) sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000);
+      currentSpeaker.value = null;
+      resolve();
+    };
+    u.onend = done;
+    u.onerror = done;
+
+    setTimeout(() => {
+      speechSynthesis.speak(u);
+      startSpeechKeepAlive();
+      watchdog = setTimeout(() => {
+        // `onend` never came. Stop whatever is still queued and carry on rather
+        // than leaving the room waiting on a promise that will not settle.
+        try { speechSynthesis.cancel(); } catch { /* nothing to cancel */ }
+        done();
+      }, speechTimeoutMs(text));
+    }, force ? 100 : 80);
   });
 }
 
-/** Force-speak: always plays TTS, ignores skip flags (for sample speeches) */
-function speakForced(text: string, botKey: string): Promise<void> {
-  return new Promise(resolve => {
-    if (!text?.trim()) { resolve(); return; }
-    captionSpeaker.value = speakerLabel(botKey, '🎙️ Sample Speaker');
-    captionText.value = text;
-    currentSpeaker.value = botKey;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const cast = voiceFor(botKey);
-    if (cast.voice) u.voice = cast.voice as SpeechSynthesisVoice;
-    u.lang = cast.lang;
-    // A shade slower and lower than the same seat's ordinary delivery: this is a
-    // set-piece speech being performed, not a line of meeting business.
-    u.rate = 0.95; u.pitch = cast.pitch - 0.03;
-    const t0 = Date.now();
-    u.onend = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
-    u.onerror = () => { sampleSpeechDuration = Math.floor((Date.now() - t0) / 1000); currentSpeaker.value = null; resolve(); };
-    setTimeout(() => speechSynthesis.speak(u), 100);
-  });
+function speak(text: string, botKey: string): Promise<void> { return say(text, botKey, false); }
+
+/** Always plays, ignoring the skip flags — for the sample speeches. */
+function speakForced(text: string, botKey: string): Promise<void> { return say(text, botKey, true); }
+
+// ═══════ THE TRANSCRIPT EDITOR ═══════
+//
+// Thin on purpose: every rule lives in `@/utils/answerEditing`, which is a plain
+// module with a check of its own. What is here is the wiring — where the caret
+// is, what is selected, and putting the textarea's own cursor back where the
+// speaker would expect it.
+
+/*
+ * The placeholder is prose in the reader's language, so it goes through `t()`
+ * rather than being a bare literal -- this is a script block, where `$t` is
+ * undefined and the call would throw on whichever branch reached it.
+ */
+const transcriptPlaceholder = computed(() => (
+  isSpeakingRef.value
+    ? t('Speak — your words appear here every few seconds. You can also type or correct anything in this box while you talk.')
+    : '—'
+));
+const transcriptWords = computed(() => wordCount(answer.value.text));
+const caretHintText = computed(() => caretHint(answer.value));
+const hasSelection = computed(() => selection.value.end > selection.value.start);
+
+/** Put the textarea's own cursor where the next dictated words will land. */
+async function syncCursor() {
+  const at = answer.value.caret;
+  if (at === null) return;
+  await nextTick();
+  const el = transcriptEl.value;
+  if (!el) return;
+  try { el.setSelectionRange(at, at); } catch { /* not focusable yet */ }
+}
+
+/** One transcribed chunk, with spoken corrections applied. */
+function applyChunk(text: string) {
+  answer.value = applyTranscript(answer.value, text, { voiceEditing: voiceEditing.value });
+  void syncCursor();
+}
+
+function onTranscriptTyped(event: Event) {
+  const el = event.target as HTMLTextAreaElement;
+  answer.value = setTypedText(answer.value, el.value);
+}
+
+function trackSelection() {
+  const el = transcriptEl.value;
+  if (!el) return;
+  selection.value = { start: el.selectionStart ?? 0, end: el.selectionEnd ?? 0 };
+}
+
+/*
+ * Delete what is highlighted and dictate into the gap.
+ *
+ * The selection is read off the element rather than out of `selection` at the
+ * moment of the click, because clicking can collapse a selection on some
+ * browsers before the handler runs — and a button that silently does nothing on
+ * the one browser nobody tested is worse than no button. The template's
+ * `mousedown.prevent` is the other half of the same problem: pressing the button
+ * blurs the field, and a browser that collapses on blur would disable the button
+ * between mousedown and click.
+ */
+function replaceHighlighted() {
+  const el = transcriptEl.value;
+  const start = el?.selectionStart ?? selection.value.start;
+  const end = el?.selectionEnd ?? selection.value.end;
+  if (end <= start) return;
+  answer.value = replaceSelection(answer.value, start, end);
+  selection.value = { start: answer.value.caret ?? 0, end: answer.value.caret ?? 0 };
+  void syncCursor();
+  el?.focus();
+}
+
+function backToEnd() { answer.value = resumeAtEnd(answer.value); }
+
+/** The button form of saying "sorry", through the module rather than a second copy. */
+function undoLastPart() { answer.value = undoSegments(answer.value, 1); void syncCursor(); }
+
+function clearTranscript() {
+  answer.value = emptyAnswer();
+  selection.value = { start: 0, end: 0 };
 }
 
 // ═══════ SKIP HANDLERS ═══════
 function doSkipIntro() {
   didSkipIntro.value = true;
   speechSynthesis.cancel();
+  stopSpeechKeepAlive();
   currentSpeaker.value = null;
-  captionText.value = 'Intro skipped — jumping ahead…';
+  captionText.value = t('Intro skipped — jumping ahead…');
 }
 function doSkipReports() {
   didSkipReports.value = true;
   speechSynthesis.cancel();
+  stopSpeechKeepAlive();
   currentSpeaker.value = null;
-  captionText.value = 'Reports skipped — saving results…';
+  captionText.value = t('Reports skipped — saving results…');
 }
 
 // ═══════ CAMERA ANALYSIS (identical to original) ═══════
@@ -396,23 +677,60 @@ async function startCameraAnalysis(){videoIsMirrored=null;await loadFaceDetectio
 function stopCameraAnalysis(){if(analysisInterval)clearInterval(analysisInterval);analysisInterval=null;cameraAnalysisActive.value=false;if(faceBoxEl.value)faceBoxEl.value.style.display='none'}
 function getBodyLanguageData(){const total=blStats.frames||1;const facePct=blStats.faceVisibleFrames/total*100;const fwdPct=blStats.lookingForwardFrames/total*100;const centeredPct=blStats.centeredFrames/total*100;const avgMove=blStats.movementSamples?blStats.movementSum/blStats.movementSamples:0;const engagement=Math.min(100,Math.max(0,Math.round(facePct*.3+fwdPct*.4+centeredPct*.2+Math.max(0,100-avgMove*2)*.1)));return{frames_analyzed:total,faces_detected:blStats.faceVisibleFrames,face_visibility_percent:+(facePct).toFixed(1),looking_forward_percent:+(fwdPct).toFixed(1),looking_away_percent:+(blStats.lookingAwayFrames/total*100).toFixed(1),absent_percent:+(blStats.absentFrames/total*100).toFixed(1),centered_percent:+(centeredPct).toFixed(1),camera_off_percent:+(blStats.cameraOffFrames/total*100).toFixed(1),avg_movement:Math.round(avgMove),engagement_score:engagement,detection_method:detectionMethod.value}}
 
-// ═══════ MEDIA (identical to original) ═══════
+// ═══════ MEDIA ═══════
+//
+// THE MICROPHONE IS MANDATORY AND THE CAMERA IS NOT, AND THAT IS TWO
+// `getUserMedia` CALLS RATHER THAN ONE.
+//
+// It was one call asking for `{ video, audio }`, and `getUserMedia` is all or
+// nothing: a laptop with no webcam, a camera another tab already holds, a
+// browser profile where video is blocked, or a user who simply says no to the
+// camera half of the prompt — every one of those rejected the WHOLE request. So
+// the meeting could not start at all, with an alert about permission being
+// denied, on a machine whose microphone was working perfectly.
+//
+// That made the camera mandatory in practice while nothing in the product said
+// it was. It is not: a Toastmasters meeting is a speaking exercise. The camera
+// feeds the body-language report, which is one card out of seven and is already
+// written to say when there was nothing to analyse.
+//
+// Audio first and on its own, because it is the one that must succeed and its
+// failure is the only one worth stopping for. Video second, best effort, and its
+// tracks are ADDED to the same stream so everything downstream — the recorder,
+// `toggleCamera`, `doLeave`'s track cleanup — keeps working unchanged.
 async function initMedia(): Promise<boolean> {
+  const AUDIO = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO });
+  } catch (e: any) {
+    // The only hard stop. There is no meeting without a voice, so this says what
+    // is needed rather than naming the camera as well and sending somebody to
+    // check a setting that is not the problem.
+    alert(t('Microphone access is needed to take part in the meeting.') + '\n' + (e?.message || ''));
+    return false;
+  }
+
+  // Best effort. A refusal here is a normal state, not an error: the meeting runs
+  // audio-only and the tile shows the "Camera Off" overlay it already has.
+  try {
+    const video = await navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
     });
-    if (videoEl.value) {
-      videoEl.value.srcObject = mediaStream;
-      await new Promise<void>(r => {
-        if (videoEl.value!.readyState >= 2) r();
-        else videoEl.value!.onloadedmetadata = () => videoEl.value!.play().then(() => r()).catch(() => r());
-      });
-    }
-    mediaReady.value = true;
-    return true;
-  } catch (e: any) { alert('Camera/microphone permission denied: ' + e.message); return false; }
+    for (const track of video.getVideoTracks()) mediaStream.addTrack(track);
+  } catch {
+    cameraAvailable.value = false;
+    cameraEnabled.value = false;
+  }
+
+  if (cameraAvailable.value && videoEl.value) {
+    videoEl.value.srcObject = mediaStream;
+    await new Promise<void>(r => {
+      if (videoEl.value!.readyState >= 2) r();
+      else videoEl.value!.onloadedmetadata = () => videoEl.value!.play().then(() => r()).catch(() => r());
+    });
+  }
+  mediaReady.value = true;
+  return true;
 }
 
 // ═══════ WHISPER TRANSCRIPTION (identical to original) ═══════
@@ -446,7 +764,7 @@ async function transcribeAudioBlob(blob: Blob, chunkIndex: number): Promise<void
     if (response.ok) {
       const result = await response.json();
       const text = (result.text || '').trim();
-      if (text) { transcript += ' ' + text; liveTranscript.value = transcript.trim(); chunksProcessed.value++; }
+      if (text) { applyChunk(text); chunksProcessed.value++; }
     }
   } catch (e: any) { console.error(`[Whisper] Chunk #${chunkIndex} error:`, e.message); }
 }
@@ -525,21 +843,24 @@ function doLeave() {
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();
+  stopSpeechKeepAlive();
   router.push('/toastmasters/results');
 }
 
 // ═══════ MAIN FLOW ═══════
 
 async function startMeeting() {
-  startBtnDisabled.value = true; startBtnText.value = '⏳ Setting up...';
+  startBtnDisabled.value = true; startBtnText.value = t('⏳ Setting up…');
   showSkipIntro.value = true; didSkipIntro.value = false;
-  captionText.value = 'Requesting camera and microphone…';
+  captionText.value = t('Requesting the microphone…');
 
   if (!(await initMedia())) { startBtnDisabled.value = false; startBtnText.value = '▶️ Start Meeting'; showSkipIntro.value = false; return; }
-  if (typeof MediaRecorder === 'undefined') { alert('Audio recording not supported.'); startBtnDisabled.value = false; startBtnText.value = '▶️ Start Meeting'; showSkipIntro.value = false; return; }
+  if (typeof MediaRecorder === 'undefined') { alert(t('Audio recording is not supported by this browser.')); startBtnDisabled.value = false; startBtnText.value = '▶️ Start Meeting'; showSkipIntro.value = false; return; }
 
-  captionText.value = 'Loading AI face detection…';
-  await startCameraAnalysis();
+  if (cameraAvailable.value) {
+    captionText.value = t('Loading AI face detection…');
+    await startCameraAnalysis();
+  }
   if (!voices.length) { await new Promise(r => setTimeout(r, 400)); loadVoices(); }
 
   if (userRole === 'Speaker') {
@@ -551,18 +872,18 @@ async function startMeeting() {
   showSkipIntro.value = false; didSkipIntro.value = false;
   await new Promise(r => setTimeout(r, 500));
   speakBtnDisabled.value = false;
-  captionText.value = 'Click the speak button when ready.';
-  startBtnText.value = '✓ Started';
+  captionText.value = t('Click the speak button when ready.');
+  startBtnText.value = t('✓ Started');
 }
 
 // ─── Speaker Intro ───
 async function speakerIntroFlow() {
   if (speechType === 'Table Topics (Impromptu)') {
-    captionText.value = 'Generating your impromptu question...';
+    captionText.value = t('Generating your impromptu question…');
     const q = await toastmastersService.callBot('table-topic', {});
     if (q) displayTopic.value = q;
   }
-  captionText.value = 'Bots are preparing...';
+  captionText.value = t('The room is preparing…');
   const [intro, timerIntro, ahIntro, gramIntro, seIntro, geIntro] = await Promise.all([
     toastmastersService.callBot('toastmaster', { stage: 'intro', topic: displayTopic.value, speech_type: speechType, user_name: userName.value, user_role: 'Speaker' }),
     toastmastersService.callBot('timer', { stage: 'intro', min_time: minTime, max_time: maxTime }),
@@ -571,14 +892,14 @@ async function speakerIntroFlow() {
     toastmastersService.callBot('speech-evaluator', { stage: 'intro' }),
     toastmastersService.callBot('general-evaluator', { stage: 'intro' })
   ]);
-  await speak(intro || `Welcome ${userName.value}!`, 'toastmaster');
+  await speak(intro || t('Welcome {v0}!', { v0: userName.value }), 'toastmaster');
   await speak(timerIntro || '', 'timer');
   await speak(ahIntro || '', 'ah');
   try {
     const m = (gramIntro || '').match(/\{[\s\S]*\}/);
-    if (m) { const j = JSON.parse(m[0]); wordOfTheDay = j.word || ''; await speak(`${j.intro} Today's Word of the Day is "${j.word}", meaning: ${j.meaning}.`, 'grammarian'); }
-    else { wordOfTheDay = 'eloquent'; await speak("Hi, I'm Emma.", 'grammarian'); }
-  } catch { wordOfTheDay = 'eloquent'; await speak("Hi, I'm Emma.", 'grammarian'); }
+    if (m) { const j = JSON.parse(m[0]); wordOfTheDay = j.word || ''; await speak(t('{v0} Today’s Word of the Day is “{v1}”, meaning: {v2}.', { v0: j.intro, v1: j.word, v2: j.meaning }), 'grammarian'); }
+    else { wordOfTheDay = 'eloquent'; await speak(t('Hello, I am your Grammarian.'), 'grammarian'); }
+  } catch { wordOfTheDay = 'eloquent'; await speak(t('Hello, I am your Grammarian.'), 'grammarian'); }
   await speak(seIntro || '', 'speechEval');
   await speak(geIntro || '', 'generalEval');
 
@@ -586,19 +907,22 @@ async function speakerIntroFlow() {
     showSkipIntro.value = false; didSkipIntro.value = false;
     const intro2 = await toastmastersService.callBot('toastmaster', { stage: 'evalspeech_intro' });
     await speakForced(intro2 || '', 'toastmaster');
-    captionText.value = 'Preparing sample speech...';
-    sampleSpeechText = await toastmastersService.callBot('sample-speech', {}) || 'Three years ago, I lost my job. I started a business that failed. But that failure taught me everything.';
-    captionSpeaker.value = sampleSpeakerCaption; captionText.value = 'Listen carefully...';
+    captionText.value = t('Preparing sample speech…');
+    sampleSpeechText = await toastmastersService.callBot('sample-speech', {}) || t('Three years ago, I lost my job. I started a business that failed. But that failure taught me everything.');
+    captionSpeaker.value = sampleSpeakerCaption; captionText.value = t('Listen carefully…');
     await speakForced(sampleSpeechText, 'toastmaster');
     const ho = await toastmastersService.callBot('toastmaster', { stage: 'evalspeech_handover', user_name: userName.value });
     await speakForced(ho || '', 'toastmaster');
-  } else if (speechType === 'Ice Breaker' && !cameraEnabled.value) {
+  } else if (speechType === 'Ice Breaker' && cameraAvailable.value && !cameraEnabled.value) {
+    // `cameraAvailable` and not just `cameraEnabled`: asking somebody with no
+    // camera to turn theirs on is the Toastmaster reading out an instruction
+    // that cannot be followed, which reads as the meeting being broken.
     const msg = await toastmastersService.callBot('toastmaster', { stage: 'icebreaker_camera', user_name: userName.value });
-    await speak(msg || 'Please turn on your camera.', 'toastmaster');
+    await speak(msg || t('Please turn on your camera.'), 'toastmaster');
   }
   if (speechType !== 'Evaluation Speech') {
     const handover = await toastmastersService.callBot('toastmaster', { stage: 'handover', topic: displayTopic.value, user_name: userName.value, speech_type: speechType, user_role: 'Speaker' });
-    await speak(handover || `Please welcome ${userName.value}!`, 'toastmaster');
+    await speak(handover || t('Please welcome {v0}!', { v0: userName.value }), 'toastmaster');
   }
 }
 
@@ -606,40 +930,45 @@ async function speakerIntroFlow() {
 async function roleIntroFlow() {
   captionText.value = `Setting up ${userRole} practice…`;
   const task = await toastmastersService.generateRoleTask({ user_role: userRole, user_name: userName.value });
-  roleTaskInfo.value = task || `Practice your ${userRole} duties.`;
+  roleTaskInfo.value = task || t('Practice your {v0} duties.', { v0: userRole });
 
   const intro = await toastmastersService.callBot('toastmaster', { stage: 'intro', topic: displayTopic.value, speech_type: speechType, user_name: userName.value, user_role: userRole });
-  await speak(intro || `Welcome ${userName.value}! Today: ${userRole} role.`, 'toastmaster');
+  await speak(intro || t('Welcome {v0}! Today you have the {v1} role.', { v0: userName.value, v1: userRole }), 'toastmaster');
 
   // Disable skip for sample speech
   showSkipIntro.value = false; didSkipIntro.value = false;
 
-  captionText.value = 'Generating sample speech…';
+  captionText.value = t('Generating sample speech…');
   sampleSpeechText = await toastmastersService.callBot('sample-speech', { purpose: 'role_practice', user_role: userRole } as any)
-    || "Three years ago I was afraid of failure. Then I, um, lost my job and started a business. It failed but, you know, that failure taught me everything. I basically learned that, like, taking risks is actually the key.";
+    // Deliberately full of fillers -- it is the speech the Evaluation-Speech
+    // exercise asks the candidate to critique, so the "um" and the "like" are
+    // the material rather than sloppiness. Translated, the fillers become that
+    // language's own.
+    || t('Three years ago I was afraid of failure. Then I, um, lost my job and started a business. It failed but, you know, that failure taught me everything. I basically learned that, like, taking risks is actually the key.');
   sampleSpeechFillers = countFillers(sampleSpeechText);
 
-  await speakForced('Now our sample speaker will deliver a speech. Listen carefully!', 'toastmaster');
-  captionSpeaker.value = '🎙️ Sample Speaker'; captionText.value = 'Listen carefully...';
+  await speakForced(t('Now our sample speaker will deliver a speech. Listen carefully!'), 'toastmaster');
+  captionSpeaker.value = t('🎙️ Sample Speaker'); captionText.value = t('Listen carefully…');
   await speakForced(sampleSpeechText, 'toastmaster');
 
   const ho = await toastmastersService.callBot('toastmaster', { stage: 'handover', topic: displayTopic.value, user_name: userName.value, speech_type: speechType, user_role: userRole });
-  await speakForced(ho || `Your turn, ${userName.value}.`, 'toastmaster');
+  await speakForced(ho || t('Your turn, {v0}.', { v0: userName.value }), 'toastmaster');
 }
 
 // ─── User starts speaking ───
 function userSpeak() {
-  if (!micEnabled.value) { alert('Please unmute your microphone first.'); return; }
-  if (!mediaStream) { alert('Microphone not initialized.'); return; }
-  if (typeof MediaRecorder === 'undefined') { alert('Audio recording not supported.'); return; }
+  if (!micEnabled.value) { alert(t('Please unmute your microphone first.')); return; }
+  if (!mediaStream) { alert(t('The microphone is not ready yet.')); return; }
+  if (typeof MediaRecorder === 'undefined') { alert(t('Audio recording is not supported by this browser.')); return; }
   speechSynthesis.cancel();
+  stopSpeechKeepAlive();
   isSpeaking = true; isSpeakingRef.value = true;
-  transcript = ''; liveTranscript.value = '';
+  answer.value = emptyAnswer(); selection.value = { start: 0, end: 0 };
   showSkipIntro.value = false;
   startContinuousRecording().catch(e => console.error('[Recording]', e));
   startTimer();
   speakBtnDisabled.value = true; finishBtnDisabled.value = false;
-  captionSpeaker.value = 'You'; captionText.value = '🎤 Speak now! Transcription appears every ~3 seconds (Whisper AI)';
+  captionSpeaker.value = t('You'); captionText.value = t('🎤 Speak now! Your words appear here every few seconds.');
 }
 
 // ─── User finishes ───
@@ -647,7 +976,7 @@ async function userFinish() {
   isSpeaking = false; isSpeakingRef.value = false;
   stopCurrentRecording();
   await new Promise(r => setTimeout(r, 800));
-  captionText.value = 'Finalizing transcription...';
+  captionText.value = t('Finalizing transcription…');
   await new Promise(r => setTimeout(r, 1500));
   clearInterval(timerInterval); currentSpeaker.value = null;
   const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -655,15 +984,15 @@ async function userFinish() {
 
   showSkipReports.value = true; didSkipReports.value = false;
 
-  const fillers = countFillers(transcript);
+  const fillers = countFillers(speechText());
   fillerCounts.value = { ...fillers.counts };
   const onTime = duration >= minTime * 60 && duration <= maxTime * 60;
-  const cleanTranscript = transcript.trim() || '(no speech captured)';
+  const cleanTranscript = speechText().trim() || t('(no speech captured)');
 
   reportsVisible.value = true;
-  reports.timer = '⏳ Generating...'; reports.ah = '⏳ Generating...';
-  reports.gram = '⏳ Analyzing…'; reports.speechEval = '⏳ Analyzing…';
-  reports.generalEval = '⏳ Analyzing…'; reports.bodyLang = '⏳ Analyzing…';
+  reports.timer = t('⏳ Generating…'); reports.ah = t('⏳ Generating…');
+  reports.gram = t('⏳ Analyzing…'); reports.speechEval = t('⏳ Analyzing…');
+  reports.generalEval = t('⏳ Analyzing…'); reports.bodyLang = t('⏳ Analyzing…');
 
   if (userRole === 'Speaker') {
     await finishSpeakerFlow(duration, fillers, onTime, cleanTranscript);
@@ -678,47 +1007,69 @@ async function finishSpeakerFlow(duration: number, fillers: { counts: Record<str
   const closing = await toastmastersService.callBot('toastmaster', { stage: 'closing', user_name: userName.value, user_role: 'Speaker' });
   await speak(closing || '', 'toastmaster');
 
-  reports.timer = await toastmastersService.callBot('timer', { stage: 'report', duration, min_time: minTime, max_time: maxTime }) || `${Math.floor(duration / 60)}m ${duration % 60}s.`;
+  reports.timer = await toastmastersService.callBot('timer', { stage: 'report', duration, min_time: minTime, max_time: maxTime }) || t('{v0}m {v1}s.', { v0: Math.floor(duration / 60), v1: duration % 60 });
   if (!didSkipReports.value) await speak(reports.timer, 'timer');
 
-  reports.ah = await toastmastersService.callBot('ah-counter', { stage: 'report', counts: fillers.counts, total: fillers.total }) || `${fillers.total} fillers.`;
+  reports.ah = await toastmastersService.callBot('ah-counter', { stage: 'report', counts: fillers.counts, total: fillers.total }) || t('{v0} filler words.', { v0: fillers.total });
   if (!didSkipReports.value) await speak(reports.ah, 'ah');
 
-  reports.gram = await toastmastersService.callBot('grammarian', { stage: 'report', transcript: cleanTranscript }) || 'Good language overall.';
+  reports.gram = await toastmastersService.callBot('grammarian', { stage: 'report', transcript: cleanTranscript }) || t('Good language overall.');
   if (!didSkipReports.value) await speak(reports.gram, 'grammarian');
 
-  reports.speechEval = await toastmastersService.callBot('speech-evaluator', { stage: 'report', transcript: cleanTranscript, topic: displayTopic.value, speech_type: speechType, sample_speech: sampleSpeechText }) || 'Solid effort.';
+  reports.speechEval = await toastmastersService.callBot('speech-evaluator', { stage: 'report', transcript: cleanTranscript, topic: displayTopic.value, speech_type: speechType, sample_speech: sampleSpeechText }) || t('Solid effort.');
   if (!didSkipReports.value) await speak(reports.speechEval, 'speechEval');
 
   stopCameraAnalysis();
   const blData = getBodyLanguageData();
-  const blAdvice = await toastmastersService.callBot('body-language', { body_language: blData }) || 'Maintain eye contact.';
-  reports.bodyLang = `Engagement: ${blData.engagement_score}/100 | Face visible: ${blData.face_visibility_percent}% | Looking forward: ${blData.looking_forward_percent}% | Centered: ${blData.centered_percent}%\n\n${blAdvice}`;
+  /*
+   * With no camera there is nothing to analyse, and the zeros are not a result.
+   * Sent through the bot they read as 0/100 engagement and a face never visible
+   * -- a damning assessment of somebody who never had a camera to look at. So
+   * the card says what happened instead, and no provider call is spent on it.
+   */
+  const blAdvice = cameraAvailable.value
+    ? (await toastmastersService.callBot('body-language', { body_language: blData })
+       || t('Maintain eye contact.'))
+    : t('No camera was used for this meeting, so there is no body-language analysis. The microphone is all a meeting needs — turn a camera on next time if you would like this report too.');
+  reports.bodyLang = cameraAvailable.value
+    ? `${t('Engagement')}: ${blData.engagement_score}/100 | ${t('Face visible')}: ${blData.face_visibility_percent}% | ${t('Looking forward')}: ${blData.looking_forward_percent}% | ${t('Centered')}: ${blData.centered_percent}%\n\n${blAdvice}`
+    : blAdvice;
 
-  reports.generalEval = await toastmastersService.callBot('general-evaluator', { stage: 'report', transcript: cleanTranscript, speech_type: speechType, topic: displayTopic.value, duration, total_fillers: fillers.total, on_time: onTime, min_time: minTime, max_time: maxTime, engagement_score: blData.engagement_score }) || 'Good meeting overall.';
+  reports.generalEval = await toastmastersService.callBot('general-evaluator', { stage: 'report', transcript: cleanTranscript, speech_type: speechType, topic: displayTopic.value, duration, total_fillers: fillers.total, on_time: onTime, min_time: minTime, max_time: maxTime, engagement_score: blData.engagement_score }) || t('Good meeting overall.');
   if (!didSkipReports.value) await speak(reports.generalEval, 'generalEval');
 
   const timeScore = onTime ? 40 : Math.max(0, 40 - Math.abs(duration - (minTime * 60 + maxTime * 60) / 2) / 3);
-  const wc = transcript.split(/\s+/).filter(Boolean).length || 1;
+  const wc = wordCount(speechText()) || 1;
   const fillerScore = Math.max(0, 30 - (fillers.total / wc) * 300);
   const bodyScore = blData.engagement_score * 0.3;
   const overall = Math.round(timeScore + fillerScore + bodyScore);
 
   await saveSessionData('Speaker', duration, fillers, overall, blData, blAdvice);
-  if (didSkipReports.value) { captionText.value = '✅ Saved! Redirecting…'; setTimeout(() => router.push('/toastmasters/results'), 1200); }
+  if (didSkipReports.value) { captionText.value = t('✅ Saved! Redirecting…'); setTimeout(() => router.push('/toastmasters/results'), 1200); }
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
 }
 
 async function finishRoleFlow(duration: number, fillers: { counts: Record<string, number>; total: number }, onTime: boolean, cleanTranscript: string) {
-  reports.roleEval = '⏳ AI evaluating your role…';
+  reports.roleEval = t('⏳ Evaluating your role…');
 
   const closing = await toastmastersService.callBot('toastmaster', { stage: 'closing', user_name: userName.value, user_role: userRole });
   if (!didSkipReports.value) await speak(closing || '', 'toastmaster');
 
   stopCameraAnalysis();
   const blData = getBodyLanguageData();
-  const blAdvice = await toastmastersService.callBot('body-language', { body_language: blData }) || 'Maintain eye contact.';
-  reports.bodyLang = `Engagement: ${blData.engagement_score}/100 | Face visible: ${blData.face_visibility_percent}% | Centered: ${blData.centered_percent}%\n\n${blAdvice}`;
+  /*
+   * With no camera there is nothing to analyse, and the zeros are not a result.
+   * Sent through the bot they read as 0/100 engagement and a face never visible
+   * -- a damning assessment of somebody who never had a camera to look at. So
+   * the card says what happened instead, and no provider call is spent on it.
+   */
+  const blAdvice = cameraAvailable.value
+    ? (await toastmastersService.callBot('body-language', { body_language: blData })
+       || t('Maintain eye contact.'))
+    : t('No camera was used for this meeting, so there is no body-language analysis. The microphone is all a meeting needs — turn a camera on next time if you would like this report too.');
+  reports.bodyLang = cameraAvailable.value
+    ? `${t('Engagement')}: ${blData.engagement_score}/100 | ${t('Face visible')}: ${blData.face_visibility_percent}% | ${t('Centered')}: ${blData.centered_percent}%\n\n${blAdvice}`
+    : blAdvice;
 
   // Role evaluation
   const roleEvalText = await toastmastersService.evaluateRole({
@@ -741,14 +1092,14 @@ async function finishRoleFlow(duration: number, fillers: { counts: Record<string
   else if (userRole === 'General Evaluator') reports.generalEval = `GE: ${Math.floor(duration/60)}m ${duration%60}s. Timing, flow, performances?`;
   else if (userRole === 'Toastmaster') reports.generalEval = `Hosting: ${Math.floor(duration/60)}m ${duration%60}s. Welcome, introduce, transitions, close?`;
 
-  const wc = transcript.split(/\s+/).filter(Boolean).length || 0;
+  const wc = wordCount(speechText());
   const contentScore = Math.min(40, wc * 0.5);
   const fillerPenalty = Math.max(0, 30 - (fillers.total / Math.max(1, wc)) * 300);
   const bodyScore = blData.engagement_score * 0.3;
   const overall = Math.round(Math.min(100, contentScore + fillerPenalty + bodyScore));
 
   await saveSessionData(userRole, duration, fillers, overall, blData, blAdvice);
-  if (didSkipReports.value) { captionText.value = '✅ Saved! Redirecting…'; setTimeout(() => router.push('/toastmasters/results'), 1200); }
+  if (didSkipReports.value) { captionText.value = t('✅ Saved! Redirecting…'); setTimeout(() => router.push('/toastmasters/results'), 1200); }
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
 }
 
@@ -760,7 +1111,7 @@ async function saveSessionData(role: string, duration: number, fillers: { counts
       user_full_name: `${authStore.user?.first_name || ''} ${authStore.user?.last_name || ''}`.trim() || authStore.user?.username,
       user_role: role, topic: displayTopic.value, speech_type: speechType,
       min_time: minTime, max_time: maxTime,
-      duration_seconds: duration, transcript: transcript.trim(),
+      duration_seconds: duration, transcript: speechText().trim(),
       sample_speech_text: sampleSpeechText,
       filler_counts: fillers.counts, total_fillers: fillers.total,
       word_of_the_day: wordOfTheDay,
@@ -779,6 +1130,7 @@ onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();
+  stopSpeechKeepAlive();
 });
 </script>
 

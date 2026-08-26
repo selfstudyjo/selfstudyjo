@@ -40,28 +40,195 @@
  * already offset with `margin-inline-start`, so that half flipped for free.
  * This is the other half.
  *
- * The mobile drawer is the interesting one: it is parked off-screen with
- * `transform: translateX(-100%)` and slid in. A transform is geometry and does
- * not flip, so without this the drawer on an Arabic phone slides in from the
- * left — over the rail it is supposed to be replacing — and the backdrop
- * covers the wrong half of the screen.
+ * ============================================================
+ * THE CLASS NAMES HERE MUST BE THE ONES `side-nav.css` ACTUALLY USES
+ * ============================================================
+ *
+ * They were not, and the mobile drawer was broken in Arabic for as long as
+ * this file has existed. The block below used to name `.sidebar.mobile-hidden`
+ * and `.sidebar.is-closed` — two classes that appear NOWHERE else in the
+ * repository. `SideNav.vue` marks the open drawer with `.active` and
+ * `side-nav.css` parks the closed one at `translateX(-100%)` inside a
+ * `max-width: 768px` query, so every rule in this section matched nothing and
+ * the correction never ran.
+ *
+ * What an Arabic phone therefore got was the WORST of both halves: the rail was
+ * re-pinned to `right: 0` by the rule above (which does match), and then
+ * shifted a full width to the LEFT of that by a transform written for a
+ * left-pinned drawer. So the closed drawer did not park off-screen at all — it
+ * sat in the middle of the viewport, `position: fixed`, on top of the page,
+ * with the content flowing underneath it. That is the "side menu destroyed and
+ * mixed into the pages" report, and it is a spelling mistake rather than a
+ * layout problem.
+ *
+ * Two things follow, and both are the durable half of this fix:
+ *
+ *  1. **The parked state has to be corrected inside the same media query.**
+ *     `side-nav.css` only parks the drawer at ≤768px; above that the rail is
+ *     always on screen and a `translateX` would push it off. A rule outside the
+ *     query would hide the desktop sidebar in Arabic — the same bug arriving
+ *     from the other direction.
+ *
+ *  2. **Every selector here is one class more specific than the one it
+ *     corrects.** `[dir='rtl'] .sidebar` is (0,2,0) and beats `.sidebar`, but
+ *     it merely TIES `.sidebar.collapsed` — and a tie is decided by source
+ *     order, which is not something this file can rely on. `side-nav.css`
+ *     arrives through `<style src>` inside `SideNav.vue`, so it is part of that
+ *     component's chunk and may well be injected after `main.ts` has loaded
+ *     this one. The `.collapsed` variants are spelled out for exactly that
+ *     reason; do not collapse them back into one selector.
+ *
+ * `npm run check:i18n` now fails on any class named in this file that no
+ * template and no other stylesheet defines, so the original mistake cannot
+ * come back quietly.
  */
 [dir='rtl'] .sidebar {
     left: auto;
     right: 0;
 }
 
-[dir='rtl'] .sidebar.mobile-hidden,
-[dir='rtl'] .sidebar.is-closed {
-    transform: translateX(100%);
+@media (max-width: 768px) {
+    /*
+     * Parked: a full width to the RIGHT of the right edge, which is off-screen.
+     * `translateX(-100%)` from a right-pinned box is on-screen — that was the
+     * bug.
+     */
+    [dir='rtl'] .sidebar,
+    [dir='rtl'] .sidebar.collapsed {
+        transform: translateX(100%);
+    }
+
+    /*
+     * Open. Restated rather than inherited: the parked rule above matches the
+     * open drawer too (it carries `.sidebar`), so without this the drawer could
+     * never come in.
+     */
+    [dir='rtl'] .sidebar.active,
+    [dir='rtl'] .sidebar.collapsed.active {
+        transform: translateX(0);
+    }
 }
 
-/* The collapse handle and the mobile toggle both sit on the rail's inner edge. */
-[dir='rtl'] .collapse-btn,
-[dir='rtl'] .sidebar-toggle,
-[dir='rtl'] .mobile-menu-btn {
+/*
+ * The floating drawer button.
+ *
+ * `.mobile-toggle` is the class; `.mobile-menu-btn` — what this file used to
+ * name — does not exist. Left unflipped it sits at `left: 0.85rem` while the
+ * drawer it opens comes in from the right, which on a phone reads as two
+ * unrelated controls. `main-content` reserves its space with `padding-top`
+ * rather than a side inset, so nothing else has to move with it.
+ */
+[dir='rtl'] .mobile-toggle {
     left: auto;
     right: 0.85rem;
+}
+
+/*
+ * `.sidebar-toggle` is a flex child of the header and needs no offset — it
+ * follows `dir` for free. It is named here only for the absolutely-positioned
+ * `.collapse-btn` variant some layouts use.
+ */
+[dir='rtl'] .collapse-btn {
+    left: auto;
+    right: 0.85rem;
+}
+
+/*
+ * The unread badge, and the active item's marker.
+ *
+ * Both are absolutely positioned against the nav row, so both stay on the
+ * left-hand edge of a right-hand sidebar — the badge lands on top of the item's
+ * icon, and the 4px marker sits inside the panel instead of on its inner edge.
+ * The marker's `border-radius` is mirrored with it: a bar rounded on its right
+ * points into the sidebar, which is backwards once the sidebar is on the right.
+ */
+[dir='rtl'] .notification-badge {
+    right: auto;
+    left: 0.65rem;
+}
+
+[dir='rtl'] .sidebar.collapsed .notification-badge {
+    right: auto;
+    left: 6px;
+}
+
+[dir='rtl'] .nav-item.active::before {
+    left: auto;
+    right: -0.6rem;
+    border-radius: 4px 0 0 4px;
+}
+
+/*
+ * `.nav-item:hover` nudges itself `translateX(2px)` — into the page in English
+ * and out of it in Arabic. Two pixels, but it is the difference between an item
+ * that leans toward what it opens and one that leans away.
+ */
+[dir='rtl'] .nav-item:hover {
+    transform: translateX(-2px);
+}
+
+/* ------------------------------------------------------------------ *
+ * 1b. Overlays pinned to a corner
+ * ------------------------------------------------------------------ */
+
+/*
+ * A badge pinned to a corner is pinned to the WRONG corner once the page flips,
+ * and on a phone that is not a cosmetic complaint — the tiles are ~150px wide,
+ * so a name tag and a status pill that should be at opposite ends land on top
+ * of each other.
+ *
+ * These are named individually rather than swept, because the sweep would take
+ * `.tm-face-box` with it and that one must NOT move: its `left` and `top` are
+ * written by `showFaceBox()` in pixels it computed against the video element,
+ * already accounting for the mirror. A CSS `right` on top of a JS `left` puts
+ * the box in two places at once.
+ */
+[dir='rtl'] .tm-name-tag,
+[dir='rtl'] .tm-speaking-dot,
+[dir='rtl'] .tm-cam-debug,
+[dir='rtl'] .ji-name-tag,
+[dir='rtl'] .ji-speaking-dot {
+    left: auto;
+    right: 8px;
+}
+
+[dir='rtl'] .tm-speaking-dot,
+[dir='rtl'] .ji-speaking-dot {
+    right: 12px;
+}
+
+[dir='rtl'] .tm-cam-debug {
+    right: 6px;
+}
+
+[dir='rtl'] .tm-self-status,
+[dir='rtl'] .ji-self-status {
+    right: auto;
+    left: 8px;
+}
+
+/*
+ * A toast is pinned to a screen corner rather than to content, so it follows
+ * the reading direction: an Arabic reader's eye finishes a line on the left,
+ * which is where a notification should appear. Both files already collapse the
+ * toast to full width on a phone, so this only bites above that breakpoint.
+ */
+[dir='rtl'] .ns-toasts,
+[dir='rtl'] .rf-toast,
+[dir='rtl'] .toast-container {
+    right: auto;
+    left: 0.85rem;
+}
+
+/*
+ * The face box's own container. Pinned LTR so that the pixel offsets
+ * `showFaceBox()` computes are resolved against the same origin in all three
+ * languages — the box is geometry over a camera frame, and a camera frame has
+ * no reading direction. Same reasoning as the newscast set below.
+ */
+[dir='rtl'] .tm-user-video-wrap,
+[dir='rtl'] .ji-user-video-wrap {
+    direction: ltr;
 }
 
 /* ------------------------------------------------------------------ *
@@ -131,7 +298,7 @@
 [dir='rtl'] kbd,
 [dir='rtl'] .hljs,
 [dir='rtl'] .code-block,
-[dir='rtl'] .terminal,
+[dir='rtl'] .terminal-wrapper,
 [dir='rtl'] .lab-output,
 [dir='rtl'] .cm-editor,
 [dir='rtl'] .monaco-editor {
@@ -159,7 +326,7 @@
  * on `.stage__room` and a future wrapper is one careless `direction: inherit`
  * away from undoing it.
  */
-[dir='rtl'] .stage,
+[dir='rtl'] .studio__stage,
 [dir='rtl'] .stage__room {
     direction: ltr;
 }
@@ -223,7 +390,7 @@
 .message-text,
 .msg-body,
 .notification-message,
-.comment-text,
+.rf-comment-text,
 .bubble__text {
     unicode-bidi: plaintext;
 }

@@ -27,7 +27,7 @@
         <!-- Header -->
         <div class="runbook-header">
           <div class="runbook-title-section">
-            <h1 class="runbook-title">{{ runbook.title }}</h1>
+            <h1 class="runbook-title">{{ $td(runbook) }}</h1>
             <div class="runbook-meta">
               <span class="section-count">
                 {{ $t('{v0} steps', { v0: runbook.sections?.length || 0 }) }}
@@ -53,7 +53,7 @@
                 {{ index + 1 }}
               </div>
               <div v-if="section.title" class="section-title">
-                {{ section.title }}
+                {{ $td(section) }}
               </div>
             </div>
 
@@ -75,8 +75,15 @@
                 </div>
                 <pre class="code-block"><code>{{ section.content }}</code></pre>
               </div>
+              <!--
+                The PROSE branch is translated; the code branch above is not, and
+                deliberately: `switchport mode trunk` is the same command in every
+                language, and a student who types a translated keyword gets a
+                command that does not run. Same rule `rtl.css` applies when it pins
+                every `<pre>` left-to-right.
+              -->
               <div v-else class="text-content">
-                <template v-for="(paragraph, pIndex) in section.content.split('\n')" :key="pIndex">
+                <template v-for="(paragraph, pIndex) in $td(section, 'content').split('\n')" :key="pIndex">
                   <p v-if="paragraph.trim()">{{ paragraph }}</p>
                 </template>
               </div>

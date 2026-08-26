@@ -78,7 +78,7 @@
 
             <div class="question-body">
               <div class="question-text">
-                {{ currentQuestion?.text }}
+                {{ $td(currentQuestion, 'text') }}
               </div>
 
               <div class="answers-container">
@@ -98,7 +98,7 @@
                       incorrect: examSubmitted && selectedAnswer?.external_id === answer.external_id && !answer.is_correct
                     }"></div>
                   </div>
-                  <div class="answer-text">{{ answer.text }}</div>
+                  <div class="answer-text">{{ $td(answer, 'text') }}</div>
                   <div v-if="showCorrectAnswers && answer.is_correct && !examSubmitted" class="correct-badge">✓</div>
                 </div>
               </div>

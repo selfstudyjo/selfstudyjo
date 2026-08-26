@@ -308,6 +308,101 @@ const speaking: Catalogue = {
     'Looking Forward:': 'النظر إلى الأمام:',
     'Centered:': 'التمركز:',
     'Engagement:': 'التفاعل:',
+
+    /* ------------------------------------------------------------------ *
+     * The meeting room's own voice
+     * ------------------------------------------------------------------ *
+     *
+     * Every string below is either SPOKEN by one of the seven bots or is the
+     * room's own status line, and most of them are fallbacks reached when a
+     * provider did not answer. Working rule 39: a fallback is reached when
+     * something has already gone wrong, so it is the last place to introduce a
+     * second, avoidable wrongness -- an Arabic meeting whose Toastmaster
+     * switches to English because one provider was rate limited for four
+     * seconds reads as the feature being broken rather than as a provider
+     * having blinked.
+     *
+     * The sample speeches are translated rather than left in English on
+     * purpose. The Evaluation-Speech exercise asks the candidate to CRITIQUE
+     * the speech it plays them, so its deliberate fillers are the material --
+     * and a filler in a language the listener does not speak is not something
+     * they can be asked to spot.
+     */
+    '(no speech captured)': '(لم يُسجَّل أي كلام)',
+    'Audio recording is not supported by this browser.': 'تسجيل الصوت غير مدعوم في هذا المتصفّح.',
+    'Centered': 'التمركز',
+    'Click "Start Meeting" to begin.': 'اضغط «ابدأ الاجتماع» للبدء.',
+    'Click the speak button when ready.': 'اضغط زر التحدّث عندما تكون مستعدًّا.',
+    'Engagement': 'التفاعل',
+    'Face visible': 'الوجه ظاهر',
+    'Finalizing transcription…': 'إتمام تحويل الكلام إلى نص…',
+    'Generating sample speech…': 'إعداد الخطاب النموذجي…',
+    'Generating your impromptu question…': 'إعداد سؤالك المفاجئ…',
+    'Good language overall.': 'لغة جيّدة بشكل عام.',
+    'Good meeting overall.': 'اجتماع جيّد بشكل عام.',
+    'Hello, I am your Grammarian.': 'مرحبًا، أنا مدقّق اللغة.',
+    'Intro skipped — jumping ahead…': 'تم تجاوز المقدّمة — ننتقل للأمام…',
+    'Listen carefully…': 'استمع بتركيز…',
+    'Loading AI face detection…': 'تحميل كشف الوجه بالذكاء الاصطناعي…',
+    'Looking forward': 'النظر إلى الأمام',
+    'Maintain eye contact.': 'حافظ على التواصل البصري.',
+    'Microphone access is needed to take part in the meeting.': 'يلزم السماح باستخدام الميكروفون للمشاركة في الاجتماع.',
+    'No camera on this device — the meeting runs on the microphone alone': 'لا توجد كاميرا على هذا الجهاز — يعمل الاجتماع بالميكروفون وحده',
+    'No camera was used for this meeting, so there is no body-language analysis. The microphone is all a meeting needs — turn a camera on next time if you would like this report too.': 'لم تُستخدم كاميرا في هذا الاجتماع، لذلك لا يوجد تحليل لِلُغة الجسد. الميكروفون هو كل ما يحتاجه الاجتماع — شغّل الكاميرا في المرة القادمة إن أردت هذا التقرير أيضًا.',
+    'Now our sample speaker will deliver a speech. Listen carefully!': 'سيقدّم المتحدّث النموذجي خطابًا الآن. استمع بتركيز!',
+    'Please turn on your camera.': 'يُرجى تشغيل الكاميرا.',
+    'Please unmute your microphone first.': 'يُرجى إلغاء كتم الميكروفون أوّلًا.',
+    'Please welcome {v0}!': 'لِنُرحّب بـ {v0}!',
+    'Practice your {v0} duties.': 'تدرّب على مهام دور {v0}.',
+    'Preparing sample speech…': 'تجهيز الخطاب النموذجي…',
+    'Reports skipped — saving results…': 'تم تجاوز التقارير — جارٍ حفظ النتائج…',
+    'Requesting the microphone…': 'طلب الوصول إلى الميكروفون…',
+    'Sample': 'نموذجي',
+    'Solid effort.': 'جهد جيّد.',
+    'Speak — your words appear here every few seconds. You can also type or correct anything in this box while you talk.': 'تحدّث — تظهر كلماتك هنا كل بضع ثوانٍ. ويمكنك أيضًا الكتابة أو تصحيح أي شيء في هذا المربّع أثناء حديثك.',
+    'System': 'النظام',
+    'The microphone is not ready yet.': 'الميكروفون غير جاهز بعد.',
+    'The room is preparing…': 'القاعة تستعدّ…',
+    'Three years ago I was afraid of failure. Then I, um, lost my job and started a business. It failed but, you know, that failure taught me everything. I basically learned that, like, taking risks is actually the key.': 'قبل ثلاث سنوات كنت أخاف الفشل. ثم، إممم، فقدت عملي وبدأت مشروعًا. فشل المشروع لكن، تعرف، ذلك الفشل علّمني كل شيء. تعلّمت أساسًا أن، مثلًا، المخاطرة هي المفتاح فعلًا.',
+    'Three years ago, I lost my job. I started a business that failed. But that failure taught me everything.': 'قبل ثلاث سنوات فقدت عملي. بدأت مشروعًا وفشل. لكن ذلك الفشل علّمني كل شيء.',
+    'Turn off if the speech is about a subject where you say these words for real': 'أوقفه إذا كان الخطاب عن موضوع تقول فيه هذه الكلمات فعلًا',
+    'Welcome {v0}!': 'مرحبًا {v0}!',
+    'Welcome {v0}! Today you have the {v1} role.': 'مرحبًا {v0}! اليوم لديك دور {v1}.',
+    'Your turn, {v0}.': 'دورك الآن، {v0}.',
+    '🎙️ Sample Speaker': '🎙️ المتحدّث النموذجي',
+    '{v0} Today’s Word of the Day is “{v1}”, meaning: {v2}.': '{v0} كلمة اليوم هي «{v1}»، ومعناها: {v2}.',
+    '{v0} filler words.': '{v0} من كلمات الحشو.',
+    '⇥ Back to the end': '⇥ العودة إلى النهاية',
+    '⏱️ Timer report': '⏱️ تقرير المؤقِّت',
+    '⏳ Analyzing…': '⏳ جارٍ التحليل…',
+    '⏳ Evaluating your role…': '⏳ جارٍ تقييم دورك…',
+    '⏳ Generating…': '⏳ جارٍ الإنشاء…',
+    '⏳ Setting up…': '⏳ جارٍ التهيئة…',
+    '▶️ Start Meeting': '▶️ ابدأ الاجتماع',
+    '✅ Saved! Redirecting…': '✅ تم الحفظ! جارٍ التحويل…',
+    '✍️ Grammarian report': '✍️ تقرير مدقّق اللغة',
+    '✓ Started': '✓ بدأ',
+    '🎙️ Start hosting': '🎙️ ابدأ الاستضافة',
+    '🎤 I am ready to speak': '🎤 أنا مستعدّ للتحدّث',
+    '🎤 Speak now! Your words appear here every few seconds.': '🎤 تحدّث الآن! تظهر كلماتك هنا كل بضع ثوانٍ.',
+    '🎯 General evaluation': '🎯 التقييم العام',
+    '📋 Deliver evaluation': '📋 قدّم التقييم',
+    '🗣️ Ah-Counter report': '🗣️ تقرير عدّاد الحشو',
+
+    /* The interview room's status line. Prose in a `<script>` block, so it goes
+     * through `t()` rather than `$t` -- and translated for the same reason the
+     * meeting room's is: an Arabic interview whose captions are in English reads
+     * as half a feature. */
+    'Click "Start Answering" when you are ready to respond.': 'اضغط «ابدأ الإجابة» عندما تكون مستعدًّا للردّ.',
+    'Finalizing your answer…': 'إتمام إجابتك…',
+    'Finishing your report…': 'إتمام تقريرك…',
+    'Interviewer is joining…': 'المحاوِر ينضمّ الآن…',
+    'Interviewer is thinking of the next question…': 'المحاوِر يفكّر في السؤال التالي…',
+    'Requesting your microphone…': 'طلب الوصول إلى الميكروفون…',
+    'The interview cannot start without a microphone — see the message above.': 'لا يمكن بدء المقابلة بدون ميكروفون — راجع الرسالة أعلاه.',
+    'Wrapping up the interview and preparing your feedback…': 'إنهاء المقابلة وتحضير ملاحظاتك…',
+    'Your microphone is not connected yet.': 'الميكروفون غير متّصل بعد.',
+    '⏰ Time is up — finish your current answer, then it will wrap up.': '⏰ انتهى الوقت — أكمل إجابتك الحالية وسيتم الإنهاء بعدها.',
 };
 
 export default speaking;

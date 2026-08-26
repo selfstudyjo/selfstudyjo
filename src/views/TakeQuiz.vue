@@ -18,11 +18,11 @@
             {{ $t('Back to Course') }}
           </router-link>
           <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">{{ $t('Quiz: {v0}', { v0: quiz.title }) }}</span>
+          <span class="breadcrumb-current">{{ $t('Quiz: {v0}', { v0: $td(quiz) }) }}</span>
         </div>
 
         <div class="quiz-info">
-          <h1 class="quiz-title">{{ quiz.title }}</h1>
+          <h1 class="quiz-title">{{ $td(quiz) }}</h1>
           <div class="quiz-meta">
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -80,7 +80,7 @@
         <div class="instructions-card">
           <h2 class="instructions-title">{{ $t('Quiz Instructions') }}</h2>
           <div class="instructions-content">
-            <p>{{ quiz.description }}</p>
+            <p>{{ $td(quiz, 'description') }}</p>
             <div class="instructions-list">
               <div class="instruction-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -227,7 +227,7 @@
 
             <!-- Question Text -->
             <div class="question-text">
-              <h2>{{ currentQuestion.text }}</h2>
+              <h2>{{ $td(currentQuestion, 'text') }}</h2>
               <div class="question-score">
                 <span class="score-badge">{{ $t('Score: {v0} points', { v0: currentQuestion.score }) }}</span>
               </div>
@@ -249,7 +249,7 @@
                   <div class="radio-circle" :class="{ 'checked': selectedAnswer === answer.external_id }"></div>
                 </div>
                 <div class="answer-content">
-                  <p>{{ answer.text }}</p>
+                  <p>{{ $td(answer, 'text') }}</p>
                   <span v-if="showCorrectAnswers && answer.is_correct" class="correct-indicator">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>

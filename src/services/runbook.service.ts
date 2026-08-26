@@ -1,7 +1,19 @@
 import { apiService, ApiError, withReplicas } from './api';
 import { serviceRegistry } from './config';
+import type { TranslationMap } from '@/i18n/records';
 
 export interface Runbook {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and
+     * `{}` when nothing has been translated yet; optional here because this
+     * bundle and those services deploy separately, so a record from an
+     * older replica has no such key at all. Read it with `$td(record)` /
+     * `td(record)` rather than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     id: number;
     sync_id: string;
     title: string;
@@ -18,6 +30,17 @@ export interface Runbook {
 }
 
 export interface RunBookSection {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and `{}`
+     * when nothing has been translated yet; optional here because this bundle
+     * and those services deploy separately, so a record from an older replica
+     * has no such key at all. Read it with `$td(record)` / `td(record)` rather
+     * than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     id: number;
     sync_id: string;
     runbook: number;

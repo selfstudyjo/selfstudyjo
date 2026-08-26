@@ -66,7 +66,7 @@
           <div class="exam-header">
             <div class="exam-icon">📚</div>
             <div class="exam-title-section">
-              <h3 class="exam-title">{{ exam.title }}</h3>
+              <h3 class="exam-title">{{ $td(exam) }}</h3>
               <p class="exam-course">{{ $t('Course: {v0}', { v0: exam.course_name || exam.course_id }) }}</p>
             </div>
             <div v-if="isAuthenticated" class="exam-status" :class="getExamStatusClass(exam)">
@@ -81,7 +81,7 @@
             </div>
             <div class="detail-row">
               <span class="detail-label">{{ $t('Instructions:') }}</span>
-              <span class="detail-value truncated">{{ exam.exam_instructions }}</span>
+              <span class="detail-value truncated">{{ $td(exam, 'exam_instructions') }}</span>
             </div>
 
             <!-- Show times taken only for authenticated users -->
@@ -193,7 +193,7 @@
     <div v-if="selectedExam" class="modal-overlay" @click.self="selectedExam = null">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ selectedExam.title }}</h3>
+          <h3>{{ $td(selectedExam) }}</h3>
           <button @click="selectedExam = null" class="modal-close">×</button>
         </div>
         <div class="modal-body">

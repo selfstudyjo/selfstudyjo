@@ -37,17 +37,17 @@
             {{ $t('Back to Course') }}
           </router-link>
           <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">{{ homework.title }}</span>
+          <span class="breadcrumb-current">{{ $td(homework) }}</span>
         </div>
 
         <div class="homework-hero">
           <div class="homework-info">
             <div class="homework-meta">
               <span class="homework-badge">{{ $t('Homework') }}</span>
-              <span class="lesson-title" v-if="lesson">{{ $t('Lesson: {v0}', { v0: lesson.title }) }}</span>
+              <span class="lesson-title" v-if="lesson">{{ $t('Lesson: {v0}', { v0: $td(lesson) }) }}</span>
             </div>
-            <h1 class="homework-title">{{ homework.title }}</h1>
-            <p class="homework-description">{{ homework.description }}</p>
+            <h1 class="homework-title">{{ $td(homework) }}</h1>
+            <p class="homework-description">{{ $td(homework, 'description') }}</p>
           </div>
         </div>
       </div>

@@ -95,7 +95,7 @@
         <div class="course-image-container">
           <Planet
             :imageUrl="course.image_url"
-            :courseName="course.title"
+            :courseName="$td(course)"
             :width="300"
             :height="200"
           />
@@ -138,11 +138,11 @@
         </div>
         <div class="course-content">
           <div class="course-header">
-            <h3 class="course-title">{{ course.title || 'Untitled Course' }}</h3>
+            <h3 class="course-title">{{ $td(course) || $t('Untitled Course') }}</h3>
             <span class="course-badge">{{ $t('Course') }}</span>
           </div>
           <p class="course-description">
-            {{ truncateDescription(course.description) }}
+            {{ truncateDescription($td(course, 'description')) }}
           </p>
           <div class="course-meta">
             <div class="meta-item">
@@ -209,6 +209,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
+// A record's own text, in the reader's language. `$td` is the template global;
+// `$td_` is the same thing for a script block, where `$td` is undefined.
+import { t, td as $td_, tdMatches, tdSort } from '@/i18n/runtime';
 import { useRouter } from 'vue-router';
 import { courseService, type Course, type CourseRegistration } from '@/services/course.service';
 import { notificationService } from '@/services/notification.service';
@@ -265,17 +268,21 @@ const filteredCourses = computed(() => {
   let courses = [...allCourses.value];
 
   if (searchQuery.value.trim()) {
-    const query = searchQuery.value.trim().toLowerCase();
-    courses = courses.filter(course =>
-      course.title.toLowerCase().includes(query) ||
-      course.description.toLowerCase().includes(query)
-    );
+    // Matched against every language the record carries, not just the one on
+    // screen. A filter that only matched the rendered language would stop
+    // finding a course the moment somebody switched the interface -- for exactly
+    // the readers this change is for. See `records.ts`.
+    const query = searchQuery.value;
+    courses = courses.filter(course => tdMatches(course, ['title', 'description'], query));
   }
 
   if (sortBy.value === 'title') {
-    courses.sort((a, b) => a.title.localeCompare(b.title));
+    // By the title the reader can SEE, in their own collation. `Array.sort` on
+    // Arabic compares UTF-16 code units, which is alphabetical in no language.
+    courses.sort(tdSort<Course>('title'));
   } else if (sortBy.value === '-title') {
-    courses.sort((a, b) => b.title.localeCompare(a.title));
+    const asc = tdSort<Course>('title');
+    courses.sort((a, b) => asc(b, a));
   } else if (sortBy.value === 'date_added') {
     courses.sort((a, b) => new Date(a.date_added || '').getTime() - new Date(b.date_added || '').getTime());
   } else if (sortBy.value === '-date_added') {
@@ -351,7 +358,7 @@ const handleRegister = async (course: Course) => {
     // not fail because the bell service is cold.
     notificationService.notifyAdmins('course.enrolled', {
       student: authStore.user.username,
-      course: course.title,
+      course: $td_(course),
       courseId,
     });
   } catch (err: any) {
@@ -374,7 +381,7 @@ const handleUnregister = async (course: Course) => {
   const courseId = course.external_course_id;
   if (registrationLoading.value[courseId]) return;
 
-  if (!confirm(`Unenroll from "${course.title}"?`)) return;
+  if (!confirm(t('Unenroll from "{v0}"?', { v0: $td_(course) }))) return;
 
   registrationLoading.value[courseId] = true;
   try {
@@ -485,7 +492,7 @@ const navigateToCourse = (courseId: string) => {
 };
 
 const truncateDescription = (description: string, maxLength: number = 100) => {
-  if (!description) return 'No description available';
+  if (!description) return t('No description available');
   const trimmed = description.trim();
   return trimmed.length > maxLength ? trimmed.substring(0, maxLength) + '...' : trimmed;
 };

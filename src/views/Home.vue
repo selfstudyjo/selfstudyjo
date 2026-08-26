@@ -58,7 +58,7 @@
                   </svg>
                 </div>
                 <div class="course-info">
-                  <h3 class="course-title">{{ courseDetails[course.course_external_id || course.course]?.title || 'Loading...' }}</h3>
+                  <h3 class="course-title">{{ $td(courseDetails[course.course_external_id || course.course]) || $t('Loading...') }}</h3>
                   <p class="course-date">{{ $t('Registered: {v0}', { v0: formatDate(course.date_registered) }) }}</p>
                 </div>
                 <div class="course-arrow">
@@ -276,7 +276,7 @@
                   </svg>
                 </div>
                 <div class="homework-info">
-                  <h3 class="homework-title">{{ homework.title || 'Untitled Homework' }}</h3>
+                  <h3 class="homework-title">{{ $td(homework) || $t('Untitled Homework') }}</h3>
                   <p class="homework-description">{{ truncateText(homework.description, 60) }}</p>
                   <div class="homework-meta">
                     <span class="homework-course">{{ homeworkDetails[homework.external_homework_id]?.courseTitle || homework.course_external_id || 'Unknown Course' }}</span>
@@ -337,7 +337,7 @@
               class="subscription-details"
             >
               <div class="subscription-plan">
-                <h3 class="plan-title">{{ sub.subscription_type?.title || 'Unknown Plan' }}</h3>
+                <h3 class="plan-title">{{ $td(sub.subscription_type) || $t('Unknown Plan') }}</h3>
                 <div class="plan-price">
                   <span class="price-amount">{{ sub.subscription_type?.price || 'Free' }}</span>
                   <span class="price-period">/year</span>

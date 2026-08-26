@@ -80,7 +80,7 @@
         </div>
 
         <div class="plan-header">
-          <h3 class="plan-title">{{ plan.title }}</h3>
+          <h3 class="plan-title">{{ $td(plan) }}</h3>
           <div class="price">
             <span v-if="!isFreePlan(plan.external_id)" class="currency">JOD</span>
             <span class="amount">{{ isFreePlan(plan.external_id) ? 'Free' : plan.price }}</span>
@@ -89,7 +89,7 @@
         </div>
 
         <div class="plan-description">
-          <p>{{ plan.description }}</p>
+          <p>{{ $td(plan, 'description') }}</p>
         </div>
 
         <div class="plan-features">
@@ -147,7 +147,7 @@
           class="subscription-item"
         >
           <div class="subscription-info">
-            <h4 class="subscription-name">{{ subscription.title }}</h4>
+            <h4 class="subscription-name">{{ $td(subscription.subscription_type) || subscription.title }}</h4>
             <p class="subscription-status">
               <span>{{ $t('Status:') }}</span>
               <span :class="['status', subscription.is_active ? 'active' : 'inactive']">

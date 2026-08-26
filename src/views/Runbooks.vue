@@ -61,7 +61,7 @@
         <div class="runbook-card-header">
           <div class="runbook-icon">📘</div>
           <div class="runbook-info">
-            <h3 class="runbook-title">{{ runbook.title }}</h3>
+            <h3 class="runbook-title">{{ $td(runbook) }}</h3>
             <div class="runbook-meta">
               <span class="section-count">
                 {{ $t('{v0} steps', { v0: runbook.sections?.length || 0 }) }}

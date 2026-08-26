@@ -28,7 +28,7 @@
         >
           <div class="question-header">
             <span class="q-num">Q{{ index + 1 }}.</span>
-            <span class="q-text">{{ question.text }}</span>
+            <span class="q-text">{{ $td(question, 'text') }}</span>
             <span class="q-score">{{ $t('{v0} pts', { v0: question.score }) }}</span>
           </div>
           <div class="answers">
@@ -41,7 +41,7 @@
                 'correct-answer': answer.is_correct
               }"
             >
-              <span class="answer-text">{{ answer.text }}</span>
+              <span class="answer-text">{{ $td(answer, 'text') }}</span>
               <span v-if="answer.is_correct" class="correct-badge">{{ $t('Correct') }}</span>
               <span v-else-if="isAnswerSelected(question, answer) && !answer.is_correct" class="wrong-badge">{{ $t('Your answer') }}</span>
             </div>

@@ -299,7 +299,7 @@
                 <span class="banner-icon">⭐</span>
                 <div class="banner-text">
                   <span class="banner-label">{{ $t('Currently Active:') }}</span>
-                  <strong class="banner-plan">{{ currentActiveSubscription.subscription_type?.title || currentActiveSubscription.title }}</strong>
+                  <strong class="banner-plan">{{ $td(currentActiveSubscription.subscription_type) || currentActiveSubscription.title }}</strong>
                 </div>
               </div>
             </div>
@@ -320,7 +320,7 @@
                     {{ $t('⭐ IN USE') }}
                   </div>
                   <div class="plan-header">
-                    <h3 class="plan-title">{{ subscription.title }}</h3>
+                    <h3 class="plan-title">{{ $td(subscription.subscription_type) || subscription.title }}</h3>
                     <div class="plan-price">{{ priceLabel(subscription) }}</div>
                   </div>
                 </div>
@@ -356,7 +356,7 @@
                         <span class="feature-icon">✓</span>
                         <div class="feature-content">
                           <span class="feature-name">{{ feature.name }}</span>
-                          <span v-if="feature.description" class="feature-description">{{ feature.description }}</span>
+                          <span v-if="feature.description" class="feature-description">{{ $td(feature, 'description') }}</span>
                         </div>
                       </li>
                     </ul>
@@ -418,7 +418,7 @@
                     {{ $t('EXPIRED') }}
                   </div>
                   <div class="plan-header">
-                    <h3 class="plan-title">{{ subscription.title }}</h3>
+                    <h3 class="plan-title">{{ $td(subscription.subscription_type) || subscription.title }}</h3>
                     <div class="plan-price">{{ priceLabel(subscription) }}</div>
                   </div>
                 </div>

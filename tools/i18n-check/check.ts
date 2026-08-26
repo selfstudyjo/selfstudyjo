@@ -629,6 +629,180 @@ section('12. Switching language actually switches the language');
  * 13. Coverage
  * ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ *
+ * RTL corrections that correct nothing
+ * ------------------------------------------------------------------ */
+
+/*
+ * EVERY CLASS `rtl.css` NAMES MUST EXIST SOMEWHERE ELSE.
+ *
+ * This is the check that had to exist, and it is here rather than in
+ * `check:cssleaks` because the failure it catches is a *language* failure: the
+ * page is correct in English and broken in Arabic, so nobody working in English
+ * can see it and no other check looks at `dir` at all.
+ *
+ * `rtl.css` is the one stylesheet on the platform whose entire job is to
+ * correct declarations another file has already made. That makes it uniquely
+ * fragile in a way no amount of care in the file itself can fix: a selector
+ * that names a class which does not exist is not an error, it is not a warning,
+ * and it is not visibly different from a correction that is working. It just
+ * silently does nothing.
+ *
+ * It had three of them, and together they broke the mobile drawer in Arabic for
+ * the whole life of the file. `.sidebar.mobile-hidden` and `.sidebar.is-closed`
+ * were invented names — `SideNav.vue` uses `.active` — and `.mobile-menu-btn`
+ * was a guess at `.mobile-toggle`. The consequence was not a missing
+ * correction: the rule that DID match re-pinned the rail to `right: 0`, and the
+ * rule that was supposed to park it off-screen never ran, so the closed drawer
+ * sat `position: fixed` in the middle of the viewport with the page flowing
+ * underneath it. Reported as the side menu being "destroyed and mixed into the
+ * pages".
+ *
+ * A class is "defined" if any other stylesheet declares it, or any template
+ * mentions it in a `class` / `:class` binding. That is deliberately generous —
+ * the point is to catch a name that exists NOWHERE, which is always a typo or a
+ * rename nobody carried across, and never a judgement call.
+ */
+section('14. rtl.css corrects something that exists');
+
+const CSS_DIR = path.resolve('src/assets/css');
+const RTL_CSS = path.join(CSS_DIR, 'rtl.css');
+
+/** Class names appearing in the selector half of a stylesheet. */
+function classesInCss(source: string): Set<string> {
+    const found = new Set<string>();
+    // Strip comments and declaration blocks, so a `content: '.foo'` or a note
+    // in prose cannot register as a selector.
+    const selectorsOnly = source
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\{[^{}]*\}/g, '{}');
+    for (const m of selectorsOnly.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)) found.add(m[1]);
+    return found;
+}
+
+const rtlSource = fs.readFileSync(RTL_CSS, 'utf8');
+const rtlClasses = classesInCss(rtlSource);
+
+const defined = new Set<string>();
+for (const name of fs.readdirSync(CSS_DIR)) {
+    if (!name.endsWith('.css') || name === 'rtl.css') continue;
+    for (const c of classesInCss(fs.readFileSync(path.join(CSS_DIR, name), 'utf8'))) defined.add(c);
+}
+for (const extra of ['src/style.css']) {
+    if (fs.existsSync(extra)) {
+        for (const c of classesInCss(fs.readFileSync(extra, 'utf8'))) defined.add(c);
+    }
+}
+
+// Templates, including `<style scoped>` blocks and every `class` / `:class`
+// binding — a class applied only from a component and styled only in a scoped
+// block is still a real class.
+const walkVue = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walkVue(full); continue; }
+        if (!full.endsWith('.vue')) continue;
+        const src = fs.readFileSync(full, 'utf8');
+        for (const c of classesInCss(src)) defined.add(c);
+        for (const m of src.matchAll(/:?class\s*=\s*"([^"]*)"/g)) {
+            for (const c of m[1].matchAll(/[\w-]+/g)) defined.add(c[0]);
+        }
+        for (const m of src.matchAll(/'([\w-]+)'\s*:/g)) defined.add(m[1]);
+    }
+};
+walkVue(path.resolve('src'));
+
+/*
+ * The allow-list, and why it is a list of names with a reason each rather than
+ * a pattern.
+ *
+ * Two kinds of class in `rtl.css` legitimately match nothing in `src/`:
+ *
+ *  1. **A hook this file OFFERS.** `class="sfs-ltr"` on a uuid is the documented
+ *     way to stop the bidi algorithm rearranging its hyphens. Nothing has to be
+ *     using it yet for the rule to be correct — it is an interface, and an
+ *     unused interface is a real state.
+ *  2. **A class rendered by something that is not in `src/`.** `highlight.js`
+ *     emits `.hljs`, an editor emits `.cm-editor`, and neither appears in any
+ *     file here. Pinning those left-to-right is the single most valuable rule in
+ *     the file (a shell command with its pipe relocated is a command that does
+ *     not run), and it cannot be verified from this repository.
+ *
+ * Everything else is a typo, and the triage that produced this list found three:
+ * `.stage` (the newscast uses `studio__stage`), `.terminal` (`lab.css` calls it
+ * `terminal-wrapper`) and `.comment-text` (the research screens use
+ * `rf-comment-text`). All three were corrections that silently did nothing.
+ *
+ * An entry that becomes defined is REMOVED, and the check below fails until it
+ * is — the same rule `check:cssleaks` applies to its own exceptions and for the
+ * same reason: a list that may contain dead entries is a list nobody trusts, and
+ * an exemption left behind is an exemption that hides the next real typo.
+ */
+const RTL_ALLOWED_ORPHANS: Record<string, string> = {
+    // Hooks this file offers to templates.
+    'sfs-flip': 'opt-in mirror for a directional glyph',
+    'sfs-noflip': 'the escape hatch back out of it',
+    'sfs-ltr': 'pin a machine identifier left-to-right',
+    'sfs-bidi': 'isolate user-written content of unknown direction',
+    'uuid': 'bidi isolation for an id printed in prose',
+    'record-id': 'as above',
+    'external-id': 'as above',
+    'nav-arrow': 'directional glyph hook',
+    'back-arrow': 'directional glyph hook',
+    'chevron': 'directional glyph hook — note `.nav-more-chevron` is a DISCLOSURE '
+        + 'caret pointing down, and is deliberately not mirrored',
+    'collapse-btn': 'the absolutely-positioned rail handle some layouts use',
+    'bar-fill': 'a meter fill positioned with `left`',
+    'meter__fill': 'as above',
+    'msg-body': 'chat bubble text, for `unicode-bidi: plaintext`',
+    'bubble__text': 'as above',
+    // Rendered outside src/.
+    'hljs': 'highlight.js emits this — code must never render right-to-left',
+    'cm-editor': 'CodeMirror',
+    'monaco-editor': 'Monaco',
+    'lab-output': 'sandbox output, inserted as text at runtime',
+};
+
+const staleAllowances = Object.keys(RTL_ALLOWED_ORPHANS)
+    .filter(c => defined.has(c))
+    .sort();
+ok('no allow-listed rtl.css orphan has since become a real class',
+    staleAllowances.length === 0,
+    staleAllowances.length
+        ? `these are defined now, so remove them from RTL_ALLOWED_ORPHANS: ${staleAllowances.join(', ')}`
+        : '');
+
+const orphanRtl = [...rtlClasses]
+    .filter(c => !(c in RTL_ALLOWED_ORPHANS) && !defined.has(c))
+    .sort();
+
+ok('every class rtl.css corrects exists somewhere else',
+    orphanRtl.length === 0,
+    orphanRtl.length
+        ? `rtl.css names ${orphanRtl.length} class(es) nothing else defines, so the `
+          + `correction silently does nothing:\n        ${orphanRtl.join(', ')}`
+        : '');
+
+/*
+ * The mobile drawer specifically, because it is the one that was broken and the
+ * one whose breakage is worst. `side-nav.css` parks the closed drawer with a
+ * transform inside a `max-width` query; a right-pinned drawer parked with a
+ * NEGATIVE translate is on-screen, so the sign is the whole bug. Assert the
+ * correction exists, is inside a media query, and pushes the right way.
+ */
+const sideNav = fs.readFileSync(path.join(CSS_DIR, 'side-nav.css'), 'utf8');
+const parksNegative = /\.sidebar[^{}]*\{[^{}]*translateX\(-100%\)/.test(sideNav);
+ok('side-nav.css still parks the mobile drawer at translateX(-100%)', parksNegative,
+    'if this moved, the RTL correction below is describing a layout that no longer exists');
+
+const rtlMedia = rtlSource.match(/@media[^{]*max-width:\s*768px[^{]*\{([\s\S]*?)\n\}/);
+ok('rtl.css corrects the parked drawer inside a max-width: 768px query',
+    !!rtlMedia && /translateX\(100%\)/.test(rtlMedia[1]),
+    'outside the query the correction would also translate the DESKTOP rail off-screen');
+ok('rtl.css brings the open drawer back to translateX(0)',
+    !!rtlMedia && /\.sidebar\.active[\s\S]*translateX\(0\)/.test(rtlMedia[1]),
+    'the parked rule matches the open drawer too, so this has to be restated');
+
 section('13. Coverage');
 
 const byArea = new Map<string, Set<string>>();

@@ -1,8 +1,20 @@
 import { apiService } from './api';
 import { serviceRegistry } from './config';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
+import type { TranslationMap } from '@/i18n/records';
 
 export interface Quiz {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and `{}`
+     * when nothing has been translated yet; optional here because this bundle
+     * and those services deploy separately, so a record from an older replica
+     * has no such key at all. Read it with `$td(record)` / `td(record)` rather
+     * than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     title: string;
     course_id: string;
@@ -14,6 +26,17 @@ export interface Quiz {
 }
 
 export interface QuizQuestion {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and `{}`
+     * when nothing has been translated yet; optional here because this bundle
+     * and those services deploy separately, so a record from an older replica
+     * has no such key at all. Read it with `$td(record)` / `td(record)` rather
+     * than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     quiz: string;
     text: string;
@@ -22,6 +45,17 @@ export interface QuizQuestion {
 }
 
 export interface QuizAnswer {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and `{}`
+     * when nothing has been translated yet; optional here because this bundle
+     * and those services deploy separately, so a record from an older replica
+     * has no such key at all. Read it with `$td(record)` / `td(record)` rather
+     * than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     quiz_question: string;
     text: string;

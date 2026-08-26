@@ -5,8 +5,20 @@ import { courseService, type Course } from './course.service';
 import { proctorService, type ExamProctor } from './proctor.service';
 import { notificationService } from './notification.service'; // <-- proctor notifications
 import { userService } from './user.service'; // <-- to enrich student details in notifications
+import type { TranslationMap } from '@/i18n/records';
 
 export interface Exam {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and
+     * `{}` when nothing has been translated yet; optional here because this
+     * bundle and those services deploy separately, so a record from an
+     * older replica has no such key at all. Read it with `$td(record)` /
+     * `td(record)` rather than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     title: string;
     course_id: string;
@@ -38,6 +50,17 @@ export function passMarkOf(exam?: Exam | null): number {
 }
 
 export interface ExamQuestion {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and
+     * `{}` when nothing has been translated yet; optional here because this
+     * bundle and those services deploy separately, so a record from an
+     * older replica has no such key at all. Read it with `$td(record)` /
+     * `td(record)` rather than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     exam: string;
     text: string;
@@ -46,6 +69,17 @@ export interface ExamQuestion {
 }
 
 export interface ExamAnswer {
+    /**
+     * The Arabic and Chinese copies of this record's own text, keyed by language
+     * then by field. English is NOT in here -- it is the field beside it.
+     *
+     * Always present from a backend carrying `utils/translations.py`, and
+     * `{}` when nothing has been translated yet; optional here because this
+     * bundle and those services deploy separately, so a record from an
+     * older replica has no such key at all. Read it with `$td(record)` /
+     * `td(record)` rather than by hand -- see `src/i18n/records.ts`.
+     */
+    translations?: TranslationMap;
     external_id: string;
     exam_question: string;
     text: string;

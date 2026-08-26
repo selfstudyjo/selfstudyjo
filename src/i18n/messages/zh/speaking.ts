@@ -301,6 +301,101 @@ const speaking: Catalogue = {
     'Centered:': '居中：',
     'Engagement:': '投入度：',
 
+
+    /* ------------------------------------------------------------------ *
+     * The meeting room's own voice
+     * ------------------------------------------------------------------ *
+     *
+     * Every string below is either SPOKEN by one of the seven bots or is the
+     * room's own status line, and most of them are fallbacks reached when a
+     * provider did not answer. Working rule 39: a fallback is reached when
+     * something has already gone wrong, so it is the last place to introduce a
+     * second, avoidable wrongness -- an Arabic meeting whose Toastmaster
+     * switches to English because one provider was rate limited for four
+     * seconds reads as the feature being broken rather than as a provider
+     * having blinked.
+     *
+     * The sample speeches are translated rather than left in English on
+     * purpose. The Evaluation-Speech exercise asks the candidate to CRITIQUE
+     * the speech it plays them, so its deliberate fillers are the material --
+     * and a filler in a language the listener does not speak is not something
+     * they can be asked to spot.
+     */
+    '(no speech captured)': '（未捕获到语音）',
+    'Audio recording is not supported by this browser.': '此浏览器不支持录音。',
+    'Centered': '居中程度',
+    'Click "Start Meeting" to begin.': '点击“开始会议”以开始。',
+    'Click the speak button when ready.': '准备好后点击发言按钮。',
+    'Engagement': '参与度',
+    'Face visible': '面部可见',
+    'Finalizing transcription…': '正在完成语音转文字…',
+    'Generating sample speech…': '正在生成示范演讲…',
+    'Generating your impromptu question…': '正在生成你的即席问题…',
+    'Good language overall.': '整体语言表达良好。',
+    'Good meeting overall.': '整体会议表现良好。',
+    'Hello, I am your Grammarian.': '你好，我是语法官。',
+    'Intro skipped — jumping ahead…': '已跳过开场——继续下一步…',
+    'Listen carefully…': '请仔细聆听…',
+    'Loading AI face detection…': '正在加载 AI 面部检测…',
+    'Looking forward': '正视前方',
+    'Maintain eye contact.': '保持眼神交流。',
+    'Microphone access is needed to take part in the meeting.': '参加会议需要麦克风权限。',
+    'No camera on this device — the meeting runs on the microphone alone': '此设备没有摄像头——仅用麦克风即可进行会议',
+    'No camera was used for this meeting, so there is no body-language analysis. The microphone is all a meeting needs — turn a camera on next time if you would like this report too.': '本次会议未使用摄像头，因此没有肢体语言分析。会议只需要麦克风——如果你也想要这份报告，下次可以打开摄像头。',
+    'Now our sample speaker will deliver a speech. Listen carefully!': '现在由示范演讲者发言，请仔细聆听！',
+    'Please turn on your camera.': '请打开你的摄像头。',
+    'Please unmute your microphone first.': '请先取消麦克风静音。',
+    'Please welcome {v0}!': '让我们欢迎 {v0}！',
+    'Practice your {v0} duties.': '练习你的{v0}职责。',
+    'Preparing sample speech…': '正在准备示范演讲…',
+    'Reports skipped — saving results…': '已跳过报告——正在保存结果…',
+    'Requesting the microphone…': '正在请求麦克风权限…',
+    'Sample': '示范',
+    'Solid effort.': '表现扎实。',
+    'Speak — your words appear here every few seconds. You can also type or correct anything in this box while you talk.': '开始说话——你的内容每隔几秒会显示在这里。你也可以在说话时直接在此框内输入或修改。',
+    'System': '系统',
+    'The microphone is not ready yet.': '麦克风尚未就绪。',
+    'The room is preparing…': '会场正在准备…',
+    'Three years ago I was afraid of failure. Then I, um, lost my job and started a business. It failed but, you know, that failure taught me everything. I basically learned that, like, taking risks is actually the key.': '三年前我很害怕失败。然后我，呃，失去了工作并开始创业。创业失败了，但是，你知道的，那次失败教会了我一切。我基本上明白了，就是说，冒险其实才是关键。',
+    'Three years ago, I lost my job. I started a business that failed. But that failure taught me everything.': '三年前我失去了工作。我创办的企业失败了。但那次失败教会了我一切。',
+    'Turn off if the speech is about a subject where you say these words for real': '如果演讲主题本身就会用到这些词，请关闭此项',
+    'Welcome {v0}!': '欢迎 {v0}！',
+    'Welcome {v0}! Today you have the {v1} role.': '欢迎 {v0}！今天你担任{v1}。',
+    'Your turn, {v0}.': '轮到你了，{v0}。',
+    '🎙️ Sample Speaker': '🎙️ 示范演讲者',
+    '{v0} Today’s Word of the Day is “{v1}”, meaning: {v2}.': '{v0} 今天的每日词汇是“{v1}”，意思是：{v2}。',
+    '{v0} filler words.': '{v0} 个填充词。',
+    '⇥ Back to the end': '⇥ 回到末尾',
+    '⏱️ Timer report': '⏱️ 计时官报告',
+    '⏳ Analyzing…': '⏳ 正在分析…',
+    '⏳ Evaluating your role…': '⏳ 正在评估你的角色…',
+    '⏳ Generating…': '⏳ 正在生成…',
+    '⏳ Setting up…': '⏳ 正在设置…',
+    '▶️ Start Meeting': '▶️ 开始会议',
+    '✅ Saved! Redirecting…': '✅ 已保存！正在跳转…',
+    '✍️ Grammarian report': '✍️ 语法官报告',
+    '✓ Started': '✓ 已开始',
+    '🎙️ Start hosting': '🎙️ 开始主持',
+    '🎤 I am ready to speak': '🎤 我准备好发言了',
+    '🎤 Speak now! Your words appear here every few seconds.': '🎤 现在开始说话！你的内容每隔几秒会显示在这里。',
+    '🎯 General evaluation': '🎯 总评',
+    '📋 Deliver evaluation': '📋 进行点评',
+    '🗣️ Ah-Counter report': '🗣️ 填充词统计报告',
+
+    /* The interview room's status line. Prose in a `<script>` block, so it goes
+     * through `t()` rather than `$t` -- and translated for the same reason the
+     * meeting room's is: an Arabic interview whose captions are in English reads
+     * as half a feature. */
+    'Click "Start Answering" when you are ready to respond.': '准备好回答时，请点击“开始回答”。',
+    'Finalizing your answer…': '正在整理你的回答…',
+    'Finishing your report…': '正在完成你的报告…',
+    'Interviewer is joining…': '面试官正在加入…',
+    'Interviewer is thinking of the next question…': '面试官正在思考下一个问题…',
+    'Requesting your microphone…': '正在请求麦克风权限…',
+    'The interview cannot start without a microphone — see the message above.': '没有麦克风无法开始面试——请查看上方提示。',
+    'Wrapping up the interview and preparing your feedback…': '正在结束面试并准备你的反馈…',
+    'Your microphone is not connected yet.': '你的麦克风尚未连接。',
+    '⏰ Time is up — finish your current answer, then it will wrap up.': '⏰ 时间到——请说完当前回答，之后将自动结束。',
 };
 
 export default speaking;
