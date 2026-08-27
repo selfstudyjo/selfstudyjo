@@ -1,0 +1,1 @@
+import{F as e}from"./index-CTYlp5WU.js";export{e as serviceRegistry};
