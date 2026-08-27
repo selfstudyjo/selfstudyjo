@@ -146,7 +146,27 @@
                   >
                     <div class="lesson-info">
                       <div class="lesson-header">
-                        <h3 class="lesson-title">{{ $td(lesson) }}</h3>
+                        <!--
+                          THE TITLE IS THE WAY IN. A lesson has had a page of its
+                          own since 2026-08-27 -- its write-up, its media, its
+                          runbook, its homework and its own discussion -- and the
+                          title is where a reader clicks to open a thing they are
+                          looking at the name of.
+
+                          A <router-link> with no target="_blank": an internal
+                          destination stays in the tab, the same rule linkify.ts
+                          follows. It is NOT gated on enrolment or on a
+                          subscription, because `/course/:courseId/lesson/:id`
+                          carries `requiresAuth: false` exactly as this page
+                          does -- a catalogue whose contents cannot be opened is
+                          an advertisement with dead links in it.
+                        -->
+                        <h3 class="lesson-title">
+                          <router-link
+                            :to="`/course/${route.params.id}/lesson/${lesson.external_lesson_id}`"
+                            class="lesson-title-link"
+                          >{{ $td(lesson) }}</router-link>
+                        </h3>
                         <div class="lesson-badges">
                           <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -177,6 +197,26 @@
 
                       <div class="lesson-links">
                         <!--
+                          The lesson's own page leads the row, ahead of the
+                          runbook it used to lead with. That is a reordering
+                          rather than an addition: everything else in this row is
+                          ALSO on the lesson page, so it is the one destination
+                          that cannot be reached from any of the others, and it is
+                          where the write-up and the discussion are.
+                        -->
+                        <router-link
+                          :to="`/course/${route.params.id}/lesson/${lesson.external_lesson_id}`"
+                          class="lesson-link lesson-link--page"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            <line x1="9" y1="11" x2="16" y2="11"></line>
+                          </svg>
+                          {{ $t('Open Lesson') }}
+                        </router-link>
+
+                        <!--
                           The lesson's runbook, when one has been written for it.
 
                           A router-link rather than an <a href>, and no
@@ -184,10 +224,11 @@
                           same rule linkify.ts follows — an internal destination
                           stays in the tab, an external one does not.
 
-                          It leads the row on purpose. A runbook is the step-by-
-                          step version of the lesson, so it is what somebody
-                          working through the material wants first; the reading
-                          material and the source code are references beside it.
+                          It comes second, after the lesson's own page: a
+                          runbook is the step-by-step version of the lesson, so
+                          it is what somebody working through the material wants
+                          before the reading material or the source code, and
+                          those two are references beside it.
                         -->
                         <router-link
                           v-if="lesson.runbook"
@@ -574,7 +615,17 @@ const fetchCourseData = async () => {
     const [fetchedCourse, fetchedLessons, fetchedComments] = await Promise.all([
       courseService.getCourse(courseId, courseReplicaBaseUrl.value),
       courseService.getCourseLessons(courseId, courseReplicaBaseUrl.value),
-      courseService.getCourseComments(courseId, courseReplicaBaseUrl.value)
+      // THE COURSE'S OWN DISCUSSION, not every comment on the course.
+      //
+      // Since a lesson has a page with a comment box on it, `?course_id=` alone
+      // answers with both scopes -- and it has to, because that is what every
+      // other client on the platform sends. Rendered here that would list a
+      // question about lesson 14 on the course page with nothing saying which
+      // lesson it was about, and would make the "Comments" count on the hero
+      // disagree with the number of rows underneath it. `?lesson_id=none` is
+      // narrowed on the SERVER rather than filtered here, so a course with two
+      // hundred lesson comments does not download all of them to draw a four.
+      courseService.getCourseOwnComments(courseId, courseReplicaBaseUrl.value)
     ]);
     course.value = fetchedCourse;
     log('Course =', fetchedCourse);
@@ -1020,6 +1071,39 @@ onUnmounted(() => {
   them is how a coloured pill ends up with near-invisible text in the light
   galaxies, which is the single largest cause of that in this app's history.
 */
+/*
+  The lesson's own page. It reuses `.lesson-link` for its geometry and states
+  only its fill and its ink, so it sits in the same row as the runbook, the
+  reading material and the source code and still reads as the primary
+  destination. A fill and its ink are decided together (working rule 12).
+*/
+.lesson-link--page {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  color: var(--sfs-accent-text, #667eea);
+  font-weight: 700;
+}
+
+.lesson-link--page:hover {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.32);
+}
+
+/*
+  The title is a link now. It inherits the heading's colour rather than taking
+  the accent, because a whole row of accent-coloured headings reads as a list of
+  buttons; the underline on hover is what says it is clickable.
+*/
+.lesson-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lesson-title-link:hover,
+.lesson-title-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .lesson-link--runbook {
   background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
   border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);

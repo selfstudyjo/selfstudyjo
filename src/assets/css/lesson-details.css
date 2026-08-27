@@ -1,0 +1,752 @@
+/*
+ * The lesson page.
+ *
+ * EVERY SELECTOR IS NAMESPACED `lesson-`, and `npm run check:lessoncontent`
+ * fails on one that is not. This file is loaded through `<style scoped src>`, so
+ * Vite scopes it and it cannot leak — but the namespace is what stops the
+ * OPPOSITE leak, which is the one this platform has paid for three times:
+ * `.header-content` in `exam-approval.css` and `.placeholder` in
+ * `roblox-tool.css` were bare class names another page also used, and they
+ * restyled screens their authors had never seen (working rule 32). A page that
+ * shares a generic class name is a page waiting to be restyled from elsewhere.
+ *
+ * NO COLOUR LITERAL WITHOUT A TOKEN (working rule 12). Every colour is a
+ * `var(--sfs-*)` with the original literal as its fallback, so a missing token
+ * renders as the default galaxy rather than as nothing, and a fill and its ink
+ * are always set together.
+ *
+ * LOGICAL PROPERTIES THROUGHOUT — `margin-inline-start`, `padding-inline`,
+ * `border-inline-start`. A rule written once is then right in Arabic and in
+ * English, and a rule added next year is right in both without anybody thinking
+ * about it. The one exception is the code block, which is pinned LTR on purpose.
+ *
+ * FLUID RATHER THAN BROKEN INTO BREAKPOINTS: `clamp()` for type and spacing and
+ * `minmax()` for the grid, so `responsive.css`'s fluid root size carries it from
+ * a 320px phone to a television. There is one media query, for the point at
+ * which a sidebar beside the write-up stops being readable.
+ */
+
+.lesson-details-page {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding: clamp(1rem, 2.5vw, 2rem);
+    color: var(--sfs-text, #e6e8f0);
+
+    /*
+     * THE CODE BLOCK IS DELIBERATELY THEME-INDEPENDENT, and this pair is local
+     * rather than a `--sfs-*` token on purpose.
+     *
+     * A terminal is dark everywhere else on this platform -- the runbook's code
+     * sections use exactly this measured pair (14.48:1, WCAG AAA), and a reader
+     * uses that difference to find the thing they are meant to paste. Under the
+     * three light galaxies a code block that followed the theme would become a
+     * pale box that looks like every other card on the page.
+     *
+     * It is the same argument `--sfs-paper` / `--sfs-on-paper` make from the
+     * other end: a certificate is a white page in all ten galaxies, and a code
+     * block is a dark one. Those two are real tokens because a dozen screens
+     * print; this pair is used by one page, so it is declared here with its
+     * measured contrast beside it rather than added to a palette that ten
+     * galaxies then have to be re-verified against.
+     */
+    --lesson-code-bg: #0f172a;
+    --lesson-code-ink: #e2e8f0;
+}
+
+/* ------------------------------------------------------------- loading, error */
+.lesson-loading,
+.lesson-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    min-height: 55vh;
+    text-align: center;
+}
+
+.lesson-spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.25);
+    border-top-color: var(--sfs-accent, #667eea);
+    border-radius: 50%;
+    animation: lesson-spin 0.8s linear infinite;
+}
+
+@keyframes lesson-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lesson-loading-text,
+.lesson-error-text {
+    color: var(--sfs-text-muted, #a7adc0);
+    margin: 0;
+}
+
+.lesson-error-title {
+    margin: 0;
+    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+}
+
+.lesson-error svg {
+    color: var(--sfs-danger-text, #f87171);
+}
+
+/* -------------------------------------------------------------------- crumbs */
+.lesson-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.86rem;
+    margin-block-end: 1rem;
+}
+
+.lesson-crumb {
+    color: var(--sfs-text-muted, #a7adc0);
+    text-decoration: none;
+}
+
+.lesson-crumb:hover {
+    color: var(--sfs-accent-text, #667eea);
+}
+
+.lesson-crumb--current {
+    color: var(--sfs-text, #e6e8f0);
+    font-weight: 600;
+    /* A lesson title can be Arabic on an English page and English on an Arabic
+       one, since $td falls back to the record's own field. `plaintext` reads the
+       direction out of the string itself, so both render correctly here. */
+    unicode-bidi: plaintext;
+}
+
+.lesson-crumb-sep {
+    color: var(--sfs-text-faint, #6b7280);
+}
+
+/* ---------------------------------------------------------------------- head */
+.lesson-head {
+    margin-block-end: 1.1rem;
+}
+
+.lesson-head-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-block-end: 0.6rem;
+}
+
+.lesson-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    color: var(--sfs-accent-text, #667eea);
+    /* A count, a duration and a date are machine-shaped runs of digits and
+       punctuation. Inside Arabic prose the bidi algorithm relocates their dots
+       and slashes; isolating each chip stops that. */
+    unicode-bidi: isolate;
+}
+
+.lesson-chip--quiet {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text-muted, #a7adc0);
+}
+
+.lesson-title {
+    margin: 0;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    line-height: 1.25;
+    color: var(--sfs-text, #e6e8f0);
+    unicode-bidi: plaintext;
+}
+
+/* ----------------------------------------------------------------- resources */
+.lesson-resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-end: 1.4rem;
+}
+
+.lesson-res {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    /* max() rather than a bare rem: responsive.css scales the ROOT font size, so
+       2.75rem measures ~41px on a 390px phone — under the 44px minimum, on
+       exactly the devices the rule exists for. */
+    min-height: max(2.5rem, 44px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 10px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e6e8f0);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lesson-res:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+}
+
+.lesson-res--runbook {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+    color: var(--sfs-accent-text, #667eea);
+    font-weight: 600;
+}
+
+.lesson-res--runbook:hover {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.26);
+}
+
+.lesson-res--action {
+    background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.16);
+    border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
+    /* A fill decides its own ink. `--sfs-success-text` is derived against this
+       wash rather than against a plain card, which is where it actually sits. */
+    color: var(--sfs-success-text, #48bb78);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- grid */
+.lesson-grid {
+    display: grid;
+    /* minmax(0, …) rather than 1fr: a `1fr` track's automatic minimum is
+       min-content, so one unwrappable id or URL forces the track wider than its
+       share and the row overflows the card. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+    gap: clamp(1rem, 2vw, 1.6rem);
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .lesson-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.lesson-main {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2vw, 1.6rem);
+    min-width: 0;
+}
+
+.lesson-side {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2vw, 1.6rem);
+    min-width: 0;
+}
+
+.lesson-card {
+    padding: clamp(0.9rem, 2vw, 1.5rem);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    border-radius: 14px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    min-width: 0;
+}
+
+.lesson-h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    color: var(--sfs-text, #e6e8f0);
+}
+
+.lesson-h2 svg {
+    color: var(--sfs-accent-text, #667eea);
+    flex: 0 0 auto;
+}
+
+.lesson-count {
+    margin-inline-start: auto;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text-muted, #a7adc0);
+    unicode-bidi: isolate;
+}
+
+/* --------------------------------------------------------------------- media */
+.lesson-media {
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+}
+
+.lesson-image,
+.lesson-video {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    /* CONTAINED, NEVER CROPPED. A lesson picture is usually a diagram, and a
+       diagram with its edges cut off is worse than a small diagram. */
+    object-fit: contain;
+}
+
+/* ------------------------------------------------------------------ the body */
+.lesson-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    /* The write-up is Arabic when there is a translation and English when there
+       is not, and $td's fallback makes the second case ordinary. `plaintext`
+       reads the direction out of the text itself, so an English paragraph inside
+       an Arabic page does not have its full stop moved to the front. It is on
+       each block rather than here as well, because `unicode-bidi` acts on an
+       element's OWN inline content and a block child starts a new bidi
+       paragraph — a rule on the wrapper alone reaches nothing. */
+    unicode-bidi: plaintext;
+}
+
+.lesson-h3 {
+    margin: 0.5rem 0 0;
+    font-size: clamp(1rem, 2vw, 1.12rem);
+    color: var(--sfs-text, #e6e8f0);
+    unicode-bidi: plaintext;
+}
+
+.lesson-p {
+    margin: 0;
+    font-size: clamp(0.94rem, 1.6vw, 1rem);
+    line-height: 1.75;
+    color: var(--sfs-text, #e6e8f0);
+    unicode-bidi: plaintext;
+}
+
+.lesson-ul,
+.lesson-ol {
+    margin: 0;
+    padding-inline-start: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    line-height: 1.7;
+    unicode-bidi: plaintext;
+}
+
+.lesson-note {
+    padding: 0.75rem 0.95rem;
+    border-inline-start: 3px solid var(--sfs-accent, #667eea);
+    border-radius: 0 10px 10px 0;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1);
+    color: var(--sfs-text, #e6e8f0);
+    line-height: 1.7;
+    unicode-bidi: plaintext;
+}
+
+/* ---------------------------------------------------------------------- code */
+/*
+ * CODE IS NOT RIGHT-TO-LEFT.
+ *
+ * rtl.css already pins every `<pre>` and `<code>`, and this repeats it on the
+ * block itself deliberately: the pin is the difference between
+ * `ls -la /var/log | grep error` and the same characters with the pipe and the
+ * flags relocated by the bidi algorithm — a student who copies the second gets a
+ * command that does not run, and this platform's labs are SQL, Linux and Python.
+ * A rule that important is worth stating where the element is defined rather
+ * than relying on a shared sheet nobody looks at while editing this page.
+ */
+.lesson-code {
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--lesson-code-bg);
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+}
+
+.lesson-code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    border-block-end: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+.lesson-code-lang {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lesson-code-ink);
+}
+
+.lesson-copy {
+    padding: 0.2rem 0.55rem;
+    min-height: max(1.8rem, 32px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--lesson-code-ink);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.lesson-copy:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+}
+
+.lesson-pre {
+    margin: 0;
+    padding: 0.85rem 0.95rem;
+    overflow-x: auto;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--lesson-code-ink);
+    /* `anywhere`, not `break-word`. A long path or a uuid has no permitted break
+       point, so `break-word` leaves the block wider than its card — and unlike
+       `break-word` this is counted when min-content is computed, which is what
+       lets the grid track shrink at all. */
+    white-space: pre;
+    tab-size: 4;
+}
+
+/* -------------------------------------------------------------------- empty */
+.lesson-empty {
+    margin: 0;
+    color: var(--sfs-text-muted, #a7adc0);
+    line-height: 1.7;
+}
+
+.lesson-empty p {
+    margin: 0 0 0.4rem;
+}
+
+/* ----------------------------------------------------------------- comments */
+.lesson-signin {
+    margin: 0 0 0.8rem;
+    color: var(--sfs-text-muted, #a7adc0);
+}
+
+.lesson-signin a {
+    color: var(--sfs-accent-text, #667eea);
+}
+
+.lesson-comment-form {
+    margin-block-end: 1.1rem;
+}
+
+.lesson-mention-wrap {
+    position: relative;
+}
+
+.lesson-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 10px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e6e8f0);
+    /* 16px minimum, and it has to be a px floor: below 16 iOS zooms the page on
+       focus and never zooms back. */
+    font-size: max(1rem, 16px);
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    /* A comment is what a person wrote, in whichever language they wrote it. */
+    unicode-bidi: plaintext;
+}
+
+.lesson-textarea:focus {
+    outline: 2px solid var(--sfs-accent, #667eea);
+    outline-offset: 1px;
+}
+
+.lesson-mention-list {
+    position: absolute;
+    z-index: 20;
+    min-width: 190px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 0.25rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 10px;
+    background: var(--sfs-surface, #151830);
+    box-shadow: 0 10px 26px rgb(0 0 0 / 0.35);
+}
+
+.lesson-mention {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--sfs-text, #e6e8f0);
+}
+
+.lesson-mention.is-selected,
+.lesson-mention:hover {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+}
+
+.lesson-mention-name {
+    font-size: 0.88rem;
+    unicode-bidi: isolate;
+}
+
+.lesson-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 30px;
+    block-size: 30px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.lesson-form-error {
+    margin: 0.5rem 0 0;
+    color: var(--sfs-danger-text, #f87171);
+    font-size: 0.86rem;
+}
+
+.lesson-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-start: 0.6rem;
+}
+
+.lesson-comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.lesson-comment {
+    padding: 0.8rem 0.9rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    border-radius: 12px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+    min-width: 0;
+}
+
+.lesson-comment-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-block-end: 0.5rem;
+}
+
+.lesson-comment-who {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lesson-comment-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    unicode-bidi: isolate;
+}
+
+.lesson-comment-when {
+    font-size: 0.76rem;
+    color: var(--sfs-text-muted, #a7adc0);
+    unicode-bidi: isolate;
+}
+
+.lesson-comment-del {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: max(2rem, 36px);
+    block-size: max(2rem, 36px);
+    border: 1px solid rgb(var(--sfs-danger-rgb, 248 113 113) / 0.3);
+    border-radius: 9px;
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.12);
+    color: var(--sfs-danger-text, #f87171);
+    cursor: pointer;
+}
+
+.lesson-comment-del:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.lesson-comment-body {
+    font-size: 0.94rem;
+    line-height: 1.7;
+    color: var(--sfs-text, #e6e8f0);
+    overflow-wrap: anywhere;
+    /* A mixed thread is mixed whichever language the interface is in, so this is
+       not scoped to one direction. */
+    unicode-bidi: plaintext;
+}
+
+/* ------------------------------------------------------------------ sidebars */
+.lesson-toc {
+    margin: 0;
+    padding-inline-start: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+    color: var(--sfs-text-muted, #a7adc0);
+    unicode-bidi: plaintext;
+}
+
+.lesson-hw {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.lesson-hw li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding-inline-start: 0.7rem;
+    border-inline-start: 2px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+}
+
+.lesson-hw-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    unicode-bidi: plaintext;
+}
+
+.lesson-hw-desc {
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #a7adc0);
+    unicode-bidi: plaintext;
+}
+
+.lesson-siblings {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.lesson-sibling {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 9px;
+    color: var(--sfs-text-muted, #a7adc0);
+    text-decoration: none;
+    font-size: 0.86rem;
+    min-height: max(2.2rem, 40px);
+}
+
+.lesson-sibling:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text, #e6e8f0);
+}
+
+.lesson-sibling.is-current {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    color: var(--sfs-accent-text, #667eea);
+    font-weight: 600;
+}
+
+.lesson-sibling-n {
+    flex: 0 0 auto;
+    inline-size: 1.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--sfs-text-faint, #6b7280);
+    unicode-bidi: isolate;
+}
+
+.lesson-sibling-t {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+
+/* ------------------------------------------------------------- prev and next */
+.lesson-updown {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.6rem;
+    margin-block-start: clamp(1rem, 2vw, 1.6rem);
+}
+
+.lesson-updown .lesson-btn {
+    justify-content: center;
+    overflow-wrap: anywhere;
+}
+
+.lesson-updown .lesson-btn:last-child {
+    justify-self: end;
+}
+
+/* ------------------------------------------------------------------- buttons */
+.lesson-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.1rem;
+    min-height: max(2.5rem, 44px);
+    border: none;
+    border-radius: 10px;
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    unicode-bidi: plaintext;
+}
+
+.lesson-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.lesson-btn--ghost {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    /* Its own ink. The base rule can hold only one `color`, and a glass button
+       taking the ink meant for a filled indigo one is how a button ends up
+       unreadable in the light galaxies. */
+    color: var(--sfs-text, #e6e8f0);
+}
+
+.lesson-btn-spinner {
+    inline-size: 16px;
+    block-size: 16px;
+    border: 2px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.4);
+    border-top-color: var(--sfs-on-accent, #fff);
+    border-radius: 50%;
+    animation: lesson-spin 0.7s linear infinite;
+}

@@ -4,6 +4,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
 import Courses from '../views/Courses.vue';
 import CourseDetails from '../views/CourseDetails.vue';
+import LessonDetails from '../views/LessonDetails.vue';
 import HomeworkView from '../views/HomeworkView.vue';
 import Profile from '../views/Profile.vue';
 import Login from '../views/Login.vue';
@@ -144,6 +145,29 @@ const routes = [
                 name: 'CourseDetails',
                 component: CourseDetails,
                 meta: { title: 'Course Details', requiresAuth: false }
+            },
+            {
+                /*
+                  ONE LESSON'S PAGE, and it is `requiresAuth: false` for the
+                  same reason `course/:id` is: the catalogue and what is in it
+                  are what a visitor is deciding about, and a course page that
+                  lists twenty lesson titles a signed-out reader cannot open is
+                  an advertisement with twenty dead links in it.
+
+                  What being signed out costs on that page is spelled out there
+                  rather than hidden: the comment form says to sign in, the
+                  runbook link is drawn only for somebody who can open one, and
+                  the quiz and homework badges need an enrolment.
+
+                  It sits ABOVE `.../homework` so the two are adjacent in the
+                  file; the order is not load-bearing, because Vue Router scores
+                  a four-segment pattern above a three-segment one and neither
+                  of these can match the other's depth.
+                */
+                path: 'course/:courseId/lesson/:lessonId',
+                name: 'LessonDetails',
+                component: LessonDetails,
+                meta: { title: 'Lesson', requiresAuth: false }
             },
             {
                 path: 'course/:courseId/lesson/:lessonId/homework',

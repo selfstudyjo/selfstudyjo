@@ -50,6 +50,43 @@ const learning: Catalogue = {
     'Reading Material': 'مادة القراءة',
     'Source Code': 'الشيفرة المصدرية',
     'Runbook': 'دليل العمل',
+
+    /* ---------------------------------------------------------------- *
+     * One lesson's page.
+     *
+     * `الدرس` is the lesson itself; `المحتوى` is its write-up. English uses
+     * "content" for both the field and the page section, and Arabic must not:
+     * `محتوى الدرس` names the write-up, and a heading reading just `المحتوى`
+     * over a page that also has a discussion and a homework list reads as "the
+     * contents of this page".
+     *
+     * `المناقشة` for the lesson's comments rather than `التعليقات`. The course
+     * page's list is a set of remarks about the course; a lesson's is a thread
+     * of questions and answers about one topic, and a student scanning a
+     * sidebar for "where do I ask about this" looks for the second word.
+     * ---------------------------------------------------------------- */
+    'Loading lesson…': 'جارٍ تحميل الدرس…',
+    'Unable to load this lesson': 'تعذّر تحميل هذا الدرس',
+    'Back to the course': 'رجوع إلى الدورة',
+    'Open Lesson': 'افتح الدرس',
+    'Lesson content': 'محتوى الدرس',
+    'This lesson has no write-up yet.': 'لا يوجد شرح مكتوب لهذا الدرس بعد.',
+    'The reading material above covers it in the meantime.':
+        'مادة القراءة أعلاه تغطّيه في الوقت الحالي.',
+    'On this page': 'في هذه الصفحة',
+    'Lessons in this course': 'دروس هذه الدورة',
+    'Discussion': 'المناقشة',
+    'Ask about this lesson… Use @ to mention someone':
+        'اسأل عن هذا الدرس… استخدم @ للإشارة إلى أحد',
+    'No comments on this lesson yet. Be the first to ask.':
+        'لا توجد تعليقات على هذا الدرس بعد. كن أول من يسأل.',
+    'Copied': 'تم النسخ',
+    // Latin digits, deliberately: CLDR's numbering system for the language `ar`
+    // is `latn`, every digit on this platform sits beside something Latin, and
+    // Arabic-Indic digits next to a Latin unit are exactly the bidi hazard
+    // `formatNumber` avoids. See src/i18n/index.ts.
+    '{v0} min read': 'قراءة {v0} دقيقة',
+    '{v0} of {v1}': '{v0} من {v1}',
     'Take Quiz': 'ابدأ الاختبار القصير',
     'Homework ({v0})': 'الواجبات ({v0})',
     'Comments': 'التعليقات',

@@ -44,6 +44,32 @@ export interface Lesson {
     course_external_id?: string;
     source_code_url?: string;
     reading_url?: string;
+    /**
+     * The lesson's own write-up, and the reason /course/:id/lesson/:id exists.
+     *
+     * Plain text in a small notation (`## `, `- `, `1. `, `> `, ``` fences) that
+     * `src/utils/lessonContent.ts` turns into blocks. NEVER rendered with
+     * v-html -- it is a record fetched over the network and the page is open to
+     * a signed-out visitor (working rule 13).
+     *
+     * Always a string from a backend carrying it, `''` when nothing has been
+     * written, and `undefined` from a replica that has not been deployed yet.
+     * Read it with `$td(lesson, 'content')`, never off the record: the English
+     * field on an Arabic page is exactly the half-translated failure working
+     * rule 41 exists for.
+     */
+    content?: string;
+    /**
+     * Media held in Self Study Media (app 18) against this lesson id.
+     *
+     * App 18 pushes these onto the lesson record when an image or a video is
+     * uploaded (`update_lesson_image` / `update_lesson_video` in
+     * selfstudymedia/main/external_apps.py), so the lesson page needs one
+     * request rather than a second service call per lesson -- which against a
+     * cold media replica is ~20 seconds to decide whether to draw a picture.
+     */
+    image_url?: string | null;
+    video_url?: string | null;
     date_added?: string;
     homeworks?: Homework[];
 }
@@ -56,6 +82,17 @@ export interface Comment {
     user_id: string;
     course?: string;
     course_external_id?: string;
+    /**
+     * Which lesson the comment is on, or null/absent for the course itself.
+     *
+     * A comment on a lesson STILL names its course -- the lesson is an extra
+     * reference, never a replacement, because every reader on the platform calls
+     * `?course_id=` and a comment that named only a lesson would vanish from all
+     * of them at once. So the course page filters to `!lesson_external_id` and
+     * the lesson page asks for `?lesson_id=<id>`.
+     */
+    lesson_external_id?: string | null;
+    lesson?: string | null;
 }
 
 export interface Homework {
@@ -262,17 +299,52 @@ class CourseService {
         return normalizePaginatedResponse<Comment>(response).results;
     }
 
+    /**
+     * The course's OWN discussion -- what a reader on /course/:id should see.
+     *
+     * `?lesson_id=none` rather than filtering here, so a course with two hundred
+     * lesson comments does not download all of them to draw a count of four. The
+     * unfiltered route is deliberately unchanged and still answers with
+     * everything, because that is what every other caller on the platform sends.
+     */
+    async getCourseOwnComments(courseId: string, baseUrl?: string): Promise<Comment[]> {
+        const url = baseUrl || await this.getRandomCourseReplica();
+        if (!url) throw new Error('No course service replicas available');
+        const response = await apiService.get<any>(
+            url, `/comments/?course_id=${encodeURIComponent(courseId)}&lesson_id=none`);
+        return normalizePaginatedResponse<Comment>(response).results;
+    }
+
+    /** One lesson's discussion. */
+    async getLessonComments(courseId: string, lessonId: string, baseUrl?: string): Promise<Comment[]> {
+        const url = baseUrl || await this.getRandomCourseReplica();
+        if (!url) throw new Error('No course service replicas available');
+        const response = await apiService.get<any>(
+            url,
+            `/comments/?course_id=${encodeURIComponent(courseId)}`
+            + `&lesson_id=${encodeURIComponent(lessonId)}`);
+        return normalizePaginatedResponse<Comment>(response).results;
+    }
+
     async createComment(commentData: Partial<Comment>, baseUrl?: string): Promise<Comment> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');
         const reg = await import('./config').then(m => m.serviceRegistry);
         reg.clearCache();
-        const commentPayload = {
+        const commentPayload: Record<string, unknown> = {
             external_comment_id: commentData.external_comment_id,
             content: commentData.content,
             user_id: commentData.user_id,
             course_external_id: commentData.course,
         };
+        // ONLY WHEN THERE IS ONE. Sending `lesson_external_id: undefined` is
+        // fine over JSON and sending `null` is not the same request: app 19
+        // reads the key's presence, so a course comment must not mention the
+        // field at all. Getting that wrong would file every course comment
+        // against a lesson id of `null` and, more usefully wrong, would make an
+        // edit from the course page move a lesson comment off its lesson.
+        const lesson = commentData.lesson_external_id || commentData.lesson;
+        if (lesson) commentPayload.lesson_external_id = lesson;
         try {
             return await apiService.post<Comment>(url, '/comments/', commentPayload);
         } catch (error: any) {

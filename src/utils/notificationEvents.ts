@@ -170,10 +170,19 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         priority: 'normal',
         audience: 'user',
         sentBy: ['console'],
-        params: ['course', 'lesson', 'courseId'],
+        params: ['course', 'lesson', 'courseId', 'lessonId'],
         title: 'New lesson in {course}',
         message: '{lesson} is now available in {course}.',
-        link: '/course/{courseId}',
+        // THE LESSON'S OWN PAGE, not the course.
+        //
+        // It linked to `/course/{courseId}` until 2026-08-27, which was the only
+        // honest destination while a lesson was a row on a list. Now that a
+        // lesson has a page — its write-up, its media, its runbook, its homework
+        // and its own discussion — sending a reader to the course hands them a
+        // list of twenty titles and asks them to find the one the notification
+        // was about. Same reasoning as `exam.appointment_requested`'s bare
+        // `/exam-approval`, which was deleted for it.
+        link: '/course/{courseId}/lesson/{lessonId}',
     },
     'course.homework_submitted': {
         key: 'course.homework_submitted',
@@ -205,6 +214,33 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
         title: '{author} mentioned you',
         message: '{author} mentioned you in {course}: "{excerpt}"',
         link: '/course/{courseId}',
+    },
+    // A SECOND MENTION EVENT, because there are now two places to comment and
+    // the difference is the DESTINATION rather than the wording.
+    //
+    // `course.mentioned` links to `/course/{courseId}`, which is the whole
+    // course. A mention inside one lesson's discussion sent there lands the
+    // reader on a page whose comment list does not contain the comment they were
+    // named in -- the course page shows the course's OWN discussion, because
+    // that is what makes its count match what it lists. They then have to guess
+    // which of twenty lessons it was. That is the same failure as
+    // `exam.appointment_requested`'s bare `/exam-approval`: a link that resolves
+    // to a page which cannot show the thing it is about reads as the record
+    // having been deleted, which is worse than a dead link.
+    //
+    // Reusing one event with a conditional link was the alternative and it is
+    // worse: `link` is a template checked against the router, so a link that is
+    // sometimes two segments and sometimes four cannot be verified at all.
+    'course.lesson_mentioned': {
+        key: 'course.lesson_mentioned',
+        category: 'course',
+        priority: 'high',
+        audience: 'user',
+        sentBy: ['app'],
+        params: ['author', 'lesson', 'courseId', 'lessonId', 'excerpt'],
+        title: '{author} mentioned you',
+        message: '{author} mentioned you in {lesson}: "{excerpt}"',
+        link: '/course/{courseId}/lesson/{lessonId}',
     },
     'course.enrolled': {
         key: 'course.enrolled',

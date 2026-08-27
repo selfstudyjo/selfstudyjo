@@ -46,6 +46,36 @@ const learning: Catalogue = {
     'Reading Material': '阅读材料',
     'Source Code': '源代码',
     'Runbook': '操作手册',
+
+    /* ---------------------------------------------------------------- *
+     * One lesson's page.
+     *
+     * 课时正文 for the write-up, not 内容: 内容 alone over a page that also
+     * carries a discussion and a homework list reads as "the contents of this
+     * page" rather than "the text of this lesson".
+     *
+     * 讨论 for the lesson's comments rather than 评论 — the course page's list
+     * is remarks about a course, a lesson's is a thread of questions about one
+     * topic, and a student looking for where to ask scans for the first word.
+     * ---------------------------------------------------------------- */
+    'Loading lesson…': '正在加载课时……',
+    'Unable to load this lesson': '无法加载此课时',
+    'Back to the course': '返回课程',
+    'Open Lesson': '打开课时',
+    'Lesson content': '课时正文',
+    'This lesson has no write-up yet.': '此课时还没有正文。',
+    'The reading material above covers it in the meantime.':
+        '目前可以先看上面的阅读材料。',
+    'On this page': '本页内容',
+    'Lessons in this course': '本课程的课时',
+    'Discussion': '讨论',
+    'Ask about this lesson… Use @ to mention someone':
+        '就本课时提问……用 @ 提到某人',
+    'No comments on this lesson yet. Be the first to ask.':
+        '此课时还没有评论。来做第一个提问的人。',
+    'Copied': '已复制',
+    '{v0} min read': '阅读约 {v0} 分钟',
+    '{v0} of {v1}': '第 {v0} / {v1}',
     'Take Quiz': '开始小测',
     'Homework ({v0})': '作业（{v0}）',
     'Comments': '评论',
