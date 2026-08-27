@@ -209,6 +209,16 @@ export function localeFor(language: LanguageCode): string {
  *   ASCII one (U+FF5C against U+007C) and is read as "vertical bar" by the
  *   voices that read the ASCII one that way. Chinese book and article titles
  *   are wrapped in `《》`, which is punctuation and not part of the name.
+ *
+ * A DASH IS TWO DIFFERENT MARKS AND THEY NEED OPPOSITE TREATMENT, which a live
+ * BBC headline is what showed: `西藏—尼泊尔边境山洪幸存者` came out as
+ * `西藏, 尼泊尔边境…`, so the anchor said "Tibet, the Nepal border" where the
+ * story is about the Tibet–Nepal *border*. One rule turning every dash into a
+ * comma is right for English, where the em dash is a parenthesis, and wrong
+ * wherever the dash JOINS two names or two numbers. The two are told apart by
+ * shape rather than by language: Chinese writes its parenthetical dash doubled
+ * (`——`), English spaces its single one out, and a lone dash pressed between
+ * two characters is a range or a compound in both.
  */
 export function speakable(raw: string): string {
     if (!raw) return '';
@@ -226,9 +236,18 @@ export function speakable(raw: string): string {
         // set below. English `wait… what` is one sentence.
         .replace(/…+/g, ', ')
         .replace(/["“”«»《》『』「」]/g, ' ')
-        // `+`, because Chinese writes an em dash doubled (`——`) and one
-        // replacement per character turns it into ", , ".
+        // A LONE dash pressed between two characters joins them — a border, a
+        // date range, a compound name. It becomes a boundary, never a pause.
+        // First, so the parenthetical rule below cannot claim it.
+        .replace(/(\S)[–—](\S)/g, '$1 $2')
+        // What is left is the parenthesis: a doubled `——`, or a single one
+        // with air around it. `+` because one replacement per character turns
+        // `——` into ", , ".
         .replace(/\s*[–—]+\s*/g, ', ')
+        // Chinese never puts a space before its punctuation, and stripping the
+        // quotes above leaves one: `“…冲走了”：西藏` became `…冲走了 ：西藏`.
+        // Inaudible, but these strings are also what the rundown lists.
+        .replace(/\s+([，。！？：；、）】》」』])/g, '$1')
         .replace(/\s+/g, ' ')
         .trim();
 }

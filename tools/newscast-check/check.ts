@@ -210,9 +210,29 @@ console.log('\n4b. speakable() in Chinese — full-width punctuation');
 
     // Chinese writes an em dash doubled. One replacement per character turned
     // `——` into ", , " — two pauses where the author wrote one.
+    /*
+      A DASH IS TWO DIFFERENT MARKS. Found by running a live BBC bulletin
+      through the engine: `西藏—尼泊尔边境山洪幸存者忆述事发经过` came out as
+      `西藏, 尼泊尔边境…`, so the anchor said "Tibet, the Nepal border" about a
+      story on the Tibet–Nepal border. Turning every dash into a comma is right
+      for the English parenthesis and wrong wherever a dash JOINS two things.
+    */
     check('a doubled em dash is one pause, not two',
-          !speakable('中俄关系——一个例子').includes(', ,'),
+          speakable('中俄关系——一个例子') === '中俄关系, 一个例子',
           speakable('中俄关系——一个例子'));
+    check('a lone dash between two names joins them rather than splitting them',
+          !speakable('西藏—尼泊尔边境山洪').includes(','),
+          speakable('西藏—尼泊尔边境山洪'));
+    check('...and so does one between two numbers',
+          !speakable('2020–2021年').includes(','), speakable('2020–2021年'));
+    check('while a spaced-out english em dash is still a pause',
+          speakable('The plan — which nobody read — was approved')
+          === 'The plan, which nobody read, was approved',
+          speakable('The plan — which nobody read — was approved'));
+    // Stripping `“”` leaves a space in front of the colon that followed them.
+    check('no space is left in front of chinese punctuation',
+          speakable('“我的家人被冲走了”：幸存者忆述') === '我的家人被冲走了：幸存者忆述',
+          speakable('“我的家人被冲走了”：幸存者忆述'));
 
     check('an ellipsis becomes a pause',
           !speakable('他停顿了……然后继续').includes('…'),
