@@ -1,0 +1,1 @@
+import{F as e}from"./index-Dp2bQpgE.js";export{e as serviceRegistry};
