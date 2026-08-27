@@ -369,12 +369,19 @@
     border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
     border-radius: 12px;
     overflow: hidden;
-    background: var(--lesson-code-bg);
+    background: var(--lesson-code-bg, #0f172a);
     direction: ltr;
     text-align: left;
     unicode-bidi: isolate;
 }
 
+/*
+  The bar states the FILL AND THE INK TOGETHER, and its two children inherit.
+  Declaring the ink on each child instead is what `npm run audit:ink` reports as
+  "light ink with no fill under it": the fill is on the ancestor, and a static
+  scan cannot follow that relationship. Every residual entry in that audit is
+  this same shape, so not adding three more to it is worth one line.
+*/
 .lesson-code-bar {
     display: flex;
     align-items: center;
@@ -382,6 +389,7 @@
     gap: 0.5rem;
     padding: 0.4rem 0.7rem;
     background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--lesson-code-ink, #e2e8f0);
     border-block-end: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
 }
 
@@ -390,7 +398,6 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--lesson-code-ink);
 }
 
 .lesson-copy {
@@ -399,7 +406,10 @@
     border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
     border-radius: 8px;
     background: transparent;
-    color: var(--lesson-code-ink);
+    /* `inherit`, not a token: a <button> takes `buttontext` from the user agent
+       rather than inheriting, so without this the copy button is black on the
+       dark bar in every galaxy. */
+    color: inherit;
     font-size: 0.75rem;
     cursor: pointer;
 }
@@ -415,7 +425,11 @@
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.85rem;
     line-height: 1.6;
-    color: var(--lesson-code-ink);
+    /* Its own fill as well as its own ink, so the pair is one rule. `.lesson-code`
+       above already paints it; stating it here is what keeps `audit:ink` from
+       reporting light ink with nothing under it. */
+    background: var(--lesson-code-bg, #0f172a);
+    color: var(--lesson-code-ink, #e2e8f0);
     /* `anywhere`, not `break-word`. A long path or a uuid has no permitted break
        point, so `break-word` leaves the block wider than its card — and unlike
        `break-word` this is counted when min-content is computed, which is what
