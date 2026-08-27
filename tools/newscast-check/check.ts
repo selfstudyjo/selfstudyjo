@@ -16,9 +16,15 @@
 // * **`speakable`.** Everything it misses is *heard*: a URL read out character
 //   by character, "quot" in the middle of a sentence, a pipe read as "vertical
 //   bar". You only find these by listening, one story at a time.
-// * **Arabic sentence splitting.** An English-only `[.!?]` split returns one
-//   enormous sentence for Arabic, so the detail cap stops capping and a feature
-//   is read for nine minutes without a pause.
+// * **Sentence splitting in a script that is not English.** An English-only
+//   `[.!?]` split returns one enormous sentence for Arabic, so the detail cap
+//   stops capping and a feature is read for nine minutes without a pause. Then
+//   Chinese arrived and did it again through a different door — `。` is in the
+//   terminator set, but Chinese puts no whitespace after it, and the rule that
+//   protects "3.5" from being split also protected the whole article.
+// * **Per-language pacing.** Mandarin is read at roughly a third of the
+//   characters a second English is. Estimated at the English rate the progress
+//   bar finishes while the anchor is a third of the way through the story.
 // * **Voice casting.** Both anchors landing on the same voice makes the handover
 //   lines sound like a fault rather than a handover.
 
@@ -185,7 +191,41 @@ console.log('\n4. speakable() — everything it misses is heard aloud');
     check('empty in, empty out', speakable('') === '');
 }
 
-console.log('\n5. Sentence splitting works in both scripts');
+console.log('\n4b. speakable() in Chinese — full-width punctuation');
+{
+    // RT China separates a strand name from the headline with U+FF5C, not the
+    // ASCII pipe: `RT深度盘点｜特朗普或将取代二战黑人英雄`. Different codepoint,
+    // same "vertical bar" read aloud by the voices that do that.
+    check('a full-width pipe becomes a pause, not "vertical bar"',
+          !speakable('RT深度盘点｜特朗普或将取代二战黑人英雄').includes('｜'),
+          speakable('RT深度盘点｜特朗普或将取代二战黑人英雄'));
+    check('and the ASCII pipe still does',
+          !speakable('عاجل | خبر').includes('|'), speakable('عاجل | خبر'));
+
+    // `《消息报》` is Izvestia. The brackets are punctuation, not part of the
+    // name, and a voice that reads them says "left double angle bracket".
+    check('chinese title brackets are stripped',
+          !/[《》]/.test(speakable('他在接受《消息报》采访时表示')),
+          speakable('他在接受《消息报》采访时表示'));
+
+    // Chinese writes an em dash doubled. One replacement per character turned
+    // `——` into ", , " — two pauses where the author wrote one.
+    check('a doubled em dash is one pause, not two',
+          !speakable('中俄关系——一个例子').includes(', ,'),
+          speakable('中俄关系——一个例子'));
+
+    check('an ellipsis becomes a pause',
+          !speakable('他停顿了……然后继续').includes('…'),
+          speakable('他停顿了……然后继续'));
+
+    // The sentence-ending marks must SURVIVE speakable, or the splitter that
+    // runs after it has nothing left to split on.
+    check('speakable keeps the chinese terminators',
+          speakable('第一句。第二句！第三句？') === '第一句。第二句！第三句？',
+          speakable('第一句。第二句！第三句？'));
+}
+
+console.log('\n5. Sentence splitting works in every script');
 {
     const english = sentences('One. Two! Three? Four.');
     check('splits english on terminators', english.length === 4, english);
@@ -211,6 +251,68 @@ console.log('\n5. Sentence splitting works in both scripts');
                   + 'وأضاف أن الهدف هو توازن القوى. فهل ينجح ذلك؟ الوقت وحده يحكم.';
     check('real arabic prose splits into its sentences', sentences(scraped).length === 4,
           sentences(scraped));
+
+    /*
+      CHINESE, WHICH IS THE SAME FAILURE THROUGH A DIFFERENT DOOR.
+
+      The Arabic fix put `؟` in the terminator set. That is necessary and it is
+      not what Chinese needs: `。` in the set changes nothing on its own,
+      because the split also requires WHITESPACE after the terminator — the
+      rule that keeps "3.5" and "U.S." whole — and Chinese puts no space after
+      anything. So the whole article came back as one sentence, `detailText`'s
+      cap had nothing to cap, and the anchor read two thousand characters
+      without drawing breath. Real scraped prose here, not a fixture, because
+      the fixture that "works" is the one written to the rule being tested.
+    */
+    const chinese = sentences(
+        '韩方声称俄军机进入所谓韩国防识区。俄方指出该区域是单方面划设的。这能约束其他国家吗？'
+        + '俄罗斯国防部此前多次强调相关飞行合乎国际法！');
+    check('splits chinese on 。！？ with no whitespace after them',
+          chinese.length === 4, chinese);
+    check('and keeps each terminator with its own sentence',
+          chinese[0].endsWith('。') && chinese[2].endsWith('？')
+          && chinese[3].endsWith('！'), chinese);
+    check('a chinese paragraph is not one enormous sentence',
+          sentences('第一句。第二句。第三句。第四句。第五句。').length === 5);
+
+    // `他说：“可以。”` ends with the quote. Split at the stop inside it and the
+    // next sentence opens with a stray `”`, which some voices read aloud.
+    const quoted = sentences('他说：“可以。”记者随后离开了。');
+    check('a closing quote stays with the sentence it closes',
+          quoted.length === 2 && quoted[0].endsWith('”'), quoted);
+
+    // An ellipsis is a pause in every script that uses it, and `speakable`
+    // turns it into a comma. Promoting it to a terminator would split English
+    // "wait… what" into two sentences.
+    check('an ellipsis is not a sentence break',
+          sentences('他停顿了一下……然后继续说。').length === 1,
+          sentences('他停顿了一下……然后继续说。'));
+    check('nor is a full-width semicolon',
+          sentences('第一部分；第二部分。').length === 1,
+          sentences('第一部分；第二部分。'));
+
+    // ASCII punctuation inside Chinese must still behave as it does in English:
+    // a decimal point is not the end of anything, in any script.
+    check('a decimal inside chinese prose is not split',
+          sentences('油价上涨了3.5个百分点。').length === 1,
+          sentences('油价上涨了3.5个百分点。'));
+
+    // The cap is what all of this is for.
+    const zhFeature = '第一句话在这里。第二句话在这里。第三句话在这里。第四句话在这里。';
+    const zhLong = item('zx', '长篇报道',
+                        { paragraphs: [zhFeature], body: zhFeature, summary: '' });
+    check('detailText caps a chinese body at the sentence count',
+          detailText(zhLong, 2) === '第一句话在这里。第二句话在这里。',
+          detailText(zhLong, 2));
+    // Chinese does not put a space after `。`. These strings reach the studio's
+    // lower third and the rundown, not only the synthesiser.
+    check('and joins them without inserting a space after 。',
+          !detailText(zhLong, 3).includes('。 '), detailText(zhLong, 3));
+    const enJoin = 'One sentence. Two sentence. Three sentence.';
+    check('while english sentences are still joined with one',
+          detailText(item('ej', 't', { paragraphs: [enJoin], body: enJoin, summary: '' }), 3)
+          === enJoin,
+          detailText(item('ej', 't', { paragraphs: [enJoin], body: enJoin, summary: '' }), 3));
 
     // A lookbehind is a PARSE-TIME error on Safari < 16.4, so it would not fail
     // at runtime — it would take the whole bundle down before a line executed.
@@ -297,7 +399,7 @@ console.log('\n5. Sentence splitting works in both scripts');
           === 'Only this.');
 }
 
-console.log('\n6. Both languages are first class');
+console.log('\n6. All three languages are first class');
 {
     const arabic = buildScript({
         language: 'ar',
@@ -318,12 +420,60 @@ console.log('\n6. Both languages are first class');
           english[0].text.includes('News') && !english[0].text.includes('أخبار'),
           english[0].text);
 
-    check('arabic is rtl and english is not', isRtl('ar') && !isRtl('en'));
+    /*
+      Chinese. There is a Chinese BULLETIN now — four categories off
+      `rtchina.cn`, written by the DAGs in the `dags` repo — so this is no
+      longer a page-chrome language with no stories behind it.
+    */
+    const zh = buildScript({
+        language: 'zh',
+        items: [item('a', '美国暂停所有移民签证申请')],
+        meta: { label: '国际', label_en: 'International' },
+    });
+    check('the chinese opening is in chinese', /新闻/.test(zh[0].text), zh[0].text);
+    check('the chinese opening names the chinese category',
+          zh[0].text.includes('国际') && !zh[0].text.includes('International'),
+          zh[0].text);
+    check('the chinese sign-off is in chinese',
+          /感谢收看/.test(zh[zh.length - 1].text), zh[zh.length - 1].text);
+    /*
+      Only the lines the ENGINE writes — the opening, the handovers and the
+      sign-off. A story's own text is whatever the source published, and RT
+      China quotes English names constantly. "Self Study" is the product name
+      and stays in Latin here exactly as it does in this page's Chinese chrome.
+    */
+    const zhSpoken = buildScript({
+        language: 'zh',
+        items: [item('a', '美国暂停所有移民签证申请'), item('b', '俄对外情报局长确认会晤')],
+        meta: { label: '国际', label_en: 'International' },
+    }).filter(s => s.kind !== 'headline' && s.kind !== 'detail');
+    check('every line the engine writes in a chinese bulletin is chinese',
+          zhSpoken.every(s => !/[A-Za-z]/.test(s.text.replace(/Self Study/g, ''))),
+          zhSpoken.map(s => s.text));
+    check('and a handover is among them', zhSpoken.some(s => s.kind === 'handover'),
+          zhSpoken.map(s => s.kind));
+
+    const zhEmpty = buildScript({ language: 'zh', items: [] });
+    check('an empty chinese bulletin still speaks in chinese',
+          /没有新闻/.test(zhEmpty[0].text), zhEmpty[0].text);
+
+    check('arabic is rtl and the other two are not',
+          isRtl('ar') && !isRtl('en') && !isRtl('zh'));
     check('each language has a distinct locale',
-          localeFor('ar') !== localeFor('en'));
+          new Set((['ar', 'en', 'zh'] as const).map(localeFor)).size === 3,
+          (['ar', 'en', 'zh'] as const).map(localeFor));
+    check('chinese resolves to Simplified, which is what the bulletins are in',
+          localeFor('zh') === 'zh-CN', localeFor('zh'));
     check('no phrase list is empty',
-          (['ar', 'en'] as const).every(l =>
+          (['ar', 'en', 'zh'] as const).every(l =>
               PHRASES[l].handover.length > 0 && PHRASES[l].close.length > 0));
+    // Every language must offer the same phrases, or one of them quietly falls
+    // back to a missing key at a call site and the anchor says "undefined".
+    check('every language declares the same phrases',
+          (['ar', 'zh'] as const).every(l =>
+              Object.keys(PHRASES[l]).sort().join(',')
+              === Object.keys(PHRASES.en).sort().join(',')),
+          (['en', 'ar', 'zh'] as const).map(l => Object.keys(PHRASES[l]).length));
 
     // A category with nothing in it has to SAY so. Silence reads as broken.
     const empty = buildScript({ language: 'ar', items: [] });
@@ -399,6 +549,21 @@ console.log('\n8. Bed rotation and duration estimates');
           estimateDurationMs('a'.repeat(200), 'en') > estimateDurationMs('a'.repeat(50), 'en'));
     check('arabic is estimated slower than english for the same length',
           estimateDurationMs('a'.repeat(100), 'ar') > estimateDurationMs('a'.repeat(100), 'en'));
+    /*
+      One Han character is one syllable and Mandarin news runs at roughly
+      250-300 syllables a minute, against English's ~14 characters a second. At
+      the English rate a 200-character story was estimated at fourteen seconds
+      and took forty, so the progress bar finished a third of the way in.
+    */
+    check('chinese is estimated slower again — it is denser per character',
+          estimateDurationMs('字'.repeat(100), 'zh')
+          > estimateDurationMs('a'.repeat(100), 'ar') * 1.5,
+          [estimateDurationMs('字'.repeat(100), 'zh'),
+           estimateDurationMs('a'.repeat(100), 'ar')]);
+    check('a 100-character chinese line lands in the 15-25 second range',
+          estimateDurationMs('字'.repeat(100), 'zh') >= 15000
+          && estimateDurationMs('字'.repeat(100), 'zh') <= 25000,
+          estimateDurationMs('字'.repeat(100), 'zh'));
     check('a faster rate is quicker',
           estimateDurationMs('a'.repeat(100), 'en', 2) < estimateDurationMs('a'.repeat(100), 'en', 1));
     check('empty text takes no time', estimateDurationMs('', 'en') === 0);

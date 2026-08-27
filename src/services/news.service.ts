@@ -29,25 +29,31 @@ export const NEWS_APP_ID = parseInt(import.meta.env.VITE_NEWS_APP_ID || '36');
 /**
  * The languages there are BULLETINS in.
  *
- * Airflow scrapes RT and Al Jazeera in Arabic and English, so those are the two
- * a reader can pick a bulletin from. Adding a third means new DAGs in the `dags`
- * repo and a source that publishes in that language — not a wider type here.
+ * This said, in as many words, that a third language "means new DAGs in the
+ * `dags` repo and a source that publishes in that language — not a wider type
+ * here". That was right, and on 2026-08-27 both halves were done: four Chinese
+ * DAGs scraping `rtchina.cn`, an entry in app 36's `LANGUAGES`, and now the
+ * wider type. The order matters and it is this one — a type widened first is a
+ * picker offering a language the backend answers 400 for.
+ *
+ * Chinese is RT alone; Al Jazeera has no Chinese edition. So a `zh` reader gets
+ * four categories where an `ar` one gets thirty-six, which is why the page
+ * builds its picker from `languages()` and its live counts rather than from
+ * this type — a language with nothing behind it should look empty, not absent.
  */
-export type NewsLanguage = 'ar' | 'en';
+export type NewsLanguage = 'ar' | 'en' | 'zh';
 
 /**
- * The languages this service can SPEAK, which is a different and larger set.
+ * The languages this service can SPEAK.
  *
- * `/api/news/tts/` is a general endpoint: it is named `news` because that is
- * the service that grew it, and it is what the Job Interview room and the
+ * The same three today, and still a separate type, because the two answer
+ * different questions and will come apart again the moment either side moves.
+ * `/api/news/tts/` is a general endpoint — named `news` because that is the
+ * service that grew it — and it is what the Job Interview room and the
  * Toastmasters meeting reach for when the DEVICE has no voice for the reader's
- * language — a stock Windows install has none for Arabic and many Linux builds
- * have none for Chinese. App 36's `VOICES` table carries a measured, gendered
- * neural pair for all three.
- *
- * Kept as a separate type rather than widening `NewsLanguage`, because the two
- * answer different questions and a single type would make "there is a Chinese
- * bulletin" expressible when there is not.
+ * language. A fourth interface language would land here and not in
+ * `NewsLanguage`; a fourth news source in a language nobody can synthesise
+ * would land there and not here.
  */
 export type SpeechLanguage = 'ar' | 'en' | 'zh';
 

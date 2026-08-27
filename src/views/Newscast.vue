@@ -43,7 +43,7 @@
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
-import { localeId } from '@/i18n/runtime';
+import { localeId, rel } from '@/i18n/runtime';
 import { onBeforeRouteLeave } from 'vue-router';
 import {
     Radio, Play, Pause, SkipForward, SkipBack, Square, Volume2, VolumeX,
@@ -95,9 +95,20 @@ import bed4 from '@/assets/audio/selfstudy_newscast_bed4.mp3';
 
 const BEDS: Record<number, string> = { 1: bed1, 2: bed2, 3: bed3, 4: bed4 };
 
+/*
+ * The two presenters, named in the language they are reading.
+ *
+ * These are the SAME two people in each row, written in the script of the
+ * bulletin — which is why Chinese gets 莱拉 and 亚当 rather than a translation
+ * of anything. That is transliteration, and CLAUDE.md is right that a machine
+ * guessing how a real person says their own name is not something to do; these
+ * two are fictional presenters the platform invented, and the Arabic row has
+ * been the Arabic spelling of the same two names since the page was written.
+ */
 const ANCHOR_NAMES: Record<LanguageCode, Record<AnchorId, string>> = {
     en: { female: 'Layla', male: 'Adam' },
     ar: { female: 'ليلى', male: 'آدم' },
+    zh: { female: '莱拉', male: '亚当' },
 };
 
 const UI = {
@@ -117,8 +128,13 @@ const UI = {
         noVoice: 'no matching voice',
         voices: 'Voices',
         autoVoice: 'Automatic',
-        noVoiceHelp: 'This device has no English voice installed, so the bulletin is being read '
-            + 'by the Self Study voice service instead. Nothing to install.',
+        // Deliberately not "no English voice": the chrome is in the SITE's
+        // language and the bulletin is in whichever the reader picked, so
+        // naming a language here is wrong two thirds of the time — an English
+        // page reading the Chinese bulletin used to report a missing English
+        // voice. The Chinese row got this right first; the other two follow it.
+        noVoiceHelp: 'This device has no voice installed for the language of this bulletin, '
+            + 'so it is being read by the Self Study voice service instead. Nothing to install.',
         speechFailed: 'Speech synthesis stopped responding. Try again, or switch the voice source.',
         source: 'Voice from', sourceAuto: 'Automatic', sourceDevice: 'This device',
         sourceServer: 'Self Study (any device)',
@@ -150,13 +166,13 @@ const UI = {
         speed: 'السرعة', muted: 'الموسيقى متوقفة', unmuted: 'الموسيقى تعمل',
         openOriginal: 'فتح الخبر الأصلي', rundown: 'ترتيب النشرة',
         unsupported: 'هذا المتصفح لا يدعم قراءة النص. العناوين أدناه محدّثة.',
-        sharedVoice: 'الصوت العربي الوحيد المتاح',
-        noVoice: 'لا يوجد صوت عربي',
+        sharedVoice: 'الصوت الوحيد المتاح لهذه اللغة',
+        noVoice: 'لا يوجد صوت لهذه اللغة',
         voices: 'الأصوات',
         autoVoice: 'تلقائي',
         // No longer a dead end. A missing OS voice is now just a note about
         // which engine is doing the reading — the bulletin plays either way.
-        noVoiceHelp: 'لا يوجد صوت عربي مثبّت على هذا الجهاز، لذلك تُقرأ النشرة بصوت خدمة '
+        noVoiceHelp: 'لا يوجد على هذا الجهاز صوت مثبّت للغة هذه النشرة، لذلك تُقرأ بصوت خدمة '
             + '"سيلف ستدي" الصوتية. لا حاجة لتثبيت أي شيء.',
         speechFailed: 'توقف محرك الصوت عن الاستجابة. حاول مرة أخرى أو غيّر مصدر الصوت.',
         source: 'مصدر الصوت', sourceAuto: 'تلقائي', sourceDevice: 'هذا الجهاز',
@@ -177,14 +193,17 @@ const UI = {
         breaking: 'عاجل', fresh: 'جديد',
     },
     /*
-     * Chinese — the page's own chrome only.
+     * Chinese.
      *
-     * There is no Chinese BULLETIN and this entry does not imply one: Airflow
-     * scrapes RT and Al Jazeera in Arabic and English, so those are the two the
-     * category picker offers. What this gives a Chinese reader is a Chinese
-     * page around whichever bulletin they choose, which is the honest version
-     * of "the Newscast supports Chinese" — the alternative was an English page
-     * with an English bulletin, on the one screen that needs no account at all.
+     * This block was the page's chrome ONLY, and said so: there was no Chinese
+     * bulletin, so a Chinese reader got a Chinese page around an Arabic or an
+     * English one. As of 2026-08-27 there is — four categories off
+     * `rtchina.cn`, written by `selfstudy_news.py` in the `dags` repo — so the
+     * chrome, the stories, the anchors and the voices are all Chinese now.
+     *
+     * Al Jazeera publishes no Chinese edition, so `zh` is RT alone: four
+     * categories where Arabic has thirty-six. Nothing in this block mentions
+     * how many there are, which is deliberate — a thin bulletin is a bulletin.
      */
     zh: {
         dir: 'ltr', title: '新闻播报', subtitle: '国际新闻，每小时为你播报',
@@ -226,17 +245,29 @@ const UI = {
  * State
  * ------------------------------------------------------------------ */
 
+/** The three the engine has a phrasebook, a voice rota and a pace for. */
+const BULLETIN_LANGUAGES: readonly LanguageCode[] = ['en', 'ar', 'zh'];
+
+function isBulletinLanguage(code: string): code is LanguageCode {
+    return (BULLETIN_LANGUAGES as readonly string[]).includes(code);
+}
+
 /**
  * The BULLETIN's language — which set of scraped stories to read.
  *
- * Opens on the site language when there are bulletins in it, and on English
- * otherwise: an Arabic reader arriving on this page wants Arabic news, and a
- * Chinese one has no Chinese news to want. Only the OPENING value, so the
- * category picker still switches it freely — somebody reading the site in
- * Arabic is perfectly entitled to listen to the English bulletin.
+ * Opens on the site language, now that all three have news behind them; it
+ * used to fall back to English for a Chinese reader because there was nothing
+ * else to give them. Only the OPENING value — the picker still switches it
+ * freely, and somebody reading the site in Arabic is perfectly entitled to
+ * listen to the English bulletin.
+ *
+ * A site locale this page has no phrasebook for still falls back to English,
+ * because the two deploy separately: a fourth interface language would
+ * otherwise open the Newscast on a language with no anchor lines, no pace and
+ * no category the backend will admit to.
  */
 const language = ref<LanguageCode>(
-    (localeId.value === 'ar' || localeId.value === 'en') ? localeId.value : 'en',
+    isBulletinLanguage(localeId.value) ? localeId.value : 'en',
 );
 const languages = ref<NewsLanguageInfo[]>([]);
 const categories = ref<NewsCategory[]>([]);
@@ -411,10 +442,47 @@ async function loadLanguages() {
     try {
         languages.value = await newsService.languages();
     } catch {
-        // Not fatal: the picker falls back to the two languages we know exist.
+        // Not fatal: the picker falls back to the three we know the engine can
+        // read. See `languageOptions`.
         languages.value = [];
     }
 }
+
+/** Native names, for the picker when app 36 has not answered. */
+const LANGUAGE_NAMES: Record<LanguageCode, string> = {
+    en: 'English', ar: 'العربية', zh: '中文',
+};
+
+/**
+ * What the language picker offers.
+ *
+ * Driven by app 36 rather than by a hardcoded list, because the frontend and
+ * the backend deploy on their own schedules and this is the one place that
+ * difference is visible to a reader: a replica that has not pulled the Chinese
+ * build answers with `ar` and `en`, and offering `zh` anyway leads to a page
+ * that loads and then says there are no categories. An option that is missing
+ * reads as "not yet"; one that leads nowhere reads as broken.
+ *
+ * Filtered to the languages the ENGINE has a phrasebook for, in case the
+ * backend gets a fourth first — the anchor would have nothing to say in it.
+ * And it falls back to all three when the request failed, so a cold app 36
+ * never leaves the picker empty.
+ *
+ * Each option is labelled in its OWN script, which is what
+ * `LanguagePicker.vue` does and for the same reason: the person most in need
+ * of this control is the one who cannot read the language currently selected.
+ */
+const languageOptions = computed<{ code: LanguageCode; name: string }[]>(() => {
+    const offered = languages.value
+        .map(row => row.code)
+        .filter(isBulletinLanguage);
+    const codes = offered.length ? offered : BULLETIN_LANGUAGES;
+    return codes.map(code => ({
+        code,
+        name: languages.value.find(row => row.code === code)?.name
+            || LANGUAGE_NAMES[code],
+    }));
+});
 
 async function loadCatalogue() {
     loading.value = true;
@@ -578,6 +646,15 @@ const activeSource = computed<'device' | 'server'>(() => {
 
       English device voices stay in use when the device can field a real pair —
       they are instant and they are usually right.
+
+      CHINESE FOLLOWS ENGLISH, NOT ARABIC, and the difference is evidence
+      rather than symmetry. The Arabic clause exists because the male anchor
+      was reported as sounding female four times, each with a different cause
+      in the device's own line-up. Nothing like that has been reported for
+      Chinese, and `hasGenderedPair` already handles the common Windows case —
+      one `zh-CN` voice, female, which is not a pair, so the server takes it.
+      A device that genuinely has both is instant and correct, and refusing it
+      on the strength of Arabic's history would be a guess.
     */
     if (language.value === 'ar') {
         return (!serverPaired.value && devicePair.value) ? 'device' : 'server';
@@ -1462,23 +1539,37 @@ watch(rate, () => {
     if (status.value === 'playing' && cursor.value >= 0) speakSegment(cursor.value);
 });
 
+/**
+ * "5 minutes ago", in the SITE's language.
+ *
+ * `rel()` — `Intl.RelativeTimeFormat` — rather than the hand-rolled two-branch
+ * ladder this was. Two things were wrong with the ladder and only one of them
+ * was Chinese. It keyed on the BULLETIN language while sitting in chrome that
+ * follows the SITE language, so an Arabic reader listening to the English
+ * bulletin got `5m ago` in an otherwise Arabic page; and everything that was
+ * not Arabic got English, so a third language would have been English too.
+ * Same correction `Courses.vue` needed, for the same reason.
+ */
 function relativeTime(iso: string): string {
     if (!iso) return '';
     const then = new Date(iso).getTime();
     if (Number.isNaN(then)) return '';
-    const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
-    if (minutes < 1) return language.value === 'ar' ? 'الآن' : 'just now';
-    if (minutes < 60) return language.value === 'ar' ? `قبل ${minutes} د` : `${minutes}m ago`;
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return language.value === 'ar' ? `قبل ${hours} س` : `${hours}h ago`;
-    const days = Math.round(hours / 24);
-    return language.value === 'ar' ? `قبل ${days} ي` : `${days}d ago`;
+    return rel(then);
 }
 
+/**
+ * A category's name, in the BULLETIN's own language.
+ *
+ * `أخبار` is what Al Jazeera calls that section and `国际` is what RT China
+ * calls that one — the section exists in the language the bulletin is in, and
+ * naming it in the reader's instead would name something that is not there.
+ * Only English prefers `label_en`, where the two are the same string anyway.
+ * Matches `buildScript`, so the anchor says what the picker shows.
+ */
 function categoryLabel(category: NewsCategory): string {
-    return language.value === 'ar'
-        ? (category.label || category.label_en)
-        : (category.label_en || category.label);
+    return language.value === 'en'
+        ? (category.label_en || category.label)
+        : (category.label || category.label_en);
 }
 
 /* ------------------------------------------------------------------ *
@@ -1546,8 +1637,8 @@ onBeforeRouteLeave(() => {
                 <label class="picker">
                     <span class="picker__label"><Languages :size="14" /> {{ t.language }}</span>
                     <select v-model="language" class="picker__select">
-                        <option value="en">{{ $t('English') }}</option>
-                        <option value="ar">العربية</option>
+                        <option v-for="option in languageOptions" :key="option.code"
+                                :value="option.code">{{ option.name }}</option>
                     </select>
                 </label>
 

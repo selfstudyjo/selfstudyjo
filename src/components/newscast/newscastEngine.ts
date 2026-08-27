@@ -30,14 +30,24 @@
  *     comes from the DAG and an anchor that pauses for a body that is not there
  *     reads as a fault. See `is_usable` in `dags/selfstudy_news.py`.
  *
- *  4. **Both languages are first class.** Every line an anchor says comes from
- *     PHRASES, never from a template literal at a call site, so Arabic is not a
- *     translation bolted onto English word order. Arabic is also RTL, which the
- *     ticker has to know about because a marquee that scrolls the wrong way is
- *     unreadable rather than merely untidy.
+ *  4. **All three languages are first class.** Every line an anchor says comes
+ *     from PHRASES, never from a template literal at a call site, so Arabic is
+ *     not a translation bolted onto English word order. Arabic is also RTL,
+ *     which the ticker has to know about because a marquee that scrolls the
+ *     wrong way is unreadable rather than merely untidy.
+ *
+ *     Chinese arrived last (2026-08-27, with the `rtchina.cn` DAGs) and broke
+ *     two things that had nothing to do with the phrasebook, both silently.
+ *     `sentences()` split on a terminator FOLLOWED BY WHITESPACE, and Chinese
+ *     puts no space after `。` — so a whole article came back as one sentence,
+ *     the detail cap stopped capping, and the anchor read two thousand
+ *     characters in a single breath. And `estimateDurationMs` was told 14
+ *     characters a second, where Mandarin is nearer five, so the progress bar
+ *     ran out a third of the way through every story. Neither raises anything.
+ *     Working rule 40: a rule tuned on English prose rejects other scripts.
  */
 
-export type LanguageCode = 'ar' | 'en';
+export type LanguageCode = 'ar' | 'en' | 'zh';
 export type AnchorId = 'female' | 'male';
 export type SegmentKind = 'open' | 'headline' | 'detail' | 'handover' | 'close';
 
@@ -129,6 +139,31 @@ export const PHRASES = {
         empty: 'There are no stories in this category right now. Please try another category.',
         source: (name: string) => `${name} reports.`,
     },
+    /*
+     * Chinese. RT China is the only source that publishes in it — Al Jazeera
+     * has no Chinese edition — so a `zh` reader gets four categories where an
+     * Arabic one gets thirty-six. That is a thin bulletin, not a broken one,
+     * and none of these lines says anything about how many stories there are.
+     *
+     * "Self Study" stays in Latin, as it does in this page's own Chinese
+     * chrome and as foreign brand names do in Chinese media generally. The
+     * Arabic phrasebook transliterates it because Arabic script does not sit
+     * beside Latin comfortably in speech; Mandarin voices read an embedded
+     * Latin brand cleanly.
+     */
+    zh: {
+        dir: 'ltr' as const,
+        locale: 'zh-CN',
+        open: (category: string) =>
+            `欢迎收看 Self Study 新闻播报。以下是${category}的最新头条。`,
+        openNoCategory: '欢迎收看 Self Study 新闻播报。以下是最新头条。',
+        handover: ['下一条新闻。', '本时段还有这样一条消息。', '接下来看这条。',
+                   '另一则消息。', '与此同时。'],
+        detailLead: ['以下是详细内容。', '这条新闻的更多内容。', '详细内容。'],
+        close: '本时段的新闻播报到此结束。感谢收看 Self Study 新闻。',
+        empty: '此分类目前没有新闻。请选择其他分类。',
+        source: (name: string) => `${name}报道。`,
+    },
     ar: {
         dir: 'rtl' as const,
         locale: 'ar-SA',
@@ -168,7 +203,12 @@ export function localeFor(language: LanguageCode): string {
  * * Al Jazeera prefixes breaking stories with `عاجل |`, and the pipe is read
  *   as "vertical bar" by some voices and silently swallowed by others;
  * * an ellipsis of two dots (`..`, which both sources use heavily in Arabic)
- *   gets no pause at all, where a comma gets the right one.
+ *   gets no pause at all, where a comma gets the right one;
+ * * and RT China separates a strand name from its headline with a FULL-WIDTH
+ *   pipe — `RT深度盘点｜特朗普或将…` — which is a different codepoint from the
+ *   ASCII one (U+FF5C against U+007C) and is read as "vertical bar" by the
+ *   voices that read the ASCII one that way. Chinese book and article titles
+ *   are wrapped in `《》`, which is punctuation and not part of the name.
  */
 export function speakable(raw: string): string {
     if (!raw) return '';
@@ -179,23 +219,59 @@ export function speakable(raw: string): string {
         .replace(/&nbsp;/g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/https?:\/\/\S+/g, ' ')
-        .replace(/\s*\|\s*/g, ', ')
+        .replace(/\s*[|｜]\s*/g, ', ')
         .replace(/\.{2,}/g, ', ')
-        .replace(/["“”«»]/g, ' ')
-        .replace(/\s*[–—]\s*/g, ', ')
+        // A pause, in every script that uses it — and NOT a sentence end, which
+        // is why it is turned into one here rather than added to the terminator
+        // set below. English `wait… what` is one sentence.
+        .replace(/…+/g, ', ')
+        .replace(/["“”«»《》『』「」]/g, ' ')
+        // `+`, because Chinese writes an em dash doubled (`——`) and one
+        // replacement per character turns it into ", , ".
+        .replace(/\s*[–—]+\s*/g, ', ')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
 /**
- * Split body text into sentences, for both scripts.
+ * Split body text into sentences, for all three scripts.
  *
  * Arabic uses `؟` and `،` and does not use `.` as a terminator anywhere near as
  * often, so an English-only `/[.!?]/` split returns one enormous sentence and
  * the detail cap stops capping anything. That is not a cosmetic failure: an
  * uncapped detail is a 1300-word feature read in a single breath, which is
  * about nine minutes of one story.
+ *
+ * Chinese is the same failure reached by a different route, and the route is
+ * the WHITESPACE rule rather than the terminator set. Chinese ends a sentence
+ * with `。`, and puts nothing after it — so even with `。` in the set, a rule
+ * that requires whitespace to follow never fires and the whole article is one
+ * sentence again. Hence the two branches below.
  */
+
+/**
+ * Terminators that end a sentence WITHOUT needing whitespace after them.
+ *
+ * Full-width punctuation is unambiguous in a way the ASCII marks are not: `。`
+ * is never a decimal point and never an abbreviation dot, because Chinese
+ * writes both of those with the ASCII `.`. So there is nothing for the
+ * whitespace rule or `endsInAbbreviation` to protect against, and requiring
+ * either is what returned one sentence for a whole article.
+ *
+ * `…` and `；` are deliberately absent: an ellipsis is a pause in every script
+ * that uses it (`speakable` turns it into a comma) and a semicolon does not end
+ * a sentence in any of them.
+ */
+const CJK_TERMINATORS = '。！？';
+
+/**
+ * Closing marks that belong to the sentence they follow.
+ *
+ * `他说：“可以。”` ends with the quote, not with the stop inside it. Split at the
+ * `。` and the next "sentence" begins with a stray `”`, which some voices read
+ * aloud and all of them pause on.
+ */
+const CJK_CLOSERS = '”’」』）》〉';
 /**
  * Does `buffer` end in a dotted abbreviation rather than a full stop?
  *
@@ -245,6 +321,16 @@ export function sentences(text: string): string[] {
             continue;
         }
         buffer += ch;
+
+        // Full-width first, and without the whitespace test — see above.
+        if (CJK_TERMINATORS.includes(ch)) {
+            while (i + 1 < chars.length && CJK_CLOSERS.includes(chars[i + 1])) {
+                buffer += chars[++i];
+            }
+            flush();
+            continue;
+        }
+
         const terminator = ch === '.' || ch === '!' || ch === '?' || ch === '؟';
         const next = chars[i + 1];
         if (terminator && (next === undefined || /\s/.test(next)) && !endsInAbbreviation(buffer)) {
@@ -292,7 +378,7 @@ export function detailText(item: NewsItem, count: number): string {
         .filter(sentence => !spoken.has(sentenceKey(sentence)));
 
     const picked = lead.slice();
-    let length = picked.join(' ').length;
+    let length = joinSpoken(picked).length;
     for (const sentence of body.slice(0, Math.max(1, count))) {
         // App 36 truncates a request at MAX_TEXT_CHARS and does it mid-word, so
         // running past that trades a whole sentence for a clipped one. Stopping
@@ -302,7 +388,7 @@ export function detailText(item: NewsItem, count: number): string {
         length += sentence.length + 1;
     }
 
-    if (picked.length) return picked.join(' ');
+    if (picked.length) return joinSpoken(picked);
     return speakable(item.summary || '') || speakable(bodySource);
 }
 
@@ -311,6 +397,27 @@ export function detailText(item: NewsItem, count: number): string {
  * mid-word — and inside what one anchor should say without drawing breath.
  */
 const SPOKEN_CHAR_BUDGET = 900;
+
+/**
+ * Join sentences the way the script they are written in joins them.
+ *
+ * English and Arabic put a space after a full stop. Chinese does not — `。` is
+ * a full-width glyph that carries its own trailing space, and an extra one is
+ * visibly wrong. It is not only a synthesiser that sees these strings: the
+ * studio's lower third renders the current segment's text when a story has no
+ * headline of its own, and the rundown lists them.
+ *
+ * Derived from the preceding sentence's own last character rather than from a
+ * language argument, so a Chinese story quoting an English source — which is
+ * most of what RT China publishes — is right on both sides of the join.
+ */
+function joinSpoken(parts: string[]): string {
+    return parts.reduce(
+        (out, part) => (!out
+            ? part
+            : out + (/[。！？”’」』）》〉]$/.test(out) ? '' : ' ') + part),
+        '');
+}
 
 /** A sentence reduced to its words, for comparing two copies of one sentence. */
 function sentenceKey(sentence: string): string {
@@ -371,7 +478,13 @@ export function buildScript(options: ScriptOptions): Segment[] {
         return [{ kind: 'open', anchor: firstAnchor, text: phrases.empty, bed: false }];
     }
 
-    const categoryLabel = (language === 'ar' ? meta?.label : (meta?.label_en || meta?.label)) || '';
+    // The section is named in the BULLETIN's own language, because that is the
+    // section that exists: `أخبار` is what Al Jazeera calls it and `国际` is
+    // what RT China calls it. Only English falls back to `label_en`, and there
+    // the two are the same string anyway.
+    const categoryLabel = (language === 'en'
+        ? (meta?.label_en || meta?.label)
+        : (meta?.label || meta?.label_en)) || '';
     const script: Segment[] = [{
         kind: 'open',
         anchor: firstAnchor,
@@ -468,13 +581,22 @@ export function storyOrder(script: Segment[]): string[] {
  * anchor or leaves a hole.
  *
  * Arabic script is denser per character and the common Arabic voices read it
- * slower than English, so the two rates differ. Words are the wrong unit for
- * Arabic, where clitics attach and one "word" is often a phrase.
+ * slower than English, so the rates differ. Words are the wrong unit for
+ * Arabic, where clitics attach and one "word" is often a phrase — and they are
+ * not a unit at all for Chinese, which puts no spaces between them.
+ *
+ * Chinese is nearly THREE TIMES denser again, and that is not a tuning
+ * preference: one Han character is one syllable, and Mandarin news is read at
+ * roughly 250-300 syllables a minute. Left at the English rate a 200-character
+ * story was estimated at fourteen seconds and took forty, so the progress bar
+ * finished while the anchor was a third of the way in.
  */
+const CHARS_PER_SECOND: Record<LanguageCode, number> = { en: 14, ar: 11, zh: 5 };
+
 export function estimateDurationMs(text: string, language: LanguageCode, rate = 1): number {
     const characters = (text || '').trim().length;
     if (!characters) return 0;
-    const charactersPerSecond = language === 'ar' ? 11 : 14;
+    const charactersPerSecond = CHARS_PER_SECOND[language] ?? CHARS_PER_SECOND.en;
     return Math.round((characters / (charactersPerSecond * Math.max(0.5, rate))) * 1000);
 }
 
@@ -567,12 +689,16 @@ const KNOWN_GENDER: Record<string, 'female' | 'male'> = {
     steffan: 'male', george: 'male', james: 'male',
     // Chinese.
     //
-    // Added when the platform gained a Chinese interface. There is no Chinese
-    // BULLETIN — Airflow scrapes RT and Al Jazeera in Arabic and English only —
-    // so nothing on the newscast casts one of these. They are here because
+    // Added when the platform gained a Chinese interface, when nothing on the
+    // newscast could cast one of them — they were here only because
     // `castVoice` in `cast/actors.ts` imports `genderOf` from this file rather
     // than keeping a second copy of the table (see the note above it), and the
-    // Job Interview room and the Toastmasters meeting DO speak Chinese.
+    // Job Interview room and the Toastmasters meeting speak Chinese.
+    //
+    // Since 2026-08-27 the newscast casts them too: there is a Chinese
+    // bulletin, off `rtchina.cn`. Which makes the table load-bearing in a way
+    // it was not — a wrong entry now puts the wrong presenter on air rather
+    // than only changing an interviewer's voice.
     //
     // The gender is not guessable from the romanisation by any rule an
     // English-tuned hint list would apply, which is why every one is listed:
@@ -630,9 +756,22 @@ function scoreName(name: string, hints: string[]): number {
     return hints.reduce((score, hint) => (parts.includes(hint) ? score + 1 : score), 0);
 }
 
-/** The BCP-47 prefix a language's voices must carry. */
+/**
+ * The BCP-47 prefix a language's voices must carry.
+ *
+ * Every code here is already a primary subtag, so this is the identity — but it
+ * stays a function because it is the one place the mapping is stated. It used
+ * to be `language === 'ar' ? 'ar' : 'en'`, which quietly matched ENGLISH voices
+ * for any language that was not Arabic: adding `zh` to the type would have cast
+ * an English voice for a Chinese bulletin, which is not accented Chinese, it is
+ * noise — the exact failure `pickVoice` returning null exists to prevent.
+ *
+ * `zh` matches `zh-CN`, `zh-TW` and `zh-HK`. Traditional-script voices are
+ * accepted deliberately: the bulletins are Simplified, and a Taiwanese Mandarin
+ * voice reading them is an accent, where refusing it is silence.
+ */
 function langPrefix(language: LanguageCode): string {
-    return language === 'ar' ? 'ar' : 'en';
+    return language;
 }
 
 /** Every installed voice that actually speaks `language`. */
