@@ -574,6 +574,89 @@ for (const [name, path] of ROOMS.slice(1)) {
         /\.catch\(\(\) => undefined\)/.test(src));
 }
 
+/*
+  ============================================================
+  A MODULE-LEVEL CALL MAY NOT TOUCH A `let` DECLARED BELOW IT
+  ============================================================
+
+  This check exists because the fix for the Arabic interviewer shipped a
+  temporal dead zone of its own, in the same file, and NOTHING caught it:
+  `vue-tsc` was clean, the production build succeeded, and every other check
+  passed. A TDZ is a runtime fault and both of those are compile-time tools.
+
+  What broke was `loadVoices()` — invoked at module scope, a hundred lines above
+  the `let serverProbe` that its callee assigns to. That is
+  `ReferenceError: Cannot access 'serverProbe' before initialization`, thrown
+  synchronously out of `setup`, so the entire room fails to mount and the page
+  renders nothing at all.
+
+  The version before it was also unsafe and got away with it: the callee's first
+  statement read a `const` in the same dead zone, and it survived only because
+  `getVoices()` returns an empty list on its first synchronous call, so the
+  branch containing the read was skipped and execution reached an `await` before
+  touching anything. A browser that ever returned a populated list there would
+  have crashed the room. "It works" and "it cannot fail" are different
+  properties, and only the second one is worth having.
+
+  So the rule is checked rather than remembered: for every top-level call in
+  these rooms, every top-level `let`/`const` the call can reach must be declared
+  ABOVE it. It is a coarse reading of the source — it does not follow calls more
+  than one level deep and it does not know about scopes — and it is exactly
+  sharp enough for the thing that keeps happening.
+*/
+console.log('\nactors: module evaluation order\n');
+
+/** A top-level function body: from its opening line to the next `}` at column 0. */
+function topLevelBody(src: string, header: RegExp): string {
+    const at = src.search(header);
+    if (at < 0) return '';
+    const end = src.indexOf('\n}', at);
+    return end < 0 ? src.slice(at) : src.slice(at, end);
+}
+
+for (const [name, path] of ROOMS) {
+    const src = existsSync(path) ? stripComments(readFileSync(path, 'utf8')) : '';
+    if (!src) continue;
+
+    /*
+      Every top-level call — `foo();` at column 0. These are the statements that
+      run while the module is still being evaluated, which is the only place a
+      TDZ write can happen.
+    */
+    const calls = [...src.matchAll(/^([A-Za-z_$][\w$]*)\(\);$/gm)];
+    /* Every top-level `let`/`const`, and where it is. */
+    const declared = new Map<string, number>();
+    for (const m of src.matchAll(/^(?:let|const)\s+([A-Za-z_$][\w$]*)/gm)) {
+        if (!declared.has(m[1] as string)) declared.set(m[1] as string, m.index ?? 0);
+    }
+
+    const offenders: string[] = [];
+    for (const call of calls) {
+        const fn = call[1] as string;
+        const callAt = call.index ?? 0;
+        // The called function, plus anything IT calls at the top level — one
+        // level of indirection, which is what `loadVoices` -> `checkServerVoice`
+        // needed and is where every instance of this has been.
+        let body = topLevelBody(src, new RegExp(`^(?:async )?function ${fn}\\(`, 'm'));
+        for (const inner of [...body.matchAll(/\b([A-Za-z_$][\w$]*)\(/g)]) {
+            const callee = inner[1] as string;
+            if (callee === fn) continue;
+            body += topLevelBody(src, new RegExp(`^(?:async )?function ${callee}\\(`, 'm'));
+        }
+        if (!body) continue;
+
+        for (const [id, declAt] of declared) {
+            if (declAt < callAt) continue;
+            // Referenced by name in the body, as a whole word.
+            if (!new RegExp(`\\b${id}\\b`).test(body)) continue;
+            offenders.push(`${fn}() at ${callAt} touches '${id}' declared at ${declAt}`);
+        }
+    }
+
+    check(`${name}: no module-level call reaches a binding declared below it`,
+        offenders.length === 0, offenders.slice(0, 6));
+}
+
 /* ------------------------------------------------------------------ *
  * 4. The head sculpt
  * ------------------------------------------------------------------ */

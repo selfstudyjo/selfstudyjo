@@ -679,8 +679,6 @@ function loadVoices() {
   // well. The Newscast documents the same trap.
   void checkServerVoice();
 }
-loadVoices();
-if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
 /**
  * A voice for whoever was cast, chosen on THEIR gender rather than on the
@@ -790,6 +788,32 @@ function checkServerVoice(): Promise<void> {
   is why the two behaved differently in the same language on the same machine.
 */
 watch(localeId, () => { void checkServerVoice(); });
+
+/*
+  ============================================================
+  THE FIRST CALL GOES HERE, BELOW EVERYTHING IT TOUCHES
+  ============================================================
+
+  `loadVoices()` calls `checkServerVoice()`, which assigns to `serverProbe` — and
+  `serverProbe` is a `let`. Called from where it used to sit, a hundred lines
+  above that declaration, the assignment is a write into a temporal dead zone:
+  `ReferenceError: Cannot access 'serverProbe' before initialization`, thrown
+  synchronously out of `setup`, so the whole room fails to mount and the page
+  renders nothing.
+
+  It is worth knowing that the version before it was ALSO unsafe and got away
+  with it. `checkServerVoice` was an `async function` whose first statement reads
+  `serverVoices`, declared in the same dead zone — and it survived only because
+  `getVoices()` returns an empty list on the first synchronous call, so
+  `deviceCanSpeak` was false, the assignment inside that branch was skipped, and
+  execution reached an `await` before touching anything. A browser that ever
+  returned a populated list on that first call would have crashed the room.
+
+  The meeting has always had this order — declarations, then the call — and says
+  so at its own call site. This is the same layout.
+*/
+loadVoices();
+if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = loadVoices;
 
 /**
  * Every server clip goes through Web Audio, which is also the fix for "the
