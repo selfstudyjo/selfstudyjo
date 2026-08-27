@@ -123,6 +123,22 @@ onMounted(async () => {
         { hostEl: hostEl.value },
     );
     ready.value = true;
+    /*
+      PUSH THE CURRENT STATE, because the watch below has already missed it.
+
+      Building this stage means downloading ~700 kB of Babylon and compiling a
+      dozen PBR shaders, which is seconds. The `immediate: true` watch fires long
+      before that finishes, against a `stage` that is still null — so if the room
+      started speaking during the download, nobody ever told the renderer.
+
+      It recovers on the next energy tick in practice, because the energy is
+      polled every 40 ms while a line is playing. That is luck rather than
+      design, and it is exactly the kind of luck that runs out for whichever
+      prop happens not to be changing. `NewsStudio.vue` pushes here for the same
+      reason.
+    */
+    const seat = props.seats.find(s => s.key === props.speaking);
+    stage.value.setSpeaking(seat ? seat.figure : null, props.energy ?? 0);
     await nextTick();
     applyLayout();
 

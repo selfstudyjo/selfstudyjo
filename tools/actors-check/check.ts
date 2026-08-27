@@ -54,11 +54,12 @@ import {
     type ActorId, type Gender,
 } from '../../src/cast/actors';
 import {
-    ANCHOR_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BREATH_PERIOD, FIGURES,
+    ANCHOR_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BOUNDARY_FLOOR,
+    BOUNDARY_PULSE_SECONDS, BREATH_PERIOD, FIGURES, NOMINAL_SPEECH_ENERGY,
     SCRIPT_GLANCE_SECONDS,
     blink, breath, browRaise, clamp01, figureById, followEnergy, gesture, handOffset,
     hash01, headEmphasis, isFigureId, jawOpen, lipSpread, proportionsFor, reachPitch,
-    scriptGlance, smooth, sway,
+    scriptGlance, smooth, spokenEnergy, sway,
     type FigureSpec, type HairStyle,
 } from '../../src/stage3d/figures';
 import {
@@ -425,6 +426,153 @@ check('smooth and clamp01 behave at their edges',
     smooth(0, 1, -5) === 0 && smooth(0, 1, 5) === 1
     && Math.abs(smooth(0, 1, 0.5) - 0.5) < 1e-9
     && clamp01(-1) === 0 && clamp01(2) === 1);
+
+/* ------------------------------------------------------------------ *
+ * 3b. Energy, when there is no audio to measure
+ * ------------------------------------------------------------------ */
+
+console.log('\nactors: the unmeasured route\n');
+
+/*
+  THE MOUTHS ONLY MOVED IN ARABIC, and the language was a red herring.
+
+  A line goes out one of two ways. The SERVER route plays an MP3 through Web
+  Audio, so an `AnalyserNode` reports the real waveform. The DEVICE route is
+  `speechSynthesis`, which exposes no audio whatsoever. Arabic takes the server
+  route on almost every machine (a stock Windows install has no Arabic voice) and
+  English takes the device route — so every figure on the platform moved its
+  mouth in Arabic and sat shut in English.
+
+  `jawOpen` returns EXACTLY 0 at zero energy, deliberately, so "no reading" and
+  "silent" were the same value. The whole of the fix is that the device route
+  reports a stand-in level instead of nothing.
+*/
+check('a line with no boundary information still reports a level to speak at',
+    spokenEnergy(Infinity) === NOMINAL_SPEECH_ENERGY && NOMINAL_SPEECH_ENERGY > 0.5,
+    NOMINAL_SPEECH_ENERGY);
+check('...and so does one where no boundary has fired yet',
+    spokenEnergy(-1) === NOMINAL_SPEECH_ENERGY && spokenEnergy(NaN) === NOMINAL_SPEECH_ENERGY);
+/*
+  NEVER ZERO WHILE A LINE IS BEING SPOKEN. Zero is the signal that means SILENT,
+  and a mouth that shuts between words has stopped talking rather than paused.
+*/
+check('the stand-in level is never zero, at any point in a word',
+    (() => {
+        for (let t = 0; t < 30; t += 1 / 240) if (!(spokenEnergy(t) > 0)) return false;
+        return true;
+    })());
+check('a word boundary is a pulse to full',
+    spokenEnergy(0) > 0.98, spokenEnergy(0));
+check('...which decays to the floor rather than to silence',
+    Math.abs(spokenEnergy(BOUNDARY_PULSE_SECONDS) - BOUNDARY_FLOOR) < 1e-9
+    && BOUNDARY_FLOOR > 0.3,
+    [spokenEnergy(BOUNDARY_PULSE_SECONDS), BOUNDARY_FLOOR]);
+check('...and stays there until the next word',
+    spokenEnergy(BOUNDARY_PULSE_SECONDS * 4) === BOUNDARY_FLOOR);
+check('the decay is monotonic, so a mouth does not stutter inside one word',
+    (() => {
+        let previous = spokenEnergy(0);
+        for (let t = 0; t <= BOUNDARY_PULSE_SECONDS; t += 0.002) {
+            const now = spokenEnergy(t);
+            if (now > previous + 1e-9) return false;
+            previous = now;
+        }
+        return true;
+    })());
+check('every value stays inside 0..1',
+    (() => {
+        for (let t = -2; t < 10; t += 1 / 240) {
+            const v = spokenEnergy(t);
+            if (!(v >= 0 && v <= 1) || !Number.isFinite(v)) return false;
+        }
+        return true;
+    })());
+/*
+  AND IT HAS TO ACTUALLY OPEN THE MOUTH. The level is only useful if `jawOpen`
+  does something with it — the two are tuned against each other, and a stand-in
+  level below the point where the jaw moves would be a fix that changes nothing.
+*/
+check('the stand-in level opens a jaw as wide as a measured one would',
+    (() => {
+        let nominal = 0;
+        let measured = 0;
+        for (let t = 0; t < 12; t += 1 / 60) {
+            nominal = Math.max(nominal, jawOpen(t, 0, spokenEnergy(Infinity)));
+            measured = Math.max(measured, jawOpen(t, 0, 1));
+        }
+        return nominal > 0.4 && nominal > measured * 0.6;
+    })());
+check('...and the hands and brows come up with it',
+    gesture(6, 0, spokenEnergy(Infinity), 5) > 0.2
+    && browRaise(6, 0, spokenEnergy(Infinity)) > 0.15);
+
+/*
+  EVERY ROOM HAS TO REPORT IT, and this is a source check because the fault was
+  never in the model — it was three views each failing to call the model.
+
+  The Newscast's device path did not call its energy tracker at all, so even the
+  nominal branch was unreachable; the two rooms called theirs with a flag meaning
+  "can this BROWSER measure audio", which answers yes on every modern browser and
+  is not the question. Both produced a steady zero on the device route.
+*/
+const ROOMS: [string, string][] = [
+    ['Newscast.vue', resolve('src/views/Newscast.vue')],
+    ['ToastmastersSession.vue', resolve('src/views/ToastmastersSession.vue')],
+    ['JobInterviewSession.vue', resolve('src/views/JobInterviewSession.vue')],
+];
+for (const [name, path] of ROOMS) {
+    const src = existsSync(path) ? stripComments(readFileSync(path, 'utf8')) : '';
+    check(`${name} is present`, src.length > 0);
+    check(`${name} reports an energy on the DEVICE route too`,
+        /trackEnergy\(true,\s*false\)/.test(src),
+        'without it `jawOpen` gets 0 and the figure never opens its mouth');
+    check(`${name} says which route it is measuring`,
+        /trackEnergy\(true,\s*true\)/.test(src));
+    check(`${name} uses the shared stand-in level rather than a literal`,
+        src.includes('spokenEnergy'),
+        'a hand-written 0.7 is a fourth copy of a number three files already share');
+    check(`${name} pulses the mouth on a word boundary where the engine offers one`,
+        /onboundary\s*=/.test(src));
+    check(`${name} stops reporting when the line ends`,
+        /trackEnergy\(false\)/.test(src));
+}
+
+/*
+  AND THE INTERVIEW ROOM'S TWO OWN FAULTS.
+
+  1. `finish()` closed over a `const` declared BELOW it and was called from the
+     server route, which is the Arabic route on any machine with no Arabic voice.
+     That is a temporal dead zone: it threw `ReferenceError`, the route's own
+     empty `catch` swallowed it, `settled` had already been set — so `resolve()`
+     was never reached on any path and the interview stopped dead after its
+     first Arabic line. From a chair that is "the interviewer does not speak".
+  2. The room never re-probed app 36 when the reader changed language, so a
+     session that had settled on `NO_SERVER` for English kept that answer into
+     Arabic and asked `speechSynthesis` for a language the machine cannot speak.
+     The meeting has had that watch since it was written.
+*/
+{
+    const src = existsSync(resolve('src/views/JobInterviewSession.vue'))
+        ? stripComments(readFileSync(resolve('src/views/JobInterviewSession.vue'), 'utf8')) : '';
+    check('the interview room\'s teardown does not reach for the utterance',
+        !/speaking === u\b/.test(src),
+        'a `const` declared below `finish` is a TDZ throw on the server route');
+    check('...it uses a turn counter, which the server route can satisfy too',
+        /const turn = \+\+speechTurn/.test(src) && /turn === speechTurn/.test(src));
+    check('nothing after the network call sits inside the route\'s catch',
+        /let clip: SpeechClip \| null = null/.test(src) && /if \(clip\) \{/.test(src),
+        'a broad catch around an empty handler swallows whatever bug arrives next');
+    check('the room re-probes app 36 when the language changes',
+        /watch\(localeId, \(\) => \{ void checkServerVoice\(\); \}\)/.test(src));
+}
+for (const [name, path] of ROOMS.slice(1)) {
+    const src = existsSync(path) ? stripComments(readFileSync(path, 'utf8')) : '';
+    check(`${name} waits for the capability probe before casting a line`,
+        /await serverProbe;/.test(src),
+        'the opening line is otherwise cast against an answer that has not arrived');
+    check(`${name}'s probe can never reject into an async executor`,
+        /\.catch\(\(\) => undefined\)/.test(src));
+}
 
 /* ------------------------------------------------------------------ *
  * 4. The head sculpt

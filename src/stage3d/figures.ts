@@ -432,8 +432,33 @@ export function jawOpen(t: number, phase = 0, energy = 1): number {
         + 0.16 * Math.sin(u * 9.30 + 2.4);
     // Half-wave rectified: a jaw does not open past shut in the other direction.
     const open = Math.max(0, syllable);
-    const phrase = 0.62 + 0.38 * Math.max(0, Math.sin((t + phase) * 0.83));
-    return clamp01(open * phrase * Math.min(1, energy) * 1.25);
+    const phrase = 0.68 + 0.32 * Math.max(0, Math.sin((t + phase) * 0.83));
+    /*
+      ============================================================
+      1.9, NOT 1.25 — THE MOUTH WAS MOVING AND NOBODY COULD SEE IT
+      ============================================================
+
+      The three sines above sum to 0.94 at their theoretical peak and they are
+      incommensurable, so they almost never all line up: the RMS of the sum is
+      0.42, which is what a TYPICAL syllable reaches. Through the old gain that
+      came out at `0.42 x 0.8 x 0.72 x 1.25 = 0.30`, and 0.30 drove the jaw
+      through 0.30 rad of travel to **five degrees**. Measured over a minute, the
+      jaw was past a quarter open for 18% of the time and past half open for
+      about 8%.
+
+      So it was technically animating and visually still — and at the size these
+      figures are actually rendered (a 180 px meeting tile, a presenter 16% of
+      the frame height) five degrees of jaw is nothing at all. Reported as "human
+      bots should interact and move mouth when speaking", which was two faults:
+      the energy never arriving (see `spokenEnergy`) and, underneath it, this.
+
+      The peak is unchanged — `clamp01` still caps at 1 — so what the extra gain
+      buys is the MIDDLE of the distribution, which is where a mouth spends its
+      time. The floor of the phrase envelope came up with it for the same
+      reason: a mouth should rest at a clause boundary, not go quiet for a
+      second and a half.
+    */
+    return clamp01(open * phrase * Math.min(1, energy) * 1.9);
 }
 
 /**
@@ -461,7 +486,9 @@ export function lipSpread(t: number, phase = 0, energy = 1): number {
 export function browRaise(t: number, phase = 0, energy = 1): number {
     if (!(energy > 0)) return 0.06 * breath(t, phase);
     const u = t + phase * 2.3;
-    return clamp01(0.18 + 0.5 * Math.max(0, Math.sin(u * 1.31 + 0.9))
+    // Deeper than it was, for the reason `jawOpen`'s gain went up: at a 180 px
+    // tile a brow that travels two millimetres is a brow that does not move.
+    return clamp01(0.20 + 0.62 * Math.max(0, Math.sin(u * 1.31 + 0.9))
         * Math.min(1, energy));
 }
 
@@ -474,8 +501,15 @@ export function browRaise(t: number, phase = 0, energy = 1): number {
 export function headEmphasis(t: number, phase = 0, energy = 1): number {
     if (!(energy > 0)) return 0;
     const u = t + phase * 1.9;
-    return 0.045 * Math.sin(u * 2.7 + 0.5) * Math.min(1, energy)
-        + 0.020 * Math.sin(u * 1.1);
+    /*
+      Four and a half degrees at the extreme rather than two and a half. A nod
+      on a stressed word is the most legible thing a talking head does at
+      distance — more legible than the mouth, because it moves the whole
+      silhouette — and it was pitched below the threshold where a viewer reads
+      it as deliberate.
+    */
+    return 0.075 * Math.sin(u * 2.7 + 0.5) * Math.min(1, energy)
+        + 0.030 * Math.sin(u * 1.1);
 }
 
 /**
@@ -629,6 +663,84 @@ export function scriptGlance(since: number, energy = 1): number {
     const dip = 0.55;
     if (phase > dip) return 0;
     return 0.45 * Math.sin((phase / dip) * Math.PI);
+}
+
+/* ---- energy, when there is no audio to measure ---- */
+
+/**
+ * How loud to pretend a line is when the engine will not let us listen.
+ *
+ * ============================================================
+ * WHY THIS EXISTS: THE MOUTHS ONLY MOVED IN ARABIC
+ * ============================================================
+ *
+ * Reported as "Volume and voices work fine but no interactions in other
+ * languages — the anchors should interact, not just in Arabic", and the language
+ * was a red herring. What differs is the ROUTE.
+ *
+ * A line goes out one of two ways (see `roomSpeech.ts`). The SERVER route plays
+ * an MP3 through Web Audio, so there is an `AnalyserNode` on the output and the
+ * energy is a real reading off the real waveform. The DEVICE route is
+ * `speechSynthesis`, which exposes **no audio whatsoever** — no node, no buffer,
+ * no level — so there is nothing to read.
+ *
+ * Arabic takes the server route on almost every machine, because a stock Windows
+ * install has no Arabic voice. English takes the device route. So every mouth on
+ * the platform moved in Arabic and sat shut in English — and since
+ * {@link jawOpen} returns EXACTLY 0 at zero energy (deliberately: "almost
+ * closed" reads as chewing), the figures did not move their lips, their brows,
+ * their hands or their heads. They breathed and blinked, which is worse than
+ * nothing: it looks like a person deciding not to speak.
+ *
+ * All three rooms had the same shape of bug and none of them was quite the same:
+ * the Newscast never called its energy tracker on the device path at all, and
+ * the two rooms called theirs with a flag that means "can this BROWSER measure
+ * audio" where the question is "is THIS CLIP being measured". A browser with Web
+ * Audio playing a `speechSynthesis` line answers yes to the first and no to the
+ * second, so both rooms polled an analyser with nothing connected to it and got
+ * a steady zero.
+ */
+export const NOMINAL_SPEECH_ENERGY = 0.72;
+
+/**
+ * The floor between words, once we know the engine reports word boundaries.
+ *
+ * Not zero. A gap between two words is a fifth of a second and the mouth does
+ * not fully close in one — it closes at the end of a CLAUSE, which is what
+ * `jawOpen`'s phrase envelope already does. Dropping to zero per word is a
+ * chattering jaw, which is the classic bad lip-sync.
+ */
+export const BOUNDARY_FLOOR = 0.5;
+
+/** How long a word's pulse takes to fall back to the floor, in seconds. */
+export const BOUNDARY_PULSE_SECONDS = 0.22;
+
+/**
+ * A stand-in loudness for a line the browser will not let us hear.
+ *
+ * `sinceBoundary` is seconds since `SpeechSynthesisUtterance.onboundary` last
+ * fired, or a non-finite value when this engine has never fired one.
+ *
+ * Two behaviours, and the fallback is the important one:
+ *
+ *  * **No boundaries** — Safari fires none for remote voices, and several
+ *    engines fire none at all — so the answer is a steady
+ *    {@link NOMINAL_SPEECH_ENERGY} and the syllable model in {@link jawOpen}
+ *    supplies every bit of the movement. That is the difference between good lip
+ *    movement and excellent, not between working and broken.
+ *  * **Boundaries** — one pulse per word, decaying quadratically to
+ *    {@link BOUNDARY_FLOOR}. It costs nothing and it is genuine word-level
+ *    synchronisation on a route that has no audio to synchronise to.
+ *
+ * Never returns 0 while a line is being spoken: 0 is the signal that means
+ * SILENT, and a mouth that shuts between words has stopped talking.
+ */
+export function spokenEnergy(sinceBoundary: number): number {
+    if (!Number.isFinite(sinceBoundary) || sinceBoundary < 0) {
+        return NOMINAL_SPEECH_ENERGY;
+    }
+    const k = clamp01(1 - sinceBoundary / BOUNDARY_PULSE_SECONDS);
+    return clamp01(BOUNDARY_FLOOR + (1 - BOUNDARY_FLOOR) * k * k);
 }
 
 /**

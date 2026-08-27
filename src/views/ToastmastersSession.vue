@@ -204,6 +204,7 @@ import {
 } from '@/utils/roomSpeech';
 import { shapeRatio } from '@/components/newscast/voiceShaper';
 import { createSpeechAudio } from '@/utils/speechAudio';
+import { spokenEnergy } from '@/stage3d/figures';
 import { newsService } from '@/services/news.service';
 import { ref, computed, onUnmounted, reactive, nextTick, watch } from 'vue';
 // The transcript editor. Reused from the Job Interview room rather than
@@ -451,7 +452,40 @@ function voiceFor(botKey: string) {
  */
 const serverVoices = ref<ServerVoices>(NO_SERVER);
 
-async function checkServerVoices(): Promise<void> {
+/**
+ * The capability probe that is in flight, so a line can wait for it.
+ *
+ * ============================================================
+ * THE FIRST LINE WENT OUT BEFORE THE ANSWER CAME BACK
+ * ============================================================
+ *
+ * The probe is a network round trip to a PythonAnywhere replica whose first
+ * answer of the day takes about twenty seconds, and it is started from
+ * `loadVoices()` — which runs at setup. Nothing waited for it. So the room's
+ * opening line was cast against `NO_SERVER`, fell through to the platform route,
+ * and on a machine with no voice for the reader's language said nothing at all.
+ *
+ * The opening line is the greeting: the one line whose absence reads as "this
+ * does not work" rather than as "that question was quiet". Awaiting the probe
+ * costs nothing on every line after the first, because a settled promise is
+ * free, and on the first it costs exactly the round trip that was going to
+ * happen anyway.
+ */
+let serverProbe: Promise<void> = Promise.resolve();
+
+function checkServerVoices(): Promise<void> {
+  /*
+    NEVER REJECTS. `speak` awaits this from inside an async promise executor,
+    where a throw is swallowed and the promise it was meant to settle is left
+    hanging — which is a room that stops mid-session. The same shape as the
+    temporal-dead-zone throw this file has just been fixed for, so it is worth
+    the one line.
+  */
+  serverProbe = runServerProbe().catch(() => undefined);
+  return serverProbe;
+}
+
+async function runServerProbe(): Promise<void> {
   if (deviceCanSpeak(voices, localeId.value)) { serverVoices.value = NO_SERVER; return; }
   try {
     serverVoices.value = serverVoicesFor(await newsService.speechCapabilities(), localeId.value);
@@ -523,13 +557,43 @@ const stageSeats = computed(() => SEATS.map(seat => ({
 */
 loadVoices();
 
-function trackEnergy(live: boolean) {
+/** When `onboundary` last fired, in `performance.now()` ms, or 0 for never. */
+let lastBoundary = 0;
+
+/**
+ * ============================================================
+ * `measured` IS ABOUT THE CLIP, NOT ABOUT THE BROWSER
+ * ============================================================
+ *
+ * This branched on `speechAudio.capable` — "can this browser measure audio" —
+ * which answers yes on every modern browser and is not the question. What
+ * matters is whether THIS LINE is going through Web Audio. A `speechSynthesis`
+ * line has no node, no buffer and no level however capable the browser is, so
+ * the analyser was polled with nothing connected to it and returned a steady
+ * zero, and `jawOpen` returns EXACTLY 0 at zero energy by design.
+ *
+ * So on every machine with a voice for the reader's language — which is every
+ * machine in English — all six seats ran the meeting with their mouths shut,
+ * their hands down and their brows still. They breathed and blinked, which
+ * reads worse than nothing: it looks like six people deciding not to speak.
+ */
+function trackEnergy(live: boolean, measured = true) {
   if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
   if (!live) { speechEnergy.value = 0; return; }
-  if (!speechAudio.capable) { speechEnergy.value = 0.7; return; }
   // 40 ms rather than an animation frame: this feeds a value the renderer
   // smooths anyway, and a `setInterval` keeps running while the tab is
   // throttled, where a rAF stops and would leave a mouth frozen open.
+  if (!measured || !speechAudio.capable) {
+    // Reset the clock so the first word of a line pulses rather than inheriting
+    // the tail of the last one.
+    lastBoundary = 0;
+    speechEnergy.value = spokenEnergy(Infinity);
+    energyTimer = window.setInterval(() => {
+      speechEnergy.value = spokenEnergy(
+        lastBoundary ? (performance.now() - lastBoundary) / 1000 : Infinity);
+    }, 40);
+    return;
+  }
   energyTimer = window.setInterval(() => {
     speechEnergy.value = speechAudio.energy();
   }, 40);
@@ -642,6 +706,10 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
     speechSynthesis.cancel();
     speechAudio.stop();
 
+    // Wait for the capability probe if one is still in flight — otherwise the
+    // Toastmaster's opening line is cast against an answer that has not
+    // arrived. See `serverProbe`.
+    await serverProbe;
     const plan = voiceFor(botKey);
 
     /*
@@ -667,7 +735,8 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
         voiceLabel.value = describeSpeech(plan, activeLocale.value.nativeName, clip.voice);
         const mismatched = !!clip.gender && clip.gender !== plan.gender;
         const ratio = mismatched && plan.shapeTo ? shapeRatio(clip.gender, plan.shapeTo) : 1;
-        trackEnergy(true);
+        // Measured: this one really is going through the analyser.
+        trackEnergy(true, true);
         await speechAudio.play(clip.url, ratio);
         trackEnergy(false);
         if (force) sampleSpeechDuration = Math.floor((Date.now() - started) / 1000);
@@ -712,11 +781,16 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
     };
     u.onend = done;
     u.onerror = done;
+    /* One pulse per word — as close to lip sync as a route with no audio gets.
+       Not every engine fires it, and `spokenEnergy` falls back to a steady
+       nominal level when it never comes, so this is purely additive. */
+    u.onboundary = () => { lastBoundary = performance.now(); };
 
     setTimeout(() => {
       speechSynthesis.speak(u);
       startSpeechKeepAlive();
-      trackEnergy(true);
+      // NOT measured: `speechSynthesis` exposes no audio whatsoever.
+      trackEnergy(true, false);
       watchdog = setTimeout(() => {
         // `onend` never came. Stop whatever is still queued and carry on rather
         // than leaving the room waiting on a promise that will not settle.

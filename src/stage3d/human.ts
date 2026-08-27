@@ -1986,6 +1986,12 @@ export function buildFigure(
         torso.scaling.z = (P.chestDepth / P.shoulderHalfWidth) * (1 + 0.022 * br * m);
         // The rig's own node, never the caller's. See the note by `body`.
         body.position.x = s.lean * m;
+        /*
+          A speaker leans in. Two centimetres, on the rig's node for the same
+          reason the lean is — and it is the only whole-body cue there is that
+          somebody is addressing you rather than sitting in front of you.
+        */
+        body.position.z = 0.020 * gesture(t, spec.phase, energy, state.since) * m;
 
         // Head. Emphasis is ADDED to the drift rather than replacing it, so a
         // speaking figure still moves like a person between the nods.
@@ -2132,13 +2138,24 @@ export function buildFigure(
         // three things on one number, which is what stops it reading as a flap.
         const open = jawOpen(t, spec.phase, energy);
         const spread = lipSpread(t, spec.phase, energy);
-        jaw.rotation.x = open * 0.30;
-        lowerLip.scaling.x = R * (0.245 + 0.045 * spread);
-        upperLip.scaling.x = R * (0.255 + 0.042 * spread);
-        upperLip.scaling.y = R * (0.062 - 0.014 * open);
-        mouthHole.scaling.y = R * (0.045 + 0.30 * open);
-        mouthHole.scaling.x = R * (0.195 + 0.055 * spread);
-        mouthHole.position.y = mouthY - R * 0.10 * open;
+        /*
+          0.42 rad of travel, not 0.30 — twenty-four degrees at full open.
+
+          The other half of "the mouth does not move". A jaw is the one part of
+          this rig whose whole job is to be seen from across a room, and it was
+          geared for a close-up: at the size these figures render, the difference
+          between a shut mouth and a five-degree one is nothing.
+
+          The cavity opens further with it, and the upper lip thins more — a
+          mouth that opens without its top lip stretching reads as a hinge.
+        */
+        jaw.rotation.x = open * 0.42;
+        lowerLip.scaling.x = R * (0.245 + 0.055 * spread);
+        upperLip.scaling.x = R * (0.255 + 0.050 * spread);
+        upperLip.scaling.y = R * (0.058 - 0.022 * open);
+        mouthHole.scaling.y = R * (0.045 + 0.42 * open);
+        mouthHole.scaling.x = R * (0.195 + 0.065 * spread);
+        mouthHole.position.y = mouthY - R * 0.13 * open;
 
         // Arms. At rest they hang with a slight bend; speaking lifts and opens
         // them, and `since` ramps that in so nobody snaps into a pose.
@@ -2153,7 +2170,7 @@ export function buildFigure(
           is move a few degrees, so the gesture is scaled right down and the rest
           pose carries.
         */
-        const swing = pose === 'desk' ? g * 0.12 : g;
+        const swing = pose === 'desk' ? g * 0.22 : g;
         for (const arm of arms) {
             const beat = Math.sin((t + spec.phase * 2.2) * 2.3 + (arm.side > 0 ? 0 : 0.9));
             arm.shoulder.rotation.z = -arm.side * (restShoulder + 0.30 * swing);

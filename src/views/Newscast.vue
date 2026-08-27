@@ -63,6 +63,7 @@ import {
     canShape, shapeRatio, timeScale,
 } from '@/components/newscast/voiceShaper';
 import { createVoiceChain, prepareVoice, type VoiceChain } from '@/utils/speechAudio';
+import { spokenEnergy } from '@/stage3d/figures';
 import {
     ApiError,
 } from '@/services/api';
@@ -854,14 +855,53 @@ function ensureAudioContext(): AudioContext | null {
  */
 const anchorEnergy = ref(0);
 let energyTimer: number | null = null;
+/**
+ * When `onboundary` last fired, in `performance.now()` ms, or 0 for never.
+ *
+ * `speechSynthesis` gives no audio to measure, but most engines DO say when
+ * they cross a word — which is enough for real word-level mouth movement on a
+ * route that has none. See {@link spokenEnergy}.
+ */
+let lastBoundary = 0;
 
-function trackEnergy(live: boolean) {
+/**
+ * Report how loud the anchor is, so the 3D mouths can move on it.
+ *
+ * ============================================================
+ * `measured` IS ABOUT THE CLIP, NOT ABOUT THE BROWSER
+ * ============================================================
+ *
+ * This used to branch on `webAudioReady` — "can this browser measure audio" —
+ * which is the wrong question and answers yes on every modern browser. What
+ * matters is whether THIS LINE is going through Web Audio: a bulletin read by
+ * `speechSynthesis` has no node, no buffer and no level however capable the
+ * browser is, so the analyser was polled with nothing connected to it and
+ * returned a steady zero.
+ *
+ * And `jawOpen` returns EXACTLY 0 at zero energy, by design. So the anchors sat
+ * with their mouths shut, their hands down and their brows still for the whole
+ * bulletin — in every language that has a device voice, which is every language
+ * except Arabic on most machines. Reported as "no interactions in other
+ * languages".
+ *
+ * The device path did not call this function at all, which is the other half:
+ * even the nominal branch was unreachable from `speakSegment`.
+ */
+function trackEnergy(live: boolean, measured = true) {
     if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
     if (!live) { anchorEnergy.value = 0; return; }
-    // `speechSynthesis` exposes no audio at all, and neither does the `<audio>`
-    // fallback path, so both get a nominal figure and the syllable model in
-    // `figures.ts` carries the movement.
-    if (!webAudioReady.value) { anchorEnergy.value = 0.7; return; }
+    if (!measured) {
+        // Reset the boundary clock, so the first word of a new line pulses
+        // rather than inheriting the tail of the previous one.
+        lastBoundary = 0;
+        anchorEnergy.value = spokenEnergy(Infinity);
+        energyTimer = window.setInterval(() => {
+            anchorEnergy.value = spokenEnergy(
+                lastBoundary ? (performance.now() - lastBoundary) / 1000 : Infinity);
+        }, 40);
+        return;
+    }
+    if (!webAudioReady.value) { anchorEnergy.value = spokenEnergy(Infinity); return; }
     energyTimer = window.setInterval(() => {
         if (!voiceChain || !voiceProbe || !shapedSource) { anchorEnergy.value = 0; return; }
         voiceChain.analyser.getFloatTimeDomainData(voiceProbe as Float32Array<ArrayBuffer>);
@@ -952,7 +992,8 @@ async function speakDecoded(clip: SpeechClip, ratio: number, mine: number) {
     };
     shapedSource = source;
     source.start();
-    trackEnergy(true);
+    // Measured: this one really is going through the analyser.
+    trackEnergy(true, true);
     buffering.value = false;
     prefetch(cursor.value + 1);
 }
@@ -1064,11 +1105,13 @@ async function speakViaServer(segment: Segment, mine: number) {
 
         audio.src = clip.url;
         audio.onended = () => {
+            trackEnergy(false);
             if (mine !== generation || status.value !== 'playing') return;
             failures = 0;
             advance();
         };
         audio.onerror = () => {
+            trackEnergy(false);
             if (mine !== generation) return;
             failures += 1;
             if (failures >= 3) {
@@ -1079,6 +1122,15 @@ async function speakViaServer(segment: Segment, mine: number) {
             advance();
         };
         await audio.play();
+        /*
+          The THIRD route, and it had no mouth movement either.
+
+          An `<audio>` element exposes no level any more than `speechSynthesis`
+          does, so this is unmeasured too. It only runs where Web Audio is
+          missing, which is rare — and "rare" is exactly how a route ends up
+          being the one nobody notices is dead.
+        */
+        trackEnergy(true, false);
         // Only once it is actually playing, so the next synthesis competes with
         // playback rather than with the one the listener is waiting on.
         prefetch(cursor.value + 1);
@@ -1172,7 +1224,16 @@ function speakSegment(index: number) {
     utterance.rate = rate.value;
     utterance.pitch = segment.anchor === 'female' ? 1.08 : 0.92;
 
+    /*
+      One pulse per word, which is as close to lip sync as a route with no audio
+      can get. Not every engine fires it — Safari does not for remote voices —
+      and {@link spokenEnergy} falls back to a steady nominal level when it
+      never comes, so this is purely additive.
+    */
+    utterance.onboundary = () => { lastBoundary = performance.now(); };
+
     utterance.onend = () => {
+        trackEnergy(false);
         // A cancel() we issued ourselves also fires onend. Without the
         // generation guard, skipping a story starts the next segment twice and
         // the two anchors talk over each other.
@@ -1181,6 +1242,7 @@ function speakSegment(index: number) {
         advance();
     };
     utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
+        trackEnergy(false);
         if (mine !== generation) return;
         // 'interrupted' and 'canceled' are us.
         if (event.error === 'interrupted' || event.error === 'canceled') return;
@@ -1200,6 +1262,15 @@ function speakSegment(index: number) {
     };
 
     synth.speak(utterance);
+    /*
+      NOT MEASURED. `speechSynthesis` exposes no audio at all, so the mouths run
+      on the syllable model plus the word boundaries above.
+
+      This call is the whole of "the anchors do not interact in English": the
+      device path never reported an energy, so `jawOpen` — which returns exactly
+      0 when silent — kept both mouths shut for the entire bulletin.
+    */
+    trackEnergy(true, false);
 }
 
 function advance() {

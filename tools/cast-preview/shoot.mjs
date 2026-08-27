@@ -65,6 +65,15 @@ const SHOTS = [
       screen-right, which is the one thing about the layout that is easy to get
       backwards), and the female anchor reading.
     */
+    /*
+      THE STAND-IN LEVEL, which is what a `speechSynthesis` line reports now.
+      Three frames of the same figure at it, because the jaw is a function of
+      time: one frame proves nothing (it can land in a gap between syllables),
+      and three at different moments show the mouth actually moving.
+    */
+    { name: 'nominal-mouth-a', query: 'who=marcus&zoom=head&speaking=1&energy=0.72', width: 620, height: 700 },
+    { name: 'nominal-mouth-b', query: 'who=sara&zoom=head&speaking=1&energy=0.72', width: 620, height: 700 },
+    { name: 'nominal-mouth-c', query: 'who=james&zoom=head&speaking=1&energy=0.72', width: 620, height: 700 },
     { name: 'studio-idle', query: 'stage=studio&speaking=0', width: 1280, height: 900 },
     { name: 'studio-male', query: 'stage=studio&speaking=1&energy=0.8', width: 1280, height: 900 },
     { name: 'studio-female', query: 'stage=studio&speaking=1&reading=female&energy=0.8', width: 1280, height: 900 },

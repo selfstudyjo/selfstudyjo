@@ -311,9 +311,10 @@ import {
   serverVoicesFor, type ServerVoices,
 } from '@/utils/roomSpeech';
 import { createSpeechAudio } from '@/utils/speechAudio';
+import { spokenEnergy } from '@/stage3d/figures';
 import { shapeRatio } from '@/components/newscast/voiceShaper';
-import { newsService } from '@/services/news.service';
-import { ref, computed, nextTick, reactive, onMounted, onUnmounted } from 'vue';
+import { newsService, type SpeechClip } from '@/services/news.service';
+import { ref, computed, nextTick, reactive, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -719,15 +720,46 @@ const stageSeats = computed(() => [{
  */
 const serverVoices = ref<ServerVoices>(NO_SERVER);
 
-async function checkServerVoice(): Promise<void> {
-  if (deviceCanSpeak(voices, localeId.value)) { serverVoices.value = NO_SERVER; return; }
-  try {
-    serverVoices.value = serverVoicesFor(await newsService.speechCapabilities(), localeId.value);
-  } catch {
-    // A silent interviewer is worse than an unshaped one, and `planSpeech`
-    // falls through to the platform route on its own. Nothing to report.
-    serverVoices.value = NO_SERVER;
-  }
+/**
+ * The capability probe that is in flight, so a line can wait for it.
+ *
+ * ============================================================
+ * THE FIRST LINE WENT OUT BEFORE THE ANSWER CAME BACK
+ * ============================================================
+ *
+ * The probe is a network round trip to a PythonAnywhere replica whose first
+ * answer of the day takes about twenty seconds, and it is started from
+ * `loadVoices()` — which runs at setup. Nothing waited for it. So the room's
+ * opening line was cast against `NO_SERVER`, fell through to the platform route,
+ * and on a machine with no voice for the reader's language said nothing at all.
+ *
+ * The opening line is the greeting: the one line whose absence reads as "this
+ * does not work" rather than as "that question was quiet". Awaiting the probe
+ * costs nothing on every line after the first, because a settled promise is
+ * free, and on the first it costs exactly the round trip that was going to
+ * happen anyway.
+ */
+let serverProbe: Promise<void> = Promise.resolve();
+
+function checkServerVoice(): Promise<void> {
+  /*
+    NEVER REJECTS. `speak` awaits this from inside an async promise executor,
+    where a throw is swallowed and the promise it was meant to settle is left
+    hanging — which is a room that stops mid-session. The same shape as the
+    temporal-dead-zone throw this file has just been fixed for, so it is worth
+    the one line.
+  */
+  serverProbe = (async () => {
+    if (deviceCanSpeak(voices, localeId.value)) { serverVoices.value = NO_SERVER; return; }
+    try {
+      serverVoices.value = serverVoicesFor(await newsService.speechCapabilities(), localeId.value);
+    } catch {
+      // A silent interviewer is worse than an unshaped one, and `planSpeech`
+      // falls through to the platform route on its own. Nothing to report.
+      serverVoices.value = NO_SERVER;
+    }
+  })().catch(() => undefined);
+  return serverProbe;
 }
 
 /**
@@ -744,6 +776,21 @@ async function checkServerVoice(): Promise<void> {
  * by reshaping the audio. See `roomSpeech.ts`.
  */
 
+/*
+  AND AGAIN WHEN THE LANGUAGE CHANGES.
+
+  `loadVoices()` is the only other caller, and it runs at setup and on
+  `voiceschanged` — neither of which fires when a reader picks a different
+  language from the sidebar. So a room that had settled on `NO_SERVER` for
+  English (correctly: the device has an English voice) kept that answer after the
+  switch to Arabic, fell through to the platform route, and asked
+  `speechSynthesis` for a language the machine has no voice for. Silence.
+
+  The meeting has had this watch since it was written; this room did not, which
+  is why the two behaved differently in the same language on the same machine.
+*/
+watch(localeId, () => { void checkServerVoice(); });
+
 /**
  * Every server clip goes through Web Audio, which is also the fix for "the
  * voice is too low".
@@ -759,13 +806,40 @@ const speechAudio = createSpeechAudio();
 /** How loud the interviewer is right now, 0…1. Drives the 3D mouth. */
 const speechEnergy = ref(0);
 let energyTimer: number | null = null;
+/** When `onboundary` last fired, in `performance.now()` ms, or 0 for never. */
+let lastBoundary = 0;
 
-function trackEnergy(live: boolean) {
+/**
+ * ============================================================
+ * `measured` IS ABOUT THE CLIP, NOT ABOUT THE BROWSER
+ * ============================================================
+ *
+ * This branched on `speechAudio.capable` — "can this browser measure audio" —
+ * which answers yes on every modern browser and is not the question. What
+ * matters is whether THIS LINE is going through Web Audio. A `speechSynthesis`
+ * line has no node, no buffer and no level however capable the browser is, so
+ * the analyser was polled with nothing connected to it and returned a steady
+ * zero — and `jawOpen` returns EXACTLY 0 at zero energy, by design.
+ *
+ * So on every machine that has a voice for the reader's language, the
+ * interviewer asked their questions with their mouth shut, their hands down and
+ * their brows still. The same fault, in three slightly different disguises, was
+ * in all three rooms.
+ */
+function trackEnergy(live: boolean, measured = true) {
   if (energyTimer !== null) { window.clearInterval(energyTimer); energyTimer = null; }
   if (!live) { speechEnergy.value = 0; return; }
-  // `speechSynthesis` exposes no audio at all, so the device route gets a
-  // nominal figure and the syllable model in `figures.ts` carries the movement.
-  if (!speechAudio.capable) { speechEnergy.value = 0.7; return; }
+  if (!measured || !speechAudio.capable) {
+    // Reset the clock so the first word of a line pulses rather than inheriting
+    // the tail of the last one.
+    lastBoundary = 0;
+    speechEnergy.value = spokenEnergy(Infinity);
+    energyTimer = window.setInterval(() => {
+      speechEnergy.value = spokenEnergy(
+        lastBoundary ? (performance.now() - lastBoundary) / 1000 : Infinity);
+    }, 40);
+    return;
+  }
   energyTimer = window.setInterval(() => { speechEnergy.value = speechAudio.energy(); }, 40);
 }
 
@@ -793,6 +867,16 @@ let speechKeepAlive: number | null = null;
  * alive until it settles is the standard workaround and costs one variable.
  */
 let speaking: SpeechSynthesisUtterance | null = null;
+
+/**
+ * Which call to {@link speak} owns the room right now.
+ *
+ * It replaces an identity test against the utterance (`speaking === u`), which
+ * was doing the same job and could not be reached from the server route — see
+ * the note in `speak`'s `finish`. A counter works for both routes, because the
+ * server route creates no utterance to compare against.
+ */
+let speechTurn = 0;
 
 function startSpeechKeepAlive() {
   stopSpeechKeepAlive();
@@ -844,7 +928,8 @@ const voiceLabel = ref('');
  * and what measures it, which is what moves the interviewer's mouth.
  */
 function playClip(url: string, ratio: number): Promise<void> {
-  trackEnergy(true);
+  // Measured: this one really is going through the analyser.
+  trackEnergy(true, true);
   return speechAudio.play(url, ratio).finally(() => trackEnergy(false));
 }
 
@@ -884,19 +969,55 @@ function speak(text: string): Promise<void> {
 
     let settled = false;
     let watchdog: any = null;
+    const turn = ++speechTurn;
+    /*
+      ============================================================
+      THIS USED TO READ `speaking === u`, AND `u` IS DECLARED BELOW IT
+      ============================================================
+
+      That is a temporal dead zone, and it is the whole of "the interviewer does
+      not speak in Arabic".
+
+      `u` is the `SpeechSynthesisUtterance`, and it is `const`-declared after the
+      server-route block — so on the SERVER route (which is the Arabic route on
+      any machine with no Arabic voice) `finish()` reached a binding that had not
+      been initialised yet and threw `ReferenceError: Cannot access 'u' before
+      initialization`. The call site is inside the route's `try`, whose `catch`
+      is deliberately empty, so the throw was swallowed.
+
+      What that produced, in order:
+
+        1. the clip played;
+        2. `settled` was set to true;
+        3. `finish()` threw before reaching `resolve()`;
+        4. the empty catch swallowed it and execution fell through to the DEVICE
+           route, which spoke the same line again — silently, because the machine
+           has no voice for the language;
+        5. that utterance's `onend` called `finish()`, which returned immediately
+           because `settled` was already true.
+
+      `resolve()` was therefore never called on any path, so the promise never
+      settled and the interview stopped dead after its first Arabic line. From a
+      chair it looks exactly like "the interviewer does not speak".
+
+      Two things are different now. The guard is a turn counter, which works for
+      both routes because the server route has no utterance to compare against;
+      and nothing that runs AFTER the network call is inside the catch, so a
+      throw there can never be read as "the clip failed, try the device".
+    */
     const finish = () => {
       if (settled) return;
       settled = true;
       if (watchdog) clearTimeout(watchdog);
-      // Tear down only what is still OURS. `speak()` cancels whatever is
-      // playing on the way in, and that cancellation reaches the previous
-      // utterance as an `error` event -- which can land after the next one has
-      // already started. Unguarded, the old utterance's cleanup stops the new
-      // one's keepalive and clears the speaking indicator underneath it, and
-      // the symptom is the interviewer going quiet part-way through the very
-      // next sentence: the bug this whole change is about, reintroduced by its
-      // own fix.
-      if (speaking === u) {
+      /*
+        Tear down only what is still OURS. `speak()` cancels whatever is playing
+        on the way in, and that cancellation reaches the previous utterance as an
+        `error` event -- which can land after the next one has already started.
+        Unguarded, the old call's cleanup stops the new one's keepalive and
+        clears the speaking indicator underneath it, and the symptom is the
+        interviewer going quiet part-way through the very next sentence.
+      */
+      if (turn === speechTurn) {
         speaking = null;
         stopSpeechKeepAlive();
         trackEnergy(false);
@@ -905,6 +1026,9 @@ function speak(text: string): Promise<void> {
       resolve();
     };
 
+    // Wait for the capability probe if one is still in flight — otherwise the
+    // greeting is cast against an answer that has not arrived. See `serverProbe`.
+    await serverProbe;
     const plan = castInterviewerVoice();
 
     /*
@@ -924,9 +1048,26 @@ function speak(text: string): Promise<void> {
      * stopped" is not.
      */
     if (plan.route === 'server') {
+        /*
+          THE `try` COVERS THE NETWORK CALL AND NOTHING ELSE.
+
+          It used to wrap the playback and the teardown as well, so any fault
+          after the fetch — including the one described above — was
+          indistinguishable from "the server had no clip" and fell through to a
+          second, duplicate attempt at the same line. A catch that is this broad
+          around an empty handler will swallow whatever bug arrives next, too.
+        */
+        let clip: SpeechClip | null = null;
         try {
-            const clip = await newsService.speech(
+            clip = await newsService.speech(
                 text, localeId.value, interviewer.gender, 1, '', plan.allowAnyVoice);
+        } catch {
+            // Nothing to report to the candidate: they are mid-answer, and the
+            // caption already carries the text they would have heard. The
+            // device route below is a real chance of being heard.
+            clip = null;
+        }
+        if (clip) {
             voiceLabel.value = describeSpeech(
                 plan, activeLocale.value.nativeName, `${clip.voice} · ${clip.provider}`);
             /*
@@ -941,9 +1082,6 @@ function speak(text: string): Promise<void> {
             await playClip(clip.url, ratio);
             finish();
             return;
-        } catch {
-            // Nothing to report to the candidate: they are mid-answer, and the
-            // caption already carries the text they would have heard.
         }
     }
 
@@ -966,6 +1104,10 @@ function speak(text: string): Promise<void> {
     voiceLabel.value = describeSpeech(plan, activeLocale.value.nativeName);
     u.onend = finish;
     u.onerror = finish;
+    /* One pulse per word — as close to lip sync as a route with no audio gets.
+       Not every engine fires it, and `spokenEnergy` falls back to a steady
+       nominal level when it never comes, so this is purely additive. */
+    u.onboundary = () => { lastBoundary = performance.now(); };
 
     setTimeout(() => {
       if (settled) return;
@@ -973,7 +1115,8 @@ function speak(text: string): Promise<void> {
         speaking = u;
         speechSynthesis.speak(u);
         startSpeechKeepAlive();
-        trackEnergy(true);
+        // NOT measured: `speechSynthesis` exposes no audio whatsoever.
+        trackEnergy(true, false);
         watchdog = setTimeout(() => {
           // `onend` never came. Stop whatever is still going rather than
           // leaving it to talk over the next question.
