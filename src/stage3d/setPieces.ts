@@ -31,7 +31,11 @@ import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 
 import type * as BJS from './babylon';
 import { surface } from './human';
-import { CAMERA_Y, DESK_TOP_Y, DESK_Z, WALL_H, WALL_W, WALL_Y, WALL_Z } from './layout';
+import {
+    CAMERA_Y, DESK_TOP_Y, DESK_Z,
+    SCRIPT_X, SCRIPT_Y, SCRIPT_Z,
+    WALL_H, WALL_W, WALL_Y, WALL_Z,
+} from './layout';
 
 export interface SetPieces {
     /** The tally lamp's material, switched red when the bulletin is live. */
@@ -70,10 +74,20 @@ export function buildSet(B: typeof BJS, scene: Scene, quality: 'high' | 'low'): 
 
     const floor = B.CreateGround('floor', { width: 30, height: 30, subdivisions: 2 }, scene);
     floor.position.z = 1.2;
-    /* Polished, and polish is roughness rather than a mirror. A real planar
-       reflection means rendering the whole set again upside down every frame,
-       for something at the very bottom of frame that the desk covers most of. */
-    const floorMat = surface(B, scene, 'floormat', '#0a0f1e', { roughness: 0.22, metallic: 0.2 });
+    /*
+      Polished, and polish is roughness rather than a mirror. A real planar
+      reflection means rendering the whole set again upside down every frame,
+      for something at the very bottom of frame that the desk covers most of.
+
+      0.42 rather than 0.22, and it matters more than it sounds: at 0.22 the
+      specular lobe is narrow enough to pick up the eighteen emissive slats and
+      the six lamps as one broad sheen across the whole visible floor strip,
+      which rendered as a large flat pale-grey area between the desk and the
+      presenters — the single biggest "the desk is enormous" contributor, and it
+      is not the desk at all. Rougher, the same reflections spread out and the
+      floor reads as a dark polished floor.
+    */
+    const floorMat = surface(B, scene, 'floormat', '#080d1a', { roughness: 0.42, metallic: 0.2 });
     floor.material = floorMat;
     floor.receiveShadows = true;
     floors.push(floor);
@@ -111,20 +125,114 @@ export function buildSet(B: typeof BJS, scene: Scene, quality: 'high' | 'low'): 
        above and BEHIND the presenters, which is where an audience expects to
        catch a glimpse of one. */
     const truss = surface(B, scene, 'truss', '#242a38', { roughness: 0.45, metallic: 0.7 });
-    const softbox = surface(B, scene, 'softbox', '#1c2029', { glow: '#ffdcae', flat: true });
-    for (let i = 0; i < 3; i++) {
-        const z = 2.6 + i * 1.6;
+    /*
+      ============================================================
+      DIMMER, AND NEVER IN FRONT OF THE SCREEN
+      ============================================================
+
+      Two faults, and the second was reported: "we have a lamp cover the screen".
+
+      1. THE LEVEL. `glow: '#ffdcae'` sets `emissiveColor` to (1.00, 0.86, 0.68),
+         which is full scale before the `GlowLayer` bloom is added on top. Six of
+         them across the top of the frame rendered as flat white slabs with no
+         shape in them at all — the brightest thing in the picture by a wide
+         margin, and the eye goes there instead of to the presenters. A real
+         softbox in shot is a soft grey rectangle with a warm glow, not a hole in
+         the image. A third of that level, with the bloom doing the rest.
+
+      2. THE CENTRE LAMP WAS IN FRONT OF THE VIDEO WALL. The wall's top edge is
+         at y = 2.68 and its plane is z = 3.05; the centre lamp sat at y = 2.72,
+         z = 2.60, tilted 0.42 rad — so its lower front corner dipped to 2.57,
+         eleven centimetres below the top of the screen, and 45 cm nearer the
+         camera. It occluded the top of every headline.
+
+         Neither number is wrong on its own, which is exactly why this is now
+         DERIVED: a centre lamp is hung only on a truss BEHIND the wall plane,
+         where it cannot occlude anything, and the condition is written in terms
+         of `WALL_Z` so moving the wall carries it.
+    */
+    const softbox = surface(B, scene, 'softbox', '#1c2029', { glow: '#4c412f', flat: true });
+    /* The lens of the lamp: brighter than its shell, and small. A lamp reads as
+       a lamp because it has a bright PART, not because all of it is bright. */
+    const lens = surface(B, scene, 'lampLens', '#2a2318', { glow: '#93794f', flat: true });
+    /*
+      3. AND THE FRONT TRUSS WAS CUT IN HALF BY THE TOP OF THE FRAME.
+
+      The camera is level, so the frame's top edge RISES with depth: at the front
+      truss (z = 2.6, i.e. 4.95 m out) it is at y = 2.64, and at the third
+      (z = 5.8) it is at y = 3.44. A lamp at a constant 2.72 m is therefore
+      *partly* in frame at the front and comfortably inside it further back — and
+      a lamp with its bottom third showing along the top edge does not read as a
+      lamp, it reads as a pale slab hanging into the picture. That is what the
+      two peach shapes over the presenters' heads were.
+
+      So the whole rig moved back behind the wall plane, where the frame is tall
+      enough to contain a lamp whole. It also means the centre positions can be
+      filled without any of them occluding the screen, because the screen is now
+      in front of all of them.
+    */
+    const trussZ = [WALL_Z + 0.45, WALL_Z + 1.85, WALL_Z + 3.25];
+    for (let i = 0; i < trussZ.length; i++) {
+        const z = trussZ[i] as number;
         const bar = B.CreateBox(`truss${i}`, { width: 11, height: 0.08, depth: 0.08 }, scene);
-        bar.position.set(0, 2.85, z);
+        bar.position.set(0, 2.90, z);
         bar.material = truss;
-        for (const side of [-2.3, 0, 2.3]) {
-            if (side === 0 && i !== 0) continue;
-            const lamp = B.CreateBox(`lamp${i}${side}`, {
-                width: 0.70, height: 0.13, depth: 0.44,
+        for (const side of [-2.5, 0, 2.5]) {
+            // A centre lamp only where it is behind the wall — see above.
+            if (side === 0 && z < WALL_Z + 0.4) continue;
+            /*
+              5. AND NOT ON THE FURTHEST TRUSS.
+
+              The frame narrows toward the lens, so a lamp at a fixed x = 2.5
+              lands further IN as it goes further back: at the third truss it
+              projects to 0.82 across, which is exactly where the male anchor's
+              head is. It read as a lamp growing out of his hair. The bar stays —
+              a truss with nothing on it is what the back of a rig looks like.
+            */
+            if (i >= 2) continue;
+            /*
+              4. A BARREL, NOT A PLATE.
+
+              A `CreateBox` 54 cm by 34 cm hung under a truss and tilted is, from
+              a camera below it, a flat quad — and a flat pale quad in the top
+              corner of a frame reads as a sheet of paper, which is what the
+              first three attempts at these looked like however dim they were.
+
+              A studio lamp is unmistakable because of its SHAPE: a short barrel
+              pointing down at the set with a bright lens at the end of it. A
+              cylinder plus a disc is that shape, it has a curved silhouette so
+              it cannot read as paper, and only the small disc is bright — which
+              is also what stops the pair of them being the brightest thing in
+              the picture.
+            */
+            const barrel = B.CreateCylinder(`lamp${i}${side}`, {
+                height: 0.40, diameterTop: 0.30, diameterBottom: 0.23,
+                tessellation: Math.round(20 * detail) + 8,
             }, scene);
-            lamp.position.set(side, 2.72, z);
-            lamp.rotation.x = 0.42;
-            lamp.material = softbox;
+            barrel.position.set(side, 2.66, z);
+            // Nose down and tipped toward the presenters.
+            barrel.rotation.x = -0.85;
+            barrel.material = softbox;
+
+            const glass = B.CreateCylinder(`lampglass${i}${side}`, {
+                height: 0.02, diameter: 0.29,
+                tessellation: Math.round(20 * detail) + 8,
+            }, scene);
+            glass.position.set(
+                side,
+                2.66 - 0.20 * Math.cos(0.85),
+                z - 0.20 * Math.sin(0.85),
+            );
+            glass.rotation.x = -0.85;
+            glass.material = lens;
+
+            /* The yoke it hangs on. Two centimetres of geometry, and without it
+               the lamp is a barrel floating under a bar. */
+            const stem = B.CreateCylinder(`lampstem${i}${side}`, {
+                height: 0.22, diameter: 0.035, tessellation: 8,
+            }, scene);
+            stem.position.set(side, 2.83, z);
+            stem.material = truss;
         }
     }
 
@@ -178,19 +286,96 @@ export function buildSet(B: typeof BJS, scene: Scene, quality: 'high' | 'low'): 
         post.material = truss;
     }
 
-    /* Two auxiliary panels, angled inward and further out. Depth cues: they are
-       the reason the centre screen reads as an object standing in a room rather
-       than a rectangle pasted onto the cyclorama. */
+    /*
+      Two auxiliary panels, angled inward and further out. Depth cues: they are
+      the reason the centre screen reads as an object standing in a room rather
+      than a rectangle pasted onto the cyclorama.
+
+      They get a BEZEL and a graticule now rather than being flat blue
+      rectangles. Two plain rectangles either side of the shot read as coloured
+      paper taped to the wall; the same two with a frame and something on them
+      read as screens, and it costs one shared texture. Same reasoning as the
+      bezel on the main wall.
+    */
+    const auxTexture = new B.DynamicTexture('auxtex', { width: 256, height: 148 }, scene, true);
+    {
+        const ctx = auxTexture.getContext() as unknown as CanvasRenderingContext2D;
+        const grad = ctx.createLinearGradient(0, 0, 0, 148);
+        grad.addColorStop(0, '#123a72');
+        grad.addColorStop(1, '#081226');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 148);
+        ctx.strokeStyle = 'rgba(140, 190, 255, 0.30)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 8; i++) {
+            ctx.beginPath();
+            ctx.moveTo((i / 8) * 256, 0);
+            ctx.lineTo((i / 8) * 256, 148);
+            ctx.stroke();
+        }
+        // A rising bar chart: the most recognisable thing on a studio side
+        // screen, and four rectangles' worth of work.
+        ctx.fillStyle = 'rgba(120, 200, 255, 0.55)';
+        [0.28, 0.44, 0.62, 0.86].forEach((h, i) => {
+            ctx.fillRect(36 + i * 52, 148 - h * 110, 30, h * 110);
+        });
+        // `update()` and not `update(false)`: the argument is `invertY`, and a
+        // canvas's rows run the other way from a texture's. See `WallSurface`.
+        auxTexture.update();
+    }
     for (const side of [-1, 1]) {
+        const auxFrame = B.CreateBox(`auxframe${side}`, {
+            width: 1.44, height: 0.87, depth: 0.09,
+        }, scene);
+        auxFrame.position.set(side * 2.5, 1.85, WALL_Z - 0.50);
+        auxFrame.rotation.y = -side * 0.5;
+        auxFrame.material = surface(B, scene, `auxframemat${side}`, '#0a0e1c',
+            { roughness: 0.32, metallic: 0.55 });
+
         const aux = B.CreatePlane(`aux${side}`, { width: 1.35, height: 0.78 }, scene);
         aux.position.set(side * 2.5, 1.85, WALL_Z - 0.55);
         // Angled inward, toward the camera. Not `PI - …`: see the screen above,
         // a plane already faces the camera and PI turns it away.
         aux.rotation.y = -side * 0.5;
-        aux.material = surface(B, scene, `auxmat${side}`, '#0a1224', {
-            glow: '#15376e', flat: true,
-        });
+        const auxMat = surface(B, scene, `auxmat${side}`, '#ffffff', { flat: true, roughness: 0.1 });
+        auxMat.albedoTexture = auxTexture;
+        auxMat.emissiveTexture = auxTexture;
+        auxMat.emissiveColor = new B.Color3(0.85, 0.85, 0.95);
+        auxMat.disableLighting = true;
+        aux.material = auxMat;
     }
+
+    /*
+      A LIT BAND ACROSS THE CYC AT HEAD HEIGHT.
+
+      The one piece of set dressing that does most for "this is a television
+      studio and not a dark room": a horizontal strip of light behind the
+      presenters, at about the height of their shoulders and heads, so a dark
+      suit and dark hair have something bright to be a silhouette against. Every
+      news set built in the last twenty years has one, and without it the top of
+      each presenter's head dissolved into the cyclorama.
+
+      Behind them, not level with them: z beyond the anchor plane, so it never
+      lights their faces from the front and never appears between them and the
+      desk.
+    */
+    const strip = B.CreateCylinder('headband', {
+        diameter: 15.2, height: 0.10,
+        tessellation: Math.round(48 * detail) + 16, cap: 0, sideOrientation: 1,
+    }, scene);
+    strip.position.set(0, 1.72, 1.2);
+    strip.material = surface(B, scene, 'headbandmat', '#0e1c38',
+        { glow: '#2c62b4', flat: true });
+
+    /* And a second, dimmer one above it, so the wall has a rhythm rather than
+       one bright line on a flat field. */
+    const strip2 = B.CreateCylinder('headband2', {
+        diameter: 15.6, height: 0.06,
+        tessellation: Math.round(48 * detail) + 16, cap: 0, sideOrientation: 1,
+    }, scene);
+    strip2.position.set(0, 2.16, 1.2);
+    strip2.material = surface(B, scene, 'headbandmat2', '#0b1730',
+        { glow: '#17457f', flat: true });
 
     /* ---- the desk ---------------------------------------------------------
        A straight centre with two angled wings, rather than an arc.
@@ -227,9 +412,12 @@ export function buildSet(B: typeof BJS, scene: Scene, quality: 'high' | 'low'): 
        quarter of the picture — which reads as a hole in the set. A faint
        emissive floor stands in for the bounce off a lit floor, which is where a
        real desk front gets most of its light. */
-    deskMat.emissiveColor = deskMat.albedoColor.scale(0.55);
+    deskMat.emissiveColor = deskMat.albedoColor.scale(0.38);
     const deskTopMat = surface(B, scene, 'desktopmat', '#243052', { roughness: 0.24, metallic: 0.3 });
-    const deskGlow = surface(B, scene, 'deskglow', '#12203c', { glow: '#2f6fd8', flat: true });
+    /* Dimmer than it was: at `#2f6fd8` with the glow layer over it the lip was
+       a bar of cyan light across the whole bottom of the picture, brighter than
+       anything on the presenters. A lit lip is a detail, not a feature. */
+    const deskGlow = surface(B, scene, 'deskglow', '#12203c', { glow: '#123566', flat: true });
 
     const front = B.CreateBox('deskfront', {
         width: 3.6, height: DESK_TOP_Y, depth: 0.14,
@@ -256,14 +444,100 @@ export function buildSet(B: typeof BJS, scene: Scene, quality: 'high' | 'low'): 
     /* The lit lip. Every news desk built since about 2005 has one, and it is
        what stops the front reading as a plain black wall across the bottom of
        the picture — which is exactly how it read without one. */
-    const lip = B.CreateBox('desklip', { width: 3.62, height: 0.05, depth: 0.15 }, scene);
-    lip.position.set(0, DESK_TOP_Y - 0.22, DESK_Z - 0.005);
+    /*
+      0.10 below the top, not 0.22.
+
+      With the lens at 0.86 rad the desk front runs off the bottom of the frame,
+      and at 22 cm down the lit lip was at 99% of the picture height — a bright
+      line one pixel from the edge, which is indistinguishable from not being
+      there. The lip is the thing that stops the front reading as a plain dark
+      wall, so it has to be somewhere the frame can see it.
+    */
+    const lipY = DESK_TOP_Y - 0.10;
+    const lip = B.CreateBox('desklip', { width: 3.62, height: 0.028, depth: 0.15 }, scene);
+    lip.position.set(0, lipY, DESK_Z - 0.005);
     lip.material = deskGlow;
     for (const side of [-1, 1]) {
-        const wingLip = B.CreateBox(`desklip${side}`, { width: 1.9, height: 0.05, depth: 0.15 }, scene);
+        const wingLip = B.CreateBox(`desklip${side}`, { width: 1.9, height: 0.028, depth: 0.15 }, scene);
         wingLip.rotation.y = side * 0.42;
-        wingLip.position.set(side * 2.55, DESK_TOP_Y - 0.22, DESK_Z + 0.355);
+        wingLip.position.set(side * 2.55, lipY, DESK_Z + 0.355);
         wingLip.material = deskGlow;
+    }
+
+    /*
+      A HORIZONTAL FASCIA, NOT VERTICAL SEAMS.
+
+      The front is 3.6 m of one colour and at this lens only its top 20 cm is in
+      frame, so one flat band spans the whole picture — which is what makes a set
+      look like a backdrop. Vertical panel seams were the first answer and they
+      are wrong at this crop: the frame is only 1.95 m wide at the desk plane, so
+      of four seams two land outside it and the remaining pair read as two dark
+      POSTS holding the desk up.
+
+      A horizontal recess runs the full width by construction, so there is
+      nothing to land outside anything, and it is what a news desk fascia
+      actually is.
+    */
+    const fascia = B.CreateBox('deskfascia', {
+        width: 3.62, height: 0.055, depth: 0.03,
+    }, scene);
+    fascia.position.set(0, DESK_TOP_Y - 0.185, DESK_Z - 0.072);
+    fascia.material = surface(B, scene, 'deskfasciamat', '#0d1428', { roughness: 0.5 });
+    for (const side of [-1, 1]) {
+        const wingFascia = B.CreateBox(`deskfascia${side}`, {
+            width: 1.9, height: 0.055, depth: 0.03,
+        }, scene);
+        wingFascia.rotation.y = side * 0.42;
+        wingFascia.position.set(side * 2.55, DESK_TOP_Y - 0.185, DESK_Z + 0.288);
+        wingFascia.material = fascia.material;
+    }
+
+    /* A darker inlay across the desk top, in front of the scripts. Without it
+       the top is one flat slab spanning the whole frame, which is the last
+       remaining "one big grey shape" in the picture. */
+    const inlay = B.CreateBox('deskinlay', { width: 2.9, height: 0.008, depth: 0.20 }, scene);
+    inlay.position.set(0, DESK_TOP_Y + 0.074, DESK_Z + 0.02);
+    inlay.material = surface(B, scene, 'deskinlaymat', '#141d33', { roughness: 0.36, metallic: 0.35 });
+    floors.push(inlay);
+
+    /* ---- the scripts ------------------------------------------------------
+       ============================================================
+       WHAT THE ANCHORS ARE HOLDING
+       ============================================================
+
+       A sheet of paper under each anchor's hands, lying on the desk and tilted a
+       few degrees up toward them — which is how anybody reads something on a
+       desk, and it is also what makes the tilt visible from a camera in front.
+
+       It is not decoration. The presenters GLANCE at it: `scriptGlance` in
+       `figures.ts` sends their eyes down to this exact point at the top of every
+       story and then back to the lens. That only works if the sheet and the
+       look-at target are the same coordinates, which is why `SCRIPT_*` lives in
+       `layout.ts` and both files read it from there rather than each having a
+       number.
+
+       Slightly off-white and quite rough: a sheet of paper at 0.95 albedo under
+       a key light is a white rectangle with no shape in it, and there are two of
+       them in the lower third of the frame.
+    */
+    const paperMat = surface(B, scene, 'papermat', '#cfd4dd', { roughness: 0.88 });
+    for (const side of [-1, 1]) {
+        /* Two sheets, slightly out of register, because one rectangle reads as a
+           placemat and two read as a script somebody has been turning pages of. */
+        for (const [index, offset] of [[0, 0], [1, 1]] as const) {
+            const sheet = B.CreateBox(`script${side}${index}`, {
+                width: 0.30, height: 0.004, depth: 0.21,
+            }, scene);
+            sheet.material = paperMat;
+            sheet.rotation.x = -0.20;
+            sheet.rotation.y = side * (0.14 + offset * 0.09);
+            sheet.position.set(
+                side * SCRIPT_X + offset * side * 0.018,
+                SCRIPT_Y + offset * 0.004,
+                SCRIPT_Z - offset * 0.012,
+            );
+            floors.push(sheet);
+        }
     }
 
     /* ---- the studio camera, and its tally ---------------------------------

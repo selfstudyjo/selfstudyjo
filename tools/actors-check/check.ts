@@ -55,12 +55,15 @@ import {
 } from '../../src/cast/actors';
 import {
     ANCHOR_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BREATH_PERIOD, FIGURES,
-    blink, breath, browRaise, clamp01, figureById, followEnergy, gesture, hash01,
-    headEmphasis, isFigureId, jawOpen, lipSpread, proportionsFor, smooth, sway,
+    SCRIPT_GLANCE_SECONDS,
+    blink, breath, browRaise, clamp01, figureById, followEnergy, gesture, handOffset,
+    hash01, headEmphasis, isFigureId, jawOpen, lipSpread, proportionsFor, reachPitch,
+    scriptGlance, smooth, sway,
     type FigureSpec, type HairStyle,
 } from '../../src/stage3d/figures';
 import {
-    CAMERA_FOV, CAMERA_Z, DESK_TOP_Y, HALF_WIDTH, PLATE_X, WALL_W, WALL_Z,
+    ANCHOR_X, ANCHOR_Z, CAMERA_FOV, CAMERA_Z, DESK_TOP_Y, HALF_WIDTH, PLATE_X,
+    SCRIPT_X, SCRIPT_Y, SCRIPT_Z, WALL_W, WALL_Z,
     plateFraction,
 } from '../../src/stage3d/layout';
 import { NO_SERVER, deviceCanSpeak, describe, planSpeech, serverVoicesFor } from '../../src/utils/roomSpeech';
@@ -533,6 +536,294 @@ const studioSrc = existsSync(resolve('src/stage3d/studioStage.ts'))
 check('the video wall uploads its canvas the right way up',
     /this\.texture\.update\(\)/.test(studioSrc)
     && !/this\.texture\.update\(false\)/.test(studioSrc));
+
+
+/*
+  ============================================================
+  A LOOK-AT TARGET IS IN WORLD SPACE AND `rotation` IS NOT
+  ============================================================
+
+  `update()` used to take `atan2(dx, dz)` over WORLD deltas and write it straight
+  into `headPivot.rotation.y`. Every caller turns the whole person — the meeting
+  rotates each pod by +-0.16 rad, the studio by `PI +- 0.19` — so a local
+  rotation set from a world angle is off by exactly that parent rotation.
+
+  The meeting's cameras sit dead in front of their pods, so the world angle was
+  ~0 and every figure sat nine degrees off camera for the whole session. The
+  studio was worse: the male anchor's world angle to the lens is -2.85 rad, the
+  clamp made it -0.65 and the damping -0.49, where the correct LOCAL yaw is about
+  +0.11 — so he was turned 34 degrees the wrong way. Reported twice, as "members
+  in the meeting not look to camera" and "the 2 Anchors not looks to camera".
+
+  The fix is one matrix inverse, and its absence is invisible: both heads still
+  move, plausibly, just not at the thing they were aimed at.
+*/
+check('the look-at target is brought into the head\'s own space first',
+    /Matrix\.Invert\(\s*parent\.computeWorldMatrix/.test(bare)
+    && /Vector3\.TransformCoordinates\(state\.lookAt/.test(bare),
+    'a world angle written into a local rotation is off by the parent rotation');
+check('...and from a FRESH world matrix, not the cached one',
+    /computeWorldMatrix\(true\)/.test(bare),
+    'the caller may have moved the figure this frame');
+
+/*
+  A CHILD OF A NON-UNIFORMLY SCALED NODE INHERITS THAT SCALING — twice now.
+
+  The lashes were parented to a lid scaled by ~0.03 and came out as a speck. The
+  brow's inner end and tail were then parented to the brow's PEAK, which is a
+  unit sphere scaled by ~0.02, so both their offsets and their sizes were
+  multiplied by that: they landed at the peak's centre, a fifth of a millimetre
+  across. Same failure, same invisibility — geometry present, submitted, too
+  small to see.
+*/
+check('the brow parts hang off an unscaled pivot, not off a scaled mesh',
+    /const pivot = new B\.TransformNode\(`\$\{spec\.id\}-brow/.test(bare)
+    && /mesh\.parent = pivot/.test(bare)
+    && !/\.parent = brow;/.test(bare));
+
+/*
+  AND THE BROWS HAVE TO BE ON THE SURFACE.
+
+  They were at `eyeZ * 1.02` — a depth taken from the EYEBALL, which sits in a
+  socket the sculpt pushes 16% into the skull. Above the eye there is no socket:
+  the brow ridge is one of the most forward points on the head. So each brow was
+  about 0.14 R inside the face and has never once been visible, which also means
+  `browRaise` has never been visible. The dark bar above each eye in every
+  screenshot of this cast was the eyelash.
+
+  Guessing a second depth only moves the guess, so the sculpt is asked.
+*/
+check('anything sitting on the face is placed from the sculpt, not from a guess',
+    /function faceSurface\(/.test(bare)
+    && /sculptHeadVertex\(x, y, z, R, male/.test(bare)
+    && /const at = faceSurface\(/.test(bare));
+
+/*
+  THE CLOTHING IS PLACED ON THE JACKET'S OWN SURFACE.
+
+  Three times this was a hand-computed depth and three times it was wrong: at
+  0.66 of `chestDepth` everything sank a centimetre and a half inside; then one
+  radius at one height, which was 12 mm short at the height the lapels actually
+  sit at; and then the tie measured at a DIFFERENT height from the bib, so the
+  shirt poked through the middle of the tie as a pale oval.
+*/
+check('the clothing reads the jacket surface as a function of (x, y)',
+    /function frontZAt\(x: number, y: number\)/.test(bare)
+    && /frontZAt\(lapelX, lapelY\)/.test(bare));
+check('...and the tie and the bib are measured at the SAME point',
+    /const chestSurface = frontZAt\(0, bibY\)/.test(bare)
+    && /tie\.position\.z = chestSurface/.test(bare));
+check('the collar\'s height is found rather than named',
+    /function clearsJacketAbove\(/.test(bare)
+    && /const collarBase = clearsJacketAbove\(/.test(bare));
+
+/*
+  NO BOXES ON THE FACE OR THE CHEST.
+
+  Reported as "a lot of squares appear, this makes them ugly, like not real
+  persons", and it was literal: the lapels were two `CreateBox`es 9 cm by 23 cm
+  splayed on the chest, the eyelashes were boxes above each eye, and the
+  necklace chain was two more. A box has flat faces, straight edges and eight
+  corners, and at head framing the lapels were the two largest objects in the
+  picture after the head.
+*/
+for (const gone of ['lapel', 'lash', 'chain']) {
+    check(`the ${gone} is not a CreateBox any more`,
+        !new RegExp(`CreateBox\\(\`\\$\\{spec\\.id\\}-${gone}`).test(bare));
+}
+
+/*
+  A LATHE INTERPOLATES NOTHING BETWEEN PROFILE POINTS, and it is a body of
+  REVOLUTION.
+
+  Nine points over ninety centimetres of torso is nine visibly flat bands, and
+  the four that crossed the shoulder were the widest of them. And no profile
+  whatsoever makes a revolution flat-topped, which is what a jacket's shoulder
+  is — hence the yoke, which is a separate mesh and cannot be replaced by more
+  points.
+*/
+check('the torso profile has enough points to read as a curve',
+    (bare.match(/profile\(/g) || []).length >= 14,
+    (bare.match(/profile\(/g) || []).length);
+check('and there is a yoke across the shoulders, which no lathe can be',
+    /CreateCapsule\(`\$\{spec\.id\}-yoke`/.test(bare)
+    && /yoke\.rotation\.z = Math\.PI \/ 2/.test(bare));
+
+/*
+  VERTEX COLOUR, NOT A TEXTURE, AND NOT READ AS TRANSPARENCY.
+
+  The skin was one flat colour, which is the strongest remaining tell that a
+  rendered head is not a person. It is evaluated in the same loop as the sculpt,
+  at the same point, from the same primitives — so it cannot drift from the
+  geometry the way a UV layout would.
+
+  `hasVertexAlpha` is the trap: Babylon reads a four-component colour buffer and,
+  believing there is alpha in it, moves the mesh into the TRANSPARENT list, where
+  it is depth-sorted. On a head that means the eyes, the lids and the hair
+  showing through the skull.
+*/
+check('the skin is shaded per vertex from the sculpt\'s own coordinates',
+    /function skinShadeAt\(/.test(bare)
+    && /skinShadeAt\(ux, uy, uz, male\)/.test(bare));
+check('...and the colour buffer is not read as a transparency',
+    (bare.match(/hasVertexAlpha = false/g) || []).length >= 2,
+    (bare.match(/hasVertexAlpha = false/g) || []).length);
+
+/*
+  THE LAMP THAT COVERED THE SCREEN.
+
+  Reported directly. The video wall's top edge is at y = 2.68 in the plane
+  z = 3.05; a centre lamp sat at y = 2.72, z = 2.60 with a 0.42 rad tilt, so its
+  lower front corner dipped to 2.57 — eleven centimetres below the top of the
+  screen and 45 cm nearer the camera. It occluded the top of every headline.
+
+  Neither number is wrong on its own, which is why the rule is now DERIVED from
+  `WALL_Z` instead of the positions being chosen to miss each other.
+*/
+const setSrc = existsSync(resolve('src/stage3d/setPieces.ts'))
+    ? stripComments(readFileSync(resolve('src/stage3d/setPieces.ts'), 'utf8')) : '';
+check('setPieces.ts is present', setSrc.length > 0);
+check('a lamp may only hang where it cannot occlude the video wall',
+    /if \(side === 0 && z < WALL_Z \+ 0\.4\) continue;/.test(setSrc)
+    && /const trussZ = \[WALL_Z \+ /.test(setSrc),
+    'the centre lamp\'s position has to be a function of the wall, not a literal');
+check('and the whole rig hangs behind the wall plane',
+    /WALL_Z \+ 0\.45/.test(setSrc));
+/*
+  A studio lamp is a BARREL. A box hung under a truss and tilted is, from a
+  camera below it, a flat pale quad — which reads as a sheet of paper in the top
+  corner of the frame however dim it is.
+*/
+check('the lamps are barrels with a lens, not flat plates',
+    /CreateCylinder\(`lamp\$\{i\}\$\{side\}`/.test(setSrc)
+    && /CreateCylinder\(`lampglass/.test(setSrc));
+/* The scripts the anchors read from, and the eyes have to agree with them. */
+check('the set draws a script sheet at the shared coordinates',
+    /CreateBox\(`script\$\{side\}\$\{index\}`/.test(setSrc)
+    && /SCRIPT_Y \+ offset/.test(setSrc));
+
+
+/* ------------------------------------------------------------------ *
+ * 4b. Reaching for a desk, and looking at a script
+ * ------------------------------------------------------------------ */
+
+console.log('\nactors: hands and eyes\n');
+
+/*
+  THE TWO ANCHORS HOLD A SCRIPT ON THE DESK, and the pose is solved rather than
+  dialled in. `reachPitch` is two-link IK; the only thing worth asserting about
+  it is that the hand ends up where it was asked to, and the honest way to assert
+  that is to put the answer back through the forward kinematics rather than
+  re-deriving the same trigonometry a second time — which would only prove the
+  two copies agree with each other.
+
+  Every figure in the cast is exercised, because the whole point of solving it is
+  that eight different arm lengths all land on one desk. A pair of hand-tuned
+  angles would pass a check written against one figure.
+*/
+for (const f of [...FIGURES, ...ANCHOR_FIGURES]) {
+    const P = proportionsFor(f);
+    const upper = P.upperArm;
+    const fore = P.foreArm + P.handLength * 0.34;
+    // The studio's own target: the desk surface, in front of the body.
+    const dy = (DESK_TOP_Y + 0.105) - (P.shoulderY - 0.012 * f.height);
+    const dz = 0.34;
+    const solved = reachPitch(dy, dz, upper, fore);
+    const landed = handOffset(solved, upper, fore);
+    const missBy = Math.hypot(landed.dy - dy, landed.dz - dz);
+    check(`${f.id}: the hand lands on the desk it was aimed at (${(missBy * 1000).toFixed(1)} mm)`,
+        solved.reached ? missBy < 0.002 : true, { missBy, reached: solved.reached });
+    check(`${f.id}: and can reach it at all`, solved.reached, { dy, dz, reach: upper + fore });
+    check(`${f.id}: the elbow bends forward rather than backward`,
+        solved.elbow > 0.15 && solved.elbow < Math.PI, solved.elbow);
+    check(`${f.id}: neither angle is NaN`,
+        Number.isFinite(solved.shoulder) && Number.isFinite(solved.elbow), solved);
+}
+
+/*
+  An out-of-reach target must not produce NaN. `Math.acos` of anything outside
+  [-1, 1] is NaN, and a NaN in a rotation does not throw — it silently removes
+  the whole arm from the frame, which reads as a modelling fault three files
+  away from the cause.
+*/
+{
+    const far = reachPitch(-0.2, 5, 0.3, 0.3);
+    check('a target out of reach answers a straight arm, not NaN',
+        Number.isFinite(far.shoulder) && Number.isFinite(far.elbow) && !far.reached, far);
+    const inside = reachPitch(0, 0, 0.3, 0.1);
+    check('a target inside the shortest fold is finite too',
+        Number.isFinite(inside.shoulder) && Number.isFinite(inside.elbow), inside);
+}
+
+/*
+  DOWN TO THE PAGE, THEN UP TO THE LENS.
+
+  Both halves matter and only one of them is obvious. A presenter who never
+  glances at their script reads as an animated mannequin; one who never looks up
+  from it is worse, because the viewer is being addressed by the top of somebody's
+  head.
+*/
+check('a line STARTS with the anchor looking at the script',
+    scriptGlance(0, 1) > 0.9, scriptGlance(0, 1));
+check('...and they are on the lens by the time the glance is over',
+    scriptGlance(SCRIPT_GLANCE_SECONDS, 1) < 0.02,
+    scriptGlance(SCRIPT_GLANCE_SECONDS, 1));
+check('...and stay there for most of the story',
+    scriptGlance(SCRIPT_GLANCE_SECONDS + 3, 1) === 0);
+check('the lift is eased rather than a step',
+    (() => {
+        let previous = scriptGlance(0, 1);
+        let biggestJump = 0;
+        for (let t = 0; t <= SCRIPT_GLANCE_SECONDS; t += 1 / 60) {
+            const now = scriptGlance(t, 1);
+            biggestJump = Math.max(biggestJump, Math.abs(now - previous));
+            previous = now;
+        }
+        return biggestJump < 0.09;
+    })());
+check('the weight never leaves 0..1 over a long story',
+    (() => {
+        for (let t = 0; t < 300; t += 1 / 30) {
+            const w = scriptGlance(t, 1);
+            if (!(w >= 0 && w <= 1) || !Number.isFinite(w)) return false;
+        }
+        return true;
+    })());
+/*
+  The mid-story dip is SHALLOW on purpose: a presenter checking their place
+  flicks down and back, they do not take their attention off the camera. At full
+  weight it reads as losing their place mid-sentence.
+*/
+check('a mid-story glance is a flick, not a stare',
+    (() => {
+        let deepest = 0;
+        for (let t = SCRIPT_GLANCE_SECONDS + 0.01; t < 120; t += 1 / 120) {
+            deepest = Math.max(deepest, scriptGlance(t, 1));
+        }
+        return deepest > 0.05 && deepest < 0.6;
+    })());
+check('a silent anchor is not reading anything',
+    scriptGlance(0, 0) === 0 && scriptGlance(5, 0) === 0);
+check('and a negative time does not look down',
+    scriptGlance(-1, 1) === 0);
+
+/*
+  THE SCRIPT AND THE EYES READ THE SAME COORDINATES.
+
+  The set draws the sheet and the stage aims the presenters at it. Two copies of
+  the number is a presenter looking at a point next to their paper, which reads
+  as being distracted by something off-set — so both come out of `layout.ts`, and
+  the sheet has to be somewhere a person at that desk could actually be looking.
+*/
+check('the script lies ON the desk, not through it or above it',
+    SCRIPT_Y > DESK_TOP_Y && SCRIPT_Y < DESK_TOP_Y + 0.16,
+    { SCRIPT_Y, DESK_TOP_Y });
+check('and in front of the anchors, between them and the camera',
+    SCRIPT_Z < ANCHOR_Z && SCRIPT_Z > CAMERA_Z,
+    { SCRIPT_Z, ANCHOR_Z, CAMERA_Z });
+check('each script is under its own anchor rather than in the middle',
+    SCRIPT_X > ANCHOR_X * 0.5 && SCRIPT_X <= ANCHOR_X,
+    { SCRIPT_X, ANCHOR_X });
 
 /* ------------------------------------------------------------------ *
  * 5. The studio's geometry

@@ -495,6 +495,142 @@ export function gesture(t: number, phase = 0, energy = 1, since = 999): number {
     return clamp01(ramp * wave * Math.min(1, energy));
 }
 
+/* ---- reaching, and looking at the script ---- */
+
+/**
+ * The two arm angles that put a hand at a point. Radians.
+ *
+ * `shoulder` and `elbow` are both measured as a FORWARD swing from hanging
+ * straight down, which is the rig's own convention (see `human.ts`): the upper
+ * arm points along -Y at zero and rotates toward +Z as the angle grows.
+ */
+export interface ArmReach {
+    shoulder: number;
+    elbow: number;
+    /** False when the target is out of reach and the arm is extended toward it. */
+    reached: boolean;
+}
+
+/**
+ * Two-link inverse kinematics in the sagittal plane.
+ *
+ * ============================================================
+ * WHY THIS IS SOLVED AND NOT DIALLED IN
+ * ============================================================
+ *
+ * The two anchors have to rest their hands on the desk, holding a script. The
+ * obvious way to do that is to try shoulder and elbow angles until the render
+ * looks right — and that is a pair of magic numbers that are correct for exactly
+ * one figure. There are two anchors of different heights and six meeting seats
+ * spanning 1.66 m to 1.86 m, so every arm length in the cast is different, and a
+ * hand that misses the desk by three centimetres either hovers or goes through
+ * it. Both read as broken in a way a viewer cannot name.
+ *
+ * The angles are therefore DERIVED from the target and the figure's own arm
+ * lengths, and `check:actors` asserts that the hand lands where it was asked to
+ * for every figure in the cast — which is a thing a screenshot cannot tell you
+ * and a rendered frame can only show you one of.
+ *
+ * `dy` and `dz` are the target relative to the SHOULDER: `dy` negative for a
+ * point below it, `dz` positive for a point in front. `upper` and `fore` are the
+ * two segment lengths.
+ *
+ * The elbow bends BACKWARD (the hand comes up under it), which is the only one
+ * of the two solutions a human arm has when reaching forward and down.
+ */
+export function reachPitch(
+    dy: number, dz: number, upper: number, fore: number,
+): ArmReach {
+    const span = Math.hypot(dy, dz);
+    const reach = upper + fore;
+    const shortest = Math.abs(upper - fore);
+    // Out of reach: point the whole arm at the target rather than returning
+    // NaN. A straight arm aimed at a desk it cannot touch is wrong by
+    // centimetres; an unsolvable triangle is wrong by a whole figure, because
+    // `Math.acos` of anything outside [-1, 1] is NaN and a NaN in a rotation
+    // silently removes the mesh from the frame.
+    const clamped = Math.min(reach - 1e-4, Math.max(shortest + 1e-4, span));
+
+    /* The angle of the target itself, from straight-down toward the front. */
+    const toTarget = Math.atan2(dz, -dy);
+    /* The interior angle at the elbow, from the law of cosines. */
+    const interior = Math.acos(
+        Math.min(1, Math.max(-1, (upper * upper + fore * fore - clamped * clamped)
+            / (2 * upper * fore))));
+    /* How far the upper arm sits off the straight line to the target. */
+    const offset = Math.acos(
+        Math.min(1, Math.max(-1, (clamped * clamped + upper * upper - fore * fore)
+            / (2 * clamped * upper))));
+
+    return {
+        shoulder: toTarget - offset,
+        elbow: Math.PI - interior,
+        reached: span <= reach && span >= shortest,
+    };
+}
+
+/**
+ * Where a hand ends up for a given pair of angles. The inverse of the above.
+ *
+ * Exists so `check:actors` can verify the solver by putting its answer back
+ * through the forward kinematics rather than by re-deriving the same arithmetic
+ * a second time — which would only prove the two copies agree.
+ */
+export function handOffset(
+    reach: ArmReach, upper: number, fore: number,
+): { dy: number; dz: number } {
+    const a = reach.shoulder;
+    const b = reach.shoulder + reach.elbow;
+    return {
+        dy: -upper * Math.cos(a) - fore * Math.cos(b),
+        dz: upper * Math.sin(a) + fore * Math.sin(b),
+    };
+}
+
+/**
+ * How long an anchor looks down at their script before lifting their eyes.
+ *
+ * A real presenter reads the top of a story off the page and then delivers it to
+ * camera; they do not begin a sentence already staring down the lens. Under a
+ * second, because any longer and the viewer starts wondering whether the shot
+ * is broken.
+ */
+export const SCRIPT_GLANCE_SECONDS = 0.85;
+
+/** How often a presenter dips back to the page mid-story, in seconds. */
+export const SCRIPT_REGLANCE_PERIOD = 13;
+
+/**
+ * How much an anchor is looking at their script rather than at the lens.
+ * 1 fully at the page, 0 fully at the camera.
+ *
+ * `since` is seconds since this line started. The shape is: down for the first
+ * part of {@link SCRIPT_GLANCE_SECONDS}, easing up to the lens by the end of it,
+ * and then an occasional brief dip so the presenter does not read a
+ * ninety-second bulletin without once looking at the page in front of them.
+ *
+ * Pure and seekable like everything else here, so the check can assert both
+ * halves: that a line STARTS on the page, and that it does not stay there.
+ */
+export function scriptGlance(since: number, energy = 1): number {
+    if (!(energy > 0)) return 0;
+    if (since < 0) return 0;
+    if (since < SCRIPT_GLANCE_SECONDS) {
+        // Hold, then lift. The lift is the interesting half: a linear ramp
+        // reads as a machine, and a head has mass.
+        return 1 - smooth(SCRIPT_GLANCE_SECONDS * 0.45, SCRIPT_GLANCE_SECONDS, since);
+    }
+    /*
+      The mid-story dip. Deliberately shallow — 0.45 rather than 1 — because a
+      presenter checking their page does not take their attention off the camera,
+      they flick down and back. At full weight it reads as losing their place.
+    */
+    const phase = (since - SCRIPT_GLANCE_SECONDS) % SCRIPT_REGLANCE_PERIOD;
+    const dip = 0.55;
+    if (phase > dip) return 0;
+    return 0.45 * Math.sin((phase / dip) * Math.PI);
+}
+
 /**
  * Smoothing for a live amplitude reading.
  *

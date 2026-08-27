@@ -148,8 +148,25 @@ export function shapedPitch(ratio: number, source = FALLBACK_F0): number {
 /** Where a spoken line should sit. Chosen against the ducked bed, not in isolation. */
 export const TARGET_RMS = 0.2;
 
-/** Never louder than this, so nothing ever clips. */
-export const PEAK_CEILING = 0.97;
+/**
+ * Never louder than this, so nothing ever clips.
+ *
+ * 0.89 rather than 0.97, and the eight hundredths are not caution — they are
+ * the difference between a clean voice and a distorted one.
+ *
+ * These samples do not go to the speakers. They go into a compressor and then a
+ * makeup gain of `VOICE_MAKEUP` (`speechAudio.ts`), and a compressor has an
+ * ATTACK: for the first few milliseconds of a plosive after a pause it is not
+ * yet reducing anything, so whatever peak arrives is multiplied by the full
+ * makeup. At 0.97 that is 0.97 x 3.4 = **3.3**, which is not "a bit hot", it is
+ * eleven decibels into hard clipping on the front of every stressed consonant.
+ *
+ * That was reported as "the Arabic male voice has a lot of noise", and the
+ * reason it was loudest on the reshaped voice is arithmetic: the shaped path
+ * aims a fifth higher again. A limiter and a soft-clip now stand behind this,
+ * but the cheapest fix is not to hand the chain a signal it cannot survive.
+ */
+export const PEAK_CEILING = 0.89;
 
 /**
  * How much louder the reshaped voice has to be to SOUND as loud.
@@ -158,6 +175,24 @@ export const PEAK_CEILING = 0.97;
  * measurable one — a 0.7 resample moves the whole spectrum down by a third,
  * away from where hearing is most sensitive. Matching RMS leaves him audibly
  * behind; this closes it without approaching the ceiling.
+ *
+ * ============================================================
+ * IT IS SPENT AS A GAIN, NOT AS A HIGHER NORMALISATION TARGET
+ * ============================================================
+ *
+ * This is the correction to the first version of the fix, and it is worth
+ * knowing because the old spelling looked exactly right and did nothing at all.
+ * `normalizeLevel(shaped, TARGET_RMS * MALE_LOUDNESS_MAKEUP)` asks for a fifth
+ * more loudness — and `levelGain` is `min(loudness, ceiling/peak)`, so on real
+ * speech, whose crest factor is four to five, the CEILING is what binds at both
+ * targets and the two come out at *identical* levels. The male makeup was
+ * measurable only on a test tone.
+ *
+ * The place where the headroom actually exists is after the compressor, so that
+ * is where the multiplier goes: `speechAudio.ts` applies it to the makeup gain
+ * when the clip has been reshaped. `normalizeLevel` still accepts a target, and
+ * `check:newscast` still drives it that way — the function is not the thing
+ * that was wrong.
  */
 export const MALE_LOUDNESS_MAKEUP = 1.2;
 
@@ -248,8 +283,49 @@ export function hann(size: number): Float32Array {
  * cancel each other where they overlap — the result is the hollow, phasey
  * "underwater" voice that every naive time-stretcher produces. The correlation
  * search below slides each frame by up to one pitch period to the position that
- * best continues what has already been written, which lines the periods up. It
- * is the whole reason this is ~40 lines rather than ~10.
+ * best continues what has already been written, which lines the periods up.
+ *
+ * ============================================================
+ * THE CORRELATION IS NORMALISED, AND THAT IS THE WHOLE OF "IT SOUNDS NOISY"
+ * ============================================================
+ *
+ * The first version scored each candidate on a bare dot product,
+ * `sum(written[j] * candidate[j])`, and picked the largest. A dot product grows
+ * with the candidate's own AMPLITUDE as well as with its similarity, so on any
+ * passage where loudness is changing — which is every consonant, every vowel
+ * onset and every word ending in the language — the search does not find the
+ * position that continues the waveform, it finds the LOUDEST position inside
+ * the search window. What that produces is a frame lifted out of the middle of
+ * the next syllable laid over the tail of this one: a periodic buzz at the hop
+ * rate (~89 Hz here, squarely in the voice band) plus a granular roughness on
+ * every transient.
+ *
+ * It was reported as "the Arabic male voice has a lot of noise", and it is
+ * worse on him than on anybody else for two compounding reasons: he is the only
+ * voice that goes through this function at all, and dropping the spectrum by
+ * 0.7 moves that buzz from 89 Hz to 62 Hz, where it stops being a pitch and
+ * becomes a rattle.
+ *
+ * Dividing by the candidate's own energy — an ordinary normalised
+ * cross-correlation — makes the score a measure of SHAPE rather than of
+ * loudness, which is what the algorithm needs and what its name has always
+ * promised. `energyAt` below is a prefix sum, so the normalisation costs one
+ * subtraction per candidate rather than a second inner loop.
+ *
+ * ============================================================
+ * COARSE THEN FINE, BECAUSE THE OLD SHORTCUT COST RESOLUTION
+ * ============================================================
+ *
+ * The search is +-one period of a 70 Hz voice, so at 24 kHz it is +-343
+ * samples, and scoring every one of them against a 267-sample window is 183 000
+ * multiply-adds per frame. The first version paid for that by stepping every
+ * OTHER offset, which halves the cost and also halves the resolution — and half
+ * a sample of misalignment at 4 kHz is a quarter of a cycle.
+ *
+ * A coarse pass at a stride of four followed by a fine pass over +-4 samples
+ * around its winner is a quarter of the cost of the original AND lands on the
+ * exact best offset. A pitch-period correlation is smooth at this scale, so the
+ * coarse pass cannot pick the wrong lobe.
  */
 export function timeScale(
     input: Float32Array,
@@ -268,23 +344,52 @@ export function timeScale(
     const synthesisHop = Math.max(1, Math.round(frame / 4));
     const analysisHop = synthesisHop / scale;
 
-    // Search ± one period of the lowest voice worth tracking (~70 Hz). Any
+    // Search +- one period of the lowest voice worth tracking (~70 Hz). Any
     // wider and the search starts matching the *previous* period, which is
     // audible as a stutter rather than as a smoother join.
     const search = Math.min(Math.round(rate / 70), Math.floor(frame / 2));
-    const correlate = Math.min(synthesisHop, 256);
-    // Every other offset. At these sample rates the odd ones are within a
-    // fraction of a period of the even ones and halve the cost of the only
-    // loop here that is not linear.
-    const stride = 2;
+    /*
+      The comparison window is ONE PERIOD of the lowest voice, not one hop.
+
+      It used to be `min(synthesisHop, 256)`, which at 24 kHz is 256 samples and
+      happens to be about right; at 48 kHz it was 256 against a 555-sample
+      period, i.e. less than half a cycle — and half a cycle of a periodic
+      signal correlates almost as well with the wrong period as with the right
+      one. Deriving it from the rate is what makes the quality the same whatever
+      sample rate the provider hands back.
+    */
+    const correlate = Math.max(64, Math.min(frame - synthesisHop, Math.round(rate / 90)));
+    /** Coarse stride, then +-this many samples at full resolution. */
+    const coarse = 4;
 
     const outLength = Math.max(1, Math.round(input.length * scale));
     const accumulated = new Float32Array(outLength + frame);
     const weight = new Float32Array(outLength + frame);
     const window = hann(frame);
 
+    /*
+      Prefix sum of squares, in float64.
+
+      This is what makes the normalisation free: the energy of any window is one
+      subtraction. Float64 rather than Float32 because a prefix sum over a
+      minute of audio accumulates to a large number while the differences taken
+      out of it are small — in float32 the tail of a long clip would end up
+      normalising against rounding error.
+    */
+    const square = new Float64Array(input.length + 1);
+    for (let i = 0; i < input.length; i++) {
+        const v = input[i] as number;
+        square[i + 1] = (square[i] as number) + v * v;
+    }
+    const energyAt = (at: number) =>
+        (square[Math.min(square.length - 1, at + correlate)] as number)
+        - (square[at] as number);
+
     let writeAt = 0;
     let index = 0;
+    /** Where the last frame read to, and wrote to — the tail fill needs both. */
+    let readEnd = 0;
+    let writeEnd = 0;
     while (writeAt + frame <= accumulated.length) {
         const ideal = Math.round(index * analysisHop);
         if (ideal + frame > input.length) break;
@@ -293,25 +398,59 @@ export function timeScale(
         if (index > 0 && search > 0) {
             const lowest = Math.max(0, ideal - search);
             const highest = Math.min(input.length - frame, ideal + search);
-            let best = -Infinity;
-            for (let candidate = lowest; candidate <= highest; candidate += stride) {
-                let score = 0;
+            const score = (candidate: number): number => {
+                let dot = 0;
                 for (let j = 0; j < correlate; j++) {
-                    score += accumulated[writeAt + j] * input[candidate + j];
+                    dot += (accumulated[writeAt + j] as number)
+                        * (input[candidate + j] as number);
                 }
-                if (score > best) {
-                    best = score;
-                    start = candidate;
-                }
+                // Normalised: how well the shapes AGREE, independent of how
+                // loud the candidate happens to be. See the header.
+                return dot / Math.sqrt(energyAt(candidate) + 1e-9);
+            };
+            let best = -Infinity;
+            for (let candidate = lowest; candidate <= highest; candidate += coarse) {
+                const s = score(candidate);
+                if (s > best) { best = s; start = candidate; }
+            }
+            const from = Math.max(lowest, start - coarse);
+            const to = Math.min(highest, start + coarse);
+            for (let candidate = from; candidate <= to; candidate++) {
+                const s = score(candidate);
+                if (s > best) { best = s; start = candidate; }
             }
         }
 
         for (let j = 0; j < frame; j++) {
-            accumulated[writeAt + j] += input[start + j] * window[j];
-            weight[writeAt + j] += window[j];
+            accumulated[writeAt + j] += (input[start + j] as number) * (window[j] as number);
+            weight[writeAt + j] += window[j] as number;
         }
+        readEnd = start + frame;
+        writeEnd = writeAt + frame;
         writeAt += synthesisHop;
         index++;
+    }
+
+    /*
+      THE TAIL, which the loop above cannot reach and used to leave as silence.
+
+      The loop stops as soon as the next frame would run off the end of the
+      input, and that happens while there is still `scale * frame` of OUTPUT
+      left — about 31 ms at these numbers. Left at zero weight it divides to
+      silence, so the last syllable of every line was clipped short and faded
+      out, and a truncated word is indistinguishable from a truncated synthesis.
+
+      Copying the remaining input straight in at full weight is exact here
+      rather than approximate: at the end of a line there is no next frame to
+      align to, so there is nothing for an overlap-add to buy.
+    */
+    if (writeEnd > 0 && readEnd < input.length) {
+        for (let i = writeEnd; i < accumulated.length; i++) {
+            const from = readEnd + (i - writeEnd);
+            if (from >= input.length) break;
+            accumulated[i] = input[from] as number;
+            weight[i] = 1;
+        }
     }
 
     // Divide out the window sum rather than assuming it is constant: the first
@@ -319,7 +458,9 @@ export function timeScale(
     // and out on every segment.
     const output = new Float32Array(outLength);
     for (let i = 0; i < outLength; i++) {
-        output[i] = weight[i] > 1e-4 ? accumulated[i] / weight[i] : 0;
+        output[i] = (weight[i] as number) > 1e-4
+            ? (accumulated[i] as number) / (weight[i] as number)
+            : 0;
     }
     return output;
 }

@@ -37,6 +37,10 @@ import {
     canShape, hann, levelGain, normalizeLevel, peakOf, shapeRatio, shapedPitch,
     timeScale, voicedRms,
 } from '../../src/components/newscast/voiceShaper';
+import {
+    COMPRESSOR_RATIO, COMPRESSOR_THRESHOLD_DB, OUTPUT_CEILING, SHAPED_PRESENCE_HZ,
+    compressionCurveDb, limitVoice, prepareVoice, tiltShapedVoice,
+} from '../../src/utils/speechAudio';
 
 // Read as TEXT as well as imported, so the check can assert things about the
 // source that are invisible once it has been compiled — the lookbehind ban
@@ -914,6 +918,226 @@ console.log('\n12. Reshaping a voice, so the male anchor is never removed');
     check('canShape is true with it', canShape({ AudioContext: function () {} }));
     check('and accepts the prefixed name Safari used to ship',
           canShape({ webkitAudioContext: function () {} }));
+
+
+    /* ------------------------------------------------------------------ *
+     * The sample-domain level chain
+     *
+     * WHY THESE ARE HERE AND NOT IN `check:actors`
+     *
+     * Because they are arithmetic over a Float32Array and this is the file that
+     * already has a signal generator, an autocorrelation pitch meter and an RMS
+     * in it. `check:actors` owns the CONSTANTS (that the threshold is sane, that
+     * the makeup fits the headroom); this owns what the functions do to audio.
+     *
+     * All of it exists because of one report — "the Arabic Male Voice is not
+     * clear, it has a lot of noise, and the volume level is too low" — which was
+     * three separate faults with three separate fixes, and every one of them is
+     * silent:
+     *
+     *  1. the correlation in `timeScale` was unnormalised, so the WSOLA search
+     *     found the loudest offset rather than the matching one;
+     *  2. the graph clipped, because a `DynamicsCompressorNode` has an attack
+     *     and no look-ahead and the makeup gain was 3.4x on a 0.97 peak;
+     *  3. `MALE_LOUDNESS_MAKEUP` was spent where the peak ceiling cancelled it,
+     *     so the reshaped voice was not actually louder at all.
+     * ------------------------------------------------------------------ */
+    {
+        /** Speech-like: harmonics, a syllable envelope, and consonant bursts. */
+        const speechLike = (seconds: number, level = 0.41): Float32Array => {
+            const n = Math.round(RATE * seconds);
+            const out = new Float32Array(n);
+            for (let i = 0; i < n; i++) {
+                const t = i / RATE;
+                let v = 0;
+                for (let h = 1; h <= 14; h++) {
+                    v += (1 / h) * Math.sin(2 * Math.PI * 192 * h * t + h * 0.3);
+                }
+                const env = 0.12 + 0.88
+                    * Math.pow(Math.max(0, Math.sin(2 * Math.PI * 4 * t)), 1.6);
+                out[i] = v * env;
+            }
+            // Bursts AFTER a near-silence, which is the case a compressor's
+            // attack cannot catch and the one that was clipping.
+            for (const at of [0.30, 0.61, 0.92]) {
+                const start = Math.round(at * RATE);
+                for (let i = 0; i < 300 && start + i < n; i++) {
+                    out[start + i] = (out[start + i] as number)
+                        + 2.2 * (1 - i / 300) * Math.sin(i * 1.9);
+                }
+            }
+            const p = peakOf(out) || 1;
+            for (let i = 0; i < n; i++) out[i] = ((out[i] as number) / p) * level;
+            return out;
+        };
+
+        // ---- the guarantee -------------------------------------------------
+        for (const ratio of [IDENTITY_RATIO, MALE_RATIO]) {
+            const raw = speechLike(1.0);
+            const before = voicedRms(raw);
+            const shaped = ratio === IDENTITY_RATIO
+                ? Float32Array.from(raw)
+                : timeScale(raw, ratio, RATE);
+            prepareVoice(shaped, RATE, ratio);
+            const label = ratio === IDENTITY_RATIO ? 'plain' : 'reshaped';
+
+            check(`${label}: NO sample leaves above the ceiling`,
+                  peakOf(shaped) <= OUTPUT_CEILING + 1e-6, peakOf(shaped));
+            check(`${label}: and every sample is finite`,
+                  shaped.every(v => Number.isFinite(v)));
+            const gainDb = 20 * Math.log10(voicedRms(shaped) / before);
+            check(`${label}: the average is lifted by 6 dB or more (${gainDb.toFixed(1)} dB)`,
+                  gainDb > 6, gainDb);
+            /*
+              A crest factor that survives. Squashing a voice to a crest of 2 is
+              what "over-compressed" sounds like, and it is what a detector fast
+              enough to catch every peak produces — which is why the compressor's
+              attack is 6 ms and a separate limiter does the peak work.
+            */
+            const crest = peakOf(shaped) / voicedRms(shaped);
+            check(`${label}: and the waveform is not squashed flat (crest ${crest.toFixed(2)})`,
+                  crest > 3, crest);
+        }
+
+        /*
+          THE OLD CHAIN COULD NOT HAVE PASSED THE FIRST OF THOSE.
+
+          Stated as arithmetic rather than as prose, because it is the whole
+          reason the compression moved out of the graph: a compressor with a 4 ms
+          attack passes the front of a transient at unity, so the peak reaching
+          the destination was the sample peak times the full makeup.
+        */
+        check('the graph chain it replaced would have clipped by 10 dB or more',
+              20 * Math.log10(0.97 * 3.4) > 10,
+              20 * Math.log10(0.97 * 3.4));
+
+        // ---- the limiter ---------------------------------------------------
+        const quiet = new Float32Array(4096);
+        for (let i = 0; i < quiet.length; i++) {
+            quiet[i] = 0.2 * Math.sin((2 * Math.PI * 200 * i) / RATE);
+        }
+        const untouched = Float32Array.from(quiet);
+        limitVoice(untouched, RATE);
+        check('the limiter does nothing at all to audio that is already under it',
+              untouched.every((v, i) => Math.abs(v - (quiet[i] as number)) < 1e-9));
+
+        const hot = Float32Array.from(quiet);
+        for (let i = 0; i < hot.length; i++) hot[i] = (hot[i] as number) * 6;
+        limitVoice(hot, RATE);
+        check('...and holds the line on audio that is way over it',
+              peakOf(hot) <= OUTPUT_CEILING + 1e-6, peakOf(hot));
+        /*
+          The gain must not JUMP. A limiter that snaps its gain back is itself a
+          discontinuity, which is the artefact that makes a cheap one sound like
+          it is chewing — so consecutive samples of a steady tone may not differ
+          by more than the tone itself does.
+        */
+        let worst = 0;
+        for (let i = 1; i < hot.length; i++) {
+            worst = Math.max(worst, Math.abs((hot[i] as number) - (hot[i - 1] as number)));
+        }
+        check('and its gain moves smoothly rather than snapping', worst < 0.35, worst);
+
+        check('a limiter with a nonsense ceiling leaves the audio alone',
+              limitVoice(Float32Array.from(quiet), RATE, 0)
+                  .every((v, i) => v === (quiet[i] as number)));
+        check('and an empty buffer does not crash it',
+              limitVoice(new Float32Array(0), RATE).length === 0);
+
+        // ---- the compressor ------------------------------------------------
+        const curveAt = (x: number) => compressionCurveDb(x);
+        check('the compression curve is a straight line below the knee',
+              Math.abs(curveAt(-40) - (-40)) < 1e-9);
+        check('...and reduces by the ratio above it',
+              Math.abs(curveAt(0) - (COMPRESSOR_THRESHOLD_DB
+                  + -COMPRESSOR_THRESHOLD_DB / COMPRESSOR_RATIO)) < 1e-9,
+              curveAt(0));
+        check('...and is monotonic through the knee, so it cannot fold back',
+              (() => {
+                  for (let x = -60; x < 0; x += 0.25) {
+                      if (curveAt(x + 0.25) < curveAt(x) - 1e-9) return false;
+                  }
+                  return true;
+              })());
+        check('the curve never makes anything LOUDER', (() => {
+            for (let x = -60; x <= 6; x += 0.5) if (curveAt(x) > x + 1e-9) return false;
+            return true;
+        })());
+
+        // ---- the tilt ------------------------------------------------------
+        const flat = speechLike(0.3);
+        const same = Float32Array.from(flat);
+        tiltShapedVoice(same, RATE, IDENTITY_RATIO);
+        check('the tilt is a byte-for-byte no-op on a voice that was not reshaped',
+              same.every((v, i) => v === (flat[i] as number)));
+
+        /*
+          A DOWN-SHIFTED VOICE GETS ITS PRESENCE BACK, and the frequency is
+          divided by the ratio because these samples are about to be played at
+          `playbackRate = ratio`. Measured as the ratio of high-band to low-band
+          energy before and after: the shelf has to lift the top, and the low cut
+          has to remove the bottom.
+        */
+        const band = (signal: Float32Array, from: number, to: number): number => {
+            let total = 0;
+            for (let hz = from; hz <= to; hz += (to - from) / 12) {
+                let re = 0;
+                let im = 0;
+                for (let i = 0; i < signal.length; i++) {
+                    const a = (2 * Math.PI * hz * i) / RATE;
+                    re += (signal[i] as number) * Math.cos(a);
+                    im += (signal[i] as number) * Math.sin(a);
+                }
+                total += re * re + im * im;
+            }
+            return total;
+        };
+        const tilted = Float32Array.from(flat);
+        tiltShapedVoice(tilted, RATE, MALE_RATIO);
+        const before = band(flat, 3600, 6000) / (band(flat, 150, 400) + 1e-12);
+        const after = band(tilted, 3600, 6000) / (band(tilted, 150, 400) + 1e-12);
+        check(`the tilt lifts the presence band relative to the bass (x${(after / before).toFixed(2)})`,
+              after > before * 1.3, [before, after]);
+        check('and it stays finite',
+              tilted.every(v => Number.isFinite(v)));
+        check('the presence shelf is placed for the SHIFTED spectrum, not the raw one',
+              SHAPED_PRESENCE_HZ / MALE_RATIO > SHAPED_PRESENCE_HZ);
+
+        // ---- WSOLA, after the normalisation fix ----------------------------
+        /*
+          THE CORRELATION HAS TO BE NORMALISED.
+
+          A source assertion, because the failure is not a wrong answer — it is a
+          slightly wrong answer per frame, which sums to a buzz at the hop rate
+          (~89 Hz, in the middle of the voice band). There is no output test that
+          separates "the search picked the second-best offset" from "the provider
+          sent slightly rough audio"; what there is, is the absence of the
+          division.
+        */
+        const shaperSrc = readFileSync(SHAPER_PATH, 'utf-8');
+        check('the WSOLA search divides by the candidate\'s own energy',
+              /dot\s*\/\s*Math\.sqrt\(energyAt\(/.test(shaperSrc),
+              'an unnormalised dot product finds the LOUDEST offset, not the matching one');
+        check('...and the energy comes from a prefix sum rather than a second loop',
+              /Float64Array\(input\.length \+ 1\)/.test(shaperSrc));
+
+        /*
+          AND THE TAIL IS NOT SILENCE.
+
+          The frame loop stops as soon as the next frame would run off the end of
+          the input, which leaves `scale * frame` of output — about 31 ms — at
+          zero weight. It divided to silence, so the last syllable of every line
+          was clipped and faded out.
+        */
+        const line = speechLike(0.8, 0.6);
+        const scaled = timeScale(line, MALE_RATIO, RATE);
+        const tailLen = Math.round(RATE * 0.025);
+        const tail = scaled.subarray(scaled.length - tailLen);
+        const body = scaled.subarray(0, scaled.length - tailLen);
+        check('the last 25 ms of a line is not faded to silence',
+              voicedRms(tail) > voicedRms(body) * 0.25,
+              [voicedRms(tail), voicedRms(body)]);
+    }
 
     // Same Safari rule as the engine: a lookbehind is a PARSE-TIME error
     // before 16.4 and would take the whole bundle down, not just this module.

@@ -97,12 +97,22 @@ function backdropTexture(
     const size = 256;
     const texture = new B.DynamicTexture(name, { width: size, height: size }, scene, true);
     const ctx = texture.getContext() as unknown as CanvasRenderingContext2D;
+    /*
+      Lighter at every stop than it was, and it is the second half of the
+      darkness report.
+
+      A figure is separated from its background by CONTRAST, and the old stops
+      (`#2b3554` to `#0b1020`) put a dark suit and dark hair against a
+      near-black flat — so the silhouette disappeared at the top, where the hair
+      is, and the tile read as a face floating in a void. A real studio flat is
+      lit to about a stop under the subject, not four.
+    */
     const glow = ctx.createRadialGradient(
-        size * 0.5, size * 0.42, size * 0.04,
-        size * 0.5, size * 0.46, size * 0.62);
+        size * 0.5, size * 0.40, size * 0.04,
+        size * 0.5, size * 0.46, size * 0.66);
     glow.addColorStop(0, accent);
-    glow.addColorStop(0.4, '#2b3554');
-    glow.addColorStop(1, '#0b1020');
+    glow.addColorStop(0.42, '#5d6a90');
+    glow.addColorStop(1, '#232d4c');
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, size, size);
     texture.update(false);
@@ -165,11 +175,59 @@ export async function createPortraitStage(
     const ip = scene.imageProcessingConfiguration;
     ip.toneMappingEnabled = true;
     ip.toneMappingType = 1; // ACES
-    ip.exposure = 1.28;
-    ip.contrast = 1.35;
+    /*
+      ============================================================
+      THE THREE NUMBERS THAT MADE THE ROOM DARK
+      ============================================================
+
+      Reported as "they don't appear well because of the darkness", and it was
+      not the lights — it was the grade on top of them. Three settings were
+      each taking brightness away and their effects multiply:
+
+        exposure 1.28    a stop and a bit under where a portrait wants to sit
+        contrast 1.35    crushes everything below mid-grey toward black, and a
+                         face at tile size is mostly midtones and shadow
+        vignette 2.2     Babylon's vignette MULTIPLIES, so at 2.2 with a 0.4
+                         stretch the corners are nearly black — and a tile is
+                         180px, so "the corners" is most of the picture. A
+                         vignette is a subtle cue on a 1200px frame and a
+                         blackout on a thumbnail.
+
+      Each looked defensible on its own; together they were about two and a half
+      stops of loss. Raising the lights instead would have blown the specular
+      highlights on the forehead and cheeks while leaving the shadows just as
+      crushed, which is the wrong-looking version of the same fix.
+    */
+    /*
+      ============================================================
+      THE LEVEL IS SET BY THE PALEST SKIN IN THE CAST, NOT THE DARKEST
+      ============================================================
+
+      There are six skin tones here and they span `#6f4630` to `#f0cbaa` — a
+      factor of two in every channel. A level chosen to lift Marcus off the floor
+      puts James over the top of the tone curve, and what that looks like is not
+      "bright": it is a face that has lost its HUE, because once the brightest
+      channel saturates the ratios between the three collapse and the skin
+      renders as pale grey. It read as a plastic mask, and it hid the skin-tone
+      pass entirely.
+
+      The arithmetic that matters is `albedo x light x exposure` for the palest
+      figure, and it wants to land near 1.3, where ACES still has curve left:
+
+        front light  = key 1.55 x 0.421 + fill 0.80 x 0.629 + ambient ~0.21
+                     = 1.37
+        James        = 0.94 x 1.37 x 1.05 = 1.35  ->  bright, still beige
+        Marcus       = 0.55 x 1.37 x 1.05 = 0.79  ->  mid, still brown
+
+      It is well under half of what the first pass at "make them brighter" used,
+      and both ends of the cast are legible now instead of one.
+    */
+    ip.exposure = 1.05;
+    // Enough to keep it from looking flat, not enough to lose the shadow side.
+    ip.contrast = 1.12;
     ip.vignetteEnabled = true;
-    ip.vignetteWeight = 2.2;
-    ip.vignetteStretch = 0.4;
+    ip.vignetteWeight = 0.85;
+    ip.vignetteStretch = 0.7;
     ip.vignetteColor = new B.Color4(0, 0, 0, 0);
 
     /*
@@ -184,20 +242,59 @@ export async function createPortraitStage(
       framing.
     */
     const ambient = new B.HemisphericLight('fill', new B.Vector3(0, 1, 0), scene);
+    /*
+      The ambient is the only thing lighting the underside of a chin, the inside
+      of a collar and the shadow half of the hair, and at 0.42 against a
+      near-black ground colour there was nothing in any of them. A studio has a
+      pale floor and pale flats; the bounce off those is what this term stands
+      for, and it is never as dark as this was.
+    */
     ambient.intensity = 0.42;
-    ambient.diffuse = B.Color3.FromHexString('#8fa4c8');
-    ambient.groundColor = B.Color3.FromHexString('#241d2b');
+    ambient.diffuse = B.Color3.FromHexString('#9db2d4');
+    ambient.groundColor = B.Color3.FromHexString('#4a4152');
 
+    /*
+      ============================================================
+      A DIRECTION IS WHERE THE LIGHT TRAVELS, NOT WHERE IT COMES FROM
+      ============================================================
+
+      Worth writing down, because it cost a whole render pass and it looked like
+      something else entirely. Babylon's diffuse term is
+      `max(0, dot(N, -direction))`, so a light that ILLUMINATES a forward-facing
+      surface must have a direction pointing AWAY from the camera — and the
+      portrait camera sits at +Z looking toward -Z, so the key's Z component has
+      to be NEGATIVE.
+
+      An attempt to move the key "behind the lens, like a ring light" set it
+      positive instead. The arithmetic, for a face whose normal is (0, 0, 1):
+
+        key  (-0.30, -0.55,  0.78)   N.L = 0.000   <- missed the face entirely
+        fill ( 0.58, -0.20,  0.62)   N.L = 0.000   <- so did the fill
+        rim  ( 0.78, -0.34, -0.52)   N.L = 0.521   <- the RIM lit the face
+
+      So every face was lit by a cool blue backlight at 1.7 and by nothing else.
+      It does not look like a bug; it looks like flat, slightly bluish,
+      slightly washed-out skin, which is indistinguishable from "the shading is
+      too subtle" — and it hid a skin-tone pass that was working perfectly.
+
+      These are the original directions, which were right. What WAS wrong was the
+      grade on top of them, and the fill: at 0.95 against a key of 2.6 the shadow
+      side of every face was closed up, which is the half of "because of the
+      darkness" that raising the exposure cannot fix.
+    */
     const key = new B.DirectionalLight('key', new B.Vector3(-0.55, -0.72, -0.42), scene);
-    key.intensity = 2.6;
+    key.intensity = 1.55;
     key.diffuse = B.Color3.FromHexString('#fff1de');
     key.specular = B.Color3.FromHexString('#ffffff');
 
     /* The rim is what puts a bright edge along the jaw and the shoulder and
        lifts the figure off the backdrop. It is deliberately cool against a warm
        key: the colour contrast does as much separating as the brightness. */
+    /* Behind the figure, so it grazes the far edge of the jaw and the shoulder
+       rather than lighting the face a second time. POSITIVE Z: it travels away
+       from the subject, toward the camera. */
     const rim = new B.DirectionalLight('rim', new B.Vector3(0.72, -0.30, 0.62), scene);
-    rim.intensity = 1.9;
+    rim.intensity = 1.15;
     rim.diffuse = B.Color3.FromHexString('#9dc4ff');
     rim.specular = B.Color3.FromHexString('#cfe3ff');
 
@@ -218,8 +315,8 @@ export async function createPortraitStage(
       is free.
     */
     const fill = new B.DirectionalLight('fill', new B.Vector3(0.62, -0.28, -0.55), scene);
-    fill.intensity = 0.95;
-    fill.diffuse = B.Color3.FromHexString('#bcd4ff');
+    fill.intensity = 0.80;
+    fill.diffuse = B.Color3.FromHexString('#c3d8ff');
     fill.specular = B.Color3.FromHexString('#4a5a72');
 
     const pods: Pod[] = [];
@@ -238,10 +335,20 @@ export async function createPortraitStage(
 
         const rig = buildFigure(B, scene, spec, quality);
         rig.root.position.x = x;
-        // Turned a few degrees off square. A person photographed dead-on is a
-        // passport photo; a three-quarter turn of even ten degrees reads as
-        // somebody sitting at a table.
-        rig.root.rotation.y = (index % 2 === 0 ? 1 : -1) * 0.16;
+        /*
+          Turned a few degrees off square. A person photographed dead-on is a
+          passport photo; a turn of even seven degrees reads as somebody sitting
+          at a table.
+
+          It is the BODY that turns, and the head then comes back to the lens —
+          which is what a person at a table does and what makes eye contact read
+          as deliberate rather than as a stare. That only started working once
+          `human.ts` measured the look-at angle in the head's own space; before
+          it, this line was the whole of why nobody in the meeting was looking at
+          the camera. Reduced from 0.16 for the same reason a portrait
+          photographer would: at 180px a bigger turn is just a partial profile.
+        */
+        rig.root.rotation.y = (index % 2 === 0 ? 1 : -1) * 0.12;
 
         const eyeY = rig.proportions.headY + rig.proportions.headRadius * 0.03;
 
@@ -262,7 +369,7 @@ export async function createPortraitStage(
           into the background entirely. A studio flat is lit; 0.40 is what makes
           it look lit rather than merely painted.
         */
-        wallMat.emissiveColor = new B.Color3(0.40, 0.40, 0.44);
+        wallMat.emissiveColor = new B.Color3(1.15, 1.15, 1.24);
         wall.material = wallMat;
 
         /* A desk edge across the bottom. It is barely in frame and it is what
@@ -298,8 +405,12 @@ export async function createPortraitStage(
           just a chest. Dropping the camera 6 cm moves the head up without
           changing the lens.
         */
-        const camera = new B.UniversalCamera(`cam-${id}`, new B.Vector3(x, eyeY - 0.06, 0.98), scene);
-        camera.setTarget(new B.Vector3(x, eyeY - 0.085, 0));
+        /* 1.10 m rather than 0.98: at the closer distance the visible box was
+           0.42 m against a 0.23 m head, so a tall figure's hair touched the top
+           edge of the tile and the shoulders ran off both sides with nothing
+           between them and the frame. A video call leaves a little air. */
+        const camera = new B.UniversalCamera(`cam-${id}`, new B.Vector3(x, eyeY - 0.05, 1.10), scene);
+        camera.setTarget(new B.Vector3(x, eyeY - 0.075, 0));
         camera.fov = 0.42;
         camera.minZ = 0.15;
         camera.maxZ = 12;

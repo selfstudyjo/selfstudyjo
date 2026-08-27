@@ -17,9 +17,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import PersonStage from '@/components/stage3d/PersonStage.vue';
+import StudioPreview from './StudioPreview.vue';
 import { ANCHOR_FIGURES, FIGURES } from '@/stage3d/figures';
 
 const params = new URLSearchParams(location.search);
+
+/**
+ * `?stage=studio` renders the newscast SET instead of the tile grid.
+ *
+ * A different stage, not a different zoom: `createStudioStage` builds a room and
+ * places the camera the room is derived from, and nothing about it is reachable
+ * through `PersonStage`. Until this existed the set could only be seen by
+ * opening `/newscast` against a live backend and waiting for a story, which is
+ * how a lamp came to be hanging in front of the video wall.
+ */
+const stageKind = ref(params.get('stage') || 'portrait');
+const live = ref(params.get('live') !== '0');
+const headline = ref(params.get('headline')
+    ?? 'Ministers agree emergency funding for the northern water network');
+const rtl = ref(params.get('rtl') === '1');
 
 const ALL = [...FIGURES, ...ANCHOR_FIGURES];
 
@@ -38,6 +54,12 @@ const speaker = computed(() => (speaking.value ? seats.value[0]?.key ?? null : n
 <template>
     <div class="cp">
         <header class="cp__bar">
+            <label>stage
+                <select v-model="stageKind">
+                    <option value="portrait">portraits (meeting / interview)</option>
+                    <option value="studio">newscast studio</option>
+                </select>
+            </label>
             <label>who
                 <select v-model="who">
                     <option value="all">all eight</option>
@@ -58,7 +80,18 @@ const speaker = computed(() => (speaking.value ? seats.value[0]?.key ?? null : n
             </label>
         </header>
 
+        <StudioPreview
+            v-if="stageKind === 'studio'"
+            :speaking="speaking ? 'male' : (params.get('reading') === 'female' ? 'female' : null)"
+            :energy="energy"
+            :live="live"
+            :headline="headline"
+            kicker="World · Self Study News"
+            :rtl="rtl"
+        />
+
         <PersonStage
+            v-else
             :seats="seats"
             :speaking="speaker"
             :energy="energy"

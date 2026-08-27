@@ -45,10 +45,11 @@ import type { Engine } from '@babylonjs/core/Engines/engine';
 
 import type * as BJS from './babylon';
 import { buildFigure, type FigureRig } from './human';
-import { ANCHOR_FIGURES, type FigureSpec } from './figures';
+import { ANCHOR_FIGURES, scriptGlance, type FigureSpec } from './figures';
 import { buildSet } from './setPieces';
 import {
     ANCHOR_X, ANCHOR_Z, CAMERA_FOV, CAMERA_Y, CAMERA_Z, PLATE_X,
+    DESK_TOP_Y, SCRIPT_X, SCRIPT_Y, SCRIPT_Z,
 } from './layout';
 import { loadBabylon, pickQuality, pixelRatio, reducedMotion } from './loader';
 
@@ -329,11 +330,18 @@ export async function createStudioStage(
     const ip = scene.imageProcessingConfiguration;
     ip.toneMappingEnabled = true;
     ip.toneMappingType = 1; // ACES
-    ip.exposure = 1.12;
-    ip.contrast = 1.4;
+    /*
+      The same three-way over-correction the portrait stage had, and the same
+      fix: exposure a stop under where a face wants to sit, a contrast that
+      crushes the midtones a head is made of, and a vignette at 2.4 — which
+      MULTIPLIES, so the two presenters, who are at 20% and 80% across the
+      frame, were sitting in the darkest part of it.
+    */
+    ip.exposure = 1.16;
+    ip.contrast = 1.12;
     ip.vignetteEnabled = true;
-    ip.vignetteWeight = 2.4;
-    ip.vignetteStretch = 0.5;
+    ip.vignetteWeight = 0.9;
+    ip.vignetteStretch = 0.8;
     ip.vignetteColor = new B.Color4(0, 0, 0, 0);
 
     /*
@@ -343,17 +351,20 @@ export async function createStudioStage(
       and a soft ambient standing in for the bounce off a pale floor.
     */
     const ambient = new B.HemisphericLight('amb', new B.Vector3(0, 1, 0), scene);
-    ambient.intensity = 0.36;
-    ambient.diffuse = B.Color3.FromHexString('#7f98c4');
-    ambient.groundColor = B.Color3.FromHexString('#1b1726');
+    ambient.intensity = 0.46;
+    ambient.diffuse = B.Color3.FromHexString('#93a9d0');
+    ambient.groundColor = B.Color3.FromHexString('#3b3446');
 
+    /* The direction is right and always was — it has a positive Z, and the
+       anchors face -Z, so it reaches them. See the note in `portraitStage.ts`
+       about the one time that was got wrong. */
     const key = new B.DirectionalLight('key', new B.Vector3(0.42, -0.80, 0.44), scene);
     key.position = new B.Vector3(-3.4, 5.0, -3.6);
-    key.intensity = 2.7;
+    key.intensity = 1.85;
     key.diffuse = B.Color3.FromHexString('#fff0d9');
 
     const rim = new B.DirectionalLight('rim', new B.Vector3(-0.64, -0.36, -0.62), scene);
-    rim.intensity = 1.8;
+    rim.intensity = 1.35;
     rim.diffuse = B.Color3.FromHexString('#8fbcff');
 
     /*
@@ -374,7 +385,7 @@ export async function createStudioStage(
     */
     const fill = new B.DirectionalLight('fill', new B.Vector3(-0.58, -0.30, 0.60), scene);
     fill.intensity = 0.95;
-    fill.diffuse = B.Color3.FromHexString('#bcd4ff');
+    fill.diffuse = B.Color3.FromHexString('#c3d8ff');
     fill.specular = B.Color3.FromHexString('#4a5a72');
 
     const shadows = quality === 'high' ? new B.ShadowGenerator(1024, key) : null;
@@ -409,7 +420,25 @@ export async function createStudioStage(
 
     for (const spec of ANCHOR_FIGURES) {
         const which: StudioAnchor = spec.gender === 'male' ? 'male' : 'female';
-        const rig = buildFigure(B, scene, spec, quality);
+        /*
+          HANDS ON THE DESK, HOLDING A SCRIPT.
+
+          The pose is solved from the desk's own height and the figure's own arm
+          lengths — see `reachPitch`. The two anchors are 1.70 m and 1.80 m, so a
+          pair of hand-tuned angles would put one anchor's palms on the desk and
+          the other's through it.
+
+          `handZ` is expressed in the FIGURE's space, where +Z is the direction
+          they face. The desk is in front of them, so the target's Z is the
+          distance from the anchor plane to the script, and the sign works out
+          because the whole figure is turned by PI.
+        */
+        const rig = buildFigure(B, scene, spec, quality, {
+            pose: 'desk',
+            // A little above the slab: hands rest ON paper, not inside it.
+            handY: DESK_TOP_Y + 0.105,
+            handZ: ANCHOR_Z - SCRIPT_Z,
+        });
         // Male screen-right, female screen-left. See RIGHT_X.
         rig.root.position.set((which === 'male' ? RIGHT_X : -RIGHT_X) * ANCHOR_X, 0, ANCHOR_Z);
         // Facing the camera, and angled a few degrees inward so the two read as
@@ -486,11 +515,45 @@ export async function createStudioStage(
               targets swap.
             */
             const other = which === 'male' ? seats.female : seats.male;
-            const target = talking || !speaking
+            let target = talking || !speaking
                 ? camera.position
                 : (other
                     ? other.rig.root.position.add(new B.Vector3(0, 1.45, 0))
                     : camera.position);
+
+            /*
+              ============================================================
+              DOWN TO THE PAGE, THEN UP TO THE LENS
+              ============================================================
+
+              A presenter reads the top of a story off the script in front of
+              them and then delivers it to camera. They do not begin a sentence
+              already staring down the barrel — that is the one thing that made
+              the anchors read as animated mannequins even once they were looking
+              at the camera at all.
+
+              `scriptGlance` (in `figures.ts`, so it is checkable) is the weight:
+              1 on the page at the start of a line, easing to 0 by
+              `SCRIPT_GLANCE_SECONDS`, with an occasional shallow dip afterwards.
+              The target is then LERPED between the script and the camera rather
+              than switched, because a head that snaps between two points is
+              worse than one that never moves.
+
+              The script's coordinates come from `layout.ts` — the same constants
+              the set uses to place the sheet, so the eyes cannot land next to
+              the paper instead of on it.
+            */
+            if (talking) {
+                const weight = scriptGlance(clock - startedAt, energy);
+                if (weight > 0.001) {
+                    const page = new B.Vector3(
+                        (which === 'male' ? RIGHT_X : -RIGHT_X) * SCRIPT_X,
+                        SCRIPT_Y,
+                        SCRIPT_Z,
+                    );
+                    target = B.Vector3.Lerp(target, page, weight);
+                }
+            }
 
             seat.rig.update({
                 time: clock,

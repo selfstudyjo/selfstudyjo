@@ -21,18 +21,34 @@
  * ============================================================
  *
  *   camera            (0, 1.385, -2.35), looking level at (0, 1.385, 1.2)
- *   fov               1.00 rad, HORIZONTAL-fixed  ->  tan(half) = 0.5463
- *   aspect            1428 / 788 = 1.812, so tan(halfV) = 0.5463 / 1.812 = 0.3015
+ *   fov               0.86 rad, HORIZONTAL-fixed  ->  tan(half) = 0.4577
+ *   aspect            1428 / 788 = 1.812, so tan(halfV) = 0.4577 / 1.812 = 0.2526
  *   anchor plane      z = 0.5, so 2.85 m from the lens
- *   half-width there  2.85 * 0.5463 = 1.557 m
- *   half-height there 2.85 * 0.3015 = 0.859 m
+ *   half-width there  2.85 * 0.4577 = 1.305 m
+ *   half-height there 2.85 * 0.2526 = 0.720 m
  *
  * Which fixes the composition rather than leaving it to be nudged:
  *
- *   the desk edge    y = 1.06 at z = -0.15 lands 75% down the frame
- *   the heads        y ~ 1.68 at z = 0.5  lands 33% down, with 28% headroom
- *   the anchors      x = +-0.86 is 55% of half-width, so 22.4% and 77.6% across
- *   the video wall   1.9 m at z = 3.05 spans 36% to 64% — between them
+ *   the desk edge    y = 1.06 at z = -0.15 lands 80% down the frame
+ *   the heads        y ~ 1.68 at z = 0.5  lands 29% down, at 16% of frame height
+ *   the anchors      x = +-0.80 is 61% of half-width, so 19.3% and 80.7% across
+ *   the video wall   1.9 m at z = 3.05 spans 31% to 69% — between them
+ *
+ * ============================================================
+ * THE LENS CAME IN FROM 1.00 TO 0.86, AND WHY
+ * ============================================================
+ *
+ * 1.00 rad is a 55-degree horizontal field, which is a wide lens. On a set this
+ * size it put the two presenters' heads at 13% of the frame height with a metre
+ * and a half of cyclorama between them, and about a fifth of the picture was
+ * floor. Nothing in it was WRONG — the numbers all landed where this file said
+ * they would — and it read as a wide shot of a big empty room with two small
+ * people in it, which is not how a bulletin is framed. A gallery cuts to a
+ * two-shot at something nearer a 45-degree field.
+ *
+ * Everything else in the set followed on its own, which is the property this
+ * file exists for: the desk moved down the frame, the floor strip halved, and
+ * the DOM name plates re-derived their own positions from `plateFraction`.
  *
  * The camera looks LEVEL rather than tilted down. A tilt would be more
  * flattering and it costs the one property this file exists for: with any
@@ -48,7 +64,7 @@
  */
 
 /** Where the two anchors stand, either side of the centre line, in metres. */
-export const ANCHOR_X = 0.86;
+export const ANCHOR_X = 0.80;
 
 /** Their plane. The desk is in front of it and the video wall behind. */
 export const ANCHOR_Z = 0.5;
@@ -72,7 +88,7 @@ export const WALL_H = WALL_W * 9 / 16;
 /** The camera, spelled out so the set and the shot cannot disagree. */
 export const CAMERA_Y = 1.385;
 export const CAMERA_Z = -2.35;
-export const CAMERA_FOV = 1.00;
+export const CAMERA_FOV = 0.86;
 
 /** Half the visible width at the anchor plane. See the header. */
 export const HALF_WIDTH = (ANCHOR_Z - CAMERA_Z) * Math.tan(CAMERA_FOV / 2);
@@ -95,3 +111,21 @@ export const PLATE_X: Record<StudioAnchorId, number> = {
     female: plateFraction(-ANCHOR_X),
     male: plateFraction(ANCHOR_X),
 };
+
+/**
+ * The script each anchor holds on the desk.
+ *
+ * `DESK_TOP_Y` plus the thickness of the desk slab is where a sheet of paper
+ * lies, and the anchors' hands are solved to that height — see `reachPitch` in
+ * `figures.ts`. The Z is in FRONT of the anchor plane, i.e. between them and the
+ * camera, because that is where a desk is.
+ *
+ * Written down here rather than in `setPieces.ts` because two files need to
+ * agree about it exactly: the set draws the sheet and the stage aims the
+ * presenters' eyes at it. A second copy of this number is a presenter looking at
+ * a point next to their script.
+ */
+export const SCRIPT_Y = DESK_TOP_Y + 0.075;
+export const SCRIPT_Z = 0.16;
+/** How far out from the centre line each anchor's script lies. */
+export const SCRIPT_X = ANCHOR_X * 0.86;

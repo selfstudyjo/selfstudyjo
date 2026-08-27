@@ -59,12 +59,10 @@ import {
     type AnchorId, type LanguageCode, type Segment, type VoiceLike,
 } from '@/components/newscast/newscastEngine';
 import {
-    IDENTITY_RATIO, MALE_LOUDNESS_MAKEUP, TARGET_RMS,
-    canShape, normalizeLevel, shapeRatio, timeScale,
+    IDENTITY_RATIO,
+    canShape, shapeRatio, timeScale,
 } from '@/components/newscast/voiceShaper';
-import {
-    COMPRESSOR_RATIO, COMPRESSOR_THRESHOLD_DB, VOICE_MAKEUP,
-} from '@/utils/speechAudio';
+import { createVoiceChain, prepareVoice, type VoiceChain } from '@/utils/speechAudio';
 import {
     ApiError,
 } from '@/services/api';
@@ -327,8 +325,7 @@ let shapedSource: AudioBufferSourceNode | null = null;
  *    which is the difference between good lip movement and a mouth that closes
  *    in the gaps between words because there genuinely is no audio in them.
  */
-let voiceInput: AudioNode | null = null;
-let voiceAnalyser: AnalyserNode | null = null;
+let voiceChain: VoiceChain | null = null;
 let voiceProbe: Float32Array | null = null;
 /**
  * Reshaped audio, keyed by clip and ratio.
@@ -827,30 +824,23 @@ function ensureAudioContext(): AudioContext | null {
     if (!Ctor) return null;
     audioContext = new Ctor() as AudioContext;
 
-    const compressor = audioContext.createDynamicsCompressor();
-    compressor.threshold.value = COMPRESSOR_THRESHOLD_DB;
-    compressor.knee.value = 10;
-    compressor.ratio.value = COMPRESSOR_RATIO;
-    // Fast enough to catch a plosive, slow enough not to chop the front off a
-    // word; the release is long enough that it does not breathe between
-    // syllables, which is the artefact that sounds like a bad compressor.
-    compressor.attack.value = 0.004;
-    compressor.release.value = 0.18;
+    /*
+      THE CHAIN IS `speechAudio.ts`'s, NOT A SECOND COPY OF IT.
 
-    const makeup = audioContext.createGain();
-    makeup.gain.value = VOICE_MAKEUP;
+      This function used to build its own compressor, its own makeup gain and its
+      own analyser — the same nodes with the same numbers as `createSpeechAudio`,
+      because the Newscast cannot use `SpeechAudio.play`: it suspends the context
+      to pause, it prefetches the next line while this one is playing, and its
+      `onended` advances the running order.
 
-    voiceAnalyser = audioContext.createAnalyser();
-    // 1024 is ~21 ms at 48 kHz — one reading per frame, over about the shortest
-    // span in which a mouth position means anything.
-    voiceAnalyser.fftSize = 1024;
-    voiceAnalyser.smoothingTimeConstant = 0.4;
-    voiceProbe = new Float32Array(voiceAnalyser.fftSize);
-
-    compressor.connect(makeup);
-    makeup.connect(voiceAnalyser);
-    voiceAnalyser.connect(audioContext.destination);
-    voiceInput = compressor;
+      Two copies of an audio graph is two places for the same defect, and that is
+      exactly what happened: both were handing a 0.97-peak buffer to a 3.4x
+      makeup gain across a compressor with a 4 ms attack, i.e. clipping the front
+      of every stressed consonant. One was going to get fixed. Working rule 10 in
+      a single repo — the same argument, one directory apart.
+    */
+    voiceChain = createVoiceChain(audioContext);
+    voiceProbe = new Float32Array(voiceChain.analyser.fftSize);
 
     return audioContext;
 }
@@ -873,8 +863,8 @@ function trackEnergy(live: boolean) {
     // `figures.ts` carries the movement.
     if (!webAudioReady.value) { anchorEnergy.value = 0.7; return; }
     energyTimer = window.setInterval(() => {
-        if (!voiceAnalyser || !voiceProbe || !shapedSource) { anchorEnergy.value = 0; return; }
-        voiceAnalyser.getFloatTimeDomainData(voiceProbe as Float32Array<ArrayBuffer>);
+        if (!voiceChain || !voiceProbe || !shapedSource) { anchorEnergy.value = 0; return; }
+        voiceChain.analyser.getFloatTimeDomainData(voiceProbe as Float32Array<ArrayBuffer>);
         let total = 0;
         for (let i = 0; i < voiceProbe.length; i++) total += voiceProbe[i] * voiceProbe[i];
         anchorEnergy.value = Math.max(0, Math.min(1, Math.sqrt(total / voiceProbe.length) / 0.34));
@@ -924,10 +914,17 @@ async function speakDecoded(clip: SpeechClip, ratio: number, mine: number) {
         const shaped = ratio === IDENTITY_RATIO
             ? Float32Array.from(decoded.getChannelData(0))
             : timeScale(decoded.getChannelData(0), ratio, decoded.sampleRate);
-        // A reshaped voice is aimed higher, because the same RMS an octave
-        // lower reads as quieter. See MALE_LOUDNESS_MAKEUP.
-        normalizeLevel(shaped, ratio === IDENTITY_RATIO
-            ? TARGET_RMS : TARGET_RMS * MALE_LOUDNESS_MAKEUP);
+        /*
+          Tilt, level, compress, limit — one function, shared with the two rooms.
+
+          It used to be `normalizeLevel` here and a compressor plus a makeup gain
+          on the graph, in two copies. See `prepareVoice`: the compression is on
+          the samples now, because a `DynamicsCompressorNode` has an attack and
+          no look-ahead, so the front of every plosive was reaching the speakers
+          at the full makeup gain and clipping twelve decibels into the ceiling.
+          That is the "a lot of noise" half of the Arabic male report.
+        */
+        prepareVoice(shaped, decoded.sampleRate, ratio);
         buffer = context.createBuffer(1, shaped.length, decoded.sampleRate);
         buffer.getChannelData(0).set(shaped);
         // Decoded PCM is ~25x the size of the MP3 it came from, and a bulletin
@@ -944,9 +941,9 @@ async function speakDecoded(clip: SpeechClip, ratio: number, mine: number) {
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.playbackRate.value = ratio;
-    // Through the compressor, never straight at the destination: that is where
-    // the last ten decibels come from. See `ensureAudioContext`.
-    source.connect(voiceInput || context.destination);
+    // Through the chain rather than straight at the destination: that is where
+    // the analyser the 3D mouths move on lives. See `createVoiceChain`.
+    source.connect(voiceChain?.input || context.destination);
     source.onended = () => {
         trackEnergy(false);
         if (mine !== generation || status.value !== 'playing') return;
@@ -1447,6 +1444,10 @@ onBeforeUnmount(() => {
     shapedBuffers.clear();
     void audioContext?.close();
     audioContext = null;
+    // Every node in it belongs to the context that has just closed; holding the
+    // chain would keep the whole graph alive behind a context nothing can use.
+    voiceChain = null;
+    voiceProbe = null;
     bedAudio = null;
     voiceAudio = null;
 });

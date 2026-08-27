@@ -58,6 +58,16 @@ const SHOTS = [
     { name: 'head-anchor-female', query: 'who=anchorFemale&zoom=head', width: 620, height: 700 },
     { name: 'wide-james', query: 'who=james&zoom=wide', width: 620, height: 500 },
     { name: 'silent-mouth', query: 'who=david&zoom=head&speaking=0&energy=0', width: 620, height: 700 },
+    /*
+      The newscast SET, which had no preview at all until now — the only way to
+      see it was a live bulletin. Three shots, because the three states are
+      different pictures: nobody reading, the male anchor reading (he is
+      screen-right, which is the one thing about the layout that is easy to get
+      backwards), and the female anchor reading.
+    */
+    { name: 'studio-idle', query: 'stage=studio&speaking=0', width: 1280, height: 900 },
+    { name: 'studio-male', query: 'stage=studio&speaking=1&energy=0.8', width: 1280, height: 900 },
+    { name: 'studio-female', query: 'stage=studio&speaking=1&reading=female&energy=0.8', width: 1280, height: 900 },
 ];
 
 const dist = resolve('tools/cast-preview/dist');
