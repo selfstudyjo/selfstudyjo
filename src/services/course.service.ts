@@ -2,6 +2,7 @@ import { apiService } from './api';
 import { serviceRegistry } from './config';
 import { normalizePaginatedResponse, type PaginatedResponse } from '@/utils/api-utils';
 import type { TranslationMap } from '@/i18n/records';
+import { orderLessons } from '@/utils/lessonOrder';
 
 export interface Course {
     /**
@@ -281,9 +282,18 @@ class CourseService {
         dlog(`GET ${url}/lessons/?course_id=${courseId}`);
         const response = await apiService.get<any>(url, `/lessons/?course_id=${courseId}`);
         const list = normalizePaginatedResponse<Lesson>(response).results;
-        dlog(`Got ${list.length} lessons for course=${courseId}`,
-             list.map(l => ({ external_lesson_id: l.external_lesson_id, title: l.title, course: (l as any).course || l.course_external_id })));
-        return list;
+        // ORDERED HERE, not in the views. App 19 answers in its store's own
+        // insertion order, which for seventeen of the twenty-five courses is
+        // reversed or shuffled -- Big Data starts at Module 31, Django
+        // e-commerce starts at "Shipping Address and Coupon". Both the course
+        // page and the lesson page read this one method, and the lesson page
+        // derives prev/next and its "3 of 16" counter by INDEX into it, so
+        // sorting once here is what makes Next mean forwards. See
+        // src/utils/lessonOrder.ts for why the title's number is the signal.
+        const ordered = orderLessons(list);
+        dlog(`Got ${ordered.length} lessons for course=${courseId}`,
+             ordered.map(l => ({ external_lesson_id: l.external_lesson_id, title: l.title, course: (l as any).course || l.course_external_id })));
+        return ordered;
     }
 
     async getLesson(lessonId: string, baseUrl?: string): Promise<Lesson> {
