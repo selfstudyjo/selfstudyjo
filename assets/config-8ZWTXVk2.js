@@ -1,1 +1,0 @@
-import{F as e}from"./index-yatuVeIZ.js";export{e as serviceRegistry};
