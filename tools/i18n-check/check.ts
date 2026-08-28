@@ -70,7 +70,7 @@ import zhStudio from '../../src/i18n/messages/zh/studio';
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
-import { RAIL_KEYS } from '../../src/utils/iptvEngine';
+import { RAIL_KEYS, TAB_KEYS } from '../../src/utils/iptvEngine';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 
 /* ------------------------------------------------------------------ *
@@ -577,6 +577,10 @@ const dynamicStrings = new Set<string>([
     // `iptvEngine.ts` rather than written out, so a reworded heading cannot
     // silently revert to English in both languages.
     ...RAIL_KEYS,
+    // And its tab labels, reached as `$t(tab.label)` in the tab strip. Same
+    // arrangement, same reason; `TAB_KEYS` is itself derived from `TV_TABS`, so
+    // there is no second copy of the words anywhere.
+    ...TAB_KEYS,
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {
@@ -588,9 +592,9 @@ for (const [id, catalogue] of CATALOGUES) {
 }
 
 for (const [id, catalogue] of CATALOGUES) {
-    const missing = [...RAIL_KEYS]
+    const missing = [...RAIL_KEYS, ...TAB_KEYS]
         .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
-    ok(`${id}: every Self Study TV rail heading is translated`,
+    ok(`${id}: every Self Study TV rail heading and tab is translated`,
         missing.length === 0,
         missing.length ? `${missing.length} missing: ${missing.join(' · ')}` : '');
 }

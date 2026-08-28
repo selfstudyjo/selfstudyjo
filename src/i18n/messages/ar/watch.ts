@@ -61,6 +61,34 @@ const watch: Catalogue = {
     // context is the only thing that decides it.
     'Season {v0}': 'الموسم {v0}',
 
+    /* -- the tab strip --------------------------------------------------- */
+    // Reached as `$t(tab.label)` from `iptvEngine.TV_TABS`, so the literal never
+    // appears in a template and `check:i18n` verifies these against `TAB_KEYS`
+    // rather than by scanning. `Films` and `Series` above are two of the four -
+    // the same words in the same context, translated once.
+    'Browse': 'استعراض',
+    // The broadcast sense, `مباشر`, never `حيّ` (alive). Shorter than
+    // `قنوات مباشرة` because it is a tab beside three other tabs on a 320px bar.
+    'Live TV': 'بثّ مباشر',
+
+    /* -- the hero and the metadata chips --------------------------------- */
+    'Featured': 'مميّز',
+    // The broadcasting idiom, which Arabic shares with English exactly.
+    'On air': 'على الهواء',
+    'All genres': 'كل الأنواع',
+    // A count, not an ordinal: `الموسم {v0}` above is "season number {v0}" and
+    // would be wrong here, where the sentence is "this has N seasons".
+    '1 season': 'موسم واحد',
+    '{v0} seasons': '{v0} مواسم',
+    '1 episode': 'حلقة واحدة',
+    '{v0} episodes': '{v0} حلقات',
+
+    /* -- the shelves and the theatre ------------------------------------- */
+    'Every film in the library.': 'كل الأفلام في المكتبة.',
+    'Every series in the library, season by season.':
+        'كل المسلسلات في المكتبة، موسماً بموسم.',
+    'Pick a channel to start watching.': 'اختر قناة لبدء المشاهدة.',
+
     /* -- rails ---------------------------------------------------------- */
     // Reached as `$t(rail.key)` from `iptvEngine.buildRails`, which is why these
     // read as headings rather than as sentences.

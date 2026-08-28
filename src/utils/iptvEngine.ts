@@ -138,6 +138,92 @@ export function genresOf(movies: readonly Movie[], series: readonly Series[],
  */
 export const RAIL_KEYS = ['New this week', 'Films', 'Series'] as const;
 
+/* ------------------------------------------------------------------ *
+ * The tabs
+ * ------------------------------------------------------------------ */
+
+/** Which of the four top-level pages of Self Study TV is open. */
+export type TabId = 'home' | 'movies' | 'series' | 'live';
+
+export interface TvTab {
+    id: TabId;
+    /** A translation key, spent by the tab strip as `$t(tab.label)`. */
+    label: string;
+    /** The route. Every one of these is a REAL path — see `tabFor` below. */
+    to: string;
+}
+
+/**
+ * The four tabs, in reading order.
+ *
+ * A TAB IS A ROUTE, NEVER A PIECE OF COMPONENT STATE
+ * =================================================
+ *
+ * The Labs page has already paid for the other arrangement: its three sandboxes
+ * were an `activeTab` ref, so a student two clicks into the Python compiler had
+ * no way to see that a Linux terminal existed, could not link a classmate to it,
+ * and lost their place on reload. The rule that came out of it — if it deserves
+ * to be navigated to, it needs a route — is why `to` is a path here and why the
+ * strip is `router-link`s rather than buttons. Middle-click works, the browser's
+ * Back button works, and the sidebar can light the right row.
+ *
+ * `label` is a key rather than a sentence for the same reason `RAIL_KEYS` are:
+ * the strip spends it as `$t(tab.label)`, which is a dynamic key no literal scan
+ * can see, so `check:i18n` imports `TAB_KEYS` and verifies them positively
+ * instead. Two of the four deliberately reuse a rail heading's key — `Films` and
+ * `Series` are the same words in the same context, and a second entry for each
+ * would be two chances for one of them to be translated differently from the
+ * other on the same screen.
+ */
+export const TV_TABS: readonly TvTab[] = [
+    { id: 'home', label: 'Browse', to: '/tv' },
+    { id: 'movies', label: 'Films', to: '/tv/movies' },
+    { id: 'series', label: 'Series', to: '/tv/series' },
+    { id: 'live', label: 'Live TV', to: '/tv/live' },
+];
+
+/**
+ * The tab labels, DERIVED rather than written out a second time.
+ *
+ * `check:i18n` imports this. A hand-written copy is what goes stale the day
+ * somebody rewords a tab, and the symptom would be one tab silently reverting to
+ * English in both languages while the other three translate.
+ */
+export const TAB_KEYS: readonly string[] = TV_TABS.map(tab => tab.label);
+
+/**
+ * Which tab a path belongs to.
+ *
+ * The interesting cases are the ones that are NOT a tab's own path, because
+ * those are where a tab strip normally goes blank and reads as broken:
+ *
+ *  * `/tv/series/<id>` — a series' own page keeps **Series** lit. It is reached
+ *    from that tab and Back returns to it, so unlighting the strip there would
+ *    tell the reader they had left the section they are plainly still in.
+ *  * `/tv/watch/episode/<series>/<id>` — the player keeps **Browse** lit rather
+ *    than guessing at Series: it is reachable from every tab (a film from the
+ *    Films grid, an episode from a series page, a resume tile from Browse), so
+ *    any more specific answer is wrong more often than it is right.
+ *  * anything else under `/tv` — **Browse**, which is the section's home.
+ *
+ * Matching is SEGMENT-AWARE. A bare `startsWith` gets `/tv/series` and
+ * `/tv/seriesfoo` wrong, which is the same trap `isUnder` in `appNav.ts` exists
+ * for; the query string and the trailing slash are both stripped first, since
+ * `/tv/live?channel=x` is the live tab and a strip that goes blank the moment
+ * somebody picks a channel is worse than no strip.
+ */
+export function tabFor(path: string): TabId {
+    const clean = String(path || '').split(/[?#]/)[0].replace(/\/+$/, '');
+    const parts = clean.split('/').filter(Boolean);
+    // ['tv', ...rest]
+    if (parts[0] !== 'tv') return 'home';
+    const head = parts[1] || '';
+    if (head === 'live') return 'live';
+    if (head === 'series') return 'series';
+    if (head === 'movies') return 'movies';
+    return 'home';
+}
+
 /**
  * The home rails.
  *

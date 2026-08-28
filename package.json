@@ -42,6 +42,8 @@
     "i18n:logical": "node tools/i18n-wrap/logical.mjs",
     "i18n:where": "node tools/i18n-wrap/where.mjs",
     "audit:rtl": "node tools/rtl-audit/audit.mjs",
+    "preview:iptv": "vite --config tools/iptv-preview/vite.config.ts",
+    "build:iptv-preview": "vite build --config tools/iptv-preview/vite.config.ts",
     "preview:cast": "vite --config tools/cast-preview/vite.config.ts",
     "build:cast-preview": "vite build --config tools/cast-preview/vite.config.ts"
   },

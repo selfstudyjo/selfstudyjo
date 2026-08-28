@@ -356,6 +356,29 @@ const routes = [
                 meta: { title: 'Self Study TV', requiresAuth: true }
             },
             {
+                /*
+                  The Films and Series tabs, on the Labs precedent.
+
+                  A TAB THAT ONLY EXISTS IN COMPONENT STATE CANNOT BE NAVIGATED
+                  TO. The Labs page proved it: its three sandboxes were an
+                  `activeTab` ref, so a student two clicks into the Python
+                  compiler had no way to see the Linux terminal existed, could
+                  not link a classmate to it, and lost their place on reload.
+                  So the tab is a route, exactly as `/labs/:tab(sql|linux|python)`
+                  is — one component, the segment says which shelf it draws.
+
+                  The regex matters twice over. It excludes `live` and `watch`,
+                  which are their own pages; and it means `/tv/series` (the whole
+                  shelf) and `/tv/series/:id` (one series) can coexist, since
+                  they differ in segment count and Vue Router ranks a static
+                  segment above a parameter.
+                */
+                path: 'tv/:tab(movies|series)',
+                name: 'IptvBrowse',
+                component: Iptv,
+                meta: { title: 'Self Study TV', requiresAuth: true }
+            },
+            {
                 path: 'tv/series/:id',
                 name: 'IptvSeries',
                 component: IptvSeries,

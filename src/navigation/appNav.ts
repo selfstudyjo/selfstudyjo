@@ -407,7 +407,17 @@ const NEWSCAST = NEWSCAST_ENTRY;
   `appNav.ts` exists for - the alternative is that somebody two clicks into a
   series cannot see that live channels exist.
 */
-const TV: NavEntry = { to: '/tv', text: 'Self Study TV', icon: 'tv', keywords: 'iptv television watch films movies series episodes seasons stream video entertainment free' };
+const TV: NavEntry = { to: '/tv', text: 'Self Study TV', icon: 'tv', keywords: 'iptv television watch films movies series episodes seasons stream video entertainment free browse home' };
+/*
+  The Films and Series shelves are ROUTES (`/tv/movies`, `/tv/series`), which is
+  what lets them be sidebar entries at all - the rule the Labs page proved, where
+  three sandboxes held in an `activeTab` ref could only ever be offered as one
+  entry called "Labs". They are the same four destinations as the tab strip on the
+  page itself, so somebody who arrived from the platform menu and somebody who
+  arrived from inside the application are offered the same set.
+*/
+const TV_MOVIES: NavEntry = { to: '/tv/movies', text: 'Films', icon: 'play', keywords: 'iptv films movies cinema watch stream video library' };
+const TV_SERIES: NavEntry = { to: '/tv/series', text: 'Series', icon: 'layers', keywords: 'iptv series shows seasons episodes television watch stream binge' };
 const TV_LIVE: NavEntry = { to: '/tv/live', text: 'Live channels', icon: 'live', keywords: 'iptv live broadcast channels news sport hls m3u8 stream tv' };
 
 // -- Proctoring ----------------------------------------------------------
@@ -636,14 +646,20 @@ export const APP_SECTIONS: AppSection[] = [
         subtitle: 'Films, series and live channels',
         icon: 'tv',
         /*
-          `/tv/watch/...` and `/tv/series/...` are in the match list and in no
+          `/tv/watch/...` and `/tv/series/<id>` are in the match list and in no
           `items` list, exactly as `/take-exam` and `/course/:id` are: they are
           pages somebody arrives at from inside the application, so the sidebar
           has to stay put on them without offering them as destinations.
+
+          `/tv/series` WITHOUT an id is a different thing and IS an item: it is
+          the whole shelf, one of the four tabs. The two coexist because they
+          differ in segment count and Vue Router ranks a static segment above a
+          parameter - and `isUnder` here is segment-aware for the same reason, so
+          neither swallows the other.
         */
         match: ['/tv'],
         home: '/tv',
-        items: [TV, TV_LIVE],
+        items: [TV, TV_MOVIES, TV_SERIES, TV_LIVE],
         /*
           Everything here needs an account, which is the same level this section
           is at - so nothing in the way onward vanishes for the reader who got

@@ -1,8 +1,25 @@
 <template>
   <div class="iptv-watch">
+    <!--
+      The same strip as every other Self Study TV page. `tabFor` lights BROWSE
+      here rather than guessing at Films or Series: the player is reachable from
+      all three (a film from the Films grid, an episode from a series page, a
+      resume tile from Browse), so any more specific answer is wrong more often
+      than it is right. Getting back to the thing you came from is what the
+      breadcrumb below is for.
+    -->
+    <div class="iptv-bar">
+      <IptvTabs />
+    </div>
+
     <header class="iptv-watch__head">
-      <router-link class="iptv-btn iptv-btn--ghost" :to="backTo">
-        <span aria-hidden="true">←</span> {{ $t('Back') }}
+      <router-link class="iptv-crumb" :to="backTo">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+               stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+               stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+        </span>
+        {{ $t('Back') }}
       </router-link>
       <div class="iptv-watch__titles">
         <h1>{{ title }}</h1>
@@ -75,9 +92,18 @@
       </button>
     </section>
 
-    <section v-if="isEpisode && episodes.length" class="iptv-rail">
-      <h2 class="iptv-rail__title">{{ $t('Episodes') }}</h2>
-      <div class="iptv-rail__track">
+    <section v-if="isEpisode && episodes.length" class="iptv-shelf">
+      <div class="iptv-shelf__head">
+        <h2 class="iptv-shelf__title">
+          {{ $t('Episodes') }}
+          <span class="iptv-shelf__count">{{ $n(episodes.length) }}</span>
+        </h2>
+        <router-link v-if="series" class="iptv-shelf__more"
+                     :to="'/tv/series/' + series.id">
+          {{ $t('See all') }}
+        </router-link>
+      </div>
+      <div class="iptv-shelf__track">
         <IptvCard v-for="row in episodes" :key="row.id" :record="row"
                   kind="episode"
                   :progress="progressFor(row.id)"
@@ -115,6 +141,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import IptvCard from '@/components/iptv/IptvCard.vue';
+import IptvTabs from '@/components/iptv/IptvTabs.vue';
 import {
     iptvService, isUnreachable, type Episode, type Movie, type Series,
 } from '@/services/iptv.service';
@@ -164,7 +191,8 @@ const description = computed(() => {
 });
 
 const backTo = computed(() =>
-    isEpisode.value && series.value ? `/tv/series/${series.value.id}` : '/tv');
+    isEpisode.value && series.value
+        ? '/tv/series/' + series.value.id : '/tv');
 
 const next = computed(() =>
     isEpisode.value && episode.value
@@ -326,7 +354,7 @@ function onVideoError() {
 
 function goTo(target: Episode | null) {
     if (!target || !series.value) return;
-    router.push(`/tv/watch/episode/${series.value.id}/${target.id}`);
+    router.push('/tv/watch/episode/' + series.value.id + '/' + target.id);
 }
 
 /* A route change within this component (Next episode) has to reload. */

@@ -55,6 +55,33 @@ const watch: Catalogue = {
     // `季` is the television counter; `季节` would be a time of year.
     'Season {v0}': '第 {v0} 季',
 
+    /* -- the tab strip --------------------------------------------------- */
+    // Reached as `$t(tab.label)` from `iptvEngine.TV_TABS`, so the literal never
+    // appears in a template and `check:i18n` verifies these against `TAB_KEYS`
+    // rather than by scanning. `Films` and `Series` above are two of the four -
+    // the same words in the same context, translated once.
+    'Browse': '浏览',
+    // `直播` is the broadcast sense and is what every Chinese streaming app puts
+    // on this tab. Shorter than `直播频道` because it is a tab beside three other
+    // tabs on a 320px bar.
+    'Live TV': '直播',
+
+    /* -- the hero and the metadata chips --------------------------------- */
+    'Featured': '精选',
+    'On air': '直播中',
+    'All genres': '全部类型',
+    // A count, not an ordinal: `第 {v0} 季` above is "season number {v0}" and
+    // would be wrong here, where the sentence is "this has N seasons".
+    '1 season': '1 季',
+    '{v0} seasons': '{v0} 季',
+    '1 episode': '1 集',
+    '{v0} episodes': '{v0} 集',
+
+    /* -- the shelves and the theatre ------------------------------------- */
+    'Every film in the library.': '媒体库中的全部电影。',
+    'Every series in the library, season by season.': '媒体库中的全部剧集，按季排列。',
+    'Pick a channel to start watching.': '选择一个频道开始观看。',
+
     /* -- rails ---------------------------------------------------------- */
     // Reached as `$t(rail.key)` from `iptvEngine.buildRails`, so these are
     // headings rather than sentences.

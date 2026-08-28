@@ -1,15 +1,44 @@
 /* ============================================================
    Self Study TV (app 38).
 
-   GLOBALLY LOADED, SO EVERY SELECTOR IS `iptv-` PREFIXED
+   WHAT WAS WRONG WITH THE FIRST VERSION
+   ------------------------------------------------------------
+   Reported as "mixed blocks and text". It was, and the cause was not the
+   individual rules - it was that nothing on the page had a CONTAINER. A poster
+   sat in a 1px-bordered box, its title floated underneath in the page's own ink,
+   the next poster's title floated under that, and four shelves of it read as a
+   wall of text with pictures loose in it. A television interface is a grid of
+   OBJECTS, and an object needs an edge.
+
+   So the three things this rewrite does, in the order they matter:
+
+     1. **Every tile is a panel.** Poster, title and meta are one surface with
+        one radius and one shadow - `.iptv-card__lines` is a real box under the
+        artwork rather than two spans in the flow. That single change is most of
+        what "mixed blocks and text" was.
+     2. **One bar owns navigation.** Tabs and search in a sticky strip, so the
+        page has a top edge instead of starting mid-content, and so every one of
+        the four pages begins the same way.
+     3. **Depth, in one direction.** A shelf heading, a tile, a hero and the
+        theatre all sit on the same elevation ladder: page -> panel -> raised
+        panel. Nothing here is a second competing set of borders.
+
+   GLOBALLY LOADED, SO EVERY SELECTOR IS `iptv-` PREFIXED AND ANCHORED
    ------------------------------------------------------------
    Imported from a `<script>` block rather than through `<style scoped>`, because
-   the card is its own component and a scoped sheet would not reach it. That
-   makes this file global in production, where every page stylesheet is
-   concatenated into one always-present file - so a bare selector here would
-   apply to all ~57 routes. `npm run check:cssleaks` gates that, and this file is
-   on the GATED list from its first commit: `iptv-` is a namespace no other view
-   writes, and debt is only tolerable where it predates the check.
+   the card and the tab strip are their own components and a scoped sheet would
+   not reach them. That makes this file global in production, where every page
+   stylesheet is concatenated into one always-present file - so a bare selector
+   here would apply to all ~57 routes. `npm run check:cssleaks` gates that, and
+   this file is on the GATED list from its first commit.
+
+   The rule that check applies is worth stating, because it decides how this file
+   is written: a selector whose leading class is used by TWO OR MORE views must
+   name a page root. `.iptv-page` and `.iptv-watch` are the two roots here
+   (`IptvLive.vue`'s root is `iptv-page iptv-live`, which the check's single-class
+   regex does not register, so `.iptv-page` is what reaches it). Anything shared
+   between the hub, the series page, the player and the live page is therefore
+   written twice - once under each root - and that duplication is deliberate.
 
    NOT ONE COLOUR LITERAL
    ------------------------------------------------------------
@@ -29,21 +58,224 @@
 
 .iptv-page,
 .iptv-watch {
-  --iptv-radius: 14px;
-  --iptv-radius-sm: 10px;
+  --iptv-radius: 16px;
+  --iptv-radius-sm: 12px;
+  --iptv-radius-xs: 8px;
   --iptv-card: clamp(8.5rem, 14vw, 12rem);
+  /* One elevation ladder for the whole feature. A tile, a shelf heading, the
+     hero and the theatre all draw from these three, so nothing invents a fourth
+     shade of the same idea. */
+  --iptv-panel: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --iptv-panel-raised: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.10);
+  --iptv-line: rgb(var(--sfs-line-rgb, 255 255 255) / 0.10);
+  --iptv-line-strong: rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+  --iptv-shadow: 0 10px 30px -12px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55);
+  --iptv-shadow-lift: 0 18px 44px -14px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.7);
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2.5vw, 1.75rem);
+  gap: clamp(1.25rem, 2.5vw, 2rem);
   padding-block-end: 2rem;
 }
 
-/* ---- headings ------------------------------------------------------ */
+/* ============================================================
+   The bar: tabs and search
+   ============================================================ */
+
+/*
+  Sticky, on the take-exam precedent - `position: sticky; top: 0` with a blurred
+  translucent background, which is what every other sticky header on this
+  platform does. It is deliberately SHORT: a sticky header is not merely "above"
+  the content, it permanently subtracts its own height from the usable viewport,
+  which is how the exam header came to be 43% of a desktop screen.
+*/
+.iptv-page .iptv-bar,
+.iptv-watch .iptv-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--iptv-line);
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: var(--iptv-shadow);
+  /* Its own stacking context, so nothing inside it can paint over the sidebar. */
+  isolation: isolate;
+}
+
+/*
+  Anything a browser might scroll to has to clear the bar, or its first line
+  lands underneath it. Deliberately generous rather than exact: being 20px early
+  is invisible and being 20px late hides a heading.
+*/
+.iptv-page .iptv-shelf,
+.iptv-page .iptv-hero,
+.iptv-page .iptv-head,
+.iptv-watch .iptv-shelf,
+.iptv-watch .iptv-stage { scroll-margin-top: 5rem; }
+
+.iptv-page .iptv-tabs,
+.iptv-watch .iptv-tabs {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  /* A four-tab strip fits everywhere down to 320px only because the labels drop
+     below 420px (see the end of this file). It scrolls rather than wraps in the
+     interim, because a wrapped tab strip changes the bar's height. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+
+.iptv-page .iptv-tabs::-webkit-scrollbar,
+.iptv-watch .iptv-tabs::-webkit-scrollbar { display: none; }
+
+.iptv-page .iptv-tab,
+.iptv-watch .iptv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  color: var(--sfs-text-muted, #94a3b8);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  /* `max()` and not a bare rem: responsive.css scales the root font size, so
+     `2.25rem` measures under the touch minimum on a narrow viewport - the bug
+     the exam pages had, on exactly the devices the rule exists for. */
+  min-height: max(2.25rem, 36px);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.iptv-page .iptv-tab:hover,
+.iptv-watch .iptv-tab:hover {
+  background: var(--iptv-panel);
+  color: var(--sfs-text, #f8fafc);
+}
+
+.iptv-page .iptv-tab.is-on,
+.iptv-watch .iptv-tab.is-on {
+  /* The fill and its ink stated together. Derived alone, the ink is near-black
+     on a deep accent and reads as broken - working rule 12. */
+  background: var(--sfs-accent, #667eea);
+  color: var(--sfs-on-accent, #ffffff);
+  box-shadow: var(--iptv-shadow);
+}
+
+.iptv-page .iptv-tab__icon,
+.iptv-watch .iptv-tab__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.iptv-page .iptv-tab__count,
+.iptv-watch .iptv-tab__count {
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
+  font-size: 0.72rem;
+  font-weight: 700;
+  /* A count is a machine value next to prose: isolate it, or in Arabic the bidi
+     algorithm can move it away from the label it belongs to. */
+  unicode-bidi: isolate;
+}
+
+.iptv-page .iptv-tab.is-on .iptv-tab__count,
+.iptv-watch .iptv-tab.is-on .iptv-tab__count {
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+}
+
+/* ---- search -------------------------------------------------------- */
+.iptv-page .iptv-search {
+  /* Room to grow, but never so much that it pushes the tabs off the row. */
+  flex: 1 1 12rem;
+  max-width: 22rem;
+  /* A flex child defaults to `min-width: auto`, which is the same overflow trap
+     as a bare `1fr` track: a long value pushes the sibling off the row. */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.iptv-page .iptv-search:focus-within {
+  border-color: var(--sfs-accent, #667eea);
+  background: var(--iptv-panel-raised);
+}
+
+.iptv-page .iptv-search__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--sfs-text-muted, #94a3b8);
+}
+
+.iptv-page .iptv-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sfs-text, #f8fafc);
+  /* 16px, because below that iOS zooms the page on focus and never zooms back.
+     The fix is the font size, not `user-scalable=no`, which would take
+     pinch-zoom away from everybody. */
+  font-size: 16px;
+  padding: 0.45rem 0;
+  outline: none;
+}
+
+.iptv-page .iptv-search input::placeholder {
+  color: var(--sfs-text-faint, #64748b);
+}
+
+/* The native `type="search"` clear button is Chrome-only and invisible on a dark
+   field, so it is suppressed and replaced by one that is always there. */
+.iptv-page .iptv-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.iptv-page .iptv-search__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: max(1.75rem, 28px);
+  height: max(1.75rem, 28px);
+  border: 0;
+  border-radius: 999px;
+  background: var(--iptv-panel-raised);
+  color: var(--sfs-text-muted, #94a3b8);
+  cursor: pointer;
+}
+
+.iptv-page .iptv-search__clear:hover {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
+  color: var(--sfs-text, #f8fafc);
+}
+
+/* ============================================================
+   Headings
+   ============================================================ */
 .iptv-page .iptv-head,
 .iptv-watch .iptv-head {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
   align-items: flex-start;
 }
 
@@ -51,6 +283,8 @@
 .iptv-watch .iptv-head h1 {
   margin: 0;
   font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   color: var(--sfs-text, #f8fafc);
 }
 
@@ -60,98 +294,204 @@
   color: var(--sfs-text-muted, #94a3b8);
 }
 
-/* ---- hero ---------------------------------------------------------- */
+/* A back link that is a LINK rather than a button. It used to be
+   `.iptv-btn--ghost`, which gave a secondary navigation aid the same visual
+   weight as Play - the loudest thing on the page competing with the thing the
+   page is for. */
+.iptv-page .iptv-crumb,
+.iptv-watch .iptv-crumb {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.1rem;
+  color: var(--sfs-text-muted, #94a3b8);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  min-height: max(2rem, 32px);
+}
+
+.iptv-page .iptv-crumb:hover,
+.iptv-watch .iptv-crumb:hover { color: var(--sfs-text, #f8fafc); }
+
+.iptv-page .iptv-crumb > span,
+.iptv-watch .iptv-crumb > span { display: inline-flex; }
+
+/* An arrow is a DIRECTION, so it mirrors - unlike a bell or a camera, where
+   mirroring is a wrongness nobody can name. Same rule as `.sfs-flip`. */
+[dir='rtl'] .iptv-page .iptv-crumb > span,
+[dir='rtl'] .iptv-watch .iptv-crumb > span { transform: scaleX(-1); }
+
+/* ============================================================
+   The hero
+   ============================================================ */
 .iptv-page .iptv-hero {
   position: relative;
   border-radius: var(--iptv-radius);
   overflow: hidden;
-  min-height: clamp(15rem, 40vw, 26rem);
+  min-height: clamp(17rem, 42vw, 28rem);
   display: flex;
   align-items: flex-end;
   background-size: cover;
   background-position: center;
-  background-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  background-color: var(--iptv-panel);
+  border: 1px solid var(--iptv-line);
+  box-shadow: var(--iptv-shadow);
   isolation: isolate;
 }
 
-.iptv-page .iptv-hero--compact { min-height: clamp(12rem, 30vw, 20rem); }
+.iptv-page .iptv-hero--compact { min-height: clamp(13rem, 30vw, 21rem); }
+
+.iptv-page .iptv-hero--skeleton {
+  min-height: clamp(17rem, 42vw, 28rem);
+  animation: iptv-pulse 1.4s ease-in-out infinite;
+}
 
 /*
-  The scrim. A ::before rather than a background layer on the hero itself so the
-  inline `background-image` the view sets stays the only thing that declaration
-  owns - a gradient written into the same property would be overwritten by it.
+  The scrim. A separate element rather than a background layer on the hero
+  itself, so the inline `background-image` the view sets stays the only thing
+  that declaration owns - a gradient written into the same property would be
+  overwritten by it.
 */
 .iptv-page .iptv-hero__scrim {
   position: absolute;
   inset: 0;
   z-index: 0;
   /*
-    Bottom-heavy, because the text sits at the bottom. `--sfs-overlay` is
-    semantic and stays dark under a light galaxy, which is what keeps light ink
-    legible here in all ten.
+    THREE LAYERS, and each is doing a different job:
 
-    TWO STACKED LAYERS, not one, and that is the guarantee rather than a
-    flourish. The token is measured against the SPACE behind it
-    (`contrastClaims` → 'ink on overlay'), and on the three light galaxies that
-    composites to a mid-grey where white tops out at 4.8:1. Here the backdrop is
-    an arbitrary photograph, which no token can measure - a bright still would
-    leave a single 0.55-alpha scrim too pale for the title. Two layers roughly
-    double the effective alpha, so the ink has a floor whatever the picture is.
+      1. bottom-heavy, because the text sits at the bottom;
+      2. from the LEADING EDGE, which is the change that makes this read as a
+         television hero rather than a captioned photograph - the title has a
+         quiet field to sit in even where the still is bright behind it;
+      3. a flat wash, as a floor.
+
+    Two of them being enough is not the point. `--sfs-overlay` is measured
+    against the SPACE behind it (`contrastClaims` -> 'ink on overlay'), and on the
+    three light galaxies that composites to a mid-grey where white tops out at
+    4.8:1. Here the backdrop is an arbitrary photograph, which no token can
+    measure - a bright still would leave a single 0.55-alpha scrim too pale for
+    the title. Stacking gives the ink a floor whatever the picture is.
+
+    `to right` and not `to inline-end`: a gradient has no logical keyword, so
+    the RTL correction is at the end of this file.
   */
   background:
     linear-gradient(to top,
                     var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
-                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 22%,
-                    transparent 85%),
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 20%,
+                    transparent 82%),
+    linear-gradient(to right,
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
+                    transparent 72%),
     linear-gradient(to top,
                     var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
-                    transparent 60%);
+                    transparent 55%);
   pointer-events: none;
 }
 
 .iptv-page .iptv-hero__body {
   position: relative;
   z-index: 1;
-  padding: clamp(1rem, 3vw, 2rem);
+  padding: clamp(1.1rem, 3vw, 2.25rem);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.55rem;
   max-width: min(100%, 44rem);
   min-width: 0;
 }
 
-.iptv-page .iptv-hero__back { align-self: flex-start; margin-bottom: 0.3rem; }
+.iptv-page .iptv-hero__eyebrow {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
 
 .iptv-page .iptv-hero__kind {
-  align-self: flex-start;
-  padding: 0.15rem 0.55rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   background: var(--sfs-accent, #667eea);
   color: var(--sfs-on-accent, #ffffff);
 }
 
+.iptv-page .iptv-hero__featured {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sfs-on-overlay-muted, #cbd5e1);
+}
+
 .iptv-page .iptv-hero__title {
   margin: 0;
-  font-size: clamp(1.6rem, 5vw, 3rem);
-  line-height: 1.1;
+  font-size: clamp(1.7rem, 5.2vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   /* Light ink over the scrim, which is dark in every galaxy. */
   color: var(--sfs-on-overlay, #f8fafc);
   overflow-wrap: anywhere;
+  /* A record's own title, in whichever of three languages it carries. */
+  unicode-bidi: plaintext;
+  text-shadow: 0 2px 18px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.6);
 }
 
-.iptv-page .iptv-hero__meta {
+.iptv-page .iptv-hero__facts {
   margin: 0;
-  font-size: 0.9rem;
-  color: var(--sfs-on-overlay-muted, #cbd5e1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+/*
+  One fact, one chip.
+
+  The metadata used to be a single ` · `-joined string, which is a bidi hazard
+  as well as a visual one: inside an Arabic page the algorithm is free to reorder
+  `2019 · PG-13 · 1h 52m` around those neutral separators, so a runtime can
+  end up in front of a year. A chip is its own isolated run and cannot move.
+*/
+.iptv-page .iptv-fact {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--iptv-radius-xs);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
+  /*
+    Dark enough to stand on its own, and the AA_TEXT ink rather than the AA_LARGE
+    one. A chip is small text: `--sfs-on-overlay-muted` is derived at 3:1, and
+    measured over a light galaxy at a lighter frost this pair came out at 1.8:1.
+    The chips sit on the hero scrim, which is dark in all ten - but a rule that
+    borrows the dark half of its pair from an ancestor is one nothing can verify.
+  */
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.62);
+  color: var(--sfs-on-overlay, #f8fafc);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+/* On a plain surface rather than over a scrim, so the ink is the page's. */
+.iptv-page .iptv-fact--quiet {
+  border-color: var(--iptv-line);
+  background: var(--iptv-panel);
+  color: var(--sfs-text-muted, #94a3b8);
+  font-weight: 500;
 }
 
 .iptv-page .iptv-hero__blurb {
   margin: 0;
   color: var(--sfs-on-overlay-muted, #cbd5e1);
   line-height: 1.6;
+  max-width: 56ch;
   /* Three lines and then stop: a 600-word synopsis pushes the play button off a
      phone. The whole text is on the film's own page. */
   display: -webkit-box;
@@ -168,43 +508,64 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
 }
 
-/* ---- buttons ------------------------------------------------------- */
+/* ============================================================
+   Buttons
+   ============================================================ */
 .iptv-page .iptv-btn,
 .iptv-watch .iptv-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1rem;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.15rem;
   border-radius: 999px;
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  border: 1px solid var(--iptv-line-strong);
+  background: var(--iptv-panel);
   color: var(--sfs-text, #f8fafc);
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  /* `max()` and not a bare rem: responsive.css scales the root font size, so
-     `2.5rem` measures under the touch minimum on a narrow viewport - which is
-     the bug the exam pages had, on exactly the devices the rule exists for. */
   min-height: max(2.5rem, 40px);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease,
+              box-shadow 0.15s ease;
 }
 
 .iptv-page .iptv-btn:hover,
-.iptv-watch .iptv-btn:hover {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
-}
+.iptv-watch .iptv-btn:hover { background: var(--iptv-panel-raised); }
 
 .iptv-page .iptv-btn--primary,
 .iptv-watch .iptv-btn--primary {
   background: var(--sfs-accent, #667eea);
   border-color: var(--sfs-accent, #667eea);
-  /* The fill and its ink stated together. Derived alone, the ink is near-black
-     on a deep accent and reads as broken - working rule 12. */
   color: var(--sfs-on-accent, #ffffff);
+  box-shadow: var(--iptv-shadow);
+}
+
+.iptv-page .iptv-btn--primary:hover,
+.iptv-watch .iptv-btn--primary:hover {
+  background: var(--sfs-accent, #667eea);
+  transform: translateY(-1px);
+  box-shadow: var(--iptv-shadow-lift);
+}
+
+/* Over a scrim, where a transparent button would show the photograph through
+   its own label. Frosted rather than clear. */
+/*
+  Over a scrim, where a transparent button would show the photograph through its
+  own label - and a DARK frost rather than a white one, for the reason spelled out
+  at `.iptv-card__play`: `--sfs-tint-rgb` is white in all ten galaxies, so a white
+  frost with light ink measures 1.1:1 over a pale still.
+*/
+.iptv-page .iptv-btn--glass {
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.6);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+  color: var(--sfs-on-overlay, #f8fafc);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .iptv-page .iptv-btn--ghost,
@@ -214,64 +575,23 @@
 .iptv-watch .iptv-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.iptv-page .iptv-pill,
-.iptv-watch .iptv-pill {
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
-  font-size: 0.75rem;
-  /* A count is a machine value next to prose: isolate it, or in Arabic the
-     bidi algorithm can move it away from the label it belongs to. */
-  unicode-bidi: isolate;
+.iptv-page .iptv-btn__glyph,
+.iptv-watch .iptv-btn__glyph {
+  display: inline-flex;
+  /* A play triangle is a DIRECTION and must not mirror: the transport controls
+     of every player on earth point the same way whatever the page's language.
+     Named here so nothing later flips it with the arrows. */
+  transform: none !important;
 }
 
-/* ---- toolbar and search -------------------------------------------- */
-.iptv-page .iptv-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-}
-
-.iptv-page .iptv-search {
-  flex: 1 1 16rem;
-  /* A flex child defaults to `min-width: auto`, which is the same overflow trap
-     as a bare `1fr` track: a long value pushes the sibling off the row. */
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.15rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
-}
-
-.iptv-page .iptv-search__icon { color: var(--sfs-text-muted, #94a3b8); }
-
-.iptv-page .iptv-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--sfs-text, #f8fafc);
-  /* 16px, because below that iOS zooms the page on focus and never zooms back.
-     The fix is the font size, not `user-scalable=no`, which would take
-     pinch-zoom away from everybody. */
-  font-size: 16px;
-  padding: 0.5rem 0;
-  outline: none;
-}
-
-.iptv-page .iptv-search input::placeholder {
-  color: var(--sfs-text-faint, #64748b);
-}
-
-/* ---- chips --------------------------------------------------------- */
-.iptv-page .iptv-genres,
-.iptv-page .iptv-seasons {
+/* ============================================================
+   Chips, and the season segmented control
+   ============================================================ */
+.iptv-page .iptv-genres {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
@@ -281,14 +601,21 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 999px;
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: transparent;
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
   color: var(--sfs-text-muted, #94a3b8);
   font-size: 0.86rem;
+  font-weight: 600;
   cursor: pointer;
   min-height: max(2.25rem, 36px);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.iptv-page .iptv-chip:hover {
+  background: var(--iptv-panel-raised);
+  color: var(--sfs-text, #f8fafc);
 }
 
 .iptv-page .iptv-chip.is-on {
@@ -303,100 +630,214 @@
   unicode-bidi: isolate;
 }
 
-/* ---- rails --------------------------------------------------------- */
-.iptv-page .iptv-rail,
-.iptv-watch .iptv-rail {
+/*
+  Seasons are a SEGMENTED CONTROL, not loose chips.
+
+  They are one choice out of a set - and a set of pills identical to the genre
+  filter above them said the opposite: that any number could be on at once. One
+  track with the selected segment filled is the control every television
+  interface uses for exactly this.
+*/
+.iptv-page .iptv-segmented {
+  display: flex;
+  gap: 0.15rem;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.iptv-page .iptv-segmented::-webkit-scrollbar { display: none; }
+
+.iptv-page .iptv-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  padding: 0.35rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sfs-text-muted, #94a3b8);
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: max(2rem, 34px);
+}
+
+.iptv-page .iptv-segment:hover { color: var(--sfs-text, #f8fafc); }
+
+.iptv-page .iptv-segment.is-on {
+  background: var(--sfs-accent, #667eea);
+  color: var(--sfs-on-accent, #ffffff);
+}
+
+.iptv-page .iptv-segment__count {
+  font-size: 0.74rem;
+  opacity: 0.8;
+  unicode-bidi: isolate;
+}
+
+/* ============================================================
+   Shelves
+   ============================================================ */
+.iptv-page .iptv-shelf,
+.iptv-watch .iptv-shelf {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.75rem;
   min-width: 0;
 }
 
-.iptv-page .iptv-rail__title,
-.iptv-watch .iptv-rail__title {
+.iptv-page .iptv-shelf__head,
+.iptv-watch .iptv-shelf__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.iptv-page .iptv-shelf__title,
+.iptv-watch .iptv-shelf__title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  min-width: 0;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--sfs-text, #f8fafc);
 }
 
-.iptv-page .iptv-rail__count,
-.iptv-watch .iptv-rail__count {
-  font-size: 0.78rem;
+/*
+  The accent bar before a shelf heading. It is what makes a page of four shelves
+  read as four sections rather than as one column of text - and it costs no
+  contrast decision, because it carries no ink.
+*/
+.iptv-page .iptv-shelf__title::before,
+.iptv-watch .iptv-shelf__title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 3px;
+  height: 1.05em;
+  border-radius: 3px;
+  background: var(--sfs-accent, #667eea);
+}
+
+.iptv-page .iptv-shelf__count,
+.iptv-watch .iptv-shelf__count {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--iptv-panel);
+  font-size: 0.74rem;
+  font-weight: 700;
   color: var(--sfs-text-muted, #94a3b8);
   unicode-bidi: isolate;
 }
 
-.iptv-page .iptv-rail__more {
+.iptv-page .iptv-shelf__more,
+.iptv-watch .iptv-shelf__more {
   margin-inline-start: auto;
-  font-size: 0.85rem;
+  flex: 0 0 auto;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 600;
   color: var(--sfs-accent-text, #a5b4fc);
   text-decoration: none;
+  white-space: nowrap;
 }
+
+.iptv-page .iptv-shelf__more:hover,
+.iptv-watch .iptv-shelf__more:hover { background: var(--iptv-panel); }
 
 /*
   A horizontal shelf. `overflow-x: auto` with scroll snapping rather than a
-  carousel with arrows: a shelf that scrolls is what every reader's thumb
-  already knows, it needs no JavaScript, and it cannot get out of step with the
-  number of items the way a paged carousel can.
+  carousel with arrows: a shelf that scrolls is what every reader's thumb already
+  knows, it needs no JavaScript, and it cannot get out of step with the number of
+  items the way a paged carousel can.
 
   The scroll ORIGIN flips with `dir` on its own - that is one of the things
   `dir="rtl"` genuinely does for free - so an Arabic reader starts at the right
   and swipes the correct way with no rule here at all.
 */
-.iptv-page .iptv-rail__track,
-.iptv-watch .iptv-rail__track {
+.iptv-page .iptv-shelf__track,
+.iptv-watch .iptv-shelf__track {
   display: flex;
-  gap: 0.7rem;
+  gap: 0.8rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  padding-block-end: 0.4rem;
-  /* Room for the lift on hover, or the top of a raised card is clipped. */
-  padding-block-start: 0.2rem;
+  /* Room for the lift on hover, or the top of a raised card is clipped and the
+     shadow is cut off square. */
+  padding-block: 0.3rem 0.6rem;
   scrollbar-width: thin;
 }
 
-.iptv-page .iptv-rail__track > *,
-.iptv-watch .iptv-rail__track > * {
+.iptv-page .iptv-shelf__track > *,
+.iptv-watch .iptv-shelf__track > * {
   scroll-snap-align: start;
   flex: 0 0 var(--iptv-card);
 }
 
-.iptv-page .iptv-grid {
+.iptv-page .iptv-grid,
+.iptv-watch .iptv-grid {
   display: grid;
-  /* `minmax(min(100%, …), 1fr)` - a bare `1fr` has a `min-content` automatic
+  /* `minmax(min(100%, ...), 1fr)` - a bare `1fr` has a `min-content` automatic
      minimum, so one unwrappable title forces the track wider than its share and
      the row overflows. */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: 0.8rem;
 }
 
-/* ---- card ---------------------------------------------------------- */
+/* ============================================================
+   The tile
+   ============================================================ */
+
+/*
+  ONE PANEL, NOT A PICTURE WITH TEXT UNDER IT.
+
+  This is the change the whole rewrite is about. Before, a tile was a bordered
+  poster and two loose spans in the page's flow, so a shelf of eight read as a
+  row of pictures with a paragraph of titles beneath them - which is exactly what
+  "mixed blocks and text" describes. Poster and lines now share one surface, one
+  radius and one shadow, so a tile is an object with an edge.
+*/
 .iptv-page .iptv-card,
 .iptv-watch .iptv-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
   padding: 0;
-  border: 0;
-  background: transparent;
+  border: 1px solid var(--iptv-line);
+  border-radius: var(--iptv-radius-sm);
+  background: var(--iptv-panel);
   color: inherit;
   text-align: start;
   cursor: pointer;
   min-width: 0;
-  transition: transform 0.18s ease;
+  overflow: hidden;
+  box-shadow: var(--iptv-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+              border-color 0.18s ease, background 0.18s ease;
 }
 
 .iptv-page .iptv-card:hover,
-.iptv-watch .iptv-card:hover { transform: translateY(-3px); }
+.iptv-watch .iptv-card:hover {
+  transform: translateY(-4px);
+  background: var(--iptv-panel-raised);
+  border-color: var(--iptv-line-strong);
+  box-shadow: var(--iptv-shadow-lift);
+}
 
 .iptv-page .iptv-card:focus-visible,
 .iptv-watch .iptv-card:focus-visible {
   outline: 2px solid var(--sfs-accent, #667eea);
-  outline-offset: 3px;
-  border-radius: var(--iptv-radius-sm);
+  outline-offset: 2px;
 }
 
 .iptv-page .iptv-card__art,
@@ -406,58 +847,135 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 2 / 3;
-  border-radius: var(--iptv-radius-sm);
   overflow: hidden;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
 }
 
-.iptv-page .iptv-card__art img,
-.iptv-watch .iptv-card__art img {
+/* An episode's still is landscape - see the note in `IptvCard.vue`. The tile is
+   the same WIDTH as its neighbours (the shelf sets that), so a wide tile is
+   simply a shorter one, and a rail of episodes is a rail of episodes. */
+.iptv-page .iptv-card--wide .iptv-card__art,
+.iptv-watch .iptv-card--wide .iptv-card__art { aspect-ratio: 16 / 9; }
+
+.iptv-page .iptv-card__img,
+.iptv-watch .iptv-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.35s ease;
 }
+
+.iptv-page .iptv-card:hover .iptv-card__img,
+.iptv-watch .iptv-card:hover .iptv-card__img { transform: scale(1.06); }
 
 .iptv-page .iptv-card__initial,
 .iptv-watch .iptv-card__initial {
   font-size: clamp(1.6rem, 5vw, 2.6rem);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--sfs-text-faint, #64748b);
+}
+
+/* The gradient foot over the artwork, so a tag and a resume bar have something
+   to be legible against whatever the still happens to be. */
+.iptv-page .iptv-card__sheen,
+.iptv-watch .iptv-card__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top,
+                              var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
+                              transparent 42%);
+  opacity: 0.85;
+}
+
+.iptv-page .iptv-card__play,
+.iptv-watch .iptv-card__play {
+  position: absolute;
+  /* Centred with a transform, so `left`/`top` stay PHYSICAL: flipped to
+     `inset-inline-start`, the 50% would be measured from the other edge while
+     the transform still pulled the same way, landing the badge off-centre by its
+     own width. Eleven components on this platform have that bug waiting. */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  /*
+    A DARK frost, not a white one, and that is a light-galaxy decision.
+
+    `--sfs-tint-rgb` is `255 255 255` in ALL ten galaxies - it deliberately does
+    not flip, because lifting a surface off the page is white in both modes. That
+    is right for a card on the page and wrong for anything on a PHOTOGRAPH: over
+    a pale still, white-at-22% with light ink measures 1.1:1 and is not there.
+    `audit:contrast` reported exactly that for the three light galaxies.
+
+    `--sfs-shade-rgb` is `0 0 0` in all ten, so this is a dark disc with light ink
+    in every theme - which is what every video platform draws over artwork, and
+    what `--sfs-on-overlay` is derived against in the first place.
+  */
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.35);
+  color: var(--sfs-on-overlay, #f8fafc);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.iptv-page .iptv-card:hover .iptv-card__play,
+.iptv-page .iptv-card:focus-visible .iptv-card__play,
+.iptv-watch .iptv-card:hover .iptv-card__play,
+.iptv-watch .iptv-card:focus-visible .iptv-card__play {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .iptv-page .iptv-card__tag,
 .iptv-watch .iptv-card__tag {
   position: absolute;
   /* Physical `top`/`left` on purpose. `inset-inline-start` would move this to
-     the far corner in Arabic, and a corner badge on a poster is a *place* -
-     the same reason `.tm-face-box` is not flipped. */
-  top: 0.4rem;
-  left: 0.4rem;
-  padding: 0.1rem 0.4rem;
+     the far corner in Arabic, and a corner badge on a poster is a *place* - the
+     same reason `.tm-face-box` is not flipped. */
+  top: 0.45rem;
+  left: 0.45rem;
+  padding: 0.1rem 0.45rem;
   border-radius: 999px;
   font-size: 0.66rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   background: var(--sfs-overlay, rgba(2, 6, 23, 0.92));
   color: var(--sfs-on-overlay, #f8fafc);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   unicode-bidi: isolate;
 }
 
 .iptv-page .iptv-card__soon,
 .iptv-watch .iptv-card__soon {
   position: absolute;
-  bottom: 0.4rem;
-  left: 0.4rem;
-  right: 0.4rem;
+  bottom: 0.45rem;
+  left: 0.45rem;
+  right: 0.45rem;
   text-align: center;
-  padding: 0.15rem 0.3rem;
-  border-radius: var(--iptv-radius-sm);
+  padding: 0.2rem 0.3rem;
+  border-radius: var(--iptv-radius-xs);
   font-size: 0.7rem;
+  font-weight: 600;
   background: var(--sfs-overlay, rgba(2, 6, 23, 0.92));
-  color: var(--sfs-on-overlay-muted, #cbd5e1);
+  /* `--sfs-on-overlay`, not `-muted`: the muted one is derived at AA_LARGE (3:1)
+     and this is small text on a poster. Measured 3.26:1 with the muted token. */
+  color: var(--sfs-on-overlay, #f8fafc);
 }
+
+.iptv-page .iptv-card.is-soon,
+.iptv-watch .iptv-card.is-soon { opacity: 0.82; }
 
 .iptv-page .iptv-card__progress,
 .iptv-watch .iptv-card__progress,
@@ -466,8 +984,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25);
+  height: 4px;
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55);
 }
 
 .iptv-page .iptv-card__progress > span,
@@ -477,10 +995,21 @@
   background: var(--sfs-accent, #667eea);
 }
 
+/* The lines: a real box under the artwork rather than two spans in the flow. */
+.iptv-page .iptv-card__lines,
+.iptv-watch .iptv-card__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  min-width: 0;
+}
+
 .iptv-page .iptv-card__title,
 .iptv-watch .iptv-card__title {
   font-size: 0.88rem;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--sfs-text, #f8fafc);
   /* Two lines, then stop - a long title must not make one card taller than the
      rest of the shelf. */
@@ -494,100 +1023,165 @@
 
 .iptv-page .iptv-card__meta,
 .iptv-watch .iptv-card__meta {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--sfs-text-muted, #94a3b8);
   unicode-bidi: isolate;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.iptv-page .iptv-card--skeleton .iptv-card__art,
-.iptv-page .iptv-card--skeleton {
-  min-height: 1rem;
-}
+/* ---- the skeleton -------------------------------------------------- */
 
-.iptv-page .iptv-card--skeleton {
-  aspect-ratio: 2 / 3;
-  border-radius: var(--iptv-radius-sm);
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+/*
+  A skeleton that is the SHAPE of what is coming, not a plain grey block. The old
+  one was a bare rounded rectangle, so the page visibly changed layout when the
+  real tiles arrived - which reads as a glitch rather than as loading.
+*/
+.iptv-page .iptv-card--skeleton,
+.iptv-watch .iptv-card--skeleton {
+  cursor: default;
+  pointer-events: none;
   animation: iptv-pulse 1.4s ease-in-out infinite;
 }
+
+.iptv-page .iptv-card--skeleton:hover,
+.iptv-watch .iptv-card--skeleton:hover {
+  transform: none;
+  box-shadow: var(--iptv-shadow);
+}
+
+.iptv-page .iptv-card--skeleton .iptv-card__lines i,
+.iptv-watch .iptv-card--skeleton .iptv-card__lines i {
+  display: block;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+}
+
+.iptv-page .iptv-card--skeleton .iptv-card__lines i:first-child,
+.iptv-watch .iptv-card--skeleton .iptv-card__lines i:first-child {
+  width: 85%;
+  margin-bottom: 0.35rem;
+}
+
+.iptv-page .iptv-card--skeleton .iptv-card__lines i:last-child,
+.iptv-watch .iptv-card--skeleton .iptv-card__lines i:last-child { width: 45%; }
 
 @keyframes iptv-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
 
-/* ---- channels ------------------------------------------------------ */
-.iptv-page .iptv-channels {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
-  gap: 0.7rem;
-}
+/* ============================================================
+   Channels
+   ============================================================ */
 
+/* The tile form, on the hub's live shelf. */
 .iptv-page .iptv-channel {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.7rem 0.5rem;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
   border-radius: var(--iptv-radius-sm);
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
   color: var(--sfs-text, #f8fafc);
   text-decoration: none;
   cursor: pointer;
   min-width: 0;
-  text-align: center;
+  overflow: hidden;
+  box-shadow: var(--iptv-shadow);
+  transition: transform 0.18s ease, background 0.18s ease,
+              box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .iptv-page .iptv-channel:hover {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  transform: translateY(-4px);
+  background: var(--iptv-panel-raised);
+  border-color: var(--iptv-line-strong);
+  box-shadow: var(--iptv-shadow-lift);
 }
 
-.iptv-page .iptv-channel.is-on {
-  border-color: var(--sfs-accent, #667eea);
-  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+.iptv-page .iptv-channel:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
 }
 
 .iptv-page .iptv-channel__art {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.2rem;
-  height: 3.2rem;
-  border-radius: var(--iptv-radius-sm);
-  overflow: hidden;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  flex: 0 0 auto;
+  /* 16/9, because that is the shape of the thing behind it. A square plate on a
+     shelf of 2/3 posters read as a third kind of object for no reason. */
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  padding: 0.9rem;
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
 }
 
 .iptv-page .iptv-channel__art img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   /* `contain`, not `cover`: a broadcaster's logo is artwork with margins and
      cropping it cuts the mark in half. */
   object-fit: contain;
 }
 
 .iptv-page .iptv-channel__initial {
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--sfs-text-faint, #64748b);
 }
 
+.iptv-page .iptv-channel__live {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--sfs-overlay, rgba(2, 6, 23, 0.92));
+  color: var(--sfs-on-overlay, #f8fafc);
+  unicode-bidi: isolate;
+}
+
+.iptv-page .iptv-channel__live > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sfs-danger, #f87171);
+}
+
 .iptv-page .iptv-channel__name {
-  font-size: 0.82rem;
+  padding: 0.5rem 0.65rem 0;
+  font-size: 0.83rem;
   font-weight: 600;
   overflow-wrap: anywhere;
   unicode-bidi: plaintext;
 }
 
 .iptv-page .iptv-channel__cat {
+  padding: 0.05rem 0.65rem 0.6rem;
   font-size: 0.72rem;
   color: var(--sfs-text-muted, #94a3b8);
   unicode-bidi: plaintext;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ---- the player ---------------------------------------------------- */
+/* ============================================================
+   The player frame
+   ============================================================ */
 .iptv-page .iptv-stage,
 .iptv-watch .iptv-stage {
   position: relative;
@@ -597,6 +1191,8 @@
      that stays dark under a light theme - the same decision that keeps
      `--sfs-paper` white in all ten. A film is watched against black. */
   background: var(--sfs-overlay, rgba(2, 6, 23, 0.92));
+  border: 1px solid var(--iptv-line);
+  box-shadow: var(--iptv-shadow-lift);
   /* A VIDEO FRAME IS A PLACE, NOT A PARAGRAPH. Mirrored, the native control bar
      moves away from where the reader of that broadcast expects it. */
   direction: ltr;
@@ -612,6 +1208,41 @@
   aspect-ratio: 16 / 9;
   max-height: min(78vh, 44rem);
   background: transparent;
+}
+
+/* Nothing tuned yet: a plate rather than an empty black box, which reads as the
+   player having failed rather than as a choice not yet made. */
+.iptv-page .iptv-stage__idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  aspect-ratio: 16 / 9;
+  max-height: min(78vh, 44rem);
+  padding: 1rem;
+  text-align: center;
+  color: var(--sfs-on-overlay-muted, #cbd5e1);
+}
+
+.iptv-page .iptv-stage__idle p { margin: 0; }
+
+.iptv-page .iptv-stage__idleNote {
+  max-width: 38ch;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.iptv-page .iptv-stage__idleGlyph {
+  display: inline-flex;
+  padding: 0.9rem;
+  border-radius: 999px;
+  /* Its own dark ground, not the letterbox's. It holds light ink, and a rule
+     that borrows the dark half of its pair from an ancestor is one `audit:contrast`
+     cannot verify and a reader loses the moment the markup moves. */
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.72);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+  color: var(--sfs-on-overlay, #f8fafc);
 }
 
 .iptv-page .iptv-stage__veil,
@@ -639,19 +1270,296 @@
   color: var(--sfs-danger-text, #fca5a5);
 }
 
-/* ---- watch page ---------------------------------------------------- */
-.iptv-watch .iptv-watch__head {
+/* ============================================================
+   The live theatre
+   ============================================================ */
+
+/*
+  Two columns on a wide screen, two rows on a narrow one.
+
+  The list stays on screen beside the picture, so changing channel is one click
+  rather than a scroll past the video every time. `minmax(0, ...)` on the first
+  track for the usual reason: a bare `1fr` has a `min-content` minimum, and a
+  16/9 video's is wide.
+*/
+.iptv-page .iptv-theatre {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.8rem, 2vw, 1.25rem);
+  align-items: start;
+}
+
+@media (min-width: 62rem) {
+  .iptv-page .iptv-theatre {
+    grid-template-columns: minmax(0, 1fr) clamp(17rem, 24vw, 22rem);
+  }
+}
+
+.iptv-page .iptv-theatre__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.iptv-page .iptv-theatre__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: var(--iptv-radius);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
+  /* Bounded and scrollable beside the player, so 400 channels do not make the
+     page ten screens tall. On a narrow viewport the cap is lifted below. */
+  max-height: min(80vh, 46rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.iptv-page .iptv-theatre__sideHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block-end: 0.35rem;
+}
+
+.iptv-page .iptv-theatre__sideHead h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--sfs-text, #f8fafc);
+}
+
+.iptv-page .iptv-chanGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.iptv-page .iptv-chanGroup__title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.4rem 0.15rem 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sfs-text-muted, #94a3b8);
+  /* Opaque enough to hide the rows sliding under it. A translucent sticky
+     heading over a scrolling list reads as two overlapping labels. */
+  background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.95);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  unicode-bidi: plaintext;
+}
+
+/* A channel as a ROW, which is what a sidebar list is. The tile form above is
+   for the hub's shelf, where it sits among posters. */
+.iptv-page .iptv-chan {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--iptv-radius-xs);
+  background: transparent;
+  color: var(--sfs-text, #f8fafc);
+  text-align: start;
+  cursor: pointer;
+  min-width: 0;
+  min-height: max(2.75rem, 44px);
+  transition: background 0.15s ease;
+}
+
+.iptv-page .iptv-chan:hover { background: var(--iptv-panel-raised); }
+
+.iptv-page .iptv-chan:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 1px;
+}
+
+.iptv-page .iptv-chan.is-on {
+  border-color: var(--sfs-accent, #667eea);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+}
+
+.iptv-page .iptv-chan__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0.25rem;
+  border-radius: var(--iptv-radius-xs);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
+  overflow: hidden;
+}
+
+.iptv-page .iptv-chan__art img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.iptv-page .iptv-chan__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.iptv-page .iptv-chan__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: plaintext;
+}
+
+.iptv-page .iptv-chan__cat {
+  font-size: 0.72rem;
+  color: var(--sfs-text-muted, #94a3b8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: plaintext;
+}
+
+.iptv-page .iptv-chan__on {
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.iptv-page .iptv-chan__on > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--sfs-accent, #667eea);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28);
+}
+
+/* ---- now playing --------------------------------------------------- */
+.iptv-page .iptv-now {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-radius: var(--iptv-radius-sm);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
+  min-width: 0;
+}
+
+.iptv-page .iptv-now__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 3.4rem;
+  height: 3.4rem;
+  padding: 0.35rem;
+  border-radius: var(--iptv-radius-xs);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
+  overflow: hidden;
+}
+
+.iptv-page .iptv-now__art img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.iptv-page .iptv-now__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.iptv-page .iptv-now__head {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
   align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.iptv-page .iptv-now__head h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--sfs-text, #f8fafc);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.iptv-page .iptv-now__tagline {
+  margin: 0;
+  color: var(--sfs-text-muted, #94a3b8);
+  font-size: 0.88rem;
+  unicode-bidi: plaintext;
+}
+
+.iptv-page .iptv-now__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.iptv-page .iptv-onair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  /* A status wash with its own ink, derived against that wash rather than
+     against the plain card - the mistake that cost the light galaxies 117
+     failures the first time round. */
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.18);
+  color: var(--sfs-danger-text, #fca5a5);
+  unicode-bidi: isolate;
+}
+
+.iptv-page .iptv-onair > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sfs-danger, #f87171);
+}
+
+/* ============================================================
+   The watch page
+   ============================================================ */
+.iptv-watch .iptv-watch__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
 }
 
 .iptv-watch .iptv-watch__titles { min-width: 0; }
 
 .iptv-watch .iptv-watch__titles h1 {
   margin: 0;
-  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-size: clamp(1.25rem, 3vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--sfs-text, #f8fafc);
   overflow-wrap: anywhere;
   unicode-bidi: plaintext;
@@ -670,15 +1578,22 @@
   gap: 0.6rem;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--iptv-radius-sm);
   border: 1px solid var(--sfs-accent, #667eea);
   background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
   color: var(--sfs-text, #f8fafc);
 }
 
-.iptv-watch .iptv-resume p { margin: 0; }
+.iptv-watch .iptv-resume p { margin: 0; font-weight: 600; }
 .iptv-watch .iptv-resume__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.iptv-watch .iptv-watch__about {
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--iptv-radius-sm);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
+}
 
 .iptv-watch .iptv-watch__about p {
   margin: 0;
@@ -694,52 +1609,79 @@
   gap: 0.6rem;
   align-items: center;
   justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
 }
 
 .iptv-watch .iptv-watch__position {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--sfs-text-muted, #94a3b8);
   unicode-bidi: isolate;
 }
 
-/* ---- episodes ------------------------------------------------------ */
+/* ============================================================
+   Episodes
+   ============================================================ */
 .iptv-page .iptv-episodes {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .iptv-page .iptv-episode {
   display: flex;
-  gap: 0.8rem;
-  align-items: flex-start;
-  padding: 0.6rem;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.55rem;
   border-radius: var(--iptv-radius-sm);
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
   color: var(--sfs-text, #f8fafc);
   text-align: start;
   cursor: pointer;
   min-width: 0;
+  transition: background 0.15s ease, border-color 0.15s ease,
+              transform 0.15s ease;
 }
 
 .iptv-page .iptv-episode:hover:not(:disabled) {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  background: var(--iptv-panel-raised);
+  border-color: var(--iptv-line-strong);
+  transform: translateX(2px);
+}
+
+.iptv-page .iptv-episode:focus-visible {
+  outline: 2px solid var(--sfs-accent, #667eea);
+  outline-offset: 2px;
+}
+
+.iptv-page .iptv-episode.is-on {
+  border-color: var(--sfs-accent, #667eea);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
 }
 
 .iptv-page .iptv-episode:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* The nudge on hover is a DIRECTION, so it leans into the page rather than out
+   of it - the same correction the sidebar's hover needed. */
+[dir='rtl'] .iptv-page .iptv-episode:hover:not(:disabled) {
+  transform: translateX(-2px);
+}
+
 .iptv-page .iptv-episode__art {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(5rem, 18vw, 8rem);
+  width: clamp(5.5rem, 18vw, 8.5rem);
   aspect-ratio: 16 / 9;
-  border-radius: var(--iptv-radius-sm);
+  border-radius: var(--iptv-radius-xs);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
 }
 
 .iptv-page .iptv-episode__art img {
@@ -750,9 +1692,36 @@
 
 .iptv-page .iptv-episode__num {
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--sfs-text-faint, #64748b);
   unicode-bidi: isolate;
+}
+
+.iptv-page .iptv-episode__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.35);
+  color: var(--sfs-on-overlay, #f8fafc);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.iptv-page .iptv-episode:hover:not(:disabled) .iptv-episode__play,
+.iptv-page .iptv-episode:focus-visible .iptv-episode__play,
+.iptv-page .iptv-episode.is-on .iptv-episode__play {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .iptv-page .iptv-episode__body {
@@ -764,16 +1733,33 @@
 }
 
 .iptv-page .iptv-episode__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   overflow-wrap: anywhere;
   unicode-bidi: plaintext;
 }
 
+/* The episode number as its own mark rather than "12. " glued to the title: a
+   digit and a full stop in front of Arabic prose is precisely the neutral run
+   the bidi algorithm relocates. */
+.iptv-page .iptv-episode__ord {
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--sfs-text-faint, #64748b);
+  unicode-bidi: isolate;
+}
+
 .iptv-page .iptv-episode__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   font-size: 0.76rem;
   color: var(--sfs-text-muted, #94a3b8);
-  unicode-bidi: isolate;
 }
 
 .iptv-page .iptv-episode__blurb {
@@ -790,37 +1776,17 @@
 .iptv-page .iptv-episode__soon {
   flex: 0 0 auto;
   align-self: center;
-  font-size: 0.74rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--iptv-panel);
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--sfs-text-muted, #94a3b8);
 }
 
-/* ---- live page ----------------------------------------------------- */
-.iptv-live .iptv-live__stage {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.iptv-live .iptv-live__now h2 {
-  margin: 0;
-  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-  color: var(--sfs-text, #f8fafc);
-  unicode-bidi: plaintext;
-}
-
-.iptv-live .iptv-live__now p {
-  margin: 0;
-  color: var(--sfs-text-muted, #94a3b8);
-  unicode-bidi: plaintext;
-}
-
-.iptv-live .iptv-live__tech {
-  font-size: 0.8rem;
-  /* A stream type and a country code are machine values sitting in prose. */
-  unicode-bidi: isolate;
-}
-
-/* ---- notices ------------------------------------------------------- */
+/* ============================================================
+   Notices
+   ============================================================ */
 .iptv-page .iptv-notice,
 .iptv-watch .iptv-notice {
   display: flex;
@@ -829,8 +1795,8 @@
   align-items: flex-start;
   padding: clamp(1rem, 3vw, 2rem);
   border-radius: var(--iptv-radius);
-  border: 1px solid var(--sfs-border, rgba(255, 255, 255, 0.14));
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid var(--iptv-line);
+  background: var(--iptv-panel);
   color: var(--sfs-text-muted, #94a3b8);
 }
 
@@ -838,6 +1804,7 @@
 .iptv-watch .iptv-notice h2 {
   margin: 0;
   font-size: 1.1rem;
+  font-weight: 700;
   color: var(--sfs-text, #f8fafc);
 }
 
@@ -861,34 +1828,212 @@
   padding: 1.5rem 1rem;
   text-align: center;
   color: var(--sfs-text-muted, #94a3b8);
-  border: 1px dashed var(--sfs-border, rgba(255, 255, 255, 0.14));
+  border: 1px dashed var(--iptv-line-strong);
   border-radius: var(--iptv-radius-sm);
 }
 
 /* ============================================================
-   Both ends of the range. Most of this file is already fluid - `clamp()` for
-   type and spacing, `auto-fill` for the grids - so what is left is the two
+   Every anchor on these pages, re-stated one class more specific
+
+   THE LAYOUT COLOURS EVERY LINK IN THE APP, AND IT OUTRANKED THIS FILE
+   ------------------------------------------------------------
+   `default-layout.css` carries `.app-container > .main-content a { color: … }`,
+   which is specificity (0,2,1) - two classes and a TYPE. Every rule above is
+   (0,2,0), so on any element that happens to be an `<a>` the layout won and this
+   file's colour was simply discarded. Measured before this block existed: the
+   inactive tabs, the breadcrumb, the "See all" links and every channel tile on
+   the hub all rendered in `rgb(126, 143, 217)` - the app's link blue - where they
+   should have been `--sfs-text-muted`, `--sfs-text` and `--sfs-accent-text`. The
+   feature looked like a page of hyperlinks rather than a television interface,
+   and nothing anywhere reported it.
+
+   THREE reasons this is a block at the end rather than `a.iptv-tab` upstairs.
+   Adding the type to each selector gives (0,2,1) - a TIE, decided by source
+   order, and this file arrives through a `<script>` import inside a view while
+   the layout arrives from `main.ts`, so the order is a property of the bundler
+   rather than of anything written down. `rtl.css` has already paid for assuming
+   "loaded last". Naming a third class beats it on class count outright, whatever
+   the order. And keeping it in one place means the cause is explained once
+   instead of five times.
+
+   Each selector below names an ancestor that always exists for that element. A
+   child span that declares its own colour needs none of this - an inherited
+   value loses to any declared one - which is why `.iptv-channel__cat` was
+   correct all along and `.iptv-channel__name`, which declared none, was not.
+   ============================================================ */
+/*
+  AND THE SAME THING HAPPENS TO EVERY HEADING, through `:where()`.
+
+  `default-layout.css` also carries
+  `.app-container > .main-content :where(h1, h2, h3, h4, h5, h6) { color: var(--galaxy-text) }`
+  - and `:where()` contributes NOTHING to specificity, so that selector is
+  (0,2,0): an exact TIE with every rule above, decided by source order alone.
+
+  Measured on the three light galaxies before this: the hero's `<h1>` rendered
+  `rgb(13, 18, 32)` - near black - over a scrim that is dark in all ten, while
+  `--sfs-on-overlay` was sitting there correctly at `#f8fafc`. The token was
+  right; it was simply losing a coin flip. That is the one heading on these pages
+  whose ink is NOT the page's, so it is the one that must win, and the same
+  applies to the muted group headings in the channel list.
+
+  Every other heading here asks for `--sfs-text`, which is what `--galaxy-text`
+  already is, so a tie there changes nothing and none of them is listed.
+*/
+.iptv-page .iptv-hero .iptv-hero__title { color: var(--sfs-on-overlay, #f8fafc); }
+
+.iptv-page .iptv-theatre__side .iptv-chanGroup__title {
+  color: var(--sfs-text-muted, #94a3b8);
+}
+
+.iptv-page .iptv-tabs .iptv-tab,
+.iptv-watch .iptv-tabs .iptv-tab { color: var(--sfs-text-muted, #94a3b8); }
+
+.iptv-page .iptv-tabs .iptv-tab:hover,
+.iptv-watch .iptv-tabs .iptv-tab:hover { color: var(--sfs-text, #f8fafc); }
+
+.iptv-page .iptv-tabs .iptv-tab.is-on,
+.iptv-watch .iptv-tabs .iptv-tab.is-on { color: var(--sfs-on-accent, #ffffff); }
+
+.iptv-page .iptv-hero .iptv-crumb,
+.iptv-watch .iptv-watch__head .iptv-crumb { color: var(--sfs-text-muted, #94a3b8); }
+
+.iptv-page .iptv-hero .iptv-crumb:hover,
+.iptv-watch .iptv-watch__head .iptv-crumb:hover { color: var(--sfs-text, #f8fafc); }
+
+.iptv-page .iptv-shelf .iptv-shelf__more,
+.iptv-watch .iptv-shelf .iptv-shelf__more { color: var(--sfs-accent-text, #a5b4fc); }
+
+.iptv-page .iptv-shelf .iptv-channel { color: var(--sfs-text, #f8fafc); }
+
+/* Belt and braces on the tile's own text, which is the part a reader looks at:
+   a declared colour on the span cannot be reached by an inherited one at all. */
+.iptv-page .iptv-channel__name { color: var(--sfs-text, #f8fafc); }
+
+/* The hero's buttons. One of them is a `<router-link>` (Episodes), so without
+   this it took the link colour on top of a frosted fill over a photograph. */
+.iptv-page .iptv-hero .iptv-btn { color: var(--sfs-text, #f8fafc); }
+.iptv-page .iptv-hero .iptv-btn--primary { color: var(--sfs-on-accent, #ffffff); }
+.iptv-page .iptv-hero .iptv-btn--glass { color: var(--sfs-on-overlay, #f8fafc); }
+
+/* ============================================================
+   Right to left
+
+   Almost all of this file mirrors on its own: logical properties, `text-align:
+   start`, the flex order, and the scroll origin of every shelf. What is left is
+   the two things `dir="rtl"` genuinely cannot do - a GRADIENT, which has no
+   logical keyword, and a corner-pinned overlay, which is a place rather than a
+   paragraph and is therefore deliberately physical above.
+   ============================================================ */
+[dir='rtl'] .iptv-page .iptv-hero__scrim {
+  background:
+    linear-gradient(to top,
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 20%,
+                    transparent 82%),
+    linear-gradient(to left,
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
+                    transparent 72%),
+    linear-gradient(to top,
+                    var(--sfs-overlay, rgba(2, 6, 23, 0.92)) 0%,
+                    transparent 55%);
+}
+
+/* The corner badges DO move, because they are pinned to the corner the reader's
+   eye starts at rather than to a side of the artwork. The poster tag and the
+   "on air" dot both read as the first thing on the tile in either direction. */
+[dir='rtl'] .iptv-page .iptv-card__tag,
+[dir='rtl'] .iptv-watch .iptv-card__tag,
+[dir='rtl'] .iptv-page .iptv-channel__live {
+  left: auto;
+  right: 0.45rem;
+}
+
+/* ============================================================
+   Both ends of the range.
+
+   Most of this file is already fluid - `clamp()` for type and spacing,
+   `auto-fill` for the grids, `minmax` for the theatre - so what is left is the
    places a rule is genuinely needed.
    ============================================================ */
+
+/* A four-tab strip with labels does not fit a 320px bar next to a search box, so
+   the labels go and the icons stay. The tabs are still four distinct targets,
+   which is what matters; `aria-current` and the label text are still in the DOM
+   for a screen reader. */
+@media (max-width: 26rem) {
+  .iptv-page .iptv-tab__text,
+  .iptv-watch .iptv-tab__text { display: none; }
+  .iptv-page .iptv-tab,
+  .iptv-watch .iptv-tab { padding: 0.45rem 0.6rem; }
+}
+
 @media (max-width: 560px) {
-  .iptv-page { --iptv-card: 7.5rem; }
-  .iptv-watch .iptv-watch__nav { flex-direction: column; align-items: stretch; }
+  .iptv-page { --iptv-card: 8rem; }
+  .iptv-page .iptv-bar,
+  .iptv-watch .iptv-bar { border-radius: var(--iptv-radius); }
+  .iptv-page .iptv-grid,
+  .iptv-watch .iptv-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr));
+  }
+  .iptv-watch .iptv-watch__nav {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--iptv-radius-sm);
+  }
   .iptv-watch .iptv-watch__nav > * { justify-content: center; }
   .iptv-page .iptv-episode__blurb { display: none; }
+  /* Beside the player the list is capped so 400 channels do not make the page
+     ten screens tall. Stacked underneath it, that cap would be a small scrolling
+     box inside a scrolling page - two nested scrollbars on a phone. */
+  .iptv-page .iptv-theatre__side { max-height: none; }
+  .iptv-page .iptv-now { padding: 0.7rem; }
+}
+
+@media (max-width: 62rem) {
+  .iptv-page .iptv-theatre__side { max-height: min(60vh, 34rem); }
 }
 
 @media (pointer: coarse) {
   .iptv-page .iptv-btn,
   .iptv-watch .iptv-btn { min-height: max(2.75rem, 44px); }
-  .iptv-page .iptv-chip { min-height: max(2.75rem, 44px); }
+  .iptv-page .iptv-chip,
+  .iptv-page .iptv-segment { min-height: max(2.75rem, 44px); }
+  .iptv-page .iptv-tab,
+  .iptv-watch .iptv-tab { min-height: max(2.75rem, 44px); }
+  /* There is no hover on a touch screen, so the play badge would never appear.
+     Shown at rest instead, quietly. */
+  .iptv-page .iptv-card__play,
+  .iptv-watch .iptv-card__play {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .iptv-page .iptv-episode__play { opacity: 0.9; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .iptv-page .iptv-card,
   .iptv-watch .iptv-card,
+  .iptv-page .iptv-card__img,
+  .iptv-watch .iptv-card__img,
+  .iptv-page .iptv-card__play,
+  .iptv-watch .iptv-card__play,
+  .iptv-page .iptv-channel,
+  .iptv-page .iptv-episode,
+  .iptv-page .iptv-episode__play,
   .iptv-page .iptv-btn,
-  .iptv-watch .iptv-btn { transition: none !important; }
+  .iptv-watch .iptv-btn,
+  .iptv-page .iptv-tab,
+  .iptv-watch .iptv-tab { transition: none !important; }
   .iptv-page .iptv-card:hover,
-  .iptv-watch .iptv-card:hover { transform: none; }
-  .iptv-page .iptv-card--skeleton { animation: none !important; }
+  .iptv-watch .iptv-card:hover,
+  .iptv-page .iptv-channel:hover,
+  .iptv-page .iptv-btn--primary:hover,
+  .iptv-watch .iptv-btn--primary:hover { transform: none; }
+  .iptv-page .iptv-card:hover .iptv-card__img,
+  .iptv-watch .iptv-card:hover .iptv-card__img { transform: none; }
+  .iptv-page .iptv-episode:hover:not(:disabled),
+  [dir='rtl'] .iptv-page .iptv-episode:hover:not(:disabled) { transform: none; }
+  .iptv-page .iptv-card--skeleton,
+  .iptv-watch .iptv-card--skeleton,
+  .iptv-page .iptv-hero--skeleton { animation: none !important; }
 }

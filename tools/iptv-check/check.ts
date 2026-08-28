@@ -32,10 +32,11 @@
 //    through an upload.
 
 import {
-    RAIL_KEYS, buildRails, byCategory, byNewest, bySeason, continueWatching,
-    firstPlayable, genresOf, heroOf, inOrder, needsHlsLibrary, nextEpisode,
-    positionOf, previousEpisode, progressId, recent, recordProgress, resumeAt,
-    runtime, timecode, PROGRESS_LIMIT, RESUME_MIN_SECONDS, WATCHED_FRACTION,
+    RAIL_KEYS, TAB_KEYS, TV_TABS, buildRails, byCategory, byNewest, bySeason,
+    continueWatching, firstPlayable, genresOf, heroOf, inOrder, needsHlsLibrary,
+    nextEpisode, positionOf, previousEpisode, progressId, recent, recordProgress,
+    resumeAt, runtime, tabFor, timecode, PROGRESS_LIMIT, RESUME_MIN_SECONDS,
+    WATCHED_FRACTION,
 } from '../../src/utils/iptvEngine';
 import type { Channel, Episode, Movie, Series } from '../../src/services/iptv.service';
 
@@ -466,6 +467,66 @@ section('9. Timecodes and running times');
  * Result
  * ------------------------------------------------------------------ */
 console.log('');
+/* ------------------------------------------------------------------ *
+ * 10. The tabs
+ * ------------------------------------------------------------------ */
+section('10. The tabs, and the paths they light up for');
+{
+    ok('there are four tabs and they are declared once',
+        TV_TABS.length === 4, TV_TABS.map(t => t.id));
+    ok('the ids are the four the router knows',
+        TV_TABS.map(t => t.id).join(',') === 'home,movies,series,live',
+        TV_TABS.map(t => t.id));
+
+    // Every `to` has to be a path the router can actually match, or a tab is a
+    // dead link. The router file is not importable here (it pulls ~57 views), so
+    // the shape is asserted instead: `/tv` plus at most one more segment, which
+    // is what `tabFor` below is written against.
+    ok('every tab points at a real-shaped path under /tv',
+        TV_TABS.every(t => /^\/tv(\/[a-z]+)?$/.test(t.to)),
+        TV_TABS.map(t => t.to));
+    ok('no two tabs share a path',
+        new Set(TV_TABS.map(t => t.to)).size === TV_TABS.length,
+        TV_TABS.map(t => t.to));
+
+    // TAB_KEYS is derived, so this can only fail if somebody replaces the `map`
+    // with a second hand-written list - which is the thing that goes stale.
+    ok('TAB_KEYS is derived from TV_TABS rather than written out',
+        TAB_KEYS.length === TV_TABS.length
+        && TAB_KEYS.every((key, i) => key === TV_TABS[i].label),
+        TAB_KEYS);
+    // Films and Series deliberately reuse a rail heading's key: the same words
+    // in the same context, translated once.
+    ok('the two shared labels really are the rail headings',
+        (RAIL_KEYS as readonly string[]).includes('Films')
+        && (RAIL_KEYS as readonly string[]).includes('Series')
+        && TAB_KEYS.includes('Films') && TAB_KEYS.includes('Series'));
+
+    ok('each tab resolves to itself', TV_TABS.every(t => tabFor(t.to) === t.id),
+        TV_TABS.map(t => `${t.to} -> ${tabFor(t.to)}`));
+
+    // The cases where a strip normally goes blank and reads as broken.
+    ok("a series' own page keeps Series lit",
+        tabFor('/tv/series/abc-123') === 'series');
+    ok('a channel query keeps Live lit',
+        tabFor('/tv/live?channel=bbc-1') === 'live');
+    ok('a trailing slash changes nothing', tabFor('/tv/movies/') === 'movies');
+    ok('a hash changes nothing', tabFor('/tv/series#top') === 'series');
+    ok('the player falls back to Browse rather than guessing',
+        tabFor('/tv/watch/episode/s1/e1') === 'home'
+        && tabFor('/tv/watch/movie/m1') === 'home');
+    ok('/tv itself is Browse', tabFor('/tv') === 'home' && tabFor('/tv/') === 'home');
+
+    // Segment-aware, not `startsWith` - the trap `isUnder` in appNav.ts exists
+    // for. A path that merely begins with a tab's name is not that tab.
+    ok('matching is segment-aware, not a prefix test',
+        tabFor('/tv/seriesfoo') === 'home' && tabFor('/tv/livestream') === 'home',
+        [tabFor('/tv/seriesfoo'), tabFor('/tv/livestream')]);
+    ok('a path outside /tv is Browse rather than a throw',
+        tabFor('/courses') === 'home' && tabFor('') === 'home'
+        && tabFor('/') === 'home');
+}
+
 if (failures) {
     console.log(`FAIL — ${failures} of ${checks} checks failed.`);
     process.exit(1);
