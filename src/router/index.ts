@@ -31,6 +31,14 @@ import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
 import AiChat from '../views/AiChat.vue';
 
+// Self Study TV (app 38). Statically imported like the other ~55 views;
+// hls.js is the only heavy thing here and IptvLive.vue pulls it with a
+// dynamic import, so the other routes never download it.
+import Iptv from '../views/Iptv.vue';
+import IptvSeries from '../views/IptvSeries.vue';
+import IptvWatch from '../views/IptvWatch.vue';
+import IptvLive from '../views/IptvLive.vue';
+
 // Research Flow Views
 import ResearchFlow from '../views/ResearchFlow.vue';
 import ResearchMyProjects from '../views/ResearchMyProjects.vue';
@@ -321,6 +329,59 @@ const routes = [
                 name: 'AiChatRoom',
                 component: AiChat,
                 meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
+                /*
+                  Self Study TV. `requiresAuth: true` and NOTHING else - no
+                  `requiresSubscription`, no `requiredFeatures`.
+
+                  That is the Drawing Papers and Messages level, not the
+                  Newscast's: it needs an ACCOUNT and no subscription. The three
+                  levels on this platform are worth keeping straight, because
+                  "ungated" covers two of them and hides the difference:
+
+                    * public         - Newscast, Leaderboard, Courses, Plans
+                    * account only   - Drawing Papers, Messages, and this
+                    * a feature flag - everything under Tools
+
+                  Free television is free with an account. `check:appnav`
+                  asserts it, so nobody "tidies" it into the feature-gated set,
+                  and nobody promotes it to public either - a library of films is
+                  not something to serve to the open internet from a token-guarded
+                  backend.
+                */
+                path: 'tv',
+                name: 'Iptv',
+                component: Iptv,
+                meta: { title: 'Self Study TV', requiresAuth: true }
+            },
+            {
+                path: 'tv/series/:id',
+                name: 'IptvSeries',
+                component: IptvSeries,
+                meta: { title: 'Series', requiresAuth: true }
+            },
+            {
+                // One route for both, because the player is one page: the `kind`
+                // segment is what tells it whether the id is a film or an
+                // episode. Two routes would be two copies of the resume, the
+                // progress recording and the ticket handling.
+                path: 'tv/watch/:kind(movie)/:id',
+                name: 'IptvWatchMovie',
+                component: IptvWatch,
+                meta: { title: 'Watch', requiresAuth: true }
+            },
+            {
+                path: 'tv/watch/:kind(episode)/:seriesId/:id',
+                name: 'IptvWatchEpisode',
+                component: IptvWatch,
+                meta: { title: 'Watch', requiresAuth: true }
+            },
+            {
+                path: 'tv/live',
+                name: 'IptvLive',
+                component: IptvLive,
+                meta: { title: 'Live channels', requiresAuth: true }
             },
             {
                 // Public on purpose — no `requiresSubscription`, no

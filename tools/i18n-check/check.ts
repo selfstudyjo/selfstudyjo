@@ -70,6 +70,7 @@ import zhStudio from '../../src/i18n/messages/zh/studio';
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
+import { RAIL_KEYS } from '../../src/utils/iptvEngine';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 
 /* ------------------------------------------------------------------ *
@@ -572,6 +573,10 @@ for (const [id, catalogue] of CATALOGUES) {
 const dynamicStrings = new Set<string>([
     ...Object.values(BUCKET_LABELS),
     ...CONTEXT_KEYS,
+    // Self Study TV's rail headings, reached as `$t(rail.key)`. Imported from
+    // `iptvEngine.ts` rather than written out, so a reworded heading cannot
+    // silently revert to English in both languages.
+    ...RAIL_KEYS,
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {
@@ -580,6 +585,14 @@ for (const [id, catalogue] of CATALOGUES) {
     ok(`${id}: every AI Chat heading and memory line is translated`,
         missing.length === 0,
         missing.length ? `${missing.length} missing: ${missing.slice(0, 8).join(' · ')}` : '');
+}
+
+for (const [id, catalogue] of CATALOGUES) {
+    const missing = [...RAIL_KEYS]
+        .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
+    ok(`${id}: every Self Study TV rail heading is translated`,
+        missing.length === 0,
+        missing.length ? `${missing.length} missing: ${missing.join(' · ')}` : '');
 }
 
 /* ------------------------------------------------------------------ *

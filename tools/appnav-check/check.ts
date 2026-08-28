@@ -416,8 +416,15 @@ console.log('\n9. The disclosure, and the platform menu outside an application')
     check('outside an application the sidebar is the platform menu',
           platform.scoped.length > 0 && platform.extra.length === 0,
           platform.scoped.map(g => g.label));
+    /*
+      The exact inventory, on purpose. It is not a style assertion - it is a
+      tripwire on the shape of the platform menu, so a group added or reordered
+      has to be a deliberate edit here rather than something that happens.
+      'Watch' arrived with Self Study TV (app 38) on 2026-08-28.
+    */
     check('grouped rather than flat',
-          platform.scoped.map(g => g.label).join(',') === 'Main,Learn,Tools,Account,Proctoring',
+          platform.scoped.map(g => g.label).join(',')
+              === 'Main,Learn,Tools,Watch,Account,Proctoring',
           platform.scoped.map(g => g.label));
 
     const filtered = navLayout({ section: null, access: FULL, query: 'cert', showAllApps: false });

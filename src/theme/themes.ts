@@ -91,6 +91,8 @@ export interface Theme extends ThemeSeed {
   vars: Record<string, string>;
   /** The composited colour text is actually measured against. */
   measuredSurface: string;
+  /** The composited scrim `--sfs-on-overlay` is measured against. */
+  measuredOverlay: string;
   /** The accent wash a coloured text token most often lands on. */
   accentWash: string;
   /** The same, per status hue. */
@@ -516,6 +518,15 @@ function buildTheme(seed: ThemeSeed): Theme {
   const border = alpha(text, borderAlpha);
   const borderStrong = alpha(text, dark ? 0.26 : 0.3);
 
+  /*
+    What the eye actually sees where a scrim is used: the overlay's own colour
+    composited over the space behind it. Measuring the ink against the rgba()
+    itself would be measuring against something nobody ever sees - the same
+    correction `surfaceAt()` makes for every tinted card on the platform.
+  */
+  const overlaySolid = over(dark ? '#01010a' : '#0b1020', dark ? 0.72 : 0.55,
+                            seed.space);
+
   const vars: Record<string, string> = {
     /* Identity — readable in devtools, and what `[data-theme]` selectors use. */
     '--sfs-theme': seed.id,
@@ -529,6 +540,25 @@ function buildTheme(seed: ThemeSeed): Theme {
     '--sfs-surface-3': surface3,
     '--sfs-surface-rgb': channels(surface),
     '--sfs-overlay': alpha(dark ? '#01010a' : '#0b1020', dark ? 0.72 : 0.55),
+    /*
+      THE INK FOR AN OVERLAY, WHICH IS THE ONE SURFACE THAT HAD NONE.
+
+      `--sfs-overlay` is dark in ALL TEN galaxies - it is a scrim, and a scrim's
+      job is to darken whatever is behind it so light text reads over a
+      photograph. Every other surface here has an ink partner and a contrast
+      claim; this one did not, and a stylesheet reaching for the nearest thing
+      would spend `--sfs-text` - which FLIPS. On the three light galaxies that is
+      near-black text on a near-black scrim, which is the exact failure
+      `audit:ink` exists to catch, and it would have shipped invisible to anybody
+      working in a dark theme.
+
+      So the pair is derived here from the composited scrim, the same way
+      `--sfs-on-paper` is derived from paper and for the mirror-image reason:
+      paper is light in all ten and takes dark ink, a scrim is dark in all ten
+      and takes light ink. `contrastClaims` measures both.
+    */
+    '--sfs-on-overlay': ensureContrast('#f8fafc', overlaySolid, AA_TEXT),
+    '--sfs-on-overlay-muted': ensureContrast('#cbd5e1', overlaySolid, AA_LARGE),
 
     /* Tint ladder — one triple, every opacity */
     '--sfs-tint-rgb': tintRgb,
@@ -613,6 +643,7 @@ function buildTheme(seed: ThemeSeed): Theme {
     ...seed,
     vars,
     measuredSurface: surface,
+    measuredOverlay: overlaySolid,
     accentWash: washedBackdrop(accent, seed.space),
     statusWash: Object.fromEntries(
       Object.entries(statusFill).map(([name, hue]) => [name, washedBackdrop(hue, seed.space)])
@@ -688,6 +719,27 @@ export function contrastClaims(theme: Theme): ContrastClaim[] {
     { fg: v['--sfs-on-paper'], bg: v['--sfs-paper'], min: AAA_TEXT, label: 'ink on paper' },
     { fg: v['--sfs-on-paper-muted'], bg: v['--sfs-paper'], min: AA_TEXT, label: 'muted ink on paper' },
     { fg: v['--sfs-on-paper'], bg: v['--sfs-paper-3'], min: AA_TEXT, label: 'ink on paper-3' },
+    /*
+      A scrim is dark in all ten galaxies, so its ink is light in all ten - the
+      mirror image of paper.
+
+      CLAIMED AT AA AND NOT AAA, AND THAT IS A MEASURED CEILING RATHER THAN A
+      RELAXED STANDARD. On the three light galaxies the scrim is 0.55 alpha over
+      a light space, which composites to a mid-grey around #6e727e - and white,
+      the lightest ink there is, measures 4.8:1 on that. AAA is not reachable
+      with ANY ink, so claiming it would be claiming something no value can
+      satisfy. Measured: 4.76 (dawn), 4.80 (silver), 4.82 (cartwheel), and 12-16
+      on the seven dark galaxies.
+
+      What makes 4.8 the right answer rather than a shrug is what sits on a
+      scrim: a hero title and one line of metadata, both large text, for which
+      the applicable threshold is 3:1. A caller putting body copy on a scrim
+      should double the scrim - see `.iptv-hero__scrim`, which stacks two stops
+      of it precisely because its backdrop is an arbitrary photograph and no
+      token can measure that.
+    */
+    { fg: v['--sfs-on-overlay'], bg: theme.measuredOverlay, min: AA_TEXT, label: 'ink on overlay' },
+    { fg: v['--sfs-on-overlay-muted'], bg: theme.measuredOverlay, min: AA_LARGE, label: 'muted ink on overlay' },
     { fg: v['--sfs-field-text'], bg: v['--sfs-field'], min: AAA_TEXT, label: 'field text on field' },
     { fg: v['--sfs-placeholder'], bg: v['--sfs-field'], min: AA_LARGE, label: 'placeholder on field' },
   ];

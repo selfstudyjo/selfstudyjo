@@ -411,6 +411,25 @@ const icons: Record<IconName, any> = {
     h('path', { d: 'M12 13.2V21' }),
   ]),
 
+  /*
+    A screen with a stand, not a set with an aerial: the page is a library of
+    things to watch rather than a broadcast, and at 20px an aerial reads as the
+    newscast mast three rows above it.
+  */
+  tv: stroked('TvIcon', '1.8', () => [
+    h('rect', { x: '2.5', y: '4.5', width: '19', height: '13', rx: '2' }),
+    h('path', { d: 'M8.5 21h7M12 17.5V21' }),
+  ]),
+
+  /*
+    A play mark inside a ring, and deliberately NOT a red dot: a dot means
+    "recording" to most readers, and this is a list of things already on air.
+  */
+  live: stroked('LiveIcon', '1.8', () => [
+    h('circle', { cx: '12', cy: '12', r: '8.5' }),
+    h('path', { d: 'M10.4 9.3l4.6 2.7-4.6 2.7z' }),
+  ]),
+
   // A podium rather than a trophy: the page is a ranking of people, and three
   // stepped columns say "first, second, third" at 20px where a cup says
   // "winner" and nothing about the other 200 rows.

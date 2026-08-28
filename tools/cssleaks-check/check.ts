@@ -221,6 +221,12 @@ console.log('\n5. A globally loaded page stylesheet stays on its own page');
         // globally loaded sheet safe. Debt is only tolerable where it predates
         // the check.
         'leaderboard.css',
+        // Self Study TV, same reasoning: a NEW globally loaded page stylesheet
+        // starts at zero and is gated from its first commit. Every selector in
+        // it is `iptv-`-prefixed and anchored on `.iptv-page` / `.iptv-watch`,
+        // which is what makes a globally loaded sheet safe. Debt is only
+        // tolerable where it predates the check.
+        'iptv.css',
     ]);
     const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
         'exam-system.css', 'side-nav.css', 'style.css']);
