@@ -26,6 +26,59 @@ const tools: Catalogue = {
     'Ask me anything about your courses, labs, or general knowledge':
         '课程、实验室或任何常识问题，都可以问我',
 
+    /* The saved conversations, and the memory each one carries. */
+    'New chat': '新建对话',
+    'Your chats': '你的对话',
+    'Search chats': '搜索对话',
+    'No chats yet. Start one and it will be saved here.': '还没有对话。开始一个，它就会保存在这里。',
+    'No chats match that search.': '没有符合该搜索的对话。',
+    'Name this chat': '为这个对话命名',
+    'Rename': '重命名',
+    'Pin': '置顶',
+    'Unpin': '取消置顶',
+    'Pinned': '已置顶',
+    'Yesterday': '昨天',
+    'Previous 7 days': '过去 7 天',
+    'Previous 30 days': '过去 30 天',
+    'Older': '更早',
+    'Delete this chat and everything in it?': '删除这个对话及其中的所有内容？',
+    'Could not load your chats.': '无法加载你的对话。',
+    'Could not open that chat.': '无法打开该对话。',
+    'Could not start a new chat.': '无法新建对话。',
+    'Could not rename that chat.': '无法重命名该对话。',
+    'Could not delete that chat.': '无法删除该对话。',
+    'Could not send that message.': '无法发送该消息。',
+    'Could not clear that chat.': '无法清空该对话。',
+    'Could not save that.': '无法保存。',
+    'What are you working on?': '你在做什么？',
+    'Everything you say here is saved, and the assistant will remember the project next time you open this chat.':
+        '你在这里说的一切都会被保存，下次打开这个对话时，助手仍然记得这个项目。',
+    'Type your message… (Enter to send, Shift+Enter for a new line)':
+        '输入你的消息……（Enter 发送，Shift+Enter 换行）',
+    'Thinking…': '思考中……',
+    'Copy code': '复制代码',
+    'Memory': '记忆',
+    'What you are working on': '你正在做的事',
+    'The assistant fills this in as you talk. Edit it to correct what it remembers.':
+        '助手会在交流中填写这里。编辑它可以纠正助手记住的内容。',
+    'Update from this chat': '根据本对话更新',
+    'Updating…': '正在更新……',
+    'Clear chat': '清空对话',
+    'Clear every message here, and what the assistant remembers?': '清空这里的所有消息，以及助手记住的内容？',
+    'The assistant is updating what it remembers from this chat.':
+        '助手正在更新它从本对话中记住的内容。',
+    'Earlier in this chat': '此对话的早前内容',
+    'The assistant remembers this project': '助手记得这个项目',
+    'Could not read what the assistant remembers.': '无法读取助手记住的内容。',
+    'The assistant could not be reached. Nothing was changed.': '无法连接到助手。没有任何改动。',
+    'The assistant could not be reached. Your message was saved — try again.':
+        '无法连接到助手。你的消息已保存 —— 请重试。',
+    'Nothing yet — the assistant learns what you are working on as you go.':
+        '暂时还没有 —— 助手会在交流中逐步了解你正在做的事。',
+    'The assistant can see all {v0} messages in this chat.': '助手可以看到本对话中全部 {v0} 条消息。',
+    'The assistant reads the last {v0} messages in full, and remembers the {v1} before them as notes.':
+        '助手会完整阅读最近 {v0} 条消息，并把之前的 {v1} 条记成笔记。',
+
     /* ---------------------------------------------------------------- *
      * The newscast page's own chrome
      * ---------------------------------------------------------------- */

@@ -70,6 +70,7 @@ import zhStudio from '../../src/i18n/messages/zh/studio';
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
+import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 
 /* ------------------------------------------------------------------ *
  * Harness
@@ -105,6 +106,126 @@ interface Use {
     global: boolean;
 }
 
+/** The JavaScript half of `blankComments` below. Script regions only. */
+function blankJs(src: string): string {
+    const out: string[] = [];
+    const keep = (s: string) => out.push(s);
+    // Same length, newlines preserved, so every index and every line number is
+    // exactly where it was.
+    const blank = (s: string) => out.push(s.replace(/[^\n]/g, ' '));
+
+    let i = 0;
+    while (i < src.length) {
+        const ch = src[i];
+        const next = src[i + 1];
+
+        if (ch === '/' && next === '/') {
+            const end = src.indexOf('\n', i);
+            const stop = end === -1 ? src.length : end;
+            blank(src.slice(i, stop));
+            i = stop;
+            continue;
+        }
+        if (ch === '/' && next === '*') {
+            const end = src.indexOf('*/', i + 2);
+            const stop = end === -1 ? src.length : end + 2;
+            blank(src.slice(i, stop));
+            i = stop;
+            continue;
+        }
+        if (ch === "'" || ch === '"' || ch === '`') {
+            const quote = ch;
+            let j = i + 1;
+            while (j < src.length) {
+                if (src[j] === '\\') { j += 2; continue; }
+                if (src[j] === quote) { j++; break; }
+                j++;
+            }
+            keep(src.slice(i, j));
+            i = j;
+            continue;
+        }
+        if (ch === '/') {
+            // A regex literal. Scanned to its unescaped close with character
+            // classes tracked, because `.replace(/'/g, …)` — which this repo
+            // really contains — opens a string that never closes as far as a
+            // quote-only scanner is concerned.
+            let j = i + 1;
+            let inClass = false;
+            while (j < src.length) {
+                if (src[j] === '\\') { j += 2; continue; }
+                if (src[j] === '[') inClass = true;
+                else if (src[j] === ']') inClass = false;
+                else if (src[j] === '/' && !inClass) { j++; break; }
+                else if (src[j] === '\n') break;
+                j++;
+            }
+            keep(src.slice(i, j));
+            i = j;
+            continue;
+        }
+        keep(ch);
+        i++;
+    }
+    return out.join('');
+}
+
+/**
+ * The same source with every comment replaced by spaces of the same length.
+ *
+ * BLANKED, not removed, so every offset is unchanged — `inScript` below decides
+ * which side of a `<script>` boundary a match fell on by its index, and shifting
+ * the text would silently reclassify matches near a boundary.
+ *
+ * It is needed because a comment ABOUT a translation key is not a use of one,
+ * and that matters in both directions. A module documenting why its keys are
+ * reached through a variable — writing out the call it deliberately does not
+ * make — was reported by check 8 as calling `$t` from a script block, pointing
+ * at a line that is a sentence. And a key named only in a comment counted as
+ * "used" by check 9, so a catalogue entry nothing renders any more went on
+ * looking alive for as long as some comment still mentioned it.
+ *
+ * ============================================================
+ * A TEMPLATE IS NOT JAVASCRIPT, AND LEXING IT AS ONE ATE 51 KEYS
+ * ============================================================
+ *
+ * The first version ran the JS scanner over the whole file. In
+ * `NetworkSimulator.vue` the template contains `<code>/api/netsim/*</code>`:
+ * the first `/` reads as a regex literal, it closes at the `/` in `/api/`, and
+ * the very next `/` is followed by a `*` — so `netsim/*` opened a BLOCK COMMENT
+ * that ran to the next close-comment marker hundreds of lines away and blanked
+ * 51 real `$t` calls with it. Coverage fell by 43 keys and every one of them
+ * read as an orphaned catalogue entry.
+ *
+ * (And writing that marker out literally in this very comment closed it, which
+ * is the same family of mistake one layer up and cost another build.)
+ *
+ * That is working rule 44 exactly: a check whose input has been silently
+ * emptied passes, or in this case fails for a reason that has nothing to do
+ * with the code. So the JS scanner runs ONLY inside `<script>` blocks, and
+ * everything outside one gets HTML comments blanked and nothing else. A slash
+ * in markup is a slash.
+ */
+function blankComments(src: string, isScriptFile: boolean): string {
+    if (isScriptFile) return blankJs(src);
+
+    const out: string[] = [];
+    let at = 0;
+    // Outside a <script> block, blank `<!-- -->` and touch nothing else. No
+    // string tracking and no `//`: a URL in an attribute is full of both, and
+    // a `$t` inside a CSS or template comment is not a call either way.
+    const outsideScript = (chunk: string) =>
+        chunk.replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
+
+    for (const m of src.matchAll(/<script[\s\S]*?<\/script>/g)) {
+        out.push(outsideScript(src.slice(at, m.index!)));
+        out.push(blankJs(m[0]));
+        at = m.index! + m[0].length;
+    }
+    out.push(outsideScript(src.slice(at)));
+    return out.join('');
+}
+
 /**
  * Every `$t('…')` / `t('…')` in the app, with where it was and whether it was
  * inside a `<script>` block.
@@ -127,7 +248,10 @@ function scanUses(): Use[] {
             // The catalogues themselves are full of key strings, and the engine
             // is full of examples in its own comments.
             if (p.includes(`${path.sep}i18n${path.sep}`)) continue;
-            const src = fs.readFileSync(p, 'utf8');
+            // Comments blanked, not removed: a comment ABOUT a key is not a
+            // use of one, and preserving the offsets is what keeps `inScript`
+            // below correct.
+            const src = blankComments(fs.readFileSync(p, 'utf8'), p.endsWith('.ts'));
 
             // Where do the script blocks start and end? Needed for check 5.
             const scriptRanges: [number, number][] = [];
@@ -429,11 +553,111 @@ for (const [id, catalogue] of CATALOGUES) {
         missing.length ? `${missing.length} missing: ${missing.slice(0, 12).join(' · ')}` : '');
 }
 
+/**
+ * The AI Chat list's date headings and its memory sentence.
+ *
+ * The same shape as the sidebar's labels and verified the same way: both are
+ * reached through a variable — `$t(BUCKET_LABELS[bucket])` and `t(key, params)`
+ * from `describeContext` — so no source file contains the literal
+ * `$t('Yesterday')` and the scan in check 9 would read every one of them as an
+ * orphan. They are the opposite of orphans: they are keys whose call site
+ * cannot be scanned for, which is exactly why they are checked against the
+ * exported table instead.
+ *
+ * `CONTEXT_KEYS` is DERIVED by calling `describeContext` rather than being a
+ * second list written out by hand — a hand-written copy is the thing that goes
+ * stale the day somebody rewords one of the three branches, and the symptom
+ * would be a sentence that silently reverts to English in both languages.
+ */
+const dynamicStrings = new Set<string>([
+    ...Object.values(BUCKET_LABELS),
+    ...CONTEXT_KEYS,
+]);
+
+for (const [id, catalogue] of CATALOGUES) {
+    const missing = [...dynamicStrings]
+        .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
+    ok(`${id}: every AI Chat heading and memory line is translated`,
+        missing.length === 0,
+        missing.length ? `${missing.length} missing: ${missing.slice(0, 8).join(' · ')}` : '');
+}
+
 /* ------------------------------------------------------------------ *
  * 8. `$t` is template-only
  * ------------------------------------------------------------------ */
 
 section('8. $t is never reached from a script block');
+
+/*
+ * `blankComments` is a PREPROCESSOR, and a check whose input has been silently
+ * emptied passes — which is the worst way for a check to be wrong (working rule
+ * 44). So it gets a fixture of its own, asserting in BOTH directions: a marker
+ * after each known trap must SURVIVE, and text that is only ever a comment must
+ * NOT. Every case below is one that has actually cost something on this
+ * platform.
+ */
+{
+    const Q = String.fromCharCode(39);      // a single quote
+    const D = String.fromCharCode(34);      // a double quote
+    const TICK = String.fromCharCode(96);   // a backtick
+
+    const js = (s: string) => blankComments(s, true);
+    const vue = (s: string) => blankComments(s, false);
+
+    // Offsets must not move, or `inScript` puts a match on the wrong side of a
+    // <script> boundary.
+    const sample = 'const a = 1; // gone\nconst KEEP = 2;';
+    ok('blankComments preserves length, so every offset still holds',
+        js(sample).length === sample.length, [js(sample).length, sample.length]);
+    ok('...and preserves line numbers',
+        js('/* one\ntwo */\nKEEP').split('\n').length === 3);
+    ok('...and blanks a line comment', !js(sample).includes('gone'));
+    ok('...while keeping the code around it', js(sample).includes('KEEP'));
+
+    // The admin console's `_js_code` emptied a file from exactly this.
+    const inString = 'const a = ' + Q + '/* not a comment */' + Q + '; const KEEP = 1;';
+    ok('a comment marker inside a STRING is not a comment',
+        js(inString).includes('/* not a comment */') && js(inString).includes('KEEP'),
+        js(inString));
+
+    // ...and from this: an odd number of backticks inside a comment.
+    const oddTicks = '/* a ' + TICK + TICK + TICK + ' fence */ const KEEP = 1;';
+    ok('an odd backtick count inside a comment does not swallow the file',
+        js(oddTicks).includes('KEEP'), js(oddTicks));
+
+    // `escapeString` in this repo really is `.replace(/'/g, ...)`.
+    const regexQuote = 'x.replace(/[' + Q + D + ']/g, e); const KEEP = 1;';
+    ok('a quote inside a REGEX LITERAL does not open a string',
+        js(regexQuote).includes('KEEP'), js(regexQuote));
+
+    // A template is not JavaScript. `<code>/api/netsim/*</code>` in
+    // NetworkSimulator.vue opened a block comment that blanked 51 real calls.
+    const template = '<template>\n  <code>/api/netsim/*</code>\n'
+        + '  {{ $t(' + Q + 'Connect storage' + Q + ') }}\n</template>';
+    ok('a slash in MARKUP is a slash, not a regex or a comment',
+        vue(template).includes('Connect storage'), vue(template));
+
+    // ...and an apostrophe in template prose must not open a string that eats
+    // the next call.
+    const prose = '<template>\n  <p>the user' + Q + 's chats</p>\n'
+        + '  {{ $t(' + Q + 'New chat' + Q + ') }}\n</template>';
+    ok('an apostrophe in template prose does not swallow the next key',
+        vue(prose).includes('New chat'), vue(prose));
+
+    // What it is FOR: a comment describing a call is not a call.
+    const doc = '<template><span>{{ $t(' + Q + 'Real' + Q + ') }}</span></template>\n'
+        + '<script setup lang="ts">\n'
+        + '// reached as $t(' + Q + 'Documented' + Q + '), never written out\n'
+        + 'const x = 1;\n</script>';
+    ok('a key named only in a comment is not a use',
+        !vue(doc).includes('Documented'), vue(doc));
+    ok('...while a real call beside it survives', vue(doc).includes('Real'));
+
+    // An HTML comment in a template is not a call either.
+    ok('nor is one in an HTML comment',
+        !vue('<template><!-- $t(' + Q + 'Ghost' + Q + ') --></template>').includes('Ghost'));
+}
+
 
 const inScript = uses.filter(u => u.global && u.inScript);
 ok('no `$t(` inside a <script> block or a .ts file',
@@ -453,10 +677,14 @@ section('9. No catalogue entry has been orphaned by a reword');
  * would read as orphans. They are not orphans; they are the one set of keys
  * whose call site is a variable, which is exactly why check 7 verifies them
  * against `appNav.ts` instead of against the source scan.
+ *
+ * `dynamicStrings` is the AI Chat's version of the same thing — its date
+ * headings and its memory sentence — and it is exempt here for the same reason
+ * and verified positively in the same place.
  */
 for (const [id, catalogue] of CATALOGUES) {
     const orphans = Object.keys(catalogue)
-        .filter(k => !usedKeys.has(k) && !navStrings.has(k));
+        .filter(k => !usedKeys.has(k) && !navStrings.has(k) && !dynamicStrings.has(k));
     ok(`${id}: every entry is asked for by some source file`,
         orphans.length === 0,
         orphans.length

@@ -206,42 +206,42 @@
 /* --------------------------------------------------------------------------
    MARKDOWN
    -------------------------------------------------------------------------- */
-.ai-chat-container .markdown-body {
+.ai-chat-container .md-block {
   color: var(--aic-text-primary);
   font-family: inherit;
 }
 
-.ai-chat-container .markdown-body p {
+.ai-chat-container .md-block p {
   margin: 0 0 var(--aic-sp-sm);
 }
-.ai-chat-container .markdown-body p:last-child { margin-bottom: 0; }
+.ai-chat-container .md-block p:last-child { margin-bottom: 0; }
 
-.ai-chat-container .markdown-body h1,
-.ai-chat-container .markdown-body h2,
-.ai-chat-container .markdown-body h3,
-.ai-chat-container .markdown-body h4 {
+.ai-chat-container .md-block h1,
+.ai-chat-container .md-block h2,
+.ai-chat-container .md-block h3,
+.ai-chat-container .md-block h4 {
   color: var(--aic-text-primary);
   margin: var(--aic-sp-md) 0 var(--aic-sp-sm);
   line-height: 1.3;
 }
-.ai-chat-container .markdown-body h1 { font-size: 1.4em; }
-.ai-chat-container .markdown-body h2 { font-size: 1.25em; }
-.ai-chat-container .markdown-body h3 { font-size: 1.1em; }
+.ai-chat-container .md-block h1 { font-size: 1.4em; }
+.ai-chat-container .md-block h2 { font-size: 1.25em; }
+.ai-chat-container .md-block h3 { font-size: 1.1em; }
 
-.ai-chat-container .markdown-body a {
+.ai-chat-container .md-block a {
   color: var(--aic-accent-soft);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.ai-chat-container .markdown-body a:hover { color: var(--sfs-text-muted, #a5b4fc); }
+.ai-chat-container .md-block a:hover { color: var(--sfs-text-muted, #a5b4fc); }
 
-.ai-chat-container .markdown-body ul,
-.ai-chat-container .markdown-body ol {
+.ai-chat-container .md-block ul,
+.ai-chat-container .md-block ol {
   padding-inline-start: 1.4em;
   margin: 0 0 var(--aic-sp-sm);
 }
 
-.ai-chat-container .markdown-body blockquote {
+.ai-chat-container .md-block blockquote {
   border-inline-start: 3px solid var(--aic-accent-soft);
   padding: var(--aic-sp-xs) var(--aic-sp-md);
   margin: var(--aic-sp-sm) 0;
@@ -250,20 +250,20 @@
   color: var(--aic-text-secondary);
 }
 
-.ai-chat-container .markdown-body code {
+.ai-chat-container .md-block code {
   font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
   font-size: 0.92em;
   color: var(--sfs-text-muted, #e0e7ff);
 }
 
-.ai-chat-container .markdown-body :not(pre) > code {
+.ai-chat-container .md-block :not(pre) > code {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   padding: 0.15em 0.45em;
   border-radius: 6px;
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
 }
 
-.ai-chat-container .markdown-body pre {
+.ai-chat-container .md-block pre {
   position: relative;
   background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
   backdrop-filter: blur(8px);
@@ -277,26 +277,26 @@
   line-height: 1.5;
 }
 
-.ai-chat-container .markdown-body pre code {
+.ai-chat-container .md-block pre code {
   background: transparent;
   border: none;
   padding: 0;
   color: var(--sfs-text, #e6edf3);
 }
 
-.ai-chat-container .markdown-body table {
+.ai-chat-container .md-block table {
   width: 100%;
   border-collapse: collapse;
   margin: var(--aic-sp-sm) 0;
   font-size: 0.92em;
 }
-.ai-chat-container .markdown-body th,
-.ai-chat-container .markdown-body td {
+.ai-chat-container .md-block th,
+.ai-chat-container .md-block td {
   padding: 0.5em 0.75em;
   border: 1px solid var(--aic-glass-border);
   text-align: start;
 }
-.ai-chat-container .markdown-body th {
+.ai-chat-container .md-block th {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
 }
 
@@ -581,3 +581,503 @@
 /* --------------------------------------------------------------------------
    END
    -------------------------------------------------------------------------- */
+/* ==========================================================================
+   ROOMS, THE MEMORY PANEL, AND THE TWO-PANE LAYOUT
+   ==========================================================================
+   Added when the chat gained saved conversations. Everything below is anchored
+   on .ai-chat-container like everything above it, so this file still leaks
+   nothing -- which matters more than usual here, because .room-row, .rooms-list,
+   .context-panel and .md-block are exactly the sort of generic name another page
+   would also want. npm run check:cssleaks is what proves it stayed that way.
+
+   No colour literal anywhere: every value is a --sfs-* token with the original
+   literal as its fallback, so all ten galaxies work and a missing token renders
+   as the dark default rather than as nothing (working rule 12).
+   ========================================================================== */
+
+/* The root becomes a two-column shell. It was a single column, so the flex
+   direction is overridden here rather than edited above -- the single-column
+   rules are still what a phone gets, below the 1024px breakpoint. */
+.ai-chat-container {
+  flex-direction: row;
+  align-items: stretch;
+  max-width: 1600px;
+}
+
+.ai-chat-container .chat-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  /* Not min-width: 0 by accident: a flex child defaults to min-width: auto,
+     which is min-content, and one unbreakable string in a reply -- a URL, a
+     uuid, a stack frame -- then pushes the whole conversation wider than the
+     viewport and the page scrolls sideways. The exam pages paid for this three
+     times over. */
+  min-width: 0;
+  gap: var(--aic-sp-md);
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   THE ROOM LIST
+   -------------------------------------------------------------------------- */
+.ai-chat-container .chat-rooms {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 clamp(240px, 22vw, 300px);
+  min-width: 0;
+  gap: var(--aic-sp-sm);
+  padding: var(--aic-sp-sm);
+  background: var(--aic-glass-bg);
+  backdrop-filter: var(--aic-blur);
+  -webkit-backdrop-filter: var(--aic-blur);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-lg);
+  overflow: hidden;
+}
+
+.ai-chat-container .rooms-head {
+  display: flex;
+  align-items: center;
+  gap: var(--aic-sp-xs);
+}
+
+.ai-chat-container .new-chat-btn {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--aic-sp-xs);
+  /* max(), not a bare rem: responsive.css scales the ROOT font size fluidly, so
+     2.75rem measures about 41px on a 390px phone -- under the 44px minimum, on
+     exactly the devices the rule exists for. */
+  min-height: max(2.75rem, 44px);
+  padding: 0 var(--aic-sp-sm);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+  border-radius: var(--aic-r-md);
+  background: linear-gradient(135deg,
+              rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28),
+              rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.28));
+  color: var(--aic-text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--aic-t-fast), box-shadow var(--aic-t-fast);
+}
+
+.ai-chat-container .new-chat-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--aic-shadow);
+}
+
+.ai-chat-container .new-chat-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Only on a phone, where the rail is a drawer. */
+.ai-chat-container .rooms-close {
+  display: none;
+  width: max(2.75rem, 44px);
+  min-height: max(2.75rem, 44px);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-md);
+  background: transparent;
+  color: var(--aic-text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ai-chat-container .rooms-search input {
+  width: 100%;
+  min-height: max(2.5rem, 40px);
+  padding: 0 var(--aic-sp-sm);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-md);
+  background: var(--aic-glass-bg);
+  color: var(--aic-text-primary);
+  font: inherit;
+  /* 16px minimum: below it iOS zooms the page on focus and never zooms back. */
+  font-size: max(1rem, 16px);
+}
+
+.ai-chat-container .rooms-search input::placeholder { color: var(--aic-text-muted); }
+
+.ai-chat-container .rooms-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline-end: var(--aic-sp-xs);
+}
+
+.ai-chat-container .rooms-note {
+  margin: var(--aic-sp-md) var(--aic-sp-sm);
+  color: var(--aic-text-muted);
+  font-size: 0.9rem;
+}
+
+.ai-chat-container .rooms-bucket {
+  margin: var(--aic-sp-md) var(--aic-sp-sm) var(--aic-sp-xs);
+  color: var(--aic-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ai-chat-container .room-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--aic-sp-xs);
+  border-radius: var(--aic-r-md);
+  transition: background var(--aic-t-fast);
+}
+
+.ai-chat-container .room-row:hover { background: var(--aic-glass-bg); }
+
+.ai-chat-container .room-row.active {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+  /* The inner edge, so the marker points into the panel rather than out of the
+     page -- and mirrored below, because a box-shadow offset is a physical X and
+     dir does not flip one. */
+  box-shadow: inset 4px 0 0 0 var(--aic-accent-soft);
+}
+
+[dir='rtl'] .ai-chat-container .room-row.active {
+  box-shadow: inset -4px 0 0 0 var(--aic-accent-soft);
+}
+
+.ai-chat-container .room-open {
+  flex: 1 1 auto;
+  /* Same reason as .chat-main: a long unbroken title must not set the width of
+     the rail. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--aic-sp-sm);
+  border: 0;
+  border-radius: var(--aic-r-md);
+  background: transparent;
+  color: var(--aic-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.ai-chat-container .room-title {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.92rem;
+  font-weight: 600;
+  unicode-bidi: plaintext;
+}
+
+.ai-chat-container .room-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--aic-text-muted);
+  font-size: 0.78rem;
+}
+
+.ai-chat-container .room-preview {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  unicode-bidi: plaintext;
+}
+
+.ai-chat-container .room-brief-dot {
+  flex: 0 0 auto;
+  color: var(--aic-accent-soft);
+  font-size: 0.7rem;
+}
+
+.ai-chat-container .room-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding-inline-end: var(--aic-sp-xs);
+}
+
+/* Revealed on hover on a pointer device, and always present on a touch one --
+   :hover on touch is a tap that then needs a second tap to do anything, so the
+   actions would be unreachable. */
+.ai-chat-container .room-row:hover .room-actions,
+.ai-chat-container .room-row.active .room-actions { display: flex; }
+
+@media (pointer: coarse) {
+  .ai-chat-container .room-actions { display: flex; }
+}
+
+.ai-chat-container .room-actions button {
+  width: max(2rem, 32px);
+  height: max(2rem, 32px);
+  border: 0;
+  border-radius: var(--aic-r-sm);
+  background: transparent;
+  color: var(--aic-text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.ai-chat-container .room-actions button:hover { opacity: 1; }
+.ai-chat-container .room-actions button.on { opacity: 1; }
+
+/* --------------------------------------------------------------------------
+   HEADER ADDITIONS
+   -------------------------------------------------------------------------- */
+.ai-chat-container .chat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--aic-sp-sm);
+  text-align: start;
+}
+
+.ai-chat-container .chat-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ai-chat-container .chat-heading h1,
+.ai-chat-container .chat-heading p {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  unicode-bidi: plaintext;
+}
+
+/* Only on a phone -- the rail is always visible above 1024px. */
+.ai-chat-container .rooms-toggle {
+  display: none;
+  flex: 0 0 auto;
+  width: max(2.75rem, 44px);
+  min-height: max(2.75rem, 44px);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-md);
+  background: var(--aic-glass-bg);
+  color: var(--aic-text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.ai-chat-container .context-btn {
+  flex: 0 0 auto;
+  min-height: max(2.5rem, 40px);
+  padding: 0 var(--aic-sp-sm);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-md);
+  background: var(--aic-glass-bg);
+  color: var(--aic-text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ai-chat-container .context-btn.on {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  color: var(--aic-text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   THE MEMORY PANEL
+   -------------------------------------------------------------------------- */
+.ai-chat-container .context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aic-sp-sm);
+  max-height: 45vh;
+  overflow-y: auto;
+  padding: var(--aic-sp-md);
+  background: var(--aic-glass-bg-strong);
+  backdrop-filter: var(--aic-blur);
+  -webkit-backdrop-filter: var(--aic-blur);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-lg);
+}
+
+.ai-chat-container .context-line {
+  margin: 0;
+  color: var(--aic-text-muted);
+  font-size: 0.85rem;
+}
+
+.ai-chat-container .context-label {
+  color: var(--aic-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ai-chat-container .context-panel textarea {
+  width: 100%;
+  padding: var(--aic-sp-sm);
+  border: 1px solid var(--aic-glass-border);
+  border-radius: var(--aic-r-md);
+  background: var(--aic-glass-bg);
+  color: var(--aic-text-primary);
+  font: inherit;
+  font-size: max(0.95rem, 16px);
+  line-height: 1.5;
+  resize: vertical;
+  /* The brief is in whichever language the CONVERSATION is in, which is not
+     necessarily the interface's -- so the direction is read out of the string.
+     An English brief inside an Arabic page otherwise has its full stop
+     relocated to the front. */
+  unicode-bidi: plaintext;
+}
+
+.ai-chat-container .context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aic-sp-xs);
+}
+
+.ai-chat-container .context-actions button {
+  min-height: max(2.5rem, 40px);
+  padding: 0 var(--aic-sp-md);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
+  border-radius: var(--aic-r-md);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  color: var(--aic-text-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ai-chat-container .context-actions button.ghost {
+  background: transparent;
+  border-color: var(--aic-glass-border);
+  color: var(--aic-text-secondary);
+}
+
+.ai-chat-container .context-actions button.danger {
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.4);
+  color: var(--sfs-danger-text, #fca5a5);
+}
+
+.ai-chat-container .context-actions button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ai-chat-container .context-summary {
+  margin: 0;
+  color: var(--aic-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  unicode-bidi: plaintext;
+}
+
+.ai-chat-container .context-error,
+.ai-chat-container .chat-error {
+  margin: 0;
+  padding: var(--aic-sp-sm) var(--aic-sp-md);
+  border: 1px solid rgb(var(--sfs-danger-rgb, 248 113 113) / 0.35);
+  border-radius: var(--aic-r-md);
+  background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.12);
+  color: var(--sfs-danger-text, #fca5a5);
+  font-size: 0.88rem;
+}
+
+/* --------------------------------------------------------------------------
+   MESSAGES: THE EMPTY STATE, FAILURES, AND THE BLOCK RENDERER
+   -------------------------------------------------------------------------- */
+.ai-chat-container .chat-empty {
+  margin: auto;
+  max-width: 34rem;
+  padding: var(--aic-sp-xl) var(--aic-sp-md);
+  color: var(--aic-text-muted);
+  text-align: center;
+}
+
+.ai-chat-container .chat-empty-title {
+  margin: 0 0 var(--aic-sp-sm);
+  color: var(--aic-text-primary);
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+}
+
+.ai-chat-container .message.failed .message-content {
+  border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.45);
+}
+
+.ai-chat-container .retry-btn {
+  margin-top: var(--aic-sp-xs);
+  min-height: max(2.25rem, 36px);
+  padding: 0 var(--aic-sp-sm);
+  border: 1px solid rgb(var(--sfs-danger-rgb, 248 113 113) / 0.4);
+  border-radius: var(--aic-r-sm);
+  background: transparent;
+  color: var(--sfs-danger-text, #fca5a5);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.ai-chat-container .md-block + .md-block { margin-top: var(--aic-sp-sm); }
+
+.ai-chat-container .md-block li { margin-bottom: var(--aic-sp-xs); }
+
+/* CODE IS NOT RIGHT-TO-LEFT, in any language. Rendered RTL, the bidi algorithm
+   reorders the punctuation, so `ls -la /var/log | grep error` comes out with
+   the pipe and the flags moved and a student copying it gets a command that
+   does not run. This platform's labs are SQL, Linux and Python. */
+.ai-chat-container .md-code,
+.ai-chat-container .md-block pre,
+.ai-chat-container .md-block code {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+/* Prose written by the model is in whichever language the chat is in, which is
+   not necessarily the interface's -- so the direction comes out of the string.
+   The same rule rtl.css applies to user-written content, and it has to be on
+   the element that HOLDS the text: unicode-bidi acts on an element's own inline
+   content, so a rule on a wrapper with a block child reaches nothing. */
+.ai-chat-container .md-block p,
+.ai-chat-container .md-block li,
+.ai-chat-container .md-block blockquote,
+.ai-chat-container .plain-text {
+  unicode-bidi: plaintext;
+}
+
+/* --------------------------------------------------------------------------
+   THE RAIL BECOMES A DRAWER BELOW 1024px
+   --------------------------------------------------------------------------
+   Parked with a signed translation rather than a bare translateX(-100%). A
+   transform does not flip with dir, so the literal spelling parks the drawer a
+   full width to the LEFT of a right-pinned box -- i.e. in the middle of the
+   viewport, on top of the page. That is precisely the bug that made the
+   platform sidebar unusable in Arabic for the whole life of rtl.css, and it is
+   corrected here at the source rather than in a mirror sheet.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1023.98px) {
+  .ai-chat-container .chat-rooms {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 1200;
+    flex-basis: min(320px, 86vw);
+    width: min(320px, 86vw);
+    border-radius: 0;
+    background: var(--sfs-overlay, rgba(10, 12, 30, 0.94));
+    transform: translateX(calc(var(--aic-drawer-sign, -1) * 100%));
+    transition: transform var(--aic-t-base);
+  }
+
+  [dir='rtl'] .ai-chat-container .chat-rooms { --aic-drawer-sign: 1; }
+
+  .ai-chat-container .chat-rooms.open { transform: translateX(0); }
+  .ai-chat-container .rooms-close { display: block; }
+  .ai-chat-container .rooms-toggle { display: block; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-chat-container .chat-rooms { transition: none; }
+}

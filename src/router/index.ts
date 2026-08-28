@@ -303,6 +303,26 @@ const routes = [
                 meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             },
             {
+                // One conversation, by id.
+                //
+                // A chat is a PLACE rather than a tab: the id in the path is
+                // what makes a reload land back in the same project, what makes
+                // Back go to the conversation you came from rather than out of
+                // the feature, and what lets somebody keep two pieces of work
+                // open in two tabs. It is also what `check:appnav` needs -- an
+                // entry can only be offered for a path the router can match, so
+                // a room that lived only in component state could never be one.
+                //
+                // Deliberately NOT in the sidebar: the rooms are the page's own
+                // navigation, and thirty of them in the platform rail would be
+                // thirty entries nobody can scan. It is in the section's `match`
+                // so the sidebar stays on AI Chat while a room is open.
+                path: 'ai-chat/:roomId',
+                name: 'AiChatRoom',
+                component: AiChat,
+                meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+            },
+            {
                 // Public on purpose — no `requiresSubscription`, no
                 // `requiredFeatures`, and `requiresAuth: false`. A signed-out
                 // visitor can listen to the whole bulletin.

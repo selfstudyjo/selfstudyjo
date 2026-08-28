@@ -44,6 +44,62 @@ const tools: Catalogue = {
     'Ask me anything about your courses, labs, or general knowledge':
         'اسألني أي شيء عن دوراتك أو معاملك أو أي معرفة عامة',
 
+    /* The saved conversations, and the memory each one carries. */
+    'New chat': 'محادثة جديدة',
+    'Your chats': 'محادثاتك',
+    'Search chats': 'ابحث في المحادثات',
+    'No chats yet. Start one and it will be saved here.': 'لا محادثات بعد. ابدأ واحدة وستُحفظ هنا.',
+    'No chats match that search.': 'لا محادثات تطابق هذا البحث.',
+    'Name this chat': 'سمِّ هذه المحادثة',
+    'Rename': 'إعادة تسمية',
+    'Pin': 'تثبيت',
+    'Unpin': 'إلغاء التثبيت',
+    'Pinned': 'المثبّتة',
+    'Yesterday': 'أمس',
+    'Previous 7 days': 'آخر 7 أيام',
+    'Previous 30 days': 'آخر 30 يوماً',
+    'Older': 'أقدم',
+    'Delete this chat and everything in it?': 'هل تريد حذف هذه المحادثة وكل ما فيها؟',
+    'Could not load your chats.': 'تعذّر تحميل محادثاتك.',
+    'Could not open that chat.': 'تعذّر فتح تلك المحادثة.',
+    'Could not start a new chat.': 'تعذّر بدء محادثة جديدة.',
+    'Could not rename that chat.': 'تعذّرت إعادة تسمية تلك المحادثة.',
+    'Could not delete that chat.': 'تعذّر حذف تلك المحادثة.',
+    'Could not send that message.': 'تعذّر إرسال تلك الرسالة.',
+    'Could not clear that chat.': 'تعذّر مسح تلك المحادثة.',
+    'Could not save that.': 'تعذّر الحفظ.',
+    'What are you working on?': 'على ماذا تعمل؟',
+    'Everything you say here is saved, and the assistant will remember the project next time you open this chat.':
+        'كل ما تكتبه هنا محفوظ، وسيتذكّر المساعد المشروع في المرة القادمة التي تفتح فيها هذه المحادثة.',
+    'Type your message… (Enter to send, Shift+Enter for a new line)':
+        'اكتب رسالتك… (Enter للإرسال، Shift+Enter لسطر جديد)',
+    'Thinking…': 'يفكّر…',
+    'Copy code': 'نسخ الشيفرة',
+    'Memory': 'الذاكرة',
+    'What you are working on': 'ما الذي تعمل عليه',
+    'The assistant fills this in as you talk. Edit it to correct what it remembers.':
+        'يملأ المساعد هذا الحقل أثناء حديثكما. عدّله لتصحيح ما يتذكّره.',
+    'Update from this chat': 'حدّث من هذه المحادثة',
+    'Updating…': 'جارٍ التحديث…',
+    'Clear chat': 'مسح المحادثة',
+    'Clear every message here, and what the assistant remembers?':
+        'هل تريد مسح كل الرسائل هنا وما يتذكّره المساعد؟',
+    'The assistant is updating what it remembers from this chat.':
+        'يقوم المساعد بتحديث ما يتذكّره من هذه المحادثة.',
+    'Earlier in this chat': 'سابقاً في هذه المحادثة',
+    'The assistant remembers this project': 'يتذكّر المساعد هذا المشروع',
+    'Could not read what the assistant remembers.': 'تعذّرت قراءة ما يتذكّره المساعد.',
+    'The assistant could not be reached. Nothing was changed.':
+        'تعذّر الوصول إلى المساعد. لم يتغيّر شيء.',
+    'The assistant could not be reached. Your message was saved — try again.':
+        'تعذّر الوصول إلى المساعد. حُفظت رسالتك — أعد المحاولة.',
+    'Nothing yet — the assistant learns what you are working on as you go.':
+        'لا شيء بعد — يتعرّف المساعد على ما تعمل عليه أثناء الحديث.',
+    'The assistant can see all {v0} messages in this chat.':
+        'يرى المساعد كل الرسائل في هذه المحادثة وعددها {v0}.',
+    'The assistant reads the last {v0} messages in full, and remembers the {v1} before them as notes.':
+        'يقرأ المساعد آخر {v0} رسالة كاملةً، ويتذكّر الـ {v1} السابقة لها على شكل ملاحظات.',
+
     /* ---------------------------------------------------------------- *
      * The newscast page's own chrome
      * ---------------------------------------------------------------- */

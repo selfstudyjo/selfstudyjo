@@ -519,6 +519,10 @@ export const APP_SECTIONS: AppSection[] = [
         title: 'AI Chat Assistant',
         subtitle: 'Ask, explain, summarise',
         icon: 'ai',
+        // `/ai-chat/:roomId` is matched too, so the sidebar stays on AI Chat
+        // while a conversation is open rather than falling back to the platform
+        // menu -- the same reason `/take-exam` and `/course/:id` are in their
+        // sections' `match` lists and in no `items` list.
         match: ['/ai-chat'],
         home: '/ai-chat',
         items: [AI_CHAT],
