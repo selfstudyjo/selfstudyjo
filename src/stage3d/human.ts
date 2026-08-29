@@ -61,10 +61,12 @@ import type { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 
 import type * as BJS from './babylon';
 import {
-    blink, breath, browRaise, clamp01, gesture, headEmphasis, jawOpen,
-    lipSpread, proportionsFor, reachPitch, smooth, sway,
-    type FigureSpec, type HairStyle, type Proportions,
+    FINGERS, blink, breath, browRaise, clamp01, fingerCurl, gesture,
+    headEmphasis, headRollEmphasis, jawOpen, lipSpread, listenNod, mouthPress,
+    proportionsFor, reachPitch, saccade, smooth, sway, torsoTwist,
+    type FigureSpec, type FingerSpec, type HairStyle, type Proportions,
 } from './figures';
+import { applyNormal } from './textures';
 
 /* ------------------------------------------------------------------ *
  * Materials
@@ -577,6 +579,20 @@ export interface FigureState {
     lookAt?: BJS.Vector3 | null;
     /** Scale every idle amplitude. 0.35 under `prefers-reduced-motion`. */
     motion: number;
+    /**
+     * How much this figure is listening to somebody ELSE, 0..1.
+     *
+     * 1 when another figure is speaking and this one is not; 0 otherwise. It is
+     * what drives {@link listenNod}, and it is a separate number from `energy`
+     * on purpose: passing the speaker's own energy here would have a figure
+     * nodding along to its own sentence, which reads as agreeing with itself.
+     *
+     * Optional, and absent means 0. Two stages and a preview harness call this
+     * every frame and a required field would have been a breaking change for all
+     * three at once -- while a figure that never nods is exactly the behaviour
+     * they had before.
+     */
+    attention?: number;
 }
 
 /**
@@ -670,8 +686,36 @@ export function buildFigure(
     // makes a cheek look damp rather than chalky. `PBRMaterial` needs to be
     // told, because the default reflectance of 0.5 is glossier than skin.
     skin.metallicF0Factor = 0.28;
+    /*
+      ============================================================
+      PORE RELIEF, WHICH IS THE HALF `skinShadeAt` CANNOT DO
+      ============================================================
+
+      `skinShadeAt` gives the face its PIGMENT variation -- darker sockets, redder
+      cheeks and nose, a cooler jaw -- evaluated per vertex out of the same
+      primitives as the sculpt, which is the one way that shading cannot drift
+      from the features it is shading. What it cannot give is RELIEF, because a
+      vertex colour does not tilt a normal -- and relief is what breaks the
+      specular highlight up. Without it a cheek reflects the key light by exactly
+      the same amount at every point and the highlight is a hard oval, which is
+      most of what reads as moulded plastic.
+
+      A pore map is the one texture on a figure that needs no feature alignment
+      at all: a pore is the same wherever the map happens to land. So unlike a
+      face photograph it can be put on a sphere whose UVs the sculpt has
+      scrambled -- see `textures.ts` for why the photograph cannot.
+
+      `0.34` rather than 1, because the map is generated at a strength meant to
+      be visible at 512 px and at a 180 px meeting tile full strength reads as
+      orange peel. The tiling size is the HEAD's own diameter, so a 1.66 m
+      figure's pores are the same size as a 1.86 m figure's instead of scaling
+      with them -- which is the same reason `proportionsFor` scales the frame and
+      not the length.
+    */
+    applyNormal(B, scene, skin, 'skin-detail', P.headRadius * 2, 0.34);
     const skinDark = surface(B, scene, `${spec.id}-skin2`, spec.skin, { roughness: 0.6 });
     skinDark.albedoColor = skinDark.albedoColor.scale(0.86);
+    applyNormal(B, scene, skinDark, 'skin-detail', P.headRadius * 2, 0.34);
 
     /*
       Hair is ROUGH. At 0.34 with a raised reflectance it came out as a lacquered
@@ -690,6 +734,23 @@ export function buildFigure(
     const hairMat = surface(B, scene, `${spec.id}-hair`, spec.hair, { roughness: 0.80 });
     hairMat.metallicF0Factor = 0.10;
     /*
+      And STRANDS -- which is the thing the paragraph above says this geometry
+      does not have. It has them now, as a normal map rather than as geometry,
+      which is the only affordable way to have thousands of them.
+
+      It is the strongest of the four figure maps and deliberately so: hair is
+      the one surface here whose relief is coarse enough to see at tile size, and
+      broadening the specular lobe until a stripe became a sheen was only ever
+      half a fix. A sheen with no strand structure in it is still a sheen on a
+      solid object.
+
+      The map runs along V, which on the hair shell is crown-to-nape -- the
+      direction hair actually lies. That is why it is generated rather than
+      downloaded: a photographed strand map runs whichever way the photograph was
+      shot, and there is no way to rotate it into the scalp's frame per figure.
+    */
+    applyNormal(B, scene, hairMat, 'hair-strand', P.headRadius * 1.6, 0.62);
+    /*
       Wool is MATTE. At 0.84 the specular lobe is still broad enough to lay a
       soft sheen across the whole chest, which reads as satin — and a satin suit
       on a news anchor is one of the small wrongnesses that adds up to "not a
@@ -699,6 +760,32 @@ export function buildFigure(
     const jacketMat = surface(B, scene, `${spec.id}-jacket`, spec.outfit.jacket, { roughness: 0.94 });
     jacketMat.metallicF0Factor = 0.30;
     /*
+      ============================================================
+      THE WEAVE, AND WHY IT IS A NORMAL MAP AND NOT A COLOUR ONE
+      ============================================================
+
+      Roughness alone could not finish this job. A matte lobe stops a suit
+      reading as satin and it still leaves every point of the chest reflecting
+      the key light by the same amount -- so the jacket is a smooth solid in the
+      right colour, and a smooth matte solid is moulded plastic. Which is
+      precisely what was reported.
+
+      What separates wool from plastic at three metres is that the surface has a
+      STRUCTURE: a twill catches the light along one axis and not the other, so
+      the highlight across a shoulder is broken into thousands of small ones.
+      That is relief, and relief is a normal map.
+
+      The albedo stays the figure's own `outfit.jacket`. A downloaded colour map
+      here would put one photographed jacket on all eight of them and throw away
+      a wardrobe that is deliberately eight different colours.
+
+      The tiling size is the SHOULDER SPAN, so the weave is the same physical
+      size on a 1.66 m figure and a 1.86 m one. Passing a constant instead is how
+      a small figure ends up in unusually coarse tweed.
+    */
+    const clothSpan = P.shoulderHalfWidth * 2;
+    applyNormal(B, scene, jacketMat, 'cloth-wool', clothSpan, 0.55);
+    /*
       Every shirt in the cast is a near-white (#e8eef5 and friends), and at the
       exposure a face needs that renders as blown-out paper — which is why the
       collar read as the brightest object in the tile. A real white shirt under
@@ -706,12 +793,52 @@ export function buildFigure(
       CONTEXT, not by luminance.
     */
     const shirtMat = surface(B, scene, `${spec.id}-shirt`, spec.outfit.shirt, { roughness: 0.86 });
-    shirtMat.albedoColor = shirtMat.albedoColor.scale(0.80);
+    /*
+      0.66, down from 0.80, and the reason is the same one the original 0.80 was
+      for -- it just was not far enough. Every shirt in the cast is a near-white,
+      and at the exposure a FACE needs, a near-white panel the size of a chest is
+      the brightest and largest object in the tile: three renders in a row it
+      read as a white apron worn over the suit rather than as a shirt inside it.
+
+      A real white shirt under studio light measures well under 100%, and a shirt
+      inside a jacket is in the shadow of the lapels and the jaw on top of that.
+      The eye reads a shirt as white by CONTEXT -- because it is the lightest
+      thing on the figure -- not by luminance, so taking a third of it away costs
+      nothing and buys the whole exposure back.
+    */
+    shirtMat.albedoColor = shirtMat.albedoColor.scale(0.66);
+    // Poplin, not wool: a much finer and flatter weave, and weaker again,
+    // because the shirt is the lightest thing in the tile and relief reads
+    // strongest on a pale surface.
+    applyNormal(B, scene, shirtMat, 'cloth-shirt', clothSpan * 0.5, 0.40);
     /* And the collar is in the shadow of the jaw, always. A collar at the same
        albedo as the chest is the one that looks like a neck brace. */
+    /*
+      A BUTTON IS THE DARKEST THING ON A JACKET, not a lighter one.
+
+      Horn and corozo buttons are chosen to disappear into the cloth from a
+      distance and to catch one small highlight up close, which is exactly the
+      job here: at tile size two buttons must not read as two more beads on the
+      chest, and at head size they are the detail that says the garment fastens.
+      So the jacket's own colour at 0.55 with a tight lobe -- darker than the
+      cloth and glossier than it.
+    */
+    const buttonMat = surface(B, scene, `${spec.id}-button`, spec.outfit.jacket, { roughness: 0.30 });
+    buttonMat.albedoColor = buttonMat.albedoColor.scale(0.55);
+    buttonMat.metallicF0Factor = 0.44;
     const collarMat = surface(B, scene, `${spec.id}-collar`, spec.outfit.shirt, { roughness: 0.8 });
     collarMat.albedoColor = collarMat.albedoColor.scale(0.62);
-    const accentMat = surface(B, scene, `${spec.id}-accent`, spec.outfit.accent, { roughness: 0.56 });
+    applyNormal(B, scene, collarMat, 'cloth-shirt', clothSpan * 0.22, 0.45);
+    /*
+      A tie is SILK, and silk is the same weave as the wool at a fraction of the
+      roughness -- which is physically what it is, and is why there is no third
+      cloth texture. What reads as silk is a tight highlight running down the
+      blade, so the reflectance goes up and the relief stays low: a strong normal
+      map here would break exactly that highlight up.
+    */
+    const accentMat = surface(B, scene, `${spec.id}-accent`, spec.outfit.accent, { roughness: 0.38 });
+    accentMat.metallicF0Factor = 0.52;
+    applyNormal(B, scene, accentMat, 'cloth-wool', clothSpan * 0.28, 0.22);
     /*
       Almost white, and glossy. The visible band of sclera is a few millimetres
       of a 200 mm head, so it is only ever going to read by CONTRAST against the
@@ -753,7 +880,17 @@ export function buildFigure(
       at both ends of the range and it stays right if a seventh figure is added.
     */
     const lipBase = B.Color3.FromHexString(spec.skin);
-    const lipMat = surface(B, scene, `${spec.id}-lip`, spec.skin, { roughness: 0.34 });
+    /*
+      0.46, up from 0.34. The derived colour is right -- measured, the lips come
+      out a sixth darker than the face on every skin tone in the cast -- and they
+      still rendered LIGHTER than the surrounding skin, because at 0.34 the
+      specular lobe is tight enough to lay a broad highlight across the whole
+      lower lip. What a viewer reads from that is lipstick, on all eight figures.
+
+      Real lips are glossier than cheeks and nowhere near that glossy. Rougher,
+      the highlight spreads out and the albedo is what shows.
+    */
+    const lipMat = surface(B, scene, `${spec.id}-lip`, spec.skin, { roughness: 0.46 });
     lipMat.albedoColor = new B.Color3(
         Math.min(1, lipBase.r * 1.06),
         lipBase.g * 0.74,
@@ -887,33 +1024,55 @@ export function buildFigure(
     // Built along Y; a quarter turn lays it across the shoulders. Scaling is
     // applied before rotation, so `scaling.z` is still depth afterwards.
     yoke.rotation.z = Math.PI / 2;
-    yoke.scaling.z = (P.chestDepth * 0.94) / yokeRadius;
-    yoke.position.set(0, P.shoulderY + 0.006 * spec.height, -P.chestDepth * 0.02);
+    /*
+      ============================================================
+      0.42 OF THE CHEST DEPTH, NOT 0.94 -- THE YOKE WAS THE LOBES
+      ============================================================
+
+      This is where the two rounded masses on the chest were actually coming
+      from, and it took a render to find because the arithmetic is invisible in
+      the source. A capsule has a CONSTANT cross-section along its cylinder,
+      so at 0.94 of the chest depth the yoke is a 14 cm-deep slab laid straight
+      across the shoulders -- while the torso it lies on is an ELLIPSE whose front
+      surface falls away toward the sides: at 0.83 of the half-width the front is
+      only 8 cm forward, and at 0.94 only 5 cm.
+
+      So the yoke's ends stood five centimetres in front of the chest, and being
+      hemispherical caps they stood out as two smooth rounded lobes at chest
+      height, inboard of the arms. On the female figures that reading was the
+      worst one available, and it survived the removal of the deltoids because it
+      was never the deltoids.
+
+      At 0.42 the yoke is inside the torso's own front surface at every x --
+      verified at the cap centres and at the arm line, which are the two places
+      it can escape -- so all it can now contribute is the thing it exists for:
+      height above the torso's dome, where the shoulder line is.
+
+      A depth that FOLLOWED the ellipse would be better still and it cannot be a
+      capsule; it would be a `garment()` saddle. It is not worth it: the only
+      cameras that ever see this cast are in front of it, and from in front the
+      shoulder line is the lathe's own convex profile.
+    */
+    yoke.scaling.z = (P.chestDepth * 0.42) / yokeRadius;
+    yoke.position.set(0, P.shoulderY + 0.006 * spec.height, -P.chestDepth * 0.06);
     yoke.parent = body;
 
     /*
-      THE SHIRT IS A BIB, NOT A SECOND TORSO.
+      A NOTE KEPT FROM THE VERSION BEFORE LAST, BECAUSE IT IS STILL THE TRAP.
 
-      The first version built the shirt as the same lathe a few millimetres
-      inside the jacket, so that it would "show only where the jacket is cut
-      away". Nothing was cut away — the two surfaces are three millimetres apart
-      over an area the size of a torso, so what showed was z-fighting: pale
-      rectangles flickering across the chest wherever the depth buffer could not
-      separate them. It read as a texturing fault on a plain colour.
+      The shirt was once built as the same lathe as the jacket a few millimetres
+      inside it, so that it would "show only where the jacket is cut away".
+      Nothing was cut away -- the two surfaces are three millimetres apart over
+      an area the size of a torso, so what showed was z-fighting: pale rectangles
+      flickering across the chest wherever the depth buffer could not separate
+      them, which reads as a texturing fault on a plain colour.
 
-      One flattened ellipsoid on the chest, entirely in front of the jacket, is
-      all that is ever visible of a shirt worn under one.
-
-      The V is then two LAPELS over it, and the V is what says "jacket". The
-      first attempt made them arc-limited lathes, on the reasoning that the gap
-      between two arcs is angular and therefore widens with the radius, like a
-      real opening. It does — and placing them means knowing which direction the
-      builder's `arc` opens in, which is a convention rather than a documented
-      angle, so the two panels overlapped in the middle and rendered as a pair
-      of bright plates across the chest. Two boxes splayed into a V are exact.
+      That is why the offsets under `CLOTHING IS A SURFACE` below are ordered
+      explicitly and why no two of them overlap over more than a strip. Two
+      IDENTICALLY SHAPED surfaces a constant distance apart is the case the depth
+      buffer cannot resolve; two differently curved panels meeting at an edge is
+      not.
     */
-    const chestTop = P.neckY - 0.030 * spec.height;
-    const chestY = P.waistY + (P.shoulderY - P.waistY) * 0.52;
 
     /*
       ============================================================
@@ -989,192 +1148,463 @@ export function buildFigure(
 
     /*
       ============================================================
-      ONE SURFACE REFERENCE FOR EVERYTHING ON THE CHEST
+      CLOTHING IS A SURFACE ON THE BODY, NOT OBJECTS STUCK TO IT
       ============================================================
 
-      The tie was placed at `frontZAt(0, (tieTop + chestY) / 2)` and the bib at
-      `frontZAt(0, bibY)` — two different heights on a torso whose radius varies
-      with height, so two different depths. The tie's reference is the HIGHER of
-      the two, where the trapezius has already begun to narrow, so it came out
-      about a centimetre SHALLOWER than the bib: the shirt poked through the
-      middle of the tie and rendered as a pale oval on it.
+      Everything below used to be an ellipsoid placed in front of the chest: two
+      for the lapels, one for the notch, one for the bib, one for the tie knot,
+      one for the pendant, and a lathe for the tie. Each one was individually
+      defensible and the sum of them was the report -- "clothes not good, remove
+      ball objects on the shoulders, make clothes beautiful and good like real
+      people". At tile framing what a viewer saw was a row of figures with two
+      large rounded lobes on the chest, a coloured bead at the throat and a white
+      ring around the neck. On the female figures the two lobes read as anatomy.
 
-      It is a nice illustration of why `frontZAt` is a function and not a
-      constant — and of the trap that goes with that: two pieces of clothing that
-      have to be in front of each other must be measured at the SAME point, not
-      each at its own.
+      The reason is structural rather than a matter of tuning, and it is worth
+      stating once: A CONVEX BLOB PLACED IN FRONT OF A CONVEX TORSO CANNOT READ AS
+      CLOTH, at any size or proportion. Cloth reads as cloth because it FOLLOWS
+      the body -- it is a surface at the body's own curvature with an EDGE, and
+      the edge is what the eye recognises. A blob has a silhouette of its own and
+      no edge at all, so it reads as an object resting against a person. Three
+      rounds of reshaping ellipsoids (box, then tube, then panel) each fixed a
+      symptom and none could fix that.
+
+      So the garments are built as surfaces PARAMETRISED ON THE TORSO ITSELF.
+      `garment()` below walks the same ellipse `frontZAt` measures, at a given
+      offset outward along its normal, and produces a real mesh grid with real
+      UVs -- which is also what lets the cloth normal maps land at a sensible
+      size. A lapel is then not a separate object: it is the inner strip of the
+      jacket panel, lifted off the chest, so it has a fold and a free edge and it
+      cannot come apart from the jacket it belongs to.
+
+      What that buys, in order of how much it shows:
+
+        * the two lobes are gone, because there are no blobs;
+        * the V of a jacket is a real opening between two panels rather than a
+          gap between two objects;
+        * the tie is flat against the chest and its knot is a trapezoid;
+        * the collar band is close to the neck and the JACKET eats its lower
+          edge, instead of a bright ring standing clear of everything;
+        * and every seam is where two panels meet, so nothing z-fights.
     */
-    const bibY = (chestTop + chestY) / 2;
-    const chestSurface = frontZAt(0, bibY);
-    /*
-      THE BIB IS WHAT SHOWS EITHER SIDE OF A TIE, so it is a male garment.
+    /**
+     * A point on the torso's surface, pushed `out` metres along its own normal.
+     *
+     * `theta` is the angle around the body: 0 at the centre of the chest,
+     * positive toward the figure's LEFT (+x), which is screen-right on a figure
+     * facing the camera. `y` is a height in the body's own space.
+     *
+     * The cross-section is a circle of radius `r(y)` scaled by `torsoScaleZ` on
+     * Z, so the outward normal in the XZ plane is `(scaleZ * sin, cos)`
+     * normalised -- NOT `(sin, cos)`, which is the sphere's normal and is what
+     * makes an offset piece sink in at the sides of a torso that is wider than
+     * it is deep. Verified rather than asserted: the tangent is
+     * `(r cos, -r scaleZ sin)` and the dot product of the two is exactly zero.
+     */
+    function onTorso(theta: number, y: number, out: number): {
+        x: number; y: number; z: number;
+    } {
+        const r = Math.max(1e-4, torsoRadiusAt(y));
+        const sin = Math.sin(theta);
+        const cos = Math.cos(theta);
+        const nx = torsoScaleZ * sin;
+        const nz = cos;
+        const len = Math.sqrt(nx * nx + nz * nz) || 1;
+        return {
+            x: r * sin + (nx / len) * out,
+            y,
+            z: r * torsoScaleZ * cos + (nz / len) * out,
+        };
+    }
 
-      On a female figure there is no tie to show either side of, and every shape
-      tried for it was wrong in the same way: a tall narrow patch was a pale
-      stripe down the middle of the blazer, and a short wide one — the correction
-      — rendered as a light SPHERE under the pendant, i.e. a second piece of
-      jewellery. A closed blazer with a collar and a pendant is an ordinary look
-      and needs no third element, so the women simply do not have one.
-    */
-    const bib = track(B.CreateSphere(`${spec.id}-bib`, {
-        diameter: 1, segments: Math.round(24 * detail) + 8,
-    }, scene));
-    bib.isVisible = male;
-    /* Narrower still on a female figure: with no tie down the middle, a wide
-       bib is a pale vertical stripe on the chest. Narrow, it is a neckline. */
-    /*
-      A NECKLINE FOR THE WOMEN, NOT A STRIPE.
-
-      Narrow and tall is right under a tie and wrong without one: at 0.26 of the
-      shoulder width and 70% of the chest height it rendered as a pale vertical
-      bar down the middle of the jacket. What shows at a blouse neckline is a
-      short, comparatively WIDE patch — wider than it is tall — so the two axes
-      swap round rather than both shrinking.
-    */
-    bib.scaling.set(P.shoulderHalfWidth * 0.32,
-        (chestTop - chestY) * 0.92, 0.075 * spec.height);
-    // Its front on the jacket's surface plus 6 mm, so a strip of shirt shows
-    // between the lapels at every height rather than only at the middle.
-    bib.position.set(0, bibY, chestSurface + 0.006 * spec.height
-        - bib.scaling.z / 2);
-    bib.material = shirtMat;
-    bib.parent = body;
-
-    /* A lighter shade of the jacket: a real lapel is the same cloth turned
-       over, so it catches the light differently, and that difference is most of
-       what makes it read as a lapel rather than as a stripe. */
-    const lapelMat = surface(B, scene, `${spec.id}-lapel`, spec.outfit.jacket, { roughness: 0.66 });
-    /* 1.12, not 1.22. A lapel is the same cloth turned over, so it catches a
-       little more light — not a different colour. At 1.22 against the round
-       torso the pair read as two raised lobes rather than as an edge, which on
-       the female figures was actively unfortunate. */
-    lapelMat.albedoColor = lapelMat.albedoColor.scale(1.07);
-    lapelMat.metallicF0Factor = 0.34;
-    /*
-      ============================================================
-      A LAPEL IS AN ELLIPSOID, NOT A BOX, AND THIS IS THE "SQUARES"
-      ============================================================
-
-      These were two `CreateBox`es 9 cm wide and 23 cm tall, splayed into a V and
-      laid on the chest. At head-and-shoulders framing they are the two largest
-      objects in the picture after the head, and a box has flat faces, straight
-      edges and four hard corners each — so what the viewer got was two grey
-      rectangles stuck to a person. It is the single most literal reading of "a
-      lot of squares appear, this makes them ugly, like not real".
-
-      A tapered ellipsoid has no edge anywhere: the silhouette is a curve, the
-      shading rolls off, and the narrow end reads as the lapel notch closing
-      toward the collar. Two of them, splayed and tilted forward, plus a small
-      one at the top for the notch itself. Nothing here is a new mesh count
-      problem — an ellipsoid at 18 segments is cheaper than the box's own bevel
-      would have been.
-    */
-    for (const side of [-1, 1]) {
-        const lapel = track(B.CreateSphere(`${spec.id}-lapel${side}`, {
-            diameter: 1, segments: Math.round(18 * detail) + 6,
-        }, scene));
-        lapel.material = lapelMat;
-        /*
-          WIDE, LONG, AND THIN — a panel, not a tube.
-
-          Three shapes have been tried here and the axis that matters is DEPTH. A
-          box was two flat plates with corners on them. A narrow deep ellipsoid
-          was a tube, and read as a blue tongue lying on the chest. What a lapel
-          actually is, is a broad piece of cloth lying almost flat on the body
-          with one raised edge — so it wants to be wide across, long down, and
-          only a few millimetres proud of the surface.
-        */
-        /*
-          A MAN'S NOTCH LAPEL AND A WOMAN'S SHAWL COLLAR ARE DIFFERENT SHAPES.
-
-          They were the same object, and at 3.4 cm wide on a round torso the pair
-          read as two lobes on the chest — which on the female figures was the
-          worst reading available. A shawl collar is narrower, longer, set closer
-          to the centre line and has no notch; a notch lapel is wider, stops
-          higher, and steps outward where the collar meets it.
-        */
-        lapel.scaling.set(
-            (male ? 0.026 : 0.019) * spec.height,
-            (chestTop - chestY) * (male ? 1.04 : 1.18),
-            0.008 * spec.height,
-        );
-        // Splayed away from the centre line and tipped forward, so the inner
-        // edge lifts off the shirt the way a rolled lapel does.
-        lapel.rotation.z = -side * (male ? 0.20 : 0.13);
-        lapel.rotation.x = -0.06;
-        const lapelX = side * (male ? 0.034 : 0.024) * spec.height;
-        const lapelY = (chestTop + chestY) / 2 + 0.006 * spec.height;
-        lapel.position.set(
-            lapelX,
-            lapelY,
-            // On the surface at its OWN x, not at the centre line — the
-            // cross-section is an ellipse and the difference is a centimetre.
-            frontZAt(lapelX, lapelY) + 0.0015 * spec.height,
-        );
-        lapel.parent = body;
-
-        /*
-          The notch, and it has to OVERLAP the lapel rather than sit above it.
-
-          As a separate ellipsoid clear of the lapel's top it read as a third
-          bump — four nubs on a chest instead of two lapels. Overlapping and
-          angled the other way, the two volumes union into one shape with a step
-          in its outer edge, which is what a notch lapel is.
-
-          Men only: a shawl collar is a continuous roll with no step in it, which
-          is the whole difference between the two garments.
-        */
-        if (male) {
-            const notch = track(B.CreateSphere(`${spec.id}-notch${side}`, {
-                diameter: 1, segments: Math.round(14 * detail) + 5,
-            }, scene));
-            notch.material = lapelMat;
-            notch.scaling.set(0.028 * spec.height, 0.012 * spec.height, 0.008 * spec.height);
-            notch.rotation.z = side * 0.42;
-            const notchX = side * 0.035 * spec.height;
-            const notchY = chestTop - 0.026 * spec.height;
-            notch.position.set(notchX, notchY,
-                frontZAt(notchX, notchY) + 0.001 * spec.height);
-            notch.parent = body;
+    /**
+     * Build one garment panel as an explicit mesh grid.
+     *
+     * `at(u, v)` answers a point for `u` and `v` in 0..1. The UVs handed to the
+     * material are `u` and `v` directly, which is what makes the cloth weave
+     * land at a predictable size: the caller tells `applyNormal` how many metres
+     * across the panel is and the tiling follows from that.
+     *
+     * ============================================================
+     * WHY THIS IS VERTEX DATA AND NOT A BUILDER
+     * ============================================================
+     *
+     * `CreateLathe` with an `arc` is the obvious way to make a panel that
+     * follows a body, and it was tried twice. The problem is recorded in this
+     * file already: `arc` opens in a direction that is a convention rather than
+     * a documented angle, so the two panels overlapped in the middle and
+     * rendered as a pair of bright plates across the chest. `CreateRibbon` needs
+     * the same information in a shape that is harder to reason about.
+     *
+     * A grid is fifteen lines and there is no convention to guess: the caller
+     * says where every vertex goes. It is also the only option that can vary the
+     * OFFSET across the panel, which is exactly what a rolled lapel is.
+     */
+    function garment(
+        name: string, cols: number, rows: number,
+        at: (u: number, v: number) => { x: number; y: number; z: number },
+    ): Mesh {
+        const nu = Math.max(2, Math.round(cols * detail) + 2);
+        const nv = Math.max(2, Math.round(rows * detail) + 2);
+        const positions: number[] = [];
+        const uvs: number[] = [];
+        const indices: number[] = [];
+        for (let j = 0; j <= nv; j++) {
+            const v = j / nv;
+            for (let i = 0; i <= nu; i++) {
+                const u = i / nu;
+                const point = at(u, v);
+                positions.push(point.x, point.y, point.z);
+                uvs.push(u, v);
+            }
         }
+        const stride = nu + 1;
+        for (let j = 0; j < nv; j++) {
+            for (let i = 0; i < nu; i++) {
+                const a = j * stride + i;
+                const b = a + 1;
+                const c = a + stride;
+                const d = c + 1;
+                /*
+                  Wound so the OUTWARD face is the front one. Babylon culls back
+                  faces (see `surface`), and a panel wound the other way is
+                  invisible from in front and visible from behind -- which does
+                  not look like a winding error, it looks like the garment is
+                  missing and the inside of the torso has a hole in it.
+                */
+                indices.push(a, c, b, b, c, d);
+            }
+        }
+        /*
+          ============================================================
+          THE WINDING IS CHECKED, NOT ASSUMED -- AND THE FIRST RENDER IS WHY
+          ============================================================
+
+          Babylon culls back faces (see `surface`), so a panel wound the wrong
+          way is INVISIBLE. That is not a failure anybody can read: the first
+          render of this code showed a plain jacket with no lapels, no shirt at
+          the neckline and no tie, which looks exactly like the panels never
+          having been built -- and sends you looking for a placement bug in code
+          that is placing things perfectly.
+
+          Which way is correct depends on how the CALLER parametrised its panel:
+          a collar point that runs down-and-outward and a jacket front that runs
+          inward-to-outward have opposite handedness through the same builder. So
+          rather than each caller having to know, the winding is MEASURED once
+          against the direction the panel is supposed to face and reversed if it
+          is inward.
+
+          The test is a dot product against the radial vector `(x, 0, z)`. Every
+          panel here is a surface on a convex body of revolution about the Y
+          axis, and for any convex cross-section the outward normal has a
+          positive dot with the radius -- so it needs no per-caller hint and it
+          cannot be tricked by a panel that is nearly edge-on.
+        */
+        const normals: number[] = [];
+        B.VertexData.ComputeNormals(positions, indices, normals);
+        const probe = (Math.floor(nv / 2) * stride + Math.floor(nu / 2)) * 3;
+        const facing =
+            (normals[probe] as number) * (positions[probe] as number)
+            + (normals[probe + 2] as number) * (positions[probe + 2] as number);
+        if (facing < 0) {
+            for (let i = 0; i < indices.length; i += 3) {
+                const swap = indices[i] as number;
+                indices[i] = indices[i + 2] as number;
+                indices[i + 2] = swap;
+            }
+            normals.length = 0;
+            B.VertexData.ComputeNormals(positions, indices, normals);
+        }
+        const data = new B.VertexData();
+        data.positions = positions;
+        data.uvs = uvs;
+        data.indices = indices;
+        data.normals = normals;
+        const mesh = track(new B.Mesh(name, scene));
+        data.applyToMesh(mesh, false);
+        mesh.parent = body;
+        return mesh;
     }
 
     /*
-      Collar: a short flared band around the neck, in shirt colour.
+      ============================================================
+      THE FIVE OFFSETS, AND WHY THEY ARE ORDERED RATHER THAN CHOSEN
+      ============================================================
 
-      Its HEIGHT is found rather than written down — see `clearsJacketAbove`. The
-      old numbers put it at `neckY - 0.03h`, three centimetres below the top of
-      the trapezius, so it has never once been visible: the figures have been
-      wearing a jacket with no shirt showing at the throat, which is most of why
-      they read as dressed in one piece of cloth.
+      Every garment sits at a different distance out from the torso, and the
+      ORDER is the whole design: a piece that is meant to be in front of another
+      has to be further out at the point where they overlap. This file has
+      already paid for getting that wrong twice -- the shirt three millimetres
+      inside the jacket over the whole torso, which z-fought and rendered as pale
+      rectangles flickering across the chest; and the tie measured at its own
+      height rather than the bib's, which put the shirt through the middle of it.
+
+      Fractions of standing height, so they scale with the figure:
+
+        shirt     0.0028   the panel that fills the V
+        collar    0.0046   the shirt collar's points, over the shirt
+        jacket    0.0072   the two front panels
+        lapel     0.0072 + 0.0060 rolled up along the panel's inner edge
+        tie       0.0112   on the centre line, clear of everything
+        knot      0.0150   the fattest thing on the chest, as it should be
+
+      The gaps are at least 1.8 mm on a 1.66 m figure and the surfaces are
+      CURVED rather than parallel, which is what makes them safe: the earlier
+      z-fight was two identically-shaped lathes, where the depth difference is
+      constant and the buffer has nothing to separate. Nothing here overlaps
+      another piece over more than a strip.
     */
+    const OUT_SHIRT = 0.0028 * spec.height;
+    const OUT_COLLAR = 0.0046 * spec.height;
+    const OUT_JACKET = 0.0072 * spec.height;
+    const OUT_LAPEL_RISE = 0.0115 * spec.height;
+    const OUT_TIE = 0.0112 * spec.height;
+    const OUT_KNOT = 0.0150 * spec.height;
+
+    /** Top of the opening, and the point where the jacket buttons. */
+    const openTop = P.neckY - 0.026 * spec.height;
+    const buttonY = P.waistY + (P.shoulderY - P.waistY) * 0.30;
+    /** The panels run below the frame so no hem is ever visible. */
+    const hemY = P.hipY - 0.01 * spec.height;
+    /** How far round the body the front panels reach. */
+    const WRAP = 1.16;
+
+    /**
+     * Half the angular width of the opening at height `y`.
+     *
+     * A jacket's V is widest at the collar and closes at the button, and it is
+     * ANGULAR rather than a width in metres -- which is the thing an ellipsoid
+     * could never express and is why the V used to read as a gap. Below the
+     * button it does not close to zero: a real single-breasted jacket keeps a
+     * seam, and two panels meeting at exactly 0 would share an edge and shimmer.
+     */
     /*
-      A BAND, not a ruff.
+      A BLAZER CLOSES NARROWER THAN A SUIT JACKET, and it has to, because there
+      is no tie down the middle of it.
 
-      The first version that was actually visible went the other way and looked
-      like a neck brace: 1.26x the neck radius, flared to 1.16x of that again,
-      and 5.3 cm tall — all of it in the clear, because `clearsJacketAbove`
-      places it above the trapezius and nothing was then covering its bottom
-      edge. Against a dark jacket a white band that size is the brightest and
-      largest thing in the tile.
+      On a man the tie covers the centre of the opening, so what shows either
+      side is two strips of shirt and the eye reads a V. On a woman the same
+      opening is one unbroken pale panel the width of the chest, and at head
+      framing that reads as a bib worn over the jacket rather than as a blouse
+      inside it -- which is the same fault the old ellipsoid bib had, arriving
+      from the opposite direction.
 
-      A real collar is close to the neck (a finger's width of ease), about 3 cm
-      of visible band, and the lower half of it is behind the jaw from any camera
-      in front of the subject. Hence: 1.12x, 2.0 cm, and started BELOW the
-      clearance height so the jacket eats its bottom edge.
+      0.26 rather than 0.34: about 4.7 cm of arc each side of the centre line at
+      chest radius, which is a blazer buttoned over a blouse.
     */
-    const collarRadius = P.neckRadius * 1.08;
-    const collarBase = clearsJacketAbove(collarRadius) - 0.012 * spec.height;
+    const OPEN_TOP_ANGLE = male ? 0.34 : 0.26;
+
+    function openAt(y: number): number {
+        /*
+          0.40 rad, NOT 0.66, and the first render is why: at 0.66 the opening
+          was 76 degrees across, so the shirt panel filling it was a white
+          butterfly covering most of the chest and the lapels were pushed round
+          onto the sides of the body where nothing could see them. 0.40 puts the
+          break beside the neck, which is where a jacket's is -- about 7 cm of arc
+          from the centre line at chest radius.
+        */
+        if (y >= openTop) return OPEN_TOP_ANGLE;
+        if (y <= buttonY) return 0.035;
+        const k = smooth(buttonY, openTop, y);
+        /*
+          Curved rather than linear -- the lapel's edge is a curve on every real
+          jacket and a straight V reads as a paper cut-out -- and CUBED rather
+          than squared. Squared, the opening was still 60% of its full width
+          halfway down, so the part of the V inside a head-and-shoulders crop was
+          very nearly a rectangle. Cubed it is 22%, and the shape a viewer sees is
+          a V rather than a panel.
+        */
+        return 0.035 + (OPEN_TOP_ANGLE - 0.035) * k * k * k;
+    }
+
+    /*
+      THE SHIRT IS THE PANEL THAT FILLS THE V.
+
+      Not a bib and not a second torso. It spans the whole opening at every
+      height and runs a little UNDER the jacket panels on each side, so there can
+      be no hairline gap at the seam and no overlap wide enough to fight. Both
+      genders have one now: the old code gave the women none at all, on the
+      reasoning that there is no tie for it to show either side of, and the
+      consequence was a blazer with nothing under it at the neckline.
+    */
+    const shirtPanel = garment(`${spec.id}-shirtfront`, 14, 20, (u, v) => {
+        const y = openTop - (openTop - buttonY - 0.004 * spec.height) * v;
+        /*
+          Just enough underlap to guarantee no hairline gap at the seam, and no
+          more. At 0.10 rad the shirt ran a centimetre and a half UNDER each
+          lapel, and since the lapel is a single-sided surface seen from slightly
+          below at the free edge, that centimetre and a half was visible as a
+          pale fringe outside the jacket -- which reads as the lining showing.
+        */
+        const half = openAt(y) + 0.045;
+        return onTorso(-half + 2 * half * u, y, OUT_SHIRT);
+    });
+    shirtPanel.material = shirtMat;
+    applyNormal(B, scene, shirtMat, 'cloth-shirt', P.shoulderHalfWidth * 0.9, 0.40);
+
+    /*
+      THE FRONT PANELS, AND THE LAPELS AS PANELS OF THEIR OWN.
+
+      The first version rolled the lapel as a rise in the OFFSET along the front
+      panel's inner edge, which is the right shape and rendered as nothing at
+      all: the panel is the same material as the torso it lies on, so a surface
+      1.3 cm off the chest with a correct normal is indistinguishable from the
+      chest. What makes a lapel visible on a real jacket is not that it is
+      raised, it is that it is FOLDED -- the cloth is turned over, so it faces a
+      different way and catches a different amount of light. A rise of a
+      centimetre over five centimetres of arc is an eleven-degree tilt, and
+      eleven degrees of the same colour is invisible.
+
+      So there are two panels a side:
+
+        * `front`, from the lapel's roll line round to `WRAP`. Plain jacket.
+        * `lapel`, a narrow strip from the opening out to the roll line, rising
+          STEEPLY toward its free edge so the fold has a real angle in it, in a
+          material a few per cent lighter -- which is what the same cloth turned
+          over actually measures.
+
+      The notch is a step in the strip's WIDTH rather than a separate mesh. As a
+      third ellipsoid it read as a third bump; as a step in one silhouette it is
+      what a notch lapel is.
+    */
+    const lapelMat = surface(B, scene, `${spec.id}-lapel`, spec.outfit.jacket, { roughness: 0.88 });
+    /*
+      1.10, and it is doing two jobs. A lapel is the same cloth turned over, so
+      it genuinely catches a little more light -- and it has to be enough of a
+      difference to SEPARATE the lapel from the panel behind it, because that
+      separation is the entire reason a viewer reads the shape as a jacket. Much
+      more than this and the pair read as two stripes painted on the chest, which
+      is what 1.22 looked like in an earlier version of this file.
+    */
+    lapelMat.albedoColor = lapelMat.albedoColor.scale(1.10);
+    lapelMat.metallicF0Factor = 0.36;
+    applyNormal(B, scene, lapelMat, 'cloth-wool', clothSpan, 0.55);
+    /*
+      AND THE LAPEL IS VISIBLE FROM BOTH SIDES.
+
+      It is a single-sided surface with a free edge that stands off the chest, so
+      from any camera below the fold a culled panel shows nothing where the
+      underside of the lapel should be -- and what fills that hole is the shirt,
+      which reads as a tear in the jacket. It is one flat strip, so drawing its
+      back face costs a few hundred pixels and cannot produce a wrong occlusion.
+    */
+    lapelMat.backFaceCulling = false;
+
+    /** How wide the lapel's strip is at height `y`, in radians. */
+    function lapelWidthAt(y: number): number {
+        if (!male) {
+            /*
+              A SHAWL COLLAR is a continuous roll: constant width, narrower than
+              a notch lapel, and running all the way to the collar with no step.
+              That difference is the whole difference between the two garments,
+              and having them share one shape is what made the pair read as two
+              lobes on every female figure.
+            */
+            return 0.26;
+        }
+        /*
+          A NOTCH LAPEL is widest a third of the way down from the collar and
+          steps in sharply above that -- the step IS the notch. Measured off a
+          jacket rather than chosen: the widest point is about a third of the way
+          from the centre line to the shoulder seam.
+        */
+        const peak = openTop - 0.055 * spec.height;
+        const above = smooth(openTop + 0.006 * spec.height, peak, y);
+        const below = smooth(buttonY, peak, y);
+        return 0.13 + 0.27 * above * (0.45 + 0.55 * below);
+    }
+
+    for (const side of [-1, 1]) {
+        const front = garment(`${spec.id}-front${side}`, 16, 22, (u, v) => {
+            const top = openTop + 0.016 * spec.height;
+            const y = top - (top - hemY) * v;
+            const roll = openAt(y) + lapelWidthAt(y);
+            const theta = side * (roll + Math.max(0.04, WRAP - roll) * u);
+            return onTorso(theta, y, OUT_JACKET);
+        });
+        front.material = jacketMat;
+
+        /*
+          ============================================================
+          A LAPEL IS A PLATE WITH AN EDGE AND A FOLD, IN THAT ORDER
+          ============================================================
+
+          The version before this raised the offset smoothly from the roll line
+          to the free edge, which is the right idea and rendered as nothing: a
+          centimetre of rise over five centimetres of arc is an eleven-degree
+          tilt, and eleven degrees of the same colour against the panel behind it
+          is invisible. Three renders confirmed it -- the shirt, the tie, the
+          collar and the buttons all read, and the lapels did not.
+
+          What a lapel actually is, in three parts across its width, and all three
+          are needed:
+
+            u 0.00 .. 0.14   THE EDGE. A short wall from just above the shirt up
+                             to the plate. This is what closes the gap you would
+                             otherwise look into, and its shadow is the dark line
+                             that makes the lapel a distinct object.
+            u 0.14 .. 0.76   THE PLATE. Flat, standing 2 cm off the chest. Being
+                             at a constant offset over a CURVED body means its
+                             normal diverges from the chest's more and more toward
+                             the sides -- which is exactly how a real lapel
+                             catches a different amount of light along its length.
+            u 0.76 .. 1.00   THE FOLD, down to flush at the roll line, so the
+                             lapel and the jacket panel meet in a seam.
+
+          Together they give a silhouette, an edge, a shadow and a shading
+          difference, which is four cues where the smooth rise gave none.
+        */
+        const lapel = garment(`${spec.id}-lapel${side}`, 12, 20, (u, v) => {
+            const top = openTop + 0.016 * spec.height;
+            // The lapel stops at the button; below it the jacket is closed and
+            // there is nothing to turn over.
+            const bottom = buttonY - 0.004 * spec.height;
+            const y = top - (top - bottom) * v;
+            const inner = openAt(y);
+            const width = lapelWidthAt(y);
+
+            let out: number;
+            let theta: number;
+            if (u < 0.14) {
+                // The edge wall: theta barely moves, the offset climbs.
+                theta = side * (inner + width * 0.02 * (u / 0.14));
+                out = OUT_SHIRT + (OUT_JACKET + OUT_LAPEL_RISE - OUT_SHIRT) * (u / 0.14);
+            } else if (u < 0.76) {
+                theta = side * (inner + width * (0.02 + 0.86 * ((u - 0.14) / 0.62)));
+                out = OUT_JACKET + OUT_LAPEL_RISE;
+            } else {
+                theta = side * (inner + width * (0.88 + 0.12 * ((u - 0.76) / 0.24)));
+                out = OUT_JACKET + OUT_LAPEL_RISE * (1 - smooth(0.76, 1, u));
+            }
+            return onTorso(theta, y, out);
+        });
+        lapel.material = lapelMat;
+    }
+
+    /*
+      THE COLLAR: a band close to the neck, plus two points lying on the shirt.
+
+      The band was a flared five-point lathe at 1.08 to 1.18 of the neck radius
+      and it read as a neck brace -- against a dark jacket, a pale ring that size
+      is the brightest and largest thing in the tile. What a collar band actually
+      shows from in front is about two centimetres, and its lower half is behind
+      the jaw from any camera the subject is facing.
+
+      Its height is still FOUND rather than written down (`clearsJacketAbove`),
+      because the number that was written down put it three centimetres inside
+      the trapezius for the whole life of this file.
+    */
+    const collarRadius = P.neckRadius * 1.07;
+    const collarBase = clearsJacketAbove(collarRadius) - 0.014 * spec.height;
     const collar = track(B.CreateLathe(`${spec.id}-collar`, {
         shape: [
             new B.Vector3(collarRadius, collarBase, 0),
-            new B.Vector3(collarRadius * 1.05, collarBase + 0.007 * spec.height, 0),
-            new B.Vector3(collarRadius * 1.09, collarBase + 0.014 * spec.height, 0),
-            new B.Vector3(collarRadius * 1.00, collarBase + 0.019 * spec.height, 0),
-            new B.Vector3(collarRadius * 0.93, collarBase + 0.021 * spec.height, 0),
+            new B.Vector3(collarRadius * 1.02, collarBase + 0.008 * spec.height, 0),
+            new B.Vector3(collarRadius * 1.045, collarBase + 0.016 * spec.height, 0),
+            new B.Vector3(collarRadius * 0.99, collarBase + 0.021 * spec.height, 0),
         ],
-        // Same reason as the torso: a five-point lathe at 24 segments is a ring
-        // of visible facets right under the chin, where the eye already is.
+        // Same reason as the torso: a lathe at 24 segments is a ring of visible
+        // facets right under the chin, which is where the eye already is.
         tessellation: Math.round(40 * detail) + 12,
         closed: true,
     }, scene));
@@ -1182,110 +1612,203 @@ export function buildFigure(
     collar.parent = body;
 
     /*
-      Two collar points, lying on the lapels.
+      The two points, and they are PANELS now rather than ellipsoids.
 
-      A collar with no points is a tube, and a tube around a neck is a cast. The
-      points are what say "shirt" — and they are the reason the V between the
-      lapels reads as an opening rather than as a gap between two objects.
+      A collar point is a flat triangle of cloth folded down over the chest, and
+      that is exactly what a panel with a converging edge is. They sit at
+      `OUT_COLLAR` -- outside the shirt, inside the jacket's lapel -- which is
+      where a shirt collar is: the notch a viewer reads is the gap between this
+      and the lapel edge above it.
     */
-    for (const side of [-1, 1]) {
-        const point = track(B.CreateSphere(`${spec.id}-collarpt${side}`, {
-            diameter: 1, segments: Math.round(14 * detail) + 5,
-        }, scene));
+    /*
+      MEN ONLY, and it is the same distinction as the lapel's.
+
+      A collar point is the corner of a SHIRT collar folded down over the chest,
+      and it exists to be seen either side of a tie knot. A blazer over a blouse
+      has no such thing -- so on the female figures the pair were two grey tabs
+      at the throat with nothing to explain them, which reads as a garment
+      nobody could name. A blouse's neckline is the shirt panel and the shawl
+      collar over it, and that is complete on its own.
+    */
+    for (const side of male ? [-1, 1] : []) {
+        const point = garment(`${spec.id}-collarpt${side}`, 8, 8, (u, v) => {
+            /*
+              ============================================================
+              SHORT AND WIDE, OR IT READS AS A BRACE
+              ============================================================
+
+              At 0.085 rad half-width over 4 cm of drop the pair rendered as two
+              narrow pale straps running diagonally down the chest -- which a
+              viewer reads unmistakably as SUSPENDERS, not as a collar. Length
+              was the fault, not width: a strap is anything much longer than it is
+              wide, whatever it is made of.
+
+              A shirt collar point is roughly as wide as it is long and it sits
+              immediately beside the neck. Two and a half centimetres of drop, a
+              wide top tapering to a point, and it starts at the collar band
+              rather than a centimetre below it -- so it reads as part of the
+              collar, which is what it is.
+
+              Most of it is then UNDER the lapel, which now stands 2 cm off the
+              chest. That is correct and is why the pair no longer dominate: a
+              shirt collar shows next to the throat and disappears behind the
+              jacket's lapel, exactly as it does on a person.
+            */
+            const y = collarBase + 0.006 * spec.height
+                - (0.025 * spec.height) * v;
+            const half = 0.105 * (1 - v * 0.86);
+            const centre = side * (0.075 + 0.075 * v);
+            return onTorso(centre - half + 2 * half * u, y, OUT_COLLAR);
+        });
         point.material = collarMat;
-        point.scaling.set(0.010 * spec.height, 0.019 * spec.height, 0.006 * spec.height);
-        point.rotation.z = -side * 0.34;
-        point.rotation.x = -0.26;
-        const pointX = side * 0.017 * spec.height;
-        const pointY = collarBase - 0.004 * spec.height;
-        point.position.set(pointX, pointY,
-            frontZAt(pointX, pointY) + 0.004 * spec.height);
-        point.parent = body;
+    }
+
+    if (!male) {
+        /*
+          A PLACKET: the button strip down the front of a blouse.
+
+          Three millimetres of relief and it does more than its size suggests.
+          Without it the shirt panel is one smooth pale surface with nothing on
+          it, and a surface with no feature has no scale -- which is what makes it
+          read as a bib rather than as a garment. With a seam down the middle it
+          is a blouse front, and the two halves either side of it are what a
+          viewer recognises.
+
+          It is the male figures' TIE that does this job for them, which is why
+          this is the other branch of the same `if`.
+        */
+        const placket = garment(`${spec.id}-placket`, 6, 16, (u, v) => {
+            const y = collarBase - 0.010 * spec.height
+                - (collarBase - buttonY) * v;
+            const half = 0.030;
+            return onTorso(-half + 2 * half * u, y, OUT_SHIRT + 0.0016 * spec.height);
+        });
+        placket.material = shirtMat;
+    }
+
+    if (male) {
+        /*
+          A TIE IS A FLAT STRIP AND A TRAPEZOID KNOT, both on the torso.
+
+          The knot was a sphere scaled to 2.1 x 1.9 x 0.85 cm and the report
+          called the result a bead; at tile size, with a specular highlight on it,
+          a saturated sphere under a collar is the single most doll-like thing a
+          figure can wear -- it reads as a clown's nose, which is what the
+          screenshot showed. A real knot is a four-sided wedge, wider at the
+          bottom than the top, lying against the throat.
+
+          Both are panels on the same surface as everything else, so the tie
+          cannot come out shallower than the shirt behind it. That was a real bug
+          here and it needed a paragraph of explanation; parametrised on the
+          torso it is not expressible.
+        */
+        const knotTop = collarBase - 0.002 * spec.height;
+        const knotBottom = knotTop - 0.030 * spec.height;
+        const knot = garment(`${spec.id}-knot`, 10, 6, (u, v) => {
+            const y = knotTop - (knotTop - knotBottom) * v;
+            // Wider at the bottom, which is which way up a four-in-hand is.
+            const half = 0.070 + 0.048 * v;
+            // Bulged in the middle: a knot is the one garment piece that IS
+            // three-dimensional, and a flat one reads as a painted stripe.
+            const bulge = Math.sin(Math.PI * u) * Math.sin(Math.PI * v * 0.85);
+            return onTorso(-half + 2 * half * u, y,
+                OUT_KNOT * (0.55 + 0.45 * bulge));
+        });
+        knot.material = accentMat;
+
+        const tie = garment(`${spec.id}-tie`, 10, 18, (u, v) => {
+            const y = knotBottom + 0.004 * spec.height
+                - (knotBottom - (buttonY + 0.010 * spec.height)) * v;
+            /*
+              Narrow under the knot, widest at two thirds down, then to a point.
+              A tie with a constant width is a ribbon and one that tapers all the
+              way is a wedge; the widening is what makes it read as a tie.
+            */
+            const taper = v < 0.72
+                ? 0.062 + 0.060 * smooth(0, 0.72, v)
+                : 0.122 * (1 - smooth(0.72, 1, v) ** 0.7);
+            const half = Math.max(0.004, taper);
+            return onTorso(-half + 2 * half * u, y, OUT_TIE);
+        });
+        tie.material = accentMat;
+    } else {
+        /*
+          A PENDANT, and it stays a small sphere on purpose.
+
+          Everything else on the chest stopped being a blob because a blob cannot
+          read as cloth. A pendant is not cloth: it is a small hard object hanging
+          in front of the sternum, so a sphere is the correct shape and the only
+          question is whether it is the right size. It is the one accent a female
+          figure carries -- there is deliberately no chain, because at this scale
+          a chain never cleared the collar and rendered as nothing at all while
+          costing a mesh.
+        */
+        const pendant = track(B.CreateSphere(`${spec.id}-pendant`, {
+            /*
+              1 cm, not 2.5. At `0.014h` it measured 2.5 cm across on the taller
+              anchor and read as a bead rather than as jewellery -- the same fault
+              the tie knot had, which is that a matte sphere at any size above
+              about a centimetre reads as a bead.
+            */
+            diameter: 0.0092 * spec.height, segments: 14,
+        }, scene));
+        /*
+          And it is METAL, not cloth. `accentMat` is now a silk: 0.38 roughness
+          with a raised reflectance, which on a sphere gives one broad soft
+          highlight -- a plastic bead. A pendant is the one hard object on the
+          figure, so it gets a tight lobe and real metallness, which is what
+          produces the small sharp glint that reads as jewellery.
+        */
+        /*
+          0.55 METALLIC, NOT 0.85, AND BRIGHTER.
+
+          In PBR a metal's ALBEDO is its F0 -- the colour of its reflection --
+          rather than a diffuse colour, so at 0.85 a dark accent hue produces a
+          dark mirror with almost nothing to reflect in this room, and the pendant
+          rendered as a small dull dot. Half metallic keeps a diffuse component to
+          catch the key light, and lifting the albedo puts it in the range a
+          polished stone or a piece of costume jewellery actually sits in.
+        */
+        const pendantBase = B.Color3.FromHexString(spec.outfit.accent);
+        const pendantMat = surface(B, scene, `${spec.id}-pend`, spec.outfit.accent,
+            { roughness: 0.18, metallic: 0.55, flat: true });
+        pendantMat.albedoColor = new B.Color3(
+            Math.min(1, pendantBase.r * 1.35 + 0.10),
+            Math.min(1, pendantBase.g * 1.35 + 0.10),
+            Math.min(1, pendantBase.b * 1.35 + 0.10),
+        );
+        pendant.material = pendantMat;
+        pendant.scaling.z = 0.62;
+        const pendantY = collarBase - 0.040 * spec.height;
+        pendant.position.set(0, pendantY,
+            frontZAt(0, pendantY) + OUT_TIE);
+        pendant.parent = body;
     }
 
     /*
-      The one saturated thing a person carries, and it goes on the BIB.
+      BUTTONS, which are three millimetres of geometry and read out of all
+      proportion to that.
 
-      Both versions of this were buried. The tie was a lathe starting at
-      `neckY - 0.055h`, which is below the shoulder line and therefore inside
-      the torso; the scarf was a torus around the neck at a height where the
-      trapezius has already reached full width, so it was inside that too. What
-      renders in both cases is nothing at all, and the figure comes out in one
-      flat colour with no accent anywhere — which reads as an unfinished model
-      rather than as a placement mistake.
-
-      Anchored to `chestSurface`, the same measured depth the bib uses, so it
-      cannot sink again — and measured at the same HEIGHT, so it cannot come out
-      behind the shirt either.
+      They are the one detail that says a garment FASTENS, and a jacket with a
+      lapel, a collar and no button reads as a wrap. Two of them, at and below
+      the button point, on the panel that laps over -- the figure's own left,
+      which is how a man's jacket is made and how a woman's is not, so the side
+      follows the gender.
     */
-    if (male) {
-        /*
-          A KNOT AND A BLADE, and the knot is what was missing.
-
-          The old tie was one lathe from 0.8 cm at the throat to 2.2 cm at the
-          chest and back to a point — a thin dark wedge, which at tile size is a
-          smear and at head size reads as a crack in the shirt. A real tie is a
-          fat trapezoid knot with a much narrower blade hanging out of it, and
-          the knot is most of what the eye recognises, because it is the part
-          with a specular highlight on it.
-        */
-        const knot = track(B.CreateSphere(`${spec.id}-knot`, {
-            diameter: 1, segments: Math.round(16 * detail) + 6,
+    const buttonSide = male ? 1 : -1;
+    for (const step of [0, 1]) {
+        const buttonY2 = buttonY - step * 0.052 * spec.height;
+        const buttonTheta = buttonSide * (openAt(buttonY2) + 0.052);
+        const stud = track(B.CreateSphere(`${spec.id}-button${step}`, {
+            diameter: 0.0092 * spec.height, segments: 10,
         }, scene));
-        knot.material = accentMat;
-        /* Flat, not round. A sphere at equal proportions is a bead, and a bead
-           under a collar is the single most doll-like thing a figure can wear. */
-        knot.scaling.set(0.021 * spec.height, 0.019 * spec.height, 0.0085 * spec.height);
-        const knotY = collarBase - 0.012 * spec.height;
-        knot.position.set(0, knotY, frontZAt(0, knotY) + 0.010 * spec.height);
-        knot.parent = body;
-
-        const tieTop = knotY - 0.014 * spec.height;
-        const tie = track(B.CreateLathe(`${spec.id}-tie`, {
-            shape: [
-                new B.Vector3(0.009 * spec.height, tieTop, 0),
-                new B.Vector3(0.013 * spec.height, tieTop - 0.024 * spec.height, 0),
-                new B.Vector3(0.015 * spec.height, chestY + 0.022 * spec.height, 0),
-                new B.Vector3(0.011 * spec.height, chestY - 0.006 * spec.height, 0),
-                new B.Vector3(0.002 * spec.height, chestY - 0.024 * spec.height, 0),
-            ],
-            tessellation: Math.round(20 * detail) + 8,
-            closed: true,
-        }, scene));
-        tie.material = accentMat;
-        tie.scaling.z = 0.42;
-        // The SAME reference the bib uses, plus enough to clear it — see the
-        // note on `chestSurface`.
-        tie.position.z = chestSurface + 0.014 * spec.height;
-        tie.parent = body;
-    } else {
-        /* A pendant on a chain, rather than a scarf. A scarf has to wrap the
-           neck, and the neck is where the trapezius is — anything there is
-           swallowed. A pendant sits on the bib, where there is nothing to be
-           swallowed by. */
-        const pendant = track(B.CreateSphere(`${spec.id}-pendant`, {
-            diameter: 0.016 * spec.height, segments: 12,
-        }, scene));
-        pendant.material = accentMat;
-        pendant.scaling.z = 0.6;
-        const pendantY = collarBase - 0.036 * spec.height;
-        pendant.position.set(0, pendantY,
-            frontZAt(0, pendantY) + 0.008 * spec.height);
-        pendant.parent = body;
-
-        /*
-          NO CHAIN AT ALL, in the end, and it is the third attempt.
-
-          Two straight capsules drew a large bright lambda across the chest. A
-          torus is the right SHAPE for a necklace — it goes around a neck, which
-          is what a necklace does — and at this scale it never cleared the collar
-          band and the shawl collar in front of it, so it rendered as nothing at
-          all while costing a mesh.
-
-          What reads at 180 px is the pendant: one small saturated object at the
-          neckline, which is the one accent a female figure carries. A chain that
-          is invisible is not a chain, it is a draw call.
-        */
+        // Flattened: a button is a disc, and a sphere at equal proportions is a
+        // pearl. Same mistake the tie knot was making one paragraph up.
+        stud.scaling.set(1, 1, 0.34);
+        const seat = onTorso(buttonTheta, buttonY2, OUT_JACKET + 0.0022 * spec.height);
+        stud.position.set(seat.x, seat.y, seat.z);
+        stud.material = buttonMat;
+        stud.parent = body;
     }
 
     /* ---- neck and head ------------------------------------------------ */
@@ -1481,7 +2004,24 @@ export function buildFigure(
         const lower = track(B.CreateSphere(`${spec.id}-lidL${side}`, {
             diameter: 1, segments: Math.round(14 * detail) + 6,
         }, scene));
-        lower.scaling.set(eyeR * 2.55, eyeR * 1.20, eyeR * 1.95);
+        /*
+          ============================================================
+          THE PALE CRESCENT UNDER EACH EYE WAS THIS
+          ============================================================
+
+          At 1.95 eye-radii of depth the lower lid bulged well forward of the
+          eyeball, so the key light caught its upper edge as a bright rim -- and a
+          bright rim immediately below an iris is read as SCLERA, i.e. as an eye
+          rolled upward. Every render of this cast has had a pale crescent under
+          each eye and it has been the lid, not the white of the eye. On the
+          darker skin tones it was the most doll-like thing on the face, because
+          the contrast against the surrounding skin is greatest there.
+
+          A real lower lid is a thin ridge that follows the eyeball rather than
+          standing off it. Shallower and flatter, its edge is nearly tangent to
+          the ball and takes the light at a grazing angle instead of face-on.
+        */
+        lower.scaling.set(eyeR * 2.50, eyeR * 0.98, eyeR * 1.58);
         /*
           The SAME skin as the rest of the face, not the darker one.
 
@@ -1550,6 +2090,33 @@ export function buildFigure(
        too small to see. The same trap is already documented for the lashes and
        `check:actors` asserts it there; it now asserts this too.
     */
+    /*
+      A BROW IS NOT SCALP HAIR, and sharing `hairMat` was making the pair read as
+      two solid painted arcs.
+
+      Two differences, both real. A brow is LIGHTER than the hair on the same
+      head -- fewer, finer hairs over skin that shows between them, so what the
+      eye averages is somewhere between the two. And it is ROUGHER: scalp hair is
+      long enough to lie flat and produce a sheen, and a brow is not, so it has
+      no highlight at all. At `hairMat`'s 0.80 roughness and full hair albedo the
+      three volumes union into one glossy black bar, which with the lashes below
+      it gave the eye region two parallel painted lines.
+
+      The skin shows through, so the mix is toward the skin rather than simply
+      darker -- which is also what keeps it right across a cast whose skin tones
+      span `#6f4630` to `#f0cbaa`.
+    */
+    const browBase = B.Color3.FromHexString(spec.hair);
+    const browSkin = B.Color3.FromHexString(spec.skin);
+    const browMat = surface(B, scene, `${spec.id}-brow`, spec.hair, { roughness: 0.94 });
+    browMat.albedoColor = new B.Color3(
+        browBase.r * 0.72 + browSkin.r * 0.28,
+        browBase.g * 0.72 + browSkin.g * 0.28,
+        browBase.b * 0.72 + browSkin.b * 0.28,
+    );
+    browMat.metallicF0Factor = 0.06;
+    applyNormal(B, scene, browMat, 'hair-strand', P.headRadius * 0.5, 0.5);
+
     const brows: TransformNode[] = [];
     const browRest: number[] = [];
     for (const side of [-1, 1]) {
@@ -1570,7 +2137,7 @@ export function buildFigure(
             const mesh = track(B.CreateSphere(`${spec.id}-${name}${side}`, {
                 diameter: 1, segments: Math.round(12 * detail) + 5,
             }, scene));
-            mesh.material = hairMat;
+            mesh.material = browMat;
             mesh.scaling.set(R * sx, R * sy, R * sz);
             mesh.position.set(R * lx, R * ly, R * lz);
             mesh.rotation.z = roll;
@@ -1669,6 +2236,14 @@ export function buildFigure(
     lowerLip.material = lipMat;
     lowerLip.position.set(0, mouthY - R * 0.055 - jaw.position.y, mouthZ - jaw.position.z);
     lowerLip.parent = jaw;
+    /*
+      Its resting height, kept so `mouthPress` can move it and put it back.
+      Reading `lowerLip.position.y` inside `update` would work on the first frame
+      and accumulate on every one after it -- the classic animate-from-current
+      bug, which drifts rather than failing and is therefore diagnosed as "the
+      mouth slowly slides down the chin".
+    */
+    const lowerLipRestY = lowerLip.position.y;
 
     const teeth = track(B.CreateSphere(`${spec.id}-teeth`, {
         diameter: 1, segments: 10,
@@ -1856,89 +2431,252 @@ export function buildFigure(
         quiff.parent = headGroup;
     }
 
-    /* ---- arms ------------------------------------------------------------
-       Shoulder and elbow are nodes; the geometry hangs off them. That is what
-       lets `gesture()` swing a whole arm with two numbers instead of solving
-       for a hand position. */
-    const arms: { shoulder: TransformNode; elbow: TransformNode; side: number }[] = [];
+    /* ---- arms and hands --------------------------------------------------
+       Shoulder, elbow, wrist and one node per finger; the geometry hangs off
+       them. That is what lets `gesture()` swing a whole arm with two numbers
+       instead of solving for a hand position, and `fingerCurl()` flex four
+       fingers without touching the arm. */
+    interface Finger {
+        node: TransformNode;
+        spec: FingerSpec;
+    }
+    const arms: {
+        shoulder: TransformNode;
+        elbow: TransformNode;
+        wrist: TransformNode;
+        fingers: Finger[];
+        side: number;
+    }[] = [];
     for (const side of [-1, 1]) {
         const shoulder = new B.TransformNode(`${spec.id}-sh${side}`, scene);
-        shoulder.position.set(side * P.shoulderHalfWidth * 0.94, P.shoulderY - 0.012 * spec.height, 0);
+        /*
+          ============================================================
+          THE ARMS HANG BEHIND THE CHEST, NOT THROUGH THE MIDDLE OF IT
+          ============================================================
+
+          `z = 0` put each arm's centre line at the middle of the torso's depth,
+          and that is the real cause of the lobes on the shoulders. The torso's
+          cross-section is an ellipse, so its front surface FALLS AWAY toward the
+          sides: at `0.94` of the half-width the front is only 34% as far forward
+          as it is on the centre line. Any arm-sized volume centred at z = 0 out
+          there therefore protrudes about a centimetre in front of the chest, and
+          a smooth convex volume protruding from a smooth convex body is read as a
+          lobe however it is shaped. Three rounds of reshaping the deltoid could
+          not fix that, because the deltoid was not what was wrong.
+
+          A real shoulder joint sits well behind the front of the chest. Moved
+          back by 16% of the chest depth the whole arm is inside the torso's own
+          silhouette at the shoulder, and the lobes are structurally impossible
+          rather than merely smaller.
+        */
+        shoulder.position.set(
+            side * P.shoulderHalfWidth * 0.94,
+            P.shoulderY - 0.012 * spec.height,
+            -P.chestDepth * 0.16,
+        );
         shoulder.parent = body;
 
         /*
-          The deltoid rounds the corner between the shoulder line and the arm.
-          It is deliberately smaller than it was: at 2.5x the arm radius it was
-          a ball stuck on each side, which is the single thing that made the
-          silhouette read as a toy. Flattened on Y as well, because the muscle
-          is wider than it is tall.
-        */
-        /*
-          The deltoid rounds the corner between the shoulder line and the arm,
-          and it is easy to make it the thing that ruins the silhouette. At 2.5x
-          the arm radius it was a ball stuck on each side and the figure read as
-          a snowman; flattened and pulled inward it is a shoulder.
-        */
-        const deltoid = track(B.CreateSphere(`${spec.id}-delt${side}`, {
-            diameter: P.armRadius * 1.9, segments: Math.round(20 * detail) + 6,
-        }, scene));
-        deltoid.material = jacketMat;
-        /* Smaller and pulled further in than it was, because the yoke now
-           carries the shoulder line. Two volumes both trying to be the shoulder
-           is what put a visible bulge at each bottom corner of the tile. */
-        deltoid.scaling.set(0.82, 0.58, 0.86);
-        deltoid.position.set(-side * P.armRadius * 0.30, -P.armRadius * 0.26, 0);
-        deltoid.parent = shoulder;
+          ============================================================
+          THE BALLS ON THE SHOULDERS ARE GONE, AND WHAT REPLACES THEM
+          ============================================================
 
-        const upper = track(B.CreateCapsule(`${spec.id}-uarm${side}`, {
-            height: P.upperArm, radius: P.armRadius * 0.92,
-            tessellation: Math.round(22 * detail) + 8, subdivisions: 3,
+          Reported exactly that way -- "remove ball objects on the shoulders" --
+          and there was one on each side: a sphere of 1.9 arm-radii scaled to
+          (0.82, 0.58, 0.86), a 9.6 x 6.8 x 10.1 cm ellipsoid on the widest point
+          of the silhouette. Its own comments recorded two previous attempts to
+          make it smaller and flatter; neither worked, because the size was never
+          the problem. See the note on the shoulder node above for what was.
+
+          There is no deltoid mass any more. What covers the top of the arm is a
+          SLEEVE HEAD: a cap as wide as the sleeve it sits on and barely half as
+          TALL, which is the proportion that decides how it reads. Wider than it
+          is tall, its silhouette continues the shoulder line horizontally and
+          then turns down -- which is a shoulder. Taller than it is wide, or
+          equal, and the same object is a ball.
+
+          It exists at all because a tapered cylinder has a FLAT top, and an
+          uncovered disc edge at the shoulder is a hard rim across the top of
+          each arm. This is the smallest thing that hides it.
+        */
+        const sleeveTop = P.armRadius * 2.06;
+        const head = track(B.CreateSphere(`${spec.id}-shcap${side}`, {
+            diameter: 1, segments: Math.round(18 * detail) + 6,
+        }, scene));
+        head.material = jacketMat;
+        head.scaling.set(sleeveTop, sleeveTop * 0.50, sleeveTop * 0.86);
+        head.position.set(-side * P.armRadius * 0.04, 0, 0);
+        head.parent = shoulder;
+
+        /*
+          THE SLEEVE TAPERS, because an arm does.
+
+          A capsule is a constant radius with a hemisphere at each end, so the
+          old upper arm was a tube of one thickness from shoulder to elbow with a
+          rounded cap at the top -- and that cap, poking out above the deltoid,
+          was the second ball. A jacket sleeve is markedly wider at the bicep
+          than at the elbow, and a truncated cone is exactly that shape with no
+          cap at all. Its top ring is inside the deltoid, so there is no visible
+          rim.
+        */
+        const upper = track(B.CreateCylinder(`${spec.id}-uarm${side}`, {
+            height: P.upperArm * 1.06,
+            diameterTop: sleeveTop * 0.98,
+            diameterBottom: P.armRadius * 1.60,
+            tessellation: Math.round(24 * detail) + 10,
         }, scene));
         upper.material = jacketMat;
-        upper.position.y = -P.upperArm / 2;
+        // Its top ring is inside the sleeve head, so the disc is never seen.
+        upper.position.y = -P.upperArm * 0.50;
         upper.parent = shoulder;
 
         const elbow = new B.TransformNode(`${spec.id}-el${side}`, scene);
         elbow.position.y = -P.upperArm;
         elbow.parent = shoulder;
 
+        /*
+          The forearm keeps its capsule: its lower end IS rounded, because that
+          is where the cuff and the wrist are, and there is nothing above it for
+          a cap to poke out of.
+        */
         const fore = track(B.CreateCapsule(`${spec.id}-farm${side}`, {
-            height: P.foreArm, radius: P.armRadius * 0.76,
+            height: P.foreArm, radius: P.armRadius * 0.74,
             tessellation: Math.round(22 * detail) + 8, subdivisions: 3,
         }, scene));
         fore.material = jacketMat;
         fore.position.y = -P.foreArm / 2;
         fore.parent = elbow;
 
+        // A shirt cuff showing below the sleeve. Two centimetres of pale cloth
+        // between a dark sleeve and a hand is what makes the hand read as
+        // emerging from a garment rather than as growing out of a tube.
         const cuff = track(B.CreateCylinder(`${spec.id}-cuff${side}`, {
-            height: P.foreArm * 0.10,
-            diameter: P.armRadius * 1.62,
+            height: P.foreArm * 0.11,
+            diameterTop: P.armRadius * 1.52,
+            diameterBottom: P.armRadius * 1.44,
             tessellation: Math.round(24 * detail) + 8,
         }, scene));
         cuff.material = shirtMat;
-        cuff.position.y = -P.foreArm * 0.96;
+        cuff.position.y = -P.foreArm * 0.965;
         cuff.parent = elbow;
 
-        const hand = track(B.CreateCapsule(`${spec.id}-hand${side}`, {
-            height: P.handLength * 0.82, radius: P.armRadius * 0.66,
-            tessellation: Math.round(18 * detail) + 7, subdivisions: 2,
-        }, scene));
-        hand.material = skin;
-        hand.scaling.set(0.72, 1, 1.05);
-        hand.position.y = -P.foreArm - P.handLength * 0.34;
-        hand.rotation.x = 0.22;
-        hand.parent = elbow;
+        /*
+          ============================================================
+          A HAND, WITH FINGERS ON IT
+          ============================================================
 
-        const thumb = track(B.CreateCapsule(`${spec.id}-thumb${side}`, {
-            height: P.handLength * 0.36, radius: P.armRadius * 0.26,
-            tessellation: 12, subdivisions: 1,
-        }, scene));
-        thumb.material = skin;
-        thumb.position.set(-side * P.armRadius * 0.52, -P.foreArm - P.handLength * 0.26, P.armRadius * 0.20);
-        thumb.rotation.z = side * 0.75;
-        thumb.parent = elbow;
+          What was here was one capsule scaled (0.72, 1, 1.05) and one capsule
+          for a thumb: a MITTEN with a spur. In the studio, which is the one shot
+          where the hands are near the camera and unoccluded -- both anchors rest
+          them on the desk holding a script -- that is the second thing a viewer
+          looks at after the face, and the screenshot shows two pale flippers.
 
-        arms.push({ shoulder, elbow, side });
+          A hand is a flattened palm and four fingers off an ARCED knuckle line,
+          plus a thumb opposed to them. None of that is expensive; what it needs
+          is the proportions to be irregular, which is why they are a table in
+          `figures.ts` (`FINGERS`) rather than a loop with a formula: four equal
+          capsules on an even pitch is a rake, and it is the same class of
+          wrongness as six people blinking in unison.
+
+          THE COST, stated rather than hidden: seven meshes per hand instead of
+          two, so fourteen per figure. The meeting draws one figure per viewport
+          (the pods are a hundred metres apart so the frustum culls the other
+          five), which takes it from ~24 draw calls a frame to ~38. They all
+          share one material and one vertex format, so there is no state change
+          between them and the GPU cost is negligible; what it buys is a hand
+          that reads as a hand at every framing, and per-finger movement, which
+          is the only reason the anchors' hands are not two still objects under a
+          moving face.
+        */
+        const wrist = new B.TransformNode(`${spec.id}-wr${side}`, scene);
+        wrist.position.y = -P.foreArm - P.handLength * 0.10;
+        wrist.parent = elbow;
+
+        const palmLength = P.handLength * 0.56;
+        const palm = track(B.CreateCapsule(`${spec.id}-palm${side}`, {
+            height: palmLength, radius: P.palmWidth * 0.5,
+            tessellation: Math.round(16 * detail) + 6, subdivisions: 2,
+        }, scene));
+        palm.material = skin;
+        // Flattened front-to-back and a little narrower at the wrist end. A palm
+        // is a slab, and a round one is a sausage.
+        palm.scaling.set(0.94, 1, 0.44);
+        palm.position.y = -palmLength * 0.5;
+        palm.parent = wrist;
+
+        const fingers: Finger[] = [];
+        for (const finger of FINGERS) {
+            /*
+              One node per finger at its knuckle, so `fingerCurl` can flex it
+              without moving the palm. The node carries the splay and the resting
+              curl; the capsule hangs off it along -Y, which is the same
+              convention the arm uses.
+            */
+            const knuckle = new B.TransformNode(`${spec.id}-kn${side}${finger.index}`, scene);
+            knuckle.position.set(
+                // `across` is measured toward the THUMB, and the thumb is on the
+                // inside of each arm -- so which way that is depends on the side.
+                -side * finger.across * P.palmWidth,
+                -palmLength - finger.drop * P.fingerLength,
+                P.palmWidth * 0.04,
+            );
+            knuckle.rotation.z = -side * finger.splay;
+            knuckle.rotation.x = finger.curl;
+            knuckle.parent = wrist;
+
+            const length = P.fingerLength * finger.length;
+            const bone = track(B.CreateCapsule(`${spec.id}-fg${side}${finger.index}`, {
+                height: length,
+                // Slim. A finger at a quarter of the palm's width is a banana;
+                // real ones are nearer a fifth, and the taper toward the tip is
+                // what stops four of them reading as a fork.
+                radius: P.palmWidth * 0.105,
+                tessellation: Math.round(9 * detail) + 5,
+                subdivisions: 1,
+            }, scene));
+            bone.material = skin;
+            bone.scaling.set(1, 1, 0.86);
+            bone.position.y = -length * 0.5;
+            bone.parent = knuckle;
+            fingers.push({ node: knuckle, spec: finger });
+        }
+
+        /*
+          THE THUMB IS TWO SEGMENTS AND IT IS OPPOSED.
+
+          One capsule at 0.75 rad was the old thumb and it read as a spur off the
+          side of the mitten. What makes a thumb a thumb is that it comes off the
+          BASE of the palm, points across the other fingers rather than along
+          them, and has a visible knuckle -- so it is a short thick metacarpal
+          angled out and in, with a phalanx angled forward off it.
+        */
+        const thumbBase = new B.TransformNode(`${spec.id}-th${side}`, scene);
+        thumbBase.position.set(-side * P.palmWidth * 0.42, -palmLength * 0.34, P.palmWidth * 0.10);
+        thumbBase.rotation.z = -side * 0.92;
+        thumbBase.rotation.x = 0.30;
+        thumbBase.parent = wrist;
+
+        const thumbMeta = track(B.CreateCapsule(`${spec.id}-thm${side}`, {
+            height: P.fingerLength * 0.52, radius: P.palmWidth * 0.135,
+            tessellation: Math.round(9 * detail) + 5, subdivisions: 1,
+        }, scene));
+        thumbMeta.material = skin;
+        thumbMeta.position.y = -P.fingerLength * 0.26;
+        thumbMeta.parent = thumbBase;
+
+        const thumbTip = track(B.CreateCapsule(`${spec.id}-tht${side}`, {
+            height: P.fingerLength * 0.44, radius: P.palmWidth * 0.115,
+            tessellation: Math.round(9 * detail) + 5, subdivisions: 1,
+        }, scene));
+        thumbTip.material = skin;
+        thumbTip.position.y = -P.fingerLength * 0.22;
+        thumbTip.parent = new B.TransformNode(`${spec.id}-thj${side}`, scene);
+        const thumbJoint = thumbTip.parent as TransformNode;
+        thumbJoint.position.y = -P.fingerLength * 0.50;
+        thumbJoint.rotation.x = 0.34;
+        thumbJoint.parent = thumbBase;
+
+        arms.push({ shoulder, elbow, wrist, fingers, side });
     }
 
     /* ---- animation ------------------------------------------------------- */
@@ -1971,6 +2709,34 @@ export function buildFigure(
     const restShoulder = 0.055;
     const restElbow = pose === 'desk' ? -solved.elbow : -0.30;
     const restShoulderPitch = pose === 'desk' ? -solved.shoulder : -0.05;
+    /*
+      THE WRIST ANGLE IS SOLVED FROM THE ARM, NOT PICKED.
+
+      The old hand carried a flat `rotation.x = 0.22`, which is a number that is
+      correct for whatever arm angle happened to be in front of whoever chose it.
+      Now that there are fingers, being wrong about it is much more visible: a
+      hand at the wrong wrist angle on a desk either drives its fingertips
+      through the surface or holds them a centimetre above it, and both read as
+      the hand not being on the desk at all.
+
+      The wrist inherits the shoulder's and the elbow's pitch, so laying the palm
+      flat means cancelling their sum and adding a quarter turn. Less the small
+      break a real wrist has when a hand rests on a surface -- fully flat reads
+      as a hand pressed down rather than resting.
+    */
+    const restWrist = pose === 'desk'
+        ? -(Math.PI / 2 - 0.20) - (restShoulderPitch + restElbow)
+        : 0.12;
+    /*
+      AND THE FINGERS STRAIGHTEN ON A DESK.
+
+      `FINGERS` carries the resting curl of a relaxed hand, which is what a hand
+      hanging at somebody's side does -- a third of a radian at the knuckle. A
+      hand resting ON something is nearly flat, and at full curl the fingertips
+      would be driven through the desk. Scaling the table rather than holding two
+      tables is what keeps one source for the proportions.
+    */
+    const deskCurl = pose === 'desk' ? 0.30 : 1;
     const forward = new B.Vector3(0, 0, 1);
 
     function update(state: FigureState): void {
@@ -1987,6 +2753,16 @@ export function buildFigure(
         // The rig's own node, never the caller's. See the note by `body`.
         body.position.x = s.lean * m;
         /*
+          A twist as well as a drift. Nobody sits square to a camera for ninety
+          seconds, and unlike the lateral drift this one turns the SILHOUETTE --
+          the shoulder line, the lapels and the arms all move together, which is
+          a great deal more legible at tile size than a centimetre of sideways
+          shift. On the rig's node for the same reason the lean is: the caller
+          owns `root.rotation.y` and the studio spends it turning each anchor to
+          face the lens.
+        */
+        body.rotation.y = torsoTwist(t, spec.phase) * m;
+        /*
           A speaker leans in. Two centimetres, on the rig's node for the same
           reason the lean is — and it is the only whole-body cue there is that
           somebody is addressing you rather than sitting in front of you.
@@ -1996,8 +2772,23 @@ export function buildFigure(
         // Head. Emphasis is ADDED to the drift rather than replacing it, so a
         // speaking figure still moves like a person between the nods.
         let yaw = s.headYaw * m;
-        let pitch = s.headPitch * m + headEmphasis(t, spec.phase, energy) * m;
-        const roll = s.headRoll * m;
+        /*
+          Three things land on the pitch and they are all additive: the idle
+          drift, the nod on a stressed word while SPEAKING, and the
+          acknowledgement nod while LISTENING. The last is the one that makes a
+          room read as a conversation rather than as several figures each
+          animating alone -- see `listenNod`, and note that it is driven by
+          `attention` and not by `energy`, so it is silent for whoever is talking.
+        */
+        const attention = state.attention ?? 0;
+        let pitch = s.headPitch * m
+            + headEmphasis(t, spec.phase, energy) * m
+            + listenNod(t, spec.phase, attention) * m;
+        // And the roll gets the tilt that goes with emphasis. A head that only
+        // pitches is a metronome; at tile framing the tilt is the more legible
+        // of the two, because it moves the head against the shoulders rather
+        // than along the line of sight.
+        const roll = s.headRoll * m + headRollEmphasis(t, spec.phase, energy) * m;
         /** What the eyes have to make up after the head has turned. */
         let eyeYaw = 0;
         let eyePitch = 0;
@@ -2096,10 +2887,33 @@ export function buildFigure(
 
         headPivot.rotation.set(pitch, yaw, roll);
 
+        /*
+          ============================================================
+          AND THE EYES NEVER HOLD STILL
+          ============================================================
+
+          The aim above is what stopped the cast looking past the viewer. What it
+          does not do is anything at all when `lookAt` is null, and it holds a
+          FIXED angle when it is not -- so a figure was either staring straight
+          ahead or staring at the lens, for as long as the shot lasted. A gaze
+          that does not move is read as dead or as hostile; it is the last thing
+          on a face that gives away a rendering.
+
+          `saccade` adds the ballistic drift of a real fixation: a jump of a
+          degree or two every few hundred milliseconds. Both eyes get the SAME
+          offset, because both eyes of one person move together -- a per-eye
+          offset is a squint, and the amount of squint that reads as an eye
+          condition is very small indeed.
+        */
+        const flick = saccade(t, spec.phase);
         for (const socket of sockets) {
             // The resting convergence stays: it is what stops two parallel eyes
             // reading as a thousand-yard stare, and it is additive to the aim.
-            socket.node.rotation.set(eyePitch, -socket.side * 0.055 + eyeYaw, 0);
+            socket.node.rotation.set(
+                eyePitch + flick.pitch * m,
+                -socket.side * 0.055 + eyeYaw + flick.yaw * m,
+                0,
+            );
         }
 
         // Blinking. The lids rotate; nothing scales, because a scaled lid
@@ -2118,7 +2932,7 @@ export function buildFigure(
         for (const lid of lids) {
             const y = eyeR * (1.26 - shut * 2.44);
             lid.upper.position.y = y;
-            lid.lower.position.y = eyeR * (-0.94 + shut * 0.18);
+            lid.lower.position.y = eyeR * (-1.02 + shut * 0.18);
             // The lash rides the lid margin. It is a sibling, so it has to be
             // moved rather than carried — see where it is built.
             lid.lash.position.set(0, y - eyeR * 0.78, eyeR * 0.86);
@@ -2150,9 +2964,28 @@ export function buildFigure(
           mouth that opens without its top lip stretching reads as a hinge.
         */
         jaw.rotation.x = open * 0.42;
+        /*
+          A LISTENING MOUTH IS NOT A STILL MOUTH.
+
+          `jawOpen` returns exactly 0 when silent -- deliberately, because
+          "almost closed" reads as chewing -- and `lipSpread` returns a constant,
+          so a figure who was not speaking held one fixed expression for the
+          whole time somebody else was. That stillness is a good part of what a
+          viewer reads as "that one is not really here", and it is most obvious
+          in the meeting, where five of the six seats are silent at any moment.
+
+          `mouthPress` is a slow lip-press with an occasional swallow in it, and
+          it returns 0 while speaking so the speech shapes keep sole ownership of
+          the mouth. Two things driving one lip is a flutter.
+        */
+        const press = mouthPress(t, spec.phase, energy) * m;
         lowerLip.scaling.x = R * (0.245 + 0.055 * spread);
         upperLip.scaling.x = R * (0.255 + 0.050 * spread);
-        upperLip.scaling.y = R * (0.058 - 0.022 * open);
+        upperLip.scaling.y = R * (0.058 - 0.022 * open + 0.010 * press);
+        // The press is almost entirely the LOWER lip rolling up and in, which is
+        // what makes it read as a press rather than as a pout.
+        lowerLip.scaling.y = R * (0.062 - 0.016 * press);
+        lowerLip.position.y = lowerLipRestY + R * 0.014 * press;
         mouthHole.scaling.y = R * (0.045 + 0.42 * open);
         mouthHole.scaling.x = R * (0.195 + 0.065 * spread);
         mouthHole.position.y = mouthY - R * 0.13 * open;
@@ -2177,6 +3010,27 @@ export function buildFigure(
             arm.shoulder.rotation.x = restShoulderPitch - 0.42 * swing + 0.10 * swing * beat;
             arm.elbow.rotation.x = restElbow - 0.85 * swing + 0.22 * swing * beat;
             arm.shoulder.position.y = P.shoulderY - 0.012 * spec.height + 0.004 * br * m;
+            /*
+              The wrist follows the arm rather than being carried by it. Without
+              this the hand keeps the angle solved for the REST pose while the
+              forearm swings under it, so on a gesture the palm ends up facing
+              the ceiling -- which is not a subtle fault, it is a hand rotating
+              independently of the arm it is on.
+            */
+            arm.wrist.rotation.x = restWrist + 0.55 * swing * (0.5 + 0.5 * beat);
+            /*
+              And the fingers flex, one at a time and by under two degrees.
+
+              This is why the hand is seven meshes rather than one merged mesh:
+              the two anchors' hands are in shot, near the camera and perfectly
+              lit, under a face that breathes and blinks. Still hands under a
+              living face read as the hands being a separate object -- which,
+              until they had knuckle nodes, they were.
+            */
+            for (const finger of arm.fingers) {
+                finger.node.rotation.x = finger.spec.curl * deskCurl
+                    + fingerCurl(t, spec.phase, finger.spec.index, energy) * m;
+            }
         }
 
         // Silence must be silent. `jawOpen` already returns exactly 0, and this

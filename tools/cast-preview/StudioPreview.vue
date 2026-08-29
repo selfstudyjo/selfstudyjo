@@ -80,9 +80,16 @@ watch(() => [props.speaking, props.energy, props.live, props.headline, props.rtl
 .sp__stage {
     position: relative;
     width: 100%;
-    /* The aspect the Newscast's own stylesheet gives it. */
+    /* The aspect the Newscast's own stylesheet gives it -- and, as of the same
+       change, the WIDTH cap that makes the aspect real rather than a preference.
+       Without the second line this harness cannot reproduce the clipping the
+       real page had, which is exactly why the clipped video wall was never seen
+       here: `max-height` alone lets the box go squatter than its own ratio, and
+       at 70vh on a 900px window it barely did. See `layout.ts`. */
     aspect-ratio: 1428 / 788;
     max-height: 70vh;
+    max-width: calc(70vh * 1428 / 788);
+    margin-inline: auto;
     border: 2px solid #26304a;
     border-radius: 12px;
     overflow: hidden;

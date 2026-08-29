@@ -224,6 +224,18 @@ export interface Proportions {
     /** Radius of the upper arm at the shoulder. */
     armRadius: number;
     handLength: number;
+    /**
+     * Across the knuckles, and the length of the fingers off them.
+     *
+     * Here rather than in the builder because `check:actors` has to be able to
+     * ask whether a hand is a hand: four fingers of a plausible span, off a palm
+     * of a plausible width, at every height in the cast. The figures were built
+     * with a hand that was one capsule and one thumb -- a mitten -- and at the
+     * newscast desk, which is the one shot where the hands are unoccluded and
+     * near the camera, that is the second thing a viewer notices after the face.
+     */
+    palmWidth: number;
+    fingerLength: number;
 }
 
 export const NOMINAL_HEIGHT = 1.75;
@@ -275,6 +287,16 @@ export function proportionsFor(spec: FigureSpec): Proportions {
         foreArm: 0.157 * h,
         armRadius: 0.032 * h * (0.90 + spec.build * 0.26),
         handLength: 0.108 * h,
+        /*
+          A hand is about as wide across the knuckles as the palm is long, and
+          the fingers are a little under half its total length. Both scale with
+          `broad` because a heavier frame has heavier hands, and neither scales
+          with `female` -- the difference is real and it is smaller than the
+          difference between two people of the same sex, so encoding it would be
+          a stereotype doing the work of an anatomical fact.
+        */
+        palmWidth: 0.048 * h * (0.92 + spec.build * 0.16),
+        fingerLength: 0.046 * h,
     };
 }
 
@@ -755,4 +777,259 @@ export function followEnergy(previous: number, target: number, dt: number): numb
     const tau = target > previous ? 0.035 : 0.11;
     const a = 1 - Math.exp(-Math.max(0, dt) / tau);
     return previous + (target - previous) * a;
+}
+
+/* ------------------------------------------------------------------ *
+ * The hand
+ * ------------------------------------------------------------------ */
+
+/**
+ * The four fingers, as a fraction of {@link Proportions.fingerLength} and a
+ * fraction of {@link Proportions.palmWidth} out from the palm's centre line.
+ *
+ * A table rather than a loop with a formula in it, because the proportions are
+ * not regular: the middle finger is the longest, the index and ring are close
+ * behind it, and the little finger is markedly shorter AND set lower on the
+ * hand. A hand built from four equal capsules on an even pitch is a rake, and
+ * it is the same class of wrongness as six people blinking in unison — nobody
+ * can name it and everybody can see it.
+ *
+ * `drop` is how far below the knuckle line the finger's root sits, as a
+ * fraction of finger length: a knuckle line is an arc, not a straight edge.
+ */
+export interface FingerSpec {
+    /** 0 = index … 3 = little. */
+    index: number;
+    /** Length, as a fraction of `fingerLength`. */
+    length: number;
+    /** Across the palm, 0 at the centre line, positive toward the thumb. */
+    across: number;
+    drop: number;
+    /** Resting curl at the knuckle, radians. */
+    curl: number;
+    /** Splay away from the middle finger, radians. */
+    splay: number;
+}
+
+export const FINGERS: readonly FingerSpec[] = [
+    { index: 0, length: 0.94, across: 0.30, drop: 0.06, curl: 0.30, splay: 0.13 },
+    { index: 1, length: 1.00, across: 0.10, drop: 0.00, curl: 0.26, splay: 0.02 },
+    { index: 2, length: 0.93, across: -0.12, drop: 0.05, curl: 0.30, splay: -0.06 },
+    { index: 3, length: 0.77, across: -0.32, drop: 0.16, curl: 0.36, splay: -0.17 },
+];
+
+/**
+ * How much idle flex a finger has, in radians. See {@link fingerCurl}.
+ *
+ * Under two degrees, and bounded well below the smallest resting curl in
+ * {@link FINGERS} so a total curl can never go negative — a finger that bends
+ * backwards renders perfectly and reads as a broken bone.
+ */
+export const FINGER_IDLE_RADIANS = 0.030;
+
+/**
+ * Extra curl on one finger at `t`, in radians, on top of its resting curl.
+ *
+ * ============================================================
+ * WHY A HAND ON A DESK STILL HAS TO MOVE
+ * ============================================================
+ *
+ * The two anchors rest their hands on the desk holding a script, and those
+ * hands never moved at all. A face that breathes and blinks above a pair of
+ * perfectly still hands is a specific kind of uncanny: the eye reads the
+ * stillness as the hands being a separate, non-living object — which is exactly
+ * what they were, two capsules parented to a forearm.
+ *
+ * Each finger runs on its own rate and phase, for the same reason the blink
+ * schedules are spread: four fingers flexing together is a fist opening and
+ * closing, which is a gesture, and nobody makes a gesture continuously.
+ */
+export function fingerCurl(t: number, phase = 0, finger = 0, energy = 0): number {
+    const spec = FINGERS[finger % FINGERS.length] as FingerSpec;
+    const u = t + phase * 2.7 + finger * 1.37;
+    const drift = 0.5 + 0.5 * Math.sin(u * 0.41 + finger * 2.1);
+    /*
+      Speaking OPENS the hand a little, it does not close it. Somebody
+      emphasising a point lifts and spreads their fingers off the surface; a
+      speaker whose hands tighten reads as anxious, which is not the note a
+      presenter or an interviewer wants to hit.
+    */
+    const open = Math.min(1, Math.max(0, energy)) * 0.55;
+    const value = FINGER_IDLE_RADIANS * (drift - open);
+    const floor = -spec.curl * 0.5;
+    return value < floor ? floor : value;
+}
+
+/* ------------------------------------------------------------------ *
+ * More movement
+ * ------------------------------------------------------------------ */
+
+/** How far a micro-saccade moves the eye. About a degree and a half. */
+export const SACCADE_RADIANS = 0.026;
+/** Shortest and longest gap between micro-saccades, in seconds. */
+export const SACCADE_MIN_GAP = 0.34;
+export const SACCADE_MAX_GAP = 1.15;
+/** How long the jump itself takes. Real saccades are 20–80 ms. */
+export const SACCADE_MS = 55;
+
+export interface Gaze {
+    /** Radians, positive to the figure's left. */
+    yaw: number;
+    /** Radians, positive up. */
+    pitch: number;
+}
+
+/**
+ * Micro-saccades: where the eyes are looking, relative to the head's aim.
+ *
+ * ============================================================
+ * A GAZE THAT NEVER MOVES IS NOT A GAZE THAT LOOKS
+ * ============================================================
+ *
+ * The eyes already take up the residual of a look-at that the head only turns
+ * 90% of the way toward, which is what stopped the cast staring past the
+ * viewer. What they did not do is anything at all when there is no target: a
+ * figure facing front had two eyes locked in one direction for as long as the
+ * shot lasted, and a fixed stare reads as either dead or hostile.
+ *
+ * Real eyes never hold still. A fixation is broken every few hundred
+ * milliseconds by a micro-saccade — a BALLISTIC jump of a degree or two, not a
+ * drift — and that is why this is slot-scheduled like {@link blink} rather than
+ * a sine. A sine is a smooth pursuit, which is what an eye does when tracking a
+ * moving object and never what it does while looking at a face.
+ *
+ * Any larger than {@link SACCADE_RADIANS} and it stops reading as a living eye
+ * and starts reading as shiftiness.
+ */
+export function saccade(t: number, phase = 0): Gaze {
+    /*
+      A different multiplier from `blink`'s 7.3 on purpose. Two schedules derived
+      from the same offset would put every figure's saccades and blinks in a
+      fixed relationship, and a blink that always follows a glance is a tell of
+      its own.
+    */
+    const u = t + phase * 11.9;
+    const slot = Math.floor(u / SACCADE_MAX_GAP);
+    let yaw = 0;
+    let pitch = 0;
+    // This slot and the one before it, so a target held across a boundary is
+    // the same target rather than snapping back to centre.
+    for (let s = slot - 1; s <= slot; s++) {
+        const at = s * SACCADE_MAX_GAP
+            + (SACCADE_MAX_GAP - SACCADE_MIN_GAP) * hash01(s * 22695477 + 7);
+        if (u < at) continue;
+        const angle = hash01(s * 1103515245 + 13) * Math.PI * 2;
+        const size = 0.35 + 0.65 * hash01(s * 69069 + 3);
+        const k = smooth(at, at + SACCADE_MS / 1000, u);
+        // Ease from wherever the previous slot left the eye to this target.
+        yaw = SACCADE_RADIANS * size * Math.cos(angle) * k + yaw * (1 - k);
+        // Vertical saccades are smaller than horizontal ones: the eye is
+        // hinged in a socket that is wider than it is tall.
+        pitch = SACCADE_RADIANS * size * Math.sin(angle) * 0.6 * k + pitch * (1 - k);
+    }
+    return { yaw, pitch };
+}
+
+/** Shortest and longest gap between a listener's nods, in seconds. */
+export const NOD_MIN_GAP = 3.4;
+export const NOD_MAX_GAP = 9.0;
+/** How long one nod lasts, and how deep it goes. */
+export const NOD_SECONDS = 0.62;
+export const NOD_RADIANS = 0.055;
+
+/**
+ * A listener's nod, in radians of pitch. Exactly 0 when nobody is listening.
+ *
+ * ============================================================
+ * THE HALF THAT MAKES A ROOM A CONVERSATION
+ * ============================================================
+ *
+ * The figure who is not speaking already turns and looks at the one who is,
+ * which is what stopped the second anchor reading as a mannequin parked in
+ * shot. It is still only WATCHING. A person being spoken to acknowledges — a
+ * short nod every several seconds — and that is the clearest signal available
+ * that the figures are aware of each other rather than each animating alone.
+ *
+ * `attention` is how much this figure is listening to somebody ELSE: 1 when
+ * another figure is speaking and this one is not, 0 otherwise. Passing the
+ * speaker's own energy here would be wrong and would look wrong — a speaker
+ * nodding along to their own sentence reads as agreeing with themselves.
+ *
+ * Slot-scheduled and spread by phase, for the reason everything else here is:
+ * six seats nodding together is an audience at a rally.
+ */
+export function listenNod(t: number, phase = 0, attention = 0): number {
+    if (!(attention > 0)) return 0;
+    const u = t + phase * 5.1;
+    const slot = Math.floor(u / NOD_MAX_GAP);
+    let value = 0;
+    for (let s = slot - 1; s <= slot; s++) {
+        const at = s * NOD_MAX_GAP + (NOD_MAX_GAP - NOD_MIN_GAP) * hash01(s * 40503 + 19);
+        const dt = u - at;
+        if (dt < 0 || dt > NOD_SECONDS) continue;
+        /*
+          Down first, and one and a half cycles rather than one — a nod starts
+          by dropping the chin, and a single dip reads as a flinch. The second
+          fall is shallower because the head is losing momentum.
+        */
+        const x = dt / NOD_SECONDS;
+        const shape = Math.sin(x * Math.PI * 3) * (1 - x * 0.55);
+        const nod = -NOD_RADIANS * shape * Math.min(1, attention);
+        if (Math.abs(nod) > Math.abs(value)) value = nod;
+    }
+    return value;
+}
+
+/**
+ * Head ROLL on a stressed word, in radians. Companion to {@link headEmphasis}.
+ *
+ * A talking head that only pitches is a metronome. Almost everybody tilts as
+ * well as nods, and at tile framing the tilt is the more legible of the two:
+ * it moves the head's whole silhouette against the shoulders, where a pitch
+ * moves it along the line of sight and mostly foreshortens.
+ *
+ * Slower than the pitch nod and on an incommensurable rate, so the two never
+ * settle into a repeating figure-of-eight.
+ */
+export function headRollEmphasis(t: number, phase = 0, energy = 1): number {
+    if (!(energy > 0)) return 0;
+    const u = t + phase * 3.7;
+    return 0.042 * Math.sin(u * 1.63 + 1.4) * Math.min(1, energy);
+}
+
+/**
+ * A small torso twist, in radians. The whole body, not the head.
+ *
+ * Nobody sits square to a camera for ninety seconds. Just over a degree at the
+ * extreme, and it is applied to the rig's OWN node rather than the caller's —
+ * see the note by `body` in `human.ts`, where writing the caller's placement is
+ * a bug this code has already shipped once and which collapsed the meeting's
+ * six pods and the studio's two anchors onto x = 0.
+ */
+export function torsoTwist(t: number, phase = 0): number {
+    const u = t + phase * 1.6;
+    return 0.020 * Math.sin(u * 0.19 + 1.1) + 0.008 * Math.sin(u * 0.47);
+}
+
+/**
+ * How pressed together the lips are while NOT speaking. 0 relaxed … 1 pressed.
+ *
+ * A silent mouth is the one part of an idle face with nothing happening to it:
+ * `jawOpen` returns exactly 0 (deliberately — "almost closed" reads as chewing)
+ * and `lipSpread` returns a constant. So a listening figure held one fixed
+ * expression for as long as somebody else was talking, and the stillness of the
+ * mouth is a good part of what a viewer reads as "that one is not really here".
+ *
+ * Occasional, slow and small: a lip-press and a swallow are what a face does
+ * while listening, and both are almost entirely the lower lip. Returns 0 while
+ * speaking, because the speech shapes own the mouth then and two things driving
+ * one lip is a flutter.
+ */
+export function mouthPress(t: number, phase = 0, energy = 0): number {
+    if (energy > 0) return 0;
+    const u = t + phase * 8.3;
+    const slow = Math.max(0, Math.sin(u * 0.21 + 0.9));
+    // A swallow is rare and brief: the top 14% of a very slow sine, rescaled.
+    const swallow = Math.max(0, Math.sin(u * 0.073 + 2.7) - 0.86) / 0.14;
+    return clamp01(0.18 * slow + 0.55 * swallow);
 }

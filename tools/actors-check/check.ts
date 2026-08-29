@@ -57,15 +57,20 @@ import {
     ANCHOR_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BOUNDARY_FLOOR,
     BOUNDARY_PULSE_SECONDS, BREATH_PERIOD, FIGURES, NOMINAL_SPEECH_ENERGY,
     SCRIPT_GLANCE_SECONDS,
-    blink, breath, browRaise, clamp01, figureById, followEnergy, gesture, handOffset,
-    hash01, headEmphasis, isFigureId, jawOpen, lipSpread, proportionsFor, reachPitch,
-    scriptGlance, smooth, spokenEnergy, sway,
-    type FigureSpec, type HairStyle,
+    FINGERS, FINGER_IDLE_RADIANS, NOD_MAX_GAP, NOD_MIN_GAP, NOD_RADIANS,
+    NOD_SECONDS, SACCADE_RADIANS,
+    blink, breath, browRaise, clamp01, figureById, fingerCurl, followEnergy,
+    gesture, handOffset, hash01, headEmphasis, headRollEmphasis, isFigureId,
+    jawOpen, lipSpread, listenNod, mouthPress, proportionsFor, reachPitch,
+    saccade, scriptGlance, smooth, spokenEnergy, sway, torsoTwist,
+    type FigureSpec, type FingerSpec, type HairStyle,
 } from '../../src/stage3d/figures';
 import {
-    ANCHOR_X, ANCHOR_Z, CAMERA_FOV, CAMERA_Z, DESK_TOP_Y, HALF_WIDTH, PLATE_X,
-    SCRIPT_X, SCRIPT_Y, SCRIPT_Z, WALL_W, WALL_Z,
-    plateFraction,
+    ANCHOR_X, ANCHOR_Z, CAMERA_FOV, CAMERA_Y, CAMERA_Z, DESIGN_ASPECT,
+    DESK_TOP_Y, HALF_WIDTH, PLATE_X, RIG_ASPECT, RIG_CLEARANCE, SAFE_ASPECT,
+    SCRIPT_X, SCRIPT_Y, SCRIPT_Z, TAN_HALF_H, TAN_HALF_V_DESIGN,
+    TAN_HALF_V_SAFE, WALL_EDGE_FRACTION, WALL_H, WALL_W, WALL_Y, WALL_Z,
+    frameFractionAt, frameTopAt, plateFraction, rigHeightAt,
 } from '../../src/stage3d/layout';
 import { NO_SERVER, deviceCanSpeak, describe, planSpeech, serverVoicesFor } from '../../src/utils/roomSpeech';
 import {
@@ -838,12 +843,72 @@ check('anything sitting on the face is placed from the sculpt, not from a guess'
   sit at; and then the tie measured at a DIFFERENT height from the bib, so the
   shirt poked through the middle of the tie as a pale oval.
 */
+/*
+  ============================================================
+  THESE TWO ASKED FOR AN IMPLEMENTATION AND NOW ASK FOR THE PROPERTY
+  ============================================================
+
+  They used to assert `frontZAt(lapelX, lapelY)` and
+  `tie.position.z = chestSurface`, which are the exact call sites of the version
+  where every garment was an ellipsoid placed in front of the chest. Both were
+  guarding a real invariant -- a garment is placed by ASKING the body where its
+  surface is, and two pieces that must be in front of each other are measured at
+  the same point -- and both were spelled as the one construction that happened
+  to satisfy it.
+
+  The garments are surfaces on the torso now (see `CLOTHING IS A SURFACE` in
+  `human.ts`), which satisfies the invariant far more strongly: there is no
+  placement to get wrong, because a garment is PARAMETRISED on the body rather
+  than positioned near it. So the checks now ask for the property.
+
+  `frontZAt` stays and is still checked: the pendant and the buttons are single
+  objects rather than panels and are still placed with it.
+*/
 check('the clothing reads the jacket surface as a function of (x, y)',
     /function frontZAt\(x: number, y: number\)/.test(bare)
-    && /frontZAt\(lapelX, lapelY\)/.test(bare));
-check('...and the tie and the bib are measured at the SAME point',
-    /const chestSurface = frontZAt\(0, bibY\)/.test(bare)
-    && /tie\.position\.z = chestSurface/.test(bare));
+    && /function onTorso\(theta: number, y: number, out: number\)/.test(bare));
+check('...and every chest garment is a surface ON the torso, not a blob near it',
+    ['shirtfront', 'front${side}', 'lapel${side}', 'collarpt${side}', 'knot', 'tie']
+        .every(name => new RegExp(
+            'garment\\(`\\$\\{spec\\.id\\}-' + name.replace(/[${}]/g, '\\$&'),
+        ).test(bare)));
+/*
+  THE OFFSETS ARE ORDERED, and the order is the whole design: a piece meant to be
+  in front of another has to be further out where they overlap. This file has
+  paid for getting it wrong twice -- a shirt three millimetres inside the jacket
+  over the whole torso, which z-fought into pale flickering rectangles; and a tie
+  measured at its own height rather than the shirt's, which put the shirt through
+  the middle of it.
+
+  Parsed and COMPARED rather than merely present, because "the constants exist"
+  is not the property. Six numbers in the wrong order render perfectly.
+*/
+{
+    const outs = ['OUT_SHIRT', 'OUT_COLLAR', 'OUT_JACKET', 'OUT_TIE', 'OUT_KNOT']
+        .map(name => {
+            const m = new RegExp(`const ${name} = ([0-9.]+) \\* spec\\.height`).exec(bare);
+            return m ? Number(m[1]) : NaN;
+        });
+    check('the garment offsets are declared in front-to-back order',
+        outs.every(Number.isFinite)
+        && outs.every((v, i) => i === 0 || v > (outs[i - 1] as number)),
+        outs);
+    const rise = /const OUT_LAPEL_RISE = ([0-9.]+) \* spec\.height/.exec(bare);
+    check('...and the lapel stands clear of the shirt it lies over',
+        !!rise && Number(rise[1]) + (outs[2] as number) > (outs[0] as number) + 0.008,
+        rise?.[1]);
+}
+/*
+  A PANEL WOUND THE WRONG WAY IS INVISIBLE, not wrong-looking. Babylon culls back
+  faces, so the first render of the panel construction showed a plain jacket with
+  no lapels, no shirt at the neckline and no tie -- which looks exactly like the
+  panels never having been built, and sends you hunting for a placement bug in
+  code that is placing things perfectly. The builder measures the winding against
+  the direction the panel is supposed to face and reverses it if it is inward.
+*/
+check('the garment builder verifies its own winding',
+    /const facing =/.test(bare) && /if \(facing < 0\)/.test(bare)
+    && /ComputeNormals/.test(bare));
 check('the collar\'s height is found rather than named',
     /function clearsJacketAbove\(/.test(bare)
     && /const collarBase = clearsJacketAbove\(/.test(bare));
@@ -914,12 +979,38 @@ check('...and the colour buffer is not read as a transparency',
 const setSrc = existsSync(resolve('src/stage3d/setPieces.ts'))
     ? stripComments(readFileSync(resolve('src/stage3d/setPieces.ts'), 'utf8')) : '';
 check('setPieces.ts is present', setSrc.length > 0);
+/*
+  ============================================================
+  THE LAMP RULE IS NOW A FUNCTION OF THE WALL'S TOP EDGE
+  ============================================================
+
+  It used to be `z < WALL_Z + 0.4`, which is derived from the wall's PLANE and
+  was the right question while the rig hung at a constant height: a lamp behind
+  the wall cannot be in front of it. With the rig derived from the frame (see
+  `rigHeightAt`) the front truss is low enough to be BEHIND the wall and below
+  its top edge, so it is hidden by it -- harmless, and a draw call spent on
+  nothing. The condition that actually decides whether a centre lamp is worth
+  building is its height against the wall's top.
+*/
 check('a lamp may only hang where it cannot occlude the video wall',
-    /if \(side === 0 && z < WALL_Z \+ 0\.4\) continue;/.test(setSrc)
-    && /const trussZ = \[WALL_Z \+ /.test(setSrc),
-    'the centre lamp\'s position has to be a function of the wall, not a literal');
+    /if \(side === 0 && lampY < WALL_Y \+ WALL_H \/ 2 \+ 0\.1\) continue;/.test(setSrc),
+    'the centre lamp\'s condition has to be a function of the wall, not a literal');
 check('and the whole rig hangs behind the wall plane',
-    /WALL_Z \+ 0\.45/.test(setSrc));
+    /const trussZ = \[WALL_Z \+ /.test(setSrc) && /WALL_Z \+ 0\.45/.test(setSrc));
+/*
+  AND ITS HEIGHT IS NOT A LITERAL. Reported as lamps cut in half along the top of
+  the picture, twice. The camera is level, so the frame's top edge rises 0.31 m
+  per metre of depth -- a lamp at a constant 2.66 m was 24 cm above the frame at
+  the front truss and comfortably inside it at the back, and a lamp with its
+  bottom third showing along the top edge reads as a pale slab rather than as a
+  lamp.
+*/
+check('the rig height is derived from the frame, not written down',
+    /rigHeightAt\(z\)/.test(setSrc)
+    && !/position\.set\(side, 2\.66,/.test(setSrc)
+    && !/position\.set\(0, 2\.90,/.test(setSrc));
+check('a lamp is never where a presenter\'s head is',
+    /frameFractionAt\(side, z\)/.test(setSrc) && /headFraction/.test(setSrc));
 /*
   A studio lamp is a BARREL. A box hung under a truss and tilted is, from a
   camera below it, a flat pale quad — which reads as a sheet of paper in the top
@@ -1362,6 +1453,317 @@ for (const path of GONE) {
     check(`${path.split(/[\\/]/).slice(-2).join('/')} is gone, not orphaned`,
         !existsSync(path));
 }
+
+
+/* ------------------------------------------------------------------ *
+ * 9. The hand
+ *
+ * Reported as part of "enhance all their body parts, hands ... make them like
+ * real human parts, example fingers in hands make them real". What was there was
+ * one capsule and one spur -- a mitten -- and in the studio, which is the one
+ * shot where the hands are near the camera and unoccluded, it was the second
+ * thing a viewer looked at after the face.
+ *
+ * What is checkable here is the ANATOMY (a table in `figures.ts`) and the
+ * MOVEMENT. The geometry is read as source below, and looked at in
+ * `tools/cast-preview`.
+ * ------------------------------------------------------------------ */
+
+check('there are four fingers, indexed 0..3', FINGERS.length === 4
+    && FINGERS.every((f, i) => f.index === i));
+/*
+  THE PROPORTIONS ARE IRREGULAR, and that is the point of a table. Four equal
+  capsules on an even pitch is a rake -- the same class of wrongness as six
+  people blinking in unison: nobody can name it and everybody can see it.
+*/
+check('the middle finger is the longest',
+    FINGERS.every(f => f.index === 1 || f.length < (FINGERS[1] as FingerSpec).length));
+check('the little finger is the shortest and sits lowest on the hand',
+    (FINGERS[3] as FingerSpec).length === Math.min(...FINGERS.map(f => f.length))
+    && (FINGERS[3] as FingerSpec).drop === Math.max(...FINGERS.map(f => f.drop)));
+check('the knuckle line is an arc, not a straight edge',
+    new Set(FINGERS.map(f => f.drop)).size >= 3);
+check('the fingers are spread across the palm in order',
+    FINGERS.every((f, i) => i === 0 || f.across < (FINGERS[i - 1] as FingerSpec).across));
+check('every finger rests with a positive curl', FINGERS.every(f => f.curl > 0));
+
+/*
+  A FINGER MUST NEVER BEND BACKWARDS. It renders perfectly and reads as a broken
+  bone, which is the worst possible outcome for a detail added to make a hand
+  look real. Driven over an hour of simulated time, at both ends of the energy
+  range, for all four fingers.
+*/
+{
+    let worst = Infinity;
+    let idleMax = 0;
+    let unison = 0;
+    for (let t = 0; t < 3600; t += 0.05) {
+        for (const energy of [0, 0.5, 1]) {
+            for (const f of FINGERS) {
+                const extra = fingerCurl(t, 3.0, f.index, energy);
+                worst = Math.min(worst, f.curl + extra);
+                idleMax = Math.max(idleMax, Math.abs(extra));
+            }
+        }
+        /*
+          A HAIR OF SLACK, NOT A TENTH. At 10% of the amplitude four sines on
+          DIFFERENT rates are almost never that close, so the check passed with
+          one of the two phase offsets deleted -- the surviving one carried it.
+          At 2% it measures what it claims: whether the four are moving together.
+        */
+        const spread = FINGERS.map(f => fingerCurl(t, 3.0, f.index, 0));
+        if (Math.max(...spread) - Math.min(...spread) < FINGER_IDLE_RADIANS * 0.02) unison++;
+    }
+    /*
+      The guarantee here is the CLAMP in `fingerCurl`, not the amplitude, and a
+      negative run is what established that: raising `FINGER_IDLE_RADIANS` to
+      half a radian leaves this assertion passing, because the clamp absorbs it.
+      Which is the clamp working -- so the negative run removes the clamp
+      instead, and that does fail it.
+    */
+    check('a finger never curls backwards', worst > 0, worst);
+    check('...and the idle flex stays under two degrees',
+        idleMax <= FINGER_IDLE_RADIANS + 1e-9 && idleMax > FINGER_IDLE_RADIANS * 0.4, idleMax);
+    /*
+      Four fingers flexing together is a fist opening and closing, which is a
+      GESTURE -- and nobody makes a gesture continuously. Each runs on its own
+      rate and phase for the same reason the blink schedules are spread.
+    */
+    check('the four fingers are almost never in step',
+        unison / (3600 / 0.05) < 0.03, unison / (3600 / 0.05));
+}
+
+/* ------------------------------------------------------------------ *
+ * 10. The rest of the movement
+ * ------------------------------------------------------------------ */
+
+/*
+  A GAZE THAT NEVER MOVES IS NOT A GAZE THAT LOOKS. The eyes already take up the
+  residual of a look-at the head only turns 90% toward; what they did not do is
+  anything at all when there is no target, so a figure held one direction for as
+  long as the shot lasted. A fixed stare reads as dead or as hostile.
+*/
+{
+    let maxYaw = 0;
+    let maxPitch = 0;
+    let maxStep = 0;
+    let previous = saccade(0, 0.6);
+    let moved = 0;
+    for (let t = 0.05; t < 1800; t += 0.05) {
+        const g = saccade(t, 0.6);
+        maxYaw = Math.max(maxYaw, Math.abs(g.yaw));
+        maxPitch = Math.max(maxPitch, Math.abs(g.pitch));
+        const step = Math.abs(g.yaw - previous.yaw) + Math.abs(g.pitch - previous.pitch);
+        maxStep = Math.max(maxStep, step);
+        if (step > 1e-6) moved++;
+        previous = g;
+    }
+    check('a micro-saccade stays under a degree and a half',
+        maxYaw <= SACCADE_RADIANS + 1e-9 && maxPitch <= SACCADE_RADIANS + 1e-9,
+        [maxYaw, maxPitch]);
+    check('...and it actually moves the eye', maxYaw > SACCADE_RADIANS * 0.4, maxYaw);
+    /*
+      ============================================================
+      BALLISTIC, NOT A DRIFT -- AND THE TESTABLE HALF IS THE STILLNESS
+      ============================================================
+
+      A sine is a smooth pursuit, which is what an eye does while tracking a
+      moving object and never what it does while looking at a face. The obvious
+      test is the STEP SIZE -- a real saccade covers most of its travel in one
+      50 ms frame -- and it does not work, which was found by breaking `saccade`
+      into a sine on purpose and watching the assertion pass anyway.
+
+      The reason is worth keeping: the discontinuity a step-size test measures
+      comes from the SLOT SCHEDULE, not from the easing. Whatever `k` does, the
+      target changes at each slot boundary, so there is always one large step per
+      slot and `maxStep` cannot tell the two apart.
+
+      What does tell them apart is what happens BETWEEN the jumps. A drift moves
+      on every frame; a fixation does not move at all. So the property is that
+      the eye is static most of the time -- which a sine fails outright, at 100%
+      of frames moving against a real schedule's 8%.
+    */
+    void maxStep;
+    check('the eye holds still between jumps, rather than drifting',
+        moved / (1800 / 0.05) < 0.35, moved / (1800 / 0.05));
+    /* Two figures must not saccade together, for the reason they must not blink
+       together -- and on a different multiplier from `blink`'s, so a blink never
+       reliably follows a glance. */
+    let together = 0;
+    for (let t = 0; t < 1800; t += 0.05) {
+        const a = saccade(t, 0.6);
+        const b = saccade(t, 3.6);
+        if (Math.abs(a.yaw - b.yaw) < SACCADE_RADIANS * 0.05) together++;
+    }
+    check('two figures do not share a saccade schedule',
+        together / (1800 / 0.05) < 0.25, together / (1800 / 0.05));
+}
+
+/*
+  THE NOD IS THE HALF THAT MAKES A ROOM A CONVERSATION. It is driven by
+  `attention` -- how much this figure is listening to somebody ELSE -- and never
+  by its own energy: a speaker nodding along to their own sentence reads as
+  agreeing with themselves.
+*/
+{
+    /*
+      SWEPT, NOT SAMPLED AT FIVE POINTS. The first version of this check tested
+      `t` at five arbitrary values and passed with the guard deleted -- because
+      the movement is a narrow pulse in a nine-second slot, so five points chosen
+      by hand land between the pulses. Every zero-when-X assertion below is a
+      sweep for the same reason.
+    */
+    {
+        let leaked = 0;
+        for (let t = 0; t < 3600; t += 0.05) {
+            if (listenNod(t, 2.4, 0) !== 0) leaked++;
+        }
+        check('nobody nods when nobody is speaking', leaked === 0, leaked);
+    }
+    let depth = 0;
+    const fired: number[] = [];
+    let firstSign = 0;
+    for (let t = 0; t < 3600; t += 0.02) {
+        const nod = listenNod(t, 2.4, 1);
+        depth = Math.max(depth, Math.abs(nod));
+        if (Math.abs(nod) > NOD_RADIANS * 0.25) {
+            const last = fired[fired.length - 1];
+            if (last === undefined || t - last > NOD_SECONDS) fired.push(t);
+            if (firstSign === 0) firstSign = Math.sign(nod);
+        }
+    }
+    check('a nod is under four degrees', depth <= NOD_RADIANS + 1e-9, depth);
+    check('...and it starts by dropping the chin', firstSign < 0, firstSign);
+    check('a listener nods, repeatedly', fired.length > 3600 / NOD_MAX_GAP * 0.7,
+        fired.length);
+    const gaps = fired.slice(1).map((t, i) => t - (fired[i] as number));
+    check('...and never twice in a row', Math.min(...gaps) >= NOD_MIN_GAP - 0.05,
+        Math.min(...gaps));
+    check('...and never leaves a listener still for too long',
+        Math.max(...gaps) <= 2 * NOD_MAX_GAP - NOD_MIN_GAP + 0.05, Math.max(...gaps));
+    let inStep = 0;
+    for (let t = 0; t < 1800; t += 0.05) {
+        if (Math.abs(listenNod(t, 2.4, 1)) > NOD_RADIANS * 0.25
+            && Math.abs(listenNod(t, 5.4, 1)) > NOD_RADIANS * 0.25) inStep++;
+    }
+    check('six seats do not nod in unison', inStep / (1800 / 0.05) < 0.02,
+        inStep / (1800 / 0.05));
+}
+
+/* The roll that goes with the nod. A head that only pitches is a metronome. */
+{
+    let rollLeak = 0;
+    for (let t = 0; t < 3600; t += 0.05) {
+        if (headRollEmphasis(t, 1.1, 0) !== 0) rollLeak++;
+    }
+    check('a silent head does not tilt on emphasis', rollLeak === 0, rollLeak);
+    let maxRoll = 0;
+    for (let t = 0; t < 600; t += 0.02) {
+        maxRoll = Math.max(maxRoll, Math.abs(headRollEmphasis(t, 1.1, 1)));
+    }
+    check('...and a speaking one tilts, but under three degrees',
+        maxRoll > 0.02 && maxRoll < 0.052, maxRoll);
+}
+
+/* The torso twist. Nobody sits square to a camera for ninety seconds. */
+{
+    let maxTwist = 0;
+    let extremes = 0;
+    for (let t = 0; t < 3600; t += 0.05) {
+        const v = torsoTwist(t, 0.6);
+        maxTwist = Math.max(maxTwist, Math.abs(v));
+        if (Math.abs(v) > 0.010) extremes++;
+    }
+    check('the torso twist stays under two degrees', maxTwist < 0.032, maxTwist);
+    check('...and is not a constant', extremes > 0 && extremes < 3600 / 0.05, extremes);
+}
+
+/*
+  A LISTENING MOUTH IS NOT A STILL MOUTH. `jawOpen` returns exactly 0 when
+  silent -- deliberately -- and `lipSpread` returns a constant, so a figure who
+  was not speaking held one fixed expression for as long as somebody else was.
+  In the meeting that is five of the six seats at any moment.
+*/
+{
+    let pressLeak = 0;
+    for (let t = 0; t < 3600; t += 0.05) {
+        for (const energy of [0.05, 0.6, 1]) {
+            if (mouthPress(t, 1.7, energy) !== 0) pressLeak++;
+        }
+    }
+    check('the speech shapes keep sole ownership of a talking mouth',
+        pressLeak === 0, pressLeak);
+    let maxPress = 0;
+    let active = 0;
+    const total = 3600 / 0.05;
+    for (let t = 0; t < 3600; t += 0.05) {
+        const v = mouthPress(t, 1.7, 0);
+        if (!(v >= 0 && v <= 1)) { maxPress = NaN; break; }
+        maxPress = Math.max(maxPress, v);
+        if (v > 0.05) active++;
+    }
+    check('a listening mouth moves', maxPress > 0.15 && maxPress <= 1, maxPress);
+    check('...occasionally, not continuously',
+        active / total > 0.05 && active / total < 0.75, active / total);
+}
+
+/* ------------------------------------------------------------------ *
+ * 11. The set's geometry, against the frame it has to fit in
+ *
+ * "The display screen does not appear completely" was this, and nothing in this
+ * file could see it: the wall's height was a constant chosen so the composition
+ * read well, and it read well at exactly one aspect ratio. Its top edge was
+ * 6 cm above the frame at the design ratio and 35 cm above it at the ratio the
+ * stage actually reaches when its `max-height` binds.
+ * ------------------------------------------------------------------ */
+
+const wallTop = WALL_Y + WALL_H / 2;
+const wallBottom = WALL_Y - WALL_H / 2;
+
+check('the video wall fits the frame at the SAFE aspect',
+    wallTop <= frameTopAt(WALL_Z, TAN_HALF_V_SAFE) - 0.02,
+    [wallTop, frameTopAt(WALL_Z, TAN_HALF_V_SAFE)]);
+check('...with room to spare at the design aspect',
+    wallTop <= frameTopAt(WALL_Z, TAN_HALF_V_DESIGN) - 0.15,
+    [wallTop, frameTopAt(WALL_Z, TAN_HALF_V_DESIGN)]);
+check('...and its bottom edge is above the desk it stands behind',
+    (wallBottom - CAMERA_Y) / (WALL_Z - CAMERA_Z)
+    > (DESK_TOP_Y - CAMERA_Y) / (-0.15 - CAMERA_Z));
+/*
+  AND IT STAYS BETWEEN THE TWO ANCHORS. That is what makes its lower half safe:
+  hung low enough to be fully visible, it would otherwise be behind a presenter.
+  Compared in PICTURE space, because the wall and the anchors are 2.5 m apart in
+  depth and a comparison in metres says nothing.
+*/
+check('the video wall stays between the two anchors',
+    frameFractionAt(WALL_W / 2, WALL_Z) <= WALL_EDGE_FRACTION + 1e-9
+    && WALL_EDGE_FRACTION < frameFractionAt(ANCHOR_X, ANCHOR_Z) - 0.05,
+    [frameFractionAt(WALL_W / 2, WALL_Z), frameFractionAt(ANCHOR_X, ANCHOR_Z)]);
+check('...and is wider than the hand-chosen version it replaced', WALL_W > 1.9);
+
+/* The frame's top edge RISES with depth, because the camera is level. Both
+   faults this function exists to prevent come from forgetting that. */
+check('the frame gets taller with depth',
+    frameTopAt(1) < frameTopAt(3) && frameTopAt(3) < frameTopAt(6));
+check('a squatter stage sees less of it',
+    frameTopAt(WALL_Z, TAN_HALF_V_SAFE) < frameTopAt(WALL_Z, TAN_HALF_V_DESIGN));
+
+/* Every lamp whole, at every truss, at the aspect the rig is placed for. */
+for (const z of [WALL_Z + 0.45, WALL_Z + 1.85, WALL_Z + 3.25]) {
+    check(`a lamp at z=${z.toFixed(2)} is inside the frame`,
+        rigHeightAt(z) + RIG_CLEARANCE <= frameTopAt(z, TAN_HALF_H / RIG_ASPECT) + 1e-9
+        && rigHeightAt(z) > 1.9,
+        rigHeightAt(z));
+}
+/*
+  GUARANTEE WHAT CARRIES INFORMATION, LET DECORATION CROP. The wall is placed for
+  `SAFE_ASPECT` and the rig for the design one, and the rig is therefore higher --
+  which is the whole reason for two numbers. Placed for `SAFE_ASPECT` the lamps
+  came out 20 cm lower and read as six large bright objects in the upper third of
+  the picture rather than as a rig glimpsed along the top of it.
+*/
+check('the rig is placed for a taller frame than the wall is',
+    RIG_ASPECT < SAFE_ASPECT && RIG_ASPECT >= DESIGN_ASPECT);
 
 console.log(failures === 0
     ? '\nactors: all checks passed\n'

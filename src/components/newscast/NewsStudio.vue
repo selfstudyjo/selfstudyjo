@@ -354,11 +354,38 @@ onBeforeUnmount(() => clearInterval(clockTimer));
     aspect-ratio: 1428 / 788;
     /* ...but not at the cost of the transport. At full ratio on a laptop the
        stage is ~740px and the play button is below the fold, which on a page
-       whose entire purpose is "press play" is the wrong trade. Capped, the
-       camera loses a strip of ceiling and a strip of floor — closer to how a
-       gallery would frame it anyway, and it costs nothing horizontally because
-       the camera's fov is HORIZONTAL-fixed. */
+       whose entire purpose is "press play" is the wrong trade. */
     max-height: min(68vh, 44rem);
+    /*
+      ============================================================
+      AND THE WIDTH IS CAPPED TO MATCH, WHICH IS THE ACTUAL BUG FIX
+      ============================================================
+
+      Reported as "the display screen does not appear completely", and this line
+      is where that came from. `aspect-ratio` is a PREFERENCE, not a constraint:
+      with `width: 100%` and a `max-height` that binds, the box keeps its full
+      width and loses height, so its real aspect goes well past 1.812. A 1920x800
+      window gives a ~1400px stage capped at 544px -- an aspect of 2.6.
+
+      The camera is HORIZONTAL-fixed (see `layout.ts`), deliberately, because that
+      is what lets the DOM name plates be pinned to constants. The consequence
+      nobody had written down is that a squatter box therefore loses VERTICAL
+      field: at 2.6 the visible height at the wall plane falls from 2.73 m to
+      1.92 m and a third of the video wall is above the top of the picture. The
+      lighting rig went with it.
+
+      Capping the width at the same ratio means the box can never be squatter
+      than it was designed for: whichever of the two caps binds, the other
+      follows, and the aspect is exactly 1428/788 at every viewport. What is
+      given up is some width on a wide, short window -- which is why it centres.
+
+      `layout.ts` places everything from `SAFE_ASPECT` anyway. This file, the
+      preview harness and any future embed are three places to forget a cap, and
+      a set that is only composed correctly when the CSS is right is a set that
+      will be wrong again.
+    */
+    max-width: calc(min(68vh, 44rem) * 1428 / 788);
+    margin-inline: auto;
     overflow: hidden;
     background: var(--sfs-overlay, #05070f);
     /*

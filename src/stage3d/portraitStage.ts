@@ -455,6 +455,14 @@ export async function createPortraitStage(
                 // viewer" means, and it is the difference between a room of
                 // people and a room of mannequins.
                 lookAt: pod.camera.position,
+                /*
+                  Everybody who is NOT speaking is listening, which is what
+                  makes the grid a meeting rather than six portraits: the five
+                  silent seats acknowledge the one who is talking with an
+                  occasional nod. Zero when nobody is speaking at all -- a room
+                  of people nodding at silence is worse than a still one.
+                */
+                attention: speaking && !talking ? 1 : 0,
                 motion,
             });
         }

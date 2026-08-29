@@ -560,6 +560,19 @@ export async function createStudioStage(
                 energy: talking ? energy : 0,
                 since: talking ? clock - startedAt : 0,
                 lookAt: target,
+                /*
+                  The anchor who is not reading is LISTENING to the one who is,
+                  and already turns to look at them. `attention` is the other
+                  half of that: an occasional short nod, which is what a
+                  co-presenter does and is the cheapest thing on this set that
+                  makes the two read as being in a conversation rather than as
+                  two people who happen to be at one desk.
+
+                  Zero between stories, when nobody is reading. Two anchors
+                  nodding at each other in silence is a worse picture than two
+                  anchors sitting still.
+                */
+                attention: speaking && !talking ? 1 : 0,
                 motion,
             });
         }
