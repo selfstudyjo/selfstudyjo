@@ -365,23 +365,6 @@ class ServiceRegistry {
     }
 
     /**
-     * Self Study IPTV (app 38) - free television.
-     *
-     * Sticky per tab, and here the reason is stronger than the usual one. Every
-     * replica reads the same GitLab projects, so they cannot disagree about
-     * content - but a **playback ticket is verified by whichever replica the
-     * `<video>` element talks to**, and the media URL a record carries names the
-     * replica that minted it. Re-picking mid-film would send Range requests to a
-     * host that did not issue the ticket, and the video would stop partway
-     * through with nothing on screen saying why.
-     */
-    async getRandomIptvReplica(): Promise<string | null> {
-        const appId = parseInt(import.meta.env.VITE_IPTV_APP_ID || '38');
-        const replicas = await this.getServiceReplicas(appId, 'iptv');
-        return this.getRandomReplica(replicas, appId);
-    }
-
-    /**
      * The Network Simulator's AI tutor. Defaults to the Self Study AI app but
      * can be pointed at a dedicated deployment with VITE_NETSIM_AI_APP_ID.
      */

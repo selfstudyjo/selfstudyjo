@@ -31,14 +31,6 @@ import UserResults from '../views/UserResults.vue';
 import ReviewResults from '../views/ReviewResults.vue';
 import AiChat from '../views/AiChat.vue';
 
-// Self Study TV (app 38). Statically imported like the other ~55 views;
-// hls.js is the only heavy thing here and IptvLive.vue pulls it with a
-// dynamic import, so the other routes never download it.
-import Iptv from '../views/Iptv.vue';
-import IptvSeries from '../views/IptvSeries.vue';
-import IptvWatch from '../views/IptvWatch.vue';
-import IptvLive from '../views/IptvLive.vue';
-
 // Research Flow Views
 import ResearchFlow from '../views/ResearchFlow.vue';
 import ResearchMyProjects from '../views/ResearchMyProjects.vue';
@@ -329,82 +321,6 @@ const routes = [
                 name: 'AiChatRoom',
                 component: AiChat,
                 meta: { title: 'AI Chat Assistant', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
-            },
-            {
-                /*
-                  Self Study TV. `requiresAuth: true` and NOTHING else - no
-                  `requiresSubscription`, no `requiredFeatures`.
-
-                  That is the Drawing Papers and Messages level, not the
-                  Newscast's: it needs an ACCOUNT and no subscription. The three
-                  levels on this platform are worth keeping straight, because
-                  "ungated" covers two of them and hides the difference:
-
-                    * public         - Newscast, Leaderboard, Courses, Plans
-                    * account only   - Drawing Papers, Messages, and this
-                    * a feature flag - everything under Tools
-
-                  Free television is free with an account. `check:appnav`
-                  asserts it, so nobody "tidies" it into the feature-gated set,
-                  and nobody promotes it to public either - a library of films is
-                  not something to serve to the open internet from a token-guarded
-                  backend.
-                */
-                path: 'tv',
-                name: 'Iptv',
-                component: Iptv,
-                meta: { title: 'Self Study TV', requiresAuth: true }
-            },
-            {
-                /*
-                  The Films and Series tabs, on the Labs precedent.
-
-                  A TAB THAT ONLY EXISTS IN COMPONENT STATE CANNOT BE NAVIGATED
-                  TO. The Labs page proved it: its three sandboxes were an
-                  `activeTab` ref, so a student two clicks into the Python
-                  compiler had no way to see the Linux terminal existed, could
-                  not link a classmate to it, and lost their place on reload.
-                  So the tab is a route, exactly as `/labs/:tab(sql|linux|python)`
-                  is — one component, the segment says which shelf it draws.
-
-                  The regex matters twice over. It excludes `live` and `watch`,
-                  which are their own pages; and it means `/tv/series` (the whole
-                  shelf) and `/tv/series/:id` (one series) can coexist, since
-                  they differ in segment count and Vue Router ranks a static
-                  segment above a parameter.
-                */
-                path: 'tv/:tab(movies|series)',
-                name: 'IptvBrowse',
-                component: Iptv,
-                meta: { title: 'Self Study TV', requiresAuth: true }
-            },
-            {
-                path: 'tv/series/:id',
-                name: 'IptvSeries',
-                component: IptvSeries,
-                meta: { title: 'Series', requiresAuth: true }
-            },
-            {
-                // One route for both, because the player is one page: the `kind`
-                // segment is what tells it whether the id is a film or an
-                // episode. Two routes would be two copies of the resume, the
-                // progress recording and the ticket handling.
-                path: 'tv/watch/:kind(movie)/:id',
-                name: 'IptvWatchMovie',
-                component: IptvWatch,
-                meta: { title: 'Watch', requiresAuth: true }
-            },
-            {
-                path: 'tv/watch/:kind(episode)/:seriesId/:id',
-                name: 'IptvWatchEpisode',
-                component: IptvWatch,
-                meta: { title: 'Watch', requiresAuth: true }
-            },
-            {
-                path: 'tv/live',
-                name: 'IptvLive',
-                component: IptvLive,
-                meta: { title: 'Live channels', requiresAuth: true }
             },
             {
                 // Public on purpose — no `requiresSubscription`, no

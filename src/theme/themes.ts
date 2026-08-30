@@ -734,7 +734,7 @@ export function contrastClaims(theme: Theme): ContrastClaim[] {
       What makes 4.8 the right answer rather than a shrug is what sits on a
       scrim: a hero title and one line of metadata, both large text, for which
       the applicable threshold is 3:1. A caller putting body copy on a scrim
-      should double the scrim - see `.iptv-hero__scrim`, which stacks two stops
+      should double the scrim - a hero over an arbitrary photograph stacks two stops
       of it precisely because its backdrop is an arbitrary photograph and no
       token can measure that.
     */

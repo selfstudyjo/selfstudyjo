@@ -61,8 +61,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard'
-    | 'tv' | 'live';
+    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -393,33 +392,6 @@ const ROBLOX: NavEntry = { to: '/roblox-tool', text: 'Roblox Studio', icon: 'rob
 export const NEWSCAST_ENTRY: NavEntry = { to: '/newscast', text: 'Newscast', icon: 'newscast', keywords: 'news world headlines bulletin radio listen anchor arabic english rt aljazeera breaking free public', requires: 'public' };
 const NEWSCAST = NEWSCAST_ENTRY;
 
-/*
-  Self Study TV (app 38).
-
-  `requires` is OMITTED, which resolves to 'auth' - the Drawing Papers and
-  Messages level, and deliberately not the Newscast's 'public'. Free television
-  is free *with an account*: the library is served by a token-guarded backend and
-  is not something to hand to the open internet.
-
-  It sits under its own application section rather than in the platform menu's
-  Tools group, because it has three pages of its own (the hub, a series, the
-  channels) and a feature with a navigation tree of its own is exactly what
-  `appNav.ts` exists for - the alternative is that somebody two clicks into a
-  series cannot see that live channels exist.
-*/
-const TV: NavEntry = { to: '/tv', text: 'Self Study TV', icon: 'tv', keywords: 'iptv television watch films movies series episodes seasons stream video entertainment free browse home' };
-/*
-  The Films and Series shelves are ROUTES (`/tv/movies`, `/tv/series`), which is
-  what lets them be sidebar entries at all - the rule the Labs page proved, where
-  three sandboxes held in an `activeTab` ref could only ever be offered as one
-  entry called "Labs". They are the same four destinations as the tab strip on the
-  page itself, so somebody who arrived from the platform menu and somebody who
-  arrived from inside the application are offered the same set.
-*/
-const TV_MOVIES: NavEntry = { to: '/tv/movies', text: 'Films', icon: 'play', keywords: 'iptv films movies cinema watch stream video library' };
-const TV_SERIES: NavEntry = { to: '/tv/series', text: 'Series', icon: 'layers', keywords: 'iptv series shows seasons episodes television watch stream binge' };
-const TV_LIVE: NavEntry = { to: '/tv/live', text: 'Live channels', icon: 'live', keywords: 'iptv live broadcast channels news sport hls m3u8 stream tv' };
-
 // -- Proctoring ----------------------------------------------------------
 const PROCTOR_DASHBOARD: NavEntry = { to: '/proctor-dashboard', text: 'Proctor Dashboard', icon: 'proctor', keywords: 'monitor supervise invigilate exams candidates', requires: 'proctor' };
 
@@ -641,40 +613,6 @@ export const APP_SECTIONS: AppSection[] = [
         related: [COURSES, EXAMS, ALL_CERTIFICATES, PLANS],
     },
     {
-        id: 'iptv',
-        title: 'Self Study TV',
-        subtitle: 'Films, series and live channels',
-        icon: 'tv',
-        /*
-          `/tv/watch/...` and `/tv/series/<id>` are in the match list and in no
-          `items` list, exactly as `/take-exam` and `/course/:id` are: they are
-          pages somebody arrives at from inside the application, so the sidebar
-          has to stay put on them without offering them as destinations.
-
-          `/tv/series` WITHOUT an id is a different thing and IS an item: it is
-          the whole shelf, one of the four tabs. The two coexist because they
-          differ in segment count and Vue Router ranks a static segment above a
-          parameter - and `isUnder` here is segment-aware for the same reason, so
-          neither swallows the other.
-        */
-        match: ['/tv'],
-        home: '/tv',
-        items: [TV, TV_MOVIES, TV_SERIES, TV_LIVE],
-        /*
-          Everything here needs an account, which is the same level this section
-          is at - so nothing in the way onward vanishes for the reader who got
-          here. That is the property `check:appnav` asserts for a *public*
-          section, and it is worth honouring at this level too.
-        */
-        /*
-          NEWSCAST is deliberately NOT here. `pinnedEntries()` already pins it
-          whenever the sidebar is scoped to some other application, and this is
-          one - so listing it again would render it twice, which is worse than
-          the problem the pin solves. `check:appnav` caught exactly that.
-        */
-        related: [MESSAGES, DRAW, COURSES],
-    },
-    {
         id: 'newscast',
         title: 'Newscast',
         subtitle: 'World news, read to you hourly',
@@ -726,10 +664,6 @@ export function globalGroups(access: Access): NavGroup[] {
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
         { label: 'Tools', items: [DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
-        // Its own group rather than an item under Main or Tools: it is neither
-        // somebody trying to reach you nor something you open for a task, and
-        // the group heading is what says that at a glance.
-        { label: 'Watch', items: [TV, TV_LIVE] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);

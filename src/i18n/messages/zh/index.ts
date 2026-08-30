@@ -47,7 +47,6 @@ import tools from './tools';
 import netsim from './netsim';
 import research from './research';
 import studio from './studio';
-import watch from './watch';
 
 /**
  * Assembled in one place so a duplicate key is a visible conflict rather than a
@@ -63,7 +62,6 @@ const zh: Catalogue = {
     ...netsim,
     ...research,
     ...studio,
-    ...watch,
 };
 
 export default zh;
