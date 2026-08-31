@@ -5,12 +5,44 @@
     <link rel="icon" type="image/png" href="./logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>selfstudy2026</title>
-    <!-- Force dark background on html as well -->
+    <!--
+      The first frame.
+
+      This paints before any stylesheet or module has been fetched, so it is the
+      only thing standing between the reader and a flash of unstyled white. It
+      used to be a hardcoded near-black, which is right for seven of the ten
+      galaxies and a full-screen BLACK FLASH on the three light ones — on every
+      load, for exactly the readers who chose a light interface because a dark
+      one is uncomfortable for them.
+
+      `theme/apply.ts` writes the resolved page colour to `sfs-space` on every
+      theme application, so the script below can paint it. The literal stays as
+      the default: a first visit, private browsing, or storage disabled all end
+      up here, and the default galaxy is dark.
+    -->
     <style>
       html {
         background: #03030f;
       }
     </style>
+    <script>
+      (function () {
+        try {
+          var space = localStorage.getItem('sfs-space');
+          /* Validated, not trusted. This value is interpolated into a style
+             attribute, and localStorage is writable by anything running on this
+             origin — a hex colour is the only shape allowed through. */
+          if (space && /^#[0-9a-fA-F]{3,8}$/.test(space)) {
+            document.documentElement.style.background = space;
+            document.addEventListener('DOMContentLoaded', function () {
+              document.body.style.background = space;
+            });
+          }
+        } catch (e) {
+          /* Storage disabled. The <style> default above stands. */
+        }
+      })();
+    </script>
     <!--
       Deep-link bootstrap.
 
@@ -42,11 +74,16 @@
         history.replaceState(null, '', location.origin + '/#' + route);
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-BLIOzBwx.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BzRgDxTr.css">
+    <script type="module" crossorigin src="/assets/index-CA2YNGi1.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-1CB6nBWU.css">
   </head>
-  <!-- Direct inline style on body – this is the earliest possible paint -->
-  <body style="background:#03030f !important; margin:0; padding:0;">
-    <div id="app"></div>
+  <!--
+    The earliest possible paint for the body. The `!important` was removed with
+    the theme-aware script above: an inline `!important` cannot be overridden by
+    anything, including the script that knows which galaxy the reader chose, so
+    a light theme was pinned to near-black until the first stylesheet landed.
+  -->
+  <body style="background:#03030f; margin:0; padding:0;">
+    <div id="app"></div>
   </body>
 </html>

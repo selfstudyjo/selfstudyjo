@@ -1,1 +1,0 @@
-import{G as e}from"./index-BLIOzBwx.js";export{e as serviceRegistry};
