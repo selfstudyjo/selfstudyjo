@@ -275,7 +275,10 @@ console.log('\n7. The stylesheets agree with the token contract');
   // therefore have no business being derived per galaxy — the spacing scale,
   // the safe-area insets, the shell width.
   for (const file of ['theme.css', 'responsive.css']) {
-    const text = readFileSync(join(cssDir, file), 'utf8');
+    // Comments stripped here too, and for the opposite reason: a token name
+    // written `--sfs-foo:` inside a comment would count as DECLARED and quietly
+    // absolve every reference to a token no galaxy actually sets.
+    const text = readFileSync(join(cssDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of text.matchAll(/^\s*(--sfs-[a-z0-9-]+)\s*:/gim)) declared.add(m[1]);
   }
 
@@ -289,7 +292,13 @@ console.log('\n7. The stylesheets agree with the token contract');
   let missing: string[] = [];
   let noFallback: string[] = [];
   for (const file of files) {
-    const text = readFileSync(join(cssDir, file), 'utf8');
+    // Comments are stripped first, exactly as section 8 does it and for the
+    // same reason: a token NAMED in a comment is documentation, not a
+    // reference. ui.css explains why a page-local knob must not be spelled
+    // `--sfs-`, and quoting the wrong spelling to explain it was reported as an
+    // undeclared token and a missing fallback. A check that fires on the
+    // comment explaining it is a check nobody can document.
+    const text = readFileSync(join(cssDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of text.matchAll(/var\(\s*(--sfs-[a-z0-9-]+)\s*(,?)/gi)) {
       referenced++;
       if (!declared.has(m[1]) && !missing.includes(m[1])) missing.push(m[1]);

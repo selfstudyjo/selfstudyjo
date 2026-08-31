@@ -244,6 +244,11 @@ const common: Catalogue = {
     'Login': '登录',
     'Logout': '退出登录',
     'Theme': '主题',
+    /* ---- The galaxy picker's dark/light switch ---- */
+    'Dark': '深色',
+    'Light': '浅色',
+    'Theme: {v0}': '主题：{v0}',
+    'Change theme — currently {v0}': '更换主题 —— 当前为 {v0}',
 
     /* ---------------------------------------------------------------- *
      * The sidebar's application headers and the rest of its labels.

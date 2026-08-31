@@ -48,9 +48,19 @@ import {
 export type ThemeMode = 'dark' | 'light';
 
 /**
- * The 3D background's palette. `AnimatedBackground.vue` reads this, which is
- * what makes each theme a different *galaxy* rather than a different button
- * colour.
+ * The galaxy palette — the five colours that name a theme.
+ *
+ * `AnimatedBackground.vue` used to read this to build a three.js scene. It does
+ * not any more: the background is CSS gradients and reads its colours as
+ * `var(--sfs-…)` off the document, so a theme change repaints one element
+ * instead of disposing a WebGL context and rebuilding ~12,000 floats. See that
+ * file's header for why.
+ *
+ * These are still what makes each theme a different GALAXY rather than a
+ * different button colour: `ThemePicker.vue` paints every swatch from them —
+ * the space colour, the core bloom, the arms — so the picker is still ten
+ * galaxies. They are also written out as `--sfs-galaxy-*` custom properties, so
+ * anything that wants the palette in CSS can have it.
  */
 export interface GalaxyPalette {
   /** Deep space — the scene clear colour and the fog. */
@@ -75,7 +85,12 @@ export interface ThemeSeed {
   name: string;
   tagline: string;
   mode: ThemeMode;
-  /** Page void — also the 3D scene's clear colour. */
+  /**
+   * Page void. Also the very first frame: `apply.ts` writes it to
+   * `localStorage` as `sfs-space` and the inline script in index.html paints it
+   * before any stylesheet exists, which is what stopped the three light
+   * galaxies opening with a full-screen black flash.
+   */
   space: string;
   /** Primary light of this galaxy: buttons, active states, links. */
   accent: string;

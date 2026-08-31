@@ -241,6 +241,70 @@ const account: Catalogue = {
     'Registered: {v0}': '报名时间：{v0}',
     '· {v0} combined feature{v1}': '· 共 {v0} 项功能',
 
+    /* ---- The dashboard's banner, tiles, badges and progress card ----
+     *
+     * `Your progress`, `Certified` and `Loading...` are deliberately absent:
+     * they are already in studio.ts, learning.ts and common.ts respectively,
+     * and a key declared twice is a build failure here rather than a silent
+     * overwrite.
+     *
+     * `小测` throughout for a quiz, never `考试`, which is the invigilated exam
+     * with a proctor and a certificate — one word for both and a student cannot
+     * tell which of the two they are looking at. And no space before Chinese
+     * punctuation: the em dash and the colon carry their own spacing.
+     */
+    'Your learning dashboard': '学习面板',
+    'Quick actions': '快捷操作',
+    'Your learning at a glance': '学习概览',
+    'Average quiz score': '小测平均分',
+    'Average quiz score: {v0}%': '小测平均分：{v0}%',
+    'Take your first quiz': '完成你的第一次小测',
+    'Quizzes passed': '通过的小测',
+    'Badges': '徽章',
+    'Achievements': '成就',
+    '{v0} of {v1} earned': '已获得 {v0} / {v1}',
+    'Earned': '已获得',
+    'Not earned yet': '尚未获得',
+    'Measured from your quiz results — one attempt per quiz, your best':
+        '根据你的小测成绩计算 —— 每个小测只取一次，取你的最好成绩',
+    'Best score': '最高分',
+    'By course': '按课程',
+    'No quizzes yet': '还没有小测',
+    '{v0} of {v1} passed': '已通过 {v0} / {v1}',
+
+    /* Badge names */
+    'First Steps': '第一步',
+    'Scholar': '勤学者',
+    'Quiz Taker': '小测达人',
+    'Sharp Shooter': '神射手',
+    'Honour Roll': '荣誉榜',
+    'Perfect Score': '满分',
+
+    /* Badge requirements */
+    'Enrol in a course': '报名一门课程',
+    'Enrol in 3 courses': '报名 3 门课程',
+    'Pass a quiz': '通过一次小测',
+    'Pass 5 quizzes': '通过 5 次小测',
+    'Earn a certificate': '获得一张证书',
+    'Average 90% over 3 quizzes': '3 次小测平均分达到 90%',
+    'Score 100% on a quiz': '在一次小测中获得 100%',
+
+    /* ---- The strings that were still English literals in the template ---- */
+    'FAILED': '未通过',
+    'None': '无',
+    '{v0} Active': '{v0} 个生效中',
+    '/year': '/年',
+    'Free': '免费',
+    'Exam Certificate': '考试证书',
+    'Course Certificate': '课程证书',
+    'Untitled Quiz': '未命名小测',
+    'Unknown Course': '未知课程',
+    'Unknown Lesson': '未知课时',
+    'No description': '暂无说明',
+    /* Not "加载中" — a record that failed to arrive and one that has not
+     * arrived yet are different states. */
+    'Course unavailable': '课程不可用',
+
     /* ---------------------------------------------------------------- *
      * Messaging (app 35)
      * ---------------------------------------------------------------- */

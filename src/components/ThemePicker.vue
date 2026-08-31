@@ -12,8 +12,8 @@
       class="tp-trigger"
       :class="{ 'tp-collapsed': collapsed }"
       type="button"
-      :title="collapsed ? `Theme: ${themeStore.theme.name}` : undefined"
-      :aria-label="`Change theme — currently ${themeStore.theme.name}`"
+      :title="collapsed ? $t('Theme: {v0}', { v0: themeStore.theme.name }) : undefined"
+      :aria-label="$t('Change theme — currently {v0}', { v0: themeStore.theme.name })"
       @click="open = true"
     >
       <span class="tp-trigger-swatch" :style="swatchStyle(themeStore.theme)" aria-hidden="true"></span>
@@ -64,7 +64,7 @@
               @click="themeStore.mode === m ? null : themeStore.toggleMode()"
             >
               <component :is="m === 'dark' ? MoonIcon : SunIcon" />
-              {{ m === 'dark' ? 'Dark' : 'Light' }}
+              {{ m === 'dark' ? $t('Dark') : $t('Light') }}
             </button>
           </div>
 
@@ -111,7 +111,10 @@
                     </svg>
                   </span>
                   <span class="tp-tagline">{{ t.tagline }}</span>
-                  <span class="tp-mode-tag">{{ t.mode }}</span>
+                  <!-- The two branches spelled out rather than `$t(t.mode)`:
+                       `check:i18n` scans for LITERAL keys, so a dynamic one is
+                       reported as a catalogue entry nothing asks for. -->
+                  <span class="tp-mode-tag">{{ t.mode === 'dark' ? $t('Dark') : $t('Light') }}</span>
                 </span>
               </button>
             </li>

@@ -260,6 +260,15 @@ const common: Catalogue = {
     'Login': 'تسجيل الدخول',
     'Logout': 'تسجيل الخروج',
     'Theme': 'المظهر',
+    /* ---- The galaxy picker's dark/light switch ----
+     * `Dark` and `Light` were bare English literals in ThemePicker.vue, in the
+     * one control a reader reaches for when the interface is uncomfortable to
+     * look at — and the picker sits OUTSIDE the authenticated branch precisely
+     * so it can be reached from the login page. */
+    'Dark': 'داكن',
+    'Light': 'فاتح',
+    'Theme: {v0}': 'المظهر: {v0}',
+    'Change theme — currently {v0}': 'تغيير المظهر — الحالي {v0}',
 
     /* ---------------------------------------------------------------- *
      * The sidebar's application headers and the rest of its labels.

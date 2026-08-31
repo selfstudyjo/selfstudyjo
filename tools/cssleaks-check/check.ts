@@ -64,6 +64,10 @@ const ACCEPTED: Record<string, string> = {
 /** Stylesheets that are token or layout layers rather than one page's styles. */
 const NOT_A_PAGE = new Set([
     'theme.css', 'responsive.css', 'default-layout.css', 'exam-system.css',
+    // ui.css is the shared component floor, not a page: every class it owns is
+    // `sfs-`-prefixed precisely so it cannot collide with a page's, which is
+    // the property this check exists to protect.
+    'ui.css',
 ]);
 
 const root = resolve(process.cwd());
@@ -223,7 +227,7 @@ console.log('\n5. A globally loaded page stylesheet stays on its own page');
         'leaderboard.css',
     ]);
     const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
-        'exam-system.css', 'side-nav.css', 'style.css']);
+        'exam-system.css', 'side-nav.css', 'style.css', 'ui.css']);
 
     // Which stylesheets are imported from a script (global) rather than from a
     // style block (scoped)?
@@ -293,6 +297,50 @@ console.log('\n6. The Take Exam header cannot grow back');
         block ? block[0].slice(0, 160) : null);
     check('and the question card clears the sticky header when scrolled to',
         /scroll-margin-top:/.test(takeExam));
+}
+
+console.log('\n7. The shared component floor only owns names nobody else can use');
+{
+    // ui.css is loaded from main.ts, so it is global on every page — the same
+    // exposure `.placeholder` had. It is exempted from section 2 as a layer, so
+    // this is what keeps that exemption honest: every CLASS it invents must be
+    // `sfs-`-prefixed, a namespace no view writes, and the only unprefixed
+    // classes it may touch are ones it is deliberately defining platform-wide.
+    //
+    // `.glass-effect` is the one such name. ~30 templates use it and it had
+    // THREE competing definitions (theme.css, style.css twice behind
+    // `.dark-mode`, and a non-scoped block inside App.vue) with three different
+    // alphas and blur radii, so which one won depended on the order Vite
+    // happened to emit the chunks in. Defining it once, centrally, is the fix.
+    const ALLOWED_UNPREFIXED = new Set(['glass-effect']);
+
+    const ui = readFileSync(join(cssDir, 'ui.css'), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+    const owned = new Set<string>();
+    for (const rule of ui.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+        for (const raw of rule[1].split(',')) {
+            const sel = raw.trim();
+            if (!sel || sel.startsWith('@') || /^\d/.test(sel)
+                || sel === 'from' || sel === 'to') continue;
+            for (const m of sel.matchAll(/\.([a-z][a-z0-9-]*)/g)) {
+                if (m[1].startsWith('sfs-')) continue;
+                if (ALLOWED_UNPREFIXED.has(m[1])) continue;
+                owned.add(m[1]);
+            }
+        }
+    }
+    check('ui.css declares no class outside the sfs- namespace', owned.size === 0, [...owned]);
+
+    // A floor that can win an argument is not a floor. An `!important` in here
+    // would reach into 46 page stylesheets it has never seen, which is exactly
+    // how a globally loaded sheet stops being safe to load. The two exceptions
+    // are the blocks where the thing being overridden is the browser or the
+    // printer rather than another stylesheet.
+    const guarded = ui.split(/@media\s*\(forced-colors: active\)|@media print/);
+    const outside = guarded[0];
+    check('ui.css uses no !important outside its forced-colors and print blocks',
+        !outside.includes('!important') && guarded.length === 3,
+        { sections: guarded.length, firstOffender: outside.split('\n').find(l => l.includes('!important')) });
 }
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} failed\n`);

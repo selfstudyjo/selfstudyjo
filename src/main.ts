@@ -2,13 +2,19 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-// Order matters. theme.css declares what everything else spends and sets the
+// Order matters. theme.css declares what everything else spends — the colour
+// tokens per galaxy and the shared type/shape/elevation scale — and sets the
 // floor for elements no page styles; responsive.css scales the units those
-// pages are written in. Both are imported before style.css and before any
-// route chunk, so a page rule always wins a tie against them.
+// pages are written in; ui.css gives every element a default worth inheriting.
+// All of them land before any route chunk, so a page rule always wins a tie.
 import './assets/css/theme.css'
 import './assets/css/responsive.css'
 import './style.css'
+// The shared component floor: the type scale, the control defaults and the
+// `.sfs-*` kit. After style.css so the newer layer wins over the legacy base
+// file, and before every route chunk so any page rule still beats it — that
+// ordering is the whole reason it is safe to load globally. See its header.
+import './assets/css/ui.css'
 // Loaded after every page stylesheet on purpose: it corrects what a
 // left-to-right layout gets wrong once the document flips, and it can only do
 // that from in front. See the file's own header.

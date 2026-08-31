@@ -56,6 +56,161 @@
 }
 
 /* --------------------------------------------------------------------------
+   1b. The design-system tokens — type, shape, elevation, glass, motion
+   --------------------------------------------------------------------------
+   Everything above and below this block is a COLOUR decision, and colour is
+   derived per galaxy in `src/theme/themes.ts` because it has to be measured
+   against the surface it lands on. These are the decisions that are the same
+   in all ten galaxies — how big text is, how round a corner is, how far a card
+   is lifted off the page — so they live here, once, as plain values.
+
+   They are declared in this file on purpose. `npm run check:theme` collects
+   its list of legal `--sfs-*` names from the themes plus theme.css and
+   responsive.css, so a token declared anywhere else is a token every reference
+   to it is reported as undeclared.
+
+   WHY A SCALE AND NOT A NUMBER PER PAGE
+   ------------------------------------
+   The 46 page stylesheets between them contain dozens of hand-picked
+   `font-size: clamp(...)` triples and four different radius ladders — that is
+   how a platform ends up with headings that are the same size as each other on
+   one screen and three steps apart on the next. A page is still free to pick
+   its own number; what this gives is a right answer to reach for first.
+
+   EVERY STEP IS FLUID, AND THE MIN IS NOT NEGOTIABLE
+   -------------------------------------------------
+   `responsive.css` already scales the root font size, so a page written in
+   `rem` follows the screen. These add the second half of that: a heading that
+   is 2.4x body text on a television and 1.6x on a phone, because a phone has
+   no room to spend on a ratio. The floors are the accessibility half — 0.75rem
+   is the smallest text that belongs in a product anybody reads for an hour,
+   and nothing here goes below it.
+   -------------------------------------------------------------------------- */
+:root {
+  /* ---- Type ------------------------------------------------------------ */
+  /* No web font, deliberately: a self-hosted or Google-hosted family is one
+     more request plus a layout shift on the slowest connection, and the modern
+     system UI faces are excellent. `-apple-system` and `Segoe UI Variable`
+     first so a Mac and a Windows 11 machine each get their own optical sizes.
+     'Inter' is kept at the front for anyone who has it installed locally. */
+  --sfs-font-sans: 'Inter', 'Inter var', -apple-system, BlinkMacSystemFont,
+    'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', 'Noto Sans Arabic', 'Noto Sans SC', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  /* A lab terminal, an exam id, a Cisco command. `ui-monospace` first so it is
+     the platform's own, and the metric-compatible fallbacks after it. */
+  --sfs-font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono',
+    Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* The scale. Ratio ~1.22 at the small end, opening to ~1.28 at the top,
+     which is what keeps a page of six heading levels from running away. */
+  --sfs-text-2xs: clamp(0.6875rem, 0.66rem + 0.12vw, 0.78rem);
+  --sfs-text-xs: clamp(0.75rem, 0.72rem + 0.14vw, 0.85rem);
+  --sfs-text-sm: clamp(0.8125rem, 0.79rem + 0.16vw, 0.94rem);
+  --sfs-text-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1.06rem);
+  --sfs-text-md: clamp(1rem, 0.96rem + 0.24vw, 1.19rem);
+  --sfs-text-lg: clamp(1.125rem, 1.06rem + 0.34vw, 1.4rem);
+  --sfs-text-xl: clamp(1.3rem, 1.19rem + 0.5vw, 1.75rem);
+  --sfs-text-2xl: clamp(1.5rem, 1.32rem + 0.8vw, 2.2rem);
+  --sfs-text-3xl: clamp(1.8rem, 1.5rem + 1.3vw, 2.9rem);
+  --sfs-display: clamp(2.1rem, 1.6rem + 2.2vw, 3.8rem);
+
+  /* Line height falls as text grows — a display heading set at 1.6 looks like
+     two unrelated lines, and body copy set at 1.2 is a wall. */
+  --sfs-leading-tight: 1.15;
+  --sfs-leading-snug: 1.3;
+  --sfs-leading: 1.6;
+  --sfs-leading-relaxed: 1.75;
+
+  /* Large type needs negative tracking to stop looking loose; small type needs
+     positive tracking to stay readable. Both are why a single letter-spacing
+     value across a page always looks wrong somewhere. */
+  --sfs-tracking-tight: -0.02em;
+  --sfs-tracking-snug: -0.01em;
+  --sfs-tracking-wide: 0.02em;
+  --sfs-tracking-caps: 0.08em;
+
+  --sfs-weight-normal: 400;
+  --sfs-weight-medium: 500;
+  --sfs-weight-semibold: 600;
+  --sfs-weight-bold: 700;
+
+  /* ---- Shape ----------------------------------------------------------- */
+  /* A ladder rather than one radius: a 22px corner on a 28px chip is a
+     lozenge, and a 6px corner on a 400px panel reads as a mistake. Radii are
+     in px, not rem, on purpose — a corner should not grow with the type scale,
+     or a television gets 44px corners on everything. */
+  --sfs-radius-xs: 6px;
+  --sfs-radius-sm: 10px;
+  --sfs-radius: 14px;
+  --sfs-radius-lg: 18px;
+  --sfs-radius-xl: 24px;
+  --sfs-radius-2xl: 32px;
+  --sfs-radius-pill: 999px;
+
+  /* ---- Glass ----------------------------------------------------------- */
+  /* The alphas are NOT free to change. `themes.ts` derives every ink token
+     against the tint composited at 0.08 over the space colour, so a card at
+     0.2 in a dark galaxy is a LIGHTER surface than the one the light ink was
+     measured on, and the contrast the palette promises stops being true. The
+     three steps here stay within a range the derivation tolerates; anything
+     more opaque needs `--sfs-paper` and its own ink instead. */
+  --sfs-glass-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+  --sfs-glass-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+  --sfs-glass-3: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+  --sfs-glass-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+
+  /* 10px, and no `saturate()`. Both are performance, and the second is also
+     legibility. Blur cost scales with the radius and with the blurred area, a
+     `saturate()` on top is a second filter pass over the same region, and the
+     page stylesheets were spending `blur(22px) saturate(160%)` on cards the
+     size of a screen. Now that the background is a soft gradient rather than a
+     star field there is very little for a large radius to do — see
+     AnimatedBackground.vue. */
+  --sfs-blur: blur(10px);
+  --sfs-blur-strong: blur(16px);
+
+  /* ---- Elevation ------------------------------------------------------- */
+  /* Two shadows per step: a tight one that reads as contact and a wide one
+     that reads as distance. One shadow can do either, never both. Spent
+     through `--sfs-shade-rgb` so a light galaxy gets a neutral shadow rather
+     than the black one a dark galaxy needs. */
+  --sfs-elev-1:
+    0 1px 2px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.16),
+    0 4px 12px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.1);
+  --sfs-elev-2:
+    0 2px 4px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18),
+    0 10px 28px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.14);
+  --sfs-elev-3:
+    0 4px 8px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2),
+    0 20px 48px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
+  /* The brand glow. A halo of the accent, so a raised card belongs to the
+     galaxy it is in rather than casting a grey shadow in all ten. */
+  --sfs-glow-1: 0 8px 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+  --sfs-glow-2: 0 14px 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.26);
+  /* A 1px inner highlight along the top edge. This is the single cheapest
+     thing that makes a translucent panel read as glass rather than as a flat
+     wash, and it costs no extra layer because it is part of the shadow. */
+  --sfs-sheen: inset 0 1px 0 rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+
+  /* ---- Motion ---------------------------------------------------------- */
+  /* Three durations. Anything a finger is holding gets `fast`, anything the
+     eye follows gets `base`, and only something entering or leaving the page
+     gets `slow` — a 400ms hover feels broken. */
+  --sfs-dur-fast: 140ms;
+  --sfs-dur: 220ms;
+  --sfs-dur-slow: 380ms;
+  /* Decelerating: fast out of the gate, settling at the end. `ease` alone
+     starts slowly, which reads as lag on anything under 200ms. */
+  --sfs-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --sfs-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- Focus ----------------------------------------------------------- */
+  --sfs-ring-width: 2px;
+  --sfs-ring-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
    2. The page itself
    -------------------------------------------------------------------------- */
 html,
@@ -285,10 +440,42 @@ pre {
   }
 }
 
-.glass-effect {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  backdrop-filter: blur(10px);
+/*
+  The one definition of glass on the platform.
+
+  It used to be declared THREE times — here, in `src/style.css` (twice, once
+  behind `.dark-mode`), and again in a non-scoped <style> block inside
+  App.vue — with three different alphas and three different blur radii. Which
+  one won depended on the order Vite happened to emit the chunks in, so the
+  same class was a different thing on different builds. The other two are
+  gone; this is it.
+
+  `-webkit-backdrop-filter` is not decoration: Safari shipped the prefixed
+  property for years and an iPad without it falls back to a 8%-alpha wash,
+  which over the aurora is a barely-visible card.
+*/
+.glass-effect,
+.sfs-glass {
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+  backdrop-filter: var(--sfs-blur, blur(10px));
   border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius, 14px);
+  box-shadow: var(--sfs-sheen, inset 0 1px 0 rgb(255 255 255 / 0.14)),
+              var(--sfs-elev-1, 0 4px 12px rgb(0 0 0 / 0.1));
+}
+
+/*
+  No `backdrop-filter` support at all (Firefox before 103, and anything with
+  it disabled). The card would be an 8% wash over a gradient, which is not a
+  card. One step more opaque is the smallest change that restores an edge, and
+  it stays inside the range `themes.ts` derives its ink against.
+*/
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-effect,
+  .sfs-glass {
+    background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -370,7 +557,7 @@ pre {
   }
 
   .no-print,
-  .three-background {
+  .sfs-bg {
     display: none !important;
   }
 }

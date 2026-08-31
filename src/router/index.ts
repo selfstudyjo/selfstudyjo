@@ -57,7 +57,22 @@ import JobInterviewPreSession from '../views/JobInterviewPreSession.vue';
 import JobInterviewSession from '../views/JobInterviewSession.vue';
 import JobInterviewResults from '../views/JobInterviewResults.vue';
 
-import RobloxTool from '../views/RobloxTool.vue';
+/*
+  Lazy, and the only route here that is — because it is the only remaining
+  static import of `three`.
+
+  `RobloxTool.vue` imports the whole of `three` at module scope. Statically
+  imported, that puts a 3D engine (~170 kB gzip) in the ENTRY chunk, so every
+  visitor downloaded it to read the login page. The tool itself is behind
+  `ai_feature` and is one of the least-visited screens on the platform.
+
+  This is deliberately not a general conversion of the router to lazy routes.
+  That is a worthwhile change and a much larger one — ~50 views, each becoming a
+  network request on first navigation, which needs a loading state per route to
+  not read as a stall. This is the one case where a single line removes a
+  library from every page.
+*/
+const RobloxTool = () => import('../views/RobloxTool.vue');
 
 // CV Builder (gated by ai_feature)
 import CvBuilder from '../views/CvBuilder.vue';

@@ -85,7 +85,7 @@ watch(() => authStore.user, (newUser, oldUser) => {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--sfs-accent-strong, #a8a8a8);
 }
 
 /* Animations */
@@ -126,20 +126,21 @@ watch(() => authStore.user, (newUser, oldUser) => {
   background-clip: text;
 }
 
+/* Spent through the elevation tokens rather than a black literal: `rgba(0,0,0)`
+   is invisible on a dark galaxy and too heavy on a light one, and these were
+   the last two colour literals in this file. */
 .card-shadow {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s ease;
+  box-shadow: var(--sfs-elev-1, 0 4px 20px rgb(0 0 0 / 0.05));
+  transition: box-shadow var(--sfs-dur, 220ms) var(--sfs-ease, ease);
 }
 
 .card-shadow:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--sfs-elev-2, 0 8px 30px rgb(0 0 0 / 0.1));
 }
 
-.glass-effect {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
-}
+/* `.glass-effect` used to be declared here too, at 0.95 alpha — a nearly
+   OPAQUE card, which is not what the class means anywhere else and was the
+   worst of the three copies. There is one definition now, in theme.css. */
 
 /* Responsive design */
 @media (max-width: 768px) {
@@ -162,9 +163,12 @@ watch(() => authStore.user, (newUser, oldUser) => {
 }
 
 /* Focus styles */
+/* `--sfs-focus` is DERIVED per galaxy, `--sfs-accent` is not: a focus ring in
+   the accent colour is invisible on a page whose surface is the accent colour,
+   which is exactly why themes.ts derives a separate token for it. */
 :focus-visible {
-  outline: 2px solid var(--sfs-accent, #667eea);
-  outline-offset: 2px;
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, #667eea);
+  outline-offset: var(--sfs-ring-offset, 2px);
 }
 
 /* Loading states */

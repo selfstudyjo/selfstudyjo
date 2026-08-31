@@ -10,6 +10,12 @@
 import { DEFAULT_THEME_ID, THEMES, defaultThemeFor, getTheme, type Theme } from './themes';
 
 const STORAGE_KEY = 'sfs-theme';
+/*
+  The resolved page colour of the stored galaxy. Read by the inline script in
+  index.html to paint the very first frame in the right colour — see
+  `applyTheme` for why that matters more than it sounds.
+*/
+const SPACE_KEY = 'sfs-space';
 
 /** A galaxy chosen in one tab should be the galaxy the next tab opens with. */
 export function readStoredTheme(): string | null {
@@ -85,6 +91,27 @@ export function applyTheme(theme: Theme): void {
 
   setMeta('theme-color', theme.space);
   setMeta('color-scheme', theme.mode);
+
+  /*
+    Remember the page colour, for the inline script in index.html.
+
+    That script runs before this module is even downloaded, and until it had a
+    value to read it painted a hardcoded near-black — so the three LIGHT
+    galaxies opened with a full-screen black flash on every load and every
+    reload. It is the worst first impression the app can make and it is the one
+    frame nobody can style from a stylesheet, because the stylesheet has not
+    arrived yet.
+
+    Written here rather than beside the theme id in `writeStoredTheme` on
+    purpose: this runs on the bootstrap path as well, so a visitor who has never
+    touched the picker still seeds it, and a colour that changes because the
+    THEME definition changed is picked up without the id having moved.
+  */
+  try {
+    localStorage.setItem(SPACE_KEY, theme.space);
+  } catch {
+    /* Private browsing. The inline script's own default covers it. */
+  }
 }
 
 function setMeta(name: string, content: string): void {

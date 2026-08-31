@@ -1,0 +1,629 @@
+/* ==========================================================================
+   ui.css — the shared component floor
+   ==========================================================================
+
+   WHAT THIS IS FOR
+   ----------------
+   The platform has 46 page stylesheets and 91 templates. "Make the fonts,
+   sizes, buttons and surfaces clear and consistent on every page" cannot be
+   done by editing 46 files — the next page added would be the 47th, written to
+   whatever the author remembered. It is done by giving every page a correct
+   answer it inherits for free, and a named kit to reach for when it needs
+   more.
+
+   Three layers, in order:
+
+     theme.css       WHAT things are made of — the colour tokens (per galaxy)
+                     and the shape/type/elevation tokens (shared).
+     responsive.css  HOW BIG the units are — the fluid root, touch targets.
+     ui.css          WHAT AN ELEMENT LOOKS LIKE by default, plus the kit.
+
+   ORDER, AND WHY THIS FILE CANNOT WIN AN ARGUMENT
+   -----------------------------------------------
+   Imported from `main.ts`, so it lands before every route chunk and before
+   every page stylesheet. That is deliberate and it is the whole safety
+   property: almost every selector here is a bare element (0,0,1) or a single
+   `.sfs-`-prefixed class, so any existing page rule beats it. This file sets a
+   floor and takes nothing over. There is no `!important` in it outside the
+   `forced-colors` and `print` blocks, where the thing being overridden is the
+   browser rather than a stylesheet.
+
+   THE `.sfs-` PREFIX IS NOT DECORATION
+   ------------------------------------
+   `check:cssleaks` exists because `roblox-tool.css` declared a bare
+   `.placeholder { inset: 0 }` and made every date on the exam booking calendar
+   unclickable, on every page of the platform, for months. A globally loaded
+   sheet may only own names nobody else can collide with. Every class this file
+   invents is `sfs-`-prefixed; the handful of unprefixed selectors it touches
+   (`button`, `h1`, `.glass-effect`) are either elements or names it is
+   deliberately defining for everyone.
+
+   WHY THERE IS NO COLOUR LITERAL HERE
+   -----------------------------------
+   Ten galaxies, three of them light. A hardcoded colour is right in one and
+   wrong in nine, and nobody sees the nine until a user picks one. Every colour
+   is a `var(--sfs-…)` with the pre-theme literal as its fallback, which is
+   what `npm run check:theme` enforces.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Typography — the part that reaches every page
+   --------------------------------------------------------------------------
+   The pages between them contained dozens of hand-picked `clamp()` triples for
+   headings, so the same heading level was three different sizes on three
+   screens. These are element selectors, so a page that has an opinion still
+   keeps it; what changes is every heading that had none, which was most of
+   them.
+
+   `text-wrap: balance` on headings is the highest-value single line in this
+   file. A heading that wraps to two lines with one orphan word on the second
+   is the most common thing that makes a careful layout look careless, and it
+   happens constantly in Arabic and Chinese where the same sentence is a
+   different length. `pretty` on body copy does the same job for the last line
+   of a paragraph. Both degrade to normal wrapping where unsupported.
+   -------------------------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--sfs-weight-bold, 700);
+  line-height: var(--sfs-leading-tight, 1.15);
+  letter-spacing: var(--sfs-tracking-tight, -0.02em);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--sfs-text-3xl, 1.8rem);
+}
+
+h2 {
+  font-size: var(--sfs-text-2xl, 1.5rem);
+}
+
+h3 {
+  font-size: var(--sfs-text-xl, 1.3rem);
+  line-height: var(--sfs-leading-snug, 1.3);
+}
+
+h4 {
+  font-size: var(--sfs-text-lg, 1.125rem);
+  font-weight: var(--sfs-weight-semibold, 600);
+  line-height: var(--sfs-leading-snug, 1.3);
+  letter-spacing: var(--sfs-tracking-snug, -0.01em);
+}
+
+h5,
+h6 {
+  font-size: var(--sfs-text-md, 1rem);
+  font-weight: var(--sfs-weight-semibold, 600);
+  line-height: var(--sfs-leading-snug, 1.3);
+  letter-spacing: 0;
+}
+
+p,
+li,
+dd,
+blockquote {
+  text-wrap: pretty;
+}
+
+/*
+  Numbers in a table, a score, a countdown, a price, a certificate id.
+
+  Proportional digits are what makes a live countdown jitter — the glyph for 1
+  is narrower than the glyph for 8, so the whole line reflows every second —
+  and what makes a column of scores fail to line up. `tabular-nums` fixes
+  both. It is opt-in by class rather than global because tabular figures are
+  slightly worse inside a sentence, which is where most numbers on this
+  platform live.
+*/
+.sfs-nums,
+th,
+td,
+time,
+code,
+kbd,
+samp,
+pre {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--sfs-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 0.92em;
+}
+
+/*
+  A small-caps label — the "PROGRESS" / "TODAY" style heading above a group.
+
+  Uppercase text needs positive tracking or it reads as a solid block, and it
+  needs to be a step LARGER than the copy it labels, not smaller, because caps
+  have no descenders to help the eye. Both are the mistakes this class exists
+  to stop being made per page.
+*/
+.sfs-eyebrow {
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: var(--sfs-weight-semibold, 600);
+  letter-spacing: var(--sfs-tracking-caps, 0.08em);
+  text-transform: uppercase;
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+}
+
+/*
+  Secondary copy.
+
+  Deliberately the DERIVED token and not a hand-rolled alpha. Several page
+  stylesheets set their own muted ink as `rgb(var(--sfs-text-rgb) / 0.55)`,
+  which is ~55% of an ink that was itself derived to sit exactly on the AAA
+  line — so the result is comfortably below AA and it is the single most
+  common reason text on this platform reads as washed out. `--sfs-text-muted`
+  is derived per galaxy and measured; `--sfs-text-faint` clears 3:1 and is for
+  things that are genuinely decoration, never for a sentence.
+*/
+.sfs-muted {
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+}
+
+.sfs-faint {
+  color: var(--sfs-text-faint, rgb(255 255 255 / 0.45));
+}
+
+/* Prose that has to stay readable on a television. See responsive.css §7. */
+.sfs-measure {
+  max-width: var(--sfs-measure, 78ch);
+}
+
+/* --------------------------------------------------------------------------
+   2. Controls — the floor, not the paint
+   --------------------------------------------------------------------------
+   Colour is left alone on purpose: every page here styles its own buttons and
+   overriding them from a global sheet is how `.header-content` broke the Take
+   Exam header. What is set is the part no page ever bothered with and every
+   page wants — the pointer, the corner, the tap behaviour, the disabled state.
+   -------------------------------------------------------------------------- */
+button,
+[role='button'],
+summary {
+  cursor: pointer;
+  /* iOS double-tap-to-zoom adds a ~300ms delay before a click fires on any
+     element it thinks might be zoomable. This is the whole of what people mean
+     when they say a web app feels less responsive than a native one. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+  font-weight: var(--sfs-weight-semibold, 600);
+  line-height: var(--sfs-leading-snug, 1.3);
+  border-radius: var(--sfs-radius-sm, 10px);
+}
+
+/* A control that cannot be used must look it, and must stop pretending it can
+   be hovered. `pointer-events: none` is deliberately NOT used — it would also
+   suppress the tooltip explaining why the thing is disabled. */
+button:disabled,
+[aria-disabled='true'],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+input,
+select,
+textarea {
+  border-radius: var(--sfs-radius-sm, 10px);
+  border-style: solid;
+  border-width: 1px;
+}
+
+/* Where a field is being typed into, the border should say so. Only the
+   border: a background change on focus makes the text jump in contrast
+   mid-sentence. */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--sfs-border-accent, rgb(102 126 234 / 0.6));
+}
+
+/* A textarea that can only be dragged wider than its container is a horizontal
+   scrollbar waiting to happen. */
+textarea {
+  resize: vertical;
+}
+
+/* --------------------------------------------------------------------------
+   3. The kit
+   --------------------------------------------------------------------------
+   Opt-in classes. Nothing below applies unless a template asks for it, so this
+   section cannot regress a page that does not use it.
+   -------------------------------------------------------------------------- */
+
+/*
+  A surface. The glass panel every screen on this platform is made of.
+
+  `.glass-effect` (theme.css) is the same look and is kept because ~30
+  templates already use it. This adds the padding and the hover, which is the
+  part each page was re-declaring.
+*/
+.sfs-card {
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+  backdrop-filter: var(--sfs-blur, blur(10px));
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-lg, 18px);
+  box-shadow: var(--sfs-sheen, inset 0 1px 0 rgb(255 255 255 / 0.14)),
+              var(--sfs-elev-1, 0 4px 12px rgb(0 0 0 / 0.1));
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+  /* A card holding a long id, a URL or an untranslated title must not be the
+     thing that gives the page a horizontal scrollbar. */
+  min-width: 0;
+}
+
+/* Only where the whole card is a link or a button. A hover on a card that does
+   nothing is a promise the page cannot keep. */
+.sfs-card--interactive:hover,
+.sfs-card--interactive:focus-within {
+  background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14));
+  border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+  box-shadow: var(--sfs-sheen, inset 0 1px 0 rgb(255 255 255 / 0.14)),
+              var(--sfs-glow-1, 0 8px 28px rgb(102 126 234 / 0.16));
+}
+
+/* The lift. `translateY` and nothing else — animating a shadow's blur radius
+   or a border width forces a paint on every frame, and a 2px rise reads as
+   "this responds" just as well as 6px without moving the text under the
+   pointer. Only on a device that HAS a pointer. */
+@media (hover: hover) and (pointer: fine) {
+  .sfs-card--interactive {
+    transition: transform var(--sfs-dur, 220ms) var(--sfs-ease, ease);
+  }
+
+  .sfs-card--interactive:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/*
+  A button.
+
+  Four variants, and the split is by MEANING rather than by colour: one primary
+  action per view, secondary for everything ordinary, ghost for a toolbar,
+  danger for something irreversible. Each names both its fill and its ink,
+  because that is the pair the theme system derives together — `--sfs-accent`
+  with `--sfs-on-accent`, never `--sfs-accent` with white.
+*/
+.sfs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  /* max() rather than a rem: `responsive.css` scales the root, so on a 390px
+     phone `2.75rem` computes to 41.5px — under the 44px a finger needs, on
+     exactly the devices the rule exists for. */
+  min-height: max(2.5rem, 44px);
+  padding: 0.55em 1.1em;
+  border: 1px solid transparent;
+  border-radius: var(--sfs-radius-sm, 10px);
+  font-size: var(--sfs-text-sm, 0.875rem);
+  font-weight: var(--sfs-weight-semibold, 600);
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sfs-btn > svg {
+  flex: 0 0 auto;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.sfs-btn--primary {
+  background: var(--sfs-gradient, linear-gradient(135deg, #667eea, #764ba2));
+  color: var(--sfs-on-accent, #ffffff);
+  box-shadow: var(--sfs-glow-1, 0 8px 28px rgb(102 126 234 / 0.16));
+}
+
+.sfs-btn--primary:hover {
+  box-shadow: var(--sfs-glow-2, 0 14px 40px rgb(102 126 234 / 0.26));
+}
+
+.sfs-btn--secondary {
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  color: var(--sfs-text, #ffffff);
+  border-color: var(--sfs-border, rgb(255 255 255 / 0.14));
+}
+
+.sfs-btn--secondary:hover {
+  background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14));
+  border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+}
+
+.sfs-btn--ghost {
+  background: transparent;
+  color: var(--sfs-accent-text, #818cf8);
+}
+
+.sfs-btn--ghost:hover {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+}
+
+.sfs-btn--danger {
+  background: var(--sfs-danger, #f87171);
+  color: var(--sfs-on-danger, #ffffff);
+}
+
+/* Two sizes beyond the default, both still clearing 44px on touch. */
+.sfs-btn--sm {
+  min-height: max(2.1rem, 36px);
+  padding: 0.4em 0.8em;
+  font-size: var(--sfs-text-xs, 0.75rem);
+}
+
+.sfs-btn--lg {
+  min-height: max(3rem, 48px);
+  padding: 0.7em 1.5em;
+  font-size: var(--sfs-text-md, 1rem);
+}
+
+/*
+  A chip / a badge.
+
+  `--sfs-{hue}-text` on `--sfs-{hue}-soft`, never `--sfs-{hue}` on itself:
+  themes.ts derives the -text token against the WASH the chip actually is,
+  which is the whole reason a status hue is three tokens rather than one. The
+  first version of the platform's palette derived them against a plain card and
+  117 of the light themes' contrast failures came from that one mistake.
+*/
+.sfs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.25em 0.7em;
+  border-radius: var(--sfs-radius-pill, 999px);
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: var(--sfs-weight-semibold, 600);
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  color: var(--sfs-text, #ffffff);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+}
+
+.sfs-chip--accent {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+  color: var(--sfs-accent-text, #818cf8);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.34);
+}
+
+.sfs-chip--success {
+  background: var(--sfs-success-soft, rgb(52 211 153 / 0.16));
+  color: var(--sfs-success-text, #34d399);
+  border-color: var(--sfs-success-border, rgb(52 211 153 / 0.42));
+}
+
+.sfs-chip--warning {
+  background: var(--sfs-warning-soft, rgb(245 158 11 / 0.16));
+  color: var(--sfs-warning-text, #f59e0b);
+  border-color: var(--sfs-warning-border, rgb(245 158 11 / 0.42));
+}
+
+.sfs-chip--danger {
+  background: var(--sfs-danger-soft, rgb(248 113 113 / 0.16));
+  color: var(--sfs-danger-text, #f87171);
+  border-color: var(--sfs-danger-border, rgb(248 113 113 / 0.42));
+}
+
+.sfs-chip--info {
+  background: var(--sfs-info-soft, rgb(14 165 233 / 0.16));
+  color: var(--sfs-info-text, #0ea5e9);
+  border-color: var(--sfs-info-border, rgb(14 165 233 / 0.42));
+}
+
+/*
+  A progress meter.
+
+  A <div> pair rather than <progress>, because `<progress>` cannot be styled
+  consistently across engines and its accessible name has to come from a
+  wrapping label anyway. The caller is expected to put `role="progressbar"`
+  with the aria-value* attributes on `.sfs-meter` — a bar that a screen reader
+  reads as an empty box is not a progress tracker, it is decoration.
+
+  `--meter-fill` is the knob: set it inline from the data. Deliberately NOT
+  `--sfs-meter-fill` — the `--sfs-` prefix means "declared by the theme system
+  and legal everywhere", and `check:theme` rightly fails on a reference to an
+  `--sfs-` name no galaxy declares. A per-instance knob is page-local, which on
+  this platform is spelled without the prefix (`--hc-*`, `--galaxy-*`).
+*/
+.sfs-meter {
+  /* The default matters: with no declaration, an instance that forgets to set
+     the knob inherits whatever an ANCESTOR happens to have called
+     `--meter-fill`, and a bar reading 100% because of a name collision two
+     levels up is worse than one reading 0%. */
+  --meter-fill: 0%;
+  position: relative;
+  height: 0.5rem;
+  min-height: 6px;
+  border-radius: var(--sfs-radius-pill, 999px);
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  overflow: hidden;
+}
+
+.sfs-meter__fill {
+  height: 100%;
+  width: var(--meter-fill, 0%);
+  border-radius: inherit;
+  background: var(--sfs-gradient, linear-gradient(90deg, #667eea, #764ba2));
+  /* Width, not transform: the bar is a few pixels tall, so the paint is
+     trivial, and a scaled transform would squash the gradient. */
+  transition: width var(--sfs-dur-slow, 380ms) var(--sfs-ease-out, ease);
+}
+
+/* Meaning, where the number is a grade rather than a quantity. */
+.sfs-meter__fill--success {
+  background: var(--sfs-success, #34d399);
+}
+
+.sfs-meter__fill--warning {
+  background: var(--sfs-warning, #f59e0b);
+}
+
+.sfs-meter__fill--danger {
+  background: var(--sfs-danger, #f87171);
+}
+
+/*
+  A loading placeholder.
+
+  A sweep, not a pulse. A pulsing opacity on a block the size of a card is a
+  full-page flash every 1.5 seconds, which is unpleasant and is close to the
+  pattern that triggers photosensitive discomfort. A gradient swept by
+  `transform` is one composited layer and touches nothing else.
+*/
+.sfs-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sfs-radius-sm, 10px);
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+}
+
+.sfs-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09) 50%,
+    transparent 100%
+  );
+  animation: sfs-sweep 1.4s var(--sfs-ease, ease) infinite;
+}
+
+@keyframes sfs-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
+  Grids.
+
+  `minmax(0, 1fr)` and not `1fr`. A `1fr` track's automatic minimum is
+  `min-content`, NOT zero — so one unbreakable string (an exam id, a uuid, a
+  URL in a comment) forces its track wider than its share and the whole row
+  overflows the card. That is the "text outside div elements" report, and it
+  was 32 separate declarations across the exam screens before anybody worked
+  out it was one bug.
+
+  `min()` inside the minmax is the other half: at 320px a 260px minimum plus a
+  gap does not fit, and a track that cannot reach its minimum overflows rather
+  than wrapping.
+*/
+.sfs-grid {
+  display: grid;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}
+
+.sfs-grid--tight {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+}
+
+.sfs-grid--wide {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+}
+
+/*
+  Identifiers.
+
+  `break-word` does NOT help here and this is worth knowing before reaching for
+  it: it only breaks at permitted points and a uuid has none. `anywhere` is
+  what breaks them, and — unlike `break-word` — it is counted when the browser
+  works out `min-content`, so it is also what lets the grid track shrink.
+
+  `unicode-bidi: isolate` is the Arabic half. A uuid's hyphens, a hostname's
+  dots and a price's decimal point are all neutral characters, so inside Arabic
+  prose the bidi algorithm relocates them: `sfscertificate1.pythonanywhere.com`
+  comes out with its dots rearranged. This platform prints ids on the
+  certificate, payment and appointment screens.
+*/
+.sfs-ident {
+  font-family: var(--sfs-font-mono, ui-monospace, monospace);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+  unicode-bidi: isolate;
+}
+
+/* A visually hidden label that a screen reader still reads. Not
+   `display: none`, which removes it from the accessibility tree as well. */
+.sfs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Forced colours
+   --------------------------------------------------------------------------
+   Windows High Contrast throws the palette away, and everything in this file
+   that is a background rather than a border loses its edge with it. Giving the
+   surfaces a border is the whole fix; fighting the palette is not.
+   -------------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  .sfs-card,
+  .sfs-btn,
+  .sfs-chip,
+  .sfs-meter {
+    border: 1px solid CanvasText !important;
+  }
+
+  .sfs-meter__fill {
+    background: Highlight !important;
+  }
+
+  .sfs-skeleton::after {
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Print
+   --------------------------------------------------------------------------
+   A certificate, a lesson, an exam result. A blurred translucent card prints
+   as a grey smear on most printers and as nothing at all on the ones that will
+   not print backgrounds, so on paper the kit becomes ink on white.
+   -------------------------------------------------------------------------- */
+@media print {
+  .sfs-card,
+  .glass-effect,
+  .sfs-glass {
+    background: #ffffff !important;
+    color: #101010 !important;
+    border: 1px solid #d0d0d0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .sfs-skeleton {
+    display: none !important;
+  }
+}

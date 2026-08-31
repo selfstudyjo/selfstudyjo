@@ -151,6 +151,13 @@ tools/leaderboard-preview/shots/
 tools/rtl-audit/shots-ar/
 tools/rtl-audit/shots-en/
 
+# Output of tools/home-preview — the built preview, its screenshots and the
+# throwaway Chrome profile shoot.mjs launches. 12 PNGs a run and ~75 MB of
+# profile, regenerated with `npm run build:home-preview && node
+# tools/home-preview/shoot.mjs`. `tools/*/dist/` is already covered by the bare
+# `dist` rule above; the shots are not.
+tools/home-preview/shots/
+
 # Output of tools/cast-preview — the built preview and its screenshots. Ten
 # PNGs a run, regenerated with `npm run build:cast-preview && node
 # tools/cast-preview/shoot.mjs`.

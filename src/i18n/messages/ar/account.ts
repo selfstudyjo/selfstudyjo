@@ -252,6 +252,78 @@ const account: Catalogue = {
     'Registered: {v0}': 'التسجيل: {v0}',
     '· {v0} combined feature{v1}': '· {v0} ميزة مجتمعة{v1}',
 
+    /* ---- The dashboard's banner, tiles, badges and progress card ----
+     *
+     * `Your progress`, `Certified` and `Loading...` are deliberately absent:
+     * they are already in studio.ts, learning.ts and common.ts respectively,
+     * and a key declared twice is a build failure here rather than a silent
+     * overwrite. The key IS the English text, so one entry serves every screen.
+     *
+     * Two register notes. A badge NAME is a title, so it is a noun phrase
+     * (`الخطوات الأولى`), while a badge NOTE is an instruction to the reader and
+     * takes the imperative (`سجّل في دورة`) — read as a noun the requirement
+     * turns into a claim that the learner has already done it. And `اختبار قصير`
+     * throughout for a quiz, never `اختبار`, which is the invigilated exam.
+     */
+    'Your learning dashboard': 'لوحة تعلّمك',
+    'Quick actions': 'إجراءات سريعة',
+    'Your learning at a glance': 'تعلّمك في لمحة',
+    'Average quiz score': 'متوسط درجات الاختبارات القصيرة',
+    'Average quiz score: {v0}%': 'متوسط درجات الاختبارات القصيرة: {v0}%',
+    'Take your first quiz': 'ابدأ اختبارك القصير الأول',
+    'Quizzes passed': 'الاختبارات القصيرة الناجحة',
+    'Badges': 'الأوسمة',
+    'Achievements': 'الإنجازات',
+    '{v0} of {v1} earned': '{v0} من {v1} محقَّقة',
+    'Earned': 'محقَّق',
+    'Not earned yet': 'لم يُحقَّق بعد',
+    'Measured from your quiz results — one attempt per quiz, your best':
+        'محسوب من نتائج اختباراتك القصيرة — محاولة واحدة لكل اختبار، وهي الأفضل لديك',
+    'Best score': 'أفضل درجة',
+    'By course': 'حسب الدورة',
+    'No quizzes yet': 'لا اختبارات قصيرة بعد',
+    '{v0} of {v1} passed': 'نجحت في {v0} من {v1}',
+
+    /* Badge names */
+    'First Steps': 'الخطوات الأولى',
+    'Scholar': 'دارس مجتهد',
+    'Quiz Taker': 'مُختبِر',
+    'Sharp Shooter': 'إصابة دقيقة',
+    'Honour Roll': 'لوحة الشرف',
+    'Perfect Score': 'الدرجة الكاملة',
+
+    /* Badge requirements */
+    'Enrol in a course': 'سجّل في دورة',
+    'Enrol in 3 courses': 'سجّل في 3 دورات',
+    'Pass a quiz': 'انجح في اختبار قصير',
+    'Pass 5 quizzes': 'انجح في 5 اختبارات قصيرة',
+    'Earn a certificate': 'احصل على شهادة',
+    'Average 90% over 3 quizzes': 'حقّق متوسط 90% في 3 اختبارات قصيرة',
+    'Score 100% on a quiz': 'احصل على 100% في اختبار قصير',
+
+    /* ---- The strings that were still English literals in the template ----
+     *
+     * Every one of these was a bare `'Valid'` / `` `${n} Active` `` / `/year` in
+     * Home.vue, so they rendered in English inside an otherwise Arabic
+     * dashboard — and `{v0} Active` was worse than untranslated: the digit and
+     * the word are neutral-then-Latin, so bidi reordered it to "Active 1".
+     */
+    'FAILED': 'راسب',
+    'None': 'لا يوجد',
+    '{v0} Active': '{v0} نشط',
+    '/year': '/سنوياً',
+    'Free': 'مجاناً',
+    'Exam Certificate': 'شهادة اختبار',
+    'Course Certificate': 'شهادة دورة',
+    'Untitled Quiz': 'اختبار قصير بلا عنوان',
+    'Unknown Course': 'دورة غير معروفة',
+    'Unknown Lesson': 'درس غير معروف',
+    'No description': 'لا يوجد وصف',
+    /* Not "Loading…". A record that failed to arrive and one that has not
+     * arrived yet are different states, and the second reads as a spinner that
+     * never finishes. */
+    'Course unavailable': 'الدورة غير متاحة',
+
     /* ---------------------------------------------------------------- *
      * Messaging (app 35)
      * ---------------------------------------------------------------- */

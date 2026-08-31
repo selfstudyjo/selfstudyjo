@@ -12,9 +12,18 @@ html, body, #app {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: var(--sfs-font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Kerning on, and the browser free to pick optical sizes where the face has
+     them. `text-rendering` is deliberately left at `auto`: `optimizeLegibility`
+     forces a full shaping pass on every text node and costs measurably on a
+     long lesson page, and `optimizeSpeed` turns kerning and ligatures off,
+     which is visible in Arabic. And no `font-synthesis: none` — several of the
+     CJK and Arabic fallbacks have no real bold, so switching synthesis off
+     silently renders every <strong> at normal weight in those scripts. */
+  font-kerning: normal;
+  font-optical-sizing: auto;
   /* Was a flat `#333`, with a `.dark-mode body { color: #fff }` underneath it
      that never applied, because nothing in the app had ever added that class
      — so on a black page the document default was dark grey and every page
@@ -69,9 +78,44 @@ body {
   background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
-/* Smooth transitions */
-* {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+/*
+  Smooth transitions — on the elements that have a state to transition, not on
+  every element in the document.
+
+  This was `* { transition: background-color .3s, border-color .3s }`, which is
+  a transition on every node on the page including the ones the compositor
+  would otherwise never touch. Two costs, and the second is the one people
+  reported as sluggishness: the browser has to track a running transition per
+  element on any colour change, and a 300ms colour fade on a hover makes a
+  button feel like it is answering late — 300ms is roughly the threshold at
+  which a UI stops feeling direct.
+
+  It was also wrong on things that are not surfaces at all: a table row, a
+  <span>, an <li> and a skeleton placeholder all inherited it.
+
+  The list below is every element that has a hover, focus or active state, plus
+  the surface classes. `--sfs-dur` is 220ms and the easing decelerates, so the
+  change starts immediately and settles.
+*/
+a,
+button,
+[role='button'],
+input,
+select,
+textarea,
+summary,
+label,
+.card,
+.glass-effect,
+.sfs-glass,
+.sfs-card,
+.sfs-btn,
+.nav-item {
+  transition:
+    background-color var(--sfs-dur, 220ms) var(--sfs-ease, ease),
+    border-color var(--sfs-dur, 220ms) var(--sfs-ease, ease),
+    color var(--sfs-dur-fast, 140ms) var(--sfs-ease, ease),
+    box-shadow var(--sfs-dur, 220ms) var(--sfs-ease, ease);
 }
 
 /* Utility classes */
@@ -158,22 +202,18 @@ body {
   }
 }
 
-/* Glass effect */
-.glass-effect {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
-}
+/* Glass effect — see theme.css. It was declared here as well, with a
+   different alpha and a `.dark-mode` override on top, so the class meant three
+   things depending on chunk order. There is one definition now. */
 
-.dark-mode .glass-effect {
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
-  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
-}
+/* Focus styles for accessibility.
 
-/* Focus styles for accessibility */
+   `--sfs-focus` rather than `--sfs-accent`: the ring is derived per galaxy
+   precisely because an accent-coloured ring disappears on an accent-coloured
+   surface, which is most of what an active tab or a primary button is. */
 :focus {
-  outline: 2px solid var(--sfs-accent, #667eea);
-  outline-offset: 2px;
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, #667eea);
+  outline-offset: var(--sfs-ring-offset, 2px);
 }
 
 :focus:not(:focus-visible) {

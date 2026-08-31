@@ -119,34 +119,11 @@
   font-weight: 500;
 }
 
-.stats-badge {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center;
-  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem);
-  min-width: 110px;
-  border-radius: var(--hc-r-lg);
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.badge-count {
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 800;
-  line-height: 1;
-  background: var(--hc-brand-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.badge-label {
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--hc-text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+/* `.stats-badge` / `.badge-count` / `.badge-label` were here. The banner's
+   single "N courses" pill was replaced by the score ring and the four tiles
+   below it, so all three had nothing rendering them. Dead CSS in a scoped
+   sheet is invisible rather than harmful, which is exactly why it is worth
+   deleting rather than leaving for somebody to reverse-engineer. */
 
 /* ---------- Main grid ---------- */
 .main-grid {
@@ -677,13 +654,480 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE — mobile-first, standard breakpoints
+   DASHBOARD — the banner, the tiles, the badges and the progress card
+   ==========================================================================
+   Added with the 2030 restyle. Everything here spends the shared tokens from
+   theme.css (`--sfs-text-*`, `--sfs-radius-*`, `--sfs-elev-*`, `--sfs-glass-*`)
+   rather than inventing a fourth radius ladder, and the page-local `--hc-*`
+   aliases above are kept only where they already say something this page means.
+
+   This file is loaded with `<style scoped src>`, so every selector below is
+   scoped to Home.vue by Vite and none of it can reach another page — which is
+   also why it can safely address the global `.sfs-meter` and `.sfs-btn` from
+   the kit: those elements are in this template and carry its scope attribute.
    ========================================================================== */
 
-/* ≥ 480px — large phones */
-@media (min-width: 480px) {
-  .stats-badge { min-width: 130px; }
+/* --------------------------------------------------------------------------
+   Welcome banner
+   -------------------------------------------------------------------------- */
+.hero-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: var(--sfs-tracking-caps, 0.08em);
+  text-transform: uppercase;
+  /* The derived token, not an alpha of the ink: `--hc-text-muted` is 55% of an
+     ink that was itself derived to sit on the AAA line, which lands this label
+     below AA. Small uppercase text is the last place to spend contrast. */
+  color: var(--sfs-text-muted, #e8eaff);
 }
+
+.header-content h1 {
+  font-size: var(--sfs-text-3xl, clamp(1.4rem, 3.5vw, 2rem));
+  font-weight: 800;
+  line-height: var(--sfs-leading-tight, 1.15);
+  letter-spacing: var(--sfs-tracking-tight, -0.02em);
+  margin-bottom: 0.35rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: clamp(0.85rem, 2vw, 1.15rem);
+}
+
+/* The kit's buttons, on this page's banner. Only the things the banner
+   changes: the banner is already a tinted panel, so a secondary button needs a
+   slightly stronger fill to separate from it. */
+.hero-actions .sfs-btn {
+  flex: 0 1 auto;
+}
+
+.hero-actions .sfs-btn--secondary {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   The score ring
+   --------------------------------------------------------------------------
+   A conic gradient with a radial mask, not an SVG circle and not a
+   `stroke-dasharray`. Three reasons, in order:
+
+    * it is ONE element and no extra DOM, where an SVG ring is a wrapper, two
+      circles and a transform;
+    * the value is a single custom property, so the view binds one string and
+      the browser does the arithmetic — no `2 * Math.PI * r` in a component;
+    * an SVG stroke does not follow `border-radius`, `currentColor` or the
+      cascade the way a gradient does, so the ten galaxies would each need the
+      colour passed in as a prop.
+
+   THE MASK IS ON THE PSEUDO-ELEMENT AND MUST STAY THERE. `mask` applies to an
+   element's CONTENT as well as its background, so masking `.score-ring` itself
+   would cut the number out of the middle of the ring — the number is the point
+   of the ring. Where `mask` is unsupported the ring renders as a filled pie
+   with the number on top, which is degraded but not broken.
+   -------------------------------------------------------------------------- */
+.hero-score {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.score-ring {
+  --ring-size: clamp(5.5rem, 13vw, 8rem);
+  --ring-track: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+  --ring-color: var(--sfs-accent, #667eea);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--ring-size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.score-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    var(--ring-color) 0 var(--ring-value, 0%),
+    var(--ring-track) var(--ring-value, 0%) 100%
+  );
+  /* transparent inside 68% of the radius, opaque beyond it = a ring. */
+  -webkit-mask: radial-gradient(farthest-side, transparent 0 67%, #000 68% 100%);
+  mask: radial-gradient(farthest-side, transparent 0 67%, #000 68% 100%);
+}
+
+/* Starts at 12 o'clock and reads clockwise in BOTH directions. A progress ring
+   is a dial, not a paragraph: mirroring it under `dir="rtl"` would make the
+   same score point at a different place on an Arabic page. Same rule the
+   newscast set follows and the reason `rtl.css` pins canvases LTR. */
+.score-ring,
+.score-ring::before {
+  direction: ltr;
+}
+
+.score-ring__face {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.05em;
+  color: var(--sfs-text, #ffffff);
+}
+
+.score-ring__value {
+  font-size: calc(var(--ring-size) * 0.3);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: var(--sfs-tracking-tight, -0.02em);
+}
+
+.score-ring__unit {
+  font-size: calc(var(--ring-size) * 0.15);
+  font-weight: 600;
+  color: var(--sfs-text-muted, #e8eaff);
+}
+
+/* The band. Colour is a SECOND channel here, never the only one — the number
+   is inside the ring and the caption is under it, so a reader who cannot
+   separate amber from red still has the figure. */
+.score-ring.is-excellent { --ring-color: var(--sfs-success, #34d399); }
+.score-ring.is-good      { --ring-color: var(--sfs-accent, #667eea); }
+.score-ring.is-average   { --ring-color: var(--sfs-warning, #fbbf24); }
+.score-ring.is-poor      { --ring-color: var(--sfs-danger, #f87171); }
+
+.score-ring.is-empty .score-ring__value {
+  color: var(--sfs-text-muted, #e8eaff);
+}
+
+.hero-score__caption {
+  margin: 0;
+  max-width: 9rem;
+  text-align: center;
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--sfs-text-muted, #e8eaff);
+  text-wrap: balance;
+}
+
+/* --------------------------------------------------------------------------
+   At a glance
+   --------------------------------------------------------------------------
+   `minmax(min(100%, 8.5rem), 1fr)` and not `minmax(8.5rem, 1fr)`: at 320px a
+   fixed 8.5rem minimum plus the gaps does not fit, and a track that cannot
+   reach its minimum overflows the page rather than wrapping. Same reason the
+   kit's `.sfs-grid` is written that way.
+   -------------------------------------------------------------------------- */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  gap: clamp(0.6rem, 1.6vw, 1rem);
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: clamp(0.8rem, 2vw, 1.1rem);
+  border-radius: var(--sfs-radius-lg, 18px);
+  min-width: 0;
+}
+
+.stat-tile__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.35rem;
+  border-radius: var(--sfs-radius-sm, 10px);
+  color: var(--sfs-text, #ffffff);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
+}
+
+.stat-tile__icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* One hue per tile so the four are told apart at a glance — and the label
+   under each says which is which, so the colour is never the only channel. */
+.stat-tile__icon.is-passed { background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.22); }
+.stat-tile__icon.is-certificates { background: rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.26); }
+.stat-tile__icon.is-badges { background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.22); }
+
+.stat-tile__value {
+  font-size: var(--sfs-text-2xl, 1.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--sfs-text, #ffffff);
+}
+
+.stat-tile__label {
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--sfs-text-muted, #e8eaff);
+  /* A label like "Quizzes passed" is two words in English and one long one in
+     German or Arabic; it wraps rather than being clipped or forcing the track
+     wider than its share. */
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Achievements
+   -------------------------------------------------------------------------- */
+.achievements {
+  padding: clamp(0.9rem, 2.2vw, 1.3rem);
+  border-radius: var(--sfs-radius-xl, 24px);
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.achievements__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: clamp(0.7rem, 1.8vw, 1rem);
+}
+
+.achievements__title {
+  margin: 0;
+  font-size: var(--sfs-text-lg, 1.125rem);
+  font-weight: 700;
+  color: var(--sfs-text, #ffffff);
+}
+
+.badge-row {
+  display: grid;
+  /*
+    8rem, not 9.5rem, and the difference is one column on a small phone. With
+    `responsive.css` scaling the root to ~15px at 320px, 9.5rem is 142px and the
+    card's content box is about 262px — so two tracks plus the gap did not fit
+    and all SEVEN badges stacked, which is most of a screen of scrolling for a
+    row that is meant to be glanced at. At 8rem they pair up from 320px.
+  */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: clamp(0.5rem, 1.4vw, 0.85rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.3rem;
+  padding: clamp(0.7rem, 1.8vw, 0.95rem) 0.6rem;
+  border-radius: var(--sfs-radius, 14px);
+  background: var(--hc-surface-1);
+  border: 1px solid var(--hc-border);
+  min-width: 0;
+}
+
+.badge-card__medal {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid transparent;
+}
+
+.badge-card__medal svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.badge-card__name {
+  font-size: var(--sfs-text-sm, 0.8125rem);
+  font-weight: 700;
+  color: var(--sfs-text, #ffffff);
+  text-wrap: balance;
+}
+
+.badge-card__note {
+  font-size: var(--sfs-text-2xs, 0.6875rem);
+  line-height: 1.35;
+  /* `--sfs-text-muted`, not `--sfs-text-faint`: this line is a SENTENCE a
+     learner is meant to read and act on, and the faint token is derived to 3:1
+     — right for a graphic, below AA for small copy. */
+  color: var(--sfs-text-muted, #e8eaff);
+  text-wrap: pretty;
+}
+
+/*
+  Earned versus locked.
+
+  The tier is a wash of one of the three accents, escalating — and it is
+  DELIBERATELY not the only thing that says which tier a badge is, because in
+  several galaxies two of the three accents are within a few ΔE of each other
+  and in Triangulum `accent` and `accent-2` are the same colour to a
+  deuteranope. The badge's name and its requirement are always visible text, so
+  the colour here is decoration on top of a label rather than the label itself.
+*/
+.badge-card.is-earned {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
+  border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
+}
+
+.badge-card.is-earned.is-bronze .badge-card__medal {
+  background: rgb(var(--sfs-accent-3-rgb, 56 189 248) / 0.22);
+  border-color: rgb(var(--sfs-accent-3-rgb, 56 189 248) / 0.5);
+  color: var(--sfs-accent-3-text, #7dd3fc);
+}
+
+.badge-card.is-earned.is-silver .badge-card__medal {
+  background: rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.26);
+  border-color: rgb(var(--sfs-accent-2-rgb, 118 75 162) / 0.55);
+  color: var(--sfs-accent-2-text, #a78bfa);
+}
+
+.badge-card.is-earned.is-gold .badge-card__medal {
+  background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.22);
+  border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.55);
+  color: var(--sfs-warning-text, #fbbf24);
+  box-shadow: 0 0 0 4px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.12);
+}
+
+/* Locked. A dashed edge, so the state survives forced-colours and greyscale
+   printing where a colour difference does not. */
+.badge-card.is-locked {
+  border-style: dashed;
+}
+
+.badge-card.is-locked .badge-card__medal {
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border-color: var(--hc-border);
+  /* A glyph, so 3:1 is the right floor and the faint token is correct here. */
+  color: var(--sfs-text-faint, #94a3b8);
+}
+
+.badge-card.is-locked .badge-card__name {
+  color: var(--sfs-text-muted, #e8eaff);
+}
+
+/* --------------------------------------------------------------------------
+   Progress card
+   -------------------------------------------------------------------------- */
+.title-icon.progress-icon {
+  background: linear-gradient(135deg,
+    rgb(var(--sfs-accent-rgb, 102 126 234) / 0.85),
+    rgb(var(--sfs-accent-3-rgb, 56 189 248) / 0.85));
+}
+
+.progress-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 2.2vw, 1.25rem);
+}
+
+.rate-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: clamp(0.7rem, 1.8vw, 1.1rem);
+}
+
+.rate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.rate__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rate__label {
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--sfs-text-muted, #e8eaff);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rate__value {
+  font-size: var(--sfs-text-md, 1rem);
+  font-weight: 700;
+  color: var(--sfs-text, #ffffff);
+  white-space: nowrap;
+}
+
+.progress-subhead {
+  margin: 0;
+  font-size: var(--sfs-text-xs, 0.75rem);
+  font-weight: 700;
+  letter-spacing: var(--sfs-tracking-caps, 0.08em);
+  text-transform: uppercase;
+  color: var(--sfs-text-muted, #e8eaff);
+}
+
+.course-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.55rem, 1.4vw, 0.8rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.course-progress__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.course-progress__name {
+  font-size: var(--sfs-text-sm, 0.8125rem);
+  font-weight: 600;
+  color: var(--sfs-text, #ffffff);
+  min-width: 0;
+  /* A course title is a record, so it can be Arabic, Chinese or an
+     untranslated English string of any length. */
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.course-progress__count {
+  font-size: var(--sfs-text-2xs, 0.6875rem);
+  font-weight: 600;
+  color: var(--sfs-text-muted, #e8eaff);
+  white-space: nowrap;
+}
+
+/* The kit's meter is 0.5rem; a little taller here, where it is the card's
+   subject rather than a detail on a row. */
+.progress-body .sfs-meter {
+  height: 0.55rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE — mobile-first, standard breakpoints
+   ========================================================================== */
 
 /* ≥ 640px — phablet / small tablet portrait */
 @media (min-width: 640px) {
@@ -696,16 +1140,29 @@
 @media (min-width: 768px) {
   .home-container { padding: clamp(1.25rem, 3vw, 2rem); }
   .welcome-header { flex-wrap: nowrap; }
-  .dashboard-card:nth-child(1) { grid-column: span 12; }
 }
 
-/* ≥ 1024px — laptop */
+/*
+  ≥ 1024px — laptop. Spans are by CLASS, not by `:nth-child`.
+
+  They were `nth-child(1)` … `nth-child(5)`, which is a layout that silently
+  re-shuffles itself every time a card is added, removed or reordered — and
+  adding the progress card as the new first child would have moved all five
+  existing ones one place along, turning the courses list into an 8-column card
+  and the subscription card into nothing at all. Nobody would see it until they
+  loaded the page at exactly this width.
+
+  Row 1: progress (8) + courses (4). Row 2: the three 4s. Row 3: the
+  subscription, full width — it holds a plan, its feature list and its meta in
+  three columns of its own, and at 4 columns those stack into a narrow ribbon.
+*/
 @media (min-width: 1024px) {
-  .dashboard-card:nth-child(1) { grid-column: span 8; }
-  .dashboard-card:nth-child(2) { grid-column: span 4; }
-  .dashboard-card:nth-child(3) { grid-column: span 4; }
-  .dashboard-card:nth-child(4) { grid-column: span 4; }
-  .dashboard-card:nth-child(5) { grid-column: span 4; }
+  .card--progress      { grid-column: span 8; }
+  .card--courses       { grid-column: span 4; }
+  .card--certificates  { grid-column: span 4; }
+  .card--quizzes       { grid-column: span 4; }
+  .card--homeworks     { grid-column: span 4; }
+  .card--subscription  { grid-column: span 12; }
 }
 
 /* ≥ 1440px — desktop */

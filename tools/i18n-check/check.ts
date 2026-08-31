@@ -71,6 +71,7 @@ import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
+import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 
 /* ------------------------------------------------------------------ *
  * Harness
@@ -572,12 +573,29 @@ for (const [id, catalogue] of CATALOGUES) {
 const dynamicStrings = new Set<string>([
     ...Object.values(BUCKET_LABELS),
     ...CONTEXT_KEYS,
+    /*
+      The dashboard's achievement badges — a name and a requirement each,
+      reached as `t(BADGE_NAMES[id])` from a `v-for` over the badge list, so
+      once again no source file holds the literal. The tables live in
+      `dashboardProgress.ts` rather than in Home.vue precisely so this import
+      is possible: a badge added without its copy fails here instead of
+      rendering its raw id (`sharp-shooter`) on somebody's dashboard.
+    */
+    ...BADGE_STRINGS,
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {
     const missing = [...dynamicStrings]
         .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
     ok(`${id}: every AI Chat heading and memory line is translated`,
+        missing.length === 0,
+        missing.length ? `${missing.length} missing: ${missing.slice(0, 8).join(' · ')}` : '');
+}
+
+for (const [id, catalogue] of CATALOGUES) {
+    const missing = BADGE_STRINGS
+        .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
+    ok(`${id}: every achievement badge has a name and a requirement`,
         missing.length === 0,
         missing.length ? `${missing.length} missing: ${missing.slice(0, 8).join(' · ')}` : '');
 }
