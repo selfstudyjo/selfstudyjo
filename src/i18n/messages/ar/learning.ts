@@ -310,9 +310,7 @@ const learning: Catalogue = {
      * student who copies a translated command gets one that does not run.
      * What is translated is the prose AROUND them.
      * ---------------------------------------------------------------- */
-    'Initializing lab environment...': 'جارٍ تهيئة بيئة المعمل...',
     'No Lab Access': 'لا يوجد وصول إلى المعامل',
-    'Unable to Access Labs': 'تعذّر الوصول إلى المعامل',
     'Your plan doesn\'t include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.':
         'خطتك لا تتضمّن المعامل الافتراضية. أضف ميزة المعامل إلى اشتراكك لفتح بيئات SQL وLinux وPython.',
     'SQL Query Editor': 'محرّر استعلامات SQL',

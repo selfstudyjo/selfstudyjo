@@ -271,7 +271,6 @@ const common: Catalogue = {
     'Credentials you have earned': '你已获得的证书',
     'Who is ahead across the platform': '看看平台上谁领先',
     'Step-by-step operational guides': '分步操作指南',
-    'SQL, Linux and Python sandboxes': 'SQL、Linux 与 Python 沙箱',
     'SQL Database': 'SQL 数据库',
     'Linux Terminal': 'Linux 终端',
     'Python Compiler': 'Python 编译器',

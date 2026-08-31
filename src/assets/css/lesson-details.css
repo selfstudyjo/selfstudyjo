@@ -212,6 +212,26 @@
     border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
 }
 
+/*
+  The lab. The INFO family rather than the accent or success: the accent is the
+  runbook's and success is already spent on Take Quiz and Homework below, and a
+  third shade of either in the same row is two pills several galaxies cannot
+  separate (working rule 37).
+
+  Fill and ink together (working rule 12) - `--sfs-info-text` is derived against
+  this wash, which is the harder of the two backdrops in both modes.
+*/
+.lesson-res--lab {
+    background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.18);
+    border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.38);
+    color: var(--sfs-info-text, #4ecdc4);
+    font-weight: 700;
+}
+
+.lesson-res--lab:hover {
+    background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.28);
+}
+
 .lesson-res--runbook {
     background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
     border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);

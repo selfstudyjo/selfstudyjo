@@ -71,6 +71,26 @@ export interface Lesson {
      */
     image_url?: string | null;
     video_url?: string | null;
+    /**
+     * The lab (app 11) this lesson practises, if an operator linked one.
+     *
+     * `lab_id` is the reference; `lab_track` and `lab_title` are what app 11
+     * called the lab at the moment it was linked, cached on the lesson so a
+     * course page can draw a Practise button on each of twenty rows WITHOUT
+     * twenty cross-service lookups against a replica whose first answer of the
+     * day is ~20 seconds. They go stale if a lab is renamed, and that is
+     * deliberate: a slightly old label on a button that still leads to the right
+     * lab beats a course page that will not render because app 11 is cold. The
+     * lab page itself always shows app 11's own live title.
+     *
+     * `''` from a deployed replica when nothing is linked, `undefined` from one
+     * that has not pulled the build - the same three-states-not-two shape as
+     * `content` above, and the reason nothing here tests truthiness of the
+     * whole triple.
+     */
+    lab_id?: string;
+    lab_track?: string;
+    lab_title?: string;
     date_added?: string;
     homeworks?: Homework[];
 }

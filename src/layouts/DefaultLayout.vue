@@ -10,6 +10,18 @@
       content (sibling selector .sidebar ~ .main-content).
     -->
     <SideNav>
+      <!--
+        The top bar: a terminal, a SQL editor and a Python compiler, on every
+        page. Inside SideNav's slot rather than above it, so the sidebar's
+        collapse and its mobile drawer physically shift it with the content -
+        placed outside, it would sit under the rail at every width.
+
+        Hidden on any route that asks for it with `meta.hideTopBar`, which is the
+        lab workspace: that page has its own workbench with the same three tools
+        in it, and two consoles for one command is a student wondering which one
+        they are typing into.
+      -->
+      <TopBar v-if="!hideTopBar" />
       <router-view />
     </SideNav>
 
@@ -36,9 +48,11 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 
 import SideNav from '@/components/SideNav.vue';
+import TopBar from '@/components/TopBar.vue';
 import ChatBox from '@/components/ChatBox.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 
 const route = useRoute();
 const hideSupportChat = computed(() => Boolean(route.meta?.hideSupportChat));
+const hideTopBar = computed(() => Boolean(route.meta?.hideTopBar));
 </script>

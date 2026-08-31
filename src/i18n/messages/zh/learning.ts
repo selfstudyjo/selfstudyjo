@@ -290,9 +290,7 @@ const learning: Catalogue = {
     /* ---------------------------------------------------------------- *
      * The labs (app 11). Commands stay English — see the header.
      * ---------------------------------------------------------------- */
-    'Initializing lab environment...': '正在初始化实验环境……',
     'No Lab Access': '没有实验室权限',
-    'Unable to Access Labs': '无法访问实验室',
     'Your plan doesn\'t include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.':
         '你的套餐不包含虚拟实验室。在订阅中添加实验室功能，即可使用 SQL、Linux 和 Python 沙箱。',
     'SQL Query Editor': 'SQL 查询编辑器',

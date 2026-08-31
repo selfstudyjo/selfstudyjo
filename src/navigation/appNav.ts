@@ -317,23 +317,30 @@ const EXAMS: NavEntry = { to: '/exams', text: 'Exams', icon: 'exams', keywords: 
 const SCHEDULE_EXAM: NavEntry = { to: '/schedule-exam', text: 'Schedule Exam', icon: 'calendar', keywords: 'book appointment slot sitting date', requires: 'exam' };
 const EXAM_APPROVAL: NavEntry = { to: '/exam-approval', text: 'Exam Approval', icon: 'check', keywords: 'approve pending request start permission', requires: 'exam' };
 const RUNBOOKS: NavEntry = { to: '/runbooks', text: 'Runbooks', icon: 'runbooks', keywords: 'procedures operations guides steps playbook', requires: 'runbook' };
-const LABS: NavEntry = { to: '/labs', text: 'Labs', icon: 'lab', keywords: 'practice sandbox hands on exercises sql linux python terminal', requires: 'lab' };
+const LABS: NavEntry = { to: '/labs', text: 'Labs', icon: 'lab', keywords: 'practice playground hands on docker kubernetes terraform aws azure hadoop spark hive git linux python sql web html css javascript netsim tracks tasks', requires: 'lab' };
 /*
-  The three sandboxes, listed rather than hidden behind tabs.
+  The three practice tools, listed rather than hidden behind tabs — and they are
+  NOT labs any more.
 
-  They were tabs in the page's own state, so the sidebar could only offer
-  "Labs" and a student two clicks into the Python compiler had no way to see
-  that a Linux terminal existed. Now each is a route (`/labs/<tab>`), which is
-  what lets them appear here at all — every `to` in this registry has to be a
-  path the router can match, and `check:appnav` enforces it.
+  They were `/labs` and `/labs/<tab>`, and they were what the Labs page WAS. A
+  terminal, a SQL editor and a Python compiler are a scratchpad: no brief, no
+  tasks, no progress, nothing to complete. A lab is a playground for a subject
+  with the real tools for it and a list of things to make happen. So these three
+  moved to `/tools`, the top bar opens all three from any page on the platform,
+  and `/labs` is the catalogue.
 
-  SQL is `/labs` rather than `/labs/sql` because it is the default the page
+  The tab stays a route param for the reason it became one: it survives a reload,
+  a back button and a shared URL, and it is what lets them appear here at all —
+  every `to` in this registry has to be a path the router can match, and
+  `check:appnav` enforces it.
+
+  SQL is `/tools` rather than `/tools/sql` because it is the default the page
   opens on, and two paths that render the same thing would light up two entries
   at once.
 */
-const LAB_SQL: NavEntry = { to: '/labs', text: 'SQL Database', icon: 'database', keywords: 'sql database query select table sqlite schema', requires: 'lab' };
-const LAB_LINUX: NavEntry = { to: '/labs/linux', text: 'Linux Terminal', icon: 'terminal', keywords: 'linux terminal shell bash command line ls cd', requires: 'lab' };
-const LAB_PYTHON: NavEntry = { to: '/labs/python', text: 'Python Compiler', icon: 'python', keywords: 'python compiler run script code interpreter', requires: 'lab' };
+const TOOL_SQL: NavEntry = { to: '/tools', text: 'SQL Database', icon: 'database', keywords: 'sql database query select table sqlite schema scratchpad practice', requires: 'lab' };
+const TOOL_LINUX: NavEntry = { to: '/tools/linux', text: 'Linux Terminal', icon: 'terminal', keywords: 'linux terminal shell bash command line ls cd scratchpad practice', requires: 'lab' };
+const TOOL_PYTHON: NavEntry = { to: '/tools/python', text: 'Python Compiler', icon: 'python', keywords: 'python compiler run script code interpreter scratchpad practice', requires: 'lab' };
 
 // -- Certificates --------------------------------------------------------
 const MY_CERTIFICATES: NavEntry = { to: '/certificates', text: 'My Certificates', icon: 'certificate', keywords: 'credentials badges diplomas awarded mine' };
@@ -468,15 +475,44 @@ export const APP_SECTIONS: AppSection[] = [
         items: [RUNBOOKS],
         related: [COURSES, LABS],
     },
+    /*
+      Two applications where there was one, and the split is the point.
+
+      `labs` is the catalogue of playgrounds — twelve tracks, seventy-odd labs,
+      each with a brief, its own tools and tasks the environment is checked
+      against. `tools` is the scratchpad that used to occupy `/labs`.
+
+      They are separate sections rather than one with five items because the
+      sidebar scopes itself to whichever application you are in: from inside a
+      lab, the useful neighbours are the other labs and the tracks, not the
+      Python compiler — and from inside the Python compiler, the useful
+      neighbours are the other two tools.
+
+      `match` on `labs` lists `/lab` as well as `/labs`, because `/lab/<id>` is
+      the workspace and the sidebar must stay put on it. It is deliberately NOT
+      in `items`: a lab is somewhere you arrive from the catalogue, like
+      `/take-exam` and `/course/:id`, so offering seventy of them as destinations
+      would be seventy rows nobody can scan.
+    */
     {
         id: 'labs',
         title: 'Labs',
-        subtitle: 'SQL, Linux and Python sandboxes',
+        subtitle: 'Playgrounds for Linux, Python, web, SQL, Docker, Kubernetes, Big Data, cloud and Terraform',
         icon: 'lab',
-        match: ['/labs'],
+        match: ['/labs', '/lab'],
         home: '/labs',
-        items: [LAB_SQL, LAB_LINUX, LAB_PYTHON],
-        related: [NETSIM, COURSES, AI_CHAT],
+        items: [LABS],
+        related: [TOOL_LINUX, NETSIM, COURSES, AI_CHAT],
+    },
+    {
+        id: 'tools',
+        title: 'Practice tools',
+        subtitle: 'A terminal, a SQL editor and a Python compiler',
+        icon: 'terminal',
+        match: ['/tools'],
+        home: '/tools',
+        items: [TOOL_SQL, TOOL_LINUX, TOOL_PYTHON],
+        related: [LABS, NETSIM, AI_CHAT],
     },
     {
         id: 'netsim',
@@ -663,7 +699,7 @@ export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
-        { label: 'Tools', items: [DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
+        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);

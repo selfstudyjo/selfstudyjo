@@ -58,6 +58,7 @@ import arTools from '../../src/i18n/messages/ar/tools';
 import arNetsim from '../../src/i18n/messages/ar/netsim';
 import arResearch from '../../src/i18n/messages/ar/research';
 import arStudio from '../../src/i18n/messages/ar/studio';
+import arLabs from '../../src/i18n/messages/ar/labs';
 import zhCommon from '../../src/i18n/messages/zh/common';
 import zhAccount from '../../src/i18n/messages/zh/account';
 import zhLearning from '../../src/i18n/messages/zh/learning';
@@ -66,12 +67,17 @@ import zhTools from '../../src/i18n/messages/zh/tools';
 import zhNetsim from '../../src/i18n/messages/zh/netsim';
 import zhResearch from '../../src/i18n/messages/zh/research';
 import zhStudio from '../../src/i18n/messages/zh/studio';
+import zhLabs from '../../src/i18n/messages/zh/labs';
 
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
+import {
+    DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GUI_PANELS, PANEL_TITLE_KEYS,
+    STATUS_LABELS, TASK_STATUS_LABELS,
+} from '../../src/utils/labCatalogue';
 
 /* ------------------------------------------------------------------ *
  * Harness
@@ -488,8 +494,8 @@ for (const [id, catalogue] of CATALOGUES) {
 section('6. No key is declared twice');
 
 const MODULES: [string, Record<string, Catalogue>][] = [
-    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio }],
-    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio }],
+    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio, labs: arLabs }],
+    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio, labs: zhLabs }],
 ];
 
 for (const [id, modules] of MODULES) {
@@ -570,6 +576,22 @@ for (const [id, catalogue] of CATALOGUES) {
  * stale the day somebody rewords one of the three branches, and the symptom
  * would be a sentence that silently reverts to English in both languages.
  */
+/**
+ * Every string the labs reach through a variable: the difficulty and status
+ * words, the tool-family tab labels, the GUI panel titles and every column
+ * heading inside them.
+ */
+const LAB_STRINGS: string[] = [...new Set([
+    ...Object.values(DIFFICULTY_LABELS),
+    ...Object.values(STATUS_LABELS),
+    ...Object.values(TASK_STATUS_LABELS),
+    ...FAMILY_LABEL_KEYS,
+    ...PANEL_TITLE_KEYS,
+    ...Object.values(GUI_PANELS).flat()
+        .flatMap(panel => (panel.columns || []).map(column => column.label))
+        .filter(Boolean),
+])];
+
 const dynamicStrings = new Set<string>([
     ...Object.values(BUCKET_LABELS),
     ...CONTEXT_KEYS,
@@ -582,6 +604,23 @@ const dynamicStrings = new Set<string>([
       rendering its raw id (`sharp-shooter`) on somebody's dashboard.
     */
     ...BADGE_STRINGS,
+    /*
+      The labs' own label tables.
+
+      Every one of these is reached through a variable — `$t(pane.label)`,
+      `$t(panel.title)`, `$t(column.label)`, `$t(DIFFICULTY_LABELS[…])` — so no
+      source file contains the literal and the orphan scan below would report all
+      144 of them. They live in `labCatalogue.ts` rather than in the components
+      exactly so this import is possible: a GUI dashboard added without its
+      column headings translated is 20 English words in the middle of an
+      otherwise Arabic lab page, which is the "half-translated reads worse than
+      untranslated" failure the whole three-language change exists to end.
+
+      DERIVED by reading the tables, never a second hand-written list. A copy
+      goes stale the day somebody renames a panel, and the symptom is a heading
+      that silently reverts to English in both languages.
+    */
+    ...LAB_STRINGS,
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {
@@ -598,6 +637,14 @@ for (const [id, catalogue] of CATALOGUES) {
     ok(`${id}: every achievement badge has a name and a requirement`,
         missing.length === 0,
         missing.length ? `${missing.length} missing: ${missing.slice(0, 8).join(' · ')}` : '');
+}
+
+for (const [id, catalogue] of CATALOGUES) {
+    const missing = LAB_STRINGS
+        .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
+    ok(`${id}: every lab label, panel title and column heading is translated`,
+        missing.length === 0,
+        missing.length ? `${missing.length} missing: ${missing.slice(0, 10).join(' · ')}` : '');
 }
 
 /* ------------------------------------------------------------------ *
@@ -716,7 +763,15 @@ for (const [id, catalogue] of CATALOGUES) {
 
 section('10. The untranslated allow-list is current');
 
-const staleAllow = untranslated.filter(k => !usedKeys.has(k));
+/**
+ * `usedKeys` is the SOURCE scan, and three sets of keys are legitimately absent
+ * from it because their call site is a variable: the sidebar's labels, the AI
+ * Chat's headings, and the labs' panel titles and column headings. Allow-listing
+ * `S3` or `Pods` would otherwise read as a stale entry — the check would be
+ * telling us to remove the one thing keeping `S3` from being translated.
+ */
+const reachable = new Set<string>([...usedKeys, ...navStrings, ...dynamicStrings]);
+const staleAllow = untranslated.filter(k => !reachable.has(k));
 ok('every allow-listed key is still used in the app',
     staleAllow.length === 0,
     staleAllow.slice(0, 10).map(k => JSON.stringify(k)).join('\n        '));

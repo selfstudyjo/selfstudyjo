@@ -17,6 +17,11 @@ import AllUsersCertificates from '../views/AllUsersCertificates.vue';
 import Runbooks from '../views/Runbooks.vue';
 import RunbookDetails from '../views/RunbookDetails.vue';
 import Labs from '../views/Labs.vue';
+import LabWorkspace from '../views/LabWorkspace.vue';
+// The three practice tools, which used to BE the Labs page. They are a
+// scratchpad rather than a lab, so they live on the top bar of every page
+// and at /tools - see the routes below.
+import Tools from '../views/Tools.vue';
 import Exams from '../views/Exams.vue';
 import ScheduleExam from '../views/ScheduleExam.vue';
 import ExamApproval from '../views/ExamApproval.vue';
@@ -141,20 +146,62 @@ const routes = [
             },
             {
                 /*
-                  The three sandboxes are addressable.
+                  ONE LAB IS A PLACE, so it is a route.
 
-                  They were tabs in component state, which meant the sidebar had
-                  nothing to point at — one "Labs" entry for three tools — and a
-                  student could not link a classmate to the Python tab or come
-                  back to the one they were in. The tab is a route param now, so
-                  it survives a reload, a back button and a shared URL, and
-                  appNav can list all three. `/labs` still works and lands on SQL.
+                  A reload lands back in the lab and a student can send a
+                  classmate the lab they are stuck on — the same argument that
+                  turned the three sandbox tabs into routes, one level up.
+
+                  `hideTopBar`, because this page already has those three tools
+                  in its own workbench and two consoles for one command is a
+                  student wondering which one they are typing into.
                 */
-                path: 'labs/:tab(sql|linux|python)',
-                name: 'LabsTab',
-                component: Labs,
-                meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+                path: 'lab/:labId',
+                name: 'LabWorkspace',
+                component: LabWorkspace,
+                meta: { title: 'Lab', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'], hideTopBar: true },
+                props: true
             },
+            {
+                /*
+                  The three practice tools are addressable, and they are NOT labs.
+
+                  They were `/labs` and `/labs/<tab>` — which is what this page
+                  used to be. A terminal, a SQL editor and a Python compiler are a
+                  place to try something rather than a curriculum: no brief, no
+                  tasks, no progress. So they are `/tools` now and the top bar
+                  opens all three from any page on the platform, while `/labs` is
+                  the catalogue of playgrounds.
+
+                  The tab stays a route param for the reason it became one: it
+                  survives a reload, a back button and a shared URL, and appNav
+                  can list all three. `/tools` with no tab means SQL, because it
+                  is the page's own default and two paths rendering the same thing
+                  would light up two sidebar entries at once.
+                */
+                path: 'tools',
+                name: 'Tools',
+                component: Tools,
+                meta: { title: 'Practice tools', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            {
+                path: 'tools/:tab(sql|linux|python)',
+                name: 'ToolsTab',
+                component: Tools,
+                meta: { title: 'Practice tools', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            /*
+              The old addresses, kept as redirects.
+
+              `/labs/linux` and `/labs/python` were in the sidebar, in browser
+              histories and in bookmarks for months. A 404 on a path that worked
+              yesterday reads as the platform being broken, so they land on the
+              tab they meant — the same call the Dashboard made when the
+              PythonAnywhere screen became a tab.
+            */
+            { path: 'labs/sql', redirect: '/tools' },
+            { path: 'labs/linux', redirect: '/tools/linux' },
+            { path: 'labs/python', redirect: '/tools/python' },
             {
                 path: 'course/:id',
                 name: 'CourseDetails',

@@ -60,6 +60,31 @@
         reads as broken rather than as locked.
       -->
       <div v-if="hasResources" class="lesson-resources">
+        <!--
+          The lab (app 11) this lesson practises. It LEADS the row, ahead of the
+          runbook: everything else here is something to read about the lesson and
+          this is the one thing that is doing it.
+
+          No extra request - `lab_id` and `lab_title` ride on the lesson record,
+          cached there by app 19 so a course page can draw twenty of these
+          without twenty cross-service lookups. The title may be a rename behind
+          app 11's own; the lab page shows the live one.
+
+          Drawn only for somebody who can open it: `/lab/:labId` carries
+          `requiredFeatures: ['lab_feature']`, so without it the guard bounces
+          the click and a button that goes nowhere reads as broken rather than as
+          locked - the same rule the runbook link below follows.
+        -->
+        <router-link
+          v-if="labId && authStore.hasLabAccess"
+          :to="`/lab/${labId}`"
+          class="lesson-res lesson-res--lab"
+          :title="lesson.lab_title || labId"
+        >
+          <FlaskConical :size="16" />
+          {{ $t('Practise in the lab') }}
+        </router-link>
+
         <router-link
           v-if="runbook"
           :to="`/runbooks/${runbook.id}`"
@@ -381,6 +406,7 @@
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { FlaskConical } from 'lucide-vue-next';
 
 import RichText from '@/components/RichText.vue';
 import { rel, td } from '@/i18n/runtime';
@@ -455,8 +481,19 @@ const headings = computed(() =>
 const minutes = computed(() =>
     lesson.value ? readingMinutes(td(lesson.value, 'content')) : 0);
 
+/**
+ * The lab this lesson practises, or '' - read once so the template does not
+ * repeat the optional chain three times.
+ *
+ * `''` from a deployed app 19 replica when nothing is linked and `undefined`
+ * from one that has not pulled the build; both mean "draw nothing", which is why
+ * this is a coalesce rather than a check on the whole triple.
+ */
+const labId = computed(() => lesson.value?.lab_id || '');
+
 const hasResources = computed(() => !!(
-    runbook.value || lesson.value?.reading_url || lesson.value?.source_code_url
+    (labId.value && authStore.hasLabAccess)
+    || runbook.value || lesson.value?.reading_url || lesson.value?.source_code_url
     || quiz.value || homeworks.value.length));
 
 const imageSrc = computed(() => {

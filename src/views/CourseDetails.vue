@@ -217,6 +217,42 @@
                         </router-link>
 
                         <!--
+                          The lab (app 11) this lesson practises, when an
+                          operator has linked one.
+
+                          SECOND IN THE ROW, ahead of the runbook, the reading
+                          material and the source code: those three are things to
+                          READ about the lesson and this is the one thing that is
+                          doing it. It is also the only destination here that
+                          keeps per-student state, so a returning reader is
+                          picking up where they left off rather than starting
+                          again.
+
+                          NO EXTRA REQUEST. `lab_id` and `lab_title` are cached
+                          on the lesson record by app 19 precisely so a page with
+                          twenty rows does not make twenty cross-service lookups
+                          against a replica whose first answer of the day is ~20
+                          seconds. The title may be a rename behind app 11's own;
+                          that is the trade, and the lab page shows the live one.
+
+                          ONLY FOR SOMEBODY WHO CAN OPEN ONE, exactly as with the
+                          runbook: `/lab/:labId` carries
+                          `requiredFeatures: ['lab_feature']`, so without it the
+                          guard bounces the click and a button that goes nowhere
+                          reads as broken rather than as locked. The sidebar hides
+                          its Labs entry on the same flag.
+                        -->
+                        <router-link
+                          v-if="lesson.lab_id && authStore.hasLabAccess"
+                          :to="`/lab/${lesson.lab_id}`"
+                          class="lesson-link lesson-link--lab"
+                          :title="lesson.lab_title || lesson.lab_id"
+                        >
+                          <FlaskConical :size="16" />
+                          {{ $t('Practise in the lab') }}
+                        </router-link>
+
+                        <!--
                           The lesson's runbook, when one has been written for it.
 
                           A router-link rather than an <a href>, and no
@@ -438,6 +474,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { FlaskConical } from 'lucide-vue-next';
 import { courseService, type Course, type Lesson, type Comment, type Homework, type CourseRegistration } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
 import { runbookService, type Runbook } from '@/services/runbook.service';
@@ -1102,6 +1139,31 @@ onUnmounted(() => {
 .lesson-title-link:focus-visible {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/*
+  The lab link. Same geometry as its neighbours and the INFO family rather than
+  the accent, for two reasons: it is the one destination in the row that is a
+  place to DO something rather than a document to read, and a third
+  accent-coloured pill beside `--page` and `--runbook` is three shades of one hue
+  that several galaxies cannot separate (working rule 37).
+
+  The same colour as `.lesson-res--lab` on the lesson page, deliberately - it is
+  the same button in two places, and a reader who learns it here should recognise
+  it there.
+
+  Fill and ink decided together (working rule 12): `--sfs-info-text` is derived
+  against this wash, which is the harder of the two backdrops in both modes.
+*/
+.lesson-link--lab {
+  background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.18);
+  border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.38);
+  color: var(--sfs-info-text, #4ecdc4);
+  font-weight: 700;
+}
+
+.lesson-link--lab:hover {
+  background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.28);
 }
 
 .lesson-link--runbook {

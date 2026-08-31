@@ -1,0 +1,1558 @@
+/* ==========================================================================
+   labs.css — the playground labs, the workbench and the top bar.
+
+   GLOBAL, imported from main.ts, and safe to be global for exactly one reason:
+   EVERY selector here is `sl-` or `sfs-topbar`/`sfs-dock` prefixed, and no other
+   view uses those names. That is the escape `check:cssleaks` allows for a
+   globally loaded sheet, and it is what the lab UI needs — the workbench is eight
+   components deep and `<style scoped>` reaches a child component's ROOT element
+   and no further.
+
+   It is not scoped for a second reason worth recording, because this repository
+   has already paid for it: `lab.css` declared 51 tokens on `:root` inside a
+   scoped import, Vite rewrote that to `:root[data-v-…]`, `<html>` has no scope
+   attribute, and two thirds of that stylesheet silently did nothing for months.
+   A token block belongs on a page root; `:root` is only safe in a sheet imported
+   from main.ts. See working rule 49.
+
+   NO COLOUR LITERALS. Every colour is a `--sfs-*` token with a fallback, so all
+   ten galaxies work and `npm run check:theme` can prove it. The two places that
+   look like exceptions are the console and the code panes, which are pinned dark
+   in every galaxy on purpose — a terminal is dark everywhere, and the same
+   argument `lab.css` makes for `--code-bg` and the lesson page makes for
+   `--lesson-code-bg`.
+   ========================================================================== */
+
+.sl-catalogue,
+.sl-workspace {
+    /* Tokens on the PAGE ROOT, never on :root. See the header. */
+    --sl-gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    --sl-radius: 12px;
+    --sl-radius-sm: 8px;
+    --sl-line: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    --sl-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    --sl-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    --sl-well: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
+    --sl-code-bg: #0f172a;
+    --sl-code-ink: #e2e8f0;
+    --sl-code-dim: #94a3b8;
+    --sl-code-ok: #86efac;
+    --sl-code-bad: #fca5a5;
+    --sl-code-accent: #7dd3fc;
+
+    display: block;
+    padding: var(--sl-gap);
+    max-width: 1600px;
+    margin-inline: auto;
+    color: var(--sfs-text, #e6e8ef);
+}
+
+/* ── icons ─────────────────────────────────────────────────────────────── */
+
+.sl-i {
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    vertical-align: -0.125em;
+}
+
+.sl-i--lg {
+    width: 2.5em;
+    height: 2.5em;
+}
+
+/* ── buttons ───────────────────────────────────────────────────────────── */
+
+.sl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45em;
+    padding: 0.55rem 0.95rem;
+    /* max(), not a bare rem: responsive.css scales the ROOT font size, so
+       2.75rem measures 41.5px on a 390px phone — under the 44px minimum, on
+       exactly the devices the rule exists for. */
+    min-height: max(2.5rem, 44px);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-surface);
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.sl-btn:hover:not(:disabled) { background: var(--sl-surface-2); }
+.sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sl-btn--sm {
+    padding: 0.35rem 0.7rem;
+    min-height: max(2rem, 36px);
+    font-size: 0.86rem;
+}
+
+.sl-btn--primary {
+    /* --sfs-accent and --sfs-on-accent are derived TOGETHER, so this pair
+       clears AA in all ten galaxies. --sfs-accent-text is the ink derived to sit
+       ON a surface and is a pale lavender in the dark seven — used as a fill it
+       gives white-on-pale, which is the bug working rule 48 records. */
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sl-btn--primary:hover:not(:disabled) {
+    background: var(--sfs-accent-strong, var(--sfs-accent, #5a6fd6));
+}
+
+.sl-btn--ghost { background: transparent; }
+
+.sl-btn--danger {
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.18);
+    border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.4);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+/* ── tags and badges ───────────────────────────────────────────────────── */
+
+.sl-tag,
+.sl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.sl-tag--sim {
+    background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.22);
+    color: var(--sfs-warning-text, #fbbf7c);
+}
+
+.sl-tag--real {
+    background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.2);
+    color: var(--sfs-success-text, #86efac);
+}
+
+.sl-tag--warn {
+    background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.22);
+    color: var(--sfs-warning-text, #fbbf7c);
+}
+
+.sl-badge--good {
+    background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.2);
+    color: var(--sfs-success-text, #86efac);
+}
+
+.sl-badge--warn {
+    background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.2);
+    color: var(--sfs-warning-text, #fbbf7c);
+}
+
+.sl-badge--bad {
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.2);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+.sl-badge--quiet {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+/* ── the catalogue ─────────────────────────────────────────────────────── */
+
+.sl-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sl-gap);
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    backdrop-filter: blur(10px);
+    margin-bottom: var(--sl-gap);
+}
+
+.sl-hero__text { flex: 1 1 22rem; min-width: 0; }
+
+.sl-hero__title {
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+    /* balance: a heading with one orphan word on the second line is the
+       commonest thing that makes a careful layout look careless, and it happens
+       constantly in Arabic and Chinese where the same sentence is a different
+       length. */
+    text-wrap: balance;
+}
+
+.sl-hero__lede {
+    margin: 0;
+    max-width: 60ch;
+    color: var(--sfs-text-muted, #b7bdcc);
+    line-height: 1.6;
+}
+
+.sl-hero__tools { flex: 0 1 auto; }
+
+.sl-hero__toolsline {
+    margin: 0 0 0.4rem;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-hero__toolbtns { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.sl-mine {
+    display: grid;
+    /* min() in the minmax, never a bare 1fr: a 1fr track's automatic minimum is
+       min-content, so one long number would push its track past its share and
+       overflow the row. This platform has fixed that 32 times. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: 0.75rem;
+    margin-bottom: var(--sl-gap);
+}
+
+.sl-mine__stat {
+    padding: 0.85rem 1rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-surface);
+    text-align: center;
+}
+
+.sl-mine__value {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.sl-mine__label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: var(--sl-gap);
+}
+
+.sl-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 0;
+    /* 16px minimum: below it iOS zooms the page on focus and never zooms back,
+       and the fix is the font size rather than user-scalable=no, which would
+       take pinch-zoom away from everybody. */
+    font-size: max(1rem, 16px);
+    border: 0;
+    background: transparent;
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sl-search input:focus { outline: none; }
+
+.sl-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.sl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35rem 0.75rem;
+    min-height: max(2rem, 36px);
+    border: var(--sl-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.sl-chip.is-active {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sl-chip__count {
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+
+.sl-track { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+
+.sl-track__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.sl-track__title {
+    margin: 0;
+    font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+    text-wrap: balance;
+}
+
+.sl-track__sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.9rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-track__meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-track__blurb {
+    margin: 0 0 0.85rem;
+    max-width: 70ch;
+    font-size: 0.9rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: var(--sl-gap);
+}
+
+.sl-labcard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.sl-labcard:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+}
+
+.sl-labcard.is-completed {
+    border-inline-start: 3px solid var(--sfs-success, #48bb78);
+}
+
+.sl-labcard.is-in-progress {
+    border-inline-start: 3px solid var(--sfs-warning, #ed8936);
+}
+
+.sl-labcard__top { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.sl-labcard__title {
+    margin: 0;
+    font-size: 1.02rem;
+    text-wrap: balance;
+}
+
+.sl-labcard__summary {
+    margin: 0;
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-labcard__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sl-labcard__tools li {
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.09);
+    font-size: 0.72rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-labcard__more { font-weight: 700; }
+
+.sl-labcard__foot {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    /* auto keeps every card in a row the same height; without it the footers
+       stagger and the grid reads as broken. */
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: var(--sl-line);
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-labcard__foot span { display: inline-flex; align-items: center; gap: 0.3em; }
+
+.sl-labcard__score {
+    margin-inline-start: auto;
+    font-weight: 800;
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.sl-empty,
+.sl-gate {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    text-align: center;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-gate h3 { margin: 0.75rem 0 0.35rem; color: var(--sfs-text, #e6e8ef); }
+.sl-gate p { margin: 0 auto 1rem; max-width: 48ch; line-height: 1.6; }
+
+.sl-gate__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.sl-loading {
+    padding: clamp(2rem, 6vw, 4rem);
+    text-align: center;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0 auto 1rem;
+    border: 3px solid rgb(var(--sfs-tint-rgb, 255 255 255) / 0.15);
+    border-top-color: var(--sfs-accent, #667eea);
+    border-radius: 50%;
+    animation: sl-spin 0.9s linear infinite;
+}
+
+@keyframes sl-spin { to { transform: rotate(360deg); } }
+
+/* ── the workspace ─────────────────────────────────────────────────────── */
+
+.sl-wshead {
+    padding: clamp(0.85rem, 2vw, 1.35rem);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    margin-bottom: var(--sl-gap);
+}
+
+.sl-crumbs {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    margin-bottom: 0.4rem;
+}
+
+.sl-crumbs a { color: inherit; text-decoration: none; }
+.sl-crumbs a:hover { text-decoration: underline; }
+
+.sl-wshead__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.sl-wshead__title {
+    margin: 0;
+    font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+    text-wrap: balance;
+}
+
+.sl-wshead__sub {
+    margin: 0.2rem 0 0;
+    max-width: 70ch;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-wshead__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sl-wshead__note,
+.sl-wshead__warn {
+    margin: 0.65rem 0 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--sl-radius-sm);
+    font-size: 0.85rem;
+}
+
+.sl-wshead__note {
+    background: rgb(var(--sfs-info-rgb, 14 165 233) / 0.16);
+    color: var(--sfs-info-text, #7dd3fc);
+}
+
+.sl-wshead__warn {
+    background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.16);
+    color: var(--sfs-warning-text, #fbbf7c);
+}
+
+.sl-wsbody {
+    display: grid;
+    /* One column below 1100px. The task list under the workbench rather than
+       beside it, because a 320px sidebar next to a terminal is two things too
+       narrow to use. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sl-gap);
+}
+
+@media (min-width: 1100px) {
+    .sl-wsbody { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); }
+}
+
+.sl-bench {
+    min-width: 0;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    overflow: hidden;
+}
+
+.sl-bench__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    padding: 0.4rem;
+    border-bottom: var(--sl-line);
+    background: var(--sl-well);
+}
+
+.sl-bench__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.4rem 0.8rem;
+    /* Tabs size to their CONTENT. `flex: 1` across three tabs makes each one 400
+       pixels of mostly empty space and the active one reads as one enormous pill
+       rather than as one of three — which is what the Labs page did. */
+    min-height: max(2rem, 38px);
+    border: 1px solid transparent;
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.86rem;
+    cursor: pointer;
+}
+
+.sl-bench__tab:hover { background: var(--sl-surface-2); }
+
+.sl-bench__tab.is-active {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sl-bench__dot {
+    width: 0.45em;
+    height: 0.45em;
+    border-radius: 50%;
+    background: var(--sfs-warning, #ed8936);
+}
+
+.sl-bench__panel { padding: var(--sl-gap); min-width: 0; }
+
+.sl-bench__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+}
+
+.sl-bench__tool {
+    padding: 0.25rem 0.6rem;
+    min-height: max(1.9rem, 34px);
+    border: var(--sl-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.sl-bench__tool.is-active {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sl-side { min-width: 0; display: flex; flex-direction: column; gap: var(--sl-gap); }
+
+.sl-side__datasets {
+    padding: 0.85rem 1rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+}
+
+.sl-side__datasets h4 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+.sl-side__datasets ul { margin: 0; padding-inline-start: 1.1rem; font-size: 0.85rem; }
+
+.sl-side__hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-external { padding: 1rem 0; }
+.sl-external p { margin: 0 0 0.75rem; color: var(--sfs-text-muted, #b7bdcc); }
+
+.sl-objectives {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    border-inline-start: 3px solid var(--sfs-accent, #667eea);
+    border-radius: var(--sl-radius-sm);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.1);
+}
+
+.sl-objectives h4 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+.sl-objectives ul { margin: 0; padding-inline-start: 1.1rem; line-height: 1.7; }
+
+/* ── the brief ─────────────────────────────────────────────────────────── */
+
+.sl-brief { max-width: 74ch; line-height: 1.7; }
+
+.sl-brief__heading {
+    margin: 1.4rem 0 0.5rem;
+    font-size: 1.05rem;
+    text-wrap: balance;
+}
+
+.sl-brief__heading:first-child { margin-top: 0; }
+
+.sl-brief__para { margin: 0 0 0.85rem; }
+
+.sl-brief__list { margin: 0 0 0.85rem; padding-inline-start: 1.35rem; }
+.sl-brief__list li { margin-bottom: 0.3rem; }
+
+.sl-brief__note {
+    margin: 0 0 0.9rem;
+    padding: 0.7rem 0.95rem;
+    border-inline-start: 3px solid var(--sfs-info, #0ea5e9);
+    border-radius: var(--sl-radius-sm);
+    background: rgb(var(--sfs-info-rgb, 14 165 233) / 0.12);
+}
+
+/* A code block is DARK in all ten galaxies and never mirrors. A translucent
+   scrim over a light page composites to mid-grey with near-black text on it,
+   which is what the Labs page's terminal did; and rendered RTL the bidi
+   algorithm reorders the punctuation so a copied command does not run. */
+.sl-brief__code,
+.sl-turn__code,
+.sl-code__pre {
+    margin: 0 0 0.9rem;
+    padding: 0.8rem 0.95rem;
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    /* pre-wrap, not pre: a long command in a 320px column has to wrap rather
+       than widen the whole workbench. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-brief__empty { color: var(--sfs-text-muted, #b7bdcc); }
+
+/* ── the consoles ──────────────────────────────────────────────────────── */
+
+.sl-console__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.sl-console__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-weight: 700;
+    min-width: 0;
+}
+
+.sl-console__actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.sl-console__fidelity {
+    margin: 0 0 0.6rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-console__body {
+    height: clamp(14rem, 42vh, 30rem);
+    padding: 0.8rem 0.95rem;
+    border-radius: var(--sl-radius-sm) var(--sl-radius-sm) 0 0;
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.sl-console__hello { color: var(--sl-code-dim); }
+.sl-console__hello p { margin: 0 0 0.4rem; }
+.sl-console__hint { color: var(--sl-code-accent); }
+
+.sl-console__line {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-console__line--cmd { color: var(--sl-code-accent); font-weight: 600; }
+.sl-console__line--err { color: var(--sl-code-bad); }
+.sl-console__line--note { color: var(--sl-code-dim); font-style: italic; }
+
+.sl-console__prompt {
+    color: var(--sl-code-ok);
+    user-select: none;
+}
+
+.sl-console__form {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 0 0 var(--sl-radius-sm) var(--sl-radius-sm);
+    background: #0b111f;
+}
+
+.sl-console__input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: max(0.9rem, 16px);
+    /* The native caret is already in the right place and already takes
+       caret-color. A fake block cursor after a `flex: 1` input sits at the far
+       right of the terminal, hundreds of pixels from the text — which is what
+       the Labs page shipped. */
+    caret-color: var(--sl-code-ok);
+}
+
+.sl-console__input:focus { outline: none; }
+
+/* ── the code and query editors ────────────────────────────────────────── */
+
+.sl-code__editor,
+.sl-query__editor,
+.sl-files__text,
+.sl-web__editor {
+    display: block;
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: max(0.85rem, 16px);
+    line-height: 1.6;
+    resize: vertical;
+    tab-size: 4;
+}
+
+.sl-code__out { margin-top: 0.75rem; }
+
+.sl-code__outhead,
+.sl-web__resulthead,
+.sl-web__consolehead {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--sfs-text-muted, #b7bdcc);
+    margin-bottom: 0.3rem;
+}
+
+.sl-code__pre { margin: 0; max-height: 22rem; overflow: auto; }
+.sl-code__pre--err { color: var(--sl-code-bad); }
+.sl-code__pre--quiet { color: var(--sl-code-dim); }
+
+.sl-query__status,
+.sl-query__meta {
+    margin: 0.6rem 0 0;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sl-query__error {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sl-radius-sm);
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.14);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+.sl-query__error pre,
+.sl-query__report pre {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+.sl-query__report {
+    margin-top: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-bg);
+    color: var(--sl-code-dim);
+    max-height: 16rem;
+    overflow: auto;
+}
+
+.sl-query__results { margin-top: 0.6rem; }
+
+/* ── tables ────────────────────────────────────────────────────────────── */
+
+.sl-scroll {
+    /* The table scrolls, not the page. A result set with a uuid in it must not
+       push the whole workbench sideways. */
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+}
+
+.sl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+.sl-table th,
+.sl-table td {
+    padding: 0.45rem 0.7rem;
+    text-align: start;
+    border-bottom: var(--sl-line);
+    white-space: nowrap;
+}
+
+.sl-table th {
+    position: sticky;
+    top: 0;
+    background: var(--sl-well);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-table tbody tr:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05); }
+
+.sl-cell--code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    /* isolate: a uuid, an ARN and an Azure resource id are neutral-character
+       strings, and inside Arabic prose the bidi algorithm relocates their dots,
+       slashes and hyphens. */
+    unicode-bidi: isolate;
+}
+
+.sl-cell--num { text-align: end; font-variant-numeric: tabular-nums; }
+
+.sl-table--tree td:first-child { white-space: nowrap; }
+
+/* ── the files tool ────────────────────────────────────────────────────── */
+
+.sl-files__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+}
+
+@media (min-width: 760px) {
+    .sl-files__body { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); }
+}
+
+.sl-files__list {
+    max-height: 26rem;
+    overflow: auto;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+}
+
+.sl-files__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.45rem 0.7rem;
+    border: 0;
+    border-bottom: var(--sl-line);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.82rem;
+    text-align: start;
+    cursor: pointer;
+}
+
+.sl-files__item.is-active {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
+}
+
+.sl-files__name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-files__size { font-size: 0.72rem; color: var(--sfs-text-muted, #b7bdcc); }
+.sl-files__empty { padding: 0.7rem; font-size: 0.82rem; color: var(--sfs-text-muted, #b7bdcc); }
+
+.sl-files__pathrow { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+
+.sl-files__path {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.7rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+    color: var(--sfs-text, #e6e8ef);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: max(0.85rem, 16px);
+}
+
+.sl-files__msg { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--sfs-success-text, #86efac); }
+.sl-files__msg.is-error { color: var(--sfs-danger-text, #fca5a5); }
+
+/* ── the web playground ────────────────────────────────────────────────── */
+
+.sl-web__panes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+}
+
+@media (min-width: 980px) {
+    .sl-web__panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+.sl-web__tabs { display: flex; gap: 0.25rem; margin-bottom: 0.4rem; }
+
+.sl-web__tab {
+    padding: 0.3rem 0.75rem;
+    min-height: max(1.9rem, 34px);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sl-web__tab.is-active {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sl-web__editor { min-height: clamp(12rem, 32vh, 24rem); }
+
+.sl-web__auto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-web__frame {
+    display: block;
+    width: 100%;
+    height: clamp(12rem, 32vh, 24rem);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    /* WHITE, in every galaxy. A student's page has its own background and a
+       transparent frame over a dark galaxy would show their black text on it. */
+    background: #fff;
+}
+
+.sl-web__console {
+    margin-top: 0.6rem;
+    max-height: 12rem;
+    overflow: auto;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+.sl-web__consolehead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.sl-web__quiet { margin: 0; color: var(--sl-code-dim); }
+
+.sl-web__log {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-web__log--error { color: var(--sl-code-bad); }
+.sl-web__log--warn { color: #fcd34d; }
+
+/* ── the dashboards ────────────────────────────────────────────────────── */
+
+.sl-gui__empty,
+.sl-panel__empty {
+    margin: 0.35rem 0;
+    font-size: 0.85rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-panel { margin-bottom: 1.25rem; }
+
+.sl-panel__title {
+    margin: 0 0 0.45rem;
+    font-size: 0.95rem;
+    text-wrap: balance;
+}
+
+.sl-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    gap: 0.5rem;
+}
+
+.sl-stat {
+    padding: 0.55rem 0.7rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+}
+
+.sl-stat__label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-stat__value {
+    display: block;
+    font-weight: 700;
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 0.6rem;
+}
+
+.sl-card {
+    padding: 0.7rem 0.85rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+}
+
+.sl-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.sl-card__title {
+    font-weight: 700;
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-card__facts {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.15rem 0.6rem;
+    margin: 0;
+    font-size: 0.78rem;
+}
+
+.sl-card__facts dt { color: var(--sfs-text-muted, #b7bdcc); }
+.sl-card__facts dd { margin: 0; overflow-wrap: anywhere; unicode-bidi: isolate; }
+
+.sl-card__stages {
+    margin: 0.5rem 0 0;
+    padding-inline-start: 1rem;
+    font-size: 0.76rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-log {
+    max-height: 16rem;
+    overflow: auto;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+}
+
+.sl-log__line {
+    display: flex;
+    gap: 0.5rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.sl-log__line--warn { color: #fcd34d; }
+.sl-log__line--bad { color: var(--sl-code-bad); }
+.sl-log__when { color: var(--sl-code-dim); flex: 0 0 auto; }
+.sl-log__kind { color: var(--sl-code-accent); flex: 0 0 auto; }
+
+/* ── the task list ─────────────────────────────────────────────────────── */
+
+.sl-tasks {
+    padding: 0.9rem 1rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+}
+
+.sl-tasks__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.sl-tasks__title { margin: 0; font-size: 1.02rem; }
+
+.sl-tasks__count,
+.sl-tasks__points {
+    margin: 0.1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-meter {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.35);
+    overflow: hidden;
+}
+
+.sl-meter__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--sfs-accent, #667eea);
+    transition: width 0.3s ease;
+}
+
+.sl-tasks__list {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sl-task {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.6rem 0;
+    border-top: var(--sl-line);
+}
+
+.sl-task__mark { color: var(--sfs-text-muted, #b7bdcc); padding-top: 0.15rem; }
+.sl-task--passed .sl-task__mark { color: var(--sfs-success-text, #86efac); }
+.sl-task--unavailable .sl-task__mark { color: var(--sfs-danger-text, #fca5a5); }
+
+.sl-task__body { min-width: 0; flex: 1; }
+
+.sl-task__title {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.sl-task__points {
+    margin-inline-start: auto;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-task__detail,
+.sl-task__note,
+.sl-task__hint,
+.sl-task__requires,
+.sl-task__warn {
+    margin: 0.25rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #b7bdcc);
+    /* plaintext: a task detail can be Arabic when a translation exists and
+       English when it does not, and an English sentence in an RTL container has
+       its trailing full stop moved to the front. */
+    unicode-bidi: plaintext;
+}
+
+.sl-task__state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.35rem 0 0;
+}
+
+.sl-task__warn { color: var(--sfs-danger-text, #fca5a5); }
+
+.sl-task__hint {
+    padding: 0.5rem 0.7rem;
+    border-inline-start: 3px solid var(--sfs-warning, #ed8936);
+    border-radius: var(--sl-radius-sm);
+    background: rgb(var(--sfs-warning-rgb, 237 137 54) / 0.12);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sl-task__requires {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.74rem;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+
+.sl-task__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+}
+
+.sl-task__self {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 0.8rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tasks__empty,
+.sl-tasks__reveal {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+/* ── the tutor ─────────────────────────────────────────────────────────── */
+
+.sl-tutor__thread {
+    height: clamp(14rem, 40vh, 28rem);
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0.75rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+}
+
+.sl-tutor__hello,
+.sl-tutor__busy,
+.sl-tutor__error {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tutor__error { color: var(--sfs-danger-text, #fca5a5); }
+
+.sl-turn {
+    margin-bottom: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sl-radius-sm);
+    /* plaintext: a tutor answer is Arabic for an Arabic reader and English
+       otherwise, and both can appear in one thread. */
+    unicode-bidi: plaintext;
+}
+
+.sl-turn--user {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    margin-inline-start: 2rem;
+}
+
+.sl-turn--assistant { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06); }
+
+.sl-turn__text { margin: 0 0 0.5rem; line-height: 1.6; }
+.sl-turn__heading { margin: 0.6rem 0 0.3rem; font-size: 0.95rem; }
+.sl-turn__list { margin: 0 0 0.5rem; padding-inline-start: 1.2rem; }
+.sl-turn__quote {
+    margin: 0 0 0.5rem;
+    padding-inline-start: 0.7rem;
+    border-inline-start: 3px solid var(--sfs-info, #0ea5e9);
+}
+
+.sl-tutor__form {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.sl-tutor__input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.55rem 0.8rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-size: max(0.9rem, 16px);
+}
+
+/* ==========================================================================
+   The top bar and the tool dock.
+
+   Outside `.sl-catalogue` / `.sl-workspace` because they are on EVERY page, so
+   they carry their own tokens and their own prefix.
+   ========================================================================== */
+
+.sfs-topbar {
+    --sl-code-bg: #0f172a;
+    --sl-code-ink: #e2e8f0;
+    --sl-code-dim: #94a3b8;
+    --sl-code-ok: #86efac;
+    --sl-code-bad: #fca5a5;
+    --sl-code-accent: #7dd3fc;
+    --sl-line: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    --sl-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    --sl-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    --sl-well: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
+    --sl-radius-sm: 8px;
+    --sl-gap: 0.75rem;
+}
+
+.sfs-topbar__inner {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+    backdrop-filter: blur(8px);
+}
+
+.sfs-topbar__spacer { flex: 1; }
+
+.sfs-topbar__btn,
+.sfs-topbar__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3rem 0.6rem;
+    min-height: max(2rem, 36px);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sfs-topbar__btn:hover,
+.sfs-topbar__link:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sfs-topbar__btn.is-open {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sfs-topbar__i { width: 1.05em; height: 1.05em; flex: 0 0 auto; }
+
+/* The labels go below 560px: three icons and three words in a bar that also has
+   to hold the sidebar toggle is two rows on a phone, and a second row of chrome
+   costs more than the words are worth. */
+@media (max-width: 559px) {
+    .sfs-topbar__label { display: none; }
+}
+
+.sfs-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    /* Above the page, below the sidebar's drawer (z-index 1000 in base.css) so
+       the navigation is always reachable — and deliberately NOT a modal: the
+       whole value is that the page behind it is still readable. */
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    height: min(46vh, 26rem);
+    border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 12px 12px 0 0;
+    background: var(--sfs-space, #0b1020);
+    box-shadow: 0 -12px 32px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.4);
+}
+
+.sfs-dock.is-tall { height: min(80vh, 48rem); }
+
+.sfs-dock__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+.sfs-dock__tabs { display: flex; gap: 0.2rem; }
+
+.sfs-dock__tab {
+    padding: 0.3rem 0.7rem;
+    min-height: max(1.9rem, 34px);
+    border: 0;
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sfs-dock__tab.is-active {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sfs-dock__actions { display: flex; gap: 0.2rem; }
+
+.sfs-dock__ctl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: max(2rem, 38px);
+    height: max(2rem, 38px);
+    border: 0;
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    cursor: pointer;
+}
+
+.sfs-dock__ctl:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sfs-dock__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.7rem 0.85rem;
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sfs-dock__gate { margin: 0; font-size: 0.88rem; color: var(--sfs-text-muted, #b7bdcc); }
+.sfs-dock__gate a { color: var(--sfs-accent-text, #a5b4fc); }
+
+/* The dock reuses the lab console components, so it needs their tokens too. */
+.sfs-dock__body .sl-console__body { height: clamp(8rem, 26vh, 18rem); }
+.sfs-dock__body .sl-code__editor,
+.sfs-dock__body .sl-query__editor { min-height: 7rem; }
+
+/* ── accessibility and print ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .sl-labcard,
+    .sl-meter__fill { transition: none; }
+    /* The track ENDS where it began, so forcing the duration to 0.01ms lands it
+       on the last keyframe rather than parking it mid-rotation. */
+    .sl-spinner { animation-duration: 1.2s; }
+}
+
+@media print {
+    .sfs-topbar,
+    .sfs-dock,
+    .sl-bench__tabs,
+    .sl-console__form { display: none !important; }
+}

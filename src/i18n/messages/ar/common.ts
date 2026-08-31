@@ -293,7 +293,6 @@ const common: Catalogue = {
     'Credentials you have earned': 'المؤهّلات التي حصلت عليها',
     'Who is ahead across the platform': 'من المتقدّم على مستوى المنصّة',
     'Step-by-step operational guides': 'أدلة تشغيلية خطوة بخطوة',
-    'SQL, Linux and Python sandboxes': 'بيئات SQL وLinux وPython',
     'SQL Database': 'قاعدة بيانات SQL',
     'Linux Terminal': 'طرفية Linux',
     'Python Compiler': 'مصرّف Python',

@@ -15,6 +15,12 @@ import './style.css'
 // file, and before every route chunk so any page rule still beats it — that
 // ordering is the whole reason it is safe to load globally. See its header.
 import './assets/css/ui.css'
+// The playground labs, the workbench and the top bar's tool dock.
+// GLOBAL rather than scoped: the lab UI is eight components deep and
+// `<style scoped>` reaches a child component's ROOT element and no
+// further. Safe to be global because every selector in it is `sl-` or
+// `sfs-topbar`/`sfs-dock` prefixed - the escape check:cssleaks allows.
+import './assets/css/labs.css'
 // Loaded after every page stylesheet on purpose: it corrects what a
 // left-to-right layout gets wrong once the document flips, and it can only do
 // that from in front. See the file's own header.
