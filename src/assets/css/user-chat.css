@@ -29,7 +29,7 @@
   /* ---- text ----------------------------------------------------------- */
   --uc-text: var(--sfs-text, #ffffff);
   --uc-text-soft: rgb(var(--sfs-text-rgb, 255 255 255) / 0.82);
-  --uc-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.58);
+  --uc-text-muted: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   --uc-text-dim: rgb(var(--sfs-text-rgb, 255 255 255) / 0.38);
 
   /* ---- glass surfaces -------------------------------------------------- */

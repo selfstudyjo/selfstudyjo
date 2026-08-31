@@ -33,7 +33,7 @@
   /* Text */
   --lg-text-primary: var(--sfs-text, #ffffff);
   --lg-text-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --lg-text-muted: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --lg-text-muted: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   --lg-text-accent: var(--sfs-text-muted, #c7d2fe);
 
   /* Status — strong opaque red for maximum readability */
@@ -371,7 +371,7 @@
   border-radius: 8px;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 3px var(--sfs-ink-halo, rgb(0 0 0 / 0.7));
   box-shadow: 0 4px 14px rgb(var(--sfs-danger-rgb, 180 30 40) / 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   align-self: flex-start;
@@ -385,7 +385,7 @@
   line-height: 1;
   color: var(--sfs-text, #ffffff);
   flex-shrink: 0;
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0 6px var(--sfs-ink-halo, rgb(0 0 0 / 0.6));
 }
 
 /* ==========================================================================
@@ -412,7 +412,7 @@
   color: var(--sfs-text, #ffffff) !important;                             /* PURE WHITE */
   background: var(--lg-danger-bg);
   border: 1px solid var(--lg-danger-border);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 3px var(--sfs-ink-halo, rgb(0 0 0 / 0.7));
   box-shadow: 0 6px 20px rgb(var(--sfs-danger-rgb, 180 30 40) / 0.35),
               0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   font-weight: 600;
@@ -463,7 +463,11 @@
   font-size: var(--lg-button-fz);
   font-weight: 600;
   letter-spacing: 0.6px;
-  color: var(--lg-text-primary);
+  /* `--sfs-on-accent`, not the page ink: this element is FILLED with the brand
+     gradient, and the theme system derives an ink per fill for exactly this
+     reason. Spending the page's `--sfs-text` here is white-on-blue in the dark
+     seven and NEAR-BLACK ON BLUE in the light three — 2.79:1, measured. */
+  color: var(--sfs-on-accent, #ffffff);
   background: linear-gradient(135deg,
     var(--lg-brand-1) 0%,
     var(--lg-brand-2) 100%);
@@ -559,6 +563,34 @@
    DECORATIVE BACKGROUND SHAPES (kept invisible — galaxy is the background)
    ========================================================================== */
 .login-background,
+/*
+  THE DECORATIVE BLOBS ARE OFF, DELIBERATELY.
+
+  They have been invisible for as long as anybody can remember, and not because
+  this file said so: `verify-email.css` was loaded globally and carried
+  `.background-shapes, .shape, .shape-1… { display: none !important }` — its own
+  page's "neutralize the shapes, the galaxy is the real background" rule, landing
+  on the login page too because both files use the same class names. Scoping that
+  file (see VerifyEmail.vue) would have brought three animated blobs back to a
+  page nobody has ever seen them on.
+
+  Keeping them off is the right answer rather than a shortcut, for the reason
+  that file gave and one more: each blob is a 320px element with
+  `filter: blur(70px)` on an 18-second `animation`, and a large blur filter is
+  the single most expensive thing CSS can be asked to do — three of them, moving,
+  behind the first screen of the app. The ambient background
+  (`AnimatedBackground.vue`) is now a set of soft gradients that does the same
+  job for nothing.
+
+  The markup stays: `display: none` costs nothing and leaving the elements in
+  place keeps this reversible in one line.
+*/
+.login-background,
+.background-shapes,
+.shape {
+  display: none;
+}
+
 .background-shapes,
 .shape {
   position: absolute;

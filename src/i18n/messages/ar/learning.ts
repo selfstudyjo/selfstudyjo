@@ -339,6 +339,14 @@ const learning: Catalogue = {
     'Quick Commands (Click to insert)': 'أوامر سريعة (اضغط للإدراج)',
     'Quick Examples': 'أمثلة سريعة',
     'Quick Tips': 'نصائح سريعة',
+    /* ---- The labs: the four strings that were still literals ----
+     * `Run Query` on an Arabic page was the only English word on the screen, and
+     * it is the page's primary action. */
+    'Running...': 'جارٍ التنفيذ...',
+    'Run Query': 'نفّذ الاستعلام',
+    'Run Code': 'شغّل الكود',
+    'Enter your SQL query here...': 'اكتب استعلام SQL هنا...',
+    'Type a command and press Enter...': 'اكتب أمراً واضغط Enter...',
     'List files': 'سرد الملفات',
     'List files with details': 'سرد الملفات بالتفاصيل',
     'Current directory': 'المجلد الحالي',

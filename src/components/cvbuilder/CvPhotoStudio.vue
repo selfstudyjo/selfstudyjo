@@ -763,13 +763,13 @@ onBeforeUnmount(() => {
 }
 .ps-head h3 { font-size: 1.05rem; font-weight: 650; }
 .ps-x {
-  background: none; border: none; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  background: none; border: none; color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   font-size: 1.6rem; line-height: 1; cursor: pointer;
 }
 .ps-x:hover { color: var(--sfs-text, #fff); }
 
 .ps-lead, .ps-hint {
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62); font-size: 0.87rem; line-height: 1.6;
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-size: 0.87rem; line-height: 1.6;
 }
 
 /* ── Choose a source ─────────────────────────────────────────── */
@@ -792,7 +792,7 @@ onBeforeUnmount(() => {
 .ps-choice input { display: none; }
 .ps-choice-ico { color: var(--sfs-text-muted, #c4b5fd); }
 .ps-choice strong { font-size: 0.94rem; }
-.ps-choice small { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45); font-size: 0.77rem; }
+.ps-choice small { color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-size: 0.77rem; }
 
 /* ── Camera ──────────────────────────────────────────────────── */
 .ps-camera { padding: 18px; }
@@ -839,7 +839,7 @@ onBeforeUnmount(() => {
   background: rgb(var(--sfs-surface-rgb, 0 0 0) / 0.62); color: var(--sfs-text, #fff); font-size: 0.72rem;
   padding: 3px 10px; border-radius: 20px;
 }
-.ps-drag-hint { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.42); font-size: 0.78rem; text-align: center; }
+.ps-drag-hint { color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-size: 0.78rem; text-align: center; }
 
 .ps-controls { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .ps-group {
@@ -848,7 +848,7 @@ onBeforeUnmount(() => {
 }
 .ps-group h4 {
   font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.07em; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); margin-bottom: 11px;
+  letter-spacing: 0.07em; color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); margin-bottom: 11px;
 }
 
 .ps-slider { display: block; margin-bottom: 11px; }
@@ -856,7 +856,7 @@ onBeforeUnmount(() => {
   display: flex; justify-content: space-between; align-items: baseline;
   font-size: 0.8rem; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.72); margin-bottom: 5px;
 }
-.ps-slider em { font-style: normal; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45); font-variant-numeric: tabular-nums; }
+.ps-slider em { font-style: normal; color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-variant-numeric: tabular-nums; }
 .ps-slider input[type="range"] { width: 100%; accent-color: var(--sfs-accent-2, #8b5cf6); }
 
 .ps-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -868,7 +868,7 @@ onBeforeUnmount(() => {
 .ps-check input { width: 15px; height: 15px; accent-color: var(--sfs-accent-2, #8b5cf6); }
 
 .ps-nudge { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-.ps-nudge span { font-size: 0.78rem; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5); margin-inline-end: 3px; }
+.ps-nudge span { font-size: 0.78rem; color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); margin-inline-end: 3px; }
 .ps-nudge button {
   width: 28px; height: 28px; border-radius: 7px; cursor: pointer;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07); color: var(--sfs-text, #fff);
@@ -877,12 +877,12 @@ onBeforeUnmount(() => {
 .ps-nudge button:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
 
 .ps-seg {
-  display: flex; gap: 4px; background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+  display: flex; gap: 4px; background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
   border-radius: 9px; padding: 3px; margin-bottom: 12px;
 }
 .ps-seg button {
   flex: 1; padding: 7px 8px; border: none; border-radius: 7px; cursor: pointer;
-  background: transparent; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
+  background: transparent; color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   font-size: 0.78rem; font-weight: 600; font-family: inherit;
 }
 .ps-seg button.active { background: rgb(var(--sfs-accent-2-rgb, 139 92 246) / 0.35); color: var(--sfs-text, #fff); }
@@ -901,7 +901,7 @@ onBeforeUnmount(() => {
 .ps-note, .ps-warn {
   font-size: 0.78rem; line-height: 1.55; margin-top: 10px;
 }
-.ps-note { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45); }
+.ps-note { color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); }
 .ps-note em { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.72); font-style: normal; }
 .ps-warn {
   color: var(--sfs-warning-text, #fcd34d); background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.1);

@@ -9,8 +9,8 @@
 .ji-modal {
   --ji-text:        var(--sfs-text, #ffffff);
   --ji-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.85);
-  --ji-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.65);
-  --ji-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.45);
+  --ji-text-mute:   var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --ji-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   --ji-grad:        linear-gradient(135deg, var(--sfs-accent, #6366f1) 0%, var(--sfs-info, #14b8a6) 100%);
   --ji-grad-text:   linear-gradient(135deg, var(--sfs-text, #ffffff) 0%, var(--sfs-success-text, #c7f9ec) 55%, var(--sfs-text-muted, #c7d2fe) 100%);
@@ -225,7 +225,7 @@
 .ji-timer-display {
   padding: 0.3rem 0.8rem; font-family: 'SFMono-Regular', Consolas, monospace;
   font-size: 1.35rem; font-weight: 700; color: var(--sfs-text, #fff);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.4); border: 1px solid var(--ji-border);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.4); border: 1px solid var(--ji-border);
   border-radius: var(--ji-r-sm); letter-spacing: 0.04em;
 }
 .ji-timer-display.over { background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.35); border-color: var(--ji-danger); }
@@ -554,7 +554,7 @@
   text-align: center;
   /* The overlay sits on the dark tile in every galaxy, so this is one of the
      few places the ink is fixed to the tile rather than to the page. */
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 }
 
 .ji-card-lead {

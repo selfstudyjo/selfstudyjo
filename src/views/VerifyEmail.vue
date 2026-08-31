@@ -103,7 +103,6 @@ import { subscriptionService, FREE_TRIAL_DAYS } from '@/services/subscription.se
 import { userService } from '@/services/user.service';
 
 // Import the CSS file
-import '@/assets/css/verify-email.css';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -467,3 +466,27 @@ const changeEmail = () => {
   router.push('/register');
 };
 </script>
+
+<!--
+  SCOPED, not a script `import`.
+
+  A JS `import` of a stylesheet puts it in the bundle GLOBALLY: every selector in
+  it applies on every page of the app. `check:cssleaks` §5 has been reporting
+  this file for that, and one of the reported classes was not merely untidy — it
+  was breaking a button on another page. `verify-email.css` declared a bare
+  `.btn-primary { background: var(--ve-grad) }`, and `--ve-grad` is declared on
+  `.verify-container`. On the LOGIN page that selector still matched the submit
+  button, where the variable does not exist — and an undefined `var()` is
+  *invalid at computed value time*, which makes the property `unset` rather than
+  falling back to the earlier declaration. So `.login-btn`'s own brand gradient
+  was thrown away and Sign In had no fill at all, in all ten galaxies, on the
+  first screen every visitor sees.
+
+  `<style scoped src>` hands the job to Vite, which rewrites every selector with
+  this component's `data-v-` attribute. That is complete and cannot be got
+  wrong, where scoping 66 selectors by hand can. It is safe here because this
+  file's tokens are declared on the page root (not on `:root`, which would
+  become `:root[data-v-…]` and match nothing) and because this view renders no
+  child components whose internals it styles.
+-->
+<style scoped src="@/assets/css/verify-email.css"></style>

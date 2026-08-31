@@ -31,7 +31,7 @@
   /* Text colors over galaxy */
   --txt-primary:   var(--sfs-text, #ffffff);
   --txt-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --txt-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --txt-muted:     var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Glass surfaces */
   --glass-bg:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
@@ -226,7 +226,7 @@
   align-items: center;
   gap: clamp(0.25rem, 1vw, 0.5rem);
   padding: clamp(0.85rem, 1.8vw, 1.1rem) clamp(1rem, 3vw, 2rem);
-  background: rgb(var(--sfs-shade-rgb, 8 10 25) / 0.45);
+  background: rgb(var(--sfs-sink-rgb, 8 10 25) / 0.45);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   border-bottom: 1px solid var(--glass-border);
@@ -415,7 +415,9 @@
   margin-bottom: clamp(1rem, 2vw, 1.5rem);
   letter-spacing: -0.02em;
   color: var(--sfs-text, #ffffff);
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  /* The title is in `.course-info`, a SIBLING of the image container — page
+     text, so the drop is dark-mode only. */
+  text-shadow: 0 2px 16px var(--sfs-ink-halo-soft, rgb(0 0 0 / 0.45));
 }
 
 .course-details-page .course-stats {
@@ -804,7 +806,7 @@
 }
 .course-details-page .form-subtitle a:hover {
   color: var(--sfs-text-muted, #c7d2fe);
-  text-shadow: 0 0 12px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7);
+  text-shadow: var(--sfs-title-glow, 0 0 12px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7));
 }
 
 .course-details-page .mention-input-container {
@@ -815,7 +817,7 @@
 .course-details-page .comment-input {
   width: 100%;
   padding: clamp(0.8rem, 1.8vw, 1.05rem);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   font-family: inherit;
@@ -839,7 +841,7 @@
 .course-details-page .comment-input:focus {
   outline: none;
   border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.65);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.4);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.4);
   box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
 }
 

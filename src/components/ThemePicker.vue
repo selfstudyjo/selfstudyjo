@@ -265,7 +265,7 @@ watch(open, async isOpen => {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 }
 
 .tp-trigger-name {
@@ -330,7 +330,7 @@ watch(open, async isOpen => {
 .tp-sub {
   margin-top: 4px;
   font-size: 0.86rem;
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   max-width: 60ch;
 }
 
@@ -370,7 +370,7 @@ watch(open, async isOpen => {
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;

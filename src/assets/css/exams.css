@@ -8,7 +8,7 @@
 .exams-page {
   --ex-text:        var(--sfs-text, #ffffff);
   --ex-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.75);
-  --ex-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --ex-text-muted:  var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   --ex-text-accent: var(--sfs-text-muted, #a5b4fc);
 
   --ex-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
@@ -805,7 +805,10 @@
   gap: 0.5rem;
   padding: 0.7rem 1.4rem;
   min-height: 44px;
-  background: linear-gradient(135deg, rgb(var(--sfs-warning-rgb, 237 137 54) / 0.7) 0%, rgb(var(--sfs-warning-rgb, 221 107 32) / 0.7) 100%);
+  /* The SOLID hue, so `--sfs-on-warning` is a guarantee rather than a guess: a
+     0.7 wash composites toward the page and white on it measured 3.31:1. */
+  background: var(--sfs-warning, #ed8936);
+  color: var(--sfs-on-warning, #ffffff);
   color: var(--sfs-text, #fff);
   border: 1px solid rgb(var(--sfs-warning-rgb, 237 137 54) / 0.45);
   border-radius: var(--ex-radius-md);

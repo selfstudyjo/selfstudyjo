@@ -4,10 +4,43 @@
 
 /* ==========================================================================
    THEME TOKENS
+   ==========================================================================
+
+   ON `.labs-container`, NOT ON `:root`, AND THAT ONE WORD WAS THE WHOLE PAGE.
+
+   This file is reached through `@import '@/assets/css/lab.css'` inside
+   `<style scoped>` in Labs.vue — so Vite rewrites every selector in it with the
+   component's `data-v-…` attribute. That is exactly what you want for the rules
+   and it is fatal for `:root`, which becomes `:root[data-v-…]` and matches
+   NOTHING: <html> has no scope attribute.
+
+   The consequence: all 51 tokens declared here were undefined on the Labs page,
+   and the 300 `var(--lab-…)` / `var(--glass-…)` / `var(--radius-…)` references
+   in this file carry no fallback — so every one of those declarations was
+   *invalid at computed value time* and the property fell back to `unset`. Not
+   overridden, not wrong: absent. Two thirds of this stylesheet did nothing, in
+   every galaxy, which is what "the Labs page style is so bad, mixed buttons and
+   divs" was. Colour, radius, spacing, shadow, font and transition all went
+   missing at once, which is why it read as unstyled rather than as mis-styled.
+
+   `.labs-container` is the view's root element, so it carries the scope
+   attribute and custom properties inherit from it to everything inside.
+
+   The same trap is waiting in any stylesheet reached from a scoped block. A
+   token block belongs on the page root; `:root` is only safe in a sheet imported
+   from `main.ts`.
    ========================================================================== */
-:root {
-  /* Brand-aligned accents (match global gradient #667eea → #764ba2) */
-  --lab-primary:       var(--sfs-accent-text, #667eea);
+.labs-container {
+  /* Brand-aligned accents */
+  /*
+    `--sfs-accent` is the FILL token; `--sfs-accent-text` is the INK derived to be
+    readable ON a surface, so it is a pale accent in a dark galaxy. This was the
+    ink token, and it is spent as the fill of `.tab-btn.active` and `.btn-primary`
+    — white on pale lavender, 3.08:1 measured. `fillAndInk()` guarantees
+    `--sfs-on-accent` clears AA on `--sfs-accent` and promises nothing about the
+    other one.
+  */
+  --lab-primary:       var(--sfs-accent, #667eea);
   --lab-primary-soft:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
   --lab-primary-glow:  rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
   --lab-secondary:     var(--sfs-accent-text, #818cf8);
@@ -32,15 +65,54 @@
   --glass-border:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   --glass-border-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.18);
 
-  /* Terminal — slightly darker but still translucent */
-  --term-bg:     rgb(var(--sfs-surface-rgb, 10 12 28) / 0.55);
-  --term-header: rgb(var(--sfs-shade-rgb, 20 22 40) / 0.55);
+  /* ------------------------------------------------------------------------
+     A TERMINAL IS DARK IN ALL TEN GALAXIES, AND THAT IS THE POINT OF THIS BLOCK
+     ------------------------------------------------------------------------
+     These were translucent scrims over the page —
+     `rgb(var(--sfs-shade-rgb) / 0.45)` for the terminal and
+     `rgba(0, 0, 0, 0.30)` for the two editors — with `var(--sfs-text)` as their
+     ink. Over a dark galaxy that is a slightly deeper panel with light text.
+     Over a PALE one the same declarations composite to a mid GREY block with
+     NEAR-BLACK text on it, and the prompt, the welcome lines and the error lines
+     are status hues derived for the page rather than for a terminal: light
+     mode's success is `#047857`, a dark green, on that grey. The screenshot of
+     it is the whole of "the Labs page style is so bad".
+
+     A shell, a SQL editor, a Python editor and a traceback are the same case as
+     `--lesson-code-bg` on the lesson page and the mirror image of `--sfs-paper`:
+     a surface whose colour is a property of what it IS, not of the galaxy it is
+     in. A student reading `switchport mode trunk` or a stack trace uses the
+     dark-code convention to know they are looking at a machine, and pale
+     syntax colours have nowhere else to go.
+
+     So they are OPAQUE and fixed, with their own measured ink — and the CARDS
+     around them stay glass and keep following the theme, which is what stops
+     the page reading as one black slab.
+        --code-ink   on --code-bg   14.9:1
+        --code-dim   on --code-bg    7.6:1
+        --code-green on --code-bg   10.4:1   the prompt
+        --code-amber on --code-bg   11.5:1   a running process
+        --code-red   on --code-bg    7.9:1   stderr
+     ------------------------------------------------------------------------ */
+  --code-bg:     #0b1020;
+  --code-bg-2:   #121a2e;
+  --code-border: #253048;
+  --code-ink:    #e6edf7;
+  --code-dim:    #9fb0c9;
+  --code-green:  #4ade80;
+  --code-amber:  #fbbf24;
+  --code-red:    #fca5a5;
+
+  /* The card that HOLDS a code surface, and its header strip. Glass, so a light
+     galaxy gets a light card with a dark editor inside it. */
+  --term-bg:     var(--glass-2);
+  --term-header: rgb(var(--sfs-sink-rgb, 20 22 40) / 0.35);
   --term-text:   var(--sfs-text, #e8eaff);
 
   /* Typography */
   --text-primary:   var(--sfs-text, #ffffff);
   --text-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --text-muted:     var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Effects */
   --blur-soft:   blur(14px) saturate(140%);
@@ -146,7 +218,7 @@
   letter-spacing: -0.01em;
 }
 
-.header-content h1 i {
+.header-content h1 .lab-i {
   color: var(--lab-secondary);
   font-size: 0.95em;
   filter: drop-shadow(0 0 12px var(--lab-primary-glow));
@@ -286,14 +358,14 @@
   line-height: 1.6;
 }
 
-.error-state i {
+.error-state .lab-i {
   font-size: clamp(40px, 8vw, 60px);
   margin-bottom: var(--space-md);
   color: var(--lab-danger);
   filter: drop-shadow(0 0 14px var(--lab-danger-glow));
 }
 
-.no-access-state i {
+.no-access-state .lab-i {
   font-size: clamp(40px, 8vw, 60px);
   margin-bottom: var(--space-md);
   color: var(--text-muted);
@@ -341,7 +413,7 @@
   min-width: 0;
 }
 
-.lab-info-content i {
+.lab-info-content .lab-i {
   font-size: 1.3em;
   color: var(--sfs-text, #fff);
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
@@ -393,19 +465,45 @@
   align-self: center;
   margin-inline-start: auto;
   padding: 0 var(--space-md);
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--sfs-font-mono, ui-monospace, monospace);
   font-size: var(--font-xs, 0.75rem);
-  color: var(--text-secondary);
-  white-space: nowrap;
-  opacity: 0.75;
+  color: var(--text-muted);
+  /*
+    A hostname is a machine identifier, so it is isolated: inside Arabic the bidi
+    algorithm relocates the dots of `sfsuserlab2.pythonanywhere.com`. And it
+    wraps rather than being clipped — `nowrap` plus `margin-inline-start: auto`
+    in a flex row is what crammed it against the right edge next to three
+    stretched tabs.
+  */
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
-.workspace-indicator i {
+/* On a phone the hostname is longer than the row it is in, so it gets its own. */
+@media (max-width: 640px) {
+  .workspace-indicator {
+    flex: 1 0 100%;
+    margin-inline-start: 0;
+    justify-content: flex-start;
+    padding: var(--space-xs) var(--space-sm) 0;
+  }
+}
+
+.workspace-indicator .lab-i {
   color: var(--lab-primary);
 }
 
+/*
+  Tabs size to their CONTENT, not to the bar.
+
+  `flex: 1 1 140px` stretched three tabs across the full width, so each was 400px
+  of mostly empty space with a centred label and the active one read as a single
+  enormous pill rather than as one of three. A segmented control is legible
+  because the segments are the width of their labels.
+*/
 .tab-btn {
-  flex: 1 1 140px;
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,11 +521,17 @@
   white-space: nowrap;
 }
 
+/* An inactive tab needs a visible edge, not only a hover: with `transparent`
+   borders the bar read as one filled pill and two floating labels. */
+.tab-btn:not(.active) {
+  border-color: var(--glass-border);
+  background: var(--glass-1);
+}
+
 .tab-btn:hover {
   color: var(--text-primary);
-  background: var(--glass-1);
-  border-color: var(--glass-border);
-  transform: translateY(-1px);
+  background: var(--glass-3);
+  border-color: var(--glass-border-strong);
 }
 
 .tab-btn.active {
@@ -437,7 +541,39 @@
   box-shadow: 0 6px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4);
 }
 
-.tab-btn i { font-size: 1.05em; }
+/*
+  EVERY ICON ON THIS PAGE, SIZED IN `em`.
+
+  All 40 were `<i class="fas fa-…">` and Font Awesome is not loaded anywhere in
+  this app — not in package.json, not linked from index.html — so all 40 rendered
+  as empty `<i>` elements: a gap in front of every button label, a blank before
+  every heading. They are `lucide-vue-next` components now (see Labs.vue).
+
+  `em`, not a `:size` prop per icon: an icon then scales with the text beside it,
+  which is the thing forty hand-written sizes would get wrong somewhere. lucide
+  writes `width`/`height` ATTRIBUTES on its <svg>, and a CSS `width` beats an
+  attribute, so this is all it takes.
+*/
+.labs-container .lab-i {
+  flex: 0 0 auto;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.15em;
+}
+
+/* The page-sized state graphics: an error, "no lab access", an empty result. */
+.labs-container .lab-i--lg {
+  width: clamp(2.5rem, 7vw, 3.5rem);
+  height: clamp(2.5rem, 7vw, 3.5rem);
+}
+
+.labs-container .lab-i--spin {
+  animation: lab-spin 0.9s linear infinite;
+}
+
+@keyframes lab-spin {
+  to { transform: rotate(360deg); }
+}
 
 /* ==========================================================================
    TAB CONTENT WRAPPER
@@ -480,7 +616,7 @@
   color: var(--text-primary);
 }
 
-.sql-sidebar h4 i {
+.sql-sidebar h4 .lab-i {
   color: var(--lab-secondary);
   filter: drop-shadow(0 0 6px var(--lab-primary-glow));
 }
@@ -514,7 +650,7 @@
   box-shadow: 0 0 16px var(--lab-primary-glow);
 }
 
-.table-item i { color: var(--lab-secondary); }
+.table-item .lab-i { color: var(--lab-secondary); }
 
 .table-item span {
   flex: 1;
@@ -649,21 +785,31 @@
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: clamp(0.82rem, 1.8vw, 0.95rem);
   line-height: 1.55;
-  color: var(--term-text);
-  background: rgba(0, 0, 0, 0.30);
-  border: 1px solid var(--glass-border);
+  /* A code surface: opaque and dark in all ten galaxies, with its own ink. It
+     was `rgba(0, 0, 0, 0.30)` with the PAGE ink, which over a pale galaxy is
+     near-black text on a mid grey. See the token block. */
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
   border-radius: var(--r-sm);
   resize: vertical;
-  transition: var(--transition);
+  transition: border-color var(--sfs-dur, 220ms) var(--sfs-ease, ease),
+              box-shadow var(--sfs-dur, 220ms) var(--sfs-ease, ease);
+  /* A code editor must not mirror: rendered right-to-left the bidi algorithm
+     relocates the punctuation, and `ls -la /var/log | grep error` comes out with
+     its pipe and flags moved. Same rule `rtl.css` applies to every <pre>. */
+  direction: ltr;
+  text-align: start;
 }
 
 .sql-textarea:focus,
 .python-textarea:focus,
 .command-input:focus {
   outline: none;
-  border-color: var(--lab-secondary);
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.45);
+  border-color: var(--sfs-focus, #818cf8);
+  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.28);
+  /* The background deliberately does NOT change on focus: a code surface that
+     shifts tone mid-sentence changes the contrast of what is already typed. */
 }
 
 .python-textarea { min-height: 360px; }
@@ -695,7 +841,7 @@
   border-radius: var(--r-sm);
 }
 
-.error-message i {
+.error-message .lab-i {
   margin-top: 2px;
   font-size: 1.2em;
   color: var(--lab-danger);
@@ -708,10 +854,13 @@
   white-space: pre-wrap;
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: 0.85em;
-  color: var(--text-secondary);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
   border-radius: 4px;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+  direction: ltr;
+  text-align: start;
 }
 
 /* ---- Results table ---- */
@@ -726,8 +875,8 @@
   color: var(--text-muted);
 }
 
-.empty-results i,
-.empty-output i {
+.empty-results .lab-i,
+.empty-output .lab-i {
   font-size: clamp(36px, 7vw, 52px);
   margin-bottom: var(--space-sm);
   opacity: 0.55;
@@ -739,10 +888,14 @@
   border-radius: var(--r-sm);
 }
 
+/* A results table is DATA, not code — so unlike the editors above it follows the
+   galaxy. `--sfs-sink-rgb` is a recessed surface in whichever direction that
+   galaxy recesses; `--sfs-shade-rgb` is black in all ten and was a mid-grey slab
+   under the page's own dark ink in the light three. */
 .results-table {
   width: 100%;
   border-collapse: collapse;
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.2);
 }
 
 .results-table thead {
@@ -827,7 +980,7 @@
   word-break: break-word;
 }
 
-.terminal-title i {
+.terminal-title .lab-i {
   color: var(--lab-success);
   filter: drop-shadow(0 0 8px var(--lab-success-glow));
 }
@@ -857,9 +1010,12 @@
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: clamp(0.82rem, 1.8vw, 0.92rem);
   line-height: 1.5;
-  color: var(--term-text);
-  background: rgb(var(--sfs-shade-rgb, 5 7 22) / 0.45);
+  color: var(--code-ink);
+  background: var(--code-bg);
   cursor: text;
+  /* A shell is left-to-right in every language. */
+  direction: ltr;
+  text-align: start;
 }
 
 .terminal-content::after {
@@ -874,17 +1030,35 @@
 
 .terminal-welcome { margin-bottom: var(--space-md); opacity: 0.95; }
 
-.welcome-line {
+/*
+  These five are anchored on `.terminal-content` rather than written bare, and it
+  is not only tidiness: `audit:ink` can follow an ancestor's fill only when the
+  ancestor is written in the SAME selector, so a light ink on a class whose dark
+  background lives on the parent is reported as "light ink with no fill under it"
+  in every light galaxy. Five correct-by-design findings is enough to make a
+  report nobody reads. Every one of these classes only ever appears inside the
+  terminal anyway.
+*/
+.terminal-content .welcome-line {
   margin-bottom: 4px;
   padding-inline-start: 4px;
-  color: var(--lab-success);
+  /* The terminal's own green, not the page's success hue — which in a light
+     galaxy is `#047857`, a dark green, on a near-black terminal. */
+  color: var(--code-green);
+  /* An emoji plus a long sentence has no break opportunity at 390px unless it
+     is allowed one. */
+  overflow-wrap: anywhere;
 }
 
 .welcome-separator {
   margin: var(--space-sm) 0;
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25), transparent);
+  /* `max-width` because the rule is a child of a padded, scrollable box: at
+     390px it was 18px wider than its own content box — the padding — and
+     extended the terminal's scrollable width for a decorative line. */
+  max-width: 100%;
+  background: linear-gradient(90deg, transparent, var(--code-border), transparent);
 }
 
 .terminal-line {
@@ -899,19 +1073,20 @@
   overflow-wrap: break-word;
 }
 
-.terminal-line.command { color: var(--term-text); }
-.terminal-line.output  { color: var(--text-secondary); }
-.terminal-line.error   { color: var(--sfs-danger-text, #ffd5d5); }
-.terminal-line.info    { color: var(--sfs-text-muted, #c7d2fe); }
+/* All four read on `--code-bg`, in every galaxy, and are measured against it
+   rather than against the page. */
+.terminal-content .terminal-line.command { color: var(--code-ink); }
+.terminal-content .terminal-line.output  { color: var(--code-dim); }
+.terminal-content .terminal-line.error   { color: var(--code-red); }
+.terminal-content .terminal-line.info    { color: var(--code-dim); }
 
-.line-prompt,
-.input-prompt {
+.terminal-content .line-prompt,
+.terminal-content .input-prompt {
   flex-shrink: 0;
   font-weight: 700;
-  color: var(--lab-success);
+  color: var(--code-green);
   user-select: none;
   white-space: nowrap;
-  text-shadow: 0 0 8px var(--lab-success-glow);
 }
 
 .line-content { flex: 1; min-width: 0; word-break: break-word; }
@@ -934,32 +1109,35 @@
   min-width: 140px;
 }
 
-.command-input {
+.terminal-content .command-input {
   flex: 1;
   min-width: 120px;
   margin: 0;
   padding: 0;
   font-family: inherit;
   font-size: inherit;
-  color: var(--term-text);
+  color: var(--code-ink);
   background: transparent;
   border: none;
   outline: none;
-  caret-color: var(--lab-success);
+  caret-color: var(--code-green);
 }
 
-.command-input::placeholder { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.3); }
-.command-input:disabled    { opacity: 0.5; cursor: not-allowed; }
+.terminal-content .command-input::placeholder { color: var(--code-dim); }
+.terminal-content .command-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.cursor {
-  display: inline-block;
-  width: 8px;
-  height: 14px;
-  margin-inline-start: 2px;
-  background: var(--lab-success);
-  vertical-align: middle;
-  animation: lab-cursor 1s infinite;
-}
+/*
+  THE FAKE CURSOR IS GONE, and it could not have worked where it was.
+
+  It was a blinking block after `.command-input`, which is `flex: 1` — so it was
+  pushed to the FAR RIGHT of the terminal, hundreds of pixels from the text being
+  typed, at every width. It also made `.terminal-input-line` two pixels wider
+  than its own box, which is what `tools/labs-preview` reported.
+
+  The native caret already blinks and already takes `caret-color: --code-green`
+  from `.command-input`, so it is in the right place by construction. The element
+  is out of the template as well; the rule stays as the note.
+*/
 
 .running-indicator {
   margin-inline-start: 4px;
@@ -969,7 +1147,9 @@
 /* Terminal help */
 .terminal-help {
   padding: var(--space-md);
-  background: rgb(var(--sfs-shade-rgb, 20 22 40) / 0.4);
+  /* Chrome below the terminal, not part of it: black at 0.4 over a pale page is
+     the mid-grey band this strip was. */
+  background: rgb(var(--sfs-sink-rgb, 20 22 40) / 0.4);
   border-top: 1px solid var(--glass-border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -985,14 +1165,28 @@
   color: var(--term-text);
 }
 
-.help-header i {
+.help-header .lab-i {
   color: var(--lab-warning);
   filter: drop-shadow(0 0 6px var(--lab-warning-glow));
 }
 
+/*
+  `auto-fit` with `min(100%, …)`, and NO viewport-keyed override below.
+
+  Both of this page's chip grids had `grid-template-columns: repeat(N, 1fr)`
+  overrides at 480 / 768 / 1024 / 1440 / 1920 / 2560px — keyed on the VIEWPORT,
+  for grids that live inside columns. `.templates-grid` sits in the Output column,
+  which is about 263px wide at a 1440px viewport, so the rule said "four columns"
+  and produced four 62px tracks; a `1fr` track's automatic minimum is
+  `min-content`, not zero, so the chips overflowed their own grid by 38px and
+  their labels wrapped inside a 62px box.
+
+  A grid that measures its own container cannot get this wrong, and it needs no
+  breakpoints at all.
+*/
 .commands-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: var(--space-xs);
 }
 
@@ -1063,10 +1257,12 @@
   font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
   font-size: clamp(0.82rem, 1.8vw, 0.92rem);
   line-height: 1.5;
-  color: var(--term-text);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
-  border: 1px solid var(--glass-border);
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
   border-radius: var(--r-sm);
+  direction: ltr;
+  text-align: start;
 }
 
 .output-container pre,
@@ -1096,9 +1292,18 @@
   color: var(--lab-secondary);
 }
 
+/*
+  `auto-fit` with `min(100%, …)`, not `auto-fill` with a bare minimum.
+
+  `minmax(120px, 1fr)` cannot go below 120px, so in the Output column — which is
+  about 263px wide at 1440 — the four chips overflowed their own grid by 38px and
+  their labels wrapped to two lines inside a 62px box. `min(100%, 8.5rem)` lets a
+  track shrink to the container when there is not room for two, which is the
+  difference between wrapping and overflowing.
+*/
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
   gap: var(--space-xs);
 }
 
@@ -1262,14 +1467,14 @@
 .toast.warning { border-inline-start-color: var(--lab-warning); }
 .toast.info    { border-inline-start-color: var(--lab-info); }
 
-.toast i {
+.toast .lab-i {
   margin-top: 2px;
   font-size: 1.25em;
 }
-.toast.success i { color: var(--lab-success); filter: drop-shadow(0 0 6px var(--lab-success-glow)); }
-.toast.error i   { color: var(--lab-danger);  filter: drop-shadow(0 0 6px var(--lab-danger-glow));  }
-.toast.warning i { color: var(--lab-warning); filter: drop-shadow(0 0 6px var(--lab-warning-glow)); }
-.toast.info i    { color: var(--lab-info);    filter: drop-shadow(0 0 6px var(--lab-info-glow));    }
+.toast.success .lab-i { color: var(--lab-success); filter: drop-shadow(0 0 6px var(--lab-success-glow)); }
+.toast.error .lab-i   { color: var(--lab-danger);  filter: drop-shadow(0 0 6px var(--lab-danger-glow));  }
+.toast.warning .lab-i { color: var(--lab-warning); filter: drop-shadow(0 0 6px var(--lab-warning-glow)); }
+.toast.info .lab-i    { color: var(--lab-info);    filter: drop-shadow(0 0 6px var(--lab-info-glow));    }
 
 .toast-content { flex: 1; min-width: 0; }
 
@@ -1322,7 +1527,10 @@
 .output-container::-webkit-scrollbar-track,
 .tables-list::-webkit-scrollbar-track,
 .results-table-container::-webkit-scrollbar-track {
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.2);
+  /* Two of these four tracks are inside a code surface and two are on the page,
+     so neither page token is right for all of them. The code border reads as a
+     groove on the dark ones and as a hairline on the light ones. */
+  background: var(--code-border);
   border-radius: 4px;
 }
 
@@ -1393,16 +1601,12 @@
 /* ≥ 480px — large phones */
 @media (min-width: 480px) {
   .header-stats   { grid-template-columns: repeat(2, 1fr); }
-  .commands-grid  { grid-template-columns: repeat(2, 1fr); }
-  .templates-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ≥ 768px — tablet */
 @media (min-width: 768px) {
   .labs-container { padding: var(--space-xl); }
   .header-stats   { grid-template-columns: repeat(3, 1fr); }
-  .commands-grid  { grid-template-columns: repeat(3, 1fr); }
-  .templates-grid { grid-template-columns: repeat(4, 1fr); }
   .terminal-content { min-height: 420px; max-height: 65vh; }
 }
 
@@ -1421,7 +1625,6 @@
     grid-template-columns: 2fr 1fr;
     min-height: 600px;
   }
-  .commands-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ≥ 1440px — desktop */
@@ -1430,26 +1633,24 @@
   .header-stats   { grid-template-columns: repeat(3, 1fr); }
   .sql-container  { grid-template-columns: 360px 1fr; }
   .python-container { grid-template-columns: 2.5fr 1fr; }
-  .commands-grid  { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ≥ 1920px — full HD */
 @media (min-width: 1920px) {
   .labs-container { max-width: 1760px; }
-  .commands-grid  { grid-template-columns: repeat(5, 1fr); }
-  .templates-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 /* ≥ 2560px — TV / 4K */
 @media (min-width: 2560px) {
-  :root {
+  /* `.labs-container`, not `:root` — this file is scoped, so `:root` becomes
+     `:root[data-v-…]` and these three overrides did nothing on a 4K screen.
+     Same trap as the main token block; see the top of the file. */
+  .labs-container {
     --font-md: 1.15rem;
     --font-lg: 1.5rem;
     --font-xl: 2.2rem;
   }
   .labs-container { max-width: 2200px; padding: 4rem; }
-  .commands-grid  { grid-template-columns: repeat(6, 1fr); }
-  .templates-grid { grid-template-columns: repeat(6, 1fr); }
   .terminal-content { min-height: 520px; max-height: 70vh; }
 }
 

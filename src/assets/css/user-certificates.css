@@ -9,7 +9,7 @@
   --uc-text:        var(--sfs-text, #ffffff);
   --uc-text-soft:   var(--sfs-text-muted, #e8eaff);
   --uc-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
-  --uc-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --uc-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   --uc-accent:      var(--sfs-accent-text, #818cf8);
   --uc-accent-2:    var(--sfs-accent-2-text, #a78bfa);
@@ -507,7 +507,7 @@
   box-shadow: 0 0 20px rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.3);
 }
 .user-certificates .certificate-icon.expired {
-  background: linear-gradient(135deg, rgb(var(--sfs-tint-rgb, 156 163 175) / 0.25), rgb(var(--sfs-shade-rgb, 107 114 128) / 0.25));
+  background: linear-gradient(135deg, rgb(var(--sfs-tint-rgb, 156 163 175) / 0.25), rgb(var(--sfs-sink-rgb, 107 114 128) / 0.25));
   color: var(--sfs-text-muted, #d1d5db);
   box-shadow: 0 0 18px rgba(156,163,175,0.25);
 }

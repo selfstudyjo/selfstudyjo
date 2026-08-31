@@ -99,7 +99,7 @@ function retry() {
 .panel {
   max-width: 46ch;
   padding: 34px 30px;
-  border: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.08);
+  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
   border-radius: 15px;
   background: var(--sfs-paper, #fff);
   text-align: center;

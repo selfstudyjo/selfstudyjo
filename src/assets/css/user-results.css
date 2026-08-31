@@ -231,7 +231,7 @@
 }
 
 .score.pass {
-  color: var(--ur-success);
+  color: var(--sfs-success-text, #34d399);
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
   box-shadow: 0 0 14px rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
@@ -279,7 +279,7 @@
   backdrop-filter: blur(8px);
 }
 .status.passed {
-  color: var(--ur-success);
+  color: var(--sfs-success-text, #34d399);
   box-shadow: 0 0 10px rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
 .status.failed {

@@ -636,14 +636,14 @@ async function leave() {
   gap: 14px;
   padding: 10px 16px;
   background: var(--sfs-paper, #fff);
-  border-bottom: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.08);
+  border-bottom: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
 }
 
 .back {
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12);
+  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12);
   border-radius: 9px;
   background: var(--sfs-paper, #fff);
   font-size: 1rem;
@@ -673,7 +673,7 @@ async function leave() {
   text-overflow: ellipsis;
 }
 
-.title-input:hover { border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12); }
+.title-input:hover { border-color: rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12); }
 .title-input:focus { outline: none; border-color: var(--sfs-accent, #2563eb); background: var(--sfs-field, #fff); color: var(--sfs-field-text, #0f172a); }
 
 .byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: var(--sfs-accent-text, #94a3b8); }

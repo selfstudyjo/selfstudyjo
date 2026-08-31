@@ -85,9 +85,13 @@ const WIDTHS = (process.env.AUDIT_WIDTHS || '320,360,390,430,768,1024')
 
 const rtl = !process.argv.includes('--ltr');
 const locale = rtl ? 'ar' : 'en';
+/** Which galaxy. Empty means whatever `defaultThemeFor()` picks — Andromeda. */
+const theme = (process.env.AUDIT_THEME || '').trim();
 const BASE = process.env.AUDIT_URL || 'http://127.0.0.1:4173';
 const outDir = resolve(process.argv.find(a => !a.startsWith('-') && a.includes('shots'))
-    || `tools/rtl-audit/shots-${locale}`);
+    /* The theme is in the directory name, or a light run overwrites the dark
+       baseline and there is nothing left to diff against. */
+    || `tools/rtl-audit/shots-${locale}${theme ? '-' + theme : ''}`);
 
 const browser = CHROME_CANDIDATES.find(p => existsSync(p));
 if (!browser) {
@@ -205,8 +209,29 @@ await cdp.send('Emulation.setEmulatedMedia', {
   laid itself out left-to-right. `addScriptToEvaluateOnNewDocument` runs before
   any of the document's own script, on every navigation.
 */
+/*
+  THE GALAXY IS SEEDED THE SAME WAY, AND FOR THE SAME REASON THE LOCALE IS.
+
+  Seven of the ten themes are dark and the default is dark, so every run of this
+  audit until now looked at the app in Andromeda — and a light galaxy is not a
+  recolour of a dark one, it is the other half of the contrast rule. Ink flips,
+  the tint deliberately does not, and every hand-rolled `rgb(var(--sfs-text-rgb)
+  / 0.55)` in a page stylesheet lands three stops closer to its background,
+  because blending toward black in gamma-encoded sRGB drops luminance far faster
+  than blending toward white raises it. None of that is visible in the dark
+  seven and all of it was reported as "light themes are hard to read".
+
+    AUDIT_THEME=cartwheel npm run audit:rtl -- --ltr
+
+  `bootstrapTheme()` reads `sfs-theme` before Vue exists, so this has to be set
+  before the document's own script — clicking the picker afterwards measures a
+  page that has already painted.
+*/
 await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
-    source: `try { localStorage.setItem('sfs-locale', '${locale}'); } catch (e) {}`,
+    source: `try {
+        localStorage.setItem('sfs-locale', '${locale}');
+        ${theme ? `localStorage.setItem('sfs-theme', '${theme}');` : ''}
+    } catch (e) {}`,
 });
 
 let problems = 0;

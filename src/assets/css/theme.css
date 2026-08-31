@@ -208,6 +208,60 @@
   /* ---- Focus ----------------------------------------------------------- */
   --sfs-ring-width: 2px;
   --sfs-ring-offset: 2px;
+
+  /* ---- The ink halo ---------------------------------------------------- */
+  /*
+    A `text-shadow` behind page text, and it is the one shadow that must
+    DISAPPEAR in a light galaxy rather than change colour.
+
+    Several page headings carried `text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55)`
+    — a legible drop under white text on a black page, and under the near-black
+    ink of a light galaxy it is a black smudge behind black letters. It was the
+    most visible single thing wrong with the light themes after the dark scrims:
+    every page title looked mis-printed.
+
+    `transparent` rather than a white halo, because a white glow behind dark ink
+    on a pale page is not an improvement — it is the same smudge in reverse. A
+    heading on a light page needs no shadow at all; the contrast is the ink.
+
+    Text over a PHOTOGRAPH is a different problem and must not use this: no
+    token can measure a photograph, so those keep a hard black halo in all ten
+    galaxies and take `--sfs-on-overlay` as their ink.
+  */
+  --sfs-ink-halo: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.55);
+  --sfs-ink-halo-soft: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.35);
+
+  /*
+    A GLOW BEHIND A HEADING — the whole `text-shadow`, not a colour, because the
+    right answer in a light galaxy is `none` and only the whole value can say so.
+
+    Seventeen page headings each carried their own version of "a soft accent haze
+    behind the title", between 0.15 and 0.7 alpha at 8 to 40px. Over a dark
+    galaxy that is the effect it sounds like. Over a pale one it is a saturated
+    blue cloud around near-black letters: the accent in a light galaxy is a
+    STRONG colour (Cartwheel's is #1d4ed8), so a 28px haze at 0.55 reads as a
+    printing fault, and it was the most-complained-about thing about the light
+    themes after the dark scrims. It is not a contrast failure and no audit sees
+    it — the ink and the card both measure fine.
+
+    Consolidating seventeen values into one is deliberate as well: they were all
+    trying to be the same effect and none of them agreed on it.
+  */
+  --sfs-title-glow:
+    0 0 28px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.4),
+    0 2px 8px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+  /* The status-hue variant, for the handful of headings that glow in warning or
+     info rather than in the brand. */
+  --sfs-title-glow-warning: 0 0 22px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
+  --sfs-title-glow-info: 0 0 12px rgb(var(--sfs-info-rgb, 78 205 196) / 0.42);
+}
+
+:root[data-mode='light'] {
+  --sfs-ink-halo: transparent;
+  --sfs-ink-halo-soft: transparent;
+  --sfs-title-glow: none;
+  --sfs-title-glow-warning: none;
+  --sfs-title-glow-info: none;
 }
 
 /* --------------------------------------------------------------------------

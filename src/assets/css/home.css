@@ -13,7 +13,7 @@
   /* text */
   --hc-text:        var(--sfs-text, #ffffff);
   --hc-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --hc-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --hc-text-muted:  var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* surfaces (translucent so the galaxy is visible) */
   --hc-surface-1:   rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);

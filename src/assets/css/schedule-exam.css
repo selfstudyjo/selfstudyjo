@@ -33,7 +33,7 @@
   --sx-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --sx-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --sx-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --sx-glass-bg:    rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  --sx-glass-bg:    rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   --sx-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   --sx-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   --sx-blur:        blur(16px) saturate(150%);
@@ -519,7 +519,7 @@
 }
 
 .schedule-exam-page .calendar-container{
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 1rem;
@@ -832,7 +832,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.3);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.3);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 0.85rem 1rem;
@@ -951,7 +951,7 @@
   margin-bottom: 0.5rem;
 }
 .schedule-exam-page .appointment-detail{
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 0.85rem 1rem;
@@ -962,7 +962,7 @@
   color: var(--sx-accent);
   align-self: center;
   flex-shrink: 0;
-  text-shadow: 0 0 14px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7);
+  text-shadow: var(--sfs-title-glow, 0 0 14px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.7));
 }
 
 .schedule-exam-page .summary-card{
@@ -1233,7 +1233,7 @@ body > .modal-overlay{
 
 .schedule-exam-page .success-details,
 .schedule-exam-page .cancel-details{
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.4);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.4);
   border: 1px solid var(--sx-border);
   border-radius: var(--sx-r-md);
   padding: 1rem 1.25rem;

@@ -248,7 +248,7 @@ defineExpose({ tools });
   flex-wrap: wrap;
   padding: 10px 14px;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.94);
-  border-bottom: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.08);
+  border-bottom: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
   backdrop-filter: blur(10px);
 }
 
@@ -264,7 +264,7 @@ defineExpose({ tools });
   width: 1px;
   align-self: stretch;
   margin: 2px 2px;
-  background: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.1);
+  background: rgb(var(--sfs-sink-rgb, 15 23 42) / 0.1);
 }
 
 .tool {
@@ -309,7 +309,7 @@ defineExpose({ tools });
 .swatch {
   width: 22px;
   height: 22px;
-  border: 2px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.15);
+  border: 2px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.15);
   border-radius: 6px;
   padding: 0;
   cursor: pointer;
@@ -361,7 +361,7 @@ defineExpose({ tools });
   min-width: 30px;
   height: 30px;
   padding: 0 8px;
-  border: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.12);
+  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12);
   border-radius: 8px;
   background: var(--sfs-paper, #fff);
   color: var(--sfs-accent-on-paper, #334155);
@@ -372,7 +372,7 @@ defineExpose({ tools });
 }
 
 .icon-btn.wide { min-width: 54px; }
-.icon-btn:hover:not(:disabled) { background: var(--sfs-paper, #f1f5f9); border-color: rgb(var(--sfs-shade-rgb, 15 23 42) / 0.22); }
+.icon-btn:hover:not(:disabled) { background: var(--sfs-paper, #f1f5f9); border-color: rgb(var(--sfs-sink-rgb, 15 23 42) / 0.22); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .icon-btn.danger { color: var(--sfs-danger-text, #b91c1c); border-color: rgb(var(--sfs-danger-rgb, 185 28 28) / 0.25); }
 .icon-btn.danger:hover:not(:disabled) { background: var(--sfs-paper, #fef2f2); }

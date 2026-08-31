@@ -20,11 +20,21 @@
 
   /* text */
   --sn-text: var(--sfs-text, #e8eaff);
-  --sn-text-mute: rgb(var(--sfs-text-rgb, 232 234 255) / 0.7);
-  --sn-text-dim: rgb(var(--sfs-text-rgb, 232 234 255) / 0.5);
+  --sn-text-mute: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  /*
+    The DERIVED muted ink, not half of the page ink.
+
+    `rgb(var(--sfs-text-rgb) / 0.5)` is roughly 6:1 over a dark galaxy and
+    3.4:1 over a pale one, because blending toward black in gamma-encoded sRGB
+    loses luminance far faster than blending toward white gains it. The same
+    declaration is therefore comfortable in the dark seven and below AA in the
+    light three, which is most of why the light themes read as washed out.
+    `--sfs-text-muted` is measured against the surface per galaxy.
+  */
+  --sn-text-dim: var(--sfs-text-muted, rgb(232 234 255 / 0.7));
 
   /* glass */
-  --sn-glass-bg: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.45);
+  --sn-glass-bg: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.45);
   --sn-glass-bg-strong: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.6);
   --sn-glass-border: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   --sn-glass-border-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
@@ -111,7 +121,7 @@
   flex-shrink: 0;
   background: linear-gradient(180deg,
     rgb(var(--sfs-surface-rgb, 15 17 40) / 0.55) 0%,
-    rgb(var(--sfs-shade-rgb, 15 17 40) / 0.25) 100%);
+    rgb(var(--sfs-sink-rgb, 15 17 40) / 0.25) 100%);
   -webkit-backdrop-filter: var(--sn-glass-blur);
   backdrop-filter: var(--sn-glass-blur);
   border-bottom: 1px solid var(--sn-glass-border);
@@ -230,7 +240,7 @@
   padding: 0.75rem 0.6rem 0.35rem;
   background: linear-gradient(180deg,
     rgb(var(--sfs-surface-rgb, 15 17 40) / 0.5) 0%,
-    rgb(var(--sfs-shade-rgb, 15 17 40) / 0.2) 100%);
+    rgb(var(--sfs-sink-rgb, 15 17 40) / 0.2) 100%);
   -webkit-backdrop-filter: var(--sn-glass-blur);
   backdrop-filter: var(--sn-glass-blur);
 }
@@ -543,7 +553,7 @@
   flex-shrink: 0;
   padding: 0.85rem;
   background: linear-gradient(180deg,
-    rgb(var(--sfs-shade-rgb, 15 17 40) / 0.25) 0%,
+    rgb(var(--sfs-sink-rgb, 15 17 40) / 0.25) 0%,
     rgb(var(--sfs-surface-rgb, 15 17 40) / 0.55) 100%);
   -webkit-backdrop-filter: var(--sn-glass-blur);
   backdrop-filter: var(--sn-glass-blur);

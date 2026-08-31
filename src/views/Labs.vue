@@ -8,11 +8,11 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
-      <i class="fas fa-exclamation-triangle"></i>
+      <AlertTriangle class="lab-i lab-i--lg" />
       <h3>{{ $t('Unable to Access Labs') }}</h3>
       <p>{{ error }}</p>
       <button class="btn btn-secondary" @click="initializeLab">
-        <i class="fas fa-redo"></i> {{ $t('Try Again') }}
+        <RotateCw class="lab-i" /> {{ $t('Try Again') }}
       </button>
     </div>
 
@@ -22,11 +22,11 @@
          for something they had already bought. Access is the subscription now, so
          the link goes where it can actually be fixed. -->
     <div v-else-if="!hasLabAccess" class="no-access-state">
-      <i class="fas fa-flask"></i>
+      <FlaskConical class="lab-i lab-i--lg" />
       <h3>{{ $t('No Lab Access') }}</h3>
       <p>{{ $t('Your plan doesn\'t include the virtual labs. Add the lab feature to your subscription to open the SQL, Linux and Python sandboxes.') }}</p>
       <router-link to="/plans" class="btn btn-primary">
-        <i class="fas fa-crown"></i> {{ $t('View Plans') }}
+        <Crown class="lab-i" /> {{ $t('View Plans') }}
       </router-link>
     </div>
 
@@ -41,14 +41,19 @@
           :class="{ active: activeTab === tab.id }"
           @click="selectTab(tab.id)"
         >
-          <i :class="tab.icon"></i> {{ tab.label }}
+          <component :is="tab.icon" class="lab-i" />
+          <!-- `$t(tab.label)`: the three labels are keys, and all three already
+               exist in the catalogue because `appNav.ts` names the same three
+               routes — so the sidebar and the tab bar say the same words in
+               every language, and the orphan scan already exempts them. -->
+          <span>{{ $t(tab.label) }}</span>
         </button>
 
         <!-- Which replica holds this workspace. Worth showing: if the lab ever has
              to recreate a workspace elsewhere, this is what changes, and a student
              who can see it can tell us which machine their files were on. -->
         <span v-if="homeReplica" class="workspace-indicator" :title="`Your files are stored on ${homeReplica}`">
-          <i class="fas fa-hdd"></i> {{ homeReplicaHost }}
+          <HardDrive class="lab-i" /> {{ homeReplicaHost }}
         </span>
       </div>
 
@@ -56,19 +61,19 @@
       <div v-if="activeTab === 'sql'" class="tab-content">
         <div class="sql-container">
           <div class="sql-sidebar">
-            <h4><i class="fas fa-table"></i> {{ $t('Database Tables') }}</h4>
+            <h4><Table class="lab-i" /> {{ $t('Database Tables') }}</h4>
             <div class="tables-list">
               <div v-for="table in sqlTables" :key="table" class="table-item">
-                <i class="fas fa-table"></i>
+                <Table class="lab-i" />
                 <span>{{ table }}</span>
                 <button class="btn-sm" @click="showTableSchema(table)">
-                  <i class="fas fa-info-circle"></i>
+                  <Info class="lab-i" />
                 </button>
               </div>
             </div>
 
             <div class="sql-instructions">
-              <h5><i class="fas fa-lightbulb"></i> {{ $t('Quick Tips') }}</h5>
+              <h5><Lightbulb class="lab-i" /> {{ $t('Quick Tips') }}</h5>
               <ul>
                 <li>{{ $t('Use') }} <code>SELECT * FROM table_name;</code> {{ $t('to view all data') }}</li>
                 <li>{{ $t('Use') }} <code>DESCRIBE table_name;</code> {{ $t('to see table structure') }}</li>
@@ -81,20 +86,20 @@
           <div class="sql-main">
             <div class="sql-editor">
               <div class="editor-header">
-                <h4><i class="fas fa-edit"></i> {{ $t('SQL Query Editor') }}</h4>
+                <h4><Pencil class="lab-i" /> {{ $t('SQL Query Editor') }}</h4>
                 <div class="editor-actions">
                   <button class="btn btn-sm" @click="formatSQL">
-                    <i class="fas fa-align-left"></i> {{ $t('Format') }}
+                    <AlignLeft class="lab-i" /> {{ $t('Format') }}
                   </button>
                   <button class="btn btn-sm" @click="clearSQL">
-                    <i class="fas fa-trash"></i> {{ $t('Clear') }}
+                    <Trash2 class="lab-i" /> {{ $t('Clear') }}
                   </button>
                 </div>
               </div>
               <div class="editor-container">
                 <textarea
                   v-model="sqlQuery"
-                  placeholder="Enter your SQL query here..."
+                  :placeholder="$t('Enter your SQL query here...')"
                   class="sql-textarea"
                   :disabled="runningSQL"
                   @keydown.ctrl.enter="runSQL"
@@ -110,8 +115,8 @@
                     @click="runSQL"
                     :disabled="!sqlQuery.trim() || runningSQL"
                   >
-                    <i class="fas fa-play" :class="{ 'fa-spin': runningSQL }"></i>
-                    {{ runningSQL ? 'Running...' : 'Run Query' }}
+                    <Loader2 v-if="runningSQL" class="lab-i lab-i--spin" /><Play v-else class="lab-i" />
+                    {{ runningSQL ? $t('Running...') : $t('Run Query') }}
                   </button>
                 </div>
               </div>
@@ -119,7 +124,7 @@
 
             <div class="sql-results">
               <div class="results-header">
-                <h4><i class="fas fa-poll"></i> {{ $t('Results') }}</h4>
+                <h4><BarChart3 class="lab-i" /> {{ $t('Results') }}</h4>
                 <div class="results-info">
                   <span v-if="sqlResults">
                     {{ $t('{v0} row(s) returned', { v0: sqlResults.length }) }}
@@ -128,7 +133,7 @@
               </div>
               <div class="results-container">
                 <div v-if="sqlError" class="error-message">
-                  <i class="fas fa-exclamation-circle"></i>
+                  <AlertCircle class="lab-i" />
                   <div>
                     <strong>{{ $t('SQL Error:') }}</strong> {{ sqlError }}
                   </div>
@@ -154,7 +159,7 @@
                 </div>
 
                 <div v-else class="empty-results">
-                  <i class="fas fa-database"></i>
+                  <Database class="lab-i" />
                   <p>{{ $t('No results yet. Run a query to see results here.') }}</p>
                 </div>
               </div>
@@ -170,22 +175,22 @@
             <!-- Terminal Header -->
             <div class="terminal-header">
               <div class="terminal-title">
-                <i class="fas fa-terminal"></i>
+                <Terminal class="lab-i" />
                 {{ $t('Linux Terminal - {v0}@lab-server', { v0: username }) }}
                 <span class="terminal-status" v-if="runningProcess">
-                  <i class="fas fa-spinner fa-spin"></i> {{ $t('Process running...') }}
+                  <Loader2 class="lab-i lab-i--spin" /> {{ $t('Process running...') }}
                 </span>
               </div>
               <div class="terminal-actions">
                 <button class="btn btn-sm" @click="clearTerminal" :title="$t('Clear terminal')">
-                  <i class="fas fa-broom"></i> {{ $t('Clear') }}
+                  <Eraser class="lab-i" /> {{ $t('Clear') }}
                 </button>
                 <button class="btn btn-sm btn-danger" @click="killProcess"
                         :disabled="!runningProcess" :title="$t('Stop current process')">
-                  <i class="fas fa-stop"></i> {{ $t('Stop') }}
+                  <Square class="lab-i" /> {{ $t('Stop') }}
                 </button>
                 <button class="btn btn-sm" @click="copyTerminalContent" :title="$t('Copy terminal content')">
-                  <i class="fas fa-copy"></i> {{ $t('Copy') }}
+                  <Copy class="lab-i" /> {{ $t('Copy') }}
                 </button>
               </div>
             </div>
@@ -197,7 +202,15 @@
                 <div class="welcome-line">{{ $t('🌐 Welcome to Linux Terminal Lab!') }}</div>
                 <div class="welcome-line">{{ $t('📁 Type \'help\' for available commands') }}</div>
                 <div class="welcome-line">{{ $t('💡 Press ↑/↓ for command history • Tab for auto-completion') }}</div>
-                <div class="welcome-separator">──────────────────────────────────────────────</div>
+                <!--
+                  Empty on purpose. It used to hold 46 literal `─` box-drawing
+                  characters, which a screen reader reads out one by one and which
+                  have no break opportunity — so at 390px the run was 18px wider
+                  than the terminal and extended its scrollable width. The rule in
+                  lab.css already draws the line as a 1px gradient, which is what
+                  the characters were imitating.
+                -->
+                <div class="welcome-separator" aria-hidden="true"></div>
               </div>
 
               <!-- Terminal Lines -->
@@ -214,7 +227,7 @@
                     v-model="currentCommand"
                     type="text"
                     class="command-input"
-                    :placeholder="commandHistory.length > 0 ? '' : 'Type a command and press Enter...'"
+                    :placeholder="commandHistory.length > 0 ? '' : $t('Type a command and press Enter...')"
                     :disabled="runningProcess"
                     @keydown.enter="runLinuxCommand"
                     @keydown.up.prevent="commandHistoryUp"
@@ -227,10 +240,16 @@
                     autocorrect="off"
                     autocapitalize="off"
                   />
-                  <span class="cursor" v-if="!runningProcess && currentCommand.length === 0">█</span>
-                  <span class="cursor" v-else-if="!runningProcess">|</span>
+                  <!--
+                    The fake cursor was here — a `█` or a `|` after the input.
+                    `.command-input` is `flex: 1`, so both were pushed to the FAR
+                    RIGHT of the terminal, hundreds of pixels from the text being
+                    typed, at every width; they also made the row two pixels wider
+                    than its own box. The native caret is in the right place by
+                    construction and already takes `caret-color: --code-green`.
+                  -->
                   <span class="running-indicator" v-if="runningProcess">
-                    <i class="fas fa-spinner fa-spin"></i>
+                    <Loader2 class="lab-i lab-i--spin" />
                   </span>
                 </div>
               </div>
@@ -239,7 +258,7 @@
             <!-- Terminal Help Section -->
             <div class="terminal-help">
               <div class="help-header">
-                <i class="fas fa-bolt"></i> {{ $t('Quick Commands (Click to insert)') }}
+                <Zap class="lab-i" /> {{ $t('Quick Commands (Click to insert)') }}
               </div>
               <div class="commands-grid">
                 <button class="cmd-btn" @click="insertCommand('pwd')" :title="$t('Print working directory')">
@@ -277,13 +296,13 @@
         <div class="python-container">
           <div class="python-editor">
             <div class="editor-header">
-              <h4><i class="fas fa-code"></i> {{ $t('Python Code Editor') }}</h4>
+              <h4><Code2 class="lab-i" /> {{ $t('Python Code Editor') }}</h4>
               <div class="editor-actions">
                 <button class="btn btn-sm" @click="insertPythonTemplate">
-                  <i class="fas fa-file-code"></i> {{ $t('Template') }}
+                  <FileCode2 class="lab-i" /> {{ $t('Template') }}
                 </button>
                 <button class="btn btn-sm" @click="clearPythonCode">
-                  <i class="fas fa-trash"></i> {{ $t('Clear') }}
+                  <Trash2 class="lab-i" /> {{ $t('Clear') }}
                 </button>
               </div>
             </div>
@@ -304,8 +323,8 @@
                   @click="runPythonCode"
                   :disabled="!pythonCode.trim() || runningPython"
                 >
-                  <i class="fas fa-play" :class="{ 'fa-spin': runningPython }"></i>
-                  {{ runningPython ? 'Running...' : 'Run Code' }}
+                  <Loader2 v-if="runningPython" class="lab-i lab-i--spin" /><Play v-else class="lab-i" />
+                  {{ runningPython ? $t('Running...') : $t('Run Code') }}
                 </button>
               </div>
             </div>
@@ -313,16 +332,16 @@
 
           <div class="python-output">
             <div class="output-header">
-              <h4><i class="fas fa-terminal"></i> {{ $t('Output') }}</h4>
+              <h4><Terminal class="lab-i" /> {{ $t('Output') }}</h4>
               <div class="output-actions">
                 <button class="btn btn-sm" @click="clearPythonOutput">
-                  <i class="fas fa-trash"></i> {{ $t('Clear') }}
+                  <Trash2 class="lab-i" /> {{ $t('Clear') }}
                 </button>
               </div>
             </div>
             <div class="output-container">
               <div v-if="pythonError" class="error-message">
-                <i class="fas fa-exclamation-circle"></i>
+                <AlertCircle class="lab-i" />
                 <div>
                   <strong>{{ $t('Python Error:') }}</strong>
                   <pre>{{ pythonError }}</pre>
@@ -334,13 +353,13 @@
               </div>
 
               <div v-else class="empty-output">
-                <i class="fas fa-code"></i>
+                <Code2 class="lab-i" />
                 <p>{{ $t('Run your Python code to see output here.') }}</p>
               </div>
             </div>
 
             <div class="python-templates">
-              <h5><i class="fas fa-lightbulb"></i> {{ $t('Quick Examples') }}</h5>
+              <h5><Lightbulb class="lab-i" /> {{ $t('Quick Examples') }}</h5>
               <div class="templates-grid">
                 <button class="template-btn" @click="insertPythonExample('hello')">
                   {{ $t('Hello World') }}
@@ -364,13 +383,13 @@
     <!-- Toast Notifications -->
     <div class="toast-container">
       <div v-for="toast in toasts" :key="toast.id" class="toast" :class="toast.type">
-        <i :class="toast.icon"></i>
+        <component :is="toast.icon" class="lab-i" />
         <div class="toast-content">
           <div class="toast-title">{{ toast.title }}</div>
           <div class="toast-message">{{ toast.message }}</div>
         </div>
         <button class="toast-close" @click="removeToast(toast.id)">
-          <i class="fas fa-times"></i>
+          <X class="lab-i" />
         </button>
       </div>
     </div>
@@ -378,6 +397,18 @@
 </template>
 
 <script setup lang="ts">
+import type { Component } from 'vue';
+/*
+  Icons as components. Labs.vue was the only file in the app using Font
+  Awesome — 40 `<i class="fas fa-…">` elements — and Font Awesome is not
+  loaded anywhere: not in package.json, not linked from index.html, not
+  imported. All 40 rendered as empty `<i>` tags, so every button had a gap
+  where its icon should be and every heading started with a blank.
+  `lucide-vue-next` is already a dependency and already in the bundle.
+*/
+import {
+    AlertCircle, AlertTriangle, AlignLeft, BarChart3, CheckCircle2, Code2, Copy, Crown, Database, Eraser, FileCode2, FlaskConical, HardDrive, Info, Lightbulb, Loader2, Pencil, Play, RotateCw, Square, Table, Terminal, Trash2, X, Zap,
+} from 'lucide-vue-next';
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
@@ -489,15 +520,23 @@ const toasts = ref<Array<{
   title: string;
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
-  icon: string;
+  icon: Component;
 }>>([]);
 let toastId = 0;
 
 // Tabs configuration
-const tabs: Array<{ id: TabId; label: string; icon: string }> = [
-  { id: 'sql', label: 'SQL Database', icon: 'fas fa-database' },
-  { id: 'linux', label: 'Linux Terminal', icon: 'fas fa-terminal' },
-  { id: 'python', label: 'Python Compiler', icon: 'fas fa-code' }
+/*
+  The icon is a COMPONENT and the label is a KEY.
+
+  Both were strings: a Font Awesome class that rendered nothing, and an English
+  label that rendered in English on an Arabic page. The label is resolved through
+  `t()` at read time rather than stored translated, so switching language
+  re-labels the tabs without rebuilding the array.
+*/
+const tabs: Array<{ id: TabId; label: string; icon: Component }> = [
+  { id: 'sql', label: 'SQL Database', icon: Database },
+  { id: 'linux', label: 'Linux Terminal', icon: Terminal },
+  { id: 'python', label: 'Python Compiler', icon: Code2 },
 ];
 
 // Initialize lab — automatically create the student record if it doesn't exist
@@ -540,7 +579,7 @@ const initializeLab = async () => {
   } catch (err: any) {
     console.error('Failed to initialize lab:', err);
     error.value = err.message || 'Failed to initialize lab environment';
-    showToast('Error', error.value, 'error');
+    showToast('Error', error.value || 'Something went wrong.', 'error');
   } finally {
     loading.value = false;
   }
@@ -549,10 +588,10 @@ const initializeLab = async () => {
 // Toast functions
 const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning') => {
   const icons = {
-    success: 'fas fa-check-circle',
-    error: 'fas fa-exclamation-circle',
-    warning: 'fas fa-exclamation-triangle',
-    info: 'fas fa-info-circle'
+    success: CheckCircle2,
+    error: AlertCircle,
+    warning: AlertTriangle,
+    info: Info,
   };
 
   const id = ++toastId;
@@ -619,7 +658,7 @@ const runSQL = async () => {
     }
   } catch (err: any) {
     sqlError.value = err.message || 'Failed to execute SQL query';
-    showToast('Error', sqlError.value, 'error');
+    showToast('Error', sqlError.value || 'Something went wrong.', 'error');
   } finally {
     runningSQL.value = false;
   }
@@ -843,7 +882,7 @@ const runPythonCode = async () => {
     }
   } catch (err: any) {
     pythonError.value = err.message || 'Failed to execute Python code';
-    showToast('Error', pythonError.value, 'error');
+    showToast('Error', pythonError.value || 'Something went wrong.', 'error');
   } finally {
     runningPython.value = false;
   }

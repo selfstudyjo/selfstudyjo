@@ -11,8 +11,8 @@
 .take-quiz-page {
   --tq-text:           var(--sfs-text, #ffffff);
   --tq-text-soft:      var(--sfs-text-muted, #e8eaff);
-  --tq-text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --tq-text-dim:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --tq-text-muted:     var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --tq-text-dim:       var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   --tq-accent:         var(--sfs-accent-text, #818cf8);
   --tq-accent-2:       var(--sfs-accent-2-text, #a78bfa);
@@ -318,7 +318,7 @@
   transition: color var(--tq-t-fast);
 }
 .breadcrumb-link:hover { color: var(--tq-accent-2); }
-.breadcrumb-separator { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.3); }
+.breadcrumb-separator { color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); }
 .breadcrumb-current { color: var(--sfs-text, #fff); font-weight: 600; }
 
 /* --------------------------------------------------------
@@ -428,7 +428,7 @@
 
 .timer-section {
   padding: 1rem;
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.25);
   border: 1px solid var(--tq-glass-border);
   border-radius: var(--tq-r-md);
   text-align: center;

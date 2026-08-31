@@ -255,7 +255,7 @@
   color: var(--rr-warning);
   border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.35);
   background: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.08);
-  text-shadow: 0 0 12px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.55);
+  text-shadow: var(--sfs-title-glow-warning, 0 0 12px rgb(var(--sfs-warning-rgb, 251 191 36) / 0.55));
 }
 .score strong.fail {
   color: var(--rr-danger);

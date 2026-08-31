@@ -8,7 +8,16 @@
 
 :root {
   /* Brand colors aligned with global style.css */
-  --pay-accent-1: var(--sfs-accent-text, #667eea);
+  /*
+    `--sfs-accent` (a FILL), not `--sfs-accent-text` (an INK).
+
+    The two are different colours on purpose: the ink is derived to be readable
+    ON the surface, so it is a pale accent in a dark galaxy — and used as the
+    first stop of a button's gradient it gave white-on-pale-lavender at 3.08:1.
+    `fillAndInk()` guarantees `--sfs-on-accent` clears AA on `--sfs-accent` and
+    promises nothing about the ink token.
+  */
+  --pay-accent-1: var(--sfs-accent, #667eea);
   --pay-accent-2: var(--sfs-accent-2, #764ba2);
   --pay-accent-glow: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
   --pay-accent-soft: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
@@ -23,7 +32,7 @@
   --pay-text:        var(--sfs-text, #ffffff);
   --pay-text-strong: var(--sfs-text, #e8eaff);
   --pay-text-soft:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --pay-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --pay-text-muted:  var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Glass surfaces */
   --pay-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
@@ -129,7 +138,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 0 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  text-shadow: var(--sfs-title-glow, 0 0 40px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25));
 }
 
 .subtitle {

@@ -558,13 +558,13 @@ onBeforeUnmount(() => {
   border: 0;
   border-inline-start: 3px solid var(--uc-brand-soft);
   border-radius: var(--uc-r-xs);
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.22);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
   color: inherit;
   cursor: pointer;
   font: inherit;
   transition: background var(--uc-t-fast);
 }
-.quote:hover { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.32); }
+.quote:hover { background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.32); }
 .row.mine .quote { border-inline-start-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.7); background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14); }
 .row.mine .quote:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.2); }
 .quote-who { display: block; font-size: var(--uc-fs-xs); font-weight: 700; }
@@ -668,7 +668,7 @@ onBeforeUnmount(() => {
   gap: 6px;
   margin-top: 3px;
   font-size: var(--uc-fs-xs);
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   line-height: 1;
 }
 .bubble.image .foot { margin: 3px 5px 1px; }

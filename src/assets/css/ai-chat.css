@@ -17,7 +17,7 @@
   /* Text */
   --aic-text-primary:   var(--sfs-text, #ffffff);
   --aic-text-secondary: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --aic-text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --aic-text-muted:     var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Glass surfaces */
   --aic-glass-bg:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
@@ -265,7 +265,7 @@
 
 .ai-chat-container .md-block pre {
   position: relative;
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: var(--aic-sp-md);
@@ -396,7 +396,7 @@
   word-break: break-word;
 }
 .ai-chat-container .input-area textarea::placeholder {
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.4);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 }
 .ai-chat-container .input-area textarea:disabled {
   cursor: not-allowed;

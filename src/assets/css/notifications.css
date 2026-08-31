@@ -15,8 +15,8 @@
   /* text on dark galaxy */
   --np-text:        var(--sfs-text, #ffffff);
   --np-text-soft:   var(--sfs-text-muted, #e8eaff);
-  --np-text-muted:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --np-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --np-text-muted:  var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --np-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* glass surfaces */
   --np-surface:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
@@ -259,7 +259,7 @@
   overflow-wrap: anywhere;       /* allow long usernames */
 }
 .stat-card.unread    .stat-value { color: var(--np-personal); }
-.stat-card.general   .stat-value { color: var(--np-general); }
+.stat-card.general   .stat-value { color: var(--sfs-success-text, #34d399); }
 .stat-card.group     .stat-value { color: var(--np-group); }
 .stat-card.user-info .stat-value { color: var(--np-user); font-size: var(--np-fs-md); }
 
@@ -475,7 +475,7 @@
 }
 
 .type-badge.general {
-  color: var(--np-general);
+  color: var(--sfs-success-text, #34d399);
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.4);
 }
@@ -565,7 +565,7 @@
 }
 
 .btn-mark-read {
-  color: var(--np-general);
+  color: var(--sfs-success-text, #34d399);
   background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.12);
   border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
 }
@@ -1003,7 +1003,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--sfs-accent-text, #818cf8);
+  /* A fill, so the fill token. See payment.css. */
+  background: var(--sfs-accent, #818cf8);
   box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2);
   flex-shrink: 0;
 }

@@ -151,6 +151,14 @@ tools/leaderboard-preview/shots/
 tools/rtl-audit/shots-ar/
 tools/rtl-audit/shots-en/
 
+# Output of tools/labs-preview — the same. 19 PNGs a run, regenerated with
+# `npm run build:labs-preview && node tools/labs-preview/shoot.mjs`.
+tools/labs-preview/shots/
+
+# Screenshots from `AUDIT_THEME=<galaxy> npm run audit:rtl`, one directory per
+# language x galaxy. Generated, and a full sweep is several hundred PNGs.
+tools/rtl-audit/shots-*/
+
 # Output of tools/home-preview — the built preview, its screenshots and the
 # throwaway Chrome profile shoot.mjs launches. 12 PNGs a run and ~75 MB of
 # profile, regenerated with `npm run build:home-preview && node

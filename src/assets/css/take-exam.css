@@ -718,7 +718,7 @@
   flex-shrink: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--te-ok);
+  color: var(--sfs-success-text, #34d399);
   text-shadow: 0 0 12px rgb(var(--sfs-success-rgb, 52 211 153) / 0.6);
 }
 
@@ -817,7 +817,7 @@
 }
 .take-exam-page .question-dot.correct {
   background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.22);
-  color: var(--te-ok);
+  color: var(--sfs-success-text, #34d399);
   border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.45);
 }
 .take-exam-page .question-dot.incorrect {
@@ -873,7 +873,7 @@
 .take-exam-page .summary-item .value { color: var(--te-text); font-weight: 600; font-size: var(--te-fs-sm); }
 .take-exam-page .summary-item .value.warning { color: var(--te-warn); }
 .take-exam-page .summary-item .value.score   { font-size: var(--te-fs-lg); font-weight: 700; }
-.take-exam-page .summary-item .value.score.passed { color: var(--te-ok); }
+.take-exam-page .summary-item .value.score.passed { color: var(--sfs-success-text, #34d399); }
 .take-exam-page .summary-item .value.score.failed { color: var(--te-err); }
 
 /* actions card */
@@ -939,7 +939,7 @@
 }
 .take-exam-page .status-badge.completed {
   background: rgb(var(--sfs-success-rgb, 52 211 153) / 0.18);
-  color: var(--te-ok);
+  color: var(--sfs-success-text, #34d399);
   border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.45);
 }
 .take-exam-page .status-badge.taken-but-failed,

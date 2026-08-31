@@ -292,7 +292,6 @@ import { notificationService, type NotificationResponse } from '@/services/notif
 import { paymentService } from '@/services/payment.service';
 import { decodeNotificationMessage, type NotificationAction } from '@/utils/notificationMeta';
 import RichText from '@/components/RichText.vue';
-import '@/assets/css/notifications.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -705,3 +704,12 @@ function formatTime(timestamp: string) {
   color: var(--sfs-success-text, #38a169);
 }
 </style>
+
+<!-- Scoped rather than imported from the script, so its selectors cannot reach
+     another page. See VerifyEmail.vue for the bug that prompted it: a bare
+     `.btn-primary` in a globally-loaded sheet wiped the fill off the login
+     button, because an undefined `var()` makes a property `unset` rather than
+     letting the earlier declaration win. Safe here for the same two reasons —
+     the tokens are on the page root, not `:root`, and this view styles no child
+     component's internals. -->
+<style scoped src="@/assets/css/notifications.css"></style>

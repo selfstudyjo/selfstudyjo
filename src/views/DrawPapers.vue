@@ -352,7 +352,7 @@ h2 { margin: 0; font-size: 1.05rem; color: var(--sfs-text, #1e293b); }
 
 .card {
   position: relative;
-  border: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.08);
+  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
   border-radius: 13px;
   background: var(--sfs-paper, #fff);
   overflow: hidden;
@@ -375,7 +375,7 @@ h2 { margin: 0; font-size: 1.05rem; color: var(--sfs-text, #1e293b); }
   place-items: center;
   height: 132px;
   background: var(--sfs-paper, #f8fafc);
-  border-bottom: 1px solid rgb(var(--sfs-shade-rgb, 15 23 42) / 0.06);
+  border-bottom: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.06);
   overflow: hidden;
 }
 

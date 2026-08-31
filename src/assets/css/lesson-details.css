@@ -51,6 +51,19 @@
      */
     --lesson-code-bg: #0f172a;
     --lesson-code-ink: #e2e8f0;
+    /*
+      The bar above a code block, as an OPAQUE colour rather than
+      `rgb(var(--sfs-tint-rgb) / 0.06)`.
+
+      White at 6% over `--lesson-code-bg` is the right bar and the wrong
+      declaration: it only works while the parent's fill is what you think it
+      is, and `audit:contrast` — which composites a translucent background over
+      the PAGE, because that is all a static scan can do — read it as a light ink
+      on a light page and reported 1.03:1, the worst rule on the platform, on a
+      block that renders perfectly. Naming the colour makes the rule true on its
+      own and the audit right about it. 12.5:1 against `--lesson-code-ink`.
+    */
+    --lesson-code-bar-bg: #1a2337;
 }
 
 /* ------------------------------------------------------------- loading, error */
@@ -388,7 +401,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.4rem 0.7rem;
-    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    background: var(--lesson-code-bar-bg, #1a2337);
     color: var(--lesson-code-ink, #e2e8f0);
     border-block-end: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
 }

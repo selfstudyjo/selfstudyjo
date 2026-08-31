@@ -492,7 +492,16 @@ onUnmounted(() => {
    ========================================================================== */
 .chat-wrapper {
   /* brand (aligned with style.css :root --chat-primary) */
-  --cb-primary:        var(--sfs-accent-text, #667eea);
+  /*
+    `--sfs-accent` (a FILL), not `--sfs-accent-text` (an INK).
+
+    The two are different colours on purpose: the ink is derived to be readable
+    ON the surface, so it is a pale accent in a dark galaxy — and used as the
+    first stop of a button's gradient it gave white-on-pale-lavender at 3.08:1.
+    `fillAndInk()` guarantees `--sfs-on-accent` clears AA on `--sfs-accent` and
+    promises nothing about the ink token.
+  */
+  --cb-primary:        var(--sfs-accent, #667eea);
   --cb-primary-dark:   var(--sfs-accent-text, #5a67d8);
   --cb-secondary:      var(--sfs-accent-2, #764ba2);
   --cb-accent:         var(--sfs-accent-text, #818cf8);
@@ -501,7 +510,7 @@ onUnmounted(() => {
 
   /* glass surfaces — translucent so galaxy bleeds through */
   --cb-glass-1:        rgb(var(--sfs-surface-rgb, 15 17 40) / 0.62);   /* window */
-  --cb-glass-2:        rgb(var(--sfs-shade-rgb, 15 17 40) / 0.42);   /* messages area */
+  --cb-glass-2:        rgb(var(--sfs-sink-rgb, 15 17 40) / 0.42);   /* messages area */
   --cb-glass-3:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06); /* input field */
   --cb-glass-3-focus:  rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   --cb-bubble-in:      rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
@@ -515,8 +524,13 @@ onUnmounted(() => {
   /* text — light on dark glass */
   --cb-text:           var(--sfs-text, #f1f3f9);
   --cb-text-muted:     rgb(var(--sfs-text-rgb, 241 243 249) / 0.78);
-  --cb-text-subtle:    rgb(var(--sfs-text-rgb, 241 243 249) / 0.55);
-  --cb-text-on-primary:var(--sfs-text, #ffffff);
+  --cb-text-subtle:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  /* The ink for the brand gradient, so it has to be the ink DERIVED for that
+     fill — the name says "on primary" and it was pointing at the page's ink.
+     White on blue in the dark seven, near-black on blue in the light three:
+     2.79:1 on the launcher, the header and every outgoing bubble, and this
+     widget is on every page of the platform. */
+  --cb-text-on-primary:var(--sfs-on-accent, #ffffff);
 
   /* status */
   --cb-success:        var(--sfs-success, #48bb78);

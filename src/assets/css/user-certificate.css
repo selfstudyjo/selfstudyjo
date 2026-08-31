@@ -31,7 +31,7 @@
   --uc-text:        var(--sfs-text, #ffffff);
   --uc-text-soft:   var(--sfs-text-muted, #e8eaff);
   --uc-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
-  --uc-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --uc-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Glass surfaces */
   --uc-glass:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
@@ -509,7 +509,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3);
+  text-shadow: var(--sfs-title-glow, 0 2px 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.3));
 }
 
 .cert-ribbon {
@@ -585,7 +585,7 @@
   font-weight: 800;
   line-height: 1.2;
   color: var(--uc-text);
-  text-shadow: 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4), var(--uc-text-shadow);
+  text-shadow: var(--sfs-title-glow, 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4), var(--uc-text-shadow));
 }
 
 .name-rule {
@@ -799,15 +799,26 @@
   color: var(--uc-text-dim);
   text-shadow: var(--uc-text-shadow);
 }
+/*
+  The certificate id, as a GOLD PILL rather than gold on a black scrim.
+
+  `rgb(0 0 0 / 0.3)` over `--sfs-paper` — which is white in all ten galaxies — is
+  a mid grey, and a mid grey is the one backdrop no ink is comfortable on: gold
+  measured 3.47:1 there with the surface-derived token and 2.16:1 with the
+  paper-derived one. The wash and its `-on-paper` ink are a pair the theme system
+  derives TOGETHER and guarantees at AA, which is what a wash token is for. It is
+  also opaque, so `audit:contrast` can measure it instead of compositing a
+  translucent scrim over the wrong backdrop.
+*/
 .cert-id {
   padding: 0.3rem 0.8rem;
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
+  background: var(--sfs-warning-wash, rgb(255 210 119 / 0.3));
   border: 1px solid rgb(var(--sfs-warning-rgb, 255 210 119) / 0.35);
   border-radius: 999px;
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: var(--uc-fz-xs);
   letter-spacing: 1px;
-  color: var(--uc-gold);
+  color: var(--sfs-warning-on-paper, #8d6b14);
   overflow-wrap: anywhere;
   text-shadow: 0 0 10px var(--uc-glow-gold);
 }

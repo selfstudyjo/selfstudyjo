@@ -19,13 +19,13 @@
   /* text */
   --rg-text:       var(--sfs-text, #ffffff);
   --rg-text-soft:  var(--sfs-text-muted, #e8eaff);
-  --rg-text-mute:  rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --rg-text-dim:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --rg-text-mute:  var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --rg-text-dim:   var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* glass surfaces */
   --rg-glass-bg:        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   --rg-glass-bg-strong: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
-  --rg-glass-bg-input:  rgb(var(--sfs-shade-rgb, 15 17 40) / 0.45);
+  --rg-glass-bg-input:  rgb(var(--sfs-sink-rgb, 15 17 40) / 0.45);
   --rg-glass-bg-input-focus: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.65);
   --rg-glass-border:    rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
   --rg-glass-border-hover: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22);
@@ -514,7 +514,7 @@
 }
 .register-link:hover {
   color: var(--rg-accent-2);
-  text-shadow: 0 0 12px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.6);
+  text-shadow: var(--sfs-title-glow, 0 0 12px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.6));
   text-decoration: underline;
   text-underline-offset: 3px;
 }

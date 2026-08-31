@@ -71,6 +71,23 @@ const hex = c => '#' + [c.r, c.g, c.b].map(n =>
 
 /* ------------------------------------------------------------- resolution */
 
+/**
+ * Substitute page-local custom properties — anything not `--sfs-` — with the
+ * value declared for them in the same file. One pass over two levels is enough:
+ * these files alias a token at most twice (`--term-bg: var(--glass-2)`).
+ */
+function expandLocals(value, locals, depth = 0) {
+  if (depth > 2 || !value.includes('var(')) return value;
+  const out = value.replace(
+    /var\(\s*(--[a-z0-9-]+)\s*(?:,([^()]*(?:\([^()]*\)[^()]*)*))?\)/gi,
+    (all, name, fallback) => {
+      if (name.startsWith('--sfs-')) return all;
+      const local = locals.get(name);
+      return local !== undefined ? local : (fallback ?? all);
+    });
+  return out === value ? out : expandLocals(out, locals, depth + 1);
+}
+
 function resolve(value, vars, locals, depth = 0) {
   if (!value || depth > 5) return value;
   let out = value.replace(
@@ -168,7 +185,22 @@ function readInk() {
       const body = m[2];
       const bg = /(^|[;\s])(background|background-color|background-image)\s*:\s*([^;]+)/.exec(body);
       if (!bg) continue;
-      const value = bg[3];
+      /*
+        PAGE-LOCAL TOKENS ARE EXPANDED FIRST, and only the page-local ones.
+
+        `background: var(--code-bg)` is a fill — `--code-bg` is `#0b1020`, the
+        Labs page's opaque terminal colour — but none of the tests below could
+        see that: the NAME contains no brand word and the value contains no
+        literal, so the rule was skipped and every light ink inside the terminal
+        was reported as "light ink with no fill under it" in the three light
+        galaxies. Eight findings, all correct-by-design, in a report whose whole
+        value is being short enough to read line by line.
+
+        `--sfs-` names are deliberately left alone: `resolve()` would replace
+        them with their FALLBACK, and the `isTint` / `isBrand` tests below match
+        on the token name.
+      */
+      const value = expandLocals(bg[3], locals);
       if (/^\s*(none|transparent|inherit|initial|unset)\s*$/i.test(value)) continue;
 
       /* Paper and the status washes are light islands: dark ink is correct on

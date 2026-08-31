@@ -454,10 +454,35 @@ function buildTheme(seed: ThemeSeed): Theme {
   /* --- Text, derived. Never written down. --- */
   const inkStart = dark ? '#ffffff' : '#0d1220';
   const text = ensureContrast(inkStart, surface, AAA_TEXT);
-  // Muted text carries a hint of the galaxy so the theme reads in body copy
-  // too, then is pulled back until it clears AA. Tinting after the contrast
-  // pass would undo it.
-  const textMuted = ensureContrast(mix(text, accent, 0.42), surface, AA_TEXT);
+  /*
+    Muted text carries a hint of the galaxy so the theme reads in body copy too,
+    then is pulled back until it clears AA. Tinting after the contrast pass would
+    undo it.
+
+    THE TWO MODES CANNOT USE THE SAME RECIPE, and using one was why secondary
+    copy on a light galaxy did not read as secondary. Mixing WHITE toward the
+    accent gives a paler tinted ink, which recedes — right for the dark seven.
+    Mixing NEAR-BLACK toward a saturated accent gives something *more* saturated
+    and barely lighter: Cartwheel's muted came out `#142b6d`, a navy measuring
+    10.9:1 against the surface where the full ink measures 14:1. Two levels of
+    hierarchy three per cent apart, and the "quieter" one looked like emphasis.
+
+    So a light galaxy takes less of the accent and is then blended toward the
+    SURFACE, which is the direction that actually recedes when the ink is dark.
+    THE 0.16 IS TUNED, not chosen. Muted is spent on ~230 declarations, and a
+    good many of them land on something other than the plain surface — an accent
+    wash behind an active tab, a recessed well, a status chip. At 0.30 toward the
+    surface Cartwheel's muted measures a comfortable 5.4:1 on the surface and
+    **3.4:1 on an accent wash**, and `audit:contrast` went from 20 failures to
+    75. At 0.16 it is `#334169`: 8.3:1 on the surface, 6.9:1 in a well, 5.2:1 on
+    the accent wash — safe on every backdrop the audit can see, and still half
+    the contrast of the 15.5:1 full ink, which is what makes it read as
+    secondary. A token this widely spent has to clear AA on the WORST surface it
+    reaches, not on the average one.
+  */
+  const textMuted = dark
+    ? ensureContrast(mix(text, accent, 0.42), surface, AA_TEXT)
+    : ensureContrast(mix(mix(text, accent, 0.25), surface, 0.16), surface, AA_TEXT);
   // Faint text is captions and timestamps — AA large is the honest bar for it,
   // and pretending otherwise just produces four identical greys.
   const textFaint = ensureContrast(mix(text, surface, 0.42), surface, AA_LARGE);
@@ -518,7 +543,53 @@ function buildTheme(seed: ThemeSeed): Theme {
    * `rgba(255,255,255,α)` literals into a working light theme.
    */
   const tintRgb = '255 255 255';
+  /*
+    THE SHADOW CHANNEL AND THE WELL CHANNEL ARE NOT THE SAME THING, and
+    conflating them is what made the three light galaxies unreadable.
+
+    `--sfs-shade-rgb` is black in every galaxy, which is correct for a SHADOW —
+    a white shadow is not a shadow, and the elevation tokens want black in both
+    modes. It was also being spent as a SURFACE in 97 places across 33
+    stylesheets: a sidebar rail, a search well, a table header, a scroll track,
+    a media strip, a modal scrim. Every one of those is `rgb(0 0 0 / 0.2…0.55)`,
+    which over a dark galaxy is a slightly deeper panel and over a PALE one is a
+    mid-grey block — so on a light theme the sidebar was a dark bar down the side
+    of a white page on every screen of the platform, with the page's near-black
+    ink on top of it.
+
+    It mostly did not fail `audit:contrast`, because near-black ink on a mid-grey
+    panel clears 4.5:1 by a hair. It failed the eye, which is what it was
+    reported as.
+
+    So the surface use gets its own triple. What "recessed" MEANS flips with the
+    mode: over a dark page a well is nearer black, and over a light page it is a
+    slightly deeper grey than the page — never black, or the same 0.45 alpha that
+    is a subtle well in the dark seven is a slab in the light three. The light
+    value is derived from that galaxy's own space colour rather than being a flat
+    grey, so a well in Dawn is warm and a well in Cartwheel is cool, exactly as
+    their pages are.
+
+    The same reasoning as `--sfs-line-rgb`, one step further: that split let the
+    tint stop flipping, and this one lets the shadow stop being a surface.
+  */
   const shadeRgb = '0 0 0';
+  const sinkRgb = dark
+    ? '0 0 0'
+    /*
+      18% of the way from this galaxy's own page colour toward black — worked
+      backwards from the alphas the stylesheets actually use rather than picked.
+
+      At 0.45, the commonest, a Cartwheel well lands on #ccd1dd against a
+      #e3e9f6 page: a step of about 20 channels, which is the difference a light
+      interface uses between a page and a rail. At 0.18 it is ~8 channels, just
+      perceptible; at 0.55, ~24. Black would give #a3a5ac at 0.45, which is a
+      slab rather than a well and is what the bug looked like.
+
+      Derived from `seed.space` rather than a flat grey so a well in Dawn is warm
+      and one in Cartwheel is cool, exactly as their pages are — a neutral grey
+      well on a warm page reads as a different, dirtier colour.
+    */
+    : channels(mix(seed.space, '#000000', 0.18));
   /*
     Borders cannot share the tint.
 
@@ -578,6 +649,7 @@ function buildTheme(seed: ThemeSeed): Theme {
     /* Tint ladder — one triple, every opacity */
     '--sfs-tint-rgb': tintRgb,
     '--sfs-shade-rgb': shadeRgb,
+    '--sfs-sink-rgb': sinkRgb,
     '--sfs-line-rgb': lineRgb,
 
     /* Text */

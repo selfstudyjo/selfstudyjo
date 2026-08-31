@@ -112,14 +112,14 @@
     -webkit-text-fill-color: var(--sfs-text, #ffffff);
 }
 .courses-page ::placeholder {
-    color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65) !important;
-    -webkit-text-fill-color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65) !important;
+    color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
+    -webkit-text-fill-color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
     opacity: 1;
 }
 .courses-page :disabled,
 .courses-page [aria-disabled='true'] {
-    color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45) !important;
-    -webkit-text-fill-color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45) !important;
+    color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
+    -webkit-text-fill-color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
 }
 
 /* Secondary text tier (slightly dimmed white) — wins because more specific */
@@ -141,8 +141,8 @@
 .courses-page .course-date,
 .courses-page .count-loading,
 .courses-page .page-ellipsis {
-    color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65) !important;
-    -webkit-text-fill-color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.65) !important;
+    color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
+    -webkit-text-fill-color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
 }
 
 /* Selection */
@@ -204,10 +204,11 @@
     background: none !important;    /* defeat any inherited gradient */
 
     /* Brand glow as decoration only */
-    text-shadow:
-        0 0 28px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55),
-        0 0 12px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45),
-        0 2px 6px rgba(0, 0, 0, 0.55);
+    /* The two accent glows are decoration and are harmless in both modes; the
+       black drop is dark-mode only, so it goes through the halo token, which is
+       `transparent` in a light galaxy. Under near-black ink on a pale page it
+       was a smudge behind every letter of the page title. */
+    text-shadow: var(--sfs-title-glow, 0 0 28px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55), 0 0 12px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45), 0 2px 6px var(--sfs-ink-halo, rgb(0 0 0 / 0.55)));
 }
 
 .courses-page .page-subtitle {
@@ -405,7 +406,7 @@
     filter: drop-shadow(0 0 16px rgb(var(--sfs-danger-rgb, 252 129 129) / 0.3));
 }
 .courses-page .empty-icon {
-    color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55) !important;
+    color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
     margin-bottom: clamp(16px, 3vw, 20px);
     width: clamp(40px, 8vw, 56px);
     height: clamp(40px, 8vw, 56px);
@@ -515,7 +516,12 @@
     background:
         radial-gradient(ellipse at 30% 30%, rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18), transparent 60%),
         radial-gradient(ellipse at 70% 70%, rgb(var(--sfs-accent-2-rgb, 167 139 250) / 0.14), transparent 60%),
-        rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+        /* The SURROUND is what is visible here, not the planet — the canvas is
+           centred and smaller than the container — so this follows the page like
+           any other well. Black at 0.25 was a dark grey band across the top of
+           every card in the three light galaxies. The planet's own texture is
+           drawn dark and still reads against it. */
+        rgb(var(--sfs-sink-rgb, 0 0 0) / 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -539,8 +545,13 @@
 .courses-page .course-initials {
     font-size: clamp(32px, 8vw, 52px);
     font-weight: 800;
-    color: var(--sfs-text, #ffffff) !important;
-    -webkit-text-fill-color: var(--sfs-text, #ffffff) !important;
+    /* These initials sit over the PLANET — an hsl gradient derived from the
+       course name, over a black scrim — not over the page. So the ink is
+       `--sfs-on-overlay`, which is derived against that scrim and is a light ink
+       in all ten galaxies, and the black halo stays black in both modes. The
+       page ink was near-black here in a light galaxy, over a dark disc. */
+    color: var(--sfs-on-overlay, #ffffff) !important;
+    -webkit-text-fill-color: var(--sfs-on-overlay, #ffffff) !important;
     text-shadow: 0 4px 16px rgba(0, 0, 0, 0.55),
                  0 0 24px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4);
     z-index: 3;
@@ -707,8 +718,8 @@
 .courses-page .pagination-btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
-    color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5) !important;
-    -webkit-text-fill-color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.5) !important;
+    color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
+    -webkit-text-fill-color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)) !important;
 }
 .courses-page .pagination-btn:not(:disabled):hover {
     border-color: var(--galaxy-accent);

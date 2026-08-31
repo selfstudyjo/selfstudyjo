@@ -12,7 +12,9 @@
   --galaxy-text:           var(--sfs-text, #ffffff);
   --galaxy-text-soft:      var(--sfs-text-muted, #e8eaff);
   --galaxy-text-muted:     rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --galaxy-text-dim:       rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  /* The derived muted ink rather than half the page ink — see side-nav.css.
+     NOTE: this whole file is currently imported by nothing. */
+  --galaxy-text-dim:       var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   --galaxy-accent:         var(--sfs-accent-text, #818cf8);
   --galaxy-accent-2:       var(--sfs-accent-2-text, #a78bfa);

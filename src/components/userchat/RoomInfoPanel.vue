@@ -444,7 +444,10 @@ footer {
   transition: background var(--uc-t-fast);
 }
 .uc-danger-btn:hover { background: var(--uc-danger-bg); }
-.uc-danger-btn.solid { background: rgb(var(--sfs-danger-rgb, 220 38 38) / 0.85); border-color: transparent; color: var(--sfs-text, #fff); }
+/* `--sfs-on-danger`, not the page ink: the button is filled with the danger
+   hue, and the page ink is near-black in a light galaxy — 3.48:1 on a Delete
+   button, which is the one control that must not be misread. */
+.uc-danger-btn.solid { background: rgb(var(--sfs-danger-rgb, 220 38 38) / 0.85); border-color: transparent; color: var(--sfs-on-danger, #fff); }
 .uc-danger-btn.solid:hover { background: var(--sfs-danger, rgba(220, 38, 38, 1));   /* Its own ink. The base rule this shares with the other variants can only
      hold one `color`, and that one belongs to whichever variant came first —
      so an amber or green button inherited the ink meant for the indigo one.

@@ -34,6 +34,8 @@
     "build:leaderboard-preview": "vite build --config tools/leaderboard-preview/vite.config.ts",
     "preview:home": "vite --config tools/home-preview/vite.config.ts",
     "build:home-preview": "vite build --config tools/home-preview/vite.config.ts",
+    "preview:labs": "vite --config tools/labs-preview/vite.config.ts",
+    "build:labs-preview": "vite build --config tools/labs-preview/vite.config.ts",
     "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:aichat && npm run check:appnav && npm run check:theme && npm run check:linkify && npm run check:notifyevents && npm run check:cssleaks && npm run check:examshuffle && npm run check:proctorqueue && npm run check:newscast && npm run check:actors && npm run check:interview && npm run check:answeredit && npm run check:qacoaching && npm run check:leaderboard && npm run check:lessoncontent && npm run check:lessonorder && npm run check:jitypes && npm run check:i18n && npm run check:datai18n",
     "audit:contrast": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-contrast.mjs",
     "audit:ink": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-ink.mjs",

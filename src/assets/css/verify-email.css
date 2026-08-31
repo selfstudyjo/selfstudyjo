@@ -15,8 +15,8 @@
   /* text */
   --ve-text:        var(--sfs-text, #ffffff);
   --ve-text-soft:   var(--sfs-text-muted, #e8eaff);
-  --ve-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.7);
-  --ve-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.5);
+  --ve-text-mute:   var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --ve-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   --ve-text-err:    var(--sfs-danger-text, #fecaca);
   --ve-text-ok:     var(--sfs-success-text, #bbf7d0);
 

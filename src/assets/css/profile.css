@@ -30,7 +30,16 @@
   --pp-r-xl: 24px;
 
   /* Galaxy palette (brand gradient + cosmic accents) */
-  --pp-accent-1: var(--sfs-accent-text, #667eea);
+  /*
+    `--sfs-accent` (a FILL), not `--sfs-accent-text` (an INK).
+
+    The two are different colours on purpose: the ink is derived to be readable
+    ON the surface, so it is a pale accent in a dark galaxy — and used as the
+    first stop of a button's gradient it gave white-on-pale-lavender at 3.08:1.
+    `fillAndInk()` guarantees `--sfs-on-accent` clears AA on `--sfs-accent` and
+    promises nothing about the ink token.
+  */
+  --pp-accent-1: var(--sfs-accent, #667eea);
   --pp-accent-2: var(--sfs-accent-2, #764ba2);
   --pp-accent-cyan: var(--sfs-info-text, #4ECDC4);
   --pp-danger: var(--sfs-danger-text, #fc8181);
@@ -39,7 +48,7 @@
   /* Text on dark galaxy */
   --pp-text: var(--sfs-text, #ffffff);
   --pp-text-2: rgb(var(--sfs-text-rgb, 255 255 255) / 0.78);
-  --pp-text-3: rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --pp-text-3: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* Glass surfaces */
   --pp-glass-1: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
@@ -130,7 +139,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 2px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  text-shadow: var(--sfs-title-glow, 0 2px 30px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25));
 }
 
 .profile-subtitle {
@@ -335,7 +344,7 @@
 
 .profile-stat-value .verified {
   color: var(--pp-accent-cyan);
-  text-shadow: 0 0 10px rgb(var(--sfs-info-rgb, 78 205 196) / 0.45);
+  text-shadow: var(--sfs-title-glow-info, 0 0 10px rgb(var(--sfs-info-rgb, 78 205 196) / 0.45));
 }
 
 .profile-stat-value .unverified {
@@ -445,7 +454,7 @@
 
 .availability-message .available {
   color: var(--pp-accent-cyan);
-  text-shadow: 0 0 8px rgb(var(--sfs-info-rgb, 78 205 196) / 0.4);
+  text-shadow: var(--sfs-title-glow-info, 0 0 8px rgb(var(--sfs-info-rgb, 78 205 196) / 0.4));
 }
 
 .availability-message .unavailable {

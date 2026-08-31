@@ -321,12 +321,12 @@ defineExpose({ stop, transcript: editableTranscript, notes });
 
 .vr-meta {
   display: flex; gap: 12px; align-items: center;
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.6); font-size: 0.82rem; font-variant-numeric: tabular-nums;
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-size: 0.82rem; font-variant-numeric: tabular-nums;
 }
 .vr-pending { color: var(--sfs-text-muted, #a5b4fc); }
 
 .vr-hint {
-  color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.62);
+  color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));
   font-size: 0.86rem;
   line-height: 1.5;
   margin-bottom: 12px;
@@ -369,10 +369,10 @@ defineExpose({ stop, transcript: editableTranscript, notes });
   display: block; color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.8);
   font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;
 }
-.vr-editable { color: rgb(var(--sfs-text-rgb, 255 255 255) / 0.45); font-weight: 400; }
+.vr-editable { color: var(--sfs-text-muted, rgb(255 255 255 / 0.7)); font-weight: 400; }
 
 .vr-transcript, .vr-notes {
-  width: 100%; background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+  width: 100%; background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14); border-radius: 10px;
   color: var(--sfs-text, #fff); padding: 11px 13px; font-size: 0.9rem; line-height: 1.55;
   font-family: inherit; resize: vertical;

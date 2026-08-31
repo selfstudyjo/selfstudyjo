@@ -378,7 +378,7 @@
   font: inherit;
   font-size: 0.875rem;
   color: var(--sfs-field-text, #e6e8f0);
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--pd-line-strong);
   border-radius: var(--pd-radius-sm);
 }

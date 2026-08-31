@@ -29,14 +29,14 @@
   /* text */
   --rf-text:        var(--sfs-text, #ffffff);
   --rf-text-soft:   var(--sfs-text-muted, #e8eaff);
-  --rf-text-mute:   rgb(var(--sfs-text-rgb, 232 234 255) / 0.7);
-  --rf-text-dim:    rgb(var(--sfs-text-rgb, 232 234 255) / 0.5);
+  --rf-text-mute:   var(--sfs-text-muted, rgb(255 255 255 / 0.7));
+  --rf-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   /* glass */
   --rf-glass:       rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
   --rf-glass-2:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   --rf-glass-3:     rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
-  --rf-input:       rgb(var(--sfs-shade-rgb, 15 17 40) / 0.45);
+  --rf-input:       rgb(var(--sfs-sink-rgb, 15 17 40) / 0.45);
   --rf-border:      rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
   --rf-border-2:    rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
   --rf-border-focus: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
@@ -181,7 +181,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 6px 30px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
+  text-shadow: var(--sfs-title-glow, 0 6px 30px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25));
 }
 .rf-title svg { color: var(--rf-accent); -webkit-text-fill-color: initial; }
 
@@ -348,7 +348,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35);
+  text-shadow: var(--sfs-title-glow, 0 0 22px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.35));
   letter-spacing: -0.02em;
 }
 .rf-stat-label {
@@ -1606,7 +1606,7 @@
 .rf-filters-panel {
   margin-top: 1rem;
   padding: var(--rf-pad);
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--rf-border);
   border-radius: var(--rf-r-md);
   animation: fadeInUp 0.28s ease both;
@@ -1727,7 +1727,7 @@
 .rf-alert code {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.3);
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.3);
   font-size: 0.9em;
 }
 .rf-alert-info  { background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.14); border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4); color: var(--rf-text-soft); }
@@ -2002,7 +2002,7 @@
 .rf-structure-preview {
   margin-bottom: 1.5rem;
   padding: var(--rf-pad);
-  background: rgb(var(--sfs-shade-rgb, 15 17 40) / 0.35);
+  background: rgb(var(--sfs-sink-rgb, 15 17 40) / 0.35);
   border: 1px solid var(--rf-border);
   border-radius: var(--rf-r-md);
 }

@@ -91,7 +91,6 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import '@/assets/css/login.css';
 
 const router = useRouter();
 const route = useRoute();
@@ -261,3 +260,12 @@ onMounted(() => {
   letter-spacing: 0.2px;
 }
 </style>
+
+<!-- Scoped rather than imported from the script, so its selectors cannot reach
+     another page. See VerifyEmail.vue for the bug that prompted it: a bare
+     `.btn-primary` in a globally-loaded sheet wiped the fill off the login
+     button, because an undefined `var()` makes a property `unset` rather than
+     letting the earlier declaration win. Safe here for the same two reasons —
+     the tokens are on the page root, not `:root`, and this view styles no child
+     component's internals. -->
+<style scoped src="@/assets/css/login.css"></style>

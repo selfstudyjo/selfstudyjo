@@ -319,6 +319,12 @@ const learning: Catalogue = {
     'Quick Commands (Click to insert)': '常用命令（点击插入）',
     'Quick Examples': '快速示例',
     'Quick Tips': '小提示',
+    /* ---- The labs: the four strings that were still literals ---- */
+    'Running...': '正在执行……',
+    'Run Query': '执行查询',
+    'Run Code': '运行代码',
+    'Enter your SQL query here...': '在此输入 SQL 查询……',
+    'Type a command and press Enter...': '输入命令后按 Enter……',
     'List files': '列出文件',
     'List files with details': '列出文件及详细信息',
     'Current directory': '当前目录',

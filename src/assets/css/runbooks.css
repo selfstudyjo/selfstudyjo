@@ -8,7 +8,7 @@
   --rb-text:        var(--sfs-text, #ffffff);
   --rb-text-soft:   var(--sfs-text-muted, #e8eaff);
   --rb-text-mute:   rgb(var(--sfs-text-rgb, 255 255 255) / 0.72);
-  --rb-text-dim:    rgb(var(--sfs-text-rgb, 255 255 255) / 0.55);
+  --rb-text-dim:    var(--sfs-text-muted, rgb(255 255 255 / 0.7));
 
   --rb-accent:      var(--sfs-accent-text, #818cf8);
   --rb-accent-2:    var(--sfs-accent-2-text, #a78bfa);

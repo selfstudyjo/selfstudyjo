@@ -180,7 +180,6 @@ import { ref, reactive, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { FREE_TRIAL_DAYS } from '@/services/subscription.service';
-import '@/assets/css/register.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -394,3 +393,12 @@ const handleRegister = async () => {
   }
 };
 </script>
+
+<!-- Scoped rather than imported from the script, so its selectors cannot reach
+     another page. See VerifyEmail.vue for the bug that prompted it: a bare
+     `.btn-primary` in a globally-loaded sheet wiped the fill off the login
+     button, because an undefined `var()` makes a property `unset` rather than
+     letting the earlier declaration win. Safe here for the same two reasons —
+     the tokens are on the page root, not `:root`, and this view styles no child
+     component's internals. -->
+<style scoped src="@/assets/css/register.css"></style>
