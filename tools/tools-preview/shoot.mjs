@@ -1,6 +1,6 @@
 // Screenshot and measure the DASHBOARD preview at real viewport sizes.
 //
-//   npm run build:labs-preview && node tools/labs-preview/shoot.mjs
+//   npm run build:tools-preview && node tools/tools-preview/shoot.mjs
 //
 // The dashboard is `requiresAuth: true`, so it is the one screen `audit:rtl`
 // cannot reach and the one nobody has ever looked at at 320px. This shoots it
@@ -57,7 +57,7 @@ const VARIANTS = [
 ];
 
 const BASE = process.env.PREVIEW_URL || 'http://127.0.0.1:8794/index.html';
-const outDir = resolve(process.argv[2] || 'tools/labs-preview/shots');
+const outDir = resolve(process.argv[2] || 'tools/tools-preview/shots');
 
 const browser = CHROME_CANDIDATES.find(p => existsSync(p));
 if (!browser) {

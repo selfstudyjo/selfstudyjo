@@ -1,7 +1,7 @@
-// Mounts the real Labs.vue with the sandbox stubbed. See vite.config.ts.
+// Mounts the real Tools.vue with the sandbox stubbed. See vite.config.ts.
 import { createApp, h } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import Labs from '@/views/Labs.vue';
+import Tools from '@/views/Tools.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 import '@/assets/css/theme.css';
 import '@/assets/css/responsive.css';
@@ -26,15 +26,15 @@ applyTheme(THEMES.find(t => t.id === params.get('theme')) ?? THEMES[0]);
 setLocale((params.get('lang') || 'en') as LocaleId);
 
 /*
-  Labs.vue uses `useRoute`/`useRouter` for the `/labs/:tab` route as well as a
+  Tools.vue uses `useRoute`/`useRouter` for the `/tools/:tab` route as well as a
   `<router-link>` in its no-access state, so a router is not optional here. A
   memory history with one catch-all resolves both without pulling the real
   router's fifty view imports into this bundle.
 */
 /*
-  The route has to be `/labs/:tab?`, not a catch-all.
+  The route has to be `/tools/:tab?`, not a catch-all.
 
-  Labs.vue reads `route.params.tab` and watches it, so a catch-all called
+  Tools.vue reads `route.params.tab` and watches it, so a catch-all called
   `:all(.*)` leaves that param undefined and the page always opens on SQL — which
   is what the first run of this harness produced, and it looks exactly like the
   tab switcher being broken rather than like the preview addressing the wrong
@@ -43,13 +43,13 @@ setLocale((params.get('lang') || 'en') as LocaleId);
 const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-        { path: '/labs/:tab?', component: { render: () => h('div') } },
+        { path: '/tools/:tab?', component: { render: () => h('div') } },
         { path: '/:all(.*)', component: { render: () => h('div') } },
     ],
 });
 
 /*
-  The tab is a ROUTE on this page, not component state — `/labs/:tab(sql|linux|
+  The tab is a ROUTE on this page, not component state — `/tools/:tab(sql|linux|
   python)` — so it has to be navigated to rather than clicked. `?tab=linux`.
 */
 
@@ -64,7 +64,7 @@ const router = createRouter({
   against something it never sits on.
 */
 const app = createApp({
-    render: () => [h(AnimatedBackground), h('div', { class: 'main-content' }, [h(Labs)])],
+    render: () => [h(AnimatedBackground), h('div', { class: 'main-content' }, [h(Tools)])],
 });
 app.use(i18n);
 app.use(router);
@@ -77,7 +77,7 @@ app.use(router);
   setup, and the page opens on SQL whatever the query string said. It looks
   exactly like the tab switcher being broken.
 */
-router.replace(`/labs/${params.get('tab') || 'sql'}`)
+router.replace(`/tools/${params.get('tab') || 'sql'}`)
     .then(() => router.isReady())
     .then(() => app.mount('#app'));
 

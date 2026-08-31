@@ -1,7 +1,7 @@
 // A browser preview of the Labs page with the sandbox stubbed.
 //
-//   npm run preview:labs        (then open the printed URL)
-//   node tools/labs-preview/shoot.mjs
+//   npm run preview:tools        (then open the printed URL)
+//   node tools/tools-preview/shoot.mjs
 //
 // WHY. `/labs` needs an account AND `lab_feature` on a live subscription AND a
 // warm app 11 replica holding that student's workspace, so it is unreachable
