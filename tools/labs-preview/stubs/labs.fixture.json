@@ -1,0 +1,491 @@
+{
+ "web-01-html": {
+  "id": "web-01-html",
+  "track": "web",
+  "title": "HTML: the structure of a page",
+  "summary": "Elements, nesting, headings, lists, links and images.",
+  "brief": "## An element has a name, attributes and content\n\n```html\n<a href=\"https://selfstudy.jo\" title=\"Go there\">Self Study</a>\n```\n\nThe tag name says what it *is*; the attributes configure it; the content is\nbetween the tags. A few elements have no content and no closing tag - `<img>`,\n`<br>`, `<input>`.\n\n## The document\n\n```html\n<h1>My page</h1>\n<p>A paragraph with <strong>important</strong> words in it.</p>\n<ul>\n  <li>First</li>\n  <li>Second</li>\n</ul>\n<a href=\"#section\">A link</a>\n<img src=\"https://picsum.photos/200\" alt=\"A random photo\">\n```\n\n## Two rules that matter more than they look\n\n**One `<h1>` per page, and headings in order.** `h1` then `h3` with no `h2` is\nnot a style choice - a screen reader announces the outline, and a gap in it reads\nas a missing section.\n\n**`alt` on every image.** Not optional: an image with no `alt` is invisible to\nanybody not looking at the screen, and to a search engine.\n\n> The result pane on the right updates as you type. Break something and watch\n> what happens.",
+  "tools": [
+   "web",
+   "editor",
+   "ai_tutor"
+  ],
+  "tasks": [
+   {
+    "id": "t1",
+    "title": "Add a heading and a paragraph",
+    "detail": "One `<h1>` and one `<p>`.",
+    "hint": "",
+    "points": 1,
+    "check": {
+     "type": "all",
+     "checks": [
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "<h1[^>]*>"
+      },
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "<p[^>]*>"
+      }
+     ]
+    }
+   },
+   {
+    "id": "t2",
+    "title": "Add a list with at least two items",
+    "detail": "`<ul>` with two `<li>`.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "all",
+     "checks": [
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "<(ul|ol)[^>]*>"
+      },
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "(<li[^>]*>[\\s\\S]*){2}"
+      }
+     ]
+    }
+   },
+   {
+    "id": "t3",
+    "title": "Add a link that goes somewhere",
+    "detail": "`<a href=\"https://...\">text</a>`.",
+    "hint": "",
+    "points": 1,
+    "check": {
+     "type": "web_contains",
+     "part": "html",
+     "pattern": "<a\\s+[^>]*href\\s*=\\s*[\\'\\\"][^\\'\\\"]+"
+    }
+   },
+   {
+    "id": "t4",
+    "title": "Add an image WITH an alt attribute",
+    "detail": "An `<img>` with no alt fails this task on purpose.",
+    "hint": "alt describes the image for somebody who cannot see it.",
+    "points": 2,
+    "check": {
+     "type": "all",
+     "checks": [
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "<img\\s"
+      },
+      {
+       "type": "web_contains",
+       "part": "html",
+       "pattern": "<img[^>]*\\salt\\s*="
+      }
+     ]
+    }
+   }
+  ],
+  "difficulty": "beginner",
+  "minutes": 20,
+  "order": 1,
+  "topics": [
+   "html",
+   "accessibility"
+  ],
+  "objectives": [
+   "Write well-formed HTML",
+   "Nest elements correctly",
+   "Know why alt and heading order matter"
+  ],
+  "environment": {
+   "web": {
+    "html": "<h1>Hello</h1>\n<p>Start here.</p>",
+    "css": "",
+    "js": ""
+   }
+  },
+  "resources": [],
+  "published": true,
+  "source": "builtin",
+  "translations": {},
+  "unknown_tools": [],
+  "tool_detail": [
+   {
+    "id": "editor",
+    "label": "Files",
+    "kind": "editor",
+    "engine": "files",
+    "icon": "file",
+    "summary": "Create and edit files in your workspace.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "",
+    "family": "shell",
+    "order": 4
+   },
+   {
+    "id": "web",
+    "label": "Web Playground",
+    "kind": "web",
+    "engine": "browser",
+    "icon": "code",
+    "summary": "HTML, CSS and JavaScript with a live result pane.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "Real: your own browser renders it in a sandboxed frame.",
+    "family": "web",
+    "order": 5
+   },
+   {
+    "id": "ai_tutor",
+    "label": "AI Tutor",
+    "kind": "ai",
+    "engine": "ai",
+    "icon": "sparkles",
+    "summary": "Ask about this lab. It can see your environment and your history.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "Answers come from a language model and can be wrong.",
+    "family": "ai",
+    "order": 90
+   }
+  ],
+  "families": [
+   "shell",
+   "web",
+   "ai"
+  ],
+  "datasets": [],
+  "task_count": 4,
+  "points": 6,
+  "unreachable_checks": [],
+  "simulated": false
+ },
+ "net-01-addressing": {
+  "id": "net-01-addressing",
+  "track": "netsim",
+  "title": "Addressing and subnetting",
+  "summary": "Two hosts, one switch, and the arithmetic that decides whether they can talk.",
+  "brief": "## Open the Studio\n\nThe **Network Simulator** tool opens the studio in place. Build as you read.\n\n## The topology\n\nTwo PCs and a switch. Give the PCs `192.168.10.10/24` and `192.168.10.11/24`,\nping one from the other, and watch the ARP exchange in the packet trace.\n\n## Then break it on purpose\n\nChange one host's mask to `/25`. Ping again.\n\n`192.168.10.10/25` has the range `192.168.10.0` - `192.168.10.127`, and\n`192.168.10.11/24` has `192.168.10.0` - `192.168.10.255`. The first host still\nbelieves the second is local; the second one's replies are fine. Now move the\nsecond host to `192.168.10.200/24` and ping from the `/25` host: it thinks the\ndestination is off-net and looks for a gateway that does not exist.\n\n**A mask mismatch is not symmetrical**, and that is why it is such a confusing\nfault to diagnose from one end.\n\n## The arithmetic worth doing by hand\n\nFor `10.20.30.45/26`:\n\n- block size = 256 - 192 = 64\n- networks: .0, .64, .128, .192\n- this address is in .0 - .63\n- network `10.20.30.0`, broadcast `10.20.30.63`, hosts .1 - .62\n\nDo three of those on paper before you use a calculator. The pattern is the whole\nof subnetting.",
+  "tools": [
+   "netsim",
+   "ai_tutor",
+   "editor"
+  ],
+  "tasks": [
+   {
+    "id": "t1",
+    "title": "Build two PCs and a switch",
+    "detail": "In the Network Simulator studio.",
+    "hint": "",
+    "points": 1,
+    "check": {
+     "type": "manual"
+    }
+   },
+   {
+    "id": "t2",
+    "title": "Give both hosts a /24 address and ping successfully",
+    "detail": "Watch the ARP request and reply.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "manual"
+    }
+   },
+   {
+    "id": "t3",
+    "title": "Read one packet layer by layer",
+    "detail": "Open the trace and expand a hop. Frame, packet, and the ICMP payload.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "manual"
+    }
+   },
+   {
+    "id": "t4",
+    "title": "Break it with a mask mismatch and diagnose it",
+    "detail": "Change one host to /25 and move the other above .127.",
+    "hint": "",
+    "points": 3,
+    "check": {
+     "type": "manual"
+    }
+   },
+   {
+    "id": "t5",
+    "title": "Work out network, broadcast and host range for a /26",
+    "detail": "By hand. Then check it with the simulator.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "manual"
+    }
+   }
+  ],
+  "difficulty": "beginner",
+  "minutes": 30,
+  "order": 1,
+  "topics": [
+   "ipv4",
+   "subnetting",
+   "ethernet"
+  ],
+  "objectives": [
+   "Address a flat network correctly",
+   "Read a frame and a packet",
+   "Diagnose a mask mismatch"
+  ],
+  "environment": {},
+  "resources": [],
+  "published": true,
+  "source": "builtin",
+  "translations": {},
+  "unknown_tools": [],
+  "tool_detail": [
+   {
+    "id": "editor",
+    "label": "Files",
+    "kind": "editor",
+    "engine": "files",
+    "icon": "file",
+    "summary": "Create and edit files in your workspace.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "",
+    "family": "shell",
+    "order": 4
+   },
+   {
+    "id": "netsim",
+    "label": "Network Simulator",
+    "kind": "external",
+    "engine": "external",
+    "icon": "netsim",
+    "summary": "The full topology studio: routers, switches, VLANs, routing, packets.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "A separate application (app 27), opened in place.",
+    "family": "netsim",
+    "order": 80,
+    "href": "/network-simulator/studio"
+   },
+   {
+    "id": "ai_tutor",
+    "label": "AI Tutor",
+    "kind": "ai",
+    "engine": "ai",
+    "icon": "sparkles",
+    "summary": "Ask about this lab. It can see your environment and your history.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "Answers come from a language model and can be wrong.",
+    "family": "ai",
+    "order": 90
+   }
+  ],
+  "families": [
+   "shell",
+   "netsim",
+   "ai"
+  ],
+  "datasets": [],
+  "task_count": 5,
+  "points": 10,
+  "unreachable_checks": [],
+  "simulated": false
+ },
+ "docker-01-first": {
+  "id": "docker-01-first",
+  "track": "docker",
+  "title": "Images and your first container",
+  "summary": "pull, images, run, ps - and the difference between an image and a container.",
+  "brief": "## An image is a template; a container is a running copy\n\nOne image, many containers. The image is read-only; each container gets its own\nwritable layer on top, which is why two containers from `nginx` cannot see each\nother's files.\n\n```\ndocker version\ndocker pull nginx\ndocker images\ndocker run -d --name web nginx\ndocker ps\ndocker ps -a\n```\n\n`-d` detaches - the container runs in the background and you get its id back.\nWithout it you are attached to its output and the terminal blocks.\n\n## ps vs ps -a\n\n`docker ps` shows **running** containers. `docker ps -a` shows every container\nthat exists, including the exited ones - and a container that exited is still\nthere, holding its name, until you `docker rm` it. \"The name is already in use\"\non a container you cannot see is always this.\n\nTry:\n\n```\ndocker run --name hello hello-world\ndocker ps\ndocker ps -a\n```\n\nThe first shows nothing. The second shows `hello` as `Exited (0)`.\n\n> The **Dashboard** tab reads the same engine. Run a command and watch it appear.",
+  "tools": [
+   "docker",
+   "docker_gui",
+   "editor",
+   "ai_tutor"
+  ],
+  "tasks": [
+   {
+    "id": "t1",
+    "title": "Pull an image",
+    "detail": "`docker pull nginx`. Then `docker images`.",
+    "hint": "",
+    "points": 1,
+    "check": {
+     "type": "state",
+     "family": "docker",
+     "path": "images.repository",
+     "min": 1
+    }
+   },
+   {
+    "id": "t2",
+    "title": "Run a detached container called web",
+    "detail": "`docker run -d --name web nginx`.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "state",
+     "family": "docker",
+     "path": "containers",
+     "where": {
+      "name": "web",
+      "status": "running"
+     },
+     "min": 1
+    }
+   },
+   {
+    "id": "t3",
+    "title": "Run something that exits, and find it again",
+    "detail": "`docker run --name hello hello-world`, then `docker ps -a`.",
+    "hint": "hello-world prints and exits. It is still there.",
+    "points": 2,
+    "check": {
+     "type": "state",
+     "family": "docker",
+     "path": "containers",
+     "where": {
+      "status": "exited"
+     },
+     "min": 1
+    }
+   },
+   {
+    "id": "t4",
+    "title": "Read a container's logs",
+    "detail": "`docker logs web`.",
+    "hint": "",
+    "points": 1,
+    "check": {
+     "type": "command_ran",
+     "pattern": "^\\s*docker\\s+logs\\b"
+    }
+   },
+   {
+    "id": "t5",
+    "title": "Stop and remove the exited container",
+    "detail": "`docker rm hello`.",
+    "hint": "",
+    "points": 2,
+    "check": {
+     "type": "all",
+     "checks": [
+      {
+       "type": "command_ran",
+       "pattern": "^\\s*docker\\s+rm\\b"
+      },
+      {
+       "type": "state",
+       "family": "docker",
+       "path": "containers",
+       "where": {
+        "name": "hello"
+       },
+       "equals": 0
+      }
+     ]
+    }
+   }
+  ],
+  "difficulty": "beginner",
+  "minutes": 20,
+  "order": 1,
+  "topics": [
+   "images",
+   "containers"
+  ],
+  "objectives": [
+   "Tell an image from a container",
+   "Run a container detached",
+   "Find a container that has exited"
+  ],
+  "environment": {
+   "seed": {
+    "docker": {
+     "images": [
+      "nginx"
+     ]
+    }
+   }
+  },
+  "resources": [],
+  "published": true,
+  "source": "builtin",
+  "translations": {},
+  "unknown_tools": [],
+  "tool_detail": [
+   {
+    "id": "editor",
+    "label": "Files",
+    "kind": "editor",
+    "engine": "files",
+    "icon": "file",
+    "summary": "Create and edit files in your workspace.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "",
+    "family": "shell",
+    "order": 4
+   },
+   {
+    "id": "docker",
+    "label": "Docker CLI",
+    "kind": "console",
+    "engine": "sim:docker",
+    "icon": "docker",
+    "summary": "docker run, ps, images, build, exec, logs, network, volume.",
+    "simulated": true,
+    "prompt": "$ ",
+    "fidelity": "Simulated: a container engine modelled in Python. Real command syntax, plausible output, no kernel namespaces.",
+    "family": "docker",
+    "order": 10
+   },
+   {
+    "id": "docker_gui",
+    "label": "Docker Dashboard",
+    "kind": "gui",
+    "engine": "sim:docker",
+    "icon": "gauge",
+    "summary": "Containers, images, volumes and networks as a live board.",
+    "simulated": true,
+    "prompt": "",
+    "fidelity": "Reads the same state the Docker CLI writes.",
+    "family": "docker",
+    "order": 12
+   },
+   {
+    "id": "ai_tutor",
+    "label": "AI Tutor",
+    "kind": "ai",
+    "engine": "ai",
+    "icon": "sparkles",
+    "summary": "Ask about this lab. It can see your environment and your history.",
+    "simulated": false,
+    "prompt": "",
+    "fidelity": "Answers come from a language model and can be wrong.",
+    "family": "ai",
+    "order": 90
+   }
+  ],
+  "families": [
+   "shell",
+   "docker",
+   "ai"
+  ],
+  "datasets": [],
+  "task_count": 5,
+  "points": 8,
+  "unreachable_checks": [],
+  "simulated": true
+ }
+}

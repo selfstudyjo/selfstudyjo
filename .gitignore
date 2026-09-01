@@ -151,8 +151,8 @@ tools/leaderboard-preview/shots/
 tools/rtl-audit/shots-ar/
 tools/rtl-audit/shots-en/
 
-# Output of tools/labs-preview — the same. 19 PNGs a run, regenerated with
-# `npm run build:labs-preview && node tools/labs-preview/shoot.mjs`.
+# Output of tools/labs-preview — the same. 22 PNGs a run, regenerated with
+# `npm run build:lab-preview && node tools/labs-preview/shoot.mjs`.
 tools/labs-preview/shots/
 
 # Screenshots from `AUDIT_THEME=<galaxy> npm run audit:rtl`, one directory per

@@ -497,6 +497,59 @@
     background: radial-gradient(1200px 600px at 20% -10%, rgb(var(--sfs-accent-rgb, 99 102 241) / 0.09), transparent 60%), var(--ns-bg);
 }
 
+/* ── the studio as ONE PANE of a lab ──────────────────────────────────────
+   `100vh` is right for a route that owns the screen and wrong for a pane
+   sitting under a lab's header with a task list beside it: the toolbar would
+   start at the top of the pane and the dock would be a screen further down,
+   so the canvas — the thing the pane is for — would be entirely below the
+   fold. `dvh` rather than `vh` for the mobile URL bar, and a floor so a short
+   window still leaves the canvas usable rather than collapsing it to the
+   toolbar and the dock with nothing between them.
+
+   `overflow: hidden` above stays, and it is what makes the height a real
+   constraint: the three columns inside are `min-height: 0` grid items, so they
+   scroll within the pane instead of stretching it. */
+.ns-studio--embedded {
+    height: max(30rem, min(76vh, 76dvh));
+    border-radius: var(--sl-radius-sm, 8px);
+    border: 1px solid var(--ns-line);
+}
+
+/* AT AND BELOW 1024px THIS FILE ALREADY HIDES THE PALETTE AND THE RIGHT RAIL
+   and drops the workspace to one column, so the studio is a canvas and a dock
+   and needs the height a phone can give it rather than a fraction of it.
+
+   The breakpoints below are 1024/1025 rather than a round 900 for exactly that
+   reason, and getting it wrong is not cosmetic: the narrow-rail rule under it is
+   MORE SPECIFIC than the responsive one, so at 1024 it put three explicit tracks
+   back while the two rail items were still `display: none` — a removed grid item
+   leaves its track empty, so the canvas landed in the 200px one. The preview
+   harness reported it as six overflows at 1024 and nowhere else. */
+@media (max-width: 1024px) {
+    .ns-studio--embedded { height: max(34rem, min(86vh, 86dvh)); }
+}
+
+/* On a phone the toolbar wraps to three or four rows and the dock is the same
+   210px it is on a desktop, which between them leave the canvas about 130px -
+   the one part of the studio the pane exists to show. The dock keeps enough
+   height to read an event log line and the canvas gets the rest. */
+@media (max-width: 640px) {
+    .ns-studio--embedded .ns-dock { height: 150px; }
+    .ns-studio--embedded .ns-dock.collapsed { height: 38px; }
+}
+
+/* The three columns are 244 / 1fr / 372 on the full-screen route, which leaves
+   the canvas about 260px inside a lab pane - the palette and the properties
+   rail between them taking more room than the thing they configure. Narrower
+   rails here, and a shorter dock, so the canvas is the biggest part of the pane
+   at the widths a lab is actually read at. Both rails scroll, so nothing is
+   lost; Open full screen is there for the rest. */
+@media (min-width: 1025px) {
+    .ns-studio--embedded .ns-workspace { grid-template-columns: 200px 1fr 292px; }
+}
+
+.ns-studio--embedded .ns-dock { height: 210px; }
+
 .ns-toolbar {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 14px;

@@ -168,6 +168,88 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
     unavailable: 'Cannot be checked',
 };
 
+/* ─────────────────── what Check my work says ─────────────────── */
+
+export type GradeToneId = 'good' | 'warn' | 'bad' | 'quiet';
+
+export interface GradeReport {
+    tone: GradeToneId;
+    /** A catalogue key, so `check:i18n` can prove all three languages cover it. */
+    key: string;
+    params: Record<string, string | number>;
+}
+
+/**
+ * The sentence to put under the Check my work button.
+ *
+ * It exists because the button was SILENT in every one of its outcomes, and
+ * that is the whole of "I click Check my work and nothing happens". Three of the
+ * four things it can do are invisible:
+ *
+ *  * the grade did not move — which is the commonest outcome and the one a
+ *    student most needs a word about, because the alternative reading is that
+ *    the button is broken;
+ *  * every task in the lab is SELF-MARKED, so it can never move however much
+ *    work has been done. The whole Networking track is like that, and nothing on
+ *    screen said so;
+ *  * the lab service did not answer. `labsService.gradeLab` swallows a transport
+ *    failure on purpose — the tools must keep working when app 11 is cold — so a
+ *    dead replica and a passing grade produced the identical nothing.
+ *
+ * Only the fourth (a task went green) is visible without it, and only if the
+ * student happens to be looking at the right row.
+ *
+ * A REPORT rather than a string: this module has no Vue and no `$t`, and the
+ * platform's own rule is that the key is the English text. The view spends it.
+ */
+export function gradeReport(
+    before: LabGrade | null,
+    after: LabGrade | null,
+): GradeReport {
+    if (!after) {
+        return { tone: 'bad', key: 'The lab service did not answer. Nothing has been lost — try again in a moment.', params: {} };
+    }
+    const gained = after.done - (before?.done ?? 0);
+    if (after.total > 0 && after.done === after.total) {
+        return { tone: 'good', key: 'Every task is done. {v0} of {v1} points.', params: { v0: after.earned, v1: after.possible } };
+    }
+    if (gained > 0) {
+        return { tone: 'good', key: '{v0} more done — {v1} of {v2} now.', params: { v0: gained, v1: after.done, v2: after.total } };
+    }
+    if (after.unavailable.length > 0 && after.unavailable.length === after.total) {
+        return { tone: 'bad', key: 'This lab cannot be checked on this replica. Tell an operator.', params: {} };
+    }
+    // The environment lost something a task had already passed on — a reset, or
+    // a container removed. Reported BEFORE the self-marked case, and before
+    // "nothing new": both of those read as "carry on", and this one is the
+    // student's work having gone backwards, which is the thing to say first.
+    if (gained < 0) {
+        return { tone: 'warn', key: 'Some work is no longer in your environment — {v0} of {v1} now.', params: { v0: after.done, v1: after.total } };
+    }
+    // Nothing moved. WHY it could not move is the useful half.
+    //
+    // Guarded on `tasks.length`, never on `total`: `[].every()` is TRUE, so a
+    // lab that answered with a count and an empty task list would be told every
+    // task in it is self-marked. `total` is meant to equal `tasks.length` and a
+    // guard that only holds while two fields agree is a guard about the wrong
+    // thing.
+    if (after.tasks.length > 0 && after.tasks.every(task => task.manual)) {
+        return { tone: 'quiet', key: 'Every task here is marked by you. Tick "I have done this" as you finish each one.', params: {} };
+    }
+    return { tone: 'warn', key: 'Nothing new yet — still {v0} of {v1}. Open a task for its hint.', params: { v0: after.done, v1: after.total } };
+}
+
+/** Every sentence `gradeReport` can answer with, so `check:i18n` sees them all. */
+export const GRADE_REPORT_KEYS = [
+    'The lab service did not answer. Nothing has been lost — try again in a moment.',
+    'Every task is done. {v0} of {v1} points.',
+    '{v0} more done — {v1} of {v2} now.',
+    'This lab cannot be checked on this replica. Tell an operator.',
+    'Every task here is marked by you. Tick "I have done this" as you finish each one.',
+    'Some work is no longer in your environment — {v0} of {v1} now.',
+    'Nothing new yet — still {v0} of {v1}. Open a task for its hint.',
+];
+
 /* ─────────────────── ordering and grouping ─────────────────── */
 
 /**
@@ -378,6 +460,58 @@ export function toolPanes(tools: LabTool[]): ToolPane[] {
         if (tool.simulated) pane.simulated = true;
     }
     return [...panes.values()];
+}
+
+/**
+ * The two families that are SUPPORTING tools rather than the subject of a lab.
+ *
+ * `shell` is the Files browser and the real terminal, and `ai` is the tutor.
+ * Almost every lab in the catalogue carries one or both, and both sort ahead of
+ * the lab's own tool on the global `order` — `editor` is 4 and `web` is 5 — so
+ * "the first pane" is the wrong answer to "what is this lab about" for a large
+ * part of the catalogue.
+ */
+export const AUX_FAMILIES = ['shell', 'ai'];
+
+/**
+ * Which pane a lab OPENS on.
+ *
+ * Not `panes[0]`, and that was the bug: a web lab opened on an empty file
+ * browser and a networking lab opened on an empty file browser, because
+ * `toolPanes` orders by each tool's global `order` and the supporting tools sort
+ * first. What a student sees on opening `web-01-html` should be the web
+ * playground, and on `net-01-addressing` the Network Simulator — the thing the
+ * lab is named after.
+ *
+ * It answers a family rather than an index so a caller cannot hold a stale
+ * position across a lab change, and it falls back to the first pane and then to
+ * the brief, because a lab whose only tool is the tutor is a lab that still has
+ * to render.
+ */
+export function defaultPane(panes: ToolPane[]): string {
+    const rows = panes || [];
+    const subject = rows.find(pane => AUX_FAMILIES.indexOf(pane.family) < 0);
+    return (subject || rows[0])?.family || '__brief';
+}
+
+/**
+ * Which `external` tools this build can render IN PLACE rather than link to.
+ *
+ * An external tool lives in another application — the Network Simulator is app
+ * 27's studio — and the first version of the workbench drew a button that
+ * navigated away. That loses the lab: the brief, the tasks and the Check my work
+ * button are all on the page the student just left, so the one thing the
+ * curriculum exists to provide is the thing the link throws away.
+ *
+ * Keyed on the TOOL ID rather than on a flag from the backend, because whether a
+ * component exists in this bundle is a fact about the frontend and app 11 cannot
+ * know it. A tool absent from here still renders its link, which is what a build
+ * that has not learned to embed it should do.
+ */
+const EMBEDDABLE: Record<string, true> = { netsim: true };
+
+export function canEmbed(tool: LabTool | null | undefined): boolean {
+    return Boolean(tool && tool.kind === 'external' && EMBEDDABLE[tool.id]);
 }
 
 /* ─────────────────── the GUI spec ─────────────────── */

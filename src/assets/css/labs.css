@@ -643,6 +643,57 @@
 .sl-external { padding: 1rem 0; }
 .sl-external p { margin: 0 0 0.75rem; color: var(--sfs-text-muted, #b7bdcc); }
 
+/* ── an external application rendered IN PLACE ─────────────────────────────
+   The Network Simulator is app 27's studio, and it is one pane of a lab rather
+   than a link out of one. It brings its own stylesheet (netsim.css, every
+   selector `ns-` prefixed), so all this owns is the bar above it and the room
+   it sits in. */
+.sl-embed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* No negative inline margin to run the studio edge to edge. It looks better
+       and it makes this element WIDER THAN ITS PARENT, which the preview
+       harness reports as an overflow at every width — correctly: `.main-content`
+       is `overflow-x: hidden`, so it would not scroll, it would CLIP, and what
+       gets clipped is the right-hand rail of somebody else's application. The
+       border and radius below are what make it read as a framed application
+       instead. */
+    min-width: 0;
+}
+
+.sl-embed__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.sl-embed__note {
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-embed__wait {
+    display: grid;
+    place-items: center;
+    min-height: 12rem;
+    padding: 1.5rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-surface);
+    text-align: center;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-embed__wait--bad { color: var(--sfs-danger-text, #fca5a5); }
+
+/* A tool that is not the pane's current one is `display: none`, so nothing in
+   it can take part in layout — but the slot itself must not add a box when it
+   is the only child either. */
+.sl-bench__tool-slot { min-width: 0; }
+
 .sl-objectives {
     margin-top: 1.25rem;
     padding: 0.85rem 1rem;
@@ -820,6 +871,27 @@
     margin-bottom: 0.3rem;
 }
 
+/* ── INK ON A PINNED-DARK PANEL COMES FROM THE CODE PALETTE ────────────────
+   `--sfs-text-muted` and `--sfs-text` are derived against the PAGE, so in the
+   three light galaxies they are near-black — and this header and its Clear
+   button sit INSIDE `.sl-web__console`, which is `--sl-code-bg` (#0f172a) in
+   every galaxy because a console is dark everywhere. The two together were
+   dark-on-dark: the word Console and the only control in the pane were both
+   invisible in Cartwheel, Dawn and Silver.
+
+   Working rule 48 exactly, and it is why the same declaration above is fine for
+   `.sl-code__outhead` and `.sl-web__resulthead` — those two sit on the CARD,
+   above their dark panes, not in them. */
+.sl-web__console .sl-web__consolehead { color: var(--sl-code-dim); }
+
+.sl-web__console .sl-btn {
+    color: var(--sl-code-ink);
+    border-color: rgb(255 255 255 / 0.16);
+    background: rgb(255 255 255 / 0.06);
+}
+
+.sl-web__console .sl-btn:hover:not(:disabled) { background: rgb(255 255 255 / 0.12); }
+
 .sl-code__pre { margin: 0; max-height: 22rem; overflow: auto; }
 .sl-code__pre--err { color: var(--sl-code-bad); }
 .sl-code__pre--quiet { color: var(--sl-code-dim); }
@@ -994,6 +1066,62 @@
     .sl-web__panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
+/* ── Big preview ───────────────────────────────────────────────────────────
+   "I can't see my design on a real webpage" — half of which was the result
+   being a 419x320 box beside the editors. This stacks them so the result gets
+   the full width of the workbench and roughly two thirds of the window height,
+   which is a page rather than a thumbnail of one.
+
+   NOT a new tab, and that is a security decision rather than a limitation: the
+   only way to hand a browser a document assembled here is a `blob:` URL, which
+   inherits THIS origin — so the student's own script would run on
+   selfstudy.jo with the session token in reach. The whole point of the
+   `sandbox` attribute on the frame is that it cannot. See the comment on the
+   iframe in LabWeb.vue. */
+@media (min-width: 980px) {
+    .sl-web--wide .sl-web__panes { grid-template-columns: minmax(0, 1fr); }
+}
+
+.sl-web--wide .sl-web__editor { min-height: clamp(8rem, 18vh, 14rem); }
+.sl-web--wide .sl-web__frame { height: clamp(20rem, 62vh, 52rem); }
+
+/* What happened to the student's work. Text as well as colour — working rule
+   37 — and `role="status"` in the template, so it is heard as well as seen. */
+.sl-web__note {
+    margin: 0 0 0.5rem;
+    padding: 0.4rem 0.65rem;
+    border-inline-start: 3px solid var(--sfs-text-muted, #b7bdcc);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-surface);
+    font-size: 0.8rem;
+}
+
+.sl-web__note--good {
+    border-inline-start-color: var(--sfs-success, #22c55e);
+    color: var(--sfs-success-text, #86efac);
+}
+
+.sl-web__note--bad {
+    border-inline-start-color: var(--sfs-danger, #ef4444);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+.sl-web__resulthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* "You have typed since the last Run." Without it a student edits, looks at an
+   unchanged frame and concludes the playground is broken — which is the same
+   complaint from the other end, and the reason Live exists at all. */
+.sl-web__stale {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--sfs-warning-text, #fcd34d);
+}
+
 .sl-web__tabs { display: flex; gap: 0.25rem; margin-bottom: 0.4rem; }
 
 .sl-web__tab {
@@ -1055,7 +1183,17 @@
     margin-bottom: 0.3rem;
 }
 
-.sl-web__quiet { margin: 0; color: var(--sl-code-dim); }
+/* The console pane is pinned `dir="ltr"` because a log line is code — but this
+   sentence is PROSE and is translated, so inside an LTR box an Arabic
+   placeholder came out with its full stop at the front. `plaintext` reads the
+   direction out of the string, so the Arabic reads Arabic and an English log
+   line beside it still reads LTR. On the element that HOLDS the text, or it
+   reaches nothing (working rule 43). */
+.sl-web__quiet {
+    margin: 0;
+    color: var(--sl-code-dim);
+    unicode-bidi: plaintext;
+}
 
 .sl-web__log {
     white-space: pre-wrap;
@@ -1302,13 +1440,46 @@
     margin-top: 0.4rem;
 }
 
-.sl-task__self {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    font-size: 0.8rem;
-    color: var(--sfs-text-muted, #b7bdcc);
+/* The self-mark control. A BUTTON now rather than a trailing checkbox label:
+   in the Networking track it is the ONLY way any task can ever be completed,
+   and as a small grey label at the end of a row it was the least visible thing
+   on the card. See the comment on it in LabTasks.vue. */
+.sl-task__self { margin-inline-start: auto; }
+
+/* ── what Check my work just did ───────────────────────────────────────────
+   Never colour alone: the tone tints the left edge and the text says the same
+   thing, because in several galaxies two accents are a few dE apart and in
+   Triangulum two of them are the same colour to a deuteranope. Working rule 37. */
+.sl-tasks__feedback {
+    margin: 0.55rem 0 0;
+    padding: 0.5rem 0.7rem;
+    border-inline-start: 3px solid var(--sfs-text-muted, #b7bdcc);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-surface);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--sfs-text, #e6e8ef);
 }
+
+.sl-tasks__feedback--good {
+    border-inline-start-color: var(--sfs-success, #22c55e);
+    background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.12);
+    color: var(--sfs-success-text, #86efac);
+}
+
+.sl-tasks__feedback--warn {
+    border-inline-start-color: var(--sfs-warning, #f59e0b);
+    background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.12);
+    color: var(--sfs-warning-text, #fcd34d);
+}
+
+.sl-tasks__feedback--bad {
+    border-inline-start-color: var(--sfs-danger, #ef4444);
+    background: rgb(var(--sfs-danger-rgb, 239 68 68) / 0.12);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+.sl-tasks__feedback--quiet { color: var(--sfs-text-muted, #b7bdcc); }
 
 .sl-tasks__empty,
 .sl-tasks__reveal {

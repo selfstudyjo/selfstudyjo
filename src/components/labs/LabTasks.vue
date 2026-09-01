@@ -25,6 +25,34 @@
       {{ $t('{v0} of {v1} points', { v0: grade.earned, v1: grade.possible }) }}
     </p>
 
+    <!--
+      WHAT CHECK MY WORK JUST DID, in words.
+
+      The button had no outcome a reader could see. Three of the four things it
+      can do are invisible — the grade not moving, every task in the lab being
+      self-marked so it can never move, and the lab service not answering (which
+      `labsService.gradeLab` swallows on purpose so the tools keep working) — and
+      all three produced the identical nothing. `gradeReport` in
+      `labCatalogue.ts` decides the sentence; this draws it.
+
+      `role="status"`, so a screen reader hears it without the focus moving: the
+      student pressed a button and the answer belongs to that press.
+    -->
+    <p v-if="report" class="sl-tasks__feedback"
+       :class="`sl-tasks__feedback--${report.tone}`" role="status">
+      {{ $t(report.key, report.params) }}
+    </p>
+
+    <!--
+      A lab whose every task is self-marked says so ONCE, at the top, rather
+      than leaving a student to press a button that cannot move. The whole
+      Networking track is like this: the Network Simulator is app 27 and this
+      service cannot see inside its topology, so the honest check is to ask.
+    -->
+    <p v-else-if="allManual" class="sl-tasks__feedback sl-tasks__feedback--quiet">
+      {{ $t('You mark these tasks yourself — this lab cannot inspect them for you.') }}
+    </p>
+
     <ol class="sl-tasks__list">
       <li v-for="task in grade.tasks" :key="task.id" class="sl-task"
           :class="`sl-task--${task.status}`">
@@ -77,12 +105,22 @@
               tick that would be telling the platform they had done something the
               environment says they have not, and the whole point of grading
               against the environment is that it cannot be talked out of.
+
+              A BUTTON, not a checkbox, and it disappears once it is done.
+              A checkbox reads as a preference that can be unticked, and this one
+              cannot be: `tasks_done` is joined by union on both the environment
+              and the replicated record, so an untick is discarded in silence.
+              Offering a control that looks reversible and is not is worse than
+              a one-way one. As a small trailing label it was also the least
+              visible thing on a card whose ONLY way forward it is, in a track
+              where every single task is marked this way.
             -->
-            <label v-if="task.manual" class="sl-task__self">
-              <input type="checkbox" :checked="task.status === 'passed'"
-                     @change="$emit('self-mark', task.id)">
-              {{ $t('I have done this') }}
-            </label>
+            <button v-if="task.manual && task.status !== 'passed'" type="button"
+                    class="sl-btn sl-btn--primary sl-btn--sm sl-task__self"
+                    :disabled="busy"
+                    @click="$emit('self-mark', task.id)">
+              <Check class="sl-i" /> {{ $t('I have done this') }}
+            </button>
           </div>
 
           <p v-if="open.has(task.id)" class="sl-task__hint">{{ task.hint }}</p>
@@ -114,14 +152,21 @@
  * not done something they cannot do, which is the one answer worse than an
  * error. `utils/labgrade.py` answers the three; this draws them.
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import {
   AlertTriangle, Check, CheckCheck, Circle, Lightbulb, Sparkles,
 } from 'lucide-vue-next';
-import { TASK_STATUS_LABELS, type LabGrade, type LabTask, type TaskStatus }
-  from '@/utils/labCatalogue';
+import {
+  TASK_STATUS_LABELS, type GradeReport, type LabGrade, type LabTask,
+  type TaskStatus,
+} from '@/utils/labCatalogue';
 
-defineProps<{ grade: LabGrade; busy?: boolean }>();
+const props = defineProps<{
+  grade: LabGrade;
+  busy?: boolean;
+  /** What the last grading run did. See `gradeReport`. */
+  report?: GradeReport | null;
+}>();
 defineEmits<{
   (event: 'grade'): void;
   (event: 'ask', task: LabTask): void;
@@ -130,6 +175,10 @@ defineEmits<{
 
 const open = ref(new Set<string>());
 const showChecks = ref(false);
+
+/** Is there anything here Check my work could ever move on its own? */
+const allManual = computed(() => props.grade.tasks.length > 0
+  && props.grade.tasks.every(task => task.manual));
 
 function toggle(id: string) {
   const next = new Set(open.value);

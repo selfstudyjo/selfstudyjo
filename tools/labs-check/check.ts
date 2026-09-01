@@ -37,14 +37,18 @@ import { resolve } from 'node:path';
 import {
     DIFFICULTY_LABELS,
     FAMILY_LABEL_KEYS,
+    GRADE_REPORT_KEYS,
     GUI_PANELS,
     PANEL_TITLE_KEYS,
     STATUS_LABELS,
     TASK_STATUS_LABELS,
     buildPreview,
+    canEmbed,
+    defaultPane,
     difficultyRank,
     familyLabel,
     filterLabs,
+    gradeReport,
     groupByTrack,
     humanKey,
     panelsFor,
@@ -58,6 +62,7 @@ import {
     toolPanes,
     tutorPrompt,
     type Lab,
+    type LabGrade,
     type LabProgress,
     type LabSummary,
     type LabTool,
@@ -268,6 +273,140 @@ section('4. Tool panes');
           FAMILY_LABEL_KEYS.length >= 12 && familyLabel('hadoop') === 'Big Data');
     check('an unknown family falls back to its id rather than blank',
           familyLabel('frobnicate') === 'frobnicate');
+
+    /*
+      WHICH PANE THE LAB OPENS ON.
+
+      Not `panes[0]`, and that was a defect rather than a preference: the
+      supporting tools sort ahead of every subject tool on the catalogue's own
+      `order` - `editor` is 4 and `web` is 5 - so a web lab opened on an empty
+      file browser and a networking lab opened on an empty file browser, with
+      the thing the lab is named after one tab to the right. Both were reported.
+    */
+    check('a lab OPENS on its subject, not on the file browser',
+          defaultPane(panes) === 'hadoop', defaultPane(panes));
+}
+
+{
+    const web = toolPanes([
+        tool('editor', 'editor', 'shell', 4),
+        tool('web', 'web', 'web', 5),
+        tool('ai_tutor', 'ai', 'ai', 90),
+    ]);
+    check('...so a web lab opens on the Web playground',
+          defaultPane(web) === 'web', defaultPane(web));
+    const net = toolPanes([
+        tool('editor', 'editor', 'shell', 4),
+        tool('netsim', 'external', 'netsim', 80),
+        tool('ai_tutor', 'ai', 'ai', 90),
+    ]);
+    check('...and a networking lab on the Network Simulator',
+          defaultPane(net) === 'netsim', defaultPane(net));
+    const bare = toolPanes([tool('editor', 'editor', 'shell', 4)]);
+    check('a lab whose ONLY tool is a supporting one still opens somewhere',
+          defaultPane(bare) === 'shell', defaultPane(bare));
+    check('and a lab with no tools at all falls back to the brief',
+          defaultPane([]) === '__brief', defaultPane([]));
+}
+
+{
+    /*
+      An external tool is rendered IN PLACE where this build has a component for
+      it. Keyed on the tool id here rather than on a flag from app 11, because
+      whether the studio is in this bundle is a fact about the frontend.
+    */
+    check('the Network Simulator is embedded, not linked away to',
+          canEmbed(tool('netsim', 'external', 'netsim', 80)));
+    check('an external tool this build cannot draw still gets its link',
+          !canEmbed(tool('somethingelse', 'external', 'other', 80)));
+    check('and canEmbed is about EXTERNAL tools only',
+          !canEmbed(tool('netsim', 'console', 'netsim', 80)));
+    check('a missing tool is not embeddable', !canEmbed(null));
+}
+
+/* -------------------- 4b. what Check my work says -------------------- */
+
+section('4b. Check my work is never silent');
+
+/*
+ * The button had no visible outcome in three of its four cases, which is the
+ * whole of "I click Check my work and nothing happens":
+ *
+ *  * the grade did not move - the commonest outcome by far;
+ *  * every task in the lab is self-marked, so it CANNOT move. The entire
+ *    Networking track is like that and nothing on screen said so;
+ *  * `labsService.gradeLab` swallows a transport failure on purpose, so a dead
+ *    replica and a passing grade produced the identical nothing.
+ */
+{
+    const grade = (over: Partial<LabGrade> = {}): LabGrade => ({
+        tasks: [], done: 0, total: 4, earned: 0, possible: 8, percent: 0,
+        status: 'in_progress', unavailable: [], ...over,
+    });
+    const row = (id: string, manual: boolean, status: any = 'pending') => ({
+        id, title: id, detail: '', hint: '', points: 1, status, note: '',
+        requires: '', manual,
+    });
+
+    check('a dead replica is NAMED rather than looking like a pass',
+          gradeReport(grade(), null).tone === 'bad'
+          && /did not answer/.test(gradeReport(grade(), null).key));
+
+    const moved = gradeReport(grade({ done: 1 }), grade({ done: 3 }));
+    check('progress says how much moved', moved.tone === 'good'
+          && moved.params.v0 === 2 && moved.params.v1 === 3, moved);
+
+    const finished = gradeReport(grade({ done: 3 }),
+                                 grade({ done: 4, earned: 8 }));
+    check('and finishing says so rather than "1 more done"',
+          finished.tone === 'good' && /Every task is done/.test(finished.key),
+          finished);
+
+    const stuck = gradeReport(grade({ done: 2, tasks: [row('a', false)] }),
+                              grade({ done: 2, tasks: [row('a', false)] }));
+    check('NOTHING MOVING IS STILL AN ANSWER', stuck.tone === 'warn'
+          && /Nothing new yet/.test(stuck.key), stuck);
+
+    const manual = grade({ done: 0, tasks: [row('a', true), row('b', true)] });
+    check('a lab that can only be self-marked says so',
+          /marked by you/.test(gradeReport(manual, manual).key),
+          gradeReport(manual, manual));
+
+    const mixed = grade({ done: 0, tasks: [row('a', true), row('b', false)] });
+    check('...and one with a single automatic task does not',
+          /Nothing new yet/.test(gradeReport(mixed, mixed).key));
+
+    const lost = gradeReport(grade({ done: 3 }), grade({ done: 1 }));
+    check('work that has LEFT the environment is not reported as no change',
+          lost.tone === 'warn' && /no longer in your environment/.test(lost.key),
+          lost);
+
+    const broken = grade({ done: 0, total: 2, unavailable: ['a', 'b'],
+                           tasks: [row('a', false, 'unavailable'),
+                                   row('b', false, 'unavailable')] });
+    check('a lab nothing can check is a fault, not a to-do list',
+          gradeReport(broken, broken).tone === 'bad', gradeReport(broken, broken));
+
+    const first = gradeReport(null, grade({ done: 1 }));
+    check('and the first press has no "before" to compare against',
+          first.tone === 'good' && first.params.v0 === 1, first);
+
+    /* Every sentence it can answer with is a catalogue key `check:i18n` can see.
+       Reached through a variable, so a scan for $t('...') literals finds none of
+       them - the same shape as the sidebar's labels and the badge names. */
+    const produced = new Set<string>();
+    for (const before of [null, grade({ done: 3 })]) {
+        for (const after of [null, grade({ done: 1 }), grade({ done: 4, earned: 8 }),
+                             grade({ done: 3 }), manual, broken]) {
+            produced.add(gradeReport(before, after).key);
+        }
+    }
+    const missing = [...produced].filter(key => GRADE_REPORT_KEYS.indexOf(key) < 0);
+    check('EVERY sentence it can produce is in GRADE_REPORT_KEYS',
+          missing.length === 0, missing);
+    const orphan = GRADE_REPORT_KEYS.filter(key => !produced.has(key));
+    check('and the list carries nothing it can never produce',
+          orphan.length === 0, orphan);
 }
 
 /* ─────────────────── 5. the GUI spec ─────────────────── */
@@ -670,6 +809,116 @@ for (const path of COMPONENTS) {
           /:srcdoc="/.test(web) && !/URL\.createObjectURL/.test(web));
     check('and messages are filtered on our own marker',
           /payload\.sfsLab !== true/.test(web));
+}
+
+/*
+ * The three faults reported on this page on 2026-09-01, each pinned to the line
+ * that fixes it. None of them is a property of this module, so none of them was
+ * visible to the 341 assertions above — they were found by BUILDING
+ * `tools/labs-preview` and driving the page (working rule 42).
+ */
+{
+    const workspace = stripComments(source('src/views/LabWorkspace.vue'));
+
+    /* 1. A pane kept its state only while it was the visible one.
+          `v-if` alone on the active pane DESTROYS the others, so reading the
+          brief and coming back re-created the web playground from the last
+          SAVED source — the student's unsaved markup gone, along with every
+          console transcript. `v-if` on "has been opened" plus `v-show` on
+          "is active" is lazy first mount AND alive from then on. */
+    check('A PANE IS NOT DESTROYED WHEN THE STUDENT LEAVES IT',
+          /v-if="opened\.has\(pane\.family\)"[\s\S]{0,80}v-show="activePane === pane\.family"/
+              .test(workspace));
+    check('and the tool inside a pane is hidden rather than unmounted',
+          /v-show="activeTool\(pane\.family\) === tool\.id"/.test(workspace)
+          && !/v-if="activeTool\(pane\.family\) === tool\.id"/.test(workspace));
+
+    /* 2. `refreshViews` re-seeded `webSource` from the views payload, which
+          carries the last SAVED html/css/js — so running ANY command replaced
+          whatever the student had typed with the lab's starter file. */
+    const refresh = workspace.slice(workspace.indexOf('async function refreshViews'),
+                                    workspace.indexOf('async function grade0'));
+    check('REFRESHING THE DASHBOARDS DOES NOT OVERWRITE THE STUDENT\'S SOURCE',
+          refresh.length > 0 && !/webSource\.value\s*=/.test(refresh), refresh.length);
+    check('...and only opening the lab seeds it',
+          (workspace.match(/webSource\.value\s*=/g) || []).length === 1);
+
+    /* 3. Check my work said nothing in three of its four outcomes. */
+    check('grading reports what it did', /gradeReport\(/.test(workspace)
+          && /report\.value = gradeReport/.test(workspace));
+    check('and the report reaches the task list',
+          /:report="report"/.test(workspace));
+
+    /* The Network Simulator is a pane, not a link out of the lab — and it is
+       async, or every lab in the catalogue downloads app 27's studio. */
+    check('THE NETWORK SIMULATOR IS RENDERED IN PLACE',
+          /<NetworkStudio\b[^>]*\bembedded\b/.test(workspace));
+    check('and it is loaded lazily, not into this route\'s chunk',
+          /defineAsyncComponent\(/.test(workspace)
+          && /import\('@\/views\/NetworkSimulatorStudio\.vue'\)/.test(workspace)
+          && !/^import NetworkSimulatorStudio/m.test(workspace));
+    check('a chunk that will not load says so rather than leaving a blank pane',
+          /errorComponent/.test(workspace));
+}
+
+{
+    const web = stripComments(source('src/components/labs/LabWeb.vue'));
+
+    /* The source in these three boxes belongs to the BROWSER once the lab is
+       open. Adopting an incoming one unconditionally is what threw the
+       student's markup away on every command they ran. */
+    check('the playground ignores a server source once the student has typed',
+          /if \(touched\.value\) return;/.test(web));
+    /* The BODY of `run`, not a window around it. The first spelling of this
+       allowed 60 characters between `render()` and `queueSave()` and matched
+       straight across the closing brace into the declaration of `queueSave`
+       itself — so it passed with the call removed, which
+       `tools/labs-check/negative.py` is what found. */
+    const runBody = (web.match(/function run\(\)\s*\{([^}]*)\}/) || [])[1] || '';
+    check('and Run PERSISTS as well as rendering, so grading sees it',
+          /render\(\)/.test(runBody) && /queueSave\(\)/.test(runBody), runBody);
+
+    /* `document` as a local binding shadows the global one in every function in
+       this file. It worked, and it is a trap nobody should have to notice. */
+    check('nothing in the playground shadows a browser global',
+          !/^\s*(const|let|var)\s+(document|window|location|history)\b/m.test(web));
+
+    /* "Open in a new tab" is the obvious way to give a bigger preview and it
+       cannot be done safely: the only URL that can carry a document assembled
+       here is `blob:`, which inherits THIS origin — so the student's own script
+       would run on the platform with the session token in reach. */
+    check('THERE IS NO WAY OUT OF THE SANDBOX INTO A TAB OF OUR OWN',
+          !/createObjectURL|window\.open|blob:/.test(web));
+    check('a bigger preview widens the frame instead', /sl-web--wide/.test(web));
+}
+
+{
+    const tasks = stripComments(source('src/components/labs/LabTasks.vue'));
+    check('the task list draws the grading report',
+          /report\.key/.test(tasks) && /sl-tasks__feedback/.test(tasks));
+    check('and says so when a lab can ONLY be self-marked',
+          /allManual/.test(tasks));
+    /* A checkbox reads as reversible and this is not: `tasks_done` is joined by
+       union at both ends, so an untick is discarded in silence. */
+    check('the self-mark control is one-way and disappears once done',
+          /task\.manual && task\.status !== 'passed'/.test(tasks)
+          && !/<input type="checkbox"[^>]*self-mark/.test(tasks));
+}
+
+{
+    const studio = stripComments(source('src/views/NetworkSimulatorStudio.vue'));
+    check('the studio knows it can be one pane of a lab',
+          /defineProps<\{ embedded\?: boolean \}>/.test(studio));
+    check('embedded, it does not claim beforeunload — the lab owns the tab',
+          /if \(!props\.embedded\) window\.addEventListener\('beforeunload'/.test(studio));
+    check('embedded, it does not draw a link that navigates out of the lab',
+          /v-if="!embedded"[\s\S]{0,120}to="\/network-simulator"/.test(studio));
+    check('and it does not read a route that belongs to the lab',
+          /props\.embedded \? undefined : route\.params\.id/.test(studio));
+    const css = source('src/assets/css/netsim.css');
+    check('the embedded studio is bounded by the PANE, not by the viewport',
+          /\.ns-studio--embedded \{[^}]*height:[^}]*\}/.test(css)
+          && !/\.ns-studio--embedded \{[^}]*height: calc\(100vh/.test(css));
 }
 
 {

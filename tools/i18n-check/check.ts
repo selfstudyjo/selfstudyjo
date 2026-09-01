@@ -75,7 +75,8 @@ import {
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 import {
-    DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GUI_PANELS, PANEL_TITLE_KEYS,
+    DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GRADE_REPORT_KEYS, GUI_PANELS,
+    PANEL_TITLE_KEYS,
     STATUS_LABELS, TASK_STATUS_LABELS,
 } from '../../src/utils/labCatalogue';
 
@@ -586,6 +587,14 @@ const LAB_STRINGS: string[] = [...new Set([
     ...Object.values(STATUS_LABELS),
     ...Object.values(TASK_STATUS_LABELS),
     ...FAMILY_LABEL_KEYS,
+    /*
+      What Check my work answers with. Spent as `$t(report.key, report.params)`,
+      so once again no source file holds the literal — and this one matters more
+      than most: the sentence exists BECAUSE the button was silent, and a
+      sentence that renders in English on an Arabic page is a button that is
+      still not answering the reader.
+    */
+    ...GRADE_REPORT_KEYS,
     ...PANEL_TITLE_KEYS,
     ...Object.values(GUI_PANELS).flat()
         .flatMap(panel => (panel.columns || []).map(column => column.label))

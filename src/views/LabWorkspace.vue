@@ -68,7 +68,7 @@
               class="sl-bench__tab"
               :class="{ 'is-active': activePane === pane.family }"
               :aria-selected="activePane === pane.family"
-              @click="activePane = pane.family"
+              @click="showPane(pane.family)"
             >
               {{ $t(pane.label) }}
               <span v-if="pane.simulated" class="sl-bench__dot" :title="$t('Simulated')"></span>
@@ -79,11 +79,11 @@
               class="sl-bench__tab"
               :class="{ 'is-active': activePane === '__brief' }"
               :aria-selected="activePane === '__brief'"
-              @click="activePane = '__brief'"
+              @click="showPane('__brief')"
             >{{ $t('Brief') }}</button>
           </div>
 
-          <div v-if="activePane === '__brief'" class="sl-bench__panel">
+          <div v-show="activePane === '__brief'" class="sl-bench__panel">
             <LabBrief :text="$td(lab, 'brief')" />
             <div v-if="lab.objectives.length" class="sl-objectives">
               <h4>{{ $t('By the end of this lab') }}</h4>
@@ -98,7 +98,20 @@
                element, so the condition cannot see the loop variable and the
                whole workbench fails to compile. -->
           <template v-for="pane in panes" :key="pane.family">
-          <div v-if="activePane === pane.family" class="sl-bench__panel">
+          <!--
+            `v-if="opened"` then `v-show="active"`, and the pair is the point.
+
+            A bare `v-if` on the active pane DESTROYS every other one, so
+            switching to the Brief and back re-created the web playground from
+            the last SAVED source and the student's unsaved markup was gone —
+            along with every console transcript and every code editor's
+            contents. That is most of "I can't see my design". A bare `v-show`
+            would fix it and mount all of them at once, which for the Network
+            Simulator means building app 27's whole studio for a lab nobody has
+            opened it in. First mount on first view; alive from then on.
+          -->
+          <div v-if="opened.has(pane.family)" v-show="activePane === pane.family"
+               class="sl-bench__panel">
             <!-- Which tool inside the pane. A Big Data pane has nine; a Docker
                  pane has three. Drawn as one row of small buttons rather than as
                  nine top-level tabs, which is unreadable. -->
@@ -114,7 +127,7 @@
             </div>
 
             <template v-for="tool in pane.tools" :key="tool.id">
-              <template v-if="activeTool(pane.family) === tool.id">
+              <div v-show="activeTool(pane.family) === tool.id" class="sl-bench__tool-slot">
                 <LabConsole
                   v-if="tool.kind === 'console'"
                   :tool="tool"
@@ -141,8 +154,19 @@
                   :remove="deleteFile"
                   @changed="refreshViews"
                 />
+                <!--
+                  `:key="sourceEpoch"` so RESET actually resets it.
+
+                  The playground refuses an incoming `initial` once the student
+                  has typed (see its header), which is what stops a stray
+                  command wiping their work — and would also stop Reset
+                  environment doing the one thing it is for. The epoch moves
+                  only when the lab is loaded from the server, so a reset
+                  remounts the pane on the seed and nothing else does.
+                -->
                 <LabWeb
                   v-else-if="tool.kind === 'web'"
+                  :key="sourceEpoch"
                   :initial="webSource"
                   :save="saveWeb"
                 />
@@ -155,6 +179,28 @@
                   :busy="viewsBusy"
                   @refresh="refreshViews"
                 />
+                <!--
+                  An external tool RENDERED IN PLACE where this build has the
+                  component for it, and only linked where it does not.
+
+                  The Network Simulator is app 27's studio and this pane used to
+                  be a button that navigated to it — which throws away the brief,
+                  the tasks and the Check my work button, i.e. everything the
+                  curriculum around the simulator exists to add. It is loaded
+                  with `defineAsyncComponent` so the ~3,000 lines of netsim
+                  components stay out of this route's chunk until a lab actually
+                  opens the pane (working rule 47).
+                -->
+                <div v-else-if="tool.kind === 'external' && canEmbed(tool)" class="sl-embed">
+                  <div class="sl-embed__bar">
+                    <span class="sl-embed__note">{{ tool.fidelity }}</span>
+                    <a v-if="tool.href" :href="`#${tool.href}`" target="_blank"
+                       rel="noopener" class="sl-btn sl-btn--ghost sl-btn--sm">
+                      <ExternalLink class="sl-i" /> {{ $t('Open full screen') }}
+                    </a>
+                  </div>
+                  <NetworkStudio v-if="tool.id === 'netsim'" embedded />
+                </div>
                 <div v-else-if="tool.kind === 'external'" class="sl-external">
                   <p>{{ tool.summary }}</p>
                   <a v-if="tool.href" :href="`#${tool.href}`"
@@ -168,7 +214,7 @@
                   :lab="lab"
                   :load-context="loadContext"
                 />
-              </template>
+              </div>
             </template>
           </div>
           </template>
@@ -179,6 +225,7 @@
           <LabTasks
             :grade="grade"
             :busy="grading"
+            :report="report"
             @grade="grade0"
             @ask="askTutor"
             @self-mark="selfMark"
@@ -207,7 +254,7 @@
  * place, so a reload lands back in it and a student can send a classmate the lab
  * they are stuck on.
  *
- * Three decisions worth not undoing:
+ * Four decisions worth not undoing:
  *
  * **`openLab` is ONE call.** It seeds the environment, returns the lab, its
  * tools, the grade and every GUI view. Four requests would be four round trips
@@ -218,22 +265,29 @@
  * state that only this reader can change; refreshing after their own command is
  * both cheaper and always right.
  *
+ * **A pane keeps its state once it has been opened.** See the comment on the
+ * panel element: `v-if` on the active pane alone was destroying the web
+ * playground's unsaved source, every console transcript and every code editor
+ * on each tab switch.
+ *
  * **Grading is manual.** A lab that graded after every command would send a
  * request per keystroke-ful of typing and would tick a task off mid-thought.
  * `Check my work` is the same shape as `terraform plan` - the student decides
- * when to look.
+ * when to look. What it must not be is SILENT, which it was: see `report`.
  */
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  AlertTriangle, Crown, FlaskConical, RotateCcw, RotateCw,
+  AlertTriangle, Crown, ExternalLink, FlaskConical, RotateCcw, RotateCw,
 } from 'lucide-vue-next';
+import { t } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
 import { labService } from '@/services/lab.service';
 import { labsService } from '@/services/labs.service';
 import {
-  STATUS_LABELS, toolPanes, type Lab, type LabGrade, type LabTask,
-  type LabTool, type ToolPane,
+  STATUS_LABELS, canEmbed, defaultPane, gradeReport, toolPanes,
+  type GradeReport, type Lab, type LabGrade, type LabTask, type LabTool,
+  type ToolPane,
 } from '@/utils/labCatalogue';
 import LabBrief from '@/components/labs/LabBrief.vue';
 import LabCode from '@/components/labs/LabCode.vue';
@@ -244,6 +298,45 @@ import LabQuery from '@/components/labs/LabQuery.vue';
 import LabTasks from '@/components/labs/LabTasks.vue';
 import LabTutor from '@/components/labs/LabTutor.vue';
 import LabWeb from '@/components/labs/LabWeb.vue';
+
+/**
+ * App 27's studio, embedded in the Network Simulator pane.
+ *
+ * Async, and it is worth being exact about what that buys TODAY, because it is
+ * less than it looks: `router/index.ts` imports this view statically for
+ * `/network-simulator/studio`, so its ~570 kB is already in the entry chunk and
+ * this dynamic import currently resolves to a 61-byte re-export. Measured, not
+ * assumed — `dist/assets/NetworkSimulatorStudio-*.js` is that shim.
+ *
+ * It is still the right spelling. A static import HERE would make the eleven
+ * other tracks' pane depend on the netsim stack directly, so the day the router
+ * lazy-loads these three routes — which working rule 47 says it should, and
+ * which is the obvious follow-up — the labs would drag all of it back into the
+ * entry chunk and the split would silently buy nothing. One line now, or a
+ * regression nobody would attribute to this file later.
+ */
+const NetworkStudio = defineAsyncComponent({
+  loader: () => import('@/views/NetworkSimulatorStudio.vue'),
+  /*
+    A chunk that will not load must SAY so.
+
+    `defineAsyncComponent` renders nothing at all when its loader rejects, and
+    an empty pane under a tab labelled Network Simulator is indistinguishable
+    from a lab that forgot to include one. It rejects for reasons that happen:
+    a deploy replaces the hashed chunk under a tab somebody left open, or the
+    connection drops between opening the lab and opening the pane. Both are
+    recoverable by reloading, which is what this says.
+  */
+  loadingComponent: {
+    render: () => h('div', { class: 'sl-embed__wait' }, t('Loading the Network Simulator...')),
+  },
+  errorComponent: {
+    render: () => h('div', { class: 'sl-embed__wait sl-embed__wait--bad' },
+      t('The Network Simulator could not be loaded. Reload the page, or open it full screen.')),
+  },
+  delay: 150,
+  timeout: 30_000,
+});
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -262,8 +355,14 @@ const busy = ref(false);
 const error = ref('');
 const note = ref('');
 const activePane = ref('');
+/** Which panes have ever been shown, so each mounts once and then stays alive. */
+const opened = ref(new Set<string>());
+/** Bumped whenever the lab is loaded from the server. See the LabWeb key. */
+const sourceEpoch = ref(0);
 const chosenTool = ref<Record<string, string>>({});
 const selfMarked = ref<string[]>([]);
+/** What the last Check my work actually did. Null until it has been pressed. */
+const report = ref<GradeReport | null>(null);
 const tutor = ref<any>(null);
 const filesPane = ref<any>(null);
 
@@ -295,6 +394,13 @@ function activeTool(family: string): string {
 
 function pickTool(family: string, toolId: string) {
   chosenTool.value = { ...chosenTool.value, [family]: toolId };
+}
+
+function showPane(family: string) {
+  activePane.value = family;
+  if (family !== '__brief' && !opened.value.has(family)) {
+    opened.value = new Set([...opened.value, family]);
+  }
 }
 
 /**
@@ -330,10 +436,36 @@ async function open() {
     views.value = payload.views || {};
     webSource.value = (payload.views as any)?.web || {};
     note.value = payload.note || '';
-    if (!activePane.value) {
-      const first = toolPanes(payload.lab.tool_detail)[0];
-      activePane.value = first ? first.family : '__brief';
-    }
+    /*
+      Seed the self-marked set from what the SERVER already believes.
+
+      Without this a reload starts the list empty, and the first tick after a
+      reload posts only that one id — which the grader used to read as the whole
+      set, so every task ticked before the reload came back to-do. The backend
+      now unions its own record in as well; doing both is what makes the tick
+      feel permanent whichever end answers first.
+    */
+    selfMarked.value = payload.grade.tasks
+      .filter(task => task.manual && task.status === 'passed')
+      .map(task => task.id);
+    report.value = null;
+    sourceEpoch.value += 1;
+    /*
+      Open on the pane the LAB IS ABOUT, not on `panes[0]`.
+
+      `toolPanes` orders by each tool's global `order`, and the supporting tools
+      — the file browser and the tutor — sort ahead of every subject tool in the
+      catalogue. So `web-01-html` opened on an empty file browser and
+      `net-01-addressing` opened on an empty file browser, with the thing the
+      lab is named after one tab to the right. `defaultPane` picks the subject.
+
+      A re-open keeps whatever pane the student was on if it still exists, so
+      Reset environment does not also move them.
+    */
+    const fresh = toolPanes(payload.lab.tool_detail);
+    const stillThere = fresh.some(pane => pane.family === activePane.value);
+    showPane(activePane.value && (stillThere || activePane.value === '__brief')
+      ? activePane.value : defaultPane(fresh));
   } catch (problem: any) {
     error.value = problem?.message || 'The lab could not be opened.';
   } finally {
@@ -367,7 +499,16 @@ async function refreshViews() {
                                             lab.value.families);
     if (fresh && Object.keys(fresh).length) {
       views.value = fresh;
-      if ((fresh as any).web) webSource.value = (fresh as any).web;
+      /*
+        `webSource` is NOT re-seeded here, and that is the fix rather than an
+        omission.
+
+        The views payload carries the last SAVED html/css/js, so assigning it
+        back after every command replaced whatever the student had typed with
+        the lab's starter file — silently, on any tool run, in the one pane whose
+        entire content is unsaved work. The browser owns this source once the
+        lab is open; only `open()` and `reset()` may seed it.
+      */
     }
   } finally {
     viewsBusy.value = false;
@@ -377,15 +518,24 @@ async function refreshViews() {
 async function grade0() {
   if (!lab.value) return;
   grading.value = true;
+  const before = grade.value;
   try {
     const result = await labsService.gradeLab(username.value, lab.value.id, {
       userId: userId.value,
       selfMarked: selfMarked.value,
     });
-    if (result?.grade) grade.value = result.grade;
+    if (result?.grade) {
+      grade.value = result.grade;
+      // Keep the tick list in step with what the server now believes, so a task
+      // it has recorded is not re-posted for ever and one it has not is.
+      selfMarked.value = result.grade.tasks
+        .filter(task => task.manual && task.status === 'passed')
+        .map(task => task.id);
+    }
     if (result?.views && Object.keys(result.views).length) {
       views.value = result.views as any;
     }
+    report.value = gradeReport(before, result?.grade ?? null);
   } finally {
     grading.value = false;
   }
@@ -408,7 +558,7 @@ function selfMark(taskId: string) {
 
 async function askTutor(task: LabTask) {
   const pane = panes.value.find(row => row.tools.some(t => t.kind === 'ai'));
-  if (pane) activePane.value = pane.family;
+  if (pane) showPane(pane.family);
   // The tutor mounts inside a `v-if`, so it may not exist until the pane is
   // shown. Waiting a frame is what makes the click work the first time rather
   // than the second.
@@ -446,7 +596,9 @@ async function deleteFile(path: string) {
 async function saveWeb(source: { html: string; css: string; js: string }) {
   if (!lab.value) return null;
   const saved = await labsService.saveWeb(username.value, lab.value.id, source);
-  grade0();
+  // Only re-grade when the save landed. Grading against a source the backend
+  // never received is how "I pressed Run and Check my work says nothing".
+  if (saved) grade0();
   return saved;
 }
 
@@ -473,8 +625,10 @@ onMounted(() => {
 
 watch(labId, () => {
   activePane.value = '';
+  opened.value = new Set();
   chosenTool.value = {};
   selfMarked.value = [];
+  report.value = null;
   if (hasLabAccess.value) open();
 });
 

@@ -1,9 +1,13 @@
 <template>
-  <div class="ns-studio">
+  <div class="ns-studio" :class="{ 'ns-studio--embedded': embedded }">
     <!-- ════════════════ toolbar ════════════════ -->
     <header class="ns-toolbar">
       <div class="ns-tb-group project">
-        <router-link class="ns-icon-btn" to="/network-simulator" :title="$t('Back to projects')">
+        <!-- Not drawn when embedded: this studio is then ONE PANE of a lab, and
+             "back to projects" navigates away from the brief and the tasks it
+             is sitting inside. The lab pane offers Open full screen instead. -->
+        <router-link v-if="!embedded" class="ns-icon-btn" to="/network-simulator"
+                     :title="$t('Back to projects')">
           <DeviceIcon name="folder" :size="16" />
         </router-link>
         <div class="ns-project-name">
@@ -278,6 +282,29 @@ import { searchDeviceTypes } from '@/netsim/devices';
 import { describeSubnet, splitSubnet, maskToPrefix, isValidIPv4 } from '@/netsim/ip';
 import { getLesson } from '@/netsim/lessons';
 
+/**
+ * `embedded` — the studio inside a lab pane rather than on its own route.
+ *
+ * The Networking track's labs put the brief, the objectives, the tasks and the
+ * Check my work button beside the canvas, and the first version of that pane
+ * was a button that navigated HERE — which throws all of it away, so the
+ * curriculum the track exists to add was reachable only by going back.
+ *
+ * Three things differ, and each is a property of being one pane of a page
+ * rather than the page:
+ *
+ *  * the height is the pane's, not the viewport's (`ns-studio--embedded`);
+ *  * "back to projects" is not drawn — it would navigate out of the lab;
+ *  * `beforeunload` is not claimed. The lab owns the tab, this is one tool in
+ *    it, and a pane that blocks a reload it does not own is a pane that has
+ *    taken something that is not its to take.
+ *
+ * Everything else — the store, the topology, saving, the AI tutor — is the same
+ * code on both routes, deliberately: a second implementation of the studio for
+ * the lab would be the thing that drifts.
+ */
+const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
+
 const store = useNetSimStore();
 const route = useRoute();
 const router = useRouter();
@@ -306,9 +333,18 @@ const tools = [
 onMounted(async () => {
     await store.loadProfileAndProgress();
 
-    const projectId = route.params.id as string | undefined;
-    const templateId = route.query.template as string | undefined;
-    const lessonId = route.query.lesson as string | undefined;
+    /*
+      Embedded, the URL belongs to the LAB and not to this studio.
+
+      `/lab/:labId` has no `id` param today, so reading it would merely be
+      undefined — but a lab route that grows an `id`, or a lab opened with a
+      `?lesson=` on it for some other reason, would silently load somebody
+      else's project into the pane. Ignoring the route when it is not ours is
+      one line and removes the whole class.
+    */
+    const projectId = props.embedded ? undefined : route.params.id as string | undefined;
+    const templateId = props.embedded ? undefined : route.query.template as string | undefined;
+    const lessonId = props.embedded ? undefined : route.query.lesson as string | undefined;
 
     if (projectId && projectId !== 'new') {
         await store.openProject(projectId);
@@ -331,7 +367,7 @@ onMounted(async () => {
     }
 
     projectName.value = store.project?.name || store.topology.name;
-    window.addEventListener('beforeunload', warnUnsaved);
+    if (!props.embedded) window.addEventListener('beforeunload', warnUnsaved);
     window.addEventListener('keydown', onGlobalKey);
 });
 

@@ -129,6 +129,12 @@ const labs: Catalogue = {
     'Your own browser renders this in a sandboxed frame. Nothing runs on the server.':
         'متصفّحك هو الذي يعرض هذا داخل إطار معزول. لا شيء يُنفَّذ على الخادم.',
     'console.log output appears here.': 'تظهر هنا مخرجات console.log.',
+    'Big preview': 'معاينة كبيرة',
+    'Side by side': 'جنباً إلى جنب',
+    'Press Run to update': 'اضغط تشغيل للتحديث',
+    'Saved. Check my work will see this.': 'تم الحفظ. سيرى «تحقّق من عملي» هذا.',
+    'Your work is rendered here but could NOT be saved. The lab service did not answer.':
+        'عملك معروض هنا لكن تعذّر حفظه. لم تستجب خدمة المعامل.',
 
     /* ---------------------------------------------------------------- *
      * The task list
@@ -143,6 +149,26 @@ const labs: Catalogue = {
     '{v0} of {v1} done': 'أُنجزت {v0} من {v1}',
     '{v0} of {v1} points': '{v0} من {v1} نقطة',
 
+    /* What `Check my work` just did. It said nothing at all before, in three of
+     * its four outcomes - and a fallback that renders in English on an Arabic
+     * page is a button that is still not answering the reader. */
+    'The lab service did not answer. Nothing has been lost — try again in a moment.':
+        'لم تستجب خدمة المعامل. لم يضِع شيء — أعد المحاولة بعد لحظات.',
+    'Every task is done. {v0} of {v1} points.':
+        'أُنجزت كل المهام. {v0} من {v1} نقطة.',
+    '{v0} more done — {v1} of {v2} now.':
+        'أُنجزت {v0} إضافية — {v1} من {v2} الآن.',
+    'This lab cannot be checked on this replica. Tell an operator.':
+        'لا يمكن التحقّق من هذا المعمل على هذه النسخة. أبلِغ المشغّل.',
+    'Every task here is marked by you. Tick "I have done this" as you finish each one.':
+        'كل المهام هنا تُعلَّم بنفسك. اضغط «أنجزتُ هذه» كلما أنهيت واحدة.',
+    'Some work is no longer in your environment — {v0} of {v1} now.':
+        'لم يعد بعض عملك موجوداً في بيئتك — {v0} من {v1} الآن.',
+    'Nothing new yet — still {v0} of {v1}. Open a task for its hint.':
+        'لا جديد بعد — ما زالت {v0} من {v1}. افتح مهمة لترى تلميحها.',
+    'You mark these tasks yourself — this lab cannot inspect them for you.':
+        'أنت من يعلّم هذه المهام — لا يستطيع هذا المعمل فحصها نيابةً عنك.',
+
     /* The third task state. A task the lab cannot check is not a failure and
      * must not read as one — it is a lab whose declaration names an environment
      * this deployment does not provide, which is an operator's problem and not
@@ -153,6 +179,14 @@ const labs: Catalogue = {
     /* ---------------------------------------------------------------- *
      * The tutor
      * ---------------------------------------------------------------- */
+    /* The Network Simulator, rendered as one pane of a lab rather than linked
+     * away to. `Open full screen` is the way out for somebody who wants the
+     * whole canvas; the pane is what keeps the brief and the tasks in view. */
+    'Open full screen': 'افتح بملء الشاشة',
+    'Loading the Network Simulator...': 'جارٍ تحميل محاكي الشبكات...',
+    'The Network Simulator could not be loaded. Reload the page, or open it full screen.':
+        'تعذّر تحميل محاكي الشبكات. أعد تحميل الصفحة أو افتحه بملء الشاشة.',
+
     'AI Tutor': 'المدرّب الذكي',
     'Ask': 'اسأل',
     'Ask the tutor': 'اسأل المدرّب',

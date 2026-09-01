@@ -126,6 +126,12 @@ const labs: Catalogue = {
     'Your own browser renders this in a sandboxed frame. Nothing runs on the server.':
         '这是你自己的浏览器在沙箱框架中渲染的。服务器上不会运行任何代码。',
     'console.log output appears here.': 'console.log 的输出会显示在这里。',
+    'Big preview': '大预览',
+    'Side by side': '左右并排',
+    'Press Run to update': '按“运行”以更新',
+    'Saved. Check my work will see this.': '已保存。“检查我的作业”会看到这些内容。',
+    'Your work is rendered here but could NOT be saved. The lab service did not answer.':
+        '你的作业已在此渲染，但未能保存。实验服务没有响应。',
 
     /* ---------------------------------------------------------------- *
      * The task list
@@ -140,6 +146,26 @@ const labs: Catalogue = {
     '{v0} of {v1} done': '已完成 {v0} / {v1}',
     '{v0} of {v1} points': '{v0} / {v1} 分',
 
+    /* What `Check my work` just did. It said nothing at all before, in three of
+     * its four outcomes - and a fallback that renders in English on a Chinese
+     * page is a button that is still not answering the reader. */
+    'The lab service did not answer. Nothing has been lost — try again in a moment.':
+        '实验服务没有响应。没有内容丢失 —— 请稍后重试。',
+    'Every task is done. {v0} of {v1} points.':
+        '所有任务都已完成。{v0} / {v1} 分。',
+    '{v0} more done — {v1} of {v2} now.':
+        '又完成了 {v0} 项 —— 现在是 {v1} / {v2}。',
+    'This lab cannot be checked on this replica. Tell an operator.':
+        '本副本无法检查此实验。请告知运维人员。',
+    'Every task here is marked by you. Tick "I have done this" as you finish each one.':
+        '这里的每项任务都由你自己标记。完成一项就点一次“我已完成这一项”。',
+    'Some work is no longer in your environment — {v0} of {v1} now.':
+        '你的环境中已经没有部分成果了 —— 现在是 {v0} / {v1}。',
+    'Nothing new yet — still {v0} of {v1}. Open a task for its hint.':
+        '暂时没有新进展 —— 仍是 {v0} / {v1}。展开任务查看提示。',
+    'You mark these tasks yourself — this lab cannot inspect them for you.':
+        '这些任务由你自己标记 —— 本实验无法替你检查。',
+
     /* The third task state. A task the lab cannot check is not a failure and
      * must not read as one — it is a lab whose declaration names an environment
      * this deployment does not provide, which is an operator's problem. */
@@ -149,6 +175,14 @@ const labs: Catalogue = {
     /* ---------------------------------------------------------------- *
      * The tutor
      * ---------------------------------------------------------------- */
+    /* The Network Simulator, rendered as one pane of a lab rather than linked
+     * away to. `Open full screen` is the way out for somebody who wants the
+     * whole canvas; the pane is what keeps the brief and the tasks in view. */
+    'Open full screen': '全屏打开',
+    'Loading the Network Simulator...': '正在加载网络模拟器……',
+    'The Network Simulator could not be loaded. Reload the page, or open it full screen.':
+        '网络模拟器无法加载。请重新加载页面，或全屏打开它。',
+
     'AI Tutor': 'AI 导师',
     'Ask': '提问',
     'Ask the tutor': '向导师提问',
