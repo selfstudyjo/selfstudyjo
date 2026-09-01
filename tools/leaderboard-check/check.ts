@@ -974,5 +974,204 @@ console.log('\n17. Where a subject name can honestly come from');
         && !/Distinct learners who took each assessment/.test(view));
 }
 
+console.log('\n18. The labs (app 11), and the four ways counting them goes wrong');
+{
+    const lab = (over: Partial<LeaderboardEvent> = {}): LeaderboardEvent => ({
+        kind: 'lab', userId: 'u1', name: '', subjectId: 'docker-01',
+        score: 100, passed: true, at: ago(1), labPoints: 8, labPossible: 8,
+        ...over,
+    });
+
+    /* ---- what a lab is worth ---- */
+    check('a lab is scored on its own task points plus a completion bonus',
+        pointsFor(lab({ labPoints: 8, passed: true }))
+        === 8 * POINTS.labTaskPoint + POINTS.labCompleted);
+
+    /*
+      THE ONE THAT WOULD BE "FIXED" BY MOVING THE LAB BEHIND THE `passed` GATE.
+
+      A lab has no pass mark - `passed` means finished - so a half-done lab is not
+      a failure, it is tasks the service inspected the environment for and
+      confirmed. Gated like an exam, every in-progress lab on the platform scores
+      zero and the board only ever moves when somebody finishes one.
+    */
+    check('AN UNFINISHED LAB STILL SCORES ITS FINISHED TASKS',
+        pointsFor(lab({ labPoints: 3, passed: false })) === 3 * POINTS.labTaskPoint);
+
+    check('...and earns no completion bonus for it',
+        pointsFor(lab({ labPoints: 3, passed: false })) < POINTS.labCompleted
+        + 3 * POINTS.labTaskPoint);
+
+    check('a lab with nothing done is worth nothing',
+        pointsFor(lab({ labPoints: 0, passed: false })) === 0);
+
+    /*
+      No distinction bonus on a lab. A lab's score IS its completion, so a 100%
+      lab already earns the completion award and the bonus would pay twice - the
+      same mistake `examCertificate: 0` exists to avoid.
+    */
+    check('a 100% lab gets no distinction bonus on top',
+        pointsFor(lab({ score: 100, labPoints: 8, passed: true }))
+        === 8 * POINTS.labTaskPoint + POINTS.labCompleted);
+
+    check('a finished lab lands below an exam pass and above a quiz pass, which '
+        + 'is the ordering the printed table promises',
+        pointsFor(lab({ labPoints: 4, passed: true })) > POINTS.quizPassed
+        && pointsFor(lab({ labPoints: 13, passed: true })) < POINTS.examPassed);
+
+    /* ---- what a lab is NOT ---- */
+    const rows = aggregate([lab({ labPoints: 8, passed: true })]);
+    check('one learner, one row', rows.length === 1);
+
+    /*
+      THE BUG THIS SECTION EXISTS FOR. Without its own branch in `aggregate` a
+      lab falls through to the certificate `else`, so "Credentials earned" and
+      every row's credential count silently include lab progress - and a learner
+      five labs in appears to hold five certificates nobody issued.
+    */
+    check('A LAB IS NOT A CERTIFICATE',
+        rows[0].certificates === 0 && rows[0].courseCertificates === 0
+        && rows[0].examCertificates === 0);
+
+    /*
+      And not an assessment. A lab has no pass mark, so folding it into the
+      pass-rate denominator would move the platform pass rate for a reason no
+      reader could account for.
+    */
+    check('a lab is not an assessment, so the pass rate does not move',
+        rows[0].assessmentsTaken === 0 && rows[0].assessmentsPassed === 0
+        && rows[0].passRate === 0);
+
+    check('and a lab does not enter the average score',
+        rows[0].averageScore === 0 && rows[0].bestScore === 0);
+
+    check('a lab counts as a lab', rows[0].labsCompleted === 1
+        && rows[0].labsStarted === 1 && rows[0].labPoints === 8);
+
+    const partial = aggregate([lab({ labPoints: 3, passed: false })]);
+    check('an unfinished lab is started and not completed',
+        partial[0].labsStarted === 1 && partial[0].labsCompleted === 0);
+
+    /* ---- the score histogram and the totals ---- */
+    check('the score histogram ignores labs - it plots assessment marks',
+        scoreDistribution([lab({ score: 100 })]).every(bucket => bucket.count === 0));
+
+    const board = buildBoard([
+        lab({ labPoints: 8, passed: true }),
+        ev({ userId: 'u2', subjectId: 'e1', score: 80 }),
+    ], { now: NOW });
+    check('the totals report labs completed separately from credentials',
+        board.totals.labsCompleted === 1 && board.totals.certificates === 0);
+    check('and a lab earns its learner a place on the board',
+        board.rows.some(row => row.userId === 'u1' && row.points > 0));
+
+    /* ---- the activity chart ---- */
+    const series = activitySeries([lab({ at: ago(1) })], { now: NOW, window: '7d' });
+    check('a lab IS activity, so it appears in the activity series',
+        series.reduce((n, point) => n + point.count, 0) === 1);
+
+    /* ---- the name ---- */
+    const onlyLabs = aggregate([lab({ name: '', fallbackName: 'mahmoud' })]);
+    check('a learner known only by their lab progress is printed under their '
+        + 'username rather than as the literal "Learner"',
+        onlyLabs[0].name === 'mahmoud');
+
+    /*
+      And the half that matters more: a username must NOT displace a real name.
+      `aggregate` prefers the freshest name, and a lab record's `last_active` is
+      routinely newer than a certificate's issue date - so carrying the username
+      as `name` would replace the full name somebody's certificate carries.
+    */
+    const both = aggregate([
+        ev({ kind: 'course_certificate', subjectId: 'c1', name: 'Aya Nasser',
+             score: null, at: ago(10) }),
+        lab({ name: '', fallbackName: 'aya', at: ago(1) }),
+    ]);
+    check('A USERNAME NEVER DISPLACES A REAL NAME, however much fresher it is',
+        both[0].name === 'Aya Nasser');
+
+    /* ---- the subjects chart ---- */
+    const subjects = topSubjects([
+        lab({ subjectId: 'docker-01', subjectName: 'Your first container' }),
+        lab({ userId: 'u2', subjectId: 'docker-01',
+              subjectName: 'Your first container' }),
+        lab({ userId: 'u3', subjectId: 'linux-01' }),
+    ], ['lab'], 6);
+    check('a named lab reaches the subjects chart, counted in learners',
+        subjects.length === 1 && subjects[0].learners === 2
+        && subjects[0].name === 'Your first container');
+    check('and a lab nothing can name is dropped rather than labelled',
+        !subjects.some(row => row.subjectId === 'linux-01'));
+
+    /* ---- the window ---- */
+    const windowed = buildBoard([lab({ at: ago(40), labPoints: 8 })],
+        { now: NOW, window: '7d' });
+    check('a lab finished forty days ago is outside the seven-day window',
+        windowed.rows.length === 0);
+}
+
+console.log('\n19. The lab data layer names its collection');
+{
+    // `code`, not `source`: comments stripped. This file explains at length why
+    // it never fetches `/exams/`, and a check that fires on the paragraph
+    // documenting it is a check nobody can document (working rule 44). Section
+    // 16 already learned this; the first version of this section did not, and it
+    // failed on its own prose.
+    const service = code('src/services/leaderboard.service.ts');
+
+    /*
+      THE TRAP THAT MADE THIS EMPTY ON THE FIRST ATTEMPT.
+
+      App 11 answers `{count, progress: [...]}` and
+      `{count, labs: [...], tracks: [...]}`. `normalizePaginatedResponse` sees
+      `count` in the object, reads it as DRF's envelope, looks for `results`,
+      finds none, and hands back an EMPTY LIST with a count of five - no error,
+      no warning, and a board that silently scores nobody for their labs. The
+      same shape broke the console's lesson form on the same day.
+    */
+    check('the lab progress read NAMES its list',
+        /'\/api\/labs\/progress\/',\s*'progress'/.test(service));
+    check('and so does the lab title read',
+        /'\/api\/labs\/',\s*'labs'/.test(service));
+    check('the collection helper can name a list at all',
+        /Array\.isArray\(\(response as any\)\[key\]\)/.test(service));
+
+    /*
+      A lab merely OPENED is not an achievement. App 11 writes a `not_started`
+      record the moment somebody clicks into a lab - three of the five live
+      records are exactly that - so counting them would put a learner on a public
+      leaderboard for following a link.
+    */
+    check('a lab with no earned points is not an event',
+        /if \(done <= 0\) continue;/.test(service));
+
+    check('the lab source is reported like the others, so a partial load says so',
+        /'Lab progress'/.test(service));
+
+    /*
+      THE ENGINE HONOURS THE DISTINCTION AND THE SERVICE HAS TO USE IT.
+
+      The check above proves `fallbackName` is not allowed to displace a real
+      name; nothing proved the service puts the username THERE rather than in
+      `name`. Carried as `name` it would displace one, because `aggregate` prefers
+      the freshest and a lab's `last_active` is routinely newer than a
+      certificate's issue date - a regression invisible to every engine test.
+    */
+    check('the username is carried as `fallbackName`, never as `name`',
+        /fallbackName: String\(row\?\.username/.test(service)
+        && !/name: String\(row\?\.full_name \|\| row\?\.username/.test(service));
+
+    // Still true of the new read: naming a subject must not cost an answer key.
+    check('and reading the labs did not bring the exam collections back',
+        !/['"`]\/exams\//.test(service) && !/['"`]\/quizzes\//.test(service));
+
+    const view = source('src/views/Leaderboard.vue');
+    check('the page prints what a lab is worth, like every other award',
+        /POINTS\.labTaskPoint/.test(view) && /POINTS\.labCompleted/.test(view));
+    check('and shows labs completed as its own figure rather than folded into '
+        + 'credentials',
+        /totals\.labsCompleted/.test(view) && /row\.labsCompleted/.test(view));
+}
+
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} failed\n`);
 process.exit(failures === 0 ? 0 : 1);

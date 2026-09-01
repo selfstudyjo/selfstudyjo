@@ -39,13 +39,23 @@
  * ------------------------------------------------------------------ */
 
 /**
- * The four things a learner can earn that this platform actually records.
+ * The five things a learner can earn that this platform actually records.
  *
- * Deliberately not "everything a learner does". A drawing, a message and a lab
- * session are all activity and none of them is an *achievement* anybody could be
- * ranked on without the board turning into a volume contest — see `POINTS`.
+ * Deliberately not "everything a learner does". A drawing and a message are
+ * activity and neither is an *achievement* anybody could be ranked on without
+ * the board turning into a volume contest — see `POINTS`.
+ *
+ * **A LAB IS THE ONE THAT LOOKS LIKE ACTIVITY AND IS NOT.** It was excluded on
+ * exactly that reasoning when this file was written, and the reasoning was about
+ * a *lab session* — opening a terminal and typing in it, which is unrankable.
+ * What app 11 records now is not a session: it is `tasks_done`, and a task is
+ * only done when the service INSPECTED THE ENVIRONMENT and found what the lab
+ * asked for. That is a measured achievement, it is the same shape as a quiz
+ * question marked right, and leaving it out meant a learner who had finished a
+ * twelve-task Hadoop lab scored zero for it.
  */
-export type Achievement = 'exam' | 'quiz' | 'course_certificate' | 'exam_certificate';
+export type Achievement = 'exam' | 'quiz' | 'course_certificate' | 'exam_certificate'
+    | 'lab';
 
 /**
  * One earned thing, flattened out of whichever service holds it.
@@ -71,6 +81,28 @@ export interface LeaderboardEvent {
     at: number;
     /** Course certificates carry taught hours; nothing else does. */
     hours?: number;
+    /**
+     * A lab's own earned task points, out of `labPossible`. Nothing else carries
+     * them.
+     *
+     * The lab's points rather than its task COUNT, because a lab weights its
+     * harder tasks at 2 — using the count would pay the same for a lab that took
+     * one command and one that took six.
+     */
+    labPoints?: number;
+    labPossible?: number;
+    /**
+     * A name to print only when no other event supplied one.
+     *
+     * App 11's progress records carry a `username` and, on live data, an empty
+     * `full_name` — so a learner known ONLY by their lab progress would otherwise
+     * be printed as the literal "Learner". It cannot be `name`, because
+     * `aggregate` prefers the FRESHEST name and a lab record's `last_active` is
+     * routinely newer than a certificate's issue date: a username would then
+     * displace the real full name somebody's certificate carries, which is a
+     * visible regression in the one thing this page is for.
+     */
+    fallbackName?: string;
 }
 
 /* ------------------------------------------------------------------ *
@@ -103,6 +135,31 @@ export const POINTS = {
     examCertificate: 0,
     /** On top of the pass, for a best attempt at or above `DISTINCTION_SCORE`. */
     distinction: 25,
+    /**
+     * A lab is scored on ITS OWN POINTS, plus a bonus for finishing it.
+     *
+     * Two numbers rather than one flat award, because a lab is the only
+     * achievement here that is legitimately PARTIAL: `tasks_done` is checked task
+     * by task against the environment, so somebody six tasks into a twelve-task
+     * lab has genuinely done six tasks' worth of work. A flat "completed" award
+     * would pay them nothing, which is the same wrongness as reporting a
+     * `percent: 0` for a learner who has started.
+     *
+     * The scale is chosen so a finished lab lands just below an exam pass and
+     * well above a quiz: labs run 4-13 task points, so a completed one is worth
+     * 56 (a short Linux lab) to 92 (a full AWS lab) against 100 for an exam and
+     * 20 for a quiz. Half an hour of hands-on work that the service verified is
+     * worth more than a twenty-question quiz and less than a forty-question
+     * paper, which is the ordering a reader would expect — and the whole table is
+     * printed on the page, so if it is wrong it is arguable rather than hidden.
+     *
+     * **There is no distinction bonus on a lab.** A lab's score IS its
+     * completion, so a 100% lab already earns the completion award; adding the
+     * bonus on top would pay twice for one thing, which is the mistake
+     * `examCertificate: 0` exists to avoid.
+     */
+    labCompleted: 40,
+    labTaskPoint: 4,
 } as const;
 
 /** The mark a best attempt has to reach for the distinction bonus. */
@@ -116,6 +173,23 @@ export const DISTINCTION_SCORE = 90;
  * at 100%, which tells the reader nothing and flatters everybody equally.
  */
 export function pointsFor(event: LeaderboardEvent): number {
+    /*
+      THE LAB IS HANDLED BEFORE THE `passed` GATE, and that is the point of it
+      being its own case.
+
+      For every other kind, `passed: false` means the achievement did not happen
+      and is worth nothing. A lab has no pass mark — `passed` on one means
+      `status === 'completed'` — and a half-finished lab is not a failure, it is
+      six tasks the service confirmed. Gated behind the early return, every
+      in-progress lab on the platform would score zero and the board would only
+      move when somebody finished one.
+    */
+    if (event.kind === 'lab') {
+        const earned = Number(event.labPoints);
+        const scored = Number.isFinite(earned) && earned > 0
+            ? Math.round(earned) * POINTS.labTaskPoint : 0;
+        return scored + (event.passed ? POINTS.labCompleted : 0);
+    }
     if (!event.passed) return 0;
     const distinction = typeof event.score === 'number' && event.score >= DISTINCTION_SCORE
         ? POINTS.distinction : 0;
@@ -276,6 +350,13 @@ export interface LeaderRow {
     distinctions: number;
     /** Taught hours, from course certificates. */
     learningHours: number;
+    /** Labs finished — every task checked. A credential-shaped count. */
+    labsCompleted: number;
+    /** Labs with at least one task done, finished or not. */
+    labsStarted: number;
+    /** Task points earned across every lab, out of `labPointsPossible`. */
+    labPoints: number;
+    labPointsPossible: number;
     firstActiveAt: number;
     lastActiveAt: number;
     /** Places gained since the previous window; null when there is no previous. */
@@ -289,6 +370,7 @@ function blankRow(event: LeaderboardEvent): LeaderRow {
         examsPassed: 0, quizzesPassed: 0,
         assessmentsTaken: 0, assessmentsPassed: 0, passRate: 0,
         averageScore: 0, bestScore: 0, distinctions: 0, learningHours: 0,
+        labsCompleted: 0, labsStarted: 0, labPoints: 0, labPointsPossible: 0,
         firstActiveAt: Number.POSITIVE_INFINITY, lastActiveAt: Number.NEGATIVE_INFINITY,
         movement: null,
     };
@@ -308,6 +390,9 @@ export function aggregate(events: readonly LeaderboardEvent[]): LeaderRow[] {
        separately from `lastActiveAt` because that one moves for every event,
        including the ones carrying no name at all. */
     const nameAt = new Map<string, number>();
+    /* A username, used only if nothing else ever supplied a name. See
+       `LeaderboardEvent.fallbackName`. */
+    const fallbackNames = new Map<string, string>();
 
     for (const event of events) {
         if (!event || !event.userId) continue;
@@ -336,6 +421,9 @@ export function aggregate(events: readonly LeaderboardEvent[]): LeaderRow[] {
         } else if (!row.name && event.name) {
             row.name = event.name;
         }
+        if (event.fallbackName && !fallbackNames.has(event.userId)) {
+            fallbackNames.set(event.userId, event.fallbackName);
+        }
         if (event.avatarUrl) row.avatarUrl = event.avatarUrl;
 
         row.points += pointsFor(event);
@@ -356,6 +444,26 @@ export function aggregate(events: readonly LeaderboardEvent[]): LeaderRow[] {
                 scores.set(event.userId, list);
                 if (score > row.bestScore) row.bestScore = score;
             }
+        } else if (event.kind === 'lab') {
+            /*
+              ITS OWN BRANCH, and not for tidiness.
+
+              Left to fall through to the `else` below, a lab would have been
+              counted as a CERTIFICATE — so the "Credentials earned" tile and
+              every row's credential count would have silently included lab
+              progress, and a learner five labs in would appear to hold five
+              certificates they were never issued.
+
+              It is also deliberately outside the assessment branch: a lab has no
+              pass mark, so folding it into `assessmentsTaken` would move the
+              platform pass rate for a reason no reader could account for.
+            */
+            const earned = Number(event.labPoints);
+            const possible = Number(event.labPossible);
+            if (Number.isFinite(earned) && earned > 0) row.labsStarted += 1;
+            if (event.passed) row.labsCompleted += 1;
+            if (Number.isFinite(earned)) row.labPoints += Math.max(0, earned);
+            if (Number.isFinite(possible)) row.labPointsPossible += Math.max(0, possible);
         } else {
             row.certificates += 1;
             if (event.kind === 'course_certificate') {
@@ -378,6 +486,7 @@ export function aggregate(events: readonly LeaderboardEvent[]): LeaderRow[] {
             ? Math.round((list.reduce((a, b) => a + b, 0) / list.length) * 10) / 10
             : 0;
         row.passRate = row.assessmentsTaken ? row.assessmentsPassed / row.assessmentsTaken : 0;
+        if (!row.name) row.name = fallbackNames.get(row.userId) || '';
         if (!row.name) row.name = 'Learner';
         if (row.firstActiveAt === Number.POSITIVE_INFINITY) row.firstActiveAt = 0;
         if (row.lastActiveAt === Number.NEGATIVE_INFINITY) row.lastActiveAt = 0;
@@ -448,6 +557,8 @@ export interface Totals {
     /** Mean of every scored best attempt. */
     averageScore: number;
     learningHours: number;
+    /** Labs finished across the board. */
+    labsCompleted: number;
 }
 
 export interface Board {
@@ -477,6 +588,7 @@ function totalsOf(rows: readonly LeaderRow[], events: readonly LeaderboardEvent[
             ? Math.round((scored.reduce((n, e) => n + Number(e.score), 0) / scored.length) * 10) / 10
             : 0,
         learningHours: rows.reduce((n, row) => n + row.learningHours, 0),
+        labsCompleted: rows.reduce((n, row) => n + row.labsCompleted, 0),
     };
 }
 

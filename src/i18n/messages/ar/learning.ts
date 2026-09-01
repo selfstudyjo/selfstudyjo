@@ -391,8 +391,8 @@ const learning: Catalogue = {
         'لم يُحقَّق أي اختبار أو اختبار قصير أو شهادة في آخر {v0} يوماً. جرّب فترة أطول.',
     'Showing a partial board — {v0} did not answer. A replica is probably still waking up; try Refresh in a moment.':
         'تُعرض لوحة جزئية — {v0} لم تستجب. يُحتمل أن إحدى النسخ لا تزال في طور الاستيقاظ؛ جرّب التحديث بعد قليل.',
-    'Built from {v0} of 4 public collections across the exam and certificate services. Figures are recomputed in the browser each time this page is opened.':
-        'مبنيّة على {v0} من 4 مجموعات عامة في خدمتي الاختبارات والشهادات. تُحسب الأرقام في المتصفح في كل مرة تُفتح فيها الصفحة.',
+    'Built from {v0} of {v1} public collections across the exam, certificate and lab services. Figures are recomputed in the browser each time this page is opened.':
+        'مبنيّة على {v0} من {v1} مجموعات عامة في خدمات الاختبارات والشهادات والمعامل. تُحسب الأرقام في المتصفح في كل مرة تُفتح فيها الصفحة.',
     'Learner': 'المتعلّم',
     'Learners ranked by points. Rank is always the points rank, whatever the table is sorted by.':
         'المتعلّمون مرتَّبون حسب النقاط. الترتيب هو دائماً ترتيب النقاط، أياً كان العمود المستخدم في الفرز.',

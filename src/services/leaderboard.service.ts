@@ -3,7 +3,7 @@ import { normalizePaginatedResponse } from '@/utils/api-utils';
 import type { Achievement, LeaderboardEvent } from '@/utils/leaderboardEngine';
 
 /**
- * The leaderboard's data layer — four collections off two backends, flattened
+ * The leaderboard's data layer — six collections off three backends, flattened
  * into the one event shape `leaderboardEngine.ts` ranks.
  *
  * WHY IT READS WHAT IT READS, AND NOT WHAT IT DOES NOT
@@ -49,6 +49,7 @@ import type { Achievement, LeaderboardEvent } from '@/utils/leaderboardEngine';
 const EXAM_APP_ID = Number(import.meta.env.VITE_EXAM_APP_ID || '20');
 const CERTIFICATE_APP_ID = Number(import.meta.env.VITE_CERTIFICATE_APP_ID || '24');
 const COURSE_APP_ID = Number(import.meta.env.VITE_COURSE_APP_ID || '19');
+const LAB_APP_ID = Number(import.meta.env.VITE_LAB_APP_ID || '11');
 
 /** Epoch ms, or NaN — which the engine reads as undated rather than as 1970. */
 function stamp(value: unknown): number {
@@ -95,11 +96,27 @@ function passed(status: unknown, value: number | null): boolean {
 interface Source<T> { answered: boolean; rows: T[] }
 
 async function collection<T>(
-    appId: number, serviceName: string, endpoint: string,
+    appId: number, serviceName: string, endpoint: string, key?: string,
 ): Promise<Source<T>> {
     try {
         const rows = await withReplicas(appId, serviceName, async baseUrl => {
             const response = await apiService.get<any>(baseUrl, endpoint);
+            /*
+              `key` IS NOT OPTIONAL FOR APP 11, and this is the trap that made the
+              lab column empty on the first attempt.
+
+              App 11 answers `{count, progress: [...]}` and
+              `{count, labs: [...], tracks: [...]}`. `normalizePaginatedResponse`
+              sees `count` in the object, reads it as DRF's envelope, looks for
+              `results`, finds none — and hands back an EMPTY LIST with a count of
+              five. No error, no warning, and a board that silently scores nobody
+              for their labs. Anything that names its collection after the
+              resource has to say so here.
+            */
+            if (key && response && typeof response === 'object'
+                && Array.isArray((response as any)[key])) {
+                return (response as any)[key] as T[];
+            }
             return normalizePaginatedResponse<T>(response).results;
         });
         return { answered: true, rows };
@@ -199,7 +216,7 @@ function assessmentEvents(
  * every one of those decisions and a service that pre-deduped would be a second
  * place the dedupe rule lives.
  */
-/** The four raw collections, exactly as the services answer them. */
+/** The raw collections, exactly as the services answer them. */
 export interface RawSources {
     examResults: readonly any[];
     quizResults: readonly any[];
@@ -207,6 +224,10 @@ export interface RawSources {
     courseCerts: readonly any[];
     /** course_id to title, from app 19. Certificates top it up below. */
     courseTitles: Map<string, string>;
+    /** App 11's `lab_progress` — one row per learner per lab, already deduped. */
+    labProgress?: readonly any[];
+    /** lab_id to title, from app 11's `/api/labs/`. */
+    labTitles?: Map<string, string>;
 }
 
 /**
@@ -309,7 +330,83 @@ export function flattenSources(raw: RawSources): LeaderboardEvent[] {
         });
     }
 
+    /*
+      THE LABS (app 11).
+
+      One record per learner per lab, so there is nothing to dedupe — the uid is
+      derived from `(username, lab_id)`, which is what makes a retake an UPDATE
+      rather than a second row. `subjectId` is still set because `bestAttempts`
+      drops an event without one, and because it is what lets a lab appear in the
+      subjects chart.
+
+      A lab MERELY OPENED IS NOT AN EVENT. App 11 writes a `not_started` record
+      the moment somebody clicks into a lab, so counting those would put a
+      learner on a public leaderboard for following a link — and three of the five
+      live records are exactly that. `earned > 0` means the service inspected the
+      environment and found what the lab asked for, which is the least that can
+      honestly be called an achievement.
+
+      `at` is the completion date when there is one and the last activity
+      otherwise, because that is the moment the points were earned and it is what
+      the window filter and the activity chart both want.
+    */
+    const labTitles = raw.labTitles ?? new Map<string, string>();
+    for (const row of raw.labProgress ?? []) {
+        const userId = String(row?.user_id || '').trim();
+        const subjectId = String(row?.lab_id || '').trim();
+        if (!userId || !subjectId) continue;
+        const earned = Number(row?.earned);
+        const possible = Number(row?.possible);
+        const done = Number.isFinite(earned) ? Math.max(0, earned) : 0;
+        if (done <= 0) continue;
+        const status = String(row?.status || '').trim();
+        events.push({
+            kind: 'lab',
+            userId,
+            // Blank on every live record, and deliberately still read: an
+            // operator may fill it in, and a real name beats a username.
+            name: String(row?.full_name || '').trim(),
+            // The username only if nothing else on the platform names them —
+            // see `LeaderboardEvent.fallbackName`. A learner whose only
+            // achievement is a lab was printed as the literal "Learner".
+            fallbackName: String(row?.username || '').trim() || undefined,
+            subjectId,
+            subjectName: labTitles.get(subjectId) || undefined,
+            // The lab's own percentage. It does not enter the average score or
+            // the score histogram — both filter on kind — but it is what
+            // `bestAttempts` would compare on if two rows for one lab ever
+            // reached here through a merge artefact.
+            score: score(row?.score),
+            // `passed` on a lab means FINISHED, not "scored above a mark". There
+            // is no pass mark: every task is checked or it is not.
+            passed: status === 'completed',
+            at: stamp(row?.completed_at || row?.last_active || row?.updated_at),
+            labPoints: done,
+            labPossible: Number.isFinite(possible) ? Math.max(0, possible) : 0,
+        });
+    }
+
     return events;
+}
+
+/**
+ * A lab id to its title, for naming a lab in the subjects chart.
+ *
+ * Safe to fetch on a page that needs no account, unlike app 20's `/exams/`: a
+ * lab manifest carries a brief a student is meant to READ and no answer key —
+ * what a task checks is a query against the environment, not a stored answer. A
+ * failure here is invisible: `topSubjects` drops a subject nothing can name
+ * rather than labelling it, so the chart is shorter and never wrong.
+ */
+async function labTitles(): Promise<Map<string, string>> {
+    const titles = new Map<string, string>();
+    const { rows } = await collection<any>(LAB_APP_ID, 'lab', '/api/labs/', 'labs');
+    for (const row of rows) {
+        const id = String(row?.id || '').trim();
+        const title = String(row?.title || '').trim();
+        if (id && title) titles.set(id, title);
+    }
+    return titles;
 }
 
 /**
@@ -321,12 +418,18 @@ export function flattenSources(raw: RawSources): LeaderboardEvent[] {
  * place the dedupe rule lives.
  */
 export async function loadAchievements(): Promise<SourceReport> {
-    const [examResults, quizResults, examCerts, courseCerts, titles] = await Promise.all([
+    const [examResults, quizResults, examCerts, courseCerts, labProgress,
+           titles, labs] = await Promise.all([
         collection<any>(EXAM_APP_ID, 'exam', '/user-exam-results/'),
         collection<any>(EXAM_APP_ID, 'exam', '/user-quiz-results/'),
         collection<any>(CERTIFICATE_APP_ID, 'certificate', '/exam-certificates/'),
         collection<any>(CERTIFICATE_APP_ID, 'certificate', '/course-certificates/'),
+        // `'progress'` names the list. App 11 answers `{count, progress: [...]}`
+        // and without the key `normalizePaginatedResponse` reads it as a DRF
+        // envelope with nothing in it — see `collection`.
+        collection<any>(LAB_APP_ID, 'lab', '/api/labs/progress/', 'progress'),
         courseTitles(),
+        labTitles(),
     ]);
 
     const answered = {
@@ -334,6 +437,7 @@ export async function loadAchievements(): Promise<SourceReport> {
         'Quiz results': quizResults.answered,
         'Exam certificates': examCerts.answered,
         'Course certificates': courseCerts.answered,
+        'Lab progress': labProgress.answered,
     };
 
     return {
@@ -345,6 +449,8 @@ export async function loadAchievements(): Promise<SourceReport> {
             examCerts: examCerts.rows,
             courseCerts: courseCerts.rows,
             courseTitles: titles,
+            labProgress: labProgress.rows,
+            labTitles: labs,
         }),
     };
 }

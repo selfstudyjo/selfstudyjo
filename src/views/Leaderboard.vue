@@ -239,6 +239,10 @@
                 <span>{{ row.examsPassed }}</span>
                 {{ row.examsPassed === 1 ? 'exam' : 'exams' }}
               </li>
+              <li v-if="row.labsCompleted">
+                <span>{{ row.labsCompleted }}</span>
+                {{ row.labsCompleted === 1 ? 'lab' : 'labs' }}
+              </li>
               <li>
                 <span>{{ row.certificates }}</span>
                 {{ row.certificates === 1 ? 'credential' : 'credentials' }}
@@ -316,6 +320,7 @@
                   <th scope="col" class="lb-num">{{ $t('Points') }}</th>
                   <th scope="col" class="lb-num lb-hide-sm">{{ $t('Exams') }}</th>
                   <th scope="col" class="lb-num lb-hide-sm">{{ $t('Quizzes') }}</th>
+                  <th scope="col" class="lb-num lb-hide-md">{{ $t('Labs') }}</th>
                   <th scope="col" class="lb-num lb-hide-md">{{ $t('Credentials') }}</th>
                   <th scope="col" class="lb-num lb-hide-md">{{ $t('Avg score') }}</th>
                   <th scope="col" class="lb-hide-md">{{ $t('Progress') }}</th>
@@ -372,6 +377,7 @@
                   <td class="lb-num lb-num--lead">{{ row.points.toLocaleString() }}</td>
                   <td class="lb-num lb-hide-sm">{{ row.examsPassed }}</td>
                   <td class="lb-num lb-hide-sm">{{ row.quizzesPassed }}</td>
+                  <td class="lb-num lb-hide-md">{{ row.labsCompleted }}</td>
                   <td class="lb-num lb-hide-md">{{ row.certificates }}</td>
                   <td class="lb-num lb-hide-md">
                     <span v-if="row.averageScore > 0">{{ row.averageScore }}</span>
@@ -430,6 +436,14 @@
                   <td>{{ POINTS.courseCertificate }}</td>
                 </tr>
                 <tr>
+                  <th scope="row">{{ $t('Lab task point · checked against the environment') }}</th>
+                  <td>{{ POINTS.labTaskPoint }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">{{ $t('Lab finished · every task') }}</th>
+                  <td>+{{ POINTS.labCompleted }}</td>
+                </tr>
+                <tr>
                   <th scope="row">{{ $t('Distinction · best attempt {v0} or above', { v0: DISTINCTION_SCORE }) }}</th>
                   <td>+{{ POINTS.distinction }}</td>
                 </tr>
@@ -465,7 +479,7 @@
 
         <footer class="lb-foot">
           <p>
-            {{ $t('Built from {v0} of 4 public collections across the exam and certificate services. Figures are recomputed in the browser each time this page is opened.', { v0: sourceCount }) }}
+            {{ $t('Built from {v0} of {v1} public collections across the exam, certificate and lab services. Figures are recomputed in the browser each time this page is opened.', { v0: sourceCount, v1: sourceTotal }) }}
           </p>
         </footer>
       </template>
@@ -656,16 +670,22 @@ const topBandIndex = computed(() => {
 
   `topSubjects` drops a subject nothing can name — see its own note; the short
   version is that the first version labelled them "Untitled" and the live chart
-  came out as five identical rows. In practice that means **exams and courses**:
-  an exam is named by the certificate its pass issued, a course by app 19 or by
-  its certificate, and a quiz by nothing that does not also ship an answer key.
+  came out as five identical rows. In practice that means **exams, courses and
+  labs**: an exam is named by the certificate its pass issued, a course by app 19
+  or by its certificate, a LAB by app 11's own `/api/labs/`, and a quiz by nothing
+  that does not also ship an answer key.
+
+  A lab title is safe to fetch on a page needing no account, which is why it is
+  in the list at all: a lab manifest carries a brief a student is MEANT to read
+  and no answer key — what a task checks is a query against the environment, not
+  a stored answer. That is exactly the property app 20's `/exams/` does not have.
 
   `quiz` stays in the list deliberately. It costs nothing while no quiz can be
   named, and the day a `quiz_title` lands on the result record or a safe listing
   exists, quizzes appear here with no change to this file.
 */
 const subjects = computed(() =>
-    topSubjects(board.value.events, ['exam', 'quiz', 'course_certificate'], 6));
+    topSubjects(board.value.events, ['exam', 'quiz', 'course_certificate', 'lab'], 6));
 
 /**
  * The caption, worded from what is actually plotted rather than from what was
@@ -713,6 +733,13 @@ const kpis = computed(() => {
             hint: 'course and exam certificates',
         },
         {
+            label: 'Labs completed',
+            value: compact(totals.labsCompleted),
+            delta: delta(totals.labsCompleted, before?.labsCompleted ?? null),
+            deltaText: signed(delta(totals.labsCompleted, before?.labsCompleted ?? null)),
+            hint: 'every task checked against the environment',
+        },
+        {
             label: 'Assessments passed',
             value: compact(totals.assessmentsPassed),
             delta: delta(totals.assessmentsPassed, before?.assessmentsPassed ?? null),
@@ -734,6 +761,17 @@ const kpis = computed(() => {
 
 const partialSources = computed(() =>
     Object.entries(answered.value).filter(([, ok]) => !ok).map(([name]) => name.toLowerCase()));
+
+/*
+  The DENOMINATOR IS DERIVED, not written down.
+
+  It was the literal `4` in the sentence below and the labs made it five, so the
+  footer read "Built from 5 of 4 public collections" — a small wrongness, on the
+  one line of the page whose job is to say how much of the truth the reader is
+  being shown, which is exactly the line that has to be trustworthy. The count
+  comes from the same report the warning does.
+*/
+const sourceTotal = computed(() => Object.keys(answered.value).length || 5);
 
 const sourceCount = computed(() =>
     Object.values(answered.value).filter(Boolean).length);

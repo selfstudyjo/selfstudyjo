@@ -366,8 +366,8 @@ const learning: Catalogue = {
         '过去 {v0} 天内没有考试、小测或证书记录。请尝试更长的时间范围。',
     'Showing a partial board — {v0} did not answer. A replica is probably still waking up; try Refresh in a moment.':
         '当前排行榜不完整 —— {v0} 未响应。可能有副本仍在唤醒中，请稍后点击刷新。',
-    'Built from {v0} of 4 public collections across the exam and certificate services. Figures are recomputed in the browser each time this page is opened.':
-        '基于考试与证书服务的 4 个公开数据集中的 {v0} 个构建。每次打开此页面时，数据都会在浏览器中重新计算。',
+    'Built from {v0} of {v1} public collections across the exam, certificate and lab services. Figures are recomputed in the browser each time this page is opened.':
+        '基于考试、证书与实验服务的 {v1} 个公开数据集中的 {v0} 个构建。每次打开此页面时，数据都会在浏览器中重新计算。',
     'Learner': '学习者',
     'Learners ranked by points. Rank is always the points rank, whatever the table is sorted by.':
         '学习者按积分排名。无论表格按哪一列排序，名次始终是积分名次。',

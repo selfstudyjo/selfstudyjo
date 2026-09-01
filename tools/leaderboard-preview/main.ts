@@ -5,6 +5,7 @@ import '@/assets/css/theme.css';
 import '@/assets/css/responsive.css';
 import '@/style.css';
 import { THEMES, applyTheme } from '@/theme/apply';
+import { i18n } from '@/i18n/runtime';
 
 // ?theme=orion so one command can screenshot all ten galaxies.
 const wanted = new URLSearchParams(location.search).get('theme') || 'andromeda';
@@ -18,7 +19,21 @@ document.documentElement.style.background = getComputedStyle(document.documentEl
     .getPropertyValue('--sfs-space').trim() || '#04040f';
 document.body.style.background = 'transparent';
 
-createApp(Leaderboard).mount('#app');
+/*
+  THE i18n PLUGIN IS NOT OPTIONAL, and leaving it out rendered nothing at all.
+
+  `$t` is a template-only global installed by the plugin. Without it every
+  `$t(...)` in the view throws `$t is not a function` during the first render, Vue
+  aborts the mount, and the page is BLANK — while the overflow probe below
+  cheerfully reports "no sideways scroll", because an empty document does not
+  overflow anything. That is how this harness came to print `clean` for ten
+  galaxies at six widths against a page that had not rendered since the day the
+  interface learned Arabic. `check:qacoaching` hit the same wall and fixed it the
+  same way.
+*/
+const app = createApp(Leaderboard);
+app.use(i18n);
+app.mount('#app');
 
 /*
   `?probe=1` — the overflow report.
@@ -41,6 +56,21 @@ if (new URLSearchParams(location.search).has('probe')) {
             `VIEWPORT ${viewport}  DOCUMENT ${docWidth}  ` +
             (docWidth > viewport ? `SIDEWAYS SCROLL by ${docWidth - viewport}px` : 'no sideways scroll'),
         ];
+        /*
+          AN EMPTY PAGE IS THE FAILURE THIS PROBE MISSED FOR MONTHS.
+
+          Everything below asks whether something is too wide, and nothing is too
+          wide when nothing rendered — so a mount that threw reported as clean, at
+          every width, in every galaxy. The board is the point of the page: if
+          there is no ranked row and no empty-state card, nothing else measured
+          here means anything.
+        */
+        const mounted = document.querySelector('.lb-page, .lb-board, [class^="lb-"]');
+        const text = (document.body.innerText || '').trim();
+        if (!mounted || text.length < 80) {
+            lines.push(`EMPTY PAGE          nothing rendered `
+                + `(${text.length} characters of text, mounted=${Boolean(mounted)})`);
+        }
         for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
             const box = el.getBoundingClientRect();
             if (box.width === 0 && box.height === 0) continue;

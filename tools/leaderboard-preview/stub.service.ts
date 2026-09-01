@@ -218,14 +218,78 @@ export async function loadAchievements(): Promise<SourceReport> {
     */
     const courseTitles = new Map<string, string>(COURSES);
 
+    /*
+      APP 11'S LAB PROGRESS, in the shape the service really answers.
+
+      Rows, not events - `flattenSources` does the mapping, exactly as with the
+      four collections above, so the preview cannot pass while the real
+      flattening is broken. That is not hypothetical here: the first version of
+      the lab read handed `{count, progress: [...]}` to
+      `normalizePaginatedResponse`, which saw `count`, read it as DRF's envelope,
+      found no `results` and returned an empty list. A stub that supplied ready
+      events would have looked perfect.
+
+      Four deliberately awkward cases:
+        * a finished lab, which earns its task points AND the completion bonus;
+        * a half-finished one, which earns its task points and no bonus - the
+          case that scores zero if a lab is ever moved behind the `passed` gate;
+        * a `not_started` row with nothing earned, which app 11 writes the moment
+          somebody clicks into a lab and which must NOT put anybody on the board;
+        * a learner with NO certificate and no exam, so the only name available is
+          their username - the `fallbackName` path, which otherwise renders as the
+          literal "Learner".
+    */
+    const labProgress: any[] = [
+        {
+            user_id: 'u-0', username: 'aya', full_name: '',
+            lab_id: 'docker-01', track: 'docker', status: 'completed',
+            tasks_done: ['t1', 't2', 't3', 't4'], score: 100,
+            earned: 9, possible: 9,
+            completed_at: new Date(now - 2 * DAY).toISOString(),
+            last_active: new Date(now - 2 * DAY).toISOString(),
+        },
+        {
+            user_id: 'u-0', username: 'aya', full_name: '',
+            lab_id: 'bigdata-01', track: 'bigdata', status: 'in_progress',
+            tasks_done: ['t2'], score: 17, earned: 2, possible: 12,
+            completed_at: '',
+            last_active: new Date(now - 1 * DAY).toISOString(),
+        },
+        {
+            user_id: 'u-3', username: 'omar', full_name: '',
+            lab_id: 'linux-01', track: 'linux', status: 'not_started',
+            tasks_done: [], score: 0, earned: 0, possible: 4,
+            completed_at: '',
+            last_active: new Date(now - 3 * DAY).toISOString(),
+        },
+        {
+            user_id: 'u-labs-only', username: 'kareem', full_name: '',
+            lab_id: 'k8s-01', track: 'kubernetes', status: 'completed',
+            tasks_done: ['t1', 't2', 't3', 't4', 't5'], score: 100,
+            earned: 10, possible: 10,
+            completed_at: new Date(now - 4 * DAY).toISOString(),
+            last_active: new Date(now - 4 * DAY).toISOString(),
+        },
+    ];
+
+    // App 11's `/api/labs/` side of the title path. `linux-01` is deliberately
+    // absent so the "a lab nothing can name is dropped" branch is exercised too.
+    const labTitles = new Map<string, string>([
+        ['docker-01', 'Images and your first container'],
+        ['bigdata-01', 'HDFS: the file system'],
+        ['k8s-01', 'The cluster, nodes and namespaces'],
+    ]);
+
     return {
         answered: {
             'Exam results': true, 'Quiz results': true,
             'Exam certificates': true, 'Course certificates': true,
+            'Lab progress': true,
         },
         allFailed: false,
         events: flattenSources({
             examResults, quizResults, examCerts, courseCerts, courseTitles,
+            labProgress, labTitles,
         }),
     };
 }

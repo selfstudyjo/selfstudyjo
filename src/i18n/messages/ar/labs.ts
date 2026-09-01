@@ -83,6 +83,12 @@ const labs: Catalogue = {
      * reading material. A verb, because it is the one thing in that row that
      * is doing rather than reading. */
     'Practise in the lab': 'تدرَّب في المعمل',
+    /* The leaderboard's printed scoring table. The qualifier is the whole
+     * point: a lab task point is not self-reported, it is a task the service
+     * inspected the environment for. */
+    'Lab task point · checked against the environment':
+        'نقطة مهمة في معمل · يُتحقَّق منها في البيئة نفسها',
+    'Lab finished · every task': 'معمل مكتمل · كل المهام',
     'Brief': 'التعريف',
     'By the end of this lab': 'بنهاية هذا المعمل',
     'Datasets in this lab': 'مجموعات البيانات في هذا المعمل',

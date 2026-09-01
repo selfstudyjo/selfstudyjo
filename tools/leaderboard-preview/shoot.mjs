@@ -142,13 +142,33 @@ for (const width of WIDTHS) {
             returnByValue: true,
         });
         const lines = String(result.value).split('\n');
-        const bad = lines.filter(l => /SIDEWAYS SCROLL|OVERFLOWS/.test(l));
+        /*
+          `NO PROBE` and `EMPTY PAGE` are failures, not silence.
+
+          The probe only appends its report after a paint, so a page whose mount
+          threw leaves no `#probe` element at all — and the old filter matched
+          neither string, so a blank page scored zero problems and printed
+          `clean`. This harness reported exactly that for every width and every
+          galaxy while the view had been failing to mount since the i18n plugin
+          became mandatory.
+        */
+        const bad = lines.filter(l =>
+            /SIDEWAYS SCROLL|OVERFLOWS|EMPTY PAGE|NO PROBE/.test(l));
         if (bad.length) {
             failures += bad.length;
             report.push(`\n${width}px ${theme}:`);
             for (const line of [...new Set(bad)].slice(0, 12)) report.push('  ' + line);
         }
 
+        /*
+          `captureBeyondViewport` DOES NOT RE-RASTERISE A CANVAS, so the three
+          charts come out blank or garbled in these images while being perfectly
+          painted in the browser — verified by reading the pixel data back out of
+          each canvas. Do not chase it: the geometry report above measures the
+          real layout, and `check:leaderboard` covers what the charts plot. The
+          alternative is one capture per viewport-height slice, which is a lot of
+          machinery for a picture of a bar chart.
+        */
         const shot = await cdp.send('Page.captureScreenshot', {
             format: 'png', captureBeyondViewport: true,
         });
