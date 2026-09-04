@@ -49,7 +49,8 @@
     "i18n:where": "node tools/i18n-wrap/where.mjs",
     "audit:rtl": "node tools/rtl-audit/audit.mjs",
     "preview:cast": "vite --config tools/cast-preview/vite.config.ts",
-    "build:cast-preview": "vite build --config tools/cast-preview/vite.config.ts"
+    "build:cast-preview": "vite build --config tools/cast-preview/vite.config.ts",
+    "probe:lessonparse": "vite build --config tools/lessonparse-live/vite.config.ts && node tools/lessonparse-live/dist/probe.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

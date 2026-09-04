@@ -41,6 +41,7 @@
 //   - item  /  * item     a bullet
 //   1. item               a numbered step
 //   > note                a callout
+//   | a | b |             a table, when the next line is a |---|---| rule
 //   ```                   a fence; everything until the closing ``` is code
 //   anything else         a paragraph, joined across single newlines
 //
@@ -84,11 +85,33 @@ export interface ListBlock {
     items: string[];
 }
 
+/**
+ * A comparison table.
+ *
+ * Here because a table is the clearest form a great deal of this material has -
+ * containers against virtual machines, the three probes, requests against
+ * limits - and because without a kind for it the parser falls through to
+ * "anything else is a paragraph, joined across single newlines". A whole table
+ * then renders as one run of pipe characters, which is worse than no table:
+ * every fact is present and none of it is readable.
+ *
+ * `head` is empty when there is no header row, which is legal and rare. Every
+ * row is padded to the widest one, because a row missing its trailing cell
+ * would otherwise shift every column after it - and a table misaligned by one
+ * cell says something different from the one that was written.
+ */
+export interface TableBlock {
+    kind: 'table';
+    head: string[];
+    rows: string[][];
+}
+
 export type LessonBlock =
     | HeadingBlock
     | ParagraphBlock
     | NoteBlock
     | ListBlock
+    | TableBlock
     | CodeBlock;
 
 /** How much of a write-up is parsed. 200k characters is ~50 A4 pages. */
@@ -104,6 +127,12 @@ const HEADING = /^\s{0,3}#{1,3}\s+(.*\S)\s*$/;
 const BULLET = /^\s{0,3}[-*•](?:\s+(.*))?$/;
 const NUMBERED = /^\s{0,3}(\d{1,3})[.)](?:\s+(.*))?$/;
 const QUOTE = /^\s{0,3}>\s?(.*)$/;
+// A table ROW is any line whose first non-space character is a pipe. A table
+// only STARTS when the line after it is the separator rule - `|---|---|`, with
+// optional alignment colons. Both conditions are needed: without the second, a
+// sentence containing a pipe starts a table, and this platform teaches shell.
+const TABLE_ROW = /^\s{0,3}\|/;
+const TABLE_RULE = /^\s{0,3}\|[\s|:-]*$/;
 
 /**
  * The write-up as blocks. Never throws, and never returns partial nonsense for
@@ -186,6 +215,37 @@ export function blocks(content: string | null | undefined): LessonBlock[] {
             continue;
         }
 
+        // ---- table ---------------------------------------------------------
+        // Before the list branch, so a separator row that begins `|-` can
+        // never be read as a bullet.
+        if (TABLE_ROW.test(line) && i + 1 < lines.length
+                && TABLE_RULE.test(lines[i + 1])) {
+            flushAll();
+            const head = tableCells(line);
+            const rows: string[][] = [];
+            i += 2;                        // past the header and its rule
+            for (; i < lines.length && TABLE_ROW.test(lines[i]); i++) {
+                if (TABLE_RULE.test(lines[i])) continue;
+                rows.push(tableCells(lines[i]));
+            }
+            i--;                           // the loop's own i++ takes the next
+            const width = Math.max(head.length, 1,
+                                   ...rows.map(row => row.length));
+            const pad = (row: string[]): string[] => {
+                const copy = row.slice(0, width);
+                while (copy.length < width) copy.push('');
+                return copy;
+            };
+            if (head.length || rows.length) {
+                out.push({
+                    kind: 'table',
+                    head: head.length ? pad(head) : [],
+                    rows: rows.map(pad),
+                });
+            }
+            continue;
+        }
+
         // ---- list ----------------------------------------------------------
         const bullet = BULLET.exec(line);
         const numbered = NUMBERED.exec(line);
@@ -224,6 +284,22 @@ export function blocks(content: string | null | undefined): LessonBlock[] {
     return out;
 }
 
+/**
+ * One table row's cells.
+ *
+ * The leading and trailing pipes are optional in every markdown dialect and
+ * both spellings appear in this content, so an empty first or last cell created
+ * purely by a border pipe is dropped - otherwise every table gains a blank
+ * column at each edge.
+ */
+function tableCells(line: string): string[] {
+    const cells = line.trim().split('|').map(cell => cell.trim());
+    if (cells.length && cells[0] === '') cells.shift();
+    if (cells.length && cells[cells.length - 1] === '') cells.pop();
+    return cells;
+}
+
+
 /** Whether there is anything to show. Cheaper than parsing to find out. */
 export function hasContent(content: string | null | undefined): boolean {
     return typeof content === 'string' && content.trim().length > 0;
@@ -250,7 +326,13 @@ export function readingMinutes(content: string | null | undefined,
     let words = 0;
     for (const block of blocks(content)) {
         if (block.kind === 'code') continue;
-        const text = block.kind === 'list' ? block.items.join(' ') : block.text;
+        // A table has no `.text`, so the two-way ternary this replaced handed
+        // `undefined` to countWords - and a table IS reading, often the densest
+        // part of a lesson, so its words have to count.
+        const text = block.kind === 'list' ? block.items.join(' ')
+            : block.kind === 'table'
+                ? [...block.head, ...block.rows.flat()].join(' ')
+                : block.text;
         words += countWords(text, locale);
     }
     if (!words) return 0;

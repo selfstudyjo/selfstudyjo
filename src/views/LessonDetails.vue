@@ -183,6 +183,35 @@
                 </ul>
 
                 <!--
+                  A TABLE SCROLLS RATHER THAN SHRINKING. A four-column
+                  comparison table on a 360px phone cannot fit, and the two
+                  alternatives are both worse than a horizontal scroll: letting
+                  it overflow the card produces sideways scroll on the whole
+                  PAGE (the fault `audit:rtl` exists to catch), and squeezing
+                  the columns turns every cell into a one-word-per-line
+                  stack. The wrapper owns the scroll; the table keeps its
+                  minimum content width.
+                -->
+                <div v-else-if="block.kind === 'table'" class="lesson-table-wrap">
+                  <table class="lesson-table">
+                    <thead v-if="block.head.length">
+                      <tr>
+                        <th v-for="(cell, c) in block.head" :key="c" scope="col">
+                          <RichText :text="cell" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(row, r) in block.rows" :key="r">
+                        <td v-for="(cell, c) in row" :key="c">
+                          <RichText :text="cell" />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!--
                   CODE IS NOT RIGHT-TO-LEFT, and this is the one block on the
                   page that must not mirror. Rendered RTL the bidi algorithm
                   reorders the punctuation, so `ls -la /var/log | grep error`

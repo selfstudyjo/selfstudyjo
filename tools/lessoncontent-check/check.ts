@@ -326,6 +326,121 @@ console.log('\n12. The write-up is a record, so it is read with $td');
     check('and the title too', /\$td\(\s*lesson\s*\)/.test(view));
 }
 
+
+console.log('\n13. Tables, because half the DevOps write-ups are comparisons');
+{
+    const t = blocks([
+        'Two ways to run it:',
+        '',
+        '| Option | Means | Cost |',
+        '|---|---|---|',
+        '| `-d` | detached | none |',
+        '| `--rm` | delete on exit | none |',
+        '',
+        'And that is the choice.',
+    ].join('\n'));
+    check('a table becomes a table block', t.some(b => b.kind === 'table'),
+        t.map(b => b.kind));
+    const table = t.find(b => b.kind === 'table') as any;
+    check('the header row is the header',
+        table && table.head.join('|') === 'Option|Means|Cost', table?.head);
+    check('the rule row is not a data row', table && table.rows.length === 2,
+        table?.rows);
+    check('the border pipes do not create empty edge columns',
+        table && table.rows.every((r: string[]) => r.length === 3),
+        table?.rows);
+    check('the prose either side survives',
+        t[0].kind === 'paragraph' && t[t.length - 1].kind === 'paragraph',
+        t.map(b => b.kind));
+
+    // THE REASON THIS BLOCK KIND EXISTS. Without it the parser falls through to
+    // "anything else is a paragraph, joined across single newlines", so a whole
+    // table renders as one run of pipe characters - every fact present and none
+    // of it readable.
+    check('A TABLE IS NEVER RENDERED AS ONE RUN OF PIPES',
+        !t.some(b => b.kind === 'paragraph'
+                     && (b as any).text.split('|').length > 3),
+        t.filter(b => b.kind === 'paragraph').map(b => (b as any).text));
+
+    // A pipe in a sentence must NOT start a table. This platform teaches shell.
+    const pipe = blocks('Run `ls -la | grep error` and read the output.');
+    check('a pipe inside a sentence does not start a table',
+        pipe.length === 1 && pipe[0].kind === 'paragraph', pipe.map(b => b.kind));
+    const noRule = blocks('| a | b |\n| c | d |');
+    check('...and neither does a pipe row with no separator rule',
+        !noRule.some(b => b.kind === 'table'), noRule.map(b => b.kind));
+
+    // A ragged row would otherwise shift every column after it, and a table
+    // misaligned by one cell says something different from the one written.
+    const ragged = blocks('| a | b | c |\n|---|---|---|\n| 1 | 2 |\n| 3 |');
+    const r = ragged.find(b => b.kind === 'table') as any;
+    check('a short row is PADDED, not left to shift the columns',
+        r && r.rows.every((row: string[]) => row.length === 3), r?.rows);
+
+    // A separator row beginning `|-` must not be read as a bullet.
+    check('the separator row is not mistaken for a list',
+        !t.some(b => b.kind === 'list'), t.map(b => b.kind));
+
+    // A table IS reading, and often the densest part of a lesson. Before the
+    // table branch existed, readingMinutes handed `undefined` to countWords.
+    const dense = ['| a | b |', '|---|---|']
+        .concat(Array.from({ length: 60 },
+                           (_v, i) => `| word${i} more words here | and here |`))
+        .join('\n');
+    check('a table counts towards the reading estimate',
+        readingMinutes(dense) >= 1, readingMinutes(dense));
+
+    // Structure survives translation, exactly as the other markers do: a pipe
+    // is punctuation, not markup.
+    const ar = blocks([
+        '| الخيار | المعنى |',
+        '|---|---|',
+        '| `-d` | منفصل |',
+    ].join('\n'));
+    check('an Arabic table parses to the same shape',
+        ar.length === 1 && ar[0].kind === 'table'
+        && (ar[0] as any).rows.length === 1, ar.map(b => b.kind));
+
+    const view = source('src/views/LessonDetails.vue');
+    check('the page renders a table element for it',
+        /block\.kind === 'table'/.test(view) && /<table/.test(view));
+    check('every cell goes through RichText, which escapes before it inserts',
+        /<th[\s\S]{0,160}<RichText/.test(view)
+        && /<td[\s\S]{0,160}<RichText/.test(view));
+    // COMMENT-STRIPPED, and the module docstring is why: the page carries a
+    // paragraph explaining that nothing here uses v-html, and a raw scan
+    // matched that explanation. A check that fires on the comment documenting
+    // it is a check nobody can document (working rule 44).
+    check('THE TABLE IS NOT PUT INTO v-html',
+        !/v-html/.test(withoutComments(view)),
+        (withoutComments(view).match(/.{0,60}v-html.{0,60}/) || [])[0]);
+
+    const css = source('src/assets/css/lesson-details.css');
+    check('the WRAPPER scrolls, so a wide table cannot give the whole page '
+        + 'sideways scroll',
+        /\.lesson-table-wrap[\s\S]{0,220}overflow-x:\s*auto/.test(css));
+    check('...and the table keeps its min-content width rather than squeezing '
+        + 'every cell to one word per line',
+        /\.lesson-table\b[\s\S]{0,240}min-width:\s*min-content/.test(css));
+    check('a cell is bidi-isolated, so a flag or a CIDR is not rearranged '
+        + 'inside Arabic prose',
+        /unicode-bidi:\s*plaintext/.test(css));
+    // WORKING RULE 12. A bare colour here is right in Andromeda and wrong in
+    // the other nine galaxies, and nobody sees it until a reader picks one.
+    // Every hex in these rules must be inside a var() as its fallback.
+    const tableCss = css.slice(css.indexOf('.lesson-table-wrap'));
+    const bareHex = (tableCss.match(/#[0-9a-fA-F]{3,8}/g) || [])
+        .filter((_hex, i, all) => all.length >= 0)
+        .filter(() => true);
+    const varFallbacks = (tableCss.match(/var\([^)]*#[0-9a-fA-F]{3,8}[^)]*\)/g)
+        || []).join(' ');
+    const stray = bareHex.filter(hex => !varFallbacks.includes(hex));
+    check('every colour is a token, and every hex is only a var() fallback',
+        stray.length === 0, stray);
+    check('the table spends theme tokens rather than literals',
+        /var\(--sfs-/.test(tableCss));
+}
+
 console.log(failures === 0
     ? '\nAll checks passed.'
     : `\n${failures} check(s) FAILED.`);

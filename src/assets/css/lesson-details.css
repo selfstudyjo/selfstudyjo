@@ -797,3 +797,73 @@
     border-radius: 50%;
     animation: lesson-spin 0.7s linear infinite;
 }
+
+/* ---------------------------------------------------------------------------
+   A comparison table.
+   Every colour is a token, so all ten galaxies work. Two decisions worth not
+   undoing: the WRAPPER scrolls rather than the table shrinking (a four-column
+   table cannot fit a 360px phone, and squeezing the columns turns every cell
+   into a one-word-per-line stack), and `min-width: min-content` on the table
+   is what stops a `1fr`-style automatic minimum letting a long cell overflow
+   the card instead of scrolling.
+   --------------------------------------------------------------------------- */
+.lesson-table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgb(var(--sfs-line-rgb, 226 232 240) / 0.5);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+.lesson-table {
+    width: 100%;
+    min-width: min-content;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    color: var(--sfs-text, #e2e8f0);
+}
+
+.lesson-table th,
+.lesson-table td {
+    padding: 0.6rem 0.85rem;
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px solid rgb(var(--sfs-line-rgb, 226 232 240) / 0.35);
+}
+
+.lesson-table thead th {
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--sfs-text, #e2e8f0);
+}
+
+.lesson-table tbody tr:last-child th,
+.lesson-table tbody tr:last-child td {
+    border-block-end: 0;
+}
+
+.lesson-table tbody tr:nth-child(even) {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03);
+}
+
+/* The first column of a comparison table is the thing being compared, so it
+   reads as a label rather than as data. */
+.lesson-table tbody td:first-child {
+    font-weight: 600;
+}
+
+/* A cell holding an identifier, a flag or a path is a machine string, and
+   inside Arabic prose the bidi algorithm relocates its punctuation - `-la`
+   and `10.0.0.0/16` both come out rearranged. Isolating each cell keeps a
+   mixed table readable in every language. */
+.lesson-table th,
+.lesson-table td {
+    unicode-bidi: plaintext;
+}
+
+@media (max-width: 480px) {
+    .lesson-table { font-size: 0.88rem; }
+    .lesson-table th,
+    .lesson-table td { padding: 0.5rem 0.6rem; }
+}
