@@ -365,6 +365,61 @@ const labs: Catalogue = {
     'Type help to see every command, or press Tab to complete one.':
         'اكتب help لعرض كل الأوامر، أو اضغط Tab لإكمال أحدها.',
     'Modified': 'مُعدّل',
+
+    // ------------------------------------------------------------------
+    // Ansible - app 11's thirteenth track.
+    //
+    // `ok`, `changed` and `failed` are deliberately NOT here: they are the
+    // words `ansible-playbook`'s own PLAY RECAP prints, in English, on every
+    // machine - and a student maps the dashboard column to the recap line. A
+    // translated heading beside an English recap makes that harder, not
+    // easier. Same rule as the Cisco IOS keywords, and they are on
+    // tools/i18n-check/untranslated.json for it.
+    // ------------------------------------------------------------------
+    'Ansible': 'أنسِبل',
+    'Control node': 'عقدة التحكّم',
+    'Managed nodes': 'العقد المُدارة',
+    'Inventory groups': 'مجموعات المخزون',
+    'Playbook runs': 'تشغيلات الـ playbook',
+    'Packages': 'الحِزم',
+    'Package': 'الحِزمة',
+    'Roles': 'الأدوار',
+    'Distribution': 'التوزيعة',
+    'Groups': 'المجموعات',
+    'Hosts': 'المُضيفات',
+    'Running': 'قيد التشغيل',
+    'Variables': 'المتغيّرات',
+    'Unit': 'الوحدة',
+    'At boot': 'عند الإقلاع',
+    'Playbook': 'الـ playbook',
+    'When': 'الوقت',
+    /* "Safe to repeat" rather than a transliteration. The column answers the
+       one question this whole track turns on - would running it again change
+       anything - and a word nobody can read answers nothing. */
+    'Idempotent': 'آمن للتكرار',
+
+    // ------------------------------------------------------------------
+    // Jenkins - the fourteenth.
+    // ------------------------------------------------------------------
+    'Jenkins': 'جينكِنز',
+    'Controller': 'المُتحكّم',
+    'Stage view': 'عرض المراحل',
+    'Build history': 'سجلّ البناءات',
+    'Plugins': 'الإضافات',
+    'Plugin': 'الإضافة',
+    'Job': 'المهمة',
+    'Pipeline from': 'مصدر الـ pipeline',
+    'Builds': 'البناءات',
+    'Last result': 'آخر نتيجة',
+    'Stage': 'المرحلة',
+    'Steps': 'الخطوات',
+    'Note': 'ملاحظة',
+    'Took': 'استغرق',
+    'Artifacts': 'المُخرجات',
+    'Executors': 'المُنفّذات',
+    'Labels': 'الوسوم',
+    'ID': 'المعرّف',
+    'Kind': 'النوع',
 };
 
 export default labs;

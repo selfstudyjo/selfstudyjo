@@ -425,6 +425,8 @@ const FAMILY_LABELS: Record<string, string> = {
     azure: 'Azure',
     terraform: 'Terraform',
     git: 'Git',
+    ansible: 'Ansible',
+    jenkins: 'Jenkins',
     netsim: 'Network Simulator',
     ai: 'AI Tutor',
 };
@@ -782,6 +784,103 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             id: 'outputs', title: 'Outputs', kind: 'table', path: 'outputs',
             tool: 'terraform_gui', empty: 'No outputs',
             columns: [col('name', 'Name'), col('value', 'Value', 'code')],
+        },
+    ],
+    ansible: [
+        { id: 'stats', title: 'Control node', kind: 'stats', path: 'stats',
+            tool: 'ansible_gui' },
+        {
+            id: 'hosts', title: 'Managed nodes', kind: 'table', path: 'hosts',
+            tool: 'ansible_gui', empty: 'No hosts in this environment',
+            columns: [col('name', 'Host'), col('address', 'Address', 'code'),
+                col('os', 'Distribution'), col('groups', 'Groups', 'list'),
+                col('status', 'Status', 'badge'),
+                col('packages', 'Packages', 'number'),
+                col('services_running', 'Running', 'number')],
+        },
+        {
+            id: 'groups', title: 'Inventory groups', kind: 'table', path: 'groups',
+            tool: 'ansible_gui', empty: 'The inventory declares no groups yet',
+            columns: [col('name', 'Group'), col('hosts', 'Hosts', 'list'),
+                col('count', 'Size', 'number'), col('vars', 'Variables', 'number')],
+        },
+        {
+            id: 'services', title: 'Services', kind: 'table', path: 'services',
+            tool: 'ansible_gui', empty: 'Nothing has been installed yet',
+            columns: [col('host', 'Host'), col('name', 'Unit'),
+                col('state', 'State', 'badge'), col('enabled', 'At boot', 'badge')],
+        },
+        {
+            id: 'packages', title: 'Packages', kind: 'table', path: 'packages',
+            tool: 'ansible_gui', empty: 'Nothing has been installed yet',
+            columns: [col('host', 'Host'), col('name', 'Package'),
+                col('version', 'Version', 'code')],
+        },
+        {
+            // THE COLUMN THIS TRACK EXISTS FOR. A run whose `changed` is 0 is
+            // an idempotent run, and seeing that flip to yes on the second pass
+            // is the whole lesson - so it is a column rather than something a
+            // student has to read out of a recap.
+            id: 'runs', title: 'Playbook runs', kind: 'table', path: 'runs',
+            tool: 'ansible_gui', empty: 'No playbook has been run yet',
+            columns: [col('playbook', 'Playbook'), col('at', 'When'),
+                col('mode', 'Mode', 'badge'), col('ok', 'ok', 'number'),
+                col('changed', 'changed', 'number'),
+                col('failed', 'failed', 'number'),
+                col('idempotent', 'Idempotent', 'badge')],
+        },
+        {
+            id: 'roles', title: 'Roles', kind: 'table', path: 'roles',
+            tool: 'ansible_gui', empty: 'No roles yet',
+            columns: [col('name', 'Role'), col('tasks', 'Tasks', 'number')],
+        },
+    ],
+    jenkins: [
+        { id: 'stats', title: 'Controller', kind: 'stats', path: 'stats',
+            tool: 'jenkins_gui' },
+        {
+            id: 'jobs', title: 'Jobs', kind: 'table', path: 'jobs',
+            tool: 'jenkins_gui', empty: 'No jobs yet',
+            columns: [col('name', 'Job'), col('source', 'Pipeline from'),
+                col('builds', 'Builds', 'number'),
+                col('status', 'Last result', 'badge'), col('last_at', 'When')],
+        },
+        {
+            // The stage view of the LAST build, which is the thing a Jenkins
+            // user actually looks at: it says WHERE a build broke without
+            // opening the log, and NOT_EXECUTED is a status of its own.
+            id: 'stages', title: 'Stage view', kind: 'table', path: 'stages',
+            tool: 'jenkins_gui', empty: 'Nothing has been built yet',
+            columns: [col('stage', 'Stage'), col('status', 'Result', 'badge'),
+                col('steps', 'Steps', 'number'), col('note', 'Note')],
+        },
+        {
+            id: 'builds', title: 'Build history', kind: 'table', path: 'builds',
+            tool: 'jenkins_gui', empty: 'Nothing has been built yet',
+            columns: [col('job', 'Job'), col('number', 'Build', 'code'),
+                col('result', 'Result', 'badge'), col('at', 'Started'),
+                col('took', 'Took'), col('tests', 'Tests'),
+                col('artifacts', 'Artifacts', 'number')],
+        },
+        {
+            id: 'nodes', title: 'Nodes', kind: 'table', path: 'nodes',
+            tool: 'jenkins_gui', empty: 'No agents',
+            columns: [col('name', 'Node'), col('status', 'Status', 'badge'),
+                col('executors', 'Executors', 'number'),
+                col('labels', 'Labels', 'list')],
+        },
+        {
+            id: 'credentials', title: 'Credentials', kind: 'table',
+            path: 'credentials', tool: 'jenkins_gui',
+            empty: 'The credential store is empty',
+            columns: [col('id', 'ID', 'code'), col('kind', 'Kind'),
+                col('username', 'Username'), col('description', 'Description')],
+        },
+        {
+            id: 'plugins', title: 'Plugins', kind: 'table', path: 'plugins',
+            tool: 'jenkins_gui', empty: 'No plugins',
+            columns: [col('id', 'Plugin', 'code'), col('name', 'Name'),
+                col('version', 'Version', 'code')],
         },
     ],
     git: [

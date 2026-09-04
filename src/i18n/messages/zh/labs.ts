@@ -361,6 +361,57 @@ const labs: Catalogue = {
     'Type help to see every command, or press Tab to complete one.':
         '输入 help 查看全部命令，或按 Tab 补全命令。',
     'Modified': '已修改',
+
+    // ------------------------------------------------------------------
+    // Ansible - app 11's thirteenth track.
+    //
+    // `ok`, `changed` and `failed` are deliberately NOT here: they are the
+    // words `ansible-playbook`'s own PLAY RECAP prints, and a student maps the
+    // dashboard column to the recap line.
+    // ------------------------------------------------------------------
+    'Ansible': 'Ansible',
+    'Control node': '控制节点',
+    'Managed nodes': '受管节点',
+    'Inventory groups': '清单分组',
+    'Playbook runs': 'Playbook 运行记录',
+    'Packages': '软件包',
+    'Package': '软件包',
+    'Roles': '角色',
+    'Distribution': '发行版',
+    'Groups': '分组',
+    'Hosts': '主机',
+    'Running': '运行中',
+    'Variables': '变量',
+    'Unit': '服务单元',
+    'At boot': '开机启动',
+    'Playbook': 'Playbook',
+    'When': '时间',
+    /* 幂等 is the exact standard term, and it is the one question this track
+       turns on: would running it again change anything. */
+    'Idempotent': '幂等',
+
+    // ------------------------------------------------------------------
+    // Jenkins - the fourteenth.
+    // ------------------------------------------------------------------
+    'Jenkins': 'Jenkins',
+    'Controller': '控制器',
+    'Stage view': '阶段视图',
+    'Build history': '构建历史',
+    'Plugins': '插件',
+    'Plugin': '插件',
+    'Job': '任务',
+    'Pipeline from': 'Pipeline 来源',
+    'Builds': '构建',
+    'Last result': '最近结果',
+    'Stage': '阶段',
+    'Steps': '步骤',
+    'Note': '备注',
+    'Took': '耗时',
+    'Artifacts': '构建产物',
+    'Executors': '执行器',
+    'Labels': '标签',
+    'ID': 'ID',
+    'Kind': '类型',
 };
 
 export default labs;
