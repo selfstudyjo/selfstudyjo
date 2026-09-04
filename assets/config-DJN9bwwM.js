@@ -1,0 +1,1 @@
+import{Y as e}from"./index-KqIqXXEj.js";export{e as serviceRegistry};
