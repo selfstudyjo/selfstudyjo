@@ -340,6 +340,31 @@ const labs: Catalogue = {
      * of them are the sentence. */
     'tasks': 'مهام',
     'shuffle': 'خلط',
+
+    /* THE TERMINAL SHORTCUT CARD.
+     *
+     * Every key name is left in English on purpose and is not in the
+     * catalogue at all: `Tab`, `Ctrl+R` and `nano` are what is printed on a
+     * keyboard and what a student types, so a translated key name would be
+     * an instruction to press something that does not exist. The
+     * DESCRIPTIONS beside them are prose and are translated. Same line
+     * `untranslated.json` draws through the Cisco keywords and the shell
+     * commands. */
+    'Keyboard shortcuts': 'اختصارات لوحة المفاتيح',
+    'Keys': 'المفاتيح',
+    'complete a command or a filename': 'إكمال أمر أو اسم ملف',
+    'search what you have run': 'البحث في ما نفّذته',
+    'clear the screen': 'مسح الشاشة',
+    'start / end of the line': 'بداية السطر / نهايته',
+    'cut to the start / to the end': 'القص إلى البداية / إلى النهاية',
+    'cut the last word / paste it back': 'قص الكلمة الأخيرة / لصقها مرة أخرى',
+    'abandon the line': 'إلغاء السطر',
+    'walk through history': 'التنقّل في سجل الأوامر',
+    'run the previous command again': 'تنفيذ الأمر السابق مرة أخرى',
+    'open a file in an editor': 'فتح ملف في محرّر',
+    'Type help to see every command, or press Tab to complete one.':
+        'اكتب help لعرض كل الأوامر، أو اضغط Tab لإكمال أحدها.',
+    'Modified': 'مُعدّل',
 };
 
 export default labs;

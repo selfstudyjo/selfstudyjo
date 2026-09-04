@@ -63,13 +63,24 @@
     </div>
 
     <form class="sl-tutor__form" @submit.prevent="send">
-      <input
+      <!--
+        A TEXTAREA, not an input, and it has a ref.
+
+        "Ask the tutor" fills this in, and a filled-in question is two or three
+        lines long - in a single-line input a student sees the last six words of
+        a sentence they are being asked to check, which is worse than not
+        showing it at all. Enter still sends and Shift+Enter still adds a line,
+        so nothing about typing a short question changed.
+      -->
+      <textarea
+        ref="box"
         v-model="question"
         class="sl-tutor__input"
-        type="text"
+        rows="1"
         :disabled="busy"
         :placeholder="$t('Ask a question about this lab')"
-      >
+        @keydown.enter.exact.prevent="send"
+      ></textarea>
       <button type="submit" class="sl-btn sl-btn--primary sl-btn--sm"
               :disabled="busy || !question.trim()">
         <Send class="sl-i" /> {{ $t('Ask') }}
@@ -99,12 +110,12 @@
  * value is that it describes the environment as it is NOW, and a lab moves
  * several times a minute.
  */
-import { nextTick, ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { Eraser, Send, Sparkles, Stethoscope } from 'lucide-vue-next';
 import RichText from '@/components/RichText.vue';
 import { renderMarkdown } from '@/utils/aichatMarkdown';
 import { labAiService, type TutorMessage } from '@/services/lab-ai.service';
-import type { Lab, LabTask } from '@/utils/labCatalogue';
+import type { Lab } from '@/utils/labCatalogue';
 
 const props = defineProps<{
   lab: Lab | null;
@@ -116,6 +127,7 @@ const question = ref('');
 const busy = ref(false);
 const error = ref('');
 const scroller = ref<HTMLElement | null>(null);
+const box = ref<HTMLTextAreaElement | null>(null);
 
 function blocksOf(turn: TutorMessage) {
   // The AI Chat's parser, not `marked`. Same module, same reason: it produces
@@ -178,11 +190,42 @@ async function review() {
   }
 }
 
-/** Called by the task list's "Ask the tutor" button. */
-async function askAboutTask(task: LabTask) {
-  await ask(`I am stuck on "${task.title}". ${task.detail || ''} `
-    + 'Give me one nudge without doing it for me.');
+/**
+ * Called by the task list's "Ask the tutor" button: FILL the box, do not send.
+ *
+ * It used to send a sentence built at the call site, which is wrong twice over.
+ * A student got an answer to a question they had never read - so they could not
+ * tell whether the tutor had misunderstood them or they had misunderstood the
+ * task - and there was no way to add "I have already tried X", which is the
+ * single most useful thing anybody can put in front of a model here.
+ *
+ * Filling it costs one keypress and buys the student the chance to correct it,
+ * which is usually all the nudge they needed. The sentence is built by
+ * `taskQuestion` in `labCatalogue.ts` so `npm run check:labs` can drive it.
+ */
+function fillQuestion(text: string) {
+  question.value = String(text || '');
+  nextTick(() => {
+    const element = box.value;
+    if (!element) return;
+    element.focus();
+    // The caret at the END, not selecting the whole thing: a student who wants
+    // to add a sentence should be able to type, and a full selection means the
+    // first character they press deletes the question.
+    element.setSelectionRange(question.value.length, question.value.length);
+    autoGrow();
+  });
 }
 
-defineExpose({ askAboutTask });
+/** A textarea does not grow on its own, and a clipped question is unreadable. */
+function autoGrow() {
+  const element = box.value;
+  if (!element) return;
+  element.style.height = 'auto';
+  element.style.height = `${Math.min(element.scrollHeight, 160)}px`;
+}
+
+watch(question, () => nextTick(autoGrow));
+
+defineExpose({ fillQuestion });
 </script>

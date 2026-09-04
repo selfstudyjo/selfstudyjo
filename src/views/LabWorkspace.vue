@@ -133,6 +133,8 @@
                   :tool="tool"
                   :hint="consoleHint(tool)"
                   :run="line => runTool(tool.id, { command: line })"
+                  :complete="completeIn"
+                  :save="writeFile"
                 />
                 <LabCode
                   v-else-if="tool.kind === 'code'"
@@ -208,9 +210,21 @@
                     {{ $t('Open') }} {{ $t(tool.label) }}
                   </a>
                 </div>
+                <!--
+                  A FUNCTION REF, not `ref="tutor"`.
+
+                  This component sits inside two nested `v-for`s, and Vue
+                  collects a template ref inside a `v-for` into an ARRAY - so
+                  `tutor.value?.askAboutTask?.()` was reading a method off an
+                  array, finding `undefined`, and the optional call swallowed
+                  it. That is the whole of "Ask the tutor does nothing": no
+                  error, no request, nothing in the browser console. Only one
+                  tool in a lab has `kind === 'ai'`, so a function ref keeping
+                  the last one it is handed is exact rather than adequate.
+                -->
                 <LabTutor
                   v-else-if="tool.kind === 'ai'"
-                  ref="tutor"
+                  :ref="el => { if (el) tutor = el }"
                   :lab="lab"
                   :load-context="loadContext"
                 />
@@ -286,6 +300,7 @@ import { labService } from '@/services/lab.service';
 import { labsService } from '@/services/labs.service';
 import {
   STATUS_LABELS, canEmbed, defaultPane, gradeReport, toolPanes,
+  taskQuestion,
   type GradeReport, type Lab, type LabGrade, type LabTask, type LabTool,
   type ToolPane,
 } from '@/utils/labCatalogue';
@@ -487,7 +502,15 @@ async function runTool(toolId: string, payload: Record<string, unknown>) {
                                           toolId, payload);
   if (result?.note) note.value = result.note;
   refreshViews();
-  if (toolId === 'editor' || toolId === 'terminal') filesPane.value?.refresh?.();
+  // ANY console can write a file now, not just the terminal and the Files tool:
+  // every one of them is a shell, so `echo x > f` and `nano f` work in the
+  // Terraform and AWS consoles too. Keyed on the tool KIND rather than on two
+  // hardcoded ids, or the file tree silently stops following what a student can
+  // watch themselves doing.
+  if (toolId === 'editor' || panes.value.some(pane => pane.tools.some(
+      tool => tool.id === toolId && tool.kind === 'console'))) {
+    filesPane.value?.refresh?.();
+  }
   return result;
 }
 
@@ -556,13 +579,43 @@ function selfMark(taskId: string) {
   grade0();
 }
 
+/**
+ * Ask the tutor about a task: open the pane and FILL THE BOX.
+ *
+ * Two bugs, one button. The ref it went through was an array (see the template),
+ * so the click did nothing at all; and what it did when it worked was SEND a
+ * sentence assembled at the call site, so a student got an answer to a question
+ * they had never read.
+ *
+ * Filled and not sent, deliberately. A question the student can see is one they
+ * can correct before spending a model call on it - which is usually all the
+ * nudge they needed - and it is the only way to add "I have already tried X".
+ * The sentence itself is `taskQuestion` in `labCatalogue.ts`, where
+ * `npm run check:labs` drives it, because what makes it a good question is the
+ * checker's own note and the task's position in the lab, and neither is obvious.
+ */
 async function askTutor(task: LabTask) {
   const pane = panes.value.find(row => row.tools.some(t => t.kind === 'ai'));
   if (pane) showPane(pane.family);
+  const tasks = grade.value.tasks || [];
+  const position = tasks.findIndex(row => row.id === task.id) + 1;
+  const question = taskQuestion(lab.value, task, position, tasks.length);
   // The tutor mounts inside a `v-if`, so it may not exist until the pane is
   // shown. Waiting a frame is what makes the click work the first time rather
   // than the second.
-  requestAnimationFrame(() => tutor.value?.askAboutTask?.(task));
+  requestAnimationFrame(() => tutor.value?.fillQuestion?.(question));
+}
+
+/**
+ * The Tab candidates for a console, fetched once per directory.
+ *
+ * Here rather than in the console because it needs the username and the lab id,
+ * and `LabConsole` is deliberately given nothing but the tool record and three
+ * callbacks - that is what lets one component serve twelve consoles.
+ */
+async function completeIn(toolId: string) {
+  if (!lab.value) return { commands: [], dirs: [], files: [], paths: [] };
+  return labsService.completions(username.value, lab.value.id, toolId);
 }
 
 async function loadContext(): Promise<string> {

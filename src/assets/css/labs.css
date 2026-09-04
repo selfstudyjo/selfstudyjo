@@ -39,6 +39,10 @@
     --sl-code-ok: #86efac;
     --sl-code-bad: #fca5a5;
     --sl-code-accent: #7dd3fc;
+    --sl-code-warn: #fcd34d;
+    /* One step lighter than the console, so the editor reads as being IN
+       FRONT of it rather than as a second panel beside it. */
+    --sl-code-raise: #16203a;
 
     display: block;
     padding: var(--sl-gap);
@@ -840,6 +844,157 @@
 
 .sl-console__input:focus { outline: none; }
 
+/* The prompt is student@lab:~/practice$ now, which is long enough that it must
+   not shrink the input away on a phone. */
+.sl-console__prompt {
+    flex: 0 0 auto;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ctrl+R. Warm rather than green, because it REPLACES the prompt while it is
+   open and a student has to see at a glance that what is in the box is a match
+   being searched rather than a line being typed. */
+.sl-console__prompt--search {
+    color: var(--sl-code-warn);
+    max-width: 70%;
+}
+
+/* The shortcut card. A dl in a grid rather than a table: it is a list of pairs,
+   and a table would be read out as data by a screen reader. */
+.sl-console__keys {
+    margin: 0 0 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-well);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.sl-console__keys dl {
+    display: grid;
+    /* min(100%, ...) and never a bare 1fr: a 1fr track has an automatic
+       minimum of min-content, so one long description widens its track past
+       its share and the row overflows the card. Working rule 50. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 0.2rem 0.9rem;
+    margin: 0;
+}
+
+.sl-console__keys dl > div {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+}
+
+.sl-console__keys dt {
+    flex: 0 0 auto;
+    min-width: 6.5rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 700;
+    color: var(--sfs-accent-text, #a5b4fc);
+    /* A key name is a machine identifier: pinned LTR so bidi cannot relocate
+       the + inside an Arabic page. The same rule every pre here follows. */
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.sl-console__keys dd {
+    margin: 0;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+/* -- nano and vi ---------------------------------------------------------
+   An overlay over the CONSOLE, not a modal over the page: the editor belongs
+   to this pane, and a page-level dialog would cover the brief and the task
+   list a student is editing the file in order to satisfy.
+
+   Pinned LTR in both languages for the reason the transcript is: this is a
+   file of code, and rendered right-to-left the bidi algorithm relocates the
+   punctuation in it.
+   --------------------------------------------------------------------- */
+
+.sl-editor {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--sl-radius-sm);
+    background: var(--sl-code-raise);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    direction: ltr;
+    overflow: hidden;
+}
+
+.sl-editor__bar,
+.sl-editor__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    font-size: 0.78rem;
+}
+
+.sl-editor__name { font-weight: 700; }
+
+.sl-editor__dirty {
+    margin-inline-start: 0.5rem;
+    color: var(--sl-code-warn);
+    font-weight: 600;
+}
+
+.sl-editor__mode {
+    color: var(--sl-code-ok);
+    font-weight: 700;
+}
+
+.sl-editor__text {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    padding: 0.7rem 0.8rem;
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font: inherit;
+    font-size: max(0.85rem, 16px);
+    line-height: 1.55;
+    resize: none;
+    white-space: pre;
+    overflow: auto;
+    tab-size: 4;
+}
+
+.sl-editor__text:focus { outline: none; }
+
+/* In vi NORMAL mode the buffer is readonly, and it has to LOOK it: a caret
+   blinking in a buffer that ignores typing is the most confusing thing a modal
+   editor can do to somebody who has not used one. */
+.sl-editor__text[readonly] { caret-color: transparent; }
+
+.sl-editor__status { color: var(--sl-code-warn); }
+.sl-editor__hint { color: var(--sl-code-dim); }
+
+/* The console has to be a containing block for that overlay, and it is the one
+   place position: relative is needed here. Deliberately WITHOUT a z-index: a
+   positioned ancestor that also names one becomes a stacking context, and this
+   platform has already had every modal inside such a wrapper painted under the
+   sidebar. Working rule 17. */
+.sl-console { position: relative; }
+
+@media (max-width: 640px) {
+    .sl-console__prompt { max-width: 42%; }
+    .sl-console__keys dt { min-width: 5.5rem; }
+}
+
 /* ── the code and query editors ────────────────────────────────────────── */
 
 .sl-code__editor,
@@ -1543,6 +1698,13 @@
 }
 
 .sl-tutor__input {
+    /* A TEXTAREA now, so it needs the two properties an input did not: a
+       line height that reads as prose, and no resize handle (the height is
+       set from the content by autoGrow). */
+    resize: none;
+    line-height: 1.5;
+    max-height: 10rem;
+    overflow-y: auto;
     flex: 1;
     min-width: 0;
     padding: 0.55rem 0.8rem;

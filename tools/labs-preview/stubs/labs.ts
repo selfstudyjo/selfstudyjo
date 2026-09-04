@@ -152,6 +152,10 @@ function views(lab: AnyRec) {
 
 let current: AnyRec = (fixtures as AnyRec)['web-01-html'];
 
+/* Where the stub shell is. Module-level, like `env`: the console asks after
+   every command, and a value that reset per call would make `cd` a no-op. */
+let shellCwd = '';
+
 export const labsService = {
     openLab(_username: string, labId: string) {
         if (state === 'loading') return new Promise(() => { /* never resolves */ });
@@ -182,10 +186,83 @@ export const labsService = {
     resetLab: () => { seedFrom(current); return delay(true); },
     getContext: () => delay('The environment is empty.'),
 
+    /**
+     * A command, answering the shape `utils/sims/shell.py` answers.
+     *
+     * A stub that returned "(preview) ran: ls" for everything proved nothing
+     * about the console: `clear`, `nano` and the moving prompt are all answered
+     * OUT OF BAND, and a fake that only ever fills `output` cannot exercise any
+     * of them. Same lesson as the leaderboard preview, which handed its view
+     * finished records a service never sends and hid a real defect.
+     *
+     * Deliberately a handful of builtins and not a shell: what the harness has
+     * to drive is the wiring - the transcript, the prompt, the overlay - and the
+     * shell itself has 276 checks of its own in the backend repo.
+     */
     runTool(_u: string, _l: string, toolId: string, payload: AnyRec) {
-        const line = String(payload.command ?? payload.code ?? payload.query ?? '');
+        const line = String(payload.command ?? payload.code ?? payload.query ?? '').trim();
         env.log.push({ tool: toolId, command: line, code: 0, at: new Date().toISOString() });
-        return delay({ ok: true, output: '(preview) ' + toolId + ' ran: ' + line, code: 0 });
+        const argv = line.split(/\s+/);
+        const head = argv[0] || '';
+        const answer = (extra: AnyRec) => delay({
+            ok: true, code: 0, cwd: shellCwd,
+            prompt: shellCwd ? '~/' + shellCwd : '~', ...extra });
+
+        if (head === 'clear') return answer({ clear: true });
+        if (head === 'pwd') return answer({ output: '/home/student' + (shellCwd ? '/' + shellCwd : '') });
+        if (head === 'cd') {
+            const target = argv[1] || '';
+            shellCwd = (!target || target === '~' || target === '..') ? '' : target.replace(/^\.\//, '');
+            return answer({});
+        }
+        if (head === 'ls') {
+            const here = Object.keys(env.files)
+                .filter(p => (shellCwd ? p.startsWith(shellCwd + '/') : !p.includes('/')))
+                .map(p => (shellCwd ? p.slice(shellCwd.length + 1) : p));
+            return answer({ output: here.join('  ') });
+        }
+        if (head === 'cat') {
+            const target = argv[1] || '';
+            return env.files[target] === undefined
+                ? delay({ ok: false, code: 1, error: 'cat: ' + target + ': No such file or directory' })
+                : answer({ output: String(env.files[target]) });
+        }
+        if (['nano', 'vi', 'vim'].includes(head)) {
+            const target = argv[1];
+            if (!target) return delay({ ok: false, code: 1, error: head + ': no file named' });
+            return answer({ editor: {
+                program: head === 'nano' ? 'nano' : 'vi',
+                path: target, name: target,
+                content: String(env.files[target] ?? ''),
+                existing: env.files[target] !== undefined,
+            } });
+        }
+        const redirect = line.match(/^echo\s+(.*?)\s*>\s*(\S+)$/);
+        if (redirect) {
+            env.files[redirect[2]] = redirect[1].replace(/^["']|["']$/g, '') + '\n';
+            return answer({});
+        }
+        if (head === 'help') {
+            return answer({ output: 'cat  cd  clear  echo  help  ls  nano  pwd  vi' });
+        }
+        return answer({ output: '(preview) ' + toolId + ' ran: ' + line });
+    },
+
+    /** What Tab completes against, keyed on the directory the shell is in. */
+    completions() {
+        const here = Object.keys(env.files)
+            .filter(p => (shellCwd ? p.startsWith(shellCwd + '/') : !p.includes('/')))
+            .map(p => (shellCwd ? p.slice(shellCwd.length + 1) : p));
+        return delay({
+            prompt: shellCwd ? '~/' + shellCwd : '~',
+            cwd: shellCwd,
+            commands: ['cat', 'cd', 'clear', 'echo', 'help', 'ls', 'nano',
+                       'pwd', 'vi'],
+            dirs: [...new Set(Object.keys(env.files)
+                .filter(p => p.includes('/')).map(p => p.split('/')[0]))],
+            files: here,
+            paths: Object.keys(env.files),
+        });
     },
 
     listFiles: () => delay(Object.entries(env.files)

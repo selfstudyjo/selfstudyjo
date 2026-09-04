@@ -61,13 +61,29 @@ import {
     summariseProgress,
     toolPanes,
     tutorPrompt,
+    taskQuestion,
     type Lab,
     type LabGrade,
     type LabProgress,
     type LabSummary,
     type LabTool,
     type LabTrack,
+    type LabTask,
 } from '../../src/utils/labCatalogue';
+
+import {
+    applyReadline,
+    atCommandWord,
+    completeLine,
+    editorHelp,
+    editorKey,
+    expandHistory,
+    openEditor,
+    searchHistory,
+    wordAt,
+    type CompletionSource,
+    type EditorState,
+} from '../../src/utils/labTerminal';
 
 let passed = 0;
 const failures: string[] = [];
@@ -958,6 +974,392 @@ for (const path of COMPONENTS) {
                .filter(line => !/--sl-code|--sl-well|background: #fff|#0b111f|#fcd34d/.test(line))
                .join('\n')),
           'a colour literal outside a fallback');
+}
+
+
+/* =====================================================================
+   11. The terminal: completion, reverse search, readline and the editors
+
+   Every lab console has a POSIX shell behind it as of 2026-09-04, and a shell
+   reached through a text box with an up-arrow is not a shell. Nobody types a
+   whole path - they type three letters and press Tab; nobody scrolls to find
+   yesterday's command - they press Ctrl+R. So these keys are the feature, and
+   every decision about them is here rather than as a branch in a component,
+   because not one of them is visible in a screenshot.
+   ===================================================================== */
+
+section('11. The terminal');
+
+const SOURCE: CompletionSource = {
+    commands: ['ls', 'cat', 'cd', 'clear', 'terraform', 'nano'],
+    dirs: ['modules', 'envs'],
+    files: ['main.tf', 'main.tfvars', 'notes.txt'],
+    paths: ['main.tf', 'modules/vpc/main.tf', 'modules/vpc/outputs.tf'],
+};
+
+check('the FIRST word completes against commands',
+      atCommandWord('te', 2) && completeLine('te', 2, SOURCE).line === 'terraform ');
+check('and a later word does not - it completes against files',
+      !atCommandWord('cat mai', 7)
+      && completeLine('cat not', 7, SOURCE).line === 'cat notes.txt ');
+/* `docker ps | gre<Tab>` has to offer grep: a pipe starts a new command, and a
+   rule that only looked at the start of the LINE would offer filenames there. */
+check('a word after a pipe is a command word too',
+      atCommandWord('cat x | c', 9));
+
+/* A single match inserts a trailing SPACE, which is the whole ergonomic
+   difference: with it, completing and then typing is one motion. */
+check('one match completes and adds a space',
+      completeLine('cle', 3, SOURCE).line === 'clear '
+      && completeLine('cle', 3, SOURCE).listing.length === 0);
+/* A directory gets a SLASH instead, so `cd mod<Tab>vpc` keeps going. */
+check('a directory completes with a slash rather than a space',
+      completeLine('cd mod', 6, SOURCE).line === 'cd modules/');
+/* A prefix that is ALREADY complete inserts nothing and lists - which is what
+   `main.tf`, `main.tfvars` and a `main/` directory in one place look like, and
+   inserting anything there would silently pick one of the three. */
+check('a common prefix already typed in full lists without inserting',
+      completeLine('cat main', 8,
+                   { ...SOURCE, dirs: ['main'] }).line === 'cat main'
+      && completeLine('cat main', 8,
+                      { ...SOURCE, dirs: ['main'] }).listing.length === 3);
+
+/* SEVERAL matches insert the common prefix and then LIST. Inserting the first
+   match would silently pick one of three files, and listing without inserting
+   the prefix makes Tab feel like it did nothing. */
+{
+    const many = completeLine('cat main', 8, SOURCE);
+    check('several matches insert the COMMON PREFIX, not the first match',
+          many.line === 'cat main.tf', many);
+    check('and list every candidate',
+          many.listing.length === 2
+          && many.listing.every(name => name.startsWith('main.tf')), many);
+    check('the caret lands after what was inserted',
+          many.caret === many.line.length, many);
+}
+
+check('a path with a directory in it completes against the whole workspace',
+      completeLine('cat modules/vpc/m', 17, SOURCE).line
+      === 'cat modules/vpc/main.tf ');
+check('nothing matching leaves the line exactly as it was',
+      completeLine('cat zzz', 7, SOURCE).line === 'cat zzz'
+      && completeLine('cat zzz', 7, SOURCE).listing.length === 0);
+check('no completion source at all is not a crash',
+      completeLine('l', 1, { commands: [], dirs: [], files: [] }).line === 'l');
+check('wordAt finds the word the caret is inside, not the last one',
+      wordAt('cat main.tf note', 8).word === 'main'
+      && wordAt('cat main.tf note', 8).start === 4);
+
+/* -- Ctrl+R --------------------------------------------------------------- */
+const HISTORY = ['ls -la', 'terraform init', 'ls', 'terraform plan',
+                 'terraform init'];
+
+check('reverse search finds the most recent match first',
+      searchHistory(HISTORY, { query: 'terra', offset: 0 }).match
+      === 'terraform init');
+/* KEEPING THE POSITION is what makes it a search rather than a filter:
+   pressing Ctrl+R twice has to reach the second match, not re-find the first. */
+check('pressing it again walks back to the next match',
+      searchHistory(HISTORY, { query: 'terra', offset: 1 }).match
+      === 'terraform plan');
+/* De-duplicated, because a shell history is the same command six times over
+   and a search that walked all six needs six presses to reach the previous one. */
+check('duplicates are collapsed, so every press moves',
+      searchHistory(HISTORY, { query: 'terra', offset: 0 }).total === 2,
+      searchHistory(HISTORY, { query: 'terra', offset: 0 }));
+check('it is case-insensitive, as bash is',
+      searchHistory(HISTORY, { query: 'TERRA', offset: 0 }).match !== '');
+check('no match is an empty string, never the whole history',
+      searchHistory(HISTORY, { query: 'zzz', offset: 0 }).match === ''
+      && searchHistory(HISTORY, { query: 'zzz', offset: 0 }).total === 0);
+check('an offset past the end clamps rather than throwing',
+      searchHistory(HISTORY, { query: 'terra', offset: 99 }).match !== '');
+check('an empty history is empty, not an exception',
+      searchHistory([], { query: 'x', offset: 0 }).total === 0);
+
+/* -- readline ------------------------------------------------------------- */
+{
+    const line = 'terraform plan -out tf.plan';
+    const at = (caret: number) => ({ line, caret, yank: '' });
+    check('Ctrl+A goes to the start and Ctrl+E to the end',
+          applyReadline('home', at(9)).caret === 0
+          && applyReadline('end', at(3)).caret === line.length);
+    check('Ctrl+U cuts to the start and keeps it for Ctrl+Y',
+          applyReadline('kill-to-start', at(10)).line === 'plan -out tf.plan'
+          && applyReadline('kill-to-start', at(10)).yank === 'terraform ');
+    check('Ctrl+K cuts to the end',
+          applyReadline('kill-to-end', at(9)).line === 'terraform');
+    check('Ctrl+W cuts the word behind the caret',
+          applyReadline('kill-word', at(14)).line === 'terraform  -out tf.plan',
+          applyReadline('kill-word', at(14)));
+    check('Ctrl+Y pastes the kill ring back',
+          applyReadline('yank', { line: 'ab', caret: 2, yank: 'XY' }).line === 'abXY');
+    check('Alt+B and Alt+F move a word at a time',
+          applyReadline('word-left', at(14)).caret === 10
+          && applyReadline('word-right', at(0)).caret === 9);
+    check('a readline key on an EMPTY line does nothing rather than throwing',
+          applyReadline('kill-word', { line: '', caret: 0, yank: '' }).line === '');
+    check('a caret past the end is clamped',
+          applyReadline('end', { line: 'ab', caret: 99, yank: '' }).caret === 2);
+}
+
+/* -- !! ------------------------------------------------------------------- */
+check('!! is the previous command',
+      expandHistory('!!', HISTORY) === 'terraform init');
+check('!n is the nth', expandHistory('!2', HISTORY) === 'terraform init');
+check('!prefix is the most recent starting with it',
+      expandHistory('!ls', HISTORY) === 'ls');
+/* A shell reports `event not found`; running NOTHING reads as the console
+   having swallowed the line, which is strictly worse than leaving it alone. */
+check('!! with no history is left alone, never turned into an empty command',
+      expandHistory('!!', []) === '!!');
+check('an ordinary line is untouched',
+      expandHistory('ls -la', HISTORY) === 'ls -la');
+
+/* -- nano and vi ---------------------------------------------------------- */
+const REQUEST = { program: 'nano' as const, path: 'notes.txt',
+                  name: 'notes.txt', content: 'one\ntwo', existing: true };
+
+check('nano has no modes, which is the whole reason people reach for it',
+      openEditor(REQUEST).mode === 'insert');
+/* vi opens in NORMAL mode. A vi that let you type straight into the buffer
+   teaches a student the opposite of the one thing vi is famous for. */
+check('VI OPENS IN NORMAL MODE',
+      openEditor({ ...REQUEST, program: 'vi' }).mode === 'normal');
+check('a file that does not exist yet says so',
+      openEditor({ ...REQUEST, existing: false }).status.includes('New File'));
+
+{
+    const nano = openEditor(REQUEST);
+    check('^O writes', editorKey(nano, 'o', { ctrl: true }).kind === 'save');
+    check('^X on a clean buffer leaves',
+          editorKey(nano, 'x', { ctrl: true }).kind === 'close');
+    /* ASKING on a dirty buffer is the honest thing: the alternative is a
+       shortcut that silently discards an afternoon of typing. */
+    const dirty: EditorState = { ...nano, dirty: true };
+    check('^X ON A DIRTY BUFFER ASKS RATHER THAN DISCARDING',
+          editorKey(dirty, 'x', { ctrl: true }).kind === 'none'
+          && editorKey(dirty, 'x', { ctrl: true }).state.status.includes('Ctrl+O'),
+          editorKey(dirty, 'x', { ctrl: true }));
+    check('^Q discards deliberately',
+          editorKey(dirty, 'q', { ctrl: true }).kind === 'discard');
+    check('an ordinary letter in nano is just typing',
+          editorKey(nano, 'a').kind === 'none'
+          && editorKey(nano, 'a').state.mode === 'insert');
+}
+
+{
+    const vi = openEditor({ ...REQUEST, program: 'vi' });
+    check('i enters insert mode', editorKey(vi, 'i').state.mode === 'insert');
+    check('Esc goes back to normal',
+          editorKey({ ...vi, mode: 'insert' }, 'Escape').state.mode === 'normal');
+    check(': opens the command line',
+          editorKey(vi, ':').state.mode === 'command'
+          && editorKey(vi, ':').state.pending === ':');
+    const typed = { ...vi, mode: 'command' as const, pending: ':wq' };
+    check(':wq writes and closes',
+          editorKey(typed, 'Enter').kind === 'save-and-close');
+    check(':w writes and stays',
+          editorKey({ ...typed, pending: ':w' }, 'Enter').kind === 'save');
+    /* `:q` on a dirty buffer is E37 in every vi ever shipped, and quietly
+       closing would throw the buffer away. */
+    check(':q ON A DIRTY BUFFER IS REFUSED WITH THE REAL ERROR',
+          editorKey({ ...typed, pending: ':q', dirty: true }, 'Enter').kind === 'none'
+          && editorKey({ ...typed, pending: ':q', dirty: true }, 'Enter')
+             .state.status.includes('E37'));
+    check(':q! discards',
+          editorKey({ ...typed, pending: ':q!', dirty: true }, 'Enter').kind
+          === 'discard');
+    check('an unknown : command reports E492 rather than doing nothing',
+          editorKey({ ...typed, pending: ':frobnicate' }, 'Enter')
+          .state.status.includes('E492'));
+    check('Backspace on the : line rubs out, and empties back to normal',
+          editorKey({ ...typed, pending: ':w' }, 'Backspace').state.pending === ':'
+          && editorKey({ ...typed, pending: ':' }, 'Backspace').state.mode
+             === 'normal');
+}
+
+/* The help line has to carry the REAL shortcuts: a student who learns ^O and
+   ^X here can use nano on a real machine, and one who learns a Save button
+   cannot. */
+check('the help line names the real shortcuts',
+      editorHelp('nano').includes('^O') && editorHelp('nano').includes('^X')
+      && editorHelp('vi').includes(':wq') && editorHelp('vi').includes('Esc'));
+
+/* =====================================================================
+   12. Ask the tutor
+   ===================================================================== */
+
+section('12. Ask the tutor');
+
+const TASK: LabTask = {
+    id: 't3', title: 'Add a locals block that combines them', points: 2,
+    detail: 'local.full_name = "${var.a}-${var.b}"',
+    hint: 'locals go in their own block', requires: 'file_contains main.tf',
+    status: 'pending', note: 'main.tf does not contain it yet', manual: false,
+};
+const LAB_FOR_QUESTION = lab('tf-02-variables', 'terraform', 2);
+LAB_FOR_QUESTION.title = 'Variables and locals';
+
+{
+    const question = taskQuestion(LAB_FOR_QUESTION as unknown as Lab, TASK, 3, 6);
+    check('the question names the lab and the track',
+          question.includes('Variables and locals')
+          && question.includes('terraform'), question);
+    check('and which task, out of how many',
+          question.includes('task 3 of 6'), question);
+    check('it quotes the task TITLE', question.includes(TASK.title));
+    /* The DETAIL is where the requirement is; the title is only a label. A
+       question built from the title alone gets a generic answer about locals. */
+    check('AND THE DETAIL, which is where the requirement actually is',
+          question.includes('local.full_name'), question);
+    /* The checker's own note is the single most useful line available: it turns
+       a general question about locals into a specific one about this file. */
+    check("AND WHAT THE CHECKER JUST SAID",
+          question.includes('main.tf does not contain it yet'), question);
+    /* Without this the model writes the answer out, the student pastes it, the
+       task goes green and they have learned nothing. */
+    check('IT ASKS FOR A NUDGE RATHER THAN THE ANSWER',
+          /nudge/i.test(question) && !/give me the answer/i.test(question),
+          question);
+    /* The hint is one click away behind its own button already; putting it in
+       the prompt asks a model to paraphrase something the student can read. */
+    check('the hint is NOT sent - it is already a button',
+          !question.includes('locals go in their own block'), question);
+}
+
+check('a task already passed asks WHY it works, not how to do it',
+      /why it works|understand/i.test(
+          taskQuestion(LAB_FOR_QUESTION as unknown as Lab,
+                       { ...TASK, status: 'passed' }, 1, 4)));
+/* `unavailable` is the third state, and a question that treated it as to-do
+   would ask a student to satisfy a check the lab cannot run. */
+check('a task the lab CANNOT CHECK says so instead of pretending',
+      /cannot check/i.test(
+          taskQuestion(LAB_FOR_QUESTION as unknown as Lab,
+                       { ...TASK, status: 'unavailable' }, 1, 4)));
+check('a self-marked task says nothing will confirm it',
+      /mark this one myself/i.test(
+          taskQuestion(LAB_FOR_QUESTION as unknown as Lab,
+                       { ...TASK, manual: true }, 1, 4)));
+check('no lab record at all still produces a usable question',
+      taskQuestion(null, TASK).includes(TASK.title));
+/* The lab's detail and the checker's note are both written as FRAGMENTS, and
+   joining them with a space produced one run-on sentence - which a model
+   resolves by ignoring half of it. */
+check('a fragment is punctuated into a sentence',
+      taskQuestion(LAB_FOR_QUESTION as unknown as Lab, TASK, 1, 4)
+      .includes('does not contain it yet. What should'),
+      taskQuestion(LAB_FOR_QUESTION as unknown as Lab, TASK, 1, 4));
+check('and one that already ends in punctuation is not double-stopped',
+      !/\.\./.test(taskQuestion(LAB_FOR_QUESTION as unknown as Lab,
+                                { ...TASK, note: 'not run yet.' }, 1, 4)));
+check('a task with no detail and no note does not leave dangling wording',
+      !/: \s*$|undefined|null/.test(
+          taskQuestion(null, { ...TASK, detail: '', note: '' })));
+
+/* =====================================================================
+   13. The wiring nothing else can see
+   ===================================================================== */
+
+section('13. The console and tutor wiring');
+
+{
+    const workspace = stripComments(source('src/views/LabWorkspace.vue'));
+    /* THE REF WAS AN ARRAY. `LabTutor` sits inside two nested `v-for`s, and Vue
+       collects a template ref inside a `v-for` into an array - so
+       `tutor.value?.askAboutTask?.()` read a method off an array, found
+       undefined, and the optional call swallowed it. That is the whole of
+       "Ask the tutor does nothing". */
+    check('THE TUTOR IS REACHED BY A FUNCTION REF, NOT ref="tutor"',
+          /:ref="el => \{ if \(el\) tutor = el \}"/.test(workspace)
+          && !/ref="tutor"/.test(workspace), 'tutor ref');
+    /* Filled and not sent: a question the student can see is one they can
+       correct before it costs a model call. */
+    check('and it FILLS the question rather than sending it',
+          /fillQuestion\?\.\(question\)/.test(workspace)
+          && !/askAboutTask/.test(workspace), 'fill not send');
+    check('the question comes from the checked module, not the call site',
+          /taskQuestion\(lab\.value, task, position, tasks\.length\)/
+          .test(workspace));
+    check('the console is given a completion source and a save path',
+          /:complete="completeIn"/.test(workspace)
+          && /:save="writeFile"/.test(workspace));
+    /* Any console can write a file now, so the file tree has to follow ALL of
+       them - keyed on the tool kind rather than on two hardcoded ids. */
+    check('a write from ANY console refreshes the file tree',
+          /tool\.kind === 'console'/.test(workspace)
+          && !/toolId === 'editor' \|\| toolId === 'terminal'/.test(workspace));
+}
+
+{
+    const console_ = stripComments(source('src/components/labs/LabConsole.vue'));
+    /* `clear` is a control signal, and it has to be read BEFORE anything is
+       printed or `clear` leaves its own command line on screen. */
+    check('clear empties the transcript rather than printing nothing',
+          /result\?\.clear/.test(console_)
+          && /lines\.value = \[\]/.test(console_));
+    /* Asserted as the CALL, not as the two names: `openBuffer` is also its
+       own declaration and `result?.editor` is also in the (no output)
+       guard, so a check for either passed with the call commented out.
+       `negative.py` found that, which is what it is for. */
+    /* The status and the help are two different things. Falling back from one
+       to the other printed the shortcuts twice, side by side. */
+    check('the editor footer does not print its help line twice',
+          !/editor\.status \|\| editorHelpLine/.test(console_));
+    check('nano and vi open a buffer from the response',
+          /if \(result\?\.editor\) openBuffer\(result\.editor\);/
+          .test(console_), 'openBuffer call');
+    /* Every one of these is claimed from the browser: Ctrl+W closes the tab and
+       Ctrl+L focuses the address bar, so a handler that forgets
+       preventDefault is worse than no handler at all. */
+    check('EVERY CLAIMED KEY CALLS preventDefault',
+          (console_.match(/event\.preventDefault\(\)/g) || []).length >= 12,
+          (console_.match(/event\.preventDefault\(\)/g) || []).length);
+    check('Tab, Ctrl+R and Ctrl+L are all handled',
+          /key === 'Tab'/.test(console_)
+          && /letter === 'r'/.test(console_)
+          && /letter === 'l'/.test(console_));
+    check('the decisions live in the checked module, not in branches here',
+          /from '@\/utils\/labTerminal'/.test(console_));
+    /* A transcript is command output, which includes an access-log line a
+       stranger chose and a filename a student typed. */
+    check('nothing in the console reaches v-html',
+          !/v-html/.test(console_));
+    /* A shell prompt that did not move after `cd` makes the one thing `cd`
+       does invisible, and rewriting every PAST prompt would misreport where
+       each command ran. */
+    check('the prompt follows cd, and each past line keeps its own',
+          /student@lab:\$\{cwd\.value\}/.test(console_)
+          && /push\('cmd', line, prompt\.value\)/.test(console_));
+}
+
+{
+    const tutor = stripComments(source('src/components/labs/LabTutor.vue'));
+    check('the tutor exposes fillQuestion and nothing that sends for you',
+          /defineExpose\(\{ fillQuestion \}\)/.test(tutor));
+    /* A filled-in question is two or three lines. In a single-line input the
+       student sees the last six words of a sentence they are being asked to
+       check, which is worse than not showing it. */
+    check('the box is a TEXTAREA, so a filled question is readable',
+          /<textarea/.test(tutor) && !/class="sl-tutor__input"\s+type="text"/
+          .test(tutor));
+    check('the caret lands at the END, so the first keypress does not delete it',
+          /setSelectionRange\(question\.value\.length, question\.value\.length\)/
+          .test(tutor));
+    check('Enter still sends and Shift+Enter still adds a line',
+          /@keydown\.enter\.exact\.prevent="send"/.test(tutor));
+    check('the tutor still reaches no v-html', !/v-html/.test(tutor));
+}
+
+{
+    const service = source('src/services/labs.service.ts');
+    /* Tab quietly doing nothing is a missing convenience; an error toast over a
+       console because a completion could not be fetched is a bug in the way of
+       the work. */
+    check('the completion call never throws',
+          /async completions\(/.test(service)
+          && /catch \{\s*return empty;\s*\}/.test(service), 'completions');
 }
 
 /* ─────────────────── report ─────────────────── */

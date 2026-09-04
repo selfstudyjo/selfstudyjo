@@ -56,9 +56,39 @@ export interface ToolResult {
     columns?: string[];
     rows?: Array<Record<string, unknown>>;
     truncated?: boolean;
+    /**
+     * Where the shell is, and the four things it says beyond text.
+     *
+     * `clear` is a control signal rather than empty output — a console that
+     * printed "(no output)" for `clear` was the second thing reported about
+     * these labs. `editor` is nano or vi asking the browser to open a buffer,
+     * because there is no pseudo-terminal anywhere in this design and a curses
+     * program cannot exist. `cwd` and `prompt` are what the prompt draws and
+     * what Tab completion is relative to.
+     */
     cwd?: string;
+    prompt?: string;
+    clear?: boolean;
+    editor?: {
+        program: 'nano' | 'vi';
+        path: string;
+        name: string;
+        content: string;
+        existing: boolean;
+    };
     ran_on?: string;
     note?: string;
+}
+
+export interface CompletionSet {
+    ok?: boolean;
+    /** Where these names are relative to, e.g. `~/practice`. */
+    prompt?: string;
+    cwd?: string;
+    commands: string[];
+    dirs: string[];
+    files: string[];
+    paths?: string[];
 }
 
 export interface FileEntry {
@@ -261,6 +291,41 @@ class LabsService {
             return result;
         } catch (error: any) {
             return { ok: false, error: this.explain(error, 'That could not be run') };
+        }
+    }
+
+    /**
+     * What Tab completes against: the command names, and this directory.
+     *
+     * Fetched once per directory and cached by the caller, never per keystroke.
+     * A round trip against a replica whose first answer of the day takes twenty
+     * seconds is not a completion, it is a pause — so the console primes this on
+     * the first Tab press and re-primes from the `cwd` every command carries.
+     *
+     * It NEVER throws and it never reports: Tab quietly doing nothing is a
+     * missing convenience, and an error toast over a console because a
+     * completion could not be fetched is a bug in the way of the work.
+     */
+    async completions(username: string, labId: string,
+                      toolId = ''): Promise<CompletionSet> {
+        const empty: CompletionSet = { commands: [], dirs: [], files: [], paths: [] };
+        const replica = await this.replicaFor(username);
+        if (!replica) return empty;
+        try {
+            const result = await apiService.post<CompletionSet>(
+                replica,
+                `/api/lab-tools/${encodeURIComponent(labId)}/complete/${encodeURIComponent(username)}/`,
+                toolId ? { tool: toolId } : {});
+            return {
+                prompt: result?.prompt || '~',
+                cwd: result?.cwd || '',
+                commands: result?.commands || [],
+                dirs: result?.dirs || [],
+                files: result?.files || [],
+                paths: result?.paths || [],
+            };
+        } catch {
+            return empty;
         }
     }
 

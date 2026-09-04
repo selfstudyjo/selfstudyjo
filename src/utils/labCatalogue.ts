@@ -957,6 +957,87 @@ ${script}
 /* ─────────────────── the AI tutor's prompt ─────────────────── */
 
 /**
+ * The question the "Ask the tutor" button fills in.
+ *
+ * **The button used to send a sentence built at the call site and it filled
+ * nothing in**, so a student who pressed it either got an answer to a question
+ * they had not read or — because the ref it went through was an array, not the
+ * component — nothing at all. Both halves are fixed: the box is FILLED and left
+ * for the student to read and send, and the sentence is built here where
+ * `npm run check:labs` can drive it.
+
+ * Filled rather than sent, deliberately. A tutor question is the one place in
+ * this workbench where the student is about to spend somebody's model quota on
+ * a sentence they did not write, and a question they can see is a question they
+ * can correct — which is usually all the nudge they needed. It is also the only
+ * way to add "I have already tried X" before asking.
+ *
+ * Five things go into it, and each is there because the answer is worse without
+ * it:
+ *
+ * - **the lab and the track**, so the model does not answer about Docker when
+ *   the task is Terraform;
+ * - **which task, out of how many**, which is what tells a model whether this is
+ *   a first step or the last one;
+ * - **the lab's own wording** — the title AND the detail, because the detail is
+ *   where the actual requirement is (`local.full_name = ...`) and the title is
+ *   only a label;
+ * - **what the checker just said**, which is the single most useful line
+ *   available: "main.tf does not contain it yet" turns a general question about
+ *   locals into a specific one about this file;
+ * - **an explicit request for a NUDGE.** Without it the model writes the answer
+ *   out in full, the student pastes it, the task goes green and they have
+ *   learned nothing. That sentence is the whole difference between a tutor and
+ *   a solution key.
+ *
+ * The hint is deliberately NOT included. It is already one click away behind the
+ * Hint button, and putting it in the prompt asks the model to paraphrase
+ * something the student can simply read.
+ */
+/**
+ * A fragment as a sentence.
+ *
+ * The lab's own detail and the checker's note are both written as fragments -
+ * "nothing at images.repository", "`docker pull nginx`. Then `docker images`" -
+ * and joining them with a space produced "nothing at images.repository What
+ * should I look at next?", which reads as one run-on sentence and is exactly
+ * the kind of thing a model resolves by ignoring the second half.
+ */
+function sentence(text: string): string {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return '';
+    return /[.!?:;]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+export function taskQuestion(lab: Lab | null, task: LabTask,
+                             position = 0, total = 0): string {
+    const parts: string[] = [];
+    const where = [lab?.title, lab?.track].filter(Boolean).join(' — ');
+    const which = position > 0 && total > 0 ? `task ${position} of ${total}` : 'a task';
+    parts.push(where
+        ? `I am working through the "${where}" lab, on ${which}: "${task.title}".`
+        : `I am stuck on ${which}: "${task.title}".`);
+    if (task.detail) parts.push(`The lab asks: ${sentence(task.detail)}`);
+    if (task.status === 'passed') {
+        parts.push('It is already marked as done, and I want to understand why '
+            + 'it works rather than just move on.');
+    } else if (task.status === 'unavailable') {
+        parts.push('The lab says it cannot check this one here, so I cannot tell '
+            + 'whether what I have done is right.');
+    } else {
+        parts.push('It is still to do.');
+        if (task.note) parts.push(`The check says: ${sentence(task.note)}`);
+        if (task.manual) {
+            parts.push('I have to mark this one myself, so nothing will tell me '
+                + 'whether I have got it right.');
+        }
+    }
+    parts.push('What should I look at next? Give me one nudge rather than the '
+        + 'answer, and tell me why it works.');
+    return parts.join(' ');
+}
+
+/**
  * The system message for a lab's AI tutor.
  *
  * **It says which tools are simulated, by name.** Without that the model
