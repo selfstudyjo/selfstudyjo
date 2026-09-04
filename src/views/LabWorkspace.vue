@@ -172,6 +172,38 @@
                   :initial="webSource"
                   :save="saveWeb"
                 />
+                <!--
+                  THE TWO VISUAL PANES FOR A BACKEND OR A MOBILE LAB.
+
+                  A Django or Flask course otherwise has no way to show the
+                  thing the student is building: they write a model, a view, a
+                  URL and a template, and a console can only hand back a wall
+                  of HTML. `LabPreview` requests the URL through the lab
+                  service - which runs the real view against the real database
+                  and renders the real template - and draws the answer.
+
+                  `LabMobile` is the same idea for Ionic, with the one
+                  difference that matters: the frame is the DEVICE's own pixel
+                  size and the device is then scaled, so a media query fires
+                  where it really would.
+
+                  Both are keyed on `sourceEpoch` for the reason `LabWeb` is:
+                  Reset environment has to actually reset them.
+                -->
+                <LabPreview
+                  v-else-if="tool.kind === 'preview'"
+                  :key="`p${sourceEpoch}`"
+                  :family="pane.family"
+                  :tool-id="tool.id"
+                  :running="isServerRunning(pane.family)"
+                  :run="runTool"
+                />
+                <LabMobile
+                  v-else-if="tool.kind === 'mobile'"
+                  :key="`m${sourceEpoch}`"
+                  :tool-id="tool.id"
+                  :run="runTool"
+                />
                 <LabGui
                   v-else-if="tool.kind === 'gui'"
                   :family="pane.family"
@@ -309,6 +341,8 @@ import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabFiles from '@/components/labs/LabFiles.vue';
 import LabGui from '@/components/labs/LabGui.vue';
+import LabMobile from '@/components/labs/LabMobile.vue';
+import LabPreview from '@/components/labs/LabPreview.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
 import LabTasks from '@/components/labs/LabTasks.vue';
 import LabTutor from '@/components/labs/LabTutor.vue';
@@ -496,6 +530,18 @@ async function open() {
  * family would leave the other pane stale and the student would conclude the
  * apply had not worked.
  */
+/**
+ * Is the dev server up in this family's engine?
+ *
+ * Read from the GUI view rather than tracked here, so the Browser pane and the
+ * console can never disagree about it - the console is what started the server
+ * and the view is what the console wrote.
+ */
+function isServerRunning(family: string): boolean {
+  const view: any = views.value?.[family];
+  return !!view?.server?.running;
+}
+
 async function runTool(toolId: string, payload: Record<string, unknown>) {
   if (!lab.value) return { ok: false, error: 'The lab is not open' };
   const result = await labsService.runTool(username.value, lab.value.id,

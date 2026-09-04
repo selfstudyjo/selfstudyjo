@@ -77,7 +77,8 @@ export interface LabSummary {
 export interface LabTool {
     id: string;
     label: string;
-    kind: 'console' | 'code' | 'query' | 'editor' | 'web' | 'gui' | 'external' | 'ai';
+    kind: 'console' | 'code' | 'query' | 'editor' | 'web' | 'gui'
+        | 'preview' | 'mobile' | 'external' | 'ai';
     engine: string;
     icon: string;
     summary: string;
@@ -428,6 +429,9 @@ const FAMILY_LABELS: Record<string, string> = {
     ansible: 'Ansible',
     jenkins: 'Jenkins',
     netsim: 'Network Simulator',
+    django: 'Django',
+    flask: 'Flask',
+    ionic: 'Ionic',
     ai: 'AI Tutor',
 };
 

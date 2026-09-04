@@ -819,6 +819,8 @@ const COMPONENTS = [
     'src/components/labs/LabFiles.vue',
     'src/components/labs/LabWeb.vue',
     'src/components/labs/LabGui.vue',
+    'src/components/labs/LabPreview.vue',
+    'src/components/labs/LabMobile.vue',
     'src/components/labs/LabTasks.vue',
     'src/components/labs/LabTutor.vue',
     'src/components/TopBar.vue',
@@ -849,19 +851,78 @@ for (const path of COMPONENTS) {
 }
 
 {
+    /*
+     * EVERY FRAME IN THE LAB UI, not just the web playground.
+     *
+     * This block named `LabWeb.vue` and nothing else, which was right when it
+     * was the only component with an iframe in it. Two more now render a
+     * document a student's own source produced - the backend Browser and the
+     * mobile Phone - and a rule that names one file cannot notice the third.
+     * So the list is DERIVED from which components actually contain a frame,
+     * and a component that grows one is covered the day it does.
+     */
+    const framed = COMPONENTS.filter(path => /<iframe/.test(source(path)));
+    check('every rendered-document pane is accounted for here',
+          framed.length === 3, framed);
+    for (const path of framed) {
+        const text = source(path);
+        const attribute = text.match(/sandbox="([^"]*)"/);
+        check(`${path}: has a sandbox attribute`, Boolean(attribute), attribute);
+        check(`${path}: NO allow-same-origin, which would undo the sandbox`,
+              Boolean(attribute) && !attribute![1].includes('allow-same-origin'),
+              attribute?.[1]);
+        check(`${path}: srcdoc, not a blob URL that would inherit our origin`,
+              /:srcdoc="/.test(text) && !/URL\.createObjectURL/.test(text)
+              && !/window\.open/.test(text));
+    }
     const web = source('src/components/labs/LabWeb.vue');
-    const attribute = web.match(/sandbox="([^"]*)"/);
-    check('the web playground has a sandbox attribute', Boolean(attribute),
-          attribute);
-    check('IT DOES NOT CARRY allow-same-origin, which would undo the sandbox',
-          Boolean(attribute) && !attribute![1].includes('allow-same-origin'),
-          attribute?.[1]);
-    check('it does allow scripts, or nothing runs',
-          Boolean(attribute) && attribute![1].includes('allow-scripts'));
-    check('the frame is srcdoc, not a blob URL that would inherit our origin',
-          /:srcdoc="/.test(web) && !/URL\.createObjectURL/.test(web));
+    check('the web playground allows scripts, or nothing runs',
+          /sandbox="[^"]*allow-scripts/.test(web));
     check('and messages are filtered on our own marker',
           /payload\.sfsLab !== true/.test(web));
+
+    /*
+     * The backend Browser takes the same care with ITS shim. It cannot filter
+     * on an origin - `allow-same-origin` is absent, so the frame's origin is
+     * opaque and there is no origin to name - so the marker is the only thing
+     * that can be checked, and it has to be checked.
+     */
+    const preview = source('src/components/labs/LabPreview.vue');
+    check('the Browser pane filters postMessage on its own marker',
+          /data\.sfsPreview !== 1/.test(preview));
+    check('the Browser pane follows only ONE redirect, so a loop cannot hang it',
+          /location !== next/.test(preview));
+
+    /*
+     * THE PHONE RENDERS AT THE DEVICE'S OWN PIXEL SIZE.
+     *
+     * This is the one property the pane exists for. Scaling the frame's
+     * contents instead would report the PANE's width to the page, so a
+     * `@media (max-width: 480px)` rule would fire on a desktop and not fire on
+     * a phone - the preview would be confidently wrong about exactly the thing
+     * it was added to answer, and it would look completely fine.
+     */
+    const mobile = source('src/components/labs/LabMobile.vue');
+    /*
+     * Anchored on `innerStyle` SPECIFICALLY, which is the iframe's own style.
+     *
+     * The first version of this looked for the width expression anywhere in
+     * the file - and it appears twice, on the screen cutout and on the frame,
+     * so breaking either one left the other matching and the check passed.
+     * Caught by mutating it (working rule 44). The frame is the binding that
+     * decides what `window.innerWidth` reports to the student's page; the
+     * cutout is decoration.
+     */
+    const innerStyle = (mobile.match(
+        /const innerStyle = computed\(\(\) => \(\{([\s\S]*?)\}\)\);/) || [])[1] || '';
+    check('THE IFRAME is sized from the device, not from the pane',
+          /width:\s*`\$\{meta\.value\.width\}px`/.test(innerStyle)
+          && /height:\s*`\$\{meta\.value\.height\}px`/.test(innerStyle),
+          innerStyle.trim());
+    check('and the DEVICE is what gets scaled, not the page inside it',
+          /transform:\s*`scale\(\$\{scale\.value\}\)`/.test(mobile));
+    check('it never scales UP, which would be the same lie enlarged',
+          /Math\.min\(1,/.test(mobile));
 }
 
 /*

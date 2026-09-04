@@ -420,6 +420,15 @@ const labs: Catalogue = {
     'Labels': 'الوسوم',
     'ID': 'المعرّف',
     'Kind': 'النوع',
+
+    // The backend Browser pane and the mobile Phone pane.
+    'Preview': 'معاينة',
+    'App preview': 'معاينة التطبيق',
+    'Reload': 'إعادة التحميل',
+    'The development server is not running yet.': 'خادم التطوير لا يعمل بعد.',
+    'in the console to build the app.': 'في الطرفية لبناء التطبيق.',
+    '{v0} SQL queries ran for this page': 'نُفِّذ {v0} استعلام SQL لهذه الصفحة',
+    '{v0} network calls': '{v0} طلب شبكة',
 };
 
 export default labs;
