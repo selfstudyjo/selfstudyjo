@@ -1,1 +1,0 @@
-import{Y as e}from"./index-BoT0hd4S.js";export{e as serviceRegistry};
