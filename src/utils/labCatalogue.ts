@@ -434,6 +434,13 @@ const FAMILY_LABELS: Record<string, string> = {
     django: 'Django',
     flask: 'Flask',
     ionic: 'Ionic',
+    // `cowork` and `claudecode` are one ENGINE and two families, so the pane
+    // is labelled for the product a student is learning rather than for the
+    // implementation. See `view_families_for` in app 11's `utils/labtools.py`
+    // for the half that makes the payload answer to both names.
+    claudeapi: 'Claude API',
+    claudecode: 'Claude Code',
+    cowork: 'Claude Cowork',
     ai: 'AI Tutor',
 };
 
@@ -1049,6 +1056,191 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
         {
             id: 'commits', title: 'History', kind: 'cards', path: 'commits',
             tool: 'git', empty: 'No commits yet',
+        },
+    ],
+    // The Claude API. The Requests panel leads on purpose: every lesson in the
+    // three API courses is an arithmetic one - a cache hit is only visible as
+    // a difference between two token counts, a truncation is only visible in
+    // `stop_reason`, and a grounded answer is only distinguishable from an
+    // invented one by a flag. Reading that table IS the skill.
+    claudeapi: [
+        { id: 'stats', title: 'Account', kind: 'stats', path: 'stats',
+            tool: 'claude_gui' },
+        {
+            id: 'requests', title: 'Requests', kind: 'table', path: 'requests',
+            tool: 'claude_gui', empty: 'Nothing sent yet',
+            columns: [col('n', '#', 'number'), col('label', 'From'),
+                col('model', 'Model'), col('temperature', 'Temp', 'number'),
+                col('in_tokens', 'In', 'number'),
+                col('out_tokens', 'Out', 'number'),
+                col('cache_write', 'Cache w', 'number'),
+                col('cache_read', 'Cache r', 'number'),
+                col('stop_reason', 'Stopped', 'badge'),
+                col('cost', 'Cost', 'number')],
+        },
+        {
+            id: 'conversation', title: 'Last request', kind: 'table',
+            path: 'conversation', tool: 'claude_gui',
+            empty: 'No conversation yet',
+            columns: [col('role', 'Role', 'badge'),
+                col('blocks', 'Blocks', 'list'),
+                col('tokens', 'Tokens', 'number'), col('text', 'Text')],
+        },
+        {
+            id: 'tools', title: 'Tool definitions', kind: 'table',
+            path: 'tools', tool: 'claude_gui', empty: 'No tools defined',
+            columns: [col('name', 'Name', 'code'),
+                col('required', 'Required', 'list'),
+                col('properties', 'Properties', 'number'),
+                col('description', 'Description')],
+        },
+        {
+            id: 'tool_calls', title: 'Tool calls', kind: 'table',
+            path: 'tool_calls', tool: 'claude_gui', empty: 'No tool calls',
+            columns: [col('name', 'Tool', 'code'), col('id', 'Id', 'code'),
+                col('input', 'Input', 'code'),
+                col('answered', 'Answered', 'badge')],
+        },
+        {
+            id: 'chunks', title: 'Retrieval index', kind: 'table',
+            path: 'chunks', tool: 'claude_gui', empty: 'Nothing chunked yet',
+            columns: [col('id', 'Chunk', 'code'),
+                col('document', 'Document'), col('tokens', 'Tokens', 'number'),
+                col('text', 'First words')],
+        },
+        {
+            id: 'searches', title: 'Searches', kind: 'table', path: 'searches',
+            tool: 'claude_gui', empty: 'No searches yet',
+            columns: [col('query', 'Query'), col('mode', 'Mode', 'badge'),
+                col('reranked', 'Reranked', 'badge'),
+                col('top', 'Top hit', 'code'),
+                col('top_score', 'Score', 'number'),
+                col('documents', 'Documents', 'list')],
+        },
+        {
+            id: 'evals', title: 'Evaluations', kind: 'table', path: 'evals',
+            tool: 'claude_gui', empty: 'No evals run',
+            columns: [col('name', 'Name'), col('grader', 'Grader', 'badge'),
+                col('cases', 'Cases', 'number'),
+                col('passed', 'Passed', 'number'),
+                col('failed', 'Failed', 'number'),
+                col('pass_rate', 'Rate %', 'number'),
+                col('avg_score', 'Mean', 'number')],
+        },
+        {
+            id: 'mcp', title: 'MCP servers', kind: 'table', path: 'mcp',
+            tool: 'claude_gui', empty: 'No MCP servers',
+            columns: [col('name', 'Server'), col('transport', 'Transport'),
+                col('tools', 'Tools', 'number'),
+                col('resources', 'Resources', 'number'),
+                col('prompts', 'Prompts', 'number'),
+                col('status', 'Status', 'badge')],
+        },
+    ],
+    // Claude Code. The Tool calls panel is last and is the one that matters:
+    // every other panel says what the configuration IS, and that one says what
+    // it DID.
+    claudecode: [
+        { id: 'stats', title: 'Session', kind: 'stats', path: 'stats',
+            tool: 'claudecode_gui' },
+        {
+            id: 'memory', title: 'Memory', kind: 'table', path: 'memory',
+            tool: 'claudecode_gui', empty: 'No CLAUDE.md found',
+            columns: [col('order', 'Order', 'number'),
+                col('scope', 'Scope', 'badge'), col('path', 'File', 'code'),
+                col('lines', 'Lines', 'number'),
+                col('tokens', 'Tokens', 'number'),
+                col('imports', 'Imports', 'list')],
+        },
+        {
+            id: 'permissions', title: 'Permission rules', kind: 'table',
+            path: 'permissions', tool: 'claudecode_gui', empty: 'No rules',
+            columns: [col('effect', 'Effect', 'badge'),
+                col('rule', 'Rule', 'code')],
+        },
+        {
+            id: 'hooks', title: 'Hooks', kind: 'table', path: 'hooks',
+            tool: 'claudecode_gui', empty: 'No hooks configured',
+            columns: [col('event', 'Event', 'badge'),
+                col('matcher', 'Matcher', 'code'),
+                col('command', 'Command', 'code'),
+                col('fired', 'Fired', 'number'),
+                col('blocked', 'Blocked', 'number')],
+        },
+        {
+            id: 'skills', title: 'Skills', kind: 'table', path: 'skills',
+            tool: 'claudecode_gui', empty: 'No skills',
+            columns: [col('name', 'Name'), col('scope', 'Scope', 'badge'),
+                col('files', 'Files', 'number'),
+                col('valid', 'Loaded', 'badge'),
+                col('description', 'Description')],
+        },
+        {
+            id: 'agents', title: 'Subagents', kind: 'table', path: 'agents',
+            tool: 'claudecode_gui', empty: 'No subagents',
+            columns: [col('name', 'Name'), col('scope', 'Scope', 'badge'),
+                col('tools', 'Tools', 'list'), col('model', 'Model'),
+                col('valid', 'Loaded', 'badge')],
+        },
+        {
+            id: 'sessions', title: 'Runs', kind: 'table', path: 'sessions',
+            tool: 'claudecode_gui', empty: 'Nothing run yet',
+            columns: [col('prompt', 'Prompt'), col('mode', 'Mode', 'badge'),
+                col('tools', 'Calls', 'number'),
+                col('denied', 'Refused', 'number'),
+                col('skill', 'Skill'), col('subagent', 'Subagent'),
+                col('is_error', 'Error', 'badge'),
+                col('cost', 'Cost', 'number')],
+        },
+        {
+            id: 'tool_log', title: 'Tool calls', kind: 'table', path: 'tool_log',
+            tool: 'claudecode_gui', empty: 'No tool calls yet',
+            columns: [col('tool', 'Tool', 'badge'), col('target', 'Target', 'code'),
+                col('decision', 'Decision', 'badge'), col('reason', 'Why'),
+                col('result', 'Result')],
+        },
+    ],
+    // Cowork is the SAME engine and reads the same payload; a separate family
+    // only so the pane carries the product a student is learning. It shows the
+    // half a Cowork lab is about and leaves out the repository half.
+    cowork: [
+        { id: 'stats', title: 'Cowork', kind: 'stats', path: 'stats',
+            tool: 'cowork_gui' },
+        {
+            id: 'instructions', title: 'Standing context', kind: 'table',
+            path: 'memory', tool: 'cowork_gui', empty: 'No standing context',
+            columns: [col('scope', 'Scope', 'badge'), col('path', 'File', 'code'),
+                col('lines', 'Lines', 'number'),
+                col('tokens', 'Tokens', 'number')],
+        },
+        {
+            id: 'skills', title: 'Skills', kind: 'table', path: 'skills',
+            tool: 'cowork_gui', empty: 'No skills',
+            columns: [col('name', 'Name'), col('files', 'Files', 'number'),
+                col('valid', 'Loaded', 'badge'),
+                col('description', 'Description')],
+        },
+        {
+            id: 'plugins', title: 'Plugins', kind: 'table', path: 'plugins',
+            tool: 'cowork_gui', empty: 'No plugins installed',
+            columns: [col('name', 'Plugin'), col('marketplace', 'From'),
+                col('skills', 'Skills', 'number'),
+                col('agents', 'Subagents', 'number'),
+                col('hooks', 'Hooks', 'number')],
+        },
+        {
+            id: 'tasks', title: 'Tasks', kind: 'table', path: 'sessions',
+            tool: 'cowork_gui', empty: 'Nothing run yet',
+            columns: [col('prompt', 'Task'), col('tools', 'Calls', 'number'),
+                col('denied', 'Refused', 'number'), col('skill', 'Skill'),
+                col('is_error', 'Error', 'badge')],
+        },
+        {
+            id: 'tool_log', title: 'Tool calls', kind: 'table', path: 'tool_log',
+            tool: 'cowork_gui', empty: 'No tool calls yet',
+            columns: [col('tool', 'Tool', 'badge'), col('target', 'Target', 'code'),
+                col('decision', 'Decision', 'badge'), col('reason', 'Why'),
+                col('result', 'Result')],
         },
     ],
 };

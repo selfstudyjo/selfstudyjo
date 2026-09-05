@@ -679,6 +679,83 @@ const VIEWS: Record<string, any> = {
         files: [{ path: '/etc/motd', mode: '0644', owner: 'root', bytes: 18 }],
         running: ['nginx'],
     },
+    // The two Claude engines. Shaped exactly as `view()` builds them in app
+    // 11's `utils/sims/claude.py` and `utils/sims/claudecode.py` - which is
+    // the only place the two shapes meet, and the reason this table exists: a
+    // panel whose `path` names a key the backend does not send renders EMPTY,
+    // and an empty panel is indistinguishable from an environment with nothing
+    // in it.
+    claudeapi: {
+        kind: 'claude', platform: 'anthropic',
+        stats: { platform: 'anthropic', model: 'claude-sonnet-4-5',
+                 context: 200000, cutoff: '2025-01', temperature: 1.0,
+                 max_tokens: 1024, requests: 2, in_tokens: 90,
+                 out_tokens: 120, cache_read: 0, cost: 0.002, tools: 1,
+                 chunks: 6, index: 'hybrid', mcp_servers: 1 },
+        requests: [{ n: 1, label: 'messages.create', model: 'claude-sonnet-4-5',
+                     platform: 'anthropic', system: '', has_system: false,
+                     temperature: 0.0, max_tokens: 300, stream: false,
+                     turns: 1, tools: 1, tool_used: '', thinking: false,
+                     in_tokens: 40, out_tokens: 60, cache_write: 0,
+                     cache_read: 0, cache_ignored: 0, stop_reason: 'end_turn',
+                     words: 42, valid_json: false, xml_tags: '',
+                     grounded: false, refused: false, prefilled: false,
+                     cost: 0.001, text: '...' }],
+        conversation: [{ role: 'user', text: 'hi', blocks: 'text',
+                         tokens: 2 }],
+        tools: [{ name: 'get_weather', description: 'Get the weather',
+                  required: 'city', properties: 1 }],
+        tool_calls: [{ name: 'get_weather', id: 'toolu_x', input: '{}',
+                       answered: true }],
+        documents: [{ name: 'faq.md', tokens: 380, words: 260 }],
+        chunks: [{ id: 'faq.md#0', document: 'faq.md', tokens: 120,
+                   words: 95, text: '...' }],
+        searches: [{ query: 'cost', mode: 'hybrid', k: 3, reranked: false,
+                     results: 3, top: 'plans.md#1', top_score: 0.12,
+                     documents: 'plans.md' }],
+        evals: [{ name: 'triage', grader: 'code', cases: 3, passed: 3,
+                  failed: 0, pass_rate: 100.0, avg_score: 1.0 }],
+        mcp: [{ name: 'docs', transport: 'stdio', command: 'python server.py',
+                tools: 2, resources: 1, prompts: 1, status: 'connected' }],
+        mcp_tools: [{ name: 'search_docs', description: 'Search',
+                      params: 'query', documented: true, server: 'docs' }],
+    },
+    claudecode: {
+        kind: 'claudecode', surface: 'code',
+        stats: { surface: 'code', model: 'claude-sonnet-4-5', mode: 'default',
+                 memory_files: 2, memory_tokens: 104, rules: 4, hooks: 2,
+                 skills: 1, agents: 1, commands: 1, mcp: 0, plugins: 1,
+                 sessions: 3, denied: 1 },
+        memory: [{ order: 1, scope: 'user', path: '~/.claude/CLAUDE.md',
+                   lines: 2, tokens: 9, imports: '' }],
+        settings: [{ scope: 'project', path: '.claude/settings.json',
+                     status: 'loaded', rules: 4, hooks: 2 }],
+        permissions: [{ effect: 'deny', rule: 'Bash(rm:*)' }],
+        hooks: [{ event: 'PreToolUse', matcher: 'Bash', command: 'grep -q',
+                  source: '.claude/settings.json', fired: 1, blocked: 1 }],
+        hook_log: [{ session: 'abc', event: 'PreToolUse', matcher: 'Bash',
+                     command: 'grep -q', tool: 'Bash', exit: 2, blocked: true,
+                     output: '' }],
+        skills: [{ name: 'changelog', scope: 'project',
+                   description: 'Write a changelog entry', words: 40,
+                   files: 1, valid: true }],
+        agents: [{ name: 'reviewer', scope: 'project',
+                   description: 'Review a change', tools: 'Read, Grep',
+                   model: 'sonnet', valid: true }],
+        commands: [{ name: '/ship', description: 'Ship a release',
+                     argument_hint: '', scope: 'project', words: 20 }],
+        mcp: [{ name: 'docs', command: 'python server.py',
+                transport: 'stdio', scope: 'local', status: 'connected' }],
+        plugins: [{ name: 'release', marketplace: 'team', skills: 1,
+                    agents: 1, commands: 0, hooks: 0, root: 'm/release' }],
+        sessions: [{ id: 'abc', prompt: 'fix the bug', mode: 'acceptEdits',
+                     tools: 3, allowed: 2, denied: 1, skill: '',
+                     subagent: '', is_error: false, cost: 0.005 }],
+        tool_log: [{ session: 'abc', tool: 'Edit', target: 'src/app.py',
+                     decision: 'allow', reason: 'allow rule',
+                     result: 'edited', hooked: false }],
+        connectors: [],
+    },
     git: {
         initialised: true, branch: 'main', user: { name: 'x', email: 'y' },
         branches: [{ name: 'main', sha: 'abc1234', current: true,
@@ -691,6 +768,14 @@ const VIEWS: Record<string, any> = {
         stash: 0, tags: [],
     },
 };
+
+// COWORK READS THE CLAUDE CODE PAYLOAD, because it is the same engine under a
+// second family name - see `families_of_engine` in app 11's
+// `utils/labtools.py`, which is what makes the backend key the payload under
+// both. Aliased here rather than copied so the two cannot drift: a copy would
+// let a `cowork` panel point at a key `claudecode` no longer sends and still
+// pass.
+VIEWS.cowork = VIEWS.claudecode;
 
 for (const [family, panels] of Object.entries(GUI_PANELS)) {
     const view = VIEWS[family];

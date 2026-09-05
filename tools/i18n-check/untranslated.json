@@ -1,4 +1,5 @@
 [
+  "#",
   "1 (classful)",
   "10.0.2.10 or www.lab.local",
   "10.1234/example",
@@ -28,6 +29,8 @@
   "CanCollide",
   "changed",
   "CIDR",
+  "Claude API",
+  "Claude Code",
   "CloudWatch Logs",
   "Cluster IP",
   "Color",
