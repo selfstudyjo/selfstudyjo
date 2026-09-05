@@ -428,6 +428,8 @@ const FAMILY_LABELS: Record<string, string> = {
     git: 'Git',
     ansible: 'Ansible',
     jenkins: 'Jenkins',
+    puppet: 'Puppet',
+    chef: 'Chef',
     netsim: 'Network Simulator',
     django: 'Django',
     flask: 'Flask',
@@ -885,6 +887,156 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             tool: 'jenkins_gui', empty: 'No plugins',
             columns: [col('id', 'Plugin', 'code'), col('name', 'Name'),
                 col('version', 'Version', 'code')],
+        },
+    ],
+    /*
+      Puppet and Chef lead with the thing each tool BUILDS before it changes
+      anything - the catalog and the resource collection - where Ansible's
+      dashboard above leads with a list of managed nodes. That is the tools
+      differing rather than this file: Ansible pushes to a fleet, and these two
+      run ON the machine. A student has to learn to read the artefact, so it is
+      the first table rather than something buried under the node state.
+    */
+    puppet: [
+        { id: 'stats', title: 'Control', kind: 'stats', path: 'stats',
+            tool: 'puppet_gui' },
+        {
+            // THE TABLE THIS TRACK EXISTS FOR. A run whose `changed` is 0 is an
+            // idempotent run, and watching that flip to yes on the second apply
+            // is the whole lesson - so it is a column rather than something a
+            // student has to read out of a log.
+            id: 'runs', title: 'Runs', kind: 'table', path: 'runs',
+            tool: 'puppet_gui', empty: 'No manifest has been applied yet',
+            columns: [col('manifest', 'Manifest'), col('node', 'Node'),
+                col('at', 'When'), col('mode', 'Mode', 'badge'),
+                col('total', 'Resources', 'number'),
+                col('changed', 'changed', 'number'),
+                col('failed', 'failed', 'number'),
+                col('idempotent', 'Idempotent', 'badge')],
+        },
+        {
+            id: 'catalog', title: 'Compiled catalog', kind: 'table',
+            path: 'catalog', tool: 'puppet_gui',
+            empty: 'Nothing has been compiled yet',
+            columns: [col('ref', 'Resource', 'code'), col('type', 'Type'),
+                col('scope', 'Declared in'),
+                col('attributes', 'Attributes', 'number')],
+        },
+        {
+            id: 'edges', title: 'Relationships', kind: 'table', path: 'edges',
+            tool: 'puppet_gui',
+            empty: 'This catalog declares no relationships',
+            columns: [col('from', 'Before', 'code'), col('to', 'After', 'code'),
+                col('kind', 'Kind', 'badge')],
+        },
+        {
+            id: 'nodes', title: 'Nodes', kind: 'table', path: 'nodes',
+            tool: 'puppet_gui', empty: 'No nodes in this environment',
+            columns: [col('name', 'Certname'), col('address', 'Address', 'code'),
+                col('os', 'Distribution'), col('family', 'Family'),
+                col('certificate', 'Certificate', 'badge'),
+                col('primary', 'This node', 'badge'),
+                col('packages', 'Packages', 'number'),
+                col('services_running', 'Running', 'number')],
+        },
+        {
+            id: 'classes', title: 'Declared classes', kind: 'table',
+            path: 'classes', tool: 'puppet_gui',
+            empty: 'No classes have been declared',
+            columns: [col('name', 'Class', 'code')],
+        },
+        {
+            id: 'packages', title: 'Packages', kind: 'table', path: 'packages',
+            tool: 'puppet_gui', empty: 'Nothing has been installed yet',
+            columns: [col('node', 'Node'), col('name', 'Package'),
+                col('version', 'Version', 'code')],
+        },
+        {
+            id: 'services', title: 'Services', kind: 'table', path: 'services',
+            tool: 'puppet_gui', empty: 'Nothing has been installed yet',
+            columns: [col('node', 'Node'), col('name', 'Unit'),
+                col('state', 'State', 'badge'),
+                col('enabled', 'At boot', 'badge'),
+                col('restarted', 'Refreshed', 'badge')],
+        },
+        {
+            id: 'files', title: 'Managed files', kind: 'table', path: 'files',
+            tool: 'puppet_gui', empty: 'No files are managed yet',
+            columns: [col('node', 'Node'), col('path', 'Path', 'code'),
+                col('mode', 'Mode', 'code'), col('owner', 'Owner'),
+                col('bytes', 'Bytes', 'number')],
+        },
+    ],
+    chef: [
+        { id: 'stats', title: 'Node', kind: 'stats', path: 'stats',
+            tool: 'chef_gui' },
+        {
+            id: 'runs', title: 'Runs', kind: 'table', path: 'runs',
+            tool: 'chef_gui', empty: 'chef-client has not run yet',
+            columns: [col('runlist', 'Run list'), col('at', 'When'),
+                col('mode', 'Mode', 'badge'),
+                col('total', 'Resources', 'number'),
+                col('updated', 'updated', 'number'),
+                col('failed', 'failed', 'number'),
+                col('delayed', 'Notifications', 'number'),
+                col('idempotent', 'Idempotent', 'badge')],
+        },
+        {
+            // THE COMPILE PHASE, ON ITS OWN, ABOVE THE COLLECTION. That split
+            // is not presentation - it IS the lesson this track is built
+            // around, and a panel that interleaved the two would teach the
+            // opposite of what Chef does.
+            id: 'compile', title: 'Compile phase', kind: 'table',
+            path: 'compile_log', tool: 'chef_gui',
+            empty: 'The last run printed nothing at compile time',
+            columns: [col('line', 'Output', 'code')],
+        },
+        {
+            id: 'resources', title: 'Resource collection', kind: 'table',
+            path: 'resources', tool: 'chef_gui',
+            empty: 'Nothing has been compiled yet',
+            columns: [col('ref', 'Resource', 'code'),
+                col('cookbook', 'From'), col('actions', 'Actions'),
+                col('guarded', 'Guarded', 'badge'),
+                col('notifying', 'Notifies', 'badge'),
+                col('updated', 'Updated', 'badge')],
+        },
+        {
+            id: 'runlist', title: 'Run list', kind: 'table', path: 'runlist',
+            tool: 'chef_gui', empty: 'The run list is empty',
+            columns: [col('position', 'Order', 'number'),
+                col('entry', 'Entry', 'code')],
+        },
+        {
+            // The precedence level BESIDE the effective value, because "why is
+            // this 9090" is the question this table exists to answer and a
+            // merged value on its own cannot.
+            id: 'attributes', title: 'Attributes', kind: 'table',
+            path: 'attributes', tool: 'chef_gui',
+            empty: 'No attributes have been set',
+            columns: [col('attribute', 'Attribute', 'code'),
+                col('level', 'Precedence', 'badge'), col('value', 'Set to'),
+                col('effective', 'Effective value')],
+        },
+        {
+            id: 'packages', title: 'Packages', kind: 'table', path: 'packages',
+            tool: 'chef_gui', empty: 'Nothing has been installed yet',
+            columns: [col('name', 'Package'),
+                col('version', 'Version', 'code')],
+        },
+        {
+            id: 'services', title: 'Services', kind: 'table', path: 'services',
+            tool: 'chef_gui', empty: 'Nothing has been installed yet',
+            columns: [col('name', 'Service'), col('state', 'State', 'badge'),
+                col('enabled', 'At boot', 'badge'),
+                col('restarted', 'Restarted', 'badge'),
+                col('restarts', 'Restarts', 'number')],
+        },
+        {
+            id: 'files', title: 'Managed files', kind: 'table', path: 'files',
+            tool: 'chef_gui', empty: 'No files are managed yet',
+            columns: [col('path', 'Path', 'code'), col('mode', 'Mode', 'code'),
+                col('owner', 'Owner'), col('bytes', 'Bytes', 'number')],
         },
     ],
     git: [
