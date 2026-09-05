@@ -25,14 +25,108 @@ const delay = <T,>(v: T, ms = 260): Promise<T> => new Promise(r => setTimeout(()
 type AnyRec = Record<string, any>;
 
 /** The student's environment, shaped exactly as `labenv.blank()` shapes it. */
-const env: AnyRec = { files: {}, web: {}, log: [], self_marked: [], engines: {} };
+const env: AnyRec = {
+    files: {}, web: {}, log: [], self_marked: [], engines: {},
+    // `dirs` and `modes` are the other two filesystem keys, and they are here
+    // for the reason the real environment has them: an EMPTY folder is implied
+    // by no file, and a mode has to survive a rename. A stub that carried only
+    // `files` would make the explorer look correct while proving nothing about
+    // the two things that are hard.
+    dirs: [], modes: {},
+};
 
 function seedFrom(lab: AnyRec) {
     const spec = lab.environment || {};
     env.web = { ...(spec.web || {}) };
     env.files = { ...(spec.files || {}) };
+    env.dirs = [...(spec.dirs || [])];
+    env.modes = { ...(spec.modes || {}) };
     env.log = [];
     env.self_marked = [];
+}
+
+/* ── the filesystem, mirroring utils/labfs.py ─────────────────────────────
+ *
+ * A STUB THAT IS KINDER THAN PRODUCTION TESTS NOTHING. The refusals below are
+ * the ones the backend actually makes - a folder inside itself, an occupied
+ * destination, a non-empty folder without `recursive`, a name the path rule
+ * refuses - because a harness that accepted them all would photograph an
+ * explorer that cannot exist.
+ */
+
+const PATH_RE = /^[A-Za-z0-9.][A-Za-z0-9._/-]{0,119}$/;
+
+function validPath(path: string): boolean {
+    const text = String(path || '');
+    if (!PATH_RE.test(text)) return false;
+    if (text.includes('..') || text.startsWith('/') || text.endsWith('/')) return false;
+    return text.split('/').every(part => part !== '' && part !== '.');
+}
+
+function isFileKey(path: string): boolean {
+    return Object.prototype.hasOwnProperty.call(env.files, path);
+}
+
+function isDirKey(path: string): boolean {
+    if (!path) return true;
+    if ((env.dirs as string[]).includes(path)) return true;
+    const prefix = path + '/';
+    return Object.keys(env.files).some(key => key.startsWith(prefix))
+        || (env.dirs as string[]).some(key => key.startsWith(prefix));
+}
+
+/** Every directory, including the ones a file implies — `shell.walk_dirs`. */
+function allDirs(): string[] {
+    const out = new Set<string>();
+    for (const key of Object.keys(env.files)) {
+        const parts = key.split('/');
+        for (let i = 1; i < parts.length; i += 1) out.add(parts.slice(0, i).join('/'));
+    }
+    for (const key of env.dirs as string[]) {
+        const parts = key.split('/');
+        for (let i = 1; i <= parts.length; i += 1) out.add(parts.slice(0, i).join('/'));
+    }
+    out.delete('');
+    return [...out].sort();
+}
+
+function mkdirs(path: string) {
+    const parts = String(path || '').split('/').filter(Boolean);
+    for (let i = 1; i <= parts.length; i += 1) {
+        const candidate = parts.slice(0, i).join('/');
+        if (candidate && !(env.dirs as string[]).includes(candidate)) {
+            (env.dirs as string[]).push(candidate);
+        }
+    }
+}
+
+/** Drop a listed directory a file already implies — `shell.prune_dirs`. */
+function pruneDirs() {
+    const implied = new Set<string>();
+    for (const key of Object.keys(env.files)) {
+        const parts = key.split('/');
+        for (let i = 1; i < parts.length; i += 1) implied.add(parts.slice(0, i).join('/'));
+    }
+    env.dirs = [...new Set(env.dirs as string[])]
+        .filter(dir => dir && !implied.has(dir));
+}
+
+function clean(path: string): string {
+    return String(path || '').trim().replace(/\/+$/, '');
+}
+
+/**
+ * Delete a file, and KEEP the directory it was in — `shell.remove_file`.
+ *
+ * `dirs` holds only the directories no file implies, so the moment the last
+ * file leaves `src/` nothing implies it and it disappears. A real shell leaves
+ * it, and in the explorer this is the fault you cannot miss: drag the one file
+ * out of a folder and the folder goes with it.
+ */
+function removeFileKey(path: string) {
+    delete env.files[path];
+    delete env.modes[path];
+    mkdirs(path.split('/').slice(0, -1).join('/'));
 }
 
 /* ── the grader, matching utils/labgrade.py for the types these labs use ── */
@@ -267,14 +361,119 @@ export const labsService = {
 
     listFiles: () => delay(Object.entries(env.files)
         .map(([path, body]) => ({ path, bytes: String(body).length }))),
+
+    listTree: () => delay({
+        files: Object.entries(env.files)
+            .map(([path, body]) => ({ path, bytes: String(body).length }))
+            .sort((a, b) => (a.path < b.path ? -1 : 1)),
+        dirs: allDirs(),
+        limits: { max_files: 60, max_bytes: 256 * 1024 },
+    }),
+
     readFile: (_u: string, _l: string, path: string) => delay(String(env.files[path] || '')),
+
     writeFile: (_u: string, _l: string, path: string, content: string) => {
-        env.files[path] = content;
+        const target = clean(path);
+        if (!validPath(target)) {
+            return delay({ ok: false, error: 'That is not a usable file name.' });
+        }
+        if (!isFileKey(target) && isDirKey(target)) {
+            return delay({ ok: false, error: target + ' is a folder' });
+        }
+        env.files[target] = content;
+        mkdirs(target.split('/').slice(0, -1).join('/'));
+        pruneDirs();
         return delay({ ok: true });
     },
-    deleteFile: (_u: string, _l: string, path: string) => {
-        delete env.files[path];
-        return delay({ ok: true });
+
+    makeFolder: (_u: string, _l: string, path: string) => {
+        const target = clean(path);
+        if (!validPath(target)) {
+            return delay({ ok: false, error: 'That is not a usable folder name.' });
+        }
+        if (isFileKey(target)) {
+            return delay({ ok: false, error: 'There is already a file called ' + target });
+        }
+        if (isDirKey(target)) {
+            return delay({ ok: false, error: 'That folder already exists' });
+        }
+        mkdirs(target);
+        return delay({ ok: true, path: target });
+    },
+
+    movePath: (_u: string, _l: string, path: string, to: string) => {
+        const from = clean(path);
+        const dest = clean(to);
+        if (!validPath(from) || !validPath(dest)) {
+            return delay({ ok: false, error: 'That is not a usable name.' });
+        }
+        if (!isFileKey(from) && !isDirKey(from)) {
+            return delay({ ok: false, error: 'No such file or folder: ' + from });
+        }
+        if (dest === from) return delay({ ok: false, error: 'That is already its name' });
+        if (isFileKey(dest) || isDirKey(dest)) {
+            return delay({ ok: false, error: dest + ' already exists' });
+        }
+        if (isDirKey(from) && !isFileKey(from) && dest.startsWith(from + '/')) {
+            return delay({ ok: false, error: 'A folder cannot be moved inside itself' });
+        }
+        if (isFileKey(from)) {
+            // The mode is read BEFORE the removal and set after: the removal
+            // pops it, so reading it afterwards gets the default.
+            const mode = env.modes[from];
+            env.files[dest] = env.files[from];
+            removeFileKey(from);
+            if (mode !== undefined) env.modes[dest] = mode;
+            mkdirs(dest.split('/').slice(0, -1).join('/'));
+        } else {
+            const prefix = from + '/';
+            for (const key of Object.keys(env.files)) {
+                if (!key.startsWith(prefix)) continue;
+                const target = dest + '/' + key.slice(prefix.length);
+                const mode = env.modes[key];
+                env.files[target] = env.files[key];
+                removeFileKey(key);
+                if (mode !== undefined) env.modes[target] = mode;
+            }
+            env.dirs = (env.dirs as string[])
+                .filter(dir => dir !== from)
+                .map(dir => (dir.startsWith(prefix)
+                    ? dest + '/' + dir.slice(prefix.length) : dir));
+            mkdirs(dest);
+            mkdirs(from.split('/').slice(0, -1).join('/'));
+        }
+        pruneDirs();
+        return delay({ ok: true, path: from, to: dest });
+    },
+
+    deleteFile: (_u: string, _l: string, path: string, recursive = false) => {
+        const target = clean(path);
+        if (isFileKey(target)) {
+            removeFileKey(target);
+            pruneDirs();
+            return delay({ ok: true, removed: 1 });
+        }
+        if (!isDirKey(target)) {
+            return delay({ ok: false, error: 'No such file or folder: ' + target });
+        }
+        const prefix = target + '/';
+        const inside = Object.keys(env.files).filter(key => key.startsWith(prefix));
+        const within = (env.dirs as string[]).filter(dir => dir.startsWith(prefix));
+        if ((inside.length || within.length) && !recursive) {
+            return delay({
+                ok: false,
+                error: target + ' is not empty. Deleting it removes '
+                    + inside.length + ' file(s) too.',
+            });
+        }
+        for (const key of inside) removeFileKey(key);
+        // AFTER the loop, or `removeFileKey` re-records the directory being
+        // deleted as the parent of the file it just removed.
+        env.dirs = (env.dirs as string[])
+            .filter(dir => dir !== target && !dir.startsWith(prefix));
+        mkdirs(target.split('/').slice(0, -1).join('/'));
+        pruneDirs();
+        return delay({ ok: true, removed: inside.length, folder: true });
     },
 
     saveWeb: (_u: string, _l: string, source: AnyRec) => {

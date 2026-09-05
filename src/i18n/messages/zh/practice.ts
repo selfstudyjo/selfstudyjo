@@ -53,6 +53,9 @@ export default {
     'An exam the platform cannot name': '平台无法命名的一场考试',
     'Built in your browser from the same public collections the board is built from. No account identifiers are shown, and no answer, question or copied text is ever recorded.':
         '在你的浏览器中由排行榜所依据的同一批公开数据构建。不显示任何账号标识，也从不记录任何答案、题目或被复制的文本。',
+    'Loading the activity record...': '正在加载活动记录...',
+    'The activity record could not be loaded. Reload the page and try again.':
+        '活动记录加载失败。请刷新页面后重试。',
     'Close the activity record': '关闭活动记录',
     'Courses enrolled': '已报名的课程',
     'Earned by achievement': '来自成就的得分',

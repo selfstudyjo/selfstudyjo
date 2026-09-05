@@ -529,5 +529,219 @@
     "translations": {},
     "unknown_tools": [],
     "unreachable_checks": []
+  },
+  "dj-08-admin": {
+    "brief": "## Django ships with a back office\n\nYou get a working CRUD interface over your models for about three lines of\ncode. Nothing else in this course gives that much for that little.\n\n```python\n# shop/admin.py\nfrom django.contrib import admin\n\nfrom .models import Category, Product\n\nadmin.site.register(Category)\nadmin.site.register(Product)\n```\n\n## But first, the tables and a user\n\n```\npython manage.py migrate\npython manage.py createsuperuser --username admin --email admin@example.com\n```\n\n`migrate` is what creates `auth_user`. Running `createsuperuser` before it\nfails with **no such table: auth_user**, and that error is worth meeting once\nso you recognise it.\n\n## Where the superuser goes\n\nInto a real row in a real table. Check it:\n\n```\npython manage.py dbshell\nSELECT username, email, is_superuser FROM auth_user;\n```\n\n## What `__str__` is for\n\n```python\ndef __str__(self):\n    return self.name\n```\n\nWithout it, the admin lists your rows as `Product object (1)`,\n`Product object (2)`. With it, they have names. The same method is what makes\nthe shell readable.\n\n> The **Project** pane shows the models, the migrations and the superusers this\n> lab knows about. It reads the same state the console writes.",
+    "datasets": [],
+    "difficulty": "beginner",
+    "environment": {
+      "files": {
+        "config/settings.py": "from pathlib import Path\n\nBASE_DIR = Path(__file__).resolve().parent.parent\nDEBUG = True\n\nINSTALLED_APPS = [\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'shop',\n]\n\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',\n    }\n}\n\nTEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates',\n              'DIRS': [BASE_DIR / 'templates'], 'APP_DIRS': True}]\n",
+        "config/urls.py": "from django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('', include('shop.urls')),\n]\n",
+        "manage.py": "#!/usr/bin/env python\nimport os\nimport sys\n\n\ndef main():\n    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')\n    from django.core.management import execute_from_command_line\n    execute_from_command_line(sys.argv)\n\n\nif __name__ == '__main__':\n    main()\n",
+        "shop/__init__.py": "",
+        "shop/admin.py": "from django.contrib import admin\n\n# Register your models here.\n",
+        "shop/models.py": "from django.db import models\n\n\nclass Category(models.Model):\n    name = models.CharField(max_length=60, unique=True)\n\n    def __str__(self):\n        return self.name\n\n\nclass Product(models.Model):\n    name = models.CharField(max_length=120)\n    slug = models.SlugField(max_length=120, unique=True)\n    price = models.DecimalField(max_digits=8, decimal_places=2)\n    stock = models.IntegerField(default=0)\n    category = models.ForeignKey(Category, on_delete=models.CASCADE,\n                                 related_name='products')\n    created = models.DateTimeField(auto_now_add=True)\n\n    def __str__(self):\n        return self.name\n",
+        "shop/urls.py": "from django.urls import path\n\nfrom . import views\n\nurlpatterns = [\n]\n",
+        "shop/views.py": "from django.shortcuts import render\n\n# Create your views here.\n"
+      },
+      "seed": {
+        "sim:django": {
+          "app": "shop",
+          "project": "config"
+        }
+      }
+    },
+    "families": [
+      "shell",
+      "django",
+      "ai"
+    ],
+    "id": "dj-08-admin",
+    "minutes": 30,
+    "objectives": [
+      "Register a model with the admin",
+      "Create a superuser and find the row it wrote",
+      "Explain why migrate must run first"
+    ],
+    "order": 8,
+    "points": 5,
+    "published": true,
+    "resources": [],
+    "simulated": true,
+    "source": "builtin",
+    "summary": "The free back office, and the one command that lets you in.",
+    "task_count": 5,
+    "tasks": [
+      {
+        "check": {
+          "equals": 0,
+          "family": "django",
+          "path": "pending",
+          "type": "state"
+        },
+        "detail": "`makemigrations` then `migrate`. This is what creates `auth_user`.",
+        "hint": "",
+        "id": "t1",
+        "points": 1,
+        "title": "Apply the migrations first"
+      },
+      {
+        "check": {
+          "family": "django",
+          "min": 1,
+          "path": "superusers",
+          "type": "state"
+        },
+        "detail": "`python manage.py createsuperuser --username admin --email admin@example.com`.",
+        "hint": "",
+        "id": "t2",
+        "points": 1,
+        "title": "Create a superuser"
+      },
+      {
+        "check": {
+          "path": "shop/admin.py",
+          "pattern": "admin\\.site\\.register",
+          "type": "file_contains"
+        },
+        "detail": "In `shop/admin.py`.",
+        "hint": "",
+        "id": "t3",
+        "points": 1,
+        "title": "Register your models with the admin"
+      },
+      {
+        "check": {
+          "path": "shop/models.py",
+          "pattern": "def\\s+__str__\\s*\\(\\s*self",
+          "type": "file_contains"
+        },
+        "detail": "So it lists as its name and not as `Product object (1)`.",
+        "hint": "",
+        "id": "t4",
+        "points": 1,
+        "title": "Give a model a __str__"
+      },
+      {
+        "check": {
+          "checks": [
+            {
+              "pattern": "select\\s+.*auth_user",
+              "type": "command_ran"
+            },
+            {
+              "pattern": "dbshell",
+              "type": "command_ran"
+            }
+          ],
+          "type": "any"
+        },
+        "detail": "`python manage.py dbshell`, then `SELECT username, is_superuser FROM auth_user;`",
+        "hint": "",
+        "id": "t5",
+        "points": 1,
+        "title": "Find your user in the database"
+      }
+    ],
+    "title": "The admin, and a superuser",
+    "tool_detail": [
+      {
+        "engine": "sim:shell",
+        "family": "shell",
+        "fidelity": "Simulated: a POSIX shell over this lab's own workspace. The files are the same ones every other tool in the lab sees, and they are backed up to GitHub.",
+        "icon": "terminal",
+        "id": "terminal",
+        "kind": "console",
+        "label": "Linux Terminal",
+        "order": 1,
+        "prompt": "$ ",
+        "simulated": true,
+        "summary": "ls, cd, mkdir, cat, grep, pipes, redirection, nano and vi."
+      },
+      {
+        "engine": "files",
+        "family": "shell",
+        "fidelity": "",
+        "icon": "file",
+        "id": "editor",
+        "kind": "editor",
+        "label": "Files",
+        "order": 4,
+        "prompt": "",
+        "simulated": false,
+        "summary": "Create and edit files in your workspace."
+      },
+      {
+        "engine": "sim:django",
+        "family": "django",
+        "fidelity": "Simulated CLI over a REAL SQLite database. makemigrations reads your models.py, migrate runs the CREATE TABLE, and the ORM issues real SQL and shows you each query. Your views and templates are read rather than executed.",
+        "icon": "server",
+        "id": "django",
+        "kind": "console",
+        "label": "Django",
+        "order": 62,
+        "prompt": "$ ",
+        "simulated": true,
+        "summary": "manage.py makemigrations, migrate, shell, dbshell, runserver, curl."
+      },
+      {
+        "engine": "sim:django",
+        "family": "django",
+        "fidelity": "Real HTML from your real template and your real rows.",
+        "icon": "globe",
+        "id": "django_preview",
+        "kind": "preview",
+        "label": "Browser",
+        "order": 63,
+        "prompt": "",
+        "simulated": true,
+        "summary": "The page your view returned, rendered. Navigate and submit forms."
+      },
+      {
+        "engine": "sim:django",
+        "family": "django",
+        "fidelity": "Reads the same project state the console writes.",
+        "icon": "layers",
+        "id": "django_gui",
+        "kind": "gui",
+        "label": "Project",
+        "order": 64,
+        "prompt": "",
+        "simulated": true,
+        "summary": "Models, migrations, URL patterns and the tables in the database."
+      },
+      {
+        "engine": "ai",
+        "family": "ai",
+        "fidelity": "Answers come from a language model and can be wrong.",
+        "icon": "sparkles",
+        "id": "ai_tutor",
+        "kind": "ai",
+        "label": "AI Tutor",
+        "order": 90,
+        "prompt": "",
+        "simulated": false,
+        "summary": "Ask about this lab. It can see your environment and your history."
+      }
+    ],
+    "tools": [
+      "django",
+      "django_preview",
+      "django_gui",
+      "terminal",
+      "editor",
+      "ai_tutor"
+    ],
+    "topics": [
+      "admin",
+      "superuser",
+      "auth",
+      "str"
+    ],
+    "track": "django",
+    "translations": {},
+    "unknown_tools": [],
+    "unreachable_checks": []
   }
 }

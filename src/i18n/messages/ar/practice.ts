@@ -58,6 +58,9 @@ export default {
     'An exam the platform cannot name': 'امتحان لا تستطيع المنصّة تسميته',
     'Built in your browser from the same public collections the board is built from. No account identifiers are shown, and no answer, question or copied text is ever recorded.':
         'يُبنى في متصفّحك من المجموعات المعلَنة نفسها التي تُبنى منها اللوحة. لا تُعرَض أي معرّفات حسابات، ولا يُسجَّل أبدًا أي جواب أو سؤال أو نصّ منسوخ.',
+    'Loading the activity record...': 'جارٍ تحميل سجل النشاط...',
+    'The activity record could not be loaded. Reload the page and try again.':
+        'تعذّر تحميل سجل النشاط. أعد تحميل الصفحة وحاول مرة أخرى.',
     'Close the activity record': 'إغلاق سجل النشاط',
     'Courses enrolled': 'الدورات المسجَّل بها',
     'Earned by achievement': 'المكتسب من الإنجاز',

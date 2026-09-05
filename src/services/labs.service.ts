@@ -96,6 +96,20 @@ export interface FileEntry {
     bytes: number;
 }
 
+/**
+ * What `list` answers: the files, AND the folders.
+ *
+ * `dirs` carries every directory including the ones a file implies, and the
+ * browser deliberately does not derive them — an EMPTY folder is implied by
+ * nothing, and it is exactly the one a student has just made with New Folder
+ * and is waiting to see.
+ */
+export interface FileListing {
+    files: FileEntry[];
+    dirs: string[];
+    limits?: { max_files?: number; max_bytes?: number };
+}
+
 export interface WebSource {
     html?: string;
     css?: string;
@@ -330,8 +344,36 @@ class LabsService {
     }
 
     async listFiles(username: string, labId: string): Promise<FileEntry[]> {
-        const result = await this.fileAction(username, labId, { action: 'list' });
-        return (result as any)?.files || [];
+        return (await this.listTree(username, labId)).files;
+    }
+
+    /** The whole filesystem: files, folders and the lab's own limits. */
+    async listTree(username: string, labId: string): Promise<FileListing> {
+        const result: any = await this.fileAction(username, labId, { action: 'list' });
+        return {
+            files: result?.files || [],
+            dirs: result?.dirs || [],
+            limits: result?.limits || {},
+        };
+    }
+
+    /** Create a folder. An empty one exists only here, so it has to be asked for. */
+    async makeFolder(username: string, labId: string,
+                     path: string): Promise<ToolResult> {
+        return this.fileAction(username, labId, { action: 'mkdir', path });
+    }
+
+    /**
+     * Rename or move a file or a folder. ONE call, because it is one operation.
+     *
+     * A rename and a drag between folders differ only in whether the parent
+     * changes, and two endpoints would be two copies of the refusals — which
+     * are the whole of the operation. The backend carries the file MODES and
+     * the empty sub-folders with it; nothing here has to know that.
+     */
+    async movePath(username: string, labId: string, path: string,
+                   to: string): Promise<ToolResult> {
+        return this.fileAction(username, labId, { action: 'move', path, to });
     }
 
     async readFile(username: string, labId: string, path: string): Promise<string> {
@@ -346,8 +388,17 @@ class LabsService {
                                { action: 'write', path, content });
     }
 
-    async deleteFile(username: string, labId: string, path: string): Promise<ToolResult> {
-        return this.fileAction(username, labId, { action: 'delete', path });
+    /**
+     * Delete a file, or a folder and everything under it.
+     *
+     * `recursive` is passed explicitly and defaults to false, because the
+     * backend refuses a non-empty folder without it for the reason `rm` asks
+     * for `-r`. The browser asks first, naming the count, and then sends it.
+     */
+    async deleteFile(username: string, labId: string, path: string,
+                     recursive = false): Promise<ToolResult> {
+        return this.fileAction(username, labId,
+                               { action: 'delete', path, recursive });
     }
 
     private async fileAction(username: string, labId: string,

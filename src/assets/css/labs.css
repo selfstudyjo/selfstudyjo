@@ -65,6 +65,13 @@
     height: 2.5em;
 }
 
+/* Sized in `em`, so an explorer row's glyph follows the row's own font size
+   rather than needing a `:size` prop per icon. Working rule 51's other half. */
+.sl-i--tiny {
+    width: 1.05em;
+    height: 1.05em;
+}
+
 /* ── buttons ───────────────────────────────────────────────────────────── */
 
 .sl-btn {
@@ -1142,7 +1149,13 @@
 
 .sl-table--tree td:first-child { white-space: nowrap; }
 
-/* ── the files tool ────────────────────────────────────────────────────── */
+/* ── the files tool: an explorer panel and an editor ────────────── */
+
+/* The pane is the containing block for the context menu. Deliberately WITHOUT a
+   z-index: a positioned ancestor that also names one becomes a stacking
+   context, and this platform has already had every modal inside such a wrapper
+   painted under the sidebar. Working rule 17, same as `.sl-console`. */
+.sl-files { position: relative; }
 
 .sl-files__body {
     display: grid;
@@ -1151,63 +1164,322 @@
 }
 
 @media (min-width: 760px) {
-    .sl-files__body { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); }
+    /* `minmax(0, ...)`, never a bare width: a `1fr` track's automatic minimum is
+       `min-content`, so one long path - which does not wrap - would force the
+       tree wider than its share and push the editor off the card. Working rule
+       50 / the exam pages' 32 declarations. */
+    .sl-files__body { grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); }
 }
 
-.sl-files__list {
-    max-height: 26rem;
-    overflow: auto;
+/* ── the explorer ─────────────────────────────────────── */
+
+.sl-tree {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-height: 32rem;
     border: var(--sl-line);
     border-radius: var(--sl-radius-sm);
     background: var(--sl-well);
+    overflow: hidden;
+    /* A FILE TREE IS A PLACE, NOT A PARAGRAPH. Mirrored, the indent runs from
+       the right while the paths inside it are still left-to-right, so the
+       structure reads as broken - and every name in it is a machine
+       identifier. Same rule `rtl.css` applies to a console and a `<pre>`. */
+    direction: ltr;
 }
 
-.sl-files__item {
+.sl-tree__bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.45rem 0.7rem;
-    border: 0;
+    gap: 0.4rem;
+    padding: 0.35rem 0.4rem 0.35rem 0.7rem;
     border-bottom: var(--sl-line);
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.18);
+}
+
+.sl-tree__heading {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tree__icons { display: flex; gap: 0.1rem; }
+
+.sl-tree__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* `max(...)`, because `responsive.css` scales the root fluidly: 1.7rem is
+       ~26px on a 390px phone, which is under any usable target. */
+    width: max(1.7rem, 28px);
+    height: max(1.7rem, 28px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--sl-radius-sm);
     background: transparent;
-    color: inherit;
-    font: inherit;
-    font-size: 0.82rem;
-    text-align: start;
+    color: var(--sfs-text-muted, #b7bdcc);
     cursor: pointer;
 }
 
-.sl-files__item.is-active {
+.sl-tree__icon:hover,
+.sl-tree__icon:focus-visible {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sl-tree__filter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    border-bottom: var(--sl-line);
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tree__search {
+    flex: 1;
+    min-width: 0;
+    padding: 0.2rem 0;
+    border: 0;
+    background: transparent;
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-size: max(0.78rem, 16px);
+}
+
+.sl-tree__search:focus { outline: none; }
+
+.sl-tree__rows {
+    flex: 1;
+    min-height: 6rem;
+    padding: 0.25rem 0;
+    overflow: auto;
+}
+
+.sl-tree__rows.is-drop {
+    box-shadow: inset 0 0 0 2px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55);
+}
+
+.sl-tree__row {
+    /* The indent is a CUSTOM PROPERTY, not a class per depth: a lab's project
+       is four or five levels deep and a `.is-depth-4` ladder would need a rule
+       per level and would silently stop indenting past the last one. */
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.2rem 0.5rem 0.2rem calc(0.35rem + var(--sl-depth, 0) * 0.85rem);
+    border: 0;
+    background: transparent;
+    color: var(--sfs-text, #e6e8ef);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    text-align: start;
+    cursor: pointer;
+    /* An unbreakable path must clip rather than widen the panel. */
+    white-space: nowrap;
+    overflow: hidden;
+    user-select: none;
+}
+
+.sl-tree__row:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07); }
+
+.sl-tree__row:focus-visible {
+    outline: 2px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.7);
+    outline-offset: -2px;
+}
+
+.sl-tree__row.is-active {
     background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
 }
 
-.sl-files__name {
+/* The drop target is an INSET ring rather than a border: a border would change
+   the row's height and shift every row under the pointer mid-drag. */
+.sl-tree__row.is-drop {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    box-shadow: inset 0 0 0 2px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.8);
+}
+
+.sl-tree__row.is-cut { opacity: 0.55; }
+.sl-tree__row.is-new { cursor: default; }
+
+.sl-tree__twist {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 0.9rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tree__glyph { flex: 0 0 auto; color: var(--sfs-text-muted, #b7bdcc); }
+.sl-tree__row.is-folder .sl-tree__glyph { color: var(--sfs-accent-text, #a5b4fc); }
+
+.sl-tree__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    /* A machine identifier, so the bidi algorithm must not relocate its dots
+       and dashes inside Arabic prose. */
+    unicode-bidi: isolate;
+}
+
+.sl-tree__size {
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tree__row:not(:hover):not(.is-active) .sl-tree__size { opacity: 0.65; }
+
+.sl-tree__rename {
+    flex: 1;
+    min-width: 0;
+    padding: 0 0.25rem;
+    border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.8);
+    border-radius: 3px;
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: max(0.78rem, 16px);
+}
+
+.sl-tree__empty,
+.sl-tree__note {
+    margin: 0;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.78rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-tree__note {
+    border-top: var(--sl-line);
+    unicode-bidi: plaintext;
+}
+
+/* ── the context menu ─────────────────────────────────── */
+
+.sl-menu {
+    position: absolute;
+    z-index: 40;
+    min-width: 11rem;
+    padding: 0.25rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    /* Opaque, not glass: it sits over a file tree and a code editor, and a
+       translucent menu over monospace text is unreadable in every galaxy. */
+    background: var(--sl-code-bg);
+    box-shadow: 0 12px 30px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+    direction: ltr;
+}
+
+.sl-menu__where {
+    margin: 0;
+    padding: 0.3rem 0.5rem 0.4rem;
+    border-bottom: var(--sl-line);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    color: var(--sfs-text-muted, #b7bdcc);
     overflow-wrap: anywhere;
     unicode-bidi: isolate;
 }
 
-.sl-files__size { font-size: 0.72rem; color: var(--sfs-text-muted, #b7bdcc); }
-.sl-files__empty { padding: 0.7rem; font-size: 0.82rem; color: var(--sfs-text-muted, #b7bdcc); }
+.sl-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--sl-code-ink);
+    font: inherit;
+    font-size: 0.8rem;
+    text-align: start;
+    cursor: pointer;
+}
 
-.sl-files__pathrow { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+.sl-menu__item:hover,
+.sl-menu__item:focus-visible {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+}
 
-.sl-files__path {
+.sl-menu__item.is-danger { color: var(--sfs-danger-text, #fca5a5); }
+
+.sl-menu__rule {
+    margin: 0.2rem 0.3rem;
+    border: 0;
+    border-top: var(--sl-line);
+}
+
+/* ── the editor half ──────────────────────────────────── */
+
+.sl-files__editor { min-width: 0; }
+
+.sl-files__tabrow {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.sl-files__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     flex: 1;
     min-width: 0;
-    padding: 0.45rem 0.7rem;
+    padding: 0.35rem 0.6rem;
     border: var(--sl-line);
-    border-radius: var(--sl-radius-sm);
-    background: var(--sl-well);
-    color: var(--sfs-text, #e6e8ef);
+    border-radius: var(--sl-radius-sm) var(--sl-radius-sm) 0 0;
+    background: var(--sl-code-bg);
+    color: var(--sl-code-ink);
+    direction: ltr;
+}
+
+.sl-files__tabname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: max(0.85rem, 16px);
+    font-size: 0.78rem;
+    unicode-bidi: isolate;
+}
+
+/* The unsaved marker is a DOT AND a title, never colour alone: in two galaxies
+   the accent and the warning are within a few dE of each other, and in
+   Triangulum they are the same colour to a deuteranope. Working rule 37. */
+.sl-files__dot {
+    flex: 0 0 auto;
+    font-size: 1.2rem;
+    line-height: 0;
+    color: var(--sfs-warning-text, #fcd34d);
+}
+
+.sl-files__nofile {
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+    color: var(--sfs-text-muted, #b7bdcc);
 }
 
 .sl-files__msg { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--sfs-success-text, #86efac); }
 .sl-files__msg.is-error { color: var(--sfs-danger-text, #fca5a5); }
+
+@media (max-width: 759px) {
+    /* On a phone the tree cannot also be 32rem tall: the editor would be below
+       the fold on every visit and the pane would read as having no editor. */
+    .sl-tree { max-height: 15rem; }
+}
 
 /* ── the web playground ────────────────────────────────────────────────── */
 

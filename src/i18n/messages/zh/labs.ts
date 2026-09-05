@@ -112,7 +112,23 @@ const labs: Catalogue = {
     'No files yet': '还没有文件',
     'Path': '路径',
     'Permissions': '权限',
-    'file name, e.g. Dockerfile': '文件名，例如 Dockerfile',
+
+    /* The explorer. `Top level` is the root of the LAB's filesystem, not the
+     * machine's. */
+    'Explorer': '资源管理器',
+    'New File': '新建文件',
+    'New Folder': '新建文件夹',
+    'Collapse All': '全部折叠',
+    'Filter files': '筛选文件',
+    'Nothing matches that': '没有匹配项',
+    'Top level': '顶层目录',
+    'file name': '文件名',
+    'folder name': '文件夹名',
+    'File contents': '文件内容',
+    'Pick a file on the left, or make one with New File.':
+        '在左侧选择一个文件，或点击「新建文件」创建一个。',
+    'Cut': '剪切',
+    'Paste here': '粘贴到此处',
     'Write a program and press Run, or Ctrl+Enter': '写一段程序后点击运行，或按 Ctrl+Enter',
     'Write a statement and press Run, or Ctrl+Enter': '写一条语句后点击运行，或按 Ctrl+Enter',
     'The statement ran and returned no rows.': '语句已执行，未返回任何行。',

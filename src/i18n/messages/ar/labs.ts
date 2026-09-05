@@ -115,7 +115,27 @@ const labs: Catalogue = {
     'No files yet': 'لا ملفات بعد',
     'Path': 'المسار',
     'Permissions': 'الصلاحيات',
-    'file name, e.g. Dockerfile': 'اسم الملف، مثل Dockerfile',
+
+    /* The explorer. `Explorer` is the panel heading and `Top level` is the root
+     * of the LAB's own filesystem - not the machine's, which is why it is not
+     * "الجذر". `file name` / `folder name` are placeholders in a row that is
+     * being typed into, so they stay lower case as the English does. */
+    'Explorer': 'المستعرض',
+    'New File': 'ملف جديد',
+    'New Folder': 'مجلد جديد',
+    'Collapse All': 'إغلاق الكل',
+    'Filter files': 'تصفية الملفات',
+    'Nothing matches that': 'لا نتائج مطابقة',
+    'Top level': 'المستوى الأعلى',
+    'file name': 'اسم الملف',
+    'folder name': 'اسم المجلد',
+    'File contents': 'محتوى الملف',
+    'Pick a file on the left, or make one with New File.':
+        'اختر ملفاً من القائمة، أو أنشئ ملفاً بزر «ملف جديد».',
+    /* `Cut` and `Paste here` are the drag-free way to move something: a phone
+     * has no drag, and this is the same operation the drag performs. */
+    'Cut': 'قص',
+    'Paste here': 'لصق هنا',
     'Write a program and press Run, or Ctrl+Enter': 'اكتب برنامجاً واضغط تشغيل، أو Ctrl+Enter',
     'Write a statement and press Run, or Ctrl+Enter': 'اكتب عبارة واضغط تشغيل، أو Ctrl+Enter',
     'The statement ran and returned no rows.': 'نُفِّذت العبارة ولم تُرجِع أي صفوف.',

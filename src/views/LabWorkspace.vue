@@ -151,9 +151,12 @@
                   v-else-if="tool.kind === 'editor'"
                   ref="filesPane"
                   :list="listFiles"
+                  :tree="listTree"
                   :read="readFile"
                   :write="writeFile"
                   :remove="deleteFile"
+                  :mkdir="makeFolder"
+                  :move="movePath"
                   @changed="refreshViews"
                 />
                 <!--
@@ -792,6 +795,18 @@ async function listFiles() {
   return lab.value ? labsService.listFiles(username.value, lab.value.id) : [];
 }
 
+/**
+ * The whole filesystem, files AND folders, for the explorer.
+ *
+ * `dirs` is not derived in the browser from the file paths: the implied folders
+ * could be, and an EMPTY one is implied by nothing — which is exactly the folder
+ * a student has just made with New Folder and is waiting to see.
+ */
+async function listTree() {
+  if (!lab.value) return { files: [], dirs: [] };
+  return labsService.listTree(username.value, lab.value.id);
+}
+
 async function readFile(path: string) {
   return lab.value ? labsService.readFile(username.value, lab.value.id, path) : '';
 }
@@ -804,9 +819,31 @@ async function writeFile(path: string, content: string) {
   return result;
 }
 
-async function deleteFile(path: string) {
+async function deleteFile(path: string, recursive = false) {
   if (!lab.value) return { ok: false, error: 'The lab is not open' };
-  const result = await labsService.deleteFile(username.value, lab.value.id, path);
+  const result = await labsService.deleteFile(username.value, lab.value.id,
+                                              path, recursive);
+  refreshViews();
+  return result;
+}
+
+async function makeFolder(path: string) {
+  if (!lab.value) return { ok: false, error: 'The lab is not open' };
+  return labsService.makeFolder(username.value, lab.value.id, path);
+}
+
+/**
+ * A rename or a drag between folders — one call, because it is one operation.
+ *
+ * `refreshViews` afterwards for the reason a write needs it: a GUI panel or the
+ * Browser pane may be drawing something the moved file produced, and the file
+ * tree and the panes disagreeing about which paths exist is the confusing half
+ * of a move.
+ */
+async function movePath(path: string, to: string) {
+  if (!lab.value) return { ok: false, error: 'The lab is not open' };
+  const result = await labsService.movePath(username.value, lab.value.id,
+                                            path, to);
   refreshViews();
   return result;
 }

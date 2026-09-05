@@ -72,6 +72,31 @@ import {
 } from '../../src/utils/labCatalogue';
 
 import {
+    ancestorsOf,
+    basename,
+    buildTree,
+    deleteQuestion,
+    dirname,
+    exists,
+    extensionOf,
+    filesUnder,
+    flatten,
+    folderPaths,
+    humanBytes,
+    iconFor,
+    isFolder,
+    joinPath,
+    matchTree,
+    nameProblem,
+    pathProblem,
+    planDrop,
+    planRename,
+    remapExpanded,
+    sortNodes,
+    type FileEntry as TreeFileEntry,
+} from '../../src/utils/fileTree';
+
+import {
     applyReadline,
     atCommandWord,
     completeLine,
@@ -1586,6 +1611,323 @@ section('13. The console and tutor wiring');
     check('the completion call never throws',
           /async completions\(/.test(service)
           && /catch \{\s*return empty;\s*\}/.test(service), 'completions');
+}
+
+/* ─────────────────── 14. the file explorer ─────────────────── */
+
+section('14. The file explorer: the tree, the names and the moves');
+
+{
+    /*
+     * `dirs` is the half the browser must NOT derive.
+     *
+     * The implied folders could be worked out from the file paths; an EMPTY one
+     * is implied by nothing, and it is exactly the folder a student has just
+     * made with New Folder and is waiting to see. So the backend sends both and
+     * `buildTree` believes it.
+     */
+    const files: TreeFileEntry[] = [
+        { path: 'main.tf', bytes: 120 },
+        { path: 'src/app.py', bytes: 40 },
+        { path: 'src/deep/keep.txt', bytes: 3 },
+        { path: 'README.md', bytes: 900 },
+    ];
+    const dirs = ['empty', 'src', 'src/blank', 'src/deep'];
+
+    const tree = buildTree(files, dirs);
+    const top = tree.map(node => `${node.kind}:${node.name}`);
+    check('folders sort before files, each alphabetically',
+          top.join(' ') === 'folder:empty folder:src file:main.tf file:README.md',
+          top);
+    check('an EMPTY folder appears, which no file implies',
+          tree.some(node => node.path === 'empty' && node.kind === 'folder'));
+
+    const src = tree.find(node => node.path === 'src')!;
+    check('a nested folder holds its own children',
+          src.children.map(node => node.path).join(',')
+          === 'src/blank,src/deep,src/app.py',
+          src.children.map(node => node.path));
+
+    /*
+     * A TOTAL ORDER, and this is not tidiness: the rows are re-derived inside a
+     * computed that re-evaluates on every keystroke in the filter box, so a
+     * comparator that can call two nodes equal is a tree that visibly reorders
+     * itself as somebody types — moving the row they are aiming at. Same trap
+     * `sortLabs`, `examShuffle` and `sortScene` document.
+     */
+    const clash = [
+        { path: 'b/x.py', name: 'x.py', kind: 'file' as const, bytes: 0, children: [] },
+        { path: 'a/x.py', name: 'X.PY', kind: 'file' as const, bytes: 0, children: [] },
+    ];
+    const once = sortNodes(clash).map(node => node.path).join(',');
+    const twice = sortNodes(sortNodes(clash).reverse()).map(node => node.path).join(',');
+    check('two nodes whose names differ only in case still have ONE order',
+          once === twice && once === 'a/x.py,b/x.py', [once, twice]);
+
+    /* Only what is expanded is drawn, so a lab with a deep project opens
+       readable rather than as forty rows. */
+    const shut = flatten(tree, new Set()).map(row => row.path);
+    check('a collapsed folder hides its children',
+          !shut.includes('src/app.py') && shut.includes('src'), shut);
+    const open = flatten(tree, new Set(['src'])).map(row => `${row.path}@${row.depth}`);
+    check('an expanded folder draws its children one level in',
+          open.includes('src/app.py@1') && open.includes('main.tf@0'), open);
+    const shutRows = flatten(tree, new Set());
+    const rowFor = (path: string) => shutRows.find(row => row.path === path);
+    check('a chevron is drawn only for a folder with something in it',
+          rowFor('empty')?.hasChildren === false
+          && rowFor('src')?.hasChildren === true,
+          [rowFor('empty'), rowFor('src')]);
+
+    /* Filtering keeps the folders that lead to a hit, or the row is drawn at
+       depth 0 with nothing saying which project it is in. */
+    const hits = flatten(matchTree(tree, 'keep'), new Set(['src', 'src/deep']))
+        .map(row => row.path);
+    check('a filter keeps the folders that lead to the hit',
+          hits.join(',') === 'src,src/deep,src/deep/keep.txt', hits);
+    check('a folder whose OWN name matches keeps everything under it',
+          flatten(matchTree(tree, 'src'), new Set(['src'])).length > 1);
+    check('a filter that matches nothing is empty, not everything',
+          matchTree(tree, 'zzz').length === 0);
+
+    check('folderPaths lists every folder, including the empty ones',
+          folderPaths(files, dirs).join(',') === 'empty,src,src/blank,src/deep',
+          folderPaths(files, dirs));
+    check('isFolder is true for a path only files imply',
+          isFolder('src', files, []) && isFolder('src/deep', files, []));
+    check('...and false for a file', !isFolder('main.tf', files, dirs));
+    check('the root is always a folder — it is the drop target for "out of here"',
+          isFolder('', files, dirs));
+    check('filesUnder names what a folder delete is about to remove',
+          filesUnder('src', files).join(',') === 'src/app.py,src/deep/keep.txt');
+    check('exists sees both kinds',
+          exists('main.tf', files, dirs) && exists('empty', files, dirs)
+          && !exists('nope', files, dirs));
+}
+
+{
+    /* A PATH IS NOT A NAME, and the two rules are deliberately different: a
+       slash typed into Rename would move the file somewhere else without
+       saying so, which is not the operation the student asked for. */
+    check('a slash is refused in a NAME, and says so',
+          nameProblem('a/b') === 'A name cannot contain a slash',
+          nameProblem('a/b'));
+    check('...and allowed in a PATH', pathProblem('src/main.tf') === null);
+    check('a leading dot is legal — .gitignore is a file a lab ships',
+          nameProblem('.gitignore') === null
+          && pathProblem('.claude/settings.json') === null);
+    check('".." is refused in both', nameProblem('..') !== null
+          && pathProblem('../etc/passwd') !== null);
+    check('a bare dot segment is refused', pathProblem('a/./b') !== null);
+    check('an empty segment is refused', pathProblem('a//b') !== null);
+    check('a leading slash is refused', pathProblem('/etc/passwd') !== null);
+    check('a trailing slash is refused on a file name',
+          pathProblem('src/') !== null);
+    check('a backslash is refused', pathProblem('src\\main.tf') !== null);
+    check('an empty name is refused, and says so',
+          nameProblem('  ') !== null && pathProblem('') !== null);
+    check('a space in the middle is refused, matching the backend',
+          nameProblem('my file.txt') !== null);
+    check('a very long path is refused before the round trip',
+          pathProblem('a'.repeat(200)) !== null);
+}
+
+{
+    const files: TreeFileEntry[] = [
+        { path: 'main.tf', bytes: 1 },
+        { path: 'src/app.py', bytes: 1 },
+        { path: 'modules/net/main.tf', bytes: 1 },
+    ];
+    const dirs = ['empty', 'modules', 'modules/net', 'src'];
+
+    /* THE ONE REFUSAL THAT IS NOT MERELY TIDY. Re-prefixing `modules` to
+       `modules/net` rewrites every key to a path still under `modules`, so the
+       loop's own output feeds it — the tree eats itself. Dragging a folder onto
+       its own child is an ordinary mis-drop. */
+    check('a folder cannot be dropped inside itself',
+          planDrop('modules', 'modules/net', files, dirs).problem !== null);
+    check('...nor onto its own row',
+          planDrop('modules', 'modules', files, dirs).problem !== null
+          || planDrop('modules', 'modules', files, dirs).noop);
+
+    /* A DROP ON ITS OWN PARENT IS A NO-OP, NOT AN ERROR. It is the commonest
+       mis-drop there is, and "src/app.py already exists" for it reads as the
+       explorer being broken. */
+    const same = planDrop('src/app.py', 'src', files, dirs);
+    check('a drop on the row\'s own parent is a quiet no-op',
+          same.noop === true && same.problem === null, same);
+    const renamed = planRename('main.tf', 'main.tf', files, dirs);
+    check('a rename to the name it already has is a quiet no-op',
+          renamed.noop === true && renamed.problem === null, renamed);
+
+    check('a drop onto an occupied path is refused BY NAME',
+          (planDrop('src/app.py', 'modules/net', files, dirs).problem === null)
+          && planDrop('main.tf', 'modules/net', files, dirs).problem !== null,
+          planDrop('main.tf', 'modules/net', files, dirs));
+    check('a legal drop answers the path it lands at',
+          planDrop('main.tf', 'src', files, dirs).to === 'src/main.tf');
+    check('the ROOT is a legal target — dragging out of a folder needs one',
+          planDrop('src/app.py', '', files, dirs).to === 'app.py'
+          && planDrop('src/app.py', '', files, dirs).problem === null);
+    check('a rename lands in the same folder',
+          planRename('src/app.py', 'main.py', files, dirs).to === 'src/main.py');
+    check('a rename to an occupied name is refused',
+          planRename('src/app.py', 'app.py', files, dirs).noop === true);
+    check('an illegal new name is refused before anything is sent',
+          planRename('main.tf', 'a b', files, dirs).problem !== null);
+    check('a folder rename is a move like any other',
+          planRename('modules', 'infra', files, dirs).to === 'infra'
+          && planRename('modules', 'infra', files, dirs).problem === null);
+
+    /* EXPANSION IS KEYED ON THE PATH, so a move has to carry it. Without this,
+       renaming an open folder collapses it and everything under it — which
+       reads as the rename having emptied the folder. */
+    const carried = remapExpanded(['modules', 'modules/net', 'src'],
+                                  'modules', 'infra');
+    check('an expanded folder stays expanded through a rename',
+          carried.has('infra') && carried.has('infra/net')
+          && !carried.has('modules'), [...carried]);
+    check('...and an unrelated folder is untouched', carried.has('src'));
+    check('the destination\'s parents are opened, or a dropped file looks deleted',
+          remapExpanded([], 'main.tf', 'modules/net/main.tf').has('modules/net'));
+}
+
+{
+    check('basename and dirname agree about a nested path',
+          basename('a/b/c.py') === 'c.py' && dirname('a/b/c.py') === 'a/b');
+    check('...and about a top-level one',
+          basename('c.py') === 'c.py' && dirname('c.py') === '');
+    check('joinPath does not put a slash in front of a root-level name',
+          joinPath('', 'c.py') === 'c.py' && joinPath('a', 'c.py') === 'a/c.py');
+    check('ancestorsOf is what "reveal this file" opens',
+          ancestorsOf('a/b/c.py').join(',') === 'a,a/b');
+    check('a top-level file has no ancestors', ancestorsOf('c.py').length === 0);
+
+    /* A LEADING DOT IS THE WHOLE NAME, not an extension: reading one gives
+       every dotfile in the lab whatever icon `gitignore` maps to. */
+    check('a dotfile has no extension', extensionOf('.gitignore') === '');
+    check('an extension is lower-cased', extensionOf('Main.TF') === 'tf');
+
+    /* Matched on the whole NAME first, because the files this is most often
+       about have no extension at all. */
+    check('Dockerfile gets an icon from its name, not its extension',
+          iconFor('Dockerfile') === 'config'
+          && iconFor('app/Dockerfile') === 'config');
+    check('a .tf file gets the terraform icon', iconFor('main.tf') === 'terraform');
+    check('an unknown extension falls back rather than throwing',
+          iconFor('thing.qqq') === 'file');
+    check('every icon name is one the component maps',
+          ['file', 'code', 'markup', 'style', 'data', 'config', 'shell',
+           'database', 'image', 'doc', 'lock', 'terraform']
+              .includes(iconFor('a.py')));
+
+    check('a byte count reads as an explorer prints it',
+          humanBytes(12) === '12 B' && humanBytes(2048) === '2.0 KB'
+          && humanBytes(3 * 1024 * 1024) === '3.0 MB',
+          [humanBytes(12), humanBytes(2048), humanBytes(3 * 1024 * 1024)]);
+
+    /* THE DELETE QUESTION NAMES THE COUNT. "delete src?" and "delete src and
+       the 2 files in it?" are different questions, and only one of them is the
+       one being asked. */
+    const files: TreeFileEntry[] = [
+        { path: 'src/app.py', bytes: 1 },
+        { path: 'src/deep/keep.txt', bytes: 1 },
+    ];
+    check('deleting a folder asks about what is inside it',
+          /2 file/.test(deleteQuestion('src', 'folder', files)),
+          deleteQuestion('src', 'folder', files));
+    check('deleting an empty folder does not claim a count',
+          !/file\(s\)/.test(deleteQuestion('empty', 'folder', files)));
+    check('deleting a file names the file',
+          deleteQuestion('src/app.py', 'file', files) === 'Delete src/app.py?');
+}
+
+{
+    const files = source('src/components/labs/LabFiles.vue');
+
+    /* A DROP IS REFUSED WHILE HOVERING, not on release: a student who can drop
+       something has been told the drop is allowed. */
+    check('the hover handler asks planDrop before highlighting a target',
+          /function hoverRow[\s\S]{0,320}planDrop\([\s\S]{0,200}dropTarget\.value = plan\.problem/
+          .test(files));
+    check('the root is a drop target too, so a file can be dragged OUT',
+          /@drop\.prevent="dropOn\(''\)"/.test(files)
+          && /function hoverRoot/.test(files));
+    check('a row is draggable', /:draggable="renaming !== row\.path"/.test(files));
+    /* A CHEVRON ON AN EMPTY FOLDER is a promise the row cannot keep, and reads
+       as contents that failed to load. `hasChildren` was computed and never
+       used, which is how that got past 913 assertions. */
+    check('the chevron is drawn from hasChildren, not from the kind',
+          /v-if="row\.hasChildren && !row\.expanded"/.test(files)
+          && /v-else-if="row\.hasChildren"/.test(files));
+
+    /* The console can write a file underneath us at any time — every console in
+       a lab is a shell — and `refresh` runs after every command. Re-reading the
+       open buffer there is the bug `refreshViews` on the workspace already had
+       to be taught. */
+    check('refresh does NOT re-read the open buffer',
+          /if \(!files\.value\.some\(entry => entry\.path === path\.value\)\)/
+          .test(files));
+    check('a dirty buffer is never discarded silently',
+          /if \(dirty\.value && !window\.confirm\(/.test(files));
+    check('Ctrl+S saves, because this is an editor',
+          /@keydown\.ctrl\.s\.prevent="save"/.test(files)
+          && /@keydown\.meta\.s\.prevent="save"/.test(files));
+    check('F2 renames and Delete deletes, from the row',
+          /@keydown\.f2\.prevent="startRename\(row\)"/.test(files)
+          && /@keydown\.delete\.prevent="confirmDelete\(row\)"/.test(files));
+
+    /* A NEW FILE IS WRITTEN, not held in the browser: a file that exists only
+       in this tab is one the console cannot see, and the first thing anybody
+       does with a new `main.tf` is run something against it. */
+    check('a new file is written to the backend immediately',
+          /kind === 'folder'[\s\S]{0,700}await props\.write\(target, ''\)/
+          .test(files));
+    check('a folder delete passes recursive, which the backend requires',
+          /const recursive = row\.kind === 'folder';[\s\S]{0,120}props\.remove\(row\.path, recursive\)/
+          .test(files));
+    check('the open buffer follows its own file through a move',
+          /if \(path\.value === from\) path\.value = to;/.test(files));
+
+    /* The menu is positioned in the PANE, not the document: `position: fixed`
+       would put it above the sidebar in every galaxy and leave it behind when
+       the pane scrolls. */
+    /*
+     * COMMENTS STRIPPED, in both directions.
+     *
+     * The rule below is that no `.is-depth-N` ladder exists - and the paragraph
+     * in `labs.css` explaining why there is not one NAMES that class, so an
+     * unstripped scan fails on its own documentation. A rule that fires on the
+     * comment explaining it is a rule nobody can document; `check:aichat` and
+     * `check:leaderboard` both had to learn this (working rule 44). Stripping
+     * also takes the prose out of the distance the two `direction: ltr` rules
+     * are measured over, which is what those windows are for.
+     */
+    const css = stripComments(source('src/assets/css/labs.css'));
+    check('the context menu is absolute inside the pane',
+          /\.sl-menu \{[^}]*position: absolute/.test(css));
+    check('...and the pane is the containing block, WITHOUT a z-index',
+          /\.sl-files \{ position: relative; \}/.test(css));
+    check('the tree and the menu are pinned LTR — a path is an identifier',
+          /\.sl-tree \{[\s\S]{0,600}direction: ltr;/.test(css)
+          && /\.sl-menu \{[\s\S]{0,600}direction: ltr;/.test(css));
+    check('the indent is a custom property, not a class per depth',
+          /var\(--sl-depth, 0\)/.test(css) && !/is-depth-/.test(css));
+    check('the tree track is minmax(0, ...), so a long path cannot widen it',
+          /\.sl-files__body \{ grid-template-columns: minmax\(0, 16rem\) minmax\(0, 1fr\); \}/
+          .test(css));
+    check('the unsaved marker is a dot AND a title, never colour alone',
+          /class="sl-files__dot" :title="\$t\('Unsaved changes'\)"/.test(files));
+
+    /* Every string a reader sees goes through $t: this pane is one of the few
+       screens with an Arabic and a Chinese reader and a machine identifier in
+       the same row. */
+    for (const label of ['Explorer', 'New File', 'New Folder', 'Collapse All',
+                         'Rename', 'Delete', 'Duplicate', 'Cut', 'Paste here',
+                         'Top level', 'Filter files']) {
+        check(`"${label}" is translated`,
+              files.includes(`$t('${label}')`), label);
+    }
 }
 
 /* ─────────────────── report ─────────────────── */

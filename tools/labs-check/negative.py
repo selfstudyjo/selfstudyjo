@@ -245,6 +245,126 @@ MUTATIONS = [
      'src/services/labs.service.ts',
      '        } catch {\n            return empty;\n        }',
      '        } finally {\n            void empty;\n        }'),
+
+    # ── 2026-09-05: the file explorer ──────────────────────────────────────
+    #
+    # Every one of these shipped once somewhere on this platform, and none of
+    # them raises. The comparator is the worst of them: a tree that reorders
+    # itself under a pointer mid-drag is not a fault anybody can name.
+
+    ('the tree comparator stops being a total order',
+     'src/utils/fileTree.ts',
+     '        return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;',
+     '        return 0;'),
+
+    ('folders stop sorting before files',
+     'src/utils/fileTree.ts',
+     "        if (a.kind !== b.kind) return a.kind === 'folder' ? -1 : 1;",
+     '        // kind ignored'),
+
+    ('an empty folder is derived from the file paths instead of trusted',
+     'src/utils/fileTree.ts',
+     '        if (path) folderAt(path);',
+     '        if (!path) folderAt(path);'),
+
+    ('a folder can be dropped inside itself again',
+     'src/utils/fileTree.ts',
+     "        if (into === from || into.startsWith(`${from}/`)) {\n"
+     "            return { problem: 'A folder cannot be moved inside itself',"
+     ' noop: false };\n        }',
+     '        void into;'),
+
+    ('a drop on the row\'s own parent is reported as an error',
+     'src/utils/fileTree.ts',
+     "    if (to === from) return { problem: null, noop: true };",
+     '    void 0;'),
+
+    ('a drop onto an occupied path stops being refused',
+     'src/utils/fileTree.ts',
+     '    if (exists(to, files, dirs)) {\n'
+     '        return { problem: `${to} already exists`, noop: false };\n    }',
+     '    void files;'),
+
+    ('a rename accepts a slash, so it moves the file somewhere else',
+     'src/utils/fileTree.ts',
+     "    if (text.includes('/')) return 'A name cannot contain a slash';",
+     '    void 0;'),
+
+    ('".." comes back through the path rule',
+     'src/utils/fileTree.ts',
+     '        const problem = nameProblem(part);\n        if (problem) return problem;',
+     '        void part;'),
+
+    ('an expanded folder collapses on rename',
+     'src/utils/fileTree.ts',
+     "        if (path === from) out.add(to);\n"
+     "        else if (path.startsWith(prefix)) out.add(to + '/' +"
+     ' path.slice(prefix.length));\n        else out.add(path);',
+     '        out.add(path);'),
+
+    ('a dotfile is read as having an extension',
+     'src/utils/fileTree.ts',
+     '    if (cut <= 0) return \'\';',
+     '    if (cut < 0) return \'\';'),
+
+    ('a folder delete stops naming what is inside it',
+     'src/utils/fileTree.ts',
+     '    return `Delete the folder ${path} and the ${inside} file(s) in it?`;',
+     '    return `Delete the folder ${path}?`;'),
+
+    ('a filter hides the folders that lead to a hit',
+     'src/utils/fileTree.ts',
+     '        else if (kids.length) out.push({ ...node, children: kids });',
+     '        void kids;'),
+
+    ('a drop target highlights before it is known to be legal',
+     'src/components/labs/LabFiles.vue',
+     "  dropTarget.value = plan.problem || plan.noop ? null : row.path;",
+     '  dropTarget.value = row.path;'),
+
+    ('refresh throws the open buffer away again',
+     'src/components/labs/LabFiles.vue',
+     "  if (!files.value.some(entry => entry.path === path.value)) {",
+     '  if (true) {'),
+
+    ('a dirty buffer is discarded without asking',
+     'src/components/labs/LabFiles.vue',
+     "  if (dirty.value && !window.confirm(\n"
+     "    `${basename(path.value)} has unsaved changes. Discard them?`)) return;",
+     '  void 0;'),
+
+    ('Ctrl+S stops saving',
+     'src/components/labs/LabFiles.vue',
+     '          @keydown.ctrl.s.prevent="save"',
+     '          data-was="ctrl-s"'),
+
+    ('a folder delete stops passing recursive, so the backend refuses it',
+     'src/components/labs/LabFiles.vue',
+     "  const recursive = row.kind === 'folder';\n  const result = await"
+     ' props.remove(row.path, recursive);',
+     '  const result = await props.remove(row.path);'),
+
+    ('a new file is held in the browser rather than written',
+     'src/components/labs/LabFiles.vue',
+     "    const result = await props.write(target, '');",
+     '    const result = { ok: true } as Result;'),
+
+    ('the context menu goes back to being fixed, above the sidebar',
+     'src/assets/css/labs.css',
+     '.sl-menu {\n    position: absolute;',
+     '.sl-menu {\n    position: fixed;'),
+
+    ('the tree mirrors in Arabic, so its paths read as broken',
+     'src/assets/css/labs.css',
+     '       identifier. Same rule `rtl.css` applies to a console and a `<pre>`. */\n'
+     '    direction: ltr;',
+     '       identifier. Same rule `rtl.css` applies to a console and a `<pre>`. */',
+     ),
+
+    ('the tree track loses its minmax(0, ...) and one long path widens it',
+     'src/assets/css/labs.css',
+     '    .sl-files__body { grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); }',
+     '    .sl-files__body { grid-template-columns: 16rem 1fr; }'),
 ]
 
 def run_check():
