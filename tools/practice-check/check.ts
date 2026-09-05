@@ -718,5 +718,17 @@ section('11. The activity record');
         !sources.some(row => row.label === 'Exam certificates'), sources);
 }
 
+/*
+  THE RENDER CHECKS, last and awaited.
+
+  Everything above drives plain functions and cannot see a TEMPLATE that throws
+  — and the two ways these templates throw are both invisible in source: a
+  missing i18n plugin makes every `$t(...)` throw and the component render
+  nothing at all, and a reference the setup does not define is a runtime error
+  rather than a compile one. See `render.ts`.
+*/
+const { renderChecks } = await import('./render');
+await renderChecks(check, section);
+
 console.log(failures ? `\n${failures} failed` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

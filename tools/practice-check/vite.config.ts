@@ -5,9 +5,12 @@
 //
 //   npm run check:practice
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
+  // The render checks compile three .vue files.
+  plugins: [vue()],
   resolve: {
     // `@` is needed here and not in every check config, because
     // `practiceIntegrity.ts` imports `Params` from `@/i18n` — the placeholder
