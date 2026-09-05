@@ -71,11 +71,40 @@ if (new URLSearchParams(location.search).has('probe')) {
             lines.push(`EMPTY PAGE          nothing rendered `
                 + `(${text.length} characters of text, mounted=${Boolean(mounted)})`);
         }
+        /*
+          AN ELEMENT INSIDE A HORIZONTAL SCROLLER IS NOT JUDGED AGAINST THE
+          VIEWPORT.
+
+          `.lb-tableWrap` is `overflow-x: auto`, so a table wider than a 320px
+          phone scrolls inside it - which is the whole point of that
+          declaration. Measured against the viewport alone every cell in it is a
+          finding, and adding one column produced 68 of them for one designed
+          behaviour. Sixty-eight false reports drown the one real thing the next
+          change introduces; `tools/rtl-audit` learned that going from 2,223
+          findings to 14 and `tools/home-preview` learned it again.
+
+          ONLY `auto` and `scroll`, not `hidden` or `clip`. The first version
+          of this excused those too and went from 68 findings to 816: an element
+          flush against a `hidden` container's right edge became a finding at
+          every width, which is worse than the problem it set out to fix.
+
+          The container itself is still judged, because IT is what would give
+          the page a sideways scrollbar - and `documentElement.scrollWidth`
+          above measures that directly in any case.
+        */
+        const inScroller = (el: HTMLElement): boolean => {
+            for (let node = el.parentElement; node; node = node.parentElement) {
+                const overflow = getComputedStyle(node).overflowX;
+                if (overflow === 'auto' || overflow === 'scroll') return true;
+            }
+            return false;
+        };
+
         for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
             const box = el.getBoundingClientRect();
             if (box.width === 0 && box.height === 0) continue;
             const name = `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(/\s+/)[0] || '-'}`;
-            if (box.right > viewport + 1) {
+            if (box.right > viewport + 1 && !inScroller(el)) {
                 lines.push(`OVERFLOWS VIEWPORT  ${name}  right=${Math.round(box.right)}`);
             }
             if (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX === 'visible') {

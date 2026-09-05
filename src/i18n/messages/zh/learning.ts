@@ -427,9 +427,6 @@ const learning: Catalogue = {
     'Equal points share a rank.': '积分相同则名次相同。',
     'Two learners on the same total are both shown at the same number, and the next learner takes the rank after both of them.':
         '总分相同的两位学习者显示同一名次，下一位学习者的名次排在他们两人之后。',
-    'No identifiers are published.': '不公开任何标识信息。',
-    'The board shows the name a learner\'s own certificates carry, their totals, and nothing else — no account id, no email, and no list of what anybody failed.':
-        '排行榜只显示学习者证书上的姓名和其总计数据，此外别无其他 —— 没有账户 ID、没有邮箱，也没有任何人未通过项目的清单。',
 
     /* ---------------------------------------------------------------- *
      * Scheduling an exam (apps 20 + 21)

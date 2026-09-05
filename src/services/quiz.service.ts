@@ -91,6 +91,16 @@ export interface SubmitQuizRequest {
     score: number;
     result_status: 'PASSED' | 'FAILED';
     result_message?: string;
+    /**
+     * Which sitting this came out of - app 20's `practice_events`.
+     *
+     * The ONLY integrity field a client may set. App 20 counts the stored
+     * breaches for the sitting itself and overrides the score to zero when
+     * there were five; a client that could send its own verdict could declare
+     * its own sitting clean, which is the whole reason the count is
+     * server-side.
+     */
+    practice_session?: string;
     user_answers: {
         external_id?: string;
         quiz_question: string;
@@ -108,6 +118,17 @@ export interface SubmitQuizResponse {
     date_taken: string;
     result_message: string;
     result_status: 'PASSED' | 'FAILED';
+    /**
+     * What app 20 made of the sitting. Written by the service, read-only here.
+     *
+     * Always present in the response, even as '' - a client cannot tell "this
+     * replica has not pulled the build" from "nothing was recorded" when a
+     * field is simply absent, and the difference decides whether the results
+     * screen says the sitting was voided or that the candidate simply failed.
+     */
+    integrity_status?: 'clean' | 'warned' | 'failed' | '';
+    integrity_negatives?: number;
+    integrity_points?: number;
 }
 
 const DEBUG = true;
@@ -410,7 +431,16 @@ class QuizService {
         username: string,
         quizId: string,
         scoreData: { score: number; total: number; percentage: number; passed: boolean; correctAnswers: number },
-        userAnswers: Map<string, string>
+        userAnswers: Map<string, string>,
+        /**
+         * The sitting, when there is one.
+         *
+         * Optional and last, so every existing caller compiles unchanged - and
+         * a submission without one is stored exactly as it was before the
+         * ledger existed, which is what makes this deployable ahead of the
+         * backend rather than in step with it.
+         */
+        practiceSession?: string,
     ): SubmitQuizRequest {
         const userAnswersArray: any[] = [];
         userAnswers.forEach((answerId, questionId) => {
@@ -433,6 +463,12 @@ class QuizService {
             score: finalScore,
             result_status: scoreData.passed ? 'PASSED' : 'FAILED',
             result_message: resultMessage,
+            // Omitted rather than sent empty when there is no sitting. App 20
+            // reads an ABSENT field as "leave it alone" and an empty one as a
+            // value, so sending '' would stamp a blank session onto the record
+            // and the verdict would be computed over nothing - which is the
+            // same answer, and a record that claims a sitting it never had.
+            ...(practiceSession ? { practice_session: practiceSession } : {}),
             user_answers: userAnswersArray
         };
     }

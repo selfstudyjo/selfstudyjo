@@ -57,6 +57,17 @@
         </div>
       </section>
 
+      <!--
+        HOW POINTS WORK, above the filters and below their own totals.
+
+        Above the list rather than under it, because a student who has just
+        seen "3 labs completed, 48 points" is at the exact moment of asking
+        where the 48 came from - and a scoring system nobody can read is one
+        everybody assumes is rigged. The leaderboard prints its own table for
+        the same reason one layer up.
+      -->
+      <LabScoring />
+
       <div class="sl-filters">
         <label class="sl-search">
           <Search class="sl-i" />
@@ -191,6 +202,7 @@ import {
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/store/auth';
 import { labsService } from '@/services/labs.service';
+import LabScoring from '@/components/practice/LabScoring.vue';
 import {
   DIFFICULTY_LABELS, STATUS_LABELS, filterLabs, groupByTrack,
   summariseProgress, type LabProgress, type LabSummary, type LabTrack,

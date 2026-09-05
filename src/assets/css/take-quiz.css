@@ -946,3 +946,53 @@
   .loading-spinner { display: none !important; }
   .score-value { -webkit-text-fill-color: initial; color: #000 !important; background: none; }
 }
+/* =====================================================================
+   THE VOIDED-SITTING LIST
+   ---------------------------------------------------------------------
+   Added with the practice ledger. Anchored on `.take-quiz-page`, because this
+   file is loaded with a JS `import` and is therefore a PLATFORM stylesheet in
+   production — which is how `roblox-tool.css`'s bare `.placeholder` came to
+   cover the Schedule Exam calendar.
+
+   The rest of the reprimand reuses `.result-card.failed`, which this file
+   already styles: a voided sitting IS a failed one as far as the card's
+   furniture goes, and the difference — the accusation, the count, the list
+   below — is carried by the words rather than by a second card.
+   ===================================================================== */
+
+.take-quiz-page .void-breaches {
+    list-style: none;
+    margin: 0 0 1.2rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: start;
+    width: 100%;
+    max-width: 32rem;
+}
+
+.take-quiz-page .void-breaches li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    /* A WASH with a `-on-paper` ink rather than the solid status hue with the
+       page's own text on it: `--sfs-danger-text` is derived against a plain
+       surface and this is a tinted island. */
+    background: var(--sfs-danger-wash, rgba(248, 113, 113, 0.14));
+    color: var(--sfs-danger-on-paper, #7f1d1d);
+    border-inline-start: 3px solid var(--sfs-danger, #f87171);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+.take-quiz-page .void-breaches__when {
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+    .take-quiz-page .void-breaches li { border: 1px solid CanvasText !important; }
+}

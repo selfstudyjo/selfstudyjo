@@ -225,6 +225,11 @@ console.log('\n5. A globally loaded page stylesheet stays on its own page');
         // globally loaded sheet safe. Debt is only tolerable where it predates
         // the check.
         'leaderboard.css',
+        // Added with the activity record. Gated from the day it was written,
+        // which is the only time that is cheap: every class in it is
+        // `lb-sheet`-, `lb-feed`-, `lb-conduct`- or `lb-list`-prefixed and used
+        // by exactly one file, so there is no debt to grandfather in.
+        'leaderboard-activity.css',
     ]);
     const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
         'exam-system.css', 'side-nav.css', 'style.css', 'ui.css']);

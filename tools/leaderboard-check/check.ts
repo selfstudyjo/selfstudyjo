@@ -678,7 +678,18 @@ console.log('\n12. The engine never reads the clock');
       check depend on the hour it ran, and — worse — would let one render put an
       event in one chart and not another if it straddled midnight.
     */
-    const engine = source('src/utils/leaderboardEngine.ts');
+    /*
+      COMMENTS STRIPPED, and the reason is this check's own history.
+
+      `code()` exists a few lines up for exactly this and was not used here.
+      The engine's doc comment names `window.alt_tab` as an example of a
+      practice action's catalogue key, and the DOM assertion below matched the
+      word "window." inside it - so a rule fired on the paragraph explaining
+      the rule, which is a rule nobody can document. `check:aichat` and this
+      file's own "no email is rendered" assertion have both been corrected for
+      the same shape (working rule 44).
+    */
+    const engine = code('src/utils/leaderboardEngine.ts');
     check('no Date.now() in the engine', !/Date\.now\s*\(/.test(engine));
     check('no argument-less new Date() in the engine', !/new Date\s*\(\s*\)/.test(engine));
     check('no Math.random() in the engine', !/Math\.random\s*\(/.test(engine));

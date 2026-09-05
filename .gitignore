@@ -146,6 +146,10 @@ tools/photomask-check/dist/
 # `node tools/leaderboard-preview/shoot.mjs`; ~25 PNGs per run is not something
 # to carry in the repo.
 tools/leaderboard-preview/shots/
+# ...and of shoot-activity.mjs, which opens the record and photographs its five
+# tabs. A second directory rather than a subdirectory of the first, so a diff of
+# the board is not full of dialog shots.
+tools/leaderboard-preview/shots-activity/
 
 # Output of tools/rtl-audit — the same, one set per language. 48 PNGs a run.
 tools/rtl-audit/shots-ar/

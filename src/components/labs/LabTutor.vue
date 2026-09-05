@@ -122,6 +122,20 @@ const props = defineProps<{
   loadContext: () => Promise<string>;
 }>();
 
+/**
+ * Emitted once per ASK that actually reached the provider.
+ *
+ * The workspace charges for asks past the free allowance, so this has to fire
+ * for exactly the asks that happened: not on a click that was refused because
+ * the tutor was already busy, not on an empty box, and not on a request that
+ * failed - the student did not get an answer, so charging them for one would
+ * be charging for the provider being down.
+ *
+ * It fires BEFORE the answer arrives rather than after, because the ask is what
+ * is being counted and a student who navigates away mid-answer still asked.
+ */
+const emit = defineEmits<{ (event: 'asked'): void }>();
+
 const turns = ref<TutorMessage[]>([]);
 const question = ref('');
 const busy = ref(false);
@@ -147,6 +161,8 @@ async function ask(text: string) {
   if (busy.value || !text.trim()) return;
   error.value = '';
   turns.value.push({ role: 'user', content: text });
+  // After the guards, so a refused click and an empty box cost nothing.
+  emit('asked');
   busy.value = true;
   await scrollDown();
   try {
@@ -173,6 +189,15 @@ async function send() {
 async function review() {
   if (busy.value) return;
   error.value = '';
+  /*
+    A REVIEW COUNTS AS AN ASK, and it should.
+
+    It is a model call over the whole environment - the most expensive thing
+    this pane can do and the one most likely to hand a student the answer.
+    Leaving it free would make the allowance meaningless: three asks and then
+    Review my work as many times as you like.
+  */
+  emit('asked');
   busy.value = true;
   await scrollDown();
   try {

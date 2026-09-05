@@ -103,14 +103,53 @@ export interface UserExamResult {
      */
     certificate_status?: 'pending' | 'issued' | 'not_required' | '';
     certificate_id?: string;
+    /**
+     * Which sitting this result came out of - app 20's `practice_events`.
+     *
+     * The ONLY integrity field a client may set, and the reason it exists is
+     * that it is what tells the service which ledger to count. Everything
+     * below it is written by app 20 from the STORED events and is read-only
+     * here: a client that could set its own `integrity_status` could declare
+     * its own sitting clean, which is the whole reason the count is
+     * server-side.
+     */
+    practice_session?: string;
+    /**
+     * '' on a record written before the ledger existed, or by a client that
+     * sent no sitting. Always present in the response, deliberately - a client
+     * cannot tell "this replica has not pulled the build" from "nothing was
+     * recorded" when a field is simply absent.
+     */
+    integrity_status?: 'clean' | 'warned' | 'failed' | '';
+    /** How many breaches were counted against the sitting. */
+    integrity_negatives?: number;
+    /** The net conduct points. Can be negative. */
+    integrity_points?: number;
     user_answers?: UserExamAnswer[];
 }
 
 export interface UserExamAnswer {
     external_id: string;
-    user_exam_result: string;
+    /**
+     * Optional on the way OUT, always present on the way in.
+     *
+     * A nested create does not know the result's id yet - app 20's
+     * `_create_result` writes the result first and fills this in on each answer
+     * afterwards, which is what makes a partial write leave a result with fewer
+     * answers rather than orphaned answers with no result. Declared required,
+     * every submission was a type error.
+     */
+    user_exam_result?: string;
     exam_question: string;
-    exam_answer?: string;
+    /**
+     * `null` for a question left unanswered, and NOT `''`.
+     *
+     * App 20's `validate_user_answer` stores null deliberately, because the
+     * review screen tests this for null when it renders the paper. Declared as
+     * `string | undefined`, the submission that sends null was a type error -
+     * which is what it was, on every exam, before this was corrected.
+     */
+    exam_answer?: string | null;
     flagged: boolean;
 }
 

@@ -254,12 +254,31 @@
                   tool in a lab has `kind === 'ai'`, so a function ref keeping
                   the last one it is handed is exact rather than adequate.
                 -->
-                <LabTutor
-                  v-else-if="tool.kind === 'ai'"
-                  :ref="el => { if (el) tutor = el }"
-                  :lab="lab"
-                  :load-context="loadContext"
-                />
+                <template v-else-if="tool.kind === 'ai'">
+                  <!--
+                    THE ALLOWANCE, said before the ask rather than after it.
+
+                    Three asks are free and each one after that costs points.
+                    A student who finds that out from a points total that went
+                    down has been penalised for something nobody told them
+                    about - which is the same unfairness the exam's rules gate
+                    exists to prevent, at a much smaller scale.
+                  -->
+                  <p class="sl-tutorNote" :class="{ 'is-over': tutorAsks >= AI_FREE_ASKS }">
+                    <template v-if="tutorAsks < AI_FREE_ASKS">
+                      {{ $t('{v0} of your {v1} free tutor asks used in this lab. Each ask after that costs {v2} points — and finishing within the allowance earns {v3}.', { v0: tutorAsks, v1: AI_FREE_ASKS, v2: overusePenalty, v3: cleanBonus }) }}
+                    </template>
+                    <template v-else>
+                      {{ $t('Your {v0} free asks are used. Each further ask costs {v1} points. It will not fail the lab and it will not take a verified task away from you.', { v0: AI_FREE_ASKS, v1: overusePenalty }) }}
+                    </template>
+                  </p>
+                  <LabTutor
+                    :ref="el => { if (el) tutor = el }"
+                    :lab="lab"
+                    :load-context="loadContext"
+                    @asked="noteTutorAsk"
+                  />
+                </template>
               </div>
             </template>
           </div>
@@ -268,6 +287,21 @@
 
         <!-- The tasks -->
         <aside class="sl-side">
+          <!--
+            The practice record, above the tasks.
+
+            A LAB'S VERSION OF THIS PANEL CANNOT FAIL ANYBODY - `FAILS_AT.lab`
+            is null, so `IntegrityMeter` draws no strike pips and says so in
+            words. It is here at all because the points are public and a
+            student is owed the running total that produced them, not because
+            anything is being invigilated.
+          -->
+          <IntegrityMeter
+            context="lab"
+            :verdict="sitting.verdict.value"
+            :events="sitting.log.value"
+          />
+
           <LabTasks
             :grade="grade"
             :busy="grading"
@@ -347,6 +381,9 @@ import LabQuery from '@/components/labs/LabQuery.vue';
 import LabTasks from '@/components/labs/LabTasks.vue';
 import LabTutor from '@/components/labs/LabTutor.vue';
 import LabWeb from '@/components/labs/LabWeb.vue';
+import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
+import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
 
 /**
  * App 27's studio, embedded in the Network Simulator pane.
@@ -415,6 +452,49 @@ const report = ref<GradeReport | null>(null);
 const tutor = ref<any>(null);
 const filesPane = ref<any>(null);
 
+/* ------------------------------------------------------------------ *
+ * The practice record
+ * ------------------------------------------------------------------ */
+
+/**
+ * This lab session's ledger.
+ *
+ * NO `onVoided`, and that is the whole difference from an exam: `FAILS_AT.lab`
+ * is null, so `verdictFor` never reports a failure and the callback could not
+ * fire. A lab is a place to try things - leaving the window to read the
+ * documentation is what a practitioner does, and failing somebody for it would
+ * teach them to work worse.
+ *
+ * The DETECTORS are narrowed for the same reason. `devtools` and `print` are
+ * off: a lab's whole subject is sometimes the page the student is building, so
+ * opening the developer tools in one is work rather than misconduct, and
+ * printing a brief is reading it.
+ */
+const sitting = usePracticeSitting({
+  context: 'lab',
+  watch: { devtools: false, print: false, fullscreen: false },
+});
+
+/** How many times the tutor has been asked in this lab. */
+const tutorAsks = ref(0);
+
+const overusePenalty = Math.abs(ACTIONS['ai.overused'].points);
+const cleanBonus = ACTIONS['lab.clean_session'].points;
+
+/**
+ * Record a tutor ask, and charge for it past the allowance.
+ *
+ * The FIRST THREE are `lab.ai_asked`, which is neutral and capped at three by
+ * the catalogue; everything after is `ai.overused`, which costs. Two actions
+ * rather than one with a conditional value, because the value has to come from
+ * the server's catalogue (see `practiceIntegrity`'s header) and a catalogue
+ * entry has one price.
+ */
+function noteTutorAsk() {
+  tutorAsks.value += 1;
+  sitting.note(tutorAsks.value <= AI_FREE_ASKS ? 'lab.ai_asked' : 'ai.overused');
+}
+
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const username = computed(() => authStore.user?.username || '');
 const userId = computed(() => String(authStore.user?.user_id || ''));
@@ -482,6 +562,20 @@ async function open() {
     }
     lab.value = payload.lab;
     grade.value = payload.grade;
+    /*
+      The ledger opens with the lab.
+
+      `begin` is idempotent, so a re-open after Reset environment does not
+      start a second session - which would be a second session id and a verdict
+      computed over half the work each. The tutor count is deliberately NOT
+      reset by a re-open either: the allowance is per lab, not per reload, or
+      it would be three free asks every time somebody pressed Reset.
+    */
+    sitting.begin(
+      { id: payload.lab.id, name: payload.lab.title },
+      { userId: userId.value, username: username.value },
+    );
+    sitting.note('lab.opened');
     views.value = payload.views || {};
     webSource.value = (payload.views as any)?.web || {};
     note.value = payload.note || '';
@@ -605,6 +699,31 @@ async function grade0() {
       views.value = result.views as any;
     }
     report.value = gradeReport(before, result?.grade ?? null);
+    /*
+      RECORDED ON WHAT IT FOUND, not on the press.
+
+      `lab.checked` is free and unlimited, because checking often is how a lab
+      is meant to be worked. `lab.persisted` is the award, and it is paid only
+      when the grade actually MOVED - capped at four by the catalogue, so a
+      twelve-task lab cannot out-earn an exam by being long. Paying per press
+      would pay for pressing a button.
+    */
+    sitting.note('lab.checked');
+    if ((result?.grade?.earned ?? 0) > (before.earned ?? 0)) {
+      sitting.note('lab.persisted');
+    }
+    /*
+      Finishing within the tutor allowance, awarded once by the catalogue's
+      own cap.
+
+      Read off the fresh grade rather than the ref, because `grade.value` is
+      assigned above and a re-read would be the same object - the point is that
+      the award depends on the state AFTER this grading, and on the tutor count
+      as it stands now rather than at the start.
+    */
+    if (result?.grade?.status === 'completed' && tutorAsks.value <= AI_FREE_ASKS) {
+      sitting.note('lab.clean_session');
+    }
   } finally {
     grading.value = false;
   }
@@ -711,6 +830,9 @@ async function reset() {
   busy.value = true;
   try {
     await labsService.resetLab(username.value, lab.value.id);
+    // Recorded as neutral: starting again costs nothing, and a student who
+    // believed otherwise would keep working in a broken environment.
+    sitting.note('lab.reset');
     await open();
   } finally {
     busy.value = false;

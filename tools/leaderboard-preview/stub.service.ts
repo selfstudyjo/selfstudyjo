@@ -37,7 +37,12 @@
   straight back here — a module importing itself. The relative path steps around
   the alias and reaches the genuine article.
 */
-import { flattenSources } from '../../src/services/leaderboard.service';
+import {
+    enrolmentsOf, flattenSources, labRowsOf,
+} from '../../src/services/leaderboard.service';
+import {
+    labelOf, pointsOf, severityOf, specOf,
+} from '../../src/utils/practiceIntegrity';
 import type { LeaderboardEvent } from '@/utils/leaderboardEngine';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -272,6 +277,106 @@ export async function loadAchievements(): Promise<SourceReport> {
         },
     ];
 
+    /*
+      APP 20's PRACTICE LEDGER, and the cases are chosen for the branches
+      rather than for realism.
+
+      Rows, not events - `flattenSources` does the mapping, for the reason the
+      header gives: a stub that handed the view finished events would be testing
+      its own sample data. What is in here:
+
+        * a VOIDED sitting - five breaches against one session, so the activity
+          panel's "ended for cheating" banner is drawn and the conduct tile goes
+          negative. Nothing else on the page can produce that state;
+        * a WARNED sitting - two breaches and a positive award, so the panel has
+          to show a mixed ledger rather than an all-bad one;
+        * NEUTRAL actions, which are worth zero and are what makes the feed
+          legible: without them the panel is a list of misconduct rather than a
+          record;
+        * a LAB sitting with more breaches than an exam's limit, which must NOT
+          be reported as voided - the one property of this feature that is
+          asserted in both directions;
+        * an action with an UNKNOWN name, which a replica a release ahead would
+          send and which must score zero rather than being guessed at.
+    */
+    const practiceEvents: any[] = [];
+    const breach = (user: string, subject: string, session: string,
+                    action: string, index: number, context = 'exam',
+                    ago = 6) => practiceEvents.push({
+        external_id: `pe-${session}-${index}`,
+        user_id: user, username: user, context,
+        subject_id: subject, subject_name: '',
+        session_id: session, action,
+        /*
+          DERIVED, exactly as app 20's `practice_event` derives them.
+
+          The first version of this stub sent `points: 0` and `severity: ''`
+          with a comment saying the service derives them - which is true of the
+          service and false of the WIRE: the derivation happens on the way OUT,
+          so what a replica answers with carries real values. Sending zeros made
+          every learner's Conduct column read as an em dash on a page whose
+          whole subject is that figure, and it looked completely correct.
+
+          The same trap as the "Untitled" chart this harness was written after,
+          and as app 23's identity e2e, whose stub answered the same wrong
+          endpoint the code did: a stub built from a different assumption than
+          production tests nothing.
+        */
+        label: labelOf(action),
+        severity: severityOf(action),
+        points: pointsOf(action),
+        why: specOf(action)?.why ?? '',
+        detail: action === 'clipboard.copy' ? '412 characters' : '',
+        at: new Date(now - ago * DAY + index * 60_000).toISOString(),
+    });
+
+    // u-0: a sitting that was voided.
+    breach('u-0', 'exam-1', 'sit-void', 'assessment.rules_acknowledged', 0);
+    breach('u-0', 'exam-1', 'sit-void', 'assessment.started', 1);
+    breach('u-0', 'exam-1', 'sit-void', 'window.alt_tab', 2);
+    breach('u-0', 'exam-1', 'sit-void', 'window.left', 3);
+    breach('u-0', 'exam-1', 'sit-void', 'clipboard.copy', 4);
+    breach('u-0', 'exam-1', 'sit-void', 'devtools.opened', 5);
+    breach('u-0', 'exam-1', 'sit-void', 'print.attempt', 6);
+
+    // u-1: warned, and earning as well as losing.
+    breach('u-1', 'exam-2', 'sit-warn', 'assessment.started', 0, 'exam', 3);
+    breach('u-1', 'exam-2', 'sit-warn', 'focus.sustained', 1, 'exam', 3);
+    breach('u-1', 'exam-2', 'sit-warn', 'focus.sustained', 2, 'exam', 3);
+    breach('u-1', 'exam-2', 'sit-warn', 'window.left', 3, 'exam', 3);
+    breach('u-1', 'exam-2', 'sit-warn', 'fullscreen.exited', 4, 'exam', 3);
+    breach('u-1', 'exam-2', 'sit-warn', 'assessment.submitted', 5, 'exam', 3);
+
+    // u-3: a clean sitting, which is what the reward path looks like.
+    breach('u-3', 'exam-1', 'sit-clean', 'assessment.started', 0, 'exam', 1);
+    breach('u-3', 'exam-1', 'sit-clean', 'assessment.all_answered', 1, 'exam', 1);
+    breach('u-3', 'exam-1', 'sit-clean', 'assessment.clean_sitting', 2, 'exam', 1);
+
+    // u-0 again, in a LAB: seven breaches and it must not be voided.
+    for (let index = 0; index < 7; index += 1) {
+        breach('u-0', 'bigdata-01', 'sit-lab', 'window.left', index, 'lab', 1);
+    }
+    breach('u-0', 'bigdata-01', 'sit-lab', 'ai.overused', 8, 'lab', 1);
+    breach('u-0', 'bigdata-01', 'sit-lab', 'lab.persisted', 9, 'lab', 1);
+    // An action this build does not know. Scores zero rather than being guessed.
+    breach('u-0', 'bigdata-01', 'sit-lab', 'something.new', 10, 'lab', 1);
+
+    /*
+      App 19's `/registrations/`. NOT scored - see `Enrolment` - and here
+      because the activity panel has to answer "what are they working on", which
+      none of the achievement collections can. One learner is enrolled on a
+      course whose title app 19 does answer for and one on a course it does
+      not, so both the named and the id-only rows are drawn.
+    */
+    const enrolments: any[] = [
+        { user_id: 'u-0', course_external_id: 'course-1',
+          date_registered: new Date(now - 60 * DAY).toISOString() },
+        { user_id: 'u-0', course_external_id: 'course-unnamed',
+          date_registered: new Date(now - 20 * DAY).toISOString() },
+        { user_id: 'u-1', course_external_id: 'course-1',
+          date_registered: new Date(now - 45 * DAY).toISOString() },
+    ];
+
     // App 11's `/api/labs/` side of the title path. `linux-01` is deliberately
     // absent so the "a lab nothing can name is dropped" branch is exercised too.
     const labTitles = new Map<string, string>([
@@ -284,12 +389,20 @@ export async function loadAchievements(): Promise<SourceReport> {
         answered: {
             'Exam results': true, 'Quiz results': true,
             'Exam certificates': true, 'Course certificates': true,
-            'Lab progress': true,
+            'Lab progress': true, 'Practice records': true,
+            'Enrolments': true,
         },
         allFailed: false,
         events: flattenSources({
             examResults, quizResults, examCerts, courseCerts, courseTitles,
-            labProgress, labTitles,
+            labProgress, labTitles, practiceEvents, enrolments,
         }),
+        // The real functions, not a second mapping. `labRowsOf` is a SECOND
+        // pass over the same rows - it keeps the zero-progress ones the board
+        // drops, because "currently working on" is exactly what one of those is
+        // evidence of - and a stub that built the map itself would be testing
+        // its own arithmetic.
+        labRows: labRowsOf(labProgress, labTitles),
+        enrolments: enrolmentsOf(enrolments, courseTitles),
     };
 }

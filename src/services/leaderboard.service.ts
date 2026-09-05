@@ -1,6 +1,8 @@
 import { apiService, withReplicas } from './api';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
 import type { Achievement, LeaderboardEvent } from '@/utils/leaderboardEngine';
+import { severityOf, specOf } from '@/utils/practiceIntegrity';
+import type { Enrolment, LabRow } from '@/utils/learnerDossier';
 
 /**
  * The leaderboard's data layer — six collections off three backends, flattened
@@ -142,6 +144,17 @@ export interface SourceReport {
     /** True when nothing replied — the page shows an error rather than an empty board. */
     allFailed: boolean;
     events: LeaderboardEvent[];
+    /**
+     * The two collections the RANKING does not use and the activity panel does.
+     *
+     * Carried on the report rather than fetched by the panel, because a panel
+     * that fetched on open would be a request per learner whose row somebody
+     * clicked - against a replica whose first answer of the day is ~20 seconds,
+     * on a page that has already paid for six collections. They are already in
+     * hand, so handing them over costs nothing.
+     */
+    labRows: Map<string, LabRow[]>;
+    enrolments: Map<string, Enrolment[]>;
 }
 
 /**
@@ -228,6 +241,19 @@ export interface RawSources {
     labProgress?: readonly any[];
     /** lab_id to title, from app 11's `/api/labs/`. */
     labTitles?: Map<string, string>;
+    /**
+     * App 20's `practice_events` - every action recorded during a sitting.
+     *
+     * Read on a page that needs no account, deliberately, and that is a change
+     * of posture rather than an oversight: the note at the top of this file
+     * says the board publishes no attributed failures, and conduct is now
+     * published on purpose because an integrity system nobody can see does not
+     * deter anything. What is NOT published is the content - a copy is recorded
+     * as a character count and app 20 truncates the detail again on the way in.
+     */
+    practiceEvents?: readonly any[];
+    /** App 19's `/registrations/` - which courses somebody signed up to. */
+    enrolments?: readonly any[];
 }
 
 /**
@@ -386,7 +412,146 @@ export function flattenSources(raw: RawSources): LeaderboardEvent[] {
         });
     }
 
+    /*
+      THE PRACTICE LEDGER (app 20's `practice_events`).
+
+      Every recorded action becomes an event, and `unique` is set to the
+      record's own id - because `bestAttempts` dedupes on
+      `(userId, kind, subjectId)` and a sitting produces a dozen actions against
+      one subject. Without it the whole ledger collapses to one event per paper
+      and the conduct score becomes whichever action happened to be scanned
+      last.
+
+      `points` is CARRIED rather than looked up, and app 20 derives it from its
+      own catalogue on the way out - so a record that arrived through peer sync
+      carrying a forged value is still scored from the catalogue. This side
+      reads the value it was given and `severity` is re-derived locally as a
+      second line of defence, because a severity is what decides whether an
+      action counts towards a strike limit and the two catalogues are asserted
+      equal by `npm run check:practice`.
+
+      A NEUTRAL action is kept. It is worth zero, so it changes no total, and it
+      is what makes the published feed legible: "started the exam at 09:02,
+      submitted at 09:41" is the context the breaches in between are read in,
+      and a feed showing only misconduct would be an accusation rather than a
+      record.
+    */
+    for (const row of raw.practiceEvents ?? []) {
+        const userId = String(row?.user_id || '').trim();
+        const action = String(row?.action || '').trim();
+        const sessionId = String(row?.session_id || '').trim();
+        const externalId = String(row?.external_id || '').trim();
+        if (!userId || !action || !externalId) continue;
+        const context = String(row?.context || '').trim();
+        // A subject is required by `bestAttempts`; a sitting always has one, and
+        // an event without one is a record this build cannot attribute.
+        const subjectId = String(row?.subject_id || '').trim();
+        if (!subjectId) continue;
+        const carried = Number(row?.points);
+        events.push({
+            kind: 'practice',
+            userId,
+            // A practice event carries a username and never a full name, so it
+            // must not be allowed to displace the name a certificate prints -
+            // `aggregate` prefers the FRESHEST name and a breach recorded this
+            // morning is fresher than a certificate issued last year. Same
+            // reasoning as a lab progress record.
+            name: '',
+            fallbackName: String(row?.username || '').trim() || undefined,
+            subjectId,
+            subjectName: String(row?.subject_name || '').trim() || undefined,
+            unique: externalId,
+            score: null,
+            // Meaningless for a conduct action, and false rather than true so
+            // nothing downstream can read it as an achievement.
+            passed: false,
+            at: stamp(row?.at || row?.occurred_at),
+            points: Number.isFinite(carried) ? carried : 0,
+            // Re-derived locally rather than trusted, for the reason above.
+            // Falls back to what the service said when this build does not know
+            // the action, which is what a replica a release ahead sends.
+            severity: specOf(action)
+                ? severityOf(action)
+                : (row?.severity === 'negative' || row?.severity === 'positive'
+                    ? row.severity : 'neutral'),
+            label: String(row?.label || '').trim() || action,
+            reason: String(row?.why || '').trim(),
+            detail: String(row?.detail || '').trim(),
+            sessionId,
+            action,
+            context: (context === 'exam' || context === 'quiz' || context === 'lab')
+                ? context : undefined,
+        });
+    }
+
     return events;
+}
+
+/**
+ * App 11's progress rows as the dossier reads them - INCLUDING the empty ones.
+ *
+ * `flattenSources` drops a lab with no verified task, and it is right to: app
+ * 11 writes a record the moment somebody clicks a link, so scoring those would
+ * put a learner on a public board for following one. A dossier wants the
+ * opposite, because "currently working on" is exactly what a zero-progress
+ * record is evidence of - so this is a second pass over the same rows rather
+ * than a change to that filter.
+ */
+export function labRowsOf(
+    rows: readonly any[], titles: Map<string, string>,
+): Map<string, LabRow[]> {
+    const byUser = new Map<string, LabRow[]>();
+    for (const row of rows || []) {
+        const labId = String(row?.lab_id || '').trim();
+        /*
+          KEYED ON `user_id`, and a row without one is dropped.
+
+          App 11 keys its progress uid on a `user_id` where there is one and on
+          a lowercased USERNAME otherwise (`progress_uid`), so a row can
+          legitimately carry only the username - and the events on this page
+          have already resolved everybody to an id. Guessing the join from a
+          username would attribute a lab to whoever happens to share it, and a
+          lab attributed to the wrong learner is worse than one attributed to
+          nobody.
+        */
+        const userId = String(row?.user_id || '').trim();
+        if (!labId || !userId) continue;
+        const list = byUser.get(userId) ?? [];
+        list.push({
+            labId,
+            labName: titles.get(labId) || '',
+            track: String(row?.track || ''),
+            status: String(row?.status || ''),
+            earned: Math.max(0, Number(row?.earned) || 0),
+            possible: Math.max(0, Number(row?.possible) || 0),
+            percent: Math.max(0, Math.min(100, Number(row?.score) || 0)),
+            startedAt: stamp(row?.started_at),
+            lastAt: stamp(row?.last_active || row?.updated_at),
+            completedAt: stamp(row?.completed_at),
+        });
+        byUser.set(userId, list);
+    }
+    return byUser;
+}
+
+/** Who is enrolled on what, keyed by user. App 19's `/registrations/`. */
+export function enrolmentsOf(
+    rows: readonly any[], titles: Map<string, string>,
+): Map<string, Enrolment[]> {
+    const byUser = new Map<string, Enrolment[]>();
+    for (const row of rows || []) {
+        const userId = String(row?.user_id || '').trim();
+        const courseId = String(row?.course_external_id || row?.course || '').trim();
+        if (!userId || !courseId) continue;
+        const list = byUser.get(userId) ?? [];
+        list.push({
+            courseId,
+            courseName: titles.get(courseId) || '',
+            at: stamp(row?.date_registered),
+        });
+        byUser.set(userId, list);
+    }
+    return byUser;
 }
 
 /**
@@ -419,6 +584,7 @@ async function labTitles(): Promise<Map<string, string>> {
  */
 export async function loadAchievements(): Promise<SourceReport> {
     const [examResults, quizResults, examCerts, courseCerts, labProgress,
+           practiceEvents, enrolments,
            titles, labs] = await Promise.all([
         collection<any>(EXAM_APP_ID, 'exam', '/user-exam-results/'),
         collection<any>(EXAM_APP_ID, 'exam', '/user-quiz-results/'),
@@ -428,6 +594,12 @@ export async function loadAchievements(): Promise<SourceReport> {
         // and without the key `normalizePaginatedResponse` reads it as a DRF
         // envelope with nothing in it — see `collection`.
         collection<any>(LAB_APP_ID, 'lab', '/api/labs/progress/', 'progress'),
+        // The practice ledger. Eight of the platform's collections now.
+        collection<any>(EXAM_APP_ID, 'exam', '/practice-events/'),
+        // Enrolments. NOT scored - see `Enrolment` - and read here because the
+        // activity panel has to answer "what are they working on", which none
+        // of the achievement collections can.
+        collection<any>(COURSE_APP_ID, 'course', '/registrations/'),
         courseTitles(),
         labTitles(),
     ]);
@@ -438,6 +610,8 @@ export async function loadAchievements(): Promise<SourceReport> {
         'Exam certificates': examCerts.answered,
         'Course certificates': courseCerts.answered,
         'Lab progress': labProgress.answered,
+        'Practice records': practiceEvents.answered,
+        'Enrolments': enrolments.answered,
     };
 
     return {
@@ -451,6 +625,10 @@ export async function loadAchievements(): Promise<SourceReport> {
             courseTitles: titles,
             labProgress: labProgress.rows,
             labTitles: labs,
+            practiceEvents: practiceEvents.rows,
+            enrolments: enrolments.rows,
         }),
+        labRows: labRowsOf(labProgress.rows, labs),
+        enrolments: enrolmentsOf(enrolments.rows, titles),
     };
 }

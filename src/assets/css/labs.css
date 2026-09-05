@@ -1889,3 +1889,40 @@
     .sl-bench__tabs,
     .sl-console__form { display: none !important; }
 }
+
+/* ------------------------------------------------------------------ *
+ * The tutor allowance
+ * ------------------------------------------------------------------ *
+ *
+ * Added with the practice ledger. `sl-`-prefixed like everything else in this
+ * file, which is the condition `check:cssleaks` puts on a globally loaded
+ * sheet — and this one is loaded from `main.ts`, so every selector in it is
+ * live on every page of the platform.
+ *
+ * The `is-over` state changes the WASH and the ink together rather than only
+ * the ink: `--sfs-warning-text` is derived against a plain surface, and a
+ * tinted island is a different backdrop. Pairing them is what stops the
+ * amber-on-amber failure the palette work had to correct 117 rules for.
+ */
+
+.sl-tutorNote {
+    margin: 0 0 0.6rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+    border: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+.sl-tutorNote.is-over {
+    color: var(--sfs-warning-on-paper, #78350f);
+    background: var(--sfs-warning-wash, rgba(251, 191, 36, 0.16));
+    border-style: solid;
+    border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
+}
+
+@media (forced-colors: active) {
+    .sl-tutorNote { border: 1px solid CanvasText !important; }
+}

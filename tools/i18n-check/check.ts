@@ -73,6 +73,8 @@ import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
+import { PRACTICE_KEYS } from '../../src/utils/practiceIntegrity';
+import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 import {
     DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GRADE_REPORT_KEYS, GUI_PANELS,
@@ -630,6 +632,25 @@ const dynamicStrings = new Set<string>([
       that silently reverts to English in both languages.
     */
     ...LAB_STRINGS,
+    /*
+      The practice ledger's own copy: every action's label and the reason it is
+      worth what it is worth, the strike sentences, the reprimand, the lab
+      scoring rules, the kind chips and every "why this earned that" line.
+
+      All of them are spent through a variable - `$t(rule.label)`,
+      `$t(message.key, message.params)`, `$t(line.reason, reasonParams(line))`,
+      `$t(kindLabel(line.kind))` - so no source file holds the literal, the
+      coverage scan cannot see them and the orphan scan below would report
+      every one. DERIVED by reading the catalogue and calling the functions,
+      never a second hand-written list.
+
+      This one matters more than most. The whole point of the ledger is that a
+      student can read WHY they were penalised; a penalty explained in English
+      on an otherwise Arabic screen is a penalty that has not been explained.
+    */
+    ...PRACTICE_KEYS,
+    ...REASON_KEYS,
+    ...Object.values(KIND_LABELS),
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {

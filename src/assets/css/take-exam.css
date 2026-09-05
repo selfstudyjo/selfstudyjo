@@ -1273,3 +1273,190 @@
   .take-exam-page,
   .take-exam-page * { color: var(--sfs-on-paper, #000) !important; background: var(--sfs-paper, #fff) !important; }
 }
+/* =====================================================================
+   THE RULES GATE AND THE REPRIMAND
+   ---------------------------------------------------------------------
+   Added with the practice ledger. Both are anchored on `.take-exam-page`
+   rather than left bare, which is what `check:cssleaks` requires of a globally
+   loaded page stylesheet — `roblox-tool.css`'s bare `.placeholder { inset: 0 }`
+   covered the Schedule Exam calendar and made booking impossible, and this
+   file is loaded the same way.
+
+   Every colour is a derived token, so the pair is measured against the surface
+   it sits on in all ten galaxies rather than picked. The one thing worth
+   knowing: the alarm is a WASH plus a `-on-paper` ink, never the solid status
+   hue with the page's own text on it — `--sfs-danger-text` is derived against
+   a plain surface and a tinted island is a different backdrop, which is the
+   mistake that produced a saturated amber block with amber text on it.
+   ===================================================================== */
+
+.take-exam-page .exam-gate {
+    display: flex;
+    justify-content: center;
+    padding: clamp(1rem, 4vw, 3rem) clamp(0.75rem, 3vw, 2rem);
+}
+
+.take-exam-page .exam-gate__card {
+    width: min(56rem, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    border-radius: var(--sfs-radius-lg, 18px);
+}
+
+.take-exam-page .exam-gate__eyebrow {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+.take-exam-page .exam-gate__title {
+    margin: 0;
+    font-size: clamp(1.3rem, 3.4vw, 2rem);
+    line-height: 1.2;
+    /* A paper's title, which is Arabic when there is a translation and English
+       when there is not — the `$td` fallback makes the second case normal. The
+       direction comes out of the string. */
+    unicode-bidi: plaintext;
+}
+
+.take-exam-page .exam-gate__lede {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--sfs-text-muted, #9aa3b8);
+    max-width: 70ch;
+}
+
+.take-exam-page .exam-gate__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.2rem;
+}
+
+.take-exam-page .exam-gate__go,
+.take-exam-page .exam-gate__out {
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--sfs-radius-sm, 10px);
+    padding: 0.75rem 1.4rem;
+    cursor: pointer;
+    /* 44px, not `2.75rem`: responsive.css scales the root fluidly, so a bare
+       rem measures 41.5px on a 390px phone — under the minimum, on exactly the
+       devices the rule exists for. */
+    min-height: max(2.75rem, 44px);
+}
+
+.take-exam-page .exam-gate__go {
+    color: var(--sfs-on-accent, #ffffff);
+    background: var(--sfs-accent, #667eea);
+    border: 1px solid var(--sfs-accent, #667eea);
+    flex: 1 1 16rem;
+}
+
+.take-exam-page .exam-gate__out {
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: transparent;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+}
+
+.take-exam-page .exam-gate__go:hover { filter: brightness(1.08); }
+.take-exam-page .exam-gate__out:hover { color: var(--sfs-text, #eef1f8); }
+
+/* ---------------- the reprimand ---------------- */
+
+.take-exam-page .void-modal {
+    border: 2px solid var(--sfs-danger, #f87171);
+}
+
+.take-exam-page .void-modal__mark {
+    width: 3.2rem;
+    height: 3.2rem;
+    margin: 0 auto 0.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--sfs-on-danger, #ffffff);
+    background: var(--sfs-danger, #f87171);
+}
+
+.take-exam-page .void-modal__body {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    text-align: start;
+}
+
+.take-exam-page .void-modal__list {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: start;
+}
+
+.take-exam-page .void-modal__list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    background: var(--sfs-danger-wash, rgba(248, 113, 113, 0.14));
+    color: var(--sfs-danger-on-paper, #7f1d1d);
+    border-inline-start: 3px solid var(--sfs-danger, #f87171);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+.take-exam-page .void-modal__when {
+    font-variant-numeric: tabular-nums;
+    /* A clock reading is a machine identifier inside prose that may be Arabic,
+       where a colon is bidi-neutral and gets relocated. */
+    unicode-bidi: isolate;
+    white-space: nowrap;
+}
+
+.take-exam-page .void-modal__score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.8rem;
+    border-radius: var(--sfs-radius-sm, 10px);
+    background: var(--sfs-danger-wash, rgba(248, 113, 113, 0.14));
+    color: var(--sfs-danger-on-paper, #7f1d1d);
+}
+
+.take-exam-page .void-modal__scoreValue {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+}
+
+.take-exam-page .void-modal__scoreLabel {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+@media (forced-colors: active) {
+    /* The one place `!important` is right here: what is being overridden is
+       the browser, which has replaced every colour with a system one, so the
+       shapes that carried the meaning have to be restated. */
+    .take-exam-page .exam-gate__card,
+    .take-exam-page .void-modal,
+    .take-exam-page .void-modal__list li { border: 1px solid CanvasText !important; }
+}

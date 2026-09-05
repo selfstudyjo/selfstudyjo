@@ -1,0 +1,690 @@
+/* =====================================================================
+   The activity record — src/components/leaderboard/LearnerActivity.vue
+
+   A SECOND FILE RATHER THAN AN APPENDIX TO leaderboard.css
+
+   Same `lb-` namespace, same rules, and it is imported from the same view — so
+   it could have been one file. It is two because `leaderboard.css` is 1,200
+   lines about a page and this is about a dialog, and the two get read for
+   different reasons. `npm run check:cssleaks` treats both the same way: this
+   sheet is loaded GLOBALLY (the view imports it with a JS `import`, because the
+   chart card is its own component and a scoped sheet cannot reach it), so in
+   production every selector here is live on every page of the platform. That is
+   how `roblox-tool.css`'s bare `.placeholder { inset: 0 }` came to cover the
+   Schedule Exam calendar. Every selector below is `lb-`-prefixed, which is the
+   condition that makes a globally loaded page stylesheet acceptable.
+
+   THE SHEET IS `position: fixed` AND HAS NO ANCESTOR IT CAN TRUST
+
+   It is rendered outside `.lb-body` in the view, and that is load-bearing:
+   `.lb-body.is-refetching` sets an opacity below 1, which creates a stacking
+   context — so a fixed sheet inside it would be painted against that element
+   rather than against the viewport and would sit behind the page during a
+   refresh. The same class of bug as the console's modals trapped inside a
+   `z-index` wrapper.
+
+   COLOUR: STATUS HUES ONLY WHERE THERE IS A WORD BESIDE THEM
+
+   A points figure that went down is red AND carries a minus sign; a conduct
+   meter that cost points is red AND has its number beside it. Colour is never
+   the only carrier, because in several galaxies two accents are within a few ΔE
+   of each other and in Triangulum two are the same colour to a deuteranope
+   (working rule 37). Every ink here is a derived `--sfs-*-text` token, so it is
+   measured against the surface it sits on in all ten galaxies rather than
+   picked.
+   ===================================================================== */
+
+/* ------------------------------------------------------------------ *
+ * The sheet
+ * ------------------------------------------------------------------ */
+
+.lb-sheet {
+    position: fixed;
+    inset: 0;
+    /* Above the sidebar, which base.css puts at 1000. */
+    z-index: 1400;
+    display: flex;
+    /* `margin: auto` on the panel rather than `align-items: center`, because
+       auto margins resolve to zero when there is no free space: a panel taller
+       than the viewport starts at the top and the overlay scrolls, instead of
+       overflowing upward out of reach. The same reason the console's shared
+       modal layer uses them. */
+    background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.62);
+    padding: clamp(0.5rem, 2vw, 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.lb-sheet__panel {
+    margin: auto;
+    width: min(64rem, 100%);
+    background: var(--sfs-space, #0b0e1a);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    border-radius: var(--sfs-radius-lg, 18px);
+    box-shadow: 0 24px 60px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+    padding: clamp(1rem, 2.4vw, 1.75rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lb-sheet__panel:focus { outline: none; }
+.lb-sheet__panel:focus-visible {
+    outline: 2px solid var(--sfs-accent, #667eea);
+    outline-offset: 2px;
+}
+
+.lb-sheet__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.lb-sheet__who {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.lb-sheet__eyebrow {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+.lb-sheet__name {
+    margin: 0.1rem 0 0.2rem;
+    font-size: clamp(1.15rem, 2.4vw, 1.6rem);
+    line-height: 1.2;
+    /* A person's own name, in whatever script they wrote it in. `plaintext`
+       reads the direction out of the string, so an Arabic name and a Latin one
+       render correctly in the same list - which is the case this platform
+       actually has. */
+    unicode-bidi: plaintext;
+}
+
+.lb-sheet__sub {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #9aa3b8);
+    max-width: 46ch;
+}
+
+.lb-sheet__close {
+    font: inherit;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    border-radius: var(--sfs-radius-sm, 10px);
+    /* 44px, not `2.75rem`. See the note on `.lb-actBtn`. */
+    min-width: max(2.75rem, 44px);
+    min-height: max(2.75rem, 44px);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.lb-sheet__close:hover,
+.lb-sheet__close:focus-visible {
+    color: var(--sfs-text, #eef1f8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+}
+
+/* ------------------------------------------------------------------ *
+ * The tiles
+ * ------------------------------------------------------------------ */
+
+.lb-sheet__tiles {
+    display: grid;
+    /* `min(100%, …)` rather than a bare `1fr`: a `1fr` track's automatic
+       minimum is `min-content`, not zero, so one long number forces its track
+       wider than its share and the row overflows the panel. That was 32
+       separate declarations across the exam screens before anybody worked out
+       it was one bug. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+    gap: 0.7rem;
+}
+
+.lb-sheet__tile {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    border-radius: var(--sfs-radius-sm, 10px);
+    padding: 0.75rem 0.85rem;
+    min-width: 0;
+}
+
+.lb-sheet__tile--lead {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
+}
+
+.lb-sheet__tile.is-down { border-color: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.4); }
+.lb-sheet__tile.is-up { border-color: rgb(var(--sfs-success-rgb, 52 211 153) / 0.35); }
+
+.lb-sheet__tileLabel {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+.lb-sheet__tileValue {
+    margin: 0.2rem 0 0.1rem;
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+}
+
+.lb-sheet__tile.is-down .lb-sheet__tileValue { color: var(--sfs-danger-text, #f87171); }
+.lb-sheet__tile.is-up .lb-sheet__tileValue { color: var(--sfs-success-text, #34d399); }
+
+.lb-sheet__tileFoot {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+/* ------------------------------------------------------------------ *
+ * The voided-sitting banner
+ * ------------------------------------------------------------------ */
+
+.lb-sheet__void {
+    margin: 0;
+    padding: 0.8rem 0.95rem;
+    /* A WASH plus a `-on-paper` ink, not the solid status hue with the page's
+       own text on it. `--sfs-danger-text` is derived against a plain surface
+       and this is a tinted island; the pair below is the one the palette
+       measures for exactly this arrangement, in all ten galaxies. */
+    background: var(--sfs-danger-wash, rgba(248, 113, 113, 0.16));
+    color: var(--sfs-danger-on-paper, #7f1d1d);
+    border: 1px solid rgb(var(--sfs-danger-rgb, 248 113 113) / 0.45);
+    border-radius: var(--sfs-radius-sm, 10px);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.lb-sheet__void strong { display: block; margin-bottom: 0.2rem; }
+
+/* ------------------------------------------------------------------ *
+ * Tabs
+ * ------------------------------------------------------------------ */
+
+.lb-sheet__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    padding-bottom: 0.6rem;
+}
+
+.lb-sheet__tab {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    /* Sized to its content, not stretched. Three tabs on `flex: 1` read as one
+       enormous pill rather than as one of three - the mistake the Tools page
+       had to be corrected for. */
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    border-radius: var(--sfs-radius-pill, 999px);
+    padding: 0.4rem 0.85rem;
+    min-height: max(2.2rem, 36px);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lb-sheet__tab:hover { color: var(--sfs-text, #eef1f8); }
+
+.lb-sheet__tab.is-active {
+    color: var(--sfs-on-accent, #ffffff);
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+}
+
+.lb-sheet__tabCount {
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+    unicode-bidi: isolate;
+}
+
+.lb-sheet__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.lb-sheet__note {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--sfs-text-muted, #9aa3b8);
+    max-width: 80ch;
+}
+
+.lb-sheet__empty {
+    margin: 0;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
+    border: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+.lb-sheet__h3 {
+    margin: 0.4rem 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.lb-sheet__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.2rem;
+}
+
+.lb-sheet__charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 0.9rem;
+}
+
+.lb-sheet__foot {
+    border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.1);
+    padding-top: 0.7rem;
+}
+
+.lb-sheet__foot p {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+/* ------------------------------------------------------------------ *
+ * The feed
+ * ------------------------------------------------------------------ */
+
+.lb-feed {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.lb-feed__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.6rem;
+    padding: 0.6rem 0.7rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.035);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+/* The marker is a SHAPE as well as a colour: a 4px bar for a breach and a dot
+   for everything else, so the distinction survives greyscale printing and
+   `forced-colors`, where a colour carries nothing. */
+.lb-feed__mark {
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: 0.35rem;
+    border-radius: 50%;
+    background: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+    flex: 0 0 auto;
+}
+
+.lb-feed__row.is-negative { border-inline-start: 3px solid var(--sfs-danger, #f87171); }
+.lb-feed__row.is-negative .lb-feed__mark {
+    border-radius: 1px;
+    height: 0.9rem;
+    width: 0.3rem;
+    background: var(--sfs-danger, #f87171);
+}
+.lb-feed__row.is-positive .lb-feed__mark { background: var(--sfs-success, #34d399); }
+
+.lb-feed__text { min-width: 0; }
+
+.lb-feed__title {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem;
+    /* Record text: the direction comes out of the string, because a course
+       title is Arabic when there is a translation and English when there is
+       not - and `$td`'s fallback makes the second case normal. */
+    unicode-bidi: plaintext;
+}
+
+.lb-feed__kind {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #9aa3b8);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    border-radius: var(--sfs-radius-pill, 999px);
+    padding: 0.1rem 0.45rem;
+}
+
+.lb-feed__why {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+.lb-feed__meta {
+    margin: 0.25rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    font-size: 0.72rem;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+/* A timestamp and a character count are machine identifiers inside prose that
+   may be Arabic, where a colon, a slash and a digit are all bidi-neutral and
+   get relocated. Isolated. */
+.lb-feed__when,
+.lb-feed__detail,
+.lb-feed__score { unicode-bidi: isolate; }
+
+.lb-feed__points {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+}
+
+.lb-feed__points.is-up { color: var(--sfs-success-text, #34d399); }
+.lb-feed__points.is-down { color: var(--sfs-danger-text, #f87171); }
+.lb-feed__points.is-flat { color: var(--sfs-text-faint, rgba(255, 255, 255, 0.45)); }
+
+/* ------------------------------------------------------------------ *
+ * Conduct
+ * ------------------------------------------------------------------ */
+
+.lb-conduct {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lb-conduct__row {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.035);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
+    border-radius: var(--sfs-radius-sm, 10px);
+    padding: 0.65rem 0.75rem;
+}
+
+.lb-conduct__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.lb-conduct__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lb-conduct__count,
+.lb-conduct__points {
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+}
+
+.lb-conduct__count { color: var(--sfs-text-muted, #9aa3b8); }
+.lb-conduct__points { font-weight: 700; }
+.lb-conduct__points.is-up { color: var(--sfs-success-text, #34d399); }
+.lb-conduct__points.is-down { color: var(--sfs-danger-text, #f87171); }
+.lb-conduct__points.is-flat { color: var(--sfs-text-faint, rgba(255, 255, 255, 0.45)); }
+
+.lb-conduct__why {
+    margin: 0.4rem 0 0;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--sfs-text-muted, #9aa3b8);
+}
+
+/* ------------------------------------------------------------------ *
+ * The sheet's own meter, avatar and button
+ * ------------------------------------------------------------------ *
+ *
+ * Declared here rather than borrowed from leaderboard.css, and the duplication
+ * is deliberate: `check:cssleaks` rule 5 fires on any class in a globally
+ * loaded page stylesheet that two Vue files use, because a shared class is one
+ * either file can restyle for the other. A few repeated declarations is the
+ * price of the sheet and the page being unable to break each other.
+ */
+
+.lb-sheet__avatar {
+    width: 3.2rem;
+    height: 3.2rem;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    overflow: hidden;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sfs-on-accent, #ffffff);
+    background: var(--sfs-accent, #667eea);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+}
+
+.lb-sheet__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lb-sheet__meter {
+    position: relative;
+    height: 0.45rem;
+    border-radius: var(--sfs-radius-pill, 999px);
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
+    overflow: hidden;
+    /* A dial is a PLACE, not a paragraph. Mirrored, the same value would point
+       somewhere else on an Arabic page - the rule `rtl.css` follows for the
+       score ring and the newscast set. */
+    direction: ltr;
+}
+
+.lb-sheet__meterFill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg,
+        rgb(var(--sfs-accent-rgb, 102 126 234) / 0.55),
+        var(--sfs-accent, #667eea));
+}
+
+/* A fill that means "points came off" is red AND has its signed number
+   directly above it, so colour is never the only carrier. */
+.lb-sheet__meter.is-down .lb-sheet__meterFill {
+    background: linear-gradient(90deg,
+        rgb(var(--sfs-danger-rgb, 248 113 113) / 0.55),
+        var(--sfs-danger, #f87171));
+}
+
+.lb-sheet__more {
+    align-self: flex-start;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--sfs-accent-text, #a5b4fc);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+    border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
+    border-radius: var(--sfs-radius-sm, 10px);
+    padding: 0.5rem 1rem;
+    min-height: max(2.75rem, 44px);
+    cursor: pointer;
+}
+
+.lb-sheet__more:hover,
+.lb-sheet__more:focus-visible {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+}
+
+/* ------------------------------------------------------------------ *
+ * The plain lists
+ * ------------------------------------------------------------------ */
+
+.lb-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.lb-list__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    gap: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.035);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.08);
+    border-radius: var(--sfs-radius-sm, 10px);
+}
+
+/* A pass and a fail differ by a border on the inline edge as well as by an
+   ink, so the two are still distinguishable with no colour at all. */
+.lb-list__row.is-pass { border-inline-start: 3px solid var(--sfs-success, #34d399); }
+.lb-list__row.is-fail { border-inline-start: 3px solid var(--sfs-danger, #f87171); }
+
+.lb-list__title {
+    min-width: 0;
+    /* An exam id or a lab id has no break opportunity, so `break-word` cannot
+       shorten it and the track overflows. `anywhere` breaks it AND is counted
+       when `min-content` is computed, which is what lets the track shrink. */
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+
+.lb-list__score,
+.lb-list__when {
+    font-size: 0.74rem;
+    color: var(--sfs-text-muted, #9aa3b8);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+}
+
+/* ------------------------------------------------------------------ *
+ * Small screens
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 32rem) {
+    .lb-sheet { padding: 0; }
+
+    .lb-sheet__panel {
+        border-radius: 0;
+        border-inline: 0;
+        min-height: 100%;
+        /* `100dvh` alongside `100vh` for the mobile browser chrome, the same
+           pairing `responsive.css` uses everywhere else. */
+        min-height: 100dvh;
+    }
+
+    .lb-feed__row { grid-template-columns: auto minmax(0, 1fr); }
+    .lb-feed__points { grid-column: 2; justify-self: start; }
+    .lb-list__row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ------------------------------------------------------------------ *
+ * Reduced motion and forced colours
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .lb-actBtn,
+    .lb-sheet__close { transition: none; }
+}
+
+@media (forced-colors: active) {
+    /* The one place `!important` is right: what is being overridden is the
+       browser, which has replaced every colour with a system one. The shapes
+       have to be restated because the borders that carried meaning are gone. */
+    .lb-sheet__panel,
+    .lb-feed__row,
+    .lb-conduct__row,
+    .lb-list__row { border: 1px solid CanvasText !important; }
+    .lb-sheet__tab.is-active { forced-color-adjust: none; }
+}
+
+@media print {
+    /* A print rule speaks for PAPER and not for the screen. Kept narrow for
+       that reason: this is a dialog, so printing it means somebody asked for
+       one learner's record on paper - and a fixed, scrolling overlay prints as
+       one clipped page unless it is unpinned. */
+    .lb-sheet {
+        position: static;
+        background: var(--sfs-paper, #ffffff);
+        color: var(--sfs-on-paper, #10131c);
+        overflow: visible;
+        padding: 0;
+    }
+
+    .lb-sheet__panel {
+        background: var(--sfs-paper, #ffffff);
+        color: var(--sfs-on-paper, #10131c);
+        border: 0;
+        box-shadow: none;
+        width: 100%;
+    }
+
+    .lb-sheet__close,
+    .lb-sheet__tabs { display: none; }
+
+    /* Every tab at once, because `v-show` leaves the hidden ones in the
+       document with `display: none` and a printout of one tab is a printout of
+       a fifth of the record. */
+    .lb-sheet__body { display: flex !important; }
+
+    .lb-feed__row,
+    .lb-conduct__row,
+    .lb-list__row,
+    .lb-sheet__tile,
+    .lb-sheet__void {
+        background: var(--sfs-paper, #ffffff);
+        color: var(--sfs-on-paper, #10131c);
+        border-color: var(--sfs-paper-border, rgba(0, 0, 0, 0.16));
+    }
+}

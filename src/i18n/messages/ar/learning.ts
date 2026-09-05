@@ -452,9 +452,6 @@ const learning: Catalogue = {
     'Equal points share a rank.': 'النقاط المتساوية تتشارك المرتبة.',
     'Two learners on the same total are both shown at the same number, and the next learner takes the rank after both of them.':
         'يظهر المتعلّمان اللذان لهما المجموع نفسه في المرتبة نفسها، ويأخذ التالي المرتبة التي تليهما.',
-    'No identifiers are published.': 'لا تُنشر أي معرّفات.',
-    'The board shows the name a learner\'s own certificates carry, their totals, and nothing else — no account id, no email, and no list of what anybody failed.':
-        'تُظهر اللوحة الاسم الذي تحمله شهادات المتعلّم نفسه، ومجاميعه، ولا شيء غير ذلك — لا معرّف حساب، ولا بريد إلكتروني، ولا قائمة بما رسب فيه أحد.',
 
     /* ---------------------------------------------------------------- *
      * Scheduling an exam (apps 20 + 21)

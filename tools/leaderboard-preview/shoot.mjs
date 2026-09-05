@@ -22,6 +22,7 @@
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { serveDist } from './serve.mjs';
 
 const CHROME_CANDIDATES = [
     'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -38,7 +39,26 @@ const THEMES = ['andromeda', 'orion', 'sombrero', 'whirlpool', 'pinwheel',
     'triangulum', 'sunflower', 'cartwheel', 'dawn', 'silver'];
 const WIDTHS = [1920, 1440, 1024, 820, 390, 320];
 
-const BASE = process.env.PREVIEW_URL || 'http://127.0.0.1:8791/index.html';
+const BASE = process.env.PREVIEW_URL
+    || 'http://127.0.0.1:8791/index.html';
+
+/*
+  THIS SCRIPT SERVES THE BUILD ITSELF.
+
+  It used to default to port 8791 and start nothing, so running it without a
+  server already up printed **NO PROBE for every width in every galaxy** - which
+  is the exact string it prints when the page fails to MOUNT. Those two need
+  opposite reactions and were indistinguishable, which is the same class of
+  wrongness as `EMPTY PAGE` once counting as clean.
+
+  `serveDist` answers null when the port is already taken, which is not an
+  error: something is already serving and joining it is better than fighting
+  over the socket. `PREVIEW_URL` still wins, so a dev server can be shot
+  instead.
+*/
+const served = process.env.PREVIEW_URL
+    ? null
+    : await serveDist('tools/leaderboard-preview/dist', 8791);
 const outDir = resolve(process.argv[2] || 'tools/leaderboard-preview/shots');
 
 const browser = CHROME_CANDIDATES.find(p => existsSync(p));
@@ -180,6 +200,14 @@ for (const width of WIDTHS) {
 
 cdp.close();
 chrome.kill();
+/*
+  The server it started, closed - and then an EXPLICIT exit below.
+
+  A listening socket keeps node's event loop alive, so the first version of
+  this printed its whole report and then hung for ever, which reads as a shoot
+  that never finished rather than as one that finished and would not leave.
+*/
+if (served) await served.close();
 
 if (report.length) {
     console.log('\nLayout problems:' + report.join('\n'));
@@ -187,3 +215,4 @@ if (report.length) {
     process.exit(1);
 }
 console.log(`\nNo overflow at any width, in any galaxy. Screenshots in ${outDir}\n`);
+process.exit(0);

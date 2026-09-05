@@ -249,6 +249,12 @@
               </li>
               <li v-if="row.averageScore > 0"><span>{{ row.averageScore }}</span> {{ $t('avg') }}</li>
             </ul>
+            <button
+              type="button"
+              class="lb-actBtn lb-actBtn--podium"
+              :aria-label="$t('Show every action {v0} has taken', { v0: row.name })"
+              @click="openActivity(row)"
+            >{{ $t('Activity') }}</button>
             <p v-if="index === 0" class="lb-podium__crown" aria-hidden="true"></p>
           </article>
         </section>
@@ -323,7 +329,9 @@
                   <th scope="col" class="lb-num lb-hide-md">{{ $t('Labs') }}</th>
                   <th scope="col" class="lb-num lb-hide-md">{{ $t('Credentials') }}</th>
                   <th scope="col" class="lb-num lb-hide-md">{{ $t('Avg score') }}</th>
+                  <th scope="col" class="lb-num lb-hide-sm">{{ $t('Conduct') }}</th>
                   <th scope="col" class="lb-hide-md">{{ $t('Progress') }}</th>
+                  <th scope="col"><span class="lb-sr">{{ $t('Activity record') }}</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -383,6 +391,21 @@
                     <span v-if="row.averageScore > 0">{{ row.averageScore }}</span>
                     <span v-else class="lb-dash" :aria-label="$t('no scored assessment')">—</span>
                   </td>
+                  <!--
+                    THE CONDUCT COLUMN, and it is the only figure on the board
+                    that can be negative. Shown as a signed number rather than
+                    as a count of breaches: "-18" is a fact about their total
+                    and "3 breaches" beside somebody's name in a table is a
+                    label. Which actions, and when, is behind the button.
+                  -->
+                  <td class="lb-num lb-hide-sm">
+                    <span
+                      v-if="row.conductPoints !== 0"
+                      class="lb-conductCell"
+                      :class="row.conductPoints > 0 ? 'is-up' : 'is-down'"
+                    >{{ signedPoints(row.conductPoints) }}</span>
+                    <span v-else class="lb-dash" :aria-label="$t('nothing recorded')">—</span>
+                  </td>
                   <td class="lb-hide-md">
                     <div
                       class="lb-meter lb-meter--row"
@@ -394,6 +417,16 @@
                     >
                       <span class="lb-meter__fill" :style="{ width: shareOfLeader(row) + '%' }"></span>
                     </div>
+                  </td>
+                  <td class="lb-table__act">
+                    <button
+                      type="button"
+                      class="lb-actBtn"
+                      :aria-label="$t('Show every action {v0} has taken', { v0: row.name })"
+                      @click="openActivity(row)"
+                    >
+                      {{ $t('Activity') }}
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -451,6 +484,33 @@
                   <th scope="row">{{ $t('Exam certificate') }}</th>
                   <td>{{ POINTS.examCertificate }}</td>
                 </tr>
+                <tr class="lb-points__head">
+                  <th scope="row" colspan="2">{{ $t('And what conduct is worth') }}</th>
+                </tr>
+                <tr>
+                  <th scope="row">{{ $t('Five minutes of unbroken work') }}</th>
+                  <td>+{{ ACTIONS['focus.sustained'].points }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">{{ $t('Sitting a whole paper cleanly') }}</th>
+                  <td>+{{ ACTIONS['assessment.clean_sitting'].points }}</td>
+                </tr>
+                <tr class="lb-points__bad">
+                  <th scope="row">{{ $t('Leaving the exam window') }}</th>
+                  <td>{{ ACTIONS['window.left'].points }}</td>
+                </tr>
+                <tr class="lb-points__bad">
+                  <th scope="row">{{ $t('Switching away with Alt+Tab') }}</th>
+                  <td>{{ ACTIONS['window.alt_tab'].points }}</td>
+                </tr>
+                <tr class="lb-points__bad">
+                  <th scope="row">{{ $t('Copying or pasting') }}</th>
+                  <td>{{ ACTIONS['clipboard.copy'].points }}</td>
+                </tr>
+                <tr class="lb-points__bad">
+                  <th scope="row">{{ $t('Opening the developer tools') }}</th>
+                  <td>{{ ACTIONS['devtools.opened'].points }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -471,7 +531,13 @@
                 <strong>{{ $t('Equal points share a rank.') }}</strong> {{ $t('Two learners on the same total are both shown at the same number, and the next learner takes the rank after both of them.') }}
               </li>
               <li>
-                <strong>{{ $t('No identifiers are published.') }}</strong> {{ $t('The board shows the name a learner\'s own certificates carry, their totals, and nothing else — no account id, no email, and no list of what anybody failed.') }}
+                <strong>{{ $t('Five breaches end an exam.') }}</strong> {{ $t('Leaving the window, switching away, copying, pasting, printing or opening the developer tools during an exam or a quiz is recorded. {v0} of them and the paper is submitted, scored zero and marked as cheating. A lab records the same actions and can never be failed by them.', { v0: NEGATIVE_LIMIT }) }}
+              </li>
+              <li>
+                <strong>{{ $t('Every action is public.') }}</strong> {{ $t('Anybody can open a learner\'s activity record and see what was earned, what was lost, and when. That is the point: a rule nobody can see does not deter anything, and everyone is told before they start.') }}
+              </li>
+              <li>
+                <strong>{{ $t('No identifiers and no content are published.') }}</strong> {{ $t('The board shows the name a learner\'s own certificates carry and their totals — no account id and no email. Nothing anywhere records an answer, a question, or what was copied: a copy is recorded as a character count.') }}
               </li>
             </ul>
           </div>
@@ -484,6 +550,22 @@
         </footer>
       </template>
     </div>
+
+    <!--
+      Rendered outside `.lb-body`, and that is not cosmetic: `.lb-body` carries
+      `is-refetching` with a reduced opacity, and an opacity below 1 creates a
+      stacking context - so a `position: fixed` sheet inside it would be painted
+      against that element rather than against the viewport, and would sit
+      behind the page during a refresh. The same class of bug as the console's
+      modals trapped in a `z-index` wrapper.
+    -->
+    <LearnerActivity
+      v-if="activeDossier"
+      :dossier="activeDossier"
+      :row="activeRow"
+      :now="now"
+      @close="closeActivity"
+    />
   </div>
 </template>
 
@@ -526,9 +608,45 @@
  * split is what makes the invariants testable — see the module's header for the
  * three that cannot be seen by looking at one afternoon's board.
  */
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import {
+    computed, defineAsyncComponent, h, onMounted, reactive, ref, watch,
+} from 'vue';
+import { t } from '@/i18n/runtime';
 import LeaderboardChart from '@/components/leaderboard/LeaderboardChart.vue';
+/**
+ * The activity record, deferred.
+ *
+ * It is the largest thing on this page that most readers never open: the panel,
+ * its stylesheet and `learnerDossier.ts` between them are a real chunk, and
+ * the board renders fully without any of it. Static, all of that sits in the
+ * ENTRY chunk - which every route on the platform downloads, including the
+ * login page (working rule 47).
+ *
+ * `v-if="activeDossier"` means the loader does not run until a row is clicked,
+ * so the cost lands on the click that asked for it. A chunk that will not load
+ * must SAY so: `defineAsyncComponent` renders nothing at all when its loader
+ * rejects, and an empty screen after clicking Activity is indistinguishable
+ * from a button that does nothing - which is exactly the bug the lab
+ * workspace's netsim pane had to be corrected for. It rejects for reasons that
+ * happen: a deploy replaces the hashed chunk under a tab somebody left open.
+ */
+const LearnerActivity = defineAsyncComponent({
+    loader: () => import('@/components/leaderboard/LearnerActivity.vue'),
+    loadingComponent: {
+        render: () => h('div', { class: 'lb-sheet' },
+            h('div', { class: 'lb-sheet__panel' }, t('Loading the activity record...'))),
+    },
+    errorComponent: {
+        render: () => h('div', { class: 'lb-sheet' },
+            h('div', { class: 'lb-sheet__panel' },
+              t('The activity record could not be loaded. Reload the page and try again.'))),
+    },
+    delay: 150,
+    timeout: 30_000,
+});
 import { loadAchievements } from '@/services/leaderboard.service';
+import { ACTIONS, NEGATIVE_LIMIT } from '@/utils/practiceIntegrity';
+import { buildDossier, type Dossier, type Enrolment, type LabRow } from '@/utils/learnerDossier';
 import { getProxiedImageUrl } from '@/utils/imageUtils';
 import {
     DISTINCTION_SCORE,
@@ -560,6 +678,16 @@ const error = ref<string | null>(null);
 const events = ref<LeaderboardEvent[]>([]);
 const answered = ref<Record<string, boolean>>({});
 const brokenAvatars = reactive<Record<string, boolean>>({});
+/*
+  The two collections the ranking does not use.
+
+  Held here rather than fetched when a panel opens, because a fetch per opened
+  row is a round trip to a replica whose first answer of the day is ~20 seconds
+  - and they are already in hand from the same load.
+*/
+const labRows = ref<Map<string, LabRow[]>>(new Map());
+const enrolments = ref<Map<string, Enrolment[]>>(new Map());
+const activeRow = ref<LeaderRow | null>(null);
 
 const win = ref<BoardWindow>('all');
 const query = ref('');
@@ -592,6 +720,8 @@ async function load() {
         }
         events.value = report.events;
         answered.value = report.answered;
+        labRows.value = report.labRows;
+        enrolments.value = report.enrolments;
         now.value = Date.now();
         hasLoadedOnce.value = true;
     } catch (caught: any) {
@@ -759,6 +889,35 @@ const kpis = computed(() => {
     ];
 });
 
+/**
+ * The open panel's dossier, built on demand from what is already loaded.
+ *
+ * A computed rather than built in `openActivity`, so it follows a refresh: a
+ * reader who leaves the panel open while the page reloads sees the new record
+ * rather than a snapshot from before it. `buildDossier` filters by user first
+ * and there is no window - a dossier is somebody's whole history, because
+ * "what has this person done" is not a question about the last thirty days.
+ */
+const activeDossier = computed<Dossier | null>(() => {
+    const row = activeRow.value;
+    if (!row) return null;
+    return buildDossier({
+        userId: row.userId,
+        events: events.value,
+        row,
+        labs: labRows.value.get(row.userId) ?? [],
+        enrolments: enrolments.value.get(row.userId) ?? [],
+    });
+});
+
+function openActivity(row: LeaderRow) {
+    activeRow.value = row;
+}
+
+function closeActivity() {
+    activeRow.value = null;
+}
+
 const partialSources = computed(() =>
     Object.entries(answered.value).filter(([, ok]) => !ok).map(([name]) => name.toLowerCase()));
 
@@ -789,6 +948,20 @@ function shareOfLeader(row: LeaderRow): number {
     return Math.max(2, Math.min(100, (row.points / leader) * 100));
 }
 
+/**
+ * A signed number, with a MINUS SIGN rather than a hyphen.
+ *
+ * U+2212 rather than `-`, because a hyphen is a bidi-neutral character: inside
+ * Arabic prose the algorithm is free to move it away from its digits, so "-18"
+ * renders as "18-" and reads as a footnote marker. A minus sign is strongly
+ * typed as maths and stays put.
+ */
+function signedPoints(value: number): string {
+    if (!Number.isFinite(value) || value === 0) return '0';
+    return value > 0 ? `+${value.toLocaleString()}`
+        : `\u2212${Math.abs(value).toLocaleString()}`;
+}
+
 function shortWindow(option: BoardWindow): string {
     return option === 'all' ? 'All time' : `${WINDOW_DAYS[option]}d`;
 }
@@ -813,4 +986,12 @@ function lastSeen(at: number): string {
   `npm run check:cssleaks` requires of a globally loaded page stylesheet.
 */
 import '@/assets/css/leaderboard.css';
+/*
+  The activity record's own stylesheet is NOT imported here.
+
+  It is loaded by `LearnerActivity.vue`, which this view defers - so the sheet
+  travels in that component's chunk rather than in the entry one. Importing it
+  here would leave the CSS eager while the component was lazy, which is half a
+  code split and all of the confusion.
+*/
 </script>

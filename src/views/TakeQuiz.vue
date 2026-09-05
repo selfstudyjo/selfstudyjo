@@ -42,8 +42,55 @@
         </div>
       </div>
 
+      <!--
+        THE REPRIMAND, and it replaces the result card rather than sitting
+        beside it.
+
+        A "you scored 0%" card over the top of an accusation reads as a marking
+        error rather than as a penalty, which is the reverse of what a
+        reprimand is for. It names the count, it says the quiz was submitted
+        and scored zero, and it points at the record - because every action is
+        on the ledger the candidate can read, and an accusation without the
+        evidence beside it is just an accusation.
+      -->
+      <div v-if="showVoid" class="quiz-result">
+        <div class="result-card failed" role="alertdialog" aria-modal="true">
+          <div class="result-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h2 class="result-title">{{ $t(FAIL_HEADLINE) }}</h2>
+          <div class="result-score">
+            <div class="score-display">
+              <span class="score-value">0.0%</span>
+              <span class="score-label">{{ $t('Recorded score') }}</span>
+            </div>
+          </div>
+          <p class="result-message">
+            {{ $t(FAIL_BODY, { v0: sitting.verdict.value.negatives, v1: sitting.verdict.value.limit }) }}
+          </p>
+          <ul class="void-breaches">
+            <li v-for="event in voidedBreaches" :key="event.id">
+              <span>{{ $t(event.label) }}</span>
+              <span class="void-breaches__when">{{ breachTime(event.at) }}</span>
+            </li>
+          </ul>
+          <div class="result-actions">
+            <router-link to="/leaderboard" class="btn-secondary">
+              {{ $t('See my activity record') }}
+            </router-link>
+            <button class="btn-primary" @click="returnToCourse">
+              {{ $t('Return to Course') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Result Display (after submission) -->
-      <div v-if="showResult" class="quiz-result">
+      <div v-else-if="showResult" class="quiz-result">
         <div class="result-card" :class="resultClass">
           <div class="result-icon">
             <svg v-if="quizResult?.result_status === 'PASSED'" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -110,6 +157,18 @@
                 <span>{{ $t('Flag questions to review later') }}</span>
               </div>
             </div>
+
+            <!--
+              THE RULES, on the screen that already existed for them.
+
+              The exam needed a gate built because it had no start screen and
+              its clock began on load; a quiz already asks the candidate to
+              press Start, so the rules go where they will be read and the
+              press is the acknowledgement. Same component, same catalogue,
+              same limit - a quiz that tolerated more breaches than an exam
+              would teach the wrong habit on the cheaper of the two.
+            -->
+            <IntegrityRules context="quiz" />
           </div>
           <div class="instructions-actions">
             <button class="btn-primary" @click="startQuiz">
@@ -144,6 +203,18 @@
                 </div>
               </div>
             </div>
+
+            <!--
+              Above the question grid, for the reason the exam's is first in its
+              side panel: it is the only thing on the page that can end the
+              sitting, and a count somebody has to hunt for only deters
+              retrospectively.
+            -->
+            <IntegrityMeter
+              context="quiz"
+              :verdict="sitting.verdict.value"
+              :events="sitting.log.value"
+            />
 
             <div class="question-navigation">
               <h3 class="nav-title">{{ $t('Questions') }}</h3>
@@ -192,10 +263,15 @@
             </div>
 
             <div class="sidebar-actions">
+              <!-- `submitQuiz()`, CALLED rather than passed: it takes an
+                   options object now, and `@click="submitQuiz"` would hand it
+                   the MouseEvent as that argument. Harmless today, because
+                   `event.voided` is undefined - and exactly the shape that
+                   stops being harmless the moment a second option is added. -->
               <button
                 class="btn-submit"
                 :disabled="submitting"
-                @click="submitQuiz"
+                @click="submitQuiz()"
               >
                 <span v-if="submitting" class="btn-loading"></span>
                 <span v-else>{{ $t('Submit Quiz') }}</span>
@@ -334,6 +410,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { quizService, type Quiz, type SubmitQuizResponse, type SubmitQuizRequest } from '@/services/quiz.service';
 import { useAuthStore } from '@/store/auth';
 import { serviceRegistry } from '@/services/config';
+import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
+import IntegrityRules from '@/components/practice/IntegrityRules.vue';
+import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import { FAIL_BODY, FAIL_HEADLINE } from '@/utils/practiceIntegrity';
 
 const route = useRoute();
 const router = useRouter();
@@ -359,6 +439,44 @@ const timerInterval = ref<NodeJS.Timeout | null>(null);
 
 // Replica pinning
 const quizReplicaBaseUrl = ref<string | null>(null);
+
+/* ------------------------------------------------------------------ *
+ * The practice ledger
+ * ------------------------------------------------------------------ */
+
+const showVoid = ref(false);
+
+/**
+ * This sitting.
+ *
+ * `onVoided` submits, and the composable settles the ledger against app 20
+ * before calling back - the service scores the paper from what has actually
+ * landed, so submitting first would race the flush and a quiz could be scored
+ * on four breaches and pass.
+ */
+const sitting = usePracticeSitting({
+  context: 'quiz',
+  onVoided: async () => {
+    showVoid.value = true;
+    quizStarted.value = false;
+    if (timerInterval.value) {
+      clearInterval(timerInterval.value);
+      timerInterval.value = null;
+    }
+    await submitQuiz({ voided: true });
+  },
+});
+
+/** The breaches that ended it, for the reprimand's own list. */
+const voidedBreaches = computed(() =>
+  sitting.log.value.filter(row => row.severity === 'negative'));
+
+/** A wall clock reading, through `Intl` so an Arabic reader gets their own. */
+function breachTime(at: number): string {
+  return Number.isFinite(at) && at > 0
+    ? new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : '';
+}
 
 // Cache keys
 const getQuizCacheKey = (quizId: string) => `quiz_${quizId}`;
@@ -541,6 +659,18 @@ const loadQuiz = async () => {
 
 const startQuiz = () => {
   quizStarted.value = true;
+  /*
+    The ledger opens BEFORE the first question is on screen, and the press of
+    Start is the acknowledgement - the rules were on the screen it was pressed
+    from. Recorded in that order so a sitting that ends badly can be shown to
+    have begun with them in front of the candidate.
+  */
+  sitting.begin(
+    { id: quiz.value?.external_id || '', name: quiz.value?.title || '' },
+    { userId: authStore.user?.id || '', username: authStore.user?.username || '' },
+  );
+  sitting.note('assessment.rules_acknowledged');
+  sitting.note('assessment.started');
   startTimer();
 };
 
@@ -607,14 +737,35 @@ const nextQuestion = () => {
   }
 };
 
-const submitQuiz = async () => {
+const submitQuiz = async (opts: { voided?: boolean } = {}) => {
   if (!quiz.value || !authStore.user?.id || !authStore.user?.username) {
     error.value = 'Unable to submit quiz. Please try again.';
     return;
   }
 
-  if (!confirm('Are you sure you want to submit your quiz? You cannot change answers after submission.')) {
+  /*
+    NO CONFIRMATION on a voided sitting.
+
+    The candidate is not choosing to submit - the fifth breach did - and asking
+    them to confirm would let them decline, which would leave the quiz open
+    with a ledger that already says it is over. A dialog they cannot
+    meaningfully answer is also the wrong way to deliver a reprimand.
+  */
+  if (!opts.voided
+      && !confirm('Are you sure you want to submit your quiz? You cannot change answers after submission.')) {
     return;
+  }
+
+  /*
+    The ledger is closed BEFORE the submission, and that ordering is the whole
+    enforcement: app 20 recomputes the verdict from the events that have
+    reached the store. A voided sitting has already been settled by
+    `endSitting`, which is why that path skips it.
+  */
+  if (!opts.voided) {
+    const answered = quiz.value.questions?.length
+      ? userAnswers.value.size === quiz.value.questions.length : false;
+    await sitting.finish({ allAnswered: answered });
   }
 
   submitting.value = true;
@@ -631,7 +782,10 @@ const submitQuiz = async () => {
       authStore.user.username,
       quiz.value.external_id,
       scoreData,
-      userAnswers.value
+      userAnswers.value,
+      // Which sitting to count. The only integrity field a client may set -
+      // app 20 does the counting and writes the zero itself.
+      sitting.sessionId.value,
     );
 
     const response = await quizService.submitQuiz(submission, quizReplicaBaseUrl.value || undefined);
@@ -642,8 +796,15 @@ const submitQuiz = async () => {
     }
 
     quizResult.value = response;
-    showResult.value = true;
-    showCorrectAnswers.value = true;
+    /*
+      A voided sitting does NOT get the result card or the answer key.
+
+      `showVoid` already owns the screen (see the template), and showing the
+      correct answers to somebody whose quiz was just voided for copying hands
+      them the answer key on the way out.
+    */
+    showResult.value = !opts.voided;
+    showCorrectAnswers.value = !opts.voided;
     quizStarted.value = false;
 
     // Clear cache for this quiz (so retake fetches fresh)
@@ -669,6 +830,16 @@ const returnToCourse = () => {
 const retakeQuiz = () => {
   quizStarted.value = false;
   showResult.value = false;
+  /*
+    A retake starts a NEW sitting, and `showVoid` has to be cleared or the
+    reprimand would sit over it.
+
+    The old sitting's ledger stays exactly where it is: it is a record of what
+    happened, and `usePracticeSitting.begin` mints a fresh session id, so the
+    new attempt starts on zero breaches. Carrying them over would mean one bad
+    afternoon voided every retake for ever.
+  */
+  showVoid.value = false;
   showCorrectAnswers.value = false;
   userAnswers.value.clear();
   flaggedQuestions.value.clear();

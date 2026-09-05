@@ -55,7 +55,7 @@
  * twelve-task Hadoop lab scored zero for it.
  */
 export type Achievement = 'exam' | 'quiz' | 'course_certificate' | 'exam_certificate'
-    | 'lab';
+    | 'lab' | 'practice';
 
 /**
  * One earned thing, flattened out of whichever service holds it.
@@ -103,6 +103,52 @@ export interface LeaderboardEvent {
      * visible regression in the one thing this page is for.
      */
     fallbackName?: string;
+    /**
+     * What makes THIS event unique, where the subject is not enough.
+     *
+     * `bestAttempts` dedupes on `(userId, kind, subjectId)`, which is exactly
+     * right for an attempt at an exam and exactly wrong for a practice action:
+     * a sitting produces a dozen of them against one subject and every one of
+     * them happened. Set to the record's own id for those, so the dedupe key
+     * discriminates rather than collapsing eleven events into one.
+     *
+     * Optional and unset everywhere else, because for an assessment the
+     * collapsing IS the feature - see the note on `bestAttempts`.
+     */
+    unique?: string;
+    /**
+     * The points this event carries, for a kind whose value is not a constant.
+     *
+     * Only `practice` uses it. Everything else is looked up in `POINTS`,
+     * because the platform decides what an exam pass is worth; a practice
+     * action's value is decided by app 20's `utils/integrity.py` and travels
+     * with the record, so that the browser cannot be the place a penalty is
+     * chosen. See `pointsFor`.
+     */
+    points?: number;
+    /** `practice` only: which way the points went, for the conduct counts. */
+    severity?: 'positive' | 'negative' | 'neutral';
+    /** `practice` only: what the ledger prints for it. An English key. */
+    label?: string;
+    /** `practice` only: bounded, and never the copied text. */
+    detail?: string;
+    /** `practice` only: which sitting it belongs to. */
+    sessionId?: string;
+    /** `practice` only: the catalogue key, e.g. `window.alt_tab`. */
+    action?: string;
+    /** `practice` only: why it is worth what it is worth. An English key. */
+    reason?: string;
+    /**
+     * `practice` only: which kind of sitting it happened in.
+     *
+     * Not the same thing as `kind`. A practice action's `kind` is always
+     * `practice` because that is what it is to the scoring; its `context` is
+     * whether it happened during an exam, a quiz or a lab, which is what decides
+     * whether five of them void anything. Collapsing the two would make a lab's
+     * window-switching void a lab, which is the one thing the ledger must never
+     * do.
+     */
+    context?: 'exam' | 'quiz' | 'lab';
 }
 
 /* ------------------------------------------------------------------ *
@@ -184,6 +230,23 @@ export function pointsFor(event: LeaderboardEvent): number {
       in-progress lab on the platform would score zero and the board would only
       move when somebody finished one.
     */
+    /*
+      A PRACTICE ACTION CARRIES ITS OWN VALUE, and it is the only kind that
+      does.
+
+      Every other number in this file is a constant here, because what an exam
+      pass is worth is a platform decision. What a breach costs is app 20's
+      decision - `utils/integrity.py` looks the action up in its own catalogue
+      on the way out, so the value on the record is authoritative and a browser
+      that decided its own would be a browser that could forgive itself.
+
+      Handled before the `passed` gate for the same reason a lab is: a practice
+      event has no pass mark, and `passed` on one is meaningless.
+    */
+    if (event.kind === 'practice') {
+        const carried = Number(event.points);
+        return Number.isFinite(carried) ? carried : 0;
+    }
     if (event.kind === 'lab') {
         const earned = Number(event.labPoints);
         const scored = Number.isFinite(earned) && earned > 0
@@ -282,7 +345,12 @@ const SEP = '\u0000';
 
 /** The dedupe key. Not a string any caller outside this file ever sees. */
 function attemptKey(event: LeaderboardEvent): string {
-    return [event.userId, event.kind, event.subjectId].join(SEP);
+    // `unique` when the event has one. A practice action's subject is the exam
+    // it happened during, and a sitting produces a dozen against one subject -
+    // so without this the whole ledger collapses to one event per paper and the
+    // conduct score is whatever the last one happened to be.
+    return [event.userId, event.kind, event.subjectId,
+            event.unique ?? ''].join(SEP);
 }
 
 /**
@@ -359,6 +427,20 @@ export interface LeaderRow {
     labPointsPossible: number;
     firstActiveAt: number;
     lastActiveAt: number;
+    /**
+     * Points earned and lost through CONDUCT, kept apart from the rest.
+     *
+     * Broken out rather than folded into `points` alone because the two answer
+     * different questions and a reader is owed both: `points` is where somebody
+     * stands, and this is how they got there. It is also the only figure on the
+     * board that can be negative, which is the whole reason it is worth showing
+     * separately - a total that quietly went down tells nobody why.
+     */
+    conductPoints: number;
+    /** Conduct actions that earned. */
+    positiveActions: number;
+    /** Conduct actions that cost, which is what the strike limit counts. */
+    negativeActions: number;
     /** Places gained since the previous window; null when there is no previous. */
     movement: number | null;
 }
@@ -371,6 +453,7 @@ function blankRow(event: LeaderboardEvent): LeaderRow {
         assessmentsTaken: 0, assessmentsPassed: 0, passRate: 0,
         averageScore: 0, bestScore: 0, distinctions: 0, learningHours: 0,
         labsCompleted: 0, labsStarted: 0, labPoints: 0, labPointsPossible: 0,
+        conductPoints: 0, positiveActions: 0, negativeActions: 0,
         firstActiveAt: Number.POSITIVE_INFINITY, lastActiveAt: Number.NEGATIVE_INFINITY,
         movement: null,
     };
@@ -444,6 +527,25 @@ export function aggregate(events: readonly LeaderboardEvent[]): LeaderRow[] {
                 scores.set(event.userId, list);
                 if (score > row.bestScore) row.bestScore = score;
             }
+        } else if (event.kind === 'practice') {
+            /*
+              ITS OWN BRANCH, and for the reason the lab needed one.
+
+              Left to fall through to the `else` below, a practice action would
+              be counted as a CERTIFICATE - so "Credentials earned" and every
+              row's credential count would include a student's window-switching,
+              and somebody who lost focus five times would appear to hold five
+              certificates nobody issued. That is not a hypothetical: it is
+              exactly what happened to the labs before they were given a branch.
+
+              It is also outside the assessment branch: a practice action has no
+              pass mark, so folding it into `assessmentsTaken` would move the
+              platform pass rate for a reason no reader could account for.
+            */
+            const carried = Number(event.points);
+            if (Number.isFinite(carried)) row.conductPoints += carried;
+            if (event.severity === 'negative') row.negativeActions += 1;
+            else if (carried > 0) row.positiveActions += 1;
         } else if (event.kind === 'lab') {
             /*
               ITS OWN BRANCH, and not for tidiness.
@@ -548,6 +650,10 @@ export function rank(rows: LeaderRow[]): LeaderRow[] {
 
 export interface Totals {
     learners: number;
+    /** Conduct points across the board. Can be negative. */
+    conductPoints?: number;
+    /** Breaches recorded across the board, for the transparency line. */
+    negativeActions?: number;
     points: number;
     certificates: number;
     assessmentsPassed: number;
@@ -589,6 +695,8 @@ function totalsOf(rows: readonly LeaderRow[], events: readonly LeaderboardEvent[
             : 0,
         learningHours: rows.reduce((n, row) => n + row.learningHours, 0),
         labsCompleted: rows.reduce((n, row) => n + row.labsCompleted, 0),
+        conductPoints: rows.reduce((n, row) => n + row.conductPoints, 0),
+        negativeActions: rows.reduce((n, row) => n + row.negativeActions, 0),
     };
 }
 

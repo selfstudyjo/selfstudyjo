@@ -1127,6 +1127,42 @@
     .lb-select { flex: 1 1 100%; }
 }
 
+/* A ~360px phone, where only four columns are drawn: rank, learner, points and
+   the activity button. The table CAN scroll - `.lb-tableWrap` is
+   `overflow-x: auto` - and a table that scrolls sideways on a phone is still
+   worse than one that fits, because the reader has to discover the scroll to
+   find the button. So the button gives up its word spacing and the cells give
+   up their padding rather than the column being dropped: the record is the one
+   thing this page added, and hiding the way into it on the narrowest screens
+   would hide it from the readers most likely to be on one. */
+@media (max-width: 23rem) {
+    .lb-table thead th,
+    .lb-table tbody td { padding-inline: 0.3rem; }
+
+    .lb-actBtn {
+        padding-inline: 0.5rem;
+        font-size: 0.72rem;
+        /* Still a touch target. `max()` rather than a bare rem because
+           responsive.css scales the root fluidly, so 2rem measures under 32px
+           on exactly the devices this rule is for. */
+        min-height: max(2rem, 32px);
+    }
+
+    /* The medal keeps its shape and loses its gutter. */
+    .lb-table__rank { padding-inline-end: 0; }
+
+    /* "active 3 days ago" goes. It is the least load-bearing thing in the row
+       - the same fact is on the activity record, in more detail - and it is
+       what was still holding the learner cell 13px wider than a 320px phone
+       once the button had given up its padding. The distinction chip stays:
+       it is an achievement. */
+    .lb-who__seen { display: none; }
+
+    /* And the avatar, for the same reason one step further: it identifies
+       nobody that the name beside it does not. */
+    .lb-who .lb-avatar { display: none; }
+}
+
 /* A television: bounded and centred, with an inset because most TVs overscan
    and clip the outer edge of the picture. */
 @media (min-width: 120rem) and (pointer: coarse) {
@@ -1145,6 +1181,61 @@
     .lb-body { transition: none !important; }
     .lb-podium__slot--1 { transform: none !important; }
 }
+
+/* ------------------------------------------------------------------ *
+ * The button that opens the activity record
+ * ------------------------------------------------------------------ *
+ *
+ * HERE rather than in `leaderboard-activity.css`, which is loaded by the
+ * sheet itself and is therefore deferred with it. The button is on the page
+ * from the first render, so its rules have to be too - left in the deferred
+ * sheet the whole Activity column would be unstyled until somebody clicked
+ * it, which is a regression nobody would attribute to a code split.
+ * ------------------------------------------------------------------ */
+
+.lb-table__act { text-align: end; white-space: nowrap; }
+
+.lb-actBtn {
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--sfs-accent-text, #a5b4fc);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.12);
+    border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.28);
+    border-radius: var(--sfs-radius-pill, 999px);
+    padding: 0.32rem 0.8rem;
+    cursor: pointer;
+    /* A touch target, and `max()` rather than a bare `rem`: `responsive.css`
+       scales the root fluidly, so `2.75rem` measures 41.5px on a 390px phone -
+       under the minimum, on exactly the devices the rule exists for. */
+    min-height: max(2rem, 32px);
+    transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.lb-actBtn:hover,
+.lb-actBtn:focus-visible {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+}
+
+.lb-actBtn--podium {
+    display: inline-block;
+    margin-top: 0.6rem;
+}
+
+.lb-conductCell {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    /* A machine-ish figure inside prose that may be Arabic: isolated so the
+       bidi algorithm cannot move the minus sign away from its digits. The sign
+       itself is U+2212 rather than a hyphen for the same reason - see
+       `signedPoints` in the view. */
+    unicode-bidi: isolate;
+}
+
+.lb-conductCell.is-up { color: var(--sfs-success-text, #34d399); }
+.lb-conductCell.is-down { color: var(--sfs-danger-text, #f87171); }
 
 /* ------------------------------------------------------------------ *
  * Print

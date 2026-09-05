@@ -48,6 +48,7 @@ import netsim from './netsim';
 import research from './research';
 import studio from './studio';
 import labs from './labs';
+import practice from './practice';
 
 /**
  * Assembled in one place so a duplicate key is a visible conflict rather than a
@@ -64,6 +65,11 @@ const zh: Catalogue = {
     ...research,
     ...studio,
     ...labs,
+    // The practice record: exam integrity, lab scoring, activity records. Its
+    // own area for the reason the header gives - "record", "conduct" and
+    // "breach" all need the words around them to be translated correctly, and
+    // an alphabetical list destroys exactly that context.
+    ...practice,
 };
 
 export default zh;

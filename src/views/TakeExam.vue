@@ -57,6 +57,41 @@
       <button @click="loadExam" class="retry-btn">{{ $t('Retry') }}</button>
     </div>
 
+    <!--
+      THE RULES GATE, and the clock does not start until it is accepted.
+
+      A banner would have been less work and it is the wrong shape: a candidate
+      who has to be told that five breaches void their paper has to be told
+      BEFORE the paper is in front of them, because afterwards it competes with
+      forty questions and a countdown for their attention. Accepting it is also
+      the first thing on the ledger, so a sitting that was voided can be shown
+      to have started with the rules on screen.
+
+      Skipped entirely for an already-submitted paper - somebody opening a
+      finished exam to review their answers is not sitting anything.
+    -->
+    <div v-else-if="exam && validQuestions.length > 0 && !ruleGateDone"
+         class="exam-gate">
+      <div class="exam-gate__card">
+        <p class="exam-gate__eyebrow">{{ $t('Before you begin') }}</p>
+        <h2 class="exam-gate__title">{{ $td(exam, 'title') }}</h2>
+        <p class="exam-gate__lede">
+          {{ $t('{v0} questions, {v1} minutes, and a pass mark of {v2}%. The clock starts when you accept the rules below.', { v0: validQuestions.length, v1: exam.exam_duration, v2: passMark }) }}
+        </p>
+
+        <IntegrityRules context="exam" />
+
+        <div class="exam-gate__actions">
+          <button type="button" class="exam-gate__go" @click="acceptRules">
+            {{ $t('I understand — start the exam') }}
+          </button>
+          <button type="button" class="exam-gate__out" @click="goToExams">
+            {{ $t('Not now') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <div v-else-if="exam && validQuestions.length > 0" class="main-content">
       <div class="content-grid">
@@ -131,6 +166,22 @@
 
         <!-- Side Panel -->
         <div class="side-panel">
+          <!--
+            FIRST in the side panel, not last.
+
+            It is the only thing here that can end the sitting, and the
+            proctor's own screen had to be corrected for exactly this: the most
+            time-critical control was the last thing on the page. A candidate
+            has to be able to see the count without hunting for it, or the
+            deterrent only works retrospectively.
+          -->
+          <IntegrityMeter
+            v-if="!examSubmitted"
+            context="exam"
+            :verdict="sitting.verdict.value"
+            :events="sitting.log.value"
+          />
+
           <!-- Overview -->
           <div class="overview-card">
             <div class="card-header">
@@ -271,6 +322,47 @@
       </div>
     </div>
 
+    <!--
+      THE REPRIMAND, and it is its own modal rather than a variant of the
+      results one.
+
+      The results modal congratulates or consoles; this one accuses, and
+      dressing an accusation in the same furniture as a score would bury it. It
+      names the count, it says the paper was submitted and scored zero, and it
+      points at the record - because a reprimand delivered without the evidence
+      beside it is an accusation, and every action is on the ledger the
+      candidate can read.
+    -->
+    <div v-if="showVoidModal" class="modal-overlay">
+      <div class="modal void-modal" role="alertdialog" aria-modal="true">
+        <div class="modal-header">
+          <h3>{{ $t(FAIL_HEADLINE) }}</h3>
+        </div>
+        <div class="modal-body">
+          <div class="void-modal__mark" aria-hidden="true">!</div>
+          <p class="void-modal__body">
+            {{ $t(FAIL_BODY, { v0: sitting.verdict.value.negatives, v1: sitting.verdict.value.limit }) }}
+          </p>
+          <ul class="void-modal__list">
+            <li v-for="event in voidedBreaches" :key="event.id">
+              <span>{{ $t(event.label) }}</span>
+              <span class="void-modal__when">{{ breachTime(event.at) }}</span>
+            </li>
+          </ul>
+          <div class="void-modal__score">
+            <span class="void-modal__scoreValue">0%</span>
+            <span class="void-modal__scoreLabel">{{ $t('Recorded score') }}</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <router-link to="/leaderboard" class="btn-review">
+            {{ $t('See my activity record') }}
+          </router-link>
+          <button @click="goToExams" class="btn-finish">{{ $t('Back to Exams') }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Results Modal -->
     <div v-if="showResultsModal" class="modal-overlay">
       <div class="modal results-modal">
@@ -329,6 +421,10 @@ import { examService, passMarkOf, type Exam, type ExamQuestion, type ExamAnswer,
 import { notificationService } from '@/services/notification.service';
 import { proctorService } from '@/services/proctor.service';
 import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
+import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
+import IntegrityRules from '@/components/practice/IntegrityRules.vue';
+import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import { FAIL_BODY, FAIL_HEADLINE } from '@/utils/practiceIntegrity';
 
 // Import the CSS file
 import '@/assets/css/take-exam.css';
@@ -366,6 +462,49 @@ const timerInterval = ref<NodeJS.Timeout | null>(null);
 // Results
 const examResult = ref<UserExamResult | null>(null);
 const correctAnswers = ref<number>(0);
+
+/* ------------------------------------------------------------------ *
+ * The practice ledger
+ * ------------------------------------------------------------------ */
+
+/** Whether the rules have been accepted. The clock waits for it. */
+const ruleGateDone = ref(false);
+const showVoidModal = ref(false);
+
+/**
+ * This sitting.
+ *
+ * `onVoided` submits, and it is the composable that decides WHEN: it stops the
+ * monitor and settles the ledger against app 20 before calling back, because
+ * the service scores the paper from what has actually landed and submitting
+ * first would race the flush.
+ */
+const sitting = usePracticeSitting({
+  context: 'exam',
+  onVoided: async () => {
+    showVoidModal.value = true;
+    stopTimer();
+    // Submitted for them, deliberately. Leaving the paper open would leave a
+    // voided sitting with no record at all, which is indistinguishable from a
+    // submission that never arrived - and would take the evidence with it. App
+    // 20 scores it zero on the strength of the ledger; this sends the answers
+    // so the record is complete.
+    if (!examSubmitted.value) await submitExamResults({ voided: true });
+  },
+});
+
+const passMark = computed(() => exam.value ? passMarkOf(exam.value) : 70);
+
+/** The breaches that ended the sitting, for the reprimand's own list. */
+const voidedBreaches = computed(() =>
+  sitting.log.value.filter(row => row.severity === 'negative'));
+
+/** A wall clock reading. Through `Intl`, so an Arabic reader gets their own. */
+function breachTime(at: number): string {
+  return Number.isFinite(at) && at > 0
+    ? new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : '';
+}
 
 // Computed
 const validQuestions = computed(() => {
@@ -513,9 +652,16 @@ async function loadExam() {
       throw new Error('No questions found for this exam');
     }
 
-    // Start timer if not submitted
-    if (!examSubmitted.value) {
-      startTimer();
+    /*
+      THE TIMER NO LONGER STARTS HERE.
+
+      It starts when the rules are accepted (`acceptRules`), so a candidate is
+      not charged for the time they spend reading what will void their paper.
+      An already-submitted paper skips the gate entirely - somebody reviewing
+      their answers is not sitting anything - which is what this branch is for.
+    */
+    if (examSubmitted.value) {
+      ruleGateDone.value = true;
     }
   } catch (err: any) {
     error.value = err.message || 'Failed to load exam';
@@ -592,6 +738,26 @@ async function calculateCorrectAnswers() {
       }
     }
   }
+}
+
+/**
+ * Accept the rules: start the clock, start watching, start the ledger.
+ *
+ * The order is the sitting's: the ledger records that the rules were
+ * acknowledged and that the paper was started BEFORE the first question is on
+ * screen, so a sitting that ends badly can be shown to have begun with the
+ * rules in front of the candidate.
+ */
+function acceptRules() {
+  if (ruleGateDone.value) return;
+  ruleGateDone.value = true;
+  sitting.begin(
+    { id: exam.value?.external_id || '', name: exam.value?.title || '' },
+    { userId: authStore.user?.id || '', username: authStore.user?.username || '' },
+  );
+  sitting.note('assessment.rules_acknowledged');
+  sitting.note('assessment.started');
+  startTimer();
 }
 
 function startTimer() {
@@ -683,7 +849,32 @@ async function submitExam() {
   }
 }
 
-async function submitExamResults() {
+async function submitExamResults(opts: { voided?: boolean } = {}) {
+  /*
+    A GUARD, because this has TWO callers now.
+
+    `submitExam` checks the exam and the user before calling; `onVoided` does
+    not, because it fires from the practice monitor the moment the fifth breach
+    lands and has no idea what state the page is in. Without this, a paper
+    voided while the exam record was somehow absent would throw inside a
+    background handler - which is the one place a throw is invisible.
+  */
+  if (!exam.value || !authStore.user) return;
+  /*
+    THE LEDGER IS CLOSED FIRST, and that ordering is the whole enforcement.
+
+    App 20 recomputes the verdict from the events that have reached the store
+    and overrides the score to zero when the sitting failed - so a submission
+    that arrived before the last breach was posted would be scored on one fewer
+    breach. `finish` flushes and settles; a voided sitting has already been
+    settled by `endSitting`, which is why that path skips it.
+  */
+  if (!opts.voided) {
+    await sitting.finish({
+      allAnswered: userAnswers.value.size === validQuestions.value.length,
+    });
+  }
+
   // Calculate score
   await calculateCorrectAnswers();
   const score = Math.round((correctAnswers.value / validQuestions.value.length) * 100);
@@ -713,6 +904,16 @@ async function submitExamResults() {
   });
 
   // Submit result
+  /*
+    THE CLIENT STILL SENDS ITS OWN SCORE, and app 20 still overrides it.
+
+    Nothing here is trusted to decide whether the sitting was honest: the
+    service counts the stored breaches itself and writes a zero when there were
+    five. What `practice_session` does is tell it WHICH sitting to count, and
+    that is the only integrity field a client is allowed to set - see
+    `validate_result`. Sending a locally-computed verdict instead would be a
+    candidate declaring their own sitting clean.
+  */
   const resultData = {
     external_id: resultExternalId,
     user_id: authStore.user.id,
@@ -723,7 +924,12 @@ async function submitExamResults() {
     result_message: score >= passingScore
       ? 'Congratulations! You have passed the exam.'
       : 'You need more practice. Better luck next time!',
-    result_status: score >= passingScore ? 'PASSED' : 'FAILED',
+    // `as const` on both branches, so the literal type survives into
+    // `Partial<UserExamResult>` rather than widening to `string`. A
+    // pre-existing `vue-tsc` error on this file, fixed here because the line
+    // was being touched anyway.
+    result_status: (score >= passingScore ? 'PASSED' : 'FAILED') as 'PASSED' | 'FAILED',
+    practice_session: sitting.sessionId.value,
     user_answers: userExamAnswers
   };
 
@@ -734,9 +940,15 @@ async function submitExamResults() {
     await submitExamAlternativeApproach(resultExternalId, userExamAnswers, score, passingScore);
   }
 
-  // Update appointment based on exam result
+  /*
+    Update the appointment - unless the sitting was voided.
+
+    App 20 has recorded the zero, and an operator looking at a voided sitting
+    wants the appointment as it was rather than silently closed as "Taken but
+    Failed", which reads as an ordinary poor mark.
+  */
   const appointmentId = route.query.appointmentId as string;
-  if (appointmentId) {
+  if (appointmentId && !opts.voided) {
     try {
       const status = score >= passingScore ? 'Completed' : 'Taken but Failed';
       const updateData = {
@@ -754,9 +966,30 @@ async function submitExamResults() {
 
   // Mark as submitted
   examSubmitted.value = true;
-  showResultsModal.value = true;
-  showCorrectAnswers.value = true;
+  /*
+    The results modal is NOT raised for a voided sitting, and neither is the
+    answer key.
+
+    Two different reasons and both matter. A "you scored 0%" card over the top
+    of a reprimand reads as a marking error rather than as a penalty; and
+    showing the correct answers to somebody whose paper was just voided for
+    copying hands them the answer key on the way out.
+  */
+  if (!opts.voided) {
+    showResultsModal.value = true;
+    showCorrectAnswers.value = true;
+  }
   stopTimer();
+
+  /*
+    A VOIDED SITTING STOPS HERE.
+
+    What follows is three notifications, all of them worded for a mark that was
+    earned - "passed with 0%" is not a sentence to send anybody, and
+    `exam.result_published` is the durable copy of a result the candidate is
+    meant to keep.
+  */
+  if (opts.voided) return;
 
   // The candidate is looking at their score right now, so the notification is
   // not news — it is the durable copy. An exam result is the one thing on this
