@@ -54,7 +54,8 @@ import {
     type ActorId, type Gender,
 } from '../../src/cast/actors';
 import {
-    ANCHOR_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BOUNDARY_FLOOR,
+    ANCHOR_FIGURES,
+    ASSISTANT_FIGURES, BLINK_MAX_GAP, BLINK_MIN_GAP, BLINK_MS, BOUNDARY_FLOOR,
     BOUNDARY_PULSE_SECONDS, BREATH_PERIOD, FIGURES, NOMINAL_SPEECH_ENERGY,
     SCRIPT_GLANCE_SECONDS,
     FINGERS, FINGER_IDLE_RADIANS, NOD_MAX_GAP, NOD_MIN_GAP, NOD_RADIANS,
@@ -106,7 +107,17 @@ function stripComments(src: string): string {
     return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
-const ALL = [...FIGURES, ...ANCHOR_FIGURES];
+/*
+  EVERY FIGURE, INCLUDING THE ASSISTANTS.
+
+  This was `[...FIGURES, ...ANCHOR_FIGURES]`, so the two site assistants were
+  outside every check in this file — and one of them shipped with `phase: 4.8`,
+  which is 0.2 from Marcus's 0 once taken modulo the breath cycle, i.e. exactly
+  what the spread check below calls clustered. It passed because nothing was
+  looking. A table of figures that some checks cover and others do not is worse
+  than no table, so this is derived from the module rather than listed.
+*/
+const ALL = [...FIGURES, ...ANCHOR_FIGURES, ...ASSISTANT_FIGURES];
 const HAIR: HairStyle[] = ['crop', 'fade', 'wave', 'bob', 'long', 'bun'];
 
 /* ------------------------------------------------------------------ *
@@ -166,8 +177,21 @@ check('no two figures share a phase',
 
 const spread = ALL.map(f => f.phase % BREATH_PERIOD).sort((a, b) => a - b);
 const closest = Math.min(...spread.slice(1).map((v, i) => v - spread[i]!));
+/*
+  The epsilon is not decoration: a gap of EXACTLY the floor has to fail, and
+  without it whether it does is decided by IEEE754.
+
+  A figure at `phase: 4.8` sits 0.2 from Marcus's 0 once taken modulo the
+  4.6-second cycle — clustered, by this check's own definition. It passed
+  anyway, because `4.8 % 4.6` is 0.20000000000000018 and that is greater than
+  0.2. The assertion was measuring floating-point representation rather than the
+  property it names, which is the same class of wrongness as a check that
+  matches its own comment.
+*/
+const MIN_PHASE_GAP = 0.2;
 check('and the phases are spread across the breath cycle, not clustered',
-    closest > 0.2, { closest: Number(closest.toFixed(3)) });
+    closest > MIN_PHASE_GAP + 1e-6,
+    { closest: Number(closest.toFixed(4)), floor: MIN_PHASE_GAP });
 
 check('figureById throws on an unknown id, rather than answering undefined',
     (() => {

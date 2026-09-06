@@ -4,8 +4,8 @@
     class="sfs-bot-btn"
     :class="{ 'is-open': open }"
     :aria-pressed="open"
-    :aria-label="$t('Ask Noor, the site assistant')"
-    :title="$t('Ask Noor, the site assistant')"
+    :aria-label="label"
+    :title="label"
     @click="toggle"
   >
     <!--
@@ -39,8 +39,22 @@
  * then looks exactly as it did before is one people press twice — and pressing
  * it twice closes the window they just opened.
  */
+import { computed } from 'vue';
 import { UserRound } from 'lucide-vue-next';
 import { useAssistant } from '@/composables/useAssistant';
+// The SMALL module, not the engine: this button is on every page and the
+// engine is 35 kB of prompt builder it has no use for (working rule 47).
+import { BUTTON_LABEL } from '@/utils/assistantCast';
+import { t } from '@/i18n/runtime';
 
-const { open, toggle } = useAssistant();
+const { open, cast, toggle } = useAssistant();
+
+/*
+  The button NAMES whoever is on duty, and the name goes through `$t` too — an
+  Arabic reader is offered نور or عمر rather than a Latin run inside Arabic
+  prose. Computed rather than inline so both `aria-label` and `title` are the
+  one string: a screen reader announcing a different name from the tooltip is
+  the sort of thing nobody notices and nobody can explain afterwards.
+*/
+const label = computed(() => t(BUTTON_LABEL, { bot: t(cast.value.name) }));
 </script>

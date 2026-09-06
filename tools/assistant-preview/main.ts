@@ -5,6 +5,7 @@ import AssistantDock from '@/components/assistant/AssistantDock.vue';
 import AssistantButton from '@/components/assistant/AssistantButton.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 import { useAssistant } from '@/composables/useAssistant';
+import { ASSISTANTS } from '@/utils/assistantEngine';
 import '@/assets/css/theme.css';
 import '@/assets/css/responsive.css';
 import '@/style.css';
@@ -39,6 +40,25 @@ const router = createRouter({
 });
 
 const assistant = useAssistant();
+
+/*
+  `?bot=omar` — who is on duty.
+
+  The cast alternates off `localStorage`, which is exactly right in the app and
+  useless in a harness: a shooter would get whoever happened to be next and the
+  other one would go unlooked-at. That matters more than it sounds, because the
+  male half is where the SPEECH path differs — app 36's fallback provider is
+  female in all three languages, so Omar is the one who gets reshaped — and it
+  is where the figure is a different build and a different skin tone.
+
+  Written straight into the shared ref rather than through a second code path
+  in the component: the thing being previewed has to be the thing that ships.
+*/
+{
+    const wanted = params.get('bot');
+    const found = ASSISTANTS.find(a => a.id === wanted);
+    if (found) assistant.cast.value = found;
+}
 const mounted = ref(false);
 
 /*

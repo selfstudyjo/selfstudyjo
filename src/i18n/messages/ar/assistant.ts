@@ -1,5 +1,5 @@
 /**
- * Arabic — Noor, the site assistant.
+ * Arabic — the site assistant, who is two people.
  *
  * ITS OWN AREA, for the reason the index gives: the right translation of a word
  * depends on the words around it. "Assistant" here is `مساعِد` — a person who
@@ -9,45 +9,66 @@
  * "Listening" is `أستمع`, the deliberate act, not `أسمع`. Alphabetically sorted
  * between `Assignments` and `Attempts` there would be nothing to go on.
  *
- * REGISTER. Modern Standard Arabic, and FIRST PERSON throughout, because she
- * speaks as herself: `أستطيع`, `لم أتمكّن`. The refusal is the one place to be
- * plain rather than elaborate — a student who has just been told no needs to
- * understand immediately what is being offered instead, and `الحلّ` (working
- * it out) is named as the thing that teaches, which is the whole argument.
+ * REGISTER. Modern Standard Arabic, and FIRST PERSON throughout, because the
+ * assistant speaks as themself: `أستطيع`, `لم أتمكّن`. The refusal is the one
+ * place to be plain rather than elaborate — a student who has just been told no
+ * needs to understand immediately what is being offered instead, and `الحلّ`
+ * (working it out) is named as the thing that teaches, which is the argument.
  *
- * HER NAME IS NOT TRANSLATED. `Noor` is `نور`, transliterated rather than
- * rendered as "light": it is a name, and the platform has a rule about names
- * (working rule 41) — translating one is putting words in somebody's mouth,
- * and here it would leave the spoken greeting and the plate under her face
- * disagreeing about who she is.
+ * GENDER IS THE HARD PART HERE, and it is why several of these read oddly if
+ * you compare them with the English. There are TWO assistants and they
+ * alternate — نور on one visit, عمر on the next — so any sentence Arabic forces
+ * a gender on is a sentence that is wrong half the time. `جاهزة للمساعدة` is
+ * feminine and `جاهز` is masculine; `في الخدمة` is neither, and that is why it
+ * is what the plate says. Same for `قيد التفكير` over `تفكّر`/`يفكّر`. First
+ * person carries most of the rest for free, which is the other reason the
+ * register is what it is.
+ *
+ * THE NAMES ARE TRANSLITERATED, NOT TRANSLATED. `نور` is not "light" and `عمر`
+ * is not a lifespan. Working rule 41 refuses to translate a PERSON's name
+ * because that is putting words in somebody's mouth; these are the platform's
+ * own characters, and the newscast already puts آدم and ليلى on its plates.
  *
  * DIGITS. Latin, as everywhere else — see `formatNumber`.
  */
 
 const assistant: Record<string, string> = {
+    // ── the two of them, by name ────────────────────────────────────────────
+    //
+    // TRANSLITERATED, not translated. `نور` is not "light" and `عمر` is not a
+    // lifespan: they are names, and the newscast already puts آدم and ليلى on
+    // its plates for the same reason. Working rule 41 refuses to translate a
+    // PERSON's name because that is putting words in somebody's mouth; these
+    // are the platform's own characters, and leaving them Latin would drop a
+    // left-to-right run into the middle of every Arabic greeting.
+    'Noor': 'نور',
+    'Omar': 'عمر',
+
     // ── the button and the window ───────────────────────────────────────────
     'Assistant': 'المساعِد',
-    'Ask Noor, the site assistant': 'اسأل نور، مساعِدة الموقع',
+    // `{bot}` is whoever is on duty, already translated by the caller.
+    'Ask {bot}, the site assistant': 'اسأل {bot}، مساعِد الموقع',
     'Ask me anything about Self Study Jo…': 'اسألني أي شيء عن Self Study Jo…',
-    'Noor is thinking': 'نور تفكّر',
-    'Talk to Noor': 'تحدّث إلى نور',
+    '{bot} is thinking': '{bot} قيد التفكير',
+    'Talk to {bot}': 'تحدّث إلى {bot}',
     'Stop listening': 'أوقِف الاستماع',
     'Voice on': 'الصوت مُفعَّل',
     'Voice off': 'الصوت مُعطَّل',
     // `{v0}` is the destination's own name, and Arabic puts it after the verb.
     'Open {v0}': 'افتح {v0}',
 
-    // ── the plate under her face ────────────────────────────────────────────
-    'here to help': 'جاهزة للمساعدة',
-    'thinking…': 'تفكّر…',
-    'speaking': 'تتحدّث',
-    'listening…': 'تستمع…',
+    // ── the plate under the face ────────────────────────────────────────────
+    // Also gender-neutral for the same reason - `جاهزة` is feminine.
+    'here to help': 'في الخدمة',
+    'thinking…': 'قيد التفكير…',
+    'speaking': 'قيد التحدّث',
+    'listening…': 'قيد الاستماع…',
 
     // ── what she opens with ─────────────────────────────────────────────────
-    'Hi {name} — I am Noor. Ask me about anything on Self Study Jo, or tell me where you want to go and I will take you there.':
-        'مرحبًا {name} — أنا نور. اسألني عن أي شيء في Self Study Jo، أو أخبرني إلى أين تريد الذهاب وسآخذك إليه.',
-    'Hi — I am Noor, the Self Study Jo assistant. Ask me what the platform does or where to find something. Sign in and I can look up your own results too.':
-        'مرحبًا — أنا نور، مساعِدة Self Study Jo. اسألني عمّا تقدّمه المنصّة أو عن مكان أي شيء فيها. وبعد تسجيل الدخول أستطيع أيضًا الاطّلاع على نتائجك.',
+    'Hi {name} — I am {bot}. Ask me about anything on Self Study Jo, or tell me where you want to go and I will take you there.':
+        'مرحبًا {name} — أنا {bot}. اسألني عن أي شيء في Self Study Jo، أو أخبرني إلى أين تريد الذهاب وسآخذك إليه.',
+    'Hi — I am {bot}, the Self Study Jo assistant. Ask me what the platform does or where to find something. Sign in and I can look up your own results too.':
+        'مرحبًا — أنا {bot}، مساعِد Self Study Jo. اسألني عمّا تقدّمه المنصّة أو عن مكان أي شيء فيها. وبعد تسجيل الدخول أستطيع أيضًا الاطّلاع على نتائجك.',
 
     // ── the suggestion chips ────────────────────────────────────────────────
     'What is Self Study Jo?': 'ما هي Self Study Jo؟',

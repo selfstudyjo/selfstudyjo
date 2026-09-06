@@ -471,9 +471,14 @@ class AssistantService {
                 const [courses, labs, runbooks] = await Promise.all([
                     courseService.getAllCourses()
                         .then(rows => rows.map(c => ({
-                            id: String(c.external_id || c.id),
+                            // `external_course_id`, which is what app 19 keys a
+                            // registration on and what `/course/:id` resolves —
+                            // the numeric `id` is the store's derived sha1 fold
+                            // and routing on it would 404.
+                            id: String(c.external_course_id || c.id || ''),
                             title: td(c, 'title') || c.title || '',
                         })))
+                        .then(rows => rows.filter(c => c.id))
                         .catch(() => [] as CatalogueEntry[]),
                     labsService.getCatalogue()
                         .then(c => (c?.labs || []).map(l => ({ id: l.id, title: l.title })))

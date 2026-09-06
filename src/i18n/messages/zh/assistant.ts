@@ -1,23 +1,27 @@
 /**
- * Simplified Chinese — Noor, the site assistant.
+ * Simplified Chinese — the site assistant, who is two people.
  *
  * ITS OWN AREA, for the reason the index gives: the right word depends on the
  * words around it. "Assistant" here is `助手` — a helper who acts on your
  * behalf — and not `助理` (a job title) nor `客服` (which on this platform is
  * the human support widget in the corner of every page, app 9; conflating the
  * two would have readers waiting for a person to reply). "Listening" is `聆听`
- * rather than `听到`, because the point is that she is attending, not that
- * sound reached her.
+ * rather than `听到`, because the point is that the assistant is attending, not
+ * that sound reached them.
  *
  * SIMPLIFIED, and it has to be said rather than assumed: a model told only
  * "answer in Chinese" intermittently produces Traditional, which is why
  * `locales.ts` names the script for the AI side. The same discipline applies to
  * a human editing this file.
  *
- * HER NAME IS NOT TRANSLATED. `Noor` is transliterated as `努尔`, not rendered
- * by meaning: it is a name (working rule 41), and translating it would leave
- * the spoken greeting and the plate under her face disagreeing about who she
- * is.
+ * THE NAMES ARE TRANSLITERATED, NOT TRANSLATED. There are two assistants and
+ * they alternate — `努尔` on one visit, `奥马尔` on the next — and both are
+ * rendered by SOUND. Working rule 41 refuses to translate a person's name, and
+ * these are the platform's own characters; the newscast already does the same
+ * for its two anchors.
+ *
+ * Chinese needs no gender agreement, so unlike the Arabic file none of these
+ * sentences had to be rebuilt around a verbal noun to be true of both of them.
  *
  * NO SPACE BEFORE PUNCTUATION, and full-width marks throughout — `？` and `。`
  * rather than `?` and `.`. A Latin question mark after Han characters is the
@@ -25,29 +29,38 @@
  */
 
 const assistant: Record<string, string> = {
+    // ── the two of them, by name ────────────────────────────────────────────
+    //
+    // TRANSLITERATED by sound, not rendered by meaning: they are names. The
+    // newscast already does this for its own two anchors, and leaving them
+    // Latin would drop an alphabetic run into the middle of every greeting.
+    'Noor': '努尔',
+    'Omar': '奥马尔',
+
     // ── the button and the window ───────────────────────────────────────────
     'Assistant': '助手',
-    'Ask Noor, the site assistant': '向站点助手努尔提问',
+    // `{bot}` is whoever is on duty, already translated by the caller.
+    'Ask {bot}, the site assistant': '向站点助手{bot}提问',
     'Ask me anything about Self Study Jo…': '关于 Self Study Jo 的任何问题都可以问我…',
-    'Noor is thinking': '努尔正在思考',
-    'Talk to Noor': '与努尔对话',
+    '{bot} is thinking': '{bot}正在思考',
+    'Talk to {bot}': '与{bot}对话',
     'Stop listening': '停止聆听',
     'Voice on': '语音已开启',
     'Voice off': '语音已关闭',
     // `{v0}` is the destination's own name.
     'Open {v0}': '打开{v0}',
 
-    // ── the plate under her face ────────────────────────────────────────────
+    // ── the plate under the face ────────────────────────────────────────────
     'here to help': '随时为你服务',
     'thinking…': '思考中…',
     'speaking': '讲话中',
     'listening…': '聆听中…',
 
     // ── what she opens with ─────────────────────────────────────────────────
-    'Hi {name} — I am Noor. Ask me about anything on Self Study Jo, or tell me where you want to go and I will take you there.':
-        '你好，{name}——我是努尔。关于 Self Study Jo 的任何问题都可以问我，或者告诉我你想去哪个页面，我带你过去。',
-    'Hi — I am Noor, the Self Study Jo assistant. Ask me what the platform does or where to find something. Sign in and I can look up your own results too.':
-        '你好——我是 Self Study Jo 的助手努尔。你可以问我这个平台能做什么，或者某项内容在哪里。登录之后，我还能帮你查看自己的成绩。',
+    'Hi {name} — I am {bot}. Ask me about anything on Self Study Jo, or tell me where you want to go and I will take you there.':
+        '你好，{name}——我是{bot}。关于 Self Study Jo 的任何问题都可以问我，或者告诉我你想去哪个页面，我带你过去。',
+    'Hi — I am {bot}, the Self Study Jo assistant. Ask me what the platform does or where to find something. Sign in and I can look up your own results too.':
+        '你好——我是 Self Study Jo 的助手{bot}。你可以问我这个平台能做什么，或者某项内容在哪里。登录之后，我还能帮你查看自己的成绩。',
 
     // ── the suggestion chips ────────────────────────────────────────────────
     'What is Self Study Jo?': 'Self Study Jo 是什么？',

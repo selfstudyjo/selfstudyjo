@@ -14,7 +14,7 @@
       ref="rootEl"
       class="sfs-bot"
       role="dialog"
-      :aria-label="$t('Ask Noor, the site assistant')"
+      :aria-label="$t(BUTTON_LABEL, { bot: $t(cast.name) })"
       :dir="dir"
     >
       <header class="sfs-bot__head">
@@ -28,14 +28,14 @@
           -->
           <PersonStage
             :seats="seats"
-            :speaking="speaking ? ASSISTANT_FIGURE_ID : null"
+            :speaking="speaking ? cast.id : null"
             :energy="energy"
             tile-class="sfs-bot__tile"
           />
         </div>
 
         <p class="sfs-bot__plate">
-          <span>{{ ASSISTANT_NAME }}</span>
+          <span>{{ $t(cast.name) }}</span>
           <span class="sfs-bot__state">· {{ $t(stateLabel) }}</span>
         </p>
 
@@ -94,7 +94,8 @@
         </div>
 
         <div v-if="thinking" class="sfs-bot__row">
-          <div class="sfs-bot__typing" :aria-label="$t('Noor is thinking')">
+          <div class="sfs-bot__typing"
+               :aria-label="$t(THINKING_LABEL, { bot: $t(cast.name) })">
             <span></span><span></span><span></span>
           </div>
         </div>
@@ -125,8 +126,8 @@
           :class="listening ? 'sfs-bot__act--live' : ''"
           :disabled="!micSupported"
           :aria-pressed="listening"
-          :title="listening ? $t('Stop listening') : $t('Talk to Noor')"
-          :aria-label="listening ? $t('Stop listening') : $t('Talk to Noor')"
+          :title="micLabel"
+          :aria-label="micLabel"
           @click="toggleMic"
         ><component :is="listening ? MicOff : Mic" /></button>
 
@@ -197,19 +198,20 @@ import {
 } from '@/utils/roomSpeech';
 import type { VoiceLike } from '@/components/newscast/newscastEngine';
 import {
-    ASSISTANT_FIGURE_ID, ASSISTANT_NAME, EMPTY_CONTEXT, GREETING_SIGNED_IN,
+    BUTTON_LABEL, EMPTY_CONTEXT, GREETING_SIGNED_IN, MIC_LABEL, THINKING_LABEL,
     GREETING_SIGNED_OUT, MIC_FAILED, NO_ANSWER, REFUSAL, SERVICE_BUSY,
     SERVICE_UNREACHABLE, STATE_LABELS, SUGGESTIONS_SIGNED_IN, SUGGESTIONS_SIGNED_OUT,
     VOICE_LABELS,
     buildSystemPrompt, emptySnapshot, historyFor, looksLikeSolveRequest,
-    newMessageId, parseReply, resolveAction, shouldAutoSend,
+    newMessageId, parseReply, resolveAction, seatOf, shouldAutoSend,
     type ActionContext, type AssistantMessage, type ResolvedAction,
     type StudentSnapshot,
 } from '@/utils/assistantEngine';
+import { shapeRatio } from '@/components/newscast/voiceShaper';
 
 /* ------------------------------ state ------------------------------ */
 
-const { stop: closeAssistant } = useAssistant();
+const { cast, stop: closeAssistant } = useAssistant();
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -245,8 +247,12 @@ const voices = ref<VoiceLike[]>([]);
 const speech = createSpeechAudio();
 
 const seats = computed<StageSeat[]>(() => [
-    { key: ASSISTANT_FIGURE_ID, figure: ASSISTANT_FIGURE_ID, label: ASSISTANT_NAME },
+    { key: cast.value.id, figure: cast.value.id, label: t(cast.value.name) },
 ]);
+
+const micLabel = computed(() => (listening.value
+    ? t('Stop listening')
+    : t(MIC_LABEL, { bot: t(cast.value.name) })));
 
 const suggestions = computed(() =>
     (authStore.isAuthenticated ? SUGGESTIONS_SIGNED_IN : SUGGESTIONS_SIGNED_OUT));
@@ -358,7 +364,15 @@ async function say(text: string): Promise<void> {
 
     const turn = ++speechTurn;
     const locale = localeId.value;
-    const plan = planSpeech(voices.value, locale, 'female', 0,
+    const who = cast.value;
+    /*
+      THE GENDER ON DUTY, and the seat with it.
+
+      `planSpeech` casts a DIFFERENT device voice per seat, so passing 0 for
+      both would give Noor and Omar the same voice on a machine that has two —
+      which is the "both anchors are the same woman" failure, one product along.
+    */
+    const plan = planSpeech(voices.value, locale, who.gender, seatOf(who),
                             serverVoices.value, speech.capable);
     voiceNote.value = describeSpeech(plan, locale);
     speaking.value = true;
@@ -367,11 +381,30 @@ async function say(text: string): Promise<void> {
     if (plan.route === 'server') {
         try {
             const clip = await newsService.speech(
-                text, locale as 'ar' | 'en' | 'zh', 'female', 1, '', plan.allowAnyVoice);
+                text, locale as 'ar' | 'en' | 'zh', who.gender, 1, '',
+                plan.allowAnyVoice);
             if (turn !== speechTurn) return;
             voiceNote.value = describeSpeech(plan, locale, clip.voice);
             energyTimer = setInterval(() => { energy.value = speech.energy(); }, 40);
-            await speech.play(clip.url);
+            /*
+              RESHAPE WHAT ACTUALLY ARRIVED, not what was asked for.
+
+              App 36's fallback provider has one voice per language and it is
+              female in all three, so with `edge-tts` missing from the replica
+              Omar is voiced by a woman — the exact bug the newscast was
+              reported for four times. `plan.shapeTo` is the room saying it will
+              correct that, and `voiceShaper` does it the way the newscast does:
+              192 Hz in, 140 Hz out, same duration.
+
+              The ratio is derived from `clip.gender` — the gender the backend
+              MEASURED for the clip it actually returned — rather than from the
+              plan's assumption. `shapeRatio` answers 1 for a direction it has
+              no honest number for, and `play` skips the whole resynthesis pass
+              on 1, so a correctly-voiced clip is never bent. Bending one that
+              did not need it only makes it sound synthetic.
+            */
+            const ratio = plan.shapeTo ? shapeRatio(clip.gender, plan.shapeTo) : 1;
+            await speech.play(clip.url, ratio);
         } catch {
             /* fall through to the device engine rather than going silent */
         } finally {
@@ -516,6 +549,7 @@ async function ask(text: string) {
             {
                 role: 'system',
                 content: buildSystemPrompt({
+                    assistant: cast.value,
                     snapshot: snapshot.value,
                     access: actionContext.value.access,
                     currentPath: route.path,
@@ -728,9 +762,10 @@ onMounted(() => {
     window.addEventListener('keydown', onKey);
     speech.prime();
     const name = String(authStore.user?.full_name || authStore.user?.username || '');
+    const bot = t(cast.value.name);
     push('assistant', authStore.isAuthenticated
-        ? t(GREETING_SIGNED_IN, { name })
-        : t(GREETING_SIGNED_OUT));
+        ? t(GREETING_SIGNED_IN, { name, bot })
+        : t(GREETING_SIGNED_OUT, { bot }));
     void nextTick(() => inputEl.value?.focus());
     // Kicked off here and awaited in `ask`, so opening the window costs nothing
     // and the record is usually in hand by the time a question is typed.
@@ -752,7 +787,12 @@ watch(localeId, () => {
     void probeVoices();
 });
 
-// Signing out must not leave her holding the previous person's results.
+// A cast that changed mid-session would leave a half-spoken line in the other
+// voice. It only changes between page loads today, so this is belt and braces —
+// and it is what makes the window correct if that ever stops being true.
+watch(() => cast.value.id, () => { stopSpeaking(); });
+
+// Signing out must not leave the window holding the previous person's results.
 watch(() => authStore.user?.id, () => {
     assistantService.reset();
     snapshot.value = emptySnapshot();

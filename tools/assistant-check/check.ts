@@ -34,9 +34,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import {
+    ASSISTANTS,
     ASSISTANT_FIGURE_ID,
     ASSISTANT_KEYS,
     ASSISTANT_NAME,
+    BUTTON_LABEL,
+    CAST_STORAGE_KEY,
+    DEFAULT_ASSISTANT,
     AUTO_SEND_MIN_CHARS,
     AUTO_SEND_SILENCE_MS,
     EMPTY_CONTEXT,
@@ -45,6 +49,7 @@ import {
     HISTORY_TURNS,
     MAX_ROWS,
     MIC_FAILED,
+    MIC_LABEL,
     NO_ACCESS,
     NO_ANSWER,
     REFUSAL,
@@ -52,10 +57,12 @@ import {
     SERVICE_UNREACHABLE,
     STATE_LABELS,
     SUGGESTIONS_SIGNED_IN,
+    THINKING_LABEL,
     SUGGESTIONS_SIGNED_OUT,
     VOICE_LABELS,
     bestAttempts,
     buildSystemPrompt,
+    castAssistant,
     destinationId,
     destinations,
     emptySnapshot,
@@ -64,6 +71,7 @@ import {
     newMessageId,
     parseReply,
     resolveAction,
+    seatOf,
     shouldAutoSend,
     snapshotSettled,
     summariseStudent,
@@ -72,7 +80,9 @@ import {
     type Attempt,
     type StudentSnapshot,
 } from '../../src/utils/assistantEngine';
-import { ASSISTANT_FIGURE, figureById } from '../../src/stage3d/figures';
+import {
+    ASSISTANT_FIGURE, ASSISTANT_FIGURES, BREATH_PERIOD, figureById,
+} from '../../src/stage3d/figures';
 import type { Access } from '../../src/navigation/appNav';
 
 let failures = 0;
@@ -512,6 +522,7 @@ check('a signed-out reader has no record and the prompt says so plainly',
 section('The system prompt');
 
 const prompt = buildSystemPrompt({
+    assistant: DEFAULT_ASSISTANT,
     snapshot: emptySnapshot('sami', 'Sami Q'),
     access: ALL,
     currentPath: '/course/course-7',
@@ -520,7 +531,7 @@ const prompt = buildSystemPrompt({
     runbooks: ctx.runbooks,
 });
 
-check('it names her', prompt.includes(ASSISTANT_NAME));
+check('it names whoever is on duty', prompt.includes(ASSISTANT_NAME));
 check('IT SAYS THE WORD JSON — app 27\'s `call_ai` wrapper detects it and '
     + 'appends the JSON language directive rather than the prose one, which is '
     + 'what keeps the KEYS English while translating the VALUES. Without it a '
@@ -546,6 +557,7 @@ check('it tells her to answer in words as well as with a button — the reader '
 
 {
     const narrow = buildSystemPrompt({
+        assistant: DEFAULT_ASSISTANT,
         snapshot: emptySnapshot(),
         access: NO_ACCESS,
         currentPath: '/login',
@@ -605,31 +617,96 @@ check('a message id is unique', newMessageId() !== newMessageId());
  * 9. The figure
  * ================================================================== */
 
-section('The 3D figure');
+section('The pair on duty');
 
-check('the id the component asks for is one `figures.ts` can resolve — a typo '
-    + 'here renders a blank tile with an initial on it and nothing else',
-    figureById(ASSISTANT_FIGURE_ID).id === ASSISTANT_FIGURE_ID);
-check('...and it is the assistant figure rather than a meeting seat',
-      ASSISTANT_FIGURE.id === ASSISTANT_FIGURE_ID);
-check('she is female, which is what lets the server voice route be taken '
-    + 'unreshaped — app 36\'s fallback provider has one voice per language and '
-    + 'it is female in all three',
-    ASSISTANT_FIGURE.gender === 'female', ASSISTANT_FIGURE.gender);
+check('there are two of them', ASSISTANTS.length === 2, ASSISTANTS.map(a => a.id));
+check('...one of each gender, so the male voice route is exercised by half of '
+    + 'all sessions rather than by nobody',
+    new Set(ASSISTANTS.map(a => a.gender)).size === 2,
+    ASSISTANTS.map(a => `${a.id}:${a.gender}`));
+check('...with distinct ids and distinct names',
+      new Set(ASSISTANTS.map(a => a.id)).size === 2
+      && new Set(ASSISTANTS.map(a => a.name)).size === 2, ASSISTANTS);
+
+// Derived from the figure table rather than restated, so a name on a plate, the
+// gender that casts the voice and the face being rendered cannot disagree.
+check('every one is a figure `figures.ts` can resolve - a typo here renders a '
+    + 'blank tile with an initial on it and nothing else',
+    ASSISTANTS.every(a => figureById(a.id).id === a.id),
+    ASSISTANTS.map(a => a.id));
+check('...and its name and gender come FROM that figure rather than being '
+    + 'written down twice',
+    ASSISTANTS.every(a => {
+        const figure = figureById(a.id);
+        return figure.name === a.name && figure.gender === a.gender;
+    }));
+check('...and the table is exactly the assistant figures, so one added there '
+    + 'is one that appears',
+    ASSISTANTS.length === ASSISTANT_FIGURES.length);
+
+check('THEY ALTERNATE: whoever greeted you last time, the other one greets you now',
+      castAssistant(ASSISTANTS[0]!.id).id === ASSISTANTS[1]!.id
+      && castAssistant(ASSISTANTS[1]!.id).id === ASSISTANTS[0]!.id);
+check('...a first-ever visit gets the first of them',
+      castAssistant(null).id === ASSISTANTS[0]!.id);
+check('...and so does a stored value nothing recognises. `localStorage` is '
+    + 'writable by anything on this origin, and an assistant that refused to '
+    + 'appear because a string was wrong would be a window that does not open',
+    castAssistant('nobody').id === ASSISTANTS[0]!.id
+    && castAssistant(undefined).id === ASSISTANTS[0]!.id
+    && castAssistant('').id === ASSISTANTS[0]!.id);
+check('alternating twice returns to the start, so the pair really is a cycle '
+    + 'rather than a one-way trip',
+    castAssistant(castAssistant(ASSISTANTS[0]!.id).id).id === ASSISTANTS[0]!.id);
+check('the storage key is namespaced', CAST_STORAGE_KEY.startsWith('sfs-'),
+      CAST_STORAGE_KEY);
+
+check('each gets its OWN seat number - `planSpeech` casts a different device '
+    + 'voice per seat, so one seat for both is Noor and Omar sharing a voice on '
+    + 'any machine that has two',
+    new Set(ASSISTANTS.map(seatOf)).size === ASSISTANTS.length,
+    ASSISTANTS.map(a => `${a.id}:${seatOf(a)}`));
+
+check('the default is the first of them and agrees with the legacy exports',
+      DEFAULT_ASSISTANT.id === ASSISTANT_FIGURE_ID
+      && DEFAULT_ASSISTANT.name === ASSISTANT_NAME
+      && ASSISTANT_FIGURE.id === ASSISTANT_FIGURE_ID);
 
 {
-    // Two people blinking together is uncanny in a way that is hard to name and
-    // impossible to miss, and she appears on pages that already render a cast.
-    const { FIGURES, ANCHOR_FIGURES } = await import('../../src/stage3d/figures');
-    const phases = [...FIGURES, ...ANCHOR_FIGURES, ASSISTANT_FIGURE].map(f => f.phase);
-    check('her breath phase is distinct from every other figure\'s',
-          new Set(phases).size === phases.length, phases);
-    const gaps = [...phases].sort((a, b) => a - b)
-        .map((p, i, arr) => (i ? p - arr[i - 1]! : Infinity));
-    check('...and spread, not merely distinct — the first cast had eight '
-        + 'distinct numbers, two of which landed a tenth of a second apart once '
-        + 'taken modulo the breath cycle',
-        gaps.every(g => g >= 0.5), gaps);
+    /*
+      THE BREATH PHASE, MEASURED MODULO THE CYCLE.
+
+      The first version of this measured RAW gaps and required 0.5, which passed
+      while the assistant sat 0.2 from Marcus once taken modulo the 4.6-second
+      breath cycle - clustered, by `check:actors`'s own definition, which is the
+      measurement that matters because every idle cycle is a function of
+      `t + phase`. Two checks looking at the wrong thing agreed with each other
+      and a figure shipped breathing in near-lockstep with a meeting seat.
+
+      `check:actors` covers the whole cast including these two now. This is the
+      same property asserted from the side that owns them, because the fault it
+      caught was the assistant table being invisible to the other file.
+    */
+    const phases = ASSISTANT_FIGURES.map(f => f.phase % BREATH_PERIOD);
+    check('the two of them do not breathe together',
+          Math.abs(phases[0]! - phases[1]!) > 0.2 + 1e-6,
+          phases.map(p => Number(p.toFixed(3))));
+}
+
+check('the button, the typing indicator and the microphone all take a {bot} '
+    + 'parameter - a greeting reading "I am Noor" over a plate saying Omar is '
+    + 'the window disagreeing with itself in its first sentence',
+    [BUTTON_LABEL, THINKING_LABEL, MIC_LABEL, GREETING_SIGNED_IN, GREETING_SIGNED_OUT]
+        .every(k => k.includes('{bot}')));
+
+{
+    // Each name is rendered as `$t(cast.name)`, so both have to be catalogue
+    // keys — the newscast transliterates its own anchors on their plates and
+    // this is the same decision.
+    const missing = ASSISTANTS.filter(a => !ASSISTANT_KEYS.includes(a.name));
+    check('both names are catalogue keys, so an Arabic reader is greeted by '
+        + 'نور or عمر rather than by a Latin run inside Arabic prose',
+        missing.length === 0, missing.map(a => a.name));
 }
 
 /* ================================================================== *
@@ -673,6 +750,38 @@ section('Source rules');
       `check:leaderboard` have both paid for this.
     */
     const dockCode = blankComments(blankHtmlComments(dock));
+    /*
+      NO COMPONENT HARDCODES A NAME.
+
+      The whole feature is that the two alternate, so a stray `Noor` in a
+      template is the window disagreeing with itself — the plate saying Omar
+      while the greeting says Noor, or a tooltip naming somebody who is not on
+      duty. Every one of them goes through `$t(cast.name)`.
+
+      Checked against the blanked source so the paragraphs explaining the pair
+      can go on naming them, which is the trap this same check fell into over
+      `v-html` on its first run.
+    */
+    const WORDY = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$';
+    const isWord = (ch: string) => ch !== '' && WORDY.includes(ch);
+    /*
+      A whole-word scan rather than a regex, because the first version of this
+      was `new RegExp(\`...${name}\b\`)` inside a TEMPLATE LITERAL — where
+      `` is a backspace character and not a word boundary, so the pattern
+      matched nothing and the rule passed with `<span>Noor</span>` hardcoded in
+      the plate. Found by breaking the code and watching nothing happen.
+    */
+    const named = ASSISTANTS.map(a => a.name).filter(name => {
+        for (let at = dockCode.indexOf(name); at >= 0;
+             at = dockCode.indexOf(name, at + 1)) {
+            if (!isWord(dockCode[at - 1] || '')
+                && !isWord(dockCode[at + name.length] || '')) return true;
+        }
+        return false;
+    });
+    check('the window hardcodes neither name - both come from the cast',
+          named.length === 0, named);
+
     check('NOTHING REACHES `v-html`', !dockCode.includes('v-html'), dockCode.slice(0, 0));
     check('the window is teleported to <body>, or a positioned page wrapper '
         + 'paints it under the sidebar', dockCode.includes('<Teleport to="body">'));
@@ -709,6 +818,36 @@ section('Source rules');
         + 'can say is per language, and an answer cached from English is what '
         + 'leaves an Arabic reader in silence',
         /watch\(localeId/.test(script));
+    /*
+      THE MALE HALF OF THE PAIR, which is the half that can go wrong quietly.
+
+      App 36's fallback provider has one voice per language and it is female in
+      all three, so with `edge-tts` missing from the replica Omar's line comes
+      back in a woman's voice. Two things stand between that and the reader, and
+      neither is visible in a screenshot:
+
+        * `plan.allowAnyVoice` — the backend REFUSES a wrong-gender voice by
+          default, because a silent substitution is the bug all of this exists
+          to prevent. Drop it and Omar is not mis-voiced, he is SILENT.
+        * the reshaping ratio on `play` — this is what actually corrects it,
+          the same 192 Hz in / 140 Hz out pass the newscast's Adam goes through.
+          Drop it and he is voiced by a woman, which is the newscast bug that
+          was reported four times.
+
+      Both were missed by the first version of this check and found by
+      `negative.py`.
+    */
+    check('the server is told a stand-in voice is acceptable - without it the '
+        + 'male assistant is refused one and goes silent rather than being '
+        + 'mis-voiced', /newsService\.speech\([^;]*plan\.allowAnyVoice/.test(script));
+    check('...and what comes back is RESHAPED into his register, from the '
+        + 'gender the backend MEASURED rather than the one that was asked for',
+        /shapeRatio\(\s*clip\.gender\s*,\s*plan\.shapeTo\s*\)/.test(script)
+        && /speech\.play\(\s*clip\.url\s*,\s*ratio\s*\)/.test(script));
+    check('...and the gender cast is the one on duty, not a literal',
+          /planSpeech\([^;]*who\.gender/.test(script)
+          && !/planSpeech\([^;]*'female'/.test(script));
+
     check('a wrong-language device voice is never cast by hand — the decision '
         + 'goes through `planSpeech`', script.includes('planSpeech'));
 }

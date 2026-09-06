@@ -60,6 +60,17 @@ const VARIANTS = [
     { id: 'long-en', query: 'theme=andromeda&lang=en&state=long' },
     { id: 'live-en', query: 'theme=andromeda&lang=en&state=live' },
     { id: 'signedout-ar', query: 'theme=dawn&lang=ar&signedout=1' },
+    /*
+      THE OTHER ASSISTANT.
+
+      They alternate, so half of all sessions get Omar — and he is not a recolour
+      of Noor: a different build, a different skin tone, a different hair style
+      and the one of the two whose voice has to be RESHAPED, because app 36's
+      fallback provider is female in all three languages. Shipping a figure
+      nobody has looked at is how Noor's own tile came to render a blank band.
+    */
+    { id: 'omar-en', query: 'theme=andromeda&lang=en&bot=omar&state=busy' },
+    { id: 'omar-ar', query: 'theme=andromeda&lang=ar&bot=omar&state=busy' },
 ];
 
 const BASE = process.env.PREVIEW_URL || 'http://127.0.0.1:8794/index.html';

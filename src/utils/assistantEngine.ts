@@ -62,9 +62,32 @@ import {
     type Access, type AccessKey, type NavEntry,
 } from '@/navigation/appNav';
 
-/** The 3D figure she is rendered as. See `stage3d/figures.ts`. */
-export const ASSISTANT_FIGURE_ID = 'noor';
-export const ASSISTANT_NAME = 'Noor';
+/* ------------------------------------------------------------------ *
+ * Who is on duty
+ * ------------------------------------------------------------------ */
+
+/*
+  RE-EXPORTED from `assistantCast.ts`, which is a separate module for a measured
+  reason: the button in the top bar of every page names whoever is on duty, so
+  it needs the cast and one string — and reaching them through this file put the
+  whole engine (the site map, the prompt builder, the parser, the snapshot
+  summariser) into the entry chunk, at 5 kB gzip a visitor reading the login
+  page has no use for. See that file's header; working rule 47.
+
+  One import site for everybody else, so nothing but the button had to change.
+*/
+export {
+    ASSISTANTS, BUTTON_LABEL, CAST_STORAGE_KEY, DEFAULT_ASSISTANT, MIC_LABEL,
+    THINKING_LABEL, castAssistant, seatOf, type Assistant,
+} from '@/utils/assistantCast';
+import {
+    ASSISTANTS, BUTTON_LABEL, DEFAULT_ASSISTANT, MIC_LABEL, THINKING_LABEL,
+    type Assistant,
+} from '@/utils/assistantCast';
+
+/** The first of them, under the names the rest of the app already used. */
+export const ASSISTANT_FIGURE_ID = DEFAULT_ASSISTANT.id;
+export const ASSISTANT_NAME = DEFAULT_ASSISTANT.name;
 
 /* ------------------------------------------------------------------ *
  * Destinations
@@ -651,6 +674,8 @@ export function summariseStudent(snapshot: StudentSnapshot): string {
  * ------------------------------------------------------------------ */
 
 export interface PromptContext {
+    /** Who is on duty. The model is told its own name, because it uses it. */
+    assistant: Assistant;
     snapshot: StudentSnapshot;
     access: Access;
     /** Where the reader is right now, so "take me back" and "what is this page" work. */
@@ -688,7 +713,7 @@ export function buildSystemPrompt(ctx: PromptContext): string {
         .map(d => `  ${d.id} — ${d.label}: ${d.about}`)
         .join('\n');
 
-    return `You are ${ASSISTANT_NAME}, the assistant for Self Study Jo — an online
+    return `You are ${ctx.assistant.name}, the assistant for Self Study Jo — an online
 learning platform with courses and lessons, quizzes and proctored exams,
 certificates, hands-on labs, a network simulator, a CV builder, a mock job
 interview room, a Toastmasters practice meeting, an AI chat assistant, a
@@ -785,9 +810,19 @@ export function shouldAutoSend(text: string, msSinceGrowth: number): boolean {
  * so `check:i18n` verifies them against this table instead of reporting them as
  * orphans.
  */
-export const GREETING_SIGNED_IN = 'Hi {name} — I am Noor. Ask me about anything on '
+/*
+  `{bot}` IS WHOEVER IS ON DUTY, not a decoration.
+
+  There are two assistants and they alternate, so every sentence that names one
+  has to take the name as a parameter — a greeting reading "I am Noor" while the
+  plate underneath says Omar is the window disagreeing with itself in the first
+  thing it says. The name is itself a catalogue key (`$t(cast.name)`), so an
+  Arabic reader is greeted by نور or عمر rather than by a Latin run inside
+  Arabic prose.
+*/
+export const GREETING_SIGNED_IN = 'Hi {name} — I am {bot}. Ask me about anything on '
     + 'Self Study Jo, or tell me where you want to go and I will take you there.';
-export const GREETING_SIGNED_OUT = 'Hi — I am Noor, the Self Study Jo assistant. Ask '
+export const GREETING_SIGNED_OUT = 'Hi — I am {bot}, the Self Study Jo assistant. Ask '
     + 'me what the platform does or where to find something. Sign in and I can look '
     + 'up your own results too.';
 
@@ -831,6 +866,7 @@ export const STATE_LABELS = {
  */
 export const VOICE_LABELS = { on: 'Voice on', off: 'Voice off' } as const;
 
+
 /**
  * The three things that go wrong, as named constants.
  *
@@ -867,6 +903,13 @@ export const SERVICE_UNREACHABLE = 'I could not reach the assistant service. '
  */
 export const ASSISTANT_KEYS: readonly string[] = [...new Set([
     REFUSAL, GREETING_SIGNED_IN, GREETING_SIGNED_OUT,
+    // Both names, because each is rendered as `$t(cast.name)` — see the
+    // `Assistant.name` comment for why a platform character is transliterated
+    // where a user's name is not.
+    ...ASSISTANTS.map(a => a.name),
+    // The three strings that name whoever is on duty. Reached with a `{bot}`
+    // param, so the literal is here and nowhere else.
+    BUTTON_LABEL, THINKING_LABEL, MIC_LABEL,
     MIC_FAILED, NO_ANSWER, SERVICE_BUSY, SERVICE_UNREACHABLE,
     ...Object.values(STATE_LABELS), ...Object.values(VOICE_LABELS),
     // Deduped: "What is Self Study Jo?" is offered to a signed-in reader AND to
