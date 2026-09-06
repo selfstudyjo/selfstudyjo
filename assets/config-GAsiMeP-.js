@@ -1,0 +1,1 @@
+import{Wt as e}from"./index-BxXw4nl8.js";export{e as serviceRegistry};
