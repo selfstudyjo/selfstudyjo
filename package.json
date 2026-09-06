@@ -34,9 +34,11 @@
     "preview:leaderboard": "vite --config tools/leaderboard-preview/vite.config.ts",
     "build:leaderboard-preview": "vite build --config tools/leaderboard-preview/vite.config.ts",
     "preview:home": "vite --config tools/home-preview/vite.config.ts",
+    "preview:draw": "vite --config tools/draw-preview/vite.config.ts",
     "preview:assistant": "vite --config tools/assistant-preview/vite.config.ts",
     "build:assistant-preview": "vite build --config tools/assistant-preview/vite.config.ts",
     "build:home-preview": "vite build --config tools/home-preview/vite.config.ts",
+    "build:draw-preview": "vite build --config tools/draw-preview/vite.config.ts",
     "preview:tools": "vite --config tools/tools-preview/vite.config.ts",
     "build:tools-preview": "vite build --config tools/tools-preview/vite.config.ts",
     "preview:lab": "vite --config tools/labs-preview/vite.config.ts",
@@ -58,7 +60,8 @@
     "check:assistant": "vite build --config tools/assistant-check/vite.config.ts && node tools/assistant-check/dist/check.mjs",
     "shoot:leaderboard": "npm run build:leaderboard-preview && node tools/leaderboard-preview/shoot.mjs",
     "shoot:activity": "npm run build:leaderboard-preview && node tools/leaderboard-preview/shoot-activity.mjs",
-    "shoot:assistant": "npm run build:assistant-preview && node tools/assistant-preview/serve.mjs"
+    "shoot:assistant": "npm run build:assistant-preview && node tools/assistant-preview/serve.mjs",
+    "shoot:draw": "npm run build:draw-preview && node tools/draw-preview/shoot.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

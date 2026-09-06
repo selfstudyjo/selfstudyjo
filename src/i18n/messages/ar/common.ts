@@ -471,6 +471,9 @@ const common: Catalogue = {
      * Everything else on the page around it is Arabic.
      * ---------------------------------------------------------------- */
     'Self Study JO': 'Self Study JO',
+
+    /* A paper that has never been edited, on the Drawing Papers page. */
+    'never': 'مطلقًا',
 };
 
 export default common;

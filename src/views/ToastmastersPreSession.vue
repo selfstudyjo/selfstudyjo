@@ -47,6 +47,40 @@
           </div>
         </div>
 
+        <!--
+          THE RULES, BEFORE THE ROOM, and working rule 53 is unambiguous about
+          why: a system that penalises somebody owes them the rule beforehand,
+          the reason at the time and the evidence afterwards. A meeting records
+          conduct on a PUBLIC activity record, so the one place this could go is
+          in front of the button that opens the room.
+
+          This page had no explainer of any kind, so the panel is new rather
+          than an addition to one - the role and speech-type blurbs above are
+          descriptions of what the member has chosen, not an explanation of how
+          the room works.
+
+          A bullet list rather than the shared `IntegrityRules` table: this is a
+          FORM, and a two-column penalty table between the last field and the
+          submit button pushes the button off a phone. The sentences come from
+          `roomEarningRules('toastmasters')`, so the figures are the room's own
+          rather than a paper's - a page that promises the wrong number is worse
+          than a page that promises nothing.
+        -->
+        <div class="tm-howto">
+          <h3>{{ $t('📋 What is recorded, and what it is worth') }}</h3>
+          <p>
+            {{ $t('A meeting is practice, so nothing below can fail you. What it does is keep a record: taking your turn out loud earns points, and so does hearing every other speaker out — while leaving the window, pasting your speech in or leaving partway costs them. That record is public.') }}
+          </p>
+          <ul class="tm-rules-list">
+            <li v-for="(rule, index) in integrityRules" :key="index">
+              {{ $t(rule.key, rule.params) }}
+            </li>
+          </ul>
+          <p class="tm-hint">
+            {{ $t('Copying is deliberately not recorded here — the sample speech and the word of the day are on screen for you to use. Pasting into your own transcript is, because that transcript is what the Grammarian and both Evaluators read as your speech.') }}
+          </p>
+        </div>
+
         <p class="tm-hint">{{ $t('⚠️ The next page will request camera and microphone permission.') }}</p>
         <button type="submit" class="tm-btn-primary">
           {{ form.role === 'Speaker' ? 'Join Meeting →' : `Practice ${form.role} Role →` }}
@@ -59,6 +93,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { roomEarningRules } from '@/utils/practiceIntegrity';
 
 const router = useRouter();
 
@@ -109,6 +144,15 @@ const form = reactive({
   min_time: 5,
   max_time: 7
 });
+
+/**
+ * What the ledger pays and charges in this room, priced IN this room.
+ *
+ * Derived from `ACTIONS` rather than written out here: the base prices are a
+ * PAPER's, so quoting them would tell a member a switched window costs four
+ * when in a meeting it costs three.
+ */
+const integrityRules = roomEarningRules('toastmasters');
 
 const roleInfo = computed(() => ROLE_INFO[form.role]?.info || '');
 const showSpeechType = computed(() => ROLE_INFO[form.role]?.showSpeechType || false);

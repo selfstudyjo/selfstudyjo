@@ -46,9 +46,25 @@ import type { Params } from '@/i18n';
 
 export type Severity = 'positive' | 'negative' | 'neutral';
 
-export type PracticeContext = 'exam' | 'quiz' | 'lab';
+/**
+ * Where a sitting happens. FIVE, and the last two are the SPEAKING ROOMS.
+ *
+ * `interview` is the mock job interview and `toastmasters` is the Toastmasters
+ * meeting, both served by app 27 and both added on 2026-09-06 - until then
+ * neither produced a single record anywhere on the leaderboard, so a candidate
+ * could sit ten interviews and the board would say they had done nothing.
+ *
+ * What they share with a lab and not with a paper is that **neither can be
+ * failed** (see `FAILS_AT`). What they have that a lab does not is that
+ * PRESENCE IS THE EXERCISE: leaving the window during a lab is opening the
+ * documentation the brief told the student to read, and leaving it during an
+ * interview is walking out of the interview. So the prices sit between the two.
+ */
+export type PracticeContext =
+    'exam' | 'quiz' | 'lab' | 'interview' | 'toastmasters';
 
-export const CONTEXTS: readonly PracticeContext[] = ['exam', 'quiz', 'lab'];
+export const CONTEXTS: readonly PracticeContext[] =
+    ['exam', 'quiz', 'lab', 'interview', 'toastmasters'];
 
 export interface ActionSpec {
     /** Signed. Negative for a breach, positive for conduct, zero for neutral. */
@@ -97,9 +113,17 @@ export const NEGATIVE_LIMIT = 5;
  * measurement, and a measurement taken while the candidate was somewhere else
  * is not a measurement. So the same action costs the same points in both and
  * only one of them ends the sitting.
+ *
+ *
+ * The two speaking rooms are `null` for the lab's reason and one of their own:
+ * they are rehearsal, and there is no mark to void. An interview produces a
+ * coaching report rather than a score, so "this sitting is scored zero" has
+ * nothing to act on - the consequence would be an accusation with no arithmetic
+ * behind it, which is the one shape this whole feature must not have.
  */
 export const FAILS_AT: Record<PracticeContext, number | null> = {
     exam: NEGATIVE_LIMIT, quiz: NEGATIVE_LIMIT, lab: null,
+    interview: null, toastmasters: null,
 };
 
 /**
@@ -119,9 +143,17 @@ export const FAILS_AT: Record<PracticeContext, number | null> = {
  *
  * Over the cap a breach is still recorded and still COUNTS towards the strike
  * limit. What stops is the arithmetic, which is why five still voids a paper.
+ *
+ *
+ * The speaking rooms sit between the two at -20, and the reasoning is the
+ * reasoning for the whole context: they are unbounded in TIME like a lab - a
+ * meeting runs half an hour and every bot line is synthesised and awaited - so
+ * an uncapped penalty would outweigh anything either room can earn. And
+ * presence is the exercise, unlike a lab, so it is not as forgiving as a lab's.
  */
 export const PENALTY_CAP: Record<PracticeContext, number> = {
     exam: -30, quiz: -30, lab: -15,
+    interview: -20, toastmasters: -20,
 };
 
 /**
@@ -136,11 +168,19 @@ export const PENALTY_CAP: Record<PracticeContext, number> = {
  * reported bug: a student who finished every task and left the workspace open
  * went on paying for every switch to their editor, for as long as the tab was
  * open, on a record anybody can read.
+ *
+ *
+ * The speaking rooms each need one of their own for exactly the reason the lab
+ * did: without it a session has no end, and a candidate who finished an
+ * interview and left the tab open went on paying for every switch to their
+ * email - on a record anybody can read.
  */
 export const TERMINAL_ACTIONS: Record<PracticeContext, string> = {
     exam: 'assessment.submitted',
     quiz: 'assessment.submitted',
     lab: 'lab.completed',
+    interview: 'interview.completed',
+    toastmasters: 'meeting.completed',
 };
 
 /** Asks of a lab's AI tutor that are free before each further one costs. */
@@ -203,6 +243,43 @@ export const ACTIONS: Record<string, ActionSpec> = {
         label: 'Finished the lab',
         why: 'Every task verified. Nothing after this is scored.',
     },
+    'interview.started': {
+        points: 0, severity: 'neutral', contexts: ['interview'], once: 1,
+        label: 'Started the interview',
+        why: 'Recorded so the rest of the ledger has a start.',
+    },
+    'interview.answered': {
+        points: 0, severity: 'neutral', contexts: ['interview'], once: 0,
+        label: 'Answered a question',
+        why: 'One per question submitted. Free, and it is what makes "answered three of eight, then left" legible.',
+    },
+    'interview.completed': {
+        // THE END OF AN INTERVIEW, and NEUTRAL for the same reason
+        // `lab.completed` is - except that here the reason is stronger, because
+        // nothing in this room VERIFIES anything. A lab's completion is a
+        // service inspecting an environment task by task; an interview's is a
+        // candidate having reached the last question. Paying for that would be
+        // paying for clicking through, so the positives in this context are the
+        // evidenced ones - a spoken answer, a stretch of active attention - and
+        // reaching the end is recorded rather than rewarded.
+        points: 0, severity: 'neutral', contexts: ['interview'], once: 1,
+        label: 'Finished the interview',
+        why: 'Every question answered or the time up. Nothing after this is scored.',
+    },
+    'meeting.started': {
+        points: 0, severity: 'neutral', contexts: ['toastmasters'], once: 1,
+        label: 'Joined the meeting',
+        why: 'Recorded so the rest of the ledger has a start.',
+    },
+    'meeting.completed': {
+        // THE END OF A MEETING. Neutral, and see `interview.completed` - the
+        // positive that pays for a meeting is `meeting.attended`, which is a
+        // claim about having been an audience rather than about having arrived
+        // at the end of one.
+        points: 0, severity: 'neutral', contexts: ['toastmasters'], once: 1,
+        label: 'Finished the meeting',
+        why: 'Your turn taken and the evaluations read. Nothing after this is scored.',
+    },
 
     // -- positive: conduct and effort -------------------------------------
     'focus.sustained': {
@@ -213,7 +290,8 @@ export const ACTIONS: Record<string, ActionSpec> = {
         // the previous rule paid a student who opened a lab and walked away.
         // And twelve awards was 24 points, a quarter of what passing an exam is
         // worth, for sitting still; eight is a contribution rather than a rival.
-        points: 2, severity: 'positive', contexts: ['exam', 'quiz', 'lab'],
+        points: 2, severity: 'positive',
+        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
         once: 8,
         label: 'Stayed on task',
         why: 'One award for every five minutes of unbroken, active work, up to eight.',
@@ -238,6 +316,42 @@ export const ACTIONS: Record<string, ActionSpec> = {
         label: 'Worked a task through to a verified pass',
         why: 'Awarded when Check my work finds something new, up to four times per lab.',
     },
+    'speaking.delivered': {
+        // THE ONE POSITIVE IN EITHER SPEAKING ROOM THAT IS HARD TO FAKE, and
+        // the whole reason these two contexts pay anything at all.
+        //
+        // The view awards it only when a transcript chunk came back from the
+        // MICROPHONE for that turn and the answer clears a word floor - so it
+        // cannot be had by typing, and it cannot be had by saying two words.
+        // That is the exercise in both rooms: an interview and a Toastmasters
+        // meeting are both practice at SPEAKING, and an answer somebody typed
+        // is practice at typing.
+        //
+        // Shared between the two rather than one action each, because it is the
+        // same act judged the same way and a reader of a public record gains
+        // nothing from two labels for it.
+        points: 3, severity: 'positive',
+        contexts: ['interview', 'toastmasters'], once: 8,
+        label: 'Spoke a real answer',
+        why: 'Awarded for a turn you actually said out loud, of some substance, up to eight times.',
+    },
+    'interview.all_answered': {
+        points: 5, severity: 'positive', contexts: ['interview'], once: 1,
+        label: 'Answered every question the interviewer asked',
+        why: 'Awarded once, for going the whole way rather than stopping at the hard one.',
+    },
+    'meeting.attended': {
+        // THE MOST TOASTMASTERS-SPECIFIC VIRTUE THERE IS, and the reason this
+        // context has a positive an interview does not: a meeting has other
+        // speakers in it. Sitting through the introductions, the evaluations
+        // and the reports is not padding around your own turn, it IS half of
+        // what a meeting is for - and it is the thing `meeting.left_early`
+        // exists to discourage, so the two are a matched pair rather than a
+        // penalty on its own.
+        points: 10, severity: 'positive', contexts: ['toastmasters'], once: 1,
+        label: 'Stayed for the whole meeting',
+        why: 'Awarded once, for hearing every other speaker out rather than leaving after your turn.',
+    },
 
     // -- negative: why points come off ------------------------------------
     'window.left': {
@@ -245,15 +359,22 @@ export const ACTIONS: Record<string, ActionSpec> = {
         // misconduct; leaving it during a lab is opening the documentation the
         // brief told the student to read. Still recorded, because how the work
         // went is information, and priced as the small thing it is.
-        points: -4, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
-        contextPoints: { lab: -1 },
+        //
+        // A SPEAKING ROOM PRICES IT BETWEEN THE TWO. Presence is the exercise
+        // there - somebody is asking you a question, or somebody else is
+        // giving a speech - so it is not the docs-reading a lab expects; and it
+        // is rehearsal, so it is not the misconduct a paper measures.
+        points: -4, severity: 'negative',
+        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
+        contextPoints: { lab: -1, interview: -3, toastmasters: -3 },
         once: 0,
         label: 'Left the exam window',
         why: 'The tab lost focus or was hidden. In an exam this is one of the five.',
     },
     'window.alt_tab': {
-        points: -6, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
-        contextPoints: { lab: -2 },
+        points: -6, severity: 'negative',
+        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
+        contextPoints: { lab: -2, interview: -4, toastmasters: -4 },
         once: 0,
         label: 'Switched away with Alt+Tab',
         why: 'A deliberate switch to another application, which is why it costs more.',
@@ -264,13 +385,31 @@ export const ACTIONS: Record<string, ActionSpec> = {
         // student does in one - so charging for it penalised the intended
         // behaviour. Priced at zero it would still read as a breach on the
         // record; removed from the context, it is not an event.
-        points: -5, severity: 'negative', contexts: ['exam', 'quiz'],
+        //
+        // AN INTERVIEW IS IN, A MEETING IS OUT, and the difference is what is
+        // on the screen. During an interview answer the only text there is the
+        // QUESTION, so copying it is looking it up. During a meeting the screen
+        // carries a sample speech the member has been asked to critique and a
+        // word of the day they have been asked to use, and copying those is the
+        // exercise. Priced at -2 rather than -5 because it is rehearsal.
+        points: -5, severity: 'negative',
+        contexts: ['exam', 'quiz', 'interview'],
+        contextPoints: { interview: -2 },
         once: 0,
         label: 'Copied text out of the paper',
         why: 'How many characters is recorded. The text itself never is.',
     },
     'clipboard.paste': {
-        points: -5, severity: 'negative', contexts: ['exam', 'quiz'],
+        //
+        // BOTH SPEAKING ROOMS, because the box a paste lands in is the
+        // transcript - which is the record of what the student SAID. A pasted
+        // answer is then coached, evaluated and reported as speech nobody
+        // spoke, and the report is wrong about the one thing it exists to be
+        // right about. Typing an answer is allowed and earns nothing; pasting
+        // one is something else.
+        points: -5, severity: 'negative',
+        contexts: ['exam', 'quiz', 'interview', 'toastmasters'],
+        contextPoints: { interview: -4, toastmasters: -4 },
         once: 0,
         label: 'Pasted text into the paper',
         why: 'An answer that arrived from somewhere else.',
@@ -294,6 +433,29 @@ export const ACTIONS: Record<string, ActionSpec> = {
         points: -3, severity: 'negative', contexts: ['lab'], once: 0,
         label: 'Asked the tutor beyond the free allowance',
         why: 'Each ask past the first three costs. It never fails a lab.',
+    },
+    'interview.left_early': {
+        // WALKING OUT, and it is a different fact from losing focus - which is
+        // why it is its own action and not a second `window.left`. It is noted
+        // by the room itself rather than by a DOM listener: `usePracticeSitting`
+        // records it when the page is torn down with the interview still
+        // running, so closing the tab, navigating away and pressing Leave all
+        // reach it through one path.
+        //
+        // Never a strike, because nothing in this context is - and the
+        // pre-session screen prints the price before anybody starts, which is
+        // what makes a penalty fair rather than a trap.
+        points: -5, severity: 'negative', contexts: ['interview'], once: 0,
+        label: 'Left the interview before the end',
+        why: 'Abandoning an interview partway is recorded. Nothing in an interview can fail you.',
+    },
+    'meeting.left_early': {
+        // THE COUNTERPART OF `meeting.attended`, and the sharper of the two in
+        // a meeting: leaving after your own turn means the people who were
+        // about to evaluate you are speaking to an empty chair.
+        points: -5, severity: 'negative', contexts: ['toastmasters'], once: 0,
+        label: 'Left the meeting before the end',
+        why: 'Leaving while the meeting is still running is recorded. Nothing in a meeting can fail you.',
     },
 };
 
@@ -593,6 +755,14 @@ export const MIN_GAP_MS: Record<string, number> = {
     // repeatedly while the panel stays open. One strike per half minute.
     'devtools.opened': 30000,
     'ai.overused': 0,
+    // LEAVING A ROOM HAPPENS ONCE. A second note inside one sitting is always
+    // a teardown path that ran twice - a route-leave guard alongside an unmount
+    // hook, a component re-created by a reload - and never a second departure,
+    // because after the first one the sitting is gone. So the gap is longer
+    // than anything else here on purpose: it is not rate limiting a repeatable
+    // action, it is refusing a duplicate.
+    'interview.left_early': 60000,
+    'meeting.left_early': 60000,
 };
 
 /** How long after an Alt+Tab a `window.left` is treated as the same action. */
@@ -721,15 +891,59 @@ function randomId(): string {
  * and `check:i18n` would report it as an orphan because no source file contains
  * the literal.
  */
+/**
+ * The sentence an UNFAILABLE context leads with, per context.
+ *
+ * Three of the five contexts cannot fail anybody, and the reason differs in
+ * each: a lab is a place to try things, an interview is rehearsal for one, and
+ * a meeting is a room you are practising being present in. One neutral
+ * sentence over all three would leave the reader of an interview's panel
+ * believing they were being invigilated - which is the behaviour these rooms
+ * exist to unteach - and the lab's own wording, printed in a Toastmasters
+ * meeting, would be talking about documentation nobody is reading.
+ *
+ * A map rather than a `switch` in the component, because `PRACTICE_KEYS` below
+ * derives the translation keys from it: a branch in a template is a key no
+ * scan can find, and the symptom is a line that silently reverts to English.
+ */
+export const CALM_BODY: Record<PracticeContext, string> = {
+    // Never reached - both are failable - and present because the record is
+    // total. A partial map here would need a non-null assertion at every call
+    // site, which is where a missing entry stops being a type error.
+    exam: '',
+    quiz: '',
+    lab: 'A lab is for trying things. Every action below is recorded and some of them cost points, but no number of them ends a lab or takes a task away from you. Leaving the window to read the documentation is what a practitioner does.',
+    interview: 'An interview here is rehearsal, so nothing below can fail you or take a mark away - there is no mark. Every action is recorded, some of them cost points, and the report you get at the end is coaching either way. What earns is the part that is the exercise: answering out loud, and staying in the room.',
+    toastmasters: 'A meeting cannot be failed. Every action below is recorded and some of them cost points, but the worst any of them does is lower the conduct score on your record. What earns most here is the thing a meeting is actually for: taking your turn out loud, and hearing everybody else out.',
+};
+
+/**
+ * The running sentence a room prints while a sitting is open, per context.
+ *
+ * Same reasoning as `CALM_BODY`: "a lab is for trying things" is the wrong
+ * sentence to print at somebody halfway through a mock interview.
+ */
+export const OPEN_BODY: Record<PracticeContext, string> = {
+    exam: '',
+    quiz: '',
+    lab: '{v0} points lost so far. Nothing here can fail you — a lab is for trying things.',
+    interview: '{v0} points lost so far. Nothing here can fail you — an interview is rehearsal.',
+    toastmasters: '{v0} points lost so far. Nothing here can fail you — a meeting is practice.',
+};
+
 export function strikeMessage(verdict: Verdict): { key: string; params: Params } {
     // FIRST, and before the limit is even looked at. A finished lab and a
     // submitted paper are both over, and neither should be told how many
     // breaches would end them.
     if (verdict.closed) return { key: CLOSED_MESSAGE, params: {} };
     if (verdict.limit === null) {
+        // PER CONTEXT. This branch used to print the lab's sentence in every
+        // unfailable context, which was fine while the lab was the only one -
+        // and became "a lab is for trying things" on a Toastmasters panel the
+        // moment there were three.
         return verdict.negatives
             ? {
-                key: '{v0} points lost so far. Nothing here can fail you — a lab is for trying things.',
+                key: OPEN_BODY[verdict.context] || OPEN_BODY.lab,
                 params: { v0: Math.abs(verdict.penaltyPoints) },
             }
             : { key: 'No points lost. Keep going.', params: {} };
@@ -835,6 +1049,72 @@ export function labEarningRules(): { key: string; params: Params }[] {
     ];
 }
 
+/**
+ * How a SPEAKING ROOM earns and loses points, as a list of English keys.
+ *
+ * Printed on both pre-session screens, because working rule 53 is unambiguous
+ * about it: a system that penalises somebody owes them the rule BEFOREHAND. The
+ * numbers are read out of `ACTIONS` and priced IN THE ROOM rather than written
+ * down, for the reason `labEarningRules` gives - quoting the base figures would
+ * tell a candidate a switched window costs four when it costs three, and a page
+ * that promises the wrong number is worse than a page that promises nothing.
+ */
+export function roomEarningRules(
+    context: 'interview' | 'toastmasters',
+): { key: string; params: Params }[] {
+    const spoken = ACTIONS['speaking.delivered'];
+    const rules: { key: string; params: Params }[] = [
+        {
+            key: 'Every turn you actually speak, of some substance, earns {v0} — up to {v1} times.',
+            params: { v0: spoken.points, v1: spoken.once },
+        },
+        {
+            key: 'Every five minutes of unbroken, active work earns {v0}, up to {v1} times.',
+            params: {
+                v0: ACTIONS['focus.sustained'].points,
+                v1: ACTIONS['focus.sustained'].once,
+            },
+        },
+    ];
+    if (context === 'interview') {
+        rules.push({
+            key: 'Answering every question the interviewer asks earns {v0} more.',
+            params: { v0: ACTIONS['interview.all_answered'].points },
+        });
+    } else {
+        rules.push({
+            key: 'Staying to the end, so every other speaker is heard out, earns {v0} more.',
+            params: { v0: ACTIONS['meeting.attended'].points },
+        });
+    }
+    rules.push({
+        key: 'Leaving the window costs {v0} and switching away with Alt+Tab costs {v1}.',
+        params: {
+            v0: Math.abs(pointsOf('window.left', context)),
+            v1: Math.abs(pointsOf('window.alt_tab', context)),
+        },
+    });
+    rules.push({
+        // PASTING, and it is worth its own line rather than being folded in
+        // with the others: it is the one action here that makes the REPORT
+        // wrong, because the transcript is what the coach reads.
+        key: 'Pasting text into the transcript costs {v0} — what you paste is coached as something you said.',
+        params: { v0: Math.abs(pointsOf('clipboard.paste', context)) },
+    });
+    rules.push({
+        key: 'Leaving before the end costs {v0}.',
+        params: {
+            v0: Math.abs(ACTIONS[context === 'interview'
+                ? 'interview.left_early' : 'meeting.left_early'].points),
+        },
+    });
+    rules.push({
+        key: 'Nothing here can fail you, and one sitting is capped at {v0} points lost. Once it is finished, nothing further is scored at all.',
+        params: { v0: Math.abs(PENALTY_CAP[context]) },
+    });
+    return rules;
+}
+
 /* ------------------------------------------------------------------ *
  * Every string reached through a VARIABLE, for `check:i18n`
  * ------------------------------------------------------------------ */
@@ -864,6 +1144,17 @@ export const PRACTICE_KEYS: readonly string[] = (() => {
     keys.add(FAIL_HEADLINE);
     keys.add(FAIL_BODY);
     for (const rule of labEarningRules()) keys.add(rule.key);
+    // THE SPEAKING ROOMS, both of them, and both copy maps. Every one of these
+    // is reached through a variable - `$t(rule.key)`, `$t(CALM_BODY[context])`
+    // - so the orphan scan cannot see the call site and the coverage scan
+    // cannot see the key. Derived by CALLING the functions rather than listed,
+    // because a hand-written copy goes stale the day somebody rewords a
+    // penalty and the symptom is one line of English inside an Arabic panel.
+    for (const room of ['interview', 'toastmasters'] as const) {
+        for (const rule of roomEarningRules(room)) keys.add(rule.key);
+    }
+    for (const body of Object.values(CALM_BODY)) if (body) keys.add(body);
+    for (const body of Object.values(OPEN_BODY)) if (body) keys.add(body);
     /*
       The strike messages, driven over the whole decision space rather than
       listed.
@@ -879,8 +1170,12 @@ export const PRACTICE_KEYS: readonly string[] = (() => {
     // Seven now: the six above plus a CLOSED one, which takes the branch none
     // of the others can reach.
     const closed = verdictFor([{ action: 'lab.completed' }], 'lab');
+    // Nine now: the seven above plus one per SPEAKING ROOM with a breach in
+    // it, which is the only way `OPEN_BODY.interview` and
+    // `OPEN_BODY.toastmasters` are ever reached.
     for (const verdict of [sample(0, 'exam'), sample(1, 'exam'), sample(4, 'exam'),
-        sample(5, 'exam'), sample(0, 'lab'), sample(2, 'lab'), closed]) {
+        sample(5, 'exam'), sample(0, 'lab'), sample(2, 'lab'), closed,
+        sample(1, 'interview'), sample(1, 'toastmasters')]) {
         keys.add(strikeMessage(verdict).key);
     }
     return [...keys];

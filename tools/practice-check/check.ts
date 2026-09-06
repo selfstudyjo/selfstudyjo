@@ -42,6 +42,7 @@ import {
     ACTIONS,
     AI_FREE_ASKS,
     ALT_TAB_ABSORB_MS,
+    CALM_BODY,
     CONTEXTS,
     FAILS_AT,
     FOCUS_AWARD_MS,
@@ -58,8 +59,11 @@ import {
     commitThrottle,
     describeCopy,
     isNegative,
+    OPEN_BODY,
+    PRACTICE_KEYS,
     labEarningRules,
     labelOf,
+    roomEarningRules,
     newEventId,
     newSessionId,
     newThrottle,
@@ -421,6 +425,337 @@ section('3. Five breaches, and only where five means something');
 /* ------------------------------------------------------------------ *
  * 6. The throttle
  * ------------------------------------------------------------------ */
+
+section('3b. The two speaking rooms');
+{
+    // The interview and the Toastmasters meeting, both served by app 27. Every
+    // check here is a property those rooms depend on and not one of them is
+    // visible in a screenshot. `python _integrity_negative.py` in app 20 breaks
+    // each of the corresponding server-side rules and proves the twin checks
+    // there can fail.
+    const rooms: PracticeContext[] = ['interview', 'toastmasters'];
+    const breach = (n: number, action = 'window.left') =>
+        Array.from({ length: n }, () => ({ action }));
+
+    check('both are contexts this build knows',
+        rooms.every(room => (CONTEXTS as readonly string[]).includes(room)));
+    check('and NEITHER can be failed - an interview produces a coaching '
+        + 'report rather than a mark, so there is nothing to void',
+        rooms.every(room => FAILS_AT[room] === null), FAILS_AT);
+    check('nine breaches in an interview is not a failure',
+        !verdictFor(breach(9), 'interview').failed
+        && verdictFor(breach(9), 'interview').remaining === null);
+    check('and the points still come off',
+        verdictFor(breach(9), 'interview').points < 0);
+
+    // PRESENCE IS THE EXERCISE, which is why these two sit between a lab and a
+    // paper rather than at either end. Asserted as an ORDERING rather than as
+    // three literals, so retuning any one of them has to keep the ordering.
+    for (const room of rooms) {
+        check(`leaving the window costs more in a ${room} than in a lab and `
+            + 'less than in a paper',
+            pointsOf('window.left', 'lab') > pointsOf('window.left', room)
+            && pointsOf('window.left', room) > pointsOf('window.left', 'exam'),
+            { lab: pointsOf('window.left', 'lab'),
+                room: pointsOf('window.left', room),
+                exam: pointsOf('window.left', 'exam') });
+    }
+    check('and an Alt+Tab costs more than losing focus in both',
+        rooms.every(room =>
+            pointsOf('window.alt_tab', room) < pointsOf('window.left', room)));
+
+    // THE ONE THAT CORRUPTS THE REPORT. The box a paste lands in is the
+    // transcript, which is the record of what the student SAID - so a pasted
+    // answer is coached and evaluated as speech nobody spoke.
+    check('a paste is recorded in both rooms',
+        rooms.every(room => allowedIn('clipboard.paste', room)));
+    check('and a copy is an interview event but NOT a meeting one - a meeting '
+        + 'shows a sample speech the member was asked to critique',
+        allowedIn('clipboard.copy', 'interview')
+        && !allowedIn('clipboard.copy', 'toastmasters'));
+    check('neither room watches the developer tools, the printer or full '
+        + 'screen - there is no answer key in either of them',
+        !rooms.some(room => ['devtools.opened', 'print.attempt',
+            'fullscreen.exited'].some(name => allowedIn(name, room))));
+
+    // ROOM-ONLY ACTIONS BELONG TO EXACTLY ONE CONTEXT. The narrower spelling
+    // of this - "not allowed in the other room" - let a mutation adding 'exam'
+    // to the interview's list through in app 20: a strike-bearing rehearsal
+    // action in a paper, from a list somebody widened by one word.
+    const ownRoom: Record<string, PracticeContext> = {
+        'interview.started': 'interview',
+        'interview.answered': 'interview',
+        'interview.all_answered': 'interview',
+        'interview.completed': 'interview',
+        'interview.left_early': 'interview',
+        'meeting.started': 'toastmasters',
+        'meeting.attended': 'toastmasters',
+        'meeting.completed': 'toastmasters',
+        'meeting.left_early': 'toastmasters',
+    };
+    const stray = Object.entries(ownRoom).filter(([name, room]) =>
+        ACTIONS[name].contexts.length !== 1 || ACTIONS[name].contexts[0] !== room);
+    check('every room-only action belongs to exactly ONE context',
+        !stray.length, stray.map(([name]) => name));
+
+    // THE ENDINGS, and that they are not the paper's.
+    check('each room ends on its own action',
+        TERMINAL_ACTIONS.interview === 'interview.completed'
+        && TERMINAL_ACTIONS.toastmasters === 'meeting.completed');
+    check('and neither ending is scored - nothing in these rooms VERIFIES '
+        + 'anything, so reaching the end is not evidence of work',
+        rooms.every(room => ACTIONS[TERMINAL_ACTIONS[room]].points === 0));
+    const shut = verdictFor(
+        [{ action: 'window.left' }, { action: 'interview.completed' },
+            { action: 'window.alt_tab' }], 'interview');
+    check('a breach flushed after the interview closed is not scored',
+        shut.closed && shut.negatives === 1, shut);
+
+    // THE POSITIVES, and the anti-farming bound on the only one that matters.
+    check('a spoken turn earns in both rooms and is bounded',
+        rooms.every(room => allowedIn('speaking.delivered', room))
+        && ACTIONS['speaking.delivered'].once > 0);
+    check('a stretch of active attention earns in both too',
+        rooms.every(room => allowedIn('focus.sustained', room)));
+    check('and staying for the whole meeting is the one award an interview '
+        + 'does not get - an interview has no other speakers to sit through',
+        allowedIn('meeting.attended', 'toastmasters')
+        && !allowedIn('meeting.attended', 'interview'));
+
+    // THE FAIRNESS BAND. A room whose ledger can only go down is a room
+    // nobody opens twice, so what a full sitting earns has to outweigh what
+    // one can lose - and it has to stay below what a VERIFIED achievement pays.
+    const bestInterview = ACTIONS['focus.sustained'].points
+        * ACTIONS['focus.sustained'].once
+        + ACTIONS['speaking.delivered'].points
+        * ACTIONS['speaking.delivered'].once
+        + ACTIONS['interview.all_answered'].points;
+    check('a fully spoken interview earns more than a quiz pass',
+        bestInterview > POINTS.quizPassed, bestInterview);
+    check('and far less than an exam pass, which is a MEASURED result',
+        bestInterview < POINTS.examPassed, bestInterview);
+    check('and more than one sitting can possibly lose',
+        bestInterview > Math.abs(PENALTY_CAP.interview));
+
+    // THE CAP. A meeting runs half an hour and every bot line is synthesised
+    // and awaited, so an uncapped penalty would outweigh anything either room
+    // can earn.
+    for (const room of rooms) {
+        const many = verdictFor(breach(20, 'window.alt_tab'), room);
+        check(`twenty breaches in a ${room} stops at the cap`,
+            many.penaltyPoints === PENALTY_CAP[room] && many.penaltyCapped, many);
+        check('and every one of them is still on the record',
+            many.negatives === 20);
+    }
+
+    // THE COPY. Three of the five contexts cannot fail anybody and the reason
+    // differs in each, so one sentence over all three printed the lab's
+    // wording - "leaving the window to read the documentation is what a
+    // practitioner does" - on a Toastmasters panel.
+    const unfailable = CONTEXTS.filter(c => FAILS_AT[c] === null);
+    check('every unfailable context has reassurance copy of its OWN',
+        unfailable.every(c => !!CALM_BODY[c] && !!OPEN_BODY[c]), unfailable);
+    check('and no two of them say the same thing',
+        new Set(unfailable.map(c => CALM_BODY[c])).size === unfailable.length);
+    check('a failable context has none, because it never reads one',
+        CONTEXTS.filter(c => FAILS_AT[c] !== null).every(c => !CALM_BODY[c]));
+    check('the running sentence follows the context rather than naming a lab',
+        strikeMessage(verdictFor(breach(1), 'interview')).key
+            .includes('rehearsal')
+        && strikeMessage(verdictFor(breach(1), 'toastmasters')).key
+            .includes('meeting'));
+
+    // THE RULES A CANDIDATE READS BEFORE STARTING (working rule 53). Every
+    // figure is read out of ACTIONS and priced IN THE ROOM: quoting the base
+    // numbers would tell a candidate a switched window costs four when it
+    // costs three, and a page that promises the wrong number is worse than a
+    // page that promises nothing.
+    for (const room of rooms) {
+        const filled = roomEarningRules(room)
+            .map(rule => Object.values(rule.params).map(Number));
+        check(`the ${room} rules quote its OWN window price`,
+            filled.some(values =>
+                values.includes(Math.abs(pointsOf('window.left', room)))),
+            { filled, price: Math.abs(pointsOf('window.left', room)) });
+        check('and its own paste price',
+            filled.some(values =>
+                values.includes(Math.abs(pointsOf('clipboard.paste', room)))));
+        check('and its own cap',
+            filled.some(values => values.includes(Math.abs(PENALTY_CAP[room]))));
+        check('every rule it prints has a placeholder for every param it '
+            + 'passes - a key missing one renders the literal',
+            roomEarningRules(room).every(rule =>
+                Object.keys(rule.params)
+                    .every(name => rule.key.includes(`{${name}}`))),
+            roomEarningRules(room).map(r => r.key));
+        // THE BASE FIGURE MUST NOT BE THE ONE PRINTED, and this is targeted at
+        // the one rule rather than scanned across all of them - which is how
+        // it was written first, and it failed on a coincidence: the room's own
+        // Alt+Tab price is 4 and so is a paper's window price, so "the number
+        // 4 appears somewhere in the params" was never the property. Read the
+        // window rule and check ITS values.
+        const windowRule = roomEarningRules(room)
+            .find(rule => rule.key.startsWith('Leaving the window costs'));
+        check('the window rule prices both halves in the room and not in a paper',
+            !!windowRule
+            && Number(windowRule.params.v0)
+                === Math.abs(pointsOf('window.left', room))
+            && Number(windowRule.params.v1)
+                === Math.abs(pointsOf('window.alt_tab', room))
+            && Number(windowRule.params.v0)
+                !== Math.abs(ACTIONS['window.left'].points),
+            windowRule?.params);
+    }
+    check('the interview rules mention answering everything and the meeting '
+        + 'rules mention staying to the end',
+        roomEarningRules('interview').some(r => r.key.includes('every question'))
+        && roomEarningRules('toastmasters')
+            .some(r => r.key.includes('every other speaker')));
+
+    // And the derived key list carries all of it, or these lines render in
+    // English inside an Arabic panel.
+    for (const room of rooms) {
+        const missing = roomEarningRules(room)
+            .map(rule => rule.key).filter(key => !PRACTICE_KEYS.includes(key));
+        check(`every ${room} rule is in PRACTICE_KEYS, so check:i18n can see it`,
+            !missing.length, missing);
+        check('and so is its reassurance copy',
+            PRACTICE_KEYS.includes(CALM_BODY[room])
+            && PRACTICE_KEYS.includes(OPEN_BODY[room]));
+    }
+
+    // The rules table has to list every action the room can record, or a
+    // candidate is penalised for something the panel never mentioned.
+    for (const room of rooms) {
+        const listed = rulesFor(room, 'negative').length
+            + rulesFor(room, 'positive').length + rulesFor(room, 'neutral').length;
+        const real = Object.values(ACTIONS)
+            .filter(a => a.contexts.includes(room)).length;
+        check(`the ${room} rules table lists every action it can record`,
+            listed === real, { listed, real });
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ * 3c. The two rooms are actually WIRED, read off disk
+ * ------------------------------------------------------------------ */
+
+/** A carriage return. Named rather than escaped - see `read` below. */
+const CR = String.fromCharCode(13);
+
+section('3c. The speaking rooms are wired');
+{
+    // WHY THIS READS SOURCE. Everything above drives plain functions, and the
+    // catalogue being perfect says nothing about whether either room uses it.
+    // Two mutations proved it: deleting `sitting.complete()` from the interview
+    // and deleting the abandon note from the composable both left this check
+    // entirely green, and both are silent in production - the first leaves a
+    // finished interview accruing penalties for the life of the tab, and the
+    // second stops "left before the end" ever being recorded at all.
+    //
+    // Same precedent as `check:labs`, which reads `LabWeb.vue` off disk to
+    // assert its sandbox attributes and the order its console shim is
+    // installed in. A regex over source is a blunt instrument; it is also the
+    // only instrument there is for a property that lives in a lifecycle hook.
+    /*
+      LINE ENDINGS ARE NORMALISED, and that is not tidiness.
+
+      This repo is checked out with git's own newline conversion, so a file's
+      endings depend on whether git has touched it since it was last written -
+      and a multi-line anchor below matched on a fresh write and then stopped
+      matching after a `git stash pop`. The failure was a REAL check reporting
+      a false negative on correct code, which is the second-worst thing a check
+      can do after passing on a file it could not read.
+    */
+    const read = (path: string) => {
+        try {
+            return readFileSync(resolve(process.cwd(), path), 'utf8')
+                .split(CR).join('');
+        } catch {
+            return '';
+        }
+    };
+    const sitting = read('src/composables/usePracticeSitting.ts');
+    const rooms: { name: string; path: string; context: string;
+        abandon: string; terminal: string }[] = [
+        { name: 'interview', path: 'src/views/JobInterviewSession.vue',
+            context: 'interview', abandon: 'interview.left_early',
+            terminal: 'interview.completed' },
+        { name: 'toastmasters', path: 'src/views/ToastmastersSession.vue',
+            context: 'toastmasters', abandon: 'meeting.left_early',
+            terminal: 'meeting.completed' },
+    ];
+
+    check('the composable is readable at all - a check that silently reads an '
+        + 'empty string passes everything below it',
+        sitting.length > 2000, sitting.length);
+
+    // THE ABANDON PATH. There are three ways out of one of these rooms and only
+    // one of them runs a handler the view controls, so it is noted from the
+    // composable's own unmount - which is also the last hook that can still
+    // reach the queue, because the flush is in the same hook just below.
+    check('the composable notes the abandon action from its unmount',
+        /onBeforeUnmount\(\(\) => \{[\s\S]{0,900}?note\(options\.abandonedAs\)/
+            .test(sitting), 'no note(options.abandonedAs) in onBeforeUnmount');
+    check('and it does so BEFORE stopping the monitor, which is what `note` '
+        + 'goes through - a stopped monitor records nothing',
+        sitting.indexOf('note(options.abandonedAs)')
+        < sitting.indexOf('monitor.value?.stop();\n        running.value = false;'),
+        'the note is after monitor.stop()');
+    // AND ONLY FOR AN UNFINISHED SITTING, or an interview that ended properly
+    // would be recorded as having been walked out of.
+    check('and only when the sitting was neither finished, voided nor completed',
+        /if \(running\.value && !voided\.value && !completed\.value/.test(sitting));
+
+    for (const room of rooms) {
+        const view = read(room.path);
+        check(`${room.name}: the view is readable`, view.length > 5000,
+            view.length);
+        check(`${room.name}: it opens a sitting in its own context`,
+            new RegExp(`context: '${room.context}'`).test(view));
+        check(`${room.name}: it calls sitting.begin with a subject`,
+            /sitting\.begin\(\s*\{\s*id:/.test(view));
+        // THE ENDING, and the mutation that got past every other check here.
+        check(`${room.name}: it CLOSES the sitting when the work is done`,
+            /await sitting\.complete\(\)/.test(view),
+            'no await sitting.complete()');
+        check(`${room.name}: and it declares how an abandoned one is recorded`,
+            new RegExp(`abandonedAs: '${room.abandon}'`).test(view));
+        // The detectors that must be OFF. There is no answer key in either
+        // room, so opening the console is somebody looking at a page.
+        check(`${room.name}: the developer-tools, print and full-screen `
+            + 'detectors are all off',
+            /devtools: false/.test(view) && /print: false/.test(view)
+            && /fullscreen: false/.test(view));
+        // ...and the one that must be ON, which is the whole reason the paste
+        // penalty exists: the transcript is the record of what was SAID.
+        check(`${room.name}: the clipboard detector is NOT switched off`,
+            !/clipboard: false/.test(view), 'clipboard was disabled');
+        // THE EVIDENCE BEHIND THE ONE AWARD THAT PAYS. Without the microphone
+        // flag it is payable by typing, which is the opposite of the exercise.
+        check(`${room.name}: the spoken award is gated on a microphone chunk `
+            + 'AND a word count',
+            /spokeThis\w+\s*\n?\s*&& countWords\(/.test(view)
+            || /spokeThis\w+ && countWords\(/.test(view),
+            'speaking.delivered is not gated on both');
+        check(`${room.name}: and the flag is set where a transcription lands`,
+            /function applyChunk[\s\S]{0,300}?spokeThis\w+ = true/.test(view));
+        check(`${room.name}: and cleared per turn, so one spoken answer cannot `
+            + 'pay for the next',
+            /spokeThis\w+ = false/.test(view));
+        // The meter is drawn, and hidden once the sitting is over - a panel
+        // counting breaches at somebody reading their report counts nothing.
+        check(`${room.name}: it draws the practice record`,
+            new RegExp(`context="${room.context}"`).test(view));
+        check(`${room.name}: and hides it once the report is up`,
+            /!report(Visible|sVisible)/.test(view));
+        // And the terminal action is never noted by hand: `complete()` owns it,
+        // out of `TERMINAL_ACTIONS`, so the two cannot disagree.
+        check(`${room.name}: the terminal action is not noted by hand - `
+            + 'complete() owns it',
+            !new RegExp(`note\\('${room.terminal}'`).test(view));
+    }
+}
 
 section('6. One action is one strike');
 {

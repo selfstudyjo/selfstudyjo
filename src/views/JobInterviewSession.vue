@@ -187,6 +187,25 @@
     </div>
 
     <!--
+      THE PRACTICE RECORD, under the live-report strip.
+
+      It cannot fail anybody - `FAILS_AT.interview` is null, so `IntegrityMeter`
+      draws no strike pips and says so in words. It is here because the points
+      are PUBLIC and a candidate is owed the running total that produced them,
+      not because anything is being invigilated.
+
+      Hidden once the report is up: the sitting is closed by then, so a panel
+      counting breaches at somebody reading their coaching would be counting
+      nothing and reading as an accusation.
+    -->
+    <IntegrityMeter
+      v-if="phase !== 'idle' && !reportVisible"
+      context="interview"
+      :verdict="sitting.verdict.value"
+      :events="sitting.log.value"
+    />
+
+    <!--
       Only the microphone can stop an interview, so only the microphone gets a
       blocking panel. It says what actually went wrong and offers the retry,
       because the two commonest causes — the device held by another app, and
@@ -321,6 +340,9 @@ import {
   jobInterviewService, type QAPair, type EvaluationResult, type ScoreBreakdown,
 } from '@/services/jobinterview.service';
 import PersonStage from '@/components/stage3d/PersonStage.vue';
+import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
+import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import { countWords } from '@/i18n/locales';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
 import {
   INTERVIEWER_TITLES, actorById, interviewerLabel, isActorId,
@@ -387,6 +409,58 @@ const sessionSeed = Number(cfg.sessionSeed) || newSessionSeed();
  */
 const maxQuestions = plannedQuestionCount(cfg);
 const answerSeconds = secondsPerAnswer(plannedMinutes, maxQuestions);
+
+/**
+ * THE PRACTICE LEDGER, for the first time in this room.
+ *
+ * Until 2026-09-06 an interview produced no record anywhere on the leaderboard
+ * at all: a candidate could sit ten of them and the board would say they had
+ * done nothing. It records conduct AND effort now - see `practiceIntegrity`.
+ *
+ * WHAT IS WATCHED, AND WHAT IS DELIBERATELY NOT
+ *
+ * `window` and `focusAward` are on, because presence is the exercise here in a
+ * way it is not in a lab: somebody is asking you a question. `clipboard` is on
+ * too, and it is the one that matters most - the box a paste lands in is the
+ * TRANSCRIPT, which is the record of what the candidate said, so a pasted
+ * answer is coached, evaluated and reported as speech nobody spoke and the
+ * report is wrong about the one thing it exists to be right about.
+ *
+ * `devtools`, `print` and `fullscreen` are OFF. There is no answer key in this
+ * room, so opening the console during a mock interview is somebody looking at a
+ * page rather than misconduct; printing the report is reading it; and the room
+ * is not full screen to begin with.
+ *
+ * `abandonedAs` is why there is no `note()` in `leave()`. There are three ways
+ * out of here - the Leave button, a router navigation and closing the tab - and
+ * only one of them runs a handler this view controls. All three tear the
+ * component down, so `usePracticeSitting` notes it from its own unmount, which
+ * is the single place that sees all three.
+ */
+const sitting = usePracticeSitting({
+  context: 'interview',
+  watch: { devtools: false, print: false, fullscreen: false },
+  abandonedAs: 'interview.left_early',
+});
+
+/**
+ * Whether a transcript chunk for THIS answer came back from the microphone.
+ *
+ * The evidence behind `speaking.delivered`, and the reason that award is worth
+ * paying at all: it cannot be had by typing. Set in `applyChunk`, which is the
+ * only place a transcription lands, and cleared when each answer opens.
+ */
+let spokeThisAnswer = false;
+
+/**
+ * How many words an answer needs before it counts as one.
+ *
+ * `countWords` rather than `split(' ').length`, because a Chinese answer has no
+ * spaces in it and a naive count makes every one of them a single word - which
+ * is working rule 40, and it has already been paid for twice in this room's
+ * own question guard.
+ */
+const SPOKEN_WORD_FLOOR = 12;
 
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'Candidate');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
@@ -603,6 +677,9 @@ async function syncCursor() {
 
 /** One transcribed chunk, with spoken corrections applied. */
 function applyChunk(text: string) {
+  // THE ONE PLACE A TRANSCRIPTION LANDS, so it is the one place that can say
+  // an answer was SPOKEN rather than typed. `speaking.delivered` rests on it.
+  spokeThisAnswer = true;
   answer.value = applyTranscript(answer.value, text, { voiceEditing: voiceEditing.value });
   void syncCursor();
 }
@@ -1743,6 +1820,19 @@ async function startInterview() {
   await speak(spokenIntro);
 
   startTimer();
+  /*
+    THE LEDGER STARTS WHEN THE INTERVIEW DOES, not when the page loads.
+
+    The subject is the interview TYPE rather than this sitting - `subjectId` is
+    what the board's "most studied" chart groups on, and grouping on a session
+    id would give one bar per sitting, each of height one.
+  */
+  sitting.begin(
+    { id: 'interview:' + interviewType,
+      name: interviewType + ' interview' + (topic ? ' - ' + topic : '') },
+    { userId: authStore.user?.id || '', username: authStore.user?.username || '' },
+  );
+  sitting.note('interview.started');
   // The record exists from here on, so an interview that is abandoned at
   // question seven is seven coached answers in the results list rather than
   // nothing at all. Fire and forget: nothing about the interview waits on it.
@@ -1821,6 +1911,9 @@ function startAnswering() {
   if (!audioStream) { alert(t('Your microphone is not connected yet.')); return; }
   answer.value = emptyAnswer();
   selection.value = { start: 0, end: 0 };
+  // PER ANSWER, so the fourth answer cannot be paid for on the strength of the
+  // first one having been spoken.
+  spokeThisAnswer = false;
   recordingError.value = '';
   transcribeFailures = 0;
   isAnswering = true;
@@ -1848,11 +1941,28 @@ async function submitAnswer() {
   // said, so losing it costs the end of every answer in the report.
   await new Promise(r => setTimeout(r, 1400));
 
+  const spokenText = answer.value.text.trim();
   qaPairs.value.push({
     question: currentQuestionText.value,
-    answer: answer.value.text.trim(),
+    answer: spokenText,
     seconds: answerElapsed.value,
   });
+
+  /*
+    THE ANSWER ON THE LEDGER, and the award only when it was EARNED.
+
+    `interview.answered` is neutral and unconditional - it is what makes
+    "answered three of eight, then left" legible on a public record. The award
+    needs two things and both are evidence rather than intent: a chunk came back
+    from the microphone for this turn, and the answer clears a word floor. So it
+    cannot be had by typing, and it cannot be had by saying two words. The
+    catalogue caps it at eight, which is the anti-farming half.
+  */
+  sitting.note('interview.answered');
+  if (spokeThisAnswer
+      && countWords(spokenText, localeId.value) >= SPOKEN_WORD_FLOOR) {
+    sitting.note('speaking.delivered');
+  }
 
   // Coached NOW, while the interviewer asks the next question, rather than at
   // the end with all the others. Not awaited: the candidate is never waiting on
@@ -1963,6 +2073,27 @@ async function endInterview() {
 
   reportVisible.value = true;
   phase.value = 'done';
+
+  /*
+    THE SITTING IS CLOSED HERE, and closing it is what stops everything
+    downstream scoring: `PracticeRecorder.record` drops a later breach before it
+    is queued, app 20 answers a late one `ignored: sitting_closed`, and both
+    `verdictFor` and `applyConductCaps` ignore anything stored past this point.
+
+    Without it a candidate who finished an interview and left the tab open went
+    on paying for every switch to their email, indefinitely, on a record
+    anybody can read - which is exactly the bug the labs were reported for.
+
+    `interview.all_answered` FIRST and only when nothing was skipped. "Every
+    question" is `maxQuestions`, not "however many were asked": an interview cut
+    short by the clock has not had every question answered, and paying for it
+    would make the award mean "the timer ran out".
+  */
+  if (qaPairs.value.length >= maxQuestions
+      && qaPairs.value.every(pair => !!pair.answer)) {
+    sitting.note('interview.all_answered');
+  }
+  await sitting.complete();
 
   // The last write, and the one that flips the record out of `in_progress`.
   // `persistSoon` refuses to fire once the phase is `done`, so a coaching call

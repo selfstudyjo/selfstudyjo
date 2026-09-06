@@ -16,9 +16,16 @@
     </div>
     <div v-else class="pr-rules__calm">
       <p class="pr-rules__calmTitle">{{ $t('Nothing here can fail you') }}</p>
-      <p class="pr-rules__calmBody">
-        {{ $t('A lab is for trying things. Every action below is recorded and some of them cost points, but no number of them ends a lab or takes a task away from you. Leaving the window to read the documentation is what a practitioner does.') }}
-      </p>
+      <!--
+        PER CONTEXT, out of `CALM_BODY`. Three of the five contexts are
+        unfailable and the reason differs in each: a lab is a place to try
+        things, an interview is rehearsal for one, and a meeting is a room you
+        are practising being present in. One sentence over all three printed
+        "Leaving the window to read the documentation is what a practitioner
+        does" on a Toastmasters panel, which is talking about documentation
+        nobody is reading.
+      -->
+      <p class="pr-rules__calmBody">{{ $t(calmBody) }}</p>
     </div>
 
     <!-- ------------------------------------------------------------ -->
@@ -113,6 +120,7 @@
  */
 import { computed } from 'vue';
 import {
+    CALM_BODY,
     FAILS_AT,
     rulesFor,
     type PracticeContext,
@@ -121,6 +129,10 @@ import {
 const props = defineProps<{ context: PracticeContext }>();
 
 const limit = computed(() => FAILS_AT[props.context]);
+// Falls back to the lab's wording rather than to an empty paragraph: a context
+// added without copy should read as slightly-off reassurance, never as a
+// reassurance panel with nothing in it.
+const calmBody = computed(() => CALM_BODY[props.context] || CALM_BODY.lab);
 const fails = computed(() => limit.value !== null);
 
 /*

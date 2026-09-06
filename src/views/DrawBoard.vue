@@ -622,69 +622,162 @@ async function leave() {
 </script>
 
 <style scoped>
+/*
+  THE CHROME FOLLOWS THE THEME; ONLY THE CANVAS IS PAPER.
+
+  Every surface in this header used to be `--sfs-paper`, which is light in all
+  ten galaxies, with `--sfs-text` on top of it - white in the seven dark ones.
+  That is the reported bug: the paper's title was white on white, and it became
+  visible only when the owner clicked into it, because `:focus` was the one
+  rule using a matched pair (`--sfs-field` / `--sfs-field-text`). A
+  COLLABORATOR, who gets an `<h1>` rather than an `<input>`, had no focus state
+  and so never saw the title at all.
+
+  The rule now: chrome on `--sfs-glass-*` + `--sfs-text`, a fill with its own
+  ink, and `--sfs-paper` reserved for the drawing surface itself - which is a
+  sheet of paper and is white in every theme, exactly as a certificate is.
+*/
 .board {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 0px);
+  /* `100dvh` alongside `100vh`: on iOS the small viewport unit is the only one
+     that accounts for the browser chrome, and a board an inch taller than the
+     screen puts its toolbar off the bottom. */
+  height: 100vh;
+  height: 100dvh;
   min-height: 0;
-  background: var(--sfs-paper, #f8fafc);
+  color: var(--sfs-text, #f8fafc);
 }
 
 .board-head {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 16px;
-  background: var(--sfs-paper, #fff);
-  border-bottom: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
+  gap: 0.85rem;
+  padding: 0.6rem 1rem;
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+  backdrop-filter: var(--sfs-blur, blur(10px));
+  border-bottom: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  /* A header over a canvas needs to read as being IN FRONT of it, and a sheen
+     is what does that without a shadow that would darken the drawing. */
+  box-shadow: var(--sfs-sheen, inset 0 1px 0 rgb(255 255 255 / 0.14));
+  /* The toolbar and the canvas scroll; the header does not. */
+  flex: 0 0 auto;
+  z-index: 2;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .board-head { background: var(--sfs-glass-3, rgb(255 255 255 / 0.12)); }
 }
 
 .back {
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12);
-  border-radius: 9px;
-  background: var(--sfs-paper, #fff);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-sm, 8px);
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
   font-size: 1rem;
-  color: var(--sfs-accent-on-paper, #334155);
+  line-height: 1;
+  color: var(--sfs-text, #f8fafc);
   cursor: pointer;
 }
-.back:hover { background: var(--sfs-paper, #f1f5f9); }
+
+.back:hover {
+  background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14));
+  border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+}
+
+/* THE BACK ARROW IS A DIRECTION, so it mirrors with the page. `.sfs-flip` is
+   the opt-in hook `rtl.css` offers for exactly this, and it is opt-in because
+   most icons on this platform are a bell or a camera and mirroring those is a
+   wrongness nobody can name. */
+[dir='rtl'] .back { transform: scaleX(-1); }
 
 .title-block { min-width: 0; flex: 1; }
 
-.title-input, .title-static {
+/*
+  THE TITLE. `--sfs-text` over `--sfs-glass-2` is the pair `themes.ts` derives
+  and measures together, in all ten galaxies - which is the whole fix. It also
+  gets a visible affordance now: the owner's input carries a hairline at rest,
+  because a title that looks like plain text and is secretly editable is a
+  control nobody finds, and the collaborator's `<h1>` deliberately does not.
+*/
+.title-input,
+.title-static {
   display: block;
   width: 100%;
   max-width: 420px;
   margin: 0;
-  padding: 3px 6px;
+  padding: 0.2rem 0.4rem;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--sfs-radius-xs, 6px);
   background: transparent;
+  font-family: inherit;
   font-size: 1rem;
-  font-weight: 700;
-  /* The board's topbar is transparent over the galaxy, not a light card —
-     this was written against a light page the Draw app never got, and it is
-     invisible on every dark galaxy. */
-  color: var(--sfs-text, #0f172a);
+  font-weight: var(--sfs-weight-bold, 700);
+  color: var(--sfs-text, #f8fafc);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  /* A paper's name is its owner's own text, in whichever language they typed
+     it, so the direction is read out of the string rather than imposed - an
+     English title inside an Arabic page otherwise has its full stop moved to
+     the front. */
+  unicode-bidi: plaintext;
 }
 
-.title-input:hover { border-color: rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12); }
-.title-input:focus { outline: none; border-color: var(--sfs-accent, #2563eb); background: var(--sfs-field, #fff); color: var(--sfs-field-text, #0f172a); }
+/* Only the editable one. A hairline round static text would promise an edit
+   that is not on offer to a collaborator. */
+.title-input {
+  border-color: var(--sfs-border, rgb(255 255 255 / 0.14));
+  cursor: text;
+}
 
-.byline { margin: 1px 0 0 6px; font-size: 0.74rem; color: var(--sfs-accent-text, #94a3b8); }
+.title-input:hover {
+  border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+  background: var(--sfs-glass-1, rgb(255 255 255 / 0.05));
+}
 
-.save-saved { color: var(--sfs-success-text, #16a34a); }
-.save-saving { color: var(--sfs-accent-text, #2563eb); }
-.save-dirty { color: var(--sfs-warning-text, #d97706); }
-.save-error { color: var(--sfs-danger-text, #dc2626); font-weight: 600; }
+.title-input:focus {
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, rgb(102 126 234 / 0.6));
+  outline-offset: var(--sfs-ring-offset, 2px);
+  border-color: var(--sfs-accent, #667eea);
+  background: var(--sfs-field, rgb(255 255 255 / 0.06));
+  color: var(--sfs-field-text, #f8fafc);
+}
+
+.title-input::placeholder { color: var(--sfs-placeholder, rgb(255 255 255 / 0.4)); }
+
+.byline {
+  margin: 0.05rem 0 0 0.4rem;
+  font-size: 0.74rem;
+  color: var(--sfs-text-muted, #94a3b8);
+  unicode-bidi: isolate;
+}
+
+/*
+  THE SAVE STATE, and every one of the four is a status ink on a glass surface
+  rather than on paper - which is what `--sfs-*-text` is derived for.
+*/
+.save-saved { color: var(--sfs-success-text, #6ee7b7); }
+.save-saving { color: var(--sfs-accent-text, #93c5fd); }
+.save-dirty { color: var(--sfs-warning-text, #fcd34d); }
+.save-error { color: var(--sfs-danger-text, #fca5a5); font-weight: var(--sfs-weight-semibold, 600); }
 
 .people { display: flex; align-items: center; }
 
+/*
+  A COLLABORATOR'S INITIAL, on a background that comes from DATA.
+
+  The fill is bound with `paint()` in the template - it is derived from the
+  username, so no token can reach it - which is exactly the case `paint()`
+  exists for, and it supplies the ink with the fill. What is set here is only
+  the ring, which separates two overlapping faces and has to be visible against
+  the HEADER rather than against either face.
+*/
 .face {
   display: grid;
   place-items: center;
@@ -692,64 +785,116 @@ async function leave() {
   height: 29px;
   margin-inline-start: -7px;
   border-radius: 50%;
-  border: 2px solid var(--sfs-border-strong, #fff);
-  color: var(--sfs-text, #fff);
+  border: 2px solid var(--sfs-surface-2, #1a2036);
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: var(--sfs-weight-bold, 700);
   cursor: default;
 }
-.face:first-child { margin-inline-start: 0; }
-.face.more { background: var(--sfs-accent, #64748b); }
 
-.head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.face:first-child { margin-inline-start: 0; }
+
+.face.more {
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  color: var(--sfs-text, #f8fafc);
+}
+
+.head-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 
 .pill {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--sfs-radius-pill, 999px);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: var(--sfs-weight-bold, 700);
 }
-.pill.view { background: rgb(var(--sfs-accent-rgb, 100 116 139) / 0.14); color: var(--sfs-accent-text, #475569); }
-.pill.edit { background: rgb(var(--sfs-success-rgb, 22 163 74) / 0.13); color: var(--sfs-success-text, #15803d); }
+
+.pill.view {
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  color: var(--sfs-text-muted, #94a3b8);
+}
+
+.pill.edit {
+  background: rgb(var(--sfs-success-rgb, 22 163 74) / 0.16);
+  color: var(--sfs-success-text, #6ee7b7);
+}
 
 .btn {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  min-height: max(2.2rem, 36px);
+  border: 1px solid transparent;
+  border-radius: var(--sfs-radius, 14px);
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: var(--sfs-weight-semibold, 600);
   cursor: pointer;
+  transition: background-color var(--sfs-dur-fast, 0.16s) var(--sfs-ease, ease),
+              border-color var(--sfs-dur-fast, 0.16s) var(--sfs-ease, ease);
 }
-.btn.ghost { background: var(--sfs-paper, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
-.btn.ghost:hover { background: var(--sfs-paper-2, #e2e8f0); }
-.btn.primary { background: var(--sfs-accent, #2563eb); color: var(--sfs-on-accent, #fff); }
-.btn.danger { background: var(--sfs-danger, #dc2626); color: var(--sfs-on-danger, #fff); }
+
+.btn.ghost {
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  border-color: var(--sfs-border, rgb(255 255 255 / 0.14));
+  color: var(--sfs-text, #f8fafc);
+}
+
+.btn.ghost:hover { background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14)); }
+
+.btn.primary {
+  background: var(--sfs-accent, #667eea);
+  color: var(--sfs-on-accent, #fff);
+}
+
+.btn.primary:hover { background: var(--sfs-accent-strong, #5568d3); }
+
+.btn.danger {
+  background: var(--sfs-danger, #dc2626);
+  color: var(--sfs-on-danger, #fff);
+}
 
 .state {
   flex: 1;
   display: grid;
   place-content: center;
-  gap: 10px;
+  gap: 0.6rem;
+  padding: 1.5rem;
   text-align: center;
-  color: var(--sfs-accent-text, #64748b);
+  color: var(--sfs-text-muted, #94a3b8);
   font-size: 0.92rem;
 }
-.state.error h2 { margin: 0; font-size: 1.05rem; color: var(--sfs-danger-text, #b91c1c); }
-.state.error p { margin: 0; max-width: 46ch; line-height: 1.55; }
+
+.state.error h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--sfs-danger-text, #fca5a5);
+}
+
+.state.error p { margin: 0; max-width: 46ch; line-height: var(--sfs-leading-relaxed, 1.6); }
 .state .btn { justify-self: center; }
 
+/*
+  THE TOAST, and it is the one thing here that sits over the CANVAS rather than
+  over the page - so it takes the scrim pair, which is dark with a derived light
+  ink in all ten galaxies. `--sfs-surface-rgb` would follow the theme and
+  disappear into a light one.
+*/
 .banner {
   position: absolute;
-  bottom: 18px;
+  bottom: 1.1rem;
+  /* PHYSICAL AND CENTRED. `left: 50%` with `translateX(-50%)` cannot be
+     rewritten to a logical property: flipped, the 50% is measured from the
+     right while the transform still pulls left, and the toast lands off-centre
+     by its own width. */
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.88);
-  color: var(--sfs-text, #f8fafc);
+  padding: 0.55rem 1rem;
+  border-radius: var(--sfs-radius-pill, 999px);
+  background: var(--sfs-overlay, rgb(15 23 42 / 0.88));
+  color: var(--sfs-on-overlay, #f8fafc);
   font-size: 0.82rem;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3);
+  box-shadow: var(--sfs-elev-2, 0 10px 26px rgb(0 0 0 / 0.3));
   z-index: 20;
 }
 
@@ -759,23 +904,44 @@ async function leave() {
   z-index: 1200;
   display: grid;
   place-items: center;
-  padding: 20px;
-  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.55);
+  padding: 1.25rem;
+  background: var(--sfs-overlay, rgb(15 23 42 / 0.55));
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
+/* A PANEL, NOT A SHEET. See DrawPapers' dialog - on `--sfs-paper` this was a
+   white card in all ten themes carrying white ink. */
 .dialog {
   width: min(460px, 100%);
-  padding: 22px 24px 18px;
-  border-radius: 15px;
-  background: var(--sfs-paper, #fff);
-  box-shadow: 0 26px 64px rgba(15, 23, 42, 0.34);
+  padding: 1.4rem 1.5rem 1.1rem;
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-xl, 22px);
+  background: var(--sfs-surface-2, #1a2036);
+  color: var(--sfs-text, #f8fafc);
+  box-shadow: var(--sfs-elev-3, 0 26px 64px rgb(0 0 0 / 0.34));
 }
-.dialog h2 { margin: 0 0 10px; font-size: 1.06rem; }
-.dialog p { margin: 0; color: var(--sfs-accent-text, #64748b); font-size: 0.88rem; line-height: 1.55; }
-.dialog footer { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+
+.dialog h2 { margin: 0 0 0.6rem; font-size: 1.06rem; }
+
+.dialog p {
+  margin: 0;
+  color: var(--sfs-text-muted, #94a3b8);
+  font-size: 0.88rem;
+  line-height: var(--sfs-leading-relaxed, 1.6);
+}
+
+.dialog footer { display: flex; justify-content: flex-end; gap: 0.55rem; margin-top: 1.1rem; }
+
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .back { width: 40px; height: 40px; flex-basis: 40px; }
+}
 
 @media (max-width: 760px) {
   .byline { display: none; }
-  .head-actions .btn { padding: 8px 10px; font-size: 0.78rem; }
+  .board-head { gap: 0.5rem; padding: 0.5rem 0.6rem; }
+  .head-actions .btn { padding: 0.5rem 0.6rem; font-size: 0.78rem; }
+  .title-input, .title-static { font-size: 0.92rem; }
 }
 </style>

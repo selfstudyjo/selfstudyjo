@@ -96,6 +96,68 @@ export async function renderChecks(check: Check, section: Section) {
             html.includes('-4') || html.includes('−4'), 'no penalty figure');
     }
 
+    /* ---------------- the two speaking rooms ---------------- */
+    /*
+      RENDERED, both of them, because everything in `check.ts` drives plain
+      functions and none of it can see a TEMPLATE that throws. The reassurance
+      branch of `IntegrityRules` reads `CALM_BODY[context]` now rather than a
+      literal, and a context missing an entry there renders an empty paragraph
+      under a heading promising an explanation - which no source scan can see.
+    */
+    for (const room of ['interview', 'toastmasters'] as PracticeContext[]) {
+        const html = await render(IntegrityRules, { context: room });
+        check(`the ${room} rules render at all`, html.length > 500, html.length);
+        check(`the ${room} rules promise that nothing can fail you`,
+            /Nothing here can fail you/.test(html));
+        check(`the ${room} rules do NOT threaten a zero`,
+            !/score it zero/i.test(html), html.slice(0, 200));
+        // THE WRONG SENTENCE, and the one this section exists to catch. Before
+        // `CALM_BODY` these two printed the lab's own wording - "leaving the
+        // window to read the documentation is what a practitioner does" - at
+        // somebody about to sit a mock interview.
+        check(`the ${room} rules do NOT talk about a lab`,
+            !/\ba lab\b/i.test(html), html.slice(0, 400));
+        check(`the ${room} rules say the record is public`,
+            /public/i.test(html));
+        check(`the ${room} rules list the paste penalty, which is what makes `
+            + 'the report wrong', /Pasted text/i.test(html));
+        check(`the ${room} rules list the spoken award, which is the exercise`,
+            /Spoke a real answer/i.test(html));
+        check(`the ${room} rules do NOT list the developer-tools penalty`,
+            !/developer tools/i.test(html));
+        check(`the ${room} rules do NOT list the tutor penalty, which is `
+            + 'lab-only', !/tutor/i.test(html));
+    }
+    const interviewRules = await render(IntegrityRules, { context: 'interview' });
+    const meetingRules = await render(IntegrityRules, { context: 'toastmasters' });
+    check('the interview rules mention walking out of an INTERVIEW',
+        /Left the interview/i.test(interviewRules));
+    check('and the meeting rules mention leaving a MEETING',
+        /Left the meeting/i.test(meetingRules));
+    check('the meeting rules offer the staying award and the interview ones '
+        + 'do not - an interview has no other speakers to sit through',
+        /Stayed for the whole meeting/i.test(meetingRules)
+        && !/Stayed for the whole meeting/i.test(interviewRules));
+    // A COPY is an interview event and not a meeting one, and the panels have
+    // to differ on it or one of them is telling a member something untrue.
+    check('the interview rules list the copy penalty and the meeting ones '
+        + 'do not - a meeting shows a sample speech to be critiqued',
+        /Copied text/i.test(interviewRules) && !/Copied text/i.test(meetingRules));
+
+    /* ---------------- and their meters ---------------- */
+    for (const room of ['interview', 'toastmasters'] as PracticeContext[]) {
+        const html = await render(IntegrityMeter, {
+            context: room,
+            verdict: verdictFor(breaches(2), room),
+            events: meterEvents,
+        });
+        check(`the ${room} meter renders`, html.length > 200, html.length);
+        check(`the ${room} meter draws NO strike pips - there are no strikes `
+            + 'to run out of', !/pr-meter__pip/.test(html));
+        check(`the ${room} meter says how many points have gone`,
+            html.includes('6') || html.includes(String(6)), html.slice(0, 300));
+    }
+
     const lab = await render(IntegrityRules, { context: 'lab' });
     check('the lab rules render', lab.length > 500, lab.length);
     /*

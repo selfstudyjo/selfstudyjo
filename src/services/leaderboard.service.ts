@@ -1,7 +1,9 @@
 import { apiService, withReplicas } from './api';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
 import type { Achievement, LeaderboardEvent } from '@/utils/leaderboardEngine';
-import { severityOf, specOf } from '@/utils/practiceIntegrity';
+import {
+    CONTEXTS, severityOf, specOf, type PracticeContext,
+} from '@/utils/practiceIntegrity';
 import type { Enrolment, LabRow } from '@/utils/learnerDossier';
 
 /**
@@ -490,8 +492,15 @@ export function flattenSources(raw: RawSources): LeaderboardEvent[] {
             detail: String(row?.detail || '').trim(),
             sessionId,
             action,
-            context: (context === 'exam' || context === 'quiz' || context === 'lab')
-                ? context : undefined,
+            // AGAINST `CONTEXTS`, not against a list written here. A
+            // hardcoded triple was correct for as long as there were three,
+            // and on the day the speaking rooms arrived it silently dropped
+            // `context` from every interview and meeting event - which reads
+            // as an exam to `applyConductCaps`, so a -3 window switch in an
+            // interview would be capped at the EXAM cap and a nine-breach
+            // meeting would be reported as a voided paper.
+            context: (CONTEXTS as readonly string[]).includes(context)
+                ? (context as PracticeContext) : undefined,
         });
     }
 

@@ -49,6 +49,7 @@ import {
     type LeaderRow,
     applyConductCaps,
 } from './leaderboardEngine';
+import { FAILS_AT, NEGATIVE_LIMIT } from './practiceIntegrity';
 import type { Params } from '@/i18n';
 
 /* ------------------------------------------------------------------ *
@@ -375,12 +376,22 @@ export function buildDossier(input: DossierInput): Dossier {
                 if (session) {
                     const count = (strikes.get(session) || 0) + 1;
                     strikes.set(session, count);
-                    // Five is the limit app 20 applies, and it is the limit
-                    // `practiceIntegrity.FAILS_AT` publishes. Not imported: this
-                    // module is about presenting a record and the number is
-                    // asserted equal in the check, so an import here would be a
-                    // dependency for a constant rather than for a decision.
-                    if (count >= 5 && event.context !== 'lab') voided.add(session);
+                    // FAILS_AT, IMPORTED, and that is a correction rather
+                    // than a tidy-up. This read `count >= 5 && context !==
+                    // 'lab'` on the reasoning that the five was a constant and
+                    // an import would be a dependency for a number.
+                    //
+                    // The number was never the decision. "Which contexts can be
+                    // voided" is, and as an EXCLUSION LIST it was silently
+                    // wrong the moment there were more than three: five
+                    // breaches in a mock interview would have printed "this
+                    // sitting was ended for cheating" at the top of a public
+                    // activity record, for a rehearsal that cannot be failed
+                    // and has no mark to void. Same shape as the hardcoded
+                    // context triple in `leaderboard.service.ts`.
+                    const limit = event.context
+                        ? FAILS_AT[event.context] : NEGATIVE_LIMIT;
+                    if (limit !== null && count >= limit) voided.add(session);
                 }
             } else if (value > 0) {
                 positives += 1;

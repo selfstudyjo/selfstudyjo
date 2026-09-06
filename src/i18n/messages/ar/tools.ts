@@ -122,7 +122,17 @@ const tools: Catalogue = {
     'Shared with me': 'مشتركة معي',
     'Shared with {v0}': 'مشتركة مع {v0}',
     'Size': 'الحجم',
-    'Link: {v0}': 'الرابط: {v0}',
+    /*
+     * TWO WHOLE SENTENCES rather than a sentence with a value in it.
+     * `Link: {v0}` was the key and the value interpolated into it was a
+     * bare English `can view` / `can edit`, so an Arabic reader got
+     * `الرابط: can view` - the outer key was translated and the
+     * fragment inside it never was. Split, because a two-word verb phrase
+     * handed to a translator on its own has no grammar to agree with.
+     */
+    'Link: can view': 'الرابط: للاطلاع',
+    'Link: can edit': 'الرابط: للتعديل',
+    'You can edit': 'يمكنك التعديل',
     '{v0} · edited {v1}': '{v0} · عُدِّلت {v1}',
     '{v0} item{v1} · edited {v2}': '{v0} عنصراً · عُدِّلت {v2}',
     'Delete “{v0}”?': 'حذف “{v0}”؟',

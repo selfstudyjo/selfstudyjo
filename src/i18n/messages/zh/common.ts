@@ -437,6 +437,9 @@ const common: Catalogue = {
      * looking for it.
      * ---------------------------------------------------------------- */
     'Self Study JO': 'Self Study JO',
+
+    /* A paper that has never been edited, on the Drawing Papers page. */
+    'never': '从未',
 };
 
 export default common;

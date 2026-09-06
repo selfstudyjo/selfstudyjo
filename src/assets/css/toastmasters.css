@@ -1421,3 +1421,45 @@
   align-items: center;
   gap: 0.35rem;
 }
+
+/* ------------------------------------------------------------------ *
+ * The integrity rules, on the pre-session page
+ * ------------------------------------------------------------------ *
+ *
+ * `.tm-howto` is new: this page had no explainer of any kind, so there was no
+ * existing block to hang the panel off. Styled as a quiet aside rather than as
+ * a warning - a meeting cannot be failed, and a red-bordered alarm over a
+ * rehearsal would be telling the member something untrue about the room.
+ */
+.tm-howto {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-lg, 12px);
+  background: var(--sfs-glass-1, rgb(255 255 255 / 0.05));
+}
+
+.tm-howto h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.98rem;
+  font-weight: var(--sfs-weight-semibold, 600);
+  color: var(--sfs-text, #f8fafc);
+}
+
+.tm-howto > p {
+  margin: 0 0 0.55rem;
+  font-size: 0.9rem;
+  line-height: var(--sfs-leading-relaxed, 1.6);
+  color: var(--sfs-text-muted, #94a3b8);
+}
+
+.tm-rules-list {
+  margin: 0 0 0.5rem;
+  padding-inline-start: 1.15rem;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  color: var(--sfs-text-muted, #94a3b8);
+}
+
+.tm-rules-list li { line-height: var(--sfs-leading-snug, 1.35); }

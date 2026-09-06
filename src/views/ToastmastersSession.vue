@@ -140,6 +140,25 @@
       </div>
     </div>
 
+    <!--
+      THE PRACTICE RECORD, between the transcript and the controls.
+
+      It cannot fail anybody - `FAILS_AT.toastmasters` is null, so
+      `IntegrityMeter` draws no strike pips and says so in words. It is here
+      because the points are PUBLIC and a member is owed the running total that
+      produced them, not because anything is being invigilated.
+
+      Hidden once the reports are up: the sitting is closed by then, so a panel
+      counting breaches at somebody reading their evaluations would be counting
+      nothing and reading as an accusation.
+    -->
+    <IntegrityMeter
+      v-if="sitting.running.value && !reportsVisible"
+      context="toastmasters"
+      :verdict="sitting.verdict.value"
+      :events="sitting.log.value"
+    />
+
     <div class="tm-controls">
       <button @click="startMeeting" :disabled="startBtnDisabled" class="tm-btn-primary">{{ startBtnText }}</button>
       <button v-if="showSkipIntro" @click="doSkipIntro" :disabled="didSkipIntro" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipIntro ? '⏩ Skipped' : '⏩ Skip Intro' }}</button>
@@ -215,6 +234,9 @@ import {
 } from '@/utils/answerEditing';
 import { paint } from '@/theme/contrast';
 import PersonStage from '@/components/stage3d/PersonStage.vue';
+import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
+import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import { countWords } from '@/i18n/locales';
 import { SEATS, actorById, seatByKey, seatGenders, seatLabel } from '@/cast/actors';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
@@ -238,6 +260,47 @@ const ROLE_COLORS: Record<string, string> = {
   'Speech Evaluator': '#14b8a6', 'General Evaluator': '#64748b',
 };
 const roleBadgeColor = ROLE_COLORS[userRole] || '#4f46e5';
+
+/**
+ * THE PRACTICE LEDGER, for the first time in this room.
+ *
+ * Until 2026-09-06 a meeting produced no record anywhere on the leaderboard at
+ * all: a member could attend ten of them and the board would say they had done
+ * nothing. It records conduct AND effort now - see `practiceIntegrity`.
+ *
+ * WHAT IS WATCHED, AND WHAT IS DELIBERATELY NOT
+ *
+ * `window` and `focusAward` are on, because presence is not incidental here -
+ * it IS half of the exercise. Somebody else is giving a speech, and the
+ * evaluations afterwards are addressed to a person who is expected to be in the
+ * chair. `clipboard` is on for the PASTE, which lands in the transcript that
+ * the Grammarian, the Ah-Counter and both Evaluators then read as speech.
+ *
+ * A COPY is not an event in a meeting at all, and that is a decision rather
+ * than an omission: the screen here carries a sample speech the member has been
+ * asked to critique and a word of the day they have been asked to use, so
+ * copying those is the exercise. App 20 refuses `clipboard.copy` in this
+ * context outright, which is why the detector staying on is harmless - a copy
+ * simply never becomes a record.
+ *
+ * `devtools`, `print` and `fullscreen` are OFF, for the interview's reasons.
+ */
+const sitting = usePracticeSitting({
+  context: 'toastmasters',
+  watch: { devtools: false, print: false, fullscreen: false },
+  abandonedAs: 'meeting.left_early',
+});
+
+/**
+ * Whether a transcript chunk came back from the microphone for this turn.
+ *
+ * The evidence behind `speaking.delivered`, and the reason that award is worth
+ * paying at all: it cannot be had by typing into the transcript box.
+ */
+let spokeThisTurn = false;
+
+/** How many words a turn needs before it counts as one. See working rule 40. */
+const SPOKEN_WORD_FLOOR = 12;
 
 const userName = computed(() => authStore.user?.first_name || authStore.user?.username || 'You');
 const userInitial = computed(() => (userName.value[0] || 'U').toUpperCase());
@@ -839,6 +902,9 @@ async function syncCursor() {
 
 /** One transcribed chunk, with spoken corrections applied. */
 function applyChunk(text: string) {
+  // THE ONE PLACE A TRANSCRIPTION LANDS, so it is the one place that can say a
+  // turn was SPOKEN rather than typed. `speaking.delivered` rests on it.
+  spokeThisTurn = true;
   answer.value = applyTranscript(answer.value, text, { voiceEditing: voiceEditing.value });
   void syncCursor();
 }
@@ -1118,6 +1184,20 @@ async function startMeeting() {
   // silently ignored — no error, no event, a meeting that runs in complete
   // silence. Same reason the chimes elsewhere are primed on first click.
   speechAudio.prime();
+  /*
+    THE LEDGER STARTS WHEN THE MEETING DOES.
+
+    The subject is the ROLE rather than this sitting - `subjectId` is what the
+    board's "most studied" chart groups on, and grouping on a session id would
+    give one bar per meeting, each of height one. The role is also the thing a
+    member is actually practising: hosting is a different exercise from
+    speaking, and the record should say which.
+  */
+  sitting.begin(
+    { id: 'toastmasters:' + userRole, name: 'Toastmasters: ' + userRole },
+    { userId: authStore.user?.id || '', username: authStore.user?.username || '' },
+  );
+  sitting.note('meeting.started');
   startBtnDisabled.value = true; startBtnText.value = t('⏳ Setting up…');
   showSkipIntro.value = true; didSkipIntro.value = false;
   captionText.value = t('Requesting the microphone…');
@@ -1232,6 +1312,9 @@ function userSpeak() {
   stopSpeechKeepAlive();
   isSpeaking = true; isSpeakingRef.value = true;
   answer.value = emptyAnswer(); selection.value = { start: 0, end: 0 };
+  // PER TURN, so a second turn cannot be paid for on the strength of the first
+  // one having been spoken.
+  spokeThisTurn = false;
   showSkipIntro.value = false;
   startContinuousRecording().catch(e => console.error('[Recording]', e));
   startTimer();
@@ -1256,6 +1339,21 @@ async function userFinish() {
   fillerCounts.value = { ...fillers.counts };
   const onTime = duration >= minTime * 60 && duration <= maxTime * 60;
   const cleanTranscript = speechText().trim() || t('(no speech captured)');
+
+  /*
+    THE TURN ON THE LEDGER, and only when it was EARNED.
+
+    Two conditions and both are evidence rather than intent: a chunk came back
+    from the microphone for this turn, and the transcript clears a word floor.
+    So it cannot be had by typing into the transcript box, and it cannot be had
+    by saying two words. `speechText()` rather than `cleanTranscript`, because
+    that falls back to "(no speech captured)" - which is four words and would
+    pay for silence.
+  */
+  if (spokeThisTurn
+      && countWords(speechText().trim(), localeId.value) >= SPOKEN_WORD_FLOOR) {
+    sitting.note('speaking.delivered');
+  }
 
   reportsVisible.value = true;
   reports.timer = t('⏳ Generating…'); reports.ah = t('⏳ Generating…');
@@ -1372,6 +1470,24 @@ async function finishRoleFlow(duration: number, fillers: { counts: Record<string
 }
 
 async function saveSessionData(role: string, duration: number, fillers: { counts: Record<string, number>; total: number }, overall: number, blData: any, blAdvice: string) {
+  /*
+    THE END OF THE MEETING, and this is the one place BOTH flows reach - a
+    Speaker's and a role-holder's - which is why it is here rather than in
+    either of them. Before the network call, because closing the sitting is
+    what stops everything downstream scoring and a save that fails must not
+    leave a meeting accruing penalties for the rest of the tab's life.
+
+    `meeting.attended` is gated on having SKIPPED NEITHER the introductions nor
+    the evaluations, and that is the whole evidence behind it. The award claims
+    the member heard every other speaker out; somebody who pressed Skip through
+    the intro and Skip through the reports did the opposite, which is what
+    `meeting.left_early` is for one step further along. Reaching the end of the
+    running order is not the same fact as having listened to it.
+  */
+  if (!didSkipIntro.value && !didSkipReports.value) {
+    sitting.note('meeting.attended');
+  }
+  await sitting.complete();
   try {
     await toastmastersService.saveSession({
       user_id: authStore.user?.id || '', username: authStore.user?.username || '',

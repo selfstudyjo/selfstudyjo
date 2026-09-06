@@ -268,6 +268,80 @@ export default {
     '{v0} verified tasks at {v1} points each{v2}.':
         '{v0} 项已核验的任务，每项 {v1} 分{v2}。',
 
+    /* ---------------- the two speaking rooms ---------------- */
+    /*
+     * The mock interview and the Toastmasters meeting. REGISTER: Simplified
+     * Chinese, and the distinction every award here rests on has to survive
+     * into it - 说出 / 开口说 for an answer that was SAID ALOUD, never 回答 on
+     * its own, which covers a typed answer just as well. 一轮 is the turn a
+     * speaker takes; 记录 is the written account and never a recording.
+     */
+    'Started the interview': '开始面试',
+    'Recorded so the rest of the ledger has a start.': '记录下来，让后面的记录有一个起点。',
+    'Answered a question': '回答了一个问题',
+    'One per question submitted. Free, and it is what makes "answered three of eight, then left" legible.':
+        '每提交一个问题记一次。不计分，它的作用是让“八题答了三题就离开”这样的记录读得懂。',
+    'Finished the interview': '完成面试',
+    'Every question answered or the time up. Nothing after this is scored.':
+        '所有问题都已回答，或者时间到了。此后的任何操作都不计分。',
+    'Joined the meeting': '加入会议',
+    'Finished the meeting': '完成会议',
+    'Your turn taken and the evaluations read. Nothing after this is scored.':
+        '你的环节已完成，评价也已听完。此后的任何操作都不计分。',
+    'Spoke a real answer': '开口说了一段真正的回答',
+    'Awarded for a turn you actually said out loud, of some substance, up to eight times.':
+        '对你真正开口说出、且有实质内容的一轮发言给分，最多八次。',
+    'Answered every question the interviewer asked': '回答了面试官提出的每一个问题',
+    'Awarded once, for going the whole way rather than stopping at the hard one.':
+        '记一次，奖励坚持到最后而不是卡在难题上就停下。',
+    'Stayed for the whole meeting': '全程留在会议中',
+    'Awarded once, for hearing every other speaker out rather than leaving after your turn.':
+        '记一次，奖励听完其他每一位发言人，而不是讲完自己的部分就离开。',
+    'Left the interview before the end': '面试结束前离开',
+    'Abandoning an interview partway is recorded. Nothing in an interview can fail you.':
+        '面试中途放弃会被记录。面试中的任何事都不会让你不及格。',
+    'Left the meeting before the end': '会议结束前离开',
+    'Leaving while the meeting is still running is recorded. Nothing in a meeting can fail you.':
+        '会议还在进行时离开会被记录。会议中的任何事都不会让你不及格。',
+
+    /* ---------------- what each room pays, printed before it opens ------- */
+    'Every turn you actually speak, of some substance, earns {v0} — up to {v1} times.':
+        '你真正开口说出、且有实质内容的每一轮发言可得 {v0} 分—最多 {v1} 次。',
+    'Every five minutes of unbroken, active work earns {v0}, up to {v1} times.':
+        '每连续专注投入五分钟可得 {v0} 分，最多 {v1} 次。',
+    'Answering every question the interviewer asks earns {v0} more.':
+        '回答面试官提出的每一个问题，可再得 {v0} 分。',
+    'Staying to the end, so every other speaker is heard out, earns {v0} more.':
+        '留到最后、听完其他每一位发言人，可再得 {v0} 分。',
+    'Leaving the window costs {v0} and switching away with Alt+Tab costs {v1}.':
+        '离开窗口扣 {v0} 分，用 Alt+Tab 切换出去扣 {v1} 分。',
+    'Pasting text into the transcript costs {v0} — what you paste is coached as something you said.':
+        '把文字粘贴到转写文本里扣 {v0} 分—你粘贴的内容会被当作你说过的话来点评。',
+    'Leaving before the end costs {v0}.': '结束前离开扣 {v0} 分。',
+    'Nothing here can fail you, and one sitting is capped at {v0} points lost. Once it is finished, nothing further is scored at all.':
+        '这里的任何事都不会让你不及格，单次最多只扣 {v0} 分。一旦结束，此后的任何操作都完全不计分。',
+
+    /* ---------------- the reassurance each room leads with --------------- */
+    'An interview here is rehearsal, so nothing below can fail you or take a mark away - there is no mark. Every action is recorded, some of them cost points, and the report you get at the end is coaching either way. What earns is the part that is the exercise: answering out loud, and staying in the room.':
+        '这里的面试是排练，所以下面的任何事都不会让你不及格，也不会扣掉分数——因为这里本来就没有分数。每个操作都会记录，其中一些会扣积分，而你最后拿到的报告无论如何都是指导性的。真正得分的部分正是练习本身：开口作答，并留在房间里。',
+    'A meeting cannot be failed. Every action below is recorded and some of them cost points, but the worst any of them does is lower the conduct score on your record. What earns most here is the thing a meeting is actually for: taking your turn out loud, and hearing everybody else out.':
+        '会议不存在不及格。下面的每个操作都会记录，其中一些会扣积分，但最严重的后果也只是降低你记录上的表现分。这里得分最多的，正是会议真正的目的：开口讲完自己的环节，并听完其他所有人。',
+    '{v0} points lost so far. Nothing here can fail you — an interview is rehearsal.':
+        '目前已扣 {v0} 分。这里的任何事都不会让你不及格—面试是排练。',
+    '{v0} points lost so far. Nothing here can fail you — a meeting is practice.':
+        '目前已扣 {v0} 分。这里的任何事都不会让你不及格—会议是练习。',
+
+    /* ---------------- the two pre-session panels ---------------- */
+    '📋 What is recorded, and what it is worth': '📋 会记录什么，各值多少分',
+    'An interview here is practice, so nothing below can fail you — there is no mark to void. What it does is keep a record: the turns you actually speak earn points, and leaving the window, pasting an answer in or walking out partway costs them. That record is public.':
+        '这里的面试是练习，所以下面的任何事都不会让你不及格—因为没有分数可以作废。它所做的是保留一份记录：你真正开口说出的每一轮发言可以得分，而离开窗口、粘贴答案或中途走掉则会扣分。这份记录是公开的。',
+    'Pasting is the one worth reading twice: the transcript is the record of what you said, so a pasted answer is coached and reported as speech you never gave.':
+        '粘贴这一条值得看两遍：转写文本就是你说过的话的记录，所以粘贴进去的答案会被当作你从未说过的发言来点评和上报。',
+    'A meeting is practice, so nothing below can fail you. What it does is keep a record: taking your turn out loud earns points, and so does hearing every other speaker out — while leaving the window, pasting your speech in or leaving partway costs them. That record is public.':
+        '会议是练习，所以下面的任何事都不会让你不及格。它所做的是保留一份记录：开口讲完自己的环节可以得分，听完其他每一位发言人也可以—而离开窗口、粘贴自己的讲稿或中途离开则会扣分。这份记录是公开的。',
+    'Copying is deliberately not recorded here — the sample speech and the word of the day are on screen for you to use. Pasting into your own transcript is, because that transcript is what the Grammarian and both Evaluators read as your speech.':
+        '复制在这里是故意不记录的—示范讲稿和每日词就摆在屏幕上供你使用。粘贴到你自己的转写文本里则会记录，因为那份文本正是语法官和两位评估员当作你的讲稿来读的东西。',
+
     /* ---------------- the kind chips ---------------- */
     'Lab': '实验室',
 };

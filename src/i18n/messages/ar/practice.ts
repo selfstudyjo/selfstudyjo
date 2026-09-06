@@ -275,6 +275,84 @@ export default {
     '{v0} verified tasks at {v1} points each{v2}.':
         '{v0} مهمة متحقَّق منها بواقع {v1} نقاط لكل مهمة{v2}.',
 
+    /* ---------------- the two speaking rooms ---------------- */
+    /*
+     * The mock interview and the Toastmasters meeting. REGISTER: `مقابلة عمل`
+     * is the interview, `اجتماع` the meeting, and a `دور` is the turn a member
+     * takes rather than a role in the abstract - which is `الدور` here on
+     * purpose, because the record says which role was practised. "Spoke" is
+     * `نطق`/`تحدّث` and never `قال`: the whole distinction these awards rest on
+     * is between an answer somebody SAID ALOUD and one they typed.
+     */
+    'Started the interview': 'بدأ المقابلة',
+    'Recorded so the rest of the ledger has a start.':
+        'يُسجَّل ليكون لبقية السجل بداية.',
+    'Answered a question': 'أجاب عن سؤال',
+    'One per question submitted. Free, and it is what makes "answered three of eight, then left" legible.':
+        'واحد لكل سؤال مُرسَل. مجاني، وهو ما يجعل عبارة «أجاب عن ثلاثة من ثمانية ثم انصرف» مفهومة.',
+    'Finished the interview': 'أكمل المقابلة',
+    'Every question answered or the time up. Nothing after this is scored.':
+        'أُجيب عن كل سؤال أو انتهى الوقت. لا يُحسَب شيء بعد ذلك.',
+    'Joined the meeting': 'انضمّ إلى الاجتماع',
+    'Finished the meeting': 'أكمل الاجتماع',
+    'Your turn taken and the evaluations read. Nothing after this is scored.':
+        'أخذتَ دورك واستمعتَ إلى التقييمات. لا يُحسَب شيء بعد ذلك.',
+    'Spoke a real answer': 'نطق بإجابة حقيقية',
+    'Awarded for a turn you actually said out loud, of some substance, up to eight times.':
+        'يُمنَح على دور نطقتَ به فعلًا بصوت مسموع وكان ذا مضمون، حتى ثماني مرات.',
+    'Answered every question the interviewer asked':
+        'أجاب عن كل سؤال طرحه المُقابِل',
+    'Awarded once, for going the whole way rather than stopping at the hard one.':
+        'يُمنَح مرة واحدة، للمضي إلى النهاية بدلًا من التوقف عند السؤال الصعب.',
+    'Stayed for the whole meeting': 'بقي طوال الاجتماع',
+    'Awarded once, for hearing every other speaker out rather than leaving after your turn.':
+        'يُمنَح مرة واحدة، للإنصات إلى كل متحدّث آخر بدلًا من الانصراف بعد دورك.',
+    'Left the interview before the end': 'انصرف من المقابلة قبل نهايتها',
+    'Abandoning an interview partway is recorded. Nothing in an interview can fail you.':
+        'تُسجَّل مغادرة المقابلة في منتصفها. ولا شيء في المقابلة يمكن أن يُرسِّبك.',
+    'Left the meeting before the end': 'انصرف من الاجتماع قبل نهايته',
+    'Leaving while the meeting is still running is recorded. Nothing in a meeting can fail you.':
+        'يُسجَّل الانصراف والاجتماع ما زال قائمًا. ولا شيء في الاجتماع يمكن أن يُرسِّبك.',
+
+    /* ---------------- what each room pays, printed before it opens ------- */
+    'Every turn you actually speak, of some substance, earns {v0} — up to {v1} times.':
+        'كل دور تنطق به فعلًا ويكون ذا مضمون يكسب {v0} — حتى {v1} مرات.',
+    'Every five minutes of unbroken, active work earns {v0}, up to {v1} times.':
+        'كل خمس دقائق من عمل متواصل ونشِط تكسب {v0}، حتى {v1} مرات.',
+    'Answering every question the interviewer asks earns {v0} more.':
+        'الإجابة عن كل سؤال يطرحه المُقابِل تكسب {v0} إضافية.',
+    'Staying to the end, so every other speaker is heard out, earns {v0} more.':
+        'البقاء إلى النهاية، بحيث يُنصَت إلى كل متحدّث آخر، يكسب {v0} إضافية.',
+    'Leaving the window costs {v0} and switching away with Alt+Tab costs {v1}.':
+        'مغادرة النافذة تُكلِّف {v0} والانتقال بمفتاحي Alt+Tab يُكلِّف {v1}.',
+    'Pasting text into the transcript costs {v0} — what you paste is coached as something you said.':
+        'لصق نص في النص المنسوخ يُكلِّف {v0} — فما تلصقه يُقيَّم على أنه شيء قلتَه.',
+    'Leaving before the end costs {v0}.': 'الانصراف قبل النهاية يُكلِّف {v0}.',
+    'Nothing here can fail you, and one sitting is capped at {v0} points lost. Once it is finished, nothing further is scored at all.':
+        'لا شيء هنا يمكن أن يُرسِّبك، والجلسة الواحدة محدودة بخسارة {v0} نقطة على الأكثر. وبعد انتهائها لا يُحسَب أي شيء إطلاقًا.',
+
+    /* ---------------- the reassurance each room leads with --------------- */
+    'An interview here is rehearsal, so nothing below can fail you or take a mark away - there is no mark. Every action is recorded, some of them cost points, and the report you get at the end is coaching either way. What earns is the part that is the exercise: answering out loud, and staying in the room.':
+        'المقابلة هنا تدريب، فلا شيء مما يلي يمكن أن يُرسِّبك أو يسحب منك درجة — إذ لا توجد درجة. كل إجراء يُسجَّل، وبعضه يُكلِّف نقاطًا، والتقرير الذي تحصل عليه في النهاية توجيهي في الحالتين. وما يكسب هو الجزء الذي يمثّل التمرين نفسه: أن تُجيب بصوت مسموع، وأن تبقى في الغرفة.',
+    'A meeting cannot be failed. Every action below is recorded and some of them cost points, but the worst any of them does is lower the conduct score on your record. What earns most here is the thing a meeting is actually for: taking your turn out loud, and hearing everybody else out.':
+        'لا يمكن الرسوب في اجتماع. كل إجراء مما يلي يُسجَّل وبعضه يُكلِّف نقاطًا، لكن أقصى ما يفعله أيٌّ منها هو خفض درجة السلوك في سجلك. وأكثر ما يكسب هنا هو ما وُجد الاجتماع من أجله: أن تأخذ دورك بصوت مسموع، وأن تُنصِت إلى الآخرين.',
+    '{v0} points lost so far. Nothing here can fail you — an interview is rehearsal.':
+        'خسِرتَ {v0} نقطة حتى الآن. لا شيء هنا يمكن أن يُرسِّبك — فالمقابلة تدريب.',
+    '{v0} points lost so far. Nothing here can fail you — a meeting is practice.':
+        'خسِرتَ {v0} نقطة حتى الآن. لا شيء هنا يمكن أن يُرسِّبك — فالاجتماع تمرين.',
+
+    /* ---------------- the two pre-session panels ---------------- */
+    '📋 What is recorded, and what it is worth':
+        '📋 ما الذي يُسجَّل، وما قيمته',
+    'An interview here is practice, so nothing below can fail you — there is no mark to void. What it does is keep a record: the turns you actually speak earn points, and leaving the window, pasting an answer in or walking out partway costs them. That record is public.':
+        'المقابلة هنا تمرين، فلا شيء مما يلي يمكن أن يُرسِّبك — إذ لا توجد درجة تُلغى. وما يفعله هو الاحتفاظ بسجل: الأدوار التي تنطق بها فعلًا تكسب نقاطًا، ومغادرة النافذة أو لصق إجابة أو الانصراف في المنتصف تُكلِّفك نقاطًا. وهذا السجل علني.',
+    'Pasting is the one worth reading twice: the transcript is the record of what you said, so a pasted answer is coached and reported as speech you never gave.':
+        'اللصق هو ما يستحق القراءة مرتين: النص المنسوخ هو سجل ما قلتَه، فالإجابة الملصوقة تُقيَّم ويُبلَّغ عنها ككلام لم تقله قطّ.',
+    'A meeting is practice, so nothing below can fail you. What it does is keep a record: taking your turn out loud earns points, and so does hearing every other speaker out — while leaving the window, pasting your speech in or leaving partway costs them. That record is public.':
+        'الاجتماع تمرين، فلا شيء مما يلي يمكن أن يُرسِّبك. وما يفعله هو الاحتفاظ بسجل: أخذ دورك بصوت مسموع يكسب نقاطًا، وكذلك الإنصات إلى كل متحدّث آخر — أما مغادرة النافذة أو لصق خطابك أو الانصراف في المنتصف فتُكلِّفك نقاطًا. وهذا السجل علني.',
+    'Copying is deliberately not recorded here — the sample speech and the word of the day are on screen for you to use. Pasting into your own transcript is, because that transcript is what the Grammarian and both Evaluators read as your speech.':
+        'النسخ لا يُسجَّل هنا عن قصد — فالخطاب النموذجي وكلمة اليوم معروضان على الشاشة لتستعملهما. أما اللصق في نصك المنسوخ فيُسجَّل، لأن ذلك النص هو ما يقرأه اللغوي والمقيِّمان على أنه خطابك.',
+
     /* ---------------- the kind chips ---------------- */
     'Lab': 'معمل',
 };

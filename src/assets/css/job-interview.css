@@ -1012,3 +1012,23 @@
   .ji-bar-label { grid-column: 1 / -1; }
   .ji-answer-toggle { margin-inline-start: 0; }
 }
+
+/* ------------------------------------------------------------------ *
+ * The integrity rules, on the pre-session page
+ * ------------------------------------------------------------------ *
+ *
+ * A bullet list rather than the shared `IntegrityRules` two-column table:
+ * this page is a FORM, and a full penalty table between the last field and
+ * the submit button pushes the button off a phone. The sentences come from
+ * `roomEarningRules('interview')`, so the figures are the room's own.
+ */
+.ji-rules-list {
+  margin: 0 0 0.5rem;
+  padding-inline-start: 1.15rem;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  color: var(--sfs-text-muted, #64748b);
+}
+
+.ji-rules-list li { line-height: var(--sfs-leading-snug, 1.35); }

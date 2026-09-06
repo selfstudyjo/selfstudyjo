@@ -76,6 +76,26 @@ export interface SittingOptions {
     onVoided?: () => void | Promise<void>;
     /** Which detectors to run. Assessment defaults; a lab narrows it. */
     watch?: Parameters<typeof startPracticeMonitor>[0]['watch'];
+    /**
+     * The action to record when the sitting is TORN DOWN unfinished.
+     *
+     * Opt in, and only the two speaking rooms use it: `interview.left_early`
+     * and `meeting.left_early`. A lab and a paper leave nothing out by having
+     * no such action - an abandoned paper is a paper with no submission, which
+     * the absence of `assessment.submitted` already records.
+     *
+     * IT IS NOTED HERE AND NOT IN THE VIEW'S LEAVE HANDLER, which is the whole
+     * reason it is an option rather than a `note()` call at a call site. There
+     * are three ways out of one of these rooms - the Leave button, a router
+     * navigation, and closing the tab - and only ONE of them runs a handler
+     * the view controls. Every one of the three tears the component down, so
+     * the unmount is the single place that sees all three; and it has to be
+     * noted from here rather than from a hook the view registers afterwards,
+     * because Vue runs `onBeforeUnmount` in registration order and this
+     * composable's own hook - the one that FLUSHES the queue - is registered
+     * first. A note added after it would be queued and never posted.
+     */
+    abandonedAs?: string;
 }
 
 export function usePracticeSitting(options: SittingOptions) {
@@ -240,6 +260,23 @@ export function usePracticeSitting(options: SittingOptions) {
     }
 
     onBeforeUnmount(() => {
+        /*
+          WALKING OUT, recorded before anything is stopped.
+
+          `running` is only still true when the sitting was neither finished
+          nor voided nor completed - i.e. the person left partway - so this
+          cannot fire on an interview that ended properly, and it cannot fire
+          twice (`MIN_GAP_MS` declares a minute for both, because a second
+          note inside one sitting is always a teardown path that ran twice and
+          never a second departure).
+
+          Before `monitor.stop()`, because `note` goes through the monitor and
+          a stopped monitor records nothing.
+        */
+        if (running.value && !voided.value && !completed.value
+            && options.abandonedAs) {
+            note(options.abandonedAs);
+        }
         monitor.value?.stop();
         running.value = false;
         /*

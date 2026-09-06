@@ -101,7 +101,14 @@ const tools: Catalogue = {
     'Shared with me': '共享给我的',
     'Shared with {v0}': '共享给 {v0}',
     'Size': '大小',
-    'Link: {v0}': '链接：{v0}',
+    /*
+     * TWO WHOLE SENTENCES rather than a sentence with a value in it - see
+     * the Arabic note. The interpolated fragment was bare English, so a
+     * Chinese reader got 「链接：can view」.
+     */
+    'Link: can view': '链接：可查看',
+    'Link: can edit': '链接：可编辑',
+    'You can edit': '你可以编辑',
     '{v0} · edited {v1}': '{v0} · 编辑于 {v1}',
     '{v0} item{v1} · edited {v2}': '{v0} 个元素 · 编辑于 {v2}',
     'Delete “{v0}”?': '删除“{v0}”？',

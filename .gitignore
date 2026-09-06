@@ -189,3 +189,9 @@ tools/tour-check/shots-*/
 # the `dist` rule above; the shots are not, and 22 PNGs of a chat window per run
 # is not a diff anybody wants to read.
 tools/assistant-preview/shots/
+
+# Output of tools/draw-preview — the built preview, its screenshots and the
+# throwaway Chrome profile the shooter launches. 12 PNGs a run and a large
+# profile, regenerated with `npm run shoot:draw`. `tools/*/dist/` is already
+# covered by the bare `dist` rule above; the shots are not.
+tools/draw-preview/shots/

@@ -353,33 +353,56 @@ function tint(name?: string): string {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.55);
+  /* THE SCRIM TOKEN, which is dark in all ten galaxies and carries a derived
+     ink. `--sfs-surface-rgb` FOLLOWS the theme, so in a light galaxy this was
+     a pale wash over a pale page and the dialog stopped reading as being in
+     front of anything. */
+  background: var(--sfs-overlay, rgb(15 23 42 / 0.55));
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
 }
 
+/*
+  A PANEL, NOT A SHEET OF PAPER.
+
+  `--sfs-paper` is the always-light "printed page" token, so this dialog was a
+  white card in all ten galaxies - and two rules inside it set a raw `#0f172a`,
+  which is the only reason they were readable. `--sfs-surface-2` is the theme's
+  raised surface with `--sfs-text` as its measured ink, so the dialog now
+  follows the galaxy and every ink inside it can be a token.
+*/
 .dialog {
   width: min(620px, 100%);
   max-height: 90vh;
   overflow-y: auto;
   padding: 22px 24px 18px;
-  border-radius: 16px;
-  background: var(--sfs-paper, #fff);
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.35);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-xl, 22px);
+  background: var(--sfs-surface-2, #1a2036);
+  color: var(--sfs-text, #f8fafc);
+  box-shadow: var(--sfs-elev-3, 0 28px 70px rgb(0 0 0 / 0.35));
 }
 
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
-.sub { margin: 4px 0 0; font-size: 0.82rem; color: var(--sfs-accent-text, #64748b); }
+h2 { margin: 0; font-size: 1.12rem; color: var(--sfs-text, #f8fafc); }
+.sub { margin: 4px 0 0; font-size: 0.82rem; color: var(--sfs-text-muted, #94a3b8); }
 
 .close {
   border: none;
   background: transparent;
   font-size: 1.6rem;
   line-height: 1;
-  color: var(--sfs-accent-text, #94a3b8);
+  color: var(--sfs-text-muted, #94a3b8);
   cursor: pointer;
 }
-.close:hover { color: var(--sfs-accent-text, #334155); }
+
+.close:hover { color: var(--sfs-text, #f8fafc); }
+
+.close:focus-visible {
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, rgb(102 126 234 / 0.6));
+  outline-offset: var(--sfs-ring-offset, 2px);
+  border-radius: var(--sfs-radius-xs, 6px);
+}
 
 .block { margin-top: 20px; }
 
@@ -394,32 +417,48 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--sfs-accent-text, #64748b);
+  letter-spacing: var(--sfs-tracking-caps, 0.05em);
+  color: var(--sfs-text-muted, #94a3b8);
 }
 
 .count {
   padding: 1px 8px;
   border-radius: 999px;
-  background: var(--sfs-paper, #f1f5f9);
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
   font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--sfs-accent-on-paper, #475569);
+  font-weight: var(--sfs-weight-bold, 700);
+  color: var(--sfs-text-muted, #94a3b8);
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
 }
 
 .search-row { display: flex; gap: 8px; }
 
 .input, .select {
   padding: 9px 11px;
-  border: 1px solid var(--sfs-paper-border, #cbd5e1);
-  border-radius: 9px;
+  border: 1px solid var(--sfs-field-border, rgb(255 255 255 / 0.2));
+  border-radius: var(--sfs-radius-sm, 9px);
+  font-family: inherit;
   font-size: 0.88rem;
-  color: var(--sfs-on-paper, #0f172a);
-  background: var(--sfs-paper, #fff);
+  color: var(--sfs-field-text, #f8fafc);
+  background: var(--sfs-field, rgb(255 255 255 / 0.06));
 }
 
+.input::placeholder { color: var(--sfs-placeholder, rgb(255 255 255 / 0.4)); }
+
+/* `color-scheme` is the only way to reach the browser's own `<select>` popup,
+   which is rendered by the OS and is white-on-white on a dark theme whatever
+   any stylesheet says. It is set on `<html>` by `theme.css`; naming it here
+   as well is what makes the control correct if this dialog is ever teleported
+   somewhere that is not inside it. */
+.select { color-scheme: inherit; }
+
 .input { flex: 1; min-width: 0; }
-.input:focus, .select:focus { outline: 2px solid rgb(var(--sfs-accent-rgb, 37 99 235) / 0.35); border-color: var(--sfs-accent-wash, #2563eb); }
+.input:focus, .select:focus {
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, rgb(102 126 234 / 0.6));
+  outline-offset: var(--sfs-ring-offset, 2px);
+  border-color: var(--sfs-accent, #667eea);
+}
 .input.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
 .select.tight { padding: 6px 8px; font-size: 0.8rem; }
 
@@ -431,7 +470,10 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   justify-content: space-between;
   gap: 10px;
   padding: 9px 0;
-  border-bottom: 1px solid var(--sfs-border-strong, #f1f5f9);
+  /* A row separator inside a panel, so the hairline token rather than the
+     STRONG one - which is the token for the edge of a raised surface and reads
+     as a rule drawn through the list. */
+  border-bottom: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
 }
 
 .results li:last-child, .access li:last-child { border-bottom: none; }
@@ -445,16 +487,38 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   height: 32px;
   flex: 0 0 32px;
   border-radius: 50%;
-  color: var(--sfs-text, #fff);
-  font-weight: 700;
+  font-weight: var(--sfs-weight-bold, 700);
   font-size: 0.82rem;
 }
 
-.avatar.owner { box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(var(--sfs-accent-rgb, 37 99 235) / 0.3); }
+/*
+  THE OWNER'S RING, and the inner stop is the PANEL rather than white.
+
+  A hardcoded `#fff` gap between the avatar and the accent ring is a white halo
+  on a dark panel. The avatar's own fill and ink come from `paint()` in the
+  template - it is derived from the username, so no token can reach it, which
+  is exactly what `paint()` exists for.
+*/
+.avatar.owner {
+  box-shadow: 0 0 0 2px var(--sfs-surface-2, #1a2036),
+              0 0 0 4px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+}
 
 .who-text { display: flex; flex-direction: column; min-width: 0; }
-.who-text strong { font-size: 0.88rem; color: #0f172a; }
-.who-text small { font-size: 0.74rem; color: var(--sfs-accent-text, #64748b); }
+/* A person's own name, in whichever script they wrote it. */
+.who-text strong {
+  font-size: 0.88rem;
+  color: var(--sfs-text, #f8fafc);
+  unicode-bidi: plaintext;
+}
+
+/* A username is a machine identifier: isolated, so Arabic prose around it
+   cannot relocate its dots and underscores. */
+.who-text small {
+  font-size: 0.74rem;
+  color: var(--sfs-text-muted, #94a3b8);
+  unicode-bidi: isolate;
+}
 
 .row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
@@ -464,7 +528,21 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   font-size: 0.72rem;
   font-weight: 700;
 }
-.pill.owner { background: rgb(var(--sfs-accent-rgb, 37 99 235) / 0.12); color: var(--sfs-accent-text, #1d4ed8); }
+/*
+  A PALE TINTED ISLAND TAKES ITS OWN DARK INK, and this pair was wrong first.
+
+  `--sfs-accent-wash` is LIGHT in all ten galaxies - it is the "a hint of the
+  accent behind a chip" surface - while `--sfs-accent-text` is the accent ink
+  derived against a plain GLASS card, i.e. a pale lavender in a dark galaxy.
+  Together they measured 2.59:1, which `audit:contrast` reported the moment it
+  was run. `--sfs-accent-on-paper` is the ink `themes.ts` derives against the
+  wash, dark in every galaxy, and it is what the platform's own warning and
+  error washes already use.
+*/
+.pill.owner {
+  background: var(--sfs-accent-wash, rgb(102 126 234 / 0.16));
+  color: var(--sfs-accent-on-paper, #1d4ed8);
+}
 
 .btn {
   padding: 8px 14px;
@@ -476,25 +554,30 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   font-weight: 600;
   cursor: pointer;
 }
-.btn:hover:not(:disabled) { background: var(--sfs-accent, #1d4ed8); }
+.btn:hover:not(:disabled) { background: var(--sfs-accent-strong, #5568d3); }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn.small { padding: 6px 11px; font-size: 0.78rem; }
-.btn.ghost { background: var(--sfs-paper, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
-.btn.ghost:hover:not(:disabled) { background: var(--sfs-paper-2, #e2e8f0); }
+.btn.ghost {
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  color: var(--sfs-text, #f8fafc);
+}
+
+.btn.ghost:hover:not(:disabled) { background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14)); }
 
 .link-row { display: flex; gap: 8px; }
 .link-row .select { flex: 1; }
 
 .link-box { display: flex; gap: 8px; margin-top: 9px; }
 
-.hint { margin: 9px 0 0; font-size: 0.8rem; color: var(--sfs-accent-text, #64748b); }
+.hint { margin: 9px 0 0; font-size: 0.8rem; color: var(--sfs-text-muted, #94a3b8); }
 
 .warn {
   margin: 9px 0 0;
   padding: 8px 11px;
   border-radius: 8px;
-  background: var(--sfs-paper, #fffbeb);
-  border: 1px solid var(--sfs-warning-wash, #fde68a);
+  background: var(--sfs-warning-wash, rgb(217 119 6 / 0.16));
+  border: 1px solid rgb(var(--sfs-warning-rgb, 217 119 6) / 0.4);
   font-size: 0.78rem;
   color: var(--sfs-warning-on-paper, #92400e);
 }
@@ -503,8 +586,8 @@ h2 { margin: 0; font-size: 1.12rem; color: #0f172a; }
   margin: 14px 0 0;
   padding: 9px 12px;
   border-radius: 8px;
-  background: var(--sfs-paper, #fef2f2);
-  border: 1px solid var(--sfs-danger-wash, #fecaca);
+  background: var(--sfs-danger-wash, rgb(220 38 38 / 0.14));
+  border: 1px solid rgb(var(--sfs-danger-rgb, 220 38 38) / 0.4);
   font-size: 0.82rem;
   color: var(--sfs-danger-on-paper, #b91c1c);
 }

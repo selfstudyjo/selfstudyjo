@@ -163,6 +163,33 @@ Example:
           </p>
         </div>
 
+        <!--
+          THE RULES, BEFORE THE ROOM, and working rule 53 is unambiguous about
+          why: a system that penalises somebody owes them the rule beforehand,
+          the reason at the time and the evidence afterwards. The interview
+          records conduct on a PUBLIC activity record, so the one place this
+          could go is in front of the button that opens the room.
+
+          `IntegrityRules` rather than a hand-written list: the numbers come out
+          of the same catalogue the ledger scores with, and a table of penalties
+          that disagrees with the penalties actually applied is worse than no
+          table at all.
+        -->
+        <div class="ji-howto">
+          <h3>{{ $t('📋 What is recorded, and what it is worth') }}</h3>
+          <p>
+            {{ $t('An interview here is practice, so nothing below can fail you — there is no mark to void. What it does is keep a record: the turns you actually speak earn points, and leaving the window, pasting an answer in or walking out partway costs them. That record is public.') }}
+          </p>
+          <ul class="ji-rules-list">
+            <li v-for="(rule, index) in integrityRules" :key="index">
+              {{ $t(rule.key, rule.params) }}
+            </li>
+          </ul>
+          <p class="ji-hint">
+            {{ $t('Pasting is the one worth reading twice: the transcript is the record of what you said, so a pasted answer is coached and reported as speech you never gave.') }}
+          </p>
+        </div>
+
         <p class="ji-hint">{{ $t('⚠️ The next page will request camera & microphone permission. Your answers are transcribed by AI.') }}</p>
         <button type="submit" class="ji-btn-primary" :disabled="submitting">
           {{ submitting ? 'Preparing…' : 'Enter Interview Room →' }}
@@ -179,6 +206,7 @@ import { pickInterviewer } from '@/cast/actors';
 import { useAuthStore } from '@/store/auth';
 import { cvBuilderService, type CvSummary } from '@/services/cvbuilder.service';
 import { jobInterviewService } from '@/services/jobinterview.service';
+import { roomEarningRules } from '@/utils/practiceIntegrity';
 import {
   MAX_MINUTES, MAX_QUESTIONS, MIN_MINUTES, MIN_QUESTIONS,
   askedQuestionsFrom, clampMinutes, clampQuestionCount, cvDigest, cvLabel,
@@ -252,6 +280,16 @@ const cvs = ref<CvSummary[]>([]);
 const cvState = ref<'loading' | 'ready' | 'error'>('loading');
 const cvLoading = ref(false);
 const submitting = ref(false);
+
+/**
+ * What the ledger pays and charges in this room, priced IN this room.
+ *
+ * Derived from `ACTIONS` rather than written out here, because a page that
+ * promises the wrong figure is worse than a page that promises nothing - and
+ * the base prices are a PAPER's, so quoting them would tell a candidate a
+ * switched window costs four when in an interview it costs three.
+ */
+const integrityRules = roomEarningRules('interview');
 const isRedo = ref(false);
 
 /**

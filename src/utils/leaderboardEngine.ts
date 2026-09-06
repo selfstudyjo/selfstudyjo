@@ -160,12 +160,17 @@ export interface LeaderboardEvent {
      *
      * Not the same thing as `kind`. A practice action's `kind` is always
      * `practice` because that is what it is to the scoring; its `context` is
-     * whether it happened during an exam, a quiz or a lab, which is what decides
-     * whether five of them void anything. Collapsing the two would make a lab's
-     * window-switching void a lab, which is the one thing the ledger must never
-     * do.
+     * whether it happened during an exam, a quiz, a lab, a mock interview or a
+     * Toastmasters meeting - which is what decides whether five of them void
+     * anything and what each one is priced at. Collapsing the two would make a
+     * lab's window-switching void a lab, which is the one thing the ledger must
+     * never do.
+     *
+     * `PracticeContext` rather than a literal union written here, which is what
+     * it was: the hand-written triple did not fail when the speaking rooms
+     * arrived, it just silently stopped accepting them.
      */
-    context?: 'exam' | 'quiz' | 'lab';
+    context?: PracticeContext;
     /**
      * `practice` only: this action's arithmetic was reduced or dropped.
      *

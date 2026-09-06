@@ -241,15 +241,35 @@ defineExpose({ tools });
 </script>
 
 <style scoped>
+/*
+  A GLASS BAR, not a near-white one.
+
+  `rgb(var(--sfs-tint-rgb) / 0.94)` is near-white in all ten galaxies - a tint
+  deliberately does not flip, because its job is to LIFT a surface off the page
+  and lifting is white in both modes. So this bar was light in every theme
+  while every ink on it (`--sfs-accent-text`, `--sfs-accent-on-paper`) was
+  derived for a different surface than the one it landed on. It is
+  `--sfs-glass-3` + `--sfs-text` now: the pair `themes.ts` measures together,
+  and the same pair the board header above it uses.
+*/
 .toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   padding: 10px 14px;
-  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.94);
-  border-bottom: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
-  backdrop-filter: blur(10px);
+  background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+  color: var(--sfs-text, #f8fafc);
+  border-bottom: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+  backdrop-filter: var(--sfs-blur, blur(10px));
+  /* The toolbar does not scroll with the canvas. */
+  flex: 0 0 auto;
+  z-index: 1;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .toolbar { background: var(--sfs-surface-2, #1a2036); }
 }
 
 .group {
@@ -277,12 +297,16 @@ defineExpose({ tools });
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
-  color: var(--sfs-accent-text, #334155);
+  color: var(--sfs-text, #f8fafc);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.tool:hover:not(:disabled) { background: rgb(var(--sfs-accent-rgb, 37 99 235) / 0.08); }
+.tool:hover:not(:disabled) { background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14)); }
+.tool:focus-visible {
+  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, rgb(102 126 234 / 0.6));
+  outline-offset: var(--sfs-ring-offset, 2px);
+}
 
 .tool.active {
   background: var(--sfs-accent, #2563eb);
@@ -300,8 +324,8 @@ defineExpose({ tools });
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--sfs-accent-text, #64748b);
+  letter-spacing: var(--sfs-tracking-caps, 0.04em);
+  color: var(--sfs-text-muted, #94a3b8);
 }
 
 .swatches { display: flex; gap: 4px; align-items: center; }
@@ -309,8 +333,8 @@ defineExpose({ tools });
 .swatch {
   width: 22px;
   height: 22px;
-  border: 2px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.15);
-  border-radius: 6px;
+  border: 2px solid var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+  border-radius: var(--sfs-radius-xs, 6px);
   padding: 0;
   cursor: pointer;
   transition: transform 0.12s, border-color 0.12s;
@@ -327,11 +351,9 @@ defineExpose({ tools });
     linear-gradient(to top right, transparent calc(50% - 1px), var(--sfs-danger, #dc2626) 50%,
                     transparent calc(50% + 1px)),
     var(--sfs-paper, #fff);
-  /* Its own ink. The base rule this shares with the other variants can only
-     hold one `color`, and that one belongs to whichever variant came first —
-     so an amber or green button inherited the ink meant for the indigo one.
-     A fill decides its own ink. */
-  color: var(--sfs-on-danger, #fff);
+  /* A 22px square with no text in it. Paper is the right fill: the swatch
+     DEPICTS an empty sheet, and the diagonal has to read against white in
+     every theme. */
 }
 
 .swatch.custom {
@@ -352,33 +374,52 @@ defineExpose({ tools });
 .size-value {
   min-width: 24px;
   font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--sfs-accent-text, #334155);
+  font-weight: var(--sfs-weight-bold, 700);
+  color: var(--sfs-text, #f8fafc);
   text-align: end;
+  /* A bare number beside a slider is bidi-neutral. */
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
 }
 
 .icon-btn {
   min-width: 30px;
   height: 30px;
   padding: 0 8px;
-  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.12);
-  border-radius: 8px;
-  background: var(--sfs-paper, #fff);
-  color: var(--sfs-accent-on-paper, #334155);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-sm, 8px);
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  color: var(--sfs-text, #f8fafc);
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: var(--sfs-weight-semibold, 600);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .icon-btn.wide { min-width: 54px; }
-.icon-btn:hover:not(:disabled) { background: var(--sfs-paper, #f1f5f9); border-color: rgb(var(--sfs-sink-rgb, 15 23 42) / 0.22); }
+.icon-btn:hover:not(:disabled) { background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14)); border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24)); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .icon-btn.danger { color: var(--sfs-danger-text, #b91c1c); border-color: rgb(var(--sfs-danger-rgb, 185 28 28) / 0.25); }
-.icon-btn.danger:hover:not(:disabled) { background: var(--sfs-paper, #fef2f2); }
+/* A WASH, which is light in every galaxy, with the ink derived against it -
+   rather than `--sfs-paper`, which is a full sheet and reads as a white button
+   in a dark toolbar. */
+.icon-btn.danger:hover:not(:disabled) {
+  background: var(--sfs-danger-wash, rgb(220 38 38 / 0.14));
+  color: var(--sfs-danger-on-paper, #b91c1c);
+}
 
 @media (max-width: 900px) {
   .tool-label { display: none; }
   .tool { min-width: 36px; }
+}
+
+/* 44px targets on a touch device. A toolbar is nothing but small controls, so
+   this is the one place on the board where it matters most - and `max()`
+   rather than a bare rem, because `responsive.css` scales the ROOT and
+   `2.75rem` measures 41.5px at a 390px viewport. */
+@media (pointer: coarse) {
+  .tool { min-width: max(2.75rem, 44px); min-height: max(2.75rem, 44px); }
+  .icon-btn { min-width: max(2.5rem, 40px); height: max(2.5rem, 40px); }
+  .swatch { width: 30px; height: 30px; }
 }
 </style>

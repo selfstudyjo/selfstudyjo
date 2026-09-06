@@ -576,44 +576,89 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
 </script>
 
 <style scoped>
+/*
+  THE DESK, and it follows the theme rather than being paper.
+
+  This was `--sfs-paper` at the bottom of the stack, which is the always-light
+  "printed page" token - so the whole workspace was a light desk in all ten
+  galaxies and the drawing board looked identical in every one of them. The
+  surround is CHROME: it belongs to the app, and a dark galaxy wants a dark
+  desk with a white sheet on it, which is also what every drawing application
+  does.
+
+  `--sfs-surface` rather than a glass token, because there is nothing behind
+  this to see through: the host fills the whole area below the header and a
+  `backdrop-filter` over a full-viewport region is one of the most expensive
+  things CSS can be asked for (working rule 46).
+*/
 .canvas-host {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 20%, rgb(var(--sfs-accent-rgb, 59 130 246) / 0.08), transparent 45%),
-    radial-gradient(circle at 80% 70%, rgb(var(--sfs-accent-2-rgb, 168 85 247) / 0.08), transparent 45%),
-    var(--sfs-paper, #eef2f7);
+    radial-gradient(circle at 20% 20%, rgb(var(--sfs-accent-rgb, 59 130 246) / 0.1), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgb(var(--sfs-accent-2-rgb, 168 85 247) / 0.1), transparent 45%),
+    var(--sfs-surface, #0f1220);
   touch-action: none;
 }
 
+/*
+  THE SHEET ITSELF, which is the one thing here that is genuinely PAPER.
+
+  Its fill is painted into the canvas by `paper_color` on the record, so no
+  token reaches it - what is set here is the lift off the desk. The shadow is
+  deliberately raw black rather than `--sfs-shade-rgb`: it is a drop shadow, it
+  is the same in every theme, and a shadow is the one use that channel is
+  actually for (working rule 48).
+*/
 .paper {
   position: absolute;
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  border-radius: 8px;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.06);
+  border-radius: var(--sfs-radius-sm, 8px);
+  box-shadow: 0 14px 44px rgb(0 0 0 / 0.32), 0 0 0 1px rgb(0 0 0 / 0.1);
   cursor: crosshair;
 }
 
 .is-readonly .paper { cursor: default; }
 .is-panning .paper { cursor: grab; }
 
+/*
+  THE BOX A USER TYPES INTO, and the sharpest of the three token-pairing bugs
+  this component had.
+
+  It sets a near-white fill - `--sfs-tint-rgb` deliberately does NOT flip with
+  the mode, because a tint's job is to LIFT a surface off the page and lifting
+  is white in both - and it set no `color` at all, so it inherited `--sfs-text`
+  from the board. That is white in the seven dark galaxies: white text, white
+  box, and somebody unable to read what they were typing onto the paper.
+
+  It sits on the SHEET, so it takes the paper pair. `--sfs-on-paper` is dark in
+  all ten galaxies for the same reason `--sfs-paper` is light in all ten, and
+  the border is the accent itself rather than its wash so the draft box is
+  visibly a control rather than a pale smudge on the drawing.
+*/
 .text-draft {
   position: absolute;
   min-width: 200px;
   min-height: 2.2em;
   padding: 4px 6px;
-  border: 2px dashed var(--sfs-accent-wash, #2563eb);
-  border-radius: 6px;
+  border: 2px dashed var(--sfs-accent, #667eea);
+  border-radius: var(--sfs-radius-xs, 6px);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.96);
+  color: var(--sfs-on-paper, #0f172a);
+  caret-color: var(--sfs-accent, #667eea);
   font-family: Inter, system-ui, sans-serif;
   line-height: 1.3;
   resize: both;
   outline: none;
+  /* Text somebody is typing, in whichever language they type it. */
+  unicode-bidi: plaintext;
 }
+
+.text-draft::placeholder { color: var(--sfs-on-paper-muted, #64748b); }
 
 .readonly-badge {
   position: absolute;
@@ -624,11 +669,19 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   gap: 7px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgb(var(--sfs-surface-rgb, 15 23 42) / 0.82);
-  color: var(--sfs-text, #f8fafc);
+  /*
+    THE SCRIM PAIR, not the surface one. This badge sits over a DRAWING, whose
+    colours are the user's own, so it has to be legible against anything -
+    which is what `--sfs-overlay` (dark in all ten galaxies) and its derived
+    `--sfs-on-overlay` are for. `--sfs-surface-rgb` follows the theme, so in a
+    light galaxy this was a pale badge over pale paper.
+  */
+  background: var(--sfs-overlay, rgb(15 23 42 / 0.82));
+  color: var(--sfs-on-overlay, #f8fafc);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: var(--sfs-weight-semibold, 600);
   letter-spacing: 0.01em;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 
@@ -636,11 +689,10 @@ defineExpose({ fit, thumbnail, zoomIn: () => zoomAt(0, 0, 1.2),
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  /* A 7px disc with no text in it, so it needs a fill and nothing else. The
+     `color` this used to carry - and the paragraph explaining why a fill
+     decides its own ink - arrived from a codemod that could not tell a dot
+     from a badge. */
   background: var(--sfs-warning, #fbbf24);
-  /* Its own ink. The base rule this shares with the other variants can only
-     hold one `color`, and that one belongs to whichever variant came first —
-     so an amber or green button inherited the ink meant for the indigo one.
-     A fill decides its own ink. */
-  color: #fff;
 }
 </style>

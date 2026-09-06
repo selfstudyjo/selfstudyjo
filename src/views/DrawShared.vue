@@ -96,42 +96,91 @@ function retry() {
 <style scoped>
 .shared { display: grid; place-items: center; min-height: 60vh; padding: 40px 20px; }
 
+/*
+  A GLASS CARD, not a sheet of paper.
+
+  This is the page a share link lands on, so for a great many visitors it is
+  the FIRST thing they see of the platform - and `--sfs-paper` made it a white
+  card in all ten galaxies with `--sfs-text` on it, which is white in the seven
+  dark ones. Same fault as the paper cards and the board title.
+*/
 .panel {
   max-width: 46ch;
-  padding: 34px 30px;
-  border: 1px solid rgb(var(--sfs-sink-rgb, 15 23 42) / 0.08);
-  border-radius: 15px;
-  background: var(--sfs-paper, #fff);
+  padding: clamp(1.5rem, 4vw, 2.1rem) clamp(1.25rem, 3.5vw, 1.9rem);
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  border-radius: var(--sfs-radius-lg, 18px);
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+  backdrop-filter: var(--sfs-blur, blur(10px));
   text-align: center;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.09);
+  box-shadow: var(--sfs-sheen, inset 0 1px 0 rgb(255 255 255 / 0.14)),
+              var(--sfs-elev-2, 0 14px 36px rgb(0 0 0 / 0.2));
 }
 
-h1 { margin: 0 0 10px; font-size: 1.12rem; color: var(--sfs-text, #0f172a); }
-p { margin: 0; color: var(--sfs-accent-text, #64748b); font-size: 0.9rem; line-height: 1.6; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel { background: var(--sfs-glass-3, rgb(255 255 255 / 0.12)); }
+}
+
+h1 {
+  margin: 0 0 0.6rem;
+  font-size: 1.12rem;
+  font-weight: var(--sfs-weight-semibold, 600);
+  color: var(--sfs-text, #f8fafc);
+}
+
+p {
+  margin: 0;
+  color: var(--sfs-text-muted, #94a3b8);
+  font-size: 0.9rem;
+  line-height: var(--sfs-leading-relaxed, 1.6);
+}
 
 .panel.error h1 { color: var(--sfs-danger-text, #b91c1c); }
 
 .actions { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
 
 .btn {
-  padding: 9px 16px;
-  border: none;
-  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  min-height: max(2.4rem, 40px);
+  border: 1px solid transparent;
+  border-radius: var(--sfs-radius, 14px);
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: var(--sfs-weight-semibold, 600);
   cursor: pointer;
 }
-.btn.primary { background: var(--sfs-accent, #2563eb); color: var(--sfs-on-accent, #fff); }
-.btn.ghost { background: var(--sfs-paper, #f1f5f9); color: var(--sfs-accent-on-paper, #334155); }
+
+.btn.primary { background: var(--sfs-accent, #667eea); color: var(--sfs-on-accent, #fff); }
+
+.btn.ghost {
+  background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+  border-color: var(--sfs-border, rgb(255 255 255 / 0.14));
+  color: var(--sfs-text, #f8fafc);
+}
+
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+}
 
 .spinner {
   width: 34px;
   height: 34px;
   margin: 0 auto 16px;
-  border: 3px solid rgb(var(--sfs-accent-rgb, 37 99 235) / 0.2);
-  border-top-color: var(--sfs-accent, #2563eb);
+  border: 3px solid var(--sfs-accent-wash, rgb(102 126 234 / 0.2));
+  border-top-color: var(--sfs-accent, #667eea);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+/* A spinner that keeps spinning under `prefers-reduced-motion` is the one
+   animation `responsive.css` cannot switch off for somebody, because at
+   `0.01ms` it lands on its last keyframe - a full rotation, i.e. exactly where
+   it started - and simply stops. So it is stated here rather than left to the
+   global rule: it stops, and the panel's own text says what is happening. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; opacity: 0.6; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
