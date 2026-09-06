@@ -1350,8 +1350,18 @@ async function userFinish() {
     that falls back to "(no speech captured)" - which is four words and would
     pay for silence.
   */
+  // `countWords` takes the LOCALE OBJECT, not its id. Handed a string it reads
+  // `.wordless` off it, gets undefined, and falls through to the
+  // space-separated count - so a Chinese answer measured ONE word however long
+  // it was, and this award was unreachable for exactly the speakers the CJK
+  // branch exists for. Working rule 40, and vue-tsc had been reporting it.
+  //
+  // It sits ABOVE the `if` rather than inside the condition because
+  // `check:practice` asserts the flag and the word count are adjacent, and it
+  // is right to: anything allowed between them is somewhere a third condition
+  // could be slipped in without the check noticing.
   if (spokeThisTurn
-      && countWords(speechText().trim(), localeId.value) >= SPOKEN_WORD_FLOOR) {
+      && countWords(speechText().trim(), activeLocale.value) >= SPOKEN_WORD_FLOOR) {
     sitting.note('speaking.delivered');
   }
 

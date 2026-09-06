@@ -439,6 +439,10 @@ const FAMILY_LABELS: Record<string, string> = {
     // implementation. See `view_families_for` in app 11's `utils/labtools.py`
     // for the half that makes the payload answer to both names.
     claudeapi: 'Claude API',
+    // A THIRD Claude-adjacent family and not a surface of either of the
+    // two below it: what its labs are about is the WIRE between a client
+    // and a server rather than anybody's product.
+    mcp: 'Model Context Protocol',
     claudecode: 'Claude Code',
     cowork: 'Claude Cowork',
     ai: 'AI Tutor',
@@ -1196,6 +1200,12 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             id: 'tool_log', title: 'Tool calls', kind: 'table', path: 'tool_log',
             tool: 'claudecode_gui', empty: 'No tool calls yet',
             columns: [col('tool', 'Tool', 'badge'), col('target', 'Target', 'code'),
+                // A SUBAGENT'S OWN CALLS ARE TAGGED WITH ITS NAME, and empty for
+                // the caller's. The whole point of a subagent is that its work is
+                // isolated from your context and NOT hidden from you, so a column
+                // is where that shows: one Task in your session, and everything
+                // the subagent did underneath it.
+                col('agent', 'Agent', 'badge'),
                 col('decision', 'Decision', 'badge'), col('reason', 'Why'),
                 col('result', 'Result')],
         },
@@ -1239,8 +1249,120 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             id: 'tool_log', title: 'Tool calls', kind: 'table', path: 'tool_log',
             tool: 'cowork_gui', empty: 'No tool calls yet',
             columns: [col('tool', 'Tool', 'badge'), col('target', 'Target', 'code'),
+                // A SUBAGENT'S OWN CALLS ARE TAGGED WITH ITS NAME, and empty for
+                // the caller's. The whole point of a subagent is that its work is
+                // isolated from your context and NOT hidden from you, so a column
+                // is where that shows: one Task in your session, and everything
+                // the subagent did underneath it.
+                col('agent', 'Agent', 'badge'),
                 col('decision', 'Decision', 'badge'), col('reason', 'Why'),
                 col('result', 'Result')],
+        },
+    ],
+    // The Model Context Protocol. The MESSAGES panel leads, and that is the
+    // whole design rather than an ordering preference: MCP has two independent
+    // ends and almost every problem is a disagreement between them that raises
+    // nothing, so the wire log is the artefact - which side sent which frame,
+    // which of them carry an id, and which can therefore never be answered.
+    // Every other panel says what the two sides ARE; this one says what they
+    // DID.
+    mcp: [
+        { id: 'stats', title: 'Session', kind: 'stats', path: 'stats',
+            tool: 'mcp_gui' },
+        {
+            id: 'messages', title: 'Messages', kind: 'table', path: 'messages',
+            tool: 'mcp_gui', empty: 'Nothing on the wire yet',
+            // `id` is deliberately a column of its own and deliberately EMPTY
+            // for a notification: that is the fact the whole protocol rests on,
+            // not a gap in the data.
+            columns: [col('n', '#', 'number'), col('dir', 'Direction', 'badge'),
+                col('type', 'Type', 'badge'), col('id', 'Id', 'code'),
+                col('method', 'Method', 'code'),
+                col('params', 'Params'), col('result', 'Result'),
+                col('error', 'Error')],
+        },
+        {
+            id: 'tools', title: 'Tools', kind: 'table', path: 'tools',
+            tool: 'mcp_gui', empty: 'No tools declared',
+            columns: [col('name', 'Name', 'code'),
+                col('schema', 'Input schema', 'code'),
+                col('documented', 'Documented', 'badge'),
+                col('samples', 'Samples', 'badge'),
+                col('logs', 'Logs', 'badge'),
+                col('progress', 'Progress', 'badge'),
+                col('description', 'Description')],
+        },
+        {
+            id: 'resources', title: 'Resources', kind: 'table',
+            path: 'resources', tool: 'mcp_gui', empty: 'No resources declared',
+            // `kind` distinguishes a fixed resource from a TEMPLATE, which are
+            // two different lists on the wire - and mistaking one for the other
+            // is the commonest "my resource is missing".
+            columns: [col('uri', 'URI', 'code'), col('kind', 'Kind', 'badge'),
+                col('mime', 'MIME'), col('description', 'Description')],
+        },
+        {
+            id: 'prompts', title: 'Prompts', kind: 'table', path: 'prompts',
+            tool: 'mcp_gui', empty: 'No prompts declared',
+            columns: [col('name', 'Name', 'code'),
+                col('arguments', 'Arguments', 'list'),
+                col('description', 'Description')],
+        },
+        {
+            id: 'capabilities', title: 'Capabilities', kind: 'table',
+            path: 'capabilities', tool: 'mcp_gui', empty: 'Not connected',
+            columns: [col('side', 'Side', 'badge'),
+                col('capability', 'Capability', 'code'),
+                col('declared', 'Declared', 'badge')],
+        },
+        {
+            id: 'client', title: 'Client', kind: 'table', path: 'client',
+            tool: 'mcp_gui', empty: 'No client file read',
+            // Rows over the CANONICAL method list rather than over what the
+            // file happens to call, so the panel shows the GAPS - a client with
+            // no `initialize` is the commonest broken client there is.
+            columns: [col('method', 'Wire method', 'code'),
+                col('implemented', 'Implemented', 'badge')],
+        },
+        {
+            id: 'calls', title: 'Tool calls', kind: 'table', path: 'calls',
+            tool: 'mcp_gui', empty: 'No tool calls',
+            columns: [col('tool', 'Tool', 'code'),
+                col('arguments', 'Arguments', 'code'),
+                col('ok', 'Ok', 'badge'), col('sampled', 'Sampled', 'badge'),
+                col('text', 'Result')],
+        },
+        {
+            id: 'sampling', title: 'Sampling', kind: 'table', path: 'sampling',
+            tool: 'mcp_gui', empty: 'No sampling requests',
+            columns: [col('tool', 'From tool', 'code'),
+                col('allowed', 'Allowed', 'badge'), col('model', 'Model'),
+                col('reason', 'Why')],
+        },
+        {
+            id: 'notifications', title: 'Notifications', kind: 'table',
+            path: 'notifications', tool: 'mcp_gui',
+            empty: 'No notifications',
+            // `delivered` is the column that matters: progress reported with no
+            // progressToken in the request is NOT sent, and nothing errors.
+            columns: [col('kind', 'Kind', 'badge'),
+                col('method', 'Method', 'code'), col('level', 'Level', 'badge'),
+                col('tool', 'From tool', 'code'),
+                col('delivered', 'Sent', 'badge'), col('text', 'Text')],
+        },
+        {
+            id: 'roots', title: 'Roots', kind: 'table', path: 'roots',
+            tool: 'mcp_gui', empty: 'No roots offered',
+            columns: [col('uri', 'URI', 'code'),
+                col('declared', 'Capability', 'badge')],
+        },
+        {
+            id: 'sessions', title: 'HTTP sessions', kind: 'table',
+            path: 'sessions', tool: 'mcp_gui',
+            empty: 'No session - stdio, or stateless',
+            columns: [col('id', 'Mcp-Session-Id', 'code'),
+                col('transport', 'Transport', 'badge'),
+                col('stateful', 'Stateful', 'badge'), col('at', 'Issued')],
         },
     ],
 };

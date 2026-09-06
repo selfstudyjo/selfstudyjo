@@ -557,6 +557,41 @@ const labs: Catalogue = {
     'Decision': 'القرار',
     'Why': 'السبب',
     'Task': 'المهمة',
+    // The Model Context Protocol panels. Two terms are deliberately not
+    // translated word for word: `Roots` is a protocol term whose ordinary
+    // translation reads as a plant root, so it keeps the English in brackets
+    // the way the netsim catalogue does for a protocol keyword; and
+    // `Mcp-Session-Id` is an HTTP HEADER NAME a machine parses, so translating
+    // it would be untranslated.json's rule arriving in a table column - a
+    // student copying the translated form gets a request that 400s.
+    'Model Context Protocol': 'بروتوكول سياق النموذج (MCP)',
+    'Capabilities': 'القدرات المعلنة',
+    'Client': 'العميل',
+    'Sampling': 'أخذ العيّنات',
+    'Roots': 'الجذور (Roots)',
+    'HTTP sessions': 'جلسات HTTP',
+    'Direction': 'الاتجاه',
+    'Params': 'المعامِلات',
+    'Input schema': 'مخطط الدخل',
+    'Documented': 'موثّقة',
+    'Samples': 'تأخذ عيّنة',
+    'URI': 'المعرّف الموحّد (URI)',
+    'MIME': 'نوع MIME',
+    'Arguments': 'الوسائط',
+    'Capability': 'القدرة',
+    'Declared': 'معلنة',
+    'Wire method': 'طريقة السلك',
+    'Implemented': 'منفّذة',
+    'Ok': 'نجحت',
+    'Sampled': 'أخذت عيّنة',
+    'From tool': 'من الأداة',
+    'Allowed': 'مسموح',
+    'Mcp-Session-Id': 'Mcp-Session-Id',
+    'Stateful': 'ذات حالة',
+    'Issued': 'أُصدرت',
+    'Agent': 'الوكيل الفرعي',
+    'Logs': 'تسجّل',
+    'Side': 'الجهة',
 };
 
 export default labs;

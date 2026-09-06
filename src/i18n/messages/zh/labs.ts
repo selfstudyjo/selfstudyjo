@@ -545,6 +545,41 @@ const labs: Catalogue = {
     'Decision': '判定',
     'Why': '原因',
     'Task': '任务',
+    // The Model Context Protocol panels. Two terms are deliberately not
+    // translated word for word: `Roots` is a protocol term whose ordinary
+    // translation reads as a plant root, so it keeps the English in brackets
+    // the way the netsim catalogue does for a protocol keyword; and
+    // `Mcp-Session-Id` is an HTTP HEADER NAME a machine parses, so translating
+    // it would be untranslated.json's rule arriving in a table column - a
+    // student copying the translated form gets a request that 400s.
+    'Model Context Protocol': '模型上下文协议（MCP）',
+    'Capabilities': '已声明的能力',
+    'Client': '客户端',
+    'Sampling': '采样',
+    'Roots': '根目录（Roots）',
+    'HTTP sessions': 'HTTP 会话',
+    'Direction': '方向',
+    'Params': '参数',
+    'Input schema': '输入模式',
+    'Documented': '已文档化',
+    'Samples': '会采样',
+    'URI': '统一资源标识符（URI）',
+    'MIME': 'MIME 类型',
+    'Arguments': '参数',
+    'Capability': '能力',
+    'Declared': '已声明',
+    'Wire method': '线上方法',
+    'Implemented': '已实现',
+    'Ok': '成功',
+    'Sampled': '已采样',
+    'From tool': '来自工具',
+    'Allowed': '已允许',
+    'Mcp-Session-Id': 'Mcp-Session-Id',
+    'Stateful': '有状态',
+    'Issued': '签发于',
+    'Agent': '子代理',
+    'Logs': '会记录日志',
+    'Side': '一方',
 };
 
 export default labs;
