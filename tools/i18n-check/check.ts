@@ -75,6 +75,7 @@ import {
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { PRACTICE_KEYS } from '../../src/utils/practiceIntegrity';
 import { TOUR_KEYS } from '../../src/utils/tourSteps';
+import { ASSISTANT_KEYS } from '../../src/utils/assistantEngine';
 import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 import {
@@ -665,6 +666,23 @@ const dynamicStrings = new Set<string>([
       at the one moment it had been asked for help.
     */
     ...TOUR_KEYS,
+    /*
+      Noor's own copy: her two greetings, the refusal, the four plate states,
+      the three failure sentences and the eight suggestion chips.
+
+      Spent as `$t(REFUSAL)`, `$t(stateLabel)` and `$t(chip)` through a
+      variable, so no source file holds the literal and the orphan scan below
+      would report every one. DERIVED from the constants in `assistantEngine.ts`
+      rather than listed again here.
+
+      The three failure sentences are the reason they are constants at all: one
+      of them was written as `t('… one is ' + 'connected …')` at the call site,
+      and a concatenated literal means the RUNTIME key is the joined sentence
+      while every scanner sees only the first fragment — so the catalogue would
+      be keyed on half a sentence and the message would render in English in
+      both languages for ever.
+    */
+    ...ASSISTANT_KEYS,
     ...REASON_KEYS,
     ...Object.values(KIND_LABELS),
 ]);

@@ -7,10 +7,17 @@
 //   npm run check:i18n
 //   npm run check:i18n -- --gaps      # and print what is still untranslated
 import { defineConfig } from 'vite';
+import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   resolve: {
-    alias: { '@': new URL('../../src', import.meta.url).pathname },
+    // `fileURLToPath`, not `.pathname`. On Windows the latter answers
+    // `/D:/SelfStudy%20Apps/...` — a leading slash and a percent-encoded
+    // space — so the alias resolved to nothing and any `src/` module that
+    // imports another through `@` was unloadable. Every other check here
+    // already does it this way; this one only got away with it because
+    // nothing it imported had reached for the alias yet.
+    alias: { '@': fileURLToPath(new URL('../../src', import.meta.url)) },
   },
   build: {
     lib: { entry: 'tools/i18n-check/check.ts', formats: ['es'], fileName: () => 'check.mjs' },

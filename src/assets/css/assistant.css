@@ -1,0 +1,536 @@
+/*
+  Noor, the site assistant.
+
+  GLOBALLY loaded from main.ts, for the reason `tour.css` is: the window is
+  teleported to <body>, so a `<style scoped>` block could never reach it — half
+  these page wrappers are positioned boxes with a `z-index`, which makes a
+  stacking context, and a descendant cannot escape its ancestor's. That is the
+  exact fault the admin console's modals had on nine screens.
+
+  Safe to be global because EVERY selector here is `sfs-bot` prefixed, which is
+  the escape `check:cssleaks` allows and which `check:assistant` asserts. A bare
+  name in a globally loaded sheet is how `roblox-tool.css`'s `.placeholder`
+  covered the exam calendar on every page of the platform (working rule 32).
+
+  NO COLOUR LITERAL outside a `var()` fallback. Every value is a `--sfs-` token,
+  so the window is correct in all ten galaxies without anybody choosing a shade
+  — including the three light ones, where an alpha of the ink measures roughly
+  half the contrast it does over a dark page (working rule 48).
+*/
+
+/* ------------------------------------------------------------------ *
+ * The button, in the top bar and in the lab workspace's header
+ * ------------------------------------------------------------------ */
+
+.sfs-bot-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    /* `max(…, 44px)` and not `2.75rem` alone: responsive.css scales the ROOT
+       fluidly, so on a 390px phone 1rem is ~15.1px and 2.75rem measures 41.5px
+       — under the minimum, on exactly the devices the rule exists for. */
+    min-height: max(2.2rem, 36px);
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 999px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text, #e7eaf3);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.sfs-bot-btn:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+}
+
+.sfs-bot-btn.is-open {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sfs-bot-btn__i {
+    width: 1.05em;
+    height: 1.05em;
+    flex: none;
+}
+
+/* A live dot, so the control reads as somebody who is there rather than as a
+   settings toggle. Hidden under reduced motion at the bottom of this file
+   rather than merely stopped: a pulse that has stopped mid-cycle is a dot at an
+   arbitrary opacity, which reads as a rendering fault. */
+.sfs-bot-btn__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sfs-success, #34d399);
+    flex: none;
+    animation: sfs-bot-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes sfs-bot-pulse {
+    /* Ends where it began. `responsive.css` forces `animation-duration: 0.01ms`
+       under reduced motion, which lands an element on its LAST keyframe — so a
+       track ending anywhere else parks the dot at the wrong opacity for exactly
+       the people who cannot see it move. */
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+@media (max-width: 720px) {
+    .sfs-bot-btn__label { display: none; }
+    .sfs-bot-btn { padding-inline: 0.5rem; }
+}
+
+/* ------------------------------------------------------------------ *
+ * The window
+ * ------------------------------------------------------------------ */
+
+.sfs-bot {
+    position: fixed;
+    /* LOGICAL, so the window lands on the same side as the button it came from
+       in both directions. `right` would pin it to the left of an Arabic page
+       while the top bar's button sat on the right. */
+    inset-block-start: 4.6rem;
+    inset-inline-end: 1rem;
+    inline-size: min(24.5rem, calc(100vw - 2rem));
+    /* Stops well short of the bottom-right corner, which belongs to the support
+       chat launcher (app 9) on every page. Two fixed circles in one corner is
+       the overlap `audit:rtl` reports and a reader cannot resolve. */
+    max-block-size: min(38rem, calc(100dvh - 9rem));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--sfs-radius-lg, 16px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
+    background: var(--sfs-surface, #12142b);
+    box-shadow: 0 18px 48px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.42);
+    /* Above the sidebar (1000) and the support chat, below a page modal. */
+    z-index: 1600;
+}
+
+@media (max-width: 640px) {
+    .sfs-bot {
+        inset-inline: 0.5rem;
+        inline-size: auto;
+        inset-block-start: 4rem;
+        max-block-size: calc(100dvh - 8.5rem);
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ * The stage
+ * ------------------------------------------------------------------ */
+
+.sfs-bot__head {
+    position: relative;
+    flex: none;
+    background:
+        radial-gradient(120% 90% at 50% 0%,
+            rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22), transparent 70%),
+        rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
+    border-block-end: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+/*
+  The 3D tile.
+
+  Pinned `direction: ltr` in both languages, and this is not cosmetic: the
+  renderer positions its camera viewport from the tile's own rect in VIEWPORT
+  coordinates, which do not mirror. Left to the page's `dir`, an Arabic reader
+  gets a camera aimed at the wrong half of the canvas. Same rule the newscast
+  set and the score ring follow.
+*/
+.sfs-bot__stage {
+    direction: ltr;
+}
+
+/*
+  THE TILE CARRIES THE HEIGHT, AND IT IS AN ASPECT RATIO.
+
+  `PersonStage` sets each camera's `viewport` from its TILE's measured rect, so
+  a tile with no definite height is a camera viewport of zero — the canvas fills
+  the header, the scene builds, the render loop runs, and NOTHING IS DRAWN. The
+  fallback initial does not appear either, because it is `position: absolute;
+  inset: 0` inside the same zero-height box.
+
+  That is exactly what the first shot of this window showed: a blank dark band
+  where a person should be, with no error anywhere (working rule 42). The cause
+  was `block-size: 100%` here against a `.s3d__grid` with no height of its own —
+  a percentage against an indefinite parent resolves to auto, which is zero.
+
+  An aspect ratio rather than a fixed height, and the same arrangement
+  `.ji-video-tile` uses: the height then follows the panel's width at every
+  viewport, so the framing is the same on a phone as on a desktop. The cap stops
+  a head-and-shoulders portrait eating half a chat window on a wide panel.
+*/
+.sfs-bot__tile {
+    aspect-ratio: 16 / 9;
+    max-block-size: 9.5rem;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+/*
+  A LOWER THIRD, not a caption floating on her shoulder.
+
+  The plate sits at the bottom of a head-and-shoulders portrait, which is
+  exactly where her jacket is — the first shot of this window had the name
+  printed across it, legible only because of the halo. A halo is not a
+  guarantee: what is behind it is a rendered figure whose colour depends on
+  which galaxy is on and which way she is turned, and no token can measure a
+  render (the same reason text over a photograph keeps a hard halo in every
+  galaxy). The scrim is what makes it legible by construction, and it is what
+  every broadcast name plate is.
+*/
+.sfs-bot__plate {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    padding: 1.4rem 0.7rem 0.45rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--sfs-on-overlay, #f4f6fb);
+    text-shadow: var(--sfs-ink-halo, 0 1px 3px rgb(0 0 0 / 0.65));
+    /* `--sfs-overlay`, the token derived FOR a scrim, rather than an alpha of
+       the shadow channel: `--sfs-on-overlay` above is `ensureContrast`'d
+       against exactly this composite in every galaxy, so the pair clears AA by
+       construction. Black at 0.72 also read as a hard dark stripe across a pale
+       window in the three light galaxies — working rule 48's first fault, one
+       gradient stop at a time. */
+    background: linear-gradient(to top,
+        var(--sfs-overlay, rgb(1 1 10 / 0.72)), transparent);
+    /* A gradient, never `filter: blur()`. A blur over a viewport-sized region
+       is one of the most expensive things CSS can be asked for, and a wide stop
+       range looks the same for nothing. */
+    pointer-events: none;
+}
+
+.sfs-bot__state {
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.sfs-bot__close {
+    position: absolute;
+    inset-block-start: 0.4rem;
+    inset-inline-end: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: max(2rem, 32px);
+    block-size: max(2rem, 32px);
+    border: none;
+    border-radius: 50%;
+    /*
+      `--sfs-overlay`, not an alpha of `--sfs-shade-rgb`.
+
+      The shadow channel is `0 0 0` in all ten galaxies, which is right for a
+      shadow and wrong for a SURFACE: at 0.42 over a pale page it composites to
+      a mid-grey and the light ink on it measured 3.4:1 in Cartwheel, Dawn and
+      Silver — `audit:contrast` reported all three the first time this file was
+      run through it. That is working rule 48's first fault exactly, and the
+      answer is the pair that was DERIVED together for a scrim: `--sfs-on-overlay`
+      is `ensureContrast`'d against the composited overlay in every galaxy, so
+      it clears AA by construction rather than by luck.
+    */
+    background: var(--sfs-overlay, rgb(1 1 10 / 0.72));
+    color: var(--sfs-on-overlay, #f4f6fb);
+    cursor: pointer;
+}
+
+.sfs-bot__close:hover {
+    /* Darker in both modes, so the hover reads as a press rather than as the
+       button changing colour — `--sfs-shade-rgb` is a shadow here, which is
+       what it is for. */
+    box-shadow: inset 0 0 0 999px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.28);
+}
+
+.sfs-bot__close svg { inline-size: 1em; block-size: 1em; }
+
+/* ------------------------------------------------------------------ *
+ * The transcript
+ * ------------------------------------------------------------------ */
+
+.sfs-bot__log {
+    flex: 1 1 auto;
+    min-block-size: 6rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.sfs-bot__row {
+    display: flex;
+    /* `min-width: 0` on the row, or one unbreakable string — a lab id, a uuid,
+       a URL she quoted — sets the row's width and the bubble overflows the
+       panel. A flex child defaults to `min-width: auto`, which is the same trap
+       `exam-system.css` documents for 32 declarations. */
+    min-inline-size: 0;
+}
+
+.sfs-bot__row--user { justify-content: flex-end; }
+
+.sfs-bot__msg {
+    max-inline-size: 86%;
+    min-inline-size: 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 14px;
+    font-size: 0.87rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    /* A uuid, a path or an exam id has no permitted break point, so
+       `break-word` does nothing for it AND does not count toward `min-content`.
+       `anywhere` is what both breaks the string and lets the bubble shrink. */
+    overflow-wrap: anywhere;
+    /*
+      The direction is read out of the string itself.
+
+      She answers in the reader's language and quotes machine identifiers in
+      Latin, so a bubble is routinely mixed — and an English sentence inside an
+      RTL container has its trailing full stop moved to the front. On the
+      element that HOLDS the text, because `unicode-bidi` acts on an element's
+      own inline content and a block child would start a new bidi paragraph.
+    */
+    unicode-bidi: plaintext;
+}
+
+.sfs-bot__msg--bot {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    color: var(--sfs-text, #e7eaf3);
+    border-start-start-radius: 4px;
+}
+
+.sfs-bot__msg--user {
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+    border-start-end-radius: 4px;
+}
+
+.sfs-bot__msg--error {
+    background: rgb(var(--sfs-danger-rgb, 248 113 113) / 0.16);
+    color: var(--sfs-danger-text, #fca5a5);
+}
+
+/* The action button under a bubble. Its label is the DESTINATION's name, never
+   the model's — see `resolveAction`. */
+.sfs-bot__go {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-block-start: 0.4rem;
+    min-block-size: max(2rem, 32px);
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--sfs-accent, #667eea);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-accent-text, #a5b4fc);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sfs-bot__go:hover {
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sfs-bot__go svg { inline-size: 0.95em; block-size: 0.95em; }
+
+.sfs-bot__typing {
+    display: inline-flex;
+    gap: 0.22rem;
+    padding: 0.55rem 0.7rem;
+}
+
+.sfs-bot__typing span {
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background: var(--sfs-text-muted, #9aa4bf);
+    animation: sfs-bot-blip 1.2s ease-in-out infinite;
+}
+
+.sfs-bot__typing span:nth-child(2) { animation-delay: 0.15s; }
+.sfs-bot__typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes sfs-bot-blip {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Suggestions
+ * ------------------------------------------------------------------ */
+
+.sfs-bot__chips {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0 0.75rem 0.6rem;
+}
+
+.sfs-bot__chip {
+    min-block-size: max(1.9rem, 30px);
+    padding: 0.25rem 0.6rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #9aa4bf);
+    font: inherit;
+    font-size: 0.76rem;
+    cursor: pointer;
+    text-align: start;
+}
+
+.sfs-bot__chip:hover {
+    color: var(--sfs-text, #e7eaf3);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.4);
+}
+
+/* ------------------------------------------------------------------ *
+ * The composer
+ * ------------------------------------------------------------------ */
+
+.sfs-bot__composer {
+    flex: none;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    border-block-start: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.2);
+}
+
+.sfs-bot__input {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    max-block-size: 6rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 12px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e7eaf3);
+    font: inherit;
+    /* Never below 16px: iOS zooms the page on focus below that and never zooms
+       back, and the fix is the font size rather than `user-scalable=no`, which
+       would take pinch-zoom away from everybody. */
+    font-size: max(0.9rem, 16px);
+    line-height: 1.4;
+    resize: none;
+    /* What the reader typed or dictated, in whichever language they used. */
+    unicode-bidi: plaintext;
+}
+
+.sfs-bot__input:focus {
+    outline: 2px solid var(--sfs-accent, #667eea);
+    outline-offset: 1px;
+}
+
+.sfs-bot__act {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: max(2.4rem, 40px);
+    block-size: max(2.4rem, 40px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 12px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e7eaf3);
+    cursor: pointer;
+}
+
+.sfs-bot__act:hover:not(:disabled) {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14);
+}
+
+.sfs-bot__act:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sfs-bot__act svg { inline-size: 1.15em; block-size: 1.15em; }
+
+.sfs-bot__act--send {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+}
+
+.sfs-bot__act--live {
+    background: var(--sfs-danger, #f87171);
+    border-color: var(--sfs-danger, #f87171);
+    color: var(--sfs-on-danger, #fff);
+    animation: sfs-bot-pulse 1.4s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ *
+ * The status strip
+ * ------------------------------------------------------------------ */
+
+.sfs-bot__foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0 0.6rem 0.55rem;
+    font-size: 0.7rem;
+    color: var(--sfs-text-muted, #9aa4bf);
+}
+
+.sfs-bot__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0.2rem 0;
+}
+
+.sfs-bot__toggle.is-on { color: var(--sfs-accent-text, #a5b4fc); }
+.sfs-bot__toggle svg { inline-size: 0.95em; block-size: 0.95em; }
+
+.sfs-bot__note {
+    margin-inline-start: auto;
+    /* A voice name is a machine identifier — `ar-SA-ZariyahNeural`. Isolated,
+       or the bidi algorithm relocates its hyphens inside an Arabic strip. */
+    unicode-bidi: isolate;
+}
+
+.sfs-bot__warn {
+    flex-basis: 100%;
+    color: var(--sfs-warning-text, #fbbf24);
+}
+
+/* ------------------------------------------------------------------ *
+ * Reduced motion
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    /* Removed rather than paused. `responsive.css` already collapses every
+       duration to 0.01ms, which lands each of these on its last keyframe — and
+       for the live dot and the recording button that is a legible resting
+       state, so only the decoration that carries no information is dropped. */
+    .sfs-bot-btn__dot { animation: none; }
+    .sfs-bot__typing span { animation: none; opacity: 0.65; }
+}

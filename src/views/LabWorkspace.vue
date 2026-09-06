@@ -54,6 +54,10 @@
               most to explain. Both reach the same overlay through `useTour`.
             -->
             <TourButton />
+            <!-- The one page the top bar is hidden on, so her button has to be
+                 here or she is missing from the screen with the most to ask
+                 about. One window either way - see `useAssistant`. -->
+            <AssistantButton />
             <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
                     :disabled="busy" @click="reset">
               <RotateCcw class="sl-i" /> {{ $t('Reset environment') }}
@@ -397,6 +401,7 @@ import LabWeb from '@/components/labs/LabWeb.vue';
 import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import TourButton from '@/components/TourButton.vue';
+import AssistantButton from '@/components/assistant/AssistantButton.vue';
 import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
 
 /**

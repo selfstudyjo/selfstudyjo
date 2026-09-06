@@ -175,8 +175,44 @@ export const ANCHOR_FIGURES: readonly FigureSpec[] = [
     },
 ];
 
+/**
+ * The site assistant, who is one person rather than a cast.
+ *
+ * Her own export rather than a seventh meeting seat, for the reason the anchors
+ * are their own: `ACTORS` in `cast/actors.ts` derives the six seats from
+ * {@link FIGURES} by id, so anybody added there is somebody the Toastmasters
+ * grid would start seating and the interview room would start casting. She is
+ * neither — she answers questions about the platform, everywhere, including on
+ * the login page.
+ *
+ * **Female, and that is an engineering choice rather than a cosmetic one.**
+ * App 36's fallback speech provider has exactly one voice per language and it
+ * is female in all three (CLAUDE.md records this at length: it is why the
+ * newscast's male anchor had to be reshaped). A female assistant therefore
+ * takes the server route unreshaped on every machine that has no device voice
+ * for the reader's language — which is most machines, in Arabic — so she is
+ * never a "stand-in" and never needs `voiceShaper`. Casting her male would
+ * reintroduce the entire two-women-bulletin problem for a preference nobody
+ * expressed.
+ *
+ * `phase: 4.8` continues the 0.6 grid the other eight sit on. It matters even
+ * though she is alone on screen: she appears on pages that already render a
+ * cast — the Toastmasters meeting and the interview room both have the top bar
+ * — and two people blinking together is the fault `check:actors` exists to
+ * catch.
+ */
+export const ASSISTANT_FIGURE: FigureSpec = {
+    id: 'noor', name: 'Noor', gender: 'female',
+    skin: '#d9a87e', hair: '#2a1b14', hairStyle: 'bun', eye: '#42291b',
+    // Not a suit. She is a guide rather than an interviewer or an anchor, and
+    // the teal reads as help-desk where the meeting's plums and the newscast's
+    // crimson read as an occasion somebody has dressed for.
+    outfit: { jacket: '#1f4d54', shirt: '#f4fbfb', accent: '#4fb3a7' },
+    build: 0.32, height: 1.69, phase: 4.8,
+};
+
 const BY_ID = new Map<string, FigureSpec>(
-    [...FIGURES, ...ANCHOR_FIGURES].map(f => [f.id, f]));
+    [...FIGURES, ...ANCHOR_FIGURES, ASSISTANT_FIGURE].map(f => [f.id, f]));
 
 export function isFigureId(id: string): boolean {
     return BY_ID.has(id);

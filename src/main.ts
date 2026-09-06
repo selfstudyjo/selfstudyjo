@@ -26,6 +26,12 @@ import './assets/css/labs.css'
 // Safe because every class in it is `sfs-tour` prefixed - a namespace no view
 // writes, which is the escape check:cssleaks allows.
 import './assets/css/tour.css'
+// Noor, the site assistant. GLOBAL for the same two reasons as tour.css: her
+// window is teleported to <body>, so a scoped block could never reach it, and
+// half these page wrappers are stacking contexts a fixed descendant cannot
+// escape. Safe because every class in it is `sfs-bot` prefixed - the namespace
+// escape check:cssleaks allows, and check:assistant asserts.
+import './assets/css/assistant.css'
 // Loaded after every page stylesheet on purpose: it corrects what a
 // left-to-right layout gets wrong once the document flips, and it can only do
 // that from in front. See the file's own header.

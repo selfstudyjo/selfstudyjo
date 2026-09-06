@@ -74,6 +74,7 @@ import studio from './studio';
 import labs from './labs';
 import practice from './practice';
 import tour from './tour';
+import assistant from './assistant';
 
 /**
  * Assembled in one place so a duplicate key is a real, visible conflict rather
@@ -101,6 +102,12 @@ const ar: Catalogue = {
     // translated correctly, and it is the one catalogue read by somebody
     // who is already unsure what they are looking at.
     ...tour,
+    // Noor, the site assistant. Her own area for the reason the header gives -
+    // "assistant" is a person who helps rather than the abstract noun, and it
+    // must not collide with the human support widget that sits in the corner of
+    // every page. She is also the one voice on the platform that a reader who
+    // cannot read the interface will reach for first.
+    ...assistant,
 };
 
 export default ar;

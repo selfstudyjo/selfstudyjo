@@ -35,6 +35,17 @@
       -->
       <TourButton />
 
+      <!--
+        NOOR, beside the tour and for a complementary job: the tour explains the
+        page in front of you in a fixed order, and she answers the question you
+        actually have - including "where is X" and "how did I do in Y", neither
+        of which any tour can be written to cover.
+
+        Needs no account either. Somebody deciding whether to sign up is exactly
+        who wants to ask what the platform does.
+      -->
+      <AssistantButton />
+
       <router-link to="/labs" class="sfs-topbar__link">
         <FlaskConical class="sfs-topbar__i" />
         <span class="sfs-topbar__label">{{ $t('Labs') }}</span>
@@ -156,6 +167,7 @@ import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
 import TourButton from '@/components/TourButton.vue';
+import AssistantButton from '@/components/assistant/AssistantButton.vue';
 
 const authStore = useAuthStore();
 

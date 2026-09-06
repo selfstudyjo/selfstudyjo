@@ -183,3 +183,9 @@ tools/labs-video/
 # run and a large profile, regenerated with `node tools/tour-check/shoot.mjs`.
 # `tools/*/dist/` is already covered by the bare `dist` rule above.
 tools/tour-check/shots-*/
+
+# Output of tools/assistant-preview - the built preview, its screenshots and the
+# throwaway Chrome profile the shooter runs in. The build is already covered by
+# the `dist` rule above; the shots are not, and 22 PNGs of a chat window per run
+# is not a diff anybody wants to read.
+tools/assistant-preview/shots/
