@@ -1,0 +1,1 @@
+import{Wt as e}from"./index-Ap-akFc4.js";export{e as serviceRegistry};
