@@ -200,7 +200,7 @@ for (const width of WIDTHS) {
             report.push(`\n${width}px ${variant.id}: the page never reported — it probably threw`);
         }
         const bad = lines.filter(l =>
-            /SIDEWAYS SCROLL|OVERFLOWS|OFF THE LEFT EDGE|WINDOW MISSING|TOO CLOSE|ABOVE THE VIEWPORT/
+            /SIDEWAYS SCROLL|OVERFLOWS|OFF THE LEFT EDGE|WINDOW MISSING|TOO CLOSE|ABOVE THE VIEWPORT|NOT CLICKABLE/
                 .test(l));
         if (bad.length) {
             failures += bad.length;
@@ -215,6 +215,60 @@ for (const width of WIDTHS) {
         console.log(`  shot  ${String(width).padStart(4)}px  ${variant.id.padEnd(14)}`
             + (bad.length ? `  ${bad.length} layout problem(s)` : '  clean'));
     }
+}
+
+/*
+  AND ONE REAL CLICK ON THE X.
+
+  The hit test above is per width and per language and catches a covered
+  control; this catches the other half — a control that IS on top and still
+  does nothing, because the handler never fires or the thing it sets is not
+  what the layout renders against.
+
+  Both halves were live at once. `PersonStage`'s grid covered the button, AND
+  this harness mounted the window off a local flag rather than off the shared
+  `open` ref, so it could not observe a close at all — which meant the first
+  fix looked like it had not worked.
+
+  A REAL click through `Input.dispatchMouseEvent`, never `element.click()`: the
+  synthetic one dispatches straight at the node and passes happily while a
+  transparent grid is covering the page.
+*/
+await cdp.send('Emulation.setDeviceMetricsOverride',
+               { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+await cdp.send('Page.navigate', { url: `${BASE}?theme=andromeda&lang=en` });
+await sleep(3200);
+
+const at = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+        const b = document.querySelector('.sfs-bot__close');
+        if (!b) return '';
+        const r = b.getBoundingClientRect();
+        return JSON.stringify([Math.round(r.left + r.width / 2),
+                               Math.round(r.top + r.height / 2)]);
+    })()`,
+    returnByValue: true,
+});
+
+if (!at.result.value) {
+    failures++;
+    report.push('\nclose: the window never rendered, so the X could not be tried');
+} else {
+    const [cx, cy] = JSON.parse(at.result.value);
+    for (const type of ['mousePressed', 'mouseReleased']) {
+        await cdp.send('Input.dispatchMouseEvent',
+                       { type, x: cx, y: cy, button: 'left', clickCount: 1 });
+    }
+    await sleep(700);
+    const gone = await cdp.send('Runtime.evaluate', {
+        expression: '!document.querySelector(".sfs-bot")', returnByValue: true,
+    });
+    if (gone.result.value !== true) {
+        failures++;
+        report.push('\nclose: a real click on the X did NOT close the window');
+    }
+    console.log(`  click ${gone.result.value === true
+        ? ' the X closes the window' : ' THE X DOES NOT CLOSE THE WINDOW'}`);
 }
 
 cdp.close();

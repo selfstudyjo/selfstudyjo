@@ -1,5 +1,5 @@
 // Mounts the real AssistantDock with the network stubbed. See vite.config.ts.
-import { createApp, h, nextTick, ref } from 'vue';
+import { createApp, h, nextTick } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import AssistantDock from '@/components/assistant/AssistantDock.vue';
 import AssistantButton from '@/components/assistant/AssistantButton.vue';
@@ -59,7 +59,21 @@ const assistant = useAssistant();
     const found = ASSISTANTS.find(a => a.id === wanted);
     if (found) assistant.cast.value = found;
 }
-const mounted = ref(false);
+/*
+  OPEN IT THE WAY THE APP DOES.
+
+  This harness used to mount the window off a local `mounted` flag, which meant
+  it could not observe a CLOSE at all: the dock set `open` to false, nothing was
+  watching it, and the window stayed on screen. So the one-off probe that found
+  the dead X button reported it as still dead AFTER the fix, and the difference
+  between "the button is covered" and "this harness does not model closing" was
+  invisible.
+
+  `DefaultLayout` renders `<AssistantDock v-if="assistantOpen" />` against the
+  same shared ref, so this is that, and a harness that does not render what the
+  app renders is a harness whose green result has to be interpreted.
+*/
+assistant.start();
 
 /*
   The real background, and the button beside it.
@@ -72,10 +86,6 @@ const mounted = ref(false);
 */
 const app = createApp({
     setup() {
-        void nextTick(() => {
-            assistant.start();
-            mounted.value = true;
-        });
         return () => [
             h(AnimatedBackground),
             h('div', {
@@ -87,7 +97,7 @@ const app = createApp({
                     + 'gap:.5rem;padding:0 1rem;'
                     + 'background:rgb(var(--sfs-sink-rgb, 0 0 0)/.35);z-index:1200',
             }, [h(AssistantButton)]),
-            mounted.value ? h(AssistantDock) : null,
+            assistant.open.value ? h(AssistantDock) : null,
         ];
     },
 });
@@ -206,6 +216,41 @@ if (params.has('probe')) {
                 lines.push(`TOO CLOSE TO THE CORNER  the support chat launcher lives there`);
             }
             if (rect.top < 0) lines.push('PANEL ABOVE THE VIEWPORT  its header is unreachable');
+        }
+
+        /*
+          IS EVERY CONTROL ACTUALLY CLICKABLE?
+
+          `elementFromPoint` at a control's own centre, which is the one
+          question worth asking first when a button does nothing — and the one
+          nothing else here could answer. The close button was DEAD for two
+          commits: `PersonStage` gives its grid `z-index: 1` and the button had
+          none, so a transparent 152px grid covered the top of the header and
+          swallowed every click. The X stayed perfectly visible throughout.
+
+          A synthetic `element.click()` would have passed the whole time — it
+          dispatches straight at the node — which is why the shooter also fires
+          a REAL click at the coordinates and checks the window went away.
+          Working rule 32 says this in as many words about `.placeholder`
+          covering the exam calendar, and it cost the same thing twice.
+        */
+        for (const selector of [
+            '.sfs-bot__close', '.sfs-bot__act--send', '.sfs-bot__input',
+            '.sfs-bot__toggle', '.sfs-bot__chip', '.sfs-bot__go',
+        ]) {
+            const el = document.querySelector<HTMLElement>(selector);
+            if (!el) continue;                       // not on screen in this state
+            const box = el.getBoundingClientRect();
+            if (box.width === 0 || box.height === 0) continue;
+            const x = Math.round(box.left + box.width / 2);
+            const y = Math.round(box.top + box.height / 2);
+            const top = document.elementFromPoint(x, y);
+            if (!top || !(el === top || el.contains(top))) {
+                const name = top
+                    ? `${top.tagName.toLowerCase()}.${(top.getAttribute('class') || '-').split(' ')[0]}`
+                    : 'nothing';
+                lines.push(`NOT CLICKABLE       ${selector}  covered by ${name}`);
+            }
         }
 
         const out = document.createElement('pre');

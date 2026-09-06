@@ -192,6 +192,11 @@
     position: absolute;
     inset-block-end: 0;
     inset-inline: 0;
+    /* Above the renderer's own grid — see the close button below. It is a lower
+       third and belongs over the person; today the tile is transparent so the
+       paint order is invisible, and the day a caller gives one a background the
+       name would disappear behind it. */
+    z-index: 2;
     padding: 1.4rem 0.7rem 0.45rem;
     margin: 0;
     display: flex;
@@ -224,6 +229,28 @@
     position: absolute;
     inset-block-start: 0.4rem;
     inset-inline-end: 0.4rem;
+    /*
+      ABOVE THE RENDERER'S GRID, AND THIS IS WHAT MADE THE X DEAD.
+
+      `PersonStage` gives `.s3d__grid` `position: relative; z-index: 1`, which it
+      needs in order to sit above its own canvas. `.sfs-bot__stage` sets no
+      z-index and no transform, so it creates NO stacking context — the grid
+      therefore participates in `.sfs-bot`'s, where a positive z-index beats
+      every `z-index: auto` sibling regardless of DOM order.
+
+      The grid is full width and as tall as the tile (152px), so it covers the
+      whole header including the top corner this button sits in. The button
+      stayed perfectly VISIBLE, because the grid and the tile are transparent —
+      and every click on it landed on the grid instead. `elementFromPoint` at
+      the button's own centre answered `div.s3d__grid`, which is the one
+      question worth asking first when a control does nothing (working rule 32,
+      and the same shape as `.placeholder` covering the exam calendar).
+
+      A synthetic `element.click()` would have passed throughout: it dispatches
+      straight at the node. `shoot:assistant` asserts the hit test now, and
+      dispatches a REAL click at the coordinates.
+    */
+    z-index: 3;
     display: inline-flex;
     align-items: center;
     justify-content: center;
