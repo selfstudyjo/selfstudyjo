@@ -35,12 +35,26 @@
  * submitted before its fifth breach reached the store would be scored on four
  * and pass. Flushing first closes that, and it is why `endSitting` is async and
  * why the view awaits it.
+ *
+ * AND THE THIRD WAY A SITTING ENDS, WHICH IS THE ONE THAT WAS MISSING
+ *
+ * `finish` ends a paper and `endSitting` voids one. A LAB had neither: nothing
+ * anywhere said a lab was over, so a student who completed every task and left
+ * the workspace open went on being charged for every switch to their editor,
+ * for as long as the tab lived, on a record anybody can read. `complete` is
+ * that third ending - it records the sitting's terminal action, stops the
+ * monitor and posts what is left.
+ *
+ * It is idempotent and it is deliberately reachable more than once: a lab is
+ * graded again every time Check my work is pressed, and every one of those
+ * presses after the first reports the same completed grade.
  */
 
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue';
 import type { MeterEvent } from '@/components/practice/IntegrityMeter.vue';
 import { PracticeRecorder } from '@/services/practice.service';
 import {
+    TERMINAL_ACTIONS,
     labelOf,
     pointsOf,
     severityOf,
@@ -75,6 +89,8 @@ export function usePracticeSitting(options: SittingOptions) {
     const verdict = ref<Verdict>(verdictFor([], context));
     const running = ref(false);
     const voided = ref(false);
+    /** Ended because the work was finished, rather than because it was void. */
+    const completed = ref(false);
 
     /**
      * How many log lines are kept in memory.
@@ -104,6 +120,7 @@ export function usePracticeSitting(options: SittingOptions) {
         if (running.value || !who.userId || !subject.id) return;
         running.value = true;
         voided.value = false;
+        completed.value = false;
 
         recorder.value = new PracticeRecorder({
             context,
@@ -123,7 +140,11 @@ export function usePracticeSitting(options: SittingOptions) {
                 log.value = [{
                     id: `${action.action}:${action.at}:${log.value.length}`,
                     label: labelOf(action.action),
-                    points: pointsOf(action.action),
+                    // PRICED IN THIS CONTEXT. Without the argument the meter
+                    // shows a lab a switched window at -4 while the ledger
+                    // charges -1, and the student is left to work out which
+                    // of the two numbers is the real one.
+                    points: pointsOf(action.action, context),
                     severity: severityOf(action.action),
                     at: action.at,
                 }, ...log.value].slice(0, MAX_LOG);
@@ -175,6 +196,31 @@ export function usePracticeSitting(options: SittingOptions) {
      * are conditions on the sitting as a whole, and the caller would have to
      * re-derive "was it clean" from a verdict it has already been handed.
      */
+    /**
+     * End the sitting because the work is DONE.
+     *
+     * For a lab, which has no submission and cannot be voided. Records the
+     * terminal action, which is what stops everything downstream scoring:
+     * `PracticeRecorder.record` drops a later breach before it is queued, app
+     * 20 refuses one with `SittingClosed`, and `verdictFor` and
+     * `applyConductCaps` both ignore anything already stored past that point.
+     *
+     * The monitor is stopped as well rather than instead. Stopping it alone
+     * would leave the sitting open on the service, so a second tab - or the
+     * same student coming back tomorrow to the same lab - would carry on
+     * accumulating against it.
+     */
+    async function complete() {
+        if (!running.value || completed.value || voided.value) return verdict.value;
+        completed.value = true;
+        note(TERMINAL_ACTIONS[context]);
+        running.value = false;
+        monitor.value?.stop();
+        await recorder.value?.close();
+        refresh();
+        return verdict.value;
+    }
+
     async function finish(opts: { allAnswered?: boolean } = {}) {
         if (!running.value) return verdict.value;
         if (!voided.value) {
@@ -215,9 +261,11 @@ export function usePracticeSitting(options: SittingOptions) {
         log: computed(() => log.value as readonly MeterEvent[]),
         running: computed(() => running.value),
         voided: computed(() => voided.value),
+        completed: computed(() => completed.value),
         begin,
         note,
         finish,
+        complete,
         endSitting,
         /** For a caller that wants the settled server verdict before submitting. */
         settle: async () => {

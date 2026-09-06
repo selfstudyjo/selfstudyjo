@@ -180,9 +180,14 @@ export default {
     'Your first three asks in a lab are free.': 'أسئلتك الثلاثة الأولى في المعمل مجانية.',
     'Reset the environment': 'أعاد تعيين البيئة',
     'Starting again costs nothing.': 'البدء من جديد لا يكلّف شيئًا.',
+    'Finished the lab': 'أنهى المعمل',
+    'Every task verified. Nothing after this is scored.':
+        'تم التحقّق من كل مهمة. ولا يُحتسَب شيء بعد ذلك.',
+    'This sitting is finished. Nothing further is scored against it.':
+        'انتهت هذه الجلسة. ولا يُحتسَب عليها شيء بعد الآن.',
     'Stayed on task': 'ظلّ منصرفًا إلى العمل',
-    'One award for every five minutes of unbroken attention, up to twelve.':
-        'مكافأة واحدة لكل خمس دقائق من الانتباه المتواصل، حتى اثنتي عشرة مرة.',
+    'One award for every five minutes of unbroken, active work, up to eight.':
+        'مكافأة واحدة لكل خمس دقائق من العمل المتواصل الفعلي، حتى ثماني مرات.',
     'Answered every question': 'أجاب عن كل سؤال',
     'Awarded once, for leaving nothing blank.': 'تُمنَح مرة واحدة، لعدم ترك أي فراغ.',
     'Sat the whole paper cleanly': 'أدّى الورقة كاملةً بنزاهة',
@@ -230,8 +235,10 @@ export default {
         'إنجاز كل مهام المعمل يضيف {v0} نقطة أخرى.',
     'Finishing a lab having asked the tutor {v0} times or fewer adds {v1}.':
         'إنجاز معمل بعد سؤال المدرّس {v0} مرات أو أقل يضيف {v1}.',
-    'Every five minutes of unbroken work adds {v0}, up to {v1} times.':
-        'كل خمس دقائق من العمل المتواصل تضيف {v0}، حتى {v1} مرة.',
+    'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.':
+        'كل خمس دقائق من العمل المتواصل الفعلي تضيف {v0}، حتى {v1} مرة.',
+    'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.':
+        'لا يتجاوز ما يُخصَم في المعمل {v0} نقطة مهما طال عملك، وبعد التحقّق من كل المهام لا يُحتسَب شيء بعد ذلك إطلاقًا.',
     'Working a task through to a verified pass adds {v0}, up to {v1} times.':
         'إيصال مهمة إلى نجاح متحقَّق منه يضيف {v0}، حتى {v1} مرات.',
     'Asking the tutor a fourth time and beyond costs {v0} each.':
@@ -253,12 +260,14 @@ export default {
         'خُسرت {v0} نقاط حتى الآن. لا شيء هنا يمكن أن يُسقِطك — فالمعمل مكان للتجربة.',
 
     /* ---------------- why an achievement earned what it earned ---------------- */
-    'Passed an exam — {v0} points, plus {v1} for a distinction at {v2} or above.':
-        'نجح في امتحان — {v0} نقطة، مع {v1} إضافية للامتياز عند {v2} أو أكثر.',
-    'An attempt that did not pass. It earns nothing and it counts towards the pass rate, which is the only way that figure means anything.':
-        'محاولة لم تنجح. لا تكسب شيئًا وتُحسَب في نسبة النجاح، وهذا وحده ما يجعل تلك النسبة ذات معنى.',
-    'Passed a quiz — {v0} points, plus {v1} for a distinction.':
-        'نجح في اختبار قصير — {v0} نقطة، مع {v1} إضافية للامتياز.',
+    'Passed an exam — {v0} points, plus {v1} for the mark itself.':
+        'نجح في امتحان — {v0} نقطة، مع {v1} على الدرجة نفسها.',
+    'An attempt that did not pass — {v0} points for sitting it. It counts towards the pass rate, which is the only way that figure means anything.':
+        'محاولة لم تنجح — {v0} نقاط لأدائها. وتُحسَب في نسبة النجاح، وهذا وحده ما يجعل تلك النسبة ذات معنى.',
+    'This sitting was ended for breaking the integrity rules, so it earns nothing at all — not even the credit for having attempted it.':
+        'أُنهيت هذه الجلسة لمخالفة قواعد النزاهة، فلا تكسب شيئًا إطلاقًا — ولا حتى نقاط أداء المحاولة.',
+    'Passed a quiz — {v0} points, plus {v1} for the mark itself.':
+        'نجح في اختبار قصير — {v0} نقطة، مع {v1} على الدرجة نفسها.',
     'A course certificate — {v0} points. It is the one credential that scores, because nothing else records finishing a course.':
         'شهادة دورة — {v0} نقطة. وهي الشهادة الوحيدة التي تكسب نقاطًا، لأن لا شيء آخر يسجّل إتمام دورة.',
     'Issued automatically for passing the exam, so it is worth nothing on its own — the pass already earned the points. It is still a credential.':

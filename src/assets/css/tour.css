@@ -1,0 +1,360 @@
+/*
+  The guided tour's overlay.
+
+  GLOBALLY LOADED, from main.ts, because it is drawn over every page and is
+  teleported to <body> - so a `<style scoped>` block would never reach it. That
+  is only safe because **every class in this file is `sfs-tour` prefixed**, a
+  namespace no view writes, which is the escape `check:cssleaks` allows and the
+  same arrangement `ui.css` and `labs.css` have. A bare selector here would land
+  on every page of the platform; `.placeholder` in `roblox-tool.css` did exactly
+  that and made every date on the exam calendar unclickable.
+
+  IT SPENDS TOKENS AND DECLARES NO COLOUR OF ITS OWN.
+
+  Ten galaxies, three of them light. A literal here would be right in one and
+  wrong in nine, and nothing would say so until somebody picked the tenth. The
+  scrim is `--sfs-overlay`, which is dark in all ten and has an ink partner
+  derived against the COMPOSITED scrim rather than against the page - see
+  `theme.css`. The card is `--sfs-paper` and its ink `--sfs-on-paper`: a caption
+  is a piece of paper laid over the page, it is the one thing on screen that
+  must be legible whatever is behind it, and that pair is light-with-dark-ink in
+  every galaxy by construction.
+
+  THE BOX, THE LINE AND THE ARROW ARE THE FEATURE.
+
+  A tour that only dimmed the page and showed a caption is a tour that leaves
+  the reader hunting for what is being described. The square says WHERE, the
+  line says WHICH, and the arrowhead says WHICH END. They cost three elements
+  and they are the whole reason this is not a modal with some text in it.
+*/
+
+/* ------------------------------------------------------------------ *
+ * The layer
+ * ------------------------------------------------------------------ */
+
+.sfs-tour {
+    position: fixed;
+    inset: 0;
+    /*
+      Above the sidebar (1000) and above the support chat, and BELOW nothing.
+      The tour is the only thing on screen while it runs, so it is deliberately
+      the highest layer this app declares - a tour drawn under the thing it is
+      pointing at is worse than no tour.
+    */
+    z-index: 4000;
+    /* Measured in viewport coordinates, which do not mirror. The CARD's own
+       text takes the page's direction - see its `dir` binding. */
+    direction: ltr;
+}
+
+/*
+  Four rectangles rather than one sheet with a hole cut in it.
+
+  A `clip-path` cut-out has to be recomputed on every scroll and every resize,
+  and where it is unsupported the page is covered by a solid sheet with nothing
+  saying why. Four plain boxes degrade to four plain boxes.
+*/
+.sfs-tour__scrim {
+    position: fixed;
+    background: var(--sfs-overlay, rgb(9 11 20 / 0.62));
+    /* THE SCRIM SWALLOWS CLICKS, deliberately. A tour is a sequence, and a
+       stray click that navigated away would leave the overlay describing a page
+       that is no longer there. Escape and the Stop button are always visible. */
+    pointer-events: auto;
+    animation: sfs-tour-fade 160ms ease-out both;
+}
+
+@keyframes sfs-tour-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------ *
+ * The square
+ * ------------------------------------------------------------------ */
+
+.sfs-tour__box {
+    position: fixed;
+    border: 2px solid var(--sfs-accent, #667eea);
+    border-radius: var(--sfs-radius-sm, 10px);
+    /*
+      The glow is what makes the square read as a SPOTLIGHT rather than as a
+      border somebody drew on the page. It is a box-shadow rather than a filter
+      because a filter over a large region is one of the most expensive things
+      CSS can be asked for, and this one moves on every scroll.
+    */
+    box-shadow: 0 0 0 2px rgb(var(--sfs-tint-rgb, 255 255 255) / 0.22),
+                0 0 22px 4px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+    pointer-events: none;
+    transition: left 180ms ease, top 180ms ease,
+                width 180ms ease, height 180ms ease;
+}
+
+/* The corner ticks. Four pseudo-elements would be four more nodes; two
+   gradients on the one box give the same reading of "this is a viewfinder". */
+.sfs-tour__box::before,
+.sfs-tour__box::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--sfs-accent, #667eea);
+}
+
+.sfs-tour__box::before {
+    top: -2px;
+    left: -2px;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: var(--sfs-radius-sm, 10px) 0 0 0;
+}
+
+.sfs-tour__box::after {
+    right: -2px;
+    bottom: -2px;
+    border-left: 0;
+    border-top: 0;
+    border-radius: 0 0 var(--sfs-radius-sm, 10px) 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * The line and the arrowhead
+ * ------------------------------------------------------------------ */
+
+.sfs-tour__line {
+    position: fixed;
+    height: 2px;
+    /* Rotated about its LEFT edge, because the geometry gives a start point and
+       an angle. `transform-origin: center` would swing the line half its own
+       length away from the caption it is supposed to leave. */
+    transform-origin: 0 50%;
+    background: linear-gradient(
+        to right,
+        rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25),
+        var(--sfs-accent, #667eea));
+    pointer-events: none;
+}
+
+.sfs-tour__arrow {
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    /* A triangle out of borders rather than an SVG: one element, no request,
+       and it takes `currentColor`-adjacent tokens like everything else. */
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-inline-start: 11px solid var(--sfs-accent, #667eea);
+    transform: translateY(-50%);
+}
+
+/* ------------------------------------------------------------------ *
+ * The caption
+ * ------------------------------------------------------------------ */
+
+.sfs-tour__card {
+    position: fixed;
+    /*
+      `min()` and not a fixed width. A 340px card at a 320px viewport is a card
+      hanging 20px off the edge, and every phone this platform is read on is
+      narrower than the card would like to be.
+    */
+    width: min(340px, calc(100vw - 24px));
+    box-sizing: border-box;
+    padding: 1rem 1.05rem 0.85rem;
+    background: var(--sfs-paper, #ffffff);
+    color: var(--sfs-on-paper, #12141c);
+    border: 1px solid rgb(var(--sfs-line-rgb, 20 22 34) / 0.16);
+    border-radius: var(--sfs-radius-lg, 14px);
+    box-shadow: 0 18px 44px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.42);
+    pointer-events: auto;
+    animation: sfs-tour-rise 180ms ease-out both;
+}
+
+@keyframes sfs-tour-rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.sfs-tour__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.sfs-tour__chapter {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sfs-accent-on-paper, #3d4bb0);
+}
+
+.sfs-tour__count {
+    margin-inline-start: auto;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--sfs-on-paper-muted, #5b6070);
+    /*
+      `2 / 10`, NOT `10 / 2`, and isolation alone does not get there.
+
+      Every character in a progress counter is bidi-NEUTRAL - two digit runs and
+      a slash - so inside an Arabic card the algorithm orders the runs
+      right-to-left and the reader is told they are on step ten of two.
+      `unicode-bidi: isolate` stops the counter disturbing the text around it and
+      says nothing about the order INSIDE it; the direction is what does that.
+
+      A counter is a machine reading rather than prose, so pinning it is right
+      in both languages - the same rule `rtl.css` applies to a uuid, a price and
+      every `<pre>` on the platform. Found by looking at an Arabic screenshot,
+      which is the only way it could have been.
+    */
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.sfs-tour__title {
+    margin: 0 0 0.3rem;
+    font-size: 1.02rem;
+    line-height: 1.3;
+    font-weight: 700;
+    text-wrap: balance;
+}
+
+.sfs-tour__body {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--sfs-on-paper-muted, #4d5262);
+    /* The caption is data-adjacent prose that may be English inside an Arabic
+       page - `$t` falls back to the key - so the direction is read out of the
+       string rather than imposed on it. */
+    unicode-bidi: plaintext;
+}
+
+.sfs-tour__pips {
+    display: flex;
+    gap: 4px;
+    margin: 0.8rem 0 0.65rem;
+}
+
+.sfs-tour__pip {
+    flex: 1 1 0;
+    height: 3px;
+    border-radius: 2px;
+    background: rgb(var(--sfs-line-rgb, 20 22 34) / 0.16);
+}
+
+.sfs-tour__pip.is-done { background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45); }
+.sfs-tour__pip.is-here { background: var(--sfs-accent, #667eea); }
+
+.sfs-tour__foot {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.sfs-tour__grow { flex: 1 1 auto; }
+
+.sfs-tour__btn1,
+.sfs-tour__btn2,
+.sfs-tour__stop {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    /* 44px on a coarse pointer, from `responsive.css`'s own rule, and `max()`
+       rather than a rem so a fluid root cannot shrink a touch target below the
+       minimum - the mistake `exam-system.css` had to be corrected for. */
+    min-height: max(2.1rem, 34px);
+    padding: 0 0.75rem;
+    border-radius: var(--sfs-radius-sm, 8px);
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.sfs-tour__btn1 {
+    border: 1px solid transparent;
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+}
+
+.sfs-tour__btn1:hover { filter: brightness(1.06); }
+
+.sfs-tour__btn2 {
+    border: 1px solid rgb(var(--sfs-line-rgb, 20 22 34) / 0.22);
+    background: transparent;
+    color: var(--sfs-on-paper, #12141c);
+}
+
+.sfs-tour__btn2:disabled { opacity: 0.45; cursor: default; }
+
+.sfs-tour__stop {
+    border: 0;
+    padding-inline: 0.15rem;
+    background: transparent;
+    color: var(--sfs-on-paper-muted, #5b6070);
+    text-decoration: underline;
+}
+
+.sfs-tour__stop:hover { color: var(--sfs-danger-on-paper, #a11d2b); }
+
+/* ------------------------------------------------------------------ *
+ * The button that starts it
+ * ------------------------------------------------------------------ */
+
+.sfs-tour-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: max(2rem, 32px);
+    padding: 0 0.6rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: var(--sfs-radius-sm, 8px);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    color: var(--sfs-text, #eef0f8);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 140ms ease;
+}
+
+.sfs-tour-btn:hover { background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3); }
+
+.sfs-tour-btn__i { width: 1em; height: 1em; flex: none; }
+
+/* Below 640px the top bar is already tight; the icon carries it. */
+@media (max-width: 640px) {
+    .sfs-tour-btn__label { display: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ * What a reader who cannot see motion, or is printing, gets
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    /*
+      No transition on the box.
+
+      `responsive.css` shortens every animation to 0.01ms under this query,
+      which lands an element on its LAST keyframe - fine for the two fades here,
+      since both end where they should. A TRANSITION is different: left alone it
+      would still slide the square across the screen on every step, which is
+      exactly the motion this query is asking us not to make.
+    */
+    .sfs-tour__box { transition: none; }
+}
+
+@media print {
+    /* A tour is a thing you are doing, not a thing on the page. */
+    .sfs-tour, .sfs-tour-btn { display: none !important; }
+}
+
+@media (forced-colors: active) {
+    /* The accent glow disappears in forced colours, so the square needs a
+       border the system will actually draw. */
+    .sfs-tour__box { border-color: Highlight; box-shadow: none; }
+    .sfs-tour__line, .sfs-tour__arrow { forced-color-adjust: none; }
+}

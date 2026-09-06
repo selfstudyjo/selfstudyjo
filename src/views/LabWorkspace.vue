@@ -44,6 +44,16 @@
             <span class="sl-badge" :class="`sl-badge--${statusBadge}`">
               {{ $t(statusLabel) }}
             </span>
+            <!--
+              THE TOUR BUTTON, here as well as in the top bar.
+
+              This route sets `meta.hideTopBar` - the workbench already has the
+              same three tools and two consoles for one command is a student
+              wondering which one they are typing into - so the button that is
+              on every other page is not on this one, which is the page with the
+              most to explain. Both reach the same overlay through `useTour`.
+            -->
+            <TourButton />
             <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
                     :disabled="busy" @click="reset">
               <RotateCcw class="sl-i" /> {{ $t('Reset environment') }}
@@ -386,6 +396,7 @@ import LabTutor from '@/components/labs/LabTutor.vue';
 import LabWeb from '@/components/labs/LabWeb.vue';
 import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
+import TourButton from '@/components/TourButton.vue';
 import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
 
 /**
@@ -475,7 +486,11 @@ const filesPane = ref<any>(null);
  */
 const sitting = usePracticeSitting({
   context: 'lab',
-  watch: { devtools: false, print: false, fullscreen: false },
+  // `clipboard` is off as well now, and that is a correction rather than a
+  // preference: copying in a lab is how a command gets from the brief into the
+  // terminal, so charging for it penalised the intended behaviour. App 20 no
+  // longer accepts a clipboard action in a lab context at all.
+  watch: { devtools: false, print: false, fullscreen: false, clipboard: false },
 });
 
 /** How many times the tutor has been asked in this lab. */
@@ -579,6 +594,16 @@ async function open() {
       { userId: userId.value, username: username.value },
     );
     sitting.note('lab.opened');
+    /*
+      A LAB THAT IS ALREADY FINISHED OPENS CLOSED.
+
+      Re-opening a completed lab to re-read the brief is ordinary, and without
+      this it started a fresh sitting that charged for every switch away - the
+      reported bug arriving by the other door. `complete` is idempotent and the
+      terminal action is capped at one per sitting, so this costs nothing when
+      the same lab is opened again.
+    */
+    if (payload.grade?.status === 'completed') void sitting.complete();
     views.value = payload.views || {};
     webSource.value = (payload.views as any)?.web || {};
     note.value = payload.note || '';
@@ -727,6 +752,20 @@ async function grade0() {
     if (result?.grade?.status === 'completed' && tutorAsks.value <= AI_FREE_ASKS) {
       sitting.note('lab.clean_session');
     }
+    /*
+      AND THE LAB IS OVER, which is the fix for the reported bug.
+
+      Until this line a lab had no end at all: a student who verified every
+      task and left the workspace open went on paying for every switch to their
+      editor, indefinitely, on a public record. `complete` records the terminal
+      action and closes the sitting on the service, so nothing after it scores.
+
+      LAST in this block, deliberately - `lab.clean_session` is an award and a
+      closed sitting cannot earn, so recording the close first would throw away
+      the one thing finishing cleanly is worth. Awaited so the close has left
+      the browser before anything else can end the page.
+    */
+    if (result?.grade?.status === 'completed') await sitting.complete();
   } finally {
     grading.value = false;
   }

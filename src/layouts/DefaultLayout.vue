@@ -40,6 +40,17 @@
       nothing to do with it.
     -->
     <ChatBox v-if="!hideSupportChat" />
+
+    <!--
+      The guided tour, mounted ONCE and outside SideNav's slot.
+
+      Outside because it teleports itself to <body> anyway and because it must
+      survive `meta.hideTopBar` - the lab workspace hides the top bar, which is
+      where the button normally lives, and that page is the one with the most to
+      explain. The button appears there in the workbench's own header instead;
+      both reach this through `useTour`.
+    -->
+    <TourGuide />
   </div>
 </template>
 
@@ -51,6 +62,7 @@ import SideNav from '@/components/SideNav.vue';
 import TopBar from '@/components/TopBar.vue';
 import ChatBox from '@/components/ChatBox.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
+import TourGuide from '@/components/TourGuide.vue';
 
 const route = useRoute();
 const hideSupportChat = computed(() => Boolean(route.meta?.hideSupportChat));

@@ -21,6 +21,11 @@ import './assets/css/ui.css'
 // further. Safe to be global because every selector in it is `sl-` or
 // `sfs-topbar`/`sfs-dock` prefixed - the escape check:cssleaks allows.
 import './assets/css/labs.css'
+// The guided tour's overlay. GLOBAL for the same reason as labs.css and for one
+// more: it is teleported to <body>, so a scoped block could never reach it.
+// Safe because every class in it is `sfs-tour` prefixed - a namespace no view
+// writes, which is the escape check:cssleaks allows.
+import './assets/css/tour.css'
 // Loaded after every page stylesheet on purpose: it corrects what a
 // left-to-right layout gets wrong once the document flips, and it can only do
 // that from in front. See the file's own header.

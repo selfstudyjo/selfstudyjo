@@ -54,6 +54,13 @@
  * question marked right, and leaving it out meant a learner who had finished a
  * twelve-task Hadoop lab scored zero for it.
  */
+import {
+    PENALTY_CAP,
+    afterClosure,
+    closureOf,
+    type PracticeContext,
+} from './practiceIntegrity';
+
 export type Achievement = 'exam' | 'quiz' | 'course_certificate' | 'exam_certificate'
     | 'lab' | 'practice';
 
@@ -139,6 +146,16 @@ export interface LeaderboardEvent {
     /** `practice` only: why it is worth what it is worth. An English key. */
     reason?: string;
     /**
+     * How the sitting that produced this attempt was judged for conduct.
+     *
+     * Empty on a record written before the ledger existed, and on every
+     * submission that carried no sitting - which is most of them, so an absent
+     * value is read as "not judged" and never as "judged clean". Only
+     * `failed` changes anything: an attempt the service voided for misconduct
+     * earns no credit for having been attempted, because it was not one.
+     */
+    integrityStatus?: string;
+    /**
      * `practice` only: which kind of sitting it happened in.
      *
      * Not the same thing as `kind`. A practice action's `kind` is always
@@ -149,6 +166,16 @@ export interface LeaderboardEvent {
      * do.
      */
     context?: 'exam' | 'quiz' | 'lab';
+    /**
+     * `practice` only: this action's arithmetic was reduced or dropped.
+     *
+     * Set by `applyConductCaps` when a breach fell past the per-sitting cap or
+     * landed after the sitting had ended. The line stays in the feed with its
+     * label and its time - the evidence is the point of publishing a ledger -
+     * and this is what lets a reader be told why it reads zero rather than
+     * left to conclude the page has lost the number.
+     */
+    capped?: boolean;
 }
 
 /* ------------------------------------------------------------------ *
@@ -179,8 +206,48 @@ export const POINTS = {
     quizPassed: 20,
     courseCertificate: 150,
     examCertificate: 0,
-    /** On top of the pass, for a best attempt at or above `DISTINCTION_SCORE`. */
-    distinction: 25,
+    /**
+     * THE MARK IS WORTH SOMETHING, AND IT IS A SLOPE RATHER THAN A CLIFF.
+     *
+     * This replaced a flat +25 awarded at exactly 90. Two things were wrong
+     * with that and both were visible to anybody who looked at two rows of the
+     * board:
+     *
+     *  * **70% and 89% scored identically.** Nineteen marks of difference,
+     *    hours of the difference in preparation, and the same 100 points. That
+     *    is the "underestimating" half - a learner who very nearly aced a paper
+     *    was told it counted for no more than scraping through.
+     *  * **89% and 90% differed by 25.** One question, a quarter of what the
+     *    whole pass was worth. That is the "overestimating" half, and a cliff
+     *    at a round number is the shape a scoring system has when nobody has
+     *    thought about the middle of it.
+     *
+     * It is now `mastery * (score - MASTERY_FROM) / (100 - MASTERY_FROM)`,
+     * clamped at both ends, so the scale runs smoothly: 70 -> 100, 80 -> 113,
+     * 90 -> 127, 100 -> 140. Deliberately anchored so that the old distinction
+     * mark lands within two points of where it used to, because the top of the
+     * scale was not the part that was wrong.
+     */
+    mastery: 40,
+    /**
+     * For a best attempt that FAILED, and was not voided for misconduct.
+     *
+     * The other cliff, and the sharper one: 69% earned nothing at all and 70%
+     * earned a hundred, so a learner who sat four papers honestly and missed
+     * three of them scored exactly as much as one who had never opened the
+     * platform. Sitting a paper is work, and the board is a record of work.
+     *
+     * **It cannot be farmed**, and that is why it is safe to pay at all:
+     * `bestAttempts` keeps ONE attempt per learner per subject, so forty
+     * re-sits of one quiz are one credit. And a sitting the service voided for
+     * cheating earns nothing - see `integrityStatus`, without which this would
+     * pay somebody for being caught.
+     *
+     * Small on purpose. It is a fifth of a quiz pass and a twentieth of an exam
+     * pass: enough that trying is not indistinguishable from not trying, never
+     * enough that failing is a strategy.
+     */
+    attempted: 5,
     /**
      * A lab is scored on ITS OWN POINTS, plus a bonus for finishing it.
      *
@@ -208,8 +275,45 @@ export const POINTS = {
     labTaskPoint: 4,
 } as const;
 
-/** The mark a best attempt has to reach for the distinction bonus. */
+/**
+ * Where the mastery slope starts.
+ *
+ * App 20's `DEFAULT_PASS_SCORE`, and it has to be a constant here rather than
+ * the exam's own pass mark for a reason worth stating plainly: **the leaderboard
+ * never fetches `/exams/`**, deliberately, because that route ships every
+ * question with its `is_correct` flag and this page needs no account. So the
+ * pass mark is not on the wire and cannot be.
+ *
+ * The consequence is honest and bounded: an exam with a pass mark BELOW 70
+ * pays no mastery for the marks between its own mark and 70. That is the right
+ * way round - mastery is a claim about how well the paper was answered, not
+ * about clearing a bar somebody else set low - and it can never pay MORE than
+ * it should, which is the direction that would matter.
+ */
+export const MASTERY_FROM = 70;
+
+/**
+ * The mark a best attempt has to reach to be COUNTED as a distinction.
+ *
+ * A label and a band edge, no longer a payment: `row.distinctions` and
+ * `SCORE_BANDS` both use it and the points come from the slope above. Keeping
+ * the two apart is what removed the cliff without removing the honour.
+ */
 export const DISTINCTION_SCORE = 90;
+
+/**
+ * What the mark itself is worth, on top of the pass.
+ *
+ * Zero at `MASTERY_FROM` and `POINTS.mastery` at 100, linear between, clamped
+ * at both ends. Rounded, because a leaderboard that prints 113.33 is a
+ * leaderboard nobody trusts the arithmetic of.
+ */
+export function masteryBonus(score: number | null | undefined): number {
+    if (typeof score !== 'number' || !Number.isFinite(score)) return 0;
+    const span = 100 - MASTERY_FROM;
+    const over = Math.min(100, Math.max(MASTERY_FROM, score)) - MASTERY_FROM;
+    return Math.round((POINTS.mastery * over) / span);
+}
 
 /**
  * What one event is worth on its own.
@@ -253,16 +357,100 @@ export function pointsFor(event: LeaderboardEvent): number {
             ? Math.round(earned) * POINTS.labTaskPoint : 0;
         return scored + (event.passed ? POINTS.labCompleted : 0);
     }
-    if (!event.passed) return 0;
-    const distinction = typeof event.score === 'number' && event.score >= DISTINCTION_SCORE
-        ? POINTS.distinction : 0;
+    /*
+      A FAILED ATTEMPT IS NOT NOTHING, and this is the branch that says so.
+
+      One credit per learner per subject, because `bestAttempts` has already
+      collapsed the re-sits - so this cannot be farmed by sitting the same quiz
+      forty times, which is the objection that kept it at zero for so long.
+
+      A VOIDED sitting is excluded. Paying somebody for an attempt the service
+      ended for cheating would be the ledger and the board disagreeing about the
+      same event, and the board is the louder of the two.
+    */
+    if (!event.passed) {
+        if (event.kind !== 'exam' && event.kind !== 'quiz') return 0;
+        if (String(event.integrityStatus || '') === 'failed') return 0;
+        // A certificate has no score and neither has an unattempted record;
+        // what is being paid for is a paper somebody actually sat.
+        return typeof event.score === 'number' ? POINTS.attempted : 0;
+    }
+    const mastery = masteryBonus(event.score);
     switch (event.kind) {
-        case 'exam': return POINTS.examPassed + distinction;
-        case 'quiz': return POINTS.quizPassed + distinction;
+        case 'exam': return POINTS.examPassed + mastery;
+        case 'quiz': return POINTS.quizPassed + mastery;
         case 'course_certificate': return POINTS.courseCertificate;
         case 'exam_certificate': return POINTS.examCertificate;
         default: return 0;
     }
+}
+
+/* ------------------------------------------------------------------ *
+ * Conduct: bounded per sitting, and nothing after the end
+ * ------------------------------------------------------------------ */
+
+/**
+ * The practice events, re-priced so one sitting cannot dominate a total.
+ *
+ * **Why here and not in `verdictFor`.** The verdict is what the meter shows and
+ * what app 20 stamps on the result; the BOARD adds up the value carried on each
+ * record, one event at a time, so a cap applied only in the verdict would be
+ * cosmetic - the total would still be the uncapped sum. This is the one place
+ * the two can be made to agree, and `buildBoard` and `buildDossier` both run it
+ * before anything is aggregated.
+ *
+ * Three things it does, per `(user, context, sitting)`:
+ *
+ *  1. **Nothing after the sitting ended scores.** `assessment.submitted` closes
+ *     a paper and `lab.completed` closes a lab. This is the reported bug and it
+ *     is fixed here as well as on the service, because the records written
+ *     before the service learned it are still in the store and still add up.
+ *  2. **The penalty stops at `PENALTY_CAP`.** Charged exactly to the cap and
+ *     then zero, rather than the whole event being dropped at the boundary: a
+ *     learner two points over should be charged the two.
+ *  3. **The order is the sitting's own.** Sorted by time and then by id, so the
+ *     EARLIEST breaches are the ones that score and two renders of the same
+ *     data cap the same events. An unstable order here would move points
+ *     between reloads, which is the one thing a scoreboard may never do.
+ *
+ * A capped event keeps its label, its time and its place in the feed. What it
+ * loses is its arithmetic - the evidence is the point of a published ledger and
+ * `capped` is set so a reader can be told why the line reads zero.
+ */
+export function applyConductCaps(
+    events: readonly LeaderboardEvent[],
+): LeaderboardEvent[] {
+    const sittings = new Map<string, LeaderboardEvent[]>();
+    const out: LeaderboardEvent[] = [];
+    for (const event of events || []) {
+        if (event?.kind !== 'practice') { out.push(event); continue; }
+        const key = [event.userId, event.context ?? '', event.sessionId ?? ''].join(SEP);
+        const held = sittings.get(key);
+        if (held) held.push(event); else sittings.set(key, [event]);
+    }
+    for (const group of sittings.values()) {
+        const ordered = [...group].sort((a, b) =>
+            (a.at || 0) - (b.at || 0)
+            || String(a.unique ?? '').localeCompare(String(b.unique ?? '')));
+        const context = (ordered[0]?.context ?? 'exam') as PracticeContext;
+        const cap = PENALTY_CAP[context] ?? PENALTY_CAP.exam;
+        const [stamp, atIndex] = closureOf(
+            ordered.map(row => ({ action: row.action ?? '', at: row.at })), context);
+        let spent = 0;
+        ordered.forEach((event, index) => {
+            const points = Number(event.points) || 0;
+            const closed = afterClosure(
+                { action: event.action ?? '', at: event.at }, index, stamp, atIndex);
+            if (closed) { out.push({ ...event, points: 0, capped: true }); return; }
+            if (points >= 0) { out.push(event); return; }
+            const room = cap - spent;
+            if (room >= 0) { out.push({ ...event, points: 0, capped: true }); return; }
+            const charged = Math.max(points, room);
+            spent += charged;
+            out.push(charged === points ? event : { ...event, points: charged, capped: true });
+        });
+    }
+    return out;
 }
 
 /* ------------------------------------------------------------------ *
@@ -710,9 +898,19 @@ function totalsOf(rows: readonly LeaderRow[], events: readonly LeaderboardEvent[
  * board entirely. `check:leaderboard` builds exactly that case.
  */
 export function buildBoard(
-    events: readonly LeaderboardEvent[],
+    rawEvents: readonly LeaderboardEvent[],
     opts: { now: number; window?: BoardWindow },
 ): Board {
+    /*
+      THE CAPS RUN FIRST, over the WHOLE list rather than per window.
+
+      A sitting is not a window: a paper sat on a Sunday night produces events
+      either side of midnight, and capping inside a window would charge the cap
+      twice for one sitting - once in each. Applied first, every window then
+      reads the same already-priced events, which is also what makes the weekly
+      board and the all-time board agree about the same afternoon.
+    */
+    const events = applyConductCaps(rawEvents);
     const win = opts.window ?? 'all';
     const current = bestAttempts(inRange(events, windowRange(win, opts.now)));
     const rows = rank(aggregate(current));

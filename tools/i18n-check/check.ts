@@ -74,6 +74,7 @@ import {
 } from '../../src/navigation/appNav';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { PRACTICE_KEYS } from '../../src/utils/practiceIntegrity';
+import { TOUR_KEYS } from '../../src/utils/tourSteps';
 import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 import {
@@ -649,6 +650,21 @@ const dynamicStrings = new Set<string>([
       on an otherwise Arabic screen is a penalty that has not been explained.
     */
     ...PRACTICE_KEYS,
+    /*
+      The guided tour's captions - every chapter title, every step title and
+      every step body.
+
+      Spent as `$t(step.title)` and `$t(step.body)` through a variable, so no
+      source file holds the literal: the coverage scan cannot see them and the
+      orphan scan below would report all 133. DERIVED by walking the chapters
+      rather than written out a second time.
+
+      It matters more here than the count suggests. The tour is what somebody
+      reaches for when they cannot work out what a page is FOR, and a caption
+      that reverted to English on an Arabic page would be the interface failing
+      at the one moment it had been asked for help.
+    */
+    ...TOUR_KEYS,
     ...REASON_KEYS,
     ...Object.values(KIND_LABELS),
 ]);

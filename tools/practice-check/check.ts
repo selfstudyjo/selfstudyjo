@@ -48,8 +48,13 @@ import {
     MAX_DETAIL,
     MIN_GAP_MS,
     NEGATIVE_LIMIT,
+    PENALTY_CAP,
+    TERMINAL_ACTIONS,
+    afterClosure,
     allowedIn,
     bandOf,
+    closureOf,
+    isTerminal,
     commitThrottle,
     describeCopy,
     isNegative,
@@ -69,7 +74,16 @@ import {
     verdictFor,
     type PracticeContext,
 } from '../../src/utils/practiceIntegrity';
-import { POINTS, aggregate, bestAttempts, pointsFor } from '../../src/utils/leaderboardEngine';
+import {
+    DISTINCTION_SCORE,
+    MASTERY_FROM,
+    POINTS,
+    aggregate,
+    applyConductCaps,
+    bestAttempts,
+    masteryBonus,
+    pointsFor,
+} from '../../src/utils/leaderboardEngine';
 import { buildDossier, pointsBySource, pointsSeries } from '../../src/utils/learnerDossier';
 
 let failures = 0;
@@ -150,17 +164,25 @@ section('1. The two catalogues agree');
            count assertion below is what catches a shape it did not
            understand. */
         const block = python.slice(python.indexOf('ACTIONS = {'));
-        const entries = new Map<string, { points: number; severity: string; contexts: string[]; once: number }>();
+        const entries = new Map<string, { points: number; severity: string; contexts: string[]; once: number; contextPoints: Record<string, number> }>();
         const re = /'([a-z_]+\.[a-z_]+)':\s*\{([\s\S]*?)\n    \},/g;
         for (const match of block.matchAll(re)) {
             const body = match[2];
+            // `'points':` and not `points':`, deliberately: the leading quote is
+            // what stops this matching inside `'context_points':`, whose own
+            // value is read separately below.
             const points = Number(body.match(/'points':\s*(-?\d+)/)?.[1]);
             const severity = body.match(/'severity':\s*'(\w+)'/)?.[1] ?? '';
             const contexts = [...(body.match(/'contexts':\s*\(([^)]*)\)/)?.[1] ?? '')
                 .matchAll(/'(\w+)'/g)].map(m => m[1]);
             const onceRaw = body.match(/'once':\s*([A-Z_]+|\d+)/)?.[1] ?? '0';
             const once = onceRaw === 'AI_FREE_ASKS' ? 3 : Number(onceRaw);
-            entries.set(match[1], { points, severity, contexts, once });
+            const contextPoints: Record<string, number> = {};
+            const table = body.match(/'context_points':\s*\{([^}]*)\}/)?.[1] ?? '';
+            for (const pair of table.matchAll(/'(\w+)':\s*(-?\d+)/g)) {
+                contextPoints[pair[1]] = Number(pair[2]);
+            }
+            entries.set(match[1], { points, severity, contexts, once, contextPoints });
         }
 
         check('the Python catalogue parsed', entries.size > 15, entries.size);
@@ -191,6 +213,21 @@ section('1. The two catalogues agree');
             if (!same) {
                 mismatched.push({ name, field: 'contexts', py: py.contexts, ts: ts.contexts });
             }
+            /*
+              AND THE PER-CONTEXT PRICE, which is the newest way these two can
+              drift and the least visible. A lab charges a quarter for a
+              switched window; if only one side knew that, the meter on screen
+              and the number on the record would disagree about the same action
+              and nothing anywhere would say which was right.
+            */
+            const mine = (ts.contextPoints ?? {}) as Record<string, number>;
+            const names = new Set([...Object.keys(mine), ...Object.keys(py.contextPoints)]);
+            for (const context of names) {
+                if (mine[context] !== py.contextPoints[context]) {
+                    mismatched.push({ name, field: `context_points.${context}`,
+                        py: py.contextPoints[context], ts: mine[context] });
+                }
+            }
         }
         check('every action agrees on its points, severity, contexts and cap',
             !mismatched.length, mismatched.slice(0, 6));
@@ -205,6 +242,28 @@ section('1. The two catalogues agree');
             /'lab': None/.test(python) && FAILS_AT.lab === null);
         check('the detail bound agrees',
             new RegExp(`MAX_DETAIL = ${MAX_DETAIL}\\b`).test(python));
+
+        // THE CAPS AND THE ENDINGS. Both decide arithmetic the two sides do
+        // independently - the browser for the meter, the service for the mark -
+        // so a difference is a candidate watching one number while being
+        // scored on another.
+        const pyCaps = python.match(/PENALTY_CAP = \{([^}]*)\}/)?.[1] ?? '';
+        const caps: Record<string, number> = {};
+        for (const pair of pyCaps.matchAll(/'(\w+)':\s*(-?\d+)/g)) {
+            caps[pair[1]] = Number(pair[2]);
+        }
+        check('the penalty cap agrees in every context',
+            CONTEXTS.every(context => caps[context] === PENALTY_CAP[context]),
+            { python: caps, ts: PENALTY_CAP });
+
+        const pyEnds = python.match(/TERMINAL_ACTIONS = \{([\s\S]*?)\}/)?.[1] ?? '';
+        const ends: Record<string, string> = {};
+        for (const pair of pyEnds.matchAll(/'(\w+)':\s*'([\w.]+)'/g)) {
+            ends[pair[1]] = pair[2];
+        }
+        check('and so does the action that ends a sitting',
+            CONTEXTS.every(context => ends[context] === TERMINAL_ACTIONS[context]),
+            { python: ends, ts: TERMINAL_ACTIONS });
     }
 }
 
@@ -466,6 +525,275 @@ section('7. The copied text is never recorded');
         !/\blabel\b/.test(queued), queued);
     check('the batch posts the queued events and nothing it invented',
         /events:\s*batch/.test(service), service.match(/events:[^,\n]*/g));
+}
+
+/* ------------------------------------------------------------------ *
+ * 7b. A sitting that is over
+ * ------------------------------------------------------------------ */
+
+section('7b. A finished sitting takes nothing further');
+{
+    const at = (n: number) => 1_700_000_000_000 + n * 1000;
+    const ev = (action: string, n: number) => ({ action, at: at(n) });
+
+    // BOTH DIRECTIONS. A check that only proved the ignore would pass with
+    // everything ignored, which is an integrity system that records nothing.
+    const live = verdictFor([ev('window.left', 1), ev('window.left', 5)], 'exam');
+    check('before the close a breach still counts',
+        live.negatives === 2 && live.points === -8, live);
+
+    const closed = verdictFor([
+        ev('window.left', 1),
+        ev('assessment.submitted', 9),
+        ev('window.left', 20),
+        ev('window.alt_tab', 30),
+    ], 'exam');
+    check('after the paper is submitted a breach is not scored',
+        closed.points === -4, closed);
+    check('and is not a strike - a queue flushed a second late must not void '
+        + 'a paper that was already in',
+        closed.negatives === 1 && closed.remaining === 4, closed);
+    check('the sitting says it is closed', closed.closed === true, closed);
+    check('and how many it declined to score',
+        closed.ignoredAfterClose === 2, closed);
+    check('while the record keeps every one of them',
+        closed.events === 4 && closed.scored === 2, closed);
+
+    // THE REPORTED BUG. Five switches after finishing a lab used to be -20 on
+    // a public record, for leaving a tab open.
+    const labDone = verdictFor([
+        ev('lab.completed', 1),
+        ...[10, 11, 12, 13, 14].map(n => ev('window.left', n)),
+    ], 'lab');
+    check('a finished LAB takes nothing further however long the tab is open',
+        labDone.points === 0, labDone);
+    check('and stays clean rather than warned', labDone.status === 'clean');
+
+    check('a lab is not ended by a paper being submitted - the terminal '
+        + 'action is per context',
+        verdictFor([ev('assessment.submitted', 1), ev('window.left', 9)], 'lab')
+            .closed === false);
+    check('isTerminal knows the difference',
+        isTerminal('lab.completed', 'lab')
+        && !isTerminal('lab.completed', 'exam')
+        && isTerminal('lab.completed'));
+
+    check('an event in the same instant as the submission still counts - a '
+        + 'batch stamps its items together and a tie must not forgive the '
+        + 'breach it arrived with',
+        verdictFor([ev('window.left', 9), ev('assessment.submitted', 9)], 'exam')
+            .points === -4);
+    check('with no stamps at all, position is the ordering',
+        verdictFor([{ action: 'assessment.submitted' }, { action: 'window.left' }],
+            'exam').points === 0);
+    check('but an UNDATED event beside a dated close is never assumed late',
+        verdictFor([ev('assessment.submitted', 9), { action: 'window.left' }],
+            'exam').points === -4);
+    check('the sitting ends at the FIRST submission and not the last',
+        verdictFor([ev('assessment.submitted', 9), ev('assessment.submitted', 30),
+            ev('window.left', 20)], 'exam').points === 0);
+
+    check('closureOf reports nothing for a sitting still running',
+        closureOf([ev('window.left', 1)], 'exam')[1] === null);
+    check('and afterClosure says no when there is no closure',
+        !afterClosure(ev('window.left', 99), 9, null, null));
+
+    check('the meter stops counting down at a finished sitting',
+        strikeMessage(verdictFor([ev('assessment.submitted', 1)], 'exam')).key
+        === strikeMessage(verdictFor([ev('lab.completed', 1)], 'lab')).key);
+    check('and says the sitting is finished rather than how many would end it',
+        /finished/i.test(strikeMessage(
+            verdictFor([ev('lab.completed', 1)], 'lab')).key));
+}
+
+/* ------------------------------------------------------------------ *
+ * 7c. A penalty is bounded, and a price can depend on the context
+ * ------------------------------------------------------------------ */
+
+section('7c. A penalty is a bounded modifier, not an unbounded sink');
+{
+    const at = (n: number) => 1_700_000_000_000 + n * 1000;
+    const many = (action: string, count: number) =>
+        Array.from({ length: count }, (_u, i) => ({ action, at: at(i) }));
+
+    const heavy = verdictFor(many('window.alt_tab', 10), 'exam');
+    check('ten Alt+Tabs would be -60 and the cap is -30',
+        heavy.penaltyPoints === PENALTY_CAP.exam, heavy);
+    check('and the sitting says the cap bit', heavy.penaltyCapped === true);
+    // THE HALF THAT MUST NOT BE WEAKENED: capping the arithmetic must never
+    // cap the COUNT, or a candidate buys immunity by cheating faster.
+    check('but every breach still counts, so five still voids the paper',
+        heavy.negatives === 10 && heavy.failed, heavy);
+    check('under the cap nothing is clamped',
+        verdictFor(many('window.left', 3), 'exam').penaltyCapped === false);
+
+    const labHeavy = verdictFor(many('window.left', 40), 'lab');
+    check('forty switches in a two-hour lab costs 15 and not 160 - it is what '
+        + 'the lab told the student to do',
+        labHeavy.penaltyPoints === PENALTY_CAP.lab, labHeavy);
+    check('and it is still not a failure', !labHeavy.failed);
+    check('every context declares a cap and every cap is a penalty',
+        CONTEXTS.every(c => PENALTY_CAP[c] < 0), PENALTY_CAP);
+
+    // Per-context pricing.
+    check('a lab charges a quarter for a switched window',
+        pointsOf('window.left', 'lab') === -1
+        && pointsOf('window.left', 'exam') === -4);
+    check('no context at all means the base price, not the softest one - a '
+        + 'caller that forgets gets the strict reading, which is the one that '
+        + 'gets reported rather than the one nobody notices',
+        pointsOf('window.left') === -4);
+    check('an override never changes the sign of a penalty',
+        Object.values(ACTIONS).filter(a => a.severity === 'negative')
+            .every(a => Object.values(a.contextPoints ?? {})
+                .every(value => value <= 0)));
+    check('and only ever softens - the base price is the assessed one',
+        Object.values(ACTIONS).every(a =>
+            Object.values(a.contextPoints ?? {})
+                .every(value => Math.abs(value) <= Math.abs(a.points))));
+    check('every override names a context the action is allowed in',
+        Object.values(ACTIONS).every(a =>
+            Object.keys(a.contextPoints ?? {})
+                .every(c => a.contexts.includes(c as PracticeContext))));
+    check('the clipboard is not watched in a lab at all - copying is how a '
+        + 'command gets from the brief into the terminal',
+        !allowedIn('clipboard.copy', 'lab')
+        && !allowedIn('clipboard.paste', 'lab')
+        && allowedIn('clipboard.copy', 'exam'));
+}
+
+/* ------------------------------------------------------------------ *
+ * 7d. The board is priced the same way the meter is
+ * ------------------------------------------------------------------ */
+
+section('7d. applyConductCaps, so the total agrees with the verdict');
+{
+    const at = (n: number) => 1_700_000_000_000 + n * 1000;
+    const act = (unique: string, action: string, points: number, n: number,
+                 context: PracticeContext = 'exam', session = 's1') => ({
+        kind: 'practice' as const, userId: 'u1', name: '', subjectId: 'e1',
+        unique, passed: false, at: at(n), points,
+        severity: (points < 0 ? 'negative' : 'positive') as 'negative' | 'positive',
+        action, label: 'x', context, sessionId: session,
+    });
+
+    const total = (events: readonly any[]) =>
+        applyConductCaps(events).reduce((n, e) => n + pointsFor(e), 0);
+
+    // A LAB THAT WAS FINISHED. Everything after the close is worth nothing,
+    // and this is the half that makes the fix retroactive: these records are
+    // already in the store, written before the service learned the rule.
+    const finished = [
+        act('a', 'lab.completed', 0, 1, 'lab', 'lab-1'),
+        act('b', 'window.left', -1, 10, 'lab', 'lab-1'),
+        act('c', 'window.left', -1, 20, 'lab', 'lab-1'),
+    ];
+    check('nothing recorded after a lab was finished reaches the total',
+        total(finished) === 0, applyConductCaps(finished).map(e => e.points));
+    check('and the line is marked as capped, so a reader can be told why it '
+        + 'reads zero rather than left to think the page lost the number',
+        applyConductCaps(finished).filter(e => e.capped).length === 2);
+
+    // THE CAP, charged exactly to the boundary rather than dropped at it.
+    const overrun = Array.from({ length: 10 },
+        (_u, i) => act(`x${i}`, 'window.alt_tab', -6, i));
+    check('a sitting cannot cost more than its cap',
+        total(overrun) === PENALTY_CAP.exam, total(overrun));
+    check('and the boundary event is charged partially rather than dropped - '
+        + 'a learner two points over should be charged the two',
+        applyConductCaps(overrun).some(e => e.points === -0
+            || (e.capped && e.points! < 0)),
+        applyConductCaps(overrun).map(e => e.points));
+
+    // TWO SITTINGS ARE TWO CAPS, or a learner who worked twice as long would
+    // be forgiven the second afternoon entirely.
+    const twice = [
+        ...Array.from({ length: 10 }, (_u, i) => act(`p${i}`, 'window.alt_tab', -6, i, 'exam', 'sA')),
+        ...Array.from({ length: 10 }, (_u, i) => act(`q${i}`, 'window.alt_tab', -6, i, 'exam', 'sB')),
+    ];
+    check('two sittings are two caps',
+        total(twice) === PENALTY_CAP.exam * 2, total(twice));
+
+    // A POSITIVE IS NEVER CAPPED. The cap exists to bound a penalty; the awards
+    // are already bounded by `once`, and clamping them here would be a second
+    // copy of a limit that is checked elsewhere.
+    const earned = [act('g', 'focus.sustained', 2, 1),
+        act('h', 'focus.sustained', 2, 2)];
+    check('positives pass through untouched', total(earned) === 4);
+
+    // AND NOTHING ELSE IS TOUCHED. A pass is not a practice event and must
+    // come out the other side identical.
+    const exam = { kind: 'exam' as const, userId: 'u1', name: '', subjectId: 'e1',
+        score: 80, passed: true, at: at(1) };
+    check('a non-practice event is returned exactly as it went in',
+        applyConductCaps([exam])[0] === exam);
+
+    check('the order is stable, so two renders cap the same events',
+        JSON.stringify(applyConductCaps(overrun))
+        === JSON.stringify(applyConductCaps(overrun)));
+}
+
+/* ------------------------------------------------------------------ *
+ * 7e. The mark is worth something, and it is a slope
+ * ------------------------------------------------------------------ */
+
+section('7e. No cliff at 90, and no cliff at the pass mark either');
+{
+    const ex = (score: number | null, passed: boolean, integrityStatus = '') => ({
+        kind: 'exam' as const, userId: 'u1', name: '', subjectId: 'e1',
+        score, passed, at: 1, integrityStatus,
+    });
+
+    check('a bare pass is worth the base and nothing more',
+        pointsFor(ex(MASTERY_FROM, true)) === POINTS.examPassed);
+    check('and full marks are worth the base plus the whole mastery award',
+        pointsFor(ex(100, true)) === POINTS.examPassed + POINTS.mastery);
+    // THE BUG THIS REPLACED: 70 and 89 used to score identically.
+    check('70 and 89 are no longer the same score',
+        pointsFor(ex(89, true)) > pointsFor(ex(70, true)),
+        [pointsFor(ex(70, true)), pointsFor(ex(89, true))]);
+    // AND THE OTHER HALF: 89 and 90 used to differ by a quarter of the pass.
+    check('and 89 to 90 is a step of about one point rather than of 25',
+        pointsFor(ex(DISTINCTION_SCORE, true))
+        - pointsFor(ex(DISTINCTION_SCORE - 1, true)) <= 3,
+        [pointsFor(ex(89, true)), pointsFor(ex(90, true))]);
+    check('the slope never goes backwards',
+        Array.from({ length: 101 }, (_u, s) => pointsFor(ex(s, true)))
+            .every((value, index, all) => index === 0 || value >= all[index - 1]!));
+    check('and never pays for a mark below where it starts',
+        masteryBonus(MASTERY_FROM - 1) === 0 && masteryBonus(0) === 0);
+    check('a score above 100 cannot pay more than 100 does',
+        masteryBonus(140) === masteryBonus(100));
+    check('and a missing score pays nothing rather than NaN',
+        masteryBonus(null) === 0 && masteryBonus(undefined) === 0);
+
+    check('an honest failed attempt is worth a little rather than nothing',
+        pointsFor(ex(64, false)) === POINTS.attempted);
+    check('and it is small - trying must not be a strategy',
+        POINTS.attempted * 4 < POINTS.quizPassed * 2
+        && POINTS.attempted < POINTS.quizPassed);
+    // THE ONE THAT KEEPS THE BOARD AND THE LEDGER AGREEING.
+    check('a sitting voided for cheating earns nothing at all, not even the '
+        + 'credit for having attempted it',
+        pointsFor(ex(0, false, 'failed')) === 0);
+    check('a warned sitting is not a voided one and still earns the credit',
+        pointsFor(ex(51, false, 'warned')) === POINTS.attempted);
+    check('a failed CERTIFICATE is still worth nothing - there is no such '
+        + 'thing as attempting one',
+        pointsFor({ kind: 'course_certificate', userId: 'u1', name: '',
+            subjectId: 'c1', score: null, passed: false, at: 1 }) === 0);
+    check('and a failed attempt with no score at all earns nothing',
+        pointsFor(ex(null, false)) === 0);
+
+    // The dedupe is what makes paying for an attempt safe.
+    const resits = Array.from({ length: 40 }, (_u, i) => ({
+        kind: 'quiz' as const, userId: 'u1', name: '', subjectId: 'q1',
+        score: 30 + i, passed: false, at: i,
+    }));
+    check('forty re-sits of one quiz are ONE credit, which is the whole reason '
+        + 'paying for an attempt is safe',
+        bestAttempts(resits).reduce((n, e) => n + pointsFor(e), 0)
+        === POINTS.attempted, bestAttempts(resits).length);
 }
 
 /* ------------------------------------------------------------------ *

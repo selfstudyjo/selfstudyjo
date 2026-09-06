@@ -73,6 +73,7 @@ import research from './research';
 import studio from './studio';
 import labs from './labs';
 import practice from './practice';
+import tour from './tour';
 
 /**
  * Assembled in one place so a duplicate key is a real, visible conflict rather
@@ -95,6 +96,11 @@ const ar: Catalogue = {
     // "breach" all need the words around them to be translated correctly, and
     // an alphabetical list destroys exactly that context.
     ...practice,
+    // The guided tour. Its own area for the reason the header gives -
+    // "tour", "step" and "conduct" each need the words around them to be
+    // translated correctly, and it is the one catalogue read by somebody
+    // who is already unsure what they are looking at.
+    ...tour,
 };
 
 export default ar;

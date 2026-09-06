@@ -22,6 +22,19 @@
 
       <span class="sfs-topbar__spacer"></span>
 
+      <!--
+        THE TOUR, and it is here rather than in the sidebar for one reason: it
+        describes the page you are looking at, and the top bar is the only strip
+        of chrome that is on every page and is about the page rather than about
+        where else you could go.
+
+        It needs no account. Somebody who cannot work out how to sign in is
+        exactly who a tour is for, and the platform tail explains the sidebar,
+        the search, the language and the theme - all of which are there signed
+        out.
+      -->
+      <TourButton />
+
       <router-link to="/labs" class="sfs-topbar__link">
         <FlaskConical class="sfs-topbar__i" />
         <span class="sfs-topbar__label">{{ $t('Labs') }}</span>
@@ -136,11 +149,13 @@ import {
   Terminal, X,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/store/auth';
+import { useTour } from '@/composables/useTour';
 import { labService } from '@/services/lab.service';
 import type { LabTool } from '@/utils/labCatalogue';
 import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
+import TourButton from '@/components/TourButton.vue';
 
 const authStore = useAuthStore();
 
@@ -187,11 +202,17 @@ const TOOL_RECORDS: Record<string, LabTool> = {
 const open = ref('');
 const tall = ref(false);
 const ready = ref(false);
+const tour = useTour();
 
 const username = computed(() => authStore.user?.username || '');
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 
 function toggle(id: string) {
+  // A dock opened mid-tour would slide up over the caption, and the caption is
+  // pinned in viewport coordinates so it would not move out of the way. The
+  // tour stops rather than being covered by something the reader just asked
+  // for - they made a choice, and it was not the tour.
+  tour.stop();
   open.value = open.value === id ? '' : id;
 }
 

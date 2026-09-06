@@ -174,9 +174,14 @@ export default {
     'Your first three asks in a lab are free.': '每个实验室的前三次提问免费。',
     'Reset the environment': '重置了环境',
     'Starting again costs nothing.': '重新开始不扣任何分。',
+    'Finished the lab': '完成了实验室',
+    'Every task verified. Nothing after this is scored.':
+        '所有任务均已通过核验。此后不再计分。',
+    'This sitting is finished. Nothing further is scored against it.':
+        '本次作答已结束，此后不再对其计分。',
     'Stayed on task': '保持专注',
-    'One award for every five minutes of unbroken attention, up to twelve.':
-        '每连续专注五分钟奖励一次，最多十二次。',
+    'One award for every five minutes of unbroken, active work, up to eight.':
+        '每连续实际动手五分钟奖励一次，最多八次。',
     'Answered every question': '回答了所有题目',
     'Awarded once, for leaving nothing blank.': '奖励一次，因为没有留下任何空白。',
     'Sat the whole paper cleanly': '全程清白地完成整张试卷',
@@ -223,8 +228,10 @@ export default {
         '完成一个实验室的所有任务再加 {v0} 分。',
     'Finishing a lab having asked the tutor {v0} times or fewer adds {v1}.':
         '在向助教提问不超过 {v0} 次的情况下完成实验室，再加 {v1} 分。',
-    'Every five minutes of unbroken work adds {v0}, up to {v1} times.':
-        '每连续工作五分钟加 {v0} 分，最多 {v1} 次。',
+    'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.':
+        '每连续实际动手五分钟加 {v0} 分，最多 {v1} 次。',
+    'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.':
+        '无论做多久，实验室最多只扣 {v0} 分；所有任务通过核验之后，一律不再计分。',
     'Working a task through to a verified pass adds {v0}, up to {v1} times.':
         '把一项任务做到通过核验加 {v0} 分，最多 {v1} 次。',
     'Asking the tutor a fourth time and beyond costs {v0} each.':
@@ -246,12 +253,14 @@ export default {
         '目前已扣 {v0} 分。这里没有任何东西会让你不及格——实验室就是用来动手尝试的。',
 
     /* ---------------- why an achievement earned what it earned ---------------- */
-    'Passed an exam — {v0} points, plus {v1} for a distinction at {v2} or above.':
-        '通过一场考试——{v0} 分，成绩达到 {v2} 分及以上再加 {v1} 分优异奖励。',
-    'An attempt that did not pass. It earns nothing and it counts towards the pass rate, which is the only way that figure means anything.':
-        '一次未通过的尝试。它不产生积分，并计入通过率——这也是那个数字唯一有意义的算法。',
-    'Passed a quiz — {v0} points, plus {v1} for a distinction.':
-        '通过一次测验——{v0} 分，优异再加 {v1} 分。',
+    'Passed an exam — {v0} points, plus {v1} for the mark itself.':
+        '通过一场考试——{v0} 分，另按成绩本身加 {v1} 分。',
+    'An attempt that did not pass — {v0} points for sitting it. It counts towards the pass rate, which is the only way that figure means anything.':
+        '一次未通过的尝试——参加本身得 {v0} 分。它计入通过率，这也是那个数字唯一有意义的算法。',
+    'This sitting was ended for breaking the integrity rules, so it earns nothing at all — not even the credit for having attempted it.':
+        '本次作答因违反诚信规则被终止，因此完全不产生积分——连参加本身的分也没有。',
+    'Passed a quiz — {v0} points, plus {v1} for the mark itself.':
+        '通过一次测验——{v0} 分，另按成绩本身加 {v1} 分。',
     'A course certificate — {v0} points. It is the one credential that scores, because nothing else records finishing a course.':
         '一张课程证书——{v0} 分。它是唯一产生积分的凭证，因为没有别的记录能证明课程已完成。',
     'Issued automatically for passing the exam, so it is worth nothing on its own — the pass already earned the points. It is still a credential.':

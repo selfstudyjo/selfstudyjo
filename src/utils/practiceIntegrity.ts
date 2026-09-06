@@ -53,6 +53,17 @@ export const CONTEXTS: readonly PracticeContext[] = ['exam', 'quiz', 'lab'];
 export interface ActionSpec {
     /** Signed. Negative for a breach, positive for conduct, zero for neutral. */
     points: number;
+    /**
+     * A price that overrides `points` in one context.
+     *
+     * It exists because one number cannot be right in both places: leaving the
+     * window during a paper is misconduct and leaving it during a lab is
+     * reading the documentation the lab told you to read. The base price is the
+     * ASSESSED one - the strict reading - so an action added without an
+     * override is priced as though it were misconduct rather than as though it
+     * were free, which is the direction that gets noticed.
+     */
+    contextPoints?: Partial<Record<PracticeContext, number>>;
     severity: Severity;
     /** Where it may be recorded. An action posted elsewhere is refused. */
     contexts: readonly PracticeContext[];
@@ -89,6 +100,47 @@ export const NEGATIVE_LIMIT = 5;
  */
 export const FAILS_AT: Record<PracticeContext, number | null> = {
     exam: NEGATIVE_LIMIT, quiz: NEGATIVE_LIMIT, lab: null,
+};
+
+/**
+ * What one sitting may cost, at most, per context. Signed and negative.
+ *
+ * **A PENALTY IS A BOUNDED MODIFIER, NOT AN UNBOUNDED SINK**, and the reasoning
+ * is different at each end:
+ *
+ *  * an exam or a quiz already has its real consequence - five breaches and the
+ *    paper is scored zero - so a sixth and a seventh adding more arithmetic
+ *    buys nothing and turns a voided sitting into a debt carried across the
+ *    learner's whole record;
+ *  * a lab has no other consequence and is unbounded in TIME. A two-hour
+ *    session with forty switches to the documentation is normal practice, and
+ *    uncapped that is 160 points - more than an exam pass is worth, for doing
+ *    what the lab asked.
+ *
+ * Over the cap a breach is still recorded and still COUNTS towards the strike
+ * limit. What stops is the arithmetic, which is why five still voids a paper.
+ */
+export const PENALTY_CAP: Record<PracticeContext, number> = {
+    exam: -30, quiz: -30, lab: -15,
+};
+
+/**
+ * The action that ENDS a sitting, per context.
+ *
+ * Nothing stamped after one of these is scored or counted. Declared rather than
+ * inferred from the severity, because "the sitting is over" is a fact about one
+ * named action and a rule like "the last neutral event" would silently move the
+ * end of the sitting the day somebody added one.
+ *
+ * **A lab had no end at all until this existed**, which is the whole of the
+ * reported bug: a student who finished every task and left the workspace open
+ * went on paying for every switch to their editor, for as long as the tab was
+ * open, on a record anybody can read.
+ */
+export const TERMINAL_ACTIONS: Record<PracticeContext, string> = {
+    exam: 'assessment.submitted',
+    quiz: 'assessment.submitted',
+    lab: 'lab.completed',
 };
 
 /** Asks of a lab's AI tutor that are free before each further one costs. */
@@ -143,13 +195,28 @@ export const ACTIONS: Record<string, ActionSpec> = {
         label: 'Reset the environment',
         why: 'Starting again costs nothing.',
     },
+    'lab.completed': {
+        // THE END OF A LAB. Neutral, because app 11's own task points and the
+        // completion bonus already pay for finishing one, and paying again
+        // here would be one achievement and two awards.
+        points: 0, severity: 'neutral', contexts: ['lab'], once: 1,
+        label: 'Finished the lab',
+        why: 'Every task verified. Nothing after this is scored.',
+    },
 
     // -- positive: conduct and effort -------------------------------------
     'focus.sustained': {
+        // ATTENTION IS EVIDENCED, NOT ASSUMED, and the cap is eight.
+        //
+        // `practiceMonitor.ts` requires at least one genuine interaction inside
+        // the five minutes - a keystroke, a pointer press, a scroll - because
+        // the previous rule paid a student who opened a lab and walked away.
+        // And twelve awards was 24 points, a quarter of what passing an exam is
+        // worth, for sitting still; eight is a contribution rather than a rival.
         points: 2, severity: 'positive', contexts: ['exam', 'quiz', 'lab'],
-        once: 12,
+        once: 8,
         label: 'Stayed on task',
-        why: 'One award for every five minutes of unbroken attention, up to twelve.',
+        why: 'One award for every five minutes of unbroken, active work, up to eight.',
     },
     'assessment.all_answered': {
         points: 5, severity: 'positive', contexts: ['exam', 'quiz'], once: 1,
@@ -174,25 +241,36 @@ export const ACTIONS: Record<string, ActionSpec> = {
 
     // -- negative: why points come off ------------------------------------
     'window.left': {
+        // A LAB PRICES THIS AT A QUARTER. Leaving the window during a paper is
+        // misconduct; leaving it during a lab is opening the documentation the
+        // brief told the student to read. Still recorded, because how the work
+        // went is information, and priced as the small thing it is.
         points: -4, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
+        contextPoints: { lab: -1 },
         once: 0,
         label: 'Left the exam window',
         why: 'The tab lost focus or was hidden. In an exam this is one of the five.',
     },
     'window.alt_tab': {
         points: -6, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
+        contextPoints: { lab: -2 },
         once: 0,
         label: 'Switched away with Alt+Tab',
         why: 'A deliberate switch to another application, which is why it costs more.',
     },
     'clipboard.copy': {
-        points: -5, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
+        // ASSESSED CONTEXTS ONLY. Copying in a lab is how a command gets from
+        // the brief into the terminal - the single most ordinary thing a
+        // student does in one - so charging for it penalised the intended
+        // behaviour. Priced at zero it would still read as a breach on the
+        // record; removed from the context, it is not an event.
+        points: -5, severity: 'negative', contexts: ['exam', 'quiz'],
         once: 0,
         label: 'Copied text out of the paper',
         why: 'How many characters is recorded. The text itself never is.',
     },
     'clipboard.paste': {
-        points: -5, severity: 'negative', contexts: ['exam', 'quiz', 'lab'],
+        points: -5, severity: 'negative', contexts: ['exam', 'quiz'],
         once: 0,
         label: 'Pasted text into the paper',
         why: 'An answer that arrived from somewhere else.',
@@ -227,8 +305,23 @@ export function specOf(action: string): ActionSpec | null {
     return ACTIONS[String(action || '').trim()] ?? null;
 }
 
-export function pointsOf(action: string): number {
-    return specOf(action)?.points ?? 0;
+/**
+ * What an action costs or earns, in the context it happened in.
+ *
+ * `context` is optional and its absence means the STRICT reading: the base
+ * price, which is the assessed one. That default is deliberate - a caller that
+ * forgets to pass a context prices a lab breach as an exam breach, which is
+ * visibly harsh and gets reported, where the other default would be silently
+ * generous and nobody would ever notice.
+ */
+export function pointsOf(action: string, context?: PracticeContext): number {
+    const spec = specOf(action);
+    if (!spec) return 0;
+    if (context) {
+        const override = spec.contextPoints?.[context];
+        if (typeof override === 'number') return override;
+    }
+    return spec.points;
 }
 
 export function severityOf(action: string): Severity {
@@ -286,10 +379,20 @@ export interface PracticeEvent {
 
 export interface Verdict {
     context: PracticeContext;
+    /** Every event, including the ones after the close. The record's length. */
     events: number;
+    /** How many of them the arithmetic looked at. */
+    scored: number;
+    /** Scoring events that arrived after the sitting ended. */
+    ignoredAfterClose: number;
+    /** Whether the sitting holds its terminal event. */
+    closed: boolean;
     negatives: number;
     positivePoints: number;
     penaltyPoints: number;
+    penaltyCap: number;
+    /** Whether the arithmetic hit the cap. The breaches still all count. */
+    penaltyCapped: boolean;
     /** The net. Can be negative, and is shown as such. */
     points: number;
     /** Null in a context with no limit. */
@@ -298,6 +401,59 @@ export interface Verdict {
     remaining: number | null;
     failed: boolean;
     status: 'clean' | 'warned' | 'failed';
+}
+
+/** One event, as much of it as the arithmetic needs. */
+export type ScorableEvent = { action: string; at?: number };
+
+/** Whether an action ends a sitting. With no context, any of them. */
+export function isTerminal(action: string, context?: PracticeContext): boolean {
+    const name = String(action || '');
+    if (context) return name === TERMINAL_ACTIONS[context];
+    return Object.values(TERMINAL_ACTIONS).includes(name);
+}
+
+/**
+ * Where a sitting ended: `[stamp, index]`, or `[null, null]`.
+ *
+ * The FIRST terminal event, not the last: a second submission is a retry and
+ * the sitting ended at the first one.
+ *
+ * Two keys and not one, because the comparison has to survive both shapes this
+ * is handed. Real events carry `at` and are ordered by it, so a stamp is the
+ * honest test - a breach flushed after the submission genuinely happened later.
+ * A caller driving the arithmetic with bare `{ action }` objects has no stamps
+ * at all, and there position is the only ordering there is.
+ */
+export function closureOf(
+    events: readonly ScorableEvent[], context?: PracticeContext,
+): [number | null, number | null] {
+    for (let index = 0; index < (events || []).length; index++) {
+        const row = events[index];
+        if (isTerminal(row?.action ?? '', context)) {
+            const at = Number(row?.at);
+            return [Number.isFinite(at) ? at : null, index];
+        }
+    }
+    return [null, null];
+}
+
+/**
+ * Whether one event falls outside the sitting it belongs to.
+ *
+ * An UNDATED event is never assumed to be late. That direction is chosen
+ * deliberately: reading a missing timestamp as "after the end" would silently
+ * stop scoring a whole sitting, and the failure would look like a learner who
+ * earned nothing rather than like a missing field.
+ */
+export function afterClosure(
+    row: ScorableEvent, index: number,
+    stamp: number | null, atIndex: number | null,
+): boolean {
+    if (atIndex === null) return false;
+    if (stamp === null) return index > atIndex;
+    const at = Number(row?.at);
+    return Number.isFinite(at) && at > stamp;
 }
 
 /**
@@ -313,29 +469,57 @@ export interface Verdict {
  * know what this is" is not "this is a breach".
  */
 export function verdictFor(
-    events: readonly Pick<PracticeEvent, 'action'>[],
+    events: readonly ScorableEvent[],
     context: PracticeContext,
 ): Verdict {
     const limit = FAILS_AT[context] ?? null;
+    const cap = PENALTY_CAP[context];
+    const rows = events || [];
+    const [stamp, atIndex] = closureOf(rows, context);
     let negatives = 0;
     let positivePoints = 0;
     let penaltyPoints = 0;
-    for (const event of events || []) {
+    let ignoredAfterClose = 0;
+    let scored = 0;
+    for (let index = 0; index < rows.length; index++) {
+        const event = rows[index];
         const spec = specOf(event?.action ?? '');
         if (!spec) continue;
+        if (afterClosure(event, index, stamp, atIndex)) {
+            /*
+              AFTER THE SITTING ENDED. Kept in the feed - the record of what
+              happened is the point of publishing one - and scored at nothing,
+              and NOT counted as a strike: a queue flushed a second after the
+              paper went in must not be able to void a paper that was already
+              submitted.
+            */
+            if (spec.severity !== 'neutral') ignoredAfterClose += 1;
+            continue;
+        }
+        scored += 1;
+        const value = pointsOf(event.action, context);
         if (spec.severity === 'negative') {
             negatives += 1;
-            penaltyPoints += spec.points;
-        } else if (spec.points > 0) {
-            positivePoints += spec.points;
+            penaltyPoints += value;
+        } else if (value > 0) {
+            positivePoints += value;
         }
     }
+    // The cap bounds the ARITHMETIC and never the count, so five breaches still
+    // void a paper however cheaply the sixth was priced.
+    const penaltyCapped = penaltyPoints < cap;
+    if (penaltyCapped) penaltyPoints = cap;
     return {
         context,
-        events: (events || []).length,
+        events: rows.length,
+        scored,
+        ignoredAfterClose,
+        closed: atIndex !== null,
         negatives,
         positivePoints,
         penaltyPoints,
+        penaltyCap: cap,
+        penaltyCapped,
         points: positivePoints + penaltyPoints,
         limit,
         // Clamped. A negative "strikes remaining" renders as "-2 left" on the
@@ -369,6 +553,17 @@ export function bandOf(verdict: Verdict): Band {
     if (verdict.remaining !== null && verdict.remaining <= 2) return 'critical';
     return verdict.negatives ? 'warned' : 'clean';
 }
+
+/**
+ * The sentence a finished sitting shows in place of the strike count.
+ *
+ * Its own message rather than a variant of the clean one, because the two say
+ * different things: "nothing has gone wrong yet" is about a paper still in
+ * front of you, and this is about one that is over. Without it the meter goes
+ * on counting down at somebody who has already submitted, which is exactly the
+ * anxiety the closure rule exists to remove.
+ */
+export const CLOSED_MESSAGE = 'This sitting is finished. Nothing further is scored against it.';
 
 /* ------------------------------------------------------------------ *
  * Throttling, which is the difference between a ledger and a log
@@ -527,6 +722,10 @@ function randomId(): string {
  * the literal.
  */
 export function strikeMessage(verdict: Verdict): { key: string; params: Params } {
+    // FIRST, and before the limit is even looked at. A finished lab and a
+    // submitted paper are both over, and neither should be told how many
+    // breaches would end them.
+    if (verdict.closed) return { key: CLOSED_MESSAGE, params: {} };
     if (verdict.limit === null) {
         return verdict.negatives
             ? {
@@ -600,7 +799,7 @@ export function labEarningRules(): { key: string; params: Params }[] {
             params: { v0: AI_FREE_ASKS, v1: ACTIONS['lab.clean_session'].points },
         },
         {
-            key: 'Every five minutes of unbroken work adds {v0}, up to {v1} times.',
+            key: 'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.',
             params: {
                 v0: ACTIONS['focus.sustained'].points,
                 v1: ACTIONS['focus.sustained'].once,
@@ -618,11 +817,20 @@ export function labEarningRules(): { key: string; params: Params }[] {
             params: { v0: Math.abs(ACTIONS['ai.overused'].points) },
         },
         {
+            // THE LAB'S OWN PRICES, not the exam's. Quoting the base numbers
+            // here would tell a student a switched window costs four when it
+            // costs one - a page that promises the wrong figure is worse than a
+            // page that promises nothing, which is the whole reason
+            // `check:practice` compares these against the catalogue.
             key: 'Leaving the window costs {v0}, and Alt+Tab costs {v1} — but nothing in a lab can fail you.',
             params: {
-                v0: Math.abs(ACTIONS['window.left'].points),
-                v1: Math.abs(ACTIONS['window.alt_tab'].points),
+                v0: Math.abs(pointsOf('window.left', 'lab')),
+                v1: Math.abs(pointsOf('window.alt_tab', 'lab')),
             },
+        },
+        {
+            key: 'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.',
+            params: { v0: Math.abs(PENALTY_CAP.lab) },
         },
     ];
 }
@@ -668,8 +876,11 @@ export const PRACTICE_KEYS: readonly string[] = (() => {
     const sample = (negatives: number, context: PracticeContext) =>
         verdictFor(Array.from({ length: negatives }, () => ({ action: 'window.left' })),
                    context);
+    // Seven now: the six above plus a CLOSED one, which takes the branch none
+    // of the others can reach.
+    const closed = verdictFor([{ action: 'lab.completed' }], 'lab');
     for (const verdict of [sample(0, 'exam'), sample(1, 'exam'), sample(4, 'exam'),
-        sample(5, 'exam'), sample(0, 'lab'), sample(2, 'lab')]) {
+        sample(5, 'exam'), sample(0, 'lab'), sample(2, 'lab'), closed]) {
         keys.add(strikeMessage(verdict).key);
     }
     return [...keys];

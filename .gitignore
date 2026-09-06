@@ -177,3 +177,9 @@ tools/cast-preview/dist/
 tools/cast-preview/shots/
 tools/marketing-video/
 tools/labs-video/
+
+# Output of tools/tour-check/shoot.mjs — the screenshots and the throwaway
+# Chrome profile it launches, one directory per language x galaxy. 45 PNGs a
+# run and a large profile, regenerated with `node tools/tour-check/shoot.mjs`.
+# `tools/*/dist/` is already covered by the bare `dist` rule above.
+tools/tour-check/shots-*/

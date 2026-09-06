@@ -215,6 +215,17 @@ function assessmentEvents(
                 || titles.get(subjectId) || undefined,
             score: value,
             passed: passed(row?.result_status, value),
+            /*
+              HOW THE SITTING WAS JUDGED, carried onto the event.
+
+              Only one value changes anything: a `failed` sitting is one app 20
+              voided for misconduct, and `pointsFor` pays no attempted-credit
+              for it. Without this the board would pay somebody five points for
+              an attempt it had already scored zero for cheating - the ledger
+              and the board disagreeing about the same afternoon, on the same
+              page, with the board being the louder of the two.
+            */
+            integrityStatus: String(row?.integrity_status || ''),
             at: stamp(row?.date_taken),
         });
     }

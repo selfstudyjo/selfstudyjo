@@ -42,10 +42,12 @@
 import {
     POINTS,
     isDated,
+    masteryBonus,
     pointsFor,
     type Achievement,
     type LeaderboardEvent,
     type LeaderRow,
+    applyConductCaps,
 } from './leaderboardEngine';
 import type { Params } from '@/i18n';
 
@@ -191,16 +193,54 @@ export interface Dossier {
  * untranslatable and `check:i18n` would report every one of them as an orphan,
  * because no source file would contain the literal.
  */
+/**
+ * Why an attempt that did not pass is worth what it is worth.
+ *
+ * Two sentences, because there are two cases and telling them apart is the
+ * point: an honest near miss earns a small credit, and a sitting the service
+ * voided for misconduct earns nothing. Collapsed into one line, a student
+ * looking at a zero could not tell whether the platform pays nothing for
+ * failing or nothing for cheating - and those are very different things to
+ * have been told about your own record.
+ */
+function attemptReason(event: LeaderboardEvent): { key: string; params: Params } {
+    if (String(event.integrityStatus || '') === 'failed') {
+        return {
+            key: 'This sitting was ended for breaking the integrity rules, so it earns nothing at all — not even the credit for having attempted it.',
+            params: {},
+        };
+    }
+    return {
+        key: 'An attempt that did not pass — {v0} points for sitting it. It counts towards the pass rate, which is the only way that figure means anything.',
+        params: { v0: POINTS.attempted },
+    };
+}
+
 export function reasonFor(event: LeaderboardEvent): { key: string; params: Params } {
     switch (event.kind) {
+        /*
+          THE MARK IS PART OF THE REASON NOW.
+
+          These sentences used to say "plus 25 for a distinction at 90 or
+          above", which was true of a cliff and is not true of a slope. A line
+          that explains a score with a rule the score no longer follows is
+          worse than a line that explains nothing: it is the page arguing with
+          its own arithmetic, on the panel whose entire job is showing somebody
+          where their points came from.
+
+          The mastery figure is computed from THIS attempt rather than quoted
+          as a maximum, because a learner reading their own record wants to
+          know what their 84% was worth and not what somebody else's 100% would
+          have been.
+        */
         case 'exam':
             return event.passed
-                ? { key: 'Passed an exam — {v0} points, plus {v1} for a distinction at {v2} or above.', params: { v0: POINTS.examPassed, v1: POINTS.distinction, v2: 90 } }
-                : { key: 'An attempt that did not pass. It earns nothing and it counts towards the pass rate, which is the only way that figure means anything.', params: {} };
+                ? { key: 'Passed an exam — {v0} points, plus {v1} for the mark itself.', params: { v0: POINTS.examPassed, v1: masteryBonus(event.score) } }
+                : attemptReason(event);
         case 'quiz':
             return event.passed
-                ? { key: 'Passed a quiz — {v0} points, plus {v1} for a distinction.', params: { v0: POINTS.quizPassed, v1: POINTS.distinction } }
-                : { key: 'An attempt that did not pass. It earns nothing and it counts towards the pass rate, which is the only way that figure means anything.', params: {} };
+                ? { key: 'Passed a quiz — {v0} points, plus {v1} for the mark itself.', params: { v0: POINTS.quizPassed, v1: masteryBonus(event.score) } }
+                : attemptReason(event);
         case 'course_certificate':
             return { key: 'A course certificate — {v0} points. It is the one credential that scores, because nothing else records finishing a course.', params: { v0: POINTS.courseCertificate } };
         case 'exam_certificate':
@@ -250,11 +290,13 @@ export const REASON_KEYS: readonly string[] = (() => {
         'exam_certificate', 'lab'];
     for (const kind of kinds) {
         for (const passed of [true, false]) {
-            const key = reasonFor({
-                kind, userId: '', name: '', subjectId: 's', passed, at: 0,
-                labPoints: 3,
-            }).key;
-            if (key) keys.add(key);
+            for (const integrityStatus of ['', 'failed']) {
+                const key = reasonFor({
+                    kind, userId: '', name: '', subjectId: 's', passed, at: 0,
+                    labPoints: 3, integrityStatus,
+                }).key;
+                if (key) keys.add(key);
+            }
         }
     }
     return [...keys];
@@ -277,7 +319,18 @@ function lineId(event: LeaderboardEvent, index: number): string {
  */
 export function buildDossier(input: DossierInput): Dossier {
     const userId = String(input.userId || '');
-    const mine = input.events.filter(event => event?.userId === userId);
+    /*
+      PRICED BEFORE ANYTHING IS ADDED UP, exactly as `buildBoard` does it.
+
+      The panel's total has to be the same number as the row it was opened
+      from, and the row is capped - so a dossier that summed the raw events
+      would show a learner a bigger deficit than the board did and no way to
+      account for the difference. `applyConductCaps` also drops the scoring of
+      anything recorded after a sitting ended, which is why a finished lab
+      left open in a tab no longer accumulates a debt here either.
+    */
+    const mine = applyConductCaps(input.events)
+        .filter(event => event?.userId === userId);
 
     const ledger: LedgerLine[] = [];
     /** Best attempt per assessment, and how many attempts there were. */

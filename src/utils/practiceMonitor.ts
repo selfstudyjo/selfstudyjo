@@ -30,6 +30,20 @@
  * copy is recorded as a character count (`describeCopy`), because the ledger is
  * published and the copied text during an exam is the exam paper.
  *
+ * WHAT "STAYED ON TASK" HAS TO MEAN
+ *
+ * The focus award used to be five minutes in which the tab merely held focus,
+ * and that paid a student who opened a lab and walked away: twelve awards for
+ * an empty room, which was a quarter of what passing an exam is worth. It now
+ * requires at least one GENUINE interaction inside the window - a keystroke, a
+ * pointer press, a scroll, a touch. Presence is not work, and a scoring system
+ * that cannot tell the difference is one people learn to leave running.
+ *
+ * The listeners are passive and capture-phase, so nothing here can interfere
+ * with a page that is also handling those events, and they set a boolean rather
+ * than doing anything per event - a lab console produces a keystroke per
+ * character typed.
+ *
  * WHY THE NEGATIVES FLUSH IMMEDIATELY AND THE REST DO NOT
  *
  * A positive award can wait: nothing on screen depends on it landing this
@@ -112,6 +126,15 @@ export function startPracticeMonitor(options: MonitorOptions): PracticeMonitor {
     const cleanups: Array<() => void> = [];
     let stopped = false;
     let focusSince = Date.now();
+    /**
+     * Whether anything has actually been DONE since the clock last restarted.
+     *
+     * The whole of the evidence rule. Set by a real interaction and cleared
+     * every time an award is paid or the clock restarts, so each five minutes
+     * has to be earned on its own rather than on the strength of one keystroke
+     * an hour ago.
+     */
+    let worked = false;
 
     const isActive = () => !stopped && (options.active ? options.active() : true);
 
@@ -132,8 +155,10 @@ export function startPracticeMonitor(options: MonitorOptions): PracticeMonitor {
         const onBlur = () => {
             // The focus clock restarts whichever way attention was lost, so a
             // candidate cannot bank a five-minute award by leaving the window
-            // for four of them.
+            // for four of them - and the EVIDENCE goes with it, or a keystroke
+            // from before the departure would pay for the stretch after it.
             focusSince = Date.now();
+            worked = false;
             record('window.left');
         };
         const onHidden = () => {
@@ -145,6 +170,7 @@ export function startPracticeMonitor(options: MonitorOptions): PracticeMonitor {
             // not leave the blur above to catch it.
             if (event.altKey && (event.key === 'Tab' || event.code === 'Tab')) {
                 focusSince = Date.now();
+                worked = false;
                 record('window.alt_tab');
             }
             // Ctrl/Cmd+P is a print, and it is a keystroke rather than a
@@ -239,14 +265,46 @@ export function startPracticeMonitor(options: MonitorOptions): PracticeMonitor {
 
     /* ---------------- staying on task ---------------- */
     if (watch.focusAward && typeof window !== 'undefined') {
+        /*
+          EVIDENCE, not presence.
+
+          Passive and capture-phase: passive so a page that scrolls is never
+          made to wait on this, capture so a handler that stops propagation
+          cannot make the student's own work invisible to the award. Each one
+          sets a boolean and nothing else - a lab console fires a keydown per
+          character typed, and anything heavier here would be paid for on every
+          keystroke of every session.
+        */
+        const marker = () => { worked = true; };
+        const evidence = ['keydown', 'pointerdown', 'wheel', 'touchstart'];
+        for (const name of evidence) {
+            window.addEventListener(name, marker, { passive: true, capture: true });
+        }
+        cleanups.push(() => {
+            for (const name of evidence) {
+                window.removeEventListener(name, marker, { capture: true } as any);
+            }
+        });
+
         const timer = window.setInterval(() => {
             if (!isActive()) return;
             if (typeof document !== 'undefined' && document.hidden) return;
             if (!document.hasFocus?.()) return;
             const now = Date.now();
             if (now - focusSince < FOCUS_AWARD_MS) return;
+            /*
+              THE CLOCK RESTARTS EITHER WAY.
+
+              An idle five minutes buys nothing and also does not accumulate
+              towards the next award, or somebody who worked for thirty seconds
+              after an hour away would be paid for the hour. What it does not do
+              is punish: no award is not a penalty, and a lab is a place to sit
+              and read the brief.
+            */
             focusSince = now;
-            // The cap is the server's: it refuses the thirteenth and the client
+            if (!worked) return;
+            worked = false;
+            // The cap is the server's: it refuses the ninth and the client
             // simply stops earning. Enforcing it here as well would be a second
             // copy of a number that is already checked.
             options.onAction({ action: 'focus.sustained', at: now });
@@ -280,6 +338,7 @@ export function startPracticeMonitor(options: MonitorOptions): PracticeMonitor {
         },
         resetFocus() {
             focusSince = Date.now();
+            worked = false;
         },
     };
 }

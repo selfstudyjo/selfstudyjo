@@ -33,6 +33,8 @@ import { resolve } from 'node:path';
 
 import {
     DISTINCTION_SCORE,
+    MASTERY_FROM,
+    masteryBonus,
     POINTS,
     SCORE_BANDS,
     WINDOWS,
@@ -140,18 +142,60 @@ console.log('\n1. What an achievement is worth');
     check('an exam certificate is worth nothing — the pass already scored',
         POINTS.examCertificate === 0);
 
-    check('a failed exam earns nothing', pointsFor(ev({ passed: false })) === 0);
-    check('a passed exam earns the exam points',
-        pointsFor(ev({ score: 80 })) === POINTS.examPassed);
-    check('a distinction adds its bonus',
-        pointsFor(ev({ score: 97 })) === POINTS.examPassed + POINTS.distinction);
-    check('the distinction threshold is inclusive',
-        pointsFor(ev({ score: DISTINCTION_SCORE })) === POINTS.examPassed + POINTS.distinction);
-    check('and one mark below it is not',
-        pointsFor(ev({ score: DISTINCTION_SCORE - 1 })) === POINTS.examPassed);
-    check('a failed distinction-level score still earns nothing',
-        pointsFor(ev({ score: 99, passed: false })) === 0);
-    check('a certificate has no score and takes no distinction bonus',
+    /*
+      THE MARK IS A SLOPE, NOT A CLIFF.
+
+      These four checks used to lock in a flat 100 for every pass from 70 to 89
+      and a flat +25 at exactly 90. Both halves of that were wrong in ways
+      anybody could see on two rows of the board: nineteen marks of difference
+      scoring identically, and one question either side of a round number
+      scoring a quarter of the whole pass apart. `masteryBonus` replaced it and
+      these are the properties that replaced them.
+    */
+    check('a bare pass at the reference mark earns the base and no more',
+        pointsFor(ev({ score: MASTERY_FROM })) === POINTS.examPassed);
+    check('full marks earn the base plus the whole mastery award',
+        pointsFor(ev({ score: 100 })) === POINTS.examPassed + POINTS.mastery);
+    check('70 and 89 are no longer the same score',
+        pointsFor(ev({ score: 89 })) > pointsFor(ev({ score: 70 })),
+        [pointsFor(ev({ score: 70 })), pointsFor(ev({ score: 89 }))]);
+    check('and the old distinction mark is no longer a cliff',
+        pointsFor(ev({ score: DISTINCTION_SCORE }))
+        - pointsFor(ev({ score: DISTINCTION_SCORE - 1 })) <= 3,
+        [pointsFor(ev({ score: 89 })), pointsFor(ev({ score: 90 }))]);
+    check('the slope is monotone across the whole range',
+        Array.from({ length: 101 }, (_, s) => pointsFor(ev({ score: s })))
+            .every((value, index, all) => index === 0 || value >= all[index - 1]!));
+    check('DISTINCTION_SCORE is still a real threshold, for the COUNT and the '
+        + 'band edge rather than for a payment',
+        DISTINCTION_SCORE > MASTERY_FROM && DISTINCTION_SCORE < 100);
+
+    /*
+      AND A FAILED ATTEMPT IS NOT NOTHING.
+
+      The other cliff, and the sharper one: 69 earned zero and 70 earned a
+      hundred, so four honest papers and three near misses scored the same as
+      never having opened the platform. It is safe to pay for because
+      `bestAttempts` collapses the re-sits - checked below.
+    */
+    check('an honest failed attempt earns the attempt credit',
+        pointsFor(ev({ score: 64, passed: false })) === POINTS.attempted);
+    check('and it is small enough that failing is never a strategy',
+        POINTS.attempted < POINTS.quizPassed
+        && POINTS.attempted * 8 < POINTS.examPassed);
+    check('a sitting voided for cheating earns nothing at all - the board and '
+        + 'the ledger must not disagree about the same afternoon',
+        pointsFor(ev({ score: 99, passed: false, integrityStatus: 'failed' })) === 0);
+    check('a WARNED sitting is not a voided one and keeps the credit',
+        pointsFor(ev({ score: 40, passed: false, integrityStatus: 'warned' }))
+        === POINTS.attempted);
+    check('a failed attempt with no score is not an attempt',
+        pointsFor(ev({ score: null, passed: false })) === 0);
+    check('and a failed certificate is still worth nothing - there is no such '
+        + 'thing as attempting one',
+        pointsFor(ev({ kind: 'course_certificate', score: null, passed: false }))
+        === 0);
+    check('a certificate has no score and takes no mastery bonus',
         pointsFor(ev({ kind: 'course_certificate', score: null }))
         === POINTS.courseCertificate);
 }
@@ -166,7 +210,8 @@ console.log('\n2. One attempt per assessment — the property the board rests on
     }));
     const board = buildBoard(grinder, { now: NOW });
     check('forty attempts at one quiz is one quiz',
-        board.rows.length === 1 && board.rows[0].points === POINTS.quizPassed,
+        board.rows.length === 1
+        && board.rows[0].points === POINTS.quizPassed + masteryBonus(71),
         board.rows.map(r => r.points));
     check('and it counts as one assessment taken, not forty',
         board.rows[0].assessmentsTaken === 1, board.rows[0].assessmentsTaken);
@@ -306,8 +351,28 @@ console.log('\n4. The ranking is total, stable and shares its ties');
         pAndR.length === 2 && pAndR[0].rank === pAndR[1].rank,
         split.map(r => [r.userId, r.points, r.rank]));
 
-    check('a learner with no points is not on the board',
-        rank(aggregate([ev({ passed: false, score: 12 })])).length === 0);
+    /*
+      WHO IS ON THE BOARD, and it moved when a failed attempt started earning.
+
+      The filter is still `points > 0` and the rule it enforces is still the
+      same one: the board lists people who have done something, not every
+      account that ever opened a quiz and closed it again. What changed is that
+      SITTING a paper is now something - so a learner whose only event is an
+      honest failed attempt appears, at the attempt credit, and one who merely
+      opened a page still does not.
+
+      It does not put an attributed failure on the board, which is the posture
+      the page's header commits to: the row carries a name and a total, and the
+      per-learner pass rate is deliberately not a column. The failures are
+      inside the activity record, which is opened on purpose.
+    */
+    check('a learner who has done nothing at all is not on the board',
+        rank(aggregate([ev({ kind: 'lab', passed: false, score: null,
+            labPoints: 0, labPossible: 8 })])).length === 0);
+    check('but one who SAT a paper and missed it is - the credit is what puts '
+        + 'them there, and it is the smallest thing on the table',
+        rank(aggregate([ev({ passed: false, score: 12 })]))
+            .map(row => row.points).join() === String(POINTS.attempted));
 
     // Stability: the same events in any order must give the same board. The rows
     // are recomputed inside a computed that re-evaluates on every keystroke, so
@@ -365,9 +430,10 @@ console.log('\n5. What a row says about a learner');
     check('distinctions count attempts at or above the threshold',
         row.distinctions === 2, row.distinctions);
     check('points are the sum of the parts',
-        row.points === (POINTS.examPassed + POINTS.distinction)
-            + (POINTS.quizPassed + POINTS.distinction)
-            + POINTS.courseCertificate,
+        row.points === (POINTS.examPassed + masteryBonus(95))
+            + (POINTS.quizPassed + masteryBonus(100))
+            + POINTS.courseCertificate
+            + POINTS.attempted,
         row.points);
     check('first and last activity bracket the events',
         row.firstActiveAt === ago(10) && row.lastActiveAt === ago(3),

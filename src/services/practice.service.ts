@@ -2,9 +2,12 @@ import { apiService, withReplicas } from './api';
 import { serviceRegistry } from './config';
 import { normalizePaginatedResponse } from '@/utils/api-utils';
 import {
+    PENALTY_CAP,
     isNegative,
+    isTerminal,
     newEventId,
     newSessionId,
+    severityOf,
     verdictFor,
     type PracticeContext,
     type PracticeEvent,
@@ -90,8 +93,14 @@ export class PracticeRecorder {
 
     private readonly options: RecorderOptions;
     private queue: QueuedEvent[] = [];
-    /** Every action this sitting has recorded, for the local verdict. */
-    private seen: { action: string }[] = [];
+    /**
+     * Every action this sitting has recorded, for the local verdict.
+     *
+     * Timestamped, because the verdict has to know which side of the sitting's
+     * END each one fell on - a breach recorded after `assessment.submitted` is
+     * not misconduct, there being nothing left to cheat at.
+     */
+    private seen: { action: string; at: number }[] = [];
     private timer: ReturnType<typeof setTimeout> | null = null;
     private flushing = false;
     private stopped = false;
@@ -122,9 +131,29 @@ export class PracticeRecorder {
         return { ...remote, ...local, points: local.points };
     }
 
-    /** Queue an action. Never throws, never awaits. */
+    /** Whether this sitting has already recorded the action that ends it. */
+    get closed(): boolean {
+        return this.seen.some(row => isTerminal(row.action, this.options.context));
+    }
+
+    /**
+     * Queue an action. Never throws, never awaits.
+     *
+     * **A SCORING ACTION AGAINST A FINISHED SITTING IS DROPPED HERE**, before
+     * it is queued, before it is drawn on the meter and before it costs a
+     * request. App 20 refuses it too - `SittingClosed` - and this is not
+     * belt-and-braces for its own sake: the service's refusal arrives a second
+     * later and the meter would flicker a penalty on and then off again, which
+     * on the one screen that accuses somebody of cheating is worse than the
+     * penalty would have been.
+     *
+     * A NEUTRAL one still goes through. It is free, and the feed is the shape
+     * of what happened: a record that stopped dead at the submission would not
+     * show that the student went back and reset the lab environment afterwards.
+     */
     record(action: string, detail?: string, at?: number): void {
         if (this.stopped) return;
+        if (this.closed && severityOf(action) !== 'neutral') return;
         const { context, subjectId, subjectName, userId, username } = this.options;
         if (!userId || !subjectId) return;
         this.queue.push({
@@ -139,7 +168,7 @@ export class PracticeRecorder {
             detail: detail || '',
             occurred_at: new Date(at || Date.now()).toISOString(),
         });
-        this.seen.push({ action });
+        this.seen.push({ action, at: at || Date.now() });
         this.schedule(isNegative(action) ? NEGATIVE_DEBOUNCE_MS : IDLE_DEBOUNCE_MS);
     }
 
@@ -284,9 +313,21 @@ function normaliseVerdict(raw: any, context: PracticeContext): Verdict {
     return {
         context,
         events: Number(raw?.events) || 0,
+        scored: Number(raw?.scored) || 0,
+        ignoredAfterClose: Number(raw?.ignored_after_close) || 0,
+        /*
+          A replica a release behind sends no `closed` at all, and the honest
+          reading of a missing field is "this sitting has not ended" - the same
+          direction `afterClosure` takes for an undated event. Read the other
+          way, a deploy in progress would tell a candidate mid-paper that their
+          sitting was over.
+        */
+        closed: !!raw?.closed,
         negatives,
         positivePoints: Number(raw?.positive_points) || 0,
         penaltyPoints: Number(raw?.penalty_points) || 0,
+        penaltyCap: Number(raw?.penalty_cap) || PENALTY_CAP[context],
+        penaltyCapped: !!raw?.penalty_capped,
         points: Number(raw?.points) || 0,
         limit,
         remaining: raw?.remaining === null || raw?.remaining === undefined
