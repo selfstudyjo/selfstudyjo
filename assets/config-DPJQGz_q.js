@@ -1,0 +1,1 @@
+import{Lt as e}from"./index-DG1HZKAP.js";export{e as serviceRegistry};
