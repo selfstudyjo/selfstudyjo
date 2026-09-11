@@ -225,14 +225,117 @@ textarea {
   border-width: 1px;
 }
 
-/* Where a field is being typed into, the border should say so. Only the
-   border: a background change on focus makes the text jump in contrast
-   mid-sentence. */
+/* --------------------------------------------------------------------------
+   Field focus: ONE boundary, and it is the control's own outer edge
+   --------------------------------------------------------------------------
+   Where a field is being typed into, the border should say so. Only the
+   border and a blurred halo: a background change on focus makes the text jump
+   in contrast mid-sentence.
+
+   `outline: none` is the load-bearing half. Both `:focus` in style.css and
+   `:focus-visible` in theme.css draw a 2px ring at a 2px OFFSET, which outside
+   a control that already has a 1px border is a line, a transparent gap and a
+   second line — two concentric boundaries, with different corner radii,
+   drawn around every text input on the platform that had not turned the
+   outline off for itself. Measured on the live bundle before this existed: the
+   sidebar search showed THREE edges at once.
+
+   Specificity is (0,1,1), which is chosen rather than convenient:
+
+     - it beats `:focus` and `:focus-visible` (0,1,0) on specificity alone, so
+       it does not depend on source order — and the order is not what anybody
+       assumes. The production bundle emits component and page stylesheets
+       BEFORE the ones main.ts imports, so `side-nav.css`'s own
+       `.search-input { outline: none }` was LOSING to theme.css.
+
+     - it still loses to any page rule (0,2,x), which is the floor's contract
+       (see the header): a page that has already decided how its fields look
+       keeps its own answer.
+
+   `--sfs-focus` rather than `--sfs-border-accent`: the border has to be
+   clearly different from its resting state or "the border appears when I
+   start typing" is not true — `--sfs-border-accent` is the accent at 0.4-0.45
+   alpha, which on a glass card was a change a reader could not see. `--sfs-focus`
+   is derived per galaxy and contrast-claimed for exactly this job.
+   -------------------------------------------------------------------------- */
 input:focus,
+input:focus-visible,
 select:focus,
-textarea:focus {
-  border-color: var(--sfs-border-accent, rgb(102 126 234 / 0.6));
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+[contenteditable]:focus,
+[contenteditable]:focus-visible {
+  outline: none;
+  border-color: var(--sfs-focus, #818cf8);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
+
+/*
+  The controls that are NOT fields, put back.
+
+  A checkbox, a radio, a slider, a colour well and a file picker are native
+  widgets with no border to double up with, and `input[type='submit']` is a
+  button. For all of them the offset ring is the right indicator and there is
+  nothing for it to be concentric with, so they keep the platform one.
+
+  (0,2,1), so this wins over the field rule above without either of them
+  needing to care about the order they are written in.
+*/
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible,
+input[type='range']:focus-visible,
+input[type='color']:focus-visible,
+input[type='file']:focus-visible,
+input[type='submit']:focus-visible,
+input[type='reset']:focus-visible,
+input[type='button']:focus-visible,
+input[type='image']:focus-visible {
+  outline: 2px solid var(--sfs-focus, #818cf8);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/*
+  A BARE FIELD INSIDE A DECORATED SHELL DRAWS NOTHING OF ITS OWN.
+
+  A search box on this platform is usually a bordered flex row holding an icon,
+  a borderless input and a clear button — `.search-field` in the sidebar,
+  `.sl-search`, `.lb-search`, `.search-input-wrapper`, the AI chat composer,
+  both terminals. There the SHELL is the control as far as a reader is
+  concerned, and it is the shell that carries the border and the focus ring; an
+  indicator on the input inside it is a ring floating in the middle of a box.
+
+  This class is the opt-in for anything new. The dozen that already exist say
+  it in their own stylesheets instead, at a specificity that beats the field
+  rule above — they have to, because they are emitted before this file.
+*/
+.sfs-field-bare:focus,
+.sfs-field-bare:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/*
+  Forced colours and a request for more contrast both want a real outline back:
+  a border-colour change plus a blurred halo is a system the user has asked the
+  browser to stop honouring. Offset ZERO, so it is still one edge.
+*/
+@media (prefers-contrast: more) {
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [contenteditable]:focus-visible {
+    outline: 2px solid var(--sfs-focus, #818cf8);
+    outline-offset: 0;
+  }
+}
+
+/* The forced-colours half of the same idea lives in the forced-colors block in
+   section 4 — one block per media query, because `check:cssleaks` §7 splits
+   this file on those two queries to prove nothing outside them uses
+   `!important`, and a second block of either would make that count wrong. */
 
 /* A textarea that can only be dragged wider than its container is a horizontal
    scrollbar waiting to happen. */
@@ -588,6 +691,19 @@ textarea {
    surfaces a border is the whole fix; fighting the palette is not.
    -------------------------------------------------------------------------- */
 @media (forced-colors: active) {
+  /* A field's focus indicator is a border colour and a blurred halo, and
+     forced colours honours neither — so the outline comes back, at offset
+     ZERO so it is still a single edge rather than the concentric pair this
+     whole section exists to remove. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [contenteditable]:focus-visible,
+  .sfs-field-bare:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 0;
+  }
+
   .sfs-card,
   .sfs-btn,
   .sfs-chip,

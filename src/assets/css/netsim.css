@@ -189,7 +189,7 @@
 .ns-field-grid input:focus, .ns-field-grid select:focus, .ns-field-grid textarea:focus,
 .ns-field input:focus, .ns-field textarea:focus, .ns-field select:focus {
     border-color: var(--ns-accent);
-    box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 99 102 241) / 0.16);
+    box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .ns-check {
     flex-direction: row !important;
@@ -232,6 +232,17 @@
 .ns-search input {
     flex: 1; background: none; border: none; outline: none;
     color: var(--ns-text); font-size: 0.83rem; font-family: inherit; min-width: 0;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   The search shell carries the indicator.
+*/
+.ns-search input:focus,
+.ns-search input:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 .ns-search input::placeholder { color: var(--ns-text-faint); }
 .ns-search-clear { background: none; border: none; color: var(--ns-text-faint); cursor: pointer; display: flex; }
@@ -992,6 +1003,17 @@
 .ns-terminal-input input {
     flex: 1; background: none; border: none; outline: none;
     color: var(--ns-text); font-family: var(--ns-mono); font-size: 0.8rem; min-width: 0;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   A terminal line, not a field: the prompt row is the control.
+*/
+.ns-terminal-input input:focus,
+.ns-terminal-input input:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 .ns-terminal-suggest { display: flex; gap: 5px; padding: 0 13px 7px; flex-wrap: wrap; }
 .ns-terminal-suggest button {

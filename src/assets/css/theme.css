@@ -432,10 +432,52 @@ input[type='week']::-webkit-calendar-picker-indicator {
    One ring, derived per theme, always at least AA-large against the surface —
    a focus ring in the accent colour is useless on a page whose surface is the
    accent colour, which is why --sfs-focus is derived rather than aliased.
+
+   THIS RING IS FOR THINGS WITH NO BORDER OF THEIR OWN — a button, a link, a
+   card, a tab. It is deliberately drawn OUTSIDE the element with a gap, which
+   is what makes it visible on top of a filled button.
+
+   A FIELD IS THE OPPOSITE CASE AND IS HANDLED IN ui.css. An input already has
+   a border, so a second ring two pixels outside it is two concentric
+   boundaries with a transparent gap between them — which is what "2 borders
+   appear in the search input, the shape is ugly" was, and it was true of every
+   text input on the platform that did not turn the outline off for itself.
+   `input:focus` in ui.css is (0,1,1) and beats this rule's (0,1,0) whatever
+   order the two sheets end up in, which matters: the production bundle emits
+   every component and page stylesheet BEFORE the sheets main.ts imports, so
+   "loaded last" is not a property any of them has.
    -------------------------------------------------------------------------- */
 :focus-visible {
   outline: 2px solid var(--sfs-focus, #818cf8);
   outline-offset: 2px;
+}
+
+/*
+  THE FIELD RING — the whole box-shadow, not a colour, for the same reason
+  `--sfs-title-glow` is the whole text-shadow: the right answer has two layers
+  and one of them has to be able to be nothing.
+
+  Two layers, and the distinction between them is the entire point:
+
+    1. a 1px ring at offset ZERO, in the focused border's own colour. Flush
+       against the border's outer edge with no gap, so what a reader sees is
+       ONE 2px boundary rather than a line, a gap and another line. It is what
+       gives the indicator the thickness WCAG 2.2 asks for without changing
+       `border-width`, which would shift the text inside the field by a pixel.
+
+    2. a BLURRED halo with no spread. A blur has no edge, so it cannot read as
+       a second border however strong it is — which is exactly why the ring
+       above is 1px and the prominence comes from here.
+
+  Anything that wants more presence should raise the blur, never add a second
+  hard ring. `0 0 0 3px` of a translucent accent is the shape this replaced,
+  and at low alpha over a dark card it is defensible; at any alpha it is a
+  second visible edge, and on a pale galaxy it is an obvious one.
+*/
+:root {
+  --sfs-field-ring:
+    0 0 0 1px var(--sfs-focus, #818cf8),
+    0 6px 18px -8px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
 }
 
 /* --------------------------------------------------------------------------

@@ -73,38 +73,70 @@
       <div v-if="busy" class="sl-console__line sl-console__line--note">
         {{ $t('Running...') }}
       </div>
-    </div>
 
-    <!--
-      THE REVERSE SEARCH LINE replaces the prompt while it is open, exactly as a
-      real shell does. Drawn as its own row rather than as a placeholder in the
-      input, because what is in the input at that moment is the MATCH and what
-      the student is typing is the query — two different strings, and showing
-      only one of them is what makes a browser imitation of Ctrl+R unusable.
-    -->
-    <form class="sl-console__form" dir="ltr" @submit.prevent="submit">
-      <span v-if="search" class="sl-console__prompt sl-console__prompt--search">
-        {{ searchLabel }}
-      </span>
-      <span v-else class="sl-console__prompt">{{ prompt }}</span>
-      <input
-        ref="field"
-        v-model="entry"
-        class="sl-console__input"
-        type="text"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
-        :disabled="busy"
-        :placeholder="search ? '' : placeholder"
-        @keydown="onKey"
-      >
-      <button type="submit" class="sl-btn sl-btn--primary sl-btn--sm"
-              :disabled="busy || !entry.trim()">
-        <CornerDownLeft class="sl-i" /> {{ $t('Run') }}
-      </button>
-    </form>
+      <!--
+        THE LINE BEING TYPED IS THE LAST LINE OF THE TRANSCRIPT.
+
+        It is inside the scroller, after the output, and it is the whole of the
+        2026-09-11 fix. It used to be a `<form>` SIBLING of this box with its
+        own background and its own rounded bottom corners — a footer bar
+        welded under a separately-scrolling transcript. Everything that was
+        reported about this console follows from that one arrangement:
+
+          * the prompt was "pinned/stuck at the bottom" because it literally
+            was — it never moved, at any content length;
+          * pressing Enter looked as though "nothing happens to the
+            student@lab:~$ line", because the echo was appended into the box
+            ABOVE, starting at the TOP of 420px of empty space, while the
+            prompt the student was looking at stayed exactly where it was;
+          * and the console read as a text field with a log over it rather
+            than as a shell, because that is what it was built as.
+
+        Now: output appends, the prompt follows it, Enter echoes the command
+        and the next prompt appears on the line below. Nothing is positioned,
+        nothing is anchored, and `scrollDown()` carries the prompt with the
+        content because the prompt is part of the content.
+
+        THE REVERSE SEARCH LINE replaces the prompt while it is open, exactly
+        as a real shell does. Drawn as its own row rather than as a
+        placeholder in the input, because what is in the input at that moment
+        is the MATCH and what the student is typing is the query — two
+        different strings, and showing only one of them is what makes a
+        browser imitation of Ctrl+R unusable.
+      -->
+      <form class="sl-console__entry" dir="ltr" @submit.prevent="submit">
+        <span v-if="search" class="sl-console__prompt sl-console__prompt--search">
+          {{ searchLabel }}
+        </span>
+        <span v-else class="sl-console__prompt">{{ prompt }}</span>
+        <input
+          ref="field"
+          v-model="entry"
+          class="sl-console__input"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          :disabled="busy"
+          :placeholder="search || lines.length ? '' : placeholder"
+          @keydown="onKey"
+        >
+        <!--
+          Enter is how a shell is used and this button is for the people who
+          cannot press it — a soft keyboard with no Enter on the numeric
+          layer, a switch device, a student on a tablet. So it is quiet and
+          out of the line's way rather than a primary action welded to the
+          prompt: `sl-console__go` puts it at the far end of the row, and it
+          is only reachable when there is something to run.
+        -->
+        <button type="submit" class="sl-console__go"
+                :title="$t('Run')" :aria-label="$t('Run')"
+                :disabled="busy || !entry.trim()">
+          <CornerDownLeft class="sl-i" />
+        </button>
+      </form>
+    </div>
 
     <!--
       nano and vi, as an overlay over the console.
@@ -260,6 +292,16 @@ const prompt = computed(() => {
   if (own.trim() !== '$') return own;
   return `student@lab:${cwd.value}$ `;
 });
+/**
+ * The hint after the prompt, and it is shown ONLY on an empty terminal.
+ *
+ * A shell has nothing after the prompt. Once a command has run, a dim sentence
+ * sitting where the next command goes reads as text somebody typed — and this
+ * one is long (`docker run, ps, images, build, exec, logs, network, volume`),
+ * so on a fresh prompt it filled the line the student is being invited to type
+ * on. It is also the same sentence the welcome block above already prints, and
+ * that block is drawn under exactly the same condition.
+ */
 const placeholder = computed(() => props.tool.summary.split('.')[0]);
 const editorHelpLine = computed(() => (editor.value
   ? editorHelp(editor.value.program) : ''));

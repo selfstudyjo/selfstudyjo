@@ -160,9 +160,7 @@
 
 .lb-refresh:focus-visible,
 .lb-btn:focus-visible,
-.lb-segmented__btn:focus-visible,
-.lb-search input:focus-visible,
-.lb-select select:focus-visible {
+.lb-segmented__btn:focus-visible {
     outline: 2px solid var(--sfs-focus, #a5b4fc);
     outline-offset: 2px;
 }
@@ -254,6 +252,17 @@
     font-size: max(1rem, 16px);
 }
 
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   `.lb-search` is the control and carries the indicator.
+*/
+.lb-search input:focus,
+.lb-search input:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
 .lb-search input::placeholder { color: var(--sfs-placeholder, #8b90ad); }
 .lb-search input:focus { outline: none; }
 
@@ -284,6 +293,17 @@
     font-size: max(0.9rem, 16px);
     font-weight: 600;
     cursor: pointer;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   `.lb-select` is the control and carries the indicator.
+*/
+.lb-select select:focus,
+.lb-select select:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 
 .lb-select select:focus { outline: none; }

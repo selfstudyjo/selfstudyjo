@@ -1009,8 +1009,7 @@ onUnmounted(() => {
   background-color: var(--cb-glass-3-focus) !important;
   color: var(--cb-text) !important;
   -webkit-text-fill-color: var(--cb-text) !important;
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.28),
-              0 0 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.2);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .message-input:disabled {
   background-color: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03) !important;
@@ -1256,11 +1255,17 @@ onUnmounted(() => {
 /* ==========================================================================
    ACCESSIBILITY
    ========================================================================== */
+/* The BUTTONS. An offset ring is right for them: there is no border for it to
+   be concentric with, and the gap is what makes it visible on a filled circle.
+
+   `.message-input` is deliberately NOT in this list. It is a bordered text
+   field, so the ring at a 3px offset plus the 4px shadow drew THREE edges
+   around the composer - and this widget is on every page of the platform. Its
+   own `:focus` rule below carries the one field indicator. */
 .chat-toggle-btn:focus-visible,
 .header-btn:focus-visible,
 .retry-btn:focus-visible,
-.send-btn:focus-visible,
-.message-input:focus-visible {
+.send-btn:focus-visible {
   outline: 2px solid var(--cb-accent);
   outline-offset: 3px;
   box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);

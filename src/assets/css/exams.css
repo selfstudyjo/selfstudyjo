@@ -121,7 +121,7 @@
 
 .exams-page .search-input-wrapper:focus-within {
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
-  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15), var(--ex-glow);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   background: var(--ex-glass-2);
 }
 
@@ -141,6 +141,18 @@
   color: var(--ex-text);
   font: inherit;
   font-size: clamp(0.9rem, 1.6vw, 1rem);
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   `.search-input-wrapper:focus-within` is the control here and carries
+   the indicator.
+*/
+.exams-page .search-input:focus,
+.exams-page .search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .exams-page .search-input::placeholder { color: var(--ex-text-muted); }

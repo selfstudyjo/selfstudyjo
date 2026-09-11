@@ -208,9 +208,15 @@ img, video, svg, canvas {
   color: var(--galaxy-text-dim);
 }
 .app-container > .main-content :where(input, select, textarea):focus-visible {
-  outline: 2px solid var(--galaxy-accent);
-  outline-offset: 2px;
-  border-color: transparent;
+  /* ONE boundary, and it is the field's own edge. A 2px ring at a 2px
+     offset outside a bordered control is two concentric edges with a gap
+     between them; `--sfs-field-ring` is the platform's field indicator.
+     See ui.css and theme.css section 6. (This file is imported by nothing
+     today — corrected anyway, because it is the shape of the bug and
+     would arrive on every page the day somebody imports it.) */
+  outline: none;
+  border-color: var(--sfs-focus, #818cf8);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   background: var(--glass-bg-strong);
 }
 

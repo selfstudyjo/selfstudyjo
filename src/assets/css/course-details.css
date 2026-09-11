@@ -842,7 +842,7 @@
   outline: none;
   border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.65);
   background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.4);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 /* Mention dropdown */

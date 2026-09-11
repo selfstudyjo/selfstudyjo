@@ -223,6 +223,17 @@
   outline: none;
 }
 
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   The search shell carries the indicator.
+*/
+.roblox-tool .search-input:focus,
+.roblox-tool .search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .roblox-tool .search-input::placeholder{
   color: var(--sfs-text-faint, #666);
 }

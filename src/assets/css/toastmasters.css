@@ -253,8 +253,7 @@
   outline: none;
   border-color: var(--tm-accent);
   background: var(--tm-glass-3);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25),
-              0 4px 16px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .tm-form-card select option,
 .tm-form-card select optgroup {
@@ -783,7 +782,7 @@
 .tm-transcript-input:focus {
   outline: none;
   border-color: var(--tm-accent);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .tm-transcript-input[readonly] { opacity: 0.75; }
 
@@ -930,7 +929,7 @@
   outline: none;
   border-color: var(--tm-accent);
   background: var(--tm-glass-3);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .tm-filters select option,
 .tm-filters select optgroup {

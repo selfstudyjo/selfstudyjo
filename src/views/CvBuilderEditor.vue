@@ -1518,7 +1518,7 @@ onBeforeRouteLeave(async () => {
 }
 .field input:focus, .field textarea:focus, .field select:focus, .jd:focus, textarea:focus {
   outline: none; border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.7);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .field input:disabled { opacity: 0.5; }
 .field select option { background: var(--sfs-surface-2, #141428); }

@@ -287,11 +287,24 @@
   background: var(--lg-input-bg-focus);
 }
 
-.form-group input:focus {
+/*
+  `:not(:disabled)` is here to WIN, not to be careful — a disabled input cannot
+  be focused anyway.
+
+  The hover rule above is `:hover:not(:disabled)`, which is (0,3,1), and this
+  was `:focus` at (0,2,1). So a field focused by CLICK — with the pointer still
+  sitting on it, which is the normal case — took the HOVER border and not the
+  focus one: measured `rgba(255, 255, 255, 0.22)` (`--lg-border-hover`) on the
+  first screen every visitor sees, while `--lg-border-focus` is the accent. The
+  border did not "appear" when somebody started typing, which is most of what
+  requirement 2 is about, and it looked like the focus colour being wrong
+  rather than like a rule that never applied.
+*/
+.form-group input:focus:not(:disabled) {
   outline: none;
   border-color: var(--lg-border-focus);
   background: var(--lg-input-bg-focus);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .form-group input:disabled {

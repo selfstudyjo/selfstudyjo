@@ -1626,6 +1626,85 @@ section('13. The console and tutor wiring');
     check('the prompt follows cd, and each past line keeps its own',
           /student@lab:\$\{cwd\.value\}/.test(console_)
           && /push\('cmd', line, prompt\.value\)/.test(console_));
+
+    /* ── IT IS A TERMINAL, NOT A TEXT FIELD WITH A LOG OVER IT ────────────
+       The entry row used to be a `<form>` SIBLING of the transcript box, with
+       its own background and its own rounded bottom corners. Every symptom
+       reported about this console in 2026-09 is that one arrangement:
+
+         * the prompt was "pinned/stuck at the bottom" because it was — a
+           footer bar welded under a separately-scrolling box, at any content
+           length;
+         * Enter looked as though "nothing happens to the student@lab:~$
+           line", because the echo was appended into the box ABOVE, at the TOP
+           of 420px of empty space, while the prompt being typed at never
+           moved;
+         * and the whole thing read as an input box rather than a shell.
+
+       So the assertion is STRUCTURAL: the entry row is inside the scroller.
+       Nothing about the transcript, the echo or `scrollDown()` had to change
+       for that to work — the prompt travels with the content because it IS
+       the last line of the content. */
+    /* The nesting is WALKED, not matched.
+       The first version of this asserted on
+       `/<div ref="scroller"[\s\S]*?\n {4}<\/div>/` — a `</div>` at four spaces
+       of indentation — and `negative.mjs` moved the entry row back out of the
+       scroller and the check still passed: the inserted `</div>` was indented
+       six spaces, so the lazy match ran straight past it to the original one.
+       An indentation-shaped test of a STRUCTURAL property is a test of the
+       formatting. Counting depth is the property itself. */
+    function insideScroller(markup: string, needle: string): boolean {
+        const open = markup.indexOf('<div ref="scroller"');
+        if (open < 0) return false;
+        let depth = 0;
+        for (const tag of markup.slice(open).matchAll(/<div\b|<\/div>/g)) {
+            depth += tag[0] === '</div>' ? -1 : 1;
+            if (depth === 0) {
+                return markup.slice(open, open + tag.index! + tag[0].length)
+                    .includes(needle);
+            }
+        }
+        return false;   // never closed — malformed, and not a pass
+    }
+    check('the line being typed is INSIDE the transcript box',
+          insideScroller(console_, 'class="sl-console__entry"'),
+          'the entry row is not nested inside the scroller');
+    check('...and there is no second, sibling prompt bar left behind',
+          !/sl-console__form/.test(console_));
+    /* Enter is the interface. The button is for a keyboard with no Enter
+       within reach, so it must not be a primary action welded to the prompt —
+       a filled button on that line is the single thing that most made this
+       read as a form. */
+    check('the Run affordance is a quiet control on the line, not a form button',
+          /class="sl-console__go"/.test(console_)
+          && !/sl-btn--primary[^>]*>\s*<CornerDownLeft/.test(console_));
+
+    const labsCss = stripComments(source('src/assets/css/labs.css'));
+    const bodyRule = labsCss.match(/\.sl-console__body\s*\{[^}]*\}/);
+    /* A shell starts at the TOP and grows down. A fixed `height` puts the
+       welcome and the first prompt at the top of a tall empty rectangle, which
+       is the bottom-anchored look arriving from the other direction. */
+    check('the terminal box grows from the top rather than being a fixed height',
+          !!bodyRule && /min-height:/.test(bodyRule[0])
+          && /max-height:/.test(bodyRule[0])
+          && !/\n\s*height:/.test(bodyRule[0]), bodyRule?.[0]);
+    const entryRule = labsCss.match(/\.sl-console__entry\s*\{[^}]*\}/);
+    /* The row is a line of the transcript, so it carries none of the chrome a
+       field would: no background, no padding, no border, no radius. It had all
+       four. */
+    check('the entry row carries no field chrome of its own',
+          !!entryRule && /background:\s*none/.test(entryRule[0])
+          && /padding:\s*0/.test(entryRule[0])
+          && /border:\s*0/.test(entryRule[0]), entryRule?.[0]);
+    const inputRule = labsCss.match(/\.sl-console__input\s*\{[^}]*\}/);
+    check('...and the input inherits the terminal\'s own type',
+          !!inputRule && /font:\s*inherit/.test(inputRule[0]), inputRule?.[0]);
+    /* The reported green border. `.sl-console .sl-console__input` and not one
+       class: ui.css's field contract is (0,1,1) and labs.css is emitted
+       BEFORE it, so a tie loses. */
+    check('the prompt line is never given a focus ring',
+          /\.sl-console \.sl-console__input:focus[\s\S]{0,140}?box-shadow:\s*none/
+          .test(labsCss));
 }
 
 {

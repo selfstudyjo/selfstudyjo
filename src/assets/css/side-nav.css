@@ -259,10 +259,27 @@
               box-shadow var(--sn-t-fast);
 }
 .search-field:hover { border-color: var(--sn-glass-border-hover); }
+
+/*
+  ONE BORDER, AND IT IS THIS ONE.
+
+  The field is a bordered row holding an icon, a borderless input and a clear
+  button, so the SHELL is the control as far as a reader is concerned and the
+  shell is what carries the focus indicator. It used to carry a 1px border AND
+  a hard 3px ring, and the input inside it separately picked up theme.css's
+  `:focus-visible` outline at a 2px offset — so typing in the sidebar drew
+  THREE edges, the middle one a bright 2px rounded rectangle at the INPUT's own
+  corner radius, cutting across the search icon and the clear button.
+  (Measured, not inferred: `outline: 2px solid rgb(90 111 206) off:2px`.)
+
+  `--sfs-field-ring` is the platform's one field indicator — a flush 1px
+  thickener in the border's own colour plus a blurred halo with no edge. See
+  theme.css section 6.
+*/
 .search-field:focus-within {
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
-  border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.55);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
+  border-color: var(--sfs-focus, #a5b4fc);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #a5b4fc);
 }
 .search-field.has-query { border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.4); }
 
@@ -286,6 +303,26 @@
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+/*
+  The input draws NOTHING. `.search-field` above is the control.
+
+  Written as two classes and a pseudo-class — (0,2,1) — deliberately, and the
+  bare `.search-input { outline: none }` above is not enough on its own. That
+  is (0,1,0), theme.css's `:focus-visible { outline: 2px solid }` is also
+  (0,1,0), and the production bundle emits THIS FILE FIRST: component
+  stylesheets arrive through `<style src>` and land ahead of everything main.ts
+  imports, so the tie went to theme.css and the sidebar grew a second border.
+  Same lesson `rtl.css` records at the top of its sidebar block — "loaded last"
+  is not a property this file has.
+*/
+.search-field .search-input:focus,
+.search-field .search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+  background: transparent;
 }
 .search-input::placeholder { color: var(--sn-text-dim); }
 /* hide the WebKit native affordances so only our clear button shows */

@@ -348,5 +348,203 @@ console.log('\n7. The shared component floor only owns names nobody else can use
         { sections: guarded.length, firstOffender: outside.split('\n').find(l => l.includes('!important')) });
 }
 
+console.log('\n8. A field has ONE boundary, and it is the field\'s own edge');
+{
+    /*
+      The third family, and the one that was true of the whole platform rather
+      than of one page.
+
+      `:focus` in style.css and `:focus-visible` in theme.css both draw
+      `outline: 2px solid; outline-offset: 2px`. That is right for a button, a
+      link or a card — they have no border for it to be concentric with, and the
+      gap is what makes the ring visible on top of a fill. Around a TEXT FIELD,
+      which already has a 1px border, it is a line, a transparent gap and a
+      second line, at two different corner radii.
+
+      Measured on the live bundle before this check existed: focusing the
+      sidebar search drew THREE edges — the field's border, a 3px ring, and a
+      bright 2px rounded rectangle around the bare `<input>` INSIDE the field,
+      cutting across the search icon and the clear button. It was reported as
+      "2 borders appear in the search-input, the shape is ugly".
+
+      ui.css now turns the outline off for form controls at (0,1,1), which beats
+      both global rules on specificity alone — deliberately not on source order,
+      because the order is not what anybody assumes: the production bundle emits
+      every component and page stylesheet BEFORE the sheets main.ts imports, so
+      `side-nav.css`'s own `.search-input { outline: none }` was LOSING to
+      theme.css. What ui.css cannot beat is a page rule at (0,2,x), and there
+      were twelve of those. This is what stops a thirteenth.
+
+      WHAT IS FLAGGED: a rule that targets a text-entry control and declares a
+      NON-ZERO `outline-offset`. Offset zero is flush against the border and is
+      a single edge, so it is allowed — it is what the `prefers-contrast` and
+      `forced-colors` blocks in ui.css use. The widgets that are not text
+      fields keep their offset ring and are exempt by name: a checkbox, a radio,
+      a slider, a colour well, a file picker and `input[type=submit]` have no
+      border to double up with.
+    */
+    const NOT_A_TEXT_FIELD = /\[type\s*=\s*['"]?(checkbox|radio|range|color|file|submit|reset|button|image)['"]?\]/i;
+    const TEXT_FIELD = /(^|[\s,>+~(])(input|textarea|select)\b|[-_]input\b|[-_]textarea\b|[-_]select\b|__input|__textarea/i;
+
+    /*
+      EVERY SHEET, INCLUDING THE ONES INSIDE COMPONENTS.
+
+      The first version of this scanned `src/assets/css` and `style.css` only,
+      and that blind spot held two live offenders — `DrawBoard.vue`'s title
+      field, and `ChatBox.vue`'s composer, which is the support widget and is
+      therefore on EVERY page of the platform with an offset ring plus a 4px
+      shadow around a bordered input. Scoping does not help here: a `<style
+      scoped>` rule still draws a second ring, it just does it on one page.
+    */
+    const sheets: Array<[string, string]> = [];
+    for (const name of readdirSync(cssDir).filter(f => f.endsWith('.css'))) {
+        sheets.push([name, readFileSync(join(cssDir, name), 'utf8')]);
+    }
+    sheets.push(['style.css', readFileSync(join(root, 'src/style.css'), 'utf8')]);
+    for (const file of vueFiles) {
+        const src = readFileSync(file, 'utf8');
+        for (const block of src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) {
+            sheets.push([basename(file), block[1]]);
+        }
+    }
+
+    const doubled: string[] = [];
+    for (const [label, raw] of sheets) {
+        // Comments are stripped first: this file documents the shape it forbids,
+        // and a check that fires on the paragraph explaining it is a check
+        // nobody can document.
+        const css = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+        for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+            const body = rule[2];
+            const offset = body.match(/outline-offset\s*:\s*([^;]+)/);
+            if (!offset) continue;
+            const value = offset[1].trim();
+            if (value === '0' || /^0[a-z%]*$/.test(value)) continue;   // flush: one edge
+            for (const raw of rule[1].split(',')) {
+                const sel = raw.trim();
+                if (!sel || sel.startsWith('@')) continue;
+                if (!TEXT_FIELD.test(sel)) continue;
+                if (NOT_A_TEXT_FIELD.test(sel)) continue;
+                doubled.push(`${label}   ${sel}   { outline-offset: ${value} }`);
+            }
+        }
+    }
+    check('the scan reached the component style blocks too',
+        sheets.length > readdirSync(cssDir).length, sheets.length);
+    check('no stylesheet gives a text field an offset focus outline',
+        doubled.length === 0, doubled);
+
+    // The contract itself, so it cannot be deleted by somebody tidying up.
+    const ui = readFileSync(join(cssDir, 'ui.css'), 'utf8');
+    const contract = ui.match(/input:focus,[\s\S]{0,400}?\{[^}]*\}/);
+    check('ui.css turns the outline off for text fields',
+        !!contract && /outline:\s*none/.test(contract[0]), contract?.[0].slice(0, 120));
+    check('...and draws the one indicator from --sfs-field-ring',
+        !!contract && /box-shadow:\s*var\(--sfs-field-ring/.test(contract[0]));
+    check('...and makes the focused border visibly different from the resting one',
+        !!contract && /border-color:\s*var\(--sfs-focus/.test(contract[0]));
+
+    const theme = readFileSync(join(cssDir, 'theme.css'), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+    const ring = theme.match(/--sfs-field-ring:\s*([^;]+);/);
+    check('theme.css declares --sfs-field-ring', !!ring, ring?.[1]);
+    // The whole point of the token: the crisp layer is FLUSH (offset 0, spread
+    // 1px) and the prominence comes from a BLURRED layer, which has no edge and
+    // therefore cannot read as a second border. A second hard ring in here
+    // would put the reported bug back for every field at once.
+    check('...as one flush ring plus a blurred halo, not two hard rings',
+        !!ring && /0 0 0 1px/.test(ring[1]) && (ring[1].match(/0 0 0 \d/g) || []).length === 1,
+        ring?.[1]);
+}
+
+console.log('\n9. A bare field inside a shell draws nothing of its own');
+{
+    /*
+      The other half of section 8, and the half that a global rule creates.
+
+      A search box on this platform is usually a bordered flex row holding an
+      icon, a borderless input and a clear button — `.search-field` in the
+      sidebar, `.sl-search`, `.lb-search`, `.search-input-wrapper`, the AI chat
+      composer, both terminals. There the SHELL carries the border and the focus
+      ring, and an indicator on the input inside it is a ring floating in the
+      middle of a box.
+
+      ui.css's field contract gives every `input:focus` a `box-shadow`, so every
+      one of those inputs has to say `box-shadow: none` for itself — and at a
+      specificity that beats (0,1,1), which for `.sl-console__input` and
+      `.search-input` means two classes rather than one, because those files are
+      emitted BEFORE ui.css and a tie goes to the later sheet.
+
+      A terminal is the sharpest case: the line being typed is the last line of
+      the transcript, so a ring around it is a rounded pill drawn across the
+      width of the terminal next to the prompt. That is exactly what "there is a
+      green border around the input field that looks unnatural" was.
+    */
+    const TEXT_FIELD = /(^|[\s,>+~(])(input|textarea|select)\b|[-_]input\b|[-_]textarea\b|__input/i;
+    const unguarded: string[] = [];
+
+    for (const name of readdirSync(cssDir).filter(f => f.endsWith('.css'))) {
+        if (name === 'ui.css' || name === 'theme.css') continue;
+        const css = readFileSync(join(cssDir, name), 'utf8')
+            .replace(/\/\*[\s\S]*?\*\//g, '');
+
+        // Every selector in this file that switches its own border off.
+        const bare: string[] = [];
+        for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+            if (!/border\s*:\s*(0|none)\b/.test(rule[2])) continue;
+            for (const raw of rule[1].split(',')) {
+                const sel = raw.trim();
+                if (!sel || sel.startsWith('@') || /:focus/.test(sel)) continue;
+                if (!TEXT_FIELD.test(sel)) continue;
+                bare.push(sel);
+            }
+        }
+        if (!bare.length) continue;
+
+        // Every selector in this file that suppresses the ring on focus.
+        const guarded: string[] = [];
+        for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+            if (!/box-shadow\s*:\s*none/.test(rule[2])) continue;
+            for (const raw of rule[1].split(',')) {
+                const sel = raw.trim();
+                if (/:focus/.test(sel)) guarded.push(sel.replace(/:focus(-visible)?/g, '').trim());
+            }
+        }
+
+        for (const sel of new Set(bare)) {
+            // The guard may be written more specifically than the bare rule —
+            // `.sl-console .sl-console__input` guards `.sl-console__input` —
+            // so a suffix match is what "the same element" means here.
+            const covered = guarded.some(g => g === sel || g.endsWith(' ' + sel)
+                || sel.endsWith(' ' + g) || g.includes(sel));
+            if (!covered) unguarded.push(`${name}   ${sel}`);
+        }
+    }
+    check('every borderless field switches the shared focus ring off',
+        unguarded.length === 0, unguarded);
+}
+
+console.log('\n10. The sidebar search is one control, not three');
+{
+    // The reported bug, asserted from both ends. The shell owns the indicator
+    // and the input owns nothing — and the input's rule has to be TWO classes,
+    // because `.search-input { outline: none }` is (0,1,0), theme.css's
+    // `:focus-visible` is also (0,1,0), and this file is emitted first.
+    const nav = readFileSync(join(cssDir, 'side-nav.css'), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+
+    const shell = nav.match(/\.search-field:focus-within\s*\{[^}]*\}/);
+    check('the search field carries the one focus indicator',
+        !!shell && /box-shadow:\s*var\(--sfs-field-ring/.test(shell[0]),
+        shell?.[0]);
+    check('...and no hard ring of its own beside it',
+        !!shell && !/box-shadow:\s*0 0 0 \d+px rgb/.test(shell[0]), shell?.[0]);
+
+    const inner = nav.match(/\.search-field \.search-input:focus[\s\S]{0,120}?\{[^}]*\}/);
+    check('the input inside it draws nothing, at two classes so it wins',
+        !!inner && /outline:\s*none/.test(inner[0]) && /box-shadow:\s*none/.test(inner[0]),
+        inner?.[0]);
+}
+
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} failed\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -338,7 +338,7 @@
 .user-certificates .search-input-wrapper:focus-within {
   background: var(--uc-glass-2);
   border-color: var(--uc-accent);
-  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .user-certificates .search-icon {
   color: var(--uc-text-mute);
@@ -356,6 +356,18 @@
   font-size: var(--uc-fs-base);
   padding: 0.7rem 0;
   min-height: 44px;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   `.search-input-wrapper:focus-within` is the control here and carries
+   the indicator.
+*/
+.user-certificates .search-input:focus,
+.user-certificates .search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .user-certificates .search-input::placeholder {
   color: var(--uc-text-dim);
@@ -732,7 +744,6 @@
    ============================================================ */
 .user-certificates .tab-btn:focus-visible,
 .user-certificates .certificate-card:focus-visible,
-.user-certificates .search-input:focus-visible,
 .user-certificates .search-clear:focus-visible {
   outline: 2px solid var(--uc-accent);
   outline-offset: 2px;

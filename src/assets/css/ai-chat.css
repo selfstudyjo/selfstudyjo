@@ -376,8 +376,7 @@
 
 .ai-chat-container .input-area:focus-within {
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
-  box-shadow: 0 8px 32px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25),
-              0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .ai-chat-container .input-area textarea {
@@ -394,6 +393,18 @@
   line-height: 1.5;
   resize: none;
   word-break: break-word;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   The composer row is the control: `.input-area:focus-within` carries
+   the border and the ring.
+*/
+.ai-chat-container .input-area textarea:focus,
+.ai-chat-container .input-area textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .ai-chat-container .input-area textarea::placeholder {
   color: var(--sfs-text-muted, rgb(255 255 255 / 0.7));

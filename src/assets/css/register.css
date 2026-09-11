@@ -298,7 +298,7 @@
   outline: none;
   border-color: var(--rg-accent);
   background: var(--rg-glass-bg-input-focus);
-  box-shadow: var(--rg-shadow-input-focus);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 /* select arrow + colors */
@@ -650,7 +650,7 @@
 /* -------------------------------------------------------------
   17. Focus rings (accessibility)
    ------------------------------------------------------------- */
-.register-container :where(button, a, input, select, textarea):focus-visible {
+.register-container :where(button, a):focus-visible {
   outline: 2px solid var(--rg-accent);
   outline-offset: 2px;
 }

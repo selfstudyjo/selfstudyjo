@@ -518,9 +518,14 @@
     unicode-bidi: plaintext;
 }
 
+/* One edge. A 2px ring at a 1px offset outside a box that already has a border
+   is two concentric boundaries with a hairline gap between them, which at this
+   size reads as a rendering fault rather than as a focus ring.
+   `--sfs-field-ring` is the platform's field indicator — see theme.css §6. */
 .lesson-textarea:focus {
-    outline: 2px solid var(--sfs-accent, #667eea);
-    outline-offset: 1px;
+    outline: none;
+    border-color: var(--sfs-focus, #818cf8);
+    box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .lesson-mention-list {

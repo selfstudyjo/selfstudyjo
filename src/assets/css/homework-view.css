@@ -717,7 +717,7 @@
 .homework-page .form-textarea:focus {
   outline: none;
   border-color: var(--hv-accent-1);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.22), 0 0 18px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.4);
 }
 .homework-page .form-input:disabled,

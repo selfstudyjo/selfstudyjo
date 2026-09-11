@@ -283,6 +283,18 @@
     color: var(--sfs-text, #e6e8ef);
 }
 
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   The search shell carries the border and the ring; the input inside it
+   draws nothing.
+*/
+.sl-search input:focus,
+.sl-search input:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
 .sl-search input:focus { outline: none; }
 
 .sl-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -793,10 +805,31 @@
     color: var(--sfs-text-muted, #b7bdcc);
 }
 
+/*
+  THE TERMINAL. One box: transcript, then the line being typed, then whatever
+  space is left over.
+
+  `min-height` and `max-height` rather than a fixed `height`, and the pair is
+  the point. A shell starts at the TOP — the welcome and the first prompt sit
+  where the eye already is instead of at the top of a tall empty rectangle with
+  the prompt bolted under it — grows downward as output arrives, and only
+  starts scrolling once it has used the space it is allowed. A fixed height
+  cannot do the first two.
+
+  `justify-content: flex-start` is not decoration either: this is a flex
+  column, and anything else would push the content around inside the box as it
+  grows, which is precisely the bottom-anchored behaviour being removed.
+*/
 .sl-console__body {
-    height: clamp(14rem, 42vh, 30rem);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: clamp(12rem, 34vh, 22rem);
+    max-height: clamp(18rem, 56vh, 34rem);
     padding: 0.8rem 0.95rem;
-    border-radius: var(--sl-radius-sm) var(--sl-radius-sm) 0 0;
+    border-radius: var(--sl-radius-sm);
     background: var(--sl-code-bg);
     color: var(--sl-code-ink);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -804,6 +837,9 @@
     line-height: 1.5;
     overflow: auto;
     overscroll-behavior: contain;
+    /* Clicking anywhere in the box puts the caret on the prompt, which is what
+       a terminal does and what `@click="focusField"` is for. */
+    cursor: text;
 }
 
 .sl-console__hello { color: var(--sl-code-dim); }
@@ -822,31 +858,131 @@
 
 .sl-console__prompt {
     color: var(--sl-code-ok);
+    /* The echoed lines are `.sl-console__line--cmd`, which is `font-weight:
+       600`, and the prompt span inside one inherits it. Stating it here is what
+       makes the prompt on the line being TYPED identical to the prompt on the
+       echo of that same line a moment later — without it the live prompt was
+       visibly lighter than every prompt above it, which reads as the current
+       line being a different kind of thing from the transcript. */
+    font-weight: 600;
     user-select: none;
 }
 
-.sl-console__form {
+/*
+  THE ENTRY ROW — the last line of the transcript, not a footer.
+
+  It is inside `.sl-console__body`, so it inherits the terminal's font, size,
+  colour and line-height and lands directly under the last line of output. It
+  therefore carries NO background, NO padding, NO border and NO radius: it had
+  all four as `.sl-console__form`, which is what made it read as a text field
+  welded under a log rather than as the line you are typing on.
+
+  `flex: none` so it never absorbs the leftover space in the column, and never
+  drifts away from the output above it.
+*/
+.sl-console__entry {
+    flex: none;
     display: flex;
+    /* `center`, not `baseline`. The prompt carries `overflow: hidden` (it has
+       to — it ellipsises on a narrow pane), and a flex item with a non-visible
+       overflow takes its border-box bottom edge as its baseline instead of its
+       text's, which lifts the typed text off the prompt's line by a couple of
+       pixels. Both children inherit the same font and line-height, so centring
+       puts them on the same line by construction. */
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 0.95rem;
-    border-radius: 0 0 var(--sl-radius-sm) var(--sl-radius-sm);
-    background: #0b111f;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    /* The transcript lines are `pre-wrap`; a typed line that is longer than the
+       box has to be able to wrap the same way rather than widening it. */
+    flex-wrap: wrap;
 }
 
 .sl-console__input {
-    flex: 1;
+    flex: 1 1 6ch;
     min-width: 0;
+    /* Every one of these is a reset against a field, because in the flow of a
+       transcript this element is not a field — it is the rest of the line the
+       prompt starts. `padding: 0` and `height: auto` keep the caret on the
+       prompt's own baseline; the font is inherited so a typed command and the
+       echo of it a moment later are the same glyphs at the same size. */
+    margin: 0;
+    padding: 0;
     border: 0;
+    border-radius: 0;
     background: transparent;
-    color: var(--sl-code-ink);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: max(0.9rem, 16px);
+    /*
+      THE TYPED LINE AND ITS ECHO ARE THE SAME LINE, so they are the same ink.
+
+      A command echoes into the transcript as `.sl-console__line--cmd` —
+      `--sl-code-accent`, weight 600 — and this was `--sl-code-ink` at the
+      inherited weight, so pressing Enter recoloured the words the student had
+      just typed. In a terminal nothing happens to the characters when you
+      press Enter; the cursor moves to the next line.
+    */
+    color: var(--sl-code-accent);
+    font: inherit;
+    font-weight: 600;
+    line-height: inherit;
     /* The native caret is already in the right place and already takes
        caret-color. A fake block cursor after a `flex: 1` input sits at the far
        right of the terminal, hundreds of pixels from the text — which is what
        the Labs page shipped. */
     caret-color: var(--sl-code-ok);
+}
+
+.sl-console__input::placeholder { color: var(--sl-code-dim); }
+
+/*
+  The Run affordance. Quiet, at the end of the row, and invisible in the
+  transcript's rhythm until it is wanted — a filled primary button on this line
+  is the single thing that most made the console read as a form. Enter is the
+  real interface; this is for a keyboard that has no Enter within reach.
+*/
+.sl-console__go {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline-start: 0.6rem;
+    padding: 0.1rem 0.3rem;
+    border: 0;
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sl-code-dim);
+    cursor: pointer;
+    transition: color 140ms ease, background 140ms ease;
+}
+
+.sl-console__go:hover:not(:disabled) {
+    color: var(--sl-code-ok);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+}
+
+.sl-console__go:disabled {
+    /* Zero opacity rather than `display: none`, so the row keeps its width and
+       the line does not reflow on the first keystroke. Invisible AND
+       unreachable is the pair that matters: `disabled` already takes it out of
+       the tab order, and `pointer-events: none` stops a click landing on
+       something nobody can see. */
+    opacity: 0;
+    cursor: default;
+    pointer-events: none;
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   A TERMINAL HAS NO INPUT BOX - see the entry row below. Two classes
+   rather than one: `.sl-console__input:focus` is (0,1,1), which only
+   TIES ui.css's field contract, and this file is emitted before ui.css.
+*/
+.sl-console .sl-console__input:focus,
+.sl-console .sl-console__input:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 
 .sl-console__input:focus { outline: none; }
@@ -858,7 +994,23 @@
     max-width: 55%;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    /*
+      `pre`, not `nowrap`, and the difference is one character wide.
+
+      The prompt string ENDS IN A SPACE — `student@lab:~/practice$ ` — and the
+      transcript lines are `pre-wrap`, so an echoed command renders as
+      `student@lab:~$ docker ps`. On the line being typed the prompt is its own
+      inline box, and under `nowrap` whitespace is still collapsed, so the
+      trailing space vanished at the end of the box and the active line read
+      `student@lab:~$docker ps` — the prompt and the text welded together,
+      different from the echo of the very same line a moment later.
+
+      `pre` keeps the space and still does not wrap, so the two agree. Spacing
+      belongs to the prompt string rather than to a flex `gap` for the same
+      reason: one of them is what the shell sends and the other is a number in
+      a stylesheet that has to be kept equal to it.
+    */
+    white-space: pre;
 }
 
 /* Ctrl+R. Warm rather than green, because it REPLACES the prompt while it is
@@ -2140,8 +2292,16 @@
 .sfs-dock__gate { margin: 0; font-size: 0.88rem; color: var(--sfs-text-muted, #b7bdcc); }
 .sfs-dock__gate a { color: var(--sfs-accent-text, #a5b4fc); }
 
-/* The dock reuses the lab console components, so it needs their tokens too. */
-.sfs-dock__body .sl-console__body { height: clamp(8rem, 26vh, 18rem); }
+/* The dock reuses the lab console components, so it needs their tokens too.
+
+   min/max rather than `height`, for the reason the console's own box states:
+   the terminal flows from the top and the line being typed is the last line of
+   the transcript, so a fixed height would put the prompt back at the bottom of
+   an empty rectangle inside a dock that is already short. */
+.sfs-dock__body .sl-console__body {
+    min-height: clamp(7rem, 20vh, 12rem);
+    max-height: clamp(8rem, 26vh, 18rem);
+}
 .sfs-dock__body .sl-code__editor,
 .sfs-dock__body .sl-query__editor { min-height: 7rem; }
 
@@ -2159,7 +2319,13 @@
     .sfs-topbar,
     .sfs-dock,
     .sl-bench__tabs,
-    .sl-console__form { display: none !important; }
+    /* On paper the transcript is the artefact and the line being typed is not
+       part of it. `__entry` rather than the old `__form`: the row moved inside
+       the transcript box when the console stopped being a text field with a
+       log over it, and a print rule naming a class nothing renders any more is
+       a correction that silently does nothing -- the shape `check:i18n`
+       section 7 was added for after `rtl.css` named three such classes. */
+    .sl-console__entry { display: none !important; }
 }
 
 /* ------------------------------------------------------------------ *

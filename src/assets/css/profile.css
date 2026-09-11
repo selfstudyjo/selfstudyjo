@@ -419,8 +419,7 @@
   outline: none;
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   border-color: var(--pp-accent-1);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25),
-              0 0 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.15);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .profile-form-group select {

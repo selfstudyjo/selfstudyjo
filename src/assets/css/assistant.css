@@ -463,9 +463,12 @@
     unicode-bidi: plaintext;
 }
 
+/* One edge. The 2px ring at a 1px offset drew a second rounded rectangle
+   around the composer, inside its own border. See ui.css. */
 .sfs-bot__input:focus {
-    outline: 2px solid var(--sfs-accent, #667eea);
-    outline-offset: 1px;
+    outline: none;
+    border-color: var(--sfs-focus, #818cf8);
+    box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .sfs-bot__act {

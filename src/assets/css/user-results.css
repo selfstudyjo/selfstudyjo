@@ -438,10 +438,13 @@
   border-color: var(--ur-glass-border-2);
   background-color: var(--ur-glass-bg-hover);
 }
+/* A <select> has a border, so the platform field indicator is what it wants:
+   an offset ring outside that border is a second concentric edge. The radio
+   above keeps its offset ring — it has no border to double up with. */
 .chart-filters select:focus-visible {
-  outline: 2px solid var(--ur-accent);
-  outline-offset: 2px;
-  border-color: transparent;
+  outline: none;
+  border-color: var(--sfs-focus, #818cf8);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .chart-filters select option {
   background: var(--sfs-surface-2, #1a1a2e);

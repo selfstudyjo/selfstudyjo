@@ -741,10 +741,12 @@ async function leave() {
   background: var(--sfs-glass-1, rgb(255 255 255 / 0.05));
 }
 
+/* One edge. The platform ring at a 2px offset outside this field's own border
+   is two concentric boundaries; `--sfs-field-ring` is the field indicator. */
 .title-input:focus {
-  outline: var(--sfs-ring-width, 2px) solid var(--sfs-focus, rgb(102 126 234 / 0.6));
-  outline-offset: var(--sfs-ring-offset, 2px);
-  border-color: var(--sfs-accent, #667eea);
+  outline: none;
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
+  border-color: var(--sfs-focus, #818cf8);
   background: var(--sfs-field, rgb(255 255 255 / 0.06));
   color: var(--sfs-field-text, #f8fafc);
 }

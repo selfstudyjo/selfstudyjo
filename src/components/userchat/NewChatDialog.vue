@@ -253,7 +253,7 @@ h2 { margin: 0; font-size: var(--uc-fs-xl); font-weight: 650; color: var(--uc-te
 .field input[type="text"]:focus {
   border-color: rgb(var(--sfs-accent-rgb, 129 140 248) / 0.5);
   background: var(--uc-surface-2);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 
 .search { position: relative; display: flex; align-items: center; }

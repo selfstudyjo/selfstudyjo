@@ -240,8 +240,7 @@
 .all-certificates .search-input:focus {
   border-color: var(--acc-1);
   background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.35);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2),
-              0 0 20px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .all-certificates .search-icon {
   position: absolute;
@@ -283,7 +282,7 @@
 .all-certificates .filter-select:focus {
   border-color: var(--acc-1);
   background-color: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.35);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
 }
 .all-certificates .filter-select option {
   background: var(--sfs-surface-2, #15152a);
@@ -973,7 +972,7 @@
 /* ==========================================================================
    FOCUS / ACCESSIBILITY
    ========================================================================== */
-.all-certificates :is(button, input, select):focus-visible {
+.all-certificates button:focus-visible {
   outline: 2px solid var(--acc-1);
   outline-offset: 2px;
 }

@@ -212,10 +212,7 @@
   outline: none;
   border-color: transparent;
   background: var(--ve-glass-strong);
-  box-shadow:
-    0 0 0 2px var(--ve-accent),
-    0 0 0 6px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2),
-    0 8px 22px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   transform: translateY(-1px);
 }
 
@@ -403,7 +400,7 @@
 /* fadeInUp is provided globally by style.css */
 
 /* ---------- Accessibility / focus ---------- */
-.verify-container :where(button, input, a, .link):focus-visible {
+.verify-container :where(button, a, .link):focus-visible {
   outline: 2px solid var(--ve-accent);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.25);

@@ -802,12 +802,23 @@
   text-align: start;
 }
 
+/*
+  The two EDITORS. `.command-input` is deliberately not in this list any more:
+  a query editor and a code editor are boxes with a border, and a terminal's
+  prompt line is not a box at all — see `.terminal-content .command-input`
+  below, where the ring is switched off.
+
+  `--sfs-field-ring` is the platform's one field indicator: a flush 1px
+  thickener in the border's own colour plus a blurred halo with no edge, so
+  what a reader sees is a single boundary rather than a line, a gap and a
+  second line. It replaces a hard `0 0 0 3px` ring here for consistency with
+  every other field on the platform. See theme.css section 6.
+*/
 .sql-textarea:focus,
-.python-textarea:focus,
-.command-input:focus {
+.python-textarea:focus {
   outline: none;
   border-color: var(--sfs-focus, #818cf8);
-  box-shadow: 0 0 0 3px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.28);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   /* The background deliberately does NOT change on focus: a code surface that
      shifts tone mid-sentence changes the contrast of what is already typed. */
 }
@@ -1121,6 +1132,21 @@
   border: none;
   outline: none;
   caret-color: var(--code-green);
+}
+
+/*
+   A BARE FIELD INSIDE A SHELL DRAWS NOTHING OF ITS OWN.
+
+   A TERMINAL HAS NO INPUT BOX. The line being typed is the last line of
+   the transcript, so a ring around it is a rounded pill drawn across the
+   width of the terminal next to the prompt - which is what "there is a
+   border around the input field that looks unnatural" was. The caret is
+   the indicator, and it already blinks in --code-green.
+*/
+.terminal-content .command-input:focus,
+.terminal-content .command-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .terminal-content .command-input::placeholder { color: var(--code-dim); }
@@ -1552,9 +1578,6 @@
 .tab-btn:focus-visible,
 .cmd-btn:focus-visible,
 .template-btn:focus-visible,
-.command-input:focus-visible,
-.sql-textarea:focus-visible,
-.python-textarea:focus-visible,
 .toast-close:focus-visible,
 .table-item .btn-sm:focus-visible {
   outline: 2px solid var(--lab-secondary);

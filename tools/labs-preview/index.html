@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lab workspace preview</title>
+    <!--
+      The app shell, and ONLY the parts of it that this preview needs.
+
+      `AnimatedBackground` is `position: fixed; z-index: 0`, so without a
+      positioned shell above it the page renders with nothing on it — a fault
+      in the harness that reads as one in the page. Production gets this from
+      `side-nav.css`:  `.app-container { position: relative; z-index: 1 }`.
+
+      side-nav.css itself cannot be imported here (it also margins
+      `.main-content` over by the width of a sidebar this preview does not
+      render), and `default-layout.css` — which is what this used to import —
+      is loaded by NOTHING in the app, so importing it made the preview show
+      field styling no user is served. Two declarations, copied, with the
+      source named, is the honest version.
+    -->
+    <style>
+      .app-container { position: relative; z-index: 1; display: flex; min-height: 100dvh; }
+      .main-content { flex: 1 1 auto; min-width: 0; padding: clamp(14px, 2.5vw, 32px); overflow-x: hidden; }
+    </style>
   </head>
   <body style="margin:0">
     <div id="app"></div>

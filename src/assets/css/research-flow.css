@@ -433,8 +433,7 @@
 .rf-select:focus-visible,
 .rf-textarea:focus-visible {
   border-color: var(--rf-border-focus);
-  box-shadow: 0 0 0 4px rgb(var(--sfs-accent-rgb, 129 140 248) / 0.2),
-              0 6px 18px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  box-shadow: var(--sfs-field-ring, 0 0 0 1px #818cf8);
   background: rgb(var(--sfs-surface-rgb, 15 17 40) / 0.6);
 }
 .rf-input-disabled { opacity: 0.55; cursor: not-allowed; }
@@ -1491,9 +1490,6 @@
 .rf-card:focus-visible,
 .rf-project-card:focus-visible,
 .rf-researcher-card:focus-visible,
-.rf-input:focus-visible,
-.rf-select:focus-visible,
-.rf-textarea:focus-visible,
 .rf-back-btn:focus-visible,
 .rf-link:focus-visible {
   outline: 2px solid var(--rf-accent);

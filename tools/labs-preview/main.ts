@@ -11,12 +11,28 @@ import '@/assets/css/ui.css';
 // The lab UI's own stylesheet. GLOBAL in the app (main.ts), so it is global
 // here — scoping it would be previewing a page nobody is served.
 import '@/assets/css/labs.css';
-// The shell the app serves this page inside. `.sfs-bg` is `position: fixed`
-// with `z-index: 0`, so a positioned background paints ABOVE in-flow content
-// — the app avoids that with `.app-container > .main-content { position:
-// relative; z-index: 1 }` in here. Without it the preview renders a page with
-// nothing on it, which is a fault in the HARNESS and reads as one in the page.
-import '@/assets/css/default-layout.css';
+/*
+  THE SHELL IS IN index.html, AND `default-layout.css` IS DELIBERATELY NOT
+  IMPORTED HERE ANY MORE.
+
+  `.sfs-bg` is `position: fixed; z-index: 0`, so the background paints above
+  in-flow content unless something lifts the shell out of it. This harness used
+  to get that by importing `default-layout.css` — and **the app imports that
+  file from nowhere at all** (its own token block says so, at line 15). What
+  production actually uses is `side-nav.css`'s
+  `.app-container { position: relative; z-index: 1 }`, and side-nav.css cannot
+  be imported here because it also gives `.main-content` a 260px inline-start
+  margin for a sidebar this preview does not render.
+
+  So the harness was applying ~300 declarations nobody is served, and they were
+  not inert: `.app-container > .main-content :where(input, select, textarea)`
+  is (0,4,0) and beat every page's own field styling, so the lab console's
+  input rendered in this preview with a 1px glass border and a glass
+  background that it does not have in the app. A screenshot harness that
+  restyles the thing it is photographing is worse than no harness.
+
+  The two declarations it genuinely needs are in index.html, named.
+*/
 import '@/assets/css/rtl.css';
 import { THEMES, applyTheme } from '@/theme/apply';
 import { i18n, setLocale } from '@/i18n/runtime';
