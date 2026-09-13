@@ -1195,6 +1195,26 @@ if (process.argv.includes('--gaps')) {
         console.log(`\n  ### ${area} (${missing.length})`);
         for (const k of missing.sort()) console.log(`  ${k}`);
     }
+    /*
+      AND THE KEYS THAT ARE NOT IN ANY SOURCE FILE, which `byArea` cannot see:
+      a panel title, a column heading, a badge name and an AI Chat date
+      heading are all reached through a VARIABLE, so no template holds the
+      literal and the scan above finds none of them. Three checks a few
+      hundred lines up fail on exactly those, and a `--gaps` report that
+      omitted them was telling somebody their worklist was empty while the
+      suite was red about 280 keys.
+    */
+    for (const [area, keys] of [
+        ['lab panels and columns', LAB_STRINGS],
+        ['achievement badges', BADGE_STRINGS],
+        ['AI Chat headings and memory', [...dynamicStrings]],
+    ] as Array<[string, string[]]>) {
+        const missing = keys.filter(k =>
+            !untranslatedSet.has(k) && (ar[k] === undefined || zh[k] === undefined));
+        if (!missing.length) continue;
+        console.log(`\n  ### ${area} — reached through a variable (${missing.length})`);
+        for (const k of [...new Set(missing)].sort()) console.log(`  ${k}`);
+    }
 }
 
 /* ------------------------------------------------------------------ *
