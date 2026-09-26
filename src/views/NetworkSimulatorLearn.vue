@@ -101,12 +101,17 @@
                   READ THE THEORY ALOUD.
 
                   These lessons are a compiled-in TypeScript catalogue
-                  (`src/netsim/lessons.ts`) and every word of them is ENGLISH --
-                  there is no translation mechanism for them at all. So an
-                  Arabic or Chinese reader pressing this hears English, which is
-                  the best available answer and is baffling unless the control
-                  says so: `ReadAloud` detects the script and names the language
-                  it is reading in. That declaration is the whole reason it is
+                  (`src/netsim/lessons.ts`), and until 2026-09-26 every word of
+                  them was ENGLISH with no translation mechanism at all. They
+                  are overlaid from `src/netsim/i18n/<lang>.json` now, so `l`
+                  here is already in the reader's language and this reads out
+                  what is on the screen.
+
+                  `ReadAloud` still detects the script and NAMES the language it
+                  is reading in, and that is not now redundant: the catalogue is
+                  lazy, so the first frame after a cold navigation is English,
+                  and a lesson the catalogue does not cover stays English for
+                  ever. Declaring which language came out is what makes either
                   acceptable (working rule 21).
 
                   The objectives lead the theory, because they are what the
