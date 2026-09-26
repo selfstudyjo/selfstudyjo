@@ -56,6 +56,7 @@ import {
 } from './locales';
 import {
     field as recordField, matches as recordMatches, byField as byRecordField,
+    list as recordList, nested as recordNested,
     type Translatable,
 } from './records';
 
@@ -164,6 +165,37 @@ export function td(record: Translatable | null | undefined, name = 'title'): str
     return recordField(record, name, current.value);
 }
 
+/**
+ * `$tdl(lab, 'objectives')` -- a LIST field of a record, element-wise.
+ *
+ * A third global rather than making `$td` polymorphic, for the reason `$td` is
+ * separate from `$t`: a template should say what shape it is rendering. `$td`
+ * returns a string and is interpolated; `$tdl` returns an array and is
+ * `v-for`-ed, and a `$td` that sometimes returned an array would render
+ * `a,b,c` into the page the first time somebody pointed it at a list.
+ */
+export function tdl(record: Translatable | null | undefined, name: string): string[] {
+    return recordList(record, name, current.value);
+}
+
+/**
+ * `$tdn(lab, 'tasks', task.id, 'title', task.title)` -- a keyed sub-record.
+ *
+ * The English is passed IN as the fallback rather than looked up, because the
+ * sub-record is the caller's own object: the row is `task`, not
+ * `lab.tasks[task.id]`, so this cannot reach the English itself and a helper
+ * that returned `''` on a miss would blank every untranslated task title.
+ */
+export function tdn(
+    record: Translatable | null | undefined,
+    name: string,
+    key: string,
+    sub: string,
+    fallback = '',
+): string {
+    return recordNested(record, name, key, sub, current.value, fallback);
+}
+
 /** Does this record match a filter box, in ANY language it carries? See `records.ts`. */
 export function tdMatches(
     record: Translatable | null | undefined,
@@ -244,7 +276,7 @@ export function aiLanguageHeaders(): Record<string, string> {
 /** Everything a `<script setup>` block needs, in one call. */
 export function useI18n() {
     return {
-        t, tc, n, d, rel, money, td, tdMatches, tdSort,
+        t, tc, n, d, rel, money, td, tdl, tdn, tdMatches, tdSort,
         locale, localeId, isRtl, dir,
         locales: LOCALES,
         setLocale,
@@ -274,6 +306,11 @@ export const i18n = {
         // `$td` is a record's own text, where `$t` is a catalogue key. Kept
         // visibly distinct in templates -- see `td` above for why.
         g.$td = td;
+        // `$tdl` is a LIST field and `$tdn` a keyed sub-record -- app 11's lab
+        // objectives and tasks. Separate globals so a template says which shape
+        // it is rendering; see `tdl` and `tdn` above.
+        g.$tdl = tdl;
+        g.$tdn = tdn;
         // Properties rather than functions, so a template reads `$rtl` and not
         // `$rtl()`. Defined as getters so they stay reactive.
         Object.defineProperty(g, '$rtl', { get: () => isRtl.value, configurable: true });
@@ -294,6 +331,8 @@ declare module 'vue' {
         $rel: typeof rel;
         $money: typeof money;
         $td: typeof td;
+        $tdl: typeof tdl;
+        $tdn: typeof tdn;
         $rtl: boolean;
         $dir: 'ltr' | 'rtl';
         $locale: Locale;

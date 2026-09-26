@@ -115,7 +115,7 @@
           <header class="sl-track__head">
             <div>
               <h2 class="sl-track__title">{{ $td(group.track, 'title') }}</h2>
-              <p class="sl-track__sub">{{ group.track.subtitle }}</p>
+              <p class="sl-track__sub">{{ $td(group.track, 'subtitle') }}</p>
             </div>
             <div class="sl-track__meta">
               <span>{{ $t('{v0} labs', { v0: group.labs.length }) }}</span>
@@ -124,7 +124,9 @@
               </span>
             </div>
           </header>
-          <p v-if="group.track.blurb" class="sl-track__blurb">{{ group.track.blurb }}</p>
+          <p v-if="group.track.blurb" class="sl-track__blurb">
+            {{ $td(group.track, 'blurb') }}
+          </p>
 
           <!-- `minmax(min(100%, ...), 1fr)`, never `1fr`: a `1fr` track's
                automatic minimum is min-content, so one unbreakable lab id would

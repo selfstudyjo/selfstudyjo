@@ -295,6 +295,33 @@ const netsim: Catalogue = {
     '{v0} lessons across {v1} tracks, roughly {v2} hours of work. Every task is checked against your live simulated network — not against a multiple-choice answer.':
         '{v1} 条学习路径共 {v0} 节课，约 {v2} 小时的学习量。每个任务都是对照你实际运行的模拟网络检查的 —— 不是靠选择题。',
     '← Network Simulator': '← 网络模拟器',
+    // The netsim BADGES, reached as `$t(b.title)` from a variable in
+    // NetworkSimulator.vue -- so they appear in no source file as a
+    // literal and `check:i18n`'s orphan scan cannot see them. Verified
+    // positively against the exported table instead, the same way the
+    // sidebar's labels and the dashboard's badge copy are.
+    'First Packet': '第一个数据包',
+    'Complete your first lesson': '完成你的第一节课',
+    'Frame Wrangler': '帧驾驭者',
+    'Finish the Ethernet & Switching track': '完成 Ethernet 与交换学习路径',
+    'VLAN Master': 'VLAN 大师',
+    'Finish the VLANs & Trunking track': '完成 VLAN 与 Trunking 学习路径',
+    'Subnet Surgeon': '子网专家',
+    'Finish the IP Addressing track': '完成 IP 编址学习路径',
+    'Route Finder': '路由探索者',
+    'Finish the Routing track': '完成路由学习路径',
+    'Service Owner': '服务负责人',
+    'Finish the Core Network Services track': '完成核心网络服务学习路径',
+    'Airtime Architect': '无线架构师',
+    'Finish the Wireless track': '完成无线学习路径',
+    'Gatekeeper': '守门人',
+    'Finish the Security track': '完成安全学习路径',
+    'Fabric Builder': '架构搭建者',
+    'Finish the Data Center & Cloud track': '完成数据中心与云学习路径',
+    'Fault Finder': '故障排查者',
+    'Finish the Troubleshooting track': '完成故障排除学习路径',
+    'Network Engineer': '网络工程师',
+    'Complete every lesson in every track': '完成每个学习路径的每一节课',
 };
 
 export default netsim;

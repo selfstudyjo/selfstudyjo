@@ -21,7 +21,7 @@
       <!-- ════════════ track rail ════════════ -->
       <nav class="ns-track-rail">
         <button
-          v-for="t in TRACKS" :key="t.id"
+          v-for="t in localTracks" :key="t.id"
           class="ns-track-btn"
           :class="{ active: activeTrack === t.id, done: trackComplete(t.id) }"
           :style="{ '--accent': t.accent }"
@@ -185,13 +185,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DeviceIcon from '@/components/netsim/DeviceIcon.vue';
 import ReadAloud from '@/components/ReadAloud.vue';
 import { definitions, numbered } from '@/utils/reader';
 import { useNetSimStore } from '@/store/netsim';
 import { TRACKS, lessonsByTrack, TOTAL_LESSONS, TOTAL_MINUTES } from '@/netsim/lessons';
+import { ensureNetsimI18n, overlayLesson, overlayTrack } from '@/netsim/i18n';
+import { localeId } from '@/i18n/runtime';
 import { netsimAi } from '@/services/netsim-ai.service';
 import { OSI_LAYERS } from '@/netsim/types';
 import type { Lesson, LayerId } from '@/netsim/types';
@@ -229,11 +231,36 @@ const aiQuiz = ref<Array<{ q: string; options: string[]; answer: number; why: st
 const aiAnswers = ref<Record<number, number>>({});
 
 const progress = computed(() => store.progress);
-const track = computed(() => TRACKS.find(t => t.id === activeTrack.value));
-const trackLessons = computed(() => lessonsByTrack(activeTrack.value));
+/*
+ * The curriculum in the reader's language.
+ *
+ * `overlayTrack` / `overlayLesson` read a `ref` that is null until the
+ * translation chunk lands, so these computeds render English on the first frame
+ * and re-render in Arabic or Chinese a moment later -- no await, no spinner, and
+ * no chance of a blank page if the chunk 404s after a deploy. See
+ * `src/netsim/i18n/index.ts` for why it is lazy at all: these views are in the
+ * ENTRY chunk, so an eager catalogue would be downloaded by somebody reading the
+ * login page.
+ */
+const localTracks = computed(() => TRACKS.map(overlayTrack));
+const track = computed(() => localTracks.value.find(t => t.id === activeTrack.value));
+const trackLessons = computed(
+  () => lessonsByTrack(activeTrack.value).map(overlayLesson));
 
 const completionPct = computed(() =>
     progress.value ? Math.round((progress.value.completedLessons.length / Math.max(1, TOTAL_LESSONS)) * 100) : 0);
+
+/*
+ * Fetch the translation chunk, and again if the reader switches language.
+ *
+ * The meeting room has had `watch(localeId, ...)` since it was written and the
+ * interview room did not, which is why the two behaved differently in the same
+ * language on the same machine (working rule 39). One `watch` here is what stops
+ * a reader who switches to Arabic mid-page being left with the English
+ * curriculum until they navigate away and back.
+ */
+ensureNetsimI18n(localeId.value);
+watch(localeId, id => ensureNetsimI18n(id));
 
 onMounted(async () => {
     await store.loadProfileAndProgress();

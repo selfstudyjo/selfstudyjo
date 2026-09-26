@@ -303,6 +303,33 @@ const netsim: Catalogue = {
     '{v0} lessons across {v1} tracks, roughly {v2} hours of work. Every task is checked against your live simulated network — not against a multiple-choice answer.':
         '{v0} درساً في {v1} مسارات، بما يقارب {v2} ساعة عمل. تُتحقَّق كل مهمة في مقابل شبكتك المحاكاة الحيّة — لا في مقابل إجابة اختيار من متعدد.',
     '← Network Simulator': '← محاكي الشبكات',
+    // The netsim BADGES, reached as `$t(b.title)` from a variable in
+    // NetworkSimulator.vue -- so they appear in no source file as a
+    // literal and `check:i18n`'s orphan scan cannot see them. Verified
+    // positively against the exported table instead, the same way the
+    // sidebar's labels and the dashboard's badge copy are.
+    'First Packet': 'أول حزمة',
+    'Complete your first lesson': 'أكمل درسك الأول',
+    'Frame Wrangler': 'راعي الإطارات',
+    'Finish the Ethernet & Switching track': 'أكمل مسار Ethernet والتبديل',
+    'VLAN Master': 'خبير VLAN',
+    'Finish the VLANs & Trunking track': 'أكمل مسار VLAN والوصلات المجمّعة',
+    'Subnet Surgeon': 'جرّاح الشبكات الفرعية',
+    'Finish the IP Addressing track': 'أكمل مسار عنونة IP',
+    'Route Finder': 'مكتشف المسارات',
+    'Finish the Routing track': 'أكمل مسار التوجيه',
+    'Service Owner': 'مالك الخدمة',
+    'Finish the Core Network Services track': 'أكمل مسار خدمات الشبكة الأساسية',
+    'Airtime Architect': 'مهندس البث الهوائي',
+    'Finish the Wireless track': 'أكمل مسار الشبكات اللاسلكية',
+    'Gatekeeper': 'حارس البوابة',
+    'Finish the Security track': 'أكمل مسار الأمن',
+    'Fabric Builder': 'باني النسيج',
+    'Finish the Data Center & Cloud track': 'أكمل مسار مركز البيانات والسحابة',
+    'Fault Finder': 'مكتشف الأعطال',
+    'Finish the Troubleshooting track': 'أكمل مسار تشخيص الأعطال',
+    'Network Engineer': 'مهندس شبكات',
+    'Complete every lesson in every track': 'أكمل كل درس في كل مسار',
 };
 
 export default netsim;

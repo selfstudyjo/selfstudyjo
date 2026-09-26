@@ -67,14 +67,32 @@
 import type { LocaleId } from './locales';
 
 /**
+ * One translated value.
+ *
+ * A STRING for almost everything, and the other two shapes exist because app 11
+ * has text a reader needs that is not a scalar: a lab's `objectives` is a LIST
+ * and its `tasks` are keyed by task id. Rendered raw those were English on an
+ * Arabic page inside a workbench whose every other word was translated -- which
+ * is the half-translated failure working rule 41 exists to end, arriving through
+ * a field shape rather than through a missing field.
+ *
+ * Deliberately a small closed union rather than `unknown`: every existing helper
+ * in this file guards with `typeof x === 'string'` and therefore ignores the
+ * other two safely, and a union keeps `list()` and `nested()` honest about what
+ * they may be handed.
+ */
+export type TranslatedValue = string | string[] | Record<string, Record<string, string>>;
+
+/**
  * The map a backend sends, and the shape of any record that carries one.
  *
- * `Record<string, string>` rather than a per-service union: the field names are
- * the backend's business (`title`, `description`, `text`, `course_name`,
- * `content`, `name`, `exam_instructions`), and a union here would need editing
- * every time a service declares one more.
+ * `Record<string, TranslatedValue>` rather than a per-service union: the field
+ * names are the backend's business (`title`, `description`, `text`,
+ * `course_name`, `content`, `name`, `exam_instructions`, `objectives`, `tasks`),
+ * and a union here would need editing every time a service declares one more.
  */
-export type TranslationMap = Partial<Record<Exclude<LocaleId, 'en'>, Record<string, string>>>;
+export type TranslationMap =
+    Partial<Record<Exclude<LocaleId, 'en'>, Record<string, TranslatedValue>>>;
 
 /*
  * Deliberately NO index signature.
@@ -128,6 +146,70 @@ export function field(
     }
     const own = (record as Record<string, unknown>)[name];
     return typeof own === 'string' ? own : (own == null ? '' : String(own));
+}
+
+/**
+ * A LIST field, in one language, falling back to English ELEMENT BY ELEMENT.
+ *
+ * A lab's `objectives` is the case this exists for. The element-wise fallback is
+ * the whole design and it is not tidiness: a translation that came back with
+ * three objectives where the English has five must render five, three of them
+ * Arabic and two English, rather than five Arabic-or-nothing. A dropped
+ * objective is a requirement the student is never told about, and unlike a
+ * missing translation there is nothing on screen to say it happened -- the list
+ * just looks complete and is short.
+ *
+ * Same trade as `field`'s blank check and as `authoring.translation_mismatch`
+ * refusing a reflowed lesson: a mixed-language list is visibly incomplete, a
+ * truncated one is invisibly wrong.
+ */
+export function list(
+    record: Translatable | null | undefined,
+    name: string,
+    locale: LocaleId,
+): string[] {
+    const own = (record as Record<string, unknown> | undefined)?.[name];
+    const english: string[] = Array.isArray(own)
+        ? own.map(v => (typeof v === 'string' ? v : String(v ?? '')))
+        : [];
+    if (!record || locale === BASE_LOCALE) return english;
+    const entry = (record.translations as Record<string, unknown> | undefined)?.[locale];
+    const translated = (entry as Record<string, unknown> | undefined)?.[name];
+    if (!Array.isArray(translated)) return english;
+    return english.map((text, index) => {
+        const candidate = translated[index];
+        return typeof candidate === 'string' && candidate.trim() ? candidate : text;
+    });
+}
+
+/**
+ * A field of a KEYED sub-record -- `nested(lab, 'tasks', task.id, 'title')`.
+ *
+ * Keyed on the sub-record's own id rather than on its position, because a lab's
+ * task list is reordered by an operator and a translation attached to an index
+ * would silently move onto a different task. A task id is what `tasks_done` is
+ * recorded against, so it is the one identifier that cannot drift.
+ */
+export function nested(
+    record: Translatable | null | undefined,
+    name: string,
+    key: string,
+    sub: string,
+    locale: LocaleId,
+    fallback = '',
+): string {
+    if (record && locale !== BASE_LOCALE && key) {
+        const entry = (record.translations as Record<string, unknown> | undefined)?.[locale];
+        const group = (entry as Record<string, unknown> | undefined)?.[name];
+        if (group && typeof group === 'object' && !Array.isArray(group)) {
+            const row = (group as Record<string, unknown>)[key];
+            if (row && typeof row === 'object') {
+                const text = (row as Record<string, unknown>)[sub];
+                if (typeof text === 'string' && text.trim()) return text;
+            }
+        }
+    }
+    return fallback;
 }
 
 /** `field(record, 'title', locale)`, which is most of the call sites. */

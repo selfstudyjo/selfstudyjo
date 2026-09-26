@@ -99,10 +99,13 @@
 
           <div v-show="activePane === '__brief'" class="sl-bench__panel">
             <LabBrief :text="$td(lab, 'brief')" />
-            <div v-if="lab.objectives.length" class="sl-objectives">
+            <div v-if="objectives.length" class="sl-objectives">
               <h4>{{ $t('By the end of this lab') }}</h4>
               <ul>
-                <li v-for="(item, index) in lab.objectives" :key="index">{{ item }}</li>
+                <!-- `$tdl`, not `lab.objectives`: element-wise, so a partial
+                     translation renders every objective rather than only the
+                     ones that came back. See `list()` in i18n/records.ts. -->
+                <li v-for="(item, index) in objectives" :key="index">{{ item }}</li>
               </ul>
             </div>
           </div>
@@ -320,7 +323,7 @@
           />
 
           <LabTasks
-            :grade="grade"
+            :grade="localGrade"
             :busy="grading"
             :report="report"
             @grade="grade0"
@@ -377,7 +380,7 @@ import { useRoute } from 'vue-router';
 import {
   AlertTriangle, Crown, ExternalLink, FlaskConical, RotateCcw, RotateCw,
 } from 'lucide-vue-next';
-import { t } from '@/i18n/runtime';
+import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
 import { labService } from '@/services/lab.service';
 import { labsService } from '@/services/labs.service';
@@ -451,6 +454,43 @@ const grade = ref<LabGrade>({
   tasks: [], done: 0, total: 0, earned: 0, possible: 0, percent: 0,
   status: 'not_started', unavailable: [],
 });
+/**
+ * The lab's objectives in the reader's language, element-wise.
+ *
+ * A computed rather than a mapped copy of the record, so switching language
+ * re-renders them without a refetch -- the lab already carries all three.
+ */
+const objectives = computed<string[]>(() => tdl(lab.value, 'objectives'));
+
+/**
+ * `grade`, with every task's own text in the reader's language.
+ *
+ * TRANSLATED HERE RATHER THAN IN THE BACKEND'S GRADE RESPONSE, and rather than
+ * inside `LabTasks`, for three reasons. The grade payload is recomputed on every
+ * `Check my work`, so translating it upstream would put the reader's language
+ * into a grading contract that has nothing to do with language. `LabTasks` is
+ * handed a `LabGrade` and not the lab, so it has no `translations` map to read.
+ * And doing it once here means the task list, the numbered list the voice reader
+ * speaks, and the question `Ask the tutor` fills in are all the same words --
+ * three places that would otherwise drift.
+ *
+ * Keyed on `task.id`, never on position: a task list is reordered by whoever
+ * edits the lab, and `tasks_done` is recorded against the id.
+ */
+const localGrade = computed<LabGrade>(() => {
+  const source = grade.value;
+  if (!lab.value) return source;
+  return {
+    ...source,
+    tasks: source.tasks.map(task => ({
+      ...task,
+      title: tdn(lab.value, 'tasks', task.id, 'title', task.title),
+      detail: tdn(lab.value, 'tasks', task.id, 'detail', task.detail || ''),
+      hint: tdn(lab.value, 'tasks', task.id, 'hint', task.hint || ''),
+    })),
+  };
+});
+
 const views = ref<Record<string, any>>({});
 const webSource = ref<{ html?: string; css?: string; js?: string }>({});
 const loading = ref(true);

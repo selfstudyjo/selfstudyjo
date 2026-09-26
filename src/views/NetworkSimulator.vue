@@ -79,9 +79,9 @@
           <span
             v-for="b in BADGES" :key="b.id"
             class="ns-badge-chip" :class="{ earned: progress.badges.includes(b.id) }"
-            :title="b.description"
+            :title="$t(b.description)"
           >
-            <DeviceIcon :name="b.icon" :size="14" /> {{ b.title }}
+            <DeviceIcon :name="b.icon" :size="14" /> {{ $t(b.title) }}
           </span>
         </div>
       </div>

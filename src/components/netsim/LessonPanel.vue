@@ -138,6 +138,8 @@ import ReadAloud from '@/components/ReadAloud.vue';
 import { definitions, numbered } from '@/utils/reader';
 import { useNetSimStore } from '@/store/netsim';
 import { getLesson, nextLesson, TRACKS } from '@/netsim/lessons';
+import { ensureNetsimI18n, overlayLesson, overlayTrack } from '@/netsim/i18n';
+import { localeId } from '@/i18n/runtime';
 import { marked } from 'marked';
 
 const store = useNetSimStore();
@@ -145,9 +147,17 @@ const router = useRouter();
 const view = ref<'tasks' | 'theory' | 'commands' | 'quiz'>('tasks');
 const answers = ref<Record<number, number>>({});
 
-const lesson = computed(() => (store.activeLessonId ? getLesson(store.activeLessonId) : undefined));
+// Overlaid, so the studio's lesson panel reads in the same language as the
+// catalogue page it was opened from. See src/netsim/i18n/index.ts.
+const lesson = computed(() => {
+  const found = store.activeLessonId ? getLesson(store.activeLessonId) : undefined;
+  return found ? overlayLesson(found) : undefined;
+});
 const next = computed(() => (lesson.value ? nextLesson(lesson.value.id) : undefined));
-const trackTitle = computed(() => TRACKS.find(t => t.id === lesson.value?.trackId)?.title || '');
+const trackTitle = computed(() => {
+  const found = TRACKS.find(t => t.id === lesson.value?.trackId);
+  return found ? overlayTrack(found).title : '';
+});
 
 /**
  * The theory as something a voice can read: the objectives, then the write-up,
@@ -169,6 +179,11 @@ const theoryParts = computed<string[]>(() => {
 });
 
 watch(() => lesson.value?.id, () => { answers.value = {}; view.value = 'tasks'; });
+
+// The studio can be the FIRST netsim route a reader opens (a lab embeds it),
+// so this cannot rely on the catalogue page having loaded the chunk.
+ensureNetsimI18n(localeId.value);
+watch(localeId, id => ensureNetsimI18n(id));
 
 function resultFor(id: string) {
     return store.lessonResults.find(r => r.id === id);

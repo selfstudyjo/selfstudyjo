@@ -65,7 +65,8 @@
     "shoot:activity": "npm run build:leaderboard-preview && node tools/leaderboard-preview/shoot-activity.mjs",
     "shoot:assistant": "npm run build:assistant-preview && node tools/assistant-preview/serve.mjs",
     "shoot:draw": "npm run build:draw-preview && node tools/draw-preview/shoot.mjs",
-    "shoot:reader": "npm run build:reader-preview && node tools/reader-preview/shoot.mjs"
+    "shoot:reader": "npm run build:reader-preview && node tools/reader-preview/shoot.mjs",
+    "netsim:extract": "vite build --config tools/netsim-i18n/vite.config.ts && node tools/netsim-i18n/dist/extract.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

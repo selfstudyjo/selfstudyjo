@@ -80,6 +80,9 @@ import zhReader from '../../src/i18n/messages/zh/reader';
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
 } from '../../src/navigation/appNav';
+import { BADGES as NETSIM_BADGES, LESSONS as NETSIM_LESSONS, TRACKS as NETSIM_TRACKS } from '../../src/netsim/lessons';
+import netsimAr from '../../src/netsim/i18n/ar.json';
+import netsimZh from '../../src/netsim/i18n/zh.json';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { PRACTICE_KEYS } from '../../src/utils/practiceIntegrity';
 import { TOUR_KEYS } from '../../src/utils/tourSteps';
@@ -654,6 +657,17 @@ const dynamicStrings = new Set<string>([
     */
     ...LAB_STRINGS,
     /*
+      The Network Simulator's own achievement badges.
+
+      `$t(b.title)` / `$t(b.description)` over a `v-for` in
+      NetworkSimulator.vue, so neither literal appears in any source file and
+      the orphan scan below would report all 22. DERIVED by reading `BADGES`
+      rather than hand-listed, for the reason LAB_STRINGS is: a copy goes stale
+      the day somebody renames a badge, and the symptom is a chip that silently
+      reverts to English in both languages.
+    */
+    ...NETSIM_BADGES.flatMap(b => [b.title, b.description]),
+    /*
       The practice ledger's own copy: every action's label and the reason it is
       worth what it is worth, the strike sentences, the reprimand, the lab
       scoring rules, the kind chips and every "why this earned that" line.
@@ -816,6 +830,110 @@ ok('no `$t(` inside a <script> block or a .ts file',
 /* ------------------------------------------------------------------ *
  * 9. Orphans
  * ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ *
+ * 8b. The netsim badges are covered in both languages
+ * ------------------------------------------------------------------ */
+
+section('8b. Every Network Simulator badge is translated');
+
+/**
+ * The POSITIVE half of exempting them from the orphan scan.
+ *
+ * Check 9 cannot see these keys, so without this they would be exempt from
+ * everything: a badge added without its copy would render an English chip on an
+ * otherwise Arabic page and no check anywhere would say so. Verified against
+ * the exported table, exactly as check 7 verifies the sidebar's labels and as
+ * `BADGE_STRINGS` covers the dashboard's.
+ */
+for (const [id, catalogue] of CATALOGUES) {
+    const gaps = NETSIM_BADGES.flatMap(b => [b.title, b.description])
+        .filter(key => !(catalogue as Record<string, unknown>)[key]);
+    ok(`${id}: all ${NETSIM_BADGES.length} netsim badges have a name and a requirement`,
+        gaps.length === 0,
+        gaps.slice(0, 8).map(k => JSON.stringify(k)).join(', '));
+}
+
+/* ------------------------------------------------------------------ *
+ * 8c. The netsim curriculum catalogue cannot go stale
+ * ------------------------------------------------------------------ */
+
+section('8c. The Network Simulator curriculum catalogue is current');
+
+/**
+ * The netsim lessons are a compiled-in TypeScript catalogue with their
+ * translations in a JSON file beside them, keyed on the lesson id
+ * (`src/netsim/i18n/`). That keying is what makes this check necessary: rename
+ * a lesson, reorder its objectives or add a quiz option and the JSON does not
+ * become WRONG, it becomes UNREACHABLE -- the overlay finds no entry, every
+ * accessor falls back to English, and the page renders exactly as it does for a
+ * reader who has not been translated yet. There is no error, no warning and
+ * nothing different to look at.
+ *
+ * So: every id in the catalogue must still be a lesson, and every list must
+ * still be the length the English is. A LONGER translated list is the one that
+ * matters -- `pickList` maps over the English, so extra elements are silently
+ * dropped and a quiz option nobody can pick looks like a translation that simply
+ * omitted it.
+ *
+ * A MISSING entry is deliberately NOT a failure. These files are filled in over
+ * many runs against a rate-limited provider, so "not translated yet" is the
+ * normal state of a partly-finished language and must not gate the build. What
+ * is checked is that what IS there is reachable and the right shape.
+ */
+const netsimLessonIds = new Set(NETSIM_LESSONS.map(l => l.id));
+const netsimTrackIds = new Set(NETSIM_TRACKS.map(t => t.id));
+
+for (const [id, cat] of [['ar', netsimAr], ['zh', netsimZh]] as const) {
+    const lessons = (cat as { lessons?: Record<string, any> }).lessons || {};
+    const tracks = (cat as { tracks?: Record<string, any> }).tracks || {};
+
+    const strayLessons = Object.keys(lessons).filter(k => !netsimLessonIds.has(k));
+    ok(`${id}: every netsim lesson it translates still exists`,
+        strayLessons.length === 0,
+        strayLessons.slice(0, 6).join(', '));
+
+    const strayTracks = Object.keys(tracks).filter(k => !netsimTrackIds.has(k));
+    ok(`${id}: every netsim track it translates still exists`,
+        strayTracks.length === 0,
+        strayTracks.slice(0, 6).join(', '));
+
+    const badShapes: string[] = [];
+    const badTasks: string[] = [];
+    for (const lesson of NETSIM_LESSONS) {
+        const entry = lessons[lesson.id];
+        if (!entry) continue;
+        if (Array.isArray(entry.objectives)
+            && entry.objectives.length > lesson.objectives.length) {
+            badShapes.push(`${lesson.id}/objectives`);
+        }
+        if (Array.isArray(entry.keyTerms)
+            && entry.keyTerms.length > lesson.keyTerms.length) {
+            badShapes.push(`${lesson.id}/keyTerms`);
+        }
+        if (Array.isArray(entry.quiz) && entry.quiz.length > (lesson.quiz?.length || 0)) {
+            badShapes.push(`${lesson.id}/quiz`);
+        }
+        (entry.quiz || []).forEach((q: any, i: number) => {
+            const English = lesson.quiz?.[i];
+            if (English && Array.isArray(q?.options)
+                && q.options.length > English.options.length) {
+                badShapes.push(`${lesson.id}/quiz/${i}/options`);
+            }
+        });
+        // Tasks are KEYED ON TASK ID, so a key that is not one is a translation
+        // attached to nothing -- which is what a positional catalogue would
+        // produce and is invisible on the page.
+        const ids = new Set(lesson.tasks.map(t => t.id));
+        for (const key of Object.keys(entry.tasks || {})) {
+            if (!ids.has(key)) badTasks.push(`${lesson.id}/${key}`);
+        }
+    }
+    ok(`${id}: no translated list is longer than the English it overlays`,
+        badShapes.length === 0, badShapes.slice(0, 6).join(', '));
+    ok(`${id}: every translated task id is a real task of that lesson`,
+        badTasks.length === 0, badTasks.slice(0, 6).join(', '));
+}
 
 section('9. No catalogue entry has been orphaned by a reword');
 

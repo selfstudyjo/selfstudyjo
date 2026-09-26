@@ -46,6 +46,7 @@ import {
     BASE_LOCALE, type Translatable,
 } from '../../src/i18n/records';
 import { LOCALES, type LocaleId } from '../../src/i18n/locales';
+import { listCases } from './lists';
 
 let failures = 0;
 let checks = 0;
@@ -283,6 +284,13 @@ ok('...and an untranslated field still falls back to English',
 setLocale('en');
 ok('and back in English it is the record\'s own field',
    td(full) === 'Web Technologies');
+
+/* ------------------------------------------------------------------ *
+ * Lists and keyed sub-records -- app 11's objectives and tasks
+ * ------------------------------------------------------------------ */
+
+section('Lists and keyed sub-records');
+for (const c of listCases()) ok(c.label, c.pass, c.detail || '');
 
 /* ------------------------------------------------------------------ *
  * Result
