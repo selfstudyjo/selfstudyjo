@@ -53,8 +53,8 @@ import {
     dominantLanguage, estimateMs, type Passage, type ReaderLang, type ReadingPlan,
 } from '@/utils/reader';
 import {
-    NO_SERVER, describe as describeSpeech, planSpeech, serverVoicesFor,
-    type ServerVoices,
+    NO_SERVER, describe as describeSpeech, deviceCanSpeak, planSpeech,
+    serverVoicesFor, type ServerVoices,
 } from '@/utils/roomSpeech';
 import { createSpeechAudio } from '@/utils/speechAudio';
 import { shapeRatio } from '@/components/newscast/voiceShaper';
@@ -152,16 +152,32 @@ function loadVoices(): void {
 }
 
 /**
- * Read the device list and ask app 36 what it can do.
+ * Read the device list and, ONLY IF IT IS NEEDED, ask app 36 what it can do.
  *
  * `getVoices()` is empty on its first synchronous call in every browser -- the
  * list arrives asynchronously and `voiceschanged` fills it in, and it can fire
  * more than once. Casting without this gets a null and the platform's default
  * robotic voice, in whatever language it happens to be.
+ *
+ * THE CAPABILITY PROBE IS SKIPPED WHEN THE DEVICE CAN ALREADY SPEAK EVERY
+ * LANGUAGE IN THE PLAN, and that is the whole reason `deviceCanSpeak` exists in
+ * `roomSpeech`: it is a round trip to a PythonAnywhere replica whose first
+ * answer of the day takes ~20 seconds, and it sat in front of `run()` on an
+ * `await`. So on a machine with a perfectly good local voice the reader spent
+ * twenty seconds deciding not to use the server -- twenty seconds of silence
+ * after a press, which is the one number `SPEECH_BUDGET` is tuned around and
+ * the commonest reason somebody presses a play button twice.
+ *
+ * It is still awaited when it IS needed, because `planSpeech` cannot choose
+ * between the server route and the platform route without the answer -- and
+ * getting that wrong is a silent `speechSynthesis` call for a language the
+ * machine has no voice for, which is the noise this whole module exists to
+ * avoid.
  */
-async function probe(): Promise<void> {
+async function probe(languages: ReaderLang[]): Promise<void> {
     loadVoices();
     if (probed) return;
+    if (languages.every(lang => deviceCanSpeak(voices.value, lang))) return;
     probed = true;
     try {
         capabilities = await newsService.speechCapabilities();
@@ -455,7 +471,7 @@ async function read(id: string, next: ReadingPlan): Promise<void> {
     total.value = next.passages.length;
     state.value = 'loading';
 
-    await probe();
+    await probe(next.languages);
     if (mine !== turn) return;
     await run(mine, 0);
 }

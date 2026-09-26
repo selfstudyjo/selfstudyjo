@@ -187,6 +187,16 @@ MUTATIONS = [
      '        if (mine !== turn) return;\n        index.value = at;',
      '        index.value = at;'),
 
+    ('the capability probe is spent even when the device has the voices',
+     'src/composables/useReader.ts',
+     '    if (languages.every(lang => deviceCanSpeak(voices.value, lang))) return;',
+     '    /* always probe */'),
+
+    ('the probe is asked about nothing rather than the plan',
+     'src/composables/useReader.ts',
+     '    await probe(next.languages);',
+     '    await probe([]);'),
+
     ('the audio context is no longer primed inside the click',
      'src/composables/useReader.ts',
      '    audio.prime();\n    error.value = \'\';',

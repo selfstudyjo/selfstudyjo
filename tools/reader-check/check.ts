@@ -533,6 +533,16 @@ console.log('\n14. The composable cannot leave a voice running');
     // An AudioContext created outside a user gesture starts suspended and every
     // clip on it is silently ignored -- a section that reads in total silence.
     check('read() primes the audio context', /audio\.prime\(\)/.test(js));
+
+    // THE CAPABILITY PROBE IS NOT SPENT WHEN THE DEVICE CAN ALREADY SPEAK. It
+    // is a round trip to a replica whose first answer of the day takes ~20
+    // seconds and it sits on an `await` in front of the first word -- which is
+    // the one number the whole chunking budget is tuned around.
+    check('the capability probe is skipped when the device has the voices',
+        /if \(languages\.every\(lang => deviceCanSpeak\(voices\.value, lang\)\)\) return;/
+            .test(js));
+    check('and it is asked about the languages the PLAN actually holds',
+        /await probe\(next\.languages\)/.test(js));
     const readBody = js.slice(js.indexOf('async function read('));
     check('and primes it before anything is awaited',
         readBody.indexOf('audio.prime()') < readBody.indexOf('await '),
