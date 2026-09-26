@@ -32,6 +32,21 @@
               <span class="section-count">
                 {{ $t('{v0} steps', { v0: runbook.sections?.length || 0 }) }}
               </span>
+              <!--
+                READ THE WHOLE RUNBOOK. `spokenParts` is what decides which
+                halves of it are said: a CODE section's content is skipped,
+                because `switchport mode trunk` read aloud is somewhere between
+                unintelligible and misleading and the student can see it on the
+                screen. Its HEADING is prose and is read, so the procedure still
+                has all its steps.
+              -->
+              <ReadAloud
+                v-if="spokenParts.length"
+                id="runbook-all"
+                class="runbook-read"
+                :parts="spokenParts"
+                :title="$td(runbook)"
+              />
             </div>
           </div>
         </div>
@@ -55,6 +70,20 @@
               <div v-if="section.title" class="section-title">
                 {{ $td(section) }}
               </div>
+              <!--
+                The id is the SECTION's own id, which app 17 mints and which is
+                stable across a reorder -- unlike the index, which would move
+                the transport bar to a different step the moment somebody
+                changed the order of the procedure.
+              -->
+              <ReadAloud
+                :id="`runbook-step-${section.id}`"
+                class="runbook-read runbook-read--step"
+                tone="inherit"
+                :parts="stepParts(section)"
+                :title="$td(section) || $t('{v0} steps', { v0: index + 1 })"
+                compact
+              />
             </div>
 
             <!-- Section Content -->
@@ -102,9 +131,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { runbookService, type Runbook } from '@/services/runbook.service';
+import ReadAloud from '@/components/ReadAloud.vue';
+import { td } from '@/i18n/runtime';
+import { runbookService, type Runbook, type RunBookSection } from '@/services/runbook.service';
+
+/**
+ * WHAT OF A STEP IS SAID ALOUD, and what is deliberately not.
+ *
+ * A runbook section is either prose or a code block, and app 17 says which with
+ * `is_code_block`. The prose branch is translatable and is read; the code branch
+ * is neither. That is the same split the template already makes for rendering
+ * and the same rule `rtl.css` follows when it pins every `<pre>`
+ * left-to-right -- `python -m venv LabExam` is the same text in every language,
+ * and read aloud it is a string of letters a student cannot type back.
+ *
+ * The heading is read either way, because it is prose and because without it a
+ * procedure read aloud loses the step it is on.
+ */
+function stepParts(section: RunBookSection): string[] {
+    const parts = [td(section)];
+    if (!section.is_code_block) parts.push(td(section, 'content'));
+    return parts.filter(Boolean);
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -114,6 +164,10 @@ const error = ref<string | null>(null);
 const copiedSectionId = ref<number | null>(null);
 
 const runbookId = Number(route.params.id);
+
+/** Every step's spoken half, in order, for the whole-runbook control. */
+const spokenParts = computed(() =>
+    (runbook.value?.sections || []).flatMap(stepParts));
 
 const fetchRunbook = async () => {
   if (isNaN(runbookId) || runbookId <= 0) {

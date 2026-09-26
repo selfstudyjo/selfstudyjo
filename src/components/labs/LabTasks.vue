@@ -7,11 +7,27 @@
           {{ $t('{v0} of {v1} done', { v0: grade.done, v1: grade.total }) }}
         </p>
       </div>
-      <button type="button" class="sl-btn sl-btn--primary sl-btn--sm"
-              :disabled="busy" @click="$emit('grade')">
-        <CheckCheck class="sl-i" />
-        {{ busy ? $t('Checking...') : $t('Check my work') }}
-      </button>
+      <div class="sl-tasks__head-actions">
+        <!--
+          READ THE OBJECTIVES ALOUD.
+
+          One control for the whole list rather than one per task: a task is a
+          single line, and a fourth button on a card that already carries Hint,
+          Ask the tutor and I have done this is clutter on the one row a student
+          works from. What is read is each task's title and its detail -- the
+          detail is where the requirement actually is (`local.full_name = ...`),
+          the title being only a label -- and the HINTS are left out, because a
+          hint is a thing somebody chooses to reveal and reading them all aloud
+          would hand over every answer in the lab to anybody who pressed play.
+        -->
+        <ReadAloud v-if="spokenTasks.length" id="lab-tasks"
+                   :parts="spokenTasks" :title="$t('Tasks')" compact />
+        <button type="button" class="sl-btn sl-btn--primary sl-btn--sm"
+                :disabled="busy" @click="$emit('grade')">
+          <CheckCheck class="sl-i" />
+          {{ busy ? $t('Checking...') : $t('Check my work') }}
+        </button>
+      </div>
     </div>
 
     <!-- The meter, and the reason it is a meter rather than a number.
@@ -156,6 +172,7 @@ import { computed, ref } from 'vue';
 import {
   AlertTriangle, Check, CheckCheck, Circle, Lightbulb, Sparkles,
 } from 'lucide-vue-next';
+import ReadAloud from '@/components/ReadAloud.vue';
 import {
   TASK_STATUS_LABELS, type GradeReport, type LabGrade, type LabTask,
   type TaskStatus,
@@ -167,6 +184,25 @@ const props = defineProps<{
   /** What the last grading run did. See `gradeReport`. */
   report?: GradeReport | null;
 }>();
+
+/**
+ * The task list as something a voice can read: each title, then its detail.
+ *
+ * NUMBERED, because a spoken list with no numbers is a paragraph -- and these
+ * are steps, so a student listening needs to know which one they are on. The
+ * numbering is the position in the list rather than anything stored, which is
+ * what the screen shows too (`<ol>`).
+ *
+ * The HINTS are deliberately absent. A hint is revealed one at a time by a
+ * student who chose to ask for it; reading them all aloud would hand over every
+ * answer in the lab to anybody who pressed play, which is the same line
+ * `_generate_lesson_content.py` refuses to cross for an exam paper.
+ */
+const spokenTasks = computed(() => props.grade.tasks.flatMap((task, at) => {
+  const lines = [`${at + 1}. ${task.title}`];
+  if (task.detail) lines.push(task.detail);
+  return lines;
+}));
 defineEmits<{
   (event: 'grade'): void;
   (event: 'ask', task: LabTask): void;

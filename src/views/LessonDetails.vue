@@ -158,6 +158,20 @@
                 <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
               </svg>
               {{ $t('Lesson content') }}
+              <!--
+                READ THE WHOLE WRITE-UP. The per-heading controls below are for
+                coming back to one part; this is for hearing it through. Both
+                drive ONE reader (the state in `useReader` is module-level), so
+                pressing either stops whatever was already reading rather than
+                talking over it.
+              -->
+              <ReadAloud
+                v-if="contentBlocks.length"
+                id="lesson-write-up"
+                class="lesson-read"
+                :blocks="contentBlocks"
+                :title="$td(lesson)"
+              />
             </h2>
 
             <!--
@@ -168,7 +182,22 @@
             -->
             <div v-if="contentBlocks.length" class="lesson-body">
               <template v-for="(block, index) in contentBlocks" :key="index">
-                <h3 v-if="block.kind === 'heading'" class="lesson-h3">{{ block.text }}</h3>
+                <h3 v-if="block.kind === 'heading'" class="lesson-h3">
+                  <span class="lesson-h3-text">{{ block.text }}</span>
+                  <!--
+                    The id is the heading's POSITION and not its text: two
+                    sections of a long write-up can legitimately be called
+                    "Verification", and two buttons sharing an id would both
+                    render the playing state and both teleport a transport bar.
+                  -->
+                  <ReadAloud
+                    :id="`lesson-section-${index}`"
+                    class="lesson-read lesson-read--inline"
+                    :blocks="sectionBlocks.get(index)"
+                    :title="block.text"
+                    compact
+                  />
+                </h3>
 
                 <aside v-else-if="block.kind === 'note'" class="lesson-note">
                   <RichText :text="block.text" />
@@ -437,6 +466,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FlaskConical } from 'lucide-vue-next';
 
+import ReadAloud from '@/components/ReadAloud.vue';
 import RichText from '@/components/RichText.vue';
 import { rel, td } from '@/i18n/runtime';
 import { courseService, type Comment, type Course, type Homework, type Lesson } from '@/services/course.service';
@@ -509,6 +539,43 @@ const headings = computed(() =>
     lesson.value ? outline(td(lesson.value, 'content')) : []);
 const minutes = computed(() =>
     lesson.value ? readingMinutes(td(lesson.value, 'content')) : 0);
+
+/**
+ * THE BLOCKS THAT BELONG TO ONE HEADING, for the read-aloud button beside it.
+ *
+ * A write-up here runs to ~3500 words under half a dozen `##` headings, and
+ * "read the whole lesson" is the wrong granularity for somebody who has come
+ * back to one part of it. So each heading gets its own control, and this is what
+ * it reads: the heading itself, then everything under it up to the NEXT heading.
+ *
+ * Grouped here rather than by restructuring the render into nested sections,
+ * because the flat `v-for` is what keeps the parser the single authority on
+ * where a block begins -- and a second traversal that disagreed with it would
+ * put a button on a heading whose section the voice then read differently from
+ * what is under it on screen.
+ *
+ * A COMPUTED MAP RATHER THAN A FUNCTION CALLED FROM THE TEMPLATE, and that is
+ * not a micro-optimisation: a function in a binding hands the child a NEW ARRAY
+ * on every render of this page, so the prop identity changes every time and
+ * `ReadAloud`'s own `plan` computed re-parses and re-chunks that whole section
+ * -- six sections of a 3500-word write-up, every time anything on the page
+ * moves (the comments arriving, a quiz link resolving). Keyed off
+ * `contentBlocks`, the arrays are stable until the write-up itself changes and
+ * each section is planned once.
+ */
+const sectionBlocks = computed(() => {
+    const all = contentBlocks.value;
+    const out = new Map<number, typeof all>();
+    for (let at = 0; at < all.length; at++) {
+        if (all[at]!.kind !== 'heading') continue;
+        const group = [all[at]!];
+        for (let i = at + 1; i < all.length && all[i]!.kind !== 'heading'; i++) {
+            group.push(all[i]!);
+        }
+        out.set(at, group);
+    }
+    return out;
+});
 
 /**
  * The lab this lesson practises, or '' - read once so the template does not

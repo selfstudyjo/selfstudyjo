@@ -75,6 +75,7 @@ import labs from './labs';
 import practice from './practice';
 import tour from './tour';
 import assistant from './assistant';
+import reader from './reader';
 
 /**
  * Assembled in one place so a duplicate key is a real, visible conflict rather
@@ -108,6 +109,12 @@ const ar: Catalogue = {
     // every page. She is also the one voice on the platform that a reader who
     // cannot read the interface will reach for first.
     ...assistant,
+    // The read-aloud control. Its own area for the reason the header gives -
+    // "read" here is the imperative "read this to me" rather than the
+    // reader's own act of reading, and "pause" is pausing a VOICE rather
+    // than a lab or a timer. It is also the one catalogue whose reader may
+    // not be able to see the screen at all.
+    ...reader,
 };
 
 export default ar;

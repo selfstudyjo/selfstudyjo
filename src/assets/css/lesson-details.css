@@ -351,10 +351,38 @@
 }
 
 .lesson-h3 {
+    /* A flex row now, because each heading carries its own read-aloud control.
+       `baseline` rather than `center` so the button sits on the heading's
+       baseline whatever the fluid type scale resolves to at this width. */
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
     margin: 0.5rem 0 0;
     font-size: clamp(1rem, 2vw, 1.12rem);
     color: var(--sfs-text, #e6e8f0);
+}
+
+/* The heading TEXT keeps the bidi rule that used to be on the heading itself.
+   `unicode-bidi` acts on an element's own INLINE content, so left on the flex
+   container it would reach nothing -- a block-level child starts a new bidi
+   paragraph. That is the same mistake `.plan-description` made, arriving from
+   the other direction: the rule was right and the element was wrong. */
+.lesson-h3-text {
+    min-width: 0;
     unicode-bidi: plaintext;
+}
+
+/* The control on the "Lesson content" heading goes to the far edge; the ones on
+   the section headings sit right after the text they belong to. A logical
+   margin, so both are correct in Arabic without a second declaration. */
+.lesson-read {
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+}
+
+.lesson-read--inline {
+    margin-inline-start: 0;
 }
 
 .lesson-p {

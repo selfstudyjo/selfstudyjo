@@ -1333,3 +1333,12 @@
     .ns-test-form { grid-template-columns: 1fr; }
     .ns-toasts { left: 14px; right: 14px; max-width: none; }
 }
+
+/* The read-aloud control over a lesson's theory. `ns-` prefixed like every
+   selector in this file -- the namespace that makes it safe for this sheet to
+   be loaded globally, and which `check:cssleaks` accepts by name. */
+.ns-theory-read {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: 0.4rem;
+}

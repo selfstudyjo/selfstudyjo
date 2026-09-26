@@ -195,3 +195,8 @@ tools/assistant-preview/shots/
 # profile, regenerated with `npm run shoot:draw`. `tools/*/dist/` is already
 # covered by the bare `dist` rule above; the shots are not.
 tools/draw-preview/shots/
+
+# Screenshots of the read-aloud control, regenerated with `npm run shoot:reader`.
+# `tools/*/dist/` is already covered by the bare `dist` rule above; the shots
+# are not, and 30 PNGs of a transport bar per run is not history worth keeping.
+tools/reader-preview/shots/

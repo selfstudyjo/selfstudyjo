@@ -70,6 +70,22 @@
 
       <!-- ── theory ── -->
       <div v-else-if="view === 'theory'" class="ns-lesson-body">
+        <!--
+          READ THE THEORY ALOUD, in the studio.
+
+          The side panel is where a student actually works: the canvas is in
+          front of them and the theory is in a narrow column beside it, which is
+          the one place on this platform where being read to instead of reading
+          is obviously better -- their hands are on the topology.
+
+          These lessons are English only (a compiled-in catalogue, no
+          translation mechanism), so on an Arabic or Chinese interface the
+          control names the language it is reading in rather than pretending.
+        -->
+        <div class="ns-theory-read">
+          <ReadAloud :id="`ns-panel-${lesson.id}`"
+                     :parts="theoryParts" :title="lesson.title" />
+        </div>
         <ul class="ns-objectives">
           <li v-for="(o, i) in lesson.objectives" :key="i">{{ o }}</li>
         </ul>
@@ -118,6 +134,8 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DeviceIcon from './DeviceIcon.vue';
+import ReadAloud from '@/components/ReadAloud.vue';
+import { definitions, numbered } from '@/utils/reader';
 import { useNetSimStore } from '@/store/netsim';
 import { getLesson, nextLesson, TRACKS } from '@/netsim/lessons';
 import { marked } from 'marked';
@@ -130,6 +148,25 @@ const answers = ref<Record<number, number>>({});
 const lesson = computed(() => (store.activeLessonId ? getLesson(store.activeLessonId) : undefined));
 const next = computed(() => (lesson.value ? nextLesson(lesson.value.id) : undefined));
 const trackTitle = computed(() => TRACKS.find(t => t.id === lesson.value?.trackId)?.title || '');
+
+/**
+ * The theory as something a voice can read: the objectives, then the write-up,
+ * then the key terms.
+ *
+ * `numbered` and `definitions` are the reader's, not this component's, because
+ * both are DECISIONS -- a spoken list needs numbers or it is a paragraph, and a
+ * definition list read as bare alternating fragments is unattributable in
+ * exactly the way a table is. Both live where `check:reader` can drive them.
+ */
+const theoryParts = computed<string[]>(() => {
+    const it = lesson.value;
+    if (!it) return [];
+    return [
+        numbered(it.objectives || []),
+        it.theory,
+        definitions(it.keyTerms || []),
+    ].filter(Boolean);
+});
 
 watch(() => lesson.value?.id, () => { answers.value = {}; view.value = 'tasks'; });
 

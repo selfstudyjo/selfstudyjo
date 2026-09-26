@@ -97,6 +97,26 @@
               </div>
 
               <div v-if="readMode === l.id" class="ns-theory-block">
+                <!--
+                  READ THE THEORY ALOUD.
+
+                  These lessons are a compiled-in TypeScript catalogue
+                  (`src/netsim/lessons.ts`) and every word of them is ENGLISH --
+                  there is no translation mechanism for them at all. So an
+                  Arabic or Chinese reader pressing this hears English, which is
+                  the best available answer and is baffling unless the control
+                  says so: `ReadAloud` detects the script and names the language
+                  it is reading in. That declaration is the whole reason it is
+                  acceptable (working rule 21).
+
+                  The objectives lead the theory, because they are what the
+                  lesson is FOR and a listener who has not read the card needs
+                  them first. `planParts` language-detects each piece on its own.
+                -->
+                <div class="ns-theory-read">
+                  <ReadAloud :id="`ns-theory-${l.id}`"
+                             :parts="theoryParts(l)" :title="l.title" />
+                </div>
                 <div class="ns-theory" v-html="renderMd(l.theory)"></div>
 
                 <div v-if="l.quiz?.length" class="ns-quiz">
@@ -168,6 +188,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import DeviceIcon from '@/components/netsim/DeviceIcon.vue';
+import ReadAloud from '@/components/ReadAloud.vue';
+import { definitions, numbered } from '@/utils/reader';
 import { useNetSimStore } from '@/store/netsim';
 import { TRACKS, lessonsByTrack, TOTAL_LESSONS, TOTAL_MINUTES } from '@/netsim/lessons';
 import { netsimAi } from '@/services/netsim-ai.service';
@@ -176,6 +198,24 @@ import type { Lesson, LayerId } from '@/netsim/types';
 import { marked } from 'marked';
 
 const store = useNetSimStore();
+
+/**
+ * A lesson as something a voice can read: what it is for, then the theory, then
+ * its key terms.
+ *
+ * `numbered` and `definitions` are the reader's, not this view's, because both
+ * are DECISIONS with a check over them -- a spoken list needs numbers or it is
+ * a paragraph, and a definition list read as bare alternating fragments is
+ * unattributable in exactly the way a table is.
+ */
+function theoryParts(lesson: Lesson): string[] {
+    return [
+        numbered(lesson.objectives || []),
+        lesson.theory,
+        definitions(lesson.keyTerms || []),
+    ].filter(Boolean);
+}
+
 const router = useRouter();
 
 const activeTrack = ref(TRACKS[0].id);

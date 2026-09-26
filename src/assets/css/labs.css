@@ -2364,3 +2364,57 @@
 @media (forced-colors: active) {
     .sl-tutorNote { border: 1px solid CanvasText !important; }
 }
+
+/* ------------------------------------------------------------------ *
+ * The read-aloud controls
+ * ------------------------------------------------------------------ */
+
+/* The brief's control sits on its own line above the text, aligned to the
+   reading edge -- a logical margin, so it is on the right in Arabic without a
+   second declaration. */
+.sl-brief__read {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: 0.35rem;
+}
+
+/* `.sl-tasks__head` is already `display: flex` with the title on one side, so
+   the two controls it now holds need their own row to stop `Check my work`
+   being pushed off the end at 390px. */
+.sl-tasks__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+/* A table in a lab brief. The WRAPPER owns the scroll and the table keeps its
+   minimum content width, so a wide comparison table never gives the page
+   itself a horizontal scrollbar. */
+.sl-brief__table-wrap {
+  overflow-x: auto;
+  margin-block: 0.5rem;
+}
+
+.sl-brief__table {
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 100%;
+}
+
+.sl-brief__table th,
+.sl-brief__table td {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+  text-align: start;
+  vertical-align: top;
+  /* A cell holding an unbreakable identifier must not be able to force its
+     column wider than its share -- `anywhere` is counted when `min-content` is
+     computed where `break-word` is not. */
+  overflow-wrap: anywhere;
+}
+
+.sl-brief__table th {
+  background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
+  font-weight: 650;
+}

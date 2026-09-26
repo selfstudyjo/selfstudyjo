@@ -591,3 +591,17 @@
   .code-block-container { background: var(--sfs-paper, #f7f7f7); border-color: var(--sfs-paper-border, #ccc); }
   .code-block code { color: #000; }
 }
+/* ------------------------------------------------------------------ *
+ * The read-aloud controls
+ * ------------------------------------------------------------------ */
+
+/* Both live inside containers that are already `display: flex` with a gap, so
+   all these need is to stop growing and to sit at the far edge. A logical
+   margin, so the same declaration is right in Arabic. */
+.runbook-read {
+  flex: 0 0 auto;
+}
+
+.runbook-read--step {
+  margin-inline-start: auto;
+}

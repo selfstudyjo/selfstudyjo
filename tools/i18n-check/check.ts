@@ -59,6 +59,10 @@ import arNetsim from '../../src/i18n/messages/ar/netsim';
 import arResearch from '../../src/i18n/messages/ar/research';
 import arStudio from '../../src/i18n/messages/ar/studio';
 import arLabs from '../../src/i18n/messages/ar/labs';
+import arPractice from '../../src/i18n/messages/ar/practice';
+import arTour from '../../src/i18n/messages/ar/tour';
+import arAssistant from '../../src/i18n/messages/ar/assistant';
+import arReader from '../../src/i18n/messages/ar/reader';
 import zhCommon from '../../src/i18n/messages/zh/common';
 import zhAccount from '../../src/i18n/messages/zh/account';
 import zhLearning from '../../src/i18n/messages/zh/learning';
@@ -68,6 +72,10 @@ import zhNetsim from '../../src/i18n/messages/zh/netsim';
 import zhResearch from '../../src/i18n/messages/zh/research';
 import zhStudio from '../../src/i18n/messages/zh/studio';
 import zhLabs from '../../src/i18n/messages/zh/labs';
+import zhPractice from '../../src/i18n/messages/zh/practice';
+import zhTour from '../../src/i18n/messages/zh/tour';
+import zhAssistant from '../../src/i18n/messages/zh/assistant';
+import zhReader from '../../src/i18n/messages/zh/reader';
 
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
@@ -498,9 +506,20 @@ for (const [id, catalogue] of CATALOGUES) {
 
 section('6. No key is declared twice');
 
+// EVERY module, and it used to be nine of the thirteen.
+//
+// The four missing ones were `practice`, `tour`, `assistant` and `reader` --
+// added as each feature landed and never added here, so the one section whose
+// whole job is catching a key declared twice could not see a third of the
+// catalogue. These files are spread with `...` into one object, so a duplicate
+// is a SILENT overwrite: the key resolves to whichever module `index.ts`
+// happens to spread last, and the symptom is one word wrong on one screen in
+// one language. That is the thing this list exists to make impossible.
+//
+// A new area belongs in BOTH the import block above and here.
 const MODULES: [string, Record<string, Catalogue>][] = [
-    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio, labs: arLabs }],
-    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio, labs: zhLabs }],
+    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio, labs: arLabs, practice: arPractice, tour: arTour, assistant: arAssistant, reader: arReader }],
+    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio, labs: zhLabs, practice: zhPractice, tour: zhTour, assistant: zhAssistant, reader: zhReader }],
 ];
 
 for (const [id, modules] of MODULES) {

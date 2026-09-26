@@ -1,5 +1,18 @@
 <template>
   <article class="sl-brief">
+    <!--
+      READ THE BRIEF ALOUD.
+
+      Over the SAME `parsed` blocks the article renders, not over `props.text`
+      again: re-parsing would be a second traversal that could disagree with the
+      screen about where a list ends, and the fenced blocks it has to skip are
+      exactly the ones this template draws as `<pre>`. A lab brief is mostly
+      commands, so the skip count is usually not zero and the control says so.
+    -->
+    <div v-if="parsed.length" class="sl-brief__read">
+      <ReadAloud id="lab-brief" :blocks="parsed" :title="$t('Brief')" />
+    </div>
+
     <template v-for="(block, index) in parsed" :key="index">
       <h4 v-if="block.kind === 'heading'" class="sl-brief__heading">{{ block.text }}</h4>
 
@@ -34,6 +47,45 @@
         </li>
       </ul>
 
+      <!--
+        A TABLE. Absent until now, and its absence was not cosmetic: `blocks()`
+        grew a `table` kind and this template never did, so every markdown table
+        in a lab brief fell through to the paragraph branch below and rendered
+        `block.text` -- which a TableBlock does not have. `vue-tsc` had been
+        reporting it (`Property 'text' does not exist on type 'ParagraphBlock |
+        TableBlock'`) and nothing gated on it, because `check:jitypes`
+        deliberately only fails on the Job Interview files.
+
+        It is fixed here rather than left because the read-aloud control DOES
+        read a table, so a brief with one in it would be a voice saying
+        something the page cannot show -- and a reader following along would
+        conclude the platform had lost a paragraph.
+
+        Scrolls rather than shrinks, for the reason the lesson page gives: a
+        four-column table cannot fit a 360px phone, and the two alternatives are
+        both worse than a horizontal scroll -- overflowing the card gives the
+        whole PAGE sideways scroll, and squeezing the columns turns every cell
+        into a one-word-per-line stack.
+      -->
+      <div v-else-if="block.kind === 'table'" class="sl-brief__table-wrap">
+        <table class="sl-brief__table">
+          <thead v-if="block.head.length">
+            <tr>
+              <th v-for="(cell, c) in block.head" :key="c" scope="col">
+                <RichText :text="cell" tag="span" />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, r) in block.rows" :key="r">
+              <td v-for="(cell, c) in row" :key="c">
+                <RichText :text="cell" tag="span" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <p v-else class="sl-brief__para"><RichText :text="block.text" /></p>
     </template>
 
@@ -60,6 +112,7 @@
  * ignored it taught this platform the hard way.
  */
 import { computed } from 'vue';
+import ReadAloud from '@/components/ReadAloud.vue';
 import RichText from '@/components/RichText.vue';
 import { blocks } from '@/utils/lessonContent';
 

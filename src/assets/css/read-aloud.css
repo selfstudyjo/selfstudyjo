@@ -1,0 +1,419 @@
+/*
+ * "Read this section" -- the button and the floating transport bar.
+ *
+ * Reached through `<style scoped src>` in `ReadAloud.vue`, so Vite rewrites
+ * every selector with the component's `data-v-` attribute and none of this can
+ * land on another page. That is the conservative choice and it is deliberate:
+ * this control is embedded in the lesson page, the runbook, the lab workbench
+ * and the Network Simulator, which between them carry five page stylesheets
+ * that already collide with each other over generic class names.
+ *
+ * A teleported node still carries the scope attribute, so the bar -- which is
+ * `<Teleport to="body">` because half these page wrappers are stacking contexts
+ * a fixed descendant cannot escape -- is styled from here correctly.
+ *
+ * Every class is `sfs-read` prefixed anyway (a namespace no view writes), so
+ * `check:cssleaks` is satisfied whichever way the file is ever loaded.
+ *
+ * NO COLOUR LITERAL, per working rule 12: every colour is a `var(--sfs-…)` with
+ * the literal only as the fallback, so all ten galaxies are right for free and
+ * `check:theme` can prove it. And no physical margin: `margin-inline-start` and
+ * friends are the same declaration in both directions, which is what stops a
+ * reader in Arabic getting the mirror image of somebody's good intentions.
+ */
+
+.sfs-read {
+    display: inline-flex;
+    min-width: 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * The button
+ * ------------------------------------------------------------------ */
+
+.sfs-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+    border-radius: var(--sfs-radius-pill, 999px);
+    background: var(--sfs-glass-2, rgb(255 255 255 / 0.08));
+    color: var(--sfs-text, #e8ecf8);
+    font-size: var(--sfs-text-xs, 0.78rem);
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    /* Named properties rather than `all`: a transition on `all` tracks every
+       computed value on the node, which is what `style.css` used to do
+       universally and is measurably expensive on a page with twenty of these. */
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    /* A control holding a translated label must not be the thing that gives
+       the page a horizontal scrollbar. */
+    min-width: 0;
+}
+
+/* 44px is the touch minimum, and `max()` is what makes it one.
+   `responsive.css` scales the ROOT font size fluidly, so `2.75rem` measures
+   ~41.5px on a 390px phone -- under the minimum, on exactly the devices the
+   rule exists for. A touch target is one of the few things that must not
+   scale with the type. */
+@media (pointer: coarse) {
+    .sfs-read-btn,
+    .sfs-read-ctl,
+    .sfs-read-rate {
+        min-height: max(2.75rem, 44px);
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .sfs-read-btn:hover:not(:disabled) {
+        background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14));
+        border-color: var(--sfs-border-strong, rgb(255 255 255 / 0.24));
+    }
+}
+
+.sfs-read-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sfs-read-btn--compact {
+    padding: 0.35rem;
+    /* Square, so a row of icon-only controls does not stagger. */
+    aspect-ratio: 1;
+    justify-content: center;
+}
+
+/* Reading. The accent FILL takes `--sfs-on-accent`, which is the ink
+   `fillAndInk()` guarantees clears AA on it -- never `--sfs-text`, which flips
+   with the mode and is near-black in the three light galaxies. That exact
+   pairing was wrong on the login button, two retry buttons and every outgoing
+   chat bubble before it was fixed platform-wide. */
+.sfs-read-btn--live {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+}
+
+/*
+ * ON AN ISLAND WITH ITS OWN INK.
+ *
+ * A runbook step is a card whose background and text colour an OPERATOR chose
+ * -- `#fffbeb` with near-black ink for a warning, a dark block for code -- set
+ * as inline styles from the record. A control inside one cannot spend
+ * `--sfs-text` or `--sfs-glass-2`: those are derived against the PAGE, so on a
+ * pale card the button is near-white glass with light ink on it, i.e. invisible.
+ * That is working rule 48's "a fill spending an ink token" arriving from the
+ * data side, where no token can help because no token knows what the operator
+ * picked.
+ *
+ * So it borrows: `color: inherit` takes the island's own ink, and the border is
+ * `currentColor` at an alpha. Legible on any background BY CONSTRUCTION, with
+ * no colour function and therefore no Safari version to worry about -- and
+ * correct in all ten galaxies for the same reason, since the island's ink is
+ * whatever the card already guarantees is readable on itself.
+ */
+.sfs-read-btn--inherit {
+    background: transparent;
+    border-color: currentColor;
+    color: inherit;
+    /* The border would otherwise be as loud as the heading beside it. */
+    opacity: 0.75;
+}
+
+.sfs-read-btn--inherit.sfs-read-btn--live,
+.sfs-read-btn--inherit:hover:not(:disabled) {
+    opacity: 1;
+    background: transparent;
+    border-color: currentColor;
+    color: inherit;
+}
+
+.sfs-read-label {
+    /* A label that cannot shrink is a label that widens its parent. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sfs-read-i {
+    width: 1.05em;
+    height: 1.05em;
+    flex: 0 0 auto;
+}
+
+.sfs-read-i--spin {
+    animation: sfs-read-spin 0.9s linear infinite;
+}
+
+@keyframes sfs-read-spin {
+    /* Ends where it began. `responsive.css` forces `animation-duration:
+       0.01ms` under reduced motion, which lands an element on its LAST
+       keyframe immediately -- so a track ending anywhere else would park the
+       spinner at an angle for exactly the people who cannot see it move. */
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------------ *
+ * The transport bar
+ * ------------------------------------------------------------------ */
+
+.sfs-read-bar {
+    position: fixed;
+    /* Physical `left`/`right` rather than the logical pair, on purpose: this is
+       centred with a translate, and `inset-inline-start: 50%` flipped in RTL
+       measures the 50% from the right while the transform still pulls left,
+       landing the bar off-centre by half its own width. `rtl.css` documents the
+       same trap for eleven other components. */
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    z-index: 1400;
+    width: min(46rem, calc(100vw - 1.5rem));
+    box-sizing: border-box;
+    padding: 0.6rem 0.85rem 0.5rem;
+    border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+    border-radius: var(--sfs-radius-lg, 18px);
+    background: var(--sfs-glass-3, rgb(255 255 255 / 0.12));
+    -webkit-backdrop-filter: var(--sfs-blur, blur(10px));
+    backdrop-filter: var(--sfs-blur, blur(10px));
+    box-shadow: var(--sfs-elev-3, 0 18px 48px rgb(0 0 0 / 0.34));
+    color: var(--sfs-text, #e8ecf8);
+}
+
+.sfs-read-bar__main {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    /* Wrapping is what keeps this usable at 320px: four controls, a speed
+       picker and a title do not fit on one line on a phone, and a bar that
+       overflowed would be the one element on the page causing sideways
+       scroll -- the fault `audit:rtl` exists to catch. */
+    flex-wrap: wrap;
+}
+
+.sfs-read-bar__what {
+    flex: 1 1 10rem;
+    /* A flex child defaults to `min-width: auto`, so a long untranslated title
+       pushes the controls off the end. */
+    min-width: 0;
+}
+
+.sfs-read-bar__title {
+    display: block;
+    font-size: var(--sfs-text-sm, 0.9rem);
+    font-weight: 650;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* The title is a RECORD's text -- a lesson name, a step heading -- so it
+       may be Arabic when there is a translation and English when there is not.
+       `plaintext` reads the direction out of the string itself, which is what
+       stops an English title inside an Arabic bar having its full stop moved
+       to the front. It has to sit on the element that HOLDS the text: a block
+       child starts a new bidi paragraph and a rule on the wrapper reaches
+       nothing. */
+    unicode-bidi: plaintext;
+}
+
+.sfs-read-bar__meta {
+    display: flex;
+    gap: 0.5rem;
+    font-size: var(--sfs-text-2xs, 0.72rem);
+    color: var(--sfs-text-muted, #aab3cc);
+}
+
+.sfs-read-bar__count {
+    /* See the template: every character in `3 / 40` is bidi-neutral, so in an
+       Arabic bar the algorithm reverses the runs and the reader is told they
+       are on passage forty of three. `isolate` keeps that pin from disturbing
+       the text beside it. */
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-variant-numeric: tabular-nums;
+}
+
+.sfs-read-bar__left {
+    unicode-bidi: isolate;
+}
+
+.sfs-read-bar__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    /* A transport is a PLACE, not a sentence: previous is on the left of next
+       in every media player a student has ever used, and mirroring it would
+       make the skip-back button skip forward. Same rule the score ring and the
+       newscast set follow. */
+    direction: ltr;
+}
+
+.sfs-read-ctl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    border: 1px solid var(--sfs-border, rgb(255 255 255 / 0.14));
+    border-radius: var(--sfs-radius-sm, 10px);
+    background: var(--sfs-glass-1, rgb(255 255 255 / 0.05));
+    color: var(--sfs-text, #e8ecf8);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .sfs-read-ctl:hover {
+        background: var(--sfs-glass-hover, rgb(255 255 255 / 0.14));
+    }
+}
+
+.sfs-read-ctl--primary {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+}
+
+.sfs-read-bar__rate {
+    display: flex;
+    gap: 0.15rem;
+    /* `1.25x` is digits plus a Latin letter, so mirrored it reads `x52.1`. */
+    direction: ltr;
+}
+
+.sfs-read-rate {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid transparent;
+    border-radius: var(--sfs-radius-xs, 6px);
+    background: transparent;
+    color: var(--sfs-text-muted, #aab3cc);
+    font-size: var(--sfs-text-2xs, 0.72rem);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.sfs-read-rate--on {
+    /* The selected speed is marked with a BORDER and a colour, never with
+       colour alone: in several galaxies two of the three accents are within a
+       few dE of each other, and in Triangulum the accent and accent-2 are the
+       same colour to a deuteranope. A border survives greyscale and forced
+       colours. */
+    border-color: var(--sfs-accent, #667eea);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    color: var(--sfs-text, #e8ecf8);
+}
+
+.sfs-read-bar__track {
+    height: 3px;
+    margin-block-start: 0.5rem;
+    border-radius: var(--sfs-radius-pill, 999px);
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28);
+    overflow: hidden;
+}
+
+.sfs-read-bar__fill {
+    height: 100%;
+    background: var(--sfs-accent, #667eea);
+    /* A progress bar is a place, so it fills from the start of the bar in both
+       directions -- which is what the logical property gives for free. */
+    border-start-start-radius: var(--sfs-radius-pill, 999px);
+    border-end-start-radius: var(--sfs-radius-pill, 999px);
+    transition: width 0.25s ease;
+}
+
+.sfs-read-bar__notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.4rem 0 0;
+    font-size: var(--sfs-text-2xs, 0.72rem);
+    color: var(--sfs-text-muted, #aab3cc);
+}
+
+.sfs-read-note {
+    /* A voice name is a machine identifier -- `ar-SA-ZariyahNeural`,
+       `Microsoft Zira - English (United States)` -- and its dots and hyphens
+       are bidi-neutral, so inside Arabic prose the algorithm rearranges them.
+       `isolate` is what keeps it readable. */
+    unicode-bidi: isolate;
+}
+
+/*
+ * HOW TALL THE BAR IS ALLOWED TO BE, and why it matters.
+ *
+ * `.main-content` is the scroll container and it reserves
+ * `clamp(80px, 14vh, 110px)` of bottom padding on a phone. A fixed bar taller
+ * than that covers the bottom of the page for as long as it is up -- and
+ * measured at 390px the first version was ~150px, because the title took the
+ * first line, the controls and the speed picker wrapped onto the second and
+ * third, and the voice note onto a fourth. What that hides is the last card of
+ * a lesson while somebody is being read the lesson.
+ *
+ * It is fixed by making the BAR shorter rather than by repadding every page on
+ * the platform: raising `--body-padding-bottom` would move the bottom of every
+ * screen for a control that is only occasionally on screen.
+ */
+@media (max-width: 480px) {
+    .sfs-read-bar__what {
+        /* Its own line, so the controls and the speed picker can share the
+           next one instead of taking one each -- and the title and the counter
+           then share THIS one, which is the 21px that brings the whole bar
+           inside the 110px `.main-content` reserves. Measured: 133px before,
+           109px after. */
+        flex: 1 1 100%;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+
+    .sfs-read-bar__title {
+        /* `display: block` would take the whole row back. */
+        display: inline;
+        flex: 1 1 auto;
+    }
+
+    .sfs-read-bar__meta {
+        /* At 320px the title, the counter and the remaining time do not fit on
+           one line, and the counter is the half worth keeping. */
+        flex: 0 0 auto;
+        flex-direction: row;
+        gap: 0.45rem;
+    }
+
+    .sfs-read-bar__controls {
+        /* Fills the row it now shares, pushing the speed picker to the far
+           edge. `auto` on the picker rather than `space-between` on the row, so
+           a wrapped third line would still be left-aligned. */
+        margin-inline-end: auto;
+    }
+}
+
+/*
+ * THE VOICE NAME IS DROPPED ON A SMALL SCREEN.
+ *
+ * `Microsoft Zira - English (United States)` is a whole line of diagnostic text
+ * -- it exists so "is this really reading in Arabic?" has an answer, which is
+ * the question the newscast was asked four times and could not answer. On a
+ * 390px phone it is the fourth row of a four-row bar, and the two notes that
+ * carry a DECISION (the language it is reading in, and the code it is skipping)
+ * are the ones worth the space. Exactly the call `NewsStudio` makes when it
+ * drops the voice from the name plate below 900px.
+ */
+@media (max-width: 560px) {
+    .sfs-read-note:last-child:not(:only-child) {
+        display: none;
+    }
+}
+
+/* Print and forced colours: a transport bar is a screen control and carries no
+   information a printed page needs. */
+@media print {
+    .sfs-read,
+    .sfs-read-bar {
+        display: none !important;
+    }
+}

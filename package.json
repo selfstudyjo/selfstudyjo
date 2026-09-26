@@ -30,6 +30,7 @@
     "check:leaderboard": "vite build --config tools/leaderboard-check/vite.config.ts && node tools/leaderboard-check/dist/check.mjs",
     "check:lessoncontent": "vite build --config tools/lessoncontent-check/vite.config.ts && node tools/lessoncontent-check/dist/check.mjs",
     "check:lessonorder": "vite build --config tools/lessonorder-check/vite.config.ts && node tools/lessonorder-check/dist/check.mjs",
+    "check:reader": "vite build --config tools/reader-check/vite.config.ts && node tools/reader-check/dist/check.mjs",
     "check:labs": "vite build --config tools/labs-check/vite.config.ts && node tools/labs-check/dist/check.mjs",
     "preview:leaderboard": "vite --config tools/leaderboard-preview/vite.config.ts",
     "build:leaderboard-preview": "vite build --config tools/leaderboard-preview/vite.config.ts",
@@ -43,7 +44,9 @@
     "build:tools-preview": "vite build --config tools/tools-preview/vite.config.ts",
     "preview:lab": "vite --config tools/labs-preview/vite.config.ts",
     "build:lab-preview": "vite build --config tools/labs-preview/vite.config.ts",
-    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:aichat && npm run check:appnav && npm run check:theme && npm run check:linkify && npm run check:notifyevents && npm run check:cssleaks && npm run check:examshuffle && npm run check:proctorqueue && npm run check:newscast && npm run check:actors && npm run check:interview && npm run check:answeredit && npm run check:qacoaching && npm run check:leaderboard && npm run check:practice && npm run check:tour && npm run check:assistant && npm run check:lessoncontent && npm run check:lessonorder && npm run check:labs && npm run check:jitypes && npm run check:i18n && npm run check:datai18n",
+    "preview:reader": "vite --config tools/reader-preview/vite.config.ts",
+    "build:reader-preview": "vite build --config tools/reader-preview/vite.config.ts",
+    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:aichat && npm run check:appnav && npm run check:theme && npm run check:linkify && npm run check:notifyevents && npm run check:cssleaks && npm run check:examshuffle && npm run check:proctorqueue && npm run check:newscast && npm run check:actors && npm run check:interview && npm run check:answeredit && npm run check:qacoaching && npm run check:leaderboard && npm run check:practice && npm run check:tour && npm run check:assistant && npm run check:lessoncontent && npm run check:lessonorder && npm run check:reader && npm run check:labs && npm run check:jitypes && npm run check:i18n && npm run check:datai18n",
     "audit:contrast": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-contrast.mjs",
     "audit:ink": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-ink.mjs",
     "audit:pairs": "node tools/tokenize-colors/audit-pairs.mjs",
@@ -61,7 +64,8 @@
     "shoot:leaderboard": "npm run build:leaderboard-preview && node tools/leaderboard-preview/shoot.mjs",
     "shoot:activity": "npm run build:leaderboard-preview && node tools/leaderboard-preview/shoot-activity.mjs",
     "shoot:assistant": "npm run build:assistant-preview && node tools/assistant-preview/serve.mjs",
-    "shoot:draw": "npm run build:draw-preview && node tools/draw-preview/shoot.mjs"
+    "shoot:draw": "npm run build:draw-preview && node tools/draw-preview/shoot.mjs",
+    "shoot:reader": "npm run build:reader-preview && node tools/reader-preview/shoot.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

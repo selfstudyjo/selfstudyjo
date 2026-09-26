@@ -314,3 +314,31 @@ img, video, svg, canvas {
 @media (prefers-reduced-motion: reduce) {
   .app-container > .main-content > * { animation: none !important; }
 }
+/* ------------------------------------------------------------------ *
+   Room for the read-aloud transport bar
+   ------------------------------------------------------------------ */
+
+/*
+ * WHILE SOMETHING IS BEING READ ALOUD, the page reserves room for the bar.
+ *
+ * `ReadAloud`'s transport bar is `position: fixed` at the bottom of the
+ * viewport and, measured, 115px tall plus a 16px offset on a 390px phone. This
+ * container reserves `clamp(80px, 14vh, 110px)` of its own, so without this
+ * declaration the last ~20px of the final element on the page sits underneath
+ * the bar -- on a lesson that is the bottom of the comment box, and on a
+ * runbook the last line of the last step. Found by measuring the bar rather
+ * than by looking at it: a 20px overlap at the very end of a long page is not
+ * something a screenshot makes obvious.
+ *
+ * `9rem` rather than the bar's measured height, because the alternative is a
+ * `ResizeObserver` on a teleported node feeding a custom property, and
+ * overshooting costs nothing at all: it is extra scroll room at the bottom of
+ * the page, and only while a voice is actually reading.
+ *
+ * The attribute is set by `useReader` (see `markReading`), which is the one
+ * place that knows whether any section is reading -- the reader is
+ * module-level, so exactly one bar can exist.
+ */
+html[data-sfs-reading='1'] .app-container > .main-content {
+  padding-bottom: calc(var(--body-padding-bottom) + 9rem);
+}
