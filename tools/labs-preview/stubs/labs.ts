@@ -16,7 +16,13 @@
  *   ?state=loading       openLab never resolves
  *   ?state=error         openLab answers null
  */
-import fixtures from './labs.fixture.json';
+import baseFixtures from './labs.fixture.json';
+/* A CARLA lab plus the four answers the Simulator pane asks for - catalogue,
+   one town's map, and a replay - all dumped from app 11 after a REAL run of the
+   reference solution (see `_carla_solutions.py` in app 11). */
+import carlaFixture from './carla.fixture.json';
+const fixtures: AnyRec = { ...(baseFixtures as AnyRec),
+    [(carlaFixture as AnyRec).lab.id]: (carlaFixture as AnyRec).lab };
 
 const params = new URLSearchParams(location.search);
 const state = params.get('state') || 'ok';
@@ -232,6 +238,9 @@ function views(lab: AnyRec) {
         web: { ...env.web },
         updated_at: new Date().toISOString(),
     };
+    if ((lab.families || []).indexOf('carla') >= 0) {
+        out.carla = ((carlaFixture as AnyRec).catalogue || {}).view || {};
+    }
     if ((lab.families || []).indexOf('docker') >= 0) {
         out.docker = {
             stats: { running: 0, containers: 0, images: 1 },
@@ -294,6 +303,15 @@ export const labsService = {
      * shell itself has 276 checks of its own in the backend repo.
      */
     runTool(_u: string, _l: string, toolId: string, payload: AnyRec) {
+        if (toolId === 'carla_sim') {
+            const cf = carlaFixture as AnyRec;
+            const action = String(payload.action || 'catalogue');
+            if (action === 'catalogue') return delay(cf.catalogue);
+            if (action === 'map') return delay(cf.maps[String(payload.map)]
+                || { ok: false, error: 'No such map in the preview fixture', code: 'NOT_FOUND' });
+            if (action === 'last' || action === 'run') return delay({ ...cf.last, ok: true });
+            return delay({ ok: true });
+        }
         const line = String(payload.command ?? payload.code ?? payload.query ?? '').trim();
         env.log.push({ tool: toolId, command: line, code: 0, at: new Date().toISOString() });
         const argv = line.split(/\s+/);

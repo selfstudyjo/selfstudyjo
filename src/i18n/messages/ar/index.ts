@@ -76,6 +76,7 @@ import practice from './practice';
 import tour from './tour';
 import assistant from './assistant';
 import reader from './reader';
+import drive from './drive';
 
 /**
  * Assembled in one place so a duplicate key is a real, visible conflict rather
@@ -115,6 +116,8 @@ const ar: Catalogue = {
     // than a lab or a timer. It is also the one catalogue whose reader may
     // not be able to see the screen at all.
     ...reader,
+    // The self-driving simulator (CARLA): a car and a recording, not a lab run.
+    ...drive,
 };
 
 export default ar;

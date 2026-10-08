@@ -78,7 +78,7 @@ export interface LabTool {
     id: string;
     label: string;
     kind: 'console' | 'code' | 'query' | 'editor' | 'web' | 'gui'
-        | 'preview' | 'mobile' | 'external' | 'ai';
+        | 'preview' | 'mobile' | 'drive' | 'external' | 'ai';
     engine: string;
     icon: string;
     summary: string;
@@ -452,6 +452,9 @@ const FAMILY_LABELS: Record<string, string> = {
     mlops: 'AI Engineering',
     agentlab: 'Agent Lab',
     manage: 'Management',
+    // Self-driving: the CARLA console, the 3D Simulator and the run
+    // dashboard are one engine, `sim:carla`, and one pane.
+    carla: 'Self-Driving (CARLA)',
     ai: 'AI Tutor',
 };
 
@@ -1840,6 +1843,37 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
                 col('adapts', 'Adapts', 'badge'),
                 col('reflects', 'Reflects', 'badge'), col('note', 'Trade')],
         },
+    ],
+    carla: [
+        { id: 'stats', title: 'Your runs', kind: 'stats', path: 'stats',
+            tool: 'carla_gui' },
+        { id: 'last', title: 'Last run', kind: 'stats', path: 'last',
+            tool: 'carla_gui' },
+        {
+            id: 'goals', title: 'Goals', kind: 'table', path: 'goals',
+            tool: 'carla_gui', empty: 'This lab sets no simulator goals',
+            columns: [col('id', 'Goal', 'code'), col('goal', 'What it asks'),
+                col('achieved', 'Met', 'badge')],
+        },
+        {
+            id: 'runs', title: 'Runs', kind: 'table', path: 'runs',
+            tool: 'carla_gui', empty: 'No runs yet - python drive.py',
+            // The driving score is the CARLA Leaderboard's: route completion
+            // times the product of the infraction penalties.
+            columns: [col('run', '#', 'number'), col('script', 'Script', 'code'),
+                col('map', 'Map'), col('vehicle', 'Vehicle', 'code'),
+                col('weather', 'Weather'), col('status', 'Status', 'badge'),
+                col('sim_time', 'Sim time (s)', 'number'),
+                col('distance', 'Distance (m)', 'number'),
+                col('max_speed', 'Max speed (m/s)', 'number'),
+                col('collisions', 'Collisions', 'number'),
+                col('invasions', 'Lane invasions', 'number'),
+                col('red_lights', 'Red lights', 'number'),
+                col('score', 'Driving score', 'number'),
+                col('goals_met', 'Goals met', 'number')],
+        },
+        { id: 'config', title: 'Defaults', kind: 'stats', path: 'config',
+            tool: 'carla_gui' },
     ],
     manage: [
         { id: 'stats', title: 'This sprint', kind: 'stats', path: 'stats',

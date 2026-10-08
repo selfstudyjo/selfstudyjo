@@ -3354,6 +3354,97 @@ VIEWS.manage = {
   ]
 };
 
+// CARLA: dumped from app 11's `utils/sims/carla.py` `view()` after a REAL run of
+// the reference solution to carla-01-first-drive (`_carla_solutions.py`), not
+// written from a guess at the shape.
+VIEWS.carla = {
+  "achieved": [
+    "cleanup",
+    "connect",
+    "drive50",
+    "spawn",
+    "spectator"
+  ],
+  "config": {
+    "map": "Town03",
+    "script": "drive.py",
+    "seed": 42,
+    "vehicle": "vehicle.tesla.model3",
+    "weather": "ClearNoon"
+  },
+  "goals": [
+    {
+      "achieved": true,
+      "goal": "connect to the world",
+      "id": "connect"
+    },
+    {
+      "achieved": true,
+      "goal": "spawn a vehicle",
+      "id": "spawn"
+    },
+    {
+      "achieved": true,
+      "goal": "drive 50 m",
+      "id": "drive50"
+    },
+    {
+      "achieved": true,
+      "goal": "move the spectator",
+      "id": "spectator"
+    },
+    {
+      "achieved": true,
+      "goal": "destroy what you spawned",
+      "id": "cleanup"
+    }
+  ],
+  "last": {
+    "collisions": 0,
+    "distance": 101.61,
+    "driving_score": null,
+    "duration": 10.0,
+    "infraction_penalty": 0.8,
+    "lane_changes": 0,
+    "lane_invasions": 0,
+    "max_cte": 0.0,
+    "max_npcs": 0,
+    "max_speed": 19.67,
+    "max_walkers": 0,
+    "mean_cte": 0.0,
+    "mean_speed": 10.16,
+    "red_lights": 0,
+    "route_completion": null,
+    "speeding": 1,
+    "stopped_at_red": 0
+  },
+  "runs": [
+    {
+      "collisions": 0,
+      "distance": 101.61,
+      "goals_met": 5,
+      "invasions": 0,
+      "map": "Town03",
+      "max_speed": 19.67,
+      "red_lights": 0,
+      "run": 1,
+      "score": null,
+      "script": "drive.py",
+      "sim_time": 10.0,
+      "status": "ok",
+      "vehicle": "tesla.model3",
+      "weather": "ClearNoon"
+    }
+  ],
+  "stats": {
+    "best_score": null,
+    "goals_met": 5,
+    "goals_total": 5,
+    "runs": 1,
+    "total_distance_m": 101.6
+  }
+};
+
 // COWORK READS THE CLAUDE CODE PAYLOAD, because it is the same engine under a
 // second family name - see `families_of_engine` in app 11's
 // `utils/labtools.py`, which is what makes the backend key the payload under

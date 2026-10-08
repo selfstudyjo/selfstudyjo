@@ -28,6 +28,13 @@
 // error — a shadow generator that casts nothing, a material that renders black.
 import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 import '@babylonjs/core/Rendering/depthRendererSceneComponent';
+// The self-driving studio draws thousands of trees, lamps and lane dashes as
+// THIN INSTANCES - one draw call per kind rather than one per object - and
+// `thinInstanceAdd` only exists on Mesh once this module has run.
+import '@babylonjs/core/Meshes/thinInstanceMesh';
+// ArcRotateCamera's pointer and wheel inputs register through side effects too.
+import '@babylonjs/core/Cameras/Inputs/arcRotateCameraPointersInput';
+import '@babylonjs/core/Cameras/Inputs/arcRotateCameraMouseWheelInput';
 
 export { Engine } from '@babylonjs/core/Engines/engine';
 export { Scene } from '@babylonjs/core/scene';
@@ -35,6 +42,9 @@ export { Vector3, Vector2, Matrix, Quaternion } from '@babylonjs/core/Maths/math
 export { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 export { Viewport } from '@babylonjs/core/Maths/math.viewport';
 export { UniversalCamera } from '@babylonjs/core/Cameras/universalCamera';
+export { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
+export { CreateRibbon } from '@babylonjs/core/Meshes/Builders/ribbonBuilder';
+export { CreateLineSystem } from '@babylonjs/core/Meshes/Builders/linesBuilder';
 export { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 export { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
 export { SpotLight } from '@babylonjs/core/Lights/spotLight';
@@ -59,3 +69,6 @@ export { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTextur
 export { Texture } from '@babylonjs/core/Materials/Textures/texture';
 export { GlowLayer } from '@babylonjs/core/Layers/glowLayer';
 export { ImageProcessingConfiguration } from '@babylonjs/core/Materials/imageProcessingConfiguration';
+// Type-only: erased at build time, so naming them here costs no bundle bytes.
+export type { Material } from '@babylonjs/core/Materials/material';
+export type { BaseTexture } from '@babylonjs/core/Materials/Textures/baseTexture';

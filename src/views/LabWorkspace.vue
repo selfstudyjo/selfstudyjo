@@ -224,6 +224,20 @@
                   :tool-id="tool.id"
                   :run="runTool"
                 />
+                <!--
+                  THE SELF-DRIVING STUDIO. The student's script runs on app 11
+                  as a CARLA client against the simulator server; this pane
+                  draws the replay in 3D, and lets them drive by hand. Loaded
+                  with `defineAsyncComponent`, and Babylon behind that with a
+                  dynamic import, so no other lab downloads a 3D engine
+                  (working rule 47).
+                -->
+                <LabDrive
+                  v-else-if="tool.kind === 'drive'"
+                  :key="`d${sourceEpoch}`"
+                  :tool-id="tool.id"
+                  :run="runTool"
+                />
                 <LabGui
                   v-else-if="tool.kind === 'gui'"
                   :family="pane.family"
@@ -423,6 +437,7 @@ import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
  * entry chunk and the split would silently buy nothing. One line now, or a
  * regression nobody would attribute to this file later.
  */
+const LabDrive = defineAsyncComponent(() => import('@/components/labs/LabDrive.vue'));
 const NetworkStudio = defineAsyncComponent({
   loader: () => import('@/views/NetworkSimulatorStudio.vue'),
   /*
