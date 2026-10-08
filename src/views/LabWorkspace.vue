@@ -576,7 +576,15 @@ function noteTutorAsk() {
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const username = computed(() => authStore.user?.username || '');
 const userId = computed(() => String(authStore.user?.user_id || ''));
-const labId = computed(() => String(route.params.labId || ''));
+/*
+  The PROP wins over the URL param. `/lab/:labId` passes both (props: true),
+  but `/simulator` has no param at all - it fixes the lab with
+  `props: { labId: 'carla-00-playground' }` - and reading only the param left
+  that page on "Opening the lab..." for ever, because `open()` returns early
+  on an empty id.
+*/
+const props = defineProps<{ labId?: string }>();
+const labId = computed(() => String(props.labId || route.params.labId || ''));
 
 const panes = computed<ToolPane[]>(() =>
   lab.value ? toolPanes(lab.value.tool_detail) : []);

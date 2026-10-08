@@ -22,7 +22,8 @@ import baseFixtures from './labs.fixture.json';
    reference solution (see `_carla_solutions.py` in app 11). */
 import carlaFixture from './carla.fixture.json';
 const fixtures: AnyRec = { ...(baseFixtures as AnyRec),
-    [(carlaFixture as AnyRec).lab.id]: (carlaFixture as AnyRec).lab };
+    [(carlaFixture as AnyRec).lab.id]: (carlaFixture as AnyRec).lab,
+    ...((carlaFixture as AnyRec).extra_labs || {}) };
 
 const params = new URLSearchParams(location.search);
 const state = params.get('state') || 'ok';

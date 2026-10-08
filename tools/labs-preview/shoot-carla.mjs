@@ -39,6 +39,9 @@ const VARIANTS = [
     { id: 'carla-dark', query: `lab=${LAB}&theme=andromeda&lang=en`, width: 1440 },
     { id: 'carla-light', query: `lab=${LAB}&theme=cartwheel&lang=en`, width: 1440 },
     { id: 'carla-ar', query: `lab=${LAB}&theme=andromeda&lang=ar`, width: 1440 },
+    // `/simulator`: the lab id only as a prop, no URL param - the page that
+    // was stuck on "Opening the lab..." in production.
+    { id: 'simulator-route', query: `lab=carla-00-playground&route=prop&theme=andromeda&lang=en`, width: 1440 },
     { id: 'carla-phone', query: `lab=${LAB}&theme=andromeda&lang=en`, width: 390 },
 ];
 
@@ -152,6 +155,10 @@ for (const v of VARIANTS) {
         if (state?.pane && !state.loading) break;
     }
     ok('the Simulator pane mounted', state?.pane, JSON.stringify(state));
+    if (v.id === 'simulator-route') {
+        const title = await evaluate(`(document.querySelector('h1') || {}).textContent || ''`);
+        ok('/simulator opened the PLAYGROUND lab from the prop alone', /free drive/i.test(title), title.trim());
+    }
     ok('the pane is the one the lab OPENS on', state?.visible);
     ok('the engine arrived (loading overlay gone)', state?.pane && !state.loading);
     await sleep(2500);

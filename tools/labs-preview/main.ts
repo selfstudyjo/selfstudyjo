@@ -54,6 +54,14 @@ setLocale((params.get('lang') || 'en') as LocaleId);
   spinner for ever — which reads as a dead replica rather than as the preview
   addressing the wrong param name. `tools/tools-preview` paid for exactly this.
 */
+/*
+  `?route=prop` reproduces `/simulator`: the lab id arrives ONLY as the
+  `labId` prop and the URL has no `:labId` param. The workspace read the param
+  alone and sat on "Opening the lab..." for ever in production; this mode is
+  what proves it does not any more.
+*/
+const propOnly = params.get('route') === 'prop' ? (params.get('lab') || 'web-01-html') : '';
+
 const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -66,7 +74,7 @@ const app = createApp({
     render: () => [
         h(AnimatedBackground),
         h('div', { class: 'app-container' }, [
-            h('div', { class: 'main-content' }, [h(LabWorkspace)]),
+            h('div', { class: 'main-content' }, [h(LabWorkspace, propOnly ? { labId: propOnly } : {})]),
         ]),
     ],
 });
@@ -79,7 +87,7 @@ app.use(router);
   at setup and `open()` runs `onMounted`, so mounting before the router is ready
   opens nothing at all.
 */
-router.replace(`/lab/${params.get('lab') || 'web-01-html'}`)
+router.replace(propOnly ? '/simulator' : `/lab/${params.get('lab') || 'web-01-html'}`)
     .then(() => router.isReady())
     .then(() => app.mount('#app'));
 
