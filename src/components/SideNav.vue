@@ -369,6 +369,12 @@ const icons: Record<IconName, any> = {
     'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V7h2v4zm4 0h-4V7h4v4z'),
   lab: filled('LabIcon',
     'M19 6h-4V2H9v4H5v15h14V6zM9 4h6v2H9V4zm11 15H5V8h14v11zm-12-9h2v2H8v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-8 4h2v2H8v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z'),
+  car: stroked('CarIcon', '1.7', () => [
+    h('path', { d: 'M5 17h14v-4.5l-1.8-4.6A2 2 0 0 0 15.3 6.6H8.7a2 2 0 0 0-1.9 1.3L5 12.5V17z' }),
+    h('path', { d: 'M5 12.5h14' }),
+    h('circle', { cx: '8', cy: '17', r: '1.8' }),
+    h('circle', { cx: '16', cy: '17', r: '1.8' }),
+  ]),
   netsim: stroked('NetworkSimulatorIcon', '1.7', () => [
     h('rect', { x: '9', y: '2.5', width: '6', height: '5', rx: '1.4' }),
     h('rect', { x: '2', y: '16.5', width: '6', height: '5', rx: '1.4' }),

@@ -45,6 +45,11 @@ const drive: Catalogue = {
     'ground truth': '真实值',
     'your estimate': '你的估计',
 
+    /* The sidebar entry and its section (`/simulator`). */
+    'Self-Driving Simulator': '自动驾驶模拟器',
+    'Drive a car in a 3D city, or let your CARLA code drive it':
+        '在 3D 城市中驾驶汽车，或让你的 CARLA 代码来驾驶',
+
     /* The GUI panels and their columns. */
     'Self-Driving (CARLA)': '自动驾驶 (CARLA)',
     'Goals': '目标',

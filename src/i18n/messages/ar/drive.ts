@@ -46,6 +46,11 @@ const drive: Catalogue = {
     'ground truth': 'القيمة الحقيقية',
     'your estimate': 'تقديرك',
 
+    /* The sidebar entry and its section (`/simulator`). */
+    'Self-Driving Simulator': 'محاكي القيادة الذاتية',
+    'Drive a car in a 3D city, or let your CARLA code drive it':
+        'قُد سيارة في مدينة ثلاثية الأبعاد، أو دع كود CARLA الخاص بك يقودها',
+
     /* The GUI panels and their columns. */
     'Self-Driving (CARLA)': 'القيادة الذاتية (CARLA)',
     'Goals': 'الأهداف',

@@ -145,6 +145,14 @@ const routes = [
                 meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
+                // The free-drive playground: the lab workspace on one fixed lab.
+                path: 'simulator',
+                name: 'Simulator',
+                component: LabWorkspace,
+                meta: { title: 'Self-Driving Simulator', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'], hideTopBar: true },
+                props: { labId: 'carla-00-playground' }
+            },
+            {
                 /*
                   ONE LAB IS A PLACE, so it is a route.
 

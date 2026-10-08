@@ -61,7 +61,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard';
+    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard' | 'car';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -377,6 +377,15 @@ const MESSAGES: NavEntry = { to: '/messages', text: 'Messages', icon: 'messages'
 // -- Tools ---------------------------------------------------------------
 const DRAW: NavEntry = { to: '/draw', text: 'Drawing Papers', icon: 'draw', keywords: 'whiteboard draw paint canvas sketch diagram board collaborate free' };
 const NETSIM: NavEntry = { to: '/network-simulator', text: 'Network Simulator', icon: 'netsim', keywords: 'netsim topology router switch packet tracer cisco subnet', requires: 'lab' };
+/*
+  The self-driving simulator, as a place to PLAY rather than a lab to pass.
+  `/simulator` renders the lab workspace on `carla-00-playground` - a CARLA lab
+  whose tasks are "run it, drive 200 m, try another town" - so it has the real
+  3D studio, the console, the files and the AI tutor, and a student's free play
+  is kept apart from their progress on the fourteen graded labs. Gated like
+  every other lab tool: the workspace needs `lab_feature`.
+*/
+const SIMULATOR: NavEntry = { to: '/simulator', text: 'Self-Driving Simulator', icon: 'car', keywords: 'carla self driving autonomous car vehicle simulator drive city traffic autopilot 3d', requires: 'lab' };
 const AI_CHAT: NavEntry = { to: '/ai-chat', text: 'AI Chat Assistant', icon: 'ai', keywords: 'chatbot gpt llm ask question assistant', requires: 'ai' };
 const RESEARCH: NavEntry = { to: '/research', text: 'Research Flow', icon: 'research', keywords: 'papers sources literature review academic citation', requires: 'research' };
 const TOASTMASTERS: NavEntry = { to: '/toastmasters', text: 'Toastmasters', icon: 'toastmasters', keywords: 'public speaking speech presentation pathways', requires: 'toastmasters' };
@@ -502,7 +511,7 @@ export const APP_SECTIONS: AppSection[] = [
         match: ['/labs', '/lab'],
         home: '/labs',
         items: [LABS],
-        related: [TOOL_LINUX, NETSIM, COURSES, AI_CHAT],
+        related: [TOOL_LINUX, NETSIM, SIMULATOR, COURSES, AI_CHAT],
     },
     {
         id: 'tools',
@@ -513,6 +522,16 @@ export const APP_SECTIONS: AppSection[] = [
         home: '/tools',
         items: [TOOL_SQL, TOOL_LINUX, TOOL_PYTHON],
         related: [LABS, NETSIM, AI_CHAT],
+    },
+    {
+        id: 'simulator',
+        title: 'Self-Driving Simulator',
+        subtitle: 'Drive a car in a 3D city, or let your CARLA code drive it',
+        icon: 'car',
+        match: ['/simulator'],
+        home: '/simulator',
+        items: [SIMULATOR],
+        related: [LABS, COURSES, AI_CHAT],
     },
     {
         id: 'netsim',
@@ -699,7 +718,7 @@ export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
-        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
+        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);
