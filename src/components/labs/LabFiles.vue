@@ -14,7 +14,7 @@
     </div>
 
     <p class="sl-console__fidelity">
-      {{ $t('These files are what every tool in this lab sees. Write a Dockerfile, a manifest or a .tf file here and run it in the console.') }}
+      {{ intro || $t('These files are what every tool in this lab sees. Write a Dockerfile, a manifest or a .tf file here and run it in the console.') }}
     </p>
 
     <div class="sl-files__body">
@@ -371,6 +371,8 @@ const props = defineProps<{
   remove?: (path: string, recursive?: boolean) => Promise<Result>;
   mkdir?: (path: string) => Promise<Result>;
   move?: (path: string, to: string) => Promise<Result>;
+  /** Replaces the lab wording above the tree - the Self-Driving Studio is not a lab. */
+  intro?: string;
 }>();
 
 const emit = defineEmits<{ (event: 'changed'): void }>();

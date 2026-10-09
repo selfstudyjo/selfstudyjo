@@ -50,6 +50,33 @@ const drive: Catalogue = {
     'Drive a car in a 3D city, or let your CARLA code drive it':
         '在 3D 城市中驾驶汽车，或让你的 CARLA 代码来驾驶',
 
+    /* The standalone Self-Driving Studio (`/simulator`). */
+    'Self-Driving Studio':
+        '自动驾驶工作室',
+    'Write CARLA Python, run it, and watch your car drive a 3D city - or take the wheel yourself.':
+        '编写 CARLA Python 代码并运行，观看你的汽车在 3D 城市中行驶，或亲自驾驶。',
+    'Self-driving labs':
+        '自动驾驶实验',
+    'Reset my files':
+        '重置我的文件',
+    'Starting the simulator…':
+        '正在启动模拟器…',
+    'Try: python drive.py   ·   python examples/02_autopilot_city.py --map Town10HD   ·   carla maps':
+        '试试：python drive.py   ·   python examples/02_autopilot_city.py --map Town10HD   ·   carla maps',
+    'Put drive.py and the examples back the way they shipped? Files you created are removed.':
+        '要把 drive.py 和示例恢复为初始状态吗？你创建的文件将被删除。',
+    'CARLA console':
+        'CARLA 控制台',
+    'AI helper':
+        'AI 助手',
+    'Guide':
+        '指南',
+    'The simulator service could not be reached. It may still be starting up.':
+        '无法连接模拟器服务，它可能仍在启动中。',
+
+    'Your scripts, saved for you. Edit drive.py or a file in examples/, press Ctrl+S, then Run it in the simulator.':
+        '你的脚本会自动保存。编辑 drive.py 或 examples/ 中的文件，按 Ctrl+S，然后在模拟器中运行。',
+
     /* The GUI panels and their columns. */
     'Self-Driving (CARLA)': '自动驾驶 (CARLA)',
     'Goals': '目标',

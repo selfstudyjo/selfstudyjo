@@ -145,12 +145,14 @@ const routes = [
                 meta: { title: 'Labs', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
-                // The free-drive playground: the lab workspace on one fixed lab.
+                // THE SELF-DRIVING STUDIO: the simulator on its own, not a lab -
+                // an editor, a console, the 3D studio and an AI helper over a
+                // saved workspace. Lazy, because it pulls in Babylon (rule 47).
+                // The graded labs, and the free-drive playground lab, are in /labs.
                 path: 'simulator',
                 name: 'Simulator',
-                component: LabWorkspace,
-                meta: { title: 'Self-Driving Simulator', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'], hideTopBar: true },
-                props: { labId: 'carla-00-playground' }
+                component: () => import('../views/SelfDrivingStudio.vue'),
+                meta: { title: 'Self-Driving Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
                 /*

@@ -378,12 +378,12 @@ const MESSAGES: NavEntry = { to: '/messages', text: 'Messages', icon: 'messages'
 const DRAW: NavEntry = { to: '/draw', text: 'Drawing Papers', icon: 'draw', keywords: 'whiteboard draw paint canvas sketch diagram board collaborate free' };
 const NETSIM: NavEntry = { to: '/network-simulator', text: 'Network Simulator', icon: 'netsim', keywords: 'netsim topology router switch packet tracer cisco subnet', requires: 'lab' };
 /*
-  The self-driving simulator, as a place to PLAY rather than a lab to pass.
-  `/simulator` renders the lab workspace on `carla-00-playground` - a CARLA lab
-  whose tasks are "run it, drive 200 m, try another town" - so it has the real
-  3D studio, the console, the files and the AI tutor, and a student's free play
-  is kept apart from their progress on the fourteen graded labs. Gated like
-  every other lab tool: the workspace needs `lab_feature`.
+  The self-driving simulator ON ITS OWN, the way the Network Simulator has a
+  studio beside its labs. `/simulator` is SelfDrivingStudio.vue - an editor, a
+  CARLA console, a terminal, the 3D studio and an AI helper over a saved
+  workspace (app 11's unpublished `carla-studio`). Not a lab: nothing graded,
+  no progress. The fourteen graded labs and the free-drive lab stay in Labs.
+  Gated like every lab tool (`lab_feature`).
 */
 const SIMULATOR: NavEntry = { to: '/simulator', text: 'Self-Driving Simulator', icon: 'car', keywords: 'carla self driving autonomous car vehicle simulator drive city traffic autopilot 3d', requires: 'lab' };
 const AI_CHAT: NavEntry = { to: '/ai-chat', text: 'AI Chat Assistant', icon: 'ai', keywords: 'chatbot gpt llm ask question assistant', requires: 'ai' };

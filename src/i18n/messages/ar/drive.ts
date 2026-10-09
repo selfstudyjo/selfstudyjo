@@ -51,6 +51,33 @@ const drive: Catalogue = {
     'Drive a car in a 3D city, or let your CARLA code drive it':
         'قُد سيارة في مدينة ثلاثية الأبعاد، أو دع كود CARLA الخاص بك يقودها',
 
+    /* The standalone Self-Driving Studio (`/simulator`). */
+    'Self-Driving Studio':
+        'استوديو القيادة الذاتية',
+    'Write CARLA Python, run it, and watch your car drive a 3D city - or take the wheel yourself.':
+        'اكتب كود CARLA بلغة Python، وشغّله، وشاهد سيارتك تقود في مدينة ثلاثية الأبعاد - أو تولَّ القيادة بنفسك.',
+    'Self-driving labs':
+        'مختبرات القيادة الذاتية',
+    'Reset my files':
+        'إعادة ضبط ملفاتي',
+    'Starting the simulator…':
+        'جارٍ تشغيل المحاكي…',
+    'Try: python drive.py   ·   python examples/02_autopilot_city.py --map Town10HD   ·   carla maps':
+        'جرّب: python drive.py   ·   python examples/02_autopilot_city.py --map Town10HD   ·   carla maps',
+    'Put drive.py and the examples back the way they shipped? Files you created are removed.':
+        'هل تريد إعادة drive.py والأمثلة إلى حالتها الأصلية؟ ستُحذف الملفات التي أنشأتها.',
+    'CARLA console':
+        'وحدة تحكم CARLA',
+    'AI helper':
+        'المساعد الذكي',
+    'Guide':
+        'الدليل',
+    'The simulator service could not be reached. It may still be starting up.':
+        'تعذّر الوصول إلى خدمة المحاكي. ربما ما زالت قيد التشغيل.',
+
+    'Your scripts, saved for you. Edit drive.py or a file in examples/, press Ctrl+S, then Run it in the simulator.':
+        'ملفاتك محفوظة لك. عدّل drive.py أو ملفًا في examples/، واضغط Ctrl+S، ثم شغّله في المحاكي.',
+
     /* The GUI panels and their columns. */
     'Self-Driving (CARLA)': 'القيادة الذاتية (CARLA)',
     'Goals': 'الأهداف',

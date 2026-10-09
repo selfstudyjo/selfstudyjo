@@ -501,6 +501,22 @@ async function loadCatalogue() {
   }
 }
 
+/**
+ * Re-read the list of runnable scripts, and nothing else.
+ *
+ * The Self-Driving Studio calls this after its editor saves or its console
+ * writes a file: a new `my_car.py` must appear in the Script list without the
+ * pane re-reading its town, car and weather and undoing a pick the student has
+ * just made.
+ */
+async function refreshScripts() {
+  const answer = await call({ action: 'catalogue' });
+  if (!answer || answer.ok === false) return;
+  scripts.value = answer.scripts || [];
+  if (!scripts.value.includes(script.value)) script.value = scripts.value[0] || '';
+}
+defineExpose({ refreshScripts });
+
 async function loadMap(id: string): Promise<DriveMap | null> {
   if (mapCache.has(id)) return mapCache.get(id)!;
   const answer = await call({ action: 'map', map: id });

@@ -42,6 +42,12 @@ const VARIANTS = [
     // `/simulator`: the lab id only as a prop, no URL param - the page that
     // was stuck on "Opening the lab..." in production.
     { id: 'simulator-route', query: `lab=carla-00-playground&route=prop&theme=andromeda&lang=en`, width: 1440 },
+    // THE STANDALONE STUDIO (`/simulator`): not a lab - an IDE beside the 3D
+    // studio, over the unpublished `carla-studio` workspace.
+    { id: 'studio-dark', query: `view=studio&theme=andromeda&lang=en`, width: 1440 },
+    { id: 'studio-light', query: `view=studio&theme=cartwheel&lang=en`, width: 1440 },
+    { id: 'studio-ar', query: `view=studio&theme=andromeda&lang=ar`, width: 1440 },
+    { id: 'studio-phone', query: `view=studio&theme=andromeda&lang=en`, width: 390 },
     { id: 'carla-phone', query: `lab=${LAB}&theme=andromeda&lang=en`, width: 390 },
 ];
 
@@ -155,6 +161,18 @@ for (const v of VARIANTS) {
         if (state?.pane && !state.loading) break;
     }
     ok('the Simulator pane mounted', state?.pane, JSON.stringify(state));
+    if (v.id.startsWith('studio')) {
+        const studio = await evaluate(`(() => ({
+            title: (document.querySelector('.sds-head h1') || {}).textContent || '',
+            tabs: document.querySelectorAll('.sds-tabs [role=tab]').length,
+            files: Array.from(document.querySelectorAll('.sds-ide *'))
+                .filter(e => e.children.length === 0 && /drive\.py|examples/.test(e.textContent || '')).length,
+            noTasks: !document.querySelector('.sl-tasks, .sl-side'),
+        }))()`);
+        ok('the standalone studio rendered (not a lab workspace)',
+           studio && studio.title && studio.tabs === 5 && studio.noTasks, JSON.stringify(studio));
+        ok('the editor lists drive.py and the examples', studio && studio.files > 0, JSON.stringify(studio));
+    }
     if (v.id === 'simulator-route') {
         const title = await evaluate(`(document.querySelector('h1') || {}).textContent || ''`);
         ok('/simulator opened the PLAYGROUND lab from the prop alone', /free drive/i.test(title), title.trim());

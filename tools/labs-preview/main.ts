@@ -3,6 +3,7 @@ import { createApp, h } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import { createPinia } from 'pinia';
 import LabWorkspace from '@/views/LabWorkspace.vue';
+import SelfDrivingStudio from '@/views/SelfDrivingStudio.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 import '@/assets/css/theme.css';
 import '@/assets/css/responsive.css';
@@ -74,7 +75,12 @@ const app = createApp({
     render: () => [
         h(AnimatedBackground),
         h('div', { class: 'app-container' }, [
-            h('div', { class: 'main-content' }, [h(LabWorkspace, propOnly ? { labId: propOnly } : {})]),
+            h('div', { class: 'main-content' }, [
+                // `?view=studio` mounts the standalone Self-Driving Studio
+                // (`/simulator`) instead of a lab workspace.
+                params.get('view') === 'studio'
+                    ? h(SelfDrivingStudio)
+                    : h(LabWorkspace, propOnly ? { labId: propOnly } : {})]),
         ]),
     ],
 });
