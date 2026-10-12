@@ -459,6 +459,10 @@ const FAMILY_LABELS: Record<string, string> = {
     // rest are one simulated estate, `sim:cloudops`, and one pane. The label
     // is the track's own title on purpose, so the two cannot disagree.
     cloudops: 'Cloud Operations Engineering',
+    // Microsoft Fabric: the fab console, notebooks, T-SQL, DAX and
+    // six dashboards are one simulated tenant, `sim:fabric`, and one
+    // pane. The label is the track's own title, as for cloudops.
+    fabric: 'Microsoft Fabric Data Engineering',
     ai: 'AI Tutor',
 };
 
@@ -2390,6 +2394,300 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             tool: 'ops_cost_gui', empty: 'No commitments yet',
             columns: [col('type', 'Type'), col('term', 'Term'), col('payment', 'Payment'),
                 col('commitment', 'Commitment ($/h)', 'number')],
+        },
+    ],
+    // Microsoft Fabric (app 11's `sim:fabric`): one simulated tenant behind six
+    // dashboards - the workspace and capacity view, OneLake, monitoring, the
+    // semantic model, governance and security, and CI/CD. Every path is a key
+    // of that engine's `view()`; the fixture in `tools/labs-check/check.ts` is
+    // dumped from it after `_fablabs.py` drives and grades all twenty labs.
+    fabric: [
+        { id: 'clock', title: 'Environment', kind: 'stats', path: 'clock', tool: 'fabric_workspace_gui' },
+        {
+            id: 'capacities', title: 'Capacities', kind: 'table', path: 'capacities',
+            tool: 'fabric_workspace_gui',
+            columns: [col('name', 'Name'), col('sku', 'SKU', 'badge'),
+                col('state', 'State', 'badge'), col('utilization', 'Utilisation %', 'number'),
+                col('carryforward_minutes', 'Carryforward (min)', 'number'),
+                col('throttling', 'Throttling', 'badge'),
+                col('surge_limit', 'Surge limit %', 'number'),
+                col('monthly_usd', 'Monthly cost ($)', 'number')],
+        },
+        {
+            id: 'workspaces', title: 'Workspaces', kind: 'table', path: 'workspaces',
+            tool: 'fabric_workspace_gui', empty: 'No workspaces yet',
+            columns: [col('name', 'Name'), col('capacity', 'Capacity'),
+                col('items', 'Items', 'number'), col('identity', 'Workspace identity', 'badge'),
+                col('git', 'Git'), col('pool', 'Spark pool'),
+                col('native_engine', 'Native engine', 'badge')],
+        },
+        {
+            id: 'workspace_roles', title: 'Workspace roles', kind: 'table', path: 'workspace_roles',
+            tool: 'fabric_workspace_gui', empty: 'No role assignments',
+            columns: [col('workspace', 'Workspace'), col('principal', 'Principal'),
+                col('kind', 'Kind', 'badge'), col('role', 'Role', 'badge')],
+        },
+        {
+            id: 'items', title: 'Items', kind: 'table', path: 'items',
+            tool: 'fabric_workspace_gui', empty: 'No items yet',
+            columns: [col('name', 'Name'), col('type', 'Type', 'badge'),
+                col('workspace', 'Workspace'), col('label', 'Sensitivity label', 'badge'),
+                col('endorsement', 'Endorsement', 'badge')],
+        },
+        {
+            id: 'shares', title: 'Item permissions', kind: 'table', path: 'shares',
+            tool: 'fabric_workspace_gui', empty: 'No items shared directly',
+            columns: [col('item', 'Item'), col('type', 'Type', 'badge'),
+                col('principal', 'Principal'), col('permissions', 'Permissions', 'code')],
+        },
+        {
+            id: 'connections', title: 'Connections', kind: 'table', path: 'connections',
+            tool: 'fabric_workspace_gui', empty: 'No connections',
+            columns: [col('name', 'Name'), col('type', 'Type'),
+                col('auth', 'Authentication', 'badge'), col('secret', 'Secret'),
+                col('expires', 'Expires')],
+        },
+
+        {
+            id: 'tables', title: 'Delta tables', kind: 'table', path: 'tables',
+            tool: 'fabric_lake_gui', empty: 'No tables yet',
+            columns: [col('label', 'Table', 'code'), col('rows', 'Rows', 'number'),
+                col('files', 'Files', 'number'), col('version', 'Version', 'number'),
+                col('vorder', 'V-Order', 'badge'), col('last_operation', 'Last operation'),
+                col('retained_versions', 'Retained versions', 'number'),
+                col('read_cost_ms', 'Scan cost (ms)', 'number')],
+        },
+        {
+            id: 'files', title: 'Files', kind: 'table', path: 'files',
+            tool: 'fabric_lake_gui', empty: 'No files landed',
+            columns: [col('item', 'Lakehouse'), col('path', 'Path', 'code'),
+                col('rows', 'Rows', 'number'), col('format', 'Format', 'badge'),
+                col('written', 'Written')],
+        },
+        {
+            id: 'shortcuts', title: 'Shortcuts', kind: 'table', path: 'shortcuts',
+            tool: 'fabric_lake_gui', empty: 'No shortcuts',
+            columns: [col('item', 'Lakehouse'), col('name', 'Name'),
+                col('target', 'Target', 'code'), col('type', 'Type', 'badge')],
+        },
+        {
+            id: 'notebooks', title: 'Notebooks', kind: 'table', path: 'notebooks',
+            tool: 'fabric_lake_gui', empty: 'No notebooks',
+            columns: [col('name', 'Name'), col('workspace', 'Workspace'),
+                col('lakehouse', 'Default lakehouse'), col('cells', 'Cells', 'number'),
+                col('lint_errors', 'Lint errors', 'number')],
+        },
+
+        {
+            id: 'runs', title: 'Runs', kind: 'table', path: 'runs',
+            tool: 'fabric_monitor_gui', empty: 'Nothing has run yet',
+            columns: [col('id', 'Run', 'code'), col('item', 'Item'),
+                col('type', 'Type', 'badge'), col('status', 'Status', 'badge'),
+                col('trigger', 'Trigger'), col('start', 'Start'),
+                col('duration_s', 'Duration (s)', 'number'), col('cu_s', 'CU (s)', 'number'),
+                col('rerun_of', 'Rerun of', 'code'), col('error', 'Error')],
+        },
+        {
+            id: 'activity_runs', title: 'Activity runs', kind: 'table', path: 'activity_runs',
+            tool: 'fabric_monitor_gui', empty: 'No pipeline activities yet',
+            columns: [col('run', 'Run', 'code'), col('pipeline', 'Pipeline'),
+                col('activity', 'Activity'), col('type', 'Type', 'badge'),
+                col('status', 'Status', 'badge'), col('attempts', 'Attempts', 'number'),
+                col('error', 'Error')],
+        },
+        {
+            id: 'pipelines', title: 'Pipelines', kind: 'table', path: 'pipelines',
+            tool: 'fabric_monitor_gui', empty: 'No pipelines',
+            columns: [col('name', 'Name'), col('activities', 'Activities', 'number'),
+                col('types', 'Activity types'), col('retry_policy', 'Retry policy', 'badge'),
+                col('connections', 'Connections'), col('last_status', 'Last status', 'badge'),
+                col('scheduled', 'Scheduled', 'badge')],
+        },
+        {
+            id: 'schedules', title: 'Schedules', kind: 'table', path: 'schedules',
+            tool: 'fabric_monitor_gui', empty: 'Nothing is scheduled',
+            columns: [col('item', 'Item'), col('type', 'Type', 'badge'),
+                col('every', 'Every'), col('enabled', 'Enabled', 'badge'),
+                col('last_status', 'Last status', 'badge')],
+        },
+        {
+            id: 'alerts', title: 'Alert rules', kind: 'table', path: 'alerts',
+            tool: 'fabric_monitor_gui', empty: 'No alert rules',
+            columns: [col('name', 'Name'), col('item', 'Item'), col('on', 'On', 'badge'),
+                col('channel', 'Channel', 'badge'), col('to', 'To')],
+        },
+        {
+            id: 'notifications', title: 'Notifications sent', kind: 'table', path: 'notifications',
+            tool: 'fabric_monitor_gui', empty: 'No notifications sent',
+            columns: [col('at', 'At'), col('channel', 'Channel', 'badge'), col('to', 'To'),
+                col('subject', 'Subject'), col('body', 'Message')],
+        },
+        {
+            id: 'top_items', title: 'Top items by CU', kind: 'table', path: 'top_items',
+            tool: 'fabric_monitor_gui', empty: 'No consumption recorded',
+            columns: [col('item', 'Item'), col('kind', 'Kind', 'badge'),
+                col('cu_s', 'CU (s)', 'number'), col('capacity', 'Capacity')],
+        },
+        {
+            id: 'signals', title: 'Events', kind: 'table', path: 'signals',
+            tool: 'fabric_monitor_gui', empty: 'No events',
+            columns: [col('at', 'At'), col('level', 'Level', 'badge'),
+                col('message', 'Message'), col('source', 'Source')],
+        },
+
+        {
+            id: 'models', title: 'Semantic models', kind: 'table', path: 'models',
+            tool: 'fabric_model_gui', empty: 'No semantic models',
+            columns: [col('name', 'Name'), col('source', 'Source'),
+                col('modes', 'Storage mode', 'badge'), col('tables', 'Tables', 'number'),
+                col('measures', 'Measures', 'number'), col('relationships', 'Relationships', 'number'),
+                col('roles', 'Roles', 'number'), col('date_table', 'Date table', 'badge'),
+                col('bpa_findings', 'Analyzer findings', 'number')],
+        },
+        {
+            id: 'measures', title: 'Measures', kind: 'table', path: 'measures',
+            tool: 'fabric_model_gui', empty: 'No measures evaluated yet',
+            columns: [col('name', 'Name'), col('table', 'Table'),
+                col('value', 'Value', 'number'), col('expected', 'Independent check', 'number'),
+                col('matches_reference', 'Matches', 'badge'), col('error', 'Error')],
+        },
+        {
+            id: 'relationships', title: 'Relationships', kind: 'table', path: 'relationships',
+            tool: 'fabric_model_gui', empty: 'No relationships',
+            columns: [col('name', 'Name'), col('from', 'From', 'code'), col('to', 'To', 'code'),
+                col('both', 'Both directions', 'badge'), col('active', 'Active', 'badge')],
+        },
+        {
+            id: 'model_roles', title: 'Row-level security roles', kind: 'table', path: 'model_roles',
+            tool: 'fabric_model_gui', empty: 'No roles',
+            columns: [col('name', 'Role'), col('filters', 'Filters', 'code'),
+                col('members', 'Members')],
+        },
+        {
+            id: 'bpa', title: 'Best Practice Analyzer', kind: 'table', path: 'bpa',
+            tool: 'fabric_model_gui', empty: 'No findings',
+            columns: [col('severity', 'Severity', 'badge'), col('rule', 'Rule'),
+                col('object', 'Object', 'code'), col('advice', 'Advice')],
+        },
+        {
+            id: 'dax_queries', title: 'DAX queries', kind: 'table', path: 'dax_queries',
+            tool: 'fabric_model_gui', empty: 'No queries yet',
+            columns: [col('query', 'Query', 'code'), col('user', 'User'),
+                col('rls', 'RLS applied', 'badge'), col('rows', 'Rows', 'number'),
+                col('duration_ms', 'Duration (ms)', 'number'), col('modes', 'Storage', 'list'),
+                col('fallback', 'Fallback', 'badge')],
+        },
+
+        { id: 'gdpr', title: 'Erasure check', kind: 'stats', path: 'gdpr', tool: 'fabric_gov_gui' },
+        {
+            id: 'dq_runs', title: 'Data quality runs', kind: 'table', path: 'dq_runs',
+            tool: 'fabric_gov_gui', empty: 'No data quality runs yet',
+            columns: [col('at', 'At'), col('table', 'Table', 'code'),
+                col('rules', 'Rules', 'number'), col('failed_rules', 'Failed rules', 'number'),
+                col('critical_failed', 'Critical failures', 'number'),
+                col('quarantined', 'Quarantined', 'number')],
+        },
+        {
+            id: 'dq_results', title: 'Rule results', kind: 'table', path: 'dq_results',
+            tool: 'fabric_gov_gui', empty: 'No rule results',
+            columns: [col('rule', 'Rule'), col('type', 'Type', 'badge'),
+                col('severity', 'Severity', 'badge'), col('failed', 'Failed rows', 'number'),
+                col('passed', 'Passed', 'badge')],
+        },
+        {
+            id: 'classifications', title: 'Classifications', kind: 'table', path: 'classifications',
+            tool: 'fabric_gov_gui', empty: 'Nothing scanned yet',
+            columns: [col('item', 'Item'), col('table', 'Table'), col('column', 'Column', 'code'),
+                col('classification', 'Classification', 'badge')],
+        },
+        {
+            id: 'lineage', title: 'Lineage', kind: 'table', path: 'lineage',
+            tool: 'fabric_gov_gui', empty: 'No lineage recorded',
+            columns: [col('from', 'From', 'code'), col('to', 'To', 'code'), col('via', 'Via')],
+        },
+        {
+            id: 'grants', title: 'T-SQL grants', kind: 'table', path: 'grants',
+            tool: 'fabric_gov_gui', empty: 'No grants',
+            columns: [col('kind', 'Kind', 'badge'), col('permission', 'Permission', 'badge'),
+                col('object', 'Object', 'code'), col('principal', 'Principal')],
+        },
+        {
+            id: 'masks', title: 'Dynamic data masks', kind: 'table', path: 'masks',
+            tool: 'fabric_gov_gui', empty: 'No masked columns',
+            columns: [col('table', 'Table', 'code'), col('column', 'Column', 'code'),
+                col('function', 'Function', 'code')],
+        },
+        {
+            id: 'rls_policies', title: 'Security policies', kind: 'table', path: 'rls_policies',
+            tool: 'fabric_gov_gui', empty: 'No security policies',
+            columns: [col('name', 'Name'), col('table', 'Table', 'code'),
+                col('function', 'Predicate', 'code'), col('on', 'On', 'badge')],
+        },
+        {
+            id: 'onelake_roles', title: 'OneLake data access roles', kind: 'table', path: 'onelake_roles',
+            tool: 'fabric_gov_gui', empty: 'No OneLake roles',
+            columns: [col('item', 'Lakehouse'), col('role', 'Role'),
+                col('paths', 'Paths', 'code'), col('members', 'Members')],
+        },
+        {
+            id: 'access_checks', title: 'Access checks', kind: 'table', path: 'access_checks',
+            tool: 'fabric_gov_gui', empty: 'No access checks',
+            columns: [col('user', 'User'), col('item', 'Lakehouse'),
+                col('path', 'Path', 'code'), col('allowed', 'Allowed', 'badge')],
+        },
+        { id: 'ai_eval', title: 'AI evaluation', kind: 'stats', path: 'ai_eval', tool: 'fabric_gov_gui' },
+        {
+            id: 'audit', title: 'Audit log', kind: 'table', path: 'audit',
+            tool: 'fabric_gov_gui', empty: 'No audit events',
+            columns: [col('at', 'At'), col('user', 'User'), col('operation', 'Operation', 'badge'),
+                col('target', 'Target'), col('detail', 'Detail')],
+        },
+
+        {
+            id: 'git_branches', title: 'Branches', kind: 'table', path: 'git_branches',
+            tool: 'fabric_cicd_gui', empty: 'Not connected to Git',
+            columns: [col('repo', 'Repository', 'code'), col('branch', 'Branch', 'code'),
+                col('files', 'Files', 'number'), col('commits', 'Commits', 'number'),
+                col('last_commit', 'Last commit')],
+        },
+        {
+            id: 'pull_requests', title: 'Pull requests', kind: 'table', path: 'pull_requests',
+            tool: 'fabric_cicd_gui', empty: 'No pull requests',
+            columns: [col('id', 'PR', 'number'), col('title', 'Title'), col('from', 'From', 'code'),
+                col('to', 'To', 'code'), col('status', 'Status', 'badge'),
+                col('approvals', 'Approvals', 'number'), col('checks_passed', 'Checks', 'badge')],
+        },
+        {
+            id: 'deployments', title: 'Deployments', kind: 'table', path: 'deployments',
+            tool: 'fabric_cicd_gui', empty: 'Nothing deployed yet',
+            columns: [col('pipeline', 'Pipeline'), col('from', 'From'), col('to', 'To'),
+                col('items', 'Items', 'number'), col('warnings', 'Warnings', 'number'),
+                col('by', 'By')],
+        },
+        {
+            id: 'deploy_pipelines', title: 'Deployment pipelines', kind: 'table', path: 'deploy_pipelines',
+            tool: 'fabric_cicd_gui', empty: 'No deployment pipelines',
+            columns: [col('name', 'Name'), col('stages', 'Stages', 'code'),
+                col('rules', 'Rules', 'number')],
+        },
+        {
+            id: 'test_runs', title: 'Release tests', kind: 'table', path: 'test_runs',
+            tool: 'fabric_cicd_gui', empty: 'No test runs',
+            columns: [col('workspace', 'Workspace'), col('tests', 'Tests', 'number'),
+                col('passed', 'Passed', 'number'), col('at', 'At')],
+        },
+        {
+            id: 'lint', title: 'Notebook reviews', kind: 'table', path: 'lint',
+            tool: 'fabric_cicd_gui', empty: 'No notebooks reviewed',
+            columns: [col('notebook', 'Notebook', 'code'), col('errors', 'Errors', 'number'),
+                col('warnings', 'Warnings', 'number'), col('findings', 'Findings', 'number')],
+        },
+        {
+            id: 'documents', title: 'Documents', kind: 'table', path: 'documents',
+            tool: 'fabric_cicd_gui', empty: 'No documents reviewed',
+            columns: [col('path', 'Path', 'code'), col('kind', 'Kind', 'badge'),
+                col('ok', 'Complete', 'badge'), col('words', 'Words', 'number'),
+                col('problems', 'Problems', 'list')],
         },
     ],
 };

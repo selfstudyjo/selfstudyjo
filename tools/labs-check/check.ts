@@ -5731,6 +5731,1026 @@ VIEWS.cloudops = {
   ]
 };
 
+// MICROSOFT FABRIC: dumped from app 11's `utils/sims/fabric` `view()` by
+// `FABLABS_DUMP=... python _fablabs.py`, which drives and grades all twenty
+// fabric labs; each key holds the first non-empty value any lab produced,
+// lists trimmed to six rows. `bpa` came back empty (the labs fix every
+// finding) and carries one row in the exact shape `model.analyze` builds.
+VIEWS.fabric = {
+  "probes": [
+    {
+      "name": "changes",
+      "value": 4
+    },
+    {
+      "name": "changes_minus_history",
+      "value": 0
+    },
+    {
+      "name": "ci_double_current",
+      "value": 0
+    },
+    {
+      "name": "ci_unknown",
+      "value": 1
+    },
+    {
+      "name": "fact_minus_silver",
+      "value": 0
+    },
+    {
+      "name": "fact_unknown_ci",
+      "value": 120
+    }
+  ],
+  "clock": {
+    "time": "Mon 12 Oct 07:00",
+    "minute": 0,
+    "stage": "platform"
+  },
+  "capacities": [
+    {
+      "name": "cap-ops-f8",
+      "sku": "F8",
+      "state": "Active",
+      "cu": 8,
+      "utilization": 0.0,
+      "carryforward_minutes": 0.0,
+      "throttling": "none",
+      "surge_limit": 0,
+      "monthly_usd": 1051.0,
+      "workspaces": "ws-ops-legacy, ws-ops-dev, ws-ops-prod"
+    }
+  ],
+  "workspaces": [
+    {
+      "name": "ws-ops-legacy",
+      "capacity": "cap-ops-f8",
+      "items": 0,
+      "roles": "data.engineer@acmepay.com=Admin",
+      "identity": false,
+      "git": "",
+      "pool": "Starter Pool",
+      "native_engine": false
+    },
+    {
+      "name": "ws-ops-dev",
+      "capacity": "cap-ops-f8",
+      "items": 4,
+      "roles": "data.engineer@acmepay.com=Admin, sg-data-engineers=Contributor",
+      "identity": false,
+      "git": "",
+      "pool": "Starter Pool",
+      "native_engine": false
+    },
+    {
+      "name": "ws-ops-prod",
+      "capacity": "cap-ops-f8",
+      "items": 0,
+      "roles": "data.engineer@acmepay.com=Admin, sg-fabric-admins=Admin, sg-ops-analysts=Viewer",
+      "identity": true,
+      "git": "",
+      "pool": "Starter Pool",
+      "native_engine": false
+    }
+  ],
+  "workspace_roles": [
+    {
+      "workspace": "ws-ops-legacy",
+      "principal": "data.engineer@acmepay.com",
+      "kind": "User",
+      "role": "Admin"
+    },
+    {
+      "workspace": "ws-ops-dev",
+      "principal": "data.engineer@acmepay.com",
+      "kind": "User",
+      "role": "Admin"
+    },
+    {
+      "workspace": "ws-ops-dev",
+      "principal": "sg-data-engineers",
+      "kind": "Group",
+      "role": "Contributor"
+    },
+    {
+      "workspace": "ws-ops-prod",
+      "principal": "data.engineer@acmepay.com",
+      "kind": "User",
+      "role": "Admin"
+    },
+    {
+      "workspace": "ws-ops-prod",
+      "principal": "sg-fabric-admins",
+      "kind": "Group",
+      "role": "Admin"
+    },
+    {
+      "workspace": "ws-ops-prod",
+      "principal": "sg-ops-analysts",
+      "kind": "Group",
+      "role": "Viewer"
+    }
+  ],
+  "items": [
+    {
+      "name": "lh_bronze",
+      "type": "Lakehouse",
+      "workspace": "ws-ops-dev",
+      "label": "",
+      "label_inherited": false,
+      "endorsement": "",
+      "description": false,
+      "onelake_security": false
+    },
+    {
+      "name": "lh_silver",
+      "type": "Lakehouse",
+      "workspace": "ws-ops-dev",
+      "label": "",
+      "label_inherited": false,
+      "endorsement": "",
+      "description": false,
+      "onelake_security": false
+    },
+    {
+      "name": "lh_gold",
+      "type": "Lakehouse",
+      "workspace": "ws-ops-dev",
+      "label": "",
+      "label_inherited": false,
+      "endorsement": "",
+      "description": false,
+      "onelake_security": false
+    },
+    {
+      "name": "wh_gold",
+      "type": "Warehouse",
+      "workspace": "ws-ops-dev",
+      "label": "",
+      "label_inherited": false,
+      "endorsement": "",
+      "description": false,
+      "onelake_security": false
+    }
+  ],
+  "shares": [
+    {
+      "item": "lh_silver",
+      "type": "Lakehouse",
+      "principal": "sg-ops-analysts",
+      "permissions": "Read+ReadAll"
+    },
+    {
+      "item": "wh_gold",
+      "type": "Warehouse",
+      "principal": "sg-ops-analysts",
+      "permissions": "Read"
+    },
+    {
+      "item": "ServiceOps",
+      "type": "SemanticModel",
+      "principal": "sg-ops-analysts",
+      "permissions": "Read+Build"
+    }
+  ],
+  "connections": [
+    {
+      "name": "conn_servicenow",
+      "type": "ServiceNow",
+      "auth": "Basic",
+      "secret": "inline",
+      "key_vault": false,
+      "expires": "Wed 11 Nov 07:00"
+    },
+    {
+      "name": "conn_servicenow_oauth",
+      "type": "ServiceNow",
+      "auth": "OAuth2",
+      "secret": "Key Vault",
+      "key_vault": true,
+      "expires": ""
+    }
+  ],
+  "tables": [
+    {
+      "item": "lh_bronze",
+      "workspace": "ws-ops-dev",
+      "schema": "dbo",
+      "name": "incident_raw",
+      "label": "lh_bronze.dbo.incident_raw",
+      "kind": "Lakehouse",
+      "rows": 1449,
+      "files": 4,
+      "size_mb": 304.0,
+      "version": 1,
+      "vorder": false,
+      "partitioned_by": "",
+      "last_operation": "WRITE",
+      "written_by": "pipeline:pl_ingest_incident",
+      "columns": 29,
+      "column_names": "sys_id, number, short_description, caller_id, opened_at, resolved_at, closed_at, state, priority, impact, urgency, category, assignment_group, assigned_to, cmdb_ci, business_service, problem_id, caused_by, reassignment_count, reopen_count, made_sla, close_code, close_notes, active, sys_mod_count, sys_created_on, sys_updated_on, _source_file, _ingested_at",
+      "retained_versions": 2,
+      "shortcut": "",
+      "dup_sys_id": 24,
+      "null_sys_id": 0,
+      "dup_number": 24,
+      "read_cost_ms": 133,
+      "operations": "WRITE"
+    }
+  ],
+  "files": [
+    {
+      "item": "lh_bronze",
+      "path": "Files/servicenow/incident/2026/10/12/incident_0700.json",
+      "rows": 1400,
+      "format": "json",
+      "written": "Mon 12 Oct 07:00"
+    },
+    {
+      "item": "lh_bronze",
+      "path": "Files/servicenow/incident/2026/10/13/incident_0704.json",
+      "rows": 49,
+      "format": "json",
+      "written": "Tue 13 Oct 07:04"
+    }
+  ],
+  "file_count": 2,
+  "shortcuts": [
+    {
+      "item": "lh_gold",
+      "name": "cmdb_ci",
+      "target": "lh_silver.dbo.cmdb_ci",
+      "type": "oneLake"
+    }
+  ],
+  "notebooks": [
+    {
+      "name": "nb_load_bronze",
+      "workspace": "ws-ops-dev",
+      "lakehouse": "lh_bronze",
+      "lakehouse_workspace": "ws-ops-dev",
+      "cells": 2,
+      "lint_errors": 0,
+      "lint_warnings": 0
+    }
+  ],
+  "pipelines": [
+    {
+      "name": "pl_ingest_incident",
+      "workspace": "ws-ops-dev",
+      "activities": 2,
+      "types": "Copy, TridentNotebook",
+      "retry_policy": true,
+      "connections": "conn_servicenow_oauth",
+      "last_status": "Succeeded",
+      "scheduled": false
+    }
+  ],
+  "runs": [
+    {
+      "id": "872d8ba3",
+      "item": "pl_ingest_incident",
+      "type": "DataPipeline",
+      "status": "Succeeded",
+      "trigger": "Manual",
+      "start": "Mon 12 Oct 07:00",
+      "minutes": 4,
+      "error": "",
+      "rerun_of": "",
+      "cu_s": 0,
+      "antipatterns": "",
+      "duration_s": 240,
+      "activities": 2,
+      "retried": true,
+      "parameters": "{\"watermark\": \"1970-01-01 00:00:00\"}"
+    },
+    {
+      "id": "a234ce63",
+      "item": "pl_ingest_incident",
+      "type": "DataPipeline",
+      "status": "Succeeded",
+      "trigger": "Manual",
+      "start": "Tue 13 Oct 07:04",
+      "minutes": 4,
+      "error": "",
+      "rerun_of": "",
+      "cu_s": 0,
+      "antipatterns": "",
+      "duration_s": 240,
+      "activities": 2,
+      "retried": true,
+      "parameters": "{\"watermark\": \"2026-10-12 06:29:00\"}"
+    }
+  ],
+  "activity_runs": [
+    {
+      "run": "872d8ba3",
+      "pipeline": "pl_ingest_incident",
+      "activity": "Copy incidents",
+      "type": "Copy",
+      "status": "Succeeded",
+      "attempts": 2,
+      "seconds": 60,
+      "iteration": "",
+      "error": ""
+    },
+    {
+      "run": "872d8ba3",
+      "pipeline": "pl_ingest_incident",
+      "activity": "Load bronze",
+      "type": "TridentNotebook",
+      "status": "Succeeded",
+      "attempts": 1,
+      "seconds": 60,
+      "iteration": "",
+      "error": ""
+    },
+    {
+      "run": "a234ce63",
+      "pipeline": "pl_ingest_incident",
+      "activity": "Copy incidents",
+      "type": "Copy",
+      "status": "Succeeded",
+      "attempts": 2,
+      "seconds": 60,
+      "iteration": "",
+      "error": ""
+    },
+    {
+      "run": "a234ce63",
+      "pipeline": "pl_ingest_incident",
+      "activity": "Load bronze",
+      "type": "TridentNotebook",
+      "status": "Succeeded",
+      "attempts": 1,
+      "seconds": 60,
+      "iteration": "",
+      "error": ""
+    }
+  ],
+  "schedules": [
+    {
+      "item": "pl_nightly_incident",
+      "type": "daily",
+      "every": "02:00",
+      "enabled": true,
+      "last_status": "Failed"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "alert-1",
+      "item": "pl_publish_gold",
+      "on": "failure",
+      "to": "dataops@acmepay.com",
+      "channel": "Teams",
+      "enabled": true
+    }
+  ],
+  "notifications": [
+    {
+      "at": "Mon 12 Oct 07:01",
+      "channel": "Teams",
+      "to": "dataops@acmepay.com",
+      "subject": "DataPipeline Failed: pl_publish_gold",
+      "body": "DQ gate: NotebookExecutionFailed: cell 1: AssertionError: DQ gate: 14 duplicate sys_id rows in lh_silver.incident",
+      "pipeline": "pl_publish_gold",
+      "rule": "alert-1"
+    }
+  ],
+  "models": [
+    {
+      "name": "ServiceOps",
+      "workspace": "ws-ops-dev",
+      "source": "lh_gold",
+      "tables": 5,
+      "measures": 6,
+      "relationships": 4,
+      "roles": 0,
+      "date_table": true,
+      "modes": "directLake",
+      "refreshed": null,
+      "bpa_findings": 0,
+      "label": "",
+      "endorsement": ""
+    }
+  ],
+  "measures": [
+    {
+      "name": "Incidents",
+      "table": "fact_incident",
+      "value": 1400,
+      "error": "",
+      "matches_reference": true,
+      "format": "0",
+      "expected": 1400,
+      "model": "ServiceOps"
+    },
+    {
+      "name": "Open Incidents",
+      "table": "fact_incident",
+      "value": 31,
+      "error": "",
+      "matches_reference": true,
+      "format": "0",
+      "expected": 31,
+      "model": "ServiceOps"
+    },
+    {
+      "name": "P1 Incidents",
+      "table": "fact_incident",
+      "value": 35,
+      "error": "",
+      "matches_reference": true,
+      "format": "0",
+      "expected": 35,
+      "model": "ServiceOps"
+    },
+    {
+      "name": "MTTR (hours)",
+      "table": "fact_incident",
+      "value": 45.0414,
+      "error": "",
+      "matches_reference": true,
+      "format": "0.0",
+      "expected": 45.0414,
+      "model": "ServiceOps"
+    },
+    {
+      "name": "Reassignment Rate",
+      "table": "fact_incident",
+      "value": 0.2679,
+      "error": "",
+      "matches_reference": true,
+      "format": "0.0%",
+      "expected": 0.2679,
+      "model": "ServiceOps"
+    },
+    {
+      "name": "SLA Breach %",
+      "table": "fact_task_sla",
+      "value": 0.2274,
+      "error": "",
+      "matches_reference": true,
+      "format": "0.0%",
+      "expected": 0.2274,
+      "model": "ServiceOps"
+    }
+  ],
+  "relationships": [
+    {
+      "model": "ServiceOps",
+      "name": "incident_date",
+      "from": "fact_incident.opened_date_key",
+      "to": "dim_date.date_key",
+      "both": false,
+      "active": true
+    },
+    {
+      "model": "ServiceOps",
+      "name": "incident_group",
+      "from": "fact_incident.group_key",
+      "to": "dim_assignment_group.group_key",
+      "both": false,
+      "active": true
+    },
+    {
+      "model": "ServiceOps",
+      "name": "incident_ci",
+      "from": "fact_incident.ci_key",
+      "to": "dim_ci.ci_key",
+      "both": false,
+      "active": true
+    },
+    {
+      "model": "ServiceOps",
+      "name": "sla_incident",
+      "from": "fact_task_sla.incident_key",
+      "to": "fact_incident.incident_key",
+      "both": false,
+      "active": true
+    }
+  ],
+  "model_roles": [
+    {
+      "model": "ServiceOps",
+      "name": "Group scope",
+      "filters": "dim_assignment_group: [owner_email] = USERPRINCIPALNAME()",
+      "members": "sg-ops-analysts"
+    }
+  ],
+  "bpa": [
+    {
+      "severity": "Warning",
+      "rule": "Avoid bi-directional relationships",
+      "object": "incident_group",
+      "advice": "Use single direction and CROSSFILTER() in the one measure that needs it."
+    }
+  ],
+  "role_tests": [
+    {
+      "at": 0,
+      "model": "ServiceOps",
+      "role": "Group scope",
+      "user": "nadia.haddad@acmepay.com",
+      "rls": true,
+      "rows": 1,
+      "value": 216
+    }
+  ],
+  "dax_queries": [
+    {
+      "at": 0,
+      "model": "ServiceOps",
+      "user": "data.engineer@acmepay.com",
+      "rls": false,
+      "rows": 3,
+      "duration_ms": 47,
+      "modes": [
+        "directLake"
+      ],
+      "fallback": false,
+      "query": "EVALUATE SUMMARIZECOLUMNS(fact_task_sla[stage], \"SLAs\", COUNTROWS(fact_task_sla))"
+    },
+    {
+      "at": 0,
+      "model": "ServiceOps",
+      "user": "data.engineer@acmepay.com",
+      "rls": false,
+      "rows": 8,
+      "duration_ms": 765,
+      "modes": [
+        "directLake"
+      ],
+      "fallback": false,
+      "query": "EVALUATE SUMMARIZECOLUMNS(dim_assignment_group[name],     \"Incidents\", [Incidents], \"Open\", [Open Incidents],     \"MTTR (h)\", [MTTR (hours)], \"SLA breach\", [SLA"
+    },
+    {
+      "at": 0,
+      "model": "ServiceOps",
+      "user": "data.engineer@acmepay.com",
+      "rls": false,
+      "rows": 5,
+      "duration_ms": 218,
+      "modes": [
+        "directLake"
+      ],
+      "fallback": false,
+      "query": "EVALUATE SUMMARIZECOLUMNS(dim_date[year_month], \"Incidents\", [Incidents], \"P1\", [P1 Incidents]) ORDER BY [year_month]"
+    },
+    {
+      "at": 0,
+      "model": "ServiceOps",
+      "user": "data.engineer@acmepay.com",
+      "rls": false,
+      "rows": 1,
+      "duration_ms": 9,
+      "modes": [
+        "directLake"
+      ],
+      "fallback": false,
+      "query": "EVALUATE ROW(\"Database Team P1\", CALCULATE([P1 Incidents], dim_assignment_group[name] = \"Database Team\"))"
+    }
+  ],
+  "sql_security": {
+    "grants": 0,
+    "masks": 0,
+    "policies": 0,
+    "procedures": 0
+  },
+  "grants": [
+    {
+      "kind": "GRANT",
+      "permission": "SELECT",
+      "object": "schema::reporting",
+      "principal": "sg-ops-analysts",
+      "columns": ""
+    }
+  ],
+  "masks": [
+    {
+      "table": "wh_gold.reporting.incident",
+      "column": "caller_email",
+      "function": "email()"
+    }
+  ],
+  "rls_policies": [
+    {
+      "name": "reporting.group_filter",
+      "table": "wh_gold.reporting.incident",
+      "function": "reporting.fn_my_group",
+      "on": true
+    }
+  ],
+  "procedures": [
+    "meta.usp_set_watermark"
+  ],
+  "onelake_roles": [
+    {
+      "item": "lh_silver",
+      "role": "ops_readers",
+      "paths": "Tables/dbo/incident, Tables/dbo/cmdb_ci",
+      "members": "sg-ops-analysts"
+    },
+    {
+      "item": "lh_silver",
+      "role": "pii_readers",
+      "paths": "Tables/dbo/sys_user",
+      "members": "sg-data-engineers"
+    }
+  ],
+  "access_checks": [
+    {
+      "at": 0,
+      "item": "lh_silver",
+      "user": "nadia.haddad@acmepay.com",
+      "path": "Tables/dbo/incident",
+      "allowed": true
+    },
+    {
+      "at": 0,
+      "item": "lh_silver",
+      "user": "nadia.haddad@acmepay.com",
+      "path": "Tables/dbo/sys_user",
+      "allowed": false
+    }
+  ],
+  "dq_runs": [
+    {
+      "at": "Mon 12 Oct 07:00",
+      "table": "lh_silver.dbo.incident",
+      "rules": 6,
+      "failed_rules": 2,
+      "critical_failed": 1,
+      "quarantined": 10
+    },
+    {
+      "at": "Mon 12 Oct 07:01",
+      "table": "lh_silver.dbo.incident",
+      "rules": 6,
+      "failed_rules": 0,
+      "critical_failed": 0,
+      "quarantined": 0
+    }
+  ],
+  "dq_results": [
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "sys_id is unique",
+      "type": "unique",
+      "severity": "critical",
+      "failed": 14,
+      "passed": false
+    },
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "number is present",
+      "type": "not_null",
+      "severity": "critical",
+      "failed": 0,
+      "passed": true
+    },
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "priority is 1 to 5",
+      "type": "accepted_values",
+      "severity": "critical",
+      "failed": 0,
+      "passed": true
+    },
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "CI exists in the CMDB",
+      "type": "relationship",
+      "severity": "warning",
+      "failed": 23,
+      "passed": true
+    },
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "resolved after opened",
+      "type": "expression",
+      "severity": "warning",
+      "failed": 10,
+      "passed": false
+    },
+    {
+      "table": "lh_silver.dbo.incident",
+      "rule": "data is fresh",
+      "type": "freshness",
+      "severity": "critical",
+      "failed": 0,
+      "passed": true
+    }
+  ],
+  "lineage": [
+    {
+      "from": "ServiceNow/incident",
+      "to": "lh_bronze/Files/servicenow/incident/2026/10/12",
+      "via": "Copy activity"
+    },
+    {
+      "from": "lh_bronze/Files/servicenow/incident/2026/10/12/incident_0700.json",
+      "to": "lh_bronze.dbo.incident_raw",
+      "via": "Notebook nb_load_bronze"
+    },
+    {
+      "from": "ServiceNow/incident",
+      "to": "lh_bronze/Files/servicenow/incident/2026/10/13",
+      "via": "Copy activity"
+    },
+    {
+      "from": "lh_bronze/Files/servicenow/incident/2026/10/13/incident_0704.json",
+      "to": "lh_bronze.dbo.incident_raw",
+      "via": "Notebook nb_load_bronze"
+    }
+  ],
+  "classifications": [
+    {
+      "table": "incident_raw",
+      "column": "close_notes",
+      "classification": "Email Address",
+      "sample_hits": 63,
+      "item": "lh_bronze"
+    },
+    {
+      "table": "sys_user_group_raw",
+      "column": "email",
+      "classification": "Email Address",
+      "sample_hits": 12,
+      "item": "lh_bronze"
+    },
+    {
+      "table": "sys_user_raw",
+      "column": "email",
+      "classification": "Email Address",
+      "sample_hits": 200,
+      "item": "lh_bronze"
+    },
+    {
+      "table": "cmdb_ci_raw",
+      "column": "ip_address",
+      "classification": "IP Address",
+      "sample_hits": 200,
+      "item": "lh_bronze"
+    },
+    {
+      "table": "incident",
+      "column": "caller_id",
+      "classification": "Person's Name",
+      "sample_hits": null,
+      "item": "lh_silver"
+    },
+    {
+      "table": "incident",
+      "column": "assigned_to",
+      "classification": "Person's Name",
+      "sample_hits": null,
+      "item": "lh_silver"
+    }
+  ],
+  "gdpr": {
+    "subject": "noor.mansour@acmepay.com",
+    "at": 0,
+    "current": 0,
+    "history": 0,
+    "files": 0,
+    "erased": true,
+    "namesakes": 1
+  },
+  "audit": [
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "CreateWorkspace",
+      "target": "ws-ops-legacy",
+      "detail": ""
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "UpdateWorkspaceAccess",
+      "target": "ws-ops-legacy",
+      "detail": "Group sg-all-staff -> Member"
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "CreateWorkspace",
+      "target": "ws-ops-dev",
+      "detail": ""
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "CreateWorkspace",
+      "target": "ws-ops-prod",
+      "detail": ""
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "CreateWorkspace",
+      "target": "ws-sandbox",
+      "detail": ""
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "user": "data.engineer@acmepay.com",
+      "operation": "AssignWorkspaceToCapacity",
+      "target": "ws-sandbox",
+      "detail": "cap-ops-f8"
+    }
+  ],
+  "git_branches": [
+    {
+      "repo": "acme-pay/fabric-serviceops",
+      "branch": "main",
+      "files": 5,
+      "commits": 2,
+      "last_commit": "Merge PR #1: SLA breach aggregate"
+    },
+    {
+      "repo": "acme-pay/fabric-serviceops",
+      "branch": "feature/sla-breach-agg",
+      "files": 5,
+      "commits": 1,
+      "last_commit": "SLA breach aggregate, credential from Key Vault"
+    }
+  ],
+  "pull_requests": [
+    {
+      "id": 1,
+      "title": "SLA breach aggregate",
+      "from": "feature/sla-breach-agg",
+      "to": "main",
+      "status": "merged",
+      "approvals": 1,
+      "checks_passed": true
+    }
+  ],
+  "deployments": [
+    {
+      "pipeline": "dp-serviceops",
+      "from": "Development",
+      "to": "Production",
+      "items": 1,
+      "warnings": 1,
+      "by": "data.engineer@acmepay.com"
+    },
+    {
+      "pipeline": "dp-serviceops",
+      "from": "Development",
+      "to": "Production",
+      "items": 1,
+      "warnings": 0,
+      "by": "data.engineer@acmepay.com"
+    }
+  ],
+  "deploy_pipelines": [
+    {
+      "name": "dp-serviceops",
+      "stages": "Development=ws-ops-dev -> Production=ws-ops-prod",
+      "rules": 1
+    }
+  ],
+  "test_runs": [
+    {
+      "workspace": "ws-ops-dev",
+      "tests": 3,
+      "passed": 3,
+      "at": "Mon 12 Oct 07:00"
+    }
+  ],
+  "lint": [
+    {
+      "at": 0,
+      "errors": 3,
+      "warnings": 2,
+      "findings": 5,
+      "notebook": "notebooks/nb_lina_ingest.py"
+    },
+    {
+      "at": 0,
+      "errors": 0,
+      "warnings": 0,
+      "findings": 0,
+      "notebook": "notebooks/nb_incident_append.py"
+    }
+  ],
+  "documents": [
+    {
+      "path": "docs/model-card.md",
+      "kind": "modelcard",
+      "ok": true,
+      "at": 0,
+      "words": 190,
+      "problems": []
+    }
+  ],
+  "ai_calls": [
+    {
+      "at": 0,
+      "function": "classify",
+      "rows": 8,
+      "column": "notes_redacted"
+    }
+  ],
+  "ai_blocked": 1,
+  "ai_eval": {
+    "at": 0,
+    "rows": 1369,
+    "accuracy": 0.0431,
+    "per_class": [
+      [
+        "Access",
+        243,
+        0.0,
+        0.0
+      ],
+      [
+        "Database",
+        218,
+        0.0,
+        0.0
+      ],
+      [
+        "Hardware",
+        217,
+        0.166,
+        0.267
+      ],
+      [
+        "Network",
+        209,
+        0.0,
+        0.0
+      ],
+      [
+        "Security",
+        254,
+        0.0,
+        0.0
+      ],
+      [
+        "Software",
+        228,
+        0.111,
+        0.004
+      ]
+    ]
+  },
+  "top_items": [
+    {
+      "capacity": "cap-ops-f8",
+      "item": "pl_ingest_incident",
+      "kind": "background",
+      "cu_s": 270
+    },
+    {
+      "capacity": "cap-ops-f8",
+      "item": "wh_gold",
+      "kind": "background",
+      "cu_s": 5
+    }
+  ],
+  "signals": [
+    {
+      "at": "Mon 12 Oct 07:00",
+      "level": "info",
+      "message": "Environment ready: ServiceNow instance acmepay.service-now.com, stage \"platform\"",
+      "source": "lab"
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "level": "info",
+      "message": "Capacity cap-ops-f8 is now: not throttled",
+      "source": "capacity"
+    },
+    {
+      "at": "Mon 12 Oct 07:00",
+      "level": "info",
+      "message": "Workspace identity created for ws-ops-prod (app id 39d9cdcc-ea50-25e9-bc3b-db6c41304310)",
+      "source": "security"
+    }
+  ],
+  "faults": {
+    "incident_no_ci": 107,
+    "incident_orphan_ci": 26,
+    "incident_resolved_before_opened": 10,
+    "duplicate_ci_names": 8,
+    "orphan_relationships": 11,
+    "duplicate_relationships": 6,
+    "relationship_cycles": 1,
+    "notes_with_email": 68,
+    "duplicate_asset_tags": 3,
+    "assets_in_use_out_of_warranty": 40,
+    "server_ci_without_asset": 12
+  }
+};
+
+
 // COWORK READS THE CLAUDE CODE PAYLOAD, because it is the same engine under a
 // second family name - see `families_of_engine` in app 11's
 // `utils/labtools.py`, which is what makes the backend key the payload under

@@ -162,6 +162,7 @@
   "trunk",
   "TX power (dBm)",
   "untagged",
+  "V-Order",
   "VNet",
   "VPC",
   "WEP (broken — never use)",
