@@ -948,9 +948,17 @@ section('9. No catalogue entry has been orphaned by a reword');
  * headings and its memory sentence — and it is exempt here for the same reason
  * and verified positively in the same place.
  */
+// A GUI panel's empty-state line is rendered as `$t(panel.empty)` by
+// LabGui.vue, so it too is reached through a variable. It is exempt from the
+// orphan scan only - an empty-state line that is not translated YET is a gap,
+// and the coverage report is where gaps are counted.
+const panelEmpties = new Set<string>(Object.values(GUI_PANELS).flat()
+    .map(panel => panel.empty || '').filter(Boolean));
+
 for (const [id, catalogue] of CATALOGUES) {
     const orphans = Object.keys(catalogue)
-        .filter(k => !usedKeys.has(k) && !navStrings.has(k) && !dynamicStrings.has(k));
+        .filter(k => !usedKeys.has(k) && !navStrings.has(k) && !dynamicStrings.has(k)
+            && !panelEmpties.has(k));
     ok(`${id}: every entry is asked for by some source file`,
         orphans.length === 0,
         orphans.length
@@ -971,7 +979,8 @@ section('10. The untranslated allow-list is current');
  * `S3` or `Pods` would otherwise read as a stale entry — the check would be
  * telling us to remove the one thing keeping `S3` from being translated.
  */
-const reachable = new Set<string>([...usedKeys, ...navStrings, ...dynamicStrings]);
+const reachable = new Set<string>([...usedKeys, ...navStrings, ...dynamicStrings,
+    ...panelEmpties]);
 const staleAllow = untranslated.filter(k => !reachable.has(k));
 ok('every allow-listed key is still used in the app',
     staleAllow.length === 0,

@@ -3445,6 +3445,2292 @@ VIEWS.carla = {
   }
 };
 
+// CLOUD OPERATIONS: dumped from app 11's `utils/sims/cloudops` `view()` after
+// driving every cloudops lab's brief through the engine (the same commands
+// `_opslabs.py` grades), lists trimmed to six rows. `restores` and
+// `savings_plans` came back empty from that run and carry one row each in the
+// exact shape `view()` builds for them.
+VIEWS.cloudops = {
+  "clock": {
+    "time": "+2d 23:35",
+    "minute": 4195,
+    "scenario": "compromised-key,public-bucket"
+  },
+  "shift": {
+    "time": "+2d 23:35",
+    "open": 2,
+    "p1_open": 0,
+    "breaches": 2,
+    "pages_open": 0,
+    "score": 76,
+    "monthly": 8407.38
+  },
+  "incidents": [
+    {
+      "number": "INC0010001",
+      "priority": 5,
+      "state": "In Progress",
+      "short": "[cloudwatch] CPUUtilization ALARM on app02-cpu-quick",
+      "ci": "payments-api",
+      "group": "Cloud Operations",
+      "assigned_to": "ops.engineer",
+      "opened": "+1d 07:05",
+      "source": "cloudwatch",
+      "events": 1,
+      "problem": "",
+      "change": "",
+      "parent": "",
+      "acked": true,
+      "responded": true,
+      "resolution_code": "Closed/Resolved by Caller",
+      "reprioritised": 0,
+      "major": false,
+      "pickup": "achieved",
+      "response": "achieved",
+      "restore": "achieved",
+      "breached": false,
+      "real": false,
+      "customer_notes": 1,
+      "work_notes": 0
+    },
+    {
+      "number": "INC0010002",
+      "priority": 3,
+      "state": "New",
+      "short": "nightly-export failed: AccessDenied (InvalidAccessKeyId)",
+      "ci": "batch-reporting",
+      "group": "Cloud Operations",
+      "assigned_to": "",
+      "opened": "+2d 02:30",
+      "source": "job-scheduler",
+      "events": 1,
+      "problem": "",
+      "change": "",
+      "parent": "",
+      "acked": false,
+      "responded": false,
+      "resolution_code": "",
+      "reprioritised": 0,
+      "major": false,
+      "pickup": "breached",
+      "response": "breached",
+      "restore": "in progress",
+      "breached": true,
+      "real": null,
+      "customer_notes": 0,
+      "work_notes": 0
+    }
+  ],
+  "slas": [
+    {
+      "incident": "INC0010001",
+      "priority": "P5",
+      "sla": "pick-up",
+      "target": "8h",
+      "elapsed": "1m",
+      "status": "achieved"
+    },
+    {
+      "incident": "INC0010001",
+      "priority": "P5",
+      "sla": "response",
+      "target": "48h",
+      "elapsed": "1m",
+      "status": "achieved"
+    },
+    {
+      "incident": "INC0010001",
+      "priority": "P5",
+      "sla": "restore",
+      "target": "120h",
+      "elapsed": "1m",
+      "status": "achieved"
+    },
+    {
+      "incident": "INC0010002",
+      "priority": "P3",
+      "sla": "pick-up",
+      "target": "1h",
+      "elapsed": "21h05m",
+      "status": "breached"
+    },
+    {
+      "incident": "INC0010002",
+      "priority": "P3",
+      "sla": "response",
+      "target": "4h",
+      "elapsed": "21h05m",
+      "status": "breached"
+    },
+    {
+      "incident": "INC0010002",
+      "priority": "P3",
+      "sla": "restore",
+      "target": "24h",
+      "elapsed": "21h05m",
+      "status": "in progress"
+    }
+  ],
+  "problems": [
+    {
+      "number": "PRB0040001",
+      "state": "Resolved",
+      "short": "win-file-01 C: drive fills nightly",
+      "incidents": 4,
+      "cause": true,
+      "workaround": true,
+      "fix": "CHG0030002"
+    }
+  ],
+  "changes": [
+    {
+      "number": "CHG0030001",
+      "type": "normal",
+      "state": "Assess",
+      "risk": "moderate",
+      "short": "Move IIS logs to D: and stage report export on D:",
+      "window": "05:35",
+      "approvals": 0,
+      "result": "",
+      "incident": "",
+      "template": ""
+    },
+    {
+      "number": "CHG0030002",
+      "type": "normal",
+      "state": "Closed",
+      "risk": "moderate",
+      "short": "Move IIS logs to D: and stage report export on D:",
+      "window": "+1d 05:35",
+      "approvals": 1,
+      "result": "successful",
+      "incident": "",
+      "template": ""
+    },
+    {
+      "number": "CHG0030003",
+      "type": "standard",
+      "state": "Scheduled",
+      "risk": "low",
+      "short": "Restart IIS application pool",
+      "window": "04:35",
+      "approvals": 1,
+      "result": "",
+      "incident": "",
+      "template": "STD-002"
+    },
+    {
+      "number": "CHG0030004",
+      "type": "emergency",
+      "state": "New",
+      "risk": "low",
+      "short": "Urgent: tidy up old AMIs",
+      "window": "04:35",
+      "approvals": 0,
+      "result": "",
+      "incident": "",
+      "template": ""
+    }
+  ],
+  "majors": [
+    {
+      "incident": "INC0010001",
+      "manager": "l.chen",
+      "bridge": "https://acme.zoom.example/j/9912003344",
+      "updates": 5,
+      "missed": 0,
+      "resolved": true,
+      "pir": true,
+      "status": "closed"
+    }
+  ],
+  "pages": [
+    {
+      "id": "PG00002",
+      "incident": "INC0010004",
+      "who": "sd.agent",
+      "level": 1,
+      "status": "acked",
+      "acked_by": "ops.engineer",
+      "sent": "01:40",
+      "escalations": 0
+    }
+  ],
+  "groups": [
+    {
+      "name": "Cloud Operations",
+      "primary": "m.rossi",
+      "secondary": "ops.engineer",
+      "steps": 2,
+      "escalation": "5m->secondary, 15m->manager"
+    },
+    {
+      "name": "Service Desk",
+      "primary": "sd.agent",
+      "secondary": "",
+      "steps": 0,
+      "escalation": ""
+    },
+    {
+      "name": "Network Engineering",
+      "primary": "n.okafor",
+      "secondary": "",
+      "steps": 0,
+      "escalation": ""
+    },
+    {
+      "name": "Windows Platform",
+      "primary": "s.dubois",
+      "secondary": "",
+      "steps": 0,
+      "escalation": ""
+    },
+    {
+      "name": "Database",
+      "primary": "p.novak",
+      "secondary": "",
+      "steps": 0,
+      "escalation": ""
+    },
+    {
+      "name": "Security Operations",
+      "primary": "r.silva",
+      "secondary": "",
+      "steps": 0,
+      "escalation": ""
+    }
+  ],
+  "events": [
+    {
+      "time": "+1d 06:51",
+      "source": "cloudwatch",
+      "node": "app02-cpu-quick",
+      "state": "OK",
+      "incident": "",
+      "action": "cleared"
+    },
+    {
+      "time": "+1d 07:05",
+      "source": "cloudwatch",
+      "node": "app02-cpu-quick",
+      "state": "ALARM",
+      "incident": "INC0010001",
+      "action": "created P5"
+    },
+    {
+      "time": "+1d 07:06",
+      "source": "cloudwatch",
+      "node": "app02-cpu-quick",
+      "state": "OK",
+      "incident": "INC0010001",
+      "action": "auto-resolved"
+    },
+    {
+      "time": "+1d 07:25",
+      "source": "cloudwatch",
+      "node": "app02-cpu-sustained",
+      "state": "OK",
+      "incident": "",
+      "action": "cleared"
+    }
+  ],
+  "rules": [
+    {
+      "name": "critical-cpu",
+      "source": "cloudwatch",
+      "match": "node=*-critical",
+      "priority": "P2",
+      "group": "Cloud Operations",
+      "ignore": false
+    }
+  ],
+  "integrations": [
+    {
+      "source": "cloudwatch",
+      "group": "Cloud Operations",
+      "auto_resolve": true,
+      "received": 4
+    },
+    {
+      "source": "site24x7",
+      "group": "Cloud Operations",
+      "auto_resolve": true,
+      "received": 0
+    }
+  ],
+  "alarms": [
+    {
+      "name": "app02-cpu-sustained",
+      "metric": "CPUUtilization",
+      "target": "i-0winapp02a1",
+      "threshold": 85.0,
+      "evaluation": "2 of 3",
+      "datapoints": 2,
+      "periods": 3,
+      "state": "OK",
+      "fired": 0,
+      "real": 0,
+      "false": 0,
+      "composite": false,
+      "actions": 1
+    },
+    {
+      "name": "app01-cpu-critical",
+      "metric": "CPUUtilization",
+      "target": "i-0winapp01a1",
+      "threshold": 85.0,
+      "evaluation": "3 of 5",
+      "datapoints": 3,
+      "periods": 5,
+      "state": "OK",
+      "fired": 0,
+      "real": 0,
+      "false": 0,
+      "composite": false,
+      "actions": 1
+    }
+  ],
+  "monitors": [
+    {
+      "name": "pay-api-quick",
+      "target": "https://pay.acme.example/health",
+      "frequency": 1,
+      "locations": 1,
+      "confirm": 1,
+      "down_after": 1,
+      "status": "Suspended",
+      "alerts": 1,
+      "real": 0,
+      "false": 1
+    },
+    {
+      "name": "pay-api-health",
+      "target": "https://pay.acme.example/health",
+      "frequency": 1,
+      "locations": 3,
+      "confirm": 2,
+      "down_after": 2,
+      "status": "Up",
+      "alerts": 0,
+      "real": 0,
+      "false": 0
+    }
+  ],
+  "subscriptions": [
+    {
+      "topic": "ops-alerts",
+      "protocol": "https",
+      "endpoint": "https://acme.service-now.com/api/sn_em_connector/em/inbound_event?source=AWSSNS",
+      "status": "Confirmed"
+    }
+  ],
+  "topics": [
+    {
+      "name": "ops-alerts",
+      "arn": "arn:aws:sns:eu-west-1:666666666666:ops-alerts"
+    },
+    {
+      "name": "ops-alerts",
+      "arn": "arn:aws:sns:eu-west-1:666666666666:ops-alerts"
+    }
+  ],
+  "site_integrations": 1,
+  "alerting": {
+    "event_incidents": 1,
+    "false_incidents": 1,
+    "real_incidents": 0,
+    "alarm_fires": 0,
+    "false_fires": 0,
+    "monitor_alerts": 1,
+    "false_monitor_alerts": 1
+  },
+  "org": {
+    "root": "r-a1b2",
+    "ous": 6,
+    "accounts": 9,
+    "ct_status": "ACTIVE",
+    "ct_drift": 0,
+    "controls": 1,
+    "factory": 1
+  },
+  "ous": [
+    {
+      "id": "ou-a1b2-security",
+      "name": "Security",
+      "parent": "Root",
+      "scps": "FullAWSAccess, aws-guardrails-mandatory",
+      "governed": true
+    },
+    {
+      "id": "ou-a1b2-infra",
+      "name": "Infrastructure",
+      "parent": "Root",
+      "scps": "FullAWSAccess, aws-guardrails-mandatory",
+      "governed": true
+    },
+    {
+      "id": "ou-a1b2-workload",
+      "name": "Workloads",
+      "parent": "Root",
+      "scps": "FullAWSAccess, aws-guardrails-mandatory",
+      "governed": true
+    },
+    {
+      "id": "ou-a1b2-prod",
+      "name": "Prod",
+      "parent": "OU Workloads",
+      "scps": "FullAWSAccess, aws-guardrails-mandatory, aws-guardrails-aws-gr_restrict_root_user",
+      "governed": true
+    },
+    {
+      "id": "ou-a1b2-nonprod",
+      "name": "NonProd",
+      "parent": "OU Workloads",
+      "scps": "FullAWSAccess, aws-guardrails-mandatory",
+      "governed": true
+    },
+    {
+      "id": "ou-a1b2-sandbox",
+      "name": "Sandbox",
+      "parent": "Root",
+      "scps": "FullAWSAccess",
+      "governed": false
+    }
+  ],
+  "accounts": [
+    {
+      "id": "111111111111",
+      "name": "management",
+      "ou": "Root",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "222222222222",
+      "name": "log-archive",
+      "ou": "OU Security",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "333333333333",
+      "name": "audit",
+      "ou": "OU Security",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "444444444444",
+      "name": "network",
+      "ou": "OU Infrastructure",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "555555555555",
+      "name": "shared-services",
+      "ou": "OU Infrastructure",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "666666666666",
+      "name": "prod-payments",
+      "ou": "OU Prod",
+      "scps": "FullAWSAccess",
+      "enrolled": true,
+      "status": "ACTIVE"
+    }
+  ],
+  "scps": [
+    {
+      "id": "p-FullAWSAccess",
+      "name": "FullAWSAccess",
+      "type": "SERVICE_CONTROL_POLICY",
+      "aws_managed": true,
+      "targets": 16,
+      "statements": 1
+    },
+    {
+      "id": "p-ctguardrail01",
+      "name": "aws-guardrails-mandatory",
+      "type": "SERVICE_CONTROL_POLICY",
+      "aws_managed": false,
+      "targets": 5,
+      "statements": 2
+    },
+    {
+      "id": "p-c6b7c3d4",
+      "name": "deny-non-eu-regions",
+      "type": "SERVICE_CONTROL_POLICY",
+      "aws_managed": false,
+      "targets": 0,
+      "statements": 1
+    },
+    {
+      "id": "p-ct4b6d11",
+      "name": "aws-guardrails-aws-gr_restrict_root_user",
+      "type": "SERVICE_CONTROL_POLICY",
+      "aws_managed": false,
+      "targets": 1,
+      "statements": 1
+    }
+  ],
+  "ct_controls": [
+    {
+      "control": "AWS-GR_RESTRICT_ROOT_USER",
+      "kind": "preventive",
+      "ou": "OU Prod"
+    }
+  ],
+  "ct_drift": [],
+  "simulations": [
+    {
+      "time": "+1d 09:50",
+      "principal": "role/OpsEngineer",
+      "account": "prod-payments",
+      "action": "ec2:RunInstances",
+      "region": "us-east-1",
+      "decision": "ALLOWED"
+    },
+    {
+      "time": "+1d 09:50",
+      "principal": "role/OpsEngineer",
+      "account": "prod-payments",
+      "action": "ec2:RunInstances",
+      "region": "eu-west-1",
+      "decision": "ALLOWED"
+    },
+    {
+      "time": "+1d 09:50",
+      "principal": "role/OpsEngineer",
+      "account": "prod-payments",
+      "action": "iam:ListRoles",
+      "region": "us-east-1",
+      "decision": "ALLOWED"
+    },
+    {
+      "time": "+1d 09:50",
+      "principal": "role/OpsEngineer",
+      "account": "prod-payments",
+      "action": "iam:CreateUser",
+      "region": "eu-west-1",
+      "decision": "DENIED"
+    },
+    {
+      "time": "+1d 09:50",
+      "principal": "root",
+      "account": "prod-payments",
+      "action": "ec2:StopInstances",
+      "region": "eu-west-1",
+      "decision": "DENIED"
+    },
+    {
+      "time": "+2d 10:50",
+      "principal": "ci-deployer",
+      "account": "",
+      "action": "autoscaling:StartInstanceRefresh, iam:CreateUser",
+      "region": "",
+      "decision": "allowed, implicitDeny"
+    }
+  ],
+  "users": [
+    {
+      "name": "svc-backup-legacy",
+      "console": false,
+      "mfa": false,
+      "keys": 1,
+      "active_keys": 1,
+      "newest_key": "AKIAZ3OPS461AF727E57",
+      "oldest_key_days": 0,
+      "admin": false,
+      "policies": "AmazonS3ReadOnlyAccess",
+      "backdoor": false
+    },
+    {
+      "name": "ci-deployer",
+      "console": false,
+      "mfa": false,
+      "keys": 1,
+      "active_keys": 0,
+      "newest_key": "AKIAZ3OPS4CIDEPLOY77",
+      "oldest_key_days": 0,
+      "admin": false,
+      "policies": "ci-deployer-scoped",
+      "backdoor": false
+    },
+    {
+      "name": "j.smith",
+      "console": true,
+      "mfa": false,
+      "keys": 1,
+      "active_keys": 1,
+      "newest_key": "AKIAZ3OPS4JSMITH0042",
+      "oldest_key_days": 96,
+      "admin": false,
+      "policies": "PowerUserAccess",
+      "backdoor": false
+    },
+    {
+      "name": "support-sync",
+      "console": false,
+      "mfa": false,
+      "keys": 1,
+      "active_keys": 1,
+      "newest_key": "AKIAZ3OPS4BACKDOOR01",
+      "oldest_key_days": 0,
+      "admin": true,
+      "policies": "AdministratorAccess",
+      "backdoor": true
+    }
+  ],
+  "roles": [
+    {
+      "name": "OpsEngineer",
+      "policies": "PowerUserAccess",
+      "inline": 0,
+      "trust": "{\"Federated\": \"arn:aws:iam::666666666666:saml-provider/AWSSS",
+      "oidc": false,
+      "admin": false
+    },
+    {
+      "name": "AWSReservedSSO_ReadOnly_8a1f",
+      "policies": "ReadOnlyAccess",
+      "inline": 0,
+      "trust": "{\"Federated\": \"arn:aws:iam::666666666666:saml-provider/AWSSS",
+      "oidc": false,
+      "admin": false
+    },
+    {
+      "name": "ssm-managed-instance",
+      "policies": "AmazonSSMManagedInstanceCore, CloudWatchAgentServerPolicy",
+      "inline": 0,
+      "trust": "{\"Service\": \"ec2.amazonaws.com\"}",
+      "oidc": false,
+      "admin": false
+    },
+    {
+      "name": "app-report-role",
+      "policies": "CloudWatchAgentServerPolicy, AmazonSSMManagedInstanceCore",
+      "inline": 0,
+      "trust": "{\"Service\": \"ec2.amazonaws.com\"}",
+      "oidc": false,
+      "admin": false
+    },
+    {
+      "name": "AWSBackupDefaultServiceRole",
+      "policies": "AWSBackupServiceRolePolicyForBackup",
+      "inline": 0,
+      "trust": "{\"Service\": \"backup.amazonaws.com\"}",
+      "oidc": false,
+      "admin": false
+    },
+    {
+      "name": "imagebuilder-instance-role",
+      "policies": "AmazonSSMManagedInstanceCore, EC2InstanceProfileForImageBuilder",
+      "inline": 0,
+      "trust": "{\"Service\": \"ec2.amazonaws.com\"}",
+      "oidc": false,
+      "admin": false
+    }
+  ],
+  "permission_sets": [
+    {
+      "name": "CloudOpsEngineer",
+      "duration": "PT4H",
+      "policies": "ReadOnlyAccess +inline",
+      "version": 3,
+      "accounts": 1,
+      "stale": 0,
+      "assignments": 1
+    }
+  ],
+  "assignments": [
+    {
+      "account": "prod-payments",
+      "permission_set": "CloudOpsEngineer",
+      "type": "GROUP",
+      "principal": "g-cloudops"
+    }
+  ],
+  "oidc_providers": [
+    {
+      "url": "https://token.actions.githubusercontent.com",
+      "audience": "sts.amazonaws.com"
+    }
+  ],
+  "root": {
+    "mfa": true,
+    "access_keys": 0
+  },
+  "secrets": [
+    {
+      "name": "prod/nightly-export/aws-key",
+      "consumer": "nightly-export",
+      "versions": 1,
+      "key": "AKIAZ3OPS4LEGACY0001"
+    },
+    {
+      "name": "prod/payments/db",
+      "consumer": "payments-api",
+      "versions": 4,
+      "key": ""
+    }
+  ],
+  "jobs": [
+    {
+      "job": "nightly-export",
+      "time": "02:30",
+      "key": "AKIAZ3OPS4LEGACY0001",
+      "ok": true
+    },
+    {
+      "job": "nightly-export",
+      "time": "+1d 02:30",
+      "key": "AKIAZ3OPS4LEGACY0001",
+      "ok": true
+    },
+    {
+      "job": "nightly-export",
+      "time": "+2d 02:30",
+      "key": "AKIAZ3OPS4LEGACY0001",
+      "ok": false
+    }
+  ],
+  "buckets": [
+    {
+      "name": "acme-tfstate-prod",
+      "public": false,
+      "block_all": true,
+      "policy": false,
+      "versioning": "Enabled",
+      "managed_by": "console"
+    },
+    {
+      "name": "acme-cloudtrail-logs",
+      "public": false,
+      "block_all": true,
+      "policy": false,
+      "versioning": "Enabled",
+      "managed_by": "console"
+    },
+    {
+      "name": "acme-reports-export",
+      "public": false,
+      "block_all": false,
+      "policy": true,
+      "versioning": "Suspended",
+      "managed_by": "terraform"
+    },
+    {
+      "name": "acme-backups",
+      "public": false,
+      "block_all": true,
+      "policy": false,
+      "versioning": "Enabled",
+      "managed_by": "console"
+    },
+    {
+      "name": "acme-s3-access-logs",
+      "public": false,
+      "block_all": true,
+      "policy": false,
+      "versioning": "Enabled",
+      "managed_by": "console"
+    }
+  ],
+  "account_pab": true,
+  "vpcs": [
+    {
+      "id": "vpc-0prod20a1b2c3d4e",
+      "name": "vpc-prod-payments",
+      "cidr": "10.20.0.0/16",
+      "account": "666666666666"
+    },
+    {
+      "id": "vpc-0shared30f6e5d4c",
+      "name": "vpc-shared-services",
+      "cidr": "10.30.0.0/16",
+      "account": "555555555555"
+    }
+  ],
+  "subnets": [
+    {
+      "id": "subnet-0pub-a",
+      "name": "prod-public-a",
+      "cidr": "10.20.0.0/24",
+      "az": "eu-west-1a",
+      "route_table": "rtb-0public",
+      "acl": "acl-0default-prod",
+      "public": true
+    },
+    {
+      "id": "subnet-0pub-b",
+      "name": "prod-public-b",
+      "cidr": "10.20.1.0/24",
+      "az": "eu-west-1b",
+      "route_table": "rtb-0public",
+      "acl": "acl-0default-prod",
+      "public": true
+    },
+    {
+      "id": "subnet-0app-a",
+      "name": "prod-app-a",
+      "cidr": "10.20.10.0/24",
+      "az": "eu-west-1a",
+      "route_table": "rtb-0app-a",
+      "acl": "acl-0default-prod",
+      "public": false
+    },
+    {
+      "id": "subnet-0app-b",
+      "name": "prod-app-b",
+      "cidr": "10.20.11.0/24",
+      "az": "eu-west-1b",
+      "route_table": "rtb-0app-b",
+      "acl": "acl-0default-prod",
+      "public": false
+    },
+    {
+      "id": "subnet-0data-a",
+      "name": "prod-data-a",
+      "cidr": "10.20.20.0/24",
+      "az": "eu-west-1a",
+      "route_table": "rtb-0data",
+      "acl": "acl-0data",
+      "public": false
+    },
+    {
+      "id": "subnet-0data-b",
+      "name": "prod-data-b",
+      "cidr": "10.20.21.0/24",
+      "az": "eu-west-1b",
+      "route_table": "rtb-0data",
+      "acl": "acl-0data",
+      "public": false
+    }
+  ],
+  "routes": [
+    {
+      "table": "rt-prod-public",
+      "id": "rtb-0public",
+      "destination": "10.20.0.0/16",
+      "target": "local",
+      "subnets": "prod-public-a, prod-public-b"
+    },
+    {
+      "table": "rt-prod-public",
+      "id": "rtb-0public",
+      "destination": "0.0.0.0/0",
+      "target": "igw-0prod1a2b3c",
+      "subnets": "prod-public-a, prod-public-b"
+    },
+    {
+      "table": "rt-prod-app-a",
+      "id": "rtb-0app-a",
+      "destination": "10.20.0.0/16",
+      "target": "local",
+      "subnets": "prod-app-a"
+    },
+    {
+      "table": "rt-prod-app-a",
+      "id": "rtb-0app-a",
+      "destination": "0.0.0.0/0",
+      "target": "nat-0prod-a",
+      "subnets": "prod-app-a"
+    },
+    {
+      "table": "rt-prod-app-a",
+      "id": "rtb-0app-a",
+      "destination": "10.30.0.0/16",
+      "target": "tgw-0acme9f8e7d6c5b4a",
+      "subnets": "prod-app-a"
+    },
+    {
+      "table": "rt-prod-app-a",
+      "id": "rtb-0app-a",
+      "destination": "192.168.0.0/16",
+      "target": "tgw-0acme9f8e7d6c5b4a",
+      "subnets": "prod-app-a"
+    }
+  ],
+  "tgw_routes": [
+    {
+      "table": "core",
+      "destination": "10.20.0.0/16",
+      "attachment": "tgw-attach-0prod",
+      "type": "propagated",
+      "blackhole": false
+    },
+    {
+      "table": "core",
+      "destination": "10.30.0.0/16",
+      "attachment": "tgw-attach-0shared",
+      "type": "propagated",
+      "blackhole": false
+    },
+    {
+      "table": "core",
+      "destination": "192.168.0.0/16",
+      "attachment": "tgw-attach-0vpn",
+      "type": "propagated",
+      "blackhole": false
+    }
+  ],
+  "endpoints": [
+    {
+      "id": "vpce-0ssm3d4e",
+      "service": "ssm",
+      "type": "Interface",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    },
+    {
+      "id": "vpce-0ssmmes3d4e",
+      "service": "ssmmessages",
+      "type": "Interface",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    },
+    {
+      "id": "vpce-0ec2mes3d4e",
+      "service": "ec2messages",
+      "type": "Interface",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    },
+    {
+      "id": "vpce-0ssm5d4c",
+      "service": "ssm",
+      "type": "Interface",
+      "vpc": "vpc-0shared30f6e5d4c",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    },
+    {
+      "id": "vpce-0ssmmes5d4c",
+      "service": "ssmmessages",
+      "type": "Interface",
+      "vpc": "vpc-0shared30f6e5d4c",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    },
+    {
+      "id": "vpce-0ec2mes5d4c",
+      "service": "ec2messages",
+      "type": "Interface",
+      "vpc": "vpc-0shared30f6e5d4c",
+      "private_dns": true,
+      "route_tables": 0,
+      "subnets": 2
+    }
+  ],
+  "security_groups": [
+    {
+      "id": "sg-0alb",
+      "name": "sg-alb",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "tcp 443-443 0.0.0.0/0",
+      "rules": 1,
+      "open_admin": false,
+      "managed_by": "console"
+    },
+    {
+      "id": "sg-0web",
+      "name": "sg-web",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "tcp 443-443 sg-0alb; tcp 3389-3389 sg-0bastion",
+      "rules": 2,
+      "open_admin": false,
+      "managed_by": "console"
+    },
+    {
+      "id": "sg-0app",
+      "name": "sg-app",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "tcp 8443-8443 sg-0web; tcp 3389-3389 sg-0bastion",
+      "rules": 2,
+      "open_admin": false,
+      "managed_by": "console"
+    },
+    {
+      "id": "sg-0sql",
+      "name": "sg-sql",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "tcp 1433-1433 sg-0app; tcp 5022-5022 sg-0sql",
+      "rules": 2,
+      "open_admin": false,
+      "managed_by": "console"
+    },
+    {
+      "id": "sg-0bastion",
+      "name": "sg-bastion",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "(none)",
+      "rules": 0,
+      "open_admin": false,
+      "managed_by": "console"
+    },
+    {
+      "id": "sg-0api",
+      "name": "sg-payments-api",
+      "vpc": "vpc-0prod20a1b2c3d4e",
+      "ingress": "tcp 8080-8080 sg-0alb",
+      "rules": 1,
+      "open_admin": false,
+      "managed_by": "console"
+    }
+  ],
+  "nacl_rules": [
+    {
+      "acl": "acl-0default-prod",
+      "direction": "inbound",
+      "rule": 100,
+      "protocol": "-1",
+      "ports": "0-65535",
+      "cidr": "0.0.0.0/0",
+      "action": "allow"
+    },
+    {
+      "acl": "acl-0default-prod",
+      "direction": "outbound",
+      "rule": 100,
+      "protocol": "-1",
+      "ports": "0-65535",
+      "cidr": "0.0.0.0/0",
+      "action": "allow"
+    },
+    {
+      "acl": "acl-0data",
+      "direction": "inbound",
+      "rule": 100,
+      "protocol": "tcp",
+      "ports": "1433-1433",
+      "cidr": "10.20.10.0/23",
+      "action": "allow"
+    },
+    {
+      "acl": "acl-0data",
+      "direction": "inbound",
+      "rule": 110,
+      "protocol": "tcp",
+      "ports": "1024-65535",
+      "cidr": "10.20.0.0/16",
+      "action": "allow"
+    },
+    {
+      "acl": "acl-0data",
+      "direction": "inbound",
+      "rule": 120,
+      "protocol": "tcp",
+      "ports": "5022-5022",
+      "cidr": "10.20.20.0/23",
+      "action": "allow"
+    },
+    {
+      "acl": "acl-0data",
+      "direction": "inbound",
+      "rule": 130,
+      "protocol": "-1",
+      "ports": "0-65535",
+      "cidr": "10.30.0.0/16",
+      "action": "allow"
+    }
+  ],
+  "analyses": [
+    {
+      "id": "nia-0925b49dbe066",
+      "source": "win-app-01",
+      "destination": "sql.acme.internal",
+      "port": 1433,
+      "found": true,
+      "blocked_at": "",
+      "reason": "",
+      "time": "+2d 10:50"
+    },
+    {
+      "id": "nia-0f85c5de0f42e",
+      "source": "win-app-01",
+      "destination": "10.30.1.10",
+      "port": 389,
+      "found": true,
+      "blocked_at": "",
+      "reason": "",
+      "time": "+2d 10:50"
+    },
+    {
+      "id": "nia-0f85c5de0f42e",
+      "source": "win-app-01",
+      "destination": "10.30.1.10",
+      "port": 389,
+      "found": true,
+      "blocked_at": "",
+      "reason": "",
+      "time": "+2d 10:50"
+    },
+    {
+      "id": "nia-0dbc964388d45",
+      "source": "win-app-01",
+      "destination": "192.168.10.25",
+      "port": 445,
+      "found": true,
+      "blocked_at": "",
+      "reason": "",
+      "time": "+2d 10:50"
+    },
+    {
+      "id": "nia-020a23d978e45",
+      "source": "win-sql-01",
+      "destination": "internet",
+      "port": 443,
+      "found": false,
+      "blocked_at": "acl-0data outbound",
+      "reason": "tcp/443 to 8.8.8.8: rule * (the implicit deny - no rule matched)",
+      "time": "+2d 10:50"
+    },
+    {
+      "id": "nia-024d68375b0c8",
+      "source": "win-sql-01",
+      "destination": "service:s3",
+      "port": 443,
+      "found": false,
+      "blocked_at": "acl-0data outbound",
+      "reason": "tcp/443 to 52.218.0.10: rule * (the implicit deny - no rule matched)",
+      "time": "+2d 10:50"
+    }
+  ],
+  "vpn": [
+    {
+      "id": "vpn-0onprem",
+      "tunnels_up": 2,
+      "routing": "bgp"
+    }
+  ],
+  "dns": {
+    "private_records": 5
+  },
+  "zones": [
+    {
+      "name": "acme.internal.",
+      "private": true,
+      "records": 5,
+      "vpcs": 2
+    },
+    {
+      "name": "acme.example.",
+      "private": false,
+      "records": 1,
+      "vpcs": 0
+    }
+  ],
+  "instances": [
+    {
+      "id": "i-0winweb01a1",
+      "name": "win-web-01",
+      "state": "running",
+      "type": "m5.large",
+      "os": "Windows Server 2022",
+      "ip": "10.20.10.11",
+      "subnet": "subnet-0app-a",
+      "region": "eu-west-1",
+      "patch_group": "prod-web",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 4,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 6,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0web",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    },
+    {
+      "id": "i-0winweb02a1",
+      "name": "win-web-02",
+      "state": "running",
+      "type": "m5.large",
+      "os": "Windows Server 2022",
+      "ip": "10.20.11.11",
+      "subnet": "subnet-0app-b",
+      "region": "eu-west-1",
+      "patch_group": "prod-web",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 4,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 5,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0web",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    },
+    {
+      "id": "i-0winweb03a1",
+      "name": "win-web-03",
+      "state": "running",
+      "type": "m5.xlarge",
+      "os": "Windows Server 2022",
+      "ip": "10.20.10.12",
+      "subnet": "subnet-0app-a",
+      "region": "eu-west-1",
+      "patch_group": "prod-web",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 4,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 5,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0web",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    },
+    {
+      "id": "i-0winweb04a1",
+      "name": "win-web-04",
+      "state": "running",
+      "type": "m5.xlarge",
+      "os": "Windows Server 2022",
+      "ip": "10.20.11.12",
+      "subnet": "subnet-0app-b",
+      "region": "eu-west-1",
+      "patch_group": "prod-web",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 4,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 5,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0web",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    },
+    {
+      "id": "i-0winapp01a1",
+      "name": "win-app-01",
+      "state": "running",
+      "type": "m5.large",
+      "os": "Windows Server 2022",
+      "ip": "10.20.10.21",
+      "subnet": "subnet-0app-a",
+      "region": "eu-west-1",
+      "patch_group": "prod-app",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 5,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 6,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0app",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    },
+    {
+      "id": "i-0winapp02a1",
+      "name": "win-app-02",
+      "state": "running",
+      "type": "m5.large",
+      "os": "Windows Server 2022",
+      "ip": "10.20.11.21",
+      "subnet": "subnet-0app-b",
+      "region": "eu-west-1",
+      "patch_group": "prod-app",
+      "ssm": "Online",
+      "ssm_reason": "via interface endpoints",
+      "baseline": "acme-windows-prod",
+      "missing": 5,
+      "compliance": "NON_COMPLIANT",
+      "health": "Healthy",
+      "asg": "",
+      "ami": "ami-0win2022base2026",
+      "tags": 5,
+      "cost_center": "CC-PAY-001",
+      "sgs": "sg-0app",
+      "quarantined": false,
+      "compromised": false,
+      "evidence_lost": false,
+      "snapshot": false,
+      "c2_blocked": false,
+      "protected": false
+    }
+  ],
+  "asgs": [
+    {
+      "name": "asg-payments-api",
+      "health_check": "ELB",
+      "grace": 300,
+      "desired": 3,
+      "running": 3,
+      "healthy": 3,
+      "unhealthy": 0,
+      "lt_version": "$Latest",
+      "refresh": "Successful",
+      "refresh_version": 2,
+      "replaced": 4
+    }
+  ],
+  "launch_templates": [
+    {
+      "name": "lt-payments-api",
+      "default": 1,
+      "latest": 2,
+      "ami": "ami-0payapi20261010"
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "snap-0226311ef058ca058",
+      "instance": "",
+      "time": "01:40"
+    },
+    {
+      "id": "snap-04087260f834b7917",
+      "instance": "",
+      "time": "01:40"
+    },
+    {
+      "id": "snap-004dc22449af2305b",
+      "instance": "",
+      "time": "01:40"
+    }
+  ],
+  "amis": [
+    {
+      "id": "ami-0win2022base2026",
+      "name": "Windows_Server-2022-English-Full-Base-2026.07.10",
+      "owner": "amazon",
+      "patched_days_ago": 96
+    },
+    {
+      "id": "ami-0win2019base2025",
+      "name": "Windows_Server-2019-English-Full-Base-2025.11.12",
+      "owner": "amazon",
+      "patched_days_ago": 336
+    },
+    {
+      "id": "ami-0payapi20260901",
+      "name": "payments-api-golden-2026.09.01",
+      "owner": "self",
+      "patched_days_ago": 43
+    },
+    {
+      "id": "ami-0payapi20261010",
+      "name": "payments-api-golden-2026.10.10",
+      "owner": "self",
+      "patched_days_ago": 4
+    },
+    {
+      "id": "ami-0bd4796a049e56177",
+      "name": "payments-api-golden-+2d 1700",
+      "owner": "self",
+      "patched_days_ago": 0
+    }
+  ],
+  "patch_baselines": [
+    {
+      "id": "pb-0b9d5d1b4f3e8a2c1",
+      "name": "AWS-DefaultPatchBaseline",
+      "os": "WINDOWS",
+      "default": true,
+      "rules": "CriticalUpdates/SecurityUpdates Critical/Important after 7d",
+      "groups": ""
+    },
+    {
+      "id": "pb-0e48d1447e8f0d67c",
+      "name": "acme-windows-prod",
+      "os": "WINDOWS",
+      "default": false,
+      "rules": "CriticalUpdates/SecurityUpdates Critical/Important after 7d",
+      "groups": "prod-web, prod-app, prod-sql, prod-sql-b, shared-dc, shared-dc-b"
+    }
+  ],
+  "maintenance_windows": [
+    {
+      "name": "patch-wave-a",
+      "schedule": "cron(0 2 ? * MON *)",
+      "duration": 4,
+      "cutoff": 1,
+      "targets": 1,
+      "tasks": 1,
+      "concurrency": "3",
+      "executions": 0,
+      "next": "+7d 02:00"
+    },
+    {
+      "name": "patch-wave-b",
+      "schedule": "cron(0 4 ? * MON *)",
+      "duration": 2,
+      "cutoff": 1,
+      "targets": 1,
+      "tasks": 1,
+      "concurrency": "1",
+      "executions": 0,
+      "next": "+7d 04:00"
+    }
+  ],
+  "commands": [
+    {
+      "id": "811b6e7b-8848",
+      "document": "AWS-RunPatchBaseline",
+      "operation": "Scan",
+      "origin": "send-command",
+      "status": "Success",
+      "targets": 17,
+      "succeeded": 17,
+      "failed": 0,
+      "concurrency": "50%"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "ops.engineer-9dda2d03bcdc83d5e",
+      "instance": "win-file-01",
+      "started": "03:35",
+      "logged": false,
+      "commands": 4,
+      "status": "ended"
+    },
+    {
+      "id": "ops.engineer-f5273acb9cdc22435",
+      "instance": "win-file-01",
+      "started": "+2d 11:55",
+      "logged": true,
+      "commands": 3,
+      "status": "ended"
+    }
+  ],
+  "session_logging": true,
+  "patching": {
+    "windows_servers": 16,
+    "managed": 16,
+    "compliant": 0,
+    "outages_caused": 0
+  },
+  "image_builds": [
+    {
+      "pipeline": "payments-api-weekly",
+      "status": "FAILED",
+      "ami": "",
+      "patched": true,
+      "tests": true,
+      "reason": "The build instance role lacks EC2InstanceProfileForImageBuilder",
+      "started": "+2d 15:25"
+    },
+    {
+      "pipeline": "payments-api-weekly",
+      "status": "AVAILABLE",
+      "ami": "ami-0bd4796a049e56177",
+      "patched": true,
+      "tests": true,
+      "reason": "",
+      "started": "+2d 16:15"
+    }
+  ],
+  "image_pipelines": [
+    {
+      "name": "payments-api-weekly",
+      "schedule": "cron(0 4 ? * SUN *)",
+      "tests": true
+    }
+  ],
+  "image_recipes": [
+    {
+      "name": "payments-api-golden",
+      "platform": "Linux",
+      "components": "update-linux, acme-cis-hardening, amazon-cloudwatch-agent-linux, simple-boot-test-linux"
+    }
+  ],
+  "vaults": [
+    {
+      "name": "Default",
+      "region": "eu-west-1",
+      "locked": false,
+      "min_days": "",
+      "points": 0
+    },
+    {
+      "name": "prod-vault",
+      "region": "eu-west-1",
+      "locked": true,
+      "min_days": 30,
+      "points": 5
+    },
+    {
+      "name": "dr-vault",
+      "region": "eu-central-1",
+      "locked": false,
+      "min_days": "",
+      "points": 5
+    }
+  ],
+  "backup_plans": [
+    {
+      "name": "acme-gold",
+      "rules": 1,
+      "schedule": "cron(0 */4 ? * * *)",
+      "copy": "eu-central-1",
+      "retention": "35"
+    }
+  ],
+  "backup_jobs": [
+    {
+      "id": "9BF50B4B",
+      "resource": "win-web-01",
+      "vault": "prod-vault",
+      "state": "COMPLETED",
+      "origin": "plan acme-gold",
+      "message": "",
+      "time": "+2d 20:00"
+    },
+    {
+      "id": "FE4FCA02",
+      "resource": "win-app-01",
+      "vault": "prod-vault",
+      "state": "COMPLETED",
+      "origin": "plan acme-gold",
+      "message": "",
+      "time": "+2d 20:00"
+    },
+    {
+      "id": "A107B05E",
+      "resource": "win-sql-01",
+      "vault": "prod-vault",
+      "state": "COMPLETED",
+      "origin": "plan acme-gold",
+      "message": "",
+      "time": "+2d 20:00"
+    },
+    {
+      "id": "1C72C7BE",
+      "resource": "win-sql-02",
+      "vault": "prod-vault",
+      "state": "COMPLETED",
+      "origin": "plan acme-gold",
+      "message": "",
+      "time": "+2d 20:00"
+    },
+    {
+      "id": "F8F698D9",
+      "resource": "win-file-01",
+      "vault": "prod-vault",
+      "state": "COMPLETED",
+      "origin": "plan acme-gold",
+      "message": "",
+      "time": "+2d 20:00"
+    }
+  ],
+  "restores": [
+    {
+      "id": "A3D8A446-9FAD",
+      "resource": "win-sql-01",
+      "status": "COMPLETED",
+      "minutes": 68,
+      "validation": "SUCCESSFUL",
+      "region": "eu-west-1"
+    }
+  ],
+  "workloads": [
+    {
+      "name": "payments",
+      "strategy": "pilot-light",
+      "rto_target": "2h",
+      "rpo_target": "15m",
+      "rto": "35m",
+      "rpo": "1m",
+      "meets": true
+    },
+    {
+      "name": "file-services",
+      "strategy": "backup-restore",
+      "rto_target": "8h",
+      "rpo_target": "4h",
+      "rto": "unknown",
+      "rpo": "4h",
+      "meets": false
+    },
+    {
+      "name": "reporting",
+      "strategy": "backup-restore",
+      "rto_target": "24h",
+      "rpo_target": "24h",
+      "rto": "unknown",
+      "rpo": "none",
+      "meets": false
+    }
+  ],
+  "dr_tests": [
+    {
+      "workload": "payments",
+      "strategy": "backup-restore",
+      "rto": "1h53m",
+      "rpo": "3h25m",
+      "met": false,
+      "reason": "RTO 1h53m vs target 2h, RPO 3h25m vs target 15m",
+      "time": "+2d 23:25"
+    },
+    {
+      "workload": "file-services",
+      "strategy": "backup-restore",
+      "rto": "1h16m",
+      "rpo": "3h25m",
+      "met": true,
+      "reason": "",
+      "time": "+2d 23:25"
+    },
+    {
+      "workload": "payments",
+      "strategy": "pilot-light",
+      "rto": "35m",
+      "rpo": "1m",
+      "met": true,
+      "reason": "",
+      "time": "+2d 23:25"
+    }
+  ],
+  "terraform": {
+    "initialised": true,
+    "backend": "s3",
+    "bucket": "acme-tfstate-prod",
+    "key": "ops/platform/terraform.tfstate",
+    "locking": "dynamodb",
+    "lock_table": "tf-locks",
+    "locked_by": "",
+    "lock_id": "",
+    "serial": 8,
+    "resources": 5,
+    "orphans": 0,
+    "unsafe": 0,
+    "last_plan": "plan",
+    "drift_detected": 0
+  },
+  "tf_resources": [
+    {
+      "address": "aws_s3_bucket.reports",
+      "type": "aws_s3_bucket",
+      "id": "acme-reports-export",
+      "module": "",
+      "drift": false
+    },
+    {
+      "address": "aws_security_group.ops_tools",
+      "type": "aws_security_group",
+      "id": "sg-0361e27b9c32d",
+      "module": "",
+      "drift": false
+    },
+    {
+      "address": "aws_ssm_parameter.release",
+      "type": "aws_ssm_parameter",
+      "id": "/platform/release",
+      "module": "",
+      "drift": false
+    },
+    {
+      "address": "module.alerts.aws_sns_topic.this",
+      "type": "aws_sns_topic",
+      "id": "ops-alerts",
+      "module": "alerts",
+      "drift": false
+    },
+    {
+      "address": "module.alerts.aws_ssm_parameter.topic_name",
+      "type": "aws_ssm_parameter",
+      "id": "/platform/alerts/topic",
+      "module": "alerts",
+      "drift": false
+    }
+  ],
+  "tf_history": [
+    {
+      "at": 4185,
+      "who": "ops.engineer",
+      "what": "plan: 4 add",
+      "time": "+2d 23:25"
+    },
+    {
+      "at": 4195,
+      "who": "a.khan",
+      "what": "apply complete (teammate)",
+      "time": "+2d 23:35"
+    },
+    {
+      "at": 4195,
+      "who": "ops.engineer",
+      "what": "plan: 4 add",
+      "time": "+2d 23:35"
+    },
+    {
+      "at": 4195,
+      "who": "ops.engineer",
+      "what": "import aws_s3_bucket.reports acme-reports-export",
+      "time": "+2d 23:35"
+    },
+    {
+      "at": 4195,
+      "who": "ops.engineer",
+      "what": "plan: 3 add, 1 change",
+      "time": "+2d 23:35"
+    },
+    {
+      "at": 4195,
+      "who": "ops.engineer",
+      "what": "apply: 3 added, 1 changed, 0 destroyed",
+      "time": "+2d 23:35"
+    }
+  ],
+  "tf_orphans": [],
+  "stacks": [
+    {
+      "name": "CDKToolkit",
+      "status": "CREATE_COMPLETE",
+      "resources": 0,
+      "drift": "NOT_CHECKED",
+      "protected": false,
+      "exports": 0,
+      "origin": "cdk",
+      "ssm_params": 0,
+      "retained": 0
+    }
+  ],
+  "changesets": [
+    {
+      "name": "rename-bucket",
+      "stack": "ops-baseline",
+      "type": "UPDATE",
+      "changes": 1,
+      "replacements": 1,
+      "executed": false
+    },
+    {
+      "name": "add-https",
+      "stack": "ops-baseline",
+      "type": "UPDATE",
+      "changes": 1,
+      "replacements": 0,
+      "executed": true
+    }
+  ],
+  "runs": [
+    {
+      "id": 1,
+      "event": "pull_request",
+      "ref": "refs/pull/42/merge",
+      "status": "failure",
+      "role": "",
+      "planned": false,
+      "applied": false,
+      "static_keys": true,
+      "repo": "acme-pay/platform-infra"
+    },
+    {
+      "id": 2,
+      "event": "pull_request",
+      "ref": "refs/pull/42/merge",
+      "status": "failure",
+      "role": "",
+      "planned": false,
+      "applied": false,
+      "static_keys": true,
+      "repo": "acme-pay/platform-infra"
+    },
+    {
+      "id": 3,
+      "event": "pull_request",
+      "ref": "refs/pull/42/merge",
+      "status": "failure",
+      "role": "",
+      "planned": false,
+      "applied": false,
+      "static_keys": true,
+      "repo": "acme-pay/some-fork"
+    },
+    {
+      "id": 4,
+      "event": "push",
+      "ref": "refs/heads/main",
+      "status": "failure",
+      "role": "",
+      "planned": false,
+      "applied": false,
+      "static_keys": true,
+      "repo": "acme-pay/platform-infra"
+    }
+  ],
+  "ownership": [
+    {
+      "type": "aws_s3_bucket",
+      "resource": "acme-tfstate-prod",
+      "managed_by": "console",
+      "conflict": false
+    },
+    {
+      "type": "aws_s3_bucket",
+      "resource": "acme-cloudtrail-logs",
+      "managed_by": "console",
+      "conflict": false
+    },
+    {
+      "type": "aws_s3_bucket",
+      "resource": "acme-reports-export",
+      "managed_by": "terraform",
+      "conflict": false
+    },
+    {
+      "type": "aws_s3_bucket",
+      "resource": "acme-backups",
+      "managed_by": "console",
+      "conflict": false
+    },
+    {
+      "type": "aws_s3_bucket",
+      "resource": "acme-s3-access-logs",
+      "managed_by": "console",
+      "conflict": false
+    },
+    {
+      "type": "aws_security_group",
+      "resource": "sg-0361e27b9c32d",
+      "managed_by": "terraform",
+      "conflict": false
+    }
+  ],
+  "parameters": [
+    {
+      "name": "/platform/alerts/topic",
+      "value": "ops-alerts",
+      "managed_by": "terraform"
+    },
+    {
+      "name": "/platform/release",
+      "value": "2026.10.12",
+      "managed_by": "terraform"
+    }
+  ],
+  "dynamodb_tables": [
+    {
+      "name": "tf-locks",
+      "hash_key": "LockID",
+      "billing": "PAY_PER_REQUEST"
+    }
+  ],
+  "security": {
+    "hub": true,
+    "standards": 1,
+    "cis": true,
+    "score": 76,
+    "failed_controls": 4,
+    "guardduty": true,
+    "findings": 4,
+    "config_recording": true,
+    "ebs_encryption": true,
+    "flow_logs": 1
+  },
+  "controls": [
+    {
+      "id": "IAM.4",
+      "title": "IAM root user access key should not exist",
+      "severity": "CRITICAL",
+      "status": "PASSED",
+      "failed": 0,
+      "suppressed": 0
+    },
+    {
+      "id": "IAM.9",
+      "title": "MFA should be enabled for the root user",
+      "severity": "CRITICAL",
+      "status": "PASSED",
+      "failed": 0,
+      "suppressed": 0
+    },
+    {
+      "id": "IAM.3",
+      "title": "IAM users' access keys should be rotated every 90 days or less",
+      "severity": "MEDIUM",
+      "status": "FAILED",
+      "failed": 1,
+      "suppressed": 0
+    },
+    {
+      "id": "IAM.5",
+      "title": "MFA should be enabled for all IAM users that have a console password",
+      "severity": "MEDIUM",
+      "status": "FAILED",
+      "failed": 1,
+      "suppressed": 0
+    },
+    {
+      "id": "IAM.15",
+      "title": "Ensure IAM password policy requires minimum password length of 14 or greater",
+      "severity": "MEDIUM",
+      "status": "PASSED",
+      "failed": 0,
+      "suppressed": 0
+    },
+    {
+      "id": "IAM.1",
+      "title": "IAM policies should not allow full \"*\" administrative privileges (attached to users)",
+      "severity": "HIGH",
+      "status": "FAILED",
+      "failed": 1,
+      "suppressed": 0
+    }
+  ],
+  "findings": [
+    {
+      "type": "UnauthorizedAccess:IAMUser/TorIPCaller",
+      "severity": 5.0,
+      "resource": "AKIAZ3OPS4CIDEPLOY77",
+      "region": "eu-west-1",
+      "archived": false,
+      "time": "+2d 23:35"
+    },
+    {
+      "type": "Impact:IAMUser/AnomalousBehavior",
+      "severity": 8.0,
+      "resource": "AKIAZ3OPS4CIDEPLOY77",
+      "region": "eu-west-1",
+      "archived": false,
+      "time": "+2d 23:35"
+    },
+    {
+      "type": "Policy:S3/BucketAnonymousAccessGranted",
+      "severity": 7.0,
+      "resource": "acme-reports-export",
+      "region": "eu-west-1",
+      "archived": false,
+      "time": "+2d 23:35"
+    },
+    {
+      "type": "Policy:S3/BucketBlockPublicAccessDisabled",
+      "severity": 4.0,
+      "resource": "acme-reports-export",
+      "region": "eu-west-1",
+      "archived": false,
+      "time": "+2d 23:35"
+    }
+  ],
+  "config_rules": [
+    {
+      "name": "restricted-common-ports",
+      "source": "RESTRICTED_INCOMING_TRAFFIC",
+      "non_compliant": 0,
+      "evaluated": 10,
+      "status": "COMPLIANT",
+      "remediation": true
+    }
+  ],
+  "trails": [
+    {
+      "name": "legacy-trail",
+      "multi_region": false,
+      "validation": true,
+      "organization": false,
+      "logging": true,
+      "bucket": "acme-cloudtrail-logs"
+    },
+    {
+      "name": "org-trail",
+      "multi_region": true,
+      "validation": true,
+      "organization": true,
+      "logging": true,
+      "bucket": "acme-cloudtrail-logs"
+    }
+  ],
+  "web_acls": [],
+  "waf_replays": [],
+  "playbook": [
+    {
+      "at": 1990,
+      "step": "key-deactivated",
+      "ref": "AKIAZ3OPS4LEGACY0001",
+      "time": "+1d 10:50"
+    },
+    {
+      "at": 3430,
+      "step": "key-deleted",
+      "ref": "AKIAZ3OPS4LEGACY0001",
+      "time": "+2d 10:50"
+    },
+    {
+      "at": 4195,
+      "step": "key-deactivated",
+      "ref": "AKIAZ3OPS4CIDEPLOY77",
+      "time": "+2d 23:35"
+    },
+    {
+      "at": 4195,
+      "step": "account-pab",
+      "ref": "666666666666",
+      "time": "+2d 23:35"
+    }
+  ],
+  "ir": {
+    "contained_before_deleted": true,
+    "evidence_lost": 0,
+    "rogue_running": 3,
+    "backdoor_users": 1
+  },
+  "grc_register": [
+    {
+      "incident": "INC0010001",
+      "major": true,
+      "personal_data": true,
+      "notified": "regulator, dpa",
+      "deadlines": "dora-initial 05:40, gdpr-dpa +3d 01:40"
+    },
+    {
+      "incident": "INC0010002",
+      "major": false,
+      "personal_data": false,
+      "notified": "",
+      "deadlines": ""
+    }
+  ],
+  "notifications": [
+    {
+      "incident": "INC0010001",
+      "to": "regulator",
+      "stage": "initial",
+      "time": "01:40",
+      "late": false
+    },
+    {
+      "incident": "INC0010001",
+      "to": "dpa",
+      "stage": "initial",
+      "time": "01:40",
+      "late": false
+    }
+  ],
+  "iso_controls": [
+    {
+      "control": "A.5.24",
+      "title": "Information security incident management planning",
+      "status": "evidence",
+      "evidence": "on-call escalation policies defined"
+    },
+    {
+      "control": "A.5.26",
+      "title": "Response to information security incidents",
+      "status": "evidence",
+      "evidence": "incidents acknowledged and worked in ServiceNow"
+    },
+    {
+      "control": "A.5.27",
+      "title": "Learning from information security incidents",
+      "status": "gap",
+      "evidence": "PIRs and problem root causes recorded"
+    },
+    {
+      "control": "A.5.28",
+      "title": "Collection of evidence",
+      "status": "gap",
+      "evidence": "forensic snapshots taken before eradication"
+    },
+    {
+      "control": "A.5.30",
+      "title": "ICT readiness for business continuity",
+      "status": "evidence",
+      "evidence": "DR game day met its targets"
+    },
+    {
+      "control": "A.8.8",
+      "title": "Management of technical vulnerabilities",
+      "status": "gap",
+      "evidence": "0 of 16 Windows servers patch compliant"
+    }
+  ],
+  "finops": {
+    "monthly": 8407.38,
+    "ec2_on_demand_equivalent": 3943.42,
+    "ec2_billed": 3943.42,
+    "sp_coverage": 0.0,
+    "sp_utilization": 0.0,
+    "sp_commitment": 0,
+    "rds_reserved": 1,
+    "untagged_pct": 8.0,
+    "tags_active": "CostCenter",
+    "rightsizing_open": 4,
+    "rightsizing_savings": 639.19
+  },
+  "bill": [
+    {
+      "service": "Amazon Elastic Compute Cloud - Compute",
+      "monthly": 3943.42
+    },
+    {
+      "service": "Amazon Simple Storage Service",
+      "monthly": 1840.0
+    },
+    {
+      "service": "AWS Data Transfer",
+      "monthly": 980.0
+    },
+    {
+      "service": "AWS Backup",
+      "monthly": 620.0
+    },
+    {
+      "service": "Amazon CloudWatch",
+      "monthly": 410.0
+    },
+    {
+      "service": "Amazon GuardDuty",
+      "monthly": 310.0
+    }
+  ],
+  "rightsizing": [
+    {
+      "instance": "win-web-03",
+      "id": "i-0winweb03a1",
+      "type": "m5.xlarge",
+      "action": "Modify",
+      "target": "m5.large",
+      "cpu_p95": 17.6,
+      "saving": 145.27
+    },
+    {
+      "instance": "win-web-04",
+      "id": "i-0winweb04a1",
+      "type": "m5.xlarge",
+      "action": "Modify",
+      "target": "m5.large",
+      "cpu_p95": 19.2,
+      "saving": 145.27
+    },
+    {
+      "instance": "win-app-03",
+      "id": "i-0winapp03a1",
+      "type": "m5.xlarge",
+      "action": "Modify",
+      "target": "m5.large",
+      "cpu_p95": 22.4,
+      "saving": 145.27
+    },
+    {
+      "instance": "win-batch-01",
+      "id": "i-0winbatch01a1",
+      "type": "m5.xlarge",
+      "action": "STOP or schedule",
+      "target": "-",
+      "cpu_p95": 14.4,
+      "saving": 203.38
+    }
+  ],
+  "savings_plans": [
+    {
+      "id": "sp-0d1a2b3c4d",
+      "type": "COMPUTE_SP",
+      "term": "ONE_YEAR",
+      "payment": "NO_UPFRONT",
+      "commitment": 2.34
+    }
+  ],
+  "signals": [
+    {
+      "at": 1930,
+      "time": "+1d 09:50",
+      "level": "warning",
+      "source": "controltower",
+      "message": "Control Tower drift: staging-payments moved to an ungoverned OU",
+      "age": "+1d 09:50"
+    },
+    {
+      "at": 2930,
+      "time": "+2d 02:30",
+      "level": "critical",
+      "source": "jobs",
+      "message": "nightly-export FAILED at +2d 02:30: its access key AKIAZ3OPS4LEGACY0001 is Inactive",
+      "age": "+2d 02:30"
+    },
+    {
+      "at": 2975,
+      "time": "+2d 03:15",
+      "level": "warning",
+      "source": "sla",
+      "message": "INC0010002 P3: pick-up SLA at 75% (45m of 1h)",
+      "age": "+2d 03:15"
+    },
+    {
+      "at": 2991,
+      "time": "+2d 03:31",
+      "level": "critical",
+      "source": "sla",
+      "message": "INC0010002 P3: pick-up SLA BREACHED at +2d 03:31",
+      "age": "+2d 03:31"
+    },
+    {
+      "at": 3110,
+      "time": "+2d 05:30",
+      "level": "warning",
+      "source": "sla",
+      "message": "INC0010002 P3: response SLA at 75% (3h of 4h)",
+      "age": "+2d 05:30"
+    },
+    {
+      "at": 3171,
+      "time": "+2d 06:31",
+      "level": "critical",
+      "source": "sla",
+      "message": "INC0010002 P3: response SLA BREACHED at +2d 06:31",
+      "age": "+2d 06:31"
+    }
+  ]
+};
+
 // COWORK READS THE CLAUDE CODE PAYLOAD, because it is the same engine under a
 // second family name - see `families_of_engine` in app 11's
 // `utils/labtools.py`, which is what makes the backend key the payload under
