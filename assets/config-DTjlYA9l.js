@@ -1,1 +1,0 @@
-import{sn as e}from"./index-9EP2T4Lx.js";export{e as serviceRegistry};
