@@ -36,7 +36,7 @@
     <!-- The display filter bar: green when it compiles, red when it does not. -->
     <form class="sl-cap__filter" @submit.prevent="applyFilter(filterText)">
       <Filter :size="14" class="sl-cap__filter-icon" />
-      <input v-model="filterText" class="sl-cap__filter-input" spellcheck="false"
+      <input ref="filterInput" v-model="filterText" class="sl-cap__filter-input" spellcheck="false"
              :class="filterClass" :aria-label="$t('Display filter')"
              :placeholder="$t('Apply a display filter … <Ctrl-/>')" />
       <!-- Never disabled: a disabled default button blocks Enter in the field,
@@ -238,6 +238,7 @@ const exportPath = ref('cs471-labs/lab1/handshake.txt');
 const exportScope = ref('marked');
 const exportCsv = ref(false);
 const listBox = ref<HTMLElement | null>(null);
+const filterInput = ref<HTMLInputElement | null>(null);
 
 const running = computed(() => Boolean(capture.value?.running));
 const selectedRow = computed(() => rows.value.find(r => r.n === selected.value) || null);
@@ -257,6 +258,10 @@ function absorb(view: any) {
   selected.value = view.selected ?? null;
   activeFilter.value = view.filter || '';
   filterError.value = view.filter_error || '';
+  // The box shows the filter that is ACTIVE - a filter applied from the
+  // Terminal, by Follow Stream, or in an earlier visit would otherwise hide
+  // packets behind an empty-looking bar. Not while the student is typing.
+  if (document.activeElement !== filterInput.value) filterText.value = activeFilter.value;
   if (view.capture?.iface && !view.capture.running) iface.value = view.capture.iface;
 }
 
@@ -290,7 +295,6 @@ async function select(n: number) {
 
 async function follow(row: Row) {
   const result = await act(`wireshark follow ${row.transport} ${row.stream}`);
-  filterText.value = activeFilter.value;
   dialog.value = {
     kind: 'follow',
     title: t('Follow {v0} Stream ({v1}.stream eq {v2})',
