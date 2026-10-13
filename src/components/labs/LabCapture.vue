@@ -537,6 +537,9 @@ tr.is-selected td { background: var(--cap-sel) !important; color: var(--cap-sel-
 .sl-cap__dialog-head { display: flex; justify-content: space-between; align-items: center; }
 .sl-cap__x { border: 0; background: none; font-size: 20px; cursor: pointer; color: #374151; }
 .sl-cap__pre {
+  /* Stated, not inherited: the global <pre> rule gives the THEME's ink, which
+     is near-white in the dark galaxies and unreadable on this white dialog. */
+  color: #12141a;
   margin: 0; overflow: auto; max-height: 60vh; background: #f8fafc; border: 1px solid #e2e8f0;
   padding: 8px; font: 11.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap;
   word-break: break-all;
