@@ -78,7 +78,7 @@ export interface LabTool {
     id: string;
     label: string;
     kind: 'console' | 'code' | 'query' | 'editor' | 'web' | 'gui'
-        | 'preview' | 'mobile' | 'drive' | 'external' | 'ai';
+        | 'preview' | 'mobile' | 'drive' | 'capture' | 'external' | 'ai';
     engine: string;
     icon: string;
     summary: string;
@@ -455,6 +455,8 @@ const FAMILY_LABELS: Record<string, string> = {
     // Self-driving: the CARLA console, the 3D Simulator and the run
     // dashboard are one engine, `sim:carla`, and one pane.
     carla: 'Self-Driving (CARLA)',
+    webdev: 'Django Project',
+    wireshark: 'Wireshark',
     // Cloud operations: ServiceNow, the AWS estate, Terraform/CDK and the
     // rest are one simulated estate, `sim:cloudops`, and one pane. The label
     // is the track's own title on purpose, so the two cannot disagree.
@@ -1289,6 +1291,60 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             tool: 'chef_gui', empty: 'No files are managed yet',
             columns: [col('path', 'Path', 'code'), col('mode', 'Mode', 'code'),
                 col('owner', 'Owner'), col('bytes', 'Bytes', 'number')],
+        },
+    ],
+    // CS471 Web Technologies (labs 2-8): the student's Django project as the
+    // sandbox last saw it, plus Git and GitHub. Read off `sim:webdev`'s view().
+    webdev: [
+        { id: 'stats', title: 'Project', kind: 'stats', path: 'stats', tool: 'webproject' },
+        {
+            id: 'venvs', title: 'Virtual environments', kind: 'table', path: 'venvs',
+            tool: 'webproject', empty: 'No virtual environment yet',
+            columns: [col('name', 'Name'), col('active', 'Active', 'badge'),
+                col('django', 'Django', 'badge'), col('packages', 'Packages', 'list')],
+        },
+        {
+            id: 'apps', title: 'Installed apps', kind: 'table', path: 'apps',
+            tool: 'webproject', empty: 'No apps in INSTALLED_APPS yet',
+            columns: [col('label', 'Label'), col('name', 'Name', 'code'),
+                col('path', 'Folder', 'code')],
+        },
+        {
+            id: 'urls', title: 'URL patterns', kind: 'table', path: 'urls',
+            tool: 'webproject', empty: 'No URL patterns yet',
+            columns: [col('route', 'Route', 'code'), col('name', 'Name', 'code'),
+                col('view', 'View', 'code')],
+        },
+        {
+            id: 'models', title: 'Models', kind: 'table', path: 'models',
+            tool: 'webproject', empty: 'No models yet',
+            columns: [col('app', 'App'), col('name', 'Model'), col('table', 'Table', 'code'),
+                col('fields', 'Fields', 'list')],
+        },
+        {
+            id: 'migrations', title: 'Migrations', kind: 'table', path: 'migrations',
+            tool: 'webproject', empty: 'Run python manage.py migrate',
+            columns: [col('app', 'App'), col('name', 'Migration', 'code'),
+                col('applied', 'Applied', 'badge')],
+        },
+        {
+            id: 'pages', title: 'Requests', kind: 'table', path: 'pages',
+            tool: 'webproject', empty: 'Open a page in the Browser tab',
+            columns: [col('method', 'Method'), col('path', 'Path', 'code'),
+                col('status', 'Status', 'badge'), col('view', 'View', 'code'),
+                col('queries', 'Queries', 'number')],
+        },
+        {
+            id: 'commits', title: 'Git commits', kind: 'table', path: 'commits',
+            tool: 'webproject', empty: 'No commits yet - git init, add, commit',
+            columns: [col('sha', 'Commit', 'code'), col('message', 'Message'),
+                col('author', 'Author')],
+        },
+        {
+            id: 'github', title: 'GitHub', kind: 'table', path: 'github.repos',
+            tool: 'webproject', empty: 'No repositories on GitHub yet',
+            columns: [col('name', 'Repository'), col('visibility', 'Visibility', 'badge'),
+                col('commits', 'Commits', 'number'), col('pushed', 'Pushed', 'badge')],
         },
     ],
     git: [

@@ -252,6 +252,10 @@ interface ConsoleAnswer {
   cwd?: string;
   prompt?: string;
   editor?: EditorRequest;
+  /** The active virtual environment's name, from the CS471 web labs. */
+  venv?: string;
+  /** `>>> ` / `sqlite> ` while manage.py shell or dbshell is open. */
+  repl?: string;
 }
 
 type Line = { kind: 'cmd' | 'out' | 'err' | 'note'; text: string; at?: string };
@@ -270,6 +274,17 @@ const yank = ref('');
 const search = ref<SearchState | null>(null);
 /** Where the shell is. Drawn in the prompt and the key for the Tab cache. */
 const cwd = ref('~');
+/**
+ * The active virtual environment, and an open REPL.
+ *
+ * Both come back from the CS471 labs' terminal: `(djangoenv)` in front of the
+ * prompt is how a student knows `source .../activate` worked - without it the
+ * lab sheet's "check the prompt" step has nothing to check - and while
+ * `manage.py shell` or `dbshell` is open the next line is Python or SQL, so the
+ * prompt is `>>> ` or `sqlite> ` exactly as on their own machine.
+ */
+const venv = ref('');
+const repl = ref('');
 const candidates = ref<Record<string, CompletionSource>>({});
 
 const ICONS: Record<string, any> = {
@@ -288,9 +303,10 @@ const icon = computed(() => ICONS[props.tool.icon] || Terminal);
  * bash prompt would be wrong about which language the next line is in.
  */
 const prompt = computed(() => {
+  if (repl.value) return repl.value;
   const own = props.tool.prompt || '$ ';
   if (own.trim() !== '$') return own;
-  return `student@lab:${cwd.value}$ `;
+  return `${venv.value ? `(${venv.value}) ` : ''}student@lab:${cwd.value}$ `;
 });
 /**
  * The hint after the prompt, and it is shown ONLY on an empty terminal.
@@ -348,6 +364,8 @@ async function submit() {
         push('note', '(no output)');
       }
     }
+    if (typeof result?.venv === 'string') venv.value = result.venv;
+    if (typeof result?.repl === 'string') repl.value = result.repl;
     if (result?.cwd !== undefined || result?.prompt) {
       const next = result.prompt || (result.cwd ? `~/${result.cwd}` : '~');
       if (next !== cwd.value) {

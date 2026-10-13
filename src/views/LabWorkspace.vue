@@ -238,6 +238,18 @@
                   :tool-id="tool.id"
                   :run="runTool"
                 />
+                <!--
+                  THE WIRESHARK PANE (CS471 Lab 1). Every action is a command to
+                  app 11, the same one the Terminal takes, so the grader reads one
+                  record of what the student selected, marked, followed and
+                  exported. Deferred like the 3D pane: no other lab needs it.
+                -->
+                <LabCapture
+                  v-else-if="tool.kind === 'capture'"
+                  :key="`c${sourceEpoch}`"
+                  :tool-id="tool.id"
+                  :run="runTool"
+                />
                 <LabGui
                   v-else-if="tool.kind === 'gui'"
                   :family="pane.family"
@@ -438,6 +450,7 @@ import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
  * regression nobody would attribute to this file later.
  */
 const LabDrive = defineAsyncComponent(() => import('@/components/labs/LabDrive.vue'));
+const LabCapture = defineAsyncComponent(() => import('@/components/labs/LabCapture.vue'));
 const NetworkStudio = defineAsyncComponent({
   loader: () => import('@/views/NetworkSimulatorStudio.vue'),
   /*

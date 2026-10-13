@@ -7,7 +7,7 @@
         <RotateCw :size="14" />
       </button>
       <form class="sl-prev__url" @submit.prevent="go(typed)">
-        <span class="sl-prev__host">{{ host }}</span>
+        <span v-if="!isFullUrl(path)" class="sl-prev__host">{{ host }}</span>
         <input v-model="typed" class="sl-prev__input" spellcheck="false"
                :aria-label="$t('Address')" />
       </form>
@@ -125,7 +125,7 @@ const SHIM = `<script>(function(){
     if(!a) return;
     var href = a.getAttribute('href') || '';
     if(!href || href.charAt(0)==='#') return;
-    if(/^[a-z]+:/i.test(href) && !/^https?:/i.test(href)) return;
+    if(/^[a-z]+:/i.test(href) && !/^(https?|file):/i.test(href)) return;
     e.preventDefault(); send({go: href});
   }, true);
   document.addEventListener('submit', function(e){
@@ -133,13 +133,36 @@ const SHIM = `<script>(function(){
     e.preventDefault();
     var data = {};
     try{ new FormData(f).forEach(function(v,k){ data[k]=v; }); }catch(err){}
-    send({go: f.getAttribute('action') || location.pathname || '/',
+    send({go: f.getAttribute('action') || '',
           method: (f.getAttribute('method')||'GET').toUpperCase(), data: data});
   }, true);
 })()<\/script>`;
 
+/**
+ * The CS471 labs browse more than the development server: a `file://` page the
+ * student opened from disk, http://neverssl.com while Wireshark captures it,
+ * validator.w3.org, github.com. Those keep their full URL; only the dev server
+ * is shortened to a path, because that is what the routes bar matches on.
+ */
+const FULL = /^(https?|file):\/\//i;
+const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?/i;
+const OPEN_WORLD = new Set(['webdev', 'wireshark']);
+
+function isFullUrl(value: string): boolean {
+  return FULL.test(String(value || ''));
+}
+
 function absolute(href: string): string {
-  let target = String(href || '/').trim();
+  // An empty form `action` means "post back to THIS page". Inside a srcdoc
+  // frame `location.pathname` is the word `srcdoc`, which is how a search
+  // form used to post to a URL that does not exist.
+  let target = String(href || '').trim() || path.value || '/';
+  if (OPEN_WORLD.has(props.family)) {
+    if (FULL.test(target) && !LOCAL.test(target)) return target;
+    if (isFullUrl(path.value) && !LOCAL.test(path.value) && !FULL.test(target)) {
+      try { return new URL(target, path.value).href; } catch { return target; }
+    }
+  }
   target = target.replace(/^https?:\/\/[^/]+/i, '');
   if (!target.startsWith('/')) {
     const base = path.value.replace(/[^/]*$/, '');
@@ -214,7 +237,13 @@ go('/');
 </script>
 
 <style scoped>
-.sl-prev { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.sl-prev {
+  display: flex; flex-direction: column; height: 100%;
+  /* The workbench slot has no height of its own, so without a floor the
+     frame falls back to an iframe's default 150px - a page the student
+     cannot read. */
+  min-height: min(72vh, 760px);
+}
 .sl-prev__bar {
   display: flex; align-items: center; gap: 6px; padding: 7px 8px;
   border-bottom: 1px solid rgb(var(--sfs-line-rgb) / 0.16);

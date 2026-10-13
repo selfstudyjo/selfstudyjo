@@ -463,6 +463,404 @@ section('5. The GUI panel spec');
  * only place the two shapes are compared.
  */
 const VIEWS: Record<string, any> = {
+    // Dumped from app 11 after a real CS471 Lab 7 run (sim:webdev view()).
+    webdev: {
+        "kind": "webdev",
+        "venvs": [
+            {
+                "path": "/home/student/djangoenv",
+                "name": "djangoenv",
+                "active": true,
+                "packages": [
+                    "asgiref",
+                    "django",
+                    "pip",
+                    "sqlparse"
+                ],
+                "django": true
+            }
+        ],
+        "active_venv": "djangoenv",
+        "django_installed": true,
+        "project": {
+            "root": "/home/student/DjangoProjects/libraryproject",
+            "settings": "libraryproject.settings"
+        },
+        "server": {
+            "running": true,
+            "port": 8000
+        },
+        "settings": {
+            "module": "libraryproject.settings",
+            "debug": true,
+            "installed_apps": [
+                "django.contrib.admin",
+                "django.contrib.auth",
+                "django.contrib.contenttypes",
+                "django.contrib.sessions",
+                "django.contrib.messages",
+                "django.contrib.staticfiles",
+                "apps.bookmodule",
+                "apps.usermodule"
+            ],
+            "root_urlconf": "libraryproject.urls"
+        },
+        "installed_apps": [
+            "django.contrib.admin",
+            "django.contrib.auth",
+            "django.contrib.contenttypes",
+            "django.contrib.sessions",
+            "django.contrib.messages",
+            "django.contrib.staticfiles",
+            "apps.bookmodule",
+            "apps.usermodule"
+        ],
+        "apps": [
+            {
+                "label": "bookmodule",
+                "name": "apps.bookmodule",
+                "path": "/home/student/DjangoProjects/libraryproject/apps/bookmodule"
+            },
+            {
+                "label": "usermodule",
+                "name": "apps.usermodule",
+                "path": "/home/student/DjangoProjects/libraryproject/apps/usermodule"
+            }
+        ],
+        "models": [
+            {
+                "app": "bookmodule",
+                "name": "Book",
+                "table": "bookmodule_book",
+                "proxy": false,
+                "fields": [
+                    "id",
+                    "title",
+                    "author",
+                    "price",
+                    "edition"
+                ],
+                "field_types": {
+                    "id": "BigAutoField",
+                    "title": "CharField",
+                    "author": "CharField",
+                    "price": "FloatField",
+                    "edition": "SmallIntegerField"
+                }
+            }
+        ],
+        "urls": [
+            {
+                "route": "admin/",
+                "name": "index",
+                "view": "django.contrib.admin.index"
+            },
+            {
+                "route": "admin/login/",
+                "name": "login",
+                "view": "django.contrib.admin.login"
+            },
+            {
+                "route": "admin/logout/",
+                "name": "logout",
+                "view": "django.contrib.admin.logout"
+            },
+            {
+                "route": "admin/<str:app_label>/<str:model_name>/",
+                "name": "changelist",
+                "view": "django.contrib.admin.changelist"
+            },
+            {
+                "route": "books/",
+                "name": "books.index",
+                "view": "apps.bookmodule.views.index"
+            },
+            {
+                "route": "books/list_books/",
+                "name": "books.list_books",
+                "view": "apps.bookmodule.views.list_books"
+            },
+            {
+                "route": "books/<int:bookId>/",
+                "name": "books.view_one_book",
+                "view": "apps.bookmodule.views.viewbook"
+            },
+            {
+                "route": "books/aboutus/",
+                "name": "books.aboutus",
+                "view": "apps.bookmodule.views.aboutus"
+            },
+            {
+                "route": "books/html5/links/",
+                "name": "books.html5_links",
+                "view": "apps.bookmodule.views.links_view"
+            },
+            {
+                "route": "books/html5/text/formatting/",
+                "name": "books.html5_formatting",
+                "view": "apps.bookmodule.views.text_formatting_view"
+            },
+            {
+                "route": "books/html5/listing/",
+                "name": "books.html5_listing",
+                "view": "apps.bookmodule.views.listing_view"
+            },
+            {
+                "route": "books/html5/tables/",
+                "name": "books.html5_tables",
+                "view": "apps.bookmodule.views.tables_view"
+            },
+            {
+                "route": "books/search/",
+                "name": "books.search",
+                "view": "apps.bookmodule.views.search_view"
+            },
+            {
+                "route": "books/simple/query",
+                "name": "books.simple_query",
+                "view": "apps.bookmodule.views.simple_query"
+            },
+            {
+                "route": "books/complex/query",
+                "name": "books.complex_query",
+                "view": "apps.bookmodule.views.complex_query"
+            },
+            {
+                "route": "books/preferences/",
+                "name": "books.preferences",
+                "view": "apps.bookmodule.views.preferences"
+            }
+        ],
+        "migrations": [
+            {
+                "app": "bookmodule",
+                "name": "0001_initial",
+                "applied": true
+            },
+            {
+                "app": "bookmodule",
+                "name": "0001_initial",
+                "applied": true
+            }
+        ],
+        "tables": [
+            "auth_group",
+            "auth_group_permissions",
+            "auth_permission",
+            "auth_user"
+        ],
+        "table_rows": [
+            {
+                "table": "bookmodule_book",
+                "rows": 0
+            }
+        ],
+        "file_visits": [],
+        "builtin_migrations_applied": 18,
+        "pages": [
+            {
+                "method": "GET",
+                "path": "/books/simple/query",
+                "status": 200,
+                "title": "Search Results",
+                "text": "Search Results Home List Books About Search Results No books",
+                "url_name": "books.simple_query",
+                "view": "apps.bookmodule.views.simple_query",
+                "exception": "",
+                "queries": 1,
+                "form_fields": [],
+                "at": "2026-10-13T20:49:24Z"
+            }
+        ],
+        "server_log": [
+            "[2026-10-13 20:49:24] \"GET /books/simple/query HTTP/1.1\" 200 1020"
+        ],
+        "validations": [],
+        "opened": [],
+        "superusers": [],
+        "files_count": 57,
+        "root": "/home/student/DjangoProjects/libraryproject",
+        "initialised": true,
+        "identity": true,
+        "user": {
+            "name": "Student",
+            "email": "student@example.com"
+        },
+        "branch": "main",
+        "remotes": [
+            {
+                "name": "origin",
+                "url": "https://github.com/student/cs471-labs.git"
+            }
+        ],
+        "upstream": {
+            "main": "origin/main"
+        },
+        "commits": [
+            {
+                "sha": "7cf6095",
+                "message": "Lab 6 - forms",
+                "author": "Student",
+                "at": "2026-10-13T20:49:15Z",
+                "files": [
+                    "apps/bookmodule/__init__.py",
+                    "apps/bookmodule/admin.py",
+                    "apps/bookmodule/apps.py",
+                    "apps/bookmodule/models.py",
+                    "apps/bookmodule/tests.py",
+                    "apps/bookmodule/urls.py",
+                    "apps/bookmodule/views.py",
+                    "apps/static/book1.jpg",
+                    "apps/static/book2.jpg",
+                    "apps/static/book3.jpg",
+                    "apps/static/desert.jpg",
+                    "apps/static/main.css",
+                    "apps/static/qu-icon.png",
+                    "apps/static/styles.css",
+                    "apps/templates/bookmodule/aboutus.html",
+                    "apps/templates/bookmodule/bookList.html",
+                    "apps/templates/bookmodule/index.html",
+                    "apps/templates/bookmodule/links.html",
+                    "apps/templates/bookmodule/list_books.html",
+                    "apps/templates/bookmodule/listing.html",
+                    "apps/templates/bookmodule/one_book.html",
+                    "apps/templates/bookmodule/search.html",
+                    "apps/templates/bookmodule/tables.html",
+                    "apps/templates/bookmodule/text_formatting.html",
+                    "apps/templates/includes/footer.html",
+                    "apps/templates/includes/header.html",
+                    "apps/templates/layouts/base.html",
+                    "apps/usermodule/__init__.py",
+                    "apps/usermodule/admin.py",
+                    "apps/usermodule/apps.py",
+                    "apps/usermodule/models.py",
+                    "apps/usermodule/tests.py",
+                    "apps/usermodule/urls.py",
+                    "apps/usermodule/views.py",
+                    "libraryproject/__init__.py",
+                    "libraryproject/asgi.py",
+                    "libraryproject/settings.py",
+                    "libraryproject/urls.py",
+                    "libraryproject/wsgi.py",
+                    "manage.py"
+                ]
+            }
+        ],
+        "commit_count": 1,
+        "tracked": [
+            "apps/bookmodule/__init__.py",
+            "apps/bookmodule/admin.py",
+            "apps/bookmodule/apps.py",
+            "apps/bookmodule/models.py",
+            "apps/bookmodule/tests.py",
+            "apps/bookmodule/urls.py",
+            "apps/bookmodule/views.py",
+            "apps/static/book1.jpg",
+            "apps/static/book2.jpg",
+            "apps/static/book3.jpg",
+            "apps/static/desert.jpg",
+            "apps/static/main.css",
+            "apps/static/qu-icon.png",
+            "apps/static/styles.css",
+            "apps/templates/bookmodule/aboutus.html",
+            "apps/templates/bookmodule/bookList.html",
+            "apps/templates/bookmodule/index.html",
+            "apps/templates/bookmodule/links.html",
+            "apps/templates/bookmodule/list_books.html",
+            "apps/templates/bookmodule/listing.html",
+            "apps/templates/bookmodule/one_book.html",
+            "apps/templates/bookmodule/search.html",
+            "apps/templates/bookmodule/tables.html",
+            "apps/templates/bookmodule/text_formatting.html",
+            "apps/templates/includes/footer.html",
+            "apps/templates/includes/header.html",
+            "apps/templates/layouts/base.html",
+            "apps/usermodule/__init__.py",
+            "apps/usermodule/admin.py",
+            "apps/usermodule/apps.py",
+            "apps/usermodule/models.py",
+            "apps/usermodule/tests.py",
+            "apps/usermodule/urls.py",
+            "apps/usermodule/views.py",
+            "libraryproject/__init__.py",
+            "libraryproject/asgi.py",
+            "libraryproject/settings.py",
+            "libraryproject/urls.py",
+            "libraryproject/wsgi.py",
+            "manage.py"
+        ],
+        "github": {
+            "user": "student",
+            "authed": true,
+            "ssh_keys": [],
+            "repos": [
+                {
+                    "name": "cs471-labs",
+                    "visibility": "public",
+                    "commits": 1,
+                    "files": [
+                        "apps/bookmodule/__init__.py",
+                        "apps/bookmodule/admin.py",
+                        "apps/bookmodule/apps.py",
+                        "apps/bookmodule/models.py",
+                        "apps/bookmodule/tests.py",
+                        "apps/bookmodule/urls.py",
+                        "apps/bookmodule/views.py",
+                        "apps/static/book1.jpg",
+                        "apps/static/book2.jpg",
+                        "apps/static/book3.jpg",
+                        "apps/static/desert.jpg",
+                        "apps/static/main.css",
+                        "apps/static/qu-icon.png",
+                        "apps/static/styles.css",
+                        "apps/templates/bookmodule/aboutus.html",
+                        "apps/templates/bookmodule/bookList.html",
+                        "apps/templates/bookmodule/index.html",
+                        "apps/templates/bookmodule/links.html",
+                        "apps/templates/bookmodule/list_books.html",
+                        "apps/templates/bookmodule/listing.html",
+                        "apps/templates/bookmodule/one_book.html",
+                        "apps/templates/bookmodule/search.html",
+                        "apps/templates/bookmodule/tables.html",
+                        "apps/templates/bookmodule/text_formatting.html",
+                        "apps/templates/includes/footer.html",
+                        "apps/templates/includes/header.html",
+                        "apps/templates/layouts/base.html",
+                        "apps/usermodule/__init__.py",
+                        "apps/usermodule/admin.py",
+                        "apps/usermodule/apps.py",
+                        "apps/usermodule/models.py",
+                        "apps/usermodule/tests.py",
+                        "apps/usermodule/urls.py",
+                        "apps/usermodule/views.py",
+                        "libraryproject/__init__.py",
+                        "libraryproject/asgi.py",
+                        "libraryproject/settings.py",
+                        "libraryproject/urls.py",
+                        "libraryproject/wsgi.py",
+                        "manage.py"
+                    ],
+                    "default_branch": "main",
+                    "pushed": true
+                }
+            ]
+        },
+        "stats": {
+            "venv": "djangoenv",
+            "django": "installed",
+            "server": "running",
+            "apps": 2,
+            "urls": 16,
+            "models": 1,
+            "commits": 1,
+            "pushed": 1
+        },
+        "ssh": {
+            "agent": false,
+            "loaded": [],
+            "keys": []
+        }
+    },
     docker: {
         stats: { running: 1, total: 2, images: 3, volumes: 1, networks: 4 },
         containers: [{ id: 'abc', name: 'web', image: 'nginx:latest',
