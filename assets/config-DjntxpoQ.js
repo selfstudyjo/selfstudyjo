@@ -1,0 +1,1 @@
+import{mn as e}from"./index-cgieRQWw.js";export{e as serviceRegistry};
