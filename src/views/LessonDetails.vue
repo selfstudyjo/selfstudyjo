@@ -77,7 +77,7 @@
         -->
         <router-link
           v-if="labId && authStore.hasLabAccess"
-          :to="`/lab/${labId}`"
+          :to="labPath(labId, courseId, lessonId)"
           class="lesson-res lesson-res--lab"
           :title="lesson.lab_title || labId"
         >
@@ -479,6 +479,7 @@ import { useAuthStore } from '@/store/auth';
 import { paint } from '@/theme/contrast';
 import { blocks, mediaKind, outline, readingMinutes } from '@/utils/lessonContent';
 import { getSecureMediaUrl } from '@/utils/mediaUtils';
+import { browserStore, labPath, rememberOrigins } from '@/utils/learningTrail';
 
 const route = useRoute();
 const router = useRouter();
@@ -653,7 +654,12 @@ const fetchLesson = async () => {
             .catch(() => { course.value = null; });
 
         courseService.getCourseLessons(courseId.value, base)
-            .then(rows => { siblings.value = rows; })
+            .then(rows => {
+                siblings.value = rows;
+                rememberOrigins(browserStore(), rows.map(row => ({
+                    labId: row.lab_id || '', courseId: courseId.value, lessonId: row.external_lesson_id,
+                })), Date.now());
+            })
             .catch(() => { siblings.value = []; });
 
         if (!homeworks.value.length) {

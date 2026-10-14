@@ -1,6 +1,8 @@
 <template>
     <div class="runbook-details-container">
-      <!-- Back Button -->
+      <!-- Back Button. "Back to Runbooks" is the catalogue; when this runbook
+           documents a lesson, the lesson is the nearer way back and the trail
+           below the header offers it first. -->
       <button @click="goBack" class="back-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
@@ -50,6 +52,15 @@
             </div>
           </div>
         </div>
+
+        <!--
+          THE LESSON THIS RUNBOOK DOCUMENTS. App 17 stores `course_id` and
+          `lesson_id` on the runbook, so the way back is a fact rather than a
+          guess; a runbook written for no lesson simply draws nothing.
+        -->
+        <LessonTrail v-if="runbook.course_id && runbook.lesson_id" class="runbook-trail"
+                     here="runbook" :course-id="runbook.course_id" :lesson-id="runbook.lesson_id"
+                     :heading="$t('Related to this lesson')" />
 
         <!-- Sections -->
         <div class="sections-container">
@@ -134,6 +145,7 @@
 import { computed, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ReadAloud from '@/components/ReadAloud.vue';
+import LessonTrail from '@/components/LessonTrail.vue';
 import { td } from '@/i18n/runtime';
 import { runbookService, type Runbook, type RunBookSection } from '@/services/runbook.service';
 

@@ -93,7 +93,12 @@ app.use(router);
   at setup and `open()` runs `onMounted`, so mounting before the router is ready
   opens nothing at all.
 */
-router.replace(propOnly ? '/simulator' : `/lab/${params.get('lab') || 'web-01-html'}`)
+// `?course=&lesson=` is passed through to the lab route, the way the lesson
+// page sends it, so the "Back to the lesson" trail in the header can be seen.
+const origin = params.get('course') && params.get('lesson')
+    ? { course: params.get('course')!, lesson: params.get('lesson')! } : undefined;
+router.replace(propOnly ? '/simulator'
+    : { path: `/lab/${params.get('lab') || 'web-01-html'}`, query: origin })
     .then(() => router.isReady())
     .then(() => app.mount('#app'));
 

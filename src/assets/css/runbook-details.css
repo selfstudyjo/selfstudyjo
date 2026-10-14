@@ -605,3 +605,8 @@
 .runbook-read--step {
   margin-inline-start: auto;
 }
+
+/* The lesson trail between the header and the steps. */
+.runbook-trail {
+  margin: 0 0 1.5rem;
+}

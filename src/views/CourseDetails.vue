@@ -244,7 +244,7 @@
                         -->
                         <router-link
                           v-if="lesson.lab_id && authStore.hasLabAccess"
-                          :to="`/lab/${lesson.lab_id}`"
+                          :to="labPath(lesson.lab_id, course?.external_course_id || String(route.params.id || ''), lesson.external_lesson_id)"
                           class="lesson-link lesson-link--lab"
                           :title="lesson.lab_title || lesson.lab_id"
                         >
@@ -486,6 +486,7 @@ import Planet from '@/components/Planet.vue';
 import RichText from '@/components/RichText.vue';
 import { paint } from '@/theme/contrast';
 import { getSecureMediaUrl } from '@/utils/mediaUtils';
+import { browserStore, labPath, rememberOrigins } from '@/utils/learningTrail';
 
 const DEBUG = true;
 const log = (...a: any[]) => { if (DEBUG) console.log('[CourseDetails]', ...a); };
@@ -738,6 +739,12 @@ const fetchCourseData = async () => {
       runbooksByLessonId = await runbookService.getRunbooksByLesson(courseId);
       log('Runbooks by lesson:', Array.from(runbooksByLessonId.keys()));
     }
+
+    // Lab -> lesson, for the lab page's "Back to the lesson" when a lab is
+    // later opened from the catalogue rather than from this course.
+    rememberOrigins(browserStore(), fetchedLessons.map(lesson => ({
+      labId: lesson.lab_id || '', courseId, lessonId: lesson.external_lesson_id,
+    })), Date.now());
 
     // ---------- Build final lessons array ----------
     lessons.value = fetchedLessons.map(lesson => {

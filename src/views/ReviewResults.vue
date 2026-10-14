@@ -18,6 +18,12 @@
         <p>{{ $t('Date: {v0}', { v0: formatDate(result?.date_taken) }) }}</p>
       </div>
 
+      <!-- Back to the lesson this quiz belongs to, and its lab, runbook and a
+           retake. An exam is course-level and has no lesson, so it has none. -->
+      <LessonTrail v-if="trail" class="review-trail" here="review"
+                   :course-id="trail.courseId" :lesson-id="trail.lessonId"
+                   :quiz-id="trail.quizId" :heading="$t('Related to this lesson')" />
+
       <div class="questions-review">
         <h3>{{ $t('Questions') }}</h3>
         <div
@@ -58,6 +64,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { examService, type UserExamResult, type ExamQuestion, type ExamAnswer } from '@/services/exam.service';
 import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
 import { quizService, type UserQuizResult, type QuizQuestion, type QuizAnswer } from '@/services/quiz.service';
+import LessonTrail from '@/components/LessonTrail.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -75,6 +82,9 @@ const error = ref('');
 const contentTitle = ref('');
 
 const resultType = type;
+
+/** The quiz's own lesson, read off the quiz record once it has loaded. */
+const trail = ref<{ courseId: string; lessonId: string; quizId: string } | null>(null);
 
 /**
  * A question's answers in the order the candidate actually saw them.
@@ -140,6 +150,9 @@ async function loadQuizResult() {
   // Fetch the quiz details (which contain the real title)
   const quiz = await quizService.getQuiz(quizResult.quiz);
   contentTitle.value = quiz.title || quizResult.quiz_title || quizResult.quiz;
+  if (quiz.course_id && quiz.lesson_id) {
+    trail.value = { courseId: quiz.course_id, lessonId: quiz.lesson_id, quizId: quiz.external_id };
+  }
 
   // Questions are already inside the quiz object? If not, fetch them separately.
   // The service might return quiz with questions; adjust if needed.

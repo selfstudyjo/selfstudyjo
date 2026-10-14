@@ -22,6 +22,9 @@
         <button type="button" class="sl-btn sl-btn--primary" @click="open">
           <RotateCw class="sl-i" /> {{ $t('Try Again') }}
         </button>
+        <router-link v-if="lessonOrigin" :to="lessonOriginLink" class="sl-btn sl-btn--ghost">
+          {{ $t('Back to the lesson') }}
+        </router-link>
         <router-link to="/labs" class="sl-btn sl-btn--ghost">
           {{ $t('Back to the labs') }}
         </router-link>
@@ -35,6 +38,16 @@
           <span aria-hidden="true">/</span>
           <router-link :to="`/labs?track=${lab.track}`">{{ trackTitle }}</router-link>
         </nav>
+        <!--
+          BACK TO THE LESSON. A lab does not know which lessons link to it - up
+          to ten do - so the lesson arrives with the click (`?course=&lesson=`,
+          sent by the lesson and course pages) or is remembered from the last
+          lesson that showed a link here. A lab opened cold from the catalogue,
+          for a course this browser has never shown, has no lesson to go back to
+          and draws nothing rather than guessing one.
+        -->
+        <LessonTrail v-if="lessonOrigin" class="sl-wshead__trail" variant="bar" here="lab"
+                     :course-id="lessonOrigin.courseId" :lesson-id="lessonOrigin.lessonId" />
         <div class="sl-wshead__row">
           <div>
             <h1 class="sl-wshead__title">{{ $td(lab, 'title') }}</h1>
@@ -430,6 +443,10 @@ import LabWeb from '@/components/labs/LabWeb.vue';
 import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import TourButton from '@/components/TourButton.vue';
+import LessonTrail from '@/components/LessonTrail.vue';
+import {
+  browserStore, lessonPath, originFromQuery, recallOrigin, rememberOrigins, type LessonRef,
+} from '@/utils/learningTrail';
 import AssistantButton from '@/components/assistant/AssistantButton.vue';
 import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
 
@@ -598,6 +615,25 @@ const userId = computed(() => String(authStore.user?.user_id || ''));
 */
 const props = defineProps<{ labId?: string }>();
 const labId = computed(() => String(props.labId || route.params.labId || ''));
+
+/*
+  The lesson this lab was opened from. The query outranks memory, and a query
+  origin is REMEMBERED so a reload, or coming back tomorrow from the catalogue,
+  still finds the same lesson - several lessons can share one lab, and the one
+  the student actually came from is the one "back" should mean.
+*/
+const lessonOrigin = computed<LessonRef | null>(() => {
+  if (!labId.value) return null;
+  return originFromQuery(route.query) || recallOrigin(browserStore(), labId.value);
+});
+const lessonOriginLink = computed(() =>
+  lessonOrigin.value ? lessonPath(lessonOrigin.value.courseId, lessonOrigin.value.lessonId) : '/labs');
+watch(() => [labId.value, route.query.course, route.query.lesson], () => {
+  const fromQuery = originFromQuery(route.query);
+  if (labId.value && fromQuery) {
+    rememberOrigins(browserStore(), [{ labId: labId.value, ...fromQuery }], Date.now(), true);
+  }
+}, { immediate: true });
 
 const panes = computed<ToolPane[]>(() =>
   lab.value ? toolPanes(lab.value.tool_detail) : []);

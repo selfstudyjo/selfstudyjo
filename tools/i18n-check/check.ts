@@ -1251,8 +1251,7 @@ walkVue(path.resolve('src'));
  */
 const RTL_ALLOWED_ORPHANS: Record<string, string> = {
     // Hooks this file offers to templates.
-    'sfs-flip': 'opt-in mirror for a directional glyph',
-    'sfs-noflip': 'the escape hatch back out of it',
+    'sfs-noflip': 'the escape hatch back out of .sfs-flip (used by LessonTrail)',
     'sfs-ltr': 'pin a machine identifier left-to-right',
     'uuid': 'bidi isolation for an id printed in prose',
     'record-id': 'as above',

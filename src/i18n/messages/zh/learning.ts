@@ -673,6 +673,15 @@ const learning: Catalogue = {
     'Unenroll from "{v0}"?': '要退出“{v0}”吗？',
     'Unknown Plan': '未知方案',
     'Untitled Homework': '未命名作业',
+    /*
+     * 课程路径 - 从测验、实验、操作手册或成绩返回课时。用 `课时` 而不是
+     * `课程`：这一行的意义就在于"课时"和"课程"是两个不同的去处。
+     */
+    'Back to the lesson': '返回本课时',
+    'The lesson': '课时',
+    'Next lesson': '下一课时',
+    'Keep going': '继续学习',
+    'Related to this lesson': '与本课时相关',
 };
 
 export default learning;

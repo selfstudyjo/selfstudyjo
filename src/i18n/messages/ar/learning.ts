@@ -698,6 +698,16 @@ const learning: Catalogue = {
     'Unenroll from "{v0}"?': 'إلغاء التسجيل من "{v0}"؟',
     'Unknown Plan': 'خطة غير معروفة',
     'Untitled Homework': 'واجب بدون عنوان',
+    /*
+     * The lesson trail - the way back to a lesson from its quiz, lab, runbook
+     * or result. `الدرس` throughout, never `الدورة`: the whole point of the
+     * row is that the lesson and the course are different destinations.
+     */
+    'Back to the lesson': 'العودة إلى الدرس',
+    'The lesson': 'الدرس',
+    'Next lesson': 'الدرس التالي',
+    'Keep going': 'تابع التعلّم',
+    'Related to this lesson': 'مرتبط بهذا الدرس',
 };
 
 export default learning;

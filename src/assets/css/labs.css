@@ -509,6 +509,9 @@
 .sl-crumbs a { color: inherit; text-decoration: none; }
 .sl-crumbs a:hover { text-decoration: underline; }
 
+/* The way back to the lesson this lab was opened from (LessonTrail, bar). */
+.sl-wshead__trail { margin-bottom: 0.5rem; }
+
 .sl-wshead__row {
     display: flex;
     flex-wrap: wrap;

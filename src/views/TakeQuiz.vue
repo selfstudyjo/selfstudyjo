@@ -17,6 +17,10 @@
             </svg>
             {{ $t('Back to Course') }}
           </router-link>
+          <template v-if="lessonLink">
+            <span class="breadcrumb-separator">/</span>
+            <router-link :to="lessonLink" class="breadcrumb-link">{{ $t('The lesson') }}</router-link>
+          </template>
           <span class="breadcrumb-separator">/</span>
           <span class="breadcrumb-current">{{ $t('Quiz: {v0}', { v0: $td(quiz) }) }}</span>
         </div>
@@ -82,10 +86,16 @@
             <router-link to="/leaderboard" class="btn-secondary">
               {{ $t('See my activity record') }}
             </router-link>
-            <button class="btn-primary" @click="returnToCourse">
+            <button v-if="lessonLink" class="btn-primary" @click="returnToLesson">
+              {{ $t('Back to the lesson') }}
+            </button>
+            <button :class="lessonLink ? 'btn-secondary' : 'btn-primary'" @click="returnToCourse">
               {{ $t('Return to Course') }}
             </button>
           </div>
+          <LessonTrail v-if="lessonLink" class="quiz-trail" here="quiz"
+                       :course-id="trailCourseId" :lesson-id="trailLessonId"
+                       :heading="$t('Keep going')" />
         </div>
       </div>
 
@@ -111,14 +121,28 @@
             </div>
           </div>
           <p class="result-message">{{ quizResult?.result_message || '' }}</p>
+          <!--
+            BACK TO THE LESSON leads, because that is where the student was:
+            a pass sends them on to the next lesson from there, a fail sends them
+            back to re-read it before the retake. "Return to Course" was twenty
+            lessons up the tree from either. The trail below adds the lesson's
+            lab, its runbook and the next lesson, so the result card is a
+            crossroads rather than a dead end.
+          -->
           <div class="result-actions">
-            <button class="btn-primary" @click="returnToCourse">
-              {{ $t('Return to Course') }}
+            <button v-if="lessonLink" class="btn-primary" @click="returnToLesson">
+              {{ $t('Back to the lesson') }}
             </button>
             <button v-if="quizResult?.result_status === 'FAILED'" class="btn-secondary" @click="retakeQuiz">
               {{ $t('Retake Quiz') }}
             </button>
+            <button :class="lessonLink ? 'btn-secondary' : 'btn-primary'" @click="returnToCourse">
+              {{ $t('Return to Course') }}
+            </button>
           </div>
+          <LessonTrail v-if="lessonLink" class="quiz-trail" here="quiz"
+                       :course-id="trailCourseId" :lesson-id="trailLessonId"
+                       :heading="$t('Keep going')" />
         </div>
       </div>
 
@@ -173,6 +197,9 @@
           <div class="instructions-actions">
             <button class="btn-primary" @click="startQuiz">
               {{ $t('Start Quiz') }}
+            </button>
+            <button v-if="lessonLink" class="btn-secondary" @click="returnToLesson">
+              {{ $t('Back to the lesson') }}
             </button>
             <button class="btn-secondary" @click="returnToCourse">
               {{ $t('Return to Course') }}
@@ -397,6 +424,9 @@
       <button class="retry-btn" @click="loadQuiz">
         {{ $t('Try Again') }}
       </button>
+      <button v-if="lessonLink" class="back-btn" @click="returnToLesson">
+        {{ $t('Back to the lesson') }}
+      </button>
       <button class="back-btn" @click="returnToCourse">
         {{ $t('Back to Course') }}
       </button>
@@ -414,6 +444,8 @@ import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import IntegrityRules from '@/components/practice/IntegrityRules.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import { FAIL_BODY, FAIL_HEADLINE } from '@/utils/practiceIntegrity';
+import LessonTrail from '@/components/LessonTrail.vue';
+import { coursePath, lessonPath } from '@/utils/learningTrail';
 
 const route = useRoute();
 const router = useRouter();
@@ -503,9 +535,24 @@ const resultClass = computed(() => {
   return quizResult.value.result_status === 'PASSED' ? 'passed' : 'failed';
 });
 
+/*
+  WHICH LESSON AND COURSE this quiz belongs to. The query is what the lesson and
+  course pages send; the quiz record carries both as well, so a quiz opened from
+  a bookmark, a notification or "My Results" with no query still knows its way
+  back - the query only wins because it is there before the quiz has loaded.
+*/
+const trailCourseId = computed(() =>
+  String(route.query.courseId || quiz.value?.course_id || '').trim());
+const trailLessonId = computed(() =>
+  String(route.query.lessonId || quiz.value?.lesson_id || '').trim());
+
+const lessonLink = computed(() =>
+  trailCourseId.value && trailLessonId.value
+    ? lessonPath(trailCourseId.value, trailLessonId.value) : null);
+
 const backToCourseLink = computed(() => {
-  const courseId = route.query.courseId as string;
-  return courseId ? `/course/${courseId}` : '/courses';
+  const courseId = trailCourseId.value;
+  return courseId ? coursePath(courseId) : '/courses';
 });
 
 /** Display-only formatted score (always 1 decimal place, e.g. 85.7) */
@@ -819,12 +866,13 @@ const submitQuiz = async (opts: { voided?: boolean } = {}) => {
 };
 
 const returnToCourse = () => {
-  const courseId = route.query.courseId as string;
-  if (courseId) {
-    router.push(`/course/${courseId}`);
-  } else {
-    router.push('/courses');
-  }
+  const courseId = trailCourseId.value;
+  router.push(courseId ? coursePath(courseId) : '/courses');
+};
+
+const returnToLesson = () => {
+  if (lessonLink.value) router.push(lessonLink.value);
+  else returnToCourse();
 };
 
 const retakeQuiz = () => {

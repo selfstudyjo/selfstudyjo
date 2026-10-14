@@ -652,3 +652,7 @@
     background: none;
   }
 }
+/* The lesson trail between the summary and the questions. */
+.review-trail {
+  margin: 0 0 1.5rem;
+}

@@ -1,0 +1,163 @@
+/*
+  LessonTrail - the way back to the lesson from a quiz, a lab, a runbook or a
+  result. Loaded as `<style scoped src>`, so nothing here can reach another page.
+
+  The pill colours match the lesson page's own resource row on purpose
+  (`lesson-details.css`): the lab is the info family, the runbook the accent,
+  the quiz the success family. A student who has just clicked "Practise in the
+  lab" on the lesson and sees the same teal pill here recognises it as the same
+  thing. The LESSON link is the one filled button - it is what the row is for.
+
+  Every colour is a token with its literal as the fallback (working rule 12),
+  and every fill states its own ink.
+*/
+
+.sfs-trail {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.sfs-trail--card {
+    padding: 0.9rem 1rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    border-radius: var(--sfs-radius, 14px);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05);
+}
+
+.sfs-trail__heading {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sfs-text-muted, #a0a6b8);
+}
+
+.sfs-trail__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.sfs-trail__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    /* A title on a button can be a 60-character lesson name; it truncates
+       rather than pushing the row wider than its container. */
+    max-width: 100%;
+    min-width: 0;
+    padding: 0.45rem 0.85rem;
+    /* max() rather than a bare rem: the root font size is fluid, so 2.75rem is
+       under 44px on a phone - exactly where a touch target matters. */
+    min-height: max(2.5rem, 44px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: var(--sfs-radius-sm, 10px);
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e6e8f0);
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sfs-trail__link:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3);
+}
+
+.sfs-trail__link:focus-visible {
+    outline: 2px solid var(--sfs-accent, #667eea);
+    outline-offset: 2px;
+}
+
+.sfs-trail__icon {
+    flex: none;
+    width: 1.05em;
+    height: 1.05em;
+}
+
+.sfs-trail__label {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sfs-trail__prefix {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.sfs-trail__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* A title is record text in whatever language the record holds; read its
+       direction out of the string, as rtl.css does for user-written content. */
+    unicode-bidi: plaintext;
+}
+
+/* The lesson: the one filled button, fill and ink decided together. */
+.sfs-trail__link--lesson {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #ffffff);
+    font-weight: 600;
+}
+
+.sfs-trail__link--lesson:hover {
+    background: var(--sfs-accent, #667eea);
+    border-color: var(--sfs-accent, #667eea);
+    filter: brightness(1.08);
+}
+
+.sfs-trail__link--lab {
+    background: rgb(var(--sfs-info-rgb, 78 205 196) / 0.18);
+    border-color: rgb(var(--sfs-info-rgb, 78 205 196) / 0.38);
+    color: var(--sfs-info-text, #4ecdc4);
+    font-weight: 600;
+}
+
+.sfs-trail__link--runbook {
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.35);
+    color: var(--sfs-accent-text, #8b9cf4);
+    font-weight: 600;
+}
+
+.sfs-trail__link--quiz {
+    background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.16);
+    border-color: rgb(var(--sfs-success-rgb, 72 187 120) / 0.35);
+    color: var(--sfs-success-text, #48bb78);
+    font-weight: 600;
+}
+
+/* The bar: one tight row for the lab workspace, where height is the budget. */
+.sfs-trail--bar .sfs-trail__link {
+    min-height: max(2rem, 36px);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.82rem;
+}
+
+.sfs-trail--bar .sfs-trail__prefix {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .sfs-trail__link {
+        flex: 1 1 100%;
+    }
+    .sfs-trail--bar .sfs-trail__link {
+        flex: 0 1 auto;
+    }
+}
+
+@media (pointer: coarse) {
+    .sfs-trail--bar .sfs-trail__link {
+        min-height: max(2.75rem, 44px);
+    }
+}
