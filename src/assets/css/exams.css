@@ -1102,3 +1102,56 @@
     transform: none;
   }
 }
+/* ------------------------------------------------------------------ *
+ * Proctored or practice.
+ *
+ * The practice button is GLASS with the info hue as its ink and edge, not a
+ * filled gradient: `--sfs-info-text` is derived against the surface, and a
+ * fill would need its own `--sfs-on-*` ink pair. The two modes are told apart
+ * by their words; colour is a second cue (working rule 37).
+ * ------------------------------------------------------------------ */
+.exams-page .exam-actions .btn-practice {
+  background: rgb(var(--sfs-info-rgb, 56 189 248) / 0.12);
+  border-color: rgb(var(--sfs-info-rgb, 56 189 248) / 0.55);
+  color: var(--sfs-info-text, #7dd3fc);
+}
+.exams-page .exam-actions .btn-practice:hover {
+  background: rgb(var(--sfs-info-rgb, 56 189 248) / 0.2);
+  transform: translateY(-2px);
+}
+
+.exams-page .exam-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 0.8rem;
+  margin: 0 0 1.25rem;
+}
+
+.exams-page .exam-mode {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+  border-inline-start-width: 4px;
+  color: var(--sfs-text, #e6e9f2);
+}
+.exams-page .exam-mode--proctored { border-inline-start-color: var(--sfs-success, #34d399); }
+.exams-page .exam-mode--practice { border-inline-start-color: var(--sfs-info, #38bdf8); }
+
+.exams-page .exam-mode__title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.exams-page .exam-mode p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--sfs-text-muted, #a0a8bd);
+  overflow-wrap: anywhere;
+}
+
+.exams-page .practice-row .detail-value {
+  color: var(--sfs-info-text, #7dd3fc);
+  font-weight: 600;
+}

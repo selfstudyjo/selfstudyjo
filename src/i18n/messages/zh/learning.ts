@@ -682,6 +682,26 @@ const learning: Catalogue = {
     'Next lesson': '下一课时',
     'Keep going': '继续学习',
     'Related to this lesson': '与本课时相关',
+    // Proctored or practice exams (2026-10-15).
+    'Practice': '练习',
+    'Practice exam': '练习考试',
+    'Proctored exam': '监考考试',
+    'No appointment and no proctor. Your score is recorded and earns leaderboard points like a quiz, but a practice exam never issues a certificate.': '无需预约，也没有监考老师。你的成绩会被记录，并像小测验一样计入排行榜积分，但练习考试从不颁发证书。',
+    'Sat with your proctor at your booked time. Pass it and your certificate is issued automatically.': '在预约时间由监考老师监考完成。通过后将自动为你颁发证书。',
+    'Practice result': '练习成绩',
+    'Your score is recorded and counts on the leaderboard like a quiz. No certificate is issued for a practice exam — book a proctored exam to earn one.': '你的成绩已记录，并像小测验一样计入排行榜。练习考试不颁发证书——请预约监考考试来获得证书。',
+    'Your certificate is being issued and will appear under My Certificates.': '你的证书正在颁发，稍后将显示在“我的证书”中。',
+    'Book an appointment with an available proctor and sit the exam at that time. Pass it and your certificate is issued automatically.': '与空闲的监考老师预约，并在预约时间参加考试。通过后将自动为你颁发证书。',
+    'Start right away with any active subscription - no appointment, no proctor. Your score is recorded and earns points like a quiz, but no certificate is issued.': '只要有任何有效订阅即可立即开始——无需预约，也没有监考老师。你的成绩会被记录并像小测验一样获得积分，但不颁发证书。',
+    'Best practice score:': '最佳练习成绩：',
+    '{v0}% ({v1} attempts)': '{v0}%（{v1} 次尝试）',
+    'Practice now - no appointment, no certificate': '立即练习——无需预约，不颁发证书',
+    'Practice now': '立即练习',
+    'Your Practice Results': '你的练习成绩',
+    'Best Score:': '最佳成绩：',
+    'Attempts:': '尝试次数：',
+    'Certificate:': '证书：',
+    'Not issued for practice': '练习不颁发证书',
 };
 
 export default learning;

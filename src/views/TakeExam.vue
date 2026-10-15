@@ -11,7 +11,10 @@
                a small phone, with the question scrolling underneath it. -->
           <div class="exam-meta-line">
             <p class="exam-course">{{ exam?.course_name || exam?.course_id }}</p>
-            <span v-if="appointment" class="appointment-status">
+            <span v-if="isPractice" class="appointment-status">
+              <span class="status-badge practice-mode">{{ $t('Practice') }}</span>
+            </span>
+            <span v-else-if="appointment" class="appointment-status">
               <span class="status-badge" :class="appointment.appointment_status.toLowerCase().replace(/\s+/g, '-')">
                 {{ appointment.appointment_status }}
               </span>
@@ -78,6 +81,15 @@
         <p class="exam-gate__lede">
           {{ $t('{v0} questions, {v1} minutes, and a pass mark of {v2}%. The clock starts when you accept the rules below.', { v0: validQuestions.length, v1: exam.exam_duration, v2: passMark }) }}
         </p>
+
+        <!-- What THIS sitting is worth, said before it starts. A student who
+             finds out afterwards that a practice pass earns no certificate has
+             been misled by omission. -->
+        <div class="exam-gate__mode" :class="isPractice ? 'is-practice' : 'is-proctored'">
+          <strong>{{ isPractice ? $t('Practice exam') : $t('Proctored exam') }}</strong>
+          <span v-if="isPractice">{{ $t('No appointment and no proctor. Your score is recorded and earns leaderboard points like a quiz, but a practice exam never issues a certificate.') }}</span>
+          <span v-else>{{ $t('Sat with your proctor at your booked time. Pass it and your certificate is issued automatically.') }}</span>
+        </div>
 
         <IntegrityRules context="exam" />
 
@@ -392,12 +404,26 @@
               <span>{{ $t('Time Spent:') }}</span>
               <span>{{ formatTime(timeSpent) }}</span>
             </div>
-            <div class="detail">
+            <div v-if="appointment && !resultIsPractice" class="detail">
               <span>{{ $t('Appointment Status:') }}</span>
               <span class="status-badge" :class="appointment?.appointment_status?.toLowerCase().replace(/\s+/g, '-')">
                 {{ appointment?.appointment_status }}
               </span>
             </div>
+          </div>
+
+          <!-- What the paper earned. Practice never issues a certificate, and a
+               paper that ASKED to be proctored but had no live appointment
+               behind it is stored as practice by app 20 - the reason is shown
+               rather than leaving somebody waiting for a certificate. -->
+          <div v-if="resultIsPractice" class="result-mode-note is-practice">
+            <strong>{{ $t('Practice result') }}</strong>
+            <span v-if="examResult?.mode_reason">{{ examResult.mode_reason }}</span>
+            <span>{{ $t('Your score is recorded and counts on the leaderboard like a quiz. No certificate is issued for a practice exam — book a proctored exam to earn one.') }}</span>
+          </div>
+          <div v-else-if="examResult?.result_status === 'PASSED'" class="result-mode-note is-proctored">
+            <strong>{{ $t('Certificate') }}</strong>
+            <span>{{ $t('Your certificate is being issued and will appear under My Certificates.') }}</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -417,7 +443,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { examService, passMarkOf, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
+import { examService, passMarkOf, isPracticeResult, type Exam, type ExamQuestion, type ExamAnswer, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { notificationService } from '@/services/notification.service';
 import { proctorService } from '@/services/proctor.service';
 import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
@@ -435,6 +461,16 @@ import '@/assets/css/exam-system.css';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+/**
+ * A practice sitting: opened from `/practice-exam`, with no appointment.
+ *
+ * Only a REQUEST. What decides whether the paper earns a certificate is app 20,
+ * which stores anything without a live appointment of this user's as practice
+ * whatever this page says - see `utils/exammode.py` there.
+ */
+const isPractice = computed(() =>
+  route.name === 'PracticeExam' && !route.query.appointmentId);
 
 // State
 const loading = ref(false);
@@ -494,6 +530,10 @@ const sitting = usePracticeSitting({
 });
 
 const passMark = computed(() => exam.value ? passMarkOf(exam.value) : 70);
+
+/** What app 20 actually stored the paper as - the answer, not the request. */
+const resultIsPractice = computed(() =>
+  examResult.value ? isPracticeResult(examResult.value) : isPractice.value);
 
 /** The breaches that ended the sitting, for the reprimand's own list. */
 const voidedBreaches = computed(() =>
@@ -605,7 +645,7 @@ onUnmounted(() => {
 
 async function loadExam() {
   const examId = route.query.examId as string;
-  const appointmentId = route.query.appointmentId as string;
+  const appointmentId = isPractice.value ? '' : (route.query.appointmentId as string);
 
   if (!examId) {
     error.value = 'No exam specified';
@@ -930,6 +970,9 @@ async function submitExamResults(opts: { voided?: boolean } = {}) {
     // was being touched anyway.
     result_status: (score >= passingScore ? 'PASSED' : 'FAILED') as 'PASSED' | 'FAILED',
     practice_session: sitting.sessionId.value,
+    // A request. App 20 decides; see `isPractice`.
+    exam_mode: (isPractice.value ? 'practice' : 'proctored') as 'practice' | 'proctored',
+    appointment_id: isPractice.value ? '' : ((route.query.appointmentId as string) || ''),
     user_answers: userExamAnswers
   };
 
@@ -947,7 +990,7 @@ async function submitExamResults(opts: { voided?: boolean } = {}) {
     wants the appointment as it was rather than silently closed as "Taken but
     Failed", which reads as an ordinary poor mark.
   */
-  const appointmentId = route.query.appointmentId as string;
+  const appointmentId = isPractice.value ? '' : (route.query.appointmentId as string);
   if (appointmentId && !opts.voided) {
     try {
       const status = score >= passingScore ? 'Completed' : 'Taken but Failed';
@@ -990,6 +1033,14 @@ async function submitExamResults(opts: { voided?: boolean } = {}) {
     meant to keep.
   */
   if (opts.voided) return;
+
+  /*
+    A PRACTICE PAPER STOPS HERE TOO. Nobody invigilated it, so there is no
+    proctor to tell and nothing for an operator to act on; and the candidate
+    is looking at the score, which is all a practice paper produces - the
+    same reason a quiz sends no bell.
+  */
+  if (resultIsPractice.value) return;
 
   // The candidate is looking at their score right now, so the notification is
   // not news — it is the durable copy. An exam result is the one thing on this

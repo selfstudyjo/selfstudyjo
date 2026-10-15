@@ -5,6 +5,22 @@
       <p class="page-subtitle">{{ $t('View and schedule your exams') }}</p>
     </div>
 
+    <!--
+      TWO WAYS TO SIT AN EXAM, said once at the top rather than discovered at
+      the end. The difference that matters to a student is the certificate, so
+      that is what each card leads with.
+    -->
+    <div class="exam-modes" role="note">
+      <div class="exam-mode exam-mode--proctored">
+        <div class="exam-mode__title">🎓 {{ $t('Proctored exam') }}</div>
+        <p>{{ $t('Book an appointment with an available proctor and sit the exam at that time. Pass it and your certificate is issued automatically.') }}</p>
+      </div>
+      <div class="exam-mode exam-mode--practice">
+        <div class="exam-mode__title">📝 {{ $t('Practice exam') }}</div>
+        <p>{{ $t('Start right away with any active subscription - no appointment, no proctor. Your score is recorded and earns points like a quiz, but no certificate is issued.') }}</p>
+      </div>
+    </div>
+
     <!-- Search Bar -->
     <div class="search-container">
       <div class="search-input-wrapper">
@@ -101,6 +117,15 @@
               <span class="score-value failed">{{ getLatestUserResult(exam)?.score }}%</span>
             </div>
 
+            <!-- Practice is its own line: a practice pass earns no certificate
+                 and must not read as the proctored result above. -->
+            <div v-if="isAuthenticated && getBestPracticeResult(exam)" class="detail-row practice-row">
+              <span class="detail-label">{{ $t('Best practice score:') }}</span>
+              <span class="detail-value">
+                {{ $t('{v0}% ({v1} attempts)', { v0: getBestPracticeResult(exam)?.score, v1: getPracticeAttempts(exam) }) }}
+              </span>
+            </div>
+
             <!-- Display next appointment if scheduled -->
             <div v-if="isAuthenticated && getActiveAppointment(exam)" class="appointment-info">
               <div class="appointment-label">{{ $t('Next Appointment:') }}</div>
@@ -173,6 +198,17 @@
                 </svg>
                 </button>
               </template>
+              <!-- PRACTICE, always available beside the proctored path: no
+                   appointment, no approval, and never a certificate. Needs any
+                   active subscription, which the route's guard checks. -->
+              <button @click="practiceExam(exam)" class="btn-practice"
+                      :title="$t('Practice now - no appointment, no certificate')">
+                <span>{{ $t('Practice now') }}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M14.752 11.168L9.192 7.108C8.892 6.9 8.5 7.1 8.5 7.44V16.56C8.5 16.9 8.892 17.1 9.192 16.892L14.752 12.832C15.068 12.6 15.068 12.4 14.752 12.168Z"
+                        fill="currentColor"/>
+                </svg>
+              </button>
             </template>
             <template v-else>
               <!-- For non-authenticated users, show login to schedule button -->
@@ -283,6 +319,24 @@
             </div>
           </div>
 
+          <div v-if="isAuthenticated && getBestPracticeResult(selectedExam)" class="exam-detail-section">
+            <h4>{{ $t('Your Practice Results') }}</h4>
+            <div class="results-section">
+              <div class="result-item">
+                <span class="result-label">{{ $t('Best Score:') }}</span>
+                <span class="result-value">{{ getBestPracticeResult(selectedExam)?.score }}%</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">{{ $t('Attempts:') }}</span>
+                <span class="result-value">{{ getPracticeAttempts(selectedExam) }}</span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">{{ $t('Certificate:') }}</span>
+                <span class="result-value">{{ $t('Not issued for practice') }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Show active appointment details -->
           <div v-if="isAuthenticated && getActiveAppointment(selectedExam)" class="exam-detail-section">
             <h4>{{ $t('Active Appointment Details') }}</h4>
@@ -359,6 +413,9 @@
         </div>
         <div class="modal-footer">
           <button @click="selectedExam = null" class="btn-secondary">{{ $t('Close') }}</button>
+          <button v-if="isAuthenticated" @click="practiceExam(selectedExam)" class="btn-secondary">
+            {{ $t('Practice now') }}
+          </button>
           <button v-if="isAuthenticated && shouldShowScheduleButton(selectedExam)"
                   @click="scheduleExam(selectedExam)" class="btn-primary">
             {{ getScheduleButtonText(selectedExam) }}
@@ -376,7 +433,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { examService, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
+import { examService, isPracticeResult, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { VideoEmbedService } from '@/utils/videoEmbed';
 import { notificationService } from '@/services/notification.service';
 
@@ -641,10 +698,15 @@ function getAppointmentStatusClass(appointment: ExamAppointment | undefined): st
   return appointment.appointment_status.toLowerCase().replace(/\s+/g, '-');
 }
 
+/**
+ * The latest PROCTORED result. Everything that decides status, "Completed" and
+ * whether a booking is still offered reads this, so a practice pass can never
+ * stand in for the proctored exam that earns the certificate.
+ */
 function getLatestUserResult(exam: Exam): UserExamResult | undefined {
-  // Filter results for this exam and current user
   const results = userResults.value
-    .filter(result => result.exam === exam.external_id && result.user_id === userId.value)
+    .filter(result => result.exam === exam.external_id && result.user_id === userId.value
+      && !isPracticeResult(result))
     .sort((a, b) => new Date(b.date_taken).getTime() - new Date(a.date_taken).getTime());
   return results[0];
 }
@@ -714,10 +776,40 @@ function hasScheduledAppointment(exam: Exam): boolean {
 }
 
 function getExamAttempts(exam: Exam): number {
-  // Count only results for this exam and current user
+  // Proctored attempts only; practice is counted on its own line.
   return userResults.value.filter(result =>
     result.exam === exam.external_id && result.user_id === userId.value
+    && !isPracticeResult(result)
   ).length;
+}
+
+function getPracticeResults(exam: Exam): UserExamResult[] {
+  return userResults.value.filter((result: UserExamResult) =>
+    result.exam === exam.external_id && result.user_id === userId.value
+    && isPracticeResult(result));
+}
+
+function getPracticeAttempts(exam: Exam): number {
+  return getPracticeResults(exam).length;
+}
+
+/** The best practice score, earliest on a tie - the leaderboard's own rule. */
+function getBestPracticeResult(exam: Exam): UserExamResult | undefined {
+  return [...getPracticeResults(exam)].sort((a, b) =>
+    (Number(b.score) - Number(a.score))
+    || (new Date(a.date_taken).getTime() - new Date(b.date_taken).getTime()))[0];
+}
+
+/**
+ * Open a practice sitting. No appointment, no proctor and no certificate; the
+ * route's guard sends somebody without an active subscription to the plans.
+ */
+function practiceExam(exam: Exam) {
+  if (!isAuthenticated.value) {
+    goToLogin();
+    return;
+  }
+  router.push({ path: '/practice-exam', query: { examId: exam.external_id } });
 }
 
 function canRescheduleAppointment(exam: Exam): boolean {

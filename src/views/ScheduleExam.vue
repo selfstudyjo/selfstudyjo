@@ -690,7 +690,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { examService, type Exam, type ExamAppointment, type UserExamResult } from '@/services/exam.service';
+import { examService, type Exam, type ExamAppointment, type UserExamResult, isPracticeResult } from '@/services/exam.service';
 import { proctorService, type ExamProctor, type AvailableDay, type AvailableHour } from '@/services/proctor.service';
 import { notificationService } from '@/services/notification.service';
 
@@ -816,7 +816,9 @@ const isCompletedPassedAppointment = (appointment: ExamAppointment): boolean => 
 
   // Check if there's a passed exam result for this appointment
   const examResult = userExamResults.value.find(
+    // A passed PRACTICE paper says nothing about a proctored appointment.
     result => result.exam === appointment.exam && result.result_status === 'PASSED'
+      && !isPracticeResult(result)
   );
 
   return !!examResult;
@@ -827,7 +829,10 @@ const hasExamPassed = (exam: Exam | null): boolean => {
   if (!exam || !userExamResults.value.length) return false;
 
   return userExamResults.value.some(
+    // Proctored passes only: passing in practice must not stop somebody booking
+    // the proctored exam that earns the certificate.
     result => result.exam === exam.external_id && result.result_status === 'PASSED'
+      && !isPracticeResult(result)
   );
 };
 

@@ -204,17 +204,32 @@ function assessmentEvents(
         const subjectId = String(row?.[subjectField] || '').trim();
         if (!userId || !subjectId) continue;
         const value = score(row?.score);
+        /*
+          A PRACTICE EXAM SCORES LIKE A QUIZ, because that is what it is: no
+          booking, no proctor, no certificate. So it travels as a `quiz` event,
+          paying `quizPassed` rather than `examPassed`.
+
+          Under its OWN subject key. `bestAttempts` dedupes on
+          (user, kind, subject), so keyed on the bare exam id it would collapse
+          with nothing - but a practice exam and a real quiz must never share a
+          key, and the prefix makes that structurally impossible. A practice
+          pass and a proctored pass of the same exam are two achievements and
+          both count.
+        */
+        const practice = kind === 'exam'
+            && String(row?.exam_mode || '').toLowerCase() === 'practice';
+        const subjectName = String(row?.[titleField] || '').trim()
+            || titles.get(subjectId) || undefined;
         out.push({
-            kind,
+            kind: practice ? 'quiz' : kind,
             userId,
             // A result carries a username and not a full name; the certificates
             // carry the full name. `aggregate` prefers whichever is freshest and
             // never lets a blank win, so a learner with a certificate is printed
             // under the name their certificate prints.
             name: String(row?.username || '').trim(),
-            subjectId,
-            subjectName: String(row?.[titleField] || '').trim()
-                || titles.get(subjectId) || undefined,
+            subjectId: practice ? `practice:${subjectId}` : subjectId,
+            subjectName: practice && subjectName ? `${subjectName} (practice)` : subjectName,
             score: value,
             passed: passed(row?.result_status, value),
             /*

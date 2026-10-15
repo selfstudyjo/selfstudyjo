@@ -1460,3 +1460,52 @@
     .take-exam-page .void-modal,
     .take-exam-page .void-modal__list li { border: 1px solid CanvasText !important; }
 }
+
+/* ------------------------------------------------------------------ *
+ * Proctored or practice: what this sitting is worth.
+ *
+ * A panel on the rules gate and a note in the results modal. The difference
+ * is said in WORDS as well as colour - the accent and the info hue are within
+ * a few dE of each other in several galaxies (working rule 37).
+ * ------------------------------------------------------------------ */
+.take-exam-page .exam-gate__mode,
+.take-exam-page .result-mode-note {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--sfs-radius-sm, 10px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-inline-start-width: 4px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+    color: var(--sfs-text, #e6e9f2);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    text-align: start;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.take-exam-page .exam-gate__mode strong,
+.take-exam-page .result-mode-note strong {
+    font-size: 0.95rem;
+}
+
+.take-exam-page .exam-gate__mode.is-practice,
+.take-exam-page .result-mode-note.is-practice {
+    border-inline-start-color: var(--sfs-info, #38bdf8);
+}
+
+.take-exam-page .exam-gate__mode.is-proctored,
+.take-exam-page .result-mode-note.is-proctored {
+    border-inline-start-color: var(--sfs-success, #34d399);
+}
+
+.take-exam-page .result-mode-note {
+    margin-top: 1rem;
+}
+
+.take-exam-page .status-badge.practice-mode {
+    background: rgb(var(--sfs-info-rgb, 56 189 248) / 0.2);
+    color: var(--sfs-info-text, #7dd3fc);
+}

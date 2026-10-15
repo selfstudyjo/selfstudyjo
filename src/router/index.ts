@@ -319,6 +319,20 @@ const routes = [
                 meta: { title: 'Take Exam', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['exam_feature'] }
             },
             {
+                /*
+                  THE SAME PAGE IN PRACTICE MODE, on its own route because its
+                  gate is different: a proctored sitting needs `exam_feature`, a
+                  practice one needs ANY active subscription. One route with a
+                  query flag could not carry two guards, and loosening
+                  `/take-exam` would open the proctored path too. Practice never
+                  earns a certificate - app 20 decides that, not this route.
+                */
+                path: 'practice-exam',
+                name: 'PracticeExam',
+                component: TakeExam,
+                meta: { title: 'Practice Exam', requiresAuth: true, requiresSubscription: true, requiredFeatures: [], anySubscription: true }
+            },
+            {
                 path: 'proctor-dashboard',
                 name: 'ProctorDashboard',
                 component: ProctorDashboard,

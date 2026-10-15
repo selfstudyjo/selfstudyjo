@@ -708,6 +708,26 @@ const learning: Catalogue = {
     'Next lesson': 'الدرس التالي',
     'Keep going': 'تابع التعلّم',
     'Related to this lesson': 'مرتبط بهذا الدرس',
+    // Proctored or practice exams (2026-10-15).
+    'Practice': 'تدريب',
+    'Practice exam': 'اختبار تدريبي',
+    'Proctored exam': 'اختبار بمراقب',
+    'No appointment and no proctor. Your score is recorded and earns leaderboard points like a quiz, but a practice exam never issues a certificate.': 'لا موعد ولا مراقب. تُسجَّل نتيجتك وتكسب نقاطًا في لوحة المتصدرين مثل الاختبار القصير، لكن الاختبار التدريبي لا يمنح شهادة أبدًا.',
+    'Sat with your proctor at your booked time. Pass it and your certificate is issued automatically.': 'تُقدِّمه مع مراقبك في موعدك المحجوز. إذا نجحت تُصدَر شهادتك تلقائيًا.',
+    'Practice result': 'نتيجة تدريبية',
+    'Your score is recorded and counts on the leaderboard like a quiz. No certificate is issued for a practice exam — book a proctored exam to earn one.': 'تُسجَّل نتيجتك وتُحتسب في لوحة المتصدرين مثل الاختبار القصير. لا تُصدَر شهادة للاختبار التدريبي — احجز اختبارًا بمراقب للحصول عليها.',
+    'Your certificate is being issued and will appear under My Certificates.': 'يجري إصدار شهادتك وستظهر ضمن شهاداتي.',
+    'Book an appointment with an available proctor and sit the exam at that time. Pass it and your certificate is issued automatically.': 'احجز موعدًا مع مراقب متاح وقدِّم الاختبار في ذلك الوقت. إذا نجحت تُصدَر شهادتك تلقائيًا.',
+    'Start right away with any active subscription - no appointment, no proctor. Your score is recorded and earns points like a quiz, but no certificate is issued.': 'ابدأ فورًا بأي اشتراك فعّال — بلا موعد وبلا مراقب. تُسجَّل نتيجتك وتكسب نقاطًا مثل الاختبار القصير، لكن لا تُصدَر شهادة.',
+    'Best practice score:': 'أفضل نتيجة تدريبية:',
+    '{v0}% ({v1} attempts)': '{v0}% ({v1} محاولات)',
+    'Practice now - no appointment, no certificate': 'تدرّب الآن — بلا موعد وبلا شهادة',
+    'Practice now': 'تدرّب الآن',
+    'Your Practice Results': 'نتائجك التدريبية',
+    'Best Score:': 'أفضل نتيجة:',
+    'Attempts:': 'المحاولات:',
+    'Certificate:': 'الشهادة:',
+    'Not issued for practice': 'لا تُصدَر للتدريب',
 };
 
 export default learning;

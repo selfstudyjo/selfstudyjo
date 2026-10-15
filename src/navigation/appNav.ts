@@ -449,7 +449,7 @@ export const APP_SECTIONS: AppSection[] = [
         // `/my-results` and `/review-result` live here rather than under Account:
         // a result is something an exam produced, and somebody looking at one is
         // far more likely to want the next exam than their avatar.
-        match: ['/exams', '/schedule-exam', '/exam-approval', '/take-exam', '/my-results', '/review-result'],
+        match: ['/exams', '/schedule-exam', '/exam-approval', '/take-exam', '/practice-exam', '/my-results', '/review-result'],
         home: '/exams',
         items: [EXAMS, SCHEDULE_EXAM, EXAM_APPROVAL, MY_RESULTS],
         related: [MY_CERTIFICATES, LEADERBOARD, COURSES, PROCTOR_DASHBOARD],

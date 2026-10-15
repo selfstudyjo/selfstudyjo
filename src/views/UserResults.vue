@@ -44,6 +44,11 @@
               <h3>{{ result.exam_title || result.exam }}</h3>
               <span class="score" :class="getScoreClass(result.score, result.result_status)">{{ result.score }}%</span>
             </div>
+            <!-- Practice or proctored, said in words: a practice pass earns no
+                 certificate, and without the label the two look identical. -->
+            <p class="exam-mode-tag" :class="isPracticeResult(result) ? 'is-practice' : 'is-proctored'">
+              {{ isPracticeResult(result) ? $t('Practice exam') : $t('Proctored exam') }}
+            </p>
             <p class="date">{{ $t('Taken: {v0}', { v0: formatDate(result.date_taken) }) }}</p>
             <p class="status" :class="result.result_status.toLowerCase()">
               {{ result.result_status }}
@@ -113,7 +118,7 @@
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
-import { examService, type UserExamResult } from '@/services/exam.service';
+import { examService, type UserExamResult, isPracticeResult } from '@/services/exam.service';
 import { quizService, type UserQuizResult, type Quiz } from '@/services/quiz.service';
 import Chart from 'chart.js/auto';
 

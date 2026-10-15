@@ -125,7 +125,28 @@ export interface UserExamResult {
     integrity_negatives?: number;
     /** The net conduct points. Can be negative. */
     integrity_points?: number;
+    /**
+     * How the paper was sat. `proctored` is booked against an appointment and
+     * earns the certificate; `practice` is open to anybody with a subscription,
+     * scores like a quiz and never issues one.
+     *
+     * DECIDED BY APP 20, never by this client: what is sent is a request, and a
+     * claim of `proctored` with no live appointment of this user's behind it is
+     * stored as practice, with `mode_reason` saying why. Absent on a replica
+     * that has not pulled the build, which reads as proctored - how every
+     * result was treated before the field existed.
+     */
+    exam_mode?: ExamMode;
+    appointment_id?: string;
+    mode_reason?: string;
     user_answers?: UserExamAnswer[];
+}
+
+export type ExamMode = 'proctored' | 'practice';
+
+/** Whether a result is a practice paper. Absent reads as proctored, as on app 20. */
+export function isPracticeResult(result?: Partial<UserExamResult> | null): boolean {
+    return String(result?.exam_mode || '').toLowerCase() === 'practice';
 }
 
 export interface UserExamAnswer {

@@ -612,3 +612,27 @@
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
 }
+
+/* Proctored or practice. A practice pass earns no certificate, so the two have to
+ * be told apart in words; the colour is a second cue, never the only one. */
+.user-results .exam-mode-tag {
+  margin: 0.35rem 0 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  width: fit-content;
+  max-width: 100%;
+  font-size: 0.74rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+}
+
+.user-results .exam-mode-tag.is-practice {
+  color: var(--sfs-info-text, #7dd3fc);
+  background: rgb(var(--sfs-info-rgb, 56 189 248) / 0.15);
+}
+
+.user-results .exam-mode-tag.is-proctored {
+  color: var(--sfs-success-text, #48bb78);
+  background: rgb(var(--sfs-success-rgb, 72 187 120) / 0.15);
+}

@@ -12,6 +12,29 @@ export async function subscriptionGuard(
     const requiresSubscription = to.meta.requiresSubscription === true;
     const requiredFeatures = to.meta.requiredFeatures as string[] || [];
 
+    /*
+      ANY ACTIVE SUBSCRIPTION, no particular feature. Practice exams use it:
+      anybody who is paying may practise. Checked before the "no features means
+      no gate" early return below, which would otherwise wave it through.
+    */
+    if (requiresSubscription && to.meta.anySubscription === true) {
+        if (!authStore.isAuthenticated || !authStore.user?.id) {
+            next('/login');
+            return;
+        }
+        const subs = await authStore.loadActiveSubscriptions();
+        if (subs.length === 0 && !authStore.hasActiveSubscription) {
+            sessionStorage.setItem('subscriptionRedirect', JSON.stringify({
+                requiredFeatures: [],
+                from: to.path,
+            }));
+            next('/plans');
+            return;
+        }
+        next();
+        return;
+    }
+
     if (!requiresSubscription || requiredFeatures.length === 0) {
         next();
         return;
