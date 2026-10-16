@@ -40,7 +40,8 @@ import { resolve } from 'node:path';
 
 import {
     ACTIONS,
-    AI_FREE_ASKS,
+    NEVER_PENALISED,
+    severityIn,
     ALT_TAB_ABSORB_MS,
     CALM_BODY,
     CONTEXTS,
@@ -180,7 +181,7 @@ section('1. The two catalogues agree');
             const contexts = [...(body.match(/'contexts':\s*\(([^)]*)\)/)?.[1] ?? '')
                 .matchAll(/'(\w+)'/g)].map(m => m[1]);
             const onceRaw = body.match(/'once':\s*([A-Z_]+|\d+)/)?.[1] ?? '0';
-            const once = onceRaw === 'AI_FREE_ASKS' ? 3 : Number(onceRaw);
+            const once = Number(onceRaw);
             const contextPoints: Record<string, number> = {};
             const table = body.match(/'context_points':\s*\{([^}]*)\}/)?.[1] ?? '';
             for (const pair of table.matchAll(/'(\w+)':\s*(-?\d+)/g)) {
@@ -240,8 +241,9 @@ section('1. The two catalogues agree');
         // differed would be a candidate promised five and failed at four.
         check('the strike limit agrees',
             new RegExp(`NEGATIVE_LIMIT = ${NEGATIVE_LIMIT}\\b`).test(python));
-        check('the free tutor allowance agrees',
-            new RegExp(`AI_FREE_ASKS = ${AI_FREE_ASKS}\\b`).test(python));
+        check('the never-penalised contexts agree',
+            /NEVER_PENALISED = \('lab',\)/.test(python)
+            && NEVER_PENALISED.length === 1 && NEVER_PENALISED[0] === 'lab');
         check('a lab is unfailable on both sides',
             /'lab': None/.test(python) && FAILS_AT.lab === null);
         check('the detail bound agrees',
@@ -304,9 +306,18 @@ section('2. The catalogue is coherent');
         .filter(([, a]) => a.severity === 'negative' && a.once).map(([n]) => n);
     check('no negative action is capped', !cappedBad.length, cappedBad);
 
-    check('ai.overused is a lab action and nothing else',
-        ACTIONS['ai.overused'].contexts.length === 1
-        && ACTIONS['ai.overused'].contexts[0] === 'lab');
+    // A LAB COSTS NOTHING, since 2026-10-16.
+    check('no negative action can be recorded in a lab',
+        !Object.values(ACTIONS).some(a => a.severity === 'negative'
+            && a.contexts.includes('lab')));
+    check('ai.overused is gone', specOf('ai.overused') === null);
+    check('the tutor is free and unlimited in a lab',
+        ACTIONS['lab.ai_asked'].once === 0 && ACTIONS['lab.ai_asked'].points === 0);
+    check('a lab earns nothing for time - only for what was achieved',
+        !ACTIONS['focus.sustained'].contexts.includes('lab'));
+    check('the completion award carries no tutor condition',
+        !/tutor/i.test(ACTIONS['lab.clean_session'].label)
+        && !/tutor/i.test(ACTIONS['lab.clean_session'].why));
     check('devtools.opened is not a lab action - a lab is where you read the '
         + 'page you are building',
         !ACTIONS['devtools.opened'].contexts.includes('lab'));
@@ -314,7 +325,7 @@ section('2. The catalogue is coherent');
         Object.values(ACTIONS).every(a => !!a.label && !!a.why));
 
     check('allowedIn refuses a lab action in an exam',
-        !allowedIn('ai.overused', 'exam') && allowedIn('ai.overused', 'lab'));
+        !allowedIn('lab.persisted', 'exam') && allowedIn('lab.persisted', 'lab'));
     check('an unknown action is allowed nowhere',
         !allowedIn('free.points', 'exam') && specOf('free.points') === null);
     check('an unknown action scores nothing and is not a breach',
@@ -361,7 +372,12 @@ section('3. Five breaches, and only where five means something');
     check('a lab has no limit at all', lab.limit === null);
     check('and remaining is null rather than a number a lab does not have',
         lab.remaining === null);
-    check('but the points still come off in a lab', lab.points < 0, lab);
+    check('and NO points come off in a lab - a stored breach is not scored',
+        lab.points === 0 && lab.negatives === 0 && lab.status === 'clean', lab);
+    check('a stored lab breach is priced at nothing and drawn as neutral',
+        pointsOf('window.left', 'lab') === 0
+        && severityIn('window.left', 'lab') === 'neutral'
+        && severityIn('window.left', 'exam') === 'negative');
 
     const mixed = verdictFor([
         { action: 'focus.sustained' }, { action: 'focus.sustained' },
@@ -390,8 +406,8 @@ section('3. Five breaches, and only where five means something');
     check('three breaches is critical, not merely warned',
         bandOf(verdictFor(breach(3), 'exam')) === 'critical');
     check('five is failed', bandOf(verdictFor(breach(5), 'exam')) === 'failed');
-    check('a lab never reaches critical however many breaches',
-        bandOf(verdictFor(breach(9), 'lab')) === 'warned');
+    check('a lab never even reaches warned - nothing in it is a breach',
+        bandOf(verdictFor(breach(9), 'lab')) === 'clean');
 
     section('5. What the meter says');
     const clean = strikeMessage(verdictFor([], 'exam'));
@@ -405,8 +421,8 @@ section('3. Five breaches, and only where five means something');
     check('the failed message names the count and the limit',
         failed.params.v0 === 5 && failed.params.v1 === 5, failed);
     const labSay = strikeMessage(verdictFor(breach(2), 'lab'));
-    check('a lab is told nothing can fail it',
-        /fail/i.test(labSay.key), labSay);
+    check('a lab is told nothing costs points',
+        /no points lost|nothing/i.test(labSay.key), labSay);
 
     // Every placeholder in a message must have a param, or the sentence renders
     // with a literal `{v1}` in it - which `check:i18n` cannot see, because the
@@ -452,9 +468,10 @@ section('3b. The two speaking rooms');
     // paper rather than at either end. Asserted as an ORDERING rather than as
     // three literals, so retuning any one of them has to keep the ordering.
     for (const room of rooms) {
-        check(`leaving the window costs more in a ${room} than in a lab and `
-            + 'less than in a paper',
-            pointsOf('window.left', 'lab') > pointsOf('window.left', room)
+        check(`leaving the window costs something in a ${room}, nothing in a `
+            + 'lab, and less than in a paper',
+            pointsOf('window.left', 'lab') === 0
+            && pointsOf('window.left', 'lab') > pointsOf('window.left', room)
             && pointsOf('window.left', room) > pointsOf('window.left', 'exam'),
             { lab: pointsOf('window.left', 'lab'),
                 room: pointsOf('window.left', room),
@@ -784,9 +801,9 @@ section('6. One action is one strike');
     check('but a genuine departure afterwards is still recorded',
         shouldRecord(alt, 'window.left', 5000 + ALT_TAB_ABSORB_MS + 1));
 
-    check('an unthrottled action is always recorded',
-        shouldRecord(newThrottle(), 'ai.overused', 0)
-        && MIN_GAP_MS['ai.overused'] === 0);
+    check('an action with no declared gap is always recorded',
+        shouldRecord(newThrottle(), 'lab.checked', 0)
+        && MIN_GAP_MS['lab.checked'] === undefined);
     check('every negative action either has a gap or is declared as having none',
         Object.entries(ACTIONS).filter(([, a]) => a.severity === 'negative')
             .every(([name]) => MIN_GAP_MS[name] !== undefined),
@@ -906,7 +923,7 @@ section('7b. A finished sitting takes nothing further');
 
     check('a lab is not ended by a paper being submitted - the terminal '
         + 'action is per context',
-        verdictFor([ev('assessment.submitted', 1), ev('window.left', 9)], 'lab')
+        verdictFor([ev('assessment.submitted', 1), ev('lab.persisted', 9)], 'lab')
             .closed === false);
     check('isTerminal knows the difference',
         isTerminal('lab.completed', 'lab')
@@ -963,16 +980,16 @@ section('7c. A penalty is a bounded modifier, not an unbounded sink');
         verdictFor(many('window.left', 3), 'exam').penaltyCapped === false);
 
     const labHeavy = verdictFor(many('window.left', 40), 'lab');
-    check('forty switches in a two-hour lab costs 15 and not 160 - it is what '
-        + 'the lab told the student to do',
-        labHeavy.penaltyPoints === PENALTY_CAP.lab, labHeavy);
+    check('forty stored switches in a lab cost nothing at all',
+        labHeavy.penaltyPoints === 0 && PENALTY_CAP.lab === 0, labHeavy);
     check('and it is still not a failure', !labHeavy.failed);
-    check('every context declares a cap and every cap is a penalty',
-        CONTEXTS.every(c => PENALTY_CAP[c] < 0), PENALTY_CAP);
+    check('every penalised context declares a negative cap, and a lab caps at 0',
+        CONTEXTS.every(c => (NEVER_PENALISED.includes(c)
+            ? PENALTY_CAP[c] === 0 : PENALTY_CAP[c] < 0)), PENALTY_CAP);
 
     // Per-context pricing.
-    check('a lab charges a quarter for a switched window',
-        pointsOf('window.left', 'lab') === -1
+    check('a lab charges nothing for a switched window',
+        pointsOf('window.left', 'lab') === 0
         && pointsOf('window.left', 'exam') === -4);
     check('no context at all means the base price, not the softest one - a '
         + 'caller that forgets gets the strict reading, which is the one that '
@@ -1139,7 +1156,7 @@ section('8. The lab page promises what the leaderboard pays');
 {
     const rules = labEarningRules();
     check('there is a rule for every way a lab moves the total',
-        rules.length >= 6, rules.length);
+        rules.length >= 4, rules.length);
     for (const rule of rules) {
         const wanted = [...rule.key.matchAll(/\{(v\d+)\}/g)].map(m => m[1]);
         const missing = wanted.filter(name => rule.params[name] === undefined);
@@ -1157,9 +1174,10 @@ section('8. The lab page promises what the leaderboard pays');
         values.includes(POINTS.labCompleted), { values, pays: POINTS.labCompleted });
     check('and the clean-session award',
         values.includes(ACTIONS['lab.clean_session'].points));
-    check('and the tutor penalty',
-        values.includes(Math.abs(ACTIONS['ai.overused'].points)));
-    check('and the free allowance', values.includes(AI_FREE_ASKS));
+    check('and it promises no penalty - a lab costs nothing',
+        rules.every(rule => !/costs \{v/i.test(rule.key)), rules.map(r => r.key));
+    check('and says so in words',
+        rules.some(rule => /nothing in a lab ever costs points/i.test(rule.key)));
 
     const listed = rulesFor('lab', 'negative').length
         + rulesFor('lab', 'positive').length + rulesFor('lab', 'neutral').length;

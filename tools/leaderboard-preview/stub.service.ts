@@ -356,7 +356,7 @@ export async function loadAchievements(): Promise<SourceReport> {
     for (let index = 0; index < 7; index += 1) {
         breach('u-0', 'bigdata-01', 'sit-lab', 'window.left', index, 'lab', 1);
     }
-    breach('u-0', 'bigdata-01', 'sit-lab', 'ai.overused', 8, 'lab', 1);
+    breach('u-0', 'bigdata-01', 'sit-lab', 'lab.persisted', 8, 'lab', 1);
     breach('u-0', 'bigdata-01', 'sit-lab', 'lab.persisted', 9, 'lab', 1);
     // An action this build does not know. Scores zero rather than being guessed.
     breach('u-0', 'bigdata-01', 'sit-lab', 'something.new', 10, 'lab', 1);

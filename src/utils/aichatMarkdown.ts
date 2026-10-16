@@ -192,3 +192,80 @@ export function previewOf(content: string, limit = 120): string {
     }
     return '';
 }
+
+/* ------------------------------------------------------------------ *
+ * Inline spans: `code` and **strong**, as DATA
+ * ------------------------------------------------------------------ */
+
+export interface InlineSpan { kind: 'text' | 'code' | 'strong'; text: string }
+
+/**
+ * One line of prose split into plain text, inline code and strong text.
+ *
+ * Used by the lab tutor, where a model writes `docker ps` and **important**
+ * constantly and a student was reading the backticks and asterisks literally.
+ * Still DATA, never markup: the template renders a `code` span as `<code>`
+ * with `{{ }}` and a text span through `RichText`, which escapes.
+ *
+ * The header's argument against inline parsing stands and is why the rules are
+ * this narrow:
+ *
+ *   * CODE SPANS FIRST, and nothing inside one is looked at again - so
+ *     `**kwargs` inside backticks stays exactly as written.
+ *   * A BACKTICK RUN CLOSES ONLY ON A RUN OF THE SAME LENGTH (CommonMark), so
+ *     ``a ` b`` is one span. An unclosed run is left as literal text.
+ *   * STRONG IS DOUBLE ASTERISKS ONLY, with no asterisk inside and no space
+ *     just inside either end. `SELECT *`, `a * b * c` and `2**10` are never
+ *     touched, and `__init__` is never bold because underscores are not
+ *     parsed at all.
+ *   * NO LOOKBEHIND, which is a parse-time error on Safari before 16.4 and
+ *     would take the whole bundle down there.
+ */
+export function inlineSpans(text: string): InlineSpan[] {
+    const source = String(text ?? '');
+    const out: InlineSpan[] = [];
+    const pushText = (value: string) => {
+        if (!value) return;
+        const strong = /\*\*([^*\s](?:[^*]*[^*\s])?)\*\*/g;
+        let last = 0;
+        let match: RegExpExecArray | null;
+        while ((match = strong.exec(value))) {
+            if (match.index > last) out.push({ kind: 'text', text: value.slice(last, match.index) });
+            out.push({ kind: 'strong', text: match[1] });
+            last = match.index + match[0].length;
+        }
+        if (last < value.length) out.push({ kind: 'text', text: value.slice(last) });
+    };
+
+    let i = 0;
+    let plain = '';
+    while (i < source.length) {
+        if (source[i] !== '`') { plain += source[i]; i++; continue; }
+        let run = 0;
+        while (source[i + run] === '`') run++;
+        const fence = '`'.repeat(run);
+        // The closing run must be exactly this long, not part of a longer one.
+        let close = -1;
+        let from = i + run;
+        while (from < source.length) {
+            const at = source.indexOf(fence, from);
+            if (at < 0) break;
+            let end = at + run;
+            if (source[at - 1] !== '`' && source[end] !== '`') { close = at; break; }
+            while (source[end] === '`') end++;
+            from = end;
+        }
+        if (close < 0) { plain += fence; i += run; continue; }
+        let body = source.slice(i + run, close);
+        // One space either side is padding (so a span can start with a backtick).
+        if (body.length > 1 && body.startsWith(' ') && body.endsWith(' ') && body.trim()) {
+            body = body.slice(1, -1);
+        }
+        pushText(plain);
+        plain = '';
+        if (body) out.push({ kind: 'code', text: body });
+        i = close + run;
+    }
+    pushText(plain);
+    return out;
+}

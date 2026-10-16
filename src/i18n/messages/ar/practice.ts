@@ -123,8 +123,6 @@ export default {
         '{v0} سؤالًا، و{v1} دقيقة، ودرجة نجاح {v2}%. يبدأ الوقت عند موافقتك على القواعد أدناه.',
 
     /* ---------------- the rules themselves ---------------- */
-    'A lab is for trying things. Every action below is recorded and some of them cost points, but no number of them ends a lab or takes a task away from you. Leaving the window to read the documentation is what a practitioner does.':
-        'المعمل مكان للتجربة. كل إجراء أدناه يُسجَّل وبعضه يخصم نقاطًا، لكن لا عدد منها يُنهي معملًا ولا يسلبك مهمة أنجزتها. ومغادرة النافذة لقراءة الوثائق هي ما يفعله الممارس فعلًا.',
     'Also recorded, and worth nothing either way': 'يُسجَّل أيضًا، ولا قيمة له سلبًا أو إيجابًا',
     'Every point on the public leaderboard comes from something this platform verified. Nothing here is awarded for turning up, and nothing here can be talked up: a task counts when the service looks at your environment and finds what the lab asked for.':
         'كل نقطة على اللوحة المعلَنة تأتي من شيء تحقّقت منه هذه المنصّة. لا شيء هنا يُمنح مقابل الحضور، ولا شيء هنا يمكن تحسينه بالكلام: تُحسَب المهمة عندما تفحص الخدمة بيئتك وتجد فيها ما طلبه المعمل.',
@@ -157,10 +155,6 @@ export default {
     '{v0} of {v1} integrity breaches recorded': 'سُجّلت {v0} من {v1} مخالفات نزاهة',
 
     /* ---------------- the lab's tutor allowance ---------------- */
-    'Your {v0} free asks are used. Each further ask costs {v1} points. It will not fail the lab and it will not take a verified task away from you.':
-        'استُهلكت أسئلتك المجانية الـ {v0}. كل سؤال إضافي يخصم {v1} نقاط. ولن يُسقِط المعمل ولن يسلبك مهمة تحقّقت.',
-    '{v0} of your {v1} free tutor asks used in this lab. Each ask after that costs {v2} points — and finishing within the allowance earns {v3}.':
-        'استُهلك {v0} من أسئلتك المجانية الـ {v1} للمدرّس في هذا المعمل. كل سؤال بعد ذلك يخصم {v2} نقاط — وإنجاز المعمل داخل الحدّ المسموح يكسب {v3}.',
 
     /* ---------------- the catalogue: what each action is ---------------- */
     'Started the paper': 'بدأ الورقة',
@@ -177,7 +171,6 @@ export default {
     'Free and unlimited. Checking often is how a lab is meant to be worked.':
         'مجاني وغير محدود. التحقّق المتكرّر هو الطريقة المقصودة للعمل في المعمل.',
     'Asked the lab tutor': 'سأل مدرّس المعمل',
-    'Your first three asks in a lab are free.': 'أسئلتك الثلاثة الأولى في المعمل مجانية.',
     'Reset the environment': 'أعاد تعيين البيئة',
     'Starting again costs nothing.': 'البدء من جديد لا يكلّف شيئًا.',
     'Finished the lab': 'أنهى المعمل',
@@ -193,10 +186,6 @@ export default {
     'Sat the whole paper cleanly': 'أدّى الورقة كاملةً بنزاهة',
     'No window left, nothing copied, nothing pasted, from the first question to submission.':
         'لا مغادرة للنافذة ولا نسخ ولا لصق، من السؤال الأول إلى التسليم.',
-    'Finished the lab within the free tutor allowance':
-        'أنجز المعمل داخل حدّ الأسئلة المجانية للمدرّس',
-    'Completed every task having asked the tutor three times or fewer.':
-        'أنجز كل المهام بعد أن سأل المدرّس ثلاث مرات أو أقل.',
     'Worked a task through to a verified pass': 'أوصل مهمة إلى نجاح متحقَّق منه',
     'Awarded when Check my work finds something new, up to four times per lab.':
         'تُمنَح عندما يجد "تحقّق من عملي" شيئًا جديدًا، حتى أربع مرات في المعمل.',
@@ -219,9 +208,6 @@ export default {
     'Left full screen': 'خرج من وضع الشاشة الكاملة',
     'Cheapest of the five, because it is the one people do by accident.':
         'أقلّ الخمس خصمًا، لأنه الإجراء الذي يقع بالخطأ.',
-    'Asked the tutor beyond the free allowance': 'سأل المدرّس بعد انتهاء الحدّ المجاني',
-    'Each ask past the first three costs. It never fails a lab.':
-        'كل سؤال بعد الثلاثة الأولى يخصم نقاطًا. ولا يُسقِط معملًا أبدًا.',
 
     /* ---------------- the reprimand ---------------- */
     'This sitting was ended for cheating': 'أُنهيت هذه الجلسة بسبب الغِشّ',
@@ -233,18 +219,8 @@ export default {
         'كل مهمة تتحقّق منها الخدمة في بيئتك تستحقّ {v0} نقاط.',
     'Finishing every task in a lab adds {v0} more.':
         'إنجاز كل مهام المعمل يضيف {v0} نقطة أخرى.',
-    'Finishing a lab having asked the tutor {v0} times or fewer adds {v1}.':
-        'إنجاز معمل بعد سؤال المدرّس {v0} مرات أو أقل يضيف {v1}.',
-    'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.':
-        'كل خمس دقائق من العمل المتواصل الفعلي تضيف {v0}، حتى {v1} مرة.',
-    'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.':
-        'لا يتجاوز ما يُخصَم في المعمل {v0} نقطة مهما طال عملك، وبعد التحقّق من كل المهام لا يُحتسَب شيء بعد ذلك إطلاقًا.',
     'Working a task through to a verified pass adds {v0}, up to {v1} times.':
         'إيصال مهمة إلى نجاح متحقَّق منه يضيف {v0}، حتى {v1} مرات.',
-    'Asking the tutor a fourth time and beyond costs {v0} each.':
-        'سؤال المدرّس للمرة الرابعة وما بعدها يخصم {v0} نقاط لكل سؤال.',
-    'Leaving the window costs {v0}, and Alt+Tab costs {v1} — but nothing in a lab can fail you.':
-        'مغادرة النافذة تخصم {v0}، وAlt+Tab يخصم {v1} — لكن لا شيء في المعمل يمكن أن يُسقِطك.',
 
     /* ---------------- the strike meter ---------------- */
     'Clean so far. {v0} breaches would end this sitting.':
@@ -256,8 +232,6 @@ export default {
     'This sitting has been ended. {v0} integrity breaches were recorded and {v1} is the limit.':
         'أُنهيت هذه الجلسة. سُجّلت {v0} مخالفات نزاهة والحدّ هو {v1}.',
     'No points lost. Keep going.': 'لم تُخسر أي نقاط. واصِل.',
-    '{v0} points lost so far. Nothing here can fail you — a lab is for trying things.':
-        'خُسرت {v0} نقاط حتى الآن. لا شيء هنا يمكن أن يُسقِطك — فالمعمل مكان للتجربة.',
 
     /* ---------------- why an achievement earned what it earned ---------------- */
     'Passed an exam — {v0} points, plus {v1} for the mark itself.':
@@ -355,4 +329,42 @@ export default {
 
     /* ---------------- the kind chips ---------------- */
     'Lab': 'معمل',
+
+    /* ---------------- labs: nothing costs, downloads, the tutor ---------------- */
+    'Ask the tutor as often as you like — it never costs points in a lab.':
+        'اسأل المدرّس متى شئت — لا يكلّفك ذلك أي نقاط في المعمل.',
+    'Free and unlimited. Asking for help never costs anything in a lab.':
+        'مجاني وبلا حدود. طلب المساعدة لا يكلّف شيئًا في المعمل.',
+    'Finished every task in the lab':
+        'أنهى جميع مهام المعمل',
+    'Awarded once, when every task in the lab has been verified.':
+        'تُمنح مرة واحدة، عند التحقق من جميع مهام المعمل.',
+    'A lab is for trying things, and nothing in it ever costs points. Copy, paste, leave the tab to read the documentation and ask the tutor as often as you like. Points are earned for every task the lab verifies and for finishing the whole lab.':
+        'المعمل مكان للتجربة، ولا شيء فيه يكلّفك نقاطًا أبدًا. انسخ والصق، واخرج من التبويب لقراءة التوثيق، واسأل المدرّس متى شئت. تُكسب النقاط عن كل مهمة يتحقق منها المعمل وعن إنهاء المعمل كاملًا.',
+    'Nothing in a lab costs points — a lab is for trying things.':
+        'لا شيء في المعمل يكلّف نقاطًا — المعمل مكان للتجربة.',
+    'Finishing a lab adds a further {v0}.':
+        'إنهاء المعمل يضيف {v0} أخرى.',
+    'Nothing in a lab ever costs points: copy, paste, leave the tab and ask the tutor as often as you like.':
+        'لا شيء في المعمل يكلّف نقاطًا أبدًا: انسخ والصق واخرج من التبويب واسأل المدرّس متى شئت.',
+    'Download all as ZIP':
+        'تنزيل الكل كملف ZIP',
+    'Download as ZIP':
+        'تنزيل كملف ZIP',
+    'Downloaded {v0}':
+        'تم تنزيل {v0}',
+    'Downloaded {v0} ({v1} files)':
+        'تم تنزيل {v0} ({v1} ملفات)',
+    'Preparing the download…':
+        'جارٍ تجهيز التنزيل…',
+    'That file could not be downloaded':
+        'تعذّر تنزيل هذا الملف',
+    'The ZIP could not be prepared. Try again in a moment.':
+        'تعذّر تجهيز ملف ZIP. حاول مرة أخرى بعد لحظة.',
+    'Copy answer':
+        'نسخ الإجابة',
+    'Copy the whole answer':
+        'نسخ الإجابة كاملة',
+    'code':
+        'كود',
 };

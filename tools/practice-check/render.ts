@@ -175,8 +175,10 @@ export async function renderChecks(check: Check, section: Section) {
     check('the lab rules still say the record is public - the reassurance is '
         + 'about failing, not about privacy',
         /public/i.test(lab));
-    check('the lab rules list the tutor penalty, which is lab-only',
-        /tutor/i.test(lab));
+    check('the lab rules say the tutor is free',
+        /tutor/i.test(lab) && /Free and unlimited/i.test(lab));
+    check('and list no penalty at all - a lab costs nothing',
+        !/Left the exam window|Alt\+Tab|beyond the free allowance/i.test(lab));
     check('and NOT the developer-tools one, which is not a lab action',
         !/developer tools/i.test(lab), 'devtools leaked into the lab table');
 
@@ -218,7 +220,8 @@ export async function renderChecks(check: Check, section: Section) {
     });
     check('a lab meter draws NO strike pips - a lab has no limit to draw',
         !/pr-meter__pip/.test(labMeter), 'pips rendered for a lab');
-    check('and says nothing can fail you', /fail you/i.test(labMeter));
+    check('and reports no points lost - stored lab breaches are not scored',
+        /No points lost/i.test(labMeter), labMeter.slice(0, 300));
     check('and is headed as a practice record rather than as exam integrity',
         /Practice record/i.test(labMeter) && !/Exam integrity/i.test(labMeter));
 

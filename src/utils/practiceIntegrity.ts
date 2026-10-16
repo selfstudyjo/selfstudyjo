@@ -152,7 +152,7 @@ export const FAILS_AT: Record<PracticeContext, number | null> = {
  * presence is the exercise, unlike a lab, so it is not as forgiving as a lab's.
  */
 export const PENALTY_CAP: Record<PracticeContext, number> = {
-    exam: -30, quiz: -30, lab: -15,
+    exam: -30, quiz: -30, lab: 0,
     interview: -20, toastmasters: -20,
 };
 
@@ -183,8 +183,18 @@ export const TERMINAL_ACTIONS: Record<PracticeContext, string> = {
     toastmasters: 'meeting.completed',
 };
 
-/** Asks of a lab's AI tutor that are free before each further one costs. */
-export const AI_FREE_ASKS = 3;
+/**
+ * Contexts in which NOTHING is ever a penalty - a lab, since 2026-10-16.
+ *
+ * Copying a command out of the brief, leaving the tab to read documentation
+ * and asking the tutor for help are all what a lab is FOR, and every one of
+ * them used to cost points. So no negative action lists `lab`, the lab's cap
+ * is 0, and `pointsOf` / `verdictFor` price an action at nothing in a context
+ * it is not allowed in - which is what makes a breach stored against a lab
+ * before the change stop costing anything, without a migration. In step with
+ * `NEVER_PENALISED` in app 20's `utils/integrity.py`.
+ */
+export const NEVER_PENALISED: readonly PracticeContext[] = ['lab'];
 
 /** How long unbroken attention earns one `focus.sustained` award. */
 export const FOCUS_AWARD_MS = 5 * 60 * 1000;
@@ -226,9 +236,10 @@ export const ACTIONS: Record<string, ActionSpec> = {
         why: 'Free and unlimited. Checking often is how a lab is meant to be worked.',
     },
     'lab.ai_asked': {
-        points: 0, severity: 'neutral', contexts: ['lab'], once: AI_FREE_ASKS,
+        // FREE AND UNLIMITED. Asking for help never costs anything in a lab.
+        points: 0, severity: 'neutral', contexts: ['lab'], once: 0,
         label: 'Asked the lab tutor',
-        why: 'Your first three asks in a lab are free.',
+        why: 'Free and unlimited. Asking for help never costs anything in a lab.',
     },
     'lab.reset': {
         points: 0, severity: 'neutral', contexts: ['lab'], once: 0,
@@ -290,8 +301,11 @@ export const ACTIONS: Record<string, ActionSpec> = {
         // the previous rule paid a student who opened a lab and walked away.
         // And twelve awards was 24 points, a quarter of what passing an exam is
         // worth, for sitting still; eight is a contribution rather than a rival.
+        //
+        // NOT IN A LAB: a lab pays for what was achieved - a verified task and
+        // a finished lab - and nothing for the conduct around it either way.
         points: 2, severity: 'positive',
-        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
+        contexts: ['exam', 'quiz', 'interview', 'toastmasters'],
         once: 8,
         label: 'Stayed on task',
         why: 'One award for every five minutes of unbroken, active work, up to eight.',
@@ -307,9 +321,11 @@ export const ACTIONS: Record<string, ActionSpec> = {
         why: 'No window left, nothing copied, nothing pasted, from the first question to submission.',
     },
     'lab.clean_session': {
+        // THE COMPLETION AWARD. The name is kept because records are stored
+        // under it; the old "three tutor asks or fewer" condition is gone.
         points: 10, severity: 'positive', contexts: ['lab'], once: 1,
-        label: 'Finished the lab within the free tutor allowance',
-        why: 'Completed every task having asked the tutor three times or fewer.',
+        label: 'Finished every task in the lab',
+        why: 'Awarded once, when every task in the lab has been verified.',
     },
     'lab.persisted': {
         points: 3, severity: 'positive', contexts: ['lab'], once: 4,
@@ -355,26 +371,23 @@ export const ACTIONS: Record<string, ActionSpec> = {
 
     // -- negative: why points come off ------------------------------------
     'window.left': {
-        // A LAB PRICES THIS AT A QUARTER. Leaving the window during a paper is
-        // misconduct; leaving it during a lab is opening the documentation the
-        // brief told the student to read. Still recorded, because how the work
-        // went is information, and priced as the small thing it is.
+        // NOT A LAB ACTION AT ALL - see `NEVER_PENALISED`.
         //
         // A SPEAKING ROOM PRICES IT BETWEEN THE TWO. Presence is the exercise
         // there - somebody is asking you a question, or somebody else is
         // giving a speech - so it is not the docs-reading a lab expects; and it
         // is rehearsal, so it is not the misconduct a paper measures.
         points: -4, severity: 'negative',
-        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
-        contextPoints: { lab: -1, interview: -3, toastmasters: -3 },
+        contexts: ['exam', 'quiz', 'interview', 'toastmasters'],
+        contextPoints: { interview: -3, toastmasters: -3 },
         once: 0,
         label: 'Left the exam window',
         why: 'The tab lost focus or was hidden. In an exam this is one of the five.',
     },
     'window.alt_tab': {
         points: -6, severity: 'negative',
-        contexts: ['exam', 'quiz', 'lab', 'interview', 'toastmasters'],
-        contextPoints: { lab: -2, interview: -4, toastmasters: -4 },
+        contexts: ['exam', 'quiz', 'interview', 'toastmasters'],
+        contextPoints: { interview: -4, toastmasters: -4 },
         once: 0,
         label: 'Switched away with Alt+Tab',
         why: 'A deliberate switch to another application, which is why it costs more.',
@@ -429,11 +442,6 @@ export const ACTIONS: Record<string, ActionSpec> = {
         label: 'Left full screen',
         why: 'Cheapest of the five, because it is the one people do by accident.',
     },
-    'ai.overused': {
-        points: -3, severity: 'negative', contexts: ['lab'], once: 0,
-        label: 'Asked the tutor beyond the free allowance',
-        why: 'Each ask past the first three costs. It never fails a lab.',
-    },
     'interview.left_early': {
         // WALKING OUT, and it is a different fact from losing focus - which is
         // why it is its own action and not a second `window.left`. It is noted
@@ -479,6 +487,9 @@ export function specOf(action: string): ActionSpec | null {
 export function pointsOf(action: string, context?: PracticeContext): number {
     const spec = specOf(action);
     if (!spec) return 0;
+    // Recorded in a context it is no longer allowed in - a lab breach stored
+    // before labs stopped penalising - and therefore worth nothing.
+    if (context && !spec.contexts.includes(context)) return 0;
     if (context) {
         const override = spec.contextPoints?.[context];
         if (typeof override === 'number') return override;
@@ -488,6 +499,13 @@ export function pointsOf(action: string, context?: PracticeContext): number {
 
 export function severityOf(action: string): Severity {
     return specOf(action)?.severity ?? 'neutral';
+}
+
+/** The severity in the context it was recorded in; `neutral` if not allowed there. */
+export function severityIn(action: string, context: PracticeContext): Severity {
+    const spec = specOf(action);
+    if (!spec || !spec.contexts.includes(context)) return 'neutral';
+    return spec.severity;
 }
 
 export function labelOf(action: string): string {
@@ -647,6 +665,9 @@ export function verdictFor(
         const event = rows[index];
         const spec = specOf(event?.action ?? '');
         if (!spec) continue;
+        // Recorded under a rule this build no longer has (see
+        // `NEVER_PENALISED`). Kept in the feed, never scored, never a strike.
+        if (!spec.contexts.includes(context)) continue;
         if (afterClosure(event, index, stamp, atIndex)) {
             /*
               AFTER THE SITTING ENDED. Kept in the feed - the record of what
@@ -754,7 +775,6 @@ export const MIN_GAP_MS: Record<string, number> = {
     // The detector is a heuristic on the window's own geometry, so it fires
     // repeatedly while the panel stays open. One strike per half minute.
     'devtools.opened': 30000,
-    'ai.overused': 0,
     // LEAVING A ROOM HAPPENS ONCE. A second note inside one sitting is always
     // a teardown path that ran twice - a route-leave guard alongside an unmount
     // hook, a component re-created by a reload - and never a second departure,
@@ -912,7 +932,7 @@ export const CALM_BODY: Record<PracticeContext, string> = {
     // site, which is where a missing entry stops being a type error.
     exam: '',
     quiz: '',
-    lab: 'A lab is for trying things. Every action below is recorded and some of them cost points, but no number of them ends a lab or takes a task away from you. Leaving the window to read the documentation is what a practitioner does.',
+    lab: 'A lab is for trying things, and nothing in it ever costs points. Copy, paste, leave the tab to read the documentation and ask the tutor as often as you like. Points are earned for every task the lab verifies and for finishing the whole lab.',
     interview: 'An interview here is rehearsal, so nothing below can fail you or take a mark away - there is no mark. Every action is recorded, some of them cost points, and the report you get at the end is coaching either way. What earns is the part that is the exercise: answering out loud, and staying in the room.',
     toastmasters: 'A meeting cannot be failed. Every action below is recorded and some of them cost points, but the worst any of them does is lower the conduct score on your record. What earns most here is the thing a meeting is actually for: taking your turn out loud, and hearing everybody else out.',
 };
@@ -926,7 +946,7 @@ export const CALM_BODY: Record<PracticeContext, string> = {
 export const OPEN_BODY: Record<PracticeContext, string> = {
     exam: '',
     quiz: '',
-    lab: '{v0} points lost so far. Nothing here can fail you — a lab is for trying things.',
+    lab: 'Nothing in a lab costs points — a lab is for trying things.',
     interview: '{v0} points lost so far. Nothing here can fail you — an interview is rehearsal.',
     toastmasters: '{v0} points lost so far. Nothing here can fail you — a meeting is practice.',
 };
@@ -999,6 +1019,10 @@ export function labEarningRules(): { key: string; params: Params }[] {
     // The body is below the derived key lists at the bottom of the file, which
     // call this - so this function has to be declared before them and they are
     // hoisted constants. See LEDGER_KEYS.
+    //
+    // ONLY EARNING, since 2026-10-16. A lab costs nothing for anything - see
+    // `NEVER_PENALISED` - so this list is what a student can earn and one line
+    // saying so, rather than a price list for doing the work.
     return [
         {
             key: 'Every task the service verifies in your environment is worth {v0} points.',
@@ -1009,15 +1033,8 @@ export function labEarningRules(): { key: string; params: Params }[] {
             params: { v0: 40 },
         },
         {
-            key: 'Finishing a lab having asked the tutor {v0} times or fewer adds {v1}.',
-            params: { v0: AI_FREE_ASKS, v1: ACTIONS['lab.clean_session'].points },
-        },
-        {
-            key: 'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.',
-            params: {
-                v0: ACTIONS['focus.sustained'].points,
-                v1: ACTIONS['focus.sustained'].once,
-            },
+            key: 'Finishing a lab adds a further {v0}.',
+            params: { v0: ACTIONS['lab.clean_session'].points },
         },
         {
             key: 'Working a task through to a verified pass adds {v0}, up to {v1} times.',
@@ -1027,24 +1044,8 @@ export function labEarningRules(): { key: string; params: Params }[] {
             },
         },
         {
-            key: 'Asking the tutor a fourth time and beyond costs {v0} each.',
-            params: { v0: Math.abs(ACTIONS['ai.overused'].points) },
-        },
-        {
-            // THE LAB'S OWN PRICES, not the exam's. Quoting the base numbers
-            // here would tell a student a switched window costs four when it
-            // costs one - a page that promises the wrong figure is worse than a
-            // page that promises nothing, which is the whole reason
-            // `check:practice` compares these against the catalogue.
-            key: 'Leaving the window costs {v0}, and Alt+Tab costs {v1} — but nothing in a lab can fail you.',
-            params: {
-                v0: Math.abs(pointsOf('window.left', 'lab')),
-                v1: Math.abs(pointsOf('window.alt_tab', 'lab')),
-            },
-        },
-        {
-            key: 'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.',
-            params: { v0: Math.abs(PENALTY_CAP.lab) },
+            key: 'Nothing in a lab ever costs points: copy, paste, leave the tab and ask the tutor as often as you like.',
+            params: {},
         },
     ];
 }

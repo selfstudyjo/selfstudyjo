@@ -187,6 +187,8 @@
                   :remove="deleteFile"
                   :mkdir="makeFolder"
                   :move="movePath"
+                  :export-files="exportFiles"
+                  :archive-name="lab?.id || 'lab'"
                   @changed="refreshViews"
                 />
                 <!--
@@ -315,21 +317,12 @@
                 -->
                 <template v-else-if="tool.kind === 'ai'">
                   <!--
-                    THE ALLOWANCE, said before the ask rather than after it.
-
-                    Three asks are free and each one after that costs points.
-                    A student who finds that out from a points total that went
-                    down has been penalised for something nobody told them
-                    about - which is the same unfairness the exam's rules gate
-                    exists to prevent, at a much smaller scale.
+                    THE TUTOR IS FREE. Said before the first ask, because the
+                    lab used to charge for every ask past the third and a
+                    student who remembers that should not have to wonder.
                   -->
-                  <p class="sl-tutorNote" :class="{ 'is-over': tutorAsks >= AI_FREE_ASKS }">
-                    <template v-if="tutorAsks < AI_FREE_ASKS">
-                      {{ $t('{v0} of your {v1} free tutor asks used in this lab. Each ask after that costs {v2} points — and finishing within the allowance earns {v3}.', { v0: tutorAsks, v1: AI_FREE_ASKS, v2: overusePenalty, v3: cleanBonus }) }}
-                    </template>
-                    <template v-else>
-                      {{ $t('Your {v0} free asks are used. Each further ask costs {v1} points. It will not fail the lab and it will not take a verified task away from you.', { v0: AI_FREE_ASKS, v1: overusePenalty }) }}
-                    </template>
+                  <p class="sl-tutorNote">
+                    {{ $t('Ask the tutor as often as you like — it never costs points in a lab.') }}
                   </p>
                   <LabTutor
                     :ref="el => { if (el) tutor = el }"
@@ -448,7 +441,6 @@ import {
   browserStore, lessonPath, originFromQuery, recallOrigin, rememberOrigins, type LessonRef,
 } from '@/utils/learningTrail';
 import AssistantButton from '@/components/assistant/AssistantButton.vue';
-import { ACTIONS, AI_FREE_ASKS } from '@/utils/practiceIntegrity';
 
 /**
  * App 27's studio, embedded in the Network Simulator pane.
@@ -565,42 +557,29 @@ const filesPane = ref<any>(null);
  *
  * NO `onVoided`, and that is the whole difference from an exam: `FAILS_AT.lab`
  * is null, so `verdictFor` never reports a failure and the callback could not
- * fire. A lab is a place to try things - leaving the window to read the
- * documentation is what a practitioner does, and failing somebody for it would
- * teach them to work worse.
+ * fire.
  *
- * The DETECTORS are narrowed for the same reason. `devtools` and `print` are
- * off: a lab's whole subject is sometimes the page the student is building, so
- * opening the developer tools in one is work rather than misconduct, and
- * printing a brief is reading it.
+ * AND NO DETECTORS AT ALL, since 2026-10-16. A lab never costs points
+ * (`NEVER_PENALISED`): copying a command out of the brief, leaving the tab to
+ * read the documentation and asking the tutor are what a lab is for. App 20
+ * refuses every negative action in a lab context, so watching for them would
+ * be a stream of 400s for nothing. `focusAward` is off too - a lab pays for
+ * what was achieved, a verified task and a finished lab, never for time.
  */
 const sitting = usePracticeSitting({
   context: 'lab',
-  // `clipboard` is off as well now, and that is a correction rather than a
-  // preference: copying in a lab is how a command gets from the brief into the
-  // terminal, so charging for it penalised the intended behaviour. App 20 no
-  // longer accepts a clipboard action in a lab context at all.
-  watch: { devtools: false, print: false, fullscreen: false, clipboard: false },
+  watch: {
+    window: false, clipboard: false, devtools: false, print: false,
+    fullscreen: false, focusAward: false,
+  },
 });
 
-/** How many times the tutor has been asked in this lab. */
-const tutorAsks = ref(0);
-
-const overusePenalty = Math.abs(ACTIONS['ai.overused'].points);
-const cleanBonus = ACTIONS['lab.clean_session'].points;
-
 /**
- * Record a tutor ask, and charge for it past the allowance.
- *
- * The FIRST THREE are `lab.ai_asked`, which is neutral and capped at three by
- * the catalogue; everything after is `ai.overused`, which costs. Two actions
- * rather than one with a conditional value, because the value has to come from
- * the server's catalogue (see `practiceIntegrity`'s header) and a catalogue
- * entry has one price.
+ * Record a tutor ask. Neutral, free and unlimited - kept on the ledger only
+ * because "asked the tutor, then the task passed" is the shape of the work.
  */
 function noteTutorAsk() {
-  tutorAsks.value += 1;
-  sitting.note(tutorAsks.value <= AI_FREE_ASKS ? 'lab.ai_asked' : 'ai.overused');
+  sitting.note('lab.ai_asked');
 }
 
 const hasLabAccess = computed(() => authStore.hasLabAccess);
@@ -702,9 +681,7 @@ async function open() {
 
       `begin` is idempotent, so a re-open after Reset environment does not
       start a second session - which would be a second session id and a verdict
-      computed over half the work each. The tutor count is deliberately NOT
-      reset by a re-open either: the allowance is per lab, not per reload, or
-      it would be three free asks every time somebody pressed Reset.
+      computed over half the work each.
     */
     sitting.begin(
       { id: payload.lab.id, name: payload.lab.title },
@@ -858,15 +835,12 @@ async function grade0() {
       sitting.note('lab.persisted');
     }
     /*
-      Finishing within the tutor allowance, awarded once by the catalogue's
-      own cap.
-
-      Read off the fresh grade rather than the ref, because `grade.value` is
-      assigned above and a re-read would be the same object - the point is that
-      the award depends on the state AFTER this grading, and on the tutor count
-      as it stands now rather than at the start.
+      THE COMPLETION AWARD, once by the catalogue's own cap, and with no
+      condition beyond finishing: the tutor allowance it used to depend on is
+      gone. Read off the fresh grade rather than the ref - the award depends on
+      the state AFTER this grading.
     */
-    if (result?.grade?.status === 'completed' && tutorAsks.value <= AI_FREE_ASKS) {
+    if (result?.grade?.status === 'completed') {
       sitting.note('lab.clean_session');
     }
     /*
@@ -879,7 +853,7 @@ async function grade0() {
 
       LAST in this block, deliberately - `lab.clean_session` is an award and a
       closed sitting cannot earn, so recording the close first would throw away
-      the one thing finishing cleanly is worth. Awaited so the close has left
+      the completion award. Awaited so the close has left
       the browser before anything else can end the page.
     */
     if (result?.grade?.status === 'completed') await sitting.complete();
@@ -965,6 +939,11 @@ async function listTree() {
 
 async function readFile(path: string) {
   return lab.value ? labsService.readFile(username.value, lab.value.id, path) : '';
+}
+
+/** Files with their contents, for the explorer's downloads. `null` = fall back. */
+async function exportFiles(path: string) {
+  return lab.value ? labsService.exportFiles(username.value, lab.value.id, path) : null;
 }
 
 async function writeFile(path: string, content: string) {

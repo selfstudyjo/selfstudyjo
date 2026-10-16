@@ -391,6 +391,21 @@ export const labsService = {
 
     readFile: (_u: string, _l: string, path: string) => delay(String(env.files[path] || '')),
 
+    /** `labfs.export`: every file at or under `path` WITH its content and mode. */
+    exportFiles: (_u: string, _l: string, path: string) => {
+        const root = clean(path);
+        if (root && !isFileKey(root) && !isDirKey(root)) return delay(null);
+        const prefix = root ? root + '/' : '';
+        const chosen = isFileKey(root) ? [root]
+            : Object.keys(env.files).filter(key => key.startsWith(prefix)).sort();
+        return delay({
+            root,
+            files: chosen.map(key => ({ path: key, content: String(env.files[key] || ''),
+                                        mode: String(env.modes[key] || '644') })),
+            dirs: isFileKey(root) ? [] : allDirs().filter(d => d !== root && d.startsWith(prefix)),
+        });
+    },
+
     writeFile: (_u: string, _l: string, path: string, content: string) => {
         const target = clean(path);
         if (!validPath(target)) {

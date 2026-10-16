@@ -28,6 +28,7 @@
  */
 import { apiService } from './api';
 import { serviceRegistry } from './config';
+import type { FileExport } from '@/utils/zipArchive';
 import type {
     Lab, LabGrade, LabProgress, LabSummary, LabTool, LabTrack,
 } from '@/utils/labCatalogue';
@@ -374,6 +375,27 @@ class LabsService {
     async movePath(username: string, labId: string, path: string,
                    to: string): Promise<ToolResult> {
         return this.fileAction(username, labId, { action: 'move', path, to });
+    }
+
+    /**
+     * Every file at or under `path` WITH its content, for a download - `''` is
+     * the whole lab. One request rather than a read per file.
+     *
+     * `null` when the replica could not answer it - including a replica that
+     * has not pulled the build carrying `export`, which answers `Unknown files
+     * action`. The explorer then builds the same thing from a listing and one
+     * read per file, so the download works during a deploy as well as after.
+     */
+    async exportFiles(username: string, labId: string,
+                      path: string): Promise<FileExport | null> {
+        const result: any = await this.fileAction(username, labId,
+                                                  { action: 'export', path });
+        if (!result?.ok || !Array.isArray(result.files)) return null;
+        return {
+            root: String(result.root ?? path ?? ''),
+            files: result.files,
+            dirs: Array.isArray(result.dirs) ? result.dirs : [],
+        };
     }
 
     async readFile(username: string, labId: string, path: string): Promise<string> {

@@ -32,6 +32,7 @@
 // wrote may reach `v-html`.
 
 import { readFileSync } from 'node:fs';
+import { inflateRawSync } from 'node:zlib';
 import { resolve } from 'node:path';
 
 import {
@@ -8362,6 +8363,166 @@ section('14. The file explorer: the tree, the names and the moves');
         check(`"${label}" is translated`,
               files.includes(`$t('${label}')`), label);
     }
+}
+
+/* ─────────────────── 15. downloads: the ZIP writer and the explorer ─────────────────── */
+
+section('15. Downloads: a ZIP built in the browser, proved against zlib');
+{
+    const zip = await import('@/utils/zipArchive');
+    const { buildZip, readZipDirectory, crc32, planArchive, safeEntryName,
+            exportFromListing, safeDownloadName } = zip;
+    const text = new TextEncoder();
+
+    check('crc32 is the IEEE value ZIP expects ("123456789" -> cbf43926)',
+          crc32(text.encode('123456789')) === 0xcbf43926);
+
+    const exported = {
+        root: '',
+        files: [
+            { path: 'main.tf', content: 'resource "x" "y" {}\n'.repeat(40), mode: '644' },
+            { path: 'src/deploy.sh', content: '#!/bin/sh\necho hi\n', mode: '755' },
+            { path: 'src/دليل.md', content: 'مرحبا\n', mode: '644' },
+        ],
+        dirs: ['src', 'tests'],
+    };
+    const plan = planArchive(exported, 'tf-01-lifecycle');
+    check('the whole lab is named after the lab',
+          plan.fileName === 'tf-01-lifecycle.zip', plan.fileName);
+    const names = plan.entries.map(entry => entry.name);
+    check('...and wrapped in ONE top folder, so it does not spill into Downloads',
+          names.every(name => name.startsWith('tf-01-lifecycle/')), names);
+    check('...holding every file and every folder, the EMPTY one included',
+          names.includes('tf-01-lifecycle/main.tf')
+          && names.includes('tf-01-lifecycle/src/deploy.sh')
+          && names.includes('tf-01-lifecycle/tests/'), names);
+
+    const folder = planArchive({ root: 'config/env', files: [
+        { path: 'config/env/a.yaml', content: 'a: 1\n' }], dirs: ['config/env/empty'] }, 'lab');
+    check('a FOLDER downloads as itself, relative to its parent',
+          folder.fileName === 'env.zip'
+          && folder.entries.map(e => e.name).join('|') === 'env/|env/empty/|env/a.yaml',
+          folder.entries.map(e => e.name));
+
+    check('a traversal or an absolute name never enters an archive',
+          safeEntryName('../etc/passwd') === '' && safeEntryName('/etc/x') === ''
+          && safeEntryName('C:/x') === '' && safeEntryName('a\\b') === 'a/b'
+          && safeEntryName('a/./b//c') === 'a/b/c');
+    check('a download name is file-system safe',
+          safeDownloadName('My Lab: 1/2') === 'My-Lab-1-2' && safeDownloadName('') === 'lab-files');
+
+    // STORED: byte-exact round trip through our own reader.
+    const stored = await buildZip(plan.entries,
+        { compress: false, date: new Date(2026, 9, 16, 12, 30, 10) });
+    const storedDir = readZipDirectory(stored);
+    check('a stored archive lists every entry', storedDir.length === plan.entries.length,
+          storedDir.map(e => e.name));
+    const sh = storedDir.find(e => e.name === 'tf-01-lifecycle/src/deploy.sh')!;
+    check('...with the bytes, the size and the CRC intact',
+          new TextDecoder().decode(sh.data) === exported.files[1].content
+          && sh.size === sh.data.length && sh.crc === crc32(sh.data), sh);
+    check('...and the Unix mode, so an executable stays executable',
+          (sh.mode & 0o777) === 0o755 && (sh.mode & 0o170000) === 0o100000, sh.mode.toString(8));
+    const dirEntry = storedDir.find(e => e.name === 'tf-01-lifecycle/tests/')!;
+    check('a folder is a directory entry', (dirEntry.mode & 0o170000) === 0o040000
+          && dirEntry.size === 0, dirEntry);
+    check('a UTF-8 name round-trips', storedDir.some(e => e.name.endsWith('src/دليل.md')));
+    const flags = new DataView(stored.buffer).getUint16(6, true);
+    check('...because the UTF-8 flag (bit 11) is set', (flags & 0x0800) === 0x0800, flags);
+
+    // DEFLATED: node's own zlib must be able to inflate what we wrote.
+    const packed = await buildZip(plan.entries);
+    const packedDir = readZipDirectory(packed);
+    const tf = packedDir.find(e => e.name === 'tf-01-lifecycle/main.tf')!;
+    check('a repetitive file is DEFLATED (method 8) and smaller',
+          tf.method === 8 && tf.compressed < tf.size, tf);
+    const inflated = new TextDecoder().decode(inflateRawSync(tf.data));
+    check('...and zlib inflates it back to exactly the original',
+          inflated === exported.files[0].content);
+    check('...whose CRC matches the inflated bytes',
+          crc32(text.encode(inflated)) === tf.crc);
+    const tiny = packedDir.find(e => e.name === 'tf-01-lifecycle/src/deploy.sh')!;
+    check('a tiny file that would GROW is stored instead',
+          tiny.method === 0 || tiny.compressed < tiny.size, tiny);
+    check('the deflated archive is smaller than the stored one',
+          packed.length < stored.length, { packed: packed.length, stored: stored.length });
+
+    // THE FALLBACK, for a replica that does not know `export`.
+    const reads: string[] = [];
+    const fallback = await exportFromListing('src',
+        [{ path: 'main.tf' }, { path: 'src/a.py' }, { path: 'src/b/c.py' }],
+        ['src', 'src/b', 'src/empty', 'other'],
+        async (path: string) => { reads.push(path); return `# ${path}`; });
+    check('the fallback reads only what is under the folder',
+          reads.join('|') === 'src/a.py|src/b/c.py', reads);
+    check('...and keeps the folder\'s own sub-folders, not itself or others',
+          fallback.dirs.join('|') === 'src/b|src/empty' && fallback.root === 'src',
+          fallback.dirs);
+    const one = await exportFromListing('main.tf', [{ path: 'main.tf' }], [], async () => 'x');
+    check('a FILE through the fallback is that file alone',
+          one.files.length === 1 && one.dirs.length === 0);
+
+    const filesPane = stripComments(source('src/components/labs/LabFiles.vue'));
+    const service = source('src/services/labs.service.ts');
+    check('the Explorer bar has Download all as ZIP',
+          /class="sl-tree__icon sl-tree__icon--download"[\s\S]{0,300}@click="downloadZip\(''\)"/
+          .test(filesPane));
+    check('right-clicking a FILE offers Download',
+          /menu\.row\.kind === 'file'[\s\S]{0,200}downloadFile\(row\.path\)/.test(filesPane));
+    check('right-clicking a FOLDER offers Download as ZIP',
+          /downloadZip\(row\.path\)[\s\S]{0,160}\$t\('Download as ZIP'\)/.test(filesPane));
+    check('the top-level menu offers Download all as ZIP',
+          /fromMenu\(\(\) => downloadZip\(''\)\)/.test(filesPane));
+    check('the explorer falls back when the replica cannot export',
+          /\?\? await exportFromListing\(/.test(filesPane));
+    check('a single file is saved as octet-stream, never rendered from a blob: URL',
+          /type: 'application\/octet-stream'/.test(filesPane)
+          && /anchor\.download = name/.test(filesPane));
+    check('the service asks for the export action and answers null when it cannot',
+          /action: 'export'/.test(service) && /return null;/.test(service));
+    check('both explorers are given the export',
+          /:export-files="exportFiles"/.test(source('src/views/LabWorkspace.vue'))
+          && /:export-files="exportFiles"/.test(source('src/views/SelfDrivingStudio.vue')));
+}
+
+/* ─────────────────── 16. the tutor: steps, code cards, copy ─────────────────── */
+
+section('16. The tutor renders steps and copyable code, never markup');
+{
+    const { inlineSpans } = await import('@/utils/aichatMarkdown');
+    const kinds = (value: string) => inlineSpans(value)
+        .map(span => `${span.kind}:${span.text}`).join('|');
+    check('inline code becomes a code span',
+          kinds('run `docker ps` now') === 'text:run |code:docker ps|text: now',
+          kinds('run `docker ps` now'));
+    check('**bold** becomes strong',
+          kinds('this is **key**.') === 'text:this is |strong:key|text:.');
+    check('SELECT * and 2**10 are left alone',
+          kinds('SELECT * FROM t; 2**10') === 'text:SELECT * FROM t; 2**10');
+    check('nothing inside code is parsed again', kinds('`**kwargs**`') === 'code:**kwargs**');
+    check('a double-backtick span may hold a backtick', kinds('``a ` b``') === 'code:a ` b');
+    check('an unclosed backtick stays literal', kinds('a ` b') === 'text:a ` b');
+    check('underscores are never emphasis',
+          kinds('__init__ and user_id') === 'text:__init__ and user_id');
+
+    const tutor = stripComments(source('src/components/labs/LabTutor.vue'));
+    const inline = source('src/components/labs/TutorInline.vue');
+    check('every code block is a card with a Copy button',
+          /class="sl-codecard"[\s\S]{0,700}class="sl-codecard__copy"[\s\S]{0,200}copy\(block\.text/
+          .test(tutor));
+    check('...and the code itself is LTR', /<pre class="sl-turn__code" dir="ltr">/.test(tutor));
+    check('a numbered list is drawn as STEPS, numbered from where it started',
+          /class="sl-steps"[\s\S]{0,300}block\.start \+ at/.test(tutor));
+    check('the whole answer can be copied', /copy\(turn\.content/.test(tutor));
+    check('copying has a fallback for a refused clipboard',
+          /execCommand\('copy'\)/.test(tutor));
+    check('prose goes through TutorInline, which goes through RichText',
+          /<TutorInline/.test(tutor) && /<RichText/.test(inline)
+          && !/v-html/.test(stripComments(inline)));
+
+    const prompt = tutorPrompt(null, '');
+    check('the prompt asks for the shape the pane renders',
+          /## Steps/.test(prompt) && /language tag/.test(prompt) && /inline code/.test(prompt));
 }
 
 /* ─────────────────── report ─────────────────── */

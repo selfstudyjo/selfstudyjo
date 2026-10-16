@@ -118,8 +118,6 @@ export default {
         '共 {v0} 道题，限时 {v1} 分钟，及格线为 {v2}%。你确认下方规则后计时开始。',
 
     /* ---------------- the rules themselves ---------------- */
-    'A lab is for trying things. Every action below is recorded and some of them cost points, but no number of them ends a lab or takes a task away from you. Leaving the window to read the documentation is what a practitioner does.':
-        '实验室就是用来动手尝试的。下面每一项操作都会被记录，其中一些会扣分，但无论多少次都不会终止实验室，也不会收回你已完成的任务。离开窗口去查文档，本来就是从业者的做法。',
     'Also recorded, and worth nothing either way': '同样会被记录，但不加分也不扣分',
     'Every point on the public leaderboard comes from something this platform verified. Nothing here is awarded for turning up, and nothing here can be talked up: a task counts when the service looks at your environment and finds what the lab asked for.':
         '公开排行榜上的每一分都来自平台亲自核验过的事实。这里没有出勤分，也没有靠说辞得来的分：只有当服务检查你的环境并找到实验室所要求的结果时，任务才算完成。',
@@ -152,10 +150,6 @@ export default {
     '{v0} of {v1} integrity breaches recorded': '已记录 {v0}/{v1} 次诚信违规',
 
     /* ---------------- the lab's tutor allowance ---------------- */
-    'Your {v0} free asks are used. Each further ask costs {v1} points. It will not fail the lab and it will not take a verified task away from you.':
-        '你的 {v0} 次免费提问已用完。之后每次提问扣 {v1} 分。这不会让实验室不及格，也不会收回已核验的任务。',
-    '{v0} of your {v1} free tutor asks used in this lab. Each ask after that costs {v2} points — and finishing within the allowance earns {v3}.':
-        '本实验室已用掉 {v0}/{v1} 次免费助教提问。之后每次提问扣 {v2} 分——而在额度内完成实验室可获得 {v3} 分。',
 
     /* ---------------- the catalogue: what each action is ---------------- */
     'Started the paper': '开始答卷',
@@ -171,7 +165,6 @@ export default {
     'Free and unlimited. Checking often is how a lab is meant to be worked.':
         '免费且不限次数。频繁检查正是实验室预期的工作方式。',
     'Asked the lab tutor': '向实验室助教提问',
-    'Your first three asks in a lab are free.': '每个实验室的前三次提问免费。',
     'Reset the environment': '重置了环境',
     'Starting again costs nothing.': '重新开始不扣任何分。',
     'Finished the lab': '完成了实验室',
@@ -187,9 +180,6 @@ export default {
     'Sat the whole paper cleanly': '全程清白地完成整张试卷',
     'No window left, nothing copied, nothing pasted, from the first question to submission.':
         '从第一题到提交，未离开窗口、未复制、未粘贴。',
-    'Finished the lab within the free tutor allowance': '在免费助教额度内完成了实验室',
-    'Completed every task having asked the tutor three times or fewer.':
-        '在向助教提问不超过三次的情况下完成了所有任务。',
     'Worked a task through to a verified pass': '把一项任务做到通过核验',
     'Awarded when Check my work finds something new, up to four times per lab.':
         '当"检查我的作业"发现新进展时奖励，每个实验室最多四次。',
@@ -212,9 +202,6 @@ export default {
     'Left full screen': '退出了全屏',
     'Cheapest of the five, because it is the one people do by accident.':
         '五者中扣分最少，因为这一项常常是无意为之。',
-    'Asked the tutor beyond the free allowance': '在免费额度之外向助教提问',
-    'Each ask past the first three costs. It never fails a lab.':
-        '前三次之后每次提问都会扣分。但绝不会让实验室不及格。',
 
     /* ---------------- the reprimand ---------------- */
     'This sitting was ended for cheating': '本场测评因作弊被终止',
@@ -226,18 +213,8 @@ export default {
         '服务在你的环境中核验通过的每项任务价值 {v0} 分。',
     'Finishing every task in a lab adds {v0} more.':
         '完成一个实验室的所有任务再加 {v0} 分。',
-    'Finishing a lab having asked the tutor {v0} times or fewer adds {v1}.':
-        '在向助教提问不超过 {v0} 次的情况下完成实验室，再加 {v1} 分。',
-    'Every five minutes of unbroken, active work adds {v0}, up to {v1} times.':
-        '每连续实际动手五分钟加 {v0} 分，最多 {v1} 次。',
-    'A lab is capped at {v0} points lost however long you work, and once every task is verified nothing further is scored at all.':
-        '无论做多久，实验室最多只扣 {v0} 分；所有任务通过核验之后，一律不再计分。',
     'Working a task through to a verified pass adds {v0}, up to {v1} times.':
         '把一项任务做到通过核验加 {v0} 分，最多 {v1} 次。',
-    'Asking the tutor a fourth time and beyond costs {v0} each.':
-        '第四次及以后每次向助教提问扣 {v0} 分。',
-    'Leaving the window costs {v0}, and Alt+Tab costs {v1} — but nothing in a lab can fail you.':
-        '离开窗口扣 {v0} 分，Alt+Tab 扣 {v1} 分——但实验室里没有任何东西会让你不及格。',
 
     /* ---------------- the strike meter ---------------- */
     'Clean so far. {v0} breaches would end this sitting.':
@@ -249,8 +226,6 @@ export default {
     'This sitting has been ended. {v0} integrity breaches were recorded and {v1} is the limit.':
         '本场测评已被终止。共记录 {v0} 次诚信违规，上限为 {v1} 次。',
     'No points lost. Keep going.': '未扣任何分。继续保持。',
-    '{v0} points lost so far. Nothing here can fail you — a lab is for trying things.':
-        '目前已扣 {v0} 分。这里没有任何东西会让你不及格——实验室就是用来动手尝试的。',
 
     /* ---------------- why an achievement earned what it earned ---------------- */
     'Passed an exam — {v0} points, plus {v1} for the mark itself.':
@@ -344,4 +319,42 @@ export default {
 
     /* ---------------- the kind chips ---------------- */
     'Lab': '实验室',
+
+    /* ---------------- labs: nothing costs, downloads, the tutor ---------------- */
+    'Ask the tutor as often as you like — it never costs points in a lab.':
+        '可以随时向助教提问——在实验室里提问从不扣分。',
+    'Free and unlimited. Asking for help never costs anything in a lab.':
+        '免费且不限次数。在实验室里求助从不扣分。',
+    'Finished every task in the lab':
+        '完成了实验室的全部任务',
+    'Awarded once, when every task in the lab has been verified.':
+        '当实验室的全部任务都通过验证时奖励一次。',
+    'A lab is for trying things, and nothing in it ever costs points. Copy, paste, leave the tab to read the documentation and ask the tutor as often as you like. Points are earned for every task the lab verifies and for finishing the whole lab.':
+        '实验室是用来尝试的地方，这里的任何操作都不会扣分。复制、粘贴、离开标签页去查阅文档、随时向助教提问都可以。每通过验证一个任务、以及完成整个实验室，都能获得积分。',
+    'Nothing in a lab costs points — a lab is for trying things.':
+        '实验室里的任何操作都不扣分——实验室是用来尝试的地方。',
+    'Finishing a lab adds a further {v0}.':
+        '完成实验室再加 {v0} 分。',
+    'Nothing in a lab ever costs points: copy, paste, leave the tab and ask the tutor as often as you like.':
+        '实验室里的任何操作都不扣分：复制、粘贴、离开标签页、随时向助教提问都可以。',
+    'Download all as ZIP':
+        '全部下载为 ZIP',
+    'Download as ZIP':
+        '下载为 ZIP',
+    'Downloaded {v0}':
+        '已下载 {v0}',
+    'Downloaded {v0} ({v1} files)':
+        '已下载 {v0}（{v1} 个文件）',
+    'Preparing the download…':
+        '正在准备下载…',
+    'That file could not be downloaded':
+        '无法下载该文件',
+    'The ZIP could not be prepared. Try again in a moment.':
+        '无法生成 ZIP 文件，请稍后重试。',
+    'Copy answer':
+        '复制回答',
+    'Copy the whole answer':
+        '复制完整回答',
+    'code':
+        '代码',
 };

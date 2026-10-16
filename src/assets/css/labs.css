@@ -1386,6 +1386,17 @@
     color: var(--sfs-text, #e6e8ef);
 }
 
+/* Download all: the one icon in the bar that takes work OUT of the lab, so it
+   carries the accent ink rather than reading as one more housekeeping glyph. */
+.sl-tree__icon--download { color: var(--sfs-accent-text, #a5b4fc); }
+
+.sl-tree__icon:disabled,
+.sl-menu__item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.sl-tree__icon:disabled:hover { background: transparent; }
+
 .sl-tree__filter {
     display: flex;
     align-items: center;
@@ -2109,13 +2120,192 @@
 
 .sl-turn--assistant { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06); }
 
-.sl-turn__text { margin: 0 0 0.5rem; line-height: 1.6; }
-.sl-turn__heading { margin: 0.6rem 0 0.3rem; font-size: 0.95rem; }
-.sl-turn__list { margin: 0 0 0.5rem; padding-inline-start: 1.2rem; }
-.sl-turn__quote {
-    margin: 0 0 0.5rem;
-    padding-inline-start: 0.7rem;
+.sl-turn__text { margin: 0 0 0.55rem; line-height: 1.65; }
+.sl-turn__text:last-child { margin-bottom: 0; }
+
+/* The answer's own header: who is speaking, and one click to copy all of it. */
+.sl-turn__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: -0.1rem 0 0.45rem;
+    font-size: 0.74rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+.sl-turn__who {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.sl-turn__copyAll,
+.sl-codecard__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 26px;
+    padding: 0.15rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.74rem;
+    cursor: pointer;
+}
+.sl-turn__copyAll { color: var(--sfs-text-muted, #b7bdcc); }
+.sl-turn__copyAll:hover,
+.sl-turn__copyAll:focus-visible {
+    border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+/* A section heading inside an answer, with an accent tick on its leading edge
+   so "Why", "Steps" and "Check" read as sections rather than as bold lines. */
+.sl-turn__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.85rem 0 0.4rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--sfs-text, #e6e8ef);
+}
+.sl-turn__heading::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 3px;
+    height: 1em;
+    border-radius: 2px;
+    background: var(--sfs-accent, #667eea);
+}
+.sl-turn__heading:first-child { margin-top: 0.1rem; }
+
+.sl-turn__list {
+    margin: 0 0 0.6rem;
+    padding-inline-start: 1.15rem;
+    line-height: 1.6;
+}
+.sl-turn__list li { margin-bottom: 0.2rem; }
+.sl-turn__list li::marker { color: var(--sfs-accent-text, #a5b4fc); }
+
+/* A tip or caveat the model set apart with `>`. */
+.sl-turn__callout {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 0 0 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--sl-radius-sm);
     border-inline-start: 3px solid var(--sfs-info, #0ea5e9);
+    background: rgb(var(--sfs-info-rgb, 14 165 233) / 0.1);
+    line-height: 1.6;
+}
+.sl-turn__callout > .sl-i { margin-top: 0.25rem; color: var(--sfs-info-text, #7dd3fc); }
+
+/* ── steps: a numbered disc per step, on a rail ───────────────────────── */
+
+.sl-steps {
+    list-style: none;
+    margin: 0.2rem 0 0.65rem;
+    padding: 0;
+}
+.sl-steps__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.65rem minmax(0, 1fr);
+    gap: 0.6rem;
+    padding-bottom: 0.6rem;
+    line-height: 1.6;
+}
+/* The rail joins one disc to the next; the last step has nothing to join. */
+.sl-steps__item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(0.825rem - 1px);
+    top: 1.7rem;
+    bottom: 0.1rem;
+    width: 2px;
+    background: rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
+}
+.sl-steps__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 50%;
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    /* A step number is a place in a sequence, not prose. */
+    direction: ltr;
+}
+.sl-steps__body { padding-top: 0.15rem; min-width: 0; }
+
+/* ── the code card ────────────────────────────────────────────────────── */
+
+.sl-codecard {
+    margin: 0 0 0.75rem;
+    border-radius: var(--sl-radius-sm);
+    overflow: hidden;
+    background: var(--sl-code-bg);
+    border: 1px solid var(--sl-code-raise);
+    /* LTR whatever the page is: a command reordered by bidi does not run. */
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+/* Under the step it belongs to, aligned with the step's text. */
+.sl-codecard.is-in-steps { margin-inline-start: 2.25rem; }
+.sl-codecard__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.25rem 0.35rem 0.25rem 0.75rem;
+    background: var(--sl-code-raise);
+    border-bottom: 1px solid var(--sl-code-raise);
+}
+.sl-codecard__lang {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    text-transform: lowercase;
+    color: var(--sl-code-dim);
+}
+.sl-codecard__copy { color: var(--sl-code-ink); }
+.sl-codecard__copy:hover,
+.sl-codecard__copy:focus-visible {
+    border-color: var(--sl-code-dim);
+    background: var(--sl-code-bg);
+}
+.sl-codecard .sl-turn__code {
+    margin: 0;
+    border-radius: 0;
+}
+.sl-codecard .sl-turn__code code { font: inherit; }
+
+/* ── inline spans ─────────────────────────────────────────────────────── */
+
+.sl-inline__code {
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+    unicode-bidi: isolate;
+}
+.sl-inline__strong { font-weight: 700; color: var(--sfs-text, #e6e8ef); }
+
+@media (forced-colors: active) {
+    .sl-steps__num { border: 1px solid CanvasText; }
+    .sl-codecard { border-color: CanvasText; }
 }
 
 .sl-tutor__form {
@@ -2332,7 +2522,7 @@
 }
 
 /* ------------------------------------------------------------------ *
- * The tutor allowance
+ * The tutor note
  * ------------------------------------------------------------------ *
  *
  * Added with the practice ledger. `sl-`-prefixed like everything else in this
@@ -2340,10 +2530,8 @@
  * sheet — and this one is loaded from `main.ts`, so every selector in it is
  * live on every page of the platform.
  *
- * The `is-over` state changes the WASH and the ink together rather than only
- * the ink: `--sfs-warning-text` is derived against a plain surface, and a
- * tinted island is a different backdrop. Pairing them is what stops the
- * amber-on-amber failure the palette work had to correct 117 rules for.
+ * It used to count down a three-ask allowance and turn amber past it; asking
+ * the tutor in a lab is free now, so it is one calm line.
  */
 
 .sl-tutorNote {
@@ -2355,13 +2543,6 @@
     background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.04);
     border: 1px dashed rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
     border-radius: var(--sfs-radius-sm, 10px);
-}
-
-.sl-tutorNote.is-over {
-    color: var(--sfs-warning-on-paper, #78350f);
-    background: var(--sfs-warning-wash, rgba(251, 191, 36, 0.16));
-    border-style: solid;
-    border-color: rgb(var(--sfs-warning-rgb, 251 191 36) / 0.45);
 }
 
 @media (forced-colors: active) {

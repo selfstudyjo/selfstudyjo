@@ -38,26 +38,65 @@
           anchors it builds itself, and `aichatMarkdown` is what turns the fenced
           blocks into typed blocks rather than markup.
         -->
+        <div v-if="turn.role === 'assistant'" class="sl-turn__head">
+          <span class="sl-turn__who"><Sparkles class="sl-i sl-i--tiny" /> {{ $t('Tutor') }}</span>
+          <button type="button" class="sl-turn__copyAll"
+                  :aria-label="$t('Copy the whole answer')"
+                  @click="copy(turn.content, `all-${index}`)">
+            <component :is="copied === `all-${index}` ? Check : Copy" class="sl-i sl-i--tiny" />
+            {{ copied === `all-${index}` ? $t('Copied') : $t('Copy answer') }}
+          </button>
+        </div>
         <template v-for="(block, position) in blocksOf(turn)" :key="position">
-          <pre v-if="block.kind === 'code'" class="sl-turn__code" dir="ltr">{{ block.text }}</pre>
-          <h4 v-else-if="block.kind === 'heading'" class="sl-turn__heading">{{ block.text }}</h4>
+          <!--
+            A CODE CARD: the language on the left and Copy on the right, so the
+            one thing a student does with a command - paste it into the console
+            - is one click and never a drag-select that misses the last
+            character. The <pre> stays LTR and dark in every galaxy.
+          -->
+          <div v-if="block.kind === 'code'" class="sl-codecard"
+               :class="{ 'is-in-steps': block.inSteps }">
+            <div class="sl-codecard__bar">
+              <span class="sl-codecard__lang" dir="ltr">{{ block.lang || $t('code') }}</span>
+              <button type="button" class="sl-codecard__copy"
+                      :aria-label="$t('Copy code')"
+                      @click="copy(block.text, `${index}-${position}`)">
+                <component :is="copied === `${index}-${position}` ? Check : Copy"
+                           class="sl-i sl-i--tiny" />
+                {{ copied === `${index}-${position}` ? $t('Copied') : $t('Copy') }}
+              </button>
+            </div>
+            <pre class="sl-turn__code" dir="ltr"><code>{{ block.text }}</code></pre>
+          </div>
+          <h4 v-else-if="block.kind === 'heading'" class="sl-turn__heading">
+            <TutorInline :text="block.text" />
+          </h4>
           <ul v-else-if="block.kind === 'list'" class="sl-turn__list">
             <li v-for="(item, at) in block.items" :key="at">
-              <RichText :text="item" />
+              <TutorInline :text="item" />
             </li>
           </ul>
-          <ol v-else-if="block.kind === 'ordered'" class="sl-turn__list"
+          <!--
+            STEPS. A numbered list is how the tutor is told to give a procedure,
+            and it is drawn as one: a numbered disc per step on a rail, the
+            number written out rather than left to a list marker so a list the
+            model resumed after a code block carries on at 4 rather than 1.
+          -->
+          <ol v-else-if="block.kind === 'ordered'" class="sl-steps"
               :start="block.start">
-            <li v-for="(item, at) in block.items" :key="at">
-              <RichText :text="item" />
+            <li v-for="(item, at) in block.items" :key="at" class="sl-steps__item">
+              <span class="sl-steps__num" aria-hidden="true">{{ block.start + at }}</span>
+              <span class="sl-steps__body"><TutorInline :text="item" /></span>
             </li>
           </ol>
-          <blockquote v-else-if="block.kind === 'quote'" class="sl-turn__quote">
-            <RichText :text="block.text" />
-          </blockquote>
-          <p v-else class="sl-turn__text"><RichText :text="block.text" /></p>
+          <div v-else-if="block.kind === 'quote'" class="sl-turn__callout">
+            <Lightbulb class="sl-i sl-i--tiny" aria-hidden="true" />
+            <TutorInline :text="block.text" />
+          </div>
+          <p v-else class="sl-turn__text"><TutorInline :text="block.text" /></p>
         </template>
       </div>
+      <p class="sfs-sr-only" aria-live="polite">{{ copied ? $t('Copied') : '' }}</p>
       <p v-if="busy" class="sl-tutor__busy">{{ $t('Thinking...') }}</p>
       <p v-if="error" class="sl-tutor__error">{{ error }}</p>
     </div>
@@ -111,9 +150,11 @@
  * several times a minute.
  */
 import { nextTick, ref, watch } from 'vue';
-import { Eraser, Send, Sparkles, Stethoscope } from 'lucide-vue-next';
-import RichText from '@/components/RichText.vue';
-import { renderMarkdown } from '@/utils/aichatMarkdown';
+import {
+  Check, Copy, Eraser, Lightbulb, Send, Sparkles, Stethoscope,
+} from 'lucide-vue-next';
+import TutorInline from '@/components/labs/TutorInline.vue';
+import { renderMarkdown, type MdBlock } from '@/utils/aichatMarkdown';
 import { labAiService, type TutorMessage } from '@/services/lab-ai.service';
 import type { Lab } from '@/utils/labCatalogue';
 
@@ -125,11 +166,10 @@ const props = defineProps<{
 /**
  * Emitted once per ASK that actually reached the provider.
  *
- * The workspace charges for asks past the free allowance, so this has to fire
- * for exactly the asks that happened: not on a click that was refused because
- * the tutor was already busy, not on an empty box, and not on a request that
- * failed - the student did not get an answer, so charging them for one would
- * be charging for the provider being down.
+ * The workspace records each ask on the practice ledger - free and neutral, a
+ * lab never charges for asking - so this fires for exactly the asks that
+ * happened: not on a click refused because the tutor was already busy, and not
+ * on an empty box.
  *
  * It fires BEFORE the answer arrives rather than after, because the ask is what
  * is being counted and a student who navigates away mid-answer still asked.
@@ -143,12 +183,53 @@ const error = ref('');
 const scroller = ref<HTMLElement | null>(null);
 const box = ref<HTMLTextAreaElement | null>(null);
 
-function blocksOf(turn: TutorMessage) {
+type TutorBlock = MdBlock & { inSteps?: boolean };
+
+function blocksOf(turn: TutorMessage): TutorBlock[] {
   // The AI Chat's parser, not `marked`. Same module, same reason: it produces
   // typed BLOCKS rather than markup, so nothing a model wrote can reach
   // `v-html` - and it already has `npm run check:aichat` over the five ways an
   // unterminated fence or a `#` inside one can go wrong.
-  return renderMarkdown(turn.content);
+  //
+  // A code block straight after a step list belongs to the last step, so it is
+  // indented under it - which is what keeps "4. Apply it" and its command
+  // visibly one step rather than a step and a stray block.
+  const blocks: TutorBlock[] = renderMarkdown(turn.content);
+  return blocks.map((block, at) => (block.kind === 'code' && blocks[at - 1]?.kind === 'ordered'
+    ? { ...block, inSteps: true } : block));
+}
+
+/** Which copy button just worked, for two seconds. */
+const copied = ref('');
+let copiedTimer = 0;
+
+/**
+ * Copy to the clipboard, with the old `execCommand` route as the fallback for a
+ * browser - or an embedded frame - that refuses the async API.
+ */
+async function copy(text: string, key: string) {
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    area.remove();
+  }
+  if (!ok) {
+    error.value = 'Your browser did not allow copying. Select the text and copy it instead.';
+    return;
+  }
+  copied.value = key;
+  window.clearTimeout(copiedTimer);
+  copiedTimer = window.setTimeout(() => { copied.value = ''; }, 2000);
 }
 
 async function scrollDown() {
@@ -190,12 +271,7 @@ async function review() {
   if (busy.value) return;
   error.value = '';
   /*
-    A REVIEW COUNTS AS AN ASK, and it should.
-
-    It is a model call over the whole environment - the most expensive thing
-    this pane can do and the one most likely to hand a student the answer.
-    Leaving it free would make the allowance meaningless: three asks and then
-    Review my work as many times as you like.
+    A REVIEW IS RECORDED AS AN ASK - free, like every ask in a lab.
   */
   emit('asked');
   busy.value = true;

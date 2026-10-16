@@ -68,6 +68,8 @@
             :remove="deleteFile"
             :mkdir="makeFolder"
             :move="movePath"
+            :export-files="exportFiles"
+            archive-name="self-driving-studio"
             :intro="$t('Your scripts, saved for you. Edit drive.py or a file in examples/, press Ctrl+S, then Run it in the simulator.')"
             @changed="onFilesChanged"
           />
@@ -231,6 +233,9 @@ async function listTree() {
 }
 async function readFile(path: string) {
   return labsService.readFile(username.value, STUDIO_ID, path);
+}
+async function exportFiles(path: string) {
+  return labsService.exportFiles(username.value, STUDIO_ID, path);
 }
 async function writeFile(path: string, content: string) {
   const result = await labsService.writeFile(username.value, STUDIO_ID, path, content);

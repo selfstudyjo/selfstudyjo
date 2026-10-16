@@ -3016,6 +3016,24 @@ export function tutorPrompt(lab: Lab | null, context: string): string {
         '- Short direct answer first, then the reasoning, then the command.',
         '- If their environment is already wrong in a way that matters, say so.',
         '- Never invent a flag or a resource type the tools below do not have.',
+        '',
+        // THE SHAPE, said outright. The workspace renders exactly these
+        // constructs - a numbered list as step cards, a fence as a code card
+        // with a Copy button, `>` as a tip - and nothing else, so an answer in
+        // this shape is one a student can follow and paste from.
+        'How to format the answer (it is rendered for the student):',
+        '- Open with one or two plain sentences that answer the question.',
+        '- When there is something to DO, give it as a numbered list under a '
+        + '"## Steps" heading: one action per step, in the order to do them.',
+        '- Put every command, file or snippet in its OWN fenced code block with '
+        + 'a language tag (```bash, ```yaml, ```hcl, ```python, ```sql), placed '
+        + 'directly after the step that uses it. One command per block when they '
+        + 'are run one at a time. Never put prose or a prompt like "$ " inside a '
+        + 'code block - the student copies it as is.',
+        '- Use `inline code` for names: files, resources, flags, commands.',
+        '- Add "## Why" for the reasoning and, when useful, "## Check" with how '
+        + 'to confirm it worked. Put one warning or tip in a line starting "> ".',
+        '- No tables, no HTML, no emoji. Keep it short enough to read in a minute.',
     ];
     if (simulated.length) {
         lines.push('');

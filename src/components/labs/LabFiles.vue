@@ -39,6 +39,19 @@
                     :aria-label="$t('Refresh')" @click="refresh">
               <RotateCw class="sl-i" />
             </button>
+            <!--
+              DOWNLOAD ALL, as one ZIP, wrapped in a folder named after the lab.
+              In the bar rather than only in the menu, because a student who
+              wants their work out of the lab looks for a button, not for a
+              right-click on empty space.
+            -->
+            <button type="button" class="sl-tree__icon sl-tree__icon--download"
+                    :title="$t('Download all as ZIP')"
+                    :aria-label="$t('Download all as ZIP')"
+                    :disabled="downloading || !files.length"
+                    @click="downloadZip('')">
+              <Download class="sl-i" />
+            </button>
           </div>
         </div>
 
@@ -164,6 +177,11 @@
                   @click="startRename({ path, name: baseName(path), kind: 'file' })">
             <PenLine class="sl-i" /> {{ $t('Rename') }}
           </button>
+          <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
+                  :title="$t('Download')" :aria-label="$t('Download')"
+                  :disabled="downloading" @click="downloadFile(path)">
+            <FileDown class="sl-i" />
+          </button>
           <button type="button" class="sl-btn sl-btn--danger sl-btn--sm"
                   :aria-label="$t('Delete')"
                   @click="confirmDelete({ path, name: baseName(path), kind: 'file' })">
@@ -249,17 +267,41 @@
           <ClipboardPaste class="sl-i sl-i--tiny" /> {{ $t('Paste here') }}
         </button>
         <hr class="sl-menu__rule">
+        <!--
+          A FILE downloads as itself; a FOLDER downloads as a ZIP holding that
+          folder - which is what "compress this folder" does on every desktop.
+        -->
+        <button v-if="menu.row.kind === 'file'" type="button" class="sl-menu__item"
+                role="menuitem" :disabled="downloading"
+                @click="fromMenu(row => row && downloadFile(row.path))">
+          <FileDown class="sl-i sl-i--tiny" /> {{ $t('Download') }}
+        </button>
+        <button v-else type="button" class="sl-menu__item" role="menuitem"
+                :disabled="downloading"
+                @click="fromMenu(row => row && downloadZip(row.path))">
+          <FolderDown class="sl-i sl-i--tiny" /> {{ $t('Download as ZIP') }}
+        </button>
+        <hr class="sl-menu__rule">
         <button type="button" class="sl-menu__item is-danger" role="menuitem"
                 @click="fromMenu(row => row && confirmDelete(row))">
           <Trash2 class="sl-i sl-i--tiny" /> {{ $t('Delete') }}
         </button>
       </template>
-      <template v-else-if="moving">
-        <hr class="sl-menu__rule">
-        <button type="button" class="sl-menu__item" role="menuitem"
-                @click="fromMenu(() => paste(''))">
-          <ClipboardPaste class="sl-i sl-i--tiny" /> {{ $t('Paste here') }}
-        </button>
+      <template v-else>
+        <template v-if="moving">
+          <hr class="sl-menu__rule">
+          <button type="button" class="sl-menu__item" role="menuitem"
+                  @click="fromMenu(() => paste(''))">
+            <ClipboardPaste class="sl-i sl-i--tiny" /> {{ $t('Paste here') }}
+          </button>
+        </template>
+        <template v-if="files.length">
+          <hr class="sl-menu__rule">
+          <button type="button" class="sl-menu__item" role="menuitem"
+                  :disabled="downloading" @click="fromMenu(() => downloadZip(''))">
+            <Download class="sl-i sl-i--tiny" /> {{ $t('Download all as ZIP') }}
+          </button>
+        </template>
       </template>
     </div>
   </div>
@@ -315,14 +357,17 @@ import {
   Code,
   Copy,
   Database,
+  Download,
   File,
   FileCode,
+  FileDown,
   FileImage,
   FileJson,
   FileLock,
   FilePlus,
   FileText,
   Folder,
+  FolderDown,
   FolderOpen,
   FolderPlus,
   FolderTree,
@@ -358,6 +403,14 @@ import {
   type NodeKind,
   type Row,
 } from '@/utils/fileTree';
+import {
+  buildZip,
+  exportFromListing,
+  planArchive,
+  safeDownloadName,
+  type FileExport,
+} from '@/utils/zipArchive';
+import { useI18n } from '@/i18n/runtime';
 
 interface Listing { files: FileEntry[]; dirs: string[] }
 type Result = { ok: boolean; error?: string };
@@ -373,7 +426,17 @@ const props = defineProps<{
   move?: (path: string, to: string) => Promise<Result>;
   /** Replaces the lab wording above the tree - the Self-Driving Studio is not a lab. */
   intro?: string;
+  /**
+   * Files WITH their contents, for a download. Optional, and `null` from it
+   * means "this replica cannot" - the pane then builds the same thing from the
+   * listing and one `read` per file, so downloads work mid-deploy.
+   */
+  exportFiles?: (path: string) => Promise<FileExport | null>;
+  /** What "Download all" calls the archive and its top folder: the lab id. */
+  archiveName?: string;
 }>();
+
+const { t } = useI18n();
 
 const emit = defineEmits<{ (event: 'changed'): void }>();
 
@@ -402,6 +465,7 @@ const dropTarget = ref<string | null>(null);
 const moving = ref('');
 
 const menu = ref<{ x: number; y: number; row: Row | null } | null>(null);
+const downloading = ref(false);
 const menuBox = ref<HTMLElement | null>(null);
 
 const dirty = computed(() => Boolean(path.value) && content.value !== saved.value);
@@ -781,7 +845,7 @@ function openMenu(event: MouseEvent, row: Row | null) {
  * should. `folder` is the row's own path for a folder and its parent for a
  * file, so New File inside a right-clicked folder lands there.
  */
-function fromMenu(action: (row: Row | null, folder: string) => void | Promise<void>) {
+function fromMenu(action: (row: Row | null, folder: string) => unknown) {
   const row = menu.value?.row ?? null;
   const folder = row ? (row.kind === 'folder' ? row.path : dirname(row.path)) : '';
   menu.value = null;
@@ -827,6 +891,85 @@ function glyph(row: { path: string; kind: NodeKind }) {
 
 const human = humanBytes;
 const baseName = basename;
+
+/* ── downloading ───────────────────────────────────────────────────────── */
+
+/**
+ * Hand a Blob to the browser as a download.
+ *
+ * `application/octet-stream` for a single file whatever its extension, so an
+ * `index.html` a student wrote is SAVED rather than rendered: a `blob:` URL
+ * inherits this origin, and a rendered page would run the student's script next
+ * to the session token (the reason `LabWeb.vue` never makes one). The anchor
+ * carries `download`, so nothing navigates; the URL is revoked once the browser
+ * has had a moment to start the transfer.
+ */
+function triggerDownload(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  anchor.rel = 'noopener';
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+/** The open buffer, when it is this file and has unsaved changes - "as is". */
+function bufferFor(target: string): string | null {
+  return target === path.value && dirty.value ? content.value : null;
+}
+
+async function downloadFile(target: string) {
+  if (!target || downloading.value) return;
+  downloading.value = true;
+  try {
+    const text = bufferFor(target) ?? await props.read(target);
+    triggerDownload(new Blob([text], { type: 'application/octet-stream' }),
+                    basename(target) || 'file.txt');
+    say(t('Downloaded {v0}', { v0: basename(target) }));
+  } catch {
+    say(t('That file could not be downloaded'), true);
+  } finally {
+    downloading.value = false;
+  }
+}
+
+/**
+ * A folder, or the whole lab with `''`, as a ZIP built in the browser.
+ *
+ * The contents come from app 11's `export` action in ONE request; a replica
+ * that does not know it yet answers `null` and the same answer is built from
+ * the listing. An unsaved buffer is included as it stands on screen, so the
+ * archive is the work "as is" rather than as it was at the last Ctrl+S.
+ */
+async function downloadZip(root: string) {
+  if (downloading.value) return;
+  downloading.value = true;
+  say(t('Preparing the download…'));
+  try {
+    const exported = (props.exportFiles ? await props.exportFiles(root) : null)
+      ?? await exportFromListing(root, files.value, dirs.value, props.read);
+    const buffered = path.value && dirty.value ? content.value : null;
+    if (buffered !== null) {
+      for (const file of exported.files) {
+        if (file.path === path.value) file.content = buffered;
+      }
+    }
+    const plan = planArchive(exported, safeDownloadName(props.archiveName || 'lab'));
+    const bytes = await buildZip(plan.entries);
+    triggerDownload(new Blob([bytes as BlobPart], { type: 'application/zip' }), plan.fileName);
+    say(t('Downloaded {v0} ({v1} files)', {
+      v0: plan.fileName, v1: exported.files.length,
+    }));
+  } catch {
+    say(t('The ZIP could not be prepared. Try again in a moment.'), true);
+  } finally {
+    downloading.value = false;
+  }
+}
 
 function say(text: string, bad = false) {
   treeNote.value = text;
