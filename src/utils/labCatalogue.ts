@@ -2849,6 +2849,56 @@ export function humanKey(key: string): string {
  * handler a syntax error in the student's script produces a blank pane and no
  * explanation, which reads as the tool being broken.
  */
+/**
+ * Put the console shim, the CSS pane and the JS pane into a FULL document the
+ * student wrote, without rewrapping it - rewrapping would silently change the
+ * thing they are learning to write.
+ *
+ * WHATEVER SHAPE IT IS IN. The first version replaced `</body>` and nothing
+ * else, so a document with no closing body tag - which is every document while
+ * it is being typed, and plenty that are finished, since the tag is optional -
+ * never received the CSS or the JS pane at all. That was "I add a style and the
+ * output does not change". Each piece now has a chain of places it can go:
+ *
+ *   shim   after `<head …>`, else in a new `<head>` after `<html …>`
+ *   style  before `</head>`, else straight after the shim, so the pane's CSS
+ *          comes after (and so wins over) any `<style>` the student wrote
+ *   script before the LAST `</body>`, else before `</html>`, else at the end
+ *
+ * By INDEX, never `String.replace` with a string: a replacement string
+ * interprets `$&`, `$'` and `` $` ``, and student JavaScript is exactly where
+ * those appear (`'$' + price`, jQuery, template literals).
+ */
+function injectIntoDocument(body: string, shim: string, style: string,
+                            script: string): string {
+    const insertAt = (text: string, index: number, piece: string) =>
+        text.slice(0, index) + piece + text.slice(index);
+    let doc = body;
+
+    const head = /<head(\s[^>]*)?>/i.exec(doc);
+    let afterShim: number;
+    if (head) {
+        afterShim = head.index + head[0].length;
+        doc = insertAt(doc, afterShim, shim);
+        afterShim += shim.length;
+    } else {
+        const root = /<html(\s[^>]*)?>/i.exec(doc);
+        const at = root ? root.index + root[0].length : 0;
+        const block = `<head>${shim}`;
+        doc = insertAt(doc, at, `${block}</head>`);
+        afterShim = at + block.length;
+    }
+
+    const headClose = doc.toLowerCase().indexOf('</head>');
+    doc = insertAt(doc, headClose >= 0 ? headClose : afterShim, style);
+
+    const lower = doc.toLowerCase();
+    const bodyClose = lower.lastIndexOf('</body>');
+    const htmlClose = lower.lastIndexOf('</html>');
+    const at = bodyClose >= 0 ? bodyClose : htmlClose >= 0 ? htmlClose : doc.length;
+    return insertAt(doc, at, script);
+}
+
 export function buildPreview(html: string, css: string, js: string): string {
     const shim = `
 <script>
@@ -2883,11 +2933,7 @@ export function buildPreview(html: string, css: string, js: string): string {
     const style = `<style>\n${String(css || '')}\n</style>`;
     const script = `<script>\n${String(js || '')}\n<\/script>`;
     if (/<html[\s>]/i.test(body)) {
-        // A full document: leave the student's own structure alone and inject
-        // the shim into the head, because rewrapping it would silently change
-        // the thing they are learning to write.
-        return body.replace(/<head(\s[^>]*)?>/i, match => match + shim)
-            .replace(/<\/body>/i, `${style}${script}</body>`);
+        return injectIntoDocument(body, shim, style, script);
     }
     return `<!DOCTYPE html>
 <html>

@@ -1676,7 +1676,13 @@
 }
 
 .sl-web--wide .sl-web__editor { min-height: clamp(8rem, 18vh, 14rem); }
-.sl-web--wide .sl-web__frame { height: clamp(20rem, 62vh, 52rem); }
+/* Big preview: most of the window, on every screen. `vh` first and `dvh` after
+   it, so a browser without `dvh` keeps the first and a phone whose address bar
+   slides away gets the real visible height. */
+.sl-web--wide .sl-web__frame {
+    height: max(24rem, calc(100vh - 11rem));
+    height: max(24rem, calc(100dvh - 11rem));
+}
 
 /* What happened to the student's work. Text as well as colour — working rule
    37 — and `role="status"` in the template, so it is heard as well as seen. */
@@ -1701,9 +1707,10 @@
 
 .sl-web__resulthead {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
+    margin-bottom: 0.35rem;
 }
 
 /* "You have typed since the last Run." Without it a student edits, looks at an
@@ -1738,6 +1745,65 @@
 
 .sl-web__editor { min-height: clamp(12rem, 32vh, 24rem); }
 
+/* Side by side, the editor is as tall as the result beside it. */
+@media (min-width: 980px) {
+    .sl-web:not(.sl-web--wide) .sl-web__editor {
+        min-height: max(20rem, calc(100vh - 20rem));
+        min-height: max(20rem, calc(100dvh - 20rem));
+    }
+}
+
+.sl-web__result { min-width: 0; }
+
+.sl-web__resulttools {
+    display: inline-flex;
+    gap: 0.25rem;
+    margin-inline-start: auto;
+}
+
+.sl-web__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: max(1.8rem, 30px);
+    height: max(1.8rem, 30px);
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    cursor: pointer;
+}
+.sl-web__icon:hover,
+.sl-web__icon:focus-visible {
+    background: var(--sl-surface-2);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+/* FULL SCREEN: header, page and console in one column, the page taking every
+   pixel the other two do not. */
+.sl-web__result:fullscreen,
+.sl-web__result.is-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    background: var(--sfs-space, #0b1020);
+    color: var(--sfs-text, #e6e8ef);
+}
+.sl-web__result.is-full .sl-web__frame {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+.sl-web__result.is-full .sl-web__console {
+    flex: 0 0 auto;
+    max-height: 22vh;
+    margin-top: 0;
+}
+
 .sl-web__auto {
     display: inline-flex;
     align-items: center;
@@ -1746,10 +1812,15 @@
     color: var(--sfs-text-muted, #b7bdcc);
 }
 
+/* THE RESULT FILLS THE SCREEN rather than being a fixed 24rem box. A page
+   shorter than the frame shows whole; a longer one scrolls inside it, and Full
+   screen is one click away. Minimum 22rem so a phone in landscape still gets a
+   page rather than a strip. */
 .sl-web__frame {
     display: block;
     width: 100%;
-    height: clamp(12rem, 32vh, 24rem);
+    height: max(22rem, calc(100vh - 17rem));
+    height: max(22rem, calc(100dvh - 17rem));
     border: var(--sl-line);
     border-radius: var(--sl-radius-sm);
     /* WHITE, in every galaxy. A student's page has its own background and a

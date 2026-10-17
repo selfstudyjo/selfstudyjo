@@ -313,6 +313,30 @@ export const labsService = {
             if (action === 'last' || action === 'run') return delay({ ...cf.last, ok: true });
             return delay({ ok: true });
         }
+        /*
+          THE BROWSER PANE (`django_preview` / `flask_preview`). A page TALLER
+          than any screen, with a coloured footer, so a screenshot shows at a
+          glance whether the frame reaches the bottom of the stage - which is
+          exactly what "only the top half shows" was about.
+        */
+        if (/_preview$/.test(toolId)) {
+            const rows = Array.from({ length: 40 }, (_v, i) =>
+                `<tr><td>${i + 1}</td><td>Product ${i + 1}</td><td>${(i * 3.5 + 2).toFixed(2)}</td></tr>`).join('');
+            return delay({
+                ok: true,
+                routes: [{ route: '/', name: 'home', view: 'shop.views.home' },
+                         { route: '/admin/', name: 'admin', view: 'admin.site' }],
+                response: {
+                    status: 200, reason: 'OK', content_type: 'text/html', queries: ['SELECT * FROM shop_product'],
+                    body: `<!doctype html><html><head><style>body{font:15px system-ui;margin:0}
+header{background:#1e3a8a;color:#fff;padding:18px 24px}main{padding:18px 24px}
+table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:6px}
+footer{background:#047857;color:#fff;padding:22px 24px;font-weight:700}</style></head>
+<body><header><h1>Shop admin</h1></header><main><table>${rows}</table></main>
+<footer>END OF PAGE - the frame reached the bottom</footer></body></html>`,
+                },
+            });
+        }
         const line = String(payload.command ?? payload.code ?? payload.query ?? '').trim();
         env.log.push({ tool: toolId, command: line, code: 0, at: new Date().toISOString() });
         const argv = line.split(/\s+/);

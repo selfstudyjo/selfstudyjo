@@ -187,7 +187,14 @@ defineExpose({ reload: build });
 </script>
 
 <style scoped>
-.sl-mob { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+/* A DEFINITE height from the viewport. `height: 100%` of a workbench slot with
+   no height resolves to auto, so `fit()` measured a stage as tall as the device
+   it was trying to fit - and never scaled a tall phone down to the screen. */
+.sl-mob {
+  display: flex; flex-direction: column; min-height: 0;
+  height: max(30rem, calc(100vh - 13rem));
+  height: max(30rem, calc(100dvh - 13rem));
+}
 .sl-mob__bar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 0 auto;
   padding: 7px 9px; border-bottom: 1px solid rgb(var(--sfs-line-rgb) / 0.16);

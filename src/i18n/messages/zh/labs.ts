@@ -433,6 +433,8 @@ const labs: Catalogue = {
     'Preview': '预览',
     'App preview': '应用预览',
     'Reload': '重新加载',
+    'Full screen': '全屏',
+    'Exit full screen': '退出全屏',
     'The development server is not running yet.': '开发服务器尚未启动。',
     'in the console to build the app.': '在控制台中构建应用。',
     '{v0} SQL queries ran for this page': '本页面执行了 {v0} 条 SQL 查询',

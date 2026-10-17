@@ -7271,6 +7271,57 @@ section('7. The web playground');
     const empty = buildPreview('', '', '');
     check('three empty panes still produce a valid document',
           empty.includes('<!DOCTYPE html>') && empty.includes('sfsLab'));
+
+    /* "I add a style and the output does not change". A full document with no
+       closing </body> - every document while it is being typed - used to get
+       neither the CSS pane nor the JS pane, because only `</body>` was looked
+       for. */
+    const open = buildPreview('<html><head><title>t</title></head><body><p>x</p>',
+                              'p { color: red }', 'console.log(3)');
+    check('A DOCUMENT WITH NO </body> STILL GETS THE CSS PANE',
+          open.includes('p { color: red }'), open);
+    check('...AND THE JS PANE, after the shim',
+          open.includes('console.log(3)')
+          && open.indexOf('sfsLab') < open.indexOf('console.log(3)'), open);
+    check('the CSS pane lands in the head, after the student\'s own head content',
+          open.indexOf('p { color: red }') < open.indexOf('</head>')
+          && open.indexOf('<title>t</title>') < open.indexOf('p { color: red }'));
+    const headless = buildPreview('<html><body><p>y</p></body></html>', 'b{}', 'var z=1');
+    check('a document with NO <head> still gets the shim, the CSS and the JS',
+          headless.includes('sfsLab') && headless.includes('b{}')
+          && headless.includes('var z=1')
+          && headless.indexOf('var z=1') < headless.indexOf('</body>'), headless);
+    const bare = buildPreview('<html><p>z</p>', 'i{}', 'var w=2');
+    check('a document with neither </body> nor </html> still gets everything',
+          bare.includes('i{}') && bare.includes('var w=2') && bare.includes('sfsLab'));
+    const dollars = buildPreview('<html><body></body></html>', "a::after{content:'$&'}",
+                                 "var p = '$' + 1; var q = \"$'\"; var r = `$`;");
+    check('$& and $\' in student code are kept verbatim, not expanded by replace()',
+          dollars.includes("content:'$&'") && dollars.includes("var q = \"$'\"")
+          && dollars.includes("var p = '$' + 1"), dollars);
+
+    const web = stripComments(source('src/components/labs/LabWeb.vue'));
+    check('the web frame is re-created on every render (:key), so it cannot stick',
+          /<iframe[\s\S]{0,40}:key="runId"/.test(web) && /runId\.value \+= 1/.test(web));
+    check('Live is ON by default and remembered',
+          /localStorage\.getItem\(LIVE_KEY\) !== '0'/.test(web));
+    check('the result has Reload and Full screen',
+          /@click="render"/.test(web) && /requestFullscreen\(\)/.test(web));
+
+    const prev = source('src/components/labs/LabPreview.vue');
+    check('THE BROWSER STAGE HAS A DEFINITE, VIEWPORT-BASED HEIGHT',
+          /\.sl-prev__stage \{[\s\S]{0,200}height: max\(22rem, calc\(100dvh - 15rem\)\)/.test(prev));
+    check('...and the iframe fills it absolutely, never falling back to 150px',
+          /\.sl-prev__frame \{[\s\S]{0,80}position: absolute; inset: 0/.test(prev));
+    check('...and is re-created per response, so Reload really reloads',
+          /<iframe :key="runId"/.test(prev));
+    check('the browser can go full screen', /requestFullscreen\(\)/.test(prev));
+    check('the phone pane has a definite height to fit the device into',
+          /\.sl-mob \{[\s\S]{0,120}height: max\(30rem, calc\(100dvh - 13rem\)\)/
+          .test(source('src/components/labs/LabMobile.vue')));
+    check('the web result fills the screen rather than a fixed 24rem box',
+          /\.sl-web__frame \{[\s\S]{0,250}height: max\(22rem, calc\(100dvh - 17rem\)\)/
+          .test(source('src/assets/css/labs.css')));
 }
 
 /* ─────────────────── 8. the tutor prompt ─────────────────── */

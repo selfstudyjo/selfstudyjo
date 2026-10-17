@@ -1,5 +1,5 @@
 <template>
-  <div class="sl-prev">
+  <div ref="root" class="sl-prev" :class="{ 'is-full': fullscreen }">
     <div class="sl-prev__bar">
       <button class="sl-prev__nav" :disabled="!canBack" :title="$t('Back')"
               @click="back"><ChevronLeft :size="15" /></button>
@@ -14,6 +14,12 @@
       <span v-if="status" class="sl-prev__status" :class="statusClass">
         {{ status }}
       </span>
+      <button v-if="canFullscreen" class="sl-prev__nav"
+              :title="fullscreen ? $t('Exit full screen') : $t('Full screen')"
+              :aria-label="fullscreen ? $t('Exit full screen') : $t('Full screen')"
+              @click="toggleFullscreen">
+        <component :is="fullscreen ? Minimize : Expand" :size="14" />
+      </button>
     </div>
 
     <div v-if="routes.length" class="sl-prev__routes">
@@ -33,7 +39,12 @@
         in it. `srcdoc` rather than a blob URL for the same reason: a `blob:`
         inherits THIS origin.
       -->
-      <iframe ref="frame" class="sl-prev__frame" :title="$t('Preview')"
+      <!--
+        `:key` - a fresh frame per response, so Reload on the same page really
+        reloads (an identical `srcdoc` is a no-op) and a wedged document can
+        never hold the next one back.
+      -->
+      <iframe :key="runId" ref="frame" class="sl-prev__frame" :title="$t('Preview')"
               sandbox="allow-scripts allow-forms allow-modals"
               :srcdoc="srcdoc"></iframe>
       <div v-if="!running && !srcdoc" class="sl-prev__idle">
@@ -76,8 +87,8 @@
  * - **A 500 is rendered, not swallowed.** The engine returns an error page with
  *   the offending line on it; showing that IS the debugging lesson.
  */
-import { computed, ref, watch } from 'vue';
-import { ChevronLeft, Globe, RotateCw } from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { ChevronLeft, Expand, Globe, Minimize, RotateCw } from 'lucide-vue-next';
 
 const props = defineProps<{
   family: string;
@@ -94,6 +105,26 @@ const queries = ref<string[]>([]);
 const routes = ref<Array<{ route: string; name: string; view: string }>>([]);
 const history = ref<string[]>([]);
 const frame = ref<HTMLIFrameElement | null>(null);
+const root = ref<HTMLElement | null>(null);
+const runId = ref(0);
+const fullscreen = ref(false);
+const canFullscreen = typeof document !== 'undefined'
+  && Boolean(document.fullscreenEnabled);
+
+/** The whole browser - bar, routes and page - full screen. Our element, not
+ *  the student's document, so the sandbox is untouched. */
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await root.value?.requestFullscreen();
+  } catch { /* refused */ }
+}
+
+function onFullscreenChange() {
+  fullscreen.value = Boolean(root.value) && document.fullscreenElement === root.value;
+}
+
+onMounted(() => document.addEventListener('fullscreenchange', onFullscreenChange));
 
 const host = computed(() =>
   props.family === 'flask' ? 'http://127.0.0.1:5000' : 'http://127.0.0.1:8000');
@@ -179,6 +210,7 @@ async function go(target: string, method = 'GET', data?: Record<string, unknown>
   if (!result?.ok) {
     status.value = '';
     srcdoc.value = errorDoc(result?.error || 'The preview could not be built');
+    runId.value += 1;
     return;
   }
   const response = result.response || {};
@@ -195,6 +227,7 @@ async function go(target: string, method = 'GET', data?: Record<string, unknown>
   srcdoc.value = (response.content_type === 'application/json'
     ? jsonDoc(body)
     : body) + SHIM;
+  runId.value += 1;
   if (history.value[history.value.length - 1] !== next) history.value.push(next);
 }
 
@@ -227,6 +260,10 @@ function onMessage(event: MessageEvent) {
 }
 
 window.addEventListener('message', onMessage);
+onBeforeUnmount(() => {
+  window.removeEventListener('message', onMessage);
+  document.removeEventListener('fullscreenchange', onFullscreenChange);
+});
 
 watch(() => props.running, (isRunning, was) => {
   if (isRunning && !was && !srcdoc.value) go('/');
@@ -238,11 +275,9 @@ go('/');
 
 <style scoped>
 .sl-prev {
-  display: flex; flex-direction: column; height: 100%;
-  /* The workbench slot has no height of its own, so without a floor the
-     frame falls back to an iframe's default 150px - a page the student
-     cannot read. */
-  min-height: min(72vh, 760px);
+  display: flex; flex-direction: column;
+  border: 1px solid rgb(var(--sfs-line-rgb) / 0.16);
+  border-radius: 10px; overflow: hidden;
 }
 .sl-prev__bar {
   display: flex; align-items: center; gap: 6px; padding: 7px 8px;
@@ -290,8 +325,36 @@ go('/');
 .sl-prev__route.is-active {
   background: var(--sfs-accent); color: var(--sfs-on-accent); border-color: transparent;
 }
-.sl-prev__stage { position: relative; flex: 1 1 auto; min-height: 0; background: #fff; }
-.sl-prev__frame { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+/*
+  THE STAGE HAS A HEIGHT OF ITS OWN, AND THE FRAME FILLS IT ABSOLUTELY.
+
+  This was the "only the top half of the page shows" bug. The pane sat in a
+  workbench slot with no definite height, so `.sl-prev { height: 100% }`
+  resolved to auto, the stage's flex-grown height was not definite either, and
+  the iframe's `height: 100%` fell back to an iframe's intrinsic 150px - drawn
+  at the top of a white stage, which read as the bottom of the page being
+  blank. A definite stage height from the VIEWPORT, and an iframe pinned to all
+  four edges of it, cannot fall back to anything.
+
+  `vh` then `dvh`: a phone whose address bar slides away gets the real visible
+  height, and a browser without `dvh` keeps the first line.
+*/
+.sl-prev__stage {
+  position: relative; flex: 0 0 auto; background: #fff;
+  height: max(22rem, calc(100vh - 15rem));
+  height: max(22rem, calc(100dvh - 15rem));
+}
+.sl-prev__frame {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; display: block; background: #fff;
+}
+/* Full screen: the stage takes whatever the bar, routes and SQL leave. */
+.sl-prev:fullscreen,
+.sl-prev.is-full {
+  width: 100%; height: 100%; border: 0; border-radius: 0;
+  background: var(--sfs-space, #0b1020);
+}
+.sl-prev.is-full .sl-prev__stage { flex: 1 1 auto; height: auto; min-height: 0; }
 .sl-prev__idle {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 8px; text-align: center;
@@ -302,7 +365,7 @@ go('/');
   border-radius: 6px; font-size: 0.8rem; direction: ltr;
 }
 .sl-prev__sql {
-  flex: 0 0 auto; max-height: 32%; overflow: auto; font-size: 0.75rem;
+  flex: 0 0 auto; max-height: 12rem; overflow: auto; font-size: 0.75rem;
   border-top: 1px solid rgb(var(--sfs-line-rgb) / 0.16);
   background: rgb(var(--sfs-tint-rgb) / 0.04); padding: 6px 10px;
 }

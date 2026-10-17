@@ -445,6 +445,8 @@ const labs: Catalogue = {
     'Preview': 'معاينة',
     'App preview': 'معاينة التطبيق',
     'Reload': 'إعادة التحميل',
+    'Full screen': 'ملء الشاشة',
+    'Exit full screen': 'الخروج من ملء الشاشة',
     'The development server is not running yet.': 'خادم التطوير لا يعمل بعد.',
     'in the console to build the app.': 'في الطرفية لبناء التطبيق.',
     '{v0} SQL queries ran for this page': 'نُفِّذ {v0} استعلام SQL لهذه الصفحة',

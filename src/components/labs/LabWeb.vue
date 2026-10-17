@@ -72,10 +72,22 @@
         ></textarea>
       </div>
 
-      <div class="sl-web__result">
+      <div ref="result" class="sl-web__result" :class="{ 'is-full': fullscreen }">
         <div class="sl-web__resulthead">
           <span>{{ $t('Result') }}</span>
           <span v-if="stale" class="sl-web__stale">{{ $t('Press Run to update') }}</span>
+          <span class="sl-web__resulttools">
+            <button type="button" class="sl-web__icon" :title="$t('Reload')"
+                    :aria-label="$t('Reload')" @click="render">
+              <RotateCw class="sl-i" />
+            </button>
+            <button v-if="canFullscreen" type="button" class="sl-web__icon"
+                    :title="fullscreen ? $t('Exit full screen') : $t('Full screen')"
+                    :aria-label="fullscreen ? $t('Exit full screen') : $t('Full screen')"
+                    @click="toggleFullscreen">
+              <component :is="fullscreen ? Minimize : Expand" class="sl-i" />
+            </button>
+          </span>
         </div>
         <!--
           `allow-scripts` WITHOUT `allow-same-origin`, and that omission is the
@@ -93,7 +105,14 @@
           other direction. "Big preview" widens this frame instead, which is the
           same thing to look at and none of the risk.
         -->
+        <!--
+          A FRESH FRAME FOR EVERY RENDER (`:key`). Setting `srcdoc` to the same
+          string is a no-op in every browser, and a frame whose previous
+          document is still loading or wedged in a script can swallow the next
+          one - both read as "the playground is stuck". A new element cannot.
+        -->
         <iframe
+          :key="runId"
           ref="frame"
           class="sl-web__frame"
           title="Result"
@@ -130,10 +149,9 @@
  * things no screenshot shows: that the shim is present before the student's
  * script, and that a FULL document the student wrote is not silently rewrapped.
  *
- * **Live mode is debounced and off by default for the JS pane's sake.** Typing
- * half a statement re-renders a frame whose script throws, which fills the
- * console with errors about code the student has not finished writing. The Run
- * button is the honest default; Live is a choice.
+ * **Live mode is ON by default and debounced** (it was off, and a style typed
+ * with Live off changes nothing until Run - reported as the playground being
+ * stuck). The choice is remembered per browser.
  *
  * Three things changed on 2026-09-01, after "I can't see my design", and all
  * three are the same fault seen from different angles: **the browser owns this
@@ -157,7 +175,9 @@
  * typed since the last Run" were all silent.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { Code2, Maximize2, Minimize2, Play, Save } from 'lucide-vue-next';
+import {
+  Code2, Expand, Maximize2, Minimize, Minimize2, Play, RotateCw, Save,
+} from 'lucide-vue-next';
 import { buildPreview } from '@/utils/labCatalogue';
 import { t } from '@/i18n/runtime';
 
@@ -176,7 +196,19 @@ const html = ref(props.initial?.html || '');
 const css = ref(props.initial?.css || '');
 const js = ref(props.initial?.js || '');
 const active = ref<'html' | 'css' | 'js'>('html');
-const live = ref(false);
+/*
+  LIVE IS ON BY DEFAULT now, and remembered. Off, a student types a style,
+  watches a frame that does not change and concludes the playground is broken -
+  which is how it was reported. A half-typed script throwing in the console is
+  the smaller cost, and the debounce keeps it to one error per pause.
+*/
+const LIVE_KEY = 'sfs-lab-web-live';
+const live = ref(readLive());
+const runId = ref(0);
+const result = ref<HTMLElement | null>(null);
+const fullscreen = ref(false);
+const canFullscreen = typeof document !== 'undefined'
+  && Boolean(document.fullscreenEnabled);
 const wide = ref(false);
 const saving = ref(false);
 const note = ref('');
@@ -214,10 +246,33 @@ function adopt(value: { html?: string; css?: string; js?: string } | undefined) 
   render();
 }
 
+function readLive(): boolean {
+  try { return localStorage.getItem(LIVE_KEY) !== '0'; } catch { return true; }
+}
+
 function render() {
+  window.clearTimeout(debounce);
   logs.value = [];
   srcdoc.value = buildPreview(html.value, css.value, js.value);
+  runId.value += 1;
   rendered.value = signature();
+}
+
+/**
+ * Full screen for the RESULT, header and console included - our own element,
+ * not the student's document, so the sandbox is untouched. Hidden where the
+ * API is missing (iOS Safari only fullscreens video).
+ */
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await result.value?.requestFullscreen();
+  } catch { /* refused - nothing to undo */ }
+}
+
+function onFullscreenChange() {
+  fullscreen.value = Boolean(result.value)
+    && document.fullscreenElement === result.value;
 }
 
 /** Run: render now, persist in the background. */
@@ -297,7 +352,13 @@ watch([html, css, js], () => {
   touched.value = true;
   if (!live.value) return;
   window.clearTimeout(debounce);
-  debounce = window.setTimeout(() => { render(); queueSave(); }, 500);
+  debounce = window.setTimeout(() => { render(); queueSave(); }, 450);
+});
+
+watch(live, value => {
+  try { localStorage.setItem(LIVE_KEY, value ? '1' : '0'); } catch { /* private mode */ }
+  // Switching Live on with edits pending shows them at once.
+  if (value && stale.value) render();
 });
 
 /**
@@ -312,11 +373,13 @@ watch(() => props.initial, value => {
 
 onMounted(() => {
   window.addEventListener('message', onMessage);
+  document.addEventListener('fullscreenchange', onFullscreenChange);
   render();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('message', onMessage);
+  document.removeEventListener('fullscreenchange', onFullscreenChange);
   window.clearTimeout(debounce);
   window.clearTimeout(saveTimer);
 });
