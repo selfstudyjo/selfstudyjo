@@ -242,23 +242,24 @@ async function removeConn() {
 </script>
 
 <style scoped>
-.ad-nav { width: 220px; flex: none; padding: 4px 8px; border-right: 1px solid #e0e0e0; overflow: auto; }
+.ad-nav { width: 240px; flex: none; padding: 4px 12px 4px calc(var(--fx-gutter) - 12px); border-right: 1px solid #e0e0e0; overflow: auto; }
 .ad-nav button { display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 4px; background: transparent; text-align: left; font: 14px "Segoe UI", sans-serif; cursor: pointer; color: #242424; }
 .ad-nav button:hover { background: #f0f0f0; }
 .ad-nav button.is-active { background: #e6f2ef; font-weight: 600; }
-.ad-bar { padding: 8px 16px; }
+.ad .fx-content { --fx-gutter: 16px; }
+.ad-bar { padding: 8px var(--fx-gutter); }
 .ad-note { font-size: 12px; }
-.ad-msg { margin: 8px 16px 0; }
+.ad-msg { margin: 8px var(--fx-gutter) 0; }
 .ad-table { min-width: 960px; }
 .ad-actions { display: flex; gap: 6px; align-items: center; }
 .ad-ws { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 .ad-meter { display: inline-block; width: 60px; height: 6px; border-radius: 3px; background: #ebebeb; overflow: hidden; vertical-align: middle; }
 .ad-meter span { display: block; height: 100%; }
-.ad-metrics { padding: 0 16px 16px; }
+.ad-metrics { padding: 0 var(--fx-gutter) 16px; }
 .ad-pre { font: 12px Consolas, monospace; white-space: pre-wrap; color: #424242; }
 .ad-p { margin: 0 0 8px; }
 @container sl-portal (max-width: 700px) {
-  .ad-nav { width: auto; display: flex; flex-wrap: wrap; gap: 2px; border-right: 0; border-bottom: 1px solid #e0e0e0; }
+  .ad-nav { width: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 0 calc(var(--fx-gutter) - 12px) 6px; border-right: 0; border-bottom: 1px solid #e0e0e0; }
   .ad-nav button { white-space: nowrap; width: auto; }
 }
 </style>

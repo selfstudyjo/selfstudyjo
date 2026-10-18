@@ -276,6 +276,138 @@
     <template v-else-if="name === 'pause'">
       <path d="M7 4.5v11M13 4.5v11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
     </template>
+    <!-- Workload tiles: a coloured rounded square with a white glyph (the Workload hub's style) -->
+    <template v-else-if="name.startsWith('wl-')">
+      <rect x="1" y="1" width="18" height="18" rx="4.5" :fill="wlColor" />
+      <path d="M1 12.5 12.5 1H14.5A4.5 4.5 0 0 1 19 5.5v0L5.5 19H5.5A4.5 4.5 0 0 1 1 14.5z" fill="#fff" opacity=".1" />
+      <template v-if="name === 'wl-dataeng'">
+        <path d="M10 4.6 5 8.6v6.2h10V8.6z" fill="#fff" />
+        <path d="M6.6 12.2c1.1-.7 2.2-.7 3.4 0s2.2.7 3.4 0v1.3c-1.1.7-2.3.7-3.4 0s-2.3-.7-3.4 0z" :fill="wlColor" />
+      </template>
+      <template v-else-if="name === 'wl-factory'">
+        <rect x="4.2" y="4.6" width="4.6" height="3.8" rx=".8" fill="#fff" />
+        <rect x="11.2" y="11.6" width="4.6" height="3.8" rx=".8" fill="#fff" />
+        <path d="M8.8 6.5h2.4a1.4 1.4 0 0 1 1.4 1.4v3.7" stroke="#fff" stroke-width="1.4" fill="none" />
+      </template>
+      <template v-else-if="name === 'wl-science'">
+        <path d="M8.2 4.5h3.6M8.9 4.5v3.7L5.3 14a1 1 0 0 0 .9 1.5h7.6a1 1 0 0 0 .9-1.5l-3.6-5.8V4.5" stroke="#fff" stroke-width="1.4" fill="none" stroke-linejoin="round" />
+        <path d="M6.9 12.4h6.2l1.2 2H5.7z" fill="#fff" />
+      </template>
+      <template v-else-if="name === 'wl-warehouse'">
+        <rect x="4.5" y="5" width="11" height="10" rx="1" fill="#fff" />
+        <path d="M4.5 8.4h11M4.5 11.7h11M8.2 5v10M11.8 5v10" :stroke="wlColor" stroke-width="1" />
+      </template>
+      <template v-else-if="name === 'wl-databases'">
+        <ellipse cx="10" cy="6" rx="4.6" ry="1.8" fill="#fff" />
+        <path d="M5.4 6v7.6c0 1 2.1 1.8 4.6 1.8s4.6-.8 4.6-1.8V6c0 1-2.1 1.8-4.6 1.8S5.4 7 5.4 6z" fill="#fff" opacity=".85" />
+        <path d="M5.4 9.9c0 1 2.1 1.8 4.6 1.8s4.6-.8 4.6-1.8" :stroke="wlColor" stroke-width=".9" fill="none" />
+      </template>
+      <template v-else-if="name === 'wl-powerbi'">
+        <rect x="5" y="9.5" width="2.4" height="5.5" rx=".6" fill="#fff" />
+        <rect x="8.8" y="6.8" width="2.4" height="8.2" rx=".6" fill="#fff" />
+        <rect x="12.6" y="4.8" width="2.4" height="10.2" rx=".6" fill="#fff" />
+      </template>
+      <template v-else-if="name === 'wl-realtime'">
+        <path d="M11.2 3.8 5.8 11h3.6l-1 5.2L14.2 9h-3.6z" fill="#fff" />
+      </template>
+      <template v-else>
+        <path d="M4.5 15.5V8l3.5-2v9.5M8 15.5V5l4.5 2.4v8.1M12.5 15.5V9.5l3 1.4v4.6M3.5 15.5h13" stroke="#fff" stroke-width="1.3" fill="none" stroke-linejoin="round" />
+      </template>
+    </template>
+    <!-- Item types this lab does not model: shown on the Create and Workload hubs only -->
+    <template v-else-if="name === 'SparkJobDefinition'">
+      <rect x="3" y="3" width="14" height="14" rx="2" fill="#ca5010" />
+      <path d="M10 5.2l1.2 3.6 3.6 1.2-3.6 1.2L10 14.8l-1.2-3.6L5.2 10l3.6-1.2z" fill="#fff" />
+    </template>
+    <template v-else-if="name === 'GraphQLApi'">
+      <path d="M10 2.5 16.5 6.2v7.6L10 17.5l-6.5-3.7V6.2z" fill="#c239b3" />
+      <path d="M10 5.5 13.9 12.3H6.1z" fill="none" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'Dataflow'">
+      <rect x="2.5" y="3" width="15" height="14" rx="2" fill="#0f6cbd" />
+      <path d="M5 8c1.7-1.4 3.3-1.4 5 0s3.3 1.4 5 0M5 12c1.7-1.4 3.3-1.4 5 0s3.3 1.4 5 0" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'CopyJob'">
+      <rect x="2.5" y="2.5" width="9.5" height="11" rx="1.2" fill="#62abf5" />
+      <rect x="8" y="6.5" width="9.5" height="11" rx="1.2" fill="#0f6cbd" />
+      <path d="M10.5 12h4.2m-1.6-1.8 1.8 1.8-1.8 1.8" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'Airflow'">
+      <circle cx="10" cy="10" r="7.5" fill="#00727c" />
+      <path d="M10 10 10 4.2a3 3 0 0 1 0 5.8zM10 10l5.8 0a3 3 0 0 1-5.8 0zM10 10v5.8a3 3 0 0 1 0-5.8zM10 10H4.2a3 3 0 0 1 5.8 0z" fill="#9fe2e8" />
+    </template>
+    <template v-else-if="name === 'MLModel'">
+      <circle cx="5" cy="6" r="2.2" fill="#8764b8" /><circle cx="5" cy="14" r="2.2" fill="#8764b8" />
+      <circle cx="15" cy="10" r="2.6" fill="#5c2e91" />
+      <path d="M7 6.8 12.6 9.2M7 13.2l5.6-2.4" stroke="#8764b8" stroke-width="1.4" />
+    </template>
+    <template v-else-if="name === 'Experiment'">
+      <path d="M7.6 2.8h4.8M8.4 2.8v4.8L4 15.2a1.3 1.3 0 0 0 1.1 2h9.8a1.3 1.3 0 0 0 1.1-2l-4.4-7.6V2.8" fill="#efe6fb" stroke="#8764b8" stroke-width="1.3" stroke-linejoin="round" />
+      <path d="M6 12.6h8l1.4 2.6a.8.8 0 0 1-.7 1.2H5.3a.8.8 0 0 1-.7-1.2z" fill="#8764b8" />
+    </template>
+    <template v-else-if="name === 'SampleWarehouse'">
+      <rect x="3" y="5" width="12" height="11.5" rx="1" fill="#1f5fc4" />
+      <path d="M3 8.8h12M3 12.6h12M7 5v11.5M11 5v11.5" stroke="#a9c8f5" stroke-width="1" />
+      <path d="M15.5 1.8l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#f2b31b" />
+    </template>
+    <template v-else-if="name === 'MirroredDatabase'">
+      <ellipse cx="8" cy="5" rx="5" ry="2" fill="#2a7ec8" />
+      <path d="M3 5v8c0 1.1 2.2 2 5 2s5-.9 5-2V5c0 1.1-2.2 2-5 2S3 6.1 3 5z" fill="#1260a8" />
+      <circle cx="14.5" cy="14" r="3.6" fill="#fff" stroke="#0f6cbd" stroke-width="1.1" />
+      <path d="M12.9 13.3h3l-1-1M16.1 14.7h-3l1 1" stroke="#0f6cbd" stroke-width=".9" fill="none" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'SQLDatabase'">
+      <ellipse cx="10" cy="5" rx="6" ry="2.3" fill="#0078d4" />
+      <path d="M4 5v10c0 1.3 2.7 2.3 6 2.3s6-1 6-2.3V5c0 1.3-2.7 2.3-6 2.3S4 6.3 4 5z" fill="#005ba1" />
+      <text x="10" y="14.4" text-anchor="middle" font-size="5" font-weight="700" fill="#fff" font-family="Segoe UI, sans-serif">SQL</text>
+    </template>
+    <template v-else-if="name === 'CosmosDB'">
+      <circle cx="10" cy="10" r="6" fill="#2a7ec8" />
+      <ellipse cx="10" cy="10" rx="8.5" ry="3" fill="none" stroke="#62abf5" stroke-width="1.2" transform="rotate(-25 10 10)" />
+      <circle cx="8" cy="8.4" r="1.5" fill="#cfe4fa" />
+    </template>
+    <template v-else-if="name === 'Dashboard'">
+      <rect x="2.5" y="3" width="7" height="6" rx="1" fill="#f0b400" /><rect x="10.5" y="3" width="7" height="9" rx="1" fill="#c87800" />
+      <rect x="2.5" y="10" width="7" height="7" rx="1" fill="#c87800" /><rect x="10.5" y="13" width="7" height="4" rx="1" fill="#f0b400" />
+    </template>
+    <template v-else-if="name === 'PaginatedReport'">
+      <path d="M6 4h8.5L16 5.5V17H6z" fill="#fde7a9" stroke="#c87800" stroke-width="1" />
+      <path d="M4 2.5h8.5L14 4v11.5H4z" fill="#f0b400" />
+      <path d="M6 6.5h6M6 9h6M6 11.5h4" stroke="#6b4c00" stroke-width="1.1" />
+    </template>
+    <template v-else-if="name === 'Eventhouse'">
+      <path d="M10 2.5 3 8v9.5h14V8z" fill="#c03b8a" />
+      <path d="M10.8 8.2 7.6 12.4h2.3l-.7 3.2 3.4-4.4h-2.3z" fill="#fff" />
+    </template>
+    <template v-else-if="name === 'Eventstream'">
+      <rect x="2.5" y="3" width="15" height="14" rx="2" fill="#c03b8a" />
+      <path d="M5 7.5h6M5 10h9M5 12.5h6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" />
+      <path d="m12.5 11 1.6-1-1.6-1" stroke="#fff" stroke-width="1.2" fill="none" />
+    </template>
+    <template v-else-if="name === 'KQLQueryset'">
+      <path d="M4.5 2.5h7L15.5 6.5v11h-11z" fill="#c03b8a" />
+      <path d="M11.5 2.5v4h4" fill="#e78ac2" />
+      <path d="m7.5 10-1.5 1.5L7.5 13M10.5 10l1.5 1.5L10.5 13" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'RTDashboard'">
+      <rect x="2.5" y="3" width="15" height="14" rx="2" fill="#c03b8a" />
+      <path d="M4.8 13.2l3-3.6 2.4 2 4.6-5.4" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'Activator'">
+      <circle cx="10" cy="10" r="7.5" fill="#e3008c" />
+      <path d="M11 4.6 6.6 10.8h3l-.8 4.6 4.6-6.4h-3z" fill="#fff" />
+    </template>
+    <template v-else-if="name === 'Healthcare'">
+      <rect x="2.5" y="2.5" width="15" height="15" rx="3" fill="#0f6cbd" />
+      <path d="M8.4 5.5h3.2v2.9h2.9v3.2h-2.9v2.9H8.4v-2.9H5.5V8.4h2.9z" fill="#fff" />
+    </template>
+    <template v-else-if="name === 'Retail'">
+      <path d="M2.5 4h2l1.6 8.2h8.6l1.8-6H5.4" fill="none" stroke="#ca5010" stroke-width="1.5" stroke-linejoin="round" />
+      <circle cx="7" cy="15.5" r="1.4" fill="#ca5010" /><circle cx="13.5" cy="15.5" r="1.4" fill="#ca5010" />
+    </template>
+    <template v-else-if="name === 'Sustainability'">
+      <path d="M16.5 3.5C9 3.5 4 6.8 4 12.2c0 1.7.6 3 1.6 4.1C7 11 10 8.4 13.5 7 10.5 9 8.3 11.6 7 15.6c1 .6 2.2.9 3.5.9 4.6 0 6-5.4 6-13z" fill="#107c10" />
+    </template>
     <template v-else>
       <rect x="3.5" y="3.5" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" />
     </template>
@@ -283,7 +415,15 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{ name: string; size?: number | string }>(), { size: 16 });
+import { computed } from 'vue';
+
+const props = withDefaults(defineProps<{ name: string; size?: number | string }>(), { size: 16 });
+/** The tile colour of each workload icon (Fabric's workload palette). */
+const WL: Record<string, string> = {
+  'wl-dataeng': '#117865', 'wl-factory': '#0f6cbd', 'wl-science': '#7a4fc4', 'wl-warehouse': '#1f5fc4',
+  'wl-databases': '#00727c', 'wl-powerbi': '#c98a00', 'wl-realtime': '#c0298a', 'wl-industry': '#5c6878',
+};
+const wlColor = computed(() => WL[props.name] || '#5c6878');
 </script>
 
 <style scoped>

@@ -38,7 +38,7 @@
               <FxIcon name="Schema" /><span class="fx-node__label">{{ schema }}</span>
             </button>
             <template v-if="!closed.includes(schema)">
-              <div class="fx-node wh-l3 wh-group">Tables</div>
+              <div class="fx-node wh-l3 wh-group"><FxIcon name="Schema" :size="14" /><span class="fx-node__label">Tables</span></div>
               <div role="treeitem" tabindex="0" v-for="t in objectsIn(schema, 'Table')" :key="'t' + t.name" class="fx-node wh-l4"
                       :class="{ 'is-selected': selObj === schema + '.' + t.name }" @click="selObj = schema + '.' + t.name"
                       @dblclick="selectTop(schema, t.name)">
@@ -46,14 +46,14 @@
                 <button type="button" class="fx-iconbtn wh-act" title="Select top 100" @click.stop="selectTop(schema, t.name)"><FxIcon name="play" :size="12" /></button>
                 <button v-if="!isEndpoint" type="button" class="fx-iconbtn wh-act" title="Delete" :aria-label="'Delete table ' + t.name" @click.stop="askDrop('TABLE', schema, t.name)"><FxIcon name="delete" :size="12" /></button>
               </div>
-              <div class="fx-node wh-l3 wh-group">Views</div>
+              <div class="fx-node wh-l3 wh-group"><FxIcon name="Schema" :size="14" /><span class="fx-node__label">Views</span></div>
               <div role="treeitem" tabindex="0" v-for="t in objectsIn(schema, 'View')" :key="'v' + t.name" class="fx-node wh-l4"
                       @dblclick="selectTop(schema, t.name)">
                 <FxIcon name="View" /><span class="fx-node__label">{{ t.name }}</span>
                 <button type="button" class="fx-iconbtn wh-act" title="Select top 100" @click.stop="selectTop(schema, t.name)"><FxIcon name="play" :size="12" /></button>
                 <button type="button" class="fx-iconbtn wh-act" title="Delete" :aria-label="'Delete view ' + t.name" @click.stop="askDrop('VIEW', schema, t.name)"><FxIcon name="delete" :size="12" /></button>
               </div>
-              <div class="fx-node wh-l3 wh-group">Stored Procedures</div>
+              <div class="fx-node wh-l3 wh-group"><FxIcon name="Schema" :size="14" /><span class="fx-node__label">Stored Procedures</span></div>
               <div role="treeitem" tabindex="0" v-for="p in procsIn(schema)" :key="'p' + p.name" class="fx-node wh-l4"
                       @dblclick="execProc(p.name)">
                 <FxIcon name="Procedure" /><span class="fx-node__label">{{ p.name.split('.').pop() }}</span>
@@ -240,7 +240,7 @@ onMounted(() => {
 .wh-l2 { padding-left: 18px; }
 .wh-l3 { padding-left: 40px; }
 .wh-l4 { padding-left: 52px; }
-.wh-group { color: #616161; font-size: 12px; cursor: default; min-height: 24px; }
+.wh-group { color: #424242; font-size: 13px; cursor: default; }
 .wh-act { width: 20px; height: 20px; opacity: 0; }
 .fx-node:hover .wh-act { opacity: 1; }
 .wh-qtabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; background: #fafafa; border-bottom: 1px solid #e0e0e0; overflow-x: auto; overflow-y: hidden; flex: none; }

@@ -30,15 +30,15 @@ defineEmits<{ (event: 'settings'): void; (event: 'share'): void;
 
 <style scoped>
 .ih { border-bottom: 1px solid #e0e0e0; }
-.ih-top { display: flex; align-items: center; gap: 8px; padding: 10px 16px 6px; flex-wrap: wrap; }
+.ih-top { display: flex; align-items: center; gap: 8px; padding: 10px var(--fx-gutter, 16px) 6px; flex-wrap: wrap; }
 .ih-name { margin: 0; font: 600 18px/24px "Segoe UI", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
 .ih-saved { font-size: 12px; }
-.ih-tabs { border-bottom: 0; padding: 0 8px; }
+.ih-tabs { border-bottom: 0; padding: 0 calc(var(--fx-gutter, 16px) - 10px); }
 @container sl-portal (max-width: 600px) {
   .ih-name { max-width: none; flex: 1 1 60px; min-width: 0; }
   .ih-top > .fx-cmdbar__grow { display: none; }
   .ih-saved { display: none; }
-  .ih-top { padding: 8px 12px 4px; gap: 6px; flex-wrap: nowrap; }
+  .ih-top { padding: 8px var(--fx-gutter, 12px) 4px; gap: 6px; flex-wrap: nowrap; }
   /* The label and endorsement stay in Settings; on a phone the row keeps the name. */
   .ih-top > .fx-pill { display: none; }
   .ih-top > :deep(.fx-select) { flex: 0 1 124px; min-width: 96px; }

@@ -7,12 +7,8 @@
     </div>
     <div v-for="group in groups" :key="group.task" class="ni-group">
       <h3 class="fx-h3">{{ group.task }}</h3>
-      <div class="fx-cards">
-        <button v-for="t in group.types" :key="t.type" type="button" class="fx-card"
-                @click="pick(t.type)">
-          <span class="fx-card__title"><FxIcon :name="t.type" :size="24" />{{ t.label }}</span>
-          <span class="fx-card__desc">{{ t.description }}</span>
-        </button>
+      <div class="ni-grid">
+        <FxTypeTile v-for="t in group.types" :key="t.type" :type="t.type" @pick="pick" />
       </div>
     </div>
     <p v-if="!groups.length" class="fx-muted">No items match "{{ filter }}".</p>
@@ -84,7 +80,8 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import FxIcon from './FxIcon.vue';
 import FxModal from './FxModal.vue';
 import FxPanel from './FxPanel.vue';
-import { ITEM_TYPES, cli, errorText, itemPath, rows, typeLabel, useFabric } from './fabric';
+import FxTypeTile from './FxTypeTile.vue';
+import { CREATABLE, ITEM_TYPES, cli, errorText, itemPath, rows, typeLabel, useFabric } from './fabric';
 
 const props = defineProps<{ ws?: string; folder?: string; initialType?: string }>();
 const emit = defineEmits<{ (event: 'close'): void;
@@ -104,8 +101,6 @@ const error = ref('');
 const busy = ref(false);
 const nameInput = ref<HTMLInputElement | null>(null);
 
-const CREATABLE = ['Lakehouse', 'Warehouse', 'Notebook', 'DataPipeline', 'SemanticModel', 'Report',
-  'Environment'];
 const ORDER = ['Get data', 'Store data', 'Prepare data', 'Develop data', 'Visualize data'];
 
 const groups = computed(() => {
@@ -192,6 +187,8 @@ async function create() {
 <style scoped>
 .ni-search { margin-bottom: 8px; }
 .ni-group { margin-bottom: 4px; }
+.ni-group .fx-h3 { margin: 20px 0 10px; }
+.ni-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
 .ni-loc { display: flex; gap: 8px; }
 .ni-loc .fx-select { flex: 1; min-width: 0; }
 .ni-tables { max-height: 220px; overflow: auto; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px 10px 0; }

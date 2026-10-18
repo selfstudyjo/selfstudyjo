@@ -234,14 +234,14 @@ async function doDelete() {
 
 <style scoped>
 .dp-msg { margin: 0 20px 8px; }
-.dp-stages { display: flex; align-items: stretch; gap: 0; padding: 12px 20px; overflow-x: auto; }
+.dp-stages { display: flex; align-items: stretch; gap: 0; padding: 12px var(--fx-gutter); overflow-x: auto; }
 .dp-stage { width: 240px; flex: none; display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid #e0e0e0; border-top: 4px solid #bdbdbd; border-radius: 8px; background: #fff; }
 .dp-stage.is-assigned { border-top-color: #117865; }
 .dp-stage__head { font-weight: 600; font-size: 16px; }
 .dp-ws { display: inline-flex; align-items: center; gap: 6px; }
 .dp-count { font-size: 12px; }
 .dp-between { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 12px; }
-.dp-section { padding: 0 20px 16px; }
+.dp-section { padding: 0 var(--fx-gutter) 16px; --fx-edge: 0px; }
 .dp-p { margin: 0 0 12px; }
 .dp-items { max-height: 200px; overflow: auto; padding-left: 8px; }
 @container sl-portal (max-width: 700px) {
@@ -250,8 +250,8 @@ async function doDelete() {
   .dp-between { flex-direction: row; padding: 10px 0; }
 }
 @container sl-portal (max-width: 600px) {
-  .dp-stages { padding: 12px; }
-  .dp-section { padding: 0 12px 16px; }
+  .dp-stages { padding: 12px var(--fx-gutter); }
+  .dp-section { padding: 0 var(--fx-gutter) 16px; }
   .dp-msg { margin: 0 12px 8px; }
 }
 </style>

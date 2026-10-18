@@ -471,11 +471,11 @@ const lineageColumns = computed(() => {
 </script>
 
 <style scoped>
-.wp-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; flex-wrap: wrap; }
+.wp-head { display: flex; align-items: center; gap: 12px; padding: 20px var(--fx-gutter) 8px; flex-wrap: wrap; }
 .wp-icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 8px; background: #eef5fc; }
 .wp-title { min-width: 0; }
 .wp-headbtns { display: flex; gap: 8px; flex-wrap: wrap; }
-.wp-toolbar { gap: 4px; padding: 8px 20px; border-bottom: 0; }
+.wp-toolbar { gap: 4px; padding: 8px var(--fx-gutter); border-bottom: 0; }
 .wp-toolbar .wp-filter { width: 200px; }
 .wp-toolbar .wp-type { width: 150px; }
 .wp-views { display: flex; gap: 2px; padding-left: 4px; }
@@ -488,7 +488,7 @@ const lineageColumns = computed(() => {
 tr:hover .wp-more, .wp-more:focus { opacity: 1; }
 .wp-child { padding-left: 24px; }
 .wp-owner { display: inline-flex; align-items: center; gap: 6px; }
-.wp-lineage { display: flex; gap: 32px; padding: 20px; align-items: flex-start; flex-wrap: wrap; }
+.wp-lineage { display: flex; gap: 32px; padding: 20px var(--fx-gutter); align-items: flex-start; flex-wrap: wrap; }
 .wp-lcol { display: flex; flex-direction: column; gap: 8px; min-width: 220px; }
 .wp-lcol__title { font-weight: 600; color: #616161; font-size: 13px; }
 .wp-lnode { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,.08); max-width: 300px; }
@@ -496,12 +496,21 @@ tr:hover .wp-more, .wp-more:focus { opacity: 1; }
 .wp-p { margin: 0 0 8px; }
 .wp-dellist { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .wp-dellist li { display: flex; gap: 8px; align-items: center; }
+/* Below ~1000px the commands keep the first row and the filter, type and
+   view switch move to a row of their own, rather than wrapping one at a time. */
+@container sl-portal (max-width: 1000px) {
+  .wp-toolbar { row-gap: 8px; }
+  .wp-toolbar > .fx-cmdbar__grow { flex: 0 0 100%; height: 0; }
+  .wp-toolbar .wp-filter { flex: 1 1 200px; width: auto; }
+}
 @container sl-portal (max-width: 600px) {
-  .wp-head { padding: 12px 12px 6px; }
+  .wp-head { padding: 14px var(--fx-gutter) 6px; }
   .wp-icon { display: none; }
-  .wp-toolbar { padding: 6px 12px; }
+  .wp-toolbar { padding: 6px var(--fx-gutter); }
   .wp-head { flex-wrap: nowrap; }
   .wp-title { flex: 1; }
+  .wp-head > .fx-cmdbar__grow { display: none; }
+  .wp-title .fx-page__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wp-title .fx-page__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wp-headbtns { flex-wrap: nowrap; gap: 4px; }
   .wp-headbtns .wp-lbl { display: none; }

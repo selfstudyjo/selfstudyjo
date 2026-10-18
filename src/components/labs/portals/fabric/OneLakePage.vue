@@ -113,7 +113,7 @@ const labelCounts = computed(() => ['Highly Confidential', 'Confidential', 'Gene
 </script>
 
 <style scoped>
-.ol-bar { padding: 8px 20px; border-bottom: 0; }
+.ol-bar { padding: 10px var(--fx-gutter); border-bottom: 0; }
 .ol-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .ol-chip { height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid #d1d1d1; background: #fff; font: 13px "Segoe UI", sans-serif; cursor: pointer; }
 .ol-chip.is-on { background: #e6f2ef; border-color: #117865; color: #0e6e5c; font-weight: 600; }
@@ -128,7 +128,7 @@ const labelCounts = computed(() => ['Highly Confidential', 'Confidential', 'Gene
 .ol-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .ol-list li { display: flex; gap: 6px; align-items: center; }
 .ol-list .fx-muted { margin-left: auto; font-size: 12px; }
-.ol-govern { padding: 16px 20px; }
+.ol-govern { padding: 16px var(--fx-gutter) 32px; --fx-edge: 0px; }
 .ol-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .ol-tile { padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; color: #424242; }
 .ol-tile__num { font: 600 28px/36px "Segoe UI", sans-serif; color: #242424; }

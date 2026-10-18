@@ -64,7 +64,7 @@ const settings = ref('');
 </script>
 
 <style scoped>
-.gi-body { padding: 16px 20px; }
+.gi-body { padding: 16px var(--fx-gutter); }
 .gi-first { margin-top: 0; }
 .gi-body p { margin: 0 0 16px; line-height: 20px; max-width: 640px; }
 .gi-report { flex: 1; display: flex; flex-direction: column; background: #eaeaea; min-height: 0; }
@@ -77,7 +77,7 @@ const settings = ref('');
 .gi-page { padding: 6px 14px; font-size: 13px; color: #424242; }
 .gi-page.is-active { background: #fff; font-weight: 600; border-bottom: 3px solid #f0b400; }
 @container sl-portal (max-width: 600px) {
-  .gi-body { padding: 12px; }
+  .gi-body { padding: 12px var(--fx-gutter); }
   .gi-canvas { margin: 8px; }
 }
 </style>

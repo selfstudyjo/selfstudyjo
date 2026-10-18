@@ -357,7 +357,7 @@ async function saveJson() {
 .pl-act.is-failed .pl-act__status { color: #c50f1f; }
 .pl-act.is-succeeded .pl-act__status { color: #107c10; }
 .pl-pane { flex: 0 0 auto; height: 40%; min-height: 160px; display: flex; flex-direction: column; border-top: 1px solid #e0e0e0; }
-.pl-panebody { flex: 1; overflow: auto; padding: 12px 16px; }
+.pl-panebody { flex: 1; overflow: auto; padding: 12px var(--fx-gutter); --fx-edge: 0px; }
 .pl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; }
 .pl-err { max-width: 320px; overflow: hidden; text-overflow: ellipsis; color: #c50f1f; }
 .pl-json, .pl-jsoned { font: 12px Consolas, monospace; }

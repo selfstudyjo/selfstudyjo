@@ -132,7 +132,7 @@ function openItem(r: Record<string, any>) {
 
 <style scoped>
 .mo-clock { font-size: 12px; }
-.mo-filters { padding: 6px 20px 10px; border-bottom: 0; gap: 8px; }
+.mo-filters { padding: 4px var(--fx-gutter) 12px; border-bottom: 0; gap: 8px; }
 .mo-search { width: 220px; }
 .mo-sel { width: 160px; }
 .mo-table { min-width: 1000px; }
@@ -144,8 +144,13 @@ tr:hover .mo-more { opacity: 1; }
 .mo-status.is-failed { color: #c50f1f; }
 .mo-status.is-succeeded { color: #107c10; }
 .mo-err { margin-top: 12px; }
+@container sl-portal (max-width: 1000px) {
+  /* The filters fill whole rows instead of leaving one dropdown stranded. */
+  .mo-search { flex: 1 1 100%; width: auto; }
+  .mo-sel { flex: 1 1 140px; width: auto; }
+}
 @container sl-portal (max-width: 600px) {
-  .mo-filters { padding: 6px 12px 10px; }
+  .mo-filters { padding: 4px var(--fx-gutter) 10px; }
   .mo-search { width: 100%; }
   .mo-sel { flex: 1 1 140px; width: auto; }
   .mo-more { opacity: 1; }

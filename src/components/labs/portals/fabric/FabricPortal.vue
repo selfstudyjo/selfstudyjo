@@ -163,8 +163,9 @@
         <OneLakePage v-else-if="route.page === 'onelake'" />
         <DeployPage v-else-if="route.page === 'deploy'" />
         <AdminPage v-else-if="route.page === 'admin'" />
-        <CreatePage v-else-if="route.page === 'create' || route.page === 'workloads'"
-                    @new-workspace="openNewWorkspace" />
+        <CreatePage v-else-if="route.page === 'create'" @new-workspace="openNewWorkspace" />
+        <WorkloadsPage v-else-if="route.page === 'workloads'" />
+        <WorkloadPage v-else-if="route.page === 'workload'" :key="'wl:' + route.wl" />
         <RealTimePage v-else-if="route.page === 'realtime'" />
       </main>
     </div>
@@ -218,6 +219,8 @@ import OneLakePage from './OneLakePage.vue';
 import DeployPage from './DeployPage.vue';
 import AdminPage from './AdminPage.vue';
 import CreatePage from './CreatePage.vue';
+import WorkloadsPage from './WorkloadsPage.vue';
+import WorkloadPage from './WorkloadPage.vue';
 import RealTimePage from './RealTimePage.vue';
 import NewWorkspacePanel from './NewWorkspacePanel.vue';
 import {
@@ -289,6 +292,7 @@ const activeRail = computed(() => {
   const page = route.value.page;
   if (page === 'workspace' || page === 'item') return 'current';
   if (page === 'deploy' || page === 'admin') return '';
+  if (page === 'workload') return 'workloads';
   return page;
 });
 
@@ -559,6 +563,10 @@ function openNewWorkspace() {
   flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column;
   margin: 0 8px 8px 0; border-radius: var(--fx-radius-lg); background: var(--fx-bg1);
   box-shadow: var(--fx-shadow4); overflow: hidden;
+  /* THE PAGE GUTTER: the one horizontal inset every page header, toolbar, tab
+     strip, section and the first/last table cell share, so a title, the toolbar
+     under it and the first column of the list start on the same line. */
+  --fx-gutter: 24px;
 }
 
 .fx-loading { position: relative; height: 2px; flex: none; overflow: hidden; background: var(--fx-brand-tint); }
@@ -650,7 +658,7 @@ function openNewWorkspace() {
 
 /* Ribbon / command bar */
 :where(.fx) :deep(.fx-cmdbar:is(*, b)) {
-  display: flex; align-items: center; gap: 2px; flex-wrap: wrap; padding: 6px 12px;
+  display: flex; align-items: center; gap: 2px; flex-wrap: wrap; padding: 6px calc(var(--fx-gutter) - 8px);
   border-bottom: 1px solid var(--fx-stroke2); background: var(--fx-bg1);
 }
 :where(.fx) :deep(.fx-cmd:is(*, b)) {
@@ -664,7 +672,7 @@ function openNewWorkspace() {
 :where(.fx) :deep(.fx-cmd .fx-ico) { color: var(--fx-brand-fg); }
 :where(.fx) :deep(.fx-cmdbar__sep:is(*, b)) { width: 1px; height: 20px; margin: 0 4px; background: var(--fx-stroke1); }
 :where(.fx) :deep(.fx-cmdbar__grow:is(*, b)) { flex: 1; }
-:where(.fx) :deep(.fx-tabs:is(*, b)) { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--fx-stroke2); overflow-x: auto; }
+:where(.fx) :deep(.fx-tabs:is(*, b)) { display: flex; gap: 4px; padding: 0 calc(var(--fx-gutter) - 10px); border-bottom: 1px solid var(--fx-stroke2); overflow-x: auto; }
 :where(.fx) :deep(.fx-tab:is(*, b)) {
   position: relative; height: 40px; padding: 0 10px; border: 0; background: transparent;
   color: var(--fx-fg2); font: 14px var(--fx-font); cursor: pointer; white-space: nowrap;
@@ -677,14 +685,45 @@ function openNewWorkspace() {
   border-radius: 2px; background: var(--fx-brand);
 }
 
-/* Page header */
+/* ---- The page layout system ----
+   .fx-page            a column filling the main surface
+     .fx-page__head    title block (+ actions on the right), padded by the gutter
+       .fx-page__titles  title over subtitle
+     .fx-page__scroll  the scrolling body
+       .fx-page__body  padded by the SAME gutter, so nothing in it starts on a
+                       different line from the title above it
+         .fx-section   a titled block: .fx-section__head (+ __title, __link)
+   Type follows the Fluent 2 web ramp: 28/36 title1, 20/28 subtitle1,
+   16/22 subtitle2, 14/20 body1, 12/16 caption1. */
 :where(.fx) :deep(.fx-page:is(*, b)) { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 :where(.fx) :deep(.fx-page__scroll:is(*, b)) { flex: 1; min-height: 0; overflow: auto; }
-:where(.fx) :deep(.fx-page__head:is(*, b)) { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; flex-wrap: wrap; }
-:where(.fx) :deep(.fx-page__title:is(*, b)) { margin: 0; font: 600 20px/28px var(--fx-font); }
-:where(.fx) :deep(.fx-page__sub:is(*, b)) { color: var(--fx-fg3); font-size: 13px; }
+:where(.fx) :deep(.fx-page__head:is(*, b)) {
+  display: flex; align-items: center; gap: 8px 12px; padding: 20px var(--fx-gutter) 12px; flex-wrap: wrap;
+}
+:where(.fx) :deep(.fx-page__titles:is(*, b)) { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 260px; }
+:where(.fx) :deep(.fx-page__actions:is(*, b)) { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+:where(.fx) :deep(.fx-page__title:is(*, b)) { margin: 0; font: 600 20px/28px var(--fx-font); color: var(--fx-fg1); }
+:where(.fx) :deep(.fx-page__sub:is(*, b)) { margin: 0; color: var(--fx-fg3); font-size: 14px; line-height: 20px; }
+:where(.fx) :deep(.fx-page:has(> .ih)) { --fx-gutter: 16px; }
+:where(.fx) :deep(.fx-page__body:is(*, b)) { padding: 4px var(--fx-gutter) 32px; }
+:where(.fx) :deep(.fx-section:is(*, b)) { margin-top: 28px; }
+:where(.fx) :deep(.fx-section:first-child) { margin-top: 8px; }
+:where(.fx) :deep(.fx-section__head:is(*, b)) { display: flex; align-items: center; gap: 10px; min-height: 28px; margin-bottom: 12px; }
+:where(.fx) :deep(.fx-section__title:is(*, b)) { margin: 0; font: 600 16px/22px var(--fx-font); color: var(--fx-fg1); }
+:where(.fx) :deep(.fx-section__sub:is(*, b)) { margin: -8px 0 12px; color: var(--fx-fg3); font-size: 14px; line-height: 20px; }
+:where(.fx) :deep(.fx-section__link:is(*, b)) {
+  margin-left: auto; border: 0; padding: 4px 6px; border-radius: var(--fx-radius); background: none;
+  color: var(--fx-brand-fg); font: 600 14px/20px var(--fx-font); cursor: pointer; white-space: nowrap;
+}
+:where(.fx) :deep(.fx-section__link:hover) { background: var(--fx-brand-tint); }
+/* Inside a padded body a table bleeds 8px either side, so its first column's
+   text lines up with the section title while the row hover reaches past it. */
+:where(.fx) :deep(:is(.fx-page__body, .fx-section)) { --fx-edge: 8px; }
+:where(.fx) :deep(:is(.fx-page__body, .fx-section) .fx-tablewrap) { margin-left: -8px; margin-right: -8px; }
+/* In a panel or a dialog a table sits flush with the form fields around it. */
+:where(.fx) :deep(:is(.fx-panel__body, .fx-dialog__body, .fx-settings__body)) { --fx-edge: 0px; }
 :where(.fx) :deep(.fx-h3:is(*, b)) { margin: 16px 0 8px; font: 600 16px/22px var(--fx-font); }
-:where(.fx) :deep(.fx-breadcrumb:is(*, b)) { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 0 20px; font-size: 14px; }
+:where(.fx) :deep(.fx-breadcrumb:is(*, b)) { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 0 calc(var(--fx-gutter) - 4px); font-size: 14px; }
 :where(.fx) :deep(.fx-breadcrumb button) { border: 0; background: none; padding: 2px 4px; border-radius: 4px; font: inherit; color: var(--fx-fg2); cursor: pointer; }
 :where(.fx) :deep(.fx-breadcrumb button:hover) { background: var(--fx-bg4); }
 :where(.fx) :deep(.fx-breadcrumb .is-current) { color: var(--fx-fg1); font-weight: 600; }
@@ -704,12 +743,16 @@ function openNewWorkspace() {
 /* An empty-state row spans the table; it wraps rather than widening every column. */
 :where(.fx) :deep(.fx-table td[colspan]) { white-space: normal; height: auto; padding-top: 12px; padding-bottom: 12px; line-height: 20px; }
 :where(.fx) :deep(.fx-table tr:hover td) { background: var(--fx-bg2); }
+/* The first and last cell carry the page gutter, so a full-width list starts on
+   the same line as the title above it (and 8px in a padded body, see above). */
+:where(.fx) :deep(.fx-table :is(th, td):first-child) { padding-left: var(--fx-edge, var(--fx-gutter, 12px)); }
+:where(.fx) :deep(.fx-table :is(th, td):last-child) { padding-right: var(--fx-edge, var(--fx-gutter, 12px)); }
 :where(.fx) :deep(.fx-table tr.is-selected td) { background: var(--fx-brand-tint); }
 :where(.fx) :deep(.fx-table .fx-cellname) { display: flex; align-items: center; gap: 8px; min-width: 180px; }
 :where(.fx) :deep(.fx-table .fx-cellname button) { border: 0; background: none; font: inherit; color: var(--fx-fg1); cursor: pointer; padding: 0; text-align: left; }
 :where(.fx) :deep(.fx-table .fx-cellname button:hover) { color: var(--fx-link); text-decoration: underline; }
 :where(.fx) :deep(.fx-table input[type='checkbox']) { accent-color: var(--fx-brand); width: 16px; height: 16px; margin: 0; vertical-align: middle; }
-:where(.fx) :deep(.fx-empty:is(*, b)) { padding: 48px 20px; text-align: center; color: var(--fx-fg3); }
+:where(.fx) :deep(.fx-empty:is(*, b)) { padding: 48px var(--fx-gutter); text-align: center; color: var(--fx-fg3); }
 :where(.fx) :deep(.fx-empty h3) { margin: 12px 0 4px; color: var(--fx-fg1); font: 600 16px var(--fx-font); }
 :where(.fx) :deep(.fx-empty p) { max-width: 560px; margin: 0 auto 16px; line-height: 20px; }
 
@@ -864,17 +907,22 @@ function openNewWorkspace() {
   width: 100%; min-height: 120px; padding: 10px 12px; border: 0; outline: 0; resize: vertical;
   font: 13px/20px var(--fx-mono); color: #1f1f1f; background: #fff; tab-size: 4; white-space: pre;
 }
-:where(.fx) :deep(.fx-cards:is(*, b)) { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+:where(.fx) :deep(.fx-cards:is(*, b)) {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 264px), 1fr)); gap: 12px;
+}
 :where(.fx) :deep(.fx-card:is(*, b)) {
-  display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--fx-stroke2);
-  border-radius: var(--fx-radius-lg); background: var(--fx-bg1); text-align: left; font: 14px var(--fx-font);
-  color: var(--fx-fg1); cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 16px; border: 1px solid var(--fx-stroke2);
+  border-radius: var(--fx-radius-lg); background: var(--fx-bg1); text-align: left; font: 14px/20px var(--fx-font);
+  color: var(--fx-fg1); cursor: pointer; transition: box-shadow .12s, border-color .12s;
 }
 :where(.fx) :deep(.fx-card:disabled:is(*, b)) { background: var(--fx-bg2); color: var(--fx-fg-disabled); cursor: default; box-shadow: none; border-color: var(--fx-stroke2); }
 :where(.fx) :deep(.fx-card:disabled .fx-card__desc) { color: var(--fx-fg-disabled); }
 :where(.fx) :deep(.fx-card:not(:disabled):hover) { box-shadow: var(--fx-shadow8); border-color: transparent; }
-:where(.fx) :deep(.fx-card__title:is(*, b)) { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-:where(.fx) :deep(.fx-card__desc:is(*, b)) { font-size: 12px; color: var(--fx-fg3); line-height: 16px; }
+:where(.fx) :deep(.fx-card__title:is(*, b)) { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 600; }
+:where(.fx) :deep(.fx-card__desc:is(*, b)) {
+  font-size: 12px; color: var(--fx-fg3); line-height: 16px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
 :where(.fx) :deep(.fx-kv:is(*, b)) { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; font-size: 14px; }
 :where(.fx) :deep(.fx-kv dt) { color: var(--fx-fg3); }
 :where(.fx) :deep(.fx-kv dd) { margin: 0; word-break: break-word; }
@@ -909,7 +957,7 @@ function openNewWorkspace() {
   .fx-rail__ws { display: block; }
   .fx-rail__item.is-active::before { top: 10px; bottom: 10px; }
   .fx-scrim { display: block; position: absolute; inset: 0; z-index: 24; background: rgba(0, 0, 0, .32); }
-  .fx-main { margin-left: 8px; }
+  .fx-main { margin-left: 8px; --fx-gutter: 20px; }
   .fx-wsfly { left: 8px; width: min(320px, calc(100% - 16px)); }
   :where(.fx) :deep(.fx-explorer:is(*, b)) { width: 200px; }
   :where(.fx) :deep(.fx-settings:is(*, b)) { flex-direction: column; }
@@ -926,14 +974,16 @@ function openNewWorkspace() {
   :where(.fx) :deep(.fx-explorer:is(*, b)) { width: auto; max-height: 38%; border-right: 0; border-bottom: 1px solid var(--fx-stroke2); }
   :where(.fx) :deep(.fx-kv:is(*, b)) { grid-template-columns: 1fr; gap: 2px 0; }
   :where(.fx) :deep(.fx-kv dd) { margin-bottom: 8px; }
-  :where(.fx) :deep(.fx-page__head:is(*, b)) { padding: 12px 12px 6px; }
-  :where(.fx) :deep(.fx-breadcrumb:is(*, b)) { padding: 0 12px; }
+  .fx-main { --fx-gutter: 16px; }
+  :where(.fx) :deep(.fx-page__head:is(*, b)) { padding: 16px var(--fx-gutter) 10px; }
+  :where(.fx) :deep(.fx-page__title:is(*, b)) { font-size: 18px; line-height: 24px; }
+  :where(.fx) :deep(.fx-section:is(*, b)) { margin-top: 24px; }
   /* The ribbon under an item header: tighter commands on a phone so it wraps
      into two rows at most rather than three that push the editor down. */
   :where(.fx) :deep(.ih + .fx-cmdbar:is(*, b)) { padding: 4px 6px; gap: 0 2px; }
   :where(.fx) :deep(.ih + .fx-cmdbar .fx-cmd:is(*, b)) { height: 30px; padding: 0 6px; gap: 4px; font-size: 13px; }
   :where(.fx) :deep(.ih + .fx-cmdbar .fx-cmdbar__sep) { display: none; }
-  :where(.fx) :deep(.fx-tabs:is(*, b)) { padding: 0 6px; gap: 0; }
+  :where(.fx) :deep(.fx-tabs:is(*, b)) { padding: 0 calc(var(--fx-gutter) - 6px); gap: 0; }
   :where(.fx) :deep(.fx-tab:is(*, b)) { padding: 0 6px; }
   :where(.fx) :deep(.fx-tab.is-active::after) { left: 6px; right: 6px; }
   :where(.fx) :deep(.fx-dialog__head:is(*, b)) { padding: 16px 16px 6px; }
