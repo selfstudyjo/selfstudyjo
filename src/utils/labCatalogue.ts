@@ -78,7 +78,7 @@ export interface LabTool {
     id: string;
     label: string;
     kind: 'console' | 'code' | 'query' | 'editor' | 'web' | 'gui'
-        | 'preview' | 'mobile' | 'drive' | 'capture' | 'external' | 'ai';
+        | 'portal' | 'preview' | 'mobile' | 'drive' | 'capture' | 'external' | 'ai';
     engine: string;
     icon: string;
     summary: string;
@@ -88,6 +88,8 @@ export interface LabTool {
     family: string;
     order: number;
     href?: string;
+    /** A portal's product: aws, azure, ambari, sparkui, fabric, jira, servicenow. */
+    skin?: string;
 }
 
 export interface LabTask {

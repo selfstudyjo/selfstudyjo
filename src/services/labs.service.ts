@@ -53,6 +53,10 @@ export interface ToolResult {
     tool?: string;
     engine?: string;
     simulated?: boolean;
+    /** Structured rows an engine returned beside its text, for a portal. */
+    data?: unknown;
+    /** The portal a line was run through, when it spoke as a sibling surface. */
+    via?: string;
     /** SQL-shaped tools answer with these instead of `output`. */
     columns?: string[];
     rows?: Array<Record<string, unknown>>;

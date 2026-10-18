@@ -2673,3 +2673,221 @@
   background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
   font-weight: 650;
 }
+
+/* ─────────────────── portals: the browser frame around a product ───────────────────
+ *
+ * A portal is ANOTHER PRODUCT drawn inside the lab - the AWS console, the Azure
+ * portal, Jira - so, like the terminal, it does not follow the galaxy: an AWS
+ * console that turned purple in Andromeda would be teaching the wrong screen.
+ * The product's own palette lives in its skin (scoped). What is here is only
+ * the browser frame around it, which is a neutral Chromium-like grey in every
+ * galaxy, and the equivalent-CLI drawer, which is a terminal and therefore dark.
+ *
+ * The frame has a FIXED height and the product scrolls inside it. A product
+ * console is an application with its own navigation and its own scroll
+ * regions; letting it grow with its content would push the lab's tabs and the
+ * task list off the screen every time a table had forty rows.
+ */
+.sl-portal {
+  --sl-portal-chrome: #dee1e6;
+  --sl-portal-chrome-ink: #3c4043;
+  --sl-portal-address: #ffffff;
+  --sl-portal-log-bg: #16191f;
+  --sl-portal-log-ink: #d5dbdb;
+  --sl-portal-log-ok: #6ad48b;
+  --sl-portal-log-bad: #ff8a80;
+  --sl-portal-dot-red: #ff5f57;
+  --sl-portal-dot-amber: #febc2e;
+  --sl-portal-dot-green: #28c840;
+  --sl-portal-url-ink: #202124;
+  --sl-portal-lock: #5f6368;
+  --sl-portal-sim-bg: #fff4ce;
+  --sl-portal-sim-ink: #5c4400;
+  --sl-portal-sim-line: #e0c060;
+  --sl-portal-frame-bg: #ffffff;
+  --sl-portal-scroll: #b9bcc2;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgb(0 0 0 / 0.35);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--sl-portal-chrome);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  direction: ltr;
+}
+
+.sl-portal__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--sl-portal-chrome);
+  color: var(--sl-portal-chrome-ink);
+  min-width: 0;
+}
+
+.sl-portal__dots { display: inline-flex; gap: 0.35rem; flex: none; }
+.sl-portal__dots i {
+  width: 0.7rem; height: 0.7rem; border-radius: 50%;
+  background: var(--sl-portal-dot-red); display: block;
+}
+.sl-portal__dots i:nth-child(2) { background: var(--sl-portal-dot-amber); }
+.sl-portal__dots i:nth-child(3) { background: var(--sl-portal-dot-green); }
+
+.sl-portal__address {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  background: var(--sl-portal-address);
+  color: var(--sl-portal-url-ink);
+  font: 0.8rem/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.sl-portal__lock { width: 0.8rem; height: 0.8rem; flex: none; color: var(--sl-portal-lock); }
+.sl-portal__url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sl-portal__sim {
+  flex: none;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--sl-portal-sim-bg);
+  color: var(--sl-portal-sim-ink);
+  border: 1px solid var(--sl-portal-sim-line);
+  font: 600 0.72rem/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  cursor: help;
+}
+
+.sl-portal__reload,
+.sl-portal__copy {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem; height: 1.9rem;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.sl-portal__reload:hover { background: rgb(0 0 0 / 0.08); }
+.sl-portal__icon { width: 1rem; height: 1rem; }
+.sl-portal__icon.is-spinning { animation: sl-spin 1s linear infinite; }
+
+.sl-portal__frame {
+  position: relative;
+  height: clamp(560px, 76vh, 1000px);
+  overflow: hidden;
+  background: var(--sl-portal-frame-bg);
+  /* The product's own layout decides; container queries inside the skins
+     answer to THIS box, which is the width the product actually has. */
+  container-type: inline-size;
+  container-name: sl-portal;
+}
+
+/* The product is a LIGHT application in every galaxy, so the browser's own
+   widgets inside it - a <select> popup, a checkbox, a date picker - must be
+   drawn light too. Left to inherit, the seven dark galaxies' `color-scheme:
+   dark` paints a native dropdown black inside a white AWS form. A skin that
+   is dark itself (a terminal pane, Spark's dark mode) sets its own. */
+.sl-portal__frame { color-scheme: light; }
+
+/* theme.css colours EVERY scrollbar with the galaxy's accent (`* {}`), and no
+   product has a purple scrollbar. One class beats the universal selector. */
+.sl-portal__frame,
+.sl-portal__frame * {
+  scrollbar-color: var(--sl-portal-scroll) transparent;
+}
+.sl-portal__frame ::-webkit-scrollbar-thumb { background: var(--sl-portal-scroll); }
+.sl-portal__frame ::-webkit-scrollbar-track { background: transparent; }
+
+.sl-portal__missing {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 2rem;
+  color: var(--sl-portal-chrome-ink);
+  font: 0.95rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-align: center;
+}
+
+.sl-portal__log {
+  background: var(--sl-portal-log-bg);
+  color: var(--sl-portal-log-ink);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  font: 0.82rem/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.sl-portal__log-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+}
+.sl-portal__count {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  text-align: center;
+  font-size: 0.74rem;
+}
+.sl-portal__chevron { margin-inline-start: auto; transition: transform 0.15s ease; transform: rotate(180deg); }
+.sl-portal__log.is-open .sl-portal__chevron { transform: none; }
+
+.sl-portal__entries {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.75rem 0.6rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+.sl-portal__empty { padding: 0.35rem 0; opacity: 0.75; }
+.sl-portal__entry {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+.sl-portal__entry.is-ok .sl-portal__status { color: var(--sl-portal-log-ok); }
+.sl-portal__entry.is-bad .sl-portal__status { color: var(--sl-portal-log-bad); }
+.sl-portal__command {
+  font: 0.8rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  direction: ltr;
+}
+.sl-portal__surface {
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.1);
+  font-size: 0.72rem;
+}
+.sl-portal__copy { width: 1.6rem; height: 1.6rem; }
+.sl-portal__copy:hover { background: rgb(255 255 255 / 0.1); }
+.sl-portal__output {
+  grid-column: 2 / -1;
+  margin: 0.15rem 0 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  background: rgb(255 80 80 / 0.1);
+  color: var(--sl-portal-log-bad);
+  font: 0.76rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  direction: ltr;
+}
+
+@media (max-width: 640px) {
+  .sl-portal__dots { display: none; }
+  .sl-portal__frame { height: clamp(520px, 80vh, 900px); }
+}

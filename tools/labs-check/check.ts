@@ -31,7 +31,7 @@
 // Plus working rule 13 over every lab component: nothing a model or an operator
 // wrote may reach `v-html`.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { inflateRawSync } from 'node:zlib';
 import { resolve } from 'node:path';
 
@@ -71,6 +71,7 @@ import {
     type LabTrack,
     type LabTask,
 } from '../../src/utils/labCatalogue';
+import * as portal from '../../src/utils/portalKit';
 
 import {
     ancestorsOf,
@@ -7629,7 +7630,11 @@ for (const path of COMPONENTS) {
           !/(^|[^(\w])#[0-9a-fA-F]{3,8}\b(?![^()]*\))/m.test(
             css.replace(/\/\*[\s\S]*?\*\//g, ' ')
                .split('\n')
-               .filter(line => !/--sl-code|--sl-well|background: #fff|#0b111f|#fcd34d/.test(line))
+               // `--sl-portal-*` is the browser frame around a product console:
+               // a fixed Chromium grey in every galaxy, for the reason the
+               // terminal's `--sl-code-*` is fixed - it is another program's
+               // screen, not a page of this one.
+               .filter(line => !/--sl-code|--sl-well|--sl-portal-[\w-]+:|background: #fff|#0b111f|#fcd34d/.test(line))
                .join('\n')),
           'a colour literal outside a fallback');
 }
@@ -8574,6 +8579,203 @@ section('16. The tutor renders steps and copyable code, never markup');
     const prompt = tutorPrompt(null, '');
     check('the prompt asks for the shape the pane renders',
           /## Steps/.test(prompt) && /language tag/.test(prompt) && /inline code/.test(prompt));
+}
+
+/* ─────────────────── 17. Portals ─────────────────── */
+
+section('17. Portals: the product consoles, and the command line they write');
+
+{
+    /*
+     * A POSIX `shlex.split` in miniature, so the quoting is proved against the
+     * reader that will actually consume it rather than against itself. The
+     * engines split every portal line with Python's `shlex.split(posix=True)`;
+     * a value that does not survive this round trip arrives at the engine as
+     * several arguments, and the engine answers about the wrong resource at
+     * exit code 0 - the failure `portalKit.ts` exists to make impossible.
+     */
+    function shlexSplit(line: string): string[] {
+        const out: string[] = [];
+        let word = '';
+        let inWord = false;
+        let quote: '' | "'" | '"' = '';
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (quote === "'") {
+                if (ch === "'") quote = ''; else word += ch;
+                continue;
+            }
+            if (quote === '"') {
+                if (ch === '"') quote = '';
+                else if (ch === '\\' && i + 1 < line.length && '"\\$`'.includes(line[i + 1])) {
+                    word += line[++i];
+                } else word += ch;
+                continue;
+            }
+            if (/\s/.test(ch)) {
+                if (inWord) { out.push(word); word = ''; inWord = false; }
+                continue;
+            }
+            inWord = true;
+            if (ch === "'" || ch === '"') { quote = ch; continue; }
+            if (ch === '\\' && i + 1 < line.length) { word += line[++i]; continue; }
+            word += ch;
+        }
+        if (inWord) out.push(word);
+        return out;
+    }
+
+    const tricky = ['plain', 'two words', "it's", 'a "quoted" word', '$HOME',
+                    '`whoami`', 'back\\slash', 'semi;colon', 'pipe | x', '> f',
+                    'tab\there', 'ünïcødé ✓', 'Key=Name,Value=web tier', '', '*.log',
+                    "''", "'", 'trailing\\'];
+    for (const value of tricky) {
+        const line = portal.cli(['aws', 'x'], { '--value': value === '' ? 'kept' : value });
+        const words = shlexSplit(line);
+        check(`quote() survives shlex: ${JSON.stringify(value)}`,
+              words.length === 4 && words[3] === (value === '' ? 'kept' : value),
+              { line, words });
+    }
+    check('an empty positional survives as one empty argument',
+          JSON.stringify(shlexSplit(portal.cli(['mgr', 'x', '']))) === JSON.stringify(['mgr', 'x', '']));
+    check('a safe word is left unquoted, so the drawer reads like the docs',
+          portal.cli(['aws', 'ec2', 'create-vpc'], { '--cidr-block': '10.0.0.0/16' })
+              === 'aws ec2 create-vpc --cidr-block 10.0.0.0/16');
+
+    const flags = portal.cli(['aws', 'rds', 'create-db-instance'], {
+        '--db-instance-identifier': 'db1',
+        '--multi-az': true,
+        '--no-multi-az': false,
+        '--description': '',
+        '--nothing': null,
+        '--tags': ['a=1', 'b two'],
+        '--empty': [],
+        '--port': 5432,
+    });
+    check('true is a BARE flag (the engines declare their booleans)',
+          / --multi-az( |$)/.test(flags) && !/--multi-az true/.test(flags), flags);
+    check('false, null and an empty string OMIT the flag',
+          !/--no-multi-az|--description|--nothing/.test(flags), flags);
+    check('an array is the flag then each value; an empty array is omitted',
+          /--tags a=1 'b two'/.test(flags) && !/--empty/.test(flags), flags);
+    check('numbers are written as numbers', / --port 5432$/.test(flags), flags);
+    check('flags keep their insertion order',
+          flags.indexOf('--db-instance-identifier') < flags.indexOf('--multi-az')
+          && flags.indexOf('--multi-az') < flags.indexOf('--tags'), flags);
+
+    check('parseJson reads a document', portal.parseJson('{"a":1}')?.a === 1);
+    check('parseJson tolerates a note line before the JSON',
+          portal.parseJson('note: done\n{"Vpc":{"VpcId":"vpc-1"}}')?.Vpc?.VpcId === 'vpc-1');
+    check('parseJson answers null for text, never throws',
+          portal.parseJson('make_bucket: x') === null && portal.parseJson('') === null);
+    check('errorText prefers the error, then the output, and is never empty',
+          portal.errorText({ ok: false, error: 'boom' }) === 'boom'
+          && portal.errorText({ ok: false, output: 'out' }) === 'out'
+          && portal.errorText({ ok: false }).length > 0
+          && portal.errorText(null).length > 0);
+    check('errorCode pulls the AWS-style code out of the message',
+          portal.errorCode({ ok: false, error: 'An error occurred (DependencyViolation) when calling' })
+              === 'DependencyViolation');
+    check('pick answers the fallback for a missing or wrong-typed path',
+          portal.pick({ a: { b: 1 } }, 'a.c', 'x') === 'x'
+          && portal.pick({ a: 3 }, 'a.b', 7) === 7
+          && Array.isArray(portal.pick({ a: { b: 'str' } }, 'a.b', [])));
+    check('rows keeps only objects', portal.rows({ l: [1, null, { a: 1 }, 'x'] }, 'l').length === 1);
+    check('matches is on the named fields, not on key names',
+          portal.matches({ state: 'running', name: 'web' }, 'web', ['name'])
+          && !portal.matches({ state: 'running', name: 'web' }, 'state', ['name', 'state'])
+          && portal.matches({ tags: ['prod', 'eu'] }, 'EU', ['tags']));
+    const ties = [{ k: 1, id: 'a' }, { k: 0, id: 'b' }, { k: 1, id: 'c' }, { k: 0, id: 'd' }];
+    check('sortBy is stable on equal keys (a table must not reshuffle)',
+          portal.sortBy(ties, 'k').map(r => r.id).join('') === 'bdac'
+          && portal.sortBy(ties, 'k', 'desc').map(r => r.id).join('') === 'acbd');
+    check('sortBy sorts numbers numerically and text naturally',
+          portal.sortBy([{ v: 'i-10' }, { v: 'i-9' }], 'v').map(r => r.v).join() === 'i-9,i-10');
+    check('the CIDR rule accepts a CIDR and refuses junk',
+          portal.RULES.cidr()('10.0.0.0/16') === '' && portal.RULES.cidr()('') === ''
+          && portal.RULES.cidr()('10.0.0/16') !== '' && portal.RULES.cidr()('300.0.0.0/8') !== ''
+          && portal.RULES.cidr()('10.0.0.0/33') !== '');
+    check('validate answers the first failing message',
+          portal.validate('', [portal.RULES.required('Name')]) === 'Name is required.');
+}
+
+{
+    const host = source('src/components/labs/portals/LabPortal.vue');
+    const workspace = source('src/views/LabWorkspace.vue');
+    const skins = [...host.matchAll(/(\w+): lazy\(\(\) => import\('\.\/([\w/]+\.vue)'\)\)/g)]
+        .map(m => ({ skin: m[1], path: `src/components/labs/portals/${m[2]}` }));
+    check('LabPortal knows all fourteen skins',
+          ['aws', 'awsops', 'azure', 'ambari', 'sparkui', 'fabric', 'jira', 'servicenow',
+           'docker', 'k8s', 'jenkins', 'hcpterraform', 'githubdesktop', 'mlflow']
+              .every(s => skins.some(row => row.skin === s)), skins.map(s => s.skin));
+    check('every skin is an ASYNC chunk with an error component (rule 47)',
+          /defineAsyncComponent\(\{[\s\S]*?errorComponent/.test(host)
+          && !/^import \w+ from '\.\/(aws|awsops|azure|ambari|spark|fabric|jira|servicenow|docker|k8s|jenkins|terraform|github|mlflow)\//m.test(host));
+    check('the host declares the simulation in the frame (rule 21)',
+          /sl-portal__sim/.test(host) && /tool\.fidelity/.test(host));
+    check('the workspace renders a portal tool with LabPortal',
+          /<LabPortal[\s\S]{0,200}tool\.kind === 'portal'/.test(workspace));
+    check('a portal action AWAITS the fresh view before resolving',
+          /async function runPortal[\s\S]{0,400}await refreshViews\(\)[\s\S]{0,40}return result/.test(workspace));
+
+    const dir = resolve(process.cwd(), 'src/components/labs/portals');
+    const files: string[] = [];
+    const walk = (folder: string) => {
+        for (const entry of readdirSync(folder, { withFileTypes: true })) {
+            const full = resolve(folder, entry.name);
+            if (entry.isDirectory()) walk(full);
+            else if (/\.(vue|ts|css)$/.test(entry.name)) files.push(full);
+        }
+    };
+    walk(dir);
+    check('the portal directory has its files', files.length >= 9, files.length);
+    for (const skin of skins) {
+        check(`${skin.skin}: its entry component exists`,
+              files.some(f => f.replace(/\\/g, '/').endsWith(skin.path.replace(/^src\/components\/labs\/portals\//, ''))));
+    }
+    for (const full of files) {
+        const name = full.replace(/\\/g, '/').replace(/^.*\/portals\//, 'portals/');
+        const raw = readFileSync(full, 'utf8');
+        const text = stripComments(raw);
+        check(`${name}: no v-html`, !/v-html/.test(text));
+        check(`${name}: no innerHTML / outerHTML / insertAdjacentHTML`,
+              !/innerHTML|outerHTML|insertAdjacentHTML/.test(text));
+        check(`${name}: makes no network request of its own`,
+              !/\bfetch\(|XMLHttpRequest|new\s+WebSocket|navigator\.sendBeacon|new\s+Image\(/.test(text));
+        check(`${name}: loads nothing remote (no remote src, url() or @import)`,
+              !/src=["']https?:|url\(\s*["']?https?:|@import\s+url/.test(text));
+        /*
+         * A SHELL command line is never a template or a concatenation: a typed
+         * value spliced into one is how a name with a space becomes two
+         * arguments. Scoped to lines that START with a CLI word - a HiveQL,
+         * T-SQL or DAX statement is not a shell line, `cli()` does not apply
+         * to it, and the engine reads it whole.
+         */
+        const CLI_HEAD = '(aws|az|hdfs|hadoop|yarn|spark-submit|spark-sql|kubectl|helm|docker|'
+            + 'mgr|snow|fab|git|terraform|jenkins|mlflow|curl|ops|bicep|mlx|torchserve|vllm)\\b';
+        check(`${name}: never builds a shell command by concatenation or template (use cli())`,
+              !new RegExp('\\.exec\\(\\s*`\\s*' + CLI_HEAD).test(text)
+              && !new RegExp('\\.exec\\(\\s*[\'"]\\s*' + CLI_HEAD + '[^\'"]*[\'"]\\s*\\+').test(text));
+        if (full.endsWith('.css')) {
+            check(`${name}: a skin stylesheet declares nothing on :root, html or body`,
+                  !/(^|[\s,}]):root|(^|[\s,}])(html|body)\s*[{,]|:global/m.test(text));
+            const leaf = name.split('/').pop()!.replace(/\./g, '\\.');
+            check(`${name}: is never imported from a script (that would make it global)`,
+                  !files.some(other => /\.(ts|vue)$/.test(other)
+                      && new RegExp('import\\s+[\'"][^\'"]*' + leaf + '[\'"]')
+                          .test(readFileSync(other, 'utf8'))));
+        }
+        if (full.endsWith('.vue')) {
+            const styles = [...raw.matchAll(/<style\b([^>]*)>/g)].map(m => m[1]);
+            check(`${name}: every <style> block is scoped`,
+                  styles.every(attrs => /\bscoped\b/.test(attrs)), styles);
+            // In the STYLE blocks only: `arn:aws:iam::123:root` is an IAM
+            // principal in a script, not a selector.
+            const css = [...raw.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)]
+                .map(m => m[1]).join('\n');
+            check(`${name}: declares nothing on :root`, !/:root\b/.test(css));
+        }
+    }
 }
 
 /* ─────────────────── report ─────────────────── */

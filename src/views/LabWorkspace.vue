@@ -265,6 +265,20 @@
                   :tool-id="tool.id"
                   :run="runTool"
                 />
+                <!--
+                  A PORTAL: the real product's console, interactive. It writes by
+                  running the same command line the console beside it accepts,
+                  so the two can never disagree - see `utils/labtools.py` on app
+                  11. Its skin is an async chunk, chosen inside LabPortal.
+                -->
+                <LabPortal
+                  v-else-if="tool.kind === 'portal'"
+                  :tool="tool"
+                  :view="views[pane.family] || {}"
+                  :run="payload => runPortal(tool.id, payload)"
+                  :busy="viewsBusy"
+                  @refresh="refreshViews"
+                />
                 <LabGui
                   v-else-if="tool.kind === 'gui'"
                   :family="pane.family"
@@ -427,6 +441,7 @@ import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabFiles from '@/components/labs/LabFiles.vue';
 import LabGui from '@/components/labs/LabGui.vue';
+import LabPortal from '@/components/labs/portals/LabPortal.vue';
 import LabMobile from '@/components/labs/LabMobile.vue';
 import LabPreview from '@/components/labs/LabPreview.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
@@ -773,6 +788,21 @@ async function runTool(toolId: string, payload: Record<string, unknown>) {
       tool => tool.id === toolId && tool.kind === 'console'))) {
     filesPane.value?.refresh?.();
   }
+  return result;
+}
+
+/**
+ * A portal action. Unlike `runTool`, the fresh view is AWAITED before the result
+ * is handed back: a portal that creates a VPC and then opens its detail page
+ * must find the VPC in the view it is about to read, and a form that closes
+ * onto a list without the new row reads as the create having failed.
+ */
+async function runPortal(toolId: string, payload: { command: string; surface?: string }) {
+  if (!lab.value) return { ok: false, error: 'The lab is not open' };
+  const result = await labsService.runTool(username.value, lab.value.id,
+                                          toolId, payload);
+  if (result?.note) note.value = result.note;
+  await refreshViews();
   return result;
 }
 

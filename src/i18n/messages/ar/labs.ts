@@ -1246,6 +1246,10 @@ const labs: Catalogue = {
     'Visibility': 'الظهور',
     'Django Project': 'مشروع Django',
     'Wireshark': 'Wireshark',
+    // The portals: the browser frame around a product console, and its CLI drawer.
+    'Equivalent CLI commands': 'أوامر CLI المكافئة',
+    'Nothing yet. Every action you take in the console above appears here as the command it ran.': 'لا شيء بعد. كل إجراء تقوم به في وحدة التحكم أعلاه يظهر هنا على شكل الأمر الذي نفّذه.',
+    'This build does not include that console yet.': 'هذا الإصدار لا يتضمن وحدة التحكم هذه بعد.',
 };
 
 export default labs;

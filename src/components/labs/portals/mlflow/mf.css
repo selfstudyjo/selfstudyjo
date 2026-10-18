@@ -1,0 +1,177 @@
+/* MLflow's shared furniture (the Databricks Du Bois design system as the
+   MLflow UI ships it), scoped into each component with
+   <style scoped src="./mf.css">. Every colour is spent from the custom
+   properties set on MlflowUi's root (.mf-app). */
+
+.mf-page { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 16px 24px 24px; gap: 12px; }
+.mf-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 13px; color: var(--mf-text-2); }
+.mf-crumbs a, .mf-crumbs button { color: var(--mf-link); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: none; }
+.mf-crumbs a:hover, .mf-crumbs button:hover { color: var(--mf-link-hover); text-decoration: underline; }
+.mf-crumbs .mf-sep { color: var(--mf-text-3); }
+
+.mf-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.mf-title { margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; color: var(--mf-text); overflow-wrap: anywhere; }
+.mf-h2 { margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; color: var(--mf-text); }
+.mf-h3 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--mf-text); }
+.mf-spacer { flex: 1; }
+.mf-muted { color: var(--mf-text-2); }
+.mf-mono { font-family: var(--mf-mono); font-size: 12px; }
+
+.mf-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px;
+  padding: 0 12px; border-radius: var(--mf-radius); border: 1px solid var(--mf-border);
+  background: var(--mf-bg); color: var(--mf-text); font: inherit; font-size: 13px; font-weight: 600;
+  line-height: 20px; cursor: pointer; white-space: nowrap; box-shadow: var(--mf-shadow-xs);
+}
+.mf-btn:hover:not(:disabled) { border-color: var(--mf-link); color: var(--mf-link); }
+.mf-btn--primary { background: var(--mf-primary); border-color: var(--mf-primary); color: #fff; }
+.mf-btn--primary:hover:not(:disabled) { background: var(--mf-primary-hover); border-color: var(--mf-primary-hover); color: #fff; }
+.mf-btn--danger { background: var(--mf-danger); border-color: var(--mf-danger); color: #fff; }
+.mf-btn--danger:hover:not(:disabled) { background: var(--mf-danger-hover); border-color: var(--mf-danger-hover); color: #fff; }
+.mf-btn--danger-ghost { color: var(--mf-danger); }
+.mf-btn--danger-ghost:hover:not(:disabled) { color: var(--mf-danger-hover); border-color: var(--mf-danger); }
+.mf-btn--link { border-color: transparent; background: transparent; box-shadow: none; color: var(--mf-link); padding: 0 6px; }
+.mf-btn--link:hover:not(:disabled) { border-color: transparent; color: var(--mf-link-hover); text-decoration: underline; }
+.mf-btn--icon { width: 32px; padding: 0; }
+.mf-btn--sm { height: 24px; padding: 0 8px; font-size: 12px; }
+.mf-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.mf-link { color: var(--mf-link); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-align: start; text-decoration: none; }
+.mf-link:hover { color: var(--mf-link-hover); text-decoration: underline; }
+
+.mf-input, .mf-select, .mf-textarea {
+  height: 32px; border: 1px solid var(--mf-border); border-radius: var(--mf-radius); background: var(--mf-bg);
+  padding: 0 10px; font: inherit; font-size: 13px; color: var(--mf-text); min-width: 0; box-sizing: border-box;
+}
+.mf-textarea { height: auto; padding: 6px 10px; resize: vertical; line-height: 20px; }
+.mf-input:hover, .mf-select:hover, .mf-textarea:hover { border-color: var(--mf-link); }
+.mf-input:focus, .mf-select:focus, .mf-textarea:focus { outline: none; border-color: var(--mf-link); box-shadow: 0 0 0 1px var(--mf-link); }
+.mf-input::placeholder, .mf-textarea::placeholder { color: var(--mf-text-3); }
+.mf-input--error { border-color: var(--mf-danger) !important; }
+.mf-field { display: flex; flex-direction: column; gap: 4px; }
+.mf-label { font-size: 13px; font-weight: 600; color: var(--mf-text); }
+.mf-hint { font-size: 12px; color: var(--mf-text-2); }
+.mf-error-text { font-size: 12px; color: var(--mf-danger); }
+
+.mf-search { position: relative; display: flex; align-items: center; min-width: 0; }
+.mf-search .mf-ico { position: absolute; left: 9px; color: var(--mf-text-2); pointer-events: none; }
+.mf-search .mf-input { padding-left: 30px; width: 100%; }
+
+.mf-table-wrap { overflow: auto; border: 1px solid var(--mf-border-light); border-radius: var(--mf-radius); min-width: 0; }
+.mf-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.mf-table th {
+  position: sticky; top: 0; z-index: 1; text-align: left; font-weight: 600; color: var(--mf-text-2);
+  background: var(--mf-bg); border-bottom: 1px solid var(--mf-border); padding: 6px 12px; white-space: nowrap; height: 32px; box-sizing: border-box;
+}
+.mf-table td { padding: 6px 12px; border-bottom: 1px solid var(--mf-border-light); color: var(--mf-text); vertical-align: middle; height: 33px; box-sizing: border-box; }
+.mf-table tr:hover td { background: var(--mf-row-hover); }
+.mf-table tr.is-selected td { background: var(--mf-row-selected); }
+.mf-table td.mf-num, .mf-table th.mf-num { text-align: right; font-variant-numeric: tabular-nums; }
+.mf-table th.mf-sortable { cursor: pointer; user-select: none; }
+.mf-table th.mf-sortable:hover { color: var(--mf-text); }
+
+.mf-check { width: 16px; height: 16px; accent-color: var(--mf-primary); cursor: pointer; margin: 0; }
+
+.mf-tag {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%; height: 20px; padding: 0 8px;
+  border-radius: var(--mf-radius); background: var(--mf-tag-bg); color: var(--mf-text); font-size: 12px; line-height: 20px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mf-tag b { font-weight: 600; }
+.mf-tag button { border: 0; background: none; padding: 0; cursor: pointer; color: var(--mf-text-2); display: inline-flex; }
+.mf-tag button:hover { color: var(--mf-text); }
+.mf-tag--alias { background: var(--mf-alias-bg); color: var(--mf-alias-text); font-weight: 600; }
+.mf-tag--blue { background: var(--mf-blue-bg); color: var(--mf-link); }
+.mf-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
+.mf-stage { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--mf-radius); font-size: 12px; font-weight: 600; }
+.mf-stage--None { background: var(--mf-tag-bg); color: var(--mf-text-2); }
+.mf-stage--Staging { background: #FFF5E6; color: #BE501E; }
+.mf-stage--Production { background: #E9F6EC; color: #277C43; }
+.mf-stage--Archived { background: #F1F3F5; color: #5F7281; }
+
+.mf-status { display: inline-flex; align-items: center; gap: 6px; }
+.mf-status--FINISHED { color: var(--mf-success); }
+.mf-status--FAILED { color: var(--mf-danger); }
+.mf-status--RUNNING { color: var(--mf-link); }
+.mf-status span { color: var(--mf-text); }
+
+.mf-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--mf-border-light); overflow-x: auto; overflow-y: hidden; flex: none; scrollbar-width: none; }
+.mf-tab {
+  border: 0; background: none; padding: 8px 0; font: inherit; font-size: 13px; color: var(--mf-text-2); cursor: pointer;
+  border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; font-weight: 600;
+}
+.mf-tab:hover { color: var(--mf-link-hover); }
+.mf-tab.is-active { color: var(--mf-text); border-bottom-color: var(--mf-primary); }
+
+.mf-seg { display: inline-flex; border: 1px solid var(--mf-border); border-radius: var(--mf-radius); overflow: hidden; flex: none; }
+.mf-seg button {
+  border: 0; border-right: 1px solid var(--mf-border); background: var(--mf-bg); height: 30px; padding: 0 10px; display: inline-flex;
+  align-items: center; gap: 6px; font: inherit; font-size: 13px; color: var(--mf-text); cursor: pointer;
+}
+.mf-seg button:last-child { border-right: 0; }
+.mf-seg button:hover { color: var(--mf-link); }
+.mf-seg button.is-active { background: var(--mf-blue-bg); color: var(--mf-link); font-weight: 600; }
+
+.mf-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 48px 16px; text-align: center; color: var(--mf-text-2); }
+.mf-empty h3 { margin: 0; color: var(--mf-text); font-size: 15px; font-weight: 600; }
+.mf-empty p { margin: 0; max-width: 460px; }
+.mf-empty .mf-ico { width: 32px; height: 32px; color: var(--mf-text-3); }
+
+.mf-kv { display: grid; grid-template-columns: minmax(140px, max-content) minmax(0, 1fr); gap: 0; border-top: 1px solid var(--mf-border-light); }
+.mf-kv > dt, .mf-kv > dd { margin: 0; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--mf-border-light); font-size: 13px; min-width: 0; }
+.mf-kv > dt { color: var(--mf-text-2); font-weight: 600; }
+.mf-kv > dd { color: var(--mf-text); overflow-wrap: anywhere; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+.mf-section { display: flex; flex-direction: column; gap: 8px; }
+.mf-section-head { display: flex; align-items: center; gap: 8px; }
+.mf-collapse { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; font: inherit; cursor: pointer; color: var(--mf-text); }
+.mf-collapse .mf-ico { transition: transform .12s; }
+.mf-collapse.is-closed .mf-ico { transform: rotate(-90deg); }
+
+.mf-desc { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--mf-text); font-size: 13px; line-height: 20px; }
+.mf-desc--none { color: var(--mf-text-3); font-style: italic; }
+
+.mf-menu {
+  position: absolute; z-index: 30; min-width: 160px; background: var(--mf-bg); border: 1px solid var(--mf-border-light);
+  border-radius: var(--mf-radius); box-shadow: var(--mf-shadow-lg); padding: 4px 0; display: flex; flex-direction: column;
+}
+.mf-menu button {
+  border: 0; background: none; text-align: left; padding: 6px 12px; font: inherit; font-size: 13px; color: var(--mf-text);
+  cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.mf-menu button:hover:not(:disabled) { background: var(--mf-row-hover); }
+.mf-menu button:disabled { color: var(--mf-text-3); cursor: not-allowed; }
+.mf-menu button.is-danger { color: var(--mf-danger); }
+.mf-menu hr { border: 0; border-top: 1px solid var(--mf-border-light); margin: 4px 0; }
+.mf-menu-anchor { position: relative; display: inline-flex; }
+
+.mf-alert { display: flex; gap: 8px; align-items: flex-start; padding: 8px 12px; border-radius: var(--mf-radius); font-size: 13px; }
+.mf-alert--error { background: #FFF5F7; border: 1px solid #F8D4DC; color: var(--mf-text); }
+.mf-alert--error .mf-ico { color: var(--mf-danger); }
+.mf-alert--info { background: var(--mf-blue-bg); border: 1px solid #BAE1FC; }
+.mf-alert--info .mf-ico { color: var(--mf-link); }
+.mf-alert--warning { background: #FFF8F0; border: 1px solid #FCD7B4; }
+.mf-alert--warning .mf-ico { color: var(--mf-warning); }
+
+.mf-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex: none; }
+
+.mf-code { background: var(--mf-bg-2); border: 1px solid var(--mf-border-light); border-radius: var(--mf-radius); padding: 12px; margin: 0;
+  font-family: var(--mf-mono); font-size: 12px; line-height: 18px; white-space: pre; overflow: auto; color: var(--mf-text); }
+
+.mf-card { border: 1px solid var(--mf-border-light); border-radius: var(--mf-radius); background: var(--mf-bg); padding: 12px 16px; min-width: 0; }
+.mf-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; user-select: none; }
+.mf-switch i { position: relative; width: 28px; height: 16px; border-radius: 8px; background: var(--mf-border); transition: background .12s; flex: none; }
+.mf-switch i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left .12s; }
+.mf-switch.is-on i { background: var(--mf-primary); }
+.mf-switch.is-on i::after { left: 14px; }
+
+/* The platform's global floor (ui.css / theme.css) styles bare elements for the
+   galaxy themes - a white-on-glass <code>, tight heading tracking, 10px button
+   corners. MLflow is not a galaxy, so those are put back here. */
+code, kbd, samp { background: var(--mf-tag-bg); color: var(--mf-text); border-radius: 3px; padding: 0 3px; font-family: var(--mf-mono); font-size: 12px; }
+pre { border-radius: var(--mf-radius); }
+h1, h2, h3, h4 { letter-spacing: normal; text-wrap: wrap; }
+.mf-title, .mf-h2, .mf-h3 { letter-spacing: normal; }
+.mf-collapse.mf-h3 { font-size: 15px; font-weight: 600; }
+.mf-page > * { flex-shrink: 0; }
