@@ -135,13 +135,14 @@ function downloadLog(app: SparkApp) {
 </script>
 
 <style scoped>
-.hist__name { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist__name { max-width: min(380px, 45cqw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hist__nowrap { white-space: nowrap; }
 .hist__none { font-size: 15px; }
 .hist__submit { border-top: 1px solid #dee2e6; margin-top: 24px; }
 .hist__panel { max-width: 860px; }
 .hist__modes { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 8px; }
-.hist__modes label { display: flex; align-items: center; gap: 6px; }
+.hist__modes label { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hist__modes input[type='radio'] { accent-color: #007bff; width: 15px; height: 15px; margin: 0; }
 .hist__sql { font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 .hist__select { max-width: 420px; }
 .hist__cmd { margin: 8px 0; word-break: break-all; }

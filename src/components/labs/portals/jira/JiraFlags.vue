@@ -44,7 +44,7 @@ function icon(type: string) {
 .jf__title { font-weight: 653; color: var(--j-text); }
 .jf__detail { margin-top: 4px; color: var(--j-text); white-space: pre-wrap; word-break: break-word; }
 .jf__command {
-  margin-top: 6px; font: 11px/16px ui-monospace, Menlo, Consolas, monospace; color: var(--j-text-subtlest);
+  margin-top: 6px; font: 12px/16px ui-monospace, Menlo, Consolas, monospace; color: var(--j-text-subtlest);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .jf__x { align-self: flex-start; display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 3px; background: transparent; color: var(--j-text-subtle); cursor: pointer; }

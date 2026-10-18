@@ -45,15 +45,17 @@
             </td>
             <td class="kd-col-menu">
               <div v-if="menuFor(row).length" class="kd-menu-anchor">
-                <button type="button" class="kd-iconbtn" :aria-label="`Actions for ${row.name}`" @click.stop="toggleMenu(row)">
+                <button type="button" class="kd-iconbtn" :aria-label="`Actions for ${row.name}`" @click.stop="toggleMenu(row, $event)">
                   <KIcon name="more" />
                 </button>
-                <div v-if="menuOpen === key(row)" class="kd-menu" role="menu">
+                <Teleport :to="menuHost" :disabled="!menuHost">
+                <div v-if="menuOpen === key(row)" class="kd-menu" role="menu" :style="menuPlace">
                   <button v-for="item in menuFor(row)" :key="item.type" type="button" role="menuitem" class="kd-menu__item"
                           @click.stop="menuOpen = ''; $emit('act', { type: item.type, row })">
                     <KIcon :name="item.icon" :size="20" /><span>{{ item.label }}</span>
                   </button>
                 </div>
+                </Teleport>
               </div>
             </td>
           </tr>
@@ -99,7 +101,25 @@ const sortDir = ref<'asc' | 'desc'>('asc');
 const menuOpen = ref('');
 
 function key(row: Row) { return `${row.namespace || ''}/${row.name}`; }
-function toggleMenu(row: Row) { menuOpen.value = menuOpen.value === key(row) ? '' : key(row); }
+/* The menu is teleported to the Dashboard root and placed against its trigger,
+   so the table's horizontal scroll box cannot clip it (it opened inside the
+   last row and was cut off). It flips upward when there is no room below. */
+const menuHost = ref<HTMLElement | null>(null);
+const menuPlace = ref<Record<string, string>>({});
+function toggleMenu(row: Row, event?: MouseEvent) {
+  const next = menuOpen.value === key(row) ? '' : key(row);
+  menuOpen.value = next;
+  const trigger = event?.currentTarget as HTMLElement | undefined;
+  const host = trigger?.closest('.kd-root') as HTMLElement | null;
+  menuHost.value = host;
+  if (!next || !trigger || !host) return;
+  const base = host.getBoundingClientRect();
+  const rect = trigger.getBoundingClientRect();
+  const below = base.bottom - rect.bottom;
+  menuPlace.value = below > 230
+    ? { top: `${rect.bottom - base.top}px`, right: `${base.right - rect.right}px` }
+    : { bottom: `${base.bottom - rect.top}px`, right: `${base.right - rect.right}px` };
+}
 function close() { menuOpen.value = ''; }
 onMounted(() => document.addEventListener('click', close));
 onBeforeUnmount(() => document.removeEventListener('click', close));
@@ -241,6 +261,8 @@ watch(needle, () => { page.value = 0; });
 .kd-col-status { width: 36px; padding-left: 20px !important; padding-right: 0 !important; }
 .kd-col-menu { width: 48px; text-align: right; }
 .kd-col-name { min-width: 140px; word-break: break-word; }
+.kd-table td:not(.kd-col-name):not(.kd-col-message):not(.kd-col-labels) { white-space: nowrap; }
+.kd-col-message { min-width: 220px; }
 .kd-col-created { white-space: nowrap; }
 .kd-sort { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; }
 .kd-sort.is-sorted { color: rgb(0 0 0 / 0.87); }
@@ -248,13 +270,13 @@ watch(needle, () => { page.value = 0; });
 .kd-link { color: var(--kd-primary); text-decoration: none; }
 .kd-link:hover { text-decoration: underline; }
 .kd-images { display: flex; flex-direction: column; gap: 2px; }
-.kd-chip-image { font-size: 13px; word-break: break-all; }
+.kd-chip-image { font-size: 13px; white-space: nowrap; }
 .kd-iconbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: rgb(0 0 0 / 0.54);
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .kd-iconbtn:hover:not(:disabled) { background: rgb(0 0 0 / 0.04); }
 .kd-iconbtn:disabled { opacity: 0.38; cursor: default; }
 .kd-menu-anchor { position: relative; display: inline-block; }
-.kd-menu { position: absolute; right: 8px; top: 36px; z-index: 30; min-width: 160px; background: #fff; border-radius: 4px; padding: 8px 0;
+.kd-menu { position: absolute; z-index: 45; min-width: 160px; background: #fff; border-radius: 4px; padding: 8px 0;
   box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.2), 0 4px 5px 0 rgb(0 0 0 / 0.14), 0 1px 10px 0 rgb(0 0 0 / 0.12); }
 .kd-menu__item { display: flex; align-items: center; gap: 16px; width: 100%; height: 48px; padding: 0 16px; border: 0; background: none;
   font: inherit; font-size: 14px; color: rgb(0 0 0 / 0.87); cursor: pointer; text-align: left; }
@@ -265,6 +287,8 @@ watch(needle, () => { page.value = 0; });
 .kd-flip { transform: scaleX(-1); }
 @container sl-portal (max-width: 600px) {
   .kd-card__filter input { width: 120px; }
+  .kd-col-name { min-width: 120px; }
+  .kd-table th, .kd-table td { padding-left: 8px; padding-right: 8px; }
   .kd-card__head { padding-left: 12px; }
 }
 </style>

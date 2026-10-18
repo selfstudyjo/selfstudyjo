@@ -24,12 +24,13 @@ withDefaults(defineProps<{
 .cs-head { margin-bottom: 16px; }
 .cs-head--2 { margin-bottom: 0; }
 .cs-head__row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 16px; }
-.cs-head__title { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.cs-head__h { margin: 0; color: #0f141a; font-weight: 700; word-break: break-word; }
+/* Inline, so a heading that wraps keeps its "Info" link after the last word, as Cloudscape does. */
+.cs-head__title { display: block; min-width: 0; }
+.cs-head__h { display: inline; margin: 0 8px 0 0; color: #0f141a; font-weight: 700; word-break: break-word; }
 .cs-head--1 .cs-head__h { font-size: 24px; line-height: 30px; }
 .cs-head--2 .cs-head__h { font-size: 18px; line-height: 22px; }
 .cs-head__counter { font-weight: 400; color: #656871; }
-.cs-head__info { font-size: 12px; font-weight: 700; color: #006ce0; text-decoration: none; }
+.cs-head__info { white-space: nowrap; font-size: 12px; font-weight: 700; color: #006ce0; text-decoration: none; }
 .cs-head__info:hover { text-decoration: underline; }
 .cs-head__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .cs-head__desc { margin: 4px 0 0; color: #656871; font-size: 14px; line-height: 20px; max-width: 900px; }

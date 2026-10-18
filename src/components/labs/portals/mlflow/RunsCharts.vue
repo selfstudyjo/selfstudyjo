@@ -98,7 +98,7 @@ const barCharts = computed(() => {
 .mf-charts__tools { display: flex; gap: 8px; }
 .mf-charts__search { width: 280px; max-width: 100%; }
 .mf-charts__section { display: flex; flex-direction: column; gap: 8px; }
-.mf-charts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.mf-charts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
 @container sl-portal (max-width: 700px) {
   .mf-charts { flex-direction: column; overflow: auto; }
   .mf-charts__runs { width: auto; max-height: 160px; }

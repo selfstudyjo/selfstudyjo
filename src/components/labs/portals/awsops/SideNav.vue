@@ -60,7 +60,7 @@ function isActive(link: Route) {
 .sn__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 20px 16px 14px 28px; }
 .sn__title { color: #0f141a; font-size: 18px; line-height: 22px; font-weight: 700; text-decoration: none; }
 .sn__title:hover { color: #006ce0; }
-.sn__close { border: 0; background: none; color: #424650; cursor: pointer; padding: 2px; border-radius: 4px; }
+.sn__close { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 28px; margin: -4px -6px 0 0; border: 0; background: none; color: #424650; cursor: pointer; padding: 4px; border-radius: 4px; }
 .sn__close:hover { color: #0f141a; }
 .sn__body { overflow-y: auto; padding: 0 0 24px; }
 .sn__divider { border: 0; border-top: 1px solid #c6c6cd; margin: 10px 28px; }

@@ -111,6 +111,9 @@ async function save() {
 .gd-set__pane code { font-family: var(--gd-mono); font-size: 11px; background: #f6f8fa; padding: 1px 4px; border-radius: 3px; }
 @container sl-portal (max-width: 620px) {
   .gd-set { flex-direction: column; }
-  .gd-set__tabs { flex-direction: row; width: auto; flex-wrap: wrap; }
+  .gd-set { gap: 12px; min-height: 0; }
+  .gd-set__tabs { flex-direction: row; width: auto; overflow-x: auto; scrollbar-width: none;
+    border-bottom: 1px solid var(--gd-border); padding-bottom: 6px; }
+  .gd-set__tab { flex: none; white-space: nowrap; min-height: 32px; }
 }
 </style>

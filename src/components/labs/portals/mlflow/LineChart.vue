@@ -93,8 +93,8 @@ function fmt(v: number) {
 .mf-chart__title { font-size: 13px; font-weight: 600; color: var(--mf-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
 .mf-chart__svg { width: 100%; height: auto; display: block; overflow: visible; }
 .mf-chart__grid line { stroke: var(--mf-border-light); stroke-width: 1; }
-.mf-chart__axis text { font-size: 10px; fill: var(--mf-text-2); font-family: var(--mf-font); }
-.mf-chart__xname { font-size: 10px; }
+.mf-chart__axis text { font-size: 12px; fill: var(--mf-text-2); font-family: var(--mf-font); }
+.mf-chart__xname { font-size: 12px; }
 .mf-chart__pt { cursor: pointer; }
 .mf-chart__tip { position: absolute; top: 8px; right: 10px; background: var(--mf-bg); border: 1px solid var(--mf-border-light); box-shadow: var(--mf-shadow-lg);
   border-radius: var(--mf-radius); padding: 4px 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; max-width: 75%; }

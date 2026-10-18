@@ -68,20 +68,20 @@
         <div v-if="diff" class="dp-section">
           <h3 class="fx-h3">Compare {{ diff.from }} with {{ diff.to }}</h3>
           <p v-if="!diff.rows.length" class="fx-msgbar fx-msgbar--success"><FxIcon name="success" />The stages are identical.</p>
-          <table v-else class="fx-table"><thead><tr><th>Item</th><th>Change</th></tr></thead>
+          <div v-else class="fx-tablewrap"><table class="fx-table"><thead><tr><th>Item</th><th>Change</th></tr></thead>
             <tbody><tr v-for="(r, i) in diff.rows" :key="i"><td>{{ r[1] }}</td>
-              <td><span class="fx-pill" :class="r[0] === 'New' ? 'fx-pill--ok' : r[0] === 'Different' ? 'fx-pill--warn' : ''">{{ r[0] }}</span></td></tr></tbody></table>
+              <td><span class="fx-pill" :class="r[0] === 'New' ? 'fx-pill--ok' : r[0] === 'Different' ? 'fx-pill--warn' : ''">{{ r[0] }}</span></td></tr></tbody></table></div>
         </div>
 
         <div class="dp-section">
           <h3 class="fx-h3">Deployment history</h3>
-          <table class="fx-table"><thead><tr><th>From</th><th>To</th><th>Items</th><th>Deployed by</th><th>Note</th><th>Warnings</th></tr></thead>
+          <div class="fx-tablewrap"><table class="fx-table"><thead><tr><th>From</th><th>To</th><th>Items</th><th>Deployed by</th><th>Note</th><th>Warnings</th></tr></thead>
             <tbody>
               <tr v-for="(h, i) in [...current.history].reverse()" :key="i">
                 <td>{{ h.from }}</td><td>{{ h.to }}</td><td>{{ h.items }}</td><td>{{ h.by }}</td><td>{{ h.note || '—' }}</td>
                 <td>{{ (h.warnings || []).length || '—' }}</td></tr>
               <tr v-if="!current.history.length"><td colspan="6" class="fx-muted">Nothing has been deployed yet.</td></tr>
-            </tbody></table>
+            </tbody></table></div>
         </div>
       </div>
     </template>
@@ -248,5 +248,10 @@ async function doDelete() {
   .dp-stages { flex-direction: column; }
   .dp-stage { width: auto; }
   .dp-between { flex-direction: row; padding: 10px 0; }
+}
+@container sl-portal (max-width: 600px) {
+  .dp-stages { padding: 12px; }
+  .dp-section { padding: 0 12px 16px; }
+  .dp-msg { margin: 0 12px 8px; }
 }
 </style>

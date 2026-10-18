@@ -107,24 +107,24 @@ async function install(id: string) {
 </script>
 
 <style scoped>
-.jk-pl { max-width: 82rem; }
-.jk-pl__layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-.jk-pl__nav { display: flex; flex-direction: column; gap: 0.1rem; }
-.jk-pl__tab { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.7rem; border: 0; border-radius: 0.6rem; background: none; font: inherit; font-weight: 500; text-align: left; color: var(--jk-text); cursor: pointer; }
+.jk-pl { max-width: 1312px; }
+.jk-pl__layout { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 24px; align-items: start; }
+.jk-pl__nav { display: flex; flex-direction: column; gap: 1.6px; }
+.jk-pl__tab { display: flex; align-items: center; gap: 9.6px; padding: 7.2px 11.2px; border: 0; border-radius: 9.6px; background: none; font: inherit; font-weight: 500; text-align: left; color: var(--jk-text); cursor: pointer; }
 .jk-pl__tab:hover { background: var(--jk-btn-hover); }
 .jk-pl__tab.is-active { background: var(--jk-btn-bg); font-weight: 650; }
-.jk-pl__tab .jk-icon { width: 1.1rem; height: 1.1rem; }
-.jk-pl__search { position: relative; margin-bottom: 0.9rem; max-width: 30rem; }
-.jk-pl__search-icon { position: absolute; left: 0.75rem; top: 0.65rem; width: 1rem; height: 1rem; color: var(--jk-secondary); }
-.jk-pl__search-input { padding-left: 2.3rem; }
+.jk-pl__tab .jk-icon { width: 17.6px; height: 17.6px; }
+.jk-pl__search { position: relative; margin-bottom: 14.4px; max-width: 480px; }
+.jk-pl__search-icon { position: absolute; left: 12px; top: 10.4px; width: 16px; height: 16px; color: var(--jk-secondary); }
+.jk-pl__search-input { padding-left: 36.8px; }
 .jk-pl__name { font-weight: 600; }
-.jk-pl__ver { color: var(--jk-secondary); font-weight: 500; margin-left: 0.3rem; }
-.jk-pl__id { font-size: 0.78rem; }
-.jk-pl__switch { display: inline-block; position: relative; width: 2.3rem; height: 1.3rem; border-radius: 1rem; background: rgba(119, 118, 124, 0.35); }
+.jk-pl__ver { color: var(--jk-secondary); font-weight: 500; margin-left: 4.8px; }
+.jk-pl__id { font-size: 12.48px; }
+.jk-pl__switch { display: inline-block; position: relative; width: 36.8px; height: 20.8px; border-radius: 16px; background: rgba(119, 118, 124, 0.35); }
 .jk-pl__switch.is-on { background: var(--jk-accent); }
-.jk-pl__switch span { position: absolute; top: 0.17rem; left: 1.15rem; width: 0.96rem; height: 0.96rem; border-radius: 50%; background: #fff; }
-.jk-pl__install { min-height: 1.9rem; padding: 0.2rem 0.75rem; }
-.jk-pl__h2 { margin: 0 0 0.8rem; font-size: 1.05rem; }
+.jk-pl__switch span { position: absolute; top: 2.72px; left: 18.4px; width: 15.36px; height: 15.36px; border-radius: 50%; background: #fff; }
+.jk-pl__install { min-height: 30.4px; padding: 3.2px 12px; }
+.jk-pl__h2 { margin: 0 0 12.8px; font-size: 16.8px; }
 @container sl-portal (max-width: 900px) {
   .jk-pl__layout { grid-template-columns: minmax(0, 1fr); }
   .jk-pl__nav { flex-direction: row; overflow-x: auto; }

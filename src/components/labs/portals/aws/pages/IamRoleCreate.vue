@@ -185,5 +185,6 @@ async function create() {
 <style scoped>
 .rc__policy { min-height: 240px; font-size: 13px; }
 .rc__desc { min-height: 64px; }
-.rc__adv { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font: inherit; color: #424650; padding: 0; }
+.rc__adv { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font: inherit; font-size: 16px; color: #0f141a; padding: 0; text-align: left; }
+.rc__adv:disabled { color: #0f141a; }
 </style>

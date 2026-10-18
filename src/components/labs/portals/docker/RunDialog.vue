@@ -100,15 +100,18 @@ async function run() {
 
 <style scoped src="./dd.css"></style>
 <style scoped>
-.rd-toggle { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--dd-text); cursor: pointer; align-self: flex-start; }
+.rd-toggle { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--dd-text); cursor: pointer; align-self: flex-start; }
 .rd-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .rd-row .dd-input { flex: 1 1 150px; width: auto; }
 .rd-row .dd-icon-btn { flex: none; border: 1px solid var(--dd-border); border-radius: 4px; }
 .rd-sep { color: var(--dd-text-2); }
 .rd-fixed { color: var(--dd-text-2); }
-.rd-add { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; align-self: flex-start; }
+.rd-add { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; align-self: flex-start; }
 .rd-cli { margin: 0; padding: 8px 10px; background: var(--dd-hover); border-radius: 4px; color: var(--dd-text-2); word-break: break-all; }
 @container sl-portal (max-width: 520px) {
   .rd-sep { display: none; }
+  .rd-row { flex-wrap: nowrap; }
+  .rd-row .dd-input { flex: 1 1 0; min-width: 0; }
+  .rd-fixed { flex: none; font-size: 12px; }
 }
 </style>

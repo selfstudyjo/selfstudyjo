@@ -196,5 +196,6 @@ async function start() {
   .bl__showdone { margin-left: 0; }
   .bl__capacity { padding-left: 8px; }
   .bl__goal { width: 100%; }
+  .bl__twisty { width: 32px; height: 32px; }
 }
 </style>

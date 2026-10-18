@@ -343,11 +343,12 @@ async function launch() {
 </script>
 
 <style scoped>
-.lw__name { flex-wrap: nowrap; }
-.lw__name .cs-input, .lw__name .cs-select { flex: 1; }
+.lw__name { flex-wrap: wrap; }
+/* The field keeps a usable width; on a narrow pane the link drops under it instead of squeezing it. */
+.lw__name .cs-input, .lw__name .cs-select { flex: 1 1 220px; min-width: 0; }
 .lw__name .cs-link { white-space: nowrap; }
 .lw__qs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
-.lw__os { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid #c6c6cd; border-radius: 8px; background: #fff; padding: 10px 6px; font: inherit; font-size: 12px; cursor: pointer; }
+.lw__os { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid #c6c6cd; border-radius: 8px; background: #fff; color: #0f141a; padding: 10px 6px; font: inherit; font-size: 12px; cursor: pointer; }
 .lw__os.is-selected { border: 2px solid #006ce0; background: #f0fbff; padding: 9px 5px; }
 .lw__os.is-off { opacity: .5; cursor: default; }
 .lw__os-name { font-weight: 700; color: #0f141a; }

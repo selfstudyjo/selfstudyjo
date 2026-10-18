@@ -170,12 +170,12 @@ async function remove() {
 </script>
 
 <style scoped>
-.jk-cr { max-width: 70rem; }
-.jk-cr__lead { margin: -0.5rem 0 1rem; }
+.jk-cr { max-width: 1120px; }
+.jk-cr__lead { margin: -8px 0 16px; }
 .jk-cr__id { font-weight: 600; }
-.jk-cr__form { max-width: 44rem; }
-.jk-cr__icon-btn { display: inline-flex; padding: 0.3rem; border: 0; border-radius: 0.5rem; background: none; color: var(--jk-text); cursor: pointer; }
+.jk-cr__form { max-width: 704px; }
+.jk-cr__icon-btn { display: inline-flex; padding: 4.8px; border: 0; border-radius: 8px; background: none; color: var(--jk-text); cursor: pointer; }
 .jk-cr__icon-btn:hover { background: var(--jk-btn-hover); }
-.jk-cr__icon-btn .jk-icon { width: 1rem; height: 1rem; }
+.jk-cr__icon-btn .jk-icon { width: 16px; height: 16px; }
 .jk-check.is-off { color: var(--jk-secondary); cursor: not-allowed; }
 </style>

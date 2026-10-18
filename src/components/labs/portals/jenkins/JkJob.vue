@@ -146,18 +146,18 @@ const tests = computed(() => {
 </script>
 
 <style scoped>
-.jk-job { max-width: 80rem; }
-.jk-job__type-icon { width: 1.6rem; height: 1.6rem; }
-.jk-job__bar-buttons { display: flex; gap: 0.5rem; }
-.jk-job__disabled { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.jk-job__edit { margin-bottom: 1rem; max-width: 52rem; }
-.jk-job__edit-buttons { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-.jk-job__desc { white-space: pre-wrap; margin: 0 0 1rem; word-break: break-word; }
-.jk-job__source { margin: -0.4rem 0 0.4rem; font-size: 0.8125rem; }
-.jk-job__perma { margin: 0; padding-left: 1.2rem; }
-.jk-job__perma li { margin: 0.15rem 0; }
-.jk-job__footer { margin-top: 1.6rem; display: flex; justify-content: flex-end; }
-.jk-job__change { margin-bottom: 0.8rem; }
-.jk-job__change-head { display: flex; gap: 0.5rem; align-items: baseline; font-size: 1rem; margin: 0; }
-.jk-job__change p { margin: 0.1rem 0 0; }
+.jk-job { max-width: 1280px; }
+.jk-job__type-icon { width: 25.6px; height: 25.6px; }
+.jk-job__bar-buttons { display: flex; gap: 8px; }
+.jk-job__disabled { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.jk-job__edit { margin-bottom: 16px; max-width: 832px; }
+.jk-job__edit-buttons { display: flex; gap: 8px; margin-top: 8px; }
+.jk-job__desc { white-space: pre-wrap; margin: 0 0 16px; word-break: break-word; }
+.jk-job__source { margin: -6.4px 0 6.4px; font-size: 13px; }
+.jk-job__perma { margin: 0; padding-left: 19.2px; }
+.jk-job__perma li { margin: 2.4px 0; }
+.jk-job__footer { margin-top: 25.6px; display: flex; justify-content: flex-end; }
+.jk-job__change { margin-bottom: 12.8px; }
+.jk-job__change-head { display: flex; gap: 8px; align-items: baseline; font-size: 16px; margin: 0; }
+.jk-job__change p { margin: 1.6px 0 0; }
 </style>

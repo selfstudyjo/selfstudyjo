@@ -50,7 +50,7 @@ const EXTENSIONS = [
 .dd-spacer { flex: 1; }
 .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
 .ev-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--dd-border); border-radius: 6px; }
-.ev-card p { margin: 0; font-size: 0.8125rem; color: var(--dd-text-2); flex: 1; line-height: 1.45; }
+.ev-card p { margin: 0; font-size: 13px; color: var(--dd-text-2); flex: 1; line-height: 1.45; }
 .ev-card strong { font-weight: 500; }
 .ev-card .dd-btn { align-self: flex-start; }
 .ev-logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--dd-blue-tint); color: var(--dd-blue); font-weight: 700; }

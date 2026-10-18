@@ -61,6 +61,9 @@
         <div class="az-cmdbar"><button type="button" class="az-cmd" @click="buying = true"><AzIcon name="plus" /> Purchase</button>
           <button type="button" class="az-cmd" @click="reservations"><AzIcon name="refresh" /> Refresh</button></div>
         <pre v-if="resOut" class="az-code">{{ resOut }}</pre>
+        <div v-else class="az-empty"><AzIcon name="props" :size="48" />
+          <h3>No reservations to display</h3>
+          <p>Purchase a reservation to save on virtual machines you run continuously, or select Refresh to list them.</p></div>
         <AzPane v-if="buying" title="Purchase reservations" :error="error" @close="buying = false">
           <div class="az-field"><div class="az-field__label">Product</div>
             <div class="az-field__ctl"><select v-model="res.sku" class="az-select"><option value="compute">Virtual machines (compute)</option></select></div></div>

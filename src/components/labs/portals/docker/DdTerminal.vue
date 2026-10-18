@@ -77,11 +77,11 @@ onMounted(focus);
 
 <style scoped>
 .dd-term { display: grid; grid-template-rows: 32px minmax(0, 1fr); border-top: 1px solid var(--dd-border); background: #0C0D10; min-height: 0; }
-.dd-term__bar { display: flex; align-items: center; gap: 4px; padding: 0 6px 0 10px; background: #1B1D22; color: #C9CED8; font-size: 0.75rem; }
+.dd-term__bar { display: flex; align-items: center; gap: 4px; padding: 0 6px 0 10px; background: #1B1D22; color: #C9CED8; font-size: 12px; }
 .dd-term__tab { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; }
 .dd-term__btn { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 4px; background: none; color: #C9CED8; cursor: pointer; }
 .dd-term__btn:hover { background: #2A2D34; }
-.dd-term__screen { overflow: auto; padding: 8px 12px; font: 0.8125rem/1.5 var(--dd-mono); color: #E6E8EC; white-space: pre-wrap; word-break: break-word; cursor: text; }
+.dd-term__screen { overflow: auto; padding: 8px 12px; font: 13px/1.5 var(--dd-mono); color: #E6E8EC; white-space: pre-wrap; word-break: break-word; cursor: text; }
 .is-dim { color: #7D8594; }
 .is-cmd { color: #E6E8EC; }
 .is-err { color: #FF7B86; }

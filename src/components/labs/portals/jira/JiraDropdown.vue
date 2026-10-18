@@ -113,7 +113,7 @@ void props;
 .jd__menu--left { left: 0; }
 .jd__menu--right { right: 0; }
 .jd__heading {
-  padding: 10px 16px 4px; font-size: 11px; font-weight: 653; color: var(--j-text-subtlest);
+  padding: 10px 16px 4px; font-size: 12px; font-weight: 653; color: var(--j-text-subtlest);
   text-transform: uppercase; letter-spacing: 0;
 }
 .jd__item {
@@ -129,5 +129,5 @@ void props;
 .jd__item.is-danger { color: var(--j-danger-text); }
 .jd__item:disabled { color: var(--j-text-disabled); cursor: not-allowed; background: transparent; border-left-color: transparent; }
 .jd__label { display: inline-flex; align-items: center; gap: 8px; }
-.jd__hint { font-size: 11px; color: var(--j-text-subtlest); white-space: normal; }
+.jd__hint { font-size: 12px; color: var(--j-text-subtlest); white-space: normal; }
 </style>

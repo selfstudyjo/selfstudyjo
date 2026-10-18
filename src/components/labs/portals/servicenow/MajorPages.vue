@@ -216,28 +216,28 @@ async function attachPir() { await one(cmd.majorPir(number.value, pirFile.value)
 <style scoped src="./sn.css"></style>
 <style scoped src="./form.css"></style>
 <style scoped>
-.pad { padding: 0 1rem; }
+.pad { padding: 0 16px; }
 .wb { background: var(--sn-page); }
-.wb-head { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; padding: 0.6rem 1rem; background: var(--sn-brand); color: #fff; }
+.wb-head { display: flex; align-items: center; gap: 11.2px; flex-wrap: wrap; padding: 9.6px 16px; background: var(--sn-brand); color: #fff; }
 .wb-back { color: #fff; }
-.wb-title { font-size: 0.95rem; min-width: 0; }
-.wb-meta { font-size: 0.78rem; opacity: 0.9; }
-.wb-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: 0.8rem; padding: 0.8rem; overflow: auto; }
-.wb-side { display: flex; flex-direction: column; gap: 0.8rem; }
+.wb-title { font-size: 15.2px; min-width: 0; }
+.wb-meta { font-size: 12.48px; opacity: 0.9; }
+.wb-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 304px minmax(0, 1fr); gap: 12.8px; padding: 12.8px; overflow: auto; }
+.wb-side { display: flex; flex-direction: column; gap: 12.8px; }
 .wb-main { min-width: 0; border: 1px solid var(--sn-border); border-radius: var(--sn-radius-lg); background: var(--sn-surface); }
-.wb-pane { padding: 0.8rem; }
-.bridge { margin: 0 0 0.5rem; overflow-wrap: anywhere; font-size: 0.8rem; color: var(--sn-link); }
-.mt { margin-top: 0.6rem; }
-.sla-row { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.4rem; align-items: center; padding: 0.2rem 0; font-size: 0.78rem; }
-.row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.lbl { font-size: 0.8125rem; font-weight: 700; }
+.wb-pane { padding: 12.8px; }
+.bridge { margin: 0 0 8px; overflow-wrap: anywhere; font-size: 12.8px; color: var(--sn-link); }
+.mt { margin-top: 9.6px; }
+.sla-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6.4px; align-items: center; padding: 3.2px 0; font-size: 12.48px; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lbl { font-size: 13px; font-weight: 700; }
 .aud { width: auto; }
-.big { margin: 0.5rem 0; min-height: 6rem; }
-.timeline { margin: 0.8rem 0 0; padding: 0; list-style: none; }
-.timeline__item { position: relative; margin-left: 0.5rem; padding: 0 0 0.8rem 1rem; border-left: 2px solid var(--sn-border); }
-.timeline__item::before { content: ''; position: absolute; left: -0.4rem; top: 0.2rem; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--sn-primary); }
-.timeline__time { margin-right: 0.5rem; font-size: 0.75rem; font-weight: 700; color: var(--sn-text-muted); }
-.timeline__item p { margin: 0.3rem 0 0; font-size: 0.8125rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.big { margin: 8px 0; min-height: 96px; }
+.timeline { margin: 12.8px 0 0; padding: 0; list-style: none; }
+.timeline__item { position: relative; margin-left: 8px; padding: 0 0 12.8px 16px; border-left: 2px solid var(--sn-border); }
+.timeline__item::before { content: ''; position: absolute; left: -6.4px; top: 3.2px; width: 10.4px; height: 10.4px; border-radius: 50%; background: var(--sn-primary); }
+.timeline__time { margin-right: 8px; font-size: 12px; font-weight: 700; color: var(--sn-text-muted); }
+.timeline__item p { margin: 4.8px 0 0; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 @container sl-portal (max-width: 900px) {
   .wb-body { grid-template-columns: minmax(0, 1fr); }
 }

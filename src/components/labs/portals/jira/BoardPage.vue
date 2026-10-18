@@ -263,11 +263,11 @@ function onBoardMenu(value: string) {
 .bp__card :deep(.bp__card-more:hover) { background: var(--j-neutral-hover); }
 .bp__label {
   display: inline-block; margin-bottom: 8px; padding: 0 4px; border-radius: 3px; background: #EED7FC; color: #803FA5;
-  font-size: 11px; font-weight: 700; text-transform: uppercase; line-height: 16px;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; line-height: 16px;
 }
 .bp__card-foot { display: flex; align-items: center; gap: 6px; }
 .bp__spacer { flex: 1; }
-.bp__carried { font-size: 11px; color: #A54800; font-weight: 600; }
+.bp__carried { font-size: 12px; color: #A54800; font-weight: 600; }
 .bp__none { padding: 12px 4px; font-size: 12px; color: var(--j-text-subtlest); text-align: center; }
 .bp__create {
   display: flex; align-items: center; gap: 6px; margin: 6px 8px 0; padding: 8px; border: 0; border-radius: 3px;
@@ -275,7 +275,14 @@ function onBoardMenu(value: string) {
 }
 .bp__create:hover { background: var(--j-neutral-hover); }
 @container sl-portal (max-width: 700px) {
-  .bp__columns { grid-template-columns: repeat(3, 240px); }
+  /* Jira on a narrow screen: one column at a time, swiped sideways inside the
+     board (the page itself never scrolls sideways). */
+  .bp__columns { grid-template-columns: repeat(3, minmax(240px, 82%)); scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain; padding-bottom: 4px; }
+  .bp__column { scroll-snap-align: start; }
   .bp__capacity { margin-left: 0; width: 100%; }
+  .bp__search { flex: 1 1 160px; }
+  .bp__card :deep(.bp__card-more) { opacity: 1; width: 32px; height: 32px; margin: -6px -6px 0 0; }
 }
+@media (hover: none) { .bp__card :deep(.bp__card-more) { opacity: 1; } }
 </style>

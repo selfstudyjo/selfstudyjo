@@ -79,7 +79,7 @@ async function submit() {
 </script>
 
 <style scoped>
-.jk-bp { max-width: 48rem; }
-.jk-bp__field { max-width: 32rem; }
-.jk-bp__build { min-width: 5.5rem; }
+.jk-bp { max-width: 768px; }
+.jk-bp__field { max-width: 512px; }
+.jk-bp__build { min-width: 88px; }
 </style>

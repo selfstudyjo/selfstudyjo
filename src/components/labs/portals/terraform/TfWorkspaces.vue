@@ -133,7 +133,7 @@ async function openRun(ws: string, id: string) {
 .ws-new { position: relative; }
 .ws-new__menu { right: 0; top: calc(100% + 4px); width: 280px; }
 .ws-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--tf-border); margin-bottom: 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.ws-tab { padding: 8px 12px; border-bottom: 3px solid transparent; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; margin-bottom: -1px; }
+.ws-tab { flex: none; padding: 8px 12px; border-bottom: 3px solid transparent; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; margin-bottom: -1px; }
 .ws-tab:hover { color: var(--tf-fg-strong); }
 .ws-tab.is-active { color: var(--tf-fg-action); border-bottom-color: var(--tf-fg-action); }
 .ws-tab__n { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 10px; background: var(--tf-surface-strong); color: var(--tf-fg-primary); font-size: 12px; text-align: center; }
@@ -141,7 +141,7 @@ async function openRun(ws: string, id: string) {
 .ws-search { position: relative; width: min(320px, 100%); }
 .ws-search__icon { position: absolute; left: 10px; top: 10px; color: var(--tf-fg-faint); }
 .ws-search__input { padding-left: 32px; }
-.ws-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ws-name { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
 .ws-name__link { font-weight: 600; }
 .ws-name__lock { color: var(--tf-fg-warning); }
 .ws-name__cur { font-size: 12px; }
@@ -149,6 +149,9 @@ async function openRun(ws: string, id: string) {
 </style>
 <style scoped>
 @container sl-portal (max-width: 720px) {
-  .ws-new__menu { right: auto; left: 0; width: min(280px, 80cqw); }
+  .ws-new__menu { width: min(280px, 90cqw); }
+}
+@container sl-portal (max-width: 560px) {
+  .ws-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
 }
 </style>

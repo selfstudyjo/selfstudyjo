@@ -155,7 +155,7 @@
     </form>
 
     <div v-if="showPreview" class="kd-overlay" @click.self="showPreview = false">
-      <div class="kd-dialog" role="dialog" aria-label="Preview">
+      <div class="kd-dialog kd-dialog--preview" role="dialog" aria-label="Preview">
         <h2 class="kd-dialog__title">Preview</h2>
         <pre class="kd-preview kd-preview--tall">{{ manifest }}</pre>
         <div class="kd-actions kd-actions--end"><button type="button" class="kd-btn kd-btn--primary" @click="showPreview = false">Close</button></div>
@@ -346,7 +346,7 @@ async function createNs() {
 .kd-create__body { padding: 20px; }
 .kd-help { margin: 0 0 16px; font-size: 14px; color: rgb(0 0 0 / 0.54); }
 .kd-editor { display: flex; border: 1px solid rgb(0 0 0 / 0.12); min-height: 300px; max-height: 50vh; overflow: auto; background: #fff; }
-.kd-editor__gutter { display: flex; flex-direction: column; padding: 8px 6px; background: #f0f0f0; color: #999; text-align: right;
+.kd-editor__gutter { display: flex; flex-direction: column; padding: 8px 6px; background: #f0f0f0; color: #6b6b6b; text-align: right;
   font: 13px/20px 'Roboto Mono', Consolas, monospace; user-select: none; min-width: 32px; }
 .kd-editor__text { flex: 1; border: 0; outline: 0; resize: none; padding: 8px; font: 13px/20px 'Roboto Mono', Consolas, monospace;
   color: rgb(0 0 0 / 0.87); white-space: pre; overflow-x: auto; overflow-y: hidden; }
@@ -358,7 +358,8 @@ async function createNs() {
 .kd-btn--primary { background: var(--kd-primary); color: #fff;
   box-shadow: 0 3px 1px -2px rgb(0 0 0 / 0.2), 0 2px 2px 0 rgb(0 0 0 / 0.14), 0 1px 5px 0 rgb(0 0 0 / 0.12); }
 .kd-btn--primary:hover:not(:disabled) { background: var(--kd-primary-hover); }
-.kd-btn:disabled { opacity: 0.38; cursor: default; box-shadow: none; }
+.kd-btn:disabled { opacity: 1; color: rgb(0 0 0 / 0.38); background: transparent; cursor: default; box-shadow: none; }
+.kd-btn--primary:disabled, .kd-btn--warn:disabled { background: rgb(0 0 0 / 0.12); }
 .kd-btn--link { text-transform: none; padding: 0 4px; height: 28px; margin: 8px 0; align-self: flex-start; }
 .kd-form { display: flex; flex-direction: column; gap: 4px; max-width: 980px; }
 .kd-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
@@ -373,18 +374,21 @@ async function createNs() {
 .kd-input.is-bad { border-bottom: 2px solid #f44336; }
 .kd-input:disabled { color: rgb(0 0 0 / 0.38); border-bottom-style: dotted; }
 .kd-textarea { resize: vertical; }
-.kd-counter { position: absolute; right: 0; bottom: -14px; font-size: 11px; color: rgb(0 0 0 / 0.54); }
+.kd-counter { position: absolute; right: 0; bottom: -14px; font-size: 12px; color: rgb(0 0 0 / 0.54); }
 .kd-error { color: #f44336; font-size: 12px; margin-top: 4px; }
 .kd-hint { font-size: 12px; color: rgb(0 0 0 / 0.54); margin-top: 4px; }
 .kd-ports { display: flex; flex-direction: column; gap: 4px; max-width: 480px; }
-.kd-port { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 16px; }
-.kd-kv { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 12px; align-items: end; margin-bottom: 4px; }
+.kd-port { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 100px); gap: 16px; }
+.kd-kv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; gap: 12px; align-items: end; margin-bottom: 4px; }
 .kd-iconbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: rgb(0 0 0 / 0.54);
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .kd-filebtn { display: inline-flex; align-items: center; gap: 8px; color: var(--kd-primary); font-size: 14px; font-weight: 500; cursor: pointer; }
 .kd-hidden { display: none; }
 .kd-preview { margin: 8px 0 0; padding: 12px; background: #f5f5f5; max-height: 260px; overflow: auto; font: 12px/1.5 'Roboto Mono', Consolas, monospace; white-space: pre; }
-.kd-preview--tall { max-height: 60vh; }
+.kd-preview--tall { max-height: none; }
+.kd-dialog--preview { display: flex; flex-direction: column; overflow: hidden; }
+.kd-dialog--preview .kd-preview { flex: 1 1 auto; min-height: 0; }
+.kd-dialog--preview .kd-actions { flex: none; }
 .kd-overlay { position: absolute; inset: 0; z-index: 50; background: rgb(0 0 0 / 0.32); display: grid; place-items: center; padding: 16px; }
 .kd-dialog { background: #fff; border-radius: 4px; padding: 24px; width: min(640px, 100%); max-height: 90%; overflow: auto;
   box-shadow: 0 11px 15px -7px rgb(0 0 0 / 0.2), 0 24px 38px 3px rgb(0 0 0 / 0.14), 0 9px 46px 8px rgb(0 0 0 / 0.12); }
@@ -393,6 +397,13 @@ async function createNs() {
   .kd-row { grid-template-columns: 1fr; gap: 0; }
   .kd-aside { margin: 0 0 12px; }
   .kd-tab { min-width: 0; padding: 0 14px; }
-  .kd-port { grid-template-columns: 1fr 1fr 80px; gap: 8px; }
+  .kd-port { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 80px); gap: 8px; }
+}
+@container sl-portal (max-width: 560px) {
+  .kd-create__body { padding: 16px 12px; }
+  .kd-tab { flex: 1 1 0; height: auto; min-height: 48px; padding: 6px 6px; white-space: normal; line-height: 1.25; font-size: 13px; letter-spacing: 0; }
+  .kd-field--pair { flex-direction: column; gap: 0; }
+  .kd-kv { gap: 8px; }
+  .kd-dialog { padding: 20px 16px; }
 }
 </style>

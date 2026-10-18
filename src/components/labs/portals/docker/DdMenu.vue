@@ -74,7 +74,7 @@ onBeforeUnmount(() => document.removeEventListener('click', outside));
 }
 .dd-menu__item {
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 16px; border: 0; background: none;
-  font: inherit; font-size: 0.875rem; color: var(--dd-text); cursor: pointer; text-align: left; white-space: nowrap;
+  font: inherit; font-size: 14px; color: var(--dd-text); cursor: pointer; text-align: left; white-space: nowrap;
 }
 .dd-menu__item:hover:not(:disabled) { background: var(--dd-hover); }
 .dd-menu__item:disabled { opacity: .4; cursor: not-allowed; }

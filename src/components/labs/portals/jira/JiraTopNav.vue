@@ -225,7 +225,7 @@ const profileItems: DropItem[] = [
   background: var(--j-surface-overlay); border-radius: 4px;
   box-shadow: 0 8px 12px rgba(30, 31, 33, 0.15), 0 0 1px rgba(30, 31, 33, 0.31);
 }
-.jt__results-head { padding: 4px 16px; font-size: 11px; font-weight: 653; color: var(--j-text-subtlest); text-transform: uppercase; }
+.jt__results-head { padding: 4px 16px; font-size: 12px; font-weight: 653; color: var(--j-text-subtlest); text-transform: uppercase; }
 .jt__hit {
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 16px; border: 0;
   background: transparent; font: inherit; color: var(--j-text); text-align: left; cursor: pointer;
@@ -236,14 +236,16 @@ const profileItems: DropItem[] = [
 .jt__noresults { padding: 8px 16px; color: var(--j-text-subtle); }
 .jt__badge {
   position: absolute; top: 0; right: -2px; min-width: 16px; height: 16px; padding: 0 4px;
-  border-radius: 8px; background: #C9372C; color: #fff; font-size: 10px; font-weight: 700;
+  border-radius: 8px; background: #C9372C; color: #fff; font-size: 12px; font-weight: 700;
   line-height: 16px; text-align: center; box-shadow: 0 0 0 2px var(--j-surface);
 }
 .jt__note { display: flex; flex-direction: column; gap: 2px; white-space: normal; font-size: 13px; }
-.jt__note-meta { font-size: 11px; color: var(--j-text-subtlest); }
+.jt__note-meta { font-size: 12px; color: var(--j-text-subtlest); }
 .jt__note.is-critical .jt__note-meta { color: var(--j-danger-text); }
 .jt__note.is-good .jt__note-meta { color: var(--j-success-text); }
 .jt__bell :deep(.jd__menu) { width: 360px; max-width: 360px; }
+/* The empty state is a message, not a dead option: subtle, but readable. */
+.jt__bell :deep(.jd__item:disabled) { color: var(--j-text-subtle); cursor: default; }
 
 @container sl-portal (max-width: 1240px) {
   .jt__nav > :nth-child(n+4):not(.jt__more) { display: none; }
@@ -261,12 +263,19 @@ const profileItems: DropItem[] = [
   .jt__create-text { display: none; }
   .jt__create-plus { display: inline-block; }
   .jt__search { width: 32px; }
-  .jt__search input { padding: 0; width: 32px; color: transparent; cursor: pointer; border-color: transparent; }
-  .jt__search input::placeholder { color: transparent; }
+  .jt__search input { padding: 0; width: 32px; cursor: pointer; border-color: transparent; }
+  .jt .jt__search input::placeholder { color: transparent; }
+  .jt .jt__search:not(.is-focused) input { text-indent: 40px; overflow: hidden; }
   .jt__search.is-focused input { border-color: var(--j-border-input); }
-  .jt__search.is-focused input::placeholder { color: var(--j-text-subtlest); }
+  .jt .jt__search.is-focused input::placeholder { color: var(--j-text-subtlest); }
   .jt__search.is-focused { position: absolute; left: 6px; right: 6px; width: auto; z-index: 45; }
   .jt__search.is-focused input { width: 100%; padding-left: 30px; color: var(--j-text); }
   .jt__right > :nth-child(3), .jt__right > :nth-child(4) { display: none; }
+  /* The right-hand menus hang from the bar, not from their icon, so a 360px
+     notifications panel never runs off the left edge of a phone. */
+  .jt { position: relative; }
+  .jt__right :deep(.jd) { position: static; }
+  .jt__right :deep(.jd__menu) { top: 52px; right: 6px; max-width: calc(100% - 12px); }
+  .jt__bell :deep(.jd__menu) { left: 6px; width: auto; max-width: none; }
 }
 </style>

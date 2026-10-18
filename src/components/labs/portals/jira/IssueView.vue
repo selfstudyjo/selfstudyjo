@@ -25,7 +25,7 @@
                         @select="onAction">
             <template #trigger><JiraIcon name="more" /></template>
           </JiraDropdown>
-          <button type="button" class="j-btn j-btn--subtle j-btn--icon" aria-label="Close" @click="$emit('close')">
+          <button type="button" class="j-btn j-btn--subtle j-btn--icon" aria-label="Close" autofocus @click="$emit('close')">
             <JiraIcon name="close" /></button>
         </div>
       </header>
@@ -113,7 +113,7 @@
                   <th title="Consulted">C</th><th title="Informed">I</th></tr></thead>
                 <tbody>
                   <tr v-for="p in team" :key="p.id">
-                    <td><span class="iv__person"><JiraAvatar :name="p.name" :size="20" /> {{ p.name }}</span></td>
+                    <td><span class="iv__person"><JiraAvatar :name="p.name" :size="24" /> {{ p.name }}</span></td>
                     <td v-for="role in ROLES" :key="role"><input v-model="raci[role]" type="checkbox" :value="p.id"
                       :aria-label="`${p.name} ${role}`" /></td>
                   </tr>
@@ -429,7 +429,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 .iv__sep { color: var(--j-text-subtlest); }
 .iv :deep(.iv__typebtn) { padding: 4px; border-radius: 3px; }
 .iv :deep(.iv__typebtn:hover) { background: var(--j-neutral-hover); }
-.iv__key { color: var(--j-text-subtle); }
+.iv__key { color: var(--j-text-subtle); white-space: nowrap; }
 .iv__tools { display: flex; gap: 2px; }
 .iv__grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
 .iv__title { margin: 0 0 12px; padding: 4px 6px; margin-left: -6px; font-size: 24px; line-height: 28px; font-weight: 653;
@@ -457,11 +457,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 .iv__comment-fake { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--j-border-input); border-radius: 3px;
   background: var(--j-surface); color: var(--j-text-subtlest); font: inherit; text-align: left; cursor: text; }
 .iv__comment-fake:hover { background: var(--j-input-hover); }
-kbd { padding: 0 4px; border: 1px solid var(--j-border); border-radius: 3px; background: var(--j-sunken); color: var(--j-text); font-size: 11px; font-family: inherit; }
+kbd { padding: 0 4px; border: 1px solid var(--j-border); border-radius: 3px; background: var(--j-sunken); color: var(--j-text); font-size: 12px; font-family: inherit; }
 .iv__activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
 .iv__entry { display: flex; gap: 12px; }
 .iv__entry-head { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
 .iv__entry-body { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.iv__side { position: sticky; top: 0; align-self: start; }
 .iv__status { margin-bottom: 16px; }
 .iv__status :deep(.iv__status-btn) {
   height: 32px; padding: 0 10px; border-radius: 3px; font-weight: 600; background: var(--j-neutral); color: var(--j-text);
@@ -469,7 +470,13 @@ kbd { padding: 0 4px; border: 1px solid var(--j-border); border-radius: 3px; bac
 .iv__status :deep(.is-done .iv__status-btn) { background: #1F845A; color: #fff; }
 .iv__status :deep(.is-doing .iv__status-btn) { background: var(--j-brand); color: #fff; }
 .iv__details { border: 1px solid var(--j-border); border-radius: 4px; }
-.iv__details summary { padding: 12px 16px; font-weight: 653; cursor: pointer; border-bottom: 1px solid var(--j-border); list-style-position: inside; }
+.iv__details summary { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-weight: 653; cursor: pointer; border-bottom: 1px solid var(--j-border); list-style: none; }
+.iv__details summary::-webkit-details-marker { display: none; }
+/* Atlassian's chevron rather than the browser's disclosure triangle. */
+.iv__details summary::before { content: ''; width: 6px; height: 6px; margin: 0 2px; border-right: 1.6px solid var(--j-text-subtle);
+  border-bottom: 1.6px solid var(--j-text-subtle); transform: translateY(-2px) rotate(45deg); }
+.iv__details:not([open]) summary { border-bottom: 0; }
+.iv__details:not([open]) summary::before { transform: rotate(-45deg); }
 .iv__details dl { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px 8px; margin: 0; padding: 16px; align-items: center; }
 .iv__details dt { font-size: 14px; font-weight: 600; color: var(--j-text-subtle); }
 .iv__details dd { margin: 0; min-width: 0; }
@@ -477,9 +484,27 @@ kbd { padding: 0 4px; border: 1px solid var(--j-border); border-radius: 3px; bac
 .iv :deep(.iv__field-btn:hover) { background: var(--j-neutral); }
 .iv__field-static { display: inline-flex; align-items: center; gap: 8px; }
 .iv__select { min-height: 32px; height: 32px; padding: 4px 6px; }
+/* The details panel edits in place: a field reads as plain text until it is
+   hovered or focused, as Jira's own inline-edit fields do. */
+.iv__details .iv__select:not(:focus):not(:hover) { border-color: transparent; background-color: transparent; }
+.iv__details select.iv__select:not(:focus):not(:hover) { background-image: none; }
+.iv__details .iv__select:disabled { border-color: transparent; background-color: transparent; }
 .iv__dates { margin-top: 12px; }
 @container sl-portal (max-width: 900px) {
-  .iv__grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .iv__side { order: -1; }
+  /* One column, in Jira's mobile order: the summary, then status and the
+     details, then description and activity. */
+  .iv__grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .iv__main { display: contents; }
+  .iv__title, .iv__title-form { order: -2; }
+  .iv__side { order: -1; margin-bottom: 20px; position: static; }
+}
+@container sl-portal (max-width: 640px) {
+  .iv__toggle { min-height: 32px; }
+  .iv :deep(.iv__typebtn) { min-width: 32px; min-height: 32px; justify-content: center; }
+  .iv__bar { flex-wrap: wrap; }
+  .iv__delivery { flex-wrap: wrap; }
+  .iv__delivery .j-progress { width: 100%; }
+  .iv__details dl { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .iv__details dd { margin-bottom: 8px; }
 }
 </style>

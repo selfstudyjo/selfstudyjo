@@ -58,11 +58,13 @@
       </main>
     </div>
 
-    <GdDialogs v-if="dialog" :key="dialogKey" :d="dialog" :v="v" :busy="busy" :run="run" @close="dialog = null" />
+    <!-- Desktop shows one popup at a time: an Error raised from a dialog replaces it on
+         screen (the dialog keeps its state underneath and comes back on Close). -->
+    <GdDialogs v-if="dialog" v-show="!errorDialog" :key="dialogKey" :d="dialog" :v="v" :busy="busy" :run="run" @close="dialog = null" />
     <GdMerge v-if="mergeOpen" :v="v" :busy="busy" :on-merge="doMerge" @close="mergeOpen = false" />
     <GdConflicts v-if="conflictsOpen && (v.conflicts.length || v.merging || v.sequencer)" :v="v" :busy="busy"
                  :run="run" @close="conflictsOpen = false" @done="conflictsOpen = false" />
-    <GdSettings v-if="settingsOpen" :v="v" :busy="busy" :run="run" :initial-tab="settingsTab"
+    <GdSettings v-if="settingsOpen" v-show="!errorDialog" :v="v" :busy="busy" :run="run" :initial-tab="settingsTab"
                 @close="settingsOpen = false" @publish="settingsOpen = false; dialog = { type: 'publish' }" />
     <GdDialogs v-if="errorDialog" :key="`e${errorDialog.id}`" :d="errorDialog" :v="v" :busy="busy" :run="run"
                @close="closeError" />
@@ -588,8 +590,11 @@ function onKey(ev: KeyboardEvent) {
   .gd-side { width: 220px; }
 }
 @container sl-portal (max-width: 700px) {
-  .gd-body { flex-direction: column; }
-  .gd-side { width: auto; height: 55%; border-right: 0; border-bottom: 1px solid var(--gd-border); }
+  /* Narrow: the sidebar stacks above the diff and the BODY scrolls, so neither
+     the file list nor the commit box is squeezed to a sliver. */
+  .gd-body { flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+  .gd-side { width: auto; height: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--gd-border); }
+  .gd-main { flex: none; min-height: 420px; }
   .gd-dropcatch { inset: 80px 0 0; }
 }
 </style>

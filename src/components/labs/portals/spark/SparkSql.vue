@@ -66,12 +66,13 @@ const shuffle = computed(() => (job.value?.stages || []).reduce((n, s) => n + s.
 </script>
 
 <style scoped>
-.sql__desc { max-width: 560px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sql__desc { max-width: min(560px, 60cqw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sql__desc a { display: inline-block; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 .sql__nowrap { white-space: nowrap; }
-.expand-details { font-size: 10pt; color: grey; margin-left: 6px; }
+.expand-details { font-size: 12px; color: #6c757d; margin-left: 6px; }
 .sql__text { background: #f7f7f7; border: 1px solid #ddd; padding: 10px; white-space: pre-wrap; }
 .sql__plan { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px; border: 1px solid #eee; margin-bottom: 10px; }
-.sql__node { background: #E5F2FF; border: 1px solid #3EC0FF; border-radius: 4px; padding: 8px 14px; min-width: 240px; display: flex; flex-direction: column; align-items: center; font-size: 12px; }
+.sql__node { background: #E5F2FF; border: 1px solid #3EC0FF; border-radius: 4px; padding: 8px 14px; min-width: min(240px, 100%); max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; text-align: center; display: flex; flex-direction: column; align-items: center; font-size: 12px; }
 .sql__node strong { font-size: 13px; }
 .sql__edge { color: #666; font-size: 16px; }
 </style>

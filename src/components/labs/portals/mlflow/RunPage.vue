@@ -66,7 +66,7 @@
               <dt>Created at</dt><dd>{{ fullTime(run.start_time) }}</dd>
               <dt>Created by</dt><dd>{{ run.user }}</dd>
               <dt>Experiment ID</dt>
-              <dd><button type="button" class="mf-link" @click="back">{{ run.experiment_id }}</button></dd>
+              <dd><button type="button" class="mf-link mf-runpage__expid" @click="back">{{ run.experiment_id }}</button></dd>
               <dt>Status</dt>
               <dd><span class="mf-status" :class="'mf-status--' + run.status">
                 <MfIcon :name="run.status === 'FINISHED' ? 'check-circle' : 'x-circle'" /><span>{{ statusText }}</span></span></dd>
@@ -280,6 +280,7 @@ const registering = ref(false);
 <style scoped>
 .mf-runpage { flex: 1; overflow: auto; }
 .mf-runpage__dot { width: 14px; height: 14px; }
+.mf-runpage__expid { min-width: 20px; min-height: 20px; }
 .mf-runpage__menu { top: 34px; left: 0; }
 .mf-runpage__deleted { background: #FFF5F7; color: var(--mf-danger); }
 .mf-runpage__body { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
@@ -287,11 +288,12 @@ const registering = ref(false);
 .mf-runpage__acts { display: flex; gap: 6px; }
 .mf-runpage__model { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; }
 .mf-runpage__tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
-.mf-runpage__charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.mf-runpage__charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
 @container sl-portal (max-width: 900px) {
   .mf-runpage { padding: 12px; }
 }
 @container sl-portal (max-width: 520px) {
+  .mf-runpage__menu { left: auto; right: 0; }
   .mf-kv { grid-template-columns: minmax(0, 1fr); }
   .mf-kv > dt { border-bottom: 0; padding-bottom: 0; }
 }

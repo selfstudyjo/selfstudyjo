@@ -197,4 +197,7 @@ async function create() {
 .ni-tables { max-height: 220px; overflow: auto; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px 10px 0; }
 .ni-tables .fx-check { gap: 6px; }
 .ni-tables .fx-muted { margin-left: auto; font-size: 12px; }
+@container sl-portal (max-width: 480px) {
+  .ni-loc { flex-direction: column; }
+}
 </style>

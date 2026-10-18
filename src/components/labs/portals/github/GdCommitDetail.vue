@@ -72,7 +72,8 @@ const dels = computed(() => props.commit.changes.reduce((n, f) => n + (f.deletio
 .gd-cd__item { display: inline-flex; align-items: center; gap: 5px; }
 .gd-cd__sha { font-family: var(--gd-mono); font-size: 11px; color: var(--gd-text-secondary); }
 .gd-cd__copy {
-  border: 0; background: none; color: var(--gd-blue); font-size: 11px; padding: 0 2px; cursor: pointer;
+  border: 0; background: none; color: var(--gd-blue); font-size: 11px; padding: 2px 4px; min-height: 20px;
+  font-family: var(--gd-sans); border-radius: 3px; cursor: pointer;
 }
 .gd-cd__copy:hover { text-decoration: underline; }
 .gd-cd__tag {

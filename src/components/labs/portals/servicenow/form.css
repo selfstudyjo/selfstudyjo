@@ -1,29 +1,30 @@
 /* Shared furniture of the classic record forms (problem, change, workbench). */
 .form-page { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--sn-surface); }
 .title { display: flex; flex-direction: column; line-height: 1.15; }
-.title__table { font-size: 0.72rem; color: var(--sn-text-muted); }
-.title__no { font-size: 1rem; font-weight: 700; }
-.scroll { flex: 1; min-height: 0; overflow: auto; padding-bottom: 2rem; }
-.sheet { padding: 0.6rem 1.5rem 0.4rem 0.5rem; }
-.mandatory { margin: 0.6rem 1rem 0; padding: 0.55rem 0.8rem; border-radius: var(--sn-radius); background: var(--sn-critical-bg); color: var(--sn-critical-ink); font-size: 0.8125rem; }
-.notice { margin: 0.6rem 1rem 0; padding: 0.55rem 0.8rem; border-radius: var(--sn-radius); background: var(--sn-info-bg); color: var(--sn-info-ink); font-size: 0.8125rem; }
+.title__table { font-size: 12px; color: var(--sn-text-muted); }
+.title__no { font-size: 16px; font-weight: 700; }
+.scroll { flex: 1; min-height: 0; overflow: auto; padding-bottom: 32px; }
+.sheet { padding: 9.6px 24px 6.4px 8px; }
+.mandatory { margin: 9.6px 16px 0; padding: 8.8px 12.8px; border-radius: var(--sn-radius); background: var(--sn-critical-bg); color: var(--sn-critical-ink); font-size: 13px; }
+.notice { margin: 9.6px 16px 0; padding: 8.8px 12.8px; border-radius: var(--sn-radius); background: var(--sn-info-bg); color: var(--sn-info-ink); font-size: 13px; }
 .notice--warn { background: var(--sn-warning-bg); color: var(--sn-warning-ink); }
-.flow { display: flex; margin: 0.8rem 1rem 0.2rem; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
-.flow li { flex: 1; min-width: 6rem; padding: 0.4rem 0.6rem 0.4rem 1.1rem; margin-right: -0.4rem; background: var(--sn-surface-alt); color: var(--sn-text-muted);
-  font-size: 0.75rem; font-weight: 700; white-space: nowrap; clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 50%, calc(100% - 0.7rem) 100%, 0 100%, 0.7rem 50%); }
-.flow li:first-child { padding-left: 0.8rem; clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 50%, calc(100% - 0.7rem) 100%, 0 100%); }
+.flow { display: flex; margin: 12.8px 16px 3.2px; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.flow li { flex: 1; min-width: 96px; padding: 6.4px 9.6px 6.4px 17.6px; margin-right: -6.4px; background: var(--sn-surface-alt); color: var(--sn-text-muted);
+  font-size: 12px; font-weight: 700; white-space: nowrap; clip-path: polygon(0 0, calc(100% - 11.2px) 0, 100% 50%, calc(100% - 11.2px) 100%, 0 100%, 11.2px 50%); }
+.flow li:last-child { margin-right: 0; }
+.flow li:first-child { padding-left: 12.8px; clip-path: polygon(0 0, calc(100% - 11.2px) 0, 100% 50%, calc(100% - 11.2px) 100%, 0 100%); }
 .flow li.is-done { background: #d9dcf3; color: var(--sn-brand); }
 .flow li.is-current { background: var(--sn-brand); color: #fff; }
-.tabsm { margin: 0.6rem 1rem 0; }
-.related { margin: 1rem; border: 1px solid var(--sn-border); border-radius: var(--sn-radius-lg); overflow: hidden; }
-.related .tabs { align-items: center; gap: 0.4rem; padding-right: 0.5rem; background: var(--sn-surface-alt); }
-.related .add { width: auto; min-height: 1.6rem; font-size: 0.75rem; }
-.checks { display: flex; flex-direction: column; gap: 0.2rem; max-height: 11rem; overflow: auto; padding: 0.4rem 0.6rem; border: 1px solid var(--sn-border-strong); border-radius: var(--sn-radius); }
+.tabsm { margin: 9.6px 16px 0; }
+.related { margin: 16px; border: 1px solid var(--sn-border); border-radius: var(--sn-radius-lg); overflow: hidden; }
+.related .tabs { align-items: center; gap: 6.4px; padding-right: 8px; background: var(--sn-surface-alt); }
+.related .add { width: auto; min-height: 25.6px; font-size: 12px; }
+.checks { display: flex; flex-direction: column; gap: 3.2px; max-height: 176px; overflow: auto; padding: 6.4px 9.6px; border: 1px solid var(--sn-border-strong); border-radius: var(--sn-radius); }
 .checks.is-invalid { border-color: var(--sn-critical); }
-.checks__row { display: flex; gap: 0.4rem; align-items: baseline; font-size: 0.8125rem; }
-.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.3rem 0.9rem; margin: 0; font-size: 0.8125rem; }
+.checks__row { display: flex; gap: 6.4px; align-items: baseline; font-size: 13px; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4.8px 14.4px; margin: 0; font-size: 13px; }
 .kv dt { color: var(--sn-text-muted); }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 @container sl-portal (max-width: 760px) {
-  .sheet { padding: 0.5rem 0.8rem; }
+  .sheet { padding: 8px 12.8px; }
 }

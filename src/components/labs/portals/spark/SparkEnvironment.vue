@@ -81,6 +81,9 @@ const blocks = computed(() => {
 </script>
 
 <style scoped>
-.env__table td:first-child { width: 40%; word-break: break-all; }
-.env__val { word-break: break-all; }
+.env__table td:first-child { width: 40%; overflow-wrap: anywhere; }
+@container sl-portal (max-width: 560px) {
+  .env__table td:first-child { width: auto; white-space: nowrap; }
+}
+.env__val { overflow-wrap: anywhere; min-width: 160px; }
 </style>

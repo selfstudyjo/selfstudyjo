@@ -280,7 +280,7 @@ async function addComment() {
 .tl__dot--warning { background: #fbeabf; color: #9e4b00; }
 .tl__dot--critical { background: #fbd4d4; color: #c00005; }
 .tl__dot--neutral { background: var(--tf-surface-strong); color: var(--tf-fg-primary); }
-.tl__avatar { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--tf-brand); color: #fff; font-size: 11px; font-weight: 600; }
+.tl__avatar { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--tf-brand); color: #fff; font-size: 12px; font-weight: 600; }
 .tl__card--plain { padding: 12px 0; }
 .tl__card--warning { border-color: #fbeabf; }
 .tl__line { display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }

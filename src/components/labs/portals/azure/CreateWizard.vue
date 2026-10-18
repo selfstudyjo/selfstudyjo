@@ -22,7 +22,7 @@
   </div>
 
   <!-- ===== A create wizard ===== -->
-  <div v-else-if="spec" class="az-blade az-wiz">
+  <div v-else-if="spec" ref="wizEl" class="az-blade az-wiz">
     <div class="az-blade__head">
       <div class="az-blade__titles"><h1 class="az-blade__title">{{ spec.title }}</h1>
         <div v-if="kind !== 'group'" class="az-blade__sub">{{ m.singular }}</div></div>
@@ -77,13 +77,13 @@
               <div class="az-cmdbar">
                 <button type="button" class="az-cmd" @click="values.subnets.push({ name: '', prefix: '' })"><AzIcon name="plus" /> Add a subnet</button>
               </div>
-              <table class="az-table"><thead><tr><th>Subnets</th><th>IP address range</th><th>Size</th><th></th></tr></thead>
+              <div class="az-tablewrap"><table class="az-table"><thead><tr><th>Subnets</th><th>IP address range</th><th>Size</th><th></th></tr></thead>
                 <tbody><tr v-for="(s, i) in values.subnets" :key="i">
                   <td><input v-model="s.name" class="az-input" aria-label="Subnet name" /></td>
                   <td><input v-model="s.prefix" class="az-input" aria-label="Subnet range" placeholder="10.0.1.0/24" /></td>
                   <td class="az-muted">{{ size(s.prefix) }}</td>
                   <td><button type="button" class="az-x" aria-label="Delete subnet" @click="values.subnets.splice(i, 1)"><AzIcon name="trash" /></button></td>
-                </tr></tbody></table>
+                </tr></tbody></table></div>
             </div>
             <input v-else :id="'f-' + f.key" v-model="values[f.key]" class="az-input" :class="{ 'is-bad': showErr(f) }"
                    :type="f.type === 'password' ? 'password' : f.type === 'number' ? 'number' : 'text'" :placeholder="f.placeholder || ''" />
@@ -126,12 +126,14 @@
       <template v-if="step < allTabs.length - 1">
         <button type="button" class="az-btn az-btn--primary" @click="goStep(allTabs.length - 1)">Review + create</button>
         <button type="button" class="az-btn" :disabled="step === 0" @click="goStep(step - 1)">&lt; Previous</button>
-        <button type="button" class="az-btn" @click="goStep(step + 1)">Next : {{ allTabs[step + 1] }} &gt;</button>
+        <button type="button" class="az-btn" @click="goStep(step + 1)"
+                :title="'Next : ' + allTabs[step + 1]">Next<span class="az-wiz__dest"> : {{ allTabs[step + 1] }}</span> &gt;</button>
       </template>
       <template v-else>
         <button type="button" class="az-btn az-btn--primary" :disabled="invalid.length > 0" @click="create">Create</button>
         <button type="button" class="az-btn" @click="goStep(step - 1)">&lt; Previous</button>
-        <button type="button" class="az-btn" :disabled="invalid.length > 0" @click="automation = true">Download a template for automation</button>
+        <button type="button" class="az-btn" :disabled="invalid.length > 0" @click="automation = true"
+                title="Download a template for automation">Download<span class="az-wiz__dest"> a template for automation</span></button>
       </template>
     </div>
 
@@ -153,7 +155,7 @@
  * createSpecs.ts, and the Marketplace's "Create a resource" page. Create hands
  * the generated `az` lines to the deployment blade, which runs them.
  */
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 import { rows } from '@/utils/portalKit';
 import AzIcon from './AzIcon';
 import AzPane from './AzPane.vue';
@@ -205,11 +207,23 @@ initValues();
 
 const allTabs = computed(() => (spec.value ? [...spec.value.tabs.map(t => t.name), ...(spec.value.tags ? ['Tags'] : []), 'Review + create'] : []));
 const step = ref(0);
+const wizEl = ref<HTMLElement | null>(null);
 const tried = ref(false);
 function goStep(i: number) {
   if (i < 0 || i >= allTabs.value.length) return;
   if (i === allTabs.value.length - 1) tried.value = true;
   step.value = i;
+  // each tab starts at its top, as the portal's create blades do
+  nextTick(() => {
+    const page = wizEl.value?.closest('.az-page');
+    if (page) page.scrollTop = 0;
+    // on a phone the tab strip scrolls sideways: bring the new tab into view
+    const strip = wizEl.value?.querySelector('.az-tabs') as HTMLElement | null;
+    const tab = strip?.querySelector('.az-tab.is-active') as HTMLElement | null;
+    if (strip && tab && strip.scrollWidth > strip.clientWidth) {
+      strip.scrollLeft = tab.offsetLeft - strip.offsetLeft - 16;
+    }
+  });
 }
 function visible(fields: Field[]) { return fields.filter(f => !f.show || f.show(ctx.value)); }
 function helpOf(f: Field) { return typeof f.help === 'function' ? f.help(ctx.value) : f.help || ''; }
@@ -292,5 +306,13 @@ function create() {
 .az-review__k { color: #424242; }
 .az-review__v { overflow-wrap: anywhere; }
 .az-subnets .az-table td { padding: 4px; }
-@container sl-portal (max-width: 560px) { .az-review { grid-template-columns: 1fr; gap: 0; } }
+.az-subnets .az-table td:last-child, .az-subnets .az-table th:last-child { min-width: 0; width: 36px; }
+.az-subnets .az-table td .az-input { min-width: 120px; }
+@container sl-portal (max-width: 560px) {
+  .az-review { grid-template-columns: 1fr; gap: 0; }
+  /* the three footer buttons stay on one row on a phone, as the portal's do */
+  .az-wiz__dest { display: none; }
+  .az-blade.az-wiz > .az-wizfoot { flex-wrap: nowrap; }
+  .az-blade.az-wiz > .az-wizfoot .az-btn { min-width: 0; flex: 1 1 auto; padding: 0 10px; }
+}
 </style>

@@ -403,25 +403,26 @@ async function remove() {
 <style scoped>
 .fv { margin: 0; display: flex; flex-direction: column; min-height: 100%; box-sizing: border-box; }
 .fv__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 15px; border-bottom: 1px solid #eee; }
-.fv__crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 15px; flex: 1; min-width: 0; }
-.fv__crumb { color: #1491c1; display: inline-flex; align-items: center; }
+.fv__crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 15px; flex: 1 1 220px; min-width: 0; }
+.fv__crumb { color: var(--amb-link); display: inline-flex; align-items: center; min-height: 24px; min-width: 18px; }
 .fv__crumb.is-current { color: #333; font-weight: 500; }
-.fv__sep { color: #999; }
+.fv__sep { color: #707070; }
 .fv__tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.fv__search { display: flex; align-items: center; gap: 6px; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px; height: 34px; color: #999; background: #fff; }
-.fv__search input { border: 0; outline: 0; font: inherit; font-size: 13px; width: 200px; max-width: 40vw; }
+.fv__search { display: flex; align-items: center; gap: 6px; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px; height: 34px; color: #707070; background: #fff; }
+.fv__search input { border: 0; outline: 0; font: inherit; font-size: 13px; width: 200px; min-width: 0; flex: 1; background: transparent; color: #333; padding: 0; }
 .fv__actions { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; padding: 8px 12px; background: #f5f5f5; border-bottom: 1px solid #e3e3e3; }
 .fv__actions .btn-link { height: 28px; font-size: 13px; }
 .fv__count { font-size: 13px; color: #666; margin-right: 8px; }
-.fv__del { color: #d9534f !important; }
+.fv__del { color: #c9302c !important; }
 .fv__clear { margin-left: auto; color: #666 !important; }
 .fv__table th { user-select: none; }
 .fv__sort { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; color: #333; }
 .fv__check { width: 30px; }
 .fv__name { white-space: nowrap; }
 .fv__name a { margin-left: 6px; }
+.fv__table .fv__name a { display: inline; max-width: none; }
 .fv__folder { color: #e8bc4e; }
-.fv__file { color: #999; }
+.fv__file { color: #707070; }
 .fv__nowrap { white-space: nowrap; }
 .fv__up a { display: inline-flex; gap: 6px; align-items: center; }
 .fv__foot { padding: 8px 15px; font-size: 12px; border-top: 1px solid #eee; margin-top: auto; }
@@ -434,8 +435,11 @@ async function remove() {
 .fv__dirs a { display: flex; align-items: center; gap: 6px; padding: 5px 8px; color: #333; font-size: 13px; }
 .fv__dirs a.is-active { background: #eef7ec; font-weight: 700; }
 .fv__dellist { max-height: 120px; overflow: auto; background: #f8f8f8; padding: 8px 8px 8px 24px; }
-@container sl-portal (max-width: 600px) {
-  .fv__search input { width: 120px; }
-  .fv__tools .btn { padding: 0 8px; }
+@container sl-portal (max-width: 720px) {
+  .fv__tools { width: 100%; }
+  .fv__search { flex: 1 1 100%; min-width: 0; }
+  .fv__search input { width: auto; }
+  .fv__tools .btn { padding: 0 10px; flex: 1 1 0; }
+  .fv__actions .btn-link { height: 32px; }
 }
 </style>

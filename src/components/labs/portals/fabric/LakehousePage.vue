@@ -50,7 +50,7 @@
           </button>
           <template v-if="open.files">
             <button v-for="f in fileFolders" :key="f" type="button" class="fx-node lh-l1"
-                    :style="{ paddingLeft: (16 + depth(f) * 12) + 'px' }"
+                    :style="{ paddingLeft: (34 + depth(f) * 14) + 'px' }"
                     :class="{ 'is-selected': sel.kind === 'folder' && sel.name === f }"
                     @click="sel = { kind: 'folder', name: f, schema: '' }">
               <FxIcon name="Folder" /><span class="fx-node__label">{{ f.split('/').pop() }}</span>
@@ -416,6 +416,7 @@ async function doDeleteFiles() {
 
 <style scoped>
 .lh-switch { width: 200px; }
+@container sl-portal (max-width: 600px) { .lh-switch { width: 124px; flex: none; } }
 .lh-root { font-weight: 600; cursor: default; }
 .lh-l1 { padding-left: 16px; }
 .lh-l2 { padding-left: 34px; }

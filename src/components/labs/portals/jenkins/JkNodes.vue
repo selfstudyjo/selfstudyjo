@@ -159,18 +159,18 @@ async function remove() {
 </script>
 
 <style scoped>
-.jk-nd { max-width: 82rem; }
-.jk-nd__bar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.jk-nd__h1-icon { width: 1.6rem; height: 1.6rem; }
+.jk-nd { max-width: 1312px; }
+.jk-nd__bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.jk-nd__h1-icon { width: 25.6px; height: 25.6px; }
 .jk-nd__on { color: var(--jk-text); }
 .jk-nd__off { color: var(--jk-secondary); opacity: 0.6; }
 .jk-nd__name { font-weight: 600; }
-.jk-nd__offline { margin-left: 0.45rem; padding: 0 0.4rem; border-radius: 0.35rem; background: rgba(227, 23, 45, 0.1); color: var(--jk-red); font-size: 0.72rem; font-weight: 600; }
-.jk-nd__icon-btn { display: inline-flex; padding: 0.3rem; border: 0; border-radius: 0.5rem; background: none; cursor: pointer; color: var(--jk-text); }
+.jk-nd__offline { margin-left: 7.2px; padding: 0 6.4px; border-radius: 5.6px; background: rgba(227, 23, 45, 0.1); color: var(--jk-red); font-size: 12px; font-weight: 600; }
+.jk-nd__icon-btn { display: inline-flex; padding: 4.8px; border: 0; border-radius: 8px; background: none; cursor: pointer; color: var(--jk-text); }
 .jk-nd__icon-btn:hover { background: var(--jk-btn-hover); }
-.jk-nd__icon-btn .jk-icon { width: 1rem; height: 1rem; }
-.jk-nd__labels { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.jk-nd__label { padding: 0.1rem 0.6rem; border-radius: 0.5rem; background: var(--jk-btn-bg); font-weight: 600; font-size: 0.8125rem; }
-.jk-nd__form { max-width: 44rem; }
-.jk-nd__num { max-width: 8rem; }
+.jk-nd__icon-btn .jk-icon { width: 16px; height: 16px; }
+.jk-nd__labels { display: flex; flex-wrap: wrap; gap: 5.6px; }
+.jk-nd__label { padding: 1.6px 9.6px; border-radius: 8px; background: var(--jk-btn-bg); font-weight: 600; font-size: 13px; }
+.jk-nd__form { max-width: 704px; }
+.jk-nd__num { max-width: 128px; }
 </style>

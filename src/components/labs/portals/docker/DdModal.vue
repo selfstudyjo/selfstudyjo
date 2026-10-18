@@ -40,10 +40,18 @@ defineEmits<{ (event: 'close'): void }>();
 }
 .dd-modal__card.is-wide { width: min(680px, 100%); }
 .dd-modal__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 20px 8px 24px; }
-.dd-modal__head h2 { margin: 0; font-size: 1.25rem; font-weight: 500; color: var(--dd-text); }
-.dd-modal__subtitle { margin: 4px 0 0; font-size: 0.875rem; color: var(--dd-text-2); word-break: break-all; }
+.dd-modal__head h2 { margin: 0; font-size: 20px; font-weight: 500; color: var(--dd-text); }
+.dd-modal__subtitle { margin: 4px 0 0; font-size: 14px; color: var(--dd-text-2); overflow-wrap: anywhere; }
 .dd-modal__close { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--dd-text-2); cursor: pointer; }
 .dd-modal__close:hover { background: var(--dd-hover-strong); color: var(--dd-text); }
-.dd-modal__body { padding: 8px 24px 16px; overflow: auto; display: flex; flex-direction: column; gap: 14px; font-size: 0.875rem; color: var(--dd-text); }
-.dd-modal__foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px 20px; flex-wrap: wrap; }
+.dd-modal__body { padding: 8px 24px 16px; overflow: auto; display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: var(--dd-text); }
+.dd-modal__foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px 20px; flex-wrap: wrap; border-top: 1px solid transparent; }
+@container sl-portal (max-width: 560px) {
+  .dd-modal { padding: 8px; }
+  .dd-modal__card, .dd-modal__card.is-wide { width: 100%; max-height: calc(100% - 8px); }
+  .dd-modal__head { padding: 16px 12px 6px 16px; }
+  .dd-modal__head h2 { font-size: 18px; }
+  .dd-modal__body { padding: 6px 16px 12px; }
+  .dd-modal__foot { padding: 12px 16px 16px; }
+}
 </style>

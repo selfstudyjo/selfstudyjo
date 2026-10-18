@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootEl" class="az-root" dir="ltr" :class="{ 'is-narrow': narrow }">
+  <div ref="rootEl" class="az-root" dir="ltr" :class="{ 'is-narrow': narrow }" @click="onRootClick">
     <!-- ===== Page header (masthead) ===== -->
     <header class="az-mast">
       <button type="button" class="az-mast__btn az-mast__menu" title="Show portal menu"
@@ -61,6 +61,16 @@
           <AzIcon name="help" :size="18" /></button>
         <button type="button" class="az-mast__btn az-mast__hide-n" title="Feedback" aria-label="Feedback"
                 @click="togglePanel('feedback')"><AzIcon name="feedback" :size="18" /></button>
+        <!-- narrow frames: the buttons that no longer fit go behind "..." as the portal does -->
+        <div class="az-mast__morewrap">
+          <button type="button" class="az-mast__btn az-mast__more" title="More" aria-label="More"
+                  :aria-expanded="moreOpen" @click.stop="moreOpen = !moreOpen"><AzIcon name="more" :size="18" /></button>
+          <div v-if="moreOpen" class="az-mast__moremenu" role="menu" @click.stop>
+            <button v-for="m in MORE" :key="m.key" type="button" role="menuitem" class="az-mast__moreitem"
+                    :class="'is-' + m.key" @click="moreOpen = false; togglePanel(m.key)">
+              <AzIcon :name="m.icon" :size="16" /> <span>{{ m.label }}</span></button>
+          </div>
+        </div>
         <button type="button" class="az-mast__acct" title="Account" @click="togglePanel('account')">
           <span class="az-mast__who">
             <span class="az-mast__user">{{ account.user }}</span>
@@ -289,6 +299,8 @@ function go(next: AzRoute) {
   menuOpen.value = false;
   panel.value = '';
   searchOpen.value = false;
+  // leaving a page through the search box must not leave the (collapsed) box focused
+  if (document.activeElement === searchInput.value) searchInput.value?.blur();
 }
 function nav(next: AzRoute) { go(next); }
 function back() {
@@ -352,7 +364,16 @@ function openRes(r: Record<string, any>) { searchText.value = ''; go({ page: 're
 function openGroup(name: string) { searchText.value = ''; go({ page: 'group', name }); }
 function pickFirst() {
   const hits = searchHits.value;
-  if (hits.services[0]) openService(hits.services[0]);
+  const q = searchText.value.trim().toLowerCase();
+  // An exact name wins over "the first thing that contains it": typing
+  // vm-web-01 must not open vm-web-01VNET.
+  const exactRes = hits.resources.find(r => String(r.name).toLowerCase() === q);
+  const exactGroup = hits.groups.find(g => String(g.name).toLowerCase() === q);
+  const exactSvc = hits.services.find(s => s.label.toLowerCase() === q);
+  if (exactSvc) openService(exactSvc);
+  else if (exactRes) openRes(exactRes);
+  else if (exactGroup) openGroup(exactGroup.name);
+  else if (hits.services[0]) openService(hits.services[0]);
   else if (hits.resources[0]) openRes(hits.resources[0]);
   else if (hits.groups[0]) openGroup(hits.groups[0].name);
 }
@@ -361,7 +382,41 @@ function isActive(s: ServiceEntry) {
   return r.page === s.route.page && r.kind === s.route.kind && r.name === s.route.name;
 }
 
+// On a narrow frame a blade's left menu collapses to its current entry (CSS
+// below); pressing that entry opens the full list, picking any entry closes it.
+// The class is toggled on the DOM node itself: every blade renders its <nav>
+// with a static class, so Vue never patches it back.
+function onRootClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null;
+  const item = target?.closest?.('.az-svcmenu__item');
+  const nav = item?.closest('.az-svcmenu') as HTMLElement | null;
+  if (moreOpen.value && !target?.closest?.('.az-mast__morewrap')) moreOpen.value = false;
+  const tabEl = target?.closest?.('.az-tab') as HTMLElement | null;
+  if (tabEl) revealTab(tabEl);
+  if (!item || !nav) return;
+  const collapsible = getComputedStyle(nav).getPropertyValue('--az-menu-collapse').trim() === '1';
+  if (collapsible && item.classList.contains('is-active') && !nav.classList.contains('is-open')) nav.classList.add('is-open');
+  else nav.classList.remove('is-open');
+}
+
+/** A tab strip scrolls sideways on a phone: keep the tab just picked fully in view. */
+function revealTab(tab: HTMLElement) {
+  const strip = tab.parentElement;
+  if (!strip || strip.scrollWidth <= strip.clientWidth) return;
+  const t = tab.getBoundingClientRect();
+  const sr = strip.getBoundingClientRect();
+  if (t.left < sr.left) strip.scrollLeft -= sr.left - t.left + 16;
+  else if (t.right > sr.right) strip.scrollLeft += t.right - sr.right + 16;
+}
+
+const moreOpen = ref(false);
+const MORE = [
+  { key: 'copilot', label: 'Copilot', icon: 'copilot' }, { key: 'shell', label: 'Cloud Shell', icon: 'shell' },
+  { key: 'settings', label: 'Settings', icon: 'gear' }, { key: 'help', label: 'Support + Troubleshooting', icon: 'help' },
+  { key: 'feedback', label: 'Feedback', icon: 'feedback' },
+];
 function togglePanel(name: string) {
+  moreOpen.value = false;
   panel.value = panel.value === name ? '' : name;
   if (name === 'notes') notes.value = notes.value.map(n => ({ ...n, read: true }));
 }
@@ -432,6 +487,12 @@ const location = computed(() => {
   }
 });
 watch(location, url => emit('location', url), { immediate: true });
+// A new page or a new menu entry starts at the top, as the portal's blades do:
+// the working area is one scroller shared by every blade, so without this the
+// next page opened at whatever depth the last one had been scrolled to.
+watch(() => [route.value.page, route.value.kind, route.value.name, route.value.id, route.value.tab].join('|'), () => {
+  nextTick(() => { const page = rootEl.value?.querySelector('.az-page'); if (page) page.scrollTop = 0; });
+});
 
 // ----- G+/ shortcut, and a narrow-frame mode the menu reads -----
 let observer: ResizeObserver | null = null;
@@ -507,12 +568,13 @@ onBeforeUnmount(() => {
   font-size: 13px;
   line-height: 1.385;
   overflow: hidden;
+  overflow: clip;   /* hidden can still be scrolled by focus()/scrollIntoView, which slid the masthead away */
 }
 .az-root *, .az-root :deep(*) { box-sizing: border-box; }
 
 /* ----- masthead ----- */
 .az-mast {
-  flex: none; display: flex; align-items: center; gap: 2px; height: 40px;
+  position: relative; flex: none; display: flex; align-items: center; gap: 2px; height: 40px;
   padding: 0 4px 0 0; background: var(--az-mast); color: #fff;
 }
 .az-mast__btn {
@@ -525,9 +587,15 @@ onBeforeUnmount(() => {
   font: 600 15px var(--az-font); cursor: pointer; white-space: nowrap;
 }
 .az-mast__tools { display: flex; align-items: center; margin-left: auto; }
+.az-mast__morewrap { position: relative; display: none; }
+.az-mast__moremenu { position: absolute; z-index: 60; top: 40px; right: 0; min-width: 230px; padding: 4px 0; background: #fff;
+  border-radius: var(--az-radius); box-shadow: var(--az-shadow16); }
+.az-mast__moreitem { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0 14px; border: 0;
+  background: none; color: var(--az-fg); font: 13px var(--az-font); text-align: left; cursor: pointer; }
+.az-mast__moreitem:hover { background: var(--az-hover); }
 .az-mast__badge {
   position: absolute; top: 5px; right: 4px; min-width: 16px; height: 16px; padding: 0 4px;
-  border-radius: 8px; background: #2886de; color: #fff; font-size: 10px; line-height: 16px;
+  border-radius: 8px; background: #0f6cbd; color: #fff; font-size: 12px; font-weight: 600; line-height: 16px;
 }
 .az-mast__acct {
   display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 10px;
@@ -535,10 +603,10 @@ onBeforeUnmount(() => {
 }
 .az-mast__who { display: flex; flex-direction: column; line-height: 1.15; }
 .az-mast__user { font-size: 12px; }
-.az-mast__dir { font-size: 10px; color: #c8c8c8; letter-spacing: .02em; }
+.az-mast__dir { font-size: 12px; color: #c8c8c8; letter-spacing: .02em; }
 .az-mast__avatar {
   display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
-  background: #6b4ea0; color: #fff; font-size: 11px; font-weight: 600;
+  background: #6b4ea0; color: #fff; font-size: 12px; font-weight: 600;
 }
 .az-mast__avatar--big { width: 64px; height: 64px; font-size: 22px; }
 .az-search { position: relative; flex: 1 1 auto; max-width: 560px; margin: 0 auto; }
@@ -578,7 +646,7 @@ onBeforeUnmount(() => {
 .az-menu__item.is-active { background: var(--az-sel); font-weight: 600; }
 .az-menu__create { color: var(--az-brand); }
 .az-menu__create :deep(svg) { color: var(--az-brand); }
-.az-menu__sep { cursor: default; font-size: 11px; color: var(--az-fg3); letter-spacing: .04em; margin-top: 4px;
+.az-menu__sep { cursor: default; font-size: 12px; color: var(--az-fg3); letter-spacing: .04em; margin-top: 4px;
   border-top: 1px solid var(--az-stroke2); }
 .az-fly-enter-active, .az-fly-leave-active { transition: transform .15s ease; }
 .az-fly-enter-from, .az-fly-leave-to { transform: translateX(-100%); }
@@ -648,9 +716,16 @@ onBeforeUnmount(() => {
 .az-root :deep(.az-link:hover) { text-decoration: underline; }
 .az-root :deep(.az-link:disabled) { color: var(--az-fg4); cursor: default; text-decoration: none; }
 .az-root :deep(.az-kv) { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--az-stroke3); }
-.az-root :deep(.az-kv > span:first-child) { color: var(--az-fg3); }
+.az-root :deep(.az-kv > span:first-child) { color: var(--az-fg3); flex: none; max-width: 45%; }
+.az-root :deep(.az-kv > :last-child:not(:first-child)) { min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.az-root :deep(.az-kv .az-link) { min-width: 16px; text-align: right; }
 
 .az-root :deep(input::placeholder), .az-root :deep(textarea::placeholder) { color: #707070; opacity: 1; }
+/* inline code in prose, and the native controls no class reaches */
+.az-root :deep(code:not([class])) { padding: 1px 4px; border-radius: 3px; background: var(--az-bg3); color: var(--az-fg);
+  font: 12px Consolas, 'Cascadia Mono', 'Courier New', monospace; }
+.az-root :deep(input[type=range]) { accent-color: var(--az-brand); }
+.az-root :deep(input[type=radio]), .az-root :deep(input[type=checkbox]) { accent-color: var(--az-brand); }
 
 /* buttons */
 .az-root :deep(.az-btn) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 80px; height: 32px;
@@ -751,12 +826,12 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--az-stroke); position: sticky; top: 0; background: #fff; }
 .az-root :deep(.az-table th button) { border: 0; background: none; padding: 0; font: 600 13px var(--az-font); cursor: pointer; color: inherit; }
 .az-root :deep(.az-table td) { padding: 7px 12px 7px 8px; border-bottom: 1px solid var(--az-stroke3); vertical-align: middle;
-  max-width: 340px; overflow-wrap: anywhere; }
+  max-width: 340px; overflow-wrap: break-word; }
 .az-root :deep(.az-table tr:hover td) { background: var(--az-hover); }
 .az-root :deep(.az-table tr.is-sel td) { background: var(--az-sel); }
 .az-root :deep(.az-table .az-cb) { width: 36px; }
 .az-root :deep(.az-table input[type=checkbox]) { accent-color: var(--az-brand); width: 15px; height: 15px; margin: 0; }
-.az-root :deep(.az-namecell) { display: inline-flex; align-items: center; gap: 8px; }
+.az-root :deep(.az-namecell) { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .az-root :deep(.az-count) { color: var(--az-fg3); margin: 4px 0 8px; font-size: 12px; }
 
 /* filter pills and list toolbar */
@@ -791,11 +866,13 @@ onBeforeUnmount(() => {
 .az-root :deep(.az-pane__sub) { color: var(--az-fg3); font-size: 12px; }
 .az-root :deep(.az-pane__body) { flex: 1 1 auto; overflow-y: auto; padding: 8px 20px; }
 .az-root :deep(.az-pane__body .az-field) { grid-template-columns: 1fr; }
-.az-root :deep(.az-pane__foot) { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--az-stroke2); }
+.az-root :deep(.az-pane__foot) { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--az-stroke2); }
 
 /* wizard footer */
+.az-root :deep(.az-wiz) { display: flex; flex-direction: column; }
+.az-root :deep(.az-wiz > .az-form) { padding-bottom: 16px; }
 .az-root :deep(.az-wizfoot) { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  margin: 16px -24px -24px; padding: 12px 24px; background: #fff; border-top: 1px solid var(--az-stroke2); }
+  margin: auto -24px -24px; padding: 12px 24px; background: #fff; border-top: 1px solid var(--az-stroke2); }
 
 /* home tiles */
 .az-root :deep(.az-tiles) { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -811,24 +888,63 @@ onBeforeUnmount(() => {
 /* ----- narrow frame ----- */
 @container sl-portal (max-width: 900px) {
   .az-mast__hide-n, .az-mast__who { display: none; }
+  .az-mast__morewrap { display: block; }
+  .az-mast__moreitem.is-copilot, .az-mast__moreitem.is-shell { display: none; }
   .az-root :deep(.az-split) { flex-direction: column; }
-  .az-root :deep(.az-svcmenu) { width: 100%; border-right: 0; border-bottom: 1px solid var(--az-stroke2); padding: 0 0 6px;
-    display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 2px; }
-  .az-root :deep(.az-svcmenu__search), .az-root :deep(.az-svcmenu__group) { display: none; }
-  .az-root :deep(.az-svcmenu__item) { width: auto; white-space: nowrap; flex: none; }
+  /* the blade menu collapses to a "current page" button that opens the list */
+  .az-root :deep(.az-svcmenu) { --az-menu-collapse: 1; width: 100%; border-right: 0; padding: 0 0 8px;
+    display: flex; flex-direction: column; }
+  .az-root :deep(.az-svcmenu:not(.is-open) > :not(.az-svcmenu__item.is-active)) { display: none; }
+  .az-root :deep(.az-svcmenu__item.is-active) { min-height: 36px; border: 1px solid var(--az-stroke); box-shadow: none;
+    background: #fff; }
+  .az-root :deep(.az-svcmenu__item.is-active::after) { content: ''; margin-left: auto; width: 7px; height: 7px;
+    border: solid var(--az-fg2); border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); flex: none; }
+  .az-root :deep(.az-svcmenu.is-open) { margin-bottom: 4px; border: 1px solid var(--az-stroke2); border-radius: var(--az-radius);
+    padding: 4px; box-shadow: var(--az-shadow4); }
+  .az-root :deep(.az-svcmenu.is-open .az-svcmenu__item.is-active) { border-color: transparent; background: var(--az-sel); }
+  .az-root :deep(.az-svcmenu.is-open .az-svcmenu__item.is-active::after) { transform: translateY(2px) rotate(-135deg); }
+  .az-root :deep(.az-svcmenu.is-open .az-svcmenu__search) { order: -1; margin-top: 0; }
   .az-root :deep(.az-content) { padding: 10px 0 0; }
   .az-root :deep(.az-field) { grid-template-columns: 1fr; }
   .az-root :deep(.az-field__label) { padding-top: 0; }
   .az-root :deep(.az-ess__grid) { grid-template-columns: 1fr; }
+  /* grids keep readable columns and scroll inside their wrapper instead of squeezing
+     every cell into a tall stack of one-word lines */
+  /* min-width is ignored on a table cell, so a zero-height strut sets the column floor */
+  .az-root :deep(.az-table th:not(.az-cb):not(:empty)::after) { content: ''; display: block; width: 110px; height: 0; }
+  .az-root :deep(.az-table td .az-mono) { display: inline-block; min-width: 240px; }
+  /* a wrapped command bar must not leave a separator dangling at a line end */
+  .az-root :deep(.az-cmdsep) { display: none; }
 }
 @container sl-portal (max-width: 560px) {
   .az-mast__brand { font-size: 13px; padding: 0 6px 0 0; }
   .az-mast__hide-s { display: none; }
-  .az-search { max-width: none; }
+  .az-root .az-mast__moreitem.is-copilot, .az-root .az-mast__moreitem.is-shell { display: flex; }
+  /* the search box collapses to the magnifier, and opens over the masthead */
+  .az-search { flex: 0 0 36px; max-width: none; margin: 0 0 0 auto; }
+  .az-search__icon { pointer-events: none; color: #fff; left: 11px; top: 11px; }
+  .az-search:not(.is-open) .az-search__input { padding: 0; width: 36px; height: 36px; background: transparent; color: transparent;
+    cursor: pointer; }
+  .az-search:not(.is-open) .az-search__input::placeholder { color: transparent; }
+  .az-search:not(.is-open) .az-search__input:hover { background: var(--az-mast-hover); }
+  .az-search:not(.is-open) .az-search__input:focus { box-shadow: none; }
+  .az-search:not(.is-open) .az-search__input:focus-visible { box-shadow: inset 0 0 0 2px #fff; }
+  .az-search.is-open { position: absolute; z-index: 55; left: 4px; right: 4px; top: 5px; }
+  .az-search.is-open .az-search__icon { color: #616161; left: 10px; top: 8px; }
   .az-root :deep(.az-blade) { padding: 4px 12px 16px; }
   .az-crumbs { padding: 6px 12px 0; }
   .az-root :deep(.az-ess__row) { grid-template-columns: 120px 1fr; }
-  .az-root :deep(.az-wizfoot) { margin: 16px -12px -16px; padding: 10px 12px; }
+  .az-root :deep(.az-wizfoot) { margin: auto -12px -16px; padding: 10px 12px; }
   .az-root :deep(.az-filter) { min-width: 0; width: 100%; }
+  /* on a phone a stack of toasts would sit on the command bar: show only the newest,
+     compact, so it covers the breadcrumb and title and not what has to be pressed */
+  .az-toasts { left: 12px; right: 12px; width: auto; }
+  .az-toast:not(:first-child), .az-toast__detail { display: none; }
+  .az-toast { padding: 8px 10px; }
+  /* tab strips scroll sideways on a phone rather than stacking into rows */
+  .az-root :deep(.az-tabs) { flex-wrap: nowrap; gap: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .az-root :deep(.az-tabs::-webkit-scrollbar) { display: none; }
+  .az-root :deep(.az-tab) { flex: none; }
+  .az-root :deep(.az-tab.is-active::after) { bottom: 0; }
 }
 </style>

@@ -51,11 +51,21 @@ defineEmits<{ (event: 'close'): void; (event: 'ok'): void }>();
 }
 .amb-modal__title { margin: 0; flex: 1; font-size: 18px; font-weight: 500; color: #333; }
 .amb-modal__close {
-  border: 0; background: none; font-size: 24px; line-height: 1; color: #000; opacity: .3; cursor: pointer; padding: 0 4px;
+  border: 0; background: none; font-size: 24px; line-height: 1; color: #000; opacity: .45; cursor: pointer; padding: 0; width: 32px; height: 32px;
 }
 .amb-modal__close:hover { opacity: .6; }
-.amb-modal__body { padding: 15px 20px; overflow: auto; font-size: 14px; color: #333; }
+.amb-modal__body { padding: 15px 20px; overflow: auto; font-size: 14px; color: #333; min-height: 0; }
 .amb-modal__footer {
-  display: flex; justify-content: flex-end; gap: 8px; padding: 15px 20px; border-top: 1px solid #e5e5e5;
+  display: flex; justify-content: flex-end; gap: 8px; padding: 15px 20px; border-top: 1px solid #e5e5e5; flex-wrap: wrap;
+}
+.amb-modal__title { min-width: 0; overflow-wrap: anywhere; }
+.amb-modal__body :deep(a) { color: #107fab; text-decoration: none; }
+.amb-modal__body :deep(a:hover) { text-decoration: underline; }
+@container sl-portal (max-width: 560px) {
+  .amb-modal-backdrop { padding: 8px; }
+  .amb-modal, .amb-modal.is-wide, .amb-modal.is-small { width: 100%; max-height: 100%; }
+  .amb-modal__header { padding: 10px 14px; min-height: 48px; }
+  .amb-modal__body { padding: 12px 14px; }
+  .amb-modal__footer { padding: 10px 14px; }
 }
 </style>

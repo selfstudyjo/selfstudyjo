@@ -83,7 +83,7 @@ const charts = computed(() => present.value.map(def => {
 .kd-donuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px 8px; padding: 4px 20px 24px; }
 .kd-donut { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .kd-donut__svg { width: 116px; height: 116px; }
-.kd-donut__num { font-size: 8px; fill: rgb(0 0 0 / 0.87); font-family: inherit; }
+.kd-donut__num { font-size: 12px; fill: rgb(0 0 0 / 0.87); font-family: inherit; }
 .kd-donut figcaption { text-align: center; }
 .kd-donut__title { display: block; font-size: 16px; color: var(--kd-primary); text-decoration: none; margin-bottom: 4px; }
 .kd-legend { list-style: none; margin: 0; padding: 0; font-size: 12px; color: rgb(0 0 0 / 0.54); text-align: left; }

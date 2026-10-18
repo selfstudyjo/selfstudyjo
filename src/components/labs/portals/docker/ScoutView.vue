@@ -45,11 +45,11 @@ const chosen = ref(list.value[0] ? imageRef(list.value[0]) : '');
 .sv-picker { display: flex; align-items: center; gap: 10px; max-width: 420px; }
 .sv-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; max-width: 620px; }
 .sv-card { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; padding: 10px 12px; border: 1px solid var(--dd-border); border-radius: 6px; }
-.sv-card small { grid-column: 2; color: var(--dd-text-2); font-size: 0.75rem; }
+.sv-card small { grid-column: 2; color: var(--dd-text-2); font-size: 12px; }
 .sv-card strong { font-weight: 500; }
-.sv-sev { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 4px; color: #fff; font-weight: 700; font-size: 0.8125rem; }
+.sv-sev { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 4px; color: #fff; font-weight: 700; font-size: 13px; }
 .is-C .sv-sev { background: #A2242E; }
 .is-H .sv-sev { background: #E2541F; }
-.is-M .sv-sev { background: #F0A020; }
-.is-L .sv-sev { background: #8E96A4; }
+.is-M .sv-sev { background: #F0A020; color: #17191E; }
+.is-L .sv-sev { background: #6B7383; }
 </style>

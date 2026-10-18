@@ -100,25 +100,25 @@ function time(at: string): string {
 </script>
 
 <style scoped>
-.jk-sv__scroll { display: inline-block; max-width: 100%; box-sizing: border-box; overflow-x: auto; border: 1px solid var(--jk-border); border-radius: 0.6rem; }
-.jk-sv__table { border-collapse: collapse; font-size: 0.8125rem; }
-.jk-sv__corner { min-width: 11rem; }
-.jk-sv__head { width: 7.5rem; min-width: 7.5rem; padding: 0.55rem 0.5rem; font-weight: 600; text-align: center; vertical-align: bottom; border-left: 1px solid #fff; }
+.jk-sv__scroll { display: inline-block; max-width: 100%; box-sizing: border-box; overflow-x: auto; border: 1px solid var(--jk-border); border-radius: 9.6px; }
+.jk-sv__table { border-collapse: collapse; font-size: 13px; }
+.jk-sv__corner { min-width: 176px; }
+.jk-sv__head { width: 120px; min-width: 120px; padding: 8.8px 8px; font-weight: 600; text-align: center; vertical-align: bottom; border-left: 1px solid #fff; }
 .jk-sv__head.tone-0 { background: #f1f1f1; }
 .jk-sv__head.tone-1 { background: #e8e8e8; }
 .jk-sv__stage { word-break: break-word; line-height: 1.3; }
-.jk-sv__avg-row td { padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--jk-border); }
-.jk-sv__avg-label { font-size: 0.78rem; color: var(--jk-text); }
+.jk-sv__avg-row td { padding: 7.2px 8px; border-bottom: 1px solid var(--jk-border); }
+.jk-sv__avg-label { font-size: 12.48px; color: var(--jk-text); }
 .jk-sv__avg { text-align: center; color: var(--jk-text); background: #fafafa; }
-.jk-sv__build { position: relative; padding: 0.4rem 0.6rem; min-width: 11rem; border-bottom: 1px solid var(--jk-border); background: #fafafa; }
-.jk-sv__badge { display: inline-block; min-width: 2.6rem; padding: 0.1rem 0.45rem; border: 0; border-radius: 0.25rem; font: inherit; font-weight: 700; font-size: 0.78rem; color: #fff; cursor: pointer; background: #8b8a90; }
+.jk-sv__build { position: relative; padding: 6.4px 9.6px; min-width: 176px; border-bottom: 1px solid var(--jk-border); background: #fafafa; }
+.jk-sv__badge { display: inline-block; min-width: 41.6px; padding: 1.6px 7.2px; border: 0; border-radius: 4px; font: inherit; font-weight: 700; font-size: 12.48px; color: #fff; cursor: pointer; background: #8b8a90; }
 .jk-sv__badge.is-blue { background: #4a9c35; }
 .jk-sv__badge.is-red { background: #d24939; }
 .jk-sv__badge.is-yellow { background: #e9a61d; }
-.jk-sv__when { display: inline-flex; flex-direction: column; margin-left: 0.6rem; vertical-align: middle; line-height: 1.2; color: var(--jk-secondary); font-size: 0.75rem; }
-.jk-sv__changes { position: absolute; right: 0.5rem; top: 0.55rem; color: var(--jk-secondary); font-size: 0.72rem; }
-.jk-sv__cell { padding: 0; text-align: center; border-left: 1px solid #fff; border-bottom: 1px solid #fff; height: 3rem; }
-.jk-sv__cell-btn { width: 100%; height: 100%; min-height: 3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
+.jk-sv__when { display: inline-flex; flex-direction: column; margin-left: 9.6px; vertical-align: middle; line-height: 1.2; color: var(--jk-secondary); font-size: 12px; }
+.jk-sv__changes { position: absolute; right: 8px; top: 8.8px; color: var(--jk-secondary); font-size: 12px; }
+.jk-sv__cell { padding: 0; text-align: center; border-left: 1px solid #fff; border-bottom: 1px solid #fff; height: 48px; }
+.jk-sv__cell-btn { width: 100%; height: 100%; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
 .jk-sv__cell.is-success { background: #e2f3dc; }
 .jk-sv__cell.is-success:hover { background: #cfeac5; }
 .jk-sv__cell.is-failed { background: repeating-linear-gradient(-45deg, #f6d7d2, #f6d7d2 6px, #fbe6e3 6px, #fbe6e3 12px); color: #8f2316; }
@@ -126,6 +126,6 @@ function time(at: string): string {
 .jk-sv__cell.is-aborted { background: #e7e7e7; }
 .jk-sv__cell.is-skipped { background: #f6f6f6; }
 .jk-sv__cell.is-none { background: transparent; }
-.jk-sv__time { font-size: 0.8rem; }
-.jk-sv__flag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; }
+.jk-sv__time { font-size: 12.8px; }
+.jk-sv__flag { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
 </style>

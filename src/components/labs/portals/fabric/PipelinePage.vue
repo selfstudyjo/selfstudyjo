@@ -9,7 +9,7 @@
         <button type="button" class="fx-cmd" @click="validate"><FxIcon name="check" />Validate</button>
         <button type="button" class="fx-cmd fx-cmd--primary" :disabled="!acts.length" @click="runNow"><FxIcon name="play" />Run</button>
         <button type="button" class="fx-cmd" @click="settings = 'schedule'"><FxIcon name="calendar" />Schedule</button>
-        <button type="button" class="fx-cmd" @click="pane = 'output'"><FxIcon name="monitor" />View run history</button>
+        <button type="button" class="fx-cmd" @click="selected = -1; pane = 'output'"><FxIcon name="monitor" />View run history</button>
       </template>
       <template v-else-if="ribbon === 'Activities'">
         <button v-for="a in palette" :key="a.type" type="button" class="fx-cmd" @click="addActivity(a.type)">
@@ -30,7 +30,7 @@
             <FxIcon :name="a.icon" />{{ a.label }}</button>
         </div>
       </div>
-      <div v-else class="pl-flow">
+      <div v-else class="pl-flow" @click.self="selected = -1">
         <template v-for="(level, li) in levels" :key="li">
           <div class="pl-col">
             <button v-for="ai in level" :key="acts[ai].name" type="button" class="pl-act"
@@ -351,9 +351,9 @@ async function saveJson() {
 .pl-act.is-sel { outline: 2px solid #117865; }
 .pl-act.is-succeeded { border-left-color: #107c10; }
 .pl-act.is-failed { border-left-color: #c50f1f; }
-.pl-act__type { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #616161; }
+.pl-act__type { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #616161; }
 .pl-act__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.pl-act__status { font-size: 11px; }
+.pl-act__status { font-size: 12px; }
 .pl-act.is-failed .pl-act__status { color: #c50f1f; }
 .pl-act.is-succeeded .pl-act__status { color: #107c10; }
 .pl-pane { flex: 0 0 auto; height: 40%; min-height: 160px; display: flex; flex-direction: column; border-top: 1px solid #e0e0e0; }

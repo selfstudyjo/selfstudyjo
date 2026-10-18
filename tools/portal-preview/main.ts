@@ -6,6 +6,8 @@
 //   ?user=student                 whose environment
 //   ?reset=1                      start the lab from scratch
 //   ?lang=ar                      the platform strings around the product
+//   ?frame=900                    cap the portal's width, as the lab workspace's
+//                                 pane does beside the task list
 import { createApp, h, ref } from 'vue';
 // EVERY global stylesheet the app loads, in main.ts's order. A skin is drawn
 // inside the app's cascade - theme.css styles bare buttons and fields, and
@@ -100,7 +102,8 @@ async function boot() {
 
 const App = {
   setup() {
-    return () => h('div', { class: 'pp' }, [
+    const width = Number(params.get('frame') || 0);
+    return () => h('div', { class: 'pp', style: width ? { maxWidth: width + 'px' } : undefined }, [
       error.value
         ? h('div', { class: 'pp__err' }, error.value)
         : !tool.value

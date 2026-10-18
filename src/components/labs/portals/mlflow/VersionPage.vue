@@ -241,7 +241,7 @@ async function remove() {
 .mf-ver { flex: 1; overflow: auto; gap: 16px; }
 .mf-ver__menu { top: 34px; left: 0; }
 .mf-ver__meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px 24px; margin: 0; font-size: 13px; }
-.mf-ver__meta div { display: flex; gap: 6px; align-items: center; min-width: 0; flex-wrap: wrap; }
+.mf-ver__meta > div { display: flex; gap: 6px; align-items: center; min-width: 0; flex-wrap: wrap; }
 .mf-ver__meta dt { color: var(--mf-text-2); font-weight: 600; white-space: nowrap; }
 .mf-ver__meta dd { margin: 0; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; min-width: 0; }
 .mf-ver__stage { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; cursor: pointer; color: var(--mf-text-2); }

@@ -71,17 +71,17 @@ function open(item: Item) {
 </script>
 
 <style scoped>
-.jk-mg { max-width: 82rem; }
-.jk-mg__warn { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.jk-mg__warn-buttons { display: flex; gap: 0.5rem; }
-.jk-mg__h2 { font-size: 1.1rem; font-weight: 650; margin: 1.5rem 0 0.6rem; }
-.jk-mg__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0.4rem; }
-.jk-mg__item { display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.8rem; border: 0; border-radius: 0.8rem; background: none; text-align: left; font: inherit; color: var(--jk-text); cursor: pointer; }
+.jk-mg { max-width: 1312px; }
+.jk-mg__warn { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.jk-mg__warn-buttons { display: flex; gap: 8px; }
+.jk-mg__h2 { font-size: 17.6px; font-weight: 650; margin: 24px 0 9.6px; }
+.jk-mg__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 304px), 1fr)); gap: 6.4px; }
+.jk-mg__item { display: flex; align-items: flex-start; gap: 14.4px; padding: 12.8px; border: 0; border-radius: 12.8px; background: none; text-align: left; font: inherit; color: var(--jk-text); cursor: pointer; }
 .jk-mg__item:hover { background: var(--jk-btn-bg); }
-.jk-mg__icon { flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 0.65rem; background: var(--jk-btn-bg); }
-.jk-mg__icon .jk-icon { width: 1.5rem; height: 1.5rem; }
+.jk-mg__icon { flex: none; display: grid; place-items: center; width: 41.6px; height: 41.6px; border-radius: 10.4px; background: var(--jk-btn-bg); }
+.jk-mg__icon .jk-icon { width: 24px; height: 24px; }
 .jk-mg__text { display: flex; flex-direction: column; min-width: 0; }
 .jk-mg__title { font-weight: 650; }
-.jk-mg__desc { color: var(--jk-secondary); font-size: 0.8125rem; line-height: 1.45; }
+.jk-mg__desc { color: var(--jk-secondary); font-size: 13px; line-height: 1.45; }
 .jk-mg__item.is-off .jk-mg__title { color: var(--jk-text); }
 </style>

@@ -27,7 +27,7 @@
       </nav>
 
       <div class="rm__main">
-        <table class="rm__metrics">
+        <div class="rm__wrap"><table class="rm__metrics">
           <thead>
             <tr><th>Apps Submitted</th><th>Apps Running</th><th>Apps Completed</th><th>Containers Running</th>
               <th>Memory Used</th><th>Memory Total</th><th>Active Nodes</th></tr>
@@ -36,7 +36,7 @@
             <tr><td>{{ apps.length }}</td><td>{{ count('RUNNING') }}</td><td>{{ apps.length - count('RUNNING') }}</td>
               <td>{{ runningContainers }}</td><td>{{ memUsed }} MB</td><td>{{ memTotal }} MB</td><td>{{ nodes.length }}</td></tr>
           </tbody>
-        </table>
+        </table></div>
 
         <!-- One application -->
         <template v-if="appId">
@@ -63,7 +63,7 @@
 
         <!-- Nodes -->
         <template v-else-if="section === 'nodes'">
-          <table class="rm__table">
+          <div class="rm__wrap"><table class="rm__table">
             <thead><tr><th>Node Labels</th><th>Rack</th><th>Node State</th><th>Node Address</th><th>Node HTTP Address</th><th>Containers</th><th>Version</th></tr></thead>
             <tbody>
               <tr v-for="n in nodes" :key="n.host">
@@ -71,7 +71,7 @@
                 <td><a href="#" @click.prevent>{{ n.host }}:8042</a></td><td>{{ count('RUNNING') }}</td><td>{{ n.version }}</td>
               </tr>
             </tbody>
-          </table>
+          </table></div>
         </template>
 
         <!-- Scheduler -->
@@ -200,7 +200,8 @@ watch(() => props.appId, id => {
 .rm__nav h4 { margin: 10px 0 4px; font-size: 13px; }
 .rm__nav ul { list-style: none; margin: 0; padding-left: 10px; }
 .rm__nav li { padding: 2px 0; }
-.rm__nav a { color: #0066cc; }
+.rm__nav a { color: #0066cc; display: inline-block; padding: 1px 0; line-height: 16px; }
+.rm td a { display: inline-block; line-height: 18px; }
 .rm__back { display: block; margin-bottom: 8px; }
 .rm__main { flex: 1; min-width: 0; padding: 10px 14px; }
 .rm__metrics, .rm__table, .rm__kv { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
@@ -209,29 +210,41 @@ watch(() => props.appId, id => {
 .rm__table tbody tr:nth-child(odd) { background: #f4f8fb; }
 .rm__kv th { text-align: right; padding: 3px 8px; width: 240px; white-space: nowrap; }
 .rm__kv td { padding: 3px 8px; }
-.rm__wrap { overflow-x: auto; }
+.rm__wrap { overflow-x: auto; margin-bottom: 12px; }
+.rm__wrap > table { margin-bottom: 0; }
 .rm__search { text-align: right; margin-bottom: 6px; }
-.rm__search input { border: 1px solid #aaa; padding: 2px 4px; font: inherit; }
+.rm__search input { border: 1px solid #767676; padding: 3px 5px; font: inherit; background: #fff; color: #000; max-width: 100%; }
 .rm__name { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rm__nowrap { white-space: nowrap; }
 .rm__prog { width: 60px; height: 10px; border: 1px solid #aaa; background: #fff; }
 .rm__prog i { display: block; height: 100%; background: #5ea1d8; }
-.rm__btn { color: #000; font: inherit; padding: 2px 8px; border: 1px solid #999; background: linear-gradient(#fff, #ddd); cursor: pointer; border-radius: 2px; }
+.rm__btn { color: #000; font: inherit; padding: 3px 10px; min-height: 24px; border: 1px solid #999; background: linear-gradient(#fff, #ddd); cursor: pointer; border-radius: 2px; }
 .rm__btn.is-kill { color: #a00; }
 .rm__appbar { display: flex; gap: 8px; margin-bottom: 10px; }
 .rm__status { background: #f8f8f8; border: 1px solid #ddd; padding: 8px; white-space: pre-wrap; }
 .rm__empty { text-align: center; color: #666; padding: 12px; }
 .rm__hint { color: #666; }
-.rm__hint code { font-size: 11px; }
+.rm__hint code { font-size: 12px; overflow-wrap: anywhere; color: #333; background: #f4f4f4; padding: 1px 3px; }
 .rm__h3 { font-size: 15px; margin: 6px 0 10px; }
 .rm__queue { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.rm__qbar { position: relative; width: 300px; height: 16px; border: 1px solid #888; background: #fff; }
+.rm__qbar { position: relative; width: 300px; max-width: 45%; flex: 0 0 auto; height: 16px; border: 1px solid #888; background: #fff; }
 .rm__qbar i { position: absolute; inset: 0 auto 0 0; background: #b5d4ee; }
 .rm__qbar b { position: absolute; inset: 0 auto 0 0; background: #5ea1d8; }
-@container sl-portal (max-width: 700px) {
+@container sl-portal (max-width: 900px) {
   .rm { margin: -12px; min-height: calc(100% + 24px); }
+}
+@container sl-portal (max-width: 700px) {
   .rm__body { flex-direction: column; }
   .rm__nav { width: auto; flex: none; border-right: 0; border-bottom: 1px solid #ccc; }
-  .rm__title { margin: 0; font-size: 17px; }
+  .rm__title { margin: 0; font-size: 17px; flex-basis: 100%; order: 3; }
+  .rm__who { margin-left: auto; }
+  .rm__nav > ul { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; }
+  .rm__nav > ul > li > ul { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 2px 0 0 10px; }
+  .rm__nav a { display: inline-block; padding: 4px 0; }
+  .rm__kv th { width: auto; white-space: normal; text-align: left; vertical-align: top; }
+  .rm__btn { min-height: 32px; }
+  .rm__search { text-align: left; }
+  .rm__queue { flex-wrap: wrap; }
+  .rm__qbar { max-width: 100%; width: 100%; }
 }
 </style>

@@ -85,7 +85,8 @@
 
       <div class="sl-wsbody">
         <!-- The workbench -->
-        <section class="sl-bench">
+        <section ref="benchEl" class="sl-bench"
+                 :class="{ 'is-full': benchFs.active.value, 'is-overlay': benchFs.active.value && !benchFs.native.value }">
           <div class="sl-bench__tabs" role="tablist">
             <button
               v-for="pane in panes"
@@ -108,6 +109,32 @@
               :aria-selected="activePane === '__brief'"
               @click="showPane('__brief')"
             >{{ $t('Brief') }}</button>
+            <!--
+              FULL SCREEN for whatever tool is open - a console, the web
+              playground, a dashboard, the 3D simulator, the Network Simulator.
+              The whole workbench goes full screen, tabs included, so a student
+              can switch tools without leaving it. Three ways out: this button,
+              the X, and Escape.
+            -->
+            <span class="sl-bench__fs">
+              <button v-if="!benchFs.active.value" type="button" class="sl-bench__fs-btn"
+                      :title="$t('Full screen')" @click="benchFs.enter()">
+                <Maximize2 class="sl-i" aria-hidden="true" />
+                <span class="sl-bench__fs-label">{{ $t('Full screen') }}</span>
+              </button>
+              <template v-else>
+                <button type="button" class="sl-bench__fs-btn"
+                        :title="$t('Exit full screen')" @click="benchFs.exit()">
+                  <Minimize2 class="sl-i" aria-hidden="true" />
+                  <span class="sl-bench__fs-label">{{ $t('Exit full screen') }}</span>
+                </button>
+                <button type="button" class="sl-bench__fs-btn sl-bench__fs-close"
+                        :title="$t('Close')" :aria-label="$t('Exit full screen')"
+                        @click="benchFs.exit()">
+                  <X class="sl-i" aria-hidden="true" />
+                </button>
+              </template>
+            </span>
           </div>
 
           <div v-show="activePane === '__brief'" class="sl-bench__panel">
@@ -424,7 +451,8 @@
 import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  AlertTriangle, Crown, ExternalLink, FlaskConical, RotateCcw, RotateCw,
+  AlertTriangle, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
+  RotateCcw, RotateCw, X,
 } from 'lucide-vue-next';
 import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
@@ -442,6 +470,7 @@ import LabConsole from '@/components/labs/LabConsole.vue';
 import LabFiles from '@/components/labs/LabFiles.vue';
 import LabGui from '@/components/labs/LabGui.vue';
 import LabPortal from '@/components/labs/portals/LabPortal.vue';
+import { useFullscreen } from '@/composables/useFullscreen';
 import LabMobile from '@/components/labs/LabMobile.vue';
 import LabPreview from '@/components/labs/LabPreview.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
@@ -554,6 +583,10 @@ const note = ref('');
 const activePane = ref('');
 /** Which panes have ever been shown, so each mounts once and then stays alive. */
 const opened = ref(new Set<string>());
+
+/** The workbench in full screen - any tool, tabs included. See useFullscreen. */
+const benchEl = ref<HTMLElement | null>(null);
+const benchFs = useFullscreen(benchEl);
 /** Bumped whenever the lab is loaded from the server. See the LabWeb key. */
 const sourceEpoch = ref(0);
 const chosenTool = ref<Record<string, string>>({});

@@ -89,7 +89,16 @@ const acct = computed(() => az.p.value.account || {});
 const title = computed(() => ({ deployments: 'Custom deployment', cost: 'Cost Management', advisor: 'Advisor',
   entra: 'Default Directory', deletedvaults: 'Manage deleted vaults' } as Record<string, string>)[name.value] || svc.value?.label || '');
 const sub = computed(() => (name.value === 'entra' ? 'Microsoft Entra ID' : `${acct.value.directory} (${acct.value.domain})`));
-const tabTitle = computed(() => (tab.value === 'overview' ? '' : tab.value.replace(/^./, c => c.toUpperCase())));
+// The page title after the bar is the menu entry's own label, as the portal shows it.
+const TAB_TITLES: Record<string, string> = {
+  activity: 'Activity log', alerts: 'Alerts', logs: 'Logs', diag: 'Diagnostic settings', compliance: 'Compliance',
+  definitions: 'Definitions', assignments: 'Assignments', exemptions: 'Exemptions', costanalysis: 'Cost analysis',
+  budgets: 'Budgets', advisor: 'Advisor recommendations', reservations: 'Reservations', users: 'Users', groups: 'Groups',
+  apps: 'Enterprise applications', troubleshoot: 'Connection troubleshoot', rules: 'Effective security rules',
+  routes: 'Next hop / Effective routes', iam: 'Access control (IAM)', deployments: 'Deployments',
+};
+const tabTitle = computed(() => (tab.value === 'overview' ? ''
+  : TAB_TITLES[tab.value] || tab.value.replace(/^./, c => c.toUpperCase())));
 function setTab(key: string) { az.route.value = { ...az.route.value, tab: key }; }
 function setTabCost(key: string) { az.go({ page: 'service', name: 'cost', tab: key }); }
 function rowsOf(path: string) { return rows(az.p.value, path); }

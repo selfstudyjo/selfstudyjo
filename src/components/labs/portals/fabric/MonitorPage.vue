@@ -145,7 +145,9 @@ tr:hover .mo-more { opacity: 1; }
 .mo-status.is-succeeded { color: #107c10; }
 .mo-err { margin-top: 12px; }
 @container sl-portal (max-width: 600px) {
-  .mo-search, .mo-sel { width: 100%; }
+  .mo-filters { padding: 6px 12px 10px; }
+  .mo-search { width: 100%; }
+  .mo-sel { flex: 1 1 140px; width: auto; }
   .mo-more { opacity: 1; }
 }
 </style>

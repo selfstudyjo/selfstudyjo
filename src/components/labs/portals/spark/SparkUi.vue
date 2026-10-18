@@ -9,7 +9,7 @@
         </svg>
         <span class="spk-version">{{ version }}</span>
       </a>
-      <button type="button" class="spk-burger" aria-label="Menu" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
+      <button v-if="app" type="button" class="spk-burger" aria-label="Menu" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
         <span></span><span></span><span></span>
       </button>
       <ul v-if="app" class="spk-tabs" :class="{ 'is-open': menuOpen }">
@@ -37,10 +37,10 @@
       <section v-else-if="route.page === 'storage'">
         <h3 class="spk-h3">Storage</h3>
         <h4 class="spk-h4"><span class="arrow-open"></span> RDDs</h4>
-        <table class="table table-bordered table-sm">
+        <div class="table-wrap"><table class="table table-bordered table-sm">
           <thead><tr><th>ID</th><th>RDD Name</th><th>Storage Level</th><th>Cached Partitions</th><th>Fraction Cached</th><th>Size in Memory</th><th>Size on Disk</th></tr></thead>
           <tbody><tr><td colspan="7" class="spk-empty">No RDDs have been persisted. Call <code>df.cache()</code> or <code>CACHE TABLE t</code> to see one here.</td></tr></tbody>
-        </table>
+        </table></div>
       </section>
       <SparkEnvironment v-else-if="route.page === 'environment'" :app="cur" :view="view" />
       <SparkExecutors v-else-if="route.page === 'executors'" :app="cur" :view="view" />
@@ -106,7 +106,7 @@ watch(route, value => emit('location', locationFor(value)), { immediate: true, d
 
 <style scoped>
 .spk {
-  --spk-link: #0088cc;
+  --spk-link: #0077b3;
   --spk-link-hover: #005580;
   --spk-blue: #3EC0FF;
   --spk-border: #dee2e6;
@@ -128,14 +128,14 @@ watch(route, value => emit('location', locationFor(value)), { immediate: true, d
 }
 .spk-brand { display: flex; align-items: center; gap: 4px; margin-right: 18px; text-decoration: none !important; }
 .spk-logo { height: 38px; width: auto; }
-.spk-version { color: #777; font-size: 12px; align-self: flex-end; margin-bottom: 9px; }
+.spk-version { color: #666; font-size: 12px; align-self: flex-end; margin-bottom: 9px; }
 .spk-tabs { display: flex; list-style: none; margin: 0; padding: 0; }
-.spk-tabs a { display: flex; align-items: center; height: 50px; padding: 0 14px; color: #777; font-size: 15px; text-decoration: none; white-space: nowrap; }
+.spk-tabs a { display: flex; align-items: center; height: 50px; padding: 0 14px; color: #666; font-size: 15px; text-decoration: none; white-space: nowrap; }
 .spk-tabs a:hover { color: #333; text-decoration: none !important; }
 .spk-tabs li.active a { background-color: #e5e5e5; color: #555; box-shadow: inset 0 3px 8px rgba(0, 0, 0, .125); }
-.spk-appname { margin-left: auto; align-self: center; color: #777; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; padding-left: 12px; }
-.spk-burger { display: none; margin-left: auto; align-self: center; background: none; border: 1px solid #ddd; border-radius: 4px; padding: 7px 9px; cursor: pointer; flex-direction: column; gap: 3px; }
-.spk-burger span { display: block; width: 18px; height: 2px; background: #888; }
+.spk-appname { margin-left: auto; align-self: center; color: #666; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; padding-left: 12px; }
+.spk-burger { display: none; margin-left: auto; align-self: center; background: none; border: 1px solid #ccc; border-radius: 4px; padding: 9px 10px; min-width: 40px; min-height: 34px; align-items: center; cursor: pointer; flex-direction: column; gap: 3px; }
+.spk-burger span { display: block; width: 18px; height: 2px; background: #666; }
 .spk-body { padding: 15px 20px 30px; }
 .spk-flashes { position: absolute; top: 60px; right: 16px; z-index: 30; display: flex; flex-direction: column; gap: 8px; width: min(420px, calc(100% - 32px)); }
 .spk-flash { position: relative; padding: 12px 32px 12px 14px; border-radius: 4px; border: 1px solid transparent; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,.1); word-break: break-word; }
@@ -151,11 +151,12 @@ watch(route, value => emit('location', locationFor(value)), { immediate: true, d
 .spk :deep(.spk-h3) { font-size: 24.5px; font-weight: 700; margin: 6px 0 12px; line-height: 1.2; display: flex; align-items: center; gap: 6px; }
 .spk :deep(.spk-h4) { font-size: 17.5px; font-weight: 700; margin: 18px 0 8px; line-height: 1.2; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
 .spk :deep(.spk-h4 a) { color: var(--spk-link); }
-.spk :deep(.arrow-open) { display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #08c; }
-.spk :deep(.arrow-closed) { display: inline-block; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 5px solid #08c; }
-.spk :deep(.tip) { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: #999; color: #fff; font-size: 10px; font-weight: 700; cursor: help; }
+.spk :deep(.arrow-open) { display: inline-block; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #0077b3; }
+.spk :deep(.arrow-closed) { display: inline-block; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 5px solid #0077b3; }
+.spk :deep(.tip) { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: #6c757d; color: #fff; font-size: 12px; font-weight: 700; cursor: help; flex: 0 0 auto; width: 16px; height: 16px; }
 .spk :deep(.list-unstyled) { list-style: none; padding: 0; margin: 0 0 10px; }
 .spk :deep(.list-unstyled li) { padding: 1px 0; }
+.spk :deep(.list-unstyled li a) { display: inline-block; min-width: 16px; min-height: 18px; }
 .spk :deep(.table) { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px; }
 .spk :deep(.table th), .spk :deep(.table td) { padding: 4px; border: 1px solid var(--spk-border); vertical-align: top; text-align: left; }
 .spk :deep(.table thead th) { vertical-align: bottom; border-bottom: 2px solid var(--spk-border); font-weight: 700; white-space: nowrap; }
@@ -167,8 +168,8 @@ watch(route, value => emit('location', locationFor(value)), { immediate: true, d
 .spk :deep(.progress-label) { position: relative; z-index: 1; font-size: 12px; line-height: 20px; color: #333; white-space: nowrap; }
 .spk :deep(.btn) { display: inline-flex; align-items: center; gap: 6px; font: inherit; padding: 5px 10px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; line-height: 1.5; }
 .spk :deep(.btn:disabled) { opacity: .65; cursor: not-allowed; }
-.spk :deep(.btn-primary) { color: #fff; background: #007bff; border-color: #007bff; }
-.spk :deep(.btn-primary:hover:not(:disabled)) { background: #0069d9; }
+.spk :deep(.btn-primary) { color: #fff; background: #0069d9; border-color: #0062cc; }
+.spk :deep(.btn-primary:hover:not(:disabled)) { background: #005cbf; }
 .spk :deep(.btn-secondary) { color: #fff; background: #6c757d; border-color: #6c757d; }
 .spk :deep(.btn-sm) { padding: 4px 7px; font-size: 12px; }
 .spk :deep(.form-control) { display: block; width: 100%; padding: 5px 10px; font: inherit; color: #495057; background: #fff; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; }
@@ -186,5 +187,13 @@ watch(route, value => emit('location', locationFor(value)), { immediate: true, d
   .spk-tabs.is-open { display: flex; }
   .spk-tabs a { height: 42px; }
   .spk-body { padding: 12px; }
+  .spk-tabs li.active a { box-shadow: inset 3px 0 0 #E25A1C; }
+}
+@container sl-portal (max-width: 560px) {
+  .spk-nav { padding: 0 10px; }
+  .spk :deep(.spk-h3) { font-size: 20px; flex-wrap: wrap; }
+  .spk :deep(.spk-h4) { font-size: 16px; }
+  .spk :deep(.btn) { min-height: 34px; }
+  .spk :deep(.list-unstyled li) { overflow-wrap: anywhere; }
 }
 </style>

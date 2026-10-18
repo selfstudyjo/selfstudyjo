@@ -10,11 +10,11 @@
       <span class="fx-cmdbar__grow" />
       <div class="wp-headbtns">
         <button v-if="ws?.git" type="button" class="fx-btn" @click="panel = 'git'">
-          <FxIcon name="git" />Source control
+          <FxIcon name="git" /><span class="wp-lbl">Source control</span>
           <span v-if="pendingGit" class="fx-pill fx-pill--brand">{{ pendingGit }}</span>
         </button>
-        <button type="button" class="fx-btn" @click="panel = 'access'"><FxIcon name="people" />Manage access</button>
-        <button type="button" class="fx-btn" @click="panel = 'settings'"><FxIcon name="settings" />Workspace settings</button>
+        <button type="button" class="fx-btn" title="Manage access" @click="panel = 'access'"><FxIcon name="people" /><span class="wp-lbl">Manage access</span></button>
+        <button type="button" class="fx-btn" title="Workspace settings" @click="panel = 'settings'"><FxIcon name="settings" /><span class="wp-lbl">Workspace settings</span></button>
       </div>
     </div>
 
@@ -321,7 +321,10 @@ function openRow(row: Row) {
 }
 
 function openMenu(row: Row, event: MouseEvent) {
-  const host = (event.currentTarget as HTMLElement).closest('.wp') as HTMLElement;
+  // Dialogs and this menu are positioned against the shell's body (rail + page),
+  // as on every other page, so a dialog dims the rail too.
+  const host = ((event.currentTarget as HTMLElement).closest('.fx-body')
+    || (event.currentTarget as HTMLElement).closest('.wp')) as HTMLElement;
   const box = host.getBoundingClientRect();
   const btn = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = Math.min(btn.left - box.left, box.width - 220);
@@ -468,7 +471,6 @@ const lineageColumns = computed(() => {
 </script>
 
 <style scoped>
-.wp { position: relative; }
 .wp-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; flex-wrap: wrap; }
 .wp-icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 8px; background: #eef5fc; }
 .wp-title { min-width: 0; }
@@ -498,7 +500,14 @@ tr:hover .wp-more, .wp-more:focus { opacity: 1; }
   .wp-head { padding: 12px 12px 6px; }
   .wp-icon { display: none; }
   .wp-toolbar { padding: 6px 12px; }
-  .wp-toolbar .wp-filter, .wp-toolbar .wp-type { width: 100%; }
+  .wp-head { flex-wrap: nowrap; }
+  .wp-title { flex: 1; }
+  .wp-title .fx-page__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wp-headbtns { flex-wrap: nowrap; gap: 4px; }
+  .wp-headbtns .wp-lbl { display: none; }
+  .wp-headbtns .fx-btn { padding: 0 8px; }
+  .wp-toolbar .wp-filter { flex: 1 1 150px; width: auto; }
+  .wp-toolbar .wp-type { flex: 1 1 120px; width: auto; }
   .wp-more { opacity: 1; }
 }
 </style>

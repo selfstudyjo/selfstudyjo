@@ -27,4 +27,4 @@ defineEmits<{ (event: 'open', row: Incident): void }>();
 </script>
 
 <style scoped src="./sn.css"></style>
-<style scoped>.short { min-width: 12rem; }</style>
+<style scoped>.short { min-width: 192px; }</style>

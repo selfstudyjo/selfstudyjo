@@ -80,7 +80,7 @@ function title(run: TfRun) {
 <style scoped src="./tfBase.css"></style>
 <style scoped>
 .rl-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--tf-border); margin-bottom: 12px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.rl-tab { padding: 8px 12px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; }
+.rl-tab { flex: none; padding: 8px 12px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; }
 .rl-tab.is-active { color: var(--tf-fg-action); border-bottom-color: var(--tf-fg-action); }
 .rl-tab__n { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 10px; background: var(--tf-surface-strong); color: var(--tf-fg-primary); font-size: 12px; text-align: center; }
 .rl { border: 1px solid var(--tf-border); border-radius: 6px; overflow: hidden; }
@@ -88,9 +88,9 @@ function title(run: TfRun) {
 .rl__link { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 16px; color: inherit; }
 .rl__link:hover { background: var(--tf-surface-faint); text-decoration: none; color: inherit; }
 .rl__title { font-weight: 600; color: var(--tf-fg-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rl__current { margin-left: 6px; font-size: 11px; }
+.rl__current { margin-left: 6px; font-size: 12px; }
 .rl__meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--tf-fg-faint); margin-top: 2px; }
-.rl__avatar { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--tf-brand); color: #fff; font-size: 10px; font-weight: 600; }
+.rl__avatar { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--tf-brand); color: #fff; font-size: 12px; font-weight: 600; }
 .rl__cmd { display: block; margin-top: 4px; font-size: 12px; color: var(--tf-fg-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rl__side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .rl__counts { display: flex; gap: 8px; font-family: var(--tf-mono); font-size: 13px; font-weight: 600; }
@@ -100,5 +100,8 @@ function title(run: TfRun) {
 @container sl-portal (max-width: 760px) {
   .rl__link { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .rl__side { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+@container sl-portal (max-width: 560px) {
+  .rl-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
 }
 </style>

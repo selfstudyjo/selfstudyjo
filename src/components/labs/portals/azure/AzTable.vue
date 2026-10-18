@@ -28,7 +28,7 @@
         </tr>
         <tr v-if="!sorted.length">
           <td :colspan="columns.length + (selectable ? 1 : 0)" class="az-tableempty">
-            <slot name="empty">No results.</slot>
+            <div class="az-tableempty__msg"><slot name="empty">No results.</slot></div>
           </td>
         </tr>
       </tbody>
@@ -80,5 +80,7 @@ function toggleAll() { emit('update:selected', allOn.value ? [] : [...keys.value
 <style scoped>
 .az-sorthint { opacity: 0; color: #707070; font-weight: 400; }
 th:hover .az-sorthint { opacity: 1; }
-.az-tableempty { padding: 28px 8px !important; text-align: center; color: #616161; }
+.az-tableempty { padding: 28px 8px !important; text-align: center; color: #616161; white-space: normal; }
+/* a wide grid scrolls sideways; its empty message stays in view and wraps to the visible width */
+.az-tableempty__msg { position: sticky; left: 8px; width: min(100%, calc(100cqw - 56px)); }
 </style>

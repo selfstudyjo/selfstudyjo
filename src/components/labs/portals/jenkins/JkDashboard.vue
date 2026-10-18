@@ -152,36 +152,37 @@ const sorted = computed(() => {
 </script>
 
 <style scoped>
-.jk-welcome { max-width: 46rem; }
-.jk-welcome__title { font-size: 1.85rem; font-weight: 700; margin: 0.4rem 0 0.6rem; }
-.jk-welcome__lead { color: var(--jk-text); margin: 0 0 1.6rem; }
-.jk-welcome__h2 { font-size: 1.05rem; font-weight: 650; margin: 1.4rem 0 0.6rem; }
+.jk-welcome { max-width: 736px; }
+.jk-welcome__title { font-size: 29.6px; font-weight: 700; margin: 6.4px 0 9.6px; }
+.jk-welcome__lead { color: var(--jk-text); margin: 0 0 25.6px; }
+.jk-welcome__h2 { font-size: 16.8px; font-weight: 650; margin: 22.4px 0 9.6px; }
 .jk-welcome__card {
-  display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 30rem;
-  padding: 0.85rem 1rem; margin-bottom: 0.5rem; border: 0; border-radius: 0.8rem;
+  display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px;
+  padding: 13.6px 16px; margin-bottom: 8px; border: 0; border-radius: 12.8px;
   background: var(--jk-btn-bg); color: var(--jk-text); font: inherit; font-weight: 600; cursor: pointer;
 }
 .jk-welcome__card:hover { background: var(--jk-btn-hover); }
-.jk-tabs { display: flex; gap: 0.25rem; margin-bottom: 0.6rem; }
-.jk-tabs__tab { display: inline-flex; align-items: center; padding: 0.35rem 0.95rem; border: 0; border-radius: 0.66rem; background: none; font: inherit; font-weight: 600; color: var(--jk-text); cursor: pointer; }
+.jk-tabs { display: flex; gap: 4px; margin-bottom: 9.6px; }
+.jk-tabs__tab { display: inline-flex; align-items: center; padding: 5.6px 15.2px; border: 0; border-radius: 10.56px; background: none; font: inherit; font-weight: 600; color: var(--jk-text); cursor: pointer; }
 .jk-tabs__tab.is-active { background: var(--jk-btn-bg); }
 .jk-tabs__tab:hover { background: var(--jk-btn-hover); }
-.jk-tabs__add .jk-icon { width: 1rem; height: 1rem; }
-.jk-sort { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; white-space: nowrap; }
+.jk-tabs__add .jk-icon { width: 16px; height: 16px; }
+.jk-sort { background: none; border: 0; padding: 0 4px; margin: 0 -4px; min-width: 16px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; white-space: nowrap; }
 .jk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .jk-dash__table td { white-space: nowrap; }
-.jk-dash__table td:first-child, .jk-dash__table td:nth-child(2) { width: 2.5rem; }
-.jk-dash__name { min-width: 10rem; }
+.jk-dash__table td:first-child, .jk-dash__table td:nth-child(2) { width: 40px; }
+.jk-dash__name { min-width: 160px; }
 .jk-dash__job { font-weight: 600; }
-.jk-dash__num { margin-left: 0.2rem; }
-.jk-dash__badge { margin-left: 0.5rem; padding: 0.05rem 0.45rem; border-radius: 0.4rem; background: var(--jk-btn-bg); color: var(--jk-secondary); font-size: 0.72rem; font-weight: 600; }
-.jk-dash__build { display: inline-flex; padding: 0.3rem; border: 0; border-radius: 0.5rem; background: none; color: var(--jk-green); cursor: pointer; }
+.jk-link.jk-dash__num { display: inline-block; min-width: 24px; text-align: left; }
+.jk-link.jk-dash__job { display: inline-block; min-width: 24px; text-align: left; }
+.jk-dash__badge { margin-left: 8px; padding: 0.8px 7.2px; border-radius: 6.4px; background: var(--jk-btn-bg); color: var(--jk-secondary); font-size: 12px; font-weight: 600; }
+.jk-dash__build { display: inline-flex; padding: 4.8px; border: 0; border-radius: 8px; background: none; color: var(--jk-green); cursor: pointer; }
 .jk-dash__build:hover:not(:disabled) { background: var(--jk-btn-hover); }
 .jk-dash__build:disabled { color: var(--jk-secondary); opacity: 0.5; cursor: not-allowed; }
-.jk-dash__legend { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 0.8rem; font-size: 0.8125rem; color: var(--jk-secondary); }
-.jk-dash__feeds { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
-.jk-dash__size { padding: 0 0.25rem; font-weight: 500; }
+.jk-dash__legend { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; margin-top: 12.8px; font-size: 13px; color: var(--jk-secondary); }
+.jk-dash__feeds { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.jk-dash__size { padding: 0 4px; font-weight: 500; }
 .jk-dash__size.is-on { font-weight: 700; color: var(--jk-text); text-decoration: underline; }
-.jk-dash__legend-card { margin-top: 0.8rem; display: grid; gap: 0.35rem; }
-.jk-dash__legend-card > div { display: flex; align-items: center; gap: 0.5rem; }
+.jk-dash__legend-card { margin-top: 12.8px; display: grid; gap: 5.6px; }
+.jk-dash__legend-card > div { display: flex; align-items: center; gap: 8px; }
 </style>

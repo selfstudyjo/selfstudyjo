@@ -78,7 +78,7 @@
           <thead><tr><th>Step</th><th>Arguments</th><th>Status</th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in stepRows" :key="index">
-              <td :style="{ paddingLeft: 0.8 + row.depth * 1.4 + 'rem' }">{{ row.step }}</td>
+              <td :style="{ paddingLeft: 13 + row.depth * 22 + 'px' }">{{ row.step }}</td>
               <td>{{ row.args }}</td>
               <td><span class="jk-build__step-status" :class="'is-' + ballOf(row.status === 'NOT_EXECUTED' ? '' : row.status)">
                 <JkStatus :ball="row.status === 'NOT_EXECUTED' ? 'nobuilt' : ballOf(row.status)" :size="16" />{{ resultLabel(row.status) }}</span></td>
@@ -228,34 +228,34 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.jk-build { max-width: 80rem; }
-.jk-build__h1-icon { width: 1.6rem; height: 1.6rem; }
-.jk-build__times { text-align: right; color: var(--jk-secondary); font-size: 0.8125rem; line-height: 1.5; }
-.jk-build__keep { margin-top: 0.4rem; }
-.jk-build__facts { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.jk-build__facts li { display: flex; align-items: center; gap: 0.75rem; }
-.jk-build__facts .jk-icon { width: 1.5rem; height: 1.5rem; color: var(--jk-secondary); }
+.jk-build { max-width: 1280px; }
+.jk-build__h1-icon { width: 25.6px; height: 25.6px; }
+.jk-build__times { text-align: right; color: var(--jk-secondary); font-size: 13px; line-height: 1.5; }
+.jk-build__keep { margin-top: 6.4px; }
+.jk-build__facts { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.jk-build__facts li { display: flex; align-items: center; gap: 12px; }
+.jk-build__facts .jk-icon { width: 24px; height: 24px; color: var(--jk-secondary); }
 .jk-build__result.is-blue { color: var(--jk-green); }
 .jk-build__result.is-red { color: var(--jk-red); }
 .jk-build__result.is-yellow { color: var(--jk-orange); }
 .jk-build__artifacts { list-style: none; padding: 0; margin: 0; }
-.jk-build__artifacts li { display: flex; align-items: center; gap: 0.5rem; padding: 0.15rem 0; }
-.jk-build__artifacts .jk-icon { width: 1rem; height: 1rem; color: var(--jk-secondary); }
-.jk-build__console-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.jk-build__artifacts li { display: flex; align-items: center; gap: 8px; padding: 2.4px 0; }
+.jk-build__artifacts .jk-icon { width: 16px; height: 16px; color: var(--jk-secondary); }
+.jk-build__console-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .jk-console {
-  margin: 0; padding: 1rem 1.1rem; background: #fff; border: 1px solid var(--jk-border); border-radius: 0.6rem;
-  font-family: var(--jk-mono); font-size: 0.8125rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+  margin: 0; padding: 16px 17.6px; background: #fff; border: 1px solid var(--jk-border); border-radius: 9.6px;
+  font-family: var(--jk-mono); font-size: 13px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
   color: var(--jk-text); max-width: 100%; overflow-x: auto;
 }
-.jk-console__line.is-pipeline { color: #9a99a0; }
+.jk-console__line.is-pipeline { color: #6c6b72; }
 .jk-console__line.is-cmd { color: #2f3138; font-weight: 600; }
 .jk-console__line.is-error { color: var(--jk-red); }
 .jk-console__line.is-warn { color: #b45309; }
 .jk-console__line.is-ok { color: var(--jk-green); font-weight: 600; }
 .jk-console.is-plain .jk-console__line { color: var(--jk-text); font-weight: 400; }
-.jk-build__param { max-width: 32rem; }
-.jk-build__step-status { display: inline-flex; align-items: center; gap: 0.4rem; }
-.jk-build__stage { margin-top: 1rem; max-width: 40rem; }
-.jk-build__stage-title { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.3rem; font-size: 1.05rem; }
-.jk-build__stage p { margin: 0.15rem 0; }
+.jk-build__param { max-width: 512px; }
+.jk-build__step-status { display: inline-flex; align-items: center; gap: 6.4px; }
+.jk-build__stage { margin-top: 16px; max-width: 640px; }
+.jk-build__stage-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4.8px; font-size: 16.8px; }
+.jk-build__stage p { margin: 2.4px 0; }
 </style>

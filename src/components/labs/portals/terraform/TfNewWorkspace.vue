@@ -107,6 +107,7 @@ async function create() {
 .nw-type.is-disabled .nw-type__icon, .nw-type.is-disabled .nw-type__name { color: var(--tf-fg-faint); }
 .nw-type--pick { border-color: var(--tf-fg-action); cursor: pointer; }
 .nw-type--pick:hover { background: var(--tf-surface-action); }
+.nw-type .tf-badge { white-space: normal; max-width: 100%; height: auto; line-height: 16px; padding-top: 2px; padding-bottom: 2px; }
 .nw-type__go { margin-top: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--tf-fg-action); font-weight: 500; }
 .nw-note { max-width: 560px; margin-bottom: 20px; }
 .nw-actions { display: flex; gap: 8px; flex-wrap: wrap; }

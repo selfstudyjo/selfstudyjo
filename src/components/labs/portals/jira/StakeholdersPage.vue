@@ -21,7 +21,7 @@
           <button v-for="row in at(power, interest)" :key="row.id" type="button" class="sp__chip"
                   :class="'is-' + statusTone(row.status)" :title="`${row.name} — sentiment ${row.sentiment}`"
                   @click="selected = row.id">
-            <JiraAvatar :name="row.name" :size="20" :title="false" /> {{ shortName(row.name) }}
+            <JiraAvatar :name="row.name" :size="24" :title="false" /> {{ shortName(row.name) }}
           </button>
         </div>
       </template>
@@ -188,7 +188,7 @@ async function onMenu(row: Holder, value: string) {
 <style scoped>
 .sp__sub { margin: 4px 0 0; max-width: 680px; }
 .sp__grid { display: grid; grid-template-columns: 24px 64px repeat(3, minmax(120px, 1fr)); grid-template-rows: repeat(3, minmax(80px, auto)) 20px 20px; gap: 4px; margin-bottom: 24px; max-width: 820px; }
-.sp__axis { font-size: 11px; font-weight: 653; color: var(--j-text-subtlest); text-transform: uppercase; }
+.sp__axis { font-size: 12px; font-weight: 653; color: var(--j-text-subtlest); text-transform: uppercase; }
 .sp__axis--y { grid-row: 1 / span 3; writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; justify-self: center; }
 .sp__axis--x { grid-column: 3 / span 3; text-align: center; }
 .sp__rowlabel { align-self: center; font-size: 12px; color: var(--j-text-subtle); }
@@ -196,7 +196,7 @@ async function onMenu(row: Holder, value: string) {
 .sp__box { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px; padding: 8px; border-radius: 4px; }
 .sp__box.is-manage { background: #FFECEB; } .sp__box.is-satisfy { background: #FFF5DB; }
 .sp__box.is-inform { background: #E9F2FE; } .sp__box.is-monitor { background: var(--j-sunken); }
-.sp__advice { width: 100%; font-size: 11px; font-weight: 653; color: var(--j-text-subtle); text-transform: uppercase; }
+.sp__advice { width: 100%; font-size: 12px; font-weight: 653; color: var(--j-text-subtle); text-transform: uppercase; }
 .sp__chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border: 0; border-radius: 12px; background: var(--j-surface); box-shadow: var(--j-card-shadow); font: inherit; font-size: 12px; color: var(--j-text); cursor: pointer; }
 .sp__chip.is-danger { box-shadow: 0 0 0 2px #E2483D; }
 .sp__chip:hover { background: #F8F8F8; }
@@ -211,9 +211,13 @@ async function onMenu(row: Holder, value: string) {
 .sp__spacer { flex: 1; }
 .sp__log { margin: 0 0 12px; padding-left: 18px; }
 .sp__log li { margin-bottom: 6px; overflow-wrap: anywhere; }
-.sp__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sp__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; text-overflow: ellipsis; }
 @container sl-portal (max-width: 700px) {
-  .sp__grid { grid-template-columns: 16px 48px repeat(3, minmax(80px, 1fr)); }
-  .sp__advice { font-size: 9px; }
+  .sp__grid { grid-template-columns: 14px 44px repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .sp__box { padding: 6px; min-width: 0; }
+  .sp__advice { overflow-wrap: anywhere; }
+  .sp__advice { font-size: 12px; line-height: 14px; }
+  .sp__chip { min-height: 28px; }
+  .sp__name { min-height: 32px; }
 }
 </style>

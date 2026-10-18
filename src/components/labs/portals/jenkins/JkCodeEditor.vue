@@ -15,7 +15,7 @@
 import { computed, ref } from 'vue';
 
 const props = withDefaults(defineProps<{ modelValue: string; label?: string; height?: string; readonly?: boolean }>(),
-                           { label: 'Script', height: '22rem', readonly: false });
+                           { label: 'Script', height: '352px', readonly: false });
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>();
 const area = ref<HTMLTextAreaElement | null>(null);
 const gutter = ref<HTMLDivElement | null>(null);
@@ -38,9 +38,9 @@ function indent() {
 </script>
 
 <style scoped>
-.jk-code { display: flex; border: 2px solid var(--jk-input-border); border-radius: var(--jk-radius); overflow: hidden; background: #fff; max-width: 60rem; }
+.jk-code { display: flex; border: 2px solid var(--jk-input-border); border-radius: var(--jk-radius); overflow: hidden; background: #fff; max-width: 960px; }
 .jk-code:focus-within { border-color: var(--jk-accent); box-shadow: 0 0 0 3px rgba(11, 102, 228, 0.15); }
-.jk-code__gutter { flex: none; overflow: hidden; padding: 0.5rem 0; background: #f3f3f5; color: #9a99a0; text-align: right; font-family: var(--jk-mono); font-size: 0.8125rem; line-height: 1.5; user-select: none; }
-.jk-code__ln { padding: 0 0.55rem 0 0.8rem; min-width: 1.6rem; }
-.jk-code__area { flex: 1; min-width: 0; border: 0; outline: none; resize: none; padding: 0.5rem 0.75rem; font-family: var(--jk-mono); font-size: 0.8125rem; line-height: 1.5; color: var(--jk-text); background: transparent; white-space: pre; overflow: auto; tab-size: 4; }
+.jk-code__gutter { flex: none; overflow: hidden; padding: 8px 0; background: #f3f3f5; color: #6c6b72; text-align: right; font-family: var(--jk-mono); font-size: 13px; line-height: 1.5; user-select: none; }
+.jk-code__ln { padding: 0 8.8px 0 12.8px; min-width: 25.6px; }
+.jk-code__area { flex: 1; min-width: 0; border: 0; outline: none; resize: none; padding: 8px 12px; font-family: var(--jk-mono); font-size: 13px; line-height: 1.5; color: var(--jk-text); background: transparent; white-space: pre; overflow: auto; tab-size: 4; }
 </style>

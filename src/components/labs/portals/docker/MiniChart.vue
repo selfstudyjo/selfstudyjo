@@ -34,7 +34,7 @@ function format(value: number) {
 
 <style scoped>
 .mc { margin: 0; padding: 10px 12px; border: 1px solid var(--dd-border); border-radius: 6px; display: flex; flex-direction: column; gap: 6px; }
-figcaption { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--dd-text-2); }
+figcaption { display: flex; justify-content: space-between; font-size: 13px; color: var(--dd-text-2); }
 figcaption strong { color: var(--dd-text); font-weight: 500; }
 svg { width: 100%; height: 70px; display: block; }
 .mc__grid { stroke: var(--dd-border); stroke-width: 1; vector-effect: non-scaling-stroke; }

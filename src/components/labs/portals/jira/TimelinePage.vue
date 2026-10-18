@@ -89,14 +89,14 @@ const shown = computed(() => all.value.filter(issue => {
 .tl__corner, .tl__col-head { position: sticky; top: 0; z-index: 1; padding: 8px; background: var(--j-sunken); border-bottom: 1px solid var(--j-border); font-size: 12px; font-weight: 653; color: var(--j-text-subtle); white-space: nowrap; }
 .tl__col-head { text-align: center; border-left: 1px solid var(--j-border); }
 .tl__col-head.is-now { color: var(--j-brand); }
-.tl__today { margin-left: 4px; padding: 0 4px; border-radius: 3px; background: var(--j-brand); color: #fff; font-size: 10px; }
+.tl__today { margin-left: 4px; padding: 0 4px; border-radius: 3px; background: var(--j-brand); color: #fff; font-size: 12px; }
 .tl__row-label { display: flex; align-items: center; gap: 6px; min-width: 0; height: 40px; padding: 0 8px; border: 0; border-bottom: 1px solid var(--j-border); background: var(--j-surface); font: inherit; color: var(--j-text); text-align: left; cursor: pointer; }
 .tl__row-label:hover { background: var(--j-subtle-hover); }
 .tl__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl__track { position: relative; display: grid; grid-template-columns: repeat(var(--cols), minmax(64px, 1fr)); height: 40px; border-bottom: 1px solid var(--j-border); }
 .tl__cell { border-left: 1px solid var(--j-border); }
 .tl__cell.is-now { background: #E9F2FE66; }
-.tl__bar { position: absolute; top: 9px; height: 22px; border: 0; border-radius: 4px; background: #8F7EE7; color: #fff; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; overflow: hidden; white-space: nowrap; }
+.tl__bar { position: absolute; top: 9px; height: 22px; border: 0; border-radius: 4px; background: #8F7EE7; color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; overflow: hidden; white-space: nowrap; }
 .tl__bar.is-done { background: #22A06B; }
 .tl__bar.is-doing { background: #1868DB; }
 .tl__bar.is-todo { background: #8C8F97; }

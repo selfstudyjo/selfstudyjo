@@ -270,7 +270,7 @@ async function saveForm() {
 .ip__action .j-input { min-height: 32px; }
 .ip__addaction { align-self: flex-start; }
 @container sl-portal (max-width: 1100px) {
-  .ip { flex-direction: column; }
+  .ip { flex-direction: column; align-items: stretch; }
   .ip__panel { width: auto; align-self: stretch; position: static; }
   .ip.has-panel .ip__panel { order: -1; }
 }

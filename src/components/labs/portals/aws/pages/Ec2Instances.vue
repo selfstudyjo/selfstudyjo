@@ -103,8 +103,8 @@ async function saveName(row: Record<string, any>) {
 
 <style scoped>
 .ei__name { display: inline-flex; align-items: center; gap: 6px; }
-.ei__pencil { border: 0; background: none; color: #424650; cursor: pointer; padding: 2px; opacity: .7; }
-.ei__pencil:hover { opacity: 1; color: #006ce0; }
+.ei__pencil { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; min-height: 20px; border: 0; background: none; color: #424650; cursor: pointer; padding: 2px; }
+.ei__pencil:hover { color: #006ce0; }
 .ei__edit { width: 160px; min-height: 28px; padding: 2px 8px; }
 .ei__mini { min-height: 26px; padding: 1px 10px; }
 </style>

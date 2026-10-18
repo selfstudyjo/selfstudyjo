@@ -31,13 +31,24 @@
           </span>
         </div>
         <span class="bar__spacer"></span>
-        <button type="button" class="btn btn--primary btn--sm" @click="newIncident">New Incident</button>
+        <button v-if="number" type="button" class="btn btn--sm assist-toggle" :class="{ 'is-on': assistOpen }"
+                aria-label="Agent Assist" title="Agent Assist" :aria-expanded="assistOpen" @click="assistOpen = !assistOpen">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.6 4.2L14 7.3l-4.4 1.6L8 13.5 6.4 8.9 2 7.3l4.4-1.6z" fill="currentColor" /></svg>
+          <span class="ws__btn-text">Agent Assist</span>
+        </button>
+        <button type="button" class="btn btn--primary btn--sm" aria-label="New Incident" title="New Incident" @click="newIncident">
+          <svg class="ws__plus" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" /></svg>
+          <span class="ws__btn-text">New Incident</span>
+        </button>
       </div>
 
       <!-- A record tab: the incident form, workspace style, plus Agent Assist -->
-      <div v-if="number" class="rec">
+      <div v-if="number" class="rec" :class="{ 'is-assist': assistOpen }">
         <div class="rec__form"><IncidentForm :key="number" :model="model" :api="api" :number="number" variant="workspace" @navigate="fromForm" /></div>
-        <aside class="assist">
+        <aside class="assist" aria-label="Agent Assist">
+          <button type="button" class="icon-btn assist__close" aria-label="Close Agent Assist" @click="assistOpen = false">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" /></svg>
+          </button>
           <AgentAssist :model="model" :incident="record" @navigate="r => $emit('navigate', r)" />
         </aside>
       </div>
@@ -106,6 +117,7 @@ const emit = defineEmits<{ (event: 'navigate', route: Route): void }>();
 // Module-level so the tabs survive the component being re-created between routes.
 const openTabs = tabsStore;
 const view = ref<'home' | 'list'>('home');
+const assistOpen = ref(false);
 const listFilter = ref<'open' | 'mine' | 'unassigned' | 'all'>('open');
 const LISTS = [
   { id: 'open' as const, label: 'Open' }, { id: 'mine' as const, label: 'Assigned to me' },
@@ -167,49 +179,72 @@ const tabsStore = vueRef<string[]>([]);
 <style scoped src="./sn.css"></style>
 <style scoped>
 .sow { display: flex; height: 100%; min-height: 0; }
-.rail { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: 3.2rem; padding: 0.6rem 0; flex: none;
+.rail { display: flex; flex-direction: column; align-items: center; gap: 4.8px; width: 51.2px; padding: 9.6px 0; flex: none;
   background: var(--sn-surface); border-right: 1px solid var(--sn-border); }
-.rail__btn { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 0; border-radius: var(--sn-radius-lg); background: transparent; color: var(--sn-text-muted); cursor: pointer; }
-.rail__btn svg { width: 1.2rem; height: 1.2rem; }
+.rail__btn { display: grid; place-items: center; width: 38.4px; height: 38.4px; border: 0; border-radius: var(--sn-radius-lg); background: transparent; color: var(--sn-text-muted); cursor: pointer; }
+.rail__btn svg { width: 19.2px; height: 19.2px; }
 .rail__btn:hover { background: var(--sn-surface-hover); color: var(--sn-text); }
 .rail__btn.is-on { background: #e4e5f8; color: var(--sn-primary); }
 .ws { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
-.ws__top { display: flex; align-items: center; gap: 0.6rem; min-height: 2.6rem; padding: 0 0.8rem; background: var(--sn-surface); border-bottom: 1px solid var(--sn-border); overflow-x: auto; }
-.ws__name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+.ws__top { display: flex; align-items: center; gap: 9.6px; min-height: 41.6px; padding: 0 12.8px; background: var(--sn-surface); border-bottom: 1px solid var(--sn-border); overflow-x: auto; }
+.ws__name { font-weight: 700; font-size: 13.6px; white-space: nowrap; }
 .ws__tabs { display: flex; align-items: stretch; align-self: stretch; }
-.ws__tab { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0 0.8rem; border: 0; border-bottom: 3px solid transparent; background: none;
-  font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--sn-text-muted); cursor: pointer; white-space: nowrap; }
+.ws__tab { display: inline-flex; align-items: center; gap: 3.2px; padding: 0 12.8px; border: 0; border-bottom: 3px solid transparent; background: none;
+  font: inherit; font-size: 12.8px; font-weight: 600; color: var(--sn-text-muted); cursor: pointer; white-space: nowrap; }
 .ws__tab.is-on { color: var(--sn-text); border-bottom-color: var(--sn-primary); }
 .ws__tab-btn { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; }
-.ws__x { border: 0; background: none; color: var(--sn-text-faint); font-size: 1rem; cursor: pointer; }
-.home { flex: 1; min-height: 0; overflow: auto; padding: 1rem 1.2rem; }
-.home__hello { margin: 0; font-size: 1.35rem; font-weight: 700; }
-.home__sub { margin: 0.2rem 0 1rem; color: var(--sn-text-muted); font-size: 0.8125rem; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr)); gap: 0.7rem; margin-bottom: 1rem; }
-.kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; padding: 0.8rem 0.9rem; border-top: 4px solid var(--sn-primary); text-align: left; cursor: pointer; font: inherit; color: var(--sn-text); }
+.ws__x { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: var(--sn-radius); background: none; color: var(--sn-text-muted); font-size: 16px; line-height: 1; cursor: pointer; }
+.ws__x:hover { background: var(--sn-surface-hover); color: var(--sn-text); }
+.home { flex: 1; min-height: 0; overflow: auto; padding: 16px 19.2px; }
+.home__hello { margin: 0; font-size: 21.6px; font-weight: 700; }
+.home__sub { margin: 3.2px 0 16px; color: var(--sn-text-muted); font-size: 13px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 136px), 1fr)); gap: 11.2px; margin-bottom: 16px; }
+.kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 2.4px; padding: 12.8px 14.4px; border-top: 4px solid var(--sn-primary); text-align: left; cursor: pointer; font: inherit; color: var(--sn-text); }
 .kpi:hover { box-shadow: 0 2px 8px rgba(24, 24, 38, 0.14); }
 .kpi.is-critical { border-top-color: var(--sn-critical); }
 .kpi.is-warn { border-top-color: var(--sn-high); }
-.kpi__label { font-size: 0.78rem; font-weight: 700; color: var(--sn-text-muted); }
-.kpi__value { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
-.kpi__foot { font-size: 0.72rem; color: var(--sn-text-muted); }
-.cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 0.9rem; align-items: start; }
-.side { display: flex; flex-direction: column; gap: 0.9rem; }
-.oc-row { display: flex; justify-content: space-between; gap: 0.6rem; padding: 0.25rem 0; font-size: 0.8125rem; }
-.pages { margin-top: 0.5rem; padding: 0.4rem 0.6rem; border-radius: var(--sn-radius); background: var(--sn-warning-bg); color: var(--sn-warning-ink); font-size: 0.78rem; }
-.rec { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 19rem; }
+.kpi__label { font-size: 12.48px; font-weight: 700; color: var(--sn-text-muted); }
+.kpi__value { font-size: 30.4px; font-weight: 700; line-height: 1.1; }
+.kpi__foot { font-size: 12px; color: var(--sn-text-muted); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14.4px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 14.4px; }
+.oc-row { display: flex; justify-content: space-between; gap: 9.6px; padding: 4px 0; font-size: 13px; }
+.pages { margin-top: 8px; padding: 6.4px 9.6px; border-radius: var(--sn-radius); background: var(--sn-warning-bg); color: var(--sn-warning-ink); font-size: 12.48px; }
+.rec { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 304px; }
 .rec__form { min-width: 0; min-height: 0; border-right: 1px solid var(--sn-border); }
-.assist { min-height: 0; overflow: auto; padding: 0.8rem; background: var(--sn-page); }
+.assist { min-height: 0; overflow: auto; padding: 12.8px; background: var(--sn-page); }
 .seg { display: inline-flex; border: 1px solid var(--sn-border-strong); border-radius: var(--sn-radius); overflow: hidden; }
-.seg__btn { padding: 0.2rem 0.6rem; border: 0; border-right: 1px solid var(--sn-border-strong); background: var(--sn-surface); font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.seg__btn { padding: 3.2px 9.6px; border: 0; border-right: 1px solid var(--sn-border-strong); background: var(--sn-surface); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .seg__btn:last-child { border-right: 0; }
 .seg__btn.is-on { background: var(--sn-brand); color: #fff; }
+.ws__plus { display: none; }
+.assist-toggle { display: none; }
+.assist__close { display: none; }
 @container sl-portal (max-width: 1000px) {
   .cols, .rec { grid-template-columns: minmax(0, 1fr); }
-  .assist { display: none; }
+  /* The contextual side panel folds into a toggle on a narrow workspace and
+     opens over the record, as the workspace's own side panel does. */
+  .rec { position: relative; }
+  .assist { display: none; position: absolute; top: 0; right: 0; bottom: 0; z-index: 8; width: min(320px, 100%);
+    box-shadow: -8px 0 24px rgba(24, 24, 38, 0.18); border-left: 1px solid var(--sn-border); }
+  .rec.is-assist .assist { display: block; }
+  .assist-toggle { display: inline-flex; }
+  .assist-toggle.is-on { background: #e4e5f8; border-color: var(--sn-primary); color: var(--sn-primary); }
+  .assist__close { display: grid; margin: -4px -4px 4px auto; }
 }
 @container sl-portal (max-width: 600px) {
   .rail { display: none; }
   .ws__name { display: none; }
+}
+@container sl-portal (max-width: 640px) {
+  .seg__btn { min-height: 32px; }
+  .ws__tab-btn { min-height: 32px; }
+  .ws__x { width: 32px; height: 32px; }
+  /* The workspace header keeps its tabs; its two actions fold to icons. */
+  .ws__top { gap: 4px; padding: 0 6px; }
+  .ws__tab { padding: 0 8px; }
+  .ws__btn-text { display: none; }
+  .ws__top > .btn { width: 32px; padding: 0; flex: none; }
+  .ws__plus { display: block; }
 }
 </style>

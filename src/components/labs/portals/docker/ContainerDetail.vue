@@ -322,11 +322,11 @@ watch(() => [props.route.id, tab.value] as const, async ([, current], previous) 
 .is-amber { color: var(--dd-amber); }
 .is-grey { color: var(--dd-grey-dot); }
 .cd-copy { border: 0; background: none; color: var(--dd-text-2); cursor: pointer; padding: 2px; }
-.cd-status { display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; padding-right: 8px; }
+.cd-status { display: flex; flex-direction: column; gap: 2px; font-size: 12px; padding-right: 8px; }
 .cd-actions { align-self: center; }
 .cd-pane { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1; }
 .cd-logs, .cd-json { max-height: 460px; min-height: 220px; background: #FAFAFB; }
-.cd-term { background: #0C0D10; color: #E6E8EC; border-radius: 6px; padding: 10px 12px; font: 0.8125rem/1.5 var(--dd-mono); min-height: 260px; max-height: 460px; overflow: auto; white-space: pre-wrap; word-break: break-word; cursor: text; }
+.cd-term { background: #0C0D10; color: #E6E8EC; border-radius: 6px; padding: 10px 12px; font: 13px/1.5 var(--dd-mono); min-height: 260px; max-height: 460px; overflow: auto; white-space: pre-wrap; word-break: break-word; cursor: text; }
 .cd-term .is-err { color: #FF7B86; }
 .cd-term .is-cmd { color: #9CC3FF; }
 .cd-term__prompt { display: flex; gap: 4px; }
@@ -335,8 +335,8 @@ watch(() => [props.route.id, tab.value] as const, async ([, current], previous) 
 .cd-path { flex: 1 1 260px; max-width: 520px; background: var(--dd-hover); }
 .cd-files { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 12px; align-items: start; }
 .cd-tree { list-style: none; margin: 0; padding: 4px 0; max-height: 420px; overflow: auto; }
-.cd-tree__none { padding: 10px 14px; font-size: 0.8125rem; }
-.cd-tree__item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 12px; border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--dd-text); cursor: pointer; text-align: left; }
+.cd-tree__none { padding: 10px 14px; font-size: 13px; }
+.cd-tree__item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 12px; border: 0; background: none; font: inherit; font-size: 13px; color: var(--dd-text); cursor: pointer; text-align: left; }
 .cd-tree__item:hover { background: var(--dd-hover); }
 .cd-tree__item.is-open { background: var(--dd-blue-tint); color: var(--dd-blue); }
 .cd-tree__item svg { color: var(--dd-text-2); }
@@ -347,5 +347,6 @@ watch(() => [props.route.id, tab.value] as const, async ([, current], previous) 
 @container sl-portal (max-width: 700px) {
   .cd-files { grid-template-columns: minmax(0, 1fr); }
   .cd-status { display: none; }
+  .cd-tree { max-height: 220px; }
 }
 </style>

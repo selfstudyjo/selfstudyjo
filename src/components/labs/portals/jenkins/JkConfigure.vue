@@ -133,7 +133,7 @@
               <button type="button" class="jk-cfg__x" aria-label="Remove Execute shell" @click="form.shellOn = false"><JkIcon name="close" /></button>
             </header>
             <label class="jk-label">Command</label>
-            <JkCodeEditor v-model="form.shell" label="Command" height="11rem" />
+            <JkCodeEditor v-model="form.shell" label="Command" height="176px" />
             <p class="jk-help">See the list of available environment variables. The lab shell has 61 builtins and no compiler.</p>
           </div>
           <div class="jk-cfg__add">
@@ -480,51 +480,51 @@ async function save(leave: boolean) {
 </script>
 
 <style scoped>
-.jk-cfg__layout { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 2rem; align-items: start; }
-.jk-cfg__nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 0.1rem; }
-.jk-cfg__nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.7rem; border: 0; border-radius: 0.6rem; background: none; font: inherit; font-weight: 500; color: var(--jk-text); text-align: left; cursor: pointer; }
+.jk-cfg__layout { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: 32px; align-items: start; }
+.jk-cfg__nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 1.6px; }
+.jk-cfg__nav-item { display: flex; align-items: center; gap: 9.6px; padding: 7.2px 11.2px; border: 0; border-radius: 9.6px; background: none; font: inherit; font-weight: 500; color: var(--jk-text); text-align: left; cursor: pointer; }
 .jk-cfg__nav-item:hover { background: var(--jk-btn-hover); }
 .jk-cfg__nav-item.is-active { background: var(--jk-btn-bg); font-weight: 650; }
-.jk-cfg__nav-item .jk-icon { width: 1.1rem; height: 1.1rem; }
+.jk-cfg__nav-item .jk-icon { width: 17.6px; height: 17.6px; }
 .jk-cfg__form { min-width: 0; }
-.jk-cfg__section { padding-bottom: 1.2rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--jk-border); scroll-margin-top: 0.5rem; }
-.jk-cfg__h2 { font-size: 1.3rem; font-weight: 700; margin: 0 0 1rem; }
-.jk-cfg__lead { margin: -0.6rem 0 0.8rem; }
-.jk-cfg__nested { margin: 0.3rem 0 1rem 1.65rem; padding-left: 1rem; border-left: 2px solid var(--jk-border); }
-.jk-cfg__param { position: relative; border: 1px solid var(--jk-border); border-radius: 0.8rem; padding: 0.8rem 1rem 0.3rem; margin-bottom: 0.8rem; max-width: 52rem; background: #fff; }
-.jk-cfg__param-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
-.jk-cfg__x { display: flex; border: 0; background: none; padding: 0.2rem; border-radius: 0.4rem; color: var(--jk-secondary); cursor: pointer; }
+.jk-cfg__section { padding-bottom: 19.2px; margin-bottom: 22.4px; border-bottom: 1px solid var(--jk-border); scroll-margin-top: 8px; }
+.jk-cfg__h2 { font-size: 20.8px; font-weight: 700; margin: 0 0 16px; }
+.jk-cfg__lead { margin: -9.6px 0 12.8px; }
+.jk-cfg__nested { margin: 4.8px 0 16px 26.4px; padding-left: 16px; border-left: 2px solid var(--jk-border); }
+.jk-cfg__param { position: relative; border: 1px solid var(--jk-border); border-radius: 12.8px; padding: 12.8px 16px 4.8px; margin-bottom: 12.8px; max-width: 832px; background: #fff; }
+.jk-cfg__param-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9.6px; }
+.jk-cfg__x { display: flex; border: 0; background: none; padding: 3.2px; border-radius: 6.4px; color: var(--jk-secondary); cursor: pointer; }
 .jk-cfg__x:hover { background: var(--jk-btn-hover); color: var(--jk-red); }
-.jk-cfg__x .jk-icon { width: 1rem; height: 1rem; }
-.jk-cfg__add { position: relative; display: inline-block; margin-bottom: 0.4rem; }
-.jk-cfg__add .jk-icon { width: 0.9rem; height: 0.9rem; }
-.jk-cfg__menu { position: absolute; top: calc(100% + 0.3rem); left: 0; z-index: 20; min-width: 16rem; padding: 0.35rem; background: #fff; border-radius: 0.8rem; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 10px 30px rgba(0, 0, 0, 0.18); }
-.jk-cfg__menu-item { display: block; width: 100%; padding: 0.45rem 0.7rem; border: 0; background: none; border-radius: 0.5rem; font: inherit; text-align: left; cursor: pointer; color: var(--jk-text); }
+.jk-cfg__x .jk-icon { width: 16px; height: 16px; }
+.jk-cfg__add { position: relative; display: inline-block; margin-bottom: 6.4px; }
+.jk-cfg__add .jk-icon { width: 14.4px; height: 14.4px; }
+.jk-cfg__menu { position: absolute; top: calc(100% + 4.8px); left: 0; z-index: 20; min-width: 256px; padding: 5.6px; background: #fff; border-radius: 12.8px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 10px 30px rgba(0, 0, 0, 0.18); }
+.jk-cfg__menu-item { display: block; width: 100%; padding: 7.2px 11.2px; border: 0; background: none; border-radius: 8px; font: inherit; text-align: left; cursor: pointer; color: var(--jk-text); }
 .jk-cfg__menu-item:hover:not(:disabled) { background: var(--jk-btn-hover); }
 .jk-cfg__menu-item:disabled { color: var(--jk-secondary); cursor: not-allowed; }
-.jk-cfg__declared { max-width: 52rem; margin-top: 0.6rem; }
-.jk-cfg__select { max-width: 24rem; }
-.jk-cfg__wide { max-width: 60rem; }
-.jk-cfg__script-foot { display: flex; align-items: center; justify-content: space-between; max-width: 60rem; }
-.jk-cfg__preview { margin-top: 0.3rem; font-size: 0.8rem; }
-.jk-cfg__preview-box { margin-top: 0.4rem; white-space: pre-wrap; }
-.jk-cfg__repo { margin-top: 1.2rem; max-width: 60rem; }
-.jk-cfg__repo-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
-.jk-cfg__repo-head strong { display: flex; align-items: center; gap: 0.35rem; }
-.jk-cfg__repo-head .jk-icon { width: 1rem; height: 1rem; }
-.jk-cfg__save { min-width: 5.5rem; }
+.jk-cfg__declared { max-width: 832px; margin-top: 9.6px; }
+.jk-cfg__select { max-width: 384px; }
+.jk-cfg__wide { max-width: 960px; }
+.jk-cfg__script-foot { display: flex; align-items: center; justify-content: space-between; max-width: 960px; }
+.jk-cfg__preview { margin-top: 4.8px; font-size: 12.8px; }
+.jk-cfg__preview-box { margin-top: 6.4px; white-space: pre-wrap; }
+.jk-cfg__repo { margin-top: 19.2px; max-width: 960px; }
+.jk-cfg__repo-head { display: flex; align-items: center; gap: 9.6px; flex-wrap: wrap; margin-bottom: 6.4px; }
+.jk-cfg__repo-head strong { display: flex; align-items: center; gap: 5.6px; }
+.jk-cfg__repo-head .jk-icon { width: 16px; height: 16px; }
+.jk-cfg__save { min-width: 88px; }
 .jk-check.is-off { color: var(--jk-secondary); cursor: not-allowed; }
-.jk-toggle { display: inline-flex; align-items: center; gap: 0.55rem; font-weight: 600; cursor: pointer; }
+.jk-toggle { display: inline-flex; align-items: center; gap: 8.8px; font-weight: 600; cursor: pointer; }
 .jk-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.jk-toggle__track { position: relative; width: 2.4rem; height: 1.35rem; border-radius: 1rem; background: rgba(119, 118, 124, 0.35); transition: background 0.15s; }
-.jk-toggle__thumb { position: absolute; top: 0.18rem; left: 0.18rem; width: 1rem; height: 1rem; border-radius: 50%; background: #fff; transition: transform 0.15s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+.jk-toggle__track { position: relative; width: 38.4px; height: 21.6px; border-radius: 16px; background: rgba(119, 118, 124, 0.35); transition: background 0.15s; }
+.jk-toggle__thumb { position: absolute; top: 2.88px; left: 2.88px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
 .jk-toggle input:checked + .jk-toggle__track { background: var(--jk-accent); }
-.jk-toggle input:checked + .jk-toggle__track .jk-toggle__thumb { transform: translateX(1.05rem); }
+.jk-toggle input:checked + .jk-toggle__track .jk-toggle__thumb { transform: translateX(16.8px); }
 .jk-toggle input:focus-visible + .jk-toggle__track { box-shadow: 0 0 0 3px rgba(11, 102, 228, 0.3); }
 @container sl-portal (max-width: 900px) {
-  .jk-cfg__layout { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
-  .jk-cfg__nav { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 0.4rem; }
+  .jk-cfg__layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .jk-cfg__nav { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 6.4px; }
   .jk-cfg__nav-item { white-space: nowrap; }
-  .jk-cfg__nested { margin-left: 0.4rem; padding-left: 0.7rem; }
+  .jk-cfg__nested { margin-left: 6.4px; padding-left: 11.2px; }
 }
 </style>

@@ -101,7 +101,12 @@ function goService(name: string) {
 </script>
 
 <style scoped>
-.alerts__select { width: 150px; }
-.alerts__filter { max-width: 300px; }
+.toolbar .form-control.alerts__select { width: 150px; flex: 0 1 150px; min-width: 0; }
+.toolbar .form-control.alerts__filter { max-width: 300px; flex: 1 1 200px; min-width: 0; }
+@container sl-portal (max-width: 520px) {
+  .toolbar .form-control.alerts__select { flex: 1 1 120px; width: auto; }
+  .toolbar .form-control.alerts__filter { max-width: none; flex-basis: 100%; }
+  .toolbar .spacer { display: none; }
+}
 .alerts__text { font-size: 12px; color: #a94442; margin-top: 3px; }
 </style>

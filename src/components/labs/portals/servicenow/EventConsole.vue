@@ -196,9 +196,9 @@ async function doDelete() {
 <style scoped src="./sn.css"></style>
 <style scoped src="./form.css"></style>
 <style scoped>
-.tabs { padding: 0 1rem; }
-.sev-summary { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0.7rem 1rem; }
-.sev-chip { padding: 0.25rem 0.6rem; border-radius: var(--sn-radius); background: var(--sn-surface-alt); font-size: 0.78rem; border-left: 4px solid var(--sn-text-faint); }
+.tabs { padding: 0 16px; }
+.sev-summary { display: flex; gap: 6.4px; flex-wrap: wrap; padding: 11.2px 16px; }
+.sev-chip { padding: 4px 9.6px; border-radius: var(--sn-radius); background: var(--sn-surface-alt); font-size: 12.48px; border-left: 4px solid var(--sn-text-faint); }
 .sev, .sev-chip { --c: var(--sn-text-faint); }
 .is-critical { --c: var(--sn-critical); }
 .is-major { --c: var(--sn-high); }
@@ -206,11 +206,11 @@ async function doDelete() {
 .is-warning { --c: var(--sn-low); }
 .is-ok { --c: var(--sn-positive); }
 .sev-chip { border-left-color: var(--c); }
-.sev { display: inline-flex; align-items: center; gap: 0.35rem; }
-.sev::before { content: ''; width: 0.6rem; height: 0.6rem; border-radius: 0.1rem; background: var(--c); }
-.mono { font-family: Consolas, Menlo, monospace; font-size: 0.72rem; }
-code { font-family: Consolas, Menlo, monospace; font-size: 0.75rem; color: var(--sn-text); background: var(--sn-surface-alt); padding: 0.05rem 0.3rem; border-radius: 0.2rem; }
-.f-sel { flex: 0 0 7rem !important; }
-.pri { display: flex; align-items: center; min-height: 2rem; font-weight: 700; font-size: 0.8125rem; }
-.chk { width: 1rem; height: 1rem; margin-top: 0.5rem; }
+.sev { display: inline-flex; align-items: center; gap: 5.6px; }
+.sev::before { content: ''; width: 9.6px; height: 9.6px; border-radius: 1.6px; background: var(--c); }
+.mono { font-family: Consolas, Menlo, monospace; font-size: 12px; }
+code { font-family: Consolas, Menlo, monospace; font-size: 12px; color: var(--sn-text); background: var(--sn-surface-alt); padding: 0.8px 4.8px; border-radius: 3.2px; }
+.f-sel { flex: 0 0 112px !important; }
+.pri { display: flex; align-items: center; min-height: 32px; font-weight: 700; font-size: 13px; }
+.chk { width: 16px; height: 16px; margin-top: 8px; }
 </style>

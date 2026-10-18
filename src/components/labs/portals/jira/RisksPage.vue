@@ -233,7 +233,7 @@ async function onMenu(row: Raid, value: string) {
 .rp__top { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
 .rp__heat { padding: 16px; border: 1px solid var(--j-border); border-radius: 6px; }
 .rp__heat-grid { display: grid; grid-template-columns: 24px 64px repeat(3, 56px); grid-auto-rows: 40px; gap: 4px; align-items: center; }
-.rp__axis { font-size: 11px; color: var(--j-text-subtlest); font-weight: 653; text-transform: uppercase; }
+.rp__axis { font-size: 12px; color: var(--j-text-subtlest); font-weight: 653; text-transform: uppercase; }
 .rp__axis--y { grid-row: 1 / span 3; writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; }
 .rp__axis--x { grid-column: 3 / span 3; text-align: center; }
 .rp__rowlabel, .rp__collabel { font-size: 12px; color: var(--j-text-subtle); }
@@ -261,5 +261,11 @@ async function onMenu(row: Raid, value: string) {
 .rp__rating.is-high { background: #FFD5D2; color: #AE2E24; }
 .rp__mit { min-width: 160px; max-width: 280px; color: var(--j-text-subtle); }
 .rp__empty { padding: 24px; }
-.rp__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.rp__stats { flex: 1 1 260px; max-width: 520px; }
+@container sl-portal (max-width: 560px) {
+  .rp__heat { flex: 1 1 100%; }
+  .rp__heat-grid { grid-template-columns: 20px 56px repeat(3, minmax(0, 1fr)); }
+  .rp__stats { max-width: none; }
+}
+.rp__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; text-overflow: ellipsis; }
 </style>

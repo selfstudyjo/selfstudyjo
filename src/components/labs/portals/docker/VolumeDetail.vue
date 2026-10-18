@@ -120,7 +120,7 @@ async function confirmDelete() {
 <style scoped src="./dd.css"></style>
 <style scoped>
 .vd-icon { color: var(--dd-blue); }
-.vd-file { display: inline-flex; align-items: center; gap: 8px; font-family: var(--dd-mono); font-size: 0.8125rem; }
+.vd-file { display: inline-flex; align-items: center; gap: 8px; font-family: var(--dd-mono); font-size: 13px; }
 .vd-file svg { color: var(--dd-text-2); }
-.vd-note { font-size: 0.8125rem; padding: 8px 12px; margin: 0; }
+.vd-note { font-size: 13px; padding: 8px 12px; margin: 0; }
 </style>

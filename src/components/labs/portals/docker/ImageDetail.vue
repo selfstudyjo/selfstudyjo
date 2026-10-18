@@ -125,19 +125,19 @@ async function confirmDelete() {
 .idt-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 14px; align-items: start; }
 .idt-side { display: flex; flex-direction: column; gap: 14px; }
 .idt-panel { overflow: hidden; }
-.idt-panel__head { padding: 10px 14px; border-bottom: 1px solid var(--dd-border); font-size: 0.875rem; background: #FAFAFB; }
+.idt-panel__head { padding: 10px 14px; border-bottom: 1px solid var(--dd-border); font-size: 14px; background: #FAFAFB; }
 .idt-panel__head strong { font-weight: 500; }
-.idt-pad { margin: 0; padding: 12px 14px; font-size: 0.8125rem; line-height: 1.5; }
-.idt-tree { list-style: none; margin: 0; padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.8125rem; }
+.idt-pad { margin: 0; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+.idt-tree { list-style: none; margin: 0; padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .idt-tree li { display: flex; align-items: center; gap: 8px; }
 .idt-tree svg { color: var(--dd-text-2); }
 .idt-tree__self { padding-left: 18px; font-weight: 500; }
 .idt-layers { list-style: none; margin: 0; padding: 0; }
-.idt-layers li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--dd-border); font-size: 0.8125rem; cursor: pointer; }
+.idt-layers li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--dd-border); font-size: 13px; cursor: pointer; }
 .idt-layers li:hover, .idt-layers li.is-open { background: var(--dd-hover); }
-.idt-layers code { color: var(--dd-text); background: none; padding: 0; font-family: var(--dd-mono); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idt-layers code { color: var(--dd-text); background: none; padding: 0; font-family: var(--dd-mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .idt-layers li.is-open code { white-space: normal; word-break: break-all; }
 .idt-layers__n { color: var(--dd-text-2); text-align: right; }
-.idt-layers__digest { grid-column: 2 / -1; font-size: 0.6875rem; color: var(--dd-text-2); word-break: break-all; }
+.idt-layers__digest { grid-column: 2 / -1; font-size: 12px; color: var(--dd-text-2); word-break: break-all; }
 @container sl-portal (max-width: 760px) { .idt-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

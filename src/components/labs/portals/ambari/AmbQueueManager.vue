@@ -194,7 +194,7 @@ async function save() {
 </script>
 
 <style scoped>
-.qm__dirty { color: #e98a41; font-size: 13px; }
+.qm__dirty { color: #b8661f; font-size: 13px; }
 .qm__body { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; }
 .qm__tree, .qm__edit { margin: 0; }
 .qm__edit .spacer { flex: 1; }
@@ -204,7 +204,7 @@ async function save() {
 .qm__node { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; background: none; padding: 9px 12px; font: inherit; font-size: 13px; cursor: pointer; color: #333; }
 .qm__root.active, .qm__children li.active { background: #eef7ec; }
 .qm__children li.is-new .qm__name { font-style: italic; }
-.qm__children li.is-removed .qm__name { text-decoration: line-through; color: #999; }
+.qm__children li.is-removed .qm__name { text-decoration: line-through; color: #707070; }
 .qm__name { display: flex; align-items: center; gap: 6px; }
 .qm__pct { color: #666; }
 .qm__bar { position: relative; height: 5px; margin: -4px 12px 8px; background: #eee; }

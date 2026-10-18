@@ -22,7 +22,7 @@
           </thead>
           <tbody>
             <tr v-for="row in rowsShown" :key="row.e.id" :class="{ 'is-selected': picked === row.e.id }" @click="picked = row.e.id">
-              <td><span class="mf-dot" :style="{ background: runColor(row.e.run_id) }"></span>
+              <td class="mf-eval__runcell"><span class="mf-dot" :style="{ background: runColor(row.e.run_id) }"></span>
                 <button type="button" class="mf-link mf-eval__run" @click.stop="openRun(row.run)">{{ row.run.run_name }}</button></td>
               <td>{{ row.e.model }}</td>
               <td><span class="mf-tag">{{ row.e.suite }}</span></td>
@@ -89,9 +89,11 @@ function openRun(run: MfRun) {
 .mf-eval__layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 12px; align-items: start; }
 .mf-eval__table tr { cursor: pointer; }
 .mf-eval__run { font-weight: 600; margin-left: 6px; }
+.mf-eval__runcell { white-space: nowrap; }
+.mf-eval__runcell .mf-dot { vertical-align: -1px; }
 .mf-eval__cm { display: flex; flex-direction: column; gap: 6px; }
 .mf-eval__sub { margin: 0; font-size: 12px; }
-.mf-eval__matrix { border-collapse: separate; border-spacing: 3px; font-size: 13px; }
+.mf-eval__matrix { align-self: flex-start; border-collapse: separate; border-spacing: 3px; font-size: 13px; }
 .mf-eval__matrix th { font-weight: 600; color: var(--mf-text-2); padding: 4px 8px; text-align: center; font-size: 12px; }
 .mf-eval__matrix td { width: 90px; height: 48px; text-align: center; border-radius: 4px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mf-eval__sl { margin-top: 8px; }

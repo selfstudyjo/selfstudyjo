@@ -56,10 +56,10 @@ const title = computed(() => ({
 
 <style scoped>
 .dd-tp { position: absolute; top: calc(100% + 4px); right: 12px; z-index: 46; width: min(340px, calc(100% - 24px)); background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgb(0 0 0 / .2), 0 0 0 1px rgb(0 0 0 / .05); }
-.dd-tp header { display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 6px 16px; font-size: 0.9375rem; }
+.dd-tp header { display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 6px 16px; font-size: 15px; }
 .dd-tp header strong { font-weight: 500; }
 .dd-tp header button { border: 0; background: none; cursor: pointer; color: var(--dd-text-2); padding: 4px; border-radius: 50%; }
-.dd-tp__body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 0.8125rem; color: var(--dd-text); }
+.dd-tp__body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--dd-text); }
 .dd-tp__body p { margin: 0; display: flex; align-items: center; gap: 6px; line-height: 1.45; flex-wrap: wrap; }
 .muted { color: var(--dd-text-2); }
 .dd-tp__link { border: 0; background: none; padding: 4px 0; text-align: left; color: var(--dd-link); font: inherit; cursor: pointer; }

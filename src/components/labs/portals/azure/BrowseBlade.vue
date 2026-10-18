@@ -48,9 +48,9 @@
 
     <div v-if="!allRows.length" class="az-empty">
       <AzIcon :name="icon" :size="64" />
-      <h3>No {{ title.toLowerCase() }} to display</h3>
+      <h3>No {{ lower(title) }} to display</h3>
       <p>{{ emptyText }}</p>
-      <button v-if="canCreate" type="button" class="az-btn az-btn--primary" @click="create">Create {{ singular.toLowerCase() }}</button>
+      <button v-if="canCreate" type="button" class="az-btn az-btn--primary" @click="create">Create {{ lower(singular) }}</button>
     </div>
     <template v-else>
       <div v-for="section in sections" :key="section.label">
@@ -103,7 +103,11 @@ const icon = computed(() => (kind.value === 'all' ? 'allservices' : kind.value =
 const canCreate = computed(() => kind.value === 'groups' || kind.value === 'all' || CREATABLE.includes(kind.value));
 const emptyText = computed(() => (kind.value === 'groups'
   ? 'Try changing your filters if you don\'t see what you\'re looking for.'
-  : `Create a ${singular.value.toLowerCase()} to get started.`));
+  : `Create ${/^[aeiou]/i.test(singular.value) ? 'an' : 'a'} ${lower(singular.value)} to get started.`));
+/** Sentence case that leaves product names and acronyms alone ("Azure Cosmos DB account"). */
+function lower(text: string) {
+  return String(text).split(' ').map(w => (/^(Azure|Cosmos|Kubernetes)$/.test(w) || /[A-Z].*[A-Z]/.test(w) ? w : w.toLowerCase())).join(' ');
+}
 
 const needle = ref('');
 const groupFilter = ref('');

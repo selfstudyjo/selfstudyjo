@@ -1,12 +1,13 @@
 <template>
   <svg :viewBox="`0 0 ${W} ${H}`" class="mf-pc" role="img" aria-label="Parallel coordinates plot">
-    <g v-for="(axis, i) in axes" :key="axis.key">
-      <line :x1="ax(i)" :x2="ax(i)" :y1="T" :y2="H - B" class="mf-pc__axis" />
-      <text :x="ax(i)" :y="T - 8" text-anchor="middle" class="mf-pc__name">{{ short(axis.key) }}</text>
-      <text :x="ax(i) + 4" :y="T + 4" class="mf-pc__tick">{{ axis.labelHi }}</text>
-      <text :x="ax(i) + 4" :y="H - B" class="mf-pc__tick">{{ axis.labelLo }}</text>
-    </g>
+    <line v-for="(axis, i) in axes" :key="'a' + axis.key" :x1="ax(i)" :x2="ax(i)" :y1="T" :y2="H - B" class="mf-pc__axis" />
     <polyline v-for="line in lines" :key="line.id" :points="line.points" fill="none" :stroke="line.color" stroke-width="2.5" stroke-opacity="0.85" />
+    <!-- Labels after the lines, with a white halo, so a line never strikes through a value. -->
+    <g v-for="(axis, i) in axes" :key="'t' + axis.key">
+      <text :x="ax(i)" :y="T - 10" text-anchor="middle" class="mf-pc__name">{{ short(axis.key) }}</text>
+      <text :x="ax(i) + 5" :y="T + 12" class="mf-pc__tick">{{ axis.labelHi }}</text>
+      <text :x="ax(i) + 5" :y="H - B - 4" class="mf-pc__tick">{{ axis.labelLo }}</text>
+    </g>
   </svg>
 </template>
 
@@ -49,6 +50,6 @@ function short(text: string) { return text.length > 18 ? text.slice(0, 17) + 'â€
 <style scoped>
 .mf-pc { width: 100%; height: auto; display: block; min-width: 520px; }
 .mf-pc__axis { stroke: #8396A5; stroke-width: 1; }
-.mf-pc__name { font-size: 11px; font-weight: 600; fill: #11171C; font-family: var(--mf-font); }
-.mf-pc__tick { font-size: 10px; fill: #5F7281; font-family: var(--mf-font); }
+.mf-pc__name { font-size: 12px; font-weight: 600; fill: #11171C; font-family: var(--mf-font); }
+.mf-pc__tick { font-size: 11px; fill: #445461; font-family: var(--mf-font); paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
 </style>

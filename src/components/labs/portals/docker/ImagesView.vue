@@ -251,9 +251,9 @@ function ran(name: string) {
 <style scoped src="./dd.css"></style>
 <style scoped>
 .dd-spacer { flex: 1; }
-.iv-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 0.875rem; }
+.iv-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; }
 .iv-summary b { font-weight: 500; }
-.iv-refresh { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; }
+.iv-refresh { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
 .iv-show { width: auto; }
 .iv-name { font-weight: 500; }
 .iv-copy { border: 0; background: none; color: var(--dd-text-2); cursor: pointer; padding: 2px 4px; opacity: .7; }

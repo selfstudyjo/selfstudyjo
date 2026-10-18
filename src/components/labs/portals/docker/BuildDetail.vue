@@ -127,7 +127,7 @@ async function confirmDelete() {
 .bd-bad { color: var(--dd-red); }
 .bd-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
 .bd-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
-.bd-card h3 { margin: 0; font-size: 0.9375rem; font-weight: 500; }
+.bd-card h3 { margin: 0; font-size: 15px; font-weight: 500; }
 .bd-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--dd-hover-strong); }
 .bd-bar__cached { background: #9DB9F6; }
 .bd-bar__run { background: var(--dd-blue); }

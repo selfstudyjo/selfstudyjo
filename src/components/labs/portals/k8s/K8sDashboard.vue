@@ -21,7 +21,7 @@
       </div>
       <form class="kd-search" role="search" @submit.prevent="go({ page: 'search', q: searchText })">
         <KIcon name="search" :size="20" />
-        <input v-model="searchText" type="search" placeholder="Search" aria-label="Search" @keydown.enter.prevent="go({ page: 'search', q: searchText })" />
+        <input v-model="searchText" type="search" placeholder="Search" aria-label="Search" @keydown.enter.prevent="go({ page: 'search', q: searchText }); ($event.target as HTMLInputElement).blur()" />
       </form>
       <span class="kd-toolbar__spacer" />
       <button type="button" class="kd-tbtn kd-tbtn--primary" title="Create new resource" aria-label="Create new resource" @click="go({ page: 'create' })"><KIcon name="add" /></button>
@@ -52,8 +52,8 @@
       <nav class="kd-crumbs" aria-label="Breadcrumbs">
         <template v-for="(crumb, i) in crumbs" :key="i">
           <span v-if="i > 0" class="kd-crumbs__sep"><KIcon name="chevron" :size="20" /></span>
-          <a v-if="crumb.to && i < crumbs.length - 1" href="#" class="kd-crumbs__link" @click.prevent="go(crumb.to)">{{ crumb.label }}</a>
-          <span v-else class="kd-crumbs__here">{{ crumb.label }}</span>
+          <a v-if="crumb.to && i < crumbs.length - 1" href="#" class="kd-crumbs__link" :title="crumb.label" @click.prevent="go(crumb.to)">{{ crumb.label }}</a>
+          <span v-else class="kd-crumbs__here" :title="crumb.label">{{ crumb.label }}</span>
         </template>
       </nav>
       <span class="kd-toolbar__spacer" />
@@ -414,7 +414,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
 .kd-toolbar__spacer { flex: 1; }
 .kd-anchor { position: relative; }
 .kd-badge { position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--kd-error); color: #fff;
-  font-size: 10px; line-height: 16px; text-align: center; padding: 0 3px; }
+  font-size: 12px; line-height: 16px; text-align: center; padding: 0 3px; }
 .kd-popup { position: absolute; right: 0; top: 44px; z-index: 40; min-width: 220px; background: #fff; border-radius: 4px; padding: 8px 0;
   box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.2), 0 4px 5px 0 rgb(0 0 0 / 0.14), 0 1px 10px 0 rgb(0 0 0 / 0.12); }
 .kd-popup--bell { width: 340px; max-height: 360px; overflow: auto; }
@@ -430,9 +430,9 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
 /* action bar */
 .kd-actionbar { display: flex; align-items: center; height: 48px; flex: none; padding: 0 8px 0 20px; background: var(--kd-primary); color: #fff; z-index: 4; }
 .kd-crumbs { display: flex; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 20px; }
-.kd-crumbs__link { color: rgb(255 255 255 / 0.8); text-decoration: none; }
+.kd-crumbs__link { color: rgb(255 255 255 / 0.8); text-decoration: none; flex: 0 1 auto; min-width: 24px; overflow: hidden; text-overflow: ellipsis; }
 .kd-crumbs__link:hover { color: #fff; text-decoration: underline; }
-.kd-crumbs__here { color: #fff; overflow: hidden; text-overflow: ellipsis; }
+.kd-crumbs__here { color: #fff; flex: 0 1 auto; min-width: 24px; overflow: hidden; text-overflow: ellipsis; }
 .kd-crumbs__sep { display: inline-flex; color: rgb(255 255 255 / 0.7); margin: 0 2px; }
 .kd-abtn { width: 40px; height: 40px; flex: none; border: 0; border-radius: 50%; background: transparent; color: #fff; display: inline-flex;
   align-items: center; justify-content: center; cursor: pointer; }
@@ -474,8 +474,21 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
   .kd-actionbar { padding-left: 12px; }
 }
 @container sl-portal (max-width: 440px) {
-  .kd-search input { width: 0; }
-  .kd-search { flex: 0 0 40px; }
-  .kd-toolbar { gap: 0; padding: 0 2px; }
+  .kd-crumbs > .kd-crumbs__link:first-child, .kd-crumbs > .kd-crumbs__link:first-child + .kd-crumbs__sep { display: none; }
+  .kd-actionbar .kd-abtn { width: 36px; height: 36px; }
+  .kd-toolbar .kd-tbtn { width: 36px; height: 36px; }
+  .kd-brand { padding: 0 2px; }
+  .kd-nsselect__box { max-width: 84px; }
+  .kd-search { flex: 0 0 36px; min-width: 36px; height: 36px; }
+  /* The box collapses to its icon; tapping it expands the field across the toolbar. */
+  .kd-search { position: relative; cursor: text; }
+  .kd-search input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+  .kd-search:focus-within { position: absolute; left: 6px; right: 6px; top: 12px; z-index: 6; flex: none; min-width: 0; padding: 0 10px; }
+  .kd-search:focus-within input { position: static; opacity: 1; cursor: text; }
+  .kd-toolbar { position: relative; gap: 0; padding: 0 2px; }
+  /* Menus anchor to the toolbar, not to their icon, so they cannot run off the left edge. */
+  .kd-toolbar .kd-anchor { position: static; }
+  .kd-toolbar .kd-popup { top: 54px; right: 6px; max-width: calc(100% - 12px); }
+  .kd-toolbar .kd-popup--bell { left: 6px; width: auto; }
 }
 </style>

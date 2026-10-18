@@ -79,7 +79,7 @@
                   <thead><tr><th v-for="col in shownCols" :key="col.i">{{ col.name }}</th></tr></thead>
                   <tbody>
                     <tr v-for="(row, r) in pageRows" :key="r">
-                      <td v-for="col in shownCols" :key="col.i" :class="{ 'hv__null': row[col.i] === null }">{{ row[col.i] === null ? 'NULL' : row[col.i] }}</td>
+                      <td v-for="col in shownCols" :key="col.i" :class="{ 'hv__null': row[col.i] === null }" :title="row[col.i] === null ? undefined : String(row[col.i])">{{ row[col.i] === null ? 'NULL' : row[col.i] }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -383,49 +383,59 @@ watch(colFilter, () => { page.value = 0; });
 .hv__explorer { background: #fff; border: 1px solid #e3e3e3; padding: 12px; overflow: auto; max-height: 100%; }
 .hv__label { font-size: 12px; text-transform: uppercase; color: #666; font-weight: 700; display: block; margin-bottom: 6px; }
 .hv__tables-head { display: flex; flex-direction: column; gap: 6px; margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; color: #666; font-weight: 700; }
-.hv__mini { height: 28px; border: 1px solid #ccc; border-radius: 3px; padding: 0 8px; font: inherit; font-size: 12px; text-transform: none; font-weight: 400; }
+.hv__mini { height: 28px; border: 1px solid #ccc; border-radius: 3px; padding: 0 8px; font: inherit; font-size: 12px; text-transform: none; font-weight: 400; background: #fff; color: #555; min-width: 0; }
 .hv__tree, .hv__cols { list-style: none; margin: 0; padding: 0; }
 .hv__tnode { display: flex; align-items: center; gap: 5px; width: 100%; border: 0; background: none; padding: 4px 2px; font: inherit; font-size: 13px; color: #333; cursor: pointer; text-align: left; }
 .hv__tnode:hover { background: #f5f5f5; }
 .hv__tnode span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hv__cols { padding-left: 26px; font-size: 12px; color: #555; }
 .hv__cols li { padding: 2px 0; }
-.hv__type { color: #999; margin-left: 4px; }
-.hv__none { color: #999; font-size: 12px; padding: 6px 0; }
+.hv__cols a { display: inline-block; line-height: 20px; }
+.hv__type { color: #707070; margin-left: 4px; }
+.hv__none { color: #707070; font-size: 12px; padding: 6px 0; }
 .hv__work { display: flex; flex-direction: column; min-width: 0; gap: 10px; }
 .hv__sheets { display: flex; gap: 2px; flex-wrap: wrap; }
-.hv__sheet { border: 1px solid #ddd; border-bottom: 0; background: #e8e8e8; color: #666; padding: 7px 14px; font: inherit; font-size: 13px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.hv__sheet { border: 1px solid #ddd; border-bottom: 0; background: #e8e8e8; color: #555; padding: 7px 14px; min-height: 32px; font: inherit; font-size: 13px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
 .hv__sheet.active { background: #fff; color: #333; font-weight: 500; }
-.hv__sheet-x { color: #999; font-size: 15px; line-height: 1; }
+.hv__sheet-x { color: #707070; font-size: 16px; line-height: 20px; width: 20px; height: 20px; text-align: center; border-radius: 2px; margin-right: -6px; }
+.hv__sheet-x:hover { background: #ddd; color: #333; }
 .hv__sheet-add { font-weight: 700; }
 .hv__editor { display: flex; border: 1px solid #ddd; background: #fff; min-height: 180px; height: 200px; resize: vertical; overflow: hidden; margin-top: -10px; }
-.hv__lines { background: #f7f7f7; border-right: 1px solid #e5e5e5; color: #999; font: 12px/18px Menlo, Consolas, monospace; padding: 8px 6px; text-align: right; display: flex; flex-direction: column; min-width: 28px; overflow: hidden; user-select: none; }
+.hv__lines { background: #f7f7f7; border-right: 1px solid #e5e5e5; color: #707070; font: 12px/18px Menlo, Consolas, monospace; padding: 8px 6px; text-align: right; display: flex; flex-direction: column; min-width: 28px; overflow: hidden; user-select: none; }
 .hv__sql { flex: 1; border: 0; outline: 0; resize: none; font: 13px/18px Menlo, Consolas, monospace; padding: 8px 10px; color: #333; white-space: pre; overflow: auto; }
 .hv__buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .hv__hint { font-size: 12px; }
 .hv__results { background: #fff; border: 1px solid #e3e3e3; flex: 1; display: flex; flex-direction: column; min-height: 220px; }
-.hv__rtabs { display: flex; list-style: none; margin: 0; padding: 0 10px; border-bottom: 1px solid #ddd; }
-.hv .hv__rtabs a { display: block; padding: 10px 14px; color: #666; font-size: 12px; text-transform: uppercase; border-bottom: 3px solid transparent; text-decoration: none; }
+.hv__rtabs { display: flex; list-style: none; margin: 0; padding: 0 10px; border-bottom: 1px solid #ddd; overflow-x: auto; scrollbar-width: none; }
+.hv .hv__rtabs a { display: block; padding: 10px 14px; color: #666; font-size: 12px; text-transform: uppercase; border-bottom: 3px solid transparent; text-decoration: none; white-space: nowrap; }
 .hv .hv__rtabs .active a { color: #333; border-bottom-color: #3FAE2A; }
 .hv__rbody { padding: 12px; overflow: auto; flex: 1; }
 .hv__rbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; font-size: 12px; }
 .hv__rbar .spacer { flex: 1; }
-.hv__mini2 { width: 200px; height: 30px; }
+.hv__mini2 { width: 200px; max-width: 100%; height: 30px; }
 .hv__grid { max-height: 360px; overflow: auto; border: 1px solid #eee; }
 .hv__grid th { position: sticky; top: 0; background: #f5f5f5; }
-.hv__null { color: #aaa; font-style: italic; }
+.hv__grid td { white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.hv__null { color: #767676; font-style: italic; }
 .hv__pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 13px; }
 .hv__err { white-space: pre-wrap; font-family: Menlo, Consolas, monospace; font-size: 12px; }
 .hv__log { margin: 0; padding: 12px; font-size: 12px; white-space: pre-wrap; overflow: auto; flex: 1; background: #fafafa; }
 .hv__plan { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px; }
 .hv__vertex { border: 2px solid #41bfae; border-radius: 4px; padding: 10px 14px; display: flex; flex-direction: column; font-size: 12px; color: #555; background: #f3fbf9; min-width: 120px; }
 .hv__vertex strong { color: #333; font-size: 13px; }
-.hv__edge { font-size: 22px; color: #999; }
+.hv__edge { font-size: 22px; color: #707070; }
 .hv__desc { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hv__nowrap { white-space: nowrap; }
 .hv__setting { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 8px; }
 @container sl-portal (max-width: 820px) {
   .hv__query { grid-template-columns: minmax(0, 1fr); }
   .hv__explorer { max-height: 220px; }
+}
+@container sl-portal (max-width: 560px) {
+  .hv__setting { grid-template-columns: minmax(0, 1fr); padding-bottom: 8px; border-bottom: 1px solid #eee; }
+  .hv__setting .btn { justify-self: start; }
+  .hv__desc { max-width: 220px; }
+  .hv__nav { flex-wrap: wrap; }
+  .hv .hv__nav a { padding: 11px 12px; }
 }
 </style>

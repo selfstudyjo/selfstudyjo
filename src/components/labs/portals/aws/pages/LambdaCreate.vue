@@ -123,5 +123,5 @@ async function create() {
 .lc__tiles { margin-bottom: 20px; }
 .lc__off { opacity: .55; cursor: default; }
 .lc__info { font-size: 12px; font-weight: 700; margin-left: 4px; }
-.lc__exp { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font: inherit; color: #0f141a; padding: 0; cursor: pointer; }
+.lc__exp, .lc__exp:disabled { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font: inherit; font-size: 16px; color: #0f141a; padding: 0; cursor: default; text-align: left; }
 </style>

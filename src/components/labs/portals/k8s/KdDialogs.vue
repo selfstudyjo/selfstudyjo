@@ -257,7 +257,9 @@ async function createSubmit() {
 .kd-overlay { position: absolute; inset: 0; z-index: 60; background: rgb(0 0 0 / 0.32); display: grid; place-items: center; padding: 16px; }
 .kd-dialog { background: #fff; border-radius: 4px; padding: 24px; width: min(560px, 100%); max-height: 92%; overflow: auto;
   box-shadow: 0 11px 15px -7px rgb(0 0 0 / 0.2), 0 24px 38px 3px rgb(0 0 0 / 0.14), 0 9px 46px 8px rgb(0 0 0 / 0.12); }
-.kd-dialog--wide { width: min(900px, 100%); }
+.kd-dialog--wide { width: min(900px, 100%); display: flex; flex-direction: column; overflow: hidden; }
+.kd-dialog--wide > * { flex: none; }
+.kd-dialog--wide > .kd-editor { flex: 1 1 460px; min-height: 140px; height: auto; max-height: 460px; }
 .kd-dialog__title { margin: 0 0 16px; font-size: 20px; font-weight: 500; color: rgb(0 0 0 / 0.87); }
 .kd-text { font-size: 14px; color: rgb(0 0 0 / 0.87); margin: 0 0 12px; line-height: 1.5; word-break: break-word; }
 .kd-small { font-size: 12px; color: rgb(0 0 0 / 0.54); }
@@ -274,17 +276,19 @@ async function createSubmit() {
 .kd-btn--primary:hover:not(:disabled) { background: var(--kd-primary-hover); }
 .kd-btn--warn { background: #f44336; color: #fff; box-shadow: 0 3px 1px -2px rgb(0 0 0 / 0.2), 0 2px 2px 0 rgb(0 0 0 / 0.14), 0 1px 5px 0 rgb(0 0 0 / 0.12); }
 .kd-btn--warn:hover:not(:disabled) { background: #d32f2f; }
-.kd-btn:disabled { opacity: 0.38; cursor: default; }
+.kd-btn:disabled { opacity: 1; color: rgb(0 0 0 / 0.38); background: transparent; cursor: default; box-shadow: none; }
+.kd-btn--primary:disabled, .kd-btn--warn:disabled { background: rgb(0 0 0 / 0.12); }
 .kd-btn--link { text-transform: none; padding: 0 4px; height: 28px; }
 .kd-error { color: #f44336; font-size: 13px; margin: 8px 0 0; word-break: break-word; }
 .kd-field { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; flex: 1; }
-.kd-pair { display: flex; gap: 16px; }
+.kd-pair { display: flex; gap: 16px; flex-wrap: wrap; }
+.kd-pair > .kd-field { min-width: min(140px, 100%); }
 .kd-label { font-size: 12px; color: rgb(0 0 0 / 0.54); }
 .kd-input { border: 0; border-bottom: 1px solid rgb(0 0 0 / 0.42); padding: 6px 0; font: inherit; font-size: 15px; background: transparent;
   color: rgb(0 0 0 / 0.87); outline: 0; min-width: 0; }
 .kd-input:focus { border-bottom: 2px solid var(--kd-primary); padding-bottom: 5px; }
 .kd-input:disabled { color: rgb(0 0 0 / 0.38); border-bottom-style: dotted; }
-.kd-kv { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 12px; align-items: end; margin-bottom: 4px; }
+.kd-kv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; gap: 12px; align-items: end; margin-bottom: 4px; }
 .kd-iconbtn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: rgb(0 0 0 / 0.54);
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .kd-tabs { display: flex; border-bottom: 1px solid rgb(0 0 0 / 0.12); margin-bottom: 8px; }
@@ -292,8 +296,13 @@ async function createSubmit() {
   cursor: pointer; border-bottom: 2px solid transparent; }
 .kd-tab.is-active { color: var(--kd-primary); border-bottom-color: var(--kd-primary); }
 .kd-editor { display: flex; border: 1px solid rgb(0 0 0 / 0.12); height: min(55vh, 460px); overflow: auto; }
-.kd-editor__gutter { display: flex; flex-direction: column; padding: 8px 6px; background: #f0f0f0; color: #999; text-align: right;
+.kd-editor__gutter { display: flex; flex-direction: column; padding: 8px 6px; background: #f0f0f0; color: #6b6b6b; text-align: right;
   font: 13px/20px 'Roboto Mono', Consolas, monospace; user-select: none; min-width: 32px; }
-.kd-editor__text { flex: 1; border: 0; outline: 0; resize: none; padding: 8px; font: 13px/20px 'Roboto Mono', Consolas, monospace;
+.kd-editor__text { flex: 1; min-width: 0; border: 0; outline: 0; resize: none; padding: 8px; font: 13px/20px 'Roboto Mono', Consolas, monospace;
   color: rgb(0 0 0 / 0.87); white-space: pre; overflow-x: auto; overflow-y: hidden; }
+@container sl-portal (max-width: 560px) {
+  .kd-overlay { padding: 8px; }
+  .kd-dialog { padding: 20px 16px; max-height: calc(100% - 8px); }
+  .kd-pair { gap: 0 12px; }
+}
 </style>

@@ -216,4 +216,9 @@ function toggleSelected() {
 .gd-commit__coauthor { border: 0; background: none; color: var(--gd-text-secondary); padding: 2px; display: inline-flex; }
 .gd-commit__go { width: 100%; justify-content: center; height: 28px; }
 .gd-commit__go b { font-weight: 600; margin-left: 3px; }
+@container sl-portal (max-width: 700px) {
+  .gd-changes__list { flex: none; max-height: 204px; }
+  .gd-file, .gd-stashed { height: 34px; }
+  .gd-check { width: 16px; height: 16px; }
+}
 </style>

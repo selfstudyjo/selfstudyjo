@@ -64,10 +64,10 @@ const tips = computed(() => {
 
 <style scoped src="./sn.css"></style>
 <style scoped>
-.assist__icon { width: 1rem; height: 1rem; color: var(--sn-primary); }
-.assist__ctx { margin: 0 0 0.5rem; font-size: 0.78rem; color: var(--sn-text-muted); }
-.assist__h { margin: 0.7rem 0 0.3rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--sn-text-muted); }
-.assist__list { margin: 0; padding-left: 1rem; font-size: 0.8rem; }
-.assist__list li { margin-bottom: 0.35rem; }
-.assist__wa { margin-top: 0.15rem; color: var(--sn-text-muted); font-size: 0.75rem; }
+.assist__icon { width: 16px; height: 16px; color: var(--sn-primary); }
+.assist__ctx { margin: 0 0 8px; font-size: 12.48px; color: var(--sn-text-muted); }
+.assist__h { margin: 11.2px 0 4.8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--sn-text-muted); }
+.assist__list { margin: 0; padding-left: 16px; font-size: 12.8px; }
+.assist__list li { margin-bottom: 5.6px; }
+.assist__wa { margin-top: 2.4px; color: var(--sn-text-muted); font-size: 12px; }
 </style>

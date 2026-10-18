@@ -185,6 +185,21 @@ for (const step of steps) {
             }
         } else if (step.eval) {
             console.log('eval:', JSON.stringify(await evaluate(step.eval)));
+        } else if (step.probe) {
+            // The style probe (probe.js): contrast, overflow, sideways scroll,
+            // clipped text, overlapping and tiny controls inside the frame.
+            const code = readFileSync(new URL('./probe.js', import.meta.url), 'utf8');
+            const findings = await evaluate(code);
+            console.log(`PROBE ${step.probe}: ${findings.length} finding(s)`);
+            for (const f of findings) {
+                console.log(`  [${f.kind}] ${f.at} "${f.text}" - ${f.detail || ''}`);
+            }
+        } else if (step.resize) {
+            await send('Emulation.setDeviceMetricsOverride', {
+                width: Number(step.resize[0]), height: Number(step.resize[1]),
+                deviceScaleFactor: 1, mobile: Number(step.resize[0]) < 700,
+            });
+            await sleep(600);
         } else if (step.shot) {
             const picture = await send('Page.captureScreenshot', { format: 'png' });
             mkdirSync(dirname(resolve(step.shot)), { recursive: true });

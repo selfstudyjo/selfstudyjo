@@ -160,6 +160,6 @@ function isBest(key: string, r: MfRun) {
 .mf-cmp__opt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 .mf-cmp__plot { max-width: 980px; overflow-x: auto; border: 1px solid var(--mf-border-light); border-radius: var(--mf-radius); padding: 8px; }
 .mf-cmp__scatter { max-width: 560px; }
-.mf-cmp__charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.mf-cmp__charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
 @container sl-portal (max-width: 900px) { .mf-cmp { padding: 12px; } }
 </style>

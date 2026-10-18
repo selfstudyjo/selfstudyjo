@@ -47,7 +47,7 @@
           <thead><tr><th>Job Id</th><th>Description</th><th>Submitted</th><th>Duration</th><th>Failure Reason</th></tr></thead>
           <tbody>
             <tr v-for="(job, i) in failed" :key="i">
-              <td>{{ app.jobs.length + i }}</td><td>{{ job.name }}</td><td>{{ date(app.started) }}</td><td>{{ duration(app.durationMs) }}</td>
+              <td>{{ app.jobs.length + i }}</td><td class="jobs__fdesc">{{ job.name }}</td><td class="jobs__nowrap">{{ date(app.started) }}</td><td>{{ duration(app.durationMs) }}</td>
               <td>org.apache.spark.sql.AnalysisException (see the console for the full message)</td>
             </tr>
           </tbody>
@@ -75,7 +75,8 @@ const executorEvents = computed(() => executorsFor(props.view).map((e, i) => ({ 
 </script>
 
 <style scoped>
-.jobs__desc { max-width: 520px; }
-.jobs__sql { display: inline-block; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.jobs__desc { max-width: 520px; min-width: 200px; }
+.jobs__sql { display: inline-block; max-width: min(520px, 55cqw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .jobs__nowrap { white-space: nowrap; }
+.jobs__fdesc { min-width: 200px; }
 </style>

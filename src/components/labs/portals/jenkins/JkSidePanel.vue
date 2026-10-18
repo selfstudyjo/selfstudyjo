@@ -158,41 +158,41 @@ const tasks = computed<Task[]>(() => {
 </script>
 
 <style scoped>
-.jk-tasks { list-style: none; margin: 0 0 1.25rem; padding: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.jk-tasks { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; gap: 1.6px; }
 .jk-task {
-  display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 2.35rem;
-  padding: 0.35rem 0.7rem; border: 0; border-radius: 0.66rem; background: none;
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 37.6px;
+  padding: 5.6px 11.2px; border: 0; border-radius: 10.56px; background: none;
   color: var(--jk-text); font: inherit; font-weight: 500; text-align: left; cursor: pointer;
 }
 .jk-task:hover:not(:disabled) { background: var(--jk-btn-hover); }
 .jk-task.is-active { background: var(--jk-btn-bg); font-weight: 600; }
 .jk-task:disabled { opacity: 0.45; cursor: not-allowed; }
-.jk-task__icon { width: 1.4rem; height: 1.4rem; color: var(--jk-text); }
+.jk-task__icon { width: 22.4px; height: 22.4px; color: var(--jk-text); }
 .jk-task.is-danger .jk-task__icon { color: var(--jk-red); }
-.jk-pane { border: 1px solid var(--jk-border); border-radius: 0.8rem; margin-bottom: 1rem; overflow: hidden; background: #fff; }
-.jk-pane__head { box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.6rem 0.85rem; font-weight: 600; background: none; border: 0; font: inherit; font-weight: 600; color: var(--jk-text); text-align: left; }
+.jk-pane { border: 1px solid var(--jk-border); border-radius: 12.8px; margin-bottom: 16px; overflow: hidden; background: #fff; }
+.jk-pane__head { box-sizing: border-box; display: flex; align-items: center; gap: 8px; width: 100%; padding: 9.6px 13.6px; font-weight: 600; background: none; border: 0; font: inherit; font-weight: 600; color: var(--jk-text); text-align: left; }
 .jk-pane__toggle { cursor: pointer; }
 .jk-pane__toggle:hover { background: var(--jk-btn-bg); }
 .jk-pane__head > span:first-child { flex: 1; }
-.jk-pane__trend { font-weight: 500; font-size: 0.8125rem; }
-.jk-pane__count { color: var(--jk-secondary); font-weight: 500; font-size: 0.8rem; }
-.jk-pane__chev { width: 0.9rem; height: 0.9rem; color: var(--jk-secondary); }
-.jk-pane__empty { margin: 0; padding: 0 0.85rem 0.75rem; color: var(--jk-secondary); }
-.jk-pane__filter { position: relative; padding: 0 0.6rem 0.5rem; }
-.jk-pane__filter-icon { position: absolute; left: 1.15rem; top: 0.55rem; width: 0.9rem; height: 0.9rem; color: var(--jk-secondary); }
-.jk-pane__filter-input { width: 100%; box-sizing: border-box; height: 2rem; padding: 0 0.6rem 0 1.9rem; border: 2px solid var(--jk-input-border); border-radius: 0.6rem; font: inherit; outline: none; }
+.jk-pane__trend { font-weight: 500; font-size: 13px; }
+.jk-pane__count { color: var(--jk-secondary); font-weight: 500; font-size: 12.8px; }
+.jk-pane__chev { width: 14.4px; height: 14.4px; color: var(--jk-secondary); }
+.jk-pane__empty { margin: 0; padding: 0 13.6px 12px; color: var(--jk-secondary); }
+.jk-pane__filter { position: relative; padding: 0 9.6px 8px; }
+.jk-pane__filter-icon { position: absolute; left: 18.4px; top: 8.8px; width: 14.4px; height: 14.4px; color: var(--jk-secondary); }
+.jk-pane__filter-input { width: 100%; box-sizing: border-box; height: 32px; padding: 0 9.6px 0 30.4px; border: 2px solid var(--jk-input-border); border-radius: 9.6px; font: inherit; outline: none; }
 .jk-pane__filter-input:focus { border-color: var(--jk-accent); }
-.jk-pane__foot { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; padding: 0.55rem 0.85rem; border-top: 1px solid var(--jk-border); font-size: 0.8rem; }
-.jk-bh { list-style: none; margin: 0; padding: 0 0.35rem 0.4rem; }
-.jk-bh__row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 0.5rem; }
+.jk-pane__foot { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8.8px 13.6px; border-top: 1px solid var(--jk-border); font-size: 12.8px; }
+.jk-bh { list-style: none; margin: 0; padding: 0 5.6px 6.4px; }
+.jk-bh__row { display: flex; align-items: center; gap: 8px; padding: 4.8px 8px; border-radius: 8px; }
 .jk-bh__row.is-current { background: var(--jk-btn-bg); }
-.jk-bh__num { font-weight: 600; }
-.jk-bh__date { margin-left: auto; color: var(--jk-secondary); font-size: 0.78rem; white-space: nowrap; }
-.jk-exec { padding: 0 0.85rem 0.7rem; }
-.jk-exec__node + .jk-exec__node { margin-top: 0.45rem; }
+.jk-link.jk-bh__num { font-weight: 600; display: inline-block; min-width: 24px; text-align: left; }
+.jk-bh__date { margin-left: auto; color: var(--jk-secondary); font-size: 12.48px; white-space: nowrap; }
+.jk-exec { padding: 0 13.6px 11.2px; }
+.jk-exec__node + .jk-exec__node { margin-top: 7.2px; }
 .jk-exec__name { font-weight: 600; }
-.jk-exec__off { color: var(--jk-secondary); margin-left: 0.35rem; }
-.jk-exec__list { list-style: none; margin: 0.15rem 0 0; padding: 0; color: var(--jk-secondary); }
-.jk-exec__list li { display: flex; gap: 0.6rem; }
-.jk-exec__n { width: 1rem; text-align: right; color: var(--jk-text); }
+.jk-exec__off { color: var(--jk-secondary); margin-left: 5.6px; }
+.jk-exec__list { list-style: none; margin: 2.4px 0 0; padding: 0; color: var(--jk-secondary); }
+.jk-exec__list li { display: flex; gap: 9.6px; }
+.jk-exec__n { width: 16px; text-align: right; color: var(--jk-text); }
 </style>

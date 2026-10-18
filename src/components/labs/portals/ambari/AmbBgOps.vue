@@ -3,7 +3,7 @@
             cancel-text="OK" wide @close="$emit('close')">
     <template v-if="!selected">
       <div v-if="!requests.length" class="empty">No operations to display</div>
-      <table v-else class="table ops">
+      <div v-else class="table-wrap"><table class="table ops">
         <thead><tr><th>Operations</th><th>Start Time</th><th>Duration</th><th>Show</th></tr></thead>
         <tbody>
           <tr v-for="req in requests" :key="req.id">
@@ -19,7 +19,7 @@
             <td>{{ req.progress }}%</td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </template>
     <template v-else>
       <p><a href="#" @click.prevent="selected = null">« All operations</a></p>
@@ -50,6 +50,7 @@ const stamp = shortStamp;
 .ops a { display: inline-flex; align-items: center; gap: 6px; }
 .ops__bar { height: 6px; background: #eee; margin-top: 6px; max-width: 360px; }
 .ops__bar i { display: block; height: 100%; background: #1EB475; }
+.ops td:first-child { min-width: 220px; }
 .ops__bar.is-failed i { background: #EF6162; }
 .ops__log { background: #f5f5f5; border: 1px solid #ccc; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
 </style>

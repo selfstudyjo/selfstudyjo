@@ -4,7 +4,7 @@
       <span :class="open ? 'arrow-open' : 'arrow-closed'"></span><a href="#" @click.prevent>DAG Visualization</a>
     </h4>
     <div v-if="open" class="dag">
-      <svg :viewBox="`0 0 ${width} ${height}`" :style="{ maxWidth: width + 'px' }" role="img" aria-label="DAG visualization">
+      <svg :viewBox="`0 0 ${width} ${height}`" :style="{ width: width + 'px' }" role="img" aria-label="DAG visualization">
         <defs>
           <marker :id="arrowId" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
             <path d="M0,0 L10,5 L0,10 Z" fill="#666" />
@@ -56,9 +56,9 @@ const height = 230;
 
 <style scoped>
 .dag { overflow-x: auto; border: 1px solid #eee; padding: 6px; margin-bottom: 12px; }
-.dag svg { width: 100%; height: auto; display: block; }
+.dag svg { max-width: none; height: auto; display: block; }
 .dag__stage { fill: #fff; stroke: #FF99AC; stroke-width: 1.5; }
 .dag__title { font-size: 12px; fill: #FF5475; font-weight: 700; }
 .dag__node { fill: #C3EBFF; stroke: #3EC0FF; }
-.dag__label { font-size: 11px; fill: #333; }
+.dag__label { font-size: 12px; fill: #333; }
 </style>

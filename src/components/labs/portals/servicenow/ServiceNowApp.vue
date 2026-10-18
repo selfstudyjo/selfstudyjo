@@ -181,8 +181,8 @@ function globalSearch(text: string) {
   --sn-warning-bg: #fff1d6; --sn-warning-ink: #7a4a00;
   --sn-positive-bg: #e1f4e4; --sn-positive-ink: #1d5e2b;
   --sn-info-bg: #e3edfd; --sn-info-ink: #1a4a9a;
-  --sn-radius: 0.25rem;
-  --sn-radius-lg: 0.5rem;
+  --sn-radius: 4px;
+  --sn-radius-lg: 8px;
   --sn-shadow-sm: 0 1px 2px rgba(24, 24, 38, 0.08);
   /* The product is a light UI whatever galaxy the platform is in: native
      checkboxes, selects and scrollbars must render light too. */
@@ -195,11 +195,11 @@ function globalSearch(text: string) {
   font-size: 14px; line-height: 1.35;
 }
 .sn-messages { flex: none; }
-.sn-msg { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.55rem 1rem; border-bottom: 1px solid; font-size: 0.8125rem; }
-.sn-msg svg { width: 1rem; height: 1rem; flex: none; margin-top: 0.05rem; }
+.sn-msg { display: flex; align-items: flex-start; gap: 8.8px; padding: 8.8px 16px; border-bottom: 1px solid; font-size: 13px; }
+.sn-msg svg { width: 16px; height: 16px; flex: none; margin-top: 0.8px; }
 .sn-msg__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.sn-msg__detail { margin-left: 0.4rem; }
-.sn-msg__close { border: 0; background: none; color: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.sn-msg__detail { margin-left: 6.4px; }
+.sn-msg__close { border: 0; background: none; color: inherit; font-size: 17.6px; line-height: 1; cursor: pointer; }
 .sn-msg--success { background: var(--sn-positive-bg); color: var(--sn-positive-ink); border-color: #b8e0bf; }
 .sn-msg--error { background: var(--sn-critical-bg); color: var(--sn-critical-ink); border-color: #f4b9b9; }
 .sn-msg--warning { background: var(--sn-warning-bg); color: var(--sn-warning-ink); border-color: #f2d49a; }

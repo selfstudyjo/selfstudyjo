@@ -128,10 +128,10 @@ async function onMenu(value: string) {
 .br__summary:hover { text-decoration: underline; }
 .is-done .br__summary { color: var(--j-text-subtle); }
 .br__label {
-  padding: 0 4px; border-radius: 3px; background: #EED7FC; color: #803FA5; font-size: 11px; font-weight: 700;
+  padding: 0 4px; border-radius: 3px; background: #EED7FC; color: #803FA5; font-size: 12px; font-weight: 700;
   text-transform: uppercase; line-height: 16px; white-space: nowrap;
 }
-.br__kr { font-size: 11px; font-weight: 700; color: #216E4E; background: #DCFFF1; padding: 0 4px; border-radius: 3px; line-height: 16px; }
+.br__kr { font-size: 12px; font-weight: 700; color: #216E4E; background: #DCFFF1; padding: 0 4px; border-radius: 3px; line-height: 16px; }
 .br :deep(.br__status) { gap: 2px; padding: 2px 4px; border-radius: 3px; }
 .br :deep(.br__status:hover) { background: var(--j-neutral-hover); }
 .br__points { border: 0; cursor: pointer; font-family: inherit; }
@@ -145,5 +145,8 @@ async function onMenu(value: string) {
   .br { flex-wrap: wrap; padding: 6px 8px; row-gap: 4px; }
   .br__summary { flex-basis: calc(100% - 90px); white-space: normal; }
   .br__label, .br__kr, .br__grip { display: none; }
+  .br__key, .br__summary { min-height: 32px; }
+  .br :deep(.br__status), .br :deep(.br__assignee), .br :deep(.br__more) { min-height: 32px; min-width: 32px; justify-content: center; }
+  .br .br__points.j-points { height: 28px; min-width: 28px; line-height: 28px; border-radius: 14px; }
 }
 </style>

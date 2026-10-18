@@ -28,8 +28,13 @@ defineEmits<{ (e: 'close'): void }>();
 .cs-modal__box--large { max-width: 820px; }
 .cs-modal__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 20px 10px; }
 .cs-modal__head h2 { margin: 0; font-size: 20px; line-height: 24px; font-weight: 700; color: #0f141a; word-break: break-word; }
-.cs-modal__x { border: 0; background: none; color: #424650; cursor: pointer; padding: 4px; border-radius: 4px; }
+.cs-modal__x { flex: none; display: inline-flex; min-width: 28px; min-height: 28px; align-items: center; justify-content: center; border: 0; background: none; color: #424650; cursor: pointer; padding: 4px; border-radius: 4px; }
 .cs-modal__x:hover { color: #0f141a; }
 .cs-modal__body { padding: 4px 20px 20px; overflow: auto; color: #0f141a; font-size: 14px; line-height: 20px; }
 .cs-modal__foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding: 12px 20px 16px; border-top: 1px solid #c6c6cd; }
+@container sl-portal (max-width: 560px) {
+  .cs-modal { padding: 16px 8px; }
+  .cs-modal__head, .cs-modal__foot { padding-left: 16px; padding-right: 16px; }
+  .cs-modal__body { padding-left: 16px; padding-right: 16px; }
+}
 </style>

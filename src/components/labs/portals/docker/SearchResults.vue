@@ -47,11 +47,11 @@ const groups = computed(() => {
 
 <style scoped>
 .dd-sr { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 46; max-height: 380px; overflow: auto; background: #fff; border-radius: 6px; box-shadow: 0 6px 24px rgb(0 0 0 / .2), 0 0 0 1px rgb(0 0 0 / .05); padding: 6px 0; }
-.dd-sr__title { padding: 6px 14px 4px; font-size: 0.6875rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--dd-text-2); }
-.dd-sr__item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 14px; border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--dd-text); text-align: left; cursor: pointer; }
+.dd-sr__title { padding: 6px 14px 4px; font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--dd-text-2); }
+.dd-sr__item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 14px; border: 0; background: none; font: inherit; font-size: 13px; color: var(--dd-text); text-align: left; cursor: pointer; }
 .dd-sr__item:hover { background: var(--dd-hover); }
 .dd-sr__item svg { color: var(--dd-text-2); }
 .dd-sr__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dd-sr__item small { color: var(--dd-text-2); }
-.dd-sr__none { padding: 14px; font-size: 0.8125rem; color: var(--dd-text-2); }
+.dd-sr__none { padding: 14px; font-size: 13px; color: var(--dd-text-2); }
 </style>

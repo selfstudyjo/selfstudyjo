@@ -468,7 +468,7 @@ label { color: inherit; }
 .tf-crumbs li:last-child span { color: var(--tf-fg-strong); font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
 .tf-crumbs a { color: var(--tf-fg-faint); }
 .tf-crumbs a:hover { color: var(--tf-fg-action); text-decoration: underline; }
-.tf-crumbs__sep { color: #b2b6bd; }
+.tf-crumbs__sep { color: #8c909c; }
 .tf-crumbs__icon { color: var(--tf-fg-faint); }
 .tf-top__busy { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--tf-fg-faint); }
 .tf-content { flex: 1; min-height: 0; overflow: auto; background: var(--tf-surface); }
@@ -496,20 +496,20 @@ label { color: inherit; }
 
 /* ---- modal ---- */
 .tf-modal-back { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(59, 61, 69, 0.4); }
-.tf-modal { width: min(480px, 100%); background: #fff; border-radius: 8px; box-shadow: 0 2px 3px rgba(59,61,69,.25), 0 16px 32px rgba(59,61,69,.3); overflow: hidden; }
+.tf-modal { width: min(480px, 100%); max-height: 100%; display: flex; flex-direction: column; background: #fff; border-radius: 8px; box-shadow: 0 2px 3px rgba(59,61,69,.25), 0 16px 32px rgba(59,61,69,.3); overflow: hidden; }
 .tf-modal__head { display: flex; align-items: center; gap: 10px; padding: 16px 20px; background: var(--tf-surface-faint); border-bottom: 1px solid var(--tf-border); }
 .tf-modal--critical .tf-modal__head { background: var(--tf-surface-critical); border-bottom-color: #fbd4d4; }
 .tf-modal--critical .tf-modal__head-icon { color: var(--tf-fg-critical); }
 .tf-modal__title { flex: 1; font-size: 18px; line-height: 24px; font-weight: 600; color: var(--tf-fg-strong); }
 .tf-modal__x { padding: 4px; border-radius: 4px; color: var(--tf-fg-primary); }
 .tf-modal__x:hover { background: rgba(0, 0, 0, 0.06); }
-.tf-modal__body { padding: 20px; }
+.tf-modal__body { padding: 20px; overflow: auto; min-height: 0; }
 .tf-modal__message { white-space: pre-line; color: var(--tf-fg-primary); }
 .tf-modal__type { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
 .tf-modal__type-label { font-size: 14px; color: var(--tf-fg-primary); }
 .tf-modal__input { min-height: 36px; padding: 7px 11px; border: 1px solid var(--tf-border-input); border-radius: 5px; background: #fff; color: var(--tf-fg-strong); }
 .tf-modal__input:focus { outline: 3px solid var(--tf-focus); }
-.tf-modal__foot { display: flex; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--tf-border); background: var(--tf-surface-faint); }
+.tf-modal__foot { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--tf-border); background: var(--tf-surface-faint); }
 .tf-mbtn { display: inline-flex; align-items: center; min-height: 36px; padding: 0 15px; border: 1px solid transparent; border-radius: 5px; font-weight: 500; font-size: 14px; }
 .tf-mbtn--primary { background: var(--tf-btn-primary); border-color: var(--tf-btn-primary-border); color: #fff; }
 .tf-mbtn--critical { background: #c00005; border-color: #a7000e; color: #fff; }

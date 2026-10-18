@@ -110,5 +110,5 @@ async function remove() {
 </script>
 
 <style scoped>
-.az-avatar { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #c7e0f4; color: #0f548c; font-size: 10px; font-weight: 600; }
+.az-avatar { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #c7e0f4; color: #0f548c; font-size: 12px; font-weight: 600; }
 </style>

@@ -108,7 +108,7 @@ async function merge() {
 .gd-merge__split > .gd-btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .gd-merge__caret { border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; border-left: 1px solid rgba(255, 255, 255, 0.4) !important; padding: 0 6px !important; }
 .gd-merge__menu {
-  position: absolute; right: 0; bottom: 34px; width: 300px; list-style: none; margin: 0; padding: 4px 0; background: #fff;
+  position: absolute; right: 0; bottom: 34px; width: 300px; max-width: calc(100cqw - 40px); list-style: none; margin: 0; padding: 4px 0; background: #fff;
   border: 1px solid rgba(27, 31, 35, 0.15); border-radius: 4px; box-shadow: 0 3px 12px rgba(27, 31, 35, 0.15); z-index: 3;
 }
 .gd-merge__menu li { display: flex; gap: 6px; padding: 6px 10px; font-size: 11px; color: var(--gd-text-secondary); }

@@ -1,5 +1,5 @@
 <template>
-  <div class="sl-portal" dir="ltr">
+  <div ref="root" class="sl-portal" :class="{ 'is-full': fs.active.value, 'is-overlay': fs.active.value && !fs.native.value }" dir="ltr">
     <!--
       A BROWSER FRAME around the product, and it is doing two jobs.
 
@@ -24,6 +24,25 @@
               :title="$t('Refresh')" :aria-label="$t('Refresh')" @click="$emit('refresh')">
         <RotateCw class="sl-portal__icon" :class="{ 'is-spinning': busy }" />
       </button>
+      <!-- FULL SCREEN. Enter, and once in: an explicit exit and an X, plus
+           Escape (see useFullscreen) - three ways out, because a student who
+           cannot find the way out of a full-window console has a broken page. -->
+      <button v-if="!fs.active.value" type="button" class="sl-portal__fs"
+              :title="$t('Full screen')" @click="fs.enter()">
+        <Maximize2 class="sl-portal__icon" aria-hidden="true" />
+        <span class="sl-portal__fs-label">{{ $t('Full screen') }}</span>
+      </button>
+      <template v-else>
+        <button type="button" class="sl-portal__fs"
+                :title="$t('Exit full screen')" @click="fs.exit()">
+          <Minimize2 class="sl-portal__icon" aria-hidden="true" />
+          <span class="sl-portal__fs-label">{{ $t('Exit full screen') }}</span>
+        </button>
+        <button type="button" class="sl-portal__close" :title="$t('Close')"
+                :aria-label="$t('Exit full screen')" @click="fs.exit()">
+          <X class="sl-portal__icon" aria-hidden="true" />
+        </button>
+      </template>
     </div>
 
     <div class="sl-portal__frame">
@@ -103,10 +122,11 @@
  *          refresh        - ask for a fresh view now
  */
 import { computed, defineAsyncComponent, h, ref, type Component } from 'vue';
-import { ChevronUp, Copy, Lock, RotateCw, TerminalSquare } from 'lucide-vue-next';
+import { ChevronUp, Copy, Lock, Maximize2, Minimize2, RotateCw, TerminalSquare, X } from 'lucide-vue-next';
 import type { LabTool } from '@/utils/labCatalogue';
 import type { PortalRun } from '@/utils/portalKit';
 import { usePortal } from './usePortal';
+import { useFullscreen } from '@/composables/useFullscreen';
 
 const props = defineProps<{
   tool: LabTool;
@@ -147,6 +167,9 @@ const SKINS: Record<string, Component> = {
 const skin = computed<Component | null>(() => SKINS[String(props.tool.skin || '')] || null);
 
 const api = usePortal(payload => props.run(payload));
+
+const root = ref<HTMLElement | null>(null);
+const fs = useFullscreen(root);
 
 const DEFAULT_LOCATIONS: Record<string, string> = {
   aws: 'https://console.aws.amazon.com/console/home',

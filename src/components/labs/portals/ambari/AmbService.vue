@@ -417,8 +417,8 @@ const charts = computed(() => {
 
 <style scoped>
 .svc__head { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid #ddd; margin-bottom: 18px; }
-.svc__tabs.nav-tabs { flex: 1; margin: 0; border-bottom: 0; }
-.svc__actions { display: flex; gap: 8px; padding-bottom: 8px; }
+.svc__head .svc__tabs.nav-tabs, .svc .svc__tabs.nav-tabs { flex: 1 1 auto; min-width: 0; margin: 0; border-bottom: 0; }
+.svc__actions { display: flex; gap: 8px; padding-bottom: 8px; margin-left: auto; }
 .svc__restart { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .svc__restart span { flex: 1; }
 .svc__summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
@@ -438,7 +438,7 @@ const charts = computed(() => {
 .cfg__note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cfg__bar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; position: sticky; top: -20px; background: #f0f0f0; padding: 6px 0; z-index: 2; }
 .cfg__bar .spacer { flex: 1; }
-.cfg__filter { max-width: 280px; }
+.cfg__filter { max-width: 280px; min-width: 0; flex: 1 1 160px; }
 .cfg__head { width: 100%; background: none; border: 0; border-bottom: 1px solid #eee; cursor: pointer; text-align: left; font: inherit; }
 .cfg__props { display: flex; flex-direction: column; gap: 10px; }
 .cfg__row { display: grid; grid-template-columns: minmax(180px, 38%) minmax(0, 1fr) 30px; gap: 12px; align-items: start; }
@@ -448,5 +448,13 @@ const charts = computed(() => {
   .svc__summary { grid-template-columns: minmax(0, 1fr); }
   .cfg__row { grid-template-columns: minmax(0, 1fr) 30px; }
   .cfg__key { grid-column: 1 / -1; padding: 0; }
+}
+@container sl-portal (max-width: 720px) {
+  .svc__head { align-items: stretch; border-bottom: 0; row-gap: 0; }
+  .svc .svc__tabs.nav-tabs { flex-basis: 100%; border-bottom: 1px solid #ddd; }
+  .svc__actions { padding: 10px 0 0; }
+  .cfg__bar { top: -12px; flex-wrap: wrap; }
+  .cfg__filter { max-width: none; flex-basis: 100%; }
+  .cfg__version { flex-basis: 170px; }
 }
 </style>

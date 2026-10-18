@@ -259,10 +259,17 @@ provide(JIRA, {
   width: 100%; min-height: 36px; padding: 6px 8px; border: 1px solid var(--j-border-input); border-radius: 3px;
   background: var(--j-surface); color: var(--j-text); font: inherit; font-size: 14px; box-sizing: border-box;
 }
-.jira :deep(.j-input:hover), .jira :deep(.j-select:hover), .jira :deep(.j-textarea:hover) { background: var(--j-input-hover); }
+.jira :deep(.j-input:hover), .jira :deep(.j-select:hover), .jira :deep(.j-textarea:hover) { background-color: var(--j-input-hover); }
 .jira :deep(.j-input:focus), .jira :deep(.j-select:focus), .jira :deep(.j-textarea:focus) {
-  outline: none; border-color: var(--j-focus); box-shadow: inset 0 0 0 1px var(--j-focus); background: var(--j-surface);
+  outline: none; border-color: var(--j-focus); box-shadow: inset 0 0 0 1px var(--j-focus); background-color: var(--j-surface);
 }
+/* Atlassian's select: no OS arrow, its own chevron-down at the right. */
+.jira :deep(select.j-select) {
+  appearance: none; -webkit-appearance: none; padding-right: 30px; text-overflow: ellipsis; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23505258' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 14px 14px;
+}
+.jira :deep(select.j-select:disabled) { cursor: not-allowed; }
 .jira :deep(.j-input.is-invalid), .jira :deep(.j-textarea.is-invalid), .jira :deep(.j-select.is-invalid) { border-color: var(--j-danger); }
 .jira :deep(.j-select:disabled), .jira :deep(.j-input:disabled) { background: var(--j-neutral); color: var(--j-text-subtle); cursor: not-allowed; }
 .jira :deep(.j-textarea) { min-height: 96px; resize: vertical; line-height: 20px; }
@@ -273,7 +280,7 @@ provide(JIRA, {
 /* Lozenges: 11px bold uppercase on a tinted ground. */
 .jira :deep(.j-lozenge) {
   display: inline-flex; align-items: center; max-width: 200px; height: 16px; padding: 0 4px;
-  border-radius: 3px; font-size: 11px; font-weight: 700; line-height: 16px; text-transform: uppercase;
+  border-radius: 3px; font-size: 12px; font-weight: 700; line-height: 16px; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #DDDEE1; color: #292A2E;
 }
 .jira :deep(.j-lozenge--todo), .jira :deep(.j-lozenge--default) { background: #DDDEE1; color: #292A2E; }
@@ -343,6 +350,12 @@ provide(JIRA, {
 .jira :deep(.j-progress--yellow > span) { background: #E2B203; }
 .jira :deep(.j-progress--red > span) { background: #E2483D; }
 
+@container sl-portal (max-width: 640px) {
+  /* Touch: nothing a finger has to hit is under 32px on a phone-width pane. */
+  .jira :deep(.j-btn--compact) { height: 32px; padding: 0 10px; }
+  .jira :deep(.j-btn--icon.j-btn--compact) { width: 32px; padding: 0; }
+  .jira :deep(.j-table .j-link) { display: inline-flex; align-items: center; min-height: 32px; }
+}
 @container sl-portal (max-width: 700px) {
   .jira :deep(.j-page) { padding: 16px 12px 32px; }
   .jira :deep(.j-grid2) { grid-template-columns: minmax(0, 1fr); }

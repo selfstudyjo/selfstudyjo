@@ -131,8 +131,11 @@ async function copyJson() {
 .st-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 12px; }
 .st-dl { margin-bottom: 20px; }
 .st-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--tf-border); margin-bottom: 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.st-tab { padding: 8px 12px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; }
+.st-tab { flex: none; padding: 8px 12px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; }
 .st-tab.is-active { color: var(--tf-fg-action); border-bottom-color: var(--tf-fg-action); }
 .st-addr, .st-id { overflow-wrap: anywhere; }
 .st-json { max-height: 520px; }
+@container sl-portal (max-width: 560px) {
+  .st-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
+}
 </style>

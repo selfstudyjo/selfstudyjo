@@ -100,7 +100,7 @@ const version = computed(() => String(pick(view.value, 'version', '')));
 <style scoped>
 .og-sub { margin-top: 4px; }
 .og-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--tf-border); margin-bottom: 16px; }
-.og-tab { padding: 8px 12px; color: var(--tf-fg-faint); font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.og-tab { flex: none; padding: 8px 12px; color: var(--tf-fg-faint); font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -1px; }
 .og-tab.is-active { color: var(--tf-fg-action); border-bottom-color: var(--tf-fg-action); }
 .og-prov { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
 .og-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 16px; }
@@ -117,5 +117,8 @@ const version = computed(() => String(pick(view.value, 'version', '')));
 @container sl-portal (max-width: 720px) {
   .og-settings { grid-template-columns: 1fr; }
   .og-settings__nav { flex-direction: row; flex-wrap: wrap; }
+}
+@container sl-portal (max-width: 560px) {
+  .og-tabs { flex-wrap: wrap; overflow: visible; row-gap: 0; }
 }
 </style>

@@ -57,5 +57,5 @@ function arrow(k: string) {
 <style scoped>
 .st__desc { max-width: 420px; }
 .st__nowrap { white-space: nowrap; }
-.expand-details { font-size: 10pt; color: grey; margin-left: 6px; cursor: pointer; }
+.expand-details { font-size: 12px; color: #6c757d; margin-left: 6px; cursor: pointer; white-space: nowrap; }
 </style>

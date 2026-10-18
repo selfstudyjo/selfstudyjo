@@ -115,7 +115,7 @@ function open(row: Record<string, any>) {
 .az-home__h { margin: 10px 0 12px; font-size: 16px; font-weight: 600; }
 .az-nav { display: flex; flex-wrap: wrap; gap: 8px 32px; }
 .az-navlink { display: inline-flex; align-items: center; gap: 10px; border: 0; background: none; padding: 6px 0;
-  font: 13px inherit; color: #115ea3; cursor: pointer; }
+  font: inherit; font-size: 13px; color: #115ea3; cursor: pointer; }
 .az-navlink:hover { text-decoration: underline; }
 .az-toolcard { display: flex; gap: 12px; align-items: flex-start; text-align: left; cursor: pointer; font: inherit; color: inherit; }
 .az-toolcard:hover { background: #fafafa; }

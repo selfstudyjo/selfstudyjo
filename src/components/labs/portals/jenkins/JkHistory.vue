@@ -10,7 +10,7 @@
             <td class="is-center"><JkStatus :ball="ballOf(row.build.result)" :size="20" /></td>
             <td>
               <button type="button" class="jk-link jk-hi__job" @click="ctx.go({ page: 'job', job: row.job })">{{ row.job }}</button>
-              <button type="button" class="jk-link" @click="ctx.go({ page: 'build', job: row.job, build: row.build.number })">#{{ row.build.number }}</button>
+              <button type="button" class="jk-link jk-hist__num" @click="ctx.go({ page: 'build', job: row.job, build: row.build.number })">#{{ row.build.number }}</button>
             </td>
             <td>{{ since(row.build.at, ctx.now.value) }}</td>
             <td>{{ statusText(row.build) }}</td>
@@ -50,10 +50,11 @@ function statusText(build: Build): string {
 </script>
 
 <style scoped>
-.jk-hi { max-width: 70rem; }
-.jk-hi__job { font-weight: 600; margin-right: 0.3rem; }
-.jk-hi__icon { display: inline-flex; padding: 0.3rem; border: 0; border-radius: 0.5rem; background: none; cursor: pointer; color: var(--jk-text); }
+.jk-link.jk-hist__num { display: inline-block; min-width: 24px; text-align: left; }
+.jk-hi { max-width: 1120px; }
+.jk-hi__job { font-weight: 600; margin-right: 4.8px; }
+.jk-hi__icon { display: inline-flex; padding: 4.8px; border: 0; border-radius: 8px; background: none; cursor: pointer; color: var(--jk-text); }
 .jk-hi__icon:hover { background: var(--jk-btn-hover); }
-.jk-hi__icon .jk-icon { width: 1rem; height: 1rem; }
-.jk-hi__feeds { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; margin-top: 0.7rem; font-size: 0.8125rem; }
+.jk-hi__icon .jk-icon { width: 16px; height: 16px; }
+.jk-hi__feeds { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; margin-top: 11.2px; font-size: 13px; }
 </style>

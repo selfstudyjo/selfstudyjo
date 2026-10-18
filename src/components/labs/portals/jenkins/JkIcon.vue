@@ -132,5 +132,5 @@ defineProps<{ name: string }>();
 </script>
 
 <style scoped>
-.jk-icon { width: 1.25rem; height: 1.25rem; flex: none; display: inline-block; vertical-align: middle; }
+.jk-icon { width: 20px; height: 20px; flex: none; display: inline-block; vertical-align: middle; }
 </style>

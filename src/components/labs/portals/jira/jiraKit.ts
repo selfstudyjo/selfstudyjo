@@ -155,8 +155,8 @@ export function initials(name: string): string {
 }
 
 /** Jira's avatar backgrounds: a fixed palette chosen by a stable hash. */
-const AVATAR_COLOURS = ['#1868DB', '#6A9A23', '#C97CF4', '#E06C00', '#2898BD',
-    '#AE2E24', '#5B7F24', '#964AC0', '#B38600', '#206A83'];
+const AVATAR_COLOURS = ['#1868DB', '#4C6B1F', '#964AC0', '#A54800', '#206A83',
+    '#AE2E24', '#5B7F24', '#803FA5', '#7F5F01', '#0055CC'];
 
 export function avatarColour(seed: string): string {
     let hash = 0;

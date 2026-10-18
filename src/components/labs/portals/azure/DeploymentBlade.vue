@@ -133,7 +133,14 @@ function goToResource() {
 .az-dep__title { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
 .az-dep__meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 24px; color: #424242; }
 .az-dep__details { margin: 8px 0 16px; }
-.az-dep__details summary { cursor: pointer; padding: 6px 0; }
+.az-dep__details summary { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0; list-style: none;
+  color: var(--az-fg); }
+.az-dep__details summary::-webkit-details-marker { display: none; }
+/* the portal's chevron, not the browser's disclosure triangle */
+.az-dep__details summary::before { content: ''; width: 6px; height: 6px; border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); transition: transform .1s; flex: none; }
+.az-dep__details[open] summary::before { transform: translateY(-2px) rotate(45deg); }
+.az-dep__meta { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
 .az-spin { animation: az-spin 1s linear infinite; }
 @keyframes az-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .az-spin { animation: none; } }

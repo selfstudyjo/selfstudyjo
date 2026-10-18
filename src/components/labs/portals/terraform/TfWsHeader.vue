@@ -97,7 +97,7 @@ async function unlock() {
 .wh__id { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tf-fg-faint); }
 .wh__id:hover { color: var(--tf-fg-action); }
 .wh__dot { width: 3px; height: 3px; border-radius: 50%; background: var(--tf-fg-faint); }
-.wh__actions { display: flex; gap: 8px; align-items: center; }
-.wh__menu-wrap { position: relative; }
-.wh__menu { right: 0; top: calc(100% + 4px); width: 260px; }
+.wh__actions { display: flex; gap: 8px; align-items: center; margin-left: auto; position: relative; }
+.wh__menu-wrap { position: static; }
+.wh__menu { right: 0; top: calc(100% + 4px); width: min(260px, 90cqw); }
 </style>

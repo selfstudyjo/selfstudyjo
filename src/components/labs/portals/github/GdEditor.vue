@@ -86,7 +86,9 @@ function accept(index: number, which: 'ours' | 'theirs' | 'both') {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 4px 8px;
   background: #f6f8fa; font-size: 11px; color: var(--gd-text-secondary); border-bottom: 1px solid var(--gd-border);
 }
-.gd-ed__actions { display: inline-flex; gap: 6px; }
+.gd-ed__actions { display: inline-flex; flex-wrap: wrap; gap: 2px 6px; }
+.gd-ed__actions .gd-link { white-space: nowrap; }
+@container sl-portal (max-width: 700px) { .gd-ed__actions .gd-link { min-height: 24px; font-size: 12px; } }
 .gd-ed__side { margin: 0; color: var(--gd-text); padding: 4px 8px; font-family: var(--gd-mono); font-size: 11px; white-space: pre-wrap; word-break: break-word; }
 .gd-ed__side--ours { background: #e6ffed; border-left: 3px solid #34d058; }
 .gd-ed__side--theirs { background: #f1f8ff; border-left: 3px solid #2188ff; }

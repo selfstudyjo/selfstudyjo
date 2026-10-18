@@ -24,7 +24,7 @@
       <p>Import a TMDL definition with <code class="fx-mono">fab import</code>, or create a model from a lakehouse with New item → Semantic model.</p>
     </div>
 
-    <div v-else-if="mode === 'model'" class="fx-split">
+    <div v-else-if="mode === 'model'" class="fx-split md-split">
       <section class="fx-content md-diagram">
         <div class="md-cards">
           <div v-for="t in m.tables" :key="t.name" class="md-card" :class="{ 'is-sel': selTable === t.name }" @click="selTable = t.name">
@@ -109,7 +109,7 @@
     <!-- Manage relationships -->
     <FxModal v-if="dialog === 'rels' && m" title="Manage relationships" width="720px" @close="dialog = ''">
       <div v-if="dlgError" class="fx-msgbar fx-msgbar--error"><FxIcon name="error" /><span>{{ dlgError }}</span></div>
-      <table class="fx-table">
+      <div class="fx-tablewrap md-relwrap"><table class="fx-table">
         <thead><tr><th>Active</th><th>From: Table (Column)</th><th>To: Table (Column)</th><th>Cross-filter</th><th /></tr></thead>
         <tbody>
           <tr v-for="r in m.relationships" :key="r.name">
@@ -118,14 +118,20 @@
           </tr>
           <tr v-if="!m.relationships.length"><td colspan="5" class="fx-muted">No relationships</td></tr>
         </tbody>
-      </table>
+      </table></div>
       <h3 class="fx-h3">New relationship</h3>
       <div class="md-relform">
-        <select v-model="rel.fromTable" class="fx-select" aria-label="From table"><option v-for="t in m.tables" :key="t.name" :value="t.name">{{ t.name }}</option></select>
-        <select v-model="rel.fromCol" class="fx-select" aria-label="From column"><option v-for="c in colsOf(rel.fromTable)" :key="c" :value="c">{{ c }}</option></select>
-        <span class="md-card-arrow">→</span>
-        <select v-model="rel.toTable" class="fx-select" aria-label="To table"><option v-for="t in m.tables" :key="t.name" :value="t.name">{{ t.name }}</option></select>
-        <select v-model="rel.toCol" class="fx-select" aria-label="To column"><option v-for="c in colsOf(rel.toTable)" :key="c" :value="c">{{ c }}</option></select>
+        <div class="md-relside">
+          <span class="fx-field__label">From table</span>
+          <select v-model="rel.fromTable" class="fx-select" aria-label="From table"><option v-for="t in m.tables" :key="t.name" :value="t.name">{{ t.name }}</option></select>
+          <select v-model="rel.fromCol" class="fx-select" aria-label="From column"><option v-for="c in colsOf(rel.fromTable)" :key="c" :value="c">{{ c }}</option></select>
+        </div>
+        <span class="md-card-arrow" aria-hidden="true">→</span>
+        <div class="md-relside">
+          <span class="fx-field__label">To table</span>
+          <select v-model="rel.toTable" class="fx-select" aria-label="To table"><option v-for="t in m.tables" :key="t.name" :value="t.name">{{ t.name }}</option></select>
+          <select v-model="rel.toCol" class="fx-select" aria-label="To column"><option v-for="c in colsOf(rel.toTable)" :key="c" :value="c">{{ c }}</option></select>
+        </div>
       </div>
       <label class="fx-check"><input v-model="rel.both" type="checkbox" />Cross-filter direction: Both</label>
       <label class="fx-check"><input v-model="rel.active" type="checkbox" />Make this relationship active</label>
@@ -143,7 +149,8 @@
           <div class="fx-field__label">Roles</div>
           <button v-for="r in m.roles" :key="r.name" type="button" class="fx-node" :class="{ 'is-selected': role.orig === r.name }" @click="pickRole(r)">
             <FxIcon name="lock" />{{ r.name }}</button>
-          <button type="button" class="fx-btn fx-btn--sm" @click="pickRole(null)">+ New</button>
+          <p v-if="!m.roles.length" class="fx-muted md-small md-p">No roles yet.</p>
+          <button type="button" class="fx-btn fx-btn--sm md-newrole" @click="pickRole(null)"><FxIcon name="plus" :size="12" />New role</button>
         </div>
         <div class="md-roleedit">
           <div class="fx-field"><label for="md-rname">Role name<span class="fx-field__req">*</span></label>
@@ -350,7 +357,7 @@ async function runDax() {
 .md-card { width: 220px; background: #fff; border: 1px solid #d1d1d1; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,.08); cursor: pointer; }
 .md-card.is-sel { border-color: #117865; box-shadow: 0 0 0 1px #117865; }
 .md-card__head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font-weight: 600; font-size: 13px; border-bottom: 1px solid #e0e0e0; background: #f5f5f5; border-radius: 6px 6px 0 0; }
-.md-mode { margin-left: auto; font-weight: 400; font-size: 11px; color: #616161; }
+.md-mode { margin-left: auto; font-weight: 400; font-size: 12px; color: #616161; }
 .md-card__list { list-style: none; margin: 0; padding: 4px 0; max-height: 300px; overflow: auto; }
 .md-card__list li { padding: 2px 10px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .md-measure { color: #242424; cursor: pointer; }
@@ -358,7 +365,7 @@ async function runDax() {
 .md-calc { display: inline-block; width: 16px; color: #117865; font-weight: 600; }
 .md-warn { color: #c50f1f; margin-left: 4px; }
 .md-col { color: #424242; padding-left: 26px !important; }
-.md-col.is-hidden { color: #a0a0a0; }
+.md-col.is-hidden { color: #8a8a8a; }
 .md-pad { padding-left: 20px; padding-right: 20px; }
 .md-rels { list-style: none; margin: 0; font-size: 13px; display: flex; flex-direction: column; gap: 6px; padding-bottom: 20px; }
 .md-card-arrow { color: #616161; padding: 0 4px; }
@@ -370,21 +377,28 @@ async function runDax() {
 .md-small { font-size: 12px; }
 .md-tree { list-style: none; padding: 0; margin: 0; font-size: 13px; }
 .md-tree > li { display: block; margin-bottom: 6px; }
+.md-tree > li > .fx-ico { vertical-align: -4px; margin-right: 6px; }
+.md-relwrap { margin: 0 -2px; }
 .md-tree ul { list-style: none; padding-left: 22px; margin: 2px 0; }
 .md-bpa { padding-left: 0; list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
 .md-daxview { min-height: 0; }
 .md-daxbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; flex-wrap: wrap; }
-.md-imp { width: 220px; min-height: 24px; padding: 2px 8px; }
+.md-imp { width: 220px; min-height: 24px; padding: 2px 28px 2px 8px; }
 .md-daxed { height: 32%; min-height: 110px; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #e0e0e0; }
 .md-info { margin: 0; padding: 6px 12px; font: 12px Consolas, monospace; color: #616161; border-top: 1px solid #e0e0e0; white-space: pre-wrap; }
-.md-relform { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-.md-relform .fx-select { width: 150px; }
+.md-relform { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; margin-bottom: 12px; }
+.md-relside { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.md-relform .fx-select { width: 100%; }
 .md-roles { display: flex; gap: 16px; }
 .md-rolelist { width: 200px; flex: none; display: flex; flex-direction: column; gap: 4px; }
 .md-roleedit { flex: 1; min-width: 0; }
+.md-newrole { align-self: flex-start; margin-top: 4px; }
 .md-p { margin: 0 0 8px; }
 @container sl-portal (max-width: 700px) {
+  .md-split { flex-direction: column; }
   .md-props { width: auto; border-left: 0; border-top: 1px solid #e0e0e0; max-height: 45%; }
+  .md-relform { grid-template-columns: minmax(0, 1fr); }
+  .md-relform .md-card-arrow { display: none; }
   .md-roles { flex-direction: column; }
   .md-rolelist { width: auto; }
 }

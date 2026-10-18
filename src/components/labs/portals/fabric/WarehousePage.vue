@@ -233,7 +233,8 @@ onMounted(() => {
 
 <style scoped>
 .wh-switch { width: 200px; }
-.wh-filter { width: 110px; min-height: 24px; padding: 2px 6px; font-size: 12px; }
+@container sl-portal (max-width: 600px) { .wh-switch { width: 124px; flex: none; } }
+.wh-filter { width: 120px; min-height: 28px; padding: 3px 8px; font-size: 13px; }
 .wh-root { font-weight: 600; cursor: default; }
 .wh-l1 { padding-left: 10px; cursor: default; }
 .wh-l2 { padding-left: 18px; }
@@ -245,7 +246,8 @@ onMounted(() => {
 .wh-qtabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; background: #fafafa; border-bottom: 1px solid #e0e0e0; overflow-x: auto; overflow-y: hidden; flex: none; }
 .wh-qtab { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid transparent; border-bottom: 0; border-radius: 4px 4px 0 0; background: transparent; font: 13px "Segoe UI", sans-serif; color: #424242; cursor: pointer; white-space: nowrap; }
 .wh-qtab.is-active { background: #fff; border-color: #e0e0e0; color: #242424; font-weight: 600; margin-bottom: -1px; height: 33px; }
-.wh-qclose { padding: 0 2px; color: #707070; }
+.wh-qclose { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: -4px; border-radius: 4px; color: #616161; font-size: 15px; font-weight: 400; }
+.wh-qclose:hover { background: #ebebeb; color: #242424; }
 .wh-qnew { font-size: 16px; }
 .wh-editorbar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; }
 .wh-ctx { font-size: 12px; }

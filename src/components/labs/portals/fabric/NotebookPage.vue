@@ -39,7 +39,7 @@
               <option value="">Add data items…</option>
               <option v-for="l in lakehouses" :key="l.name" :value="l.name">{{ l.name }}</option>
             </select>
-            <button type="button" class="fx-btn fx-btn--sm" :disabled="!attachTo" @click="attach">{{ item?.lakehouse ? 'Change' : 'Add' }}</button>
+            <button type="button" class="fx-btn" :disabled="!attachTo" @click="attach">{{ item?.lakehouse ? 'Change' : 'Add' }}</button>
           </div>
         </div>
       </aside>
@@ -255,10 +255,11 @@ async function insertRead(t: Record<string, any>) {
 .nb-lang { font-size: 12px; color: #616161; padding: 0 6px; }
 .nb-sec { padding: 4px 8px; font-size: 12px; color: #616161; font-weight: 600; }
 .nb-lh { cursor: default; font-weight: 600; }
-.nb-default { margin-left: auto; height: 18px; font-size: 11px; }
+.nb-default { margin-left: auto; flex: none; }
 .nb-l2 { padding-left: 22px; }
 .nb-hint { font-size: 12px; padding: 0 8px; }
 .nb-attach { display: flex; gap: 6px; padding: 8px; }
+.nb-attach .fx-select { flex: 1; min-width: 0; }
 .nb-cells { background: #fafafa; }
 .nb-scroll { flex: 1; overflow: auto; padding: 12px 16px 24px; }
 .nb-cell { display: flex; gap: 6px; margin-bottom: 10px; }
@@ -269,7 +270,7 @@ async function insertRead(t: Record<string, any>) {
 .nb-body { flex: 1; min-width: 0; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; overflow: hidden; }
 .nb-cell.is-focus .nb-body { border-color: #117865; box-shadow: 0 0 0 1px #117865; }
 .nb-tools { display: flex; align-items: center; gap: 2px; padding: 2px 6px; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
-.nb-kind { font-size: 11px; color: #616161; }
+.nb-kind { font-size: 12px; color: #616161; }
 .nb-code { min-height: 64px; resize: vertical; }
 .nb-md { padding: 8px 14px; }
 .nb-md h1 { font: 600 22px/28px "Segoe UI", sans-serif; margin: 4px 0; }
@@ -278,7 +279,7 @@ async function insertRead(t: Record<string, any>) {
 .nb-md p, .nb-md li { margin: 2px 0; }
 .nb-out { border-top: 1px solid #f0f0f0; padding: 6px 10px; max-height: 360px; overflow: auto; }
 .nb-out.is-error .nb-text { color: #c50f1f; }
-.nb-meta { font-size: 11px; margin-bottom: 4px; }
+.nb-meta { font-size: 12px; margin-bottom: 4px; }
 .nb-text { margin: 0 0 6px; font: 12px/17px Consolas, monospace; white-space: pre-wrap; }
 .nb-grid { max-height: 260px; display: flex; flex-direction: column; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 6px; }
 .nb-add { display: flex; gap: 8px; justify-content: center; }

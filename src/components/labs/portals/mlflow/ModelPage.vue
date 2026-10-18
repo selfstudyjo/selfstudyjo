@@ -180,8 +180,8 @@ async function startDelete() {
 <style scoped>
 .mf-model { flex: 1; overflow: auto; gap: 14px; }
 .mf-model__menu { top: 34px; left: 0; }
-.mf-model__meta { display: flex; gap: 24px; flex-wrap: wrap; margin: 0; font-size: 13px; }
-.mf-model__meta div { display: flex; gap: 6px; }
+.mf-model__meta { display: flex; gap: 6px 24px; flex-wrap: wrap; margin: 0; font-size: 13px; }
+.mf-model__meta > div { display: flex; gap: 6px; }
 .mf-model__meta dt { color: var(--mf-text-2); font-weight: 600; }
 .mf-model__meta dd { margin: 0; }
 .mf-model__descedit { display: flex; flex-direction: column; gap: 6px; max-width: 760px; }

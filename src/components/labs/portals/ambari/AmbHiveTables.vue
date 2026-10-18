@@ -385,11 +385,11 @@ async function dropTable() {
 .ht__list li { display: flex; align-items: center; }
 .ht__list li.active { background: #eef7ec; box-shadow: inset 3px 0 0 #3FAE2A; }
 .ht__item { flex: 1; display: flex; align-items: center; gap: 6px; border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 13px; color: #333; cursor: pointer; text-align: left; }
-.ht__count { margin-left: auto; color: #999; font-size: 12px; }
-.ht__del { border: 0; background: none; color: #999; cursor: pointer; padding: 6px 10px; }
-.ht__del:hover { color: #d9534f; }
-.ht__title { margin: 0; font-size: 18px; font-weight: 400; }
-.ht__filter { max-width: 220px; }
+.ht__count { margin-left: auto; color: #707070; font-size: 12px; }
+.ht__del { border: 0; background: none; color: #707070; cursor: pointer; padding: 6px 10px; }
+.ht__del:hover { color: #c9302c; }
+.ht__title { margin: 0; font-size: 18px; font-weight: 400; color: #333; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ht__filter { max-width: 220px; min-width: 0; flex: 1 1 140px; }
 .ht__loc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ht__ddl { background: #f8f8f8; border: 1px solid #ddd; padding: 10px; font-size: 12px; white-space: pre-wrap; margin: 10px 0 0; }
 .ht__kv th { width: 30%; font-weight: 400; color: #666; border-bottom: 0; border-top: 1px solid #ddd; }
@@ -399,5 +399,14 @@ async function dropTable() {
 .ht__colhead { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; }
 @container sl-portal (max-width: 760px) {
   .ht { grid-template-columns: minmax(0, 1fr); }
+}
+@container sl-portal (max-width: 1100px) {
+  .ht .ht__main .nav-tabs { flex-wrap: wrap; overflow-x: visible; }
+}
+@container sl-portal (max-width: 560px) {
+  .ht__colhead, .ht__colrow { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 30px 32px; gap: 6px; }
+  .ht__colrow.is-edit { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 32px; }
+  .ht__colhead span:nth-child(3) { font-size: 0; }
+  .ht__filter { max-width: none; }
 }
 </style>

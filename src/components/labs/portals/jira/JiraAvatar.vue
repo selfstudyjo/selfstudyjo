@@ -23,7 +23,7 @@ const letters = computed(() => initials(props.name));
 const style = computed(() => ({
   width: props.size + 'px',
   height: props.size + 'px',
-  fontSize: Math.max(9, Math.round(props.size * 0.42)) + 'px',
+  fontSize: Math.max(12, Math.round(props.size * 0.42)) + 'px',
   background: props.name ? avatarColour(props.name) : '#8590A2',
 }));
 </script>

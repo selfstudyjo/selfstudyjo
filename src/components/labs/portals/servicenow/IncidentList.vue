@@ -114,11 +114,12 @@ async function confirmDelete() {
 <style scoped>
 .page { height: 100%; }
 .seg { display: inline-flex; border: 1px solid var(--sn-border-strong); border-radius: var(--sn-radius); overflow: hidden; }
-.seg__btn { padding: 0.25rem 0.7rem; border: 0; border-right: 1px solid var(--sn-border-strong); background: var(--sn-surface); color: var(--sn-text);
-  font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.seg__btn { padding: 4px 11.2px; border: 0; border-right: 1px solid var(--sn-border-strong); background: var(--sn-surface); color: var(--sn-text);
+  font: inherit; font-size: 12.48px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .seg__btn:last-child { border-right: 0; }
 .seg__btn.is-on { background: var(--sn-brand); color: #fff; }
-.seg__count { margin-left: 0.2rem; padding: 0 0.35rem; border-radius: 0.6rem; background: rgba(0, 0, 0, 0.08); font-size: 0.7rem; }
+.seg__count { margin-left: 3.2px; padding: 0 5.6px; border-radius: 9.6px; background: rgba(0, 0, 0, 0.08); font-size: 12px; }
 .seg__btn.is-on .seg__count { background: rgba(255, 255, 255, 0.2); }
-.short { display: inline-block; min-width: 14rem; }
+.short { display: inline-block; min-width: 224px; }
+@container sl-portal (max-width: 640px) { .seg__btn { min-height: 32px; } }
 </style>

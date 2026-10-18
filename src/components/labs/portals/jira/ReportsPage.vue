@@ -205,7 +205,7 @@ async function doRightsize() {
 .rr__chart { position: relative; max-width: 760px; }
 .rr__svg { width: 100%; height: 260px; display: block; }
 .rr__grid { stroke: #0B120E24; stroke-width: 1; }
-.rr__tick { font-size: 11px; fill: #6B6E76; }
+.rr__tick { font-size: 12px; fill: #6B6E76; }
 .rr__bar--commit { fill: #8C8F97; } .rr__bar--done { fill: #1F845A; }
 .rr__bar { cursor: pointer; }
 .rr__cap { stroke: #1868DB; stroke-width: 2; stroke-dasharray: 4 3; }
@@ -220,5 +220,5 @@ async function doRightsize() {
 .rr__tile-label { text-transform: capitalize; }
 .rr__tile-num { font-size: 28px; line-height: 32px; font-weight: 653; }
 .rr__tile-num.is-bad { color: var(--j-danger-text); }
-.rr__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.rr__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; text-overflow: ellipsis; }
 </style>

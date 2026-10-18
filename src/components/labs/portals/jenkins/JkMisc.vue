@@ -188,14 +188,14 @@ const COMMANDS: [string, string][] = [
 </script>
 
 <style scoped>
-.jk-misc { max-width: 64rem; }
-.jk-misc__form { max-width: 40rem; }
-.jk-misc__h2 { font-size: 1.1rem; font-weight: 650; margin: 1.3rem 0 0.5rem; }
-.jk-misc__select { max-width: 32rem; }
-.jk-misc__arg { max-width: 40rem; }
-.jk-misc__out { margin-top: 0.8rem; max-width: 52rem; }
-.jk-misc__lint { display: flex; gap: 0.5rem; max-width: 34rem; }
+.jk-misc { max-width: 1024px; }
+.jk-misc__form { max-width: 640px; }
+.jk-misc__h2 { font-size: 17.6px; font-weight: 650; margin: 20.8px 0 8px; }
+.jk-misc__select { max-width: 512px; }
+.jk-misc__arg { max-width: 640px; }
+.jk-misc__out { margin-top: 12.8px; max-width: 832px; }
+.jk-misc__lint { display: flex; gap: 8px; max-width: 544px; }
 .jk-misc__pre.is-ok { color: var(--jk-green); }
 .jk-misc__pre.is-bad { color: var(--jk-red); }
-.jk-misc__pre { padding: 0.8rem 1rem; background: var(--jk-table-bg); border-radius: 0.6rem; font-family: var(--jk-mono); font-size: 0.8125rem; overflow-x: auto; }
+.jk-misc__pre { padding: 12.8px 16px; background: var(--jk-table-bg); border-radius: 9.6px; font-family: var(--jk-mono); font-size: 13px; overflow-x: auto; }
 </style>

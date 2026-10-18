@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 .tn { position: relative; z-index: 50; flex: none; }
 .tn__bar { display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 12px 0 16px; background: #161d26; color: #fff; }
 .tn__burger { border: 0; background: none; color: #fff; padding: 6px; margin-right: 2px; cursor: pointer; display: inline-flex; border-radius: 4px; }
-.tn__logo { display: inline-flex; align-items: center; padding: 4px 8px 0 0; margin-right: 6px; }
+.tn__logo { color: #fff; display: inline-flex; align-items: center; padding: 4px 8px 0 0; margin-right: 6px; }
 .tn__services { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: #fff; padding: 6px 8px; border-radius: 4px; font: inherit; font-weight: 700; cursor: pointer; }
 .tn__services:hover, .tn__services.is-open, .tn__icon:hover, .tn__menu-btn:hover, .tn__burger:hover { background: #232b37; }
 .tn__search { position: relative; flex: 1 1 auto; max-width: 600px; margin: 0 12px; display: flex; align-items: center; }
@@ -264,8 +264,8 @@ onBeforeUnmount(() => {
 .tn__pop-sep { border-top: 1px solid #ebebf0; margin: 4px 0; }
 .tn__signout { display: flex; justify-content: flex-end; gap: 8px; padding: 6px 16px 4px; }
 .tn__switch, .tn__out { border-radius: 20px; font: inherit; font-size: 14px; font-weight: 700; padding: 4px 16px; cursor: default; }
-.tn__switch { border: 2px solid #006ce0; color: #006ce0; background: #fff; }
-.tn__out { border: 2px solid #ff9900; background: #ff9900; color: #0f141a; }
+.tn__switch, .tn__switch:disabled { border: 2px solid #006ce0; color: #006ce0; background: #fff; }
+.tn__out, .tn__out:disabled { border: 2px solid #ff9900; background: #ff9900; color: #0f141a; }
 .tn__favs { display: flex; align-items: center; gap: 2px; height: 32px; padding: 0 12px; background: #232b37; color: #fff; overflow-x: auto; scrollbar-width: none; }
 .tn__fav { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: #fff; font: inherit; font-size: 13px; padding: 4px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
 .tn__fav:hover { background: #333d4a; }
@@ -291,7 +291,16 @@ onBeforeUnmount(() => {
 @container sl-portal (max-width: 560px) {
   .tn__services-label { display: none; }
   .tn__search { margin: 0 6px; min-width: 0; }
-  .tn__cats { width: 150px; }
-  .tn__bar { padding: 0 6px; }
+  .tn__bar { position: relative; padding: 0 6px; }
+  /* On a phone the focused search takes the whole bar, so its results are as wide as the console. */
+  .tn__search.is-focus { position: absolute; z-index: 3; top: 6px; left: 6px; right: 6px; margin: 0; max-width: none; }
+  /* The region and account menus hang from the bar, not from their button, so they stay inside the frame. */
+  .tn__dd { position: static; }
+  .tn__pop { right: 6px; top: 38px; min-width: 0; width: min(340px, calc(100% - 12px)); }
+  .tn__svc-menu { width: 100%; flex-direction: column; border-radius: 0 0 12px 12px; }
+  /* Categories become one scrolling row above the list, so the list keeps the full width. */
+  .tn__cats { width: auto; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; border-right: 0; border-bottom: 1px solid #ebebf0; padding: 6px 8px; }
+  .tn__cat { width: auto; flex: none; white-space: nowrap; padding: 6px 12px; border-radius: 16px; }
+  .tn__svc-list { min-height: 0; padding: 10px 12px; }
 }
 </style>

@@ -8778,6 +8778,50 @@ section('17. Portals: the product consoles, and the command line they write');
     }
 }
 
+{
+    /*
+     * FULL SCREEN, for every portal and for the workbench (every other tool).
+     *
+     * Three ways out must exist - an exit button, an X, and Escape - because a
+     * student who cannot leave a full-window console has a broken page; and
+     * the overlay fallback must exist, because iPhone Safari has no element
+     * full screen at all and a button that does nothing there is the failure.
+     */
+    const composable = stripComments(source('src/composables/useFullscreen.ts'));
+    check('full screen: the native API is used where it exists',
+          /requestFullscreen\(/.test(composable) && /exitFullscreen\(/.test(composable));
+    check('full screen: a refused or missing API falls back to the overlay',
+          /catch\s*\{[\s\S]{0,200}\}\s*\}\s*native\.value = false;\s*active\.value = true;/.test(composable));
+    check('full screen: Escape leaves the overlay (the browser handles native)',
+          /event\.key === 'Escape' && active\.value && !native\.value/.test(composable));
+    check('full screen: the page behind the overlay is scroll-locked, and unlocked again',
+          /setLock\(true\)/.test(composable) && /setLock\(false\)/.test(composable));
+    check('full screen: leaving the page exits it',
+          /onBeforeUnmount\([\s\S]{0,400}exit\(\)/.test(composable));
+
+    const host = source('src/components/labs/portals/LabPortal.vue');
+    const bench = source('src/views/LabWorkspace.vue');
+    for (const [label, text, api] of [['portal', host, 'fs'], ['workbench', bench, 'benchFs']] as const) {
+        check(`full screen (${label}): an enter button`,
+              new RegExp(`v-if="!${api}\\.active\\.value"[\\s\\S]{0,200}@click="${api}\\.enter\\(\\)"`).test(text));
+        check(`full screen (${label}): an explicit exit button AND an X once in`,
+              (text.match(new RegExp(`@click="${api}\\.exit\\(\\)"`, 'g')) || []).length >= 2
+              && /<X class=/.test(text));
+        check(`full screen (${label}): both states are labelled`,
+              /\$t\('Full screen'\)/.test(text) && /\$t\('Exit full screen'\)/.test(text));
+    }
+    const css = source('src/assets/css/labs.css');
+    check('full screen: the overlay fallback is fixed over the whole viewport, for both',
+          /\.sl-portal\.is-overlay\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0/.test(css)
+          && /\.sl-bench\.is-overlay\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0/.test(css));
+    check('full screen: the frame takes the whole height in either mechanism',
+          /\.sl-portal\.is-full \.sl-portal__frame,\s*\.sl-portal:fullscreen \.sl-portal__frame/.test(css));
+    check('the cascade guard reverts the galaxy\'s field ink inside a product',
+          /\.sl-portal__frame :is\(input, textarea, select, button\)\s*\{[^}]*color:\s*revert/.test(css));
+    check('...and the 44px touch minimum that breaks dense product tables',
+          /@media \(pointer: coarse\)\s*\{[^}]*\.sl-portal__frame[\s\S]{0,200}min-height:\s*revert/.test(css));
+}
+
 /* ─────────────────── report ─────────────────── */
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

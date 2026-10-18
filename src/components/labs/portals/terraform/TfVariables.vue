@@ -260,7 +260,9 @@ async function remove(v: TfVariable) {
 .va-table td { vertical-align: top; }
 .va-key { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .va-key__name { font-weight: 600; color: var(--tf-fg-strong); }
-.va-tag { font-size: 11px; padding: 0 5px; line-height: 16px; }
+.va-tag { font-size: 12px; padding: 0 5px; line-height: 16px; }
+.va-val { min-width: 160px; }
+#va-key::-webkit-calendar-picker-indicator { display: none; }
 .va-val code { overflow-wrap: anywhere; white-space: pre-wrap; }
 .va-sens { font-style: italic; }
 .va-th-act { width: 60px; }

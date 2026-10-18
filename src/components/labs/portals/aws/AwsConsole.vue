@@ -175,7 +175,7 @@ a.awsc__crumb:hover { text-decoration: underline; }
 .awsc :deep(.cs-btn:disabled) { border-color: #b4b4bb; color: #8c8c94; background: #fff; cursor: default; }
 .awsc :deep(.cs-btn--primary) { background: var(--aws-primary); border-color: var(--aws-primary); color: var(--aws-text); }
 .awsc :deep(.cs-btn--primary:hover:not(:disabled)) { background: var(--aws-primary-hover); border-color: var(--aws-primary-hover); color: var(--aws-text); }
-.awsc :deep(.cs-btn--primary:disabled) { background: #ebebf0; border-color: #ebebf0; color: #8c8c94; }
+.awsc :deep(.cs-btn--primary:disabled) { background: #ebebf0; border-color: #ebebf0; color: #74747c; }
 .awsc :deep(.cs-btn--link) { border-color: transparent; background: none; }
 .awsc :deep(.cs-btn--link:hover:not(:disabled)) { background: #f0fbff; border-color: transparent; }
 .awsc :deep(.cs-btn--icon) { padding: 4px 8px; min-width: 32px; }
@@ -186,6 +186,9 @@ a.awsc__crumb:hover { text-decoration: underline; }
 
 .awsc :deep(.cs-link) { color: var(--aws-link); text-decoration: none; cursor: pointer; background: none; border: 0; padding: 0; font: inherit; }
 .awsc :deep(.cs-link:hover) { text-decoration: underline; }
+/* Cloudscape's "Info" link is 12px bold text; give it a hit area a finger can find. */
+.awsc :deep(:is(a, button):is([class*='__info'], .cs-info)) { display: inline-block; padding: 2px 2px; line-height: 16px; }
+
 .awsc :deep(.cs-mono) { font-family: Monaco, Menlo, Consolas, 'Courier Prime', Courier, 'Courier New', monospace; font-size: 13px; }
 .awsc :deep(.cs-muted) { color: var(--aws-text-3); }
 
@@ -251,6 +254,8 @@ a.awsc__crumb:hover { text-decoration: underline; }
 .awsc :deep(.cs-alert) { display: flex; gap: 10px; align-items: flex-start; border: 2px solid; border-radius: 12px; padding: 10px 16px; font-size: 14px; margin-bottom: 16px; }
 .awsc :deep(.cs-alert__icon) { margin-top: 2px; flex: none; }
 .awsc :deep(.cs-alert strong) { display: block; }
+.awsc :deep(.cs-alert ul), .awsc :deep(.cs-alert ol) { margin: 0; padding-left: 18px; }
+.awsc :deep(.cs-alert > div) { min-width: 0; }
 .awsc :deep(.cs-alert--info) { border-color: #006ce0; background: #f0fbff; }
 .awsc :deep(.cs-alert--info .cs-alert__icon) { color: #006ce0; }
 .awsc :deep(.cs-alert--warning) { border-color: #855900; background: #fffef0; }
@@ -296,6 +301,12 @@ a.awsc__crumb:hover { text-decoration: underline; }
 @container sl-portal (max-width: 900px) {
   .awsc :deep(.cs-split), .awsc :deep(.cs-wizard), .awsc :deep(.cs-grid-2), .awsc :deep(.cs-grid-3) { grid-template-columns: minmax(0, 1fr); }
   .awsc :deep(.cs-steps) { flex-direction: row; flex-wrap: wrap; gap: 10px 18px; }
+}
+@container sl-portal (max-width: 640px) {
+  /* A mini table wider than a phone scrolls inside itself, never the page. */
+  /* (the table keeps display: table so it still fills its container; its parent does the scrolling) */
+  .awsc :deep(:has(> .cs-table-mini):not(:has(.cs-dd))) { overflow-x: auto; }
+  .awsc :deep(.cs-table-mini) { min-width: 100%; }
 }
 @container sl-portal (max-width: 560px) {
   .awsc :deep(.cs-container__head), .awsc :deep(.cs-container__body) { padding-left: 14px; padding-right: 14px; }

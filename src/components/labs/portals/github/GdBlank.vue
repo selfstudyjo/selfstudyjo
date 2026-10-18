@@ -95,7 +95,7 @@ const otherStashes = computed(() => props.v.stashes.filter(s => s.desktop && s.b
 .gd-card h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
 .gd-card p { margin: 0 0 4px; line-height: 17px; }
 .gd-card kbd {
-  font-family: var(--gd-sans); font-size: 10px; padding: 1px 4px; border: 1px solid #d1d5da; border-bottom-width: 2px;
+  font-family: var(--gd-sans); font-size: 11px; padding: 1px 4px; border: 1px solid #d1d5da; border-bottom-width: 2px;
   border-radius: 3px; background: #fafbfc; color: var(--gd-text);
 }
 .gd-dim { color: var(--gd-text-secondary); }

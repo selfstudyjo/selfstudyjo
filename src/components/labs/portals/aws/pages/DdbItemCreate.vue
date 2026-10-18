@@ -77,5 +77,6 @@ async function create() {
 
 <style scoped>
 .di__table td { vertical-align: top; }
+.di__table td:nth-child(-n+2) { min-width: 150px; }
 .di__type { width: 120px; }
 </style>

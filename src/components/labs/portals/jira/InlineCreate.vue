@@ -79,6 +79,7 @@ async function create() {
 .ic :deep(.ic__type) { gap: 2px; padding: 4px; border-radius: 3px; }
 .ic :deep(.ic__type:hover) { background: var(--j-neutral-hover); }
 .ic__input { flex: 1; min-width: 60px; height: 32px; border: 0; outline: none; background: transparent; font: inherit; color: var(--j-text); }
-.ic__hint { font-size: 11px; color: var(--j-text-subtlest); white-space: nowrap; }
+.ic__hint { font-size: 12px; color: var(--j-text-subtlest); white-space: nowrap; }
 @container sl-portal (max-width: 560px) { .ic__hint { display: none; } }
+@container sl-portal (max-width: 640px) { .ic :deep(.ic__type) { min-height: 32px; min-width: 32px; } }
 </style>

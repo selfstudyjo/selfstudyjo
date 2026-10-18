@@ -219,8 +219,8 @@ const history = computed(() => {
 
 <style scoped>
 .dash__bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; border-bottom: 1px solid #ddd; }
-.dash__tabs.nav-tabs { margin: 0; border-bottom: 0; flex: 1; }
-.dash__actions { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; }
+.dash__bar .dash__tabs.nav-tabs { margin: 0; border-bottom: 0; flex: 1 1 auto; min-width: 0; }
+.dash__actions { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; margin-left: auto; }
 .dash__range { color: #666; font-size: 13px; }
 .dash__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 14px; }
 .widget {
@@ -229,18 +229,20 @@ const history = computed(() => {
 }
 .widget__head { display: flex; align-items: center; }
 .widget__title { color: #666; font-size: 14px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.widget__x { opacity: 0; border: 0; background: none; color: #999; font-size: 16px; cursor: pointer; }
+.widget__x { opacity: 0; border: 0; background: none; color: #707070; font-size: 16px; cursor: pointer; width: 24px; height: 24px; padding: 0; line-height: 1; }
+.widget:focus-within .widget__x { opacity: 1; }
 .widget:hover .widget__x { opacity: 1; }
 .widget__body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
 .widget__big { font-size: 28px; color: #333; font-weight: 300; }
-.widget__big.is-green { color: #1EB475; }
-.widget__big.is-red { color: #EF6162; }
-.widget__sub { color: #999; font-size: 12px; text-align: center; }
+.widget__big.is-green { color: #158a57; }
+.widget__big.is-red { color: #d64545; }
+.widget__sub { color: #707070; font-size: 12px; text-align: center; }
 .widget__pie { display: flex; align-items: center; gap: 12px; }
 .widget__pietext { display: flex; flex-direction: column; }
 .widget__pietext .widget__big { font-size: 22px; }
 .widget__chart { width: 100%; height: 100%; padding-top: 6px; }
 .widget__links { list-style: none; margin: 0; padding: 0; align-self: flex-start; font-size: 13px; line-height: 1.8; }
+.widget__links a { display: inline-block; line-height: 20px; padding: 1px 0; }
 .heat { display: flex; gap: 30px; flex-wrap: wrap; }
 .heat__side { width: 240px; max-width: 100%; }
 .heat__legend { list-style: none; padding: 0; margin: 16px 0 0; font-size: 12px; color: #666; }
@@ -251,4 +253,11 @@ const history = computed(() => {
 .heat__hosts { display: flex; gap: 6px; flex-wrap: wrap; }
 .heat__host { width: 46px; height: 46px; border: 0; cursor: pointer; }
 .cfg-version { margin: 0 6px; color: #666; font-size: 12px; }
+@container sl-portal (max-width: 720px) {
+  .dash__bar { align-items: stretch; border-bottom: 0; row-gap: 0; }
+  .dash__bar .dash__tabs.nav-tabs { flex-basis: 100%; border-bottom: 1px solid #ddd; }
+  .dash__actions { padding: 10px 0 0; }
+  .heat { gap: 16px; }
+  .heat__side { width: 100%; }
+}
 </style>

@@ -334,13 +334,14 @@ async function composeUp() {
 <style scoped>
 .dd-spacer { flex: 1; }
 .cv-usage { display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap; }
-.cv-usage__card { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border: 1px solid var(--dd-border); border-radius: 6px; min-width: 220px; font-size: 0.8125rem; }
+.cv-usage__card { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; border: 1px solid var(--dd-border); border-radius: 6px; min-width: 220px; flex: 1 1 220px; max-width: 320px; font-size: 13px; }
 .cv-usage__card span { display: inline-flex; align-items: center; gap: 4px; }
-.cv-usage__card strong { font-weight: 500; font-size: 0.9375rem; }
-.cv-usage__card small { font-weight: 400; font-size: 0.75rem; }
-.cv-usage__charts { align-self: center; font-size: 0.8125rem; }
+.cv-usage__card strong { font-weight: 500; font-size: 15px; }
+.cv-usage__card small { font-weight: 400; font-size: 12px; }
+.cv-usage__charts { align-self: center; font-size: 13px; }
 .cv-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
 .cv-stack td { background: #FAFAFB; }
+@container sl-portal (max-width: 560px) { .cv-usage__card { max-width: none; } }
 .cv-expand { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 4px; background: none; cursor: pointer; color: var(--dd-text-2); padding: 0; }
 .cv-expand:hover { background: var(--dd-hover-strong); }
 .is-green { color: var(--dd-green); }

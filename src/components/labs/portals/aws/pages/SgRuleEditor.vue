@@ -91,6 +91,6 @@ function problem(row: EditRule) {
 .re__srcsel { width: 140px; }
 .re__cidr { min-width: 150px; }
 .re__info { font-size: 12px; color: #006ce0; }
-.re__id { color: #656871; }
+.re__id { color: #656871; white-space: nowrap; }
 .re__add { margin-top: 4px; }
 </style>

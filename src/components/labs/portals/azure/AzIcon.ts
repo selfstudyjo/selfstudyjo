@@ -152,6 +152,8 @@ const ICONS: Record<string, El[]> = {
                        fill: 'none', stroke: 'currentColor', 'stroke-width': 1.2 }],
             ['circle', { cx: 6.5, cy: 9, r: 1, fill: 'currentColor' }],
             ['circle', { cx: 11.5, cy: 9, r: 1, fill: 'currentColor' }]],
+  more: [['circle', { cx: 3.5, cy: 9, r: 1.3, fill: 'currentColor' }], ['circle', { cx: 9, cy: 9, r: 1.3, fill: 'currentColor' }],
+         ['circle', { cx: 14.5, cy: 9, r: 1.3, fill: 'currentColor' }]],
   menu: [['path', { d: 'M2 4.5h14M2 9h14M2 13.5h14', stroke: 'currentColor', 'stroke-width': 1.3 }]],
   plus: [['path', { d: 'M9 2.5v13M2.5 9h13', stroke: 'currentColor', 'stroke-width': 1.3 }]],
   refresh: [['path', { d: 'M15 9a6 6 0 1 1-1.8-4.3M15 2.5v3.3h-3.3', fill: 'none', stroke: 'currentColor',

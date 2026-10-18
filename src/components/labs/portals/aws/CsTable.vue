@@ -81,21 +81,25 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td :colspan="span" class="cs-table__empty"><span class="cs-spinner" /> Loading resources</td>
+            <td :colspan="span" class="cs-table__empty"><div class="cs-table__empty-in"><span class="cs-spinner" /> Loading resources</div></td>
           </tr>
           <tr v-else-if="!items.length">
             <td :colspan="span" class="cs-table__empty">
-              <strong>{{ emptyTitle }}</strong>
-              <div v-if="emptyText">{{ emptyText }}</div>
-              <div class="cs-table__empty-act"><slot name="empty" /></div>
+              <div class="cs-table__empty-in">
+                <strong>{{ emptyTitle }}</strong>
+                <div v-if="emptyText">{{ emptyText }}</div>
+                <div class="cs-table__empty-act"><slot name="empty" /></div>
+              </div>
             </td>
           </tr>
           <tr v-else-if="!filtered.length">
             <td :colspan="span" class="cs-table__empty">
-              <strong>No matches</strong>
-              <div>We can't find a match.</div>
-              <div class="cs-table__empty-act">
-                <button type="button" class="cs-btn" @click="filter = ''">Clear filter</button>
+              <div class="cs-table__empty-in">
+                <strong>No matches</strong>
+                <div>We can't find a match.</div>
+                <div class="cs-table__empty-act">
+                  <button type="button" class="cs-btn" @click="filter = ''">Clear filter</button>
+                </div>
               </div>
             </td>
           </tr>
@@ -224,11 +228,11 @@ function toggleColumn(id: string) {
 .cs-table { background: #fff; border: 1px solid #c6c6cd; border-radius: 16px; box-shadow: 0 1px 2px rgba(0, 7, 22, .06); }
 .cs-table__header { padding: 12px 20px 8px; }
 .cs-table__titlebar { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 16px; }
-.cs-table__title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.cs-table__h { margin: 0; font-size: 18px; line-height: 22px; font-weight: 700; color: #0f141a; }
+.cs-table__title { display: block; min-width: 0; }
+.cs-table__h { display: inline; margin: 0 8px 0 0; font-size: 18px; line-height: 22px; font-weight: 700; color: #0f141a; }
 .cs-table--page .cs-table__h { font-size: 20px; line-height: 24px; }
 .cs-counter { font-weight: 400; color: #656871; }
-.cs-info { font-size: 12px; font-weight: 700; color: #006ce0; text-decoration: none; }
+.cs-info { white-space: nowrap; font-size: 12px; font-weight: 700; color: #006ce0; text-decoration: none; }
 .cs-info:hover { text-decoration: underline; }
 .cs-table__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .cs-table__desc { margin: 4px 0 0; color: #656871; font-size: 14px; }
@@ -254,7 +258,7 @@ function toggleColumn(id: string) {
 .cs-prefs__group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 14px; }
 .cs-prefs__foot { display: flex; justify-content: flex-end; }
 .cs-radio, .cs-check { display: flex; gap: 8px; align-items: flex-start; color: #0f141a; }
-.cs-table__scroll { overflow-x: auto; border-top: 1px solid #c6c6cd; border-radius: 0 0 16px 16px; }
+.cs-table__scroll { container-type: inline-size; overflow-x: auto; border-top: 1px solid #c6c6cd; border-radius: 0 0 16px 16px; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
 th { position: sticky; top: 0; background: #fff; text-align: left; font-weight: 700; color: #424650; padding: 8px 12px 8px 20px; border-bottom: 1px solid #c6c6cd; white-space: nowrap; user-select: none; }
 th + th { border-left: 1px solid transparent; }
@@ -271,7 +275,9 @@ tbody tr.is-selected td { background: #f0fbff; border-bottom-color: #006ce0; }
 tbody tr.is-selected td:first-child { box-shadow: inset 2px 0 0 #006ce0; }
 .cs-table__sel { width: 20px; padding-right: 0; }
 .cs-cb, .cs-rb { accent-color: #006ce0; width: 14px; height: 14px; margin: 2px 0 0; cursor: pointer; }
-.cs-table__empty { text-align: center; color: #656871; padding: 24px 12px; white-space: normal; }
+.cs-table__empty { text-align: center; color: #656871; padding: 0; white-space: normal; }
+/* The empty state stays in the visible part of a table that scrolls sideways, as Cloudscape's does. */
+.cs-table__empty-in { position: sticky; left: 0; width: 100cqw; padding: 24px 12px; }
 .cs-table__empty strong { display: block; color: #424650; margin-bottom: 4px; }
 .cs-table__empty-act { margin-top: 12px; }
 .cs-table__empty-act:empty { display: none; }

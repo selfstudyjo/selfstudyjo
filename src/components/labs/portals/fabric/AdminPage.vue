@@ -29,12 +29,12 @@
                   <td>{{ c.throttling }}</td>
                   <td>${{ Number(c.monthly_usd).toLocaleString() }}</td>
                   <td class="ad-ws">{{ c.workspaces || '—' }}</td>
-                  <td class="ad-actions">
+                  <td><span class="ad-actions">
                     <button v-if="c.state === 'Active'" type="button" class="fx-btn fx-btn--sm" @click="pauseCap(c.name)"><FxIcon name="pause" :size="12" />Pause</button>
                     <button v-else type="button" class="fx-btn fx-btn--sm" @click="resume(c.name)"><FxIcon name="play" :size="12" />Resume</button>
                     <button type="button" class="fx-btn fx-btn--sm" @click="openResize(c)">Change size</button>
                     <button type="button" class="fx-btn fx-btn--sm" @click="openMetrics(c.name)">Metrics</button>
-                  </td>
+                  </span></td>
                 </tr>
               </tbody>
             </table>
@@ -61,8 +61,8 @@
                   <td><span class="fx-pill" :class="c.secret === 'Key Vault' ? 'fx-pill--ok' : c.secret === 'inline' ? 'fx-pill--warn' : ''">{{ c.secret }}</span></td>
                   <td>{{ detailOf(c.name).server || '—' }}</td>
                   <td>{{ c.expires || '—' }}</td>
-                  <td class="ad-actions"><button type="button" class="fx-btn fx-btn--sm" @click="openConn(c)">Settings</button>
-                    <button type="button" class="fx-btn fx-btn--sm" @click="askRemoveConn = c.name">Remove</button></td>
+                  <td><span class="ad-actions"><button type="button" class="fx-btn fx-btn--sm" @click="openConn(c)">Settings</button>
+                    <button type="button" class="fx-btn fx-btn--sm" @click="askRemoveConn = c.name">Remove</button></span></td>
                 </tr>
                 <tr v-if="!connections.length"><td colspan="7" class="fx-muted">No connections</td></tr>
               </tbody>
@@ -242,7 +242,7 @@ async function removeConn() {
 </script>
 
 <style scoped>
-.ad-nav { width: 240px; flex: none; padding: 4px 8px; border-right: 1px solid #e0e0e0; overflow: auto; }
+.ad-nav { width: 220px; flex: none; padding: 4px 8px; border-right: 1px solid #e0e0e0; overflow: auto; }
 .ad-nav button { display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 4px; background: transparent; text-align: left; font: 14px "Segoe UI", sans-serif; cursor: pointer; color: #242424; }
 .ad-nav button:hover { background: #f0f0f0; }
 .ad-nav button.is-active { background: #e6f2ef; font-weight: 600; }
@@ -250,7 +250,7 @@ async function removeConn() {
 .ad-note { font-size: 12px; }
 .ad-msg { margin: 8px 16px 0; }
 .ad-table { min-width: 960px; }
-.ad-actions { display: flex; gap: 6px; align-items: center; height: 44px; }
+.ad-actions { display: flex; gap: 6px; align-items: center; }
 .ad-ws { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 .ad-meter { display: inline-block; width: 60px; height: 6px; border-radius: 3px; background: #ebebeb; overflow: hidden; vertical-align: middle; }
 .ad-meter span { display: block; height: 100%; }
@@ -258,7 +258,7 @@ async function removeConn() {
 .ad-pre { font: 12px Consolas, monospace; white-space: pre-wrap; color: #424242; }
 .ad-p { margin: 0 0 8px; }
 @container sl-portal (max-width: 700px) {
-  .ad-nav { width: auto; display: flex; border-right: 0; border-bottom: 1px solid #e0e0e0; overflow-x: auto; }
+  .ad-nav { width: auto; display: flex; flex-wrap: wrap; gap: 2px; border-right: 0; border-bottom: 1px solid #e0e0e0; }
   .ad-nav button { white-space: nowrap; width: auto; }
 }
 </style>

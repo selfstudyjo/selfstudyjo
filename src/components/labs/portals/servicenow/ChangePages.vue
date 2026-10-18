@@ -328,16 +328,16 @@ async function doDelete() {
 <style scoped src="./sn.css"></style>
 <style scoped src="./form.css"></style>
 <style scoped>
-.landing { padding: 1rem 1.25rem; }
-.models { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.8rem; margin: 0.8rem 0 1.2rem; }
-.model { display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.9rem; text-align: left; cursor: pointer; font: inherit; color: var(--sn-text); }
+.landing { padding: 16px 20px; }
+.models { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 224px), 1fr)); gap: 12.8px; margin: 12.8px 0 19.2px; }
+.model { display: flex; align-items: flex-start; gap: 11.2px; padding: 14.4px; text-align: left; cursor: pointer; font: inherit; color: var(--sn-text); }
 .model:hover { border-color: var(--sn-primary); }
-.model small { display: block; margin-top: 0.2rem; color: var(--sn-text-muted); font-size: 0.75rem; }
-.model__icon { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; flex: none; border-radius: 0.5rem; color: #fff; font-weight: 800; }
+.model small { display: block; margin-top: 3.2px; color: var(--sn-text-muted); font-size: 12px; }
+.model__icon { display: grid; place-items: center; width: 36.8px; height: 36.8px; flex: none; border-radius: 8px; color: #fff; font-weight: 800; }
 .model__icon.is-normal { background: var(--sn-primary); }
 .model__icon.is-standard { background: var(--sn-positive); }
 .model__icon.is-emergency { background: var(--sn-critical); }
-.pad { padding: 0 0.8rem; }
+.pad { padding: 0 12.8px; }
 .field--stack { grid-template-columns: minmax(0, 1fr); }
 .field--stack .field__label { justify-content: flex-start; }
 </style>

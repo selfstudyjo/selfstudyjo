@@ -159,6 +159,7 @@ async function doUninstall() {
 .kd-btn { height: 36px; padding: 0 16px; border: 0; border-radius: 4px; background: transparent; color: var(--kd-primary); font: inherit; font-size: 14px; font-weight: 500; text-transform: uppercase; cursor: pointer; }
 .kd-btn--primary { background: var(--kd-primary); color: #fff; box-shadow: 0 3px 1px -2px rgb(0 0 0 / 0.2), 0 2px 2px 0 rgb(0 0 0 / 0.14), 0 1px 5px 0 rgb(0 0 0 / 0.12); }
 .kd-btn--warn { background: #f44336; color: #fff; }
-.kd-btn:disabled { opacity: 0.38; }
+.kd-btn:disabled { opacity: 1; color: rgb(0 0 0 / 0.38); background: transparent; cursor: default; box-shadow: none; }
+.kd-btn--primary:disabled, .kd-btn--warn:disabled { background: rgb(0 0 0 / 0.12); }
 .kd-error { color: #f44336; font-size: 13px; margin: 8px 0 0; }
 </style>

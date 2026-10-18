@@ -91,4 +91,5 @@ const byExecutor = computed(() => executors.value.filter(e => e.id !== 'driver')
 
 <style scoped>
 .sd__nowrap { white-space: nowrap; }
+.table td, .table th { white-space: nowrap; }
 </style>

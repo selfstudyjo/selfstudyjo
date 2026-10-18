@@ -74,3 +74,7 @@ function heat(time: number) {
   return time ? `rgba(255, 0, 0, ${(0.35 * time) / max})` : 'transparent';
 }
 </script>
+
+<style scoped>
+.table td, .table th { white-space: nowrap; }
+</style>

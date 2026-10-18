@@ -8,6 +8,10 @@
 .mf-crumbs a, .mf-crumbs button { color: var(--mf-link); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: none; }
 .mf-crumbs a:hover, .mf-crumbs button:hover { color: var(--mf-link-hover); text-decoration: underline; }
 .mf-crumbs .mf-sep { color: var(--mf-text-3); }
+.mf-crumbs button, .mf-crumbs a { text-align: left; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-crumbs { flex-wrap: nowrap; min-width: 0; }
+.mf-crumbs > * { flex: none; }
+.mf-crumbs > button:not(:first-child), .mf-crumbs > a:not(:first-child) { flex: 0 1 auto; }
 
 .mf-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .mf-title { margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; color: var(--mf-text); overflow-wrap: anywhere; }
@@ -160,7 +164,9 @@
   font-family: var(--mf-mono); font-size: 12px; line-height: 18px; white-space: pre; overflow: auto; color: var(--mf-text); }
 
 .mf-card { border: 1px solid var(--mf-border-light); border-radius: var(--mf-radius); background: var(--mf-bg); padding: 12px 16px; min-width: 0; }
-.mf-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; user-select: none; }
+.mf-switch { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; cursor: pointer; user-select: none;
+  border: 0; background: none; padding: 4px 0; margin: 0; color: var(--mf-text); min-height: 24px; }
+.mf-switch:focus-visible { outline: 2px solid var(--mf-link); outline-offset: 2px; border-radius: var(--mf-radius); }
 .mf-switch i { position: relative; width: 28px; height: 16px; border-radius: 8px; background: var(--mf-border); transition: background .12s; flex: none; }
 .mf-switch i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left .12s; }
 .mf-switch.is-on i { background: var(--mf-primary); }
@@ -175,3 +181,7 @@ h1, h2, h3, h4 { letter-spacing: normal; text-wrap: wrap; }
 .mf-title, .mf-h2, .mf-h3 { letter-spacing: normal; }
 .mf-collapse.mf-h3 { font-size: 15px; font-weight: 600; }
 .mf-page > * { flex-shrink: 0; }
+/* Narrow frames: tabs wrap instead of hiding the last ones off the edge. */
+@container sl-portal (max-width: 520px) {
+  .mf-tabs { flex-wrap: wrap; column-gap: 16px; overflow: visible; }
+}

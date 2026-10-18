@@ -91,7 +91,7 @@ const delivery = computed(() => [
 .js__close:hover { background: var(--j-neutral-hover); }
 .js__nav { display: flex; flex-direction: column; padding: 0 8px; gap: 2px; }
 .js__heading {
-  padding: 16px 8px 6px; font-size: 11px; font-weight: 653; line-height: 16px;
+  padding: 16px 8px 6px; font-size: 12px; font-weight: 653; line-height: 16px;
   color: var(--j-text-subtlest); text-transform: uppercase;
 }
 .js__item {

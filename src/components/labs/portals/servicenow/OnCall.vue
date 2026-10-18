@@ -41,7 +41,7 @@
           <div class="card__head"><h3 class="card__title">Escalation policy</h3><span class="bar__spacer"></span>
             <button v-if="group.escalation.length" type="button" class="btn btn--sm btn--danger" :disabled="busy" @click="confirmClear = true">Delete policy</button></div>
           <div class="card__body">
-            <table class="table">
+            <div class="table-wrap"><table class="table">
               <thead><tr><th>Level</th><th>After (minutes unacknowledged)</th><th>Notify</th><th></th></tr></thead>
               <tbody>
                 <tr><td>1</td><td>0</td><td>Primary ({{ personName(model, group.primary) || '—' }})</td><td></td></tr>
@@ -55,7 +55,7 @@
                   <td><button type="button" class="icon-btn" :aria-label="'Remove step ' + (i + 2)" @click="steps.splice(i, 1)">✕</button></td>
                 </tr>
               </tbody>
-            </table>
+            </table></div>
             <div class="row">
               <button type="button" class="btn btn--sm" @click="addStep">Add escalation step</button>
               <span class="bar__spacer"></span>
@@ -156,21 +156,23 @@ async function ack(id: string) { await one(cmd.oncallAck(id), `${id} acknowledge
 <style scoped src="./sn.css"></style>
 <style scoped src="./form.css"></style>
 <style scoped>
-.body { padding: 1rem; background: var(--sn-page); }
+.body { padding: 16px; background: var(--sn-page); }
 .grp { width: auto; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.now { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 0.6rem; margin-bottom: 0.9rem; }
-.now__card { padding: 0.7rem 0.8rem; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; text-overflow: ellipsis; }
+.now { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 224px), 1fr)); gap: 9.6px; margin-bottom: 14.4px; }
+.now__card { padding: 11.2px 12.8px; cursor: pointer; }
 .now__card.is-on { border-color: var(--sn-primary); box-shadow: 0 0 0 1px var(--sn-primary); }
-.now__group { font-size: 0.75rem; font-weight: 700; color: var(--sn-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
-.now__who { display: flex; align-items: center; gap: 0.5rem; margin: 0.45rem 0 0.3rem; font-size: 0.875rem; }
-.now__who small { display: block; color: var(--sn-text-muted); font-size: 0.7rem; }
-.av { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #d9dcf3; color: var(--sn-brand); font-size: 0.7rem; font-weight: 800; }
-.now__sec { font-size: 0.75rem; color: var(--sn-text-muted); }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0.8rem; }
-.small { width: 6rem; }
-.row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
-.inline { width: auto; min-height: 1.6rem; font-size: 0.75rem; }
-.mt { margin-top: 0.8rem; }
+.now__group { font-size: 12px; font-weight: 700; color: var(--sn-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.now__who { display: flex; align-items: center; gap: 8px; margin: 7.2px 0 4.8px; font-size: 14px; }
+.now__who small { display: block; color: var(--sn-text-muted); font-size: 12px; }
+.av { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #d9dcf3; color: var(--sn-brand); font-size: 12px; font-weight: 800; }
+.now__sec { font-size: 12px; color: var(--sn-text-muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12.8px; align-items: start; }
+.grid .table td { vertical-align: middle; }
+.small { width: 96px; }
+.row { display: flex; align-items: center; gap: 8px; margin-top: 9.6px; }
+.inline { width: auto; min-height: 25.6px; font-size: 12px; }
+.mt { margin-top: 12.8px; }
 @container sl-portal (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+@container sl-portal (max-width: 640px) { .inline { min-height: 32px; } }
 </style>

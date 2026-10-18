@@ -77,9 +77,12 @@ function move(step: number) {
   display: inline-grid; place-items: center; flex: none;
 }
 .gd-tag {
-  flex: none; font-weight: 400; font-size: 10px; padding: 0 5px; border-radius: 9px; line-height: 16px;
+  flex: none; font-weight: 400; font-size: 11px; padding: 0 5px; border-radius: 9px; line-height: 16px;
   border: 1px solid #c8e1ff; background: #f1f8ff; color: var(--gd-blue);
 }
 .gd-unpushed { margin-left: auto; display: inline-flex; }
 .gd-history__empty { padding: 24px 12px; color: var(--gd-text-secondary); font-size: 12px; text-align: center; }
+@container sl-portal (max-width: 700px) {
+  .gd-history__list { flex: none; max-height: 260px; }
+}
 </style>

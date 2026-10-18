@@ -233,5 +233,5 @@ async function onKrMenu(kr: Kr, value: string) {
 .gp__work { margin-right: 6px; font-size: 12px; }
 .gp__add { margin-top: 8px; }
 .gp__ci-text { margin: 0 0 12px; }
-.j-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.j-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; text-overflow: ellipsis; }
 </style>

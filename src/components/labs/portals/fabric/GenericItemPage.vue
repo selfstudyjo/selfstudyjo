@@ -66,13 +66,18 @@ const settings = ref('');
 <style scoped>
 .gi-body { padding: 16px 20px; }
 .gi-first { margin-top: 0; }
+.gi-body p { margin: 0 0 16px; line-height: 20px; max-width: 640px; }
 .gi-report { flex: 1; display: flex; flex-direction: column; background: #eaeaea; min-height: 0; }
 .gi-canvas { flex: 1; margin: 16px; background: #fff; border: 1px solid #d1d1d1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 8px; }
-.gi-canvas h3 { margin: 4px 0 0; }
+.gi-canvas h3 { margin: 4px 0 0; font: 600 16px/22px var(--fx-font, "Segoe UI", sans-serif); color: #242424; }
 .gi-canvas p { max-width: 420px; margin: 0; }
 .gi-models { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .gi-models li { display: flex; align-items: center; gap: 8px; }
 .gi-pages { display: flex; gap: 2px; padding: 0 16px; background: #f5f5f5; border-top: 1px solid #d1d1d1; }
 .gi-page { padding: 6px 14px; font-size: 13px; color: #424242; }
 .gi-page.is-active { background: #fff; font-weight: 600; border-bottom: 3px solid #f0b400; }
+@container sl-portal (max-width: 600px) {
+  .gi-body { padding: 12px; }
+  .gi-canvas { margin: 8px; }
+}
 </style>

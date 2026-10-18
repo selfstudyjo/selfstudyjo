@@ -53,7 +53,7 @@ function pick(item: MenuItem) {
   position: relative; z-index: 30; font-size: 12px; user-select: none;
 }
 .gd-title__logo { margin: 0 8px 0 10px; }
-.gd-title__burger { display: none; border: 0; background: none; color: #fff; padding: 4px 8px; }
+.gd-title__burger { display: none; border: 0; background: none; color: #fff; padding: 0 8px; height: 30px; align-items: center; cursor: pointer; }
 .gd-title__menus { display: flex; height: 100%; }
 .gd-title__menu { position: relative; height: 100%; }
 .gd-title__item {
@@ -81,7 +81,13 @@ function pick(item: MenuItem) {
   .gd-title__menus { position: absolute; left: 30px; top: 0; height: 30px; }
   .gd-title__item { display: none; }
   .gd-title__burger { display: inline-flex; }
-  .gd-title__menus:has(.gd-title__drop) .gd-title__item { display: block; background: var(--gd-toolbar); }
+  /* Open: the menu names take the whole title bar (burger and logo hidden under it). */
+  .gd-title__menus:has(.gd-title__drop) { left: 0; right: 0; background: var(--gd-toolbar); z-index: 3; overflow-x: auto; scrollbar-width: none; }
+  .gd-title__menus:has(.gd-title__drop) .gd-title__item { display: block; flex: none; }
+  .gd-title:has(.gd-title__drop) .gd-title__burger,
+  .gd-title:has(.gd-title__drop) .gd-title__logo { visibility: hidden; }
+  .gd-title__drop { position: fixed; left: 4px; right: 4px; top: auto; min-width: 0; width: auto; max-height: calc(100cqh - 40px); overflow-y: auto; }
+  .gd-title__entry { padding: 7px 16px; }
   .gd-title__name { display: none; }
   .gd-title__window { margin-left: auto; }
 }
