@@ -71,6 +71,21 @@ export interface InterviewConfig {
     attempt?: number;
     /** Questions this candidate has already been asked on this topic. */
     avoidQuestions?: string[];
+    /**
+     * Questions the candidate wrote or pasted themselves, in the order they will
+     * be asked.
+     *
+     * Already parsed and -- if they asked for it -- already shuffled, here in the
+     * pre-session form rather than in the room: the room is re-created by a
+     * reload, and a list shuffled again on the way back in would ask a
+     * candidate halfway through question four a different question four.
+     *
+     * When `questions` is LARGER than this list the interviewer adds its own
+     * questions after the candidate's; see {@link questionSourceOf}. The count is
+     * the single source of truth for that, so there is no second flag that could
+     * disagree with it.
+     */
+    customQuestions?: string[];
 }
 
 /** The shape a past session has to have for a redo to be built from it. */
@@ -86,6 +101,9 @@ export interface PastSession {
     cv_summary?: string;
     created_at?: string;
     qa_pairs?: { question?: string }[] | null;
+    /** The candidate's own list, as stored by app 27. Absent before 2026-10-19. */
+    custom_questions?: string[] | null;
+    question_source?: string;
 }
 
 export const MIN_MINUTES = 3;
@@ -134,6 +152,19 @@ export const CV_DIGEST_LIMIT = 2600;
  */
 export const MAX_AVOID_QUESTIONS = 24;
 
+/**
+ * The most questions a candidate may bring, and the longest one may be.
+ *
+ * Mirrored by JI_MAX_CUSTOM_QUESTIONS / JI_MAX_CUSTOM_QUESTION_CHARS in app 27
+ * -- two copies, no shared package (working rule 10). Higher than
+ * {@link MAX_QUESTIONS} on purpose: that cap exists because the fallback POOL
+ * is twenty long and a longer interview would repeat a question, and a
+ * candidate's own list has no pool behind it. Thirty is forty-five minutes,
+ * longer than any real interview; past that, somebody has pasted a document.
+ */
+export const MAX_CUSTOM_QUESTIONS = 30;
+export const MAX_CUSTOM_QUESTION_CHARS = 500;
+
 export function clampMinutes(minutes: unknown): number {
     const n = Math.round(Number(minutes));
     if (!Number.isFinite(n)) return 15;
@@ -178,7 +209,10 @@ export function minutesForQuestions(count: unknown): number {
  * which the form refuses.
  */
 export function secondsPerAnswer(minutes: unknown, count: unknown): number {
-    const n = clampQuestionCount(count);
+    // Clamped to the range a PLAN can have rather than the AI-only range, so a
+    // candidate with one question of their own, or twenty-five, is told the
+    // truth about how long each answer gets.
+    const n = clampPlanCount(count);
     const total = clampMinutes(minutes) * 60;
     return Math.max(SECONDS_PER_QUESTION, Math.floor(total / n));
 }
@@ -191,11 +225,146 @@ export function secondsPerAnswer(minutes: unknown, count: unknown): number {
  * must run exactly as it used to rather than jumping to the new floor of two.
  */
 export function plannedQuestionCount(
-    config: { questions?: unknown; minutes?: unknown } | null | undefined,
+    config: { questions?: unknown; minutes?: unknown; customQuestions?: unknown } | null | undefined,
 ): number {
+    const own = cleanCustomList(config?.customQuestions);
+    if (own.length) {
+        // The candidate's list is a floor: every one of their questions is
+        // asked. A larger count means "and then add some of your own".
+        const total = Math.round(Number(config?.questions));
+        return Number.isFinite(total) && total > own.length
+            ? Math.min(MAX_CUSTOM_QUESTIONS, total)
+            : own.length;
+    }
     const explicit = Number(config?.questions);
     if (Number.isFinite(explicit) && explicit > 0) return clampQuestionCount(explicit);
     return questionCountFor(config?.minutes);
+}
+
+// ============ THE CANDIDATE'S OWN QUESTIONS ============
+
+/** A count a plan can have: one of the candidate's own up to the custom cap. */
+export function clampPlanCount(count: unknown): number {
+    const n = Math.round(Number(count));
+    if (!Number.isFinite(n)) return MIN_QUESTIONS;
+    return Math.max(1, Math.min(MAX_CUSTOM_QUESTIONS, n));
+}
+
+/** The minutes a plan of this many questions needs. See {@link minutesForQuestions}. */
+export function minutesForPlan(count: unknown): number {
+    return clampMinutes(Math.ceil((clampPlanCount(count) * SECONDS_PER_QUESTION) / 60));
+}
+
+/**
+ * What a pasted line looks like once the list furniture is taken off it.
+ *
+ * Bullets, numbering and "Q3:" prefixes are stripped because a list copied out
+ * of a job posting, a document or an email arrives wearing all of them, and the
+ * interviewer reading "one dot, what is a load balancer" aloud is the first
+ * thing a candidate would notice. ONLY at the start of the line, and a number
+ * only when a separator AND a space follow it -- "5 years from now, where..."
+ * and "3-tier architecture: explain it" are questions, not list items.
+ */
+const LIST_MARKER = /^(?:[-*•·▪●–—>]+\s*|\(?(?:q(?:uestion)?\s*)?\d{1,3}\s*[.):\]](?:\s+|$)|q(?:uestion)?\s*\d{1,3}\s*[-:]\s*)/i;
+
+function stripListMarker(line: unknown): string {
+    let text = String(line ?? '').replace(/\s+/g, ' ').trim();
+    // Twice, for "1. - What is..." -- a numbered list that also kept its bullets.
+    for (let i = 0; i < 2; i++) text = text.replace(LIST_MARKER, '').trim();
+    return text;
+}
+
+/** One pasted line as the interviewer will read it. */
+export function cleanQuestionLine(line: unknown): string {
+    return stripListMarker(line).slice(0, MAX_CUSTOM_QUESTION_CHARS).trim();
+}
+
+/** The outcome of reading a pasted list, and everything that was left out of it. */
+export interface ParsedQuestions {
+    questions: string[];
+    /** Lines that repeated an earlier question, ignoring case and punctuation. */
+    duplicates: number;
+    /** Lines past {@link MAX_CUSTOM_QUESTIONS}. */
+    overflow: number;
+    /** Lines cut at {@link MAX_CUSTOM_QUESTION_CHARS}. */
+    clipped: number;
+}
+
+/**
+ * The textarea, one question per line, as a list the room can ask.
+ *
+ * Every line that is not used is COUNTED rather than silently dropped, so the
+ * form can say "2 repeated questions were removed" -- a candidate who pasted
+ * thirty-two lines and is asked thirty must be able to see why without
+ * comparing the two by hand.
+ */
+export function parseCustomQuestions(text: unknown): ParsedQuestions {
+    const out: ParsedQuestions = { questions: [], duplicates: 0, overflow: 0, clipped: 0 };
+    const seen = new Set<string>();
+    for (const raw of String(text ?? '').split(/\r?\n/)) {
+        const whole = stripListMarker(raw);
+        const line = whole.slice(0, MAX_CUSTOM_QUESTION_CHARS).trim();
+        const key = normaliseQuestion(line);
+        if (!line || !key) continue;
+        if (seen.has(key)) { out.duplicates++; continue; }
+        if (out.questions.length >= MAX_CUSTOM_QUESTIONS) { out.overflow++; continue; }
+        seen.add(key);
+        if (whole.length > MAX_CUSTOM_QUESTION_CHARS) out.clipped++;
+        out.questions.push(line);
+    }
+    return out;
+}
+
+/** A stored list made safe to ask: strings only, cleaned, de-duplicated, capped. */
+export function cleanCustomList(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return parseCustomQuestions(value.filter(v => typeof v === 'string').join('\n')).questions;
+}
+
+/**
+ * A deterministic shuffle, so "ask them in a random order" is one order.
+ *
+ * Seeded from the session seed and done once in the form; see
+ * {@link InterviewConfig.customQuestions} for why it is not done in the room.
+ * Fisher-Yates over a Park-Miller generator -- the point is a different order
+ * per sitting, not cryptography.
+ */
+export function shuffleQuestions(list: readonly string[], seed: number): string[] {
+    const out = [...list];
+    let state = (Math.abs(Math.round(Number(seed) || 0)) % 2147483647) || 1;
+    for (let i = out.length - 1; i > 0; i--) {
+        state = (state * 48271) % 2147483647;
+        const j = state % (i + 1);
+        [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+}
+
+export type QuestionSource = 'ai' | 'custom' | 'mixed';
+
+/** Who chose this sitting's questions, derived from the config and nothing else. */
+export function questionSourceOf(
+    config: { customQuestions?: unknown; questions?: unknown } | null | undefined,
+): QuestionSource {
+    const own = cleanCustomList(config?.customQuestions);
+    if (!own.length) return 'ai';
+    return plannedQuestionCount(config) > own.length ? 'mixed' : 'custom';
+}
+
+/**
+ * The candidate's question for this turn, or null when the interviewer should
+ * choose one.
+ *
+ * Asked VERBATIM. Not run past `isWholeQuestion`, which exists to catch a
+ * model's truncated output: "Tell me about yourself" has no question mark and
+ * is the most-asked interview question there is, and refusing a candidate's
+ * own words for want of a terminator would replace them with a question they
+ * did not ask for.
+ */
+export function customQuestionFor(list: readonly string[] | undefined, questionNumber: number): string | null {
+    const n = Math.round(Number(questionNumber));
+    if (!list || !Number.isFinite(n) || n < 1 || n > list.length) return null;
+    return list[n - 1] || null;
 }
 
 /**
@@ -288,22 +457,30 @@ export function redoConfigFrom(
         interviewer?: string; avoidQuestions?: string[];
         minutes?: number; questions?: number; sessionSeed?: number;
         voiceEditing?: boolean;
+        /** Override the stored list -- e.g. to re-shuffle it for this sitting. */
+        customQuestions?: string[];
     } = {},
 ): InterviewConfig {
     const type = normaliseType(session.interview_type);
     const topic = String(session.topic ?? '').trim();
+    // The candidate's own list is what a redo is FOR when they brought one:
+    // rehearsing the same questions until the answers are good. A redo that
+    // silently swapped them for AI questions would be a different exercise.
+    const customQuestions = cleanCustomList(extra.customQuestions ?? session.custom_questions);
     const questions = plannedQuestionCount({
         questions: extra.questions ?? session.planned_questions,
         minutes: extra.minutes ?? session.planned_minutes,
+        customQuestions,
     });
     return {
         type,
         topic: topic || (type === 'HR' ? 'HR / General' : ''),
         qualifications: String(session.qualifications ?? '').trim(),
         minutes: Math.max(
-            minutesForQuestions(questions),
+            customQuestions.length ? minutesForPlan(questions) : minutesForQuestions(questions),
             clampMinutes(extra.minutes ?? session.planned_minutes)),
         questions,
+        customQuestions: customQuestions.length ? customQuestions : undefined,
         // A NEW seed every sitting, and this is the half of "practise again"
         // that keeps working once the avoid list is full: with the same seed a
         // redo differs only by the questions it was explicitly told to skip, and

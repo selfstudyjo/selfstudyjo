@@ -10,7 +10,11 @@
           interviewer, and that this sitting is being treated as a redo rather
           than as a fresh interview that will re-ask the same questions.
         -->
-        <span class="ji-badge" v-if="cvTitle" :title="'The interviewer has read: ' + cvTitle">{{ $t('📄 CV attached') }}</span>
+        <span class="ji-badge" v-if="customQuestions.length"
+              :title="questionSource === 'mixed'
+                ? $t('Your {v0} questions first, then the interviewer adds its own', { v0: customQuestions.length })
+                : $t('The interviewer asks only the questions you added')">{{ $t('📝 Your questions ({v0})', { v0: customQuestions.length }) }}</span>
+        <span class="ji-badge" v-if="cvTitle":title="'The interviewer has read: ' + cvTitle">{{ $t('📄 CV attached') }}</span>
         <span class="ji-badge" v-if="attempt > 1" :title="$t('New questions — the interviewer knows what you have already been asked')">{{ $t('🔁 Attempt {v0}', { v0: attempt }) }}</span>
       </div>
       <div class="ji-header-right">
@@ -350,6 +354,7 @@ import {
 } from '@/cast/actors';
 import {
   MAX_AVOID_QUESTIONS, MAX_QUESTIONS, clampMinutes,
+  cleanCustomList, customQuestionFor, questionSourceOf,
   fallbackQuestion as fallbackQuestionFor, isWholeQuestion, newSessionSeed,
   normaliseQuestion, plannedQuestionCount, redoConfigFrom, secondsPerAnswer,
   type InterviewConfig,
@@ -409,6 +414,20 @@ const sessionSeed = Number(cfg.sessionSeed) || newSessionSeed();
  */
 const maxQuestions = plannedQuestionCount(cfg);
 const answerSeconds = secondsPerAnswer(plannedMinutes, maxQuestions);
+
+/**
+ * The questions the candidate brought, in the order they will be asked.
+ *
+ * Re-cleaned here rather than trusted: the config is sessionStorage, which a
+ * hand-edit or an old tab can leave in any shape. Already shuffled if the
+ * candidate asked for that -- the form did it once, so a reload asks the same
+ * question four. `questionSource` is derived, never stored, so the room and
+ * the form cannot disagree about it.
+ */
+const customQuestions = cleanCustomList(cfg.customQuestions);
+const questionSource = questionSourceOf(cfg);
+/** How many questions the INTERVIEWER chooses: all of them, some, or none. */
+const aiQuestionCount = Math.max(0, maxQuestions - customQuestions.length);
 
 /**
  * THE PRACTICE LEDGER, for the first time in this room.
@@ -542,6 +561,8 @@ const captionText = ref('Click "Start Interview" to begin.');
 const currentQuestionText = ref('');
 const questionNumber = ref(0);
 const qaPairs = ref<QAPair[]>([]);
+/** Who chose the question on screen. Stored on the answer so the report can say. */
+let currentQuestionSource: 'candidate' | 'interviewer' = 'interviewer';
 
 /**
  * The answer being given, and where the next spoken words land.
@@ -1691,6 +1712,8 @@ function sessionPayload(status: 'in_progress' | 'complete') {
     attempt,
     planned_minutes: plannedMinutes,
     planned_questions: maxQuestions,
+    custom_questions: customQuestions,
+    question_source: questionSource,
     status,
     duration_seconds: duration,
     qa_pairs: qaPairs.value,
@@ -1798,12 +1821,21 @@ async function startInterview() {
       user_name: userName.value,
       interviewer_name: interviewerName, interviewer_role: interviewerRole,
       cv_summary: cvSummary,
+      prepared_questions: customQuestions.length || undefined,
     }),
-    jobInterviewService.planQuestions({
-      interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
-      count: maxQuestions, avoid_questions: avoidQuestions, attempt,
-      session_seed: sessionSeed,
-    }).then(areas => { questionPlan.value = areas; }),
+    // Planned only for the questions the interviewer will choose. With the
+    // candidate's own list and nothing added there is nothing to plan, and a
+    // plan call then is a cold start the candidate waits through for nothing.
+    aiQuestionCount > 0
+      ? jobInterviewService.planQuestions({
+        interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
+        count: aiQuestionCount,
+        // The candidate's questions are already covered; the plan must not
+        // spend an area on ground they are about to be asked about.
+        avoid_questions: [...customQuestions, ...avoidQuestions].slice(0, MAX_AVOID_QUESTIONS),
+        attempt, session_seed: sessionSeed,
+      }).then(areas => { questionPlan.value = areas; })
+      : Promise.resolve(),
   ]);
   // "Hi Mahmoud, welcome to a" was the other half of the report, and it is the
   // first thing a candidate hears. A greeting that stops mid-word reads as the
@@ -1812,8 +1844,11 @@ async function startInterview() {
   // terminator -- which a greeting passes and a fragment does not.
   const spokenIntro = intro && isWholeQuestion(intro)
     ? intro
-    : `Hello ${userName.value}, I'm ${interviewerName}. Thanks for joining this `
-      + `${interviewType} interview. Let's begin.`;
+    : customQuestions.length
+      ? t("Hello {v0}, I'm {v1}. Thanks for joining. Today we will go through the {v2} questions you prepared. Let's begin.",
+        { v0: userName.value, v1: interviewerName, v2: customQuestions.length })
+      : `Hello ${userName.value}, I'm ${interviewerName}. Thanks for joining this `
+        + `${interviewType} interview. Let's begin.`;
   if (intro && intro !== spokenIntro) {
     console.warn('[interview] discarding a truncated greeting:', intro);
   }
@@ -1851,6 +1886,22 @@ async function askNextQuestion() {
   phase.value = 'processing';
   answer.value = emptyAnswer();
   captionSpeaker.value = interviewerName;
+
+  // The candidate's own question for this turn, asked as they wrote it and
+  // with no AI call in front of it -- which also makes these turns instant.
+  // See `customQuestionFor` for why it is not run past `isWholeQuestion`.
+  const own = customQuestionFor(customQuestions, questionNumber.value);
+  if (own) {
+    currentQuestionText.value = own;
+    currentQuestionSource = 'candidate';
+    await speak(own);
+    phase.value = 'awaiting';
+    captionSpeaker.value = 'System';
+    captionText.value = t('Click "Start Answering" when you are ready to respond.');
+    return;
+  }
+  currentQuestionSource = 'interviewer';
+
   captionText.value = t('Interviewer is thinking of the next question…');
   const asked = askedSoFar();
   const q = await jobInterviewService.callInterviewer({
@@ -1876,7 +1927,9 @@ async function askNextQuestion() {
     // The area this question is meant to cover. Telling a stateless model "ask
     // something different" is advice; telling it "ask about incident response"
     // is an instruction.
-    focus: questionPlan.value[questionNumber.value - 1] || '',
+    // The plan covers only the interviewer's share, so it is indexed from the
+    // first question after the candidate's list.
+    focus: questionPlan.value[questionNumber.value - customQuestions.length - 1] || '',
     session_seed: sessionSeed,
     attempt
   });
@@ -1946,6 +1999,7 @@ async function submitAnswer() {
     question: currentQuestionText.value,
     answer: spokenText,
     seconds: answerElapsed.value,
+    source: currentQuestionSource,
   });
 
   /*
@@ -2042,6 +2096,7 @@ async function endInterview() {
   const evaluation = jobInterviewService.evaluate({
     interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
     qa_pairs: qaPairs.value,
+    question_source: questionSource,
   });
 
   const closing = await jobInterviewService.callInterviewer({
@@ -2185,6 +2240,7 @@ function nextAttemptConfig() {
     cv_id: cfg.cvId || '',
     cv_title: cvTitle,
     cv_summary: cvSummary,
+    custom_questions: customQuestions,
   }, {
     // A different person each sitting, which is closer to the real thing than
     // meeting the same interviewer six times.
@@ -2197,8 +2253,13 @@ function nextAttemptConfig() {
     sessionSeed: newSessionSeed(),
     voiceEditing: voiceEditing.value,
     // This sitting's questions first -- they are the ones a candidate would
-    // most obviously notice being asked again.
-    avoidQuestions: [...asked, ...avoidQuestions].slice(0, MAX_AVOID_QUESTIONS),
+    // most obviously notice being asked again. The candidate's OWN questions
+    // are left out of it: they are asked again on purpose, and telling the
+    // interviewer to avoid them would only stop it adding near-duplicates,
+    // which the list already guarantees.
+    avoidQuestions: [
+      ...asked.filter(q => !customQuestions.includes(q)), ...avoidQuestions,
+    ].slice(0, MAX_AVOID_QUESTIONS),
   });
 }
 

@@ -17,6 +17,69 @@
 
         <div class="ji-type-info" v-html="typeInfo"></div>
 
+        <!--
+          THE CANDIDATE'S OWN QUESTIONS. A recruiter's list, the questions a
+          friend was asked at the same company last month, a course's revision
+          sheet: rehearsing a SPECIFIC list is the commonest way people prepare,
+          and until this box the interviewer could only ask its own.
+
+          One question per line, because that is the shape a pasted list already
+          has; bullets and numbering are stripped in `parseCustomQuestions`, and
+          the preview below shows exactly what the interviewer will read, so a
+          line that parsed badly is visible before the room rather than in it.
+        -->
+        <label class="ji-inline-check ji-custom-toggle">
+          <input type="checkbox" v-model="form.customOn">
+          {{ $t('Add questions manually') }}
+        </label>
+        <div class="ji-custom" v-if="form.customOn">
+          <label for="ji-custom-questions">{{ $t('Your questions — one per line *') }}</label>
+          <textarea
+            id="ji-custom-questions"
+            v-model="form.customText"
+            rows="8"
+            class="ji-textarea"
+            dir="auto"
+            :placeholder="customPlaceholder"
+          ></textarea>
+          <p class="ji-hint">
+            {{ $t('💡 Paste a list straight from a job posting, a document or an email. Bullets and numbering are removed for you; repeated questions are asked once. Up to {v0} questions.', { v0: MAX_CUSTOM_QUESTIONS }) }}
+          </p>
+
+          <p class="ji-hint ji-custom-warn" v-if="parsed.duplicates || parsed.overflow || parsed.clipped">
+            <template v-if="parsed.duplicates">{{ $t('⚠️ {v0} repeated line(s) removed.', { v0: parsed.duplicates }) }} </template>
+            <template v-if="parsed.overflow">{{ $t('⚠️ Only the first {v0} questions are used; {v1} more were left out.', { v0: MAX_CUSTOM_QUESTIONS, v1: parsed.overflow }) }} </template>
+            <template v-if="parsed.clipped">{{ $t('⚠️ {v0} very long line(s) were shortened to {v1} characters.', { v0: parsed.clipped, v1: MAX_CUSTOM_QUESTION_CHARS }) }}</template>
+          </p>
+
+          <details class="ji-custom-preview" v-if="ownCount" open>
+            <summary>{{ $t('The interviewer will ask these {v0} question(s)', { v0: ownCount }) }}</summary>
+            <ol dir="auto">
+              <li v-for="(q, i) in previewQuestions" :key="i">{{ q }}</li>
+            </ol>
+          </details>
+
+          <label class="ji-inline-check">
+            <input type="checkbox" v-model="form.customShuffle">
+            {{ $t('Ask them in a random order') }}
+          </label>
+          <p class="ji-hint">
+            {{ $t('Real interviewers do not follow your list. Shuffling makes sure you know each answer, not just the order.') }}
+          </p>
+
+          <label class="ji-inline-check">
+            <input type="checkbox" v-model="form.customExtra">
+            {{ $t('After my questions, let the interviewer add its own') }}
+          </label>
+          <p class="ji-hint">
+            {{ $t('Your questions always come first and are all asked. The interviewer then adds new questions on the role, requirements and CV above — never repeating one of yours.') }}
+          </p>
+
+          <p class="ji-hint">
+            {{ $t('📝 Your report is the same as a normal interview: every answer gets feedback, a model answer to rehearse, and your own answer rewritten to be stronger.') }}
+          </p>
+        </div>
+
         <div v-if="form.type === 'Technical'">
           <label>{{ $t('Role / Topic *') }}</label>
           <input v-model="form.topic" list="ji-topic-suggestions"
@@ -97,19 +160,43 @@ Example:
           itself only an artefact of a three-minute minimum divided by ninety
           seconds.
         -->
-        <label for="ji-question-count">{{ $t('How many questions? *') }}</label>
-        <input id="ji-question-count" type="number" v-model.number="form.questions"
-               :min="MIN_QUESTIONS" :max="MAX_QUESTIONS" required>
-        <div class="ji-quick-picks">
-          <button type="button" v-for="n in QUICK_PICKS" :key="n"
-                  class="ji-quick-pick" :class="{ on: form.questions === n }"
-                  @click="pickQuestions(n)">{{ n }}</button>
-        </div>
-        <p class="ji-hint">
-          {{ $t('From {v0} to {v1}. Each answer is planned at', { v0: MIN_QUESTIONS, v1: MAX_QUESTIONS }) }}
-          <strong>{{ $t('1 minute 30') }}</strong> {{ $t('— so {v0} questions is', { v0: questionCount }) }}
-          <strong>{{ $t('{v0} minutes', { v0: suggestedMinutes }) }}</strong>.
-        </p>
+        <!--
+          With the candidate's own list the count is either the list (nothing
+          to choose) or a TOTAL with the list as its floor. One number either
+          way, which `plannedQuestionCount` reads -- there is no separate flag
+          that could disagree with it.
+        -->
+        <template v-if="usingOwn && !form.customExtra">
+          <label>{{ $t('How many questions?') }}</label>
+          <p class="ji-hint ji-custom-count">
+            <strong>{{ $t('{v0} — your list', { v0: ownCount }) }}</strong>
+            {{ $t('· planned at 1:30 each, so') }}
+            <strong>{{ $t('{v0} minutes', { v0: suggestedMinutes }) }}</strong>.
+          </p>
+        </template>
+        <template v-else-if="usingOwn">
+          <label for="ji-question-count">{{ $t('Total questions (yours + the interviewer’s) *') }}</label>
+          <input id="ji-question-count" type="number" v-model.number="form.questions"
+                 :min="ownCount + 1" :max="MAX_CUSTOM_QUESTIONS" required>
+          <p class="ji-hint">
+            {{ $t('{v0} of yours, then {v1} from the interviewer — {v2} minutes at 1:30 each.', { v0: ownCount, v1: planCount - ownCount, v2: suggestedMinutes }) }}
+          </p>
+        </template>
+        <template v-else>
+          <label for="ji-question-count">{{ $t('How many questions? *') }}</label>
+          <input id="ji-question-count" type="number" v-model.number="form.questions"
+                 :min="MIN_QUESTIONS" :max="MAX_QUESTIONS" required>
+          <div class="ji-quick-picks">
+            <button type="button" v-for="n in QUICK_PICKS" :key="n"
+                    class="ji-quick-pick" :class="{ on: form.questions === n }"
+                    @click="pickQuestions(n)">{{ n }}</button>
+          </div>
+          <p class="ji-hint">
+            {{ $t('From {v0} to {v1}. Each answer is planned at', { v0: MIN_QUESTIONS, v1: MAX_QUESTIONS }) }}
+            <strong>{{ $t('1 minute 30') }}</strong> {{ $t('— so {v0} questions is', { v0: questionCount }) }}
+            <strong>{{ $t('{v0} minutes', { v0: suggestedMinutes }) }}</strong>.
+          </p>
+        </template>
 
         <label for="ji-minutes">{{ $t('Total time (minutes)') }}</label>
         <input id="ji-minutes" type="number" v-model.number="form.minutes"
@@ -119,7 +206,7 @@ Example:
             {{ $t('⏱️ {v0} extra minute{v1} — about', { v0: extraMinutes, v1: extraMinutes === 1 ? '' : 's' }) }} <strong>{{ perAnswerLabel }}</strong> {{ $t('per answer instead of 1:30.') }}
           </template>
           <template v-else>
-            {{ $t('Set from your question count. Raise it if you want longer than 1:30 to think and answer; it cannot go below what {v0} questions need.', { v0: questionCount }) }}
+            {{ $t('Set from your question count. Raise it if you want longer than 1:30 to think and answer; it cannot go below what {v0} questions need.', { v0: planCount }) }}
           </template>
         </p>
 
@@ -207,10 +294,13 @@ import { useAuthStore } from '@/store/auth';
 import { cvBuilderService, type CvSummary } from '@/services/cvbuilder.service';
 import { jobInterviewService } from '@/services/jobinterview.service';
 import { roomEarningRules } from '@/utils/practiceIntegrity';
+import { t } from '@/i18n/runtime';
 import {
-  MAX_MINUTES, MAX_QUESTIONS, MIN_MINUTES, MIN_QUESTIONS,
-  askedQuestionsFrom, clampMinutes, clampQuestionCount, cvDigest, cvLabel,
-  minutesForQuestions, newSessionSeed, plannedQuestionCount, secondsPerAnswer,
+  MAX_CUSTOM_QUESTIONS, MAX_CUSTOM_QUESTION_CHARS, MAX_MINUTES, MAX_QUESTIONS, MIN_MINUTES,
+  MIN_QUESTIONS,
+  askedQuestionsFrom, clampMinutes, clampQuestionCount, cleanCustomList, cvDigest, cvLabel,
+  minutesForPlan, minutesForQuestions, newSessionSeed, parseCustomQuestions,
+  plannedQuestionCount, secondsPerAnswer, shuffleQuestions,
   type InterviewConfig,
 } from '@/utils/interviewSetup';
 
@@ -240,10 +330,57 @@ const form = reactive({
   minutes: minutesForQuestions(6),
   cvId: '',
   voiceEditing: true,
+  // The candidate's own questions. Off by default: the AI-planned interview is
+  // still the right answer for somebody who has not been handed a list.
+  customOn: false,
+  customText: '',
+  customShuffle: false,
+  customExtra: false,
 });
 
 const questionCount = computed(() => clampQuestionCount(form.questions));
-const suggestedMinutes = computed(() => minutesForQuestions(questionCount.value));
+
+/** The pasted list as the room will ask it, plus what was left out and why. */
+const parsed = computed(() => form.customOn
+  ? parseCustomQuestions(form.customText)
+  : { questions: [] as string[], duplicates: 0, overflow: 0, clipped: 0 });
+const ownCount = computed(() => parsed.value.questions.length);
+/** Ticked AND non-empty: an empty list is an AI interview, not a refusal. */
+const usingOwn = computed(() => form.customOn && ownCount.value > 0);
+/** The preview, in its stored order -- the shuffle happens once, at submit. */
+const previewQuestions = computed(() => parsed.value.questions);
+
+/**
+ * How many questions this sitting has, whichever way it was set up.
+ *
+ * With the candidate's list and no extras it IS the list. With extras it is a
+ * total whose floor is one more than the list -- "add your own" with nothing
+ * added would be a box that did nothing.
+ */
+const planCount = computed(() => {
+  if (!usingOwn.value) return questionCount.value;
+  if (!form.customExtra) return ownCount.value;
+  const wanted = Math.round(Number(form.questions)) || 0;
+  return Math.min(MAX_CUSTOM_QUESTIONS, Math.max(ownCount.value + 1, wanted));
+});
+const suggestedMinutes = computed(() => usingOwn.value
+  ? minutesForPlan(planCount.value)
+  : minutesForQuestions(questionCount.value));
+
+/**
+ * An example of the shape the box wants, in the reader's language.
+ *
+ * Localised, unlike the requirements example above it, because this field holds
+ * the reader's own content -- the rule `untranslated.json` documents for
+ * placeholders: localise where the field is the reader's data.
+ */
+const customPlaceholder = computed(() => [
+  t('One question per line, for example:'),
+  t('Tell me about yourself.'),
+  t('Why do you want to work here?'),
+  t('Explain the difference between a process and a thread.'),
+  t('Describe a time you disagreed with your manager.'),
+].join('\n'));
 /**
  * Minutes bought on top of the plan.
  *
@@ -256,7 +393,7 @@ const totalMinutes = computed(() =>
   Math.max(suggestedMinutes.value, clampMinutes(form.minutes)));
 const extraMinutes = computed(() => totalMinutes.value - suggestedMinutes.value);
 const perAnswerLabel = computed(() => {
-  const seconds = secondsPerAnswer(totalMinutes.value, questionCount.value);
+  const seconds = secondsPerAnswer(totalMinutes.value, planCount.value);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 });
 
@@ -274,6 +411,22 @@ function pickQuestions(n: number) {
 
 watch(() => form.questions, () => {
   form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(form.minutes));
+});
+
+// The same rule for the candidate's list: the minutes follow the plan upwards
+// and keep any extra the candidate deliberately bought.
+watch(planCount, count => {
+  if (!usingOwn.value) return;
+  form.minutes = Math.max(minutesForPlan(count), clampMinutes(form.minutes));
+});
+
+// Ticking "let the interviewer add its own" starts from a total that actually
+// adds something, rather than leaving a count below the list that the input
+// then shows as invalid.
+watch(() => form.customExtra, on => {
+  if (on && Math.round(Number(form.questions)) <= ownCount.value) {
+    form.questions = Math.min(MAX_CUSTOM_QUESTIONS, ownCount.value + 3);
+  }
 });
 
 const cvs = ref<CvSummary[]>([]);
@@ -345,6 +498,17 @@ onMounted(async () => {
       form.questions = plannedQuestionCount(prefill);
       form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(prefill.minutes));
       form.voiceEditing = prefill.voiceEditing !== false;
+      // A redo of an interview with the candidate's own list comes back with
+      // the list in the box -- rehearsing the same questions again is the
+      // point of pressing "practise again" on one.
+      const own = cleanCustomList(prefill.customQuestions);
+      if (own.length) {
+        form.customOn = true;
+        form.customText = own.join('\n');
+        form.customExtra = plannedQuestionCount(prefill) > own.length;
+        form.questions = plannedQuestionCount(prefill);
+        form.minutes = Math.max(minutesForPlan(form.questions), clampMinutes(prefill.minutes));
+      }
       form.cvId = prefill.cvId || '';
       carriedCvId = prefill.cvId || '';
       carriedCvSummary = prefill.cvSummary || '';
@@ -407,7 +571,13 @@ async function resolveCvSummary(): Promise<{ summary: string; title: string }> {
 
 async function startSession() {
   if (form.type === 'Technical' && !form.topic.trim()) {
-    alert('Please enter the role / topic for a Technical interview.');
+    alert(t('Please enter the role / topic for a Technical interview.'));
+    return;
+  }
+  // Ticked with nothing usable in the box. Starting an AI interview instead
+  // would be the room quietly ignoring a choice the candidate made on purpose.
+  if (form.customOn && !ownCount.value) {
+    alert(t('Add at least one question (one per line), or untick "Add questions manually".'));
     return;
   }
   if (submitting.value) return;
@@ -458,16 +628,22 @@ async function startSession() {
       console.error('Could not read past interviews:', e);
     }
 
+    // Minted once, here, and carried: the room re-derives its question plan
+    // after a reload, and a seed regenerated there would re-plan an interview
+    // somebody is halfway through. Same reasoning as the interviewer below.
+    const sessionSeed = newSessionSeed();
+    const own = usingOwn.value
+      ? (form.customShuffle ? shuffleQuestions(parsed.value.questions, sessionSeed) : parsed.value.questions)
+      : [];
+
     const config: InterviewConfig = {
       type: form.type === 'HR' ? 'HR' : 'Technical',
       topic,
       qualifications: form.qualifications.trim(),
-      questions: questionCount.value,
+      questions: planCount.value,
       minutes: totalMinutes.value,
-      // Minted once, here, and carried: the room re-derives its question plan
-      // after a reload, and a seed regenerated there would re-plan an interview
-      // somebody is halfway through. Same reasoning as the interviewer below.
-      sessionSeed: newSessionSeed(),
+      sessionSeed,
+      customQuestions: own.length ? own : undefined,
       voiceEditing: form.voiceEditing,
       // Who conducts it is decided here, once, and travels in the config for the
       // same reason the topic does: the session view is re-created by a reload,

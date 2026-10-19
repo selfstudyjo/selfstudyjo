@@ -22,6 +22,8 @@ import {
     CV_DIGEST_LIMIT,
     HR_FALLBACKS,
     MAX_AVOID_QUESTIONS,
+    MAX_CUSTOM_QUESTIONS,
+    MAX_CUSTOM_QUESTION_CHARS,
     MAX_MINUTES,
     MAX_QUESTIONS,
     MIN_MINUTES,
@@ -30,18 +32,25 @@ import {
     askedQuestionsFrom,
     clampMinutes,
     clampQuestionCount,
+    cleanCustomList,
+    cleanQuestionLine,
+    customQuestionFor,
     cvDigest,
     cvLabel,
     fallbackQuestion,
     isWholeQuestion,
+    minutesForPlan,
     minutesForQuestions,
     newSessionSeed,
     normaliseQuestion,
     normaliseType,
+    parseCustomQuestions,
     plannedQuestionCount,
     questionCountFor,
+    questionSourceOf,
     redoConfigFrom,
     secondsPerAnswer,
+    shuffleQuestions,
     techFallbacks,
     type DigestibleCv,
     type PastSession,
@@ -654,6 +663,122 @@ console.log('\n9b. Never claim there is no camera when there is one');
     check('a throwing enumerateDevices is unknown, not false',
         (await hasVideoInput({ enumerateDevices: async () => { throw new Error('nope'); } })) === null);
     check('no API at all is unknown', (await hasVideoInput(undefined)) === null);
+}
+
+console.log('\n9b. Questions the candidate brought');
+{
+    // What a list really looks like when it is pasted: numbered, bulleted,
+    // blank lines between, a repeat, Windows line endings, and the questions
+    // that LOOK like list items and are not.
+    const pasted = [
+        '1. Tell me about yourself.',
+        '',
+        '2) Why do you want this job?',
+        '- What is a load balancer?',
+        '• Explain blue/green deployments',
+        'Q5: Describe a conflict with a colleague.',
+        'Question 6 - What motivates you?',
+        '   tell me about YOURSELF   ',
+        '5 years from now, where do you see yourself?',
+        '3-tier architecture: explain it.',
+        '1. - Which monitoring tools do you use?',
+    ].join('\r\n');
+    const parsed = parseCustomQuestions(pasted);
+    check('numbering is stripped', parsed.questions[0] === 'Tell me about yourself.', parsed.questions[0]);
+    check('so is "2)"', parsed.questions[1] === 'Why do you want this job?', parsed.questions[1]);
+    check('a dash bullet is stripped', parsed.questions[2] === 'What is a load balancer?');
+    check('a round bullet is stripped', parsed.questions[3] === 'Explain blue/green deployments');
+    check('"Q5:" is stripped', parsed.questions[4] === 'Describe a conflict with a colleague.', parsed.questions[4]);
+    check('"Question 6 -" is stripped', parsed.questions[5] === 'What motivates you?', parsed.questions[5]);
+    check('a number that STARTS a question is kept -- it is not a list marker',
+        parsed.questions.includes('5 years from now, where do you see yourself?'), parsed.questions);
+    check('and so is "3-tier"', parsed.questions.includes('3-tier architecture: explain it.'), parsed.questions);
+    check('a numbered line that also kept its bullet loses both',
+        parsed.questions.includes('Which monitoring tools do you use?'), parsed.questions);
+    check('blank lines are not questions, and a repeat differing only in case is asked once',
+        parsed.questions.length === 9 && parsed.duplicates === 1, parsed);
+    check('and the repeat is COUNTED, so the form can say so', parsed.duplicates === 1);
+
+    const many = parseCustomQuestions(Array.from({ length: 40 }, (_, i) => `Question number ${i + 1}?`).join('\n'));
+    check('the list is capped', many.questions.length === MAX_CUSTOM_QUESTIONS);
+    check('and what was left out is counted', many.overflow === 40 - MAX_CUSTOM_QUESTIONS, many.overflow);
+    const long = parseCustomQuestions('Why ' + 'x'.repeat(900) + '?');
+    check('an overlong line is cut to the cap',
+        long.questions[0].length <= MAX_CUSTOM_QUESTION_CHARS && long.clipped === 1, long);
+    check('an empty box is no questions, not an error', parseCustomQuestions('').questions.length === 0);
+    check('a line that is ONLY a marker is not a question',
+        parseCustomQuestions('1.\n-\n•').questions.length === 0, parseCustomQuestions('1.\n-\n•'));
+    check('cleanQuestionLine collapses whitespace', cleanQuestionLine('  a   b  ') === 'a b');
+    check('an Arabic question survives untouched',
+        parseCustomQuestions('١. حدثني عن نفسك؟\n- لماذا تريد هذه الوظيفة؟').questions[1] === 'لماذا تريد هذه الوظيفة؟');
+
+    // The stored list is not trusted: sessionStorage can be hand-edited and an
+    // old tab can carry any shape.
+    check('cleanCustomList drops non-strings and repeats',
+        cleanCustomList(['A real one?', null, 7, 'a REAL one', '  ']).length === 1);
+    check('cleanCustomList on garbage is empty', cleanCustomList('nope').length === 0
+        && cleanCustomList(undefined).length === 0);
+
+    const own = ['First?', 'Second?', 'Third?'];
+    check('with a list and no total, the plan IS the list',
+        plannedQuestionCount({ customQuestions: own }) === 3,
+        plannedQuestionCount({ customQuestions: own }));
+    check('with a total equal to the list, the plan is the list',
+        plannedQuestionCount({ customQuestions: own, questions: 3 }) === 3);
+    // The form always writes the REAL plan count into `questions`, never the
+    // stale value of a hidden field, so a count above the list can only mean
+    // "and then add some of your own".
+    check('a total above the list means the interviewer adds the rest',
+        plannedQuestionCount({ customQuestions: own, questions: 8 }) === 8);
+    check('which can go past the AI-only cap of twenty, up to the custom one',
+        plannedQuestionCount({ customQuestions: own, questions: 99 }) === MAX_CUSTOM_QUESTIONS);
+    check('a single question of their own is a one-question interview',
+        plannedQuestionCount({ customQuestions: ['Only one?'] }) === 1);
+    check('an empty list is an ordinary interview',
+        plannedQuestionCount({ customQuestions: [], questions: 5 }) === 5);
+
+    check('source: no list is ai', questionSourceOf({ questions: 5 }) === 'ai');
+    check('source: the list alone is custom', questionSourceOf({ customQuestions: own, questions: 3 }) === 'custom');
+    check('source: the list plus more is mixed', questionSourceOf({ customQuestions: own, questions: 5 }) === 'mixed');
+    check('source: a stale count below the list is still custom',
+        questionSourceOf({ customQuestions: own, questions: 2 }) === 'custom');
+
+    check('turn 1 is the first of theirs', customQuestionFor(own, 1) === 'First?');
+    check('turn 3 is the last of theirs', customQuestionFor(own, 3) === 'Third?');
+    check('turn 4 is the interviewer\'s', customQuestionFor(own, 4) === null);
+    check('turn 0 is nobody\'s', customQuestionFor(own, 0) === null);
+    check('a question with no terminator is asked as written -- not refused like a fragment',
+        customQuestionFor(['Tell me about yourself'], 1) === 'Tell me about yourself'
+        && !isWholeQuestion('Tell me about yourself'));
+
+    const ten = Array.from({ length: 10 }, (_, i) => `Q${i}`);
+    const a = shuffleQuestions(ten, 12345);
+    check('a shuffle keeps every question exactly once',
+        a.length === 10 && new Set(a).size === 10 && ten.every(q => a.includes(q)));
+    check('the same seed is the same order -- a reload must not reshuffle',
+        JSON.stringify(a) === JSON.stringify(shuffleQuestions(ten, 12345)));
+    const orders = new Set(Array.from({ length: 30 }, (_, i) => shuffleQuestions(ten, i * 7919 + 1).join('|')));
+    check('different seeds give different orders', orders.size > 25, orders.size);
+    check('the input is not mutated', ten[0] === 'Q0' && ten[9] === 'Q9');
+
+    check('minutes for a 25-question plan are not capped at the AI-only twenty',
+        minutesForPlan(25) === 38, minutesForPlan(25));
+    check('one question is the three-minute floor', minutesForPlan(1) === MIN_MINUTES);
+    check('seconds per answer are honest for a list longer than twenty',
+        secondsPerAnswer(38, 25) === 91, secondsPerAnswer(38, 25));
+
+    const redo = redoConfigFrom({
+        interview_type: 'Technical', topic: 'DevOps', planned_questions: 3, planned_minutes: 5,
+        custom_questions: own,
+    });
+    check('a redo of an interview with their own questions replays them, in order',
+        JSON.stringify(redo.customQuestions) === JSON.stringify(own), redo.customQuestions);
+    check('and is still the same size', redo.questions === 3);
+    const mixedRedo = redoConfigFrom({
+        interview_type: 'HR', planned_questions: 7, planned_minutes: 11, custom_questions: own,
+    });
+    check('a redo of a mixed interview stays mixed', questionSourceOf(mixedRedo) === 'mixed', mixedRedo);
+    check('an old session has no list', redoConfigFrom({ interview_type: 'HR' }).customQuestions === undefined);
 }
 
 console.log('\n10. The CV picker label');

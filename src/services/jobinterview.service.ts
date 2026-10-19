@@ -85,6 +85,12 @@ export interface QAPair {
      * difference between a report that is filling in and one that looks broken.
      */
     coaching_pending?: boolean;
+    /**
+     * `candidate` when the candidate wrote this question themselves. Absent for
+     * an interviewer's question and on every session before 2026-10-19, which
+     * the report reads the same way.
+     */
+    source?: 'candidate' | 'interviewer';
 }
 
 export interface JobInterviewSession {
@@ -112,6 +118,12 @@ export interface JobInterviewSession {
     planned_minutes: number;
     /** How many questions the candidate asked for. Absent on older sessions. */
     planned_questions?: number;
+    /**
+     * The questions the candidate brought, in the order they were asked, and
+     * who chose this sitting's questions. What a redo replays.
+     */
+    custom_questions?: string[];
+    question_source?: 'ai' | 'custom' | 'mixed';
     /**
      * `in_progress` while the interview is running, `complete` once it has been
      * evaluated.
@@ -240,6 +252,11 @@ export interface QuestionPlanBody {
     avoid_questions?: string[];
     attempt?: number;
     session_seed?: number;
+    /**
+     * How many questions the candidate prepared themselves. The greeting says
+     * it will go through them; ignored by a replica a release behind.
+     */
+    prepared_questions?: number;
 }
 
 export interface EvaluateBody {
@@ -248,6 +265,12 @@ export interface EvaluateBody {
     qualifications?: string;
     cv_summary?: string;
     qa_pairs: QAPair[];
+    /**
+     * Who chose the questions. With `custom` or `mixed` the evaluator judges
+     * the answers and does not comment on which topics the questions covered --
+     * the candidate chose them on purpose.
+     */
+    question_source?: 'ai' | 'custom' | 'mixed';
 }
 
 export interface ModelAnswersBody {

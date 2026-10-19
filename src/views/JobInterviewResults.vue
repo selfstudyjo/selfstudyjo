@@ -26,6 +26,8 @@
             <td>
               {{ formatDate(s.created_at) }}
               <span class="ji-attempt-pill" v-if="(s.attempt || 1) > 1">{{ $t('try {v0}', { v0: s.attempt }) }}</span>
+              <span class="ji-attempt-pill" v-if="s.custom_questions && s.custom_questions.length"
+                    :title="$t('Asked the questions you added')">{{ $t('📝 your questions') }}</span>
               <!--
                 The session is written from the FIRST question now and updated
                 after every answer, so an abandoned interview is in this list
@@ -89,6 +91,12 @@
           <div><strong>{{ $t('Score:') }}</strong> {{ modalSession.score }}/100</div>
           <div v-if="(modalSession.attempt || 1) > 1"><strong>{{ $t('Attempt:') }}</strong> #{{ modalSession.attempt }}</div>
           <div v-if="modalSession.cv_title"><strong>CV:</strong> {{ modalSession.cv_title }}</div>
+          <div v-if="modalSession.custom_questions && modalSession.custom_questions.length">
+            <strong>{{ $t('Questions:') }}</strong>
+            {{ modalSession.question_source === 'mixed'
+              ? $t('{v0} of yours, then the interviewer’s own', { v0: modalSession.custom_questions.length })
+              : $t('{v0} of yours', { v0: modalSession.custom_questions.length }) }}
+          </div>
         </div>
 
         <div class="ji-report-section" v-if="breakdownRows.length">

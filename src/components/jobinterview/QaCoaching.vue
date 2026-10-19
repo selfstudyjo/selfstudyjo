@@ -2,6 +2,10 @@
   <div class="ji-qa-item">
     <div class="ji-qa-q">
       Q{{ index + 1 }}. {{ qa.question }}
+      <!-- A question the candidate brought. Said on the question itself so a
+           report mixing their list with the interviewer's additions reads
+           unambiguously, and so a redo's report can be compared line by line. -->
+      <span v-if="qa.source === 'candidate'" class="ji-qa-own">{{ $t('📝 Your question') }}</span>
       <span v-if="rating !== null" class="ji-qa-rating" :class="ratingClass">{{ rating }}/10</span>
     </div>
 
