@@ -15,12 +15,13 @@ function b64(bytes: Uint8Array): string {
     return btoa(s);
 }
 
-(window as any).__render = async (lang: 'en' | 'ar' | 'zh') => {
+(window as any).__render = async (lang: 'en' | 'ar' | 'zh', content: 'full' | 'strong' | 'yours' | 'both' = 'full') => {
     setLocale(lang);
     const options = {
         tr: t, dir: (lang === 'ar' ? 'rtl' : 'ltr') as 'ltr' | 'rtl', lang,
         formatDate: (iso: string) => d(iso, { year: 'numeric', month: 'long', day: 'numeric' }),
         now: new Date('2026-10-19T09:30:00Z'),
+        content,
     };
     const model = buildReportModel(FIXTURES[lang], options);
     const canvases = await layoutReport(model);

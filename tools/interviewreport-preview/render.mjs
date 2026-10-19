@@ -57,18 +57,23 @@ try {
         if (r.result?.result?.value) break;
         await sleep(250);
     }
-    for (const lang of ['en', 'ar', 'zh']) {
-        const r = await send('Runtime.evaluate', { expression: `window.__render('${lang}')`, awaitPromise: true, returnByValue: true });
+    // Every content option in English, and the two shorter ones that matter
+    // most in the other two languages.
+    const RUNS = [['en', 'full'], ['en', 'strong'], ['en', 'yours'], ['en', 'both'],
+        ['ar', 'full'], ['ar', 'both'], ['zh', 'full'], ['zh', 'strong']];
+    for (const [lang, content] of RUNS) {
+        const r = await send('Runtime.evaluate', { expression: `window.__render('${lang}', '${content}')`, awaitPromise: true, returnByValue: true });
         if (r.result?.exceptionDetails || !r.result?.result?.value) {
             failed++;
-            console.error(lang, 'FAILED', JSON.stringify(r.result?.exceptionDetails || r).slice(0, 600));
+            console.error(lang, content, 'FAILED', JSON.stringify(r.result?.exceptionDetails || r).slice(0, 600));
             continue;
         }
         const v = r.result.result.value;
-        writeFileSync(join(out, `${lang}.pdf`), Buffer.from(v.pdf, 'base64'));
-        writeFileSync(join(out, `${lang}.docx`), Buffer.from(v.docx, 'base64'));
-        v.pages.forEach((png, i) => writeFileSync(join(out, `${lang}-page-${i + 1}.png`), Buffer.from(png, 'base64')));
-        console.log(`${lang}: ${v.pages.length} page(s), pdf ${Math.round(v.pdf.length * 0.75 / 1024)} KB, docx ${Math.round(v.docx.length * 0.75 / 1024)} KB  (${v.fileBase})`);
+        const name = content === 'full' ? lang : `${lang}-${content}`;
+        writeFileSync(join(out, `${name}.pdf`), Buffer.from(v.pdf, 'base64'));
+        writeFileSync(join(out, `${name}.docx`), Buffer.from(v.docx, 'base64'));
+        v.pages.forEach((png, i) => writeFileSync(join(out, `${name}-page-${i + 1}.png`), Buffer.from(png, 'base64')));
+        console.log(`${name}: ${v.pages.length} page(s), pdf ${Math.round(v.pdf.length * 0.75 / 1024)} KB, docx ${Math.round(v.docx.length * 0.75 / 1024)} KB  (${v.fileBase})`);
     }
 } finally {
     ws.close();

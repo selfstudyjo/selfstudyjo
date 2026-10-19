@@ -477,6 +477,24 @@ const speaking: Catalogue = {
     'Word (.docx)': 'Word 文件 (.docx)',
     'The report could not be created. Please try again.': '无法生成报告，请重试。',
     '{v0} out of {v1}': '{v1} 题中的 {v0} 题',
+    // What the interview report download includes (2026-10-19).
+    'What to include': '包含哪些内容',
+    'Full report': '完整报告',
+    'Questions with strong answers': '问题与优秀答案',
+    'Questions with your answers': '问题与你的回答',
+    'Questions with your answers and strong answers': '问题、你的回答与优秀答案',
+    'Questions & Strong Answers': '问题与优秀答案',
+    'Questions & Your Answers': '问题与你的回答',
+    'Your Answers & Strong Answers': '你的回答与优秀答案',
+    'Each question with a strong answer you can rehearse.': '每道题附有一个可供练习的优秀答案。',
+    'Each question with the answer you gave, as it was transcribed.': '每道题附有你的回答（按转写原文）。',
+    'Each question with the answer you gave, and a strong answer to compare it with.': '每道题附有你的回答，以及一个可供对照的优秀答案。',
+    'Score, evaluation, action plan and full coaching for every question.': '包括得分、评估、行动计划以及每道题的完整辅导。',
+    'A revision sheet: each question with a strong answer to rehearse.': '复习用：每道题附有一个可供练习的优秀答案。',
+    'Each question with the answer you gave, exactly as it was transcribed.': '每道题附有你的回答，完全按照转写原文。',
+    'Each question with your answer and a strong answer side by side.': '每道题并列显示你的回答和一个优秀答案。',
+    'Strong answer': '优秀答案',
+    'No strong answer was written for this question.': '这道题没有生成优秀答案。',
 };
 
 export default speaking;

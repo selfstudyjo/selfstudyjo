@@ -484,6 +484,24 @@ const speaking: Catalogue = {
     'Word (.docx)': 'ملف Word (.docx)',
     'The report could not be created. Please try again.': 'تعذّر إنشاء التقرير. يُرجى المحاولة مرة أخرى.',
     '{v0} out of {v1}': '{v0} من أصل {v1}',
+    // What the interview report download includes (2026-10-19).
+    'What to include': 'ما الذي تريد تضمينه',
+    'Full report': 'التقرير الكامل',
+    'Questions with strong answers': 'الأسئلة مع إجابات قوية',
+    'Questions with your answers': 'الأسئلة مع إجاباتك',
+    'Questions with your answers and strong answers': 'الأسئلة مع إجاباتك وإجابات قوية',
+    'Questions & Strong Answers': 'الأسئلة والإجابات القوية',
+    'Questions & Your Answers': 'الأسئلة وإجاباتك',
+    'Your Answers & Strong Answers': 'إجاباتك والإجابات القوية',
+    'Each question with a strong answer you can rehearse.': 'كل سؤال مع إجابة قوية يمكنك التدرّب عليها.',
+    'Each question with the answer you gave, as it was transcribed.': 'كل سؤال مع الإجابة التي قدّمتها، كما دُوّنت.',
+    'Each question with the answer you gave, and a strong answer to compare it with.': 'كل سؤال مع الإجابة التي قدّمتها، وإجابة قوية لتقارنها بها.',
+    'Score, evaluation, action plan and full coaching for every question.': 'النتيجة والتقييم وخطة العمل والتوجيه الكامل لكل سؤال.',
+    'A revision sheet: each question with a strong answer to rehearse.': 'ورقة مراجعة: كل سؤال مع إجابة قوية للتدرّب عليها.',
+    'Each question with the answer you gave, exactly as it was transcribed.': 'كل سؤال مع الإجابة التي قدّمتها، تمامًا كما دُوّنت.',
+    'Each question with your answer and a strong answer side by side.': 'كل سؤال مع إجابتك وإجابة قوية جنبًا إلى جنب.',
+    'Strong answer': 'إجابة قوية',
+    'No strong answer was written for this question.': 'لم تُكتب إجابة قوية لهذا السؤال.',
 };
 
 export default speaking;

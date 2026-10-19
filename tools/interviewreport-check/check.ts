@@ -8,7 +8,7 @@
 // second copy of the logic proves nothing about the first.
 
 import {
-    DIMENSIONS, LABEL_KEYS, OTHER_KEYS, buildReportModel, cleanText, fill, safeFileBase,
+    CONTENT_OPTIONS, DIMENSIONS, LABEL_KEYS, OTHER_KEYS, buildReportModel, cleanText, fill, safeFileBase,
     textDir, toneOf, type ReportSession,
 } from '../../src/utils/interviewReport/model';
 import { buildDocx, docxParts, esc } from '../../src/utils/interviewReport/docx';
@@ -203,6 +203,67 @@ console.log('\n3. The Word document');
     check('an English answer in that report is NOT marked rtl',
         !/<w:rtl\/><\/w:rPr><w:t xml:space="preserve">Layla/.test(rtlDoc));
     check('esc handles all four', esc('<a & "b">') === '&lt;a &amp; &quot;b&quot;&gt;');
+}
+
+console.log('\n3b. What the student chose to include');
+{
+    const docFor = (content: 'full' | 'strong' | 'yours' | 'both') => {
+        const m = buildReportModel(FULL, { tr, dir: 'ltr', lang: 'en', now: NOW, content });
+        return { m, doc: docxParts(m, NOW).find(p => p.name === 'word/document.xml')!.data };
+    };
+    const full = docFor('full');
+    const strong = docFor('strong');
+    const yours = docFor('yours');
+    const both = docFor('both');
+
+    check('no content option is the full report', buildReportModel(FULL, { tr, dir: 'ltr', lang: 'en', now: NOW }).content === 'full');
+    check('an unknown option is the full report, not an empty one',
+        buildReportModel(FULL, { tr, dir: 'ltr', lang: 'en', now: NOW, content: 'nope' as any }).content === 'full');
+    check('every option has a different title and file name',
+        new Set([full, strong, yours, both].map(x => x.m.title)).size === 4
+        && new Set([full, strong, yours, both].map(x => x.m.fileBase)).size === 4);
+
+    // The full report: everything, unchanged.
+    check('full: has the score card', full.doc.includes('Overall score'));
+    check('full: has the coaching', full.doc.includes('Feedback on your answer') && full.doc.includes('Model answer to rehearse'));
+
+    // Strong answers: questions + a strong answer, nothing personal.
+    check('strong: no score, no evaluation', !strong.doc.includes('Overall score') && !strong.doc.includes('Clear and structured'));
+    check('strong: no transcript of what the student said', !strong.doc.includes('It spreads traffic'));
+    check('strong: no coaching panels', !strong.doc.includes('Feedback on your answer') && !strong.doc.includes('Why the interviewer asks this'));
+    check('strong: every question has a strong answer', (strong.doc.match(/>Strong answer</g) || []).length === 2);
+    check('strong: the model answer is used', strong.doc.includes('A load balancer…') && strong.doc.includes('In 2023…'));
+    check('strong: no rating -- there is no answer beside it to rate', !/\d+\/10/.test(strong.doc));
+
+    // Your answers: questions + the transcript, nothing else.
+    check('yours: the transcript is there', yours.doc.includes('It spreads traffic across servers.'));
+    check('yours: an unanswered question says so', yours.doc.includes('No answer was captured'));
+    check('yours: no strong answer, no model answer', !yours.doc.includes('A load balancer…') && !yours.doc.includes('>Strong answer<'));
+    check('yours: no score', !yours.doc.includes('Overall score'));
+
+    // Both: transcript + strong answer + the rating that compares them.
+    check('both: the transcript AND the strong answer',
+        both.doc.includes('It spreads traffic across servers.') && both.doc.includes('A load balancer…'));
+    check('both: the rating, beside the answer it rates', both.doc.includes('8/10'));
+    check('both: still no coaching panels or evaluation',
+        !both.doc.includes('Feedback on your answer') && !both.doc.includes('Overall score'));
+
+    // A question with no model answer falls back to the improved one -- a
+    // strong answer in the student's own words -- and never prints blank.
+    const fallback = buildReportModel({ ...FULL, qa_pairs: [
+        { question: 'Q one?', answer: 'Mine.', coaching: { improved_answer: 'Mine, but better.' } },
+        { question: 'Q two?', answer: '', coaching: {} },
+    ] }, { tr, dir: 'ltr', lang: 'en', now: NOW, content: 'strong' });
+    const fdoc = docxParts(fallback, NOW).find(p => p.name === 'word/document.xml')!.data;
+    check('strong: no model answer falls back to the improved answer', fdoc.includes('Mine, but better.'));
+    check('strong: no strong answer at all says so', fdoc.includes('No strong answer was written'));
+
+    // The picker's strings are the model's own table, and both catalogues cover them.
+    for (const [id, cat] of [['ar', ar], ['zh', zh]] as const) {
+        const missing = CONTENT_OPTIONS.flatMap(o => [o.label, o.title, o.lead, o.description].filter(Boolean))
+            .filter(k => (cat as Record<string, unknown>)[k] === undefined);
+        check(`${id}: every download choice is translated`, missing.length === 0, missing);
+    }
 }
 
 console.log('\n4. The zip container');

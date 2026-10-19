@@ -351,25 +351,36 @@ function actionPlan(model: ReportModel): string {
 function questionBlock(q: ReportModel['questions'][number], model: ReportModel): string {
     const d = model.dir;
     const label = fill(model.labels.question, { v0: q.number });
-    const tags = [label, q.own ? model.labels.yourQuestion : '', q.rating !== null ? fill(model.labels.rating, { v0: q.rating }) : '']
+    const show = model.show;
+    const rated = show.rating && q.rating !== null;
+    const tags = [label, q.own ? model.labels.yourQuestion : '', rated ? fill(model.labels.rating, { v0: q.rating! }) : '']
         .filter(Boolean).join('  ·  ');
     const qd = textDir(q.text, d);
-    let out = para(run(tags, textDir(tags, d), { bold: true, size: 9, colour: q.tone ? toneColour(q.tone) : PALETTE.indigo, caps: true, spacing: 10 }),
+    let out = para(run(tags, textDir(tags, d), { bold: true, size: 9, colour: rated && q.tone ? toneColour(q.tone) : PALETTE.indigo, caps: true, spacing: 10 }),
         { dir: textDir(tags, d), keepNext: true, before: 18, after: 2, edge: { colour: PALETTE.indigo, side: 'bottom', size: 6 } });
     out += para(run(q.text, qd, { bold: true, size: 12.5, colour: PALETTE.ink }),
         { style: 'Heading2', dir: qd, keepNext: true, after: 4 });
 
-    const answer = q.answer || model.labels.noAnswer;
-    const answerSuffix = q.seconds ? `  \u00b7  ${clock(q.seconds)}` : '';
-    out += panel(model.labels.yourAnswer + answerSuffix, answer, model, PALETTE.slateTint, PALETTE.slate);
-    out += panel(model.labels.feedback, q.feedback, model, PALETTE.skyTint, PALETTE.sky);
-    out += panel(model.labels.fix, q.fix, model, PALETTE.amberTint, PALETTE.amber);
-    out += panel(model.labels.improved, q.improved, model, PALETTE.greenTint, PALETTE.green, model.labels.improvedLead);
-    out += panel(model.labels.model, q.model, model, PALETTE.indigoTint, PALETTE.indigo, model.labels.modelLead);
-    if (q.keyPoints.length) {
-        out += panel(model.labels.keyPoints, q.keyPoints.map(p => `•  ${p}`).join('\n'), model, PALETTE.slateTint, PALETTE.slate);
+    if (show.answer) {
+        const answer = q.answer || model.labels.noAnswer;
+        const answerSuffix = q.seconds ? `  \u00b7  ${clock(q.seconds)}` : '';
+        out += panel(model.labels.yourAnswer + answerSuffix, answer, model, PALETTE.slateTint, PALETTE.slate);
     }
-    out += panel(model.labels.why, q.why, model, PALETTE.slateTint, PALETTE.muted);
+    if (show.coaching) {
+        out += panel(model.labels.feedback, q.feedback, model, PALETTE.skyTint, PALETTE.sky);
+        out += panel(model.labels.fix, q.fix, model, PALETTE.amberTint, PALETTE.amber);
+        out += panel(model.labels.improved, q.improved, model, PALETTE.greenTint, PALETTE.green, model.labels.improvedLead);
+        out += panel(model.labels.model, q.model, model, PALETTE.indigoTint, PALETTE.indigo, model.labels.modelLead);
+        if (q.keyPoints.length) {
+            out += panel(model.labels.keyPoints, q.keyPoints.map(p => `•  ${p}`).join('\n'), model, PALETTE.slateTint, PALETTE.slate);
+        }
+        out += panel(model.labels.why, q.why, model, PALETTE.slateTint, PALETTE.muted);
+    } else if (show.strong) {
+        // A shorter report: one strong answer, said once, never left blank --
+        // a question with nothing under it reads as a page that failed to print.
+        out += panel(model.labels.strongAnswer, q.strong || model.labels.noStrong, model,
+            PALETTE.greenTint, PALETTE.green);
+    }
     return out;
 }
 
@@ -382,7 +393,30 @@ function documentXml(model: ReportModel): string {
         body += para('', { after: 4 }) + panel('!', model.labels.unfinished, model, PALETTE.amberTint, PALETTE.amber)
             .replace(/<w:t xml:space="preserve">!<\/w:t>/, '<w:t xml:space="preserve">⚠</w:t>');
     }
-    body += scoreBlock(model);
+    if (model.show.evaluation) body += evaluation(model);
+    else {
+        body += heading(model.labels.questions, model);
+        if (model.contentLead) body += textParas(model.contentLead, d, { size: 9.5, colour: PALETTE.muted, after: 6, italic: true });
+        if (!model.questions.length) body += textParas(model.labels.noQuestions, d, { colour: PALETTE.muted });
+        for (const q of model.questions) body += questionBlock(q, model);
+    }
+
+    body += textParas(model.generatedOn, d, { size: 8, colour: PALETTE.slate, before: 18 });
+
+    const sect = `<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter"/>`
+        + `<w:pgSz w:w="${PAGE_W}" w:h="${PAGE_H}"/>`
+        + `<w:pgMar w:top="${MARGIN}" w:right="${MARGIN}" w:bottom="${MARGIN}" w:left="${MARGIN}" w:header="567" w:footer="567" w:gutter="0"/>`
+        + (d === 'rtl' ? '<w:bidi/>' : '') + '</w:sectPr>';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+        + `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" `
+        + `xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
+        + `<w:body>${body}${sect}</w:body></w:document>`;
+}
+
+/** The full report's evaluation, then its question-by-question coaching. */
+function evaluation(model: ReportModel): string {
+    const d = model.dir;
+    let body = scoreBlock(model);
     body += section(model.labels.summary, model.summary, model);
     if (model.standout) body += panel(model.labels.standout, model.standout, model, PALETTE.greenTint, PALETTE.green);
     if (model.redFlags) body += panel(model.labels.redFlags, model.redFlags, model, PALETTE.redTint, PALETTE.red);
@@ -400,17 +434,7 @@ function documentXml(model: ReportModel): string {
     body += textParas(model.labels.coachingLead, d, { size: 9.5, colour: PALETTE.muted, after: 6, italic: true });
     if (!model.questions.length) body += textParas(model.labels.noQuestions, d, { colour: PALETTE.muted });
     for (const q of model.questions) body += questionBlock(q, model);
-
-    body += textParas(model.generatedOn, d, { size: 8, colour: PALETTE.slate, before: 18 });
-
-    const sect = `<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter"/>`
-        + `<w:pgSz w:w="${PAGE_W}" w:h="${PAGE_H}"/>`
-        + `<w:pgMar w:top="${MARGIN}" w:right="${MARGIN}" w:bottom="${MARGIN}" w:left="${MARGIN}" w:header="567" w:footer="567" w:gutter="0"/>`
-        + (d === 'rtl' ? '<w:bidi/>' : '') + '</w:sectPr>';
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
-        + `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" `
-        + `xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
-        + `<w:body>${body}${sect}</w:body></w:document>`;
+    return body;
 }
 
 function field(code: string, dir: Dir): string {

@@ -93,6 +93,81 @@ export interface ReportQuestion {
     fix: string;
     why: string;
     keyPoints: string[];
+    /**
+     * The answer the shorter reports print as "Strong answer": the model answer,
+     * or -- when the coach wrote none -- the candidate's own answer improved,
+     * which is also a strong answer and one in their own words.
+     */
+    strong: string;
+}
+
+/**
+ * WHAT A DOWNLOAD CONTAINS -- the student chooses.
+ *
+ *   full    everything: the evaluation, the score, and every coaching panel
+ *   strong  each question with a strong answer -- a revision sheet
+ *   yours   each question with the answer they gave, as transcribed
+ *   both    each question with their answer and a strong one beside it
+ *
+ * Decided HERE, as a set of flags on the model, and not as four branches in
+ * each writer: the PDF and the Word file read the same flags, so a choice
+ * cannot produce a PDF and a Word document that disagree about what is in
+ * them. That is the reason this module exists at all.
+ */
+export type ReportContent = 'full' | 'strong' | 'yours' | 'both';
+
+export interface ContentOption {
+    id: ReportContent;
+    /** The choice as the picker shows it. */
+    label: string;
+    /** The document's title. */
+    title: string;
+    /** One sentence under the questions heading, saying what follows. */
+    lead: string;
+    /** The English word in the file name -- English for every reader, like the rest of it. */
+    file: string;
+    /** One line under the choice in the picker, saying what is in it. */
+    description: string;
+}
+
+export const CONTENT_OPTIONS: readonly ContentOption[] = [
+    { id: 'full', label: 'Full report', title: 'Interview Report', lead: '', file: 'Interview Report',
+      description: 'Score, evaluation, action plan and full coaching for every question.' },
+    { id: 'strong', label: 'Questions with strong answers', title: 'Questions & Strong Answers',
+      lead: 'Each question with a strong answer you can rehearse.', file: 'Strong Answers',
+      description: 'A revision sheet: each question with a strong answer to rehearse.' },
+    { id: 'yours', label: 'Questions with your answers', title: 'Questions & Your Answers',
+      lead: 'Each question with the answer you gave, as it was transcribed.', file: 'Your Answers',
+      description: 'Each question with the answer you gave, exactly as it was transcribed.' },
+    { id: 'both', label: 'Questions with your answers and strong answers', title: 'Your Answers & Strong Answers',
+      lead: 'Each question with the answer you gave, and a strong answer to compare it with.', file: 'Your and Strong Answers',
+      description: 'Each question with your answer and a strong answer side by side.' },
+];
+
+export interface ContentFlags {
+    /** Score ring, score card, summary, strengths, assessments, action plan. */
+    evaluation: boolean;
+    /** The candidate's own transcribed answer. */
+    answer: boolean;
+    /** A strong answer. */
+    strong: boolean;
+    /** Feedback, the one change, the improved answer, why it is asked, key points. */
+    coaching: boolean;
+    /** The per-question rating -- only beside the answer it rates. */
+    rating: boolean;
+}
+
+export function contentFlags(content: ReportContent): ContentFlags {
+    switch (content) {
+        case 'strong': return { evaluation: false, answer: false, strong: true, coaching: false, rating: false };
+        case 'yours': return { evaluation: false, answer: true, strong: false, coaching: false, rating: false };
+        case 'both': return { evaluation: false, answer: true, strong: true, coaching: false, rating: true };
+        default: return { evaluation: true, answer: true, strong: true, coaching: true, rating: true };
+    }
+}
+
+export function contentOption(content: unknown): ContentOption {
+    return CONTENT_OPTIONS.find(o => o.id === content) ?? CONTENT_OPTIONS[0];
 }
 
 export interface ReportModel {
@@ -124,6 +199,11 @@ export interface ReportModel {
     generatedOn: string;
     /** The interview was not finished; said once, at the top. */
     unfinished: boolean;
+    /** Which download this is, and what it shows. */
+    content: ReportContent;
+    show: ContentFlags;
+    /** The sentence under the questions heading in a shorter report. */
+    contentLead: string;
 }
 
 export type LabelKey =
@@ -132,7 +212,7 @@ export type LabelKey =
     | 'coaching' | 'coachingLead' | 'question' | 'yourQuestion' | 'yourAnswer'
     | 'noAnswer' | 'feedback' | 'improved' | 'improvedLead' | 'model' | 'modelLead'
     | 'fix' | 'why' | 'keyPoints' | 'rating' | 'footer' | 'page' | 'unfinished'
-    | 'noQuestions' | 'generated';
+    | 'noQuestions' | 'generated' | 'questions' | 'strongAnswer' | 'noStrong';
 
 /** The five score dimensions, in a fixed order -- the room's own order. */
 export const DIMENSIONS: readonly { key: string; label: string }[] = [
@@ -181,10 +261,14 @@ export const LABEL_KEYS: Record<LabelKey, string> = {
     unfinished: 'This interview was not finished, so the report covers only the questions that were answered.',
     noQuestions: 'No questions were answered.',
     generated: 'Generated {v0}',
+    questions: 'Questions',
+    strongAnswer: 'Strong answer',
+    noStrong: 'No strong answer was written for this question.',
 };
 
 /** Words a report needs that are not section headings. */
 export const OTHER_KEYS = [
+    ...CONTENT_OPTIONS.flatMap(o => [o.label, o.title, o.lead, o.description].filter(Boolean)),
     'Interview Report', 'Candidate', 'Interview type', 'Role / topic', 'Date',
     'Duration', 'Questions answered', 'Attempt', 'CV', 'Questions',
     'Technical Assessment', 'Competency Assessment', 'Technical', 'HR',
@@ -301,6 +385,8 @@ export interface BuildOptions {
     /** Formats a date for the reader. */
     formatDate?: (iso: string) => string;
     now?: Date;
+    /** What to include. The full report when absent. */
+    content?: ReportContent;
 }
 
 export function buildReportModel(session: ReportSession, options: BuildOptions): ReportModel {
@@ -371,8 +457,10 @@ export function buildReportModel(session: ReportSession, options: BuildOptions):
             fix: cleanText(c.fix),
             why: cleanText(c.why),
             keyPoints: (c.key_points || []).map(cleanText).filter(Boolean),
+            strong: cleanText(c.model_answer) || cleanText(qa.model_answer) || (answer ? cleanText(c.improved_answer) : ''),
         };
     });
+    const option = contentOption(options.content);
 
     const subtitleParts = [tr(type === 'HR' ? 'HR' : 'Technical')];
     if (topic && type !== 'HR') subtitleParts.push(topic);
@@ -381,7 +469,7 @@ export function buildReportModel(session: ReportSession, options: BuildOptions):
         dir: options.dir,
         lang: options.lang,
         brand: 'Self Study',
-        title: tr('Interview Report'),
+        title: tr(option.title),
         candidate,
         subtitle: subtitleParts.join(' · '),
         meta,
@@ -400,9 +488,12 @@ export function buildReportModel(session: ReportSession, options: BuildOptions):
         actionPlan: (session.action_plan || []).map(cleanText).filter(Boolean),
         questions,
         labels,
-        fileBase: safeFileBase('Interview Report', topic || type, candidate, isoDay(session.created_at, now)),
+        fileBase: safeFileBase(option.file, topic || type, candidate, isoDay(session.created_at, now)),
         generatedOn: tr(LABEL_KEYS.generated, { v0: fmt(now.toISOString()) }),
         unfinished: isUnfinished(session),
+        content: option.id,
+        show: contentFlags(option.id),
+        contentLead: option.lead ? tr(option.lead) : '',
     };
 }
 

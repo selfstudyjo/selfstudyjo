@@ -379,7 +379,9 @@ function titleBand(L: Layout, m: ReportModel): void {
     // A thin accent rule at the foot of the band.
     L.rect(0, H - 3, A4_W, 3, C.indigo);
 
-    const ringRoom = m.score !== null ? 118 : 0;
+    // The ring is the evaluation, so only the full report carries it.
+    const ring = m.show.evaluation && m.score !== null;
+    const ringRoom = ring ? 118 : 0;
     const textW = CW - ringRoom;
     const brand: Style = { size: 8.5, weight: 700, colour: C.navySoft, caps: true };
     // At the START edge of the report, whichever side that is: pinned ltr it
@@ -394,7 +396,7 @@ function titleBand(L: Layout, m: ReportModel): void {
     const sub: Style = { size: 10.5, colour: C.navySoft };
     L.text(L.fit(m.subtitle, sub, textW), M, textW, 141, sub, textDir(m.subtitle, m.dir));
 
-    if (m.score !== null) {
+    if (ring && m.score !== null) {
         const r = 42;
         const cxLogical = M + CW - r - 4;
         const cx = (L.rtl ? A4_W - cxLogical : cxLogical) * SCALE;
@@ -545,7 +547,7 @@ function question(L: Layout, m: ReportModel, q: ReportModel['questions'][number]
     L.y += 10;
     const tagStyle: Style = { size: 7.5, weight: 700, colour: C.indigo, caps: true };
     const tags = [fill(m.labels.question, { v0: q.number }), q.own ? m.labels.yourQuestion : ''].filter(Boolean).join('  ·  ');
-    const pill = q.rating !== null ? fill(m.labels.rating, { v0: q.rating }) : '';
+    const pill = m.show.rating && q.rating !== null ? fill(m.labels.rating, { v0: q.rating }) : '';
     const pillStyle: Style = { size: 8, weight: 700, colour: toneColour(q.tone) };
     const pillW = pill ? L.measure(pill, pillStyle) + 16 : 0;
     L.text(tags, M, CW - pillW - 8, L.y + 9, tagStyle, textDir(tags, m.dir));
@@ -559,14 +561,21 @@ function question(L: Layout, m: ReportModel, q: ReportModel['questions'][number]
     L.block(qLines, { x: M, w: CW });
     L.y += 8;
 
-    const answerLabel = m.labels.yourAnswer + (q.seconds ? `  ·  ${clock(q.seconds)}` : '');
-    panel(L, m, answerLabel, q.answer || m.labels.noAnswer, C.slateTint, C.faint);
-    panel(L, m, m.labels.feedback, q.feedback, C.skyTint, C.sky);
-    panel(L, m, m.labels.fix, q.fix, C.amberTint, C.amber);
-    panel(L, m, m.labels.improved, q.improved, C.greenTint, C.green, m.labels.improvedLead);
-    panel(L, m, m.labels.model, q.model, C.indigoTint, C.indigo, m.labels.modelLead);
-    if (q.keyPoints.length) panel(L, m, m.labels.keyPoints, q.keyPoints.map(p => `•  ${p}`).join('\n'), C.slateTint, C.faint);
-    panel(L, m, m.labels.why, q.why, C.slateTint, C.muted);
+    if (m.show.answer) {
+        const answerLabel = m.labels.yourAnswer + (q.seconds ? `  ·  ${clock(q.seconds)}` : '');
+        panel(L, m, answerLabel, q.answer || m.labels.noAnswer, C.slateTint, C.faint);
+    }
+    if (m.show.coaching) {
+        panel(L, m, m.labels.feedback, q.feedback, C.skyTint, C.sky);
+        panel(L, m, m.labels.fix, q.fix, C.amberTint, C.amber);
+        panel(L, m, m.labels.improved, q.improved, C.greenTint, C.green, m.labels.improvedLead);
+        panel(L, m, m.labels.model, q.model, C.indigoTint, C.indigo, m.labels.modelLead);
+        if (q.keyPoints.length) panel(L, m, m.labels.keyPoints, q.keyPoints.map(p => `•  ${p}`).join('\n'), C.slateTint, C.faint);
+        panel(L, m, m.labels.why, q.why, C.slateTint, C.muted);
+    } else if (m.show.strong) {
+        // One strong answer, never left blank -- the same rule as the DOCX.
+        panel(L, m, m.labels.strongAnswer, q.strong || m.labels.noStrong, C.greenTint, C.green);
+    }
     L.y += 6;
 }
 
@@ -584,6 +593,24 @@ async function prepare(m: ReportModel): Promise<Layout> {
     titleBand(L, m);
     facts(L, m);
     if (m.unfinished) panel(L, m, '⚠', m.labels.unfinished, C.amberTint, C.amber);
+    if (m.show.evaluation) evaluation(L, m);
+    else {
+        heading(L, m.labels.questions, m);
+        if (m.contentLead) {
+            L.block(L.para(m.contentLead, { size: 9, italic: true, colour: C.muted, lh: 1.5 }, CW, 4), { x: M, w: CW });
+            L.y += 4;
+        }
+        if (!m.questions.length) L.block(L.para(m.labels.noQuestions, { ...BODY, colour: C.muted }, CW), { x: M, w: CW });
+        for (const q of m.questions) question(L, m, q);
+    }
+    L.ensure(20);
+    L.block(L.para(m.generatedOn, { size: 7.5, colour: C.faint }, CW), { x: M, w: CW });
+    L.footers();
+    return L;
+}
+
+/** The full report's evaluation, then its question-by-question coaching. */
+function evaluation(L: Layout, m: ReportModel): void {
     scoreCard(L, m);
     section(L, m.labels.summary, m.summary, m);
     if (m.standout) panel(L, m, m.labels.standout, m.standout, C.greenTint, C.green);
@@ -602,10 +629,6 @@ async function prepare(m: ReportModel): Promise<Layout> {
     L.y += 4;
     if (!m.questions.length) L.block(L.para(m.labels.noQuestions, { ...BODY, colour: C.muted }, CW), { x: M, w: CW });
     for (const q of m.questions) question(L, m, q);
-    L.ensure(20);
-    L.block(L.para(m.generatedOn, { size: 7.5, colour: C.faint }, CW), { x: M, w: CW });
-    L.footers();
-    return L;
 }
 
 function toJpeg(canvas: HTMLCanvasElement): Promise<Uint8Array> {
