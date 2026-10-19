@@ -1087,3 +1087,38 @@
 }
 
 .ji-rules-list li { line-height: var(--sfs-leading-snug, 1.35); }
+
+/* ---- Downloading the report ------------------------------------------------
+   Two real buttons with an icon and a word each, never an icon alone -- "PDF"
+   and "Word" are what somebody scans for. Everything states its own fill and
+   ink, so the pair reads the same in all ten galaxies. */
+.ji-downloads {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem;
+  margin: 0.25rem 0 1rem; padding: 0.7rem 0.9rem;
+  background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.08);
+  border: 1px solid rgb(var(--sfs-accent-rgb, 99 102 241) / 0.25);
+  border-radius: var(--ji-r-md, 12px);
+}
+.ji-downloads-label {
+  font-weight: 700; font-size: 0.9rem; color: var(--ji-text-soft, var(--sfs-text, #e2e8f0));
+  margin-inline-end: auto;
+}
+.ji-downloads .ji-download-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  width: auto; min-height: max(2.5rem, 40px); padding: 0.45rem 0.95rem;
+  border-radius: 999px; border: 1px solid var(--sfs-accent, #6366f1);
+  background: var(--sfs-accent, #6366f1); color: var(--sfs-on-accent, #ffffff);
+  font-weight: 700; font-size: 0.88rem; cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.ji-downloads .ji-download-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.ji-downloads .ji-download-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.ji-download-icon { width: 1.05em; height: 1.05em; flex: none; }
+.ji-downloads-error {
+  flex-basis: 100%; margin: 0.2rem 0 0; font-size: 0.85rem;
+  color: var(--sfs-danger-text, #fca5a5);
+}
+@media (max-width: 480px) {
+  .ji-downloads-label { flex-basis: 100%; }
+  .ji-downloads .ji-download-btn { flex: 1 1 0; justify-content: center; }
+}

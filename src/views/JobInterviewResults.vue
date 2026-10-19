@@ -81,6 +81,8 @@
           </div>
         </div>
 
+        <ReportDownloads :session="() => modalSession!" />
+
         <div class="ji-report-grid">
           <div><strong>{{ $t('Type:') }}</strong> {{ modalSession.interview_type }}</div>
           <div><strong>{{ $t('Topic:') }}</strong> {{ modalSession.topic }}</div>
@@ -172,6 +174,7 @@ import {
   jobInterviewService, type JobInterviewSession, type ScoreBreakdown,
 } from '@/services/jobinterview.service';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
+import ReportDownloads from '@/components/jobinterview/ReportDownloads.vue';
 import { askedQuestionsFrom, newSessionSeed, redoConfigFrom } from '@/utils/interviewSetup';
 import { pickInterviewer } from '@/cast/actors';
 

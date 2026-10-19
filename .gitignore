@@ -200,3 +200,6 @@ tools/draw-preview/shots/
 # `tools/*/dist/` is already covered by the bare `dist` rule above; the shots
 # are not, and 30 PNGs of a transport bar per run is not history worth keeping.
 tools/reader-preview/shots/
+
+# The interview report preview's rendered PDFs, DOCX files and page images.
+tools/interviewreport-preview/out/

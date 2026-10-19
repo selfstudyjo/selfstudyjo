@@ -250,6 +250,10 @@
     <!-- Report -->
     <div class="ji-reports-panel" v-if="reportVisible">
       <h2>{{ $t('📋 Interview Feedback Report') }}</h2>
+      <!-- Offered once the report is finished: a download taken while the last
+           answers are still being coached would be a file missing their coaching,
+           with nothing in it saying so. -->
+      <ReportDownloads :session="reportForDownload" :disabled="phase !== 'done'" />
 
       <div class="ji-score-card">
         <div class="ji-score-circle" :class="scoreClass(report.score)">{{ report.score }}<span>/100</span></div>
@@ -348,6 +352,7 @@ import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import { countWords } from '@/i18n/locales';
 import QaCoaching from '@/components/jobinterview/QaCoaching.vue';
+import ReportDownloads from '@/components/jobinterview/ReportDownloads.vue';
 import {
   INTERVIEWER_TITLES, actorById, interviewerLabel, isActorId,
   pickInterviewer, type InterviewType,
@@ -1729,6 +1734,18 @@ function sessionPayload(status: 'in_progress' | 'complete') {
     standout_moment: report.standout_moment || '',
     red_flags: report.red_flags || '',
     score_breakdown: report.score_breakdown || {},
+  };
+}
+
+/**
+ * The finished session, for the PDF and Word downloads. The same payload the
+ * store receives, plus the date -- which the service stamps on save and the
+ * payload therefore never carries.
+ */
+function reportForDownload() {
+  return {
+    ...sessionPayload('complete'),
+    created_at: new Date(startTime || Date.now()).toISOString(),
   };
 }
 

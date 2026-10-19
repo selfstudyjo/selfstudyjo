@@ -85,6 +85,7 @@ import netsimAr from '../../src/netsim/i18n/ar.json';
 import netsimZh from '../../src/netsim/i18n/zh.json';
 import { BUCKET_LABELS, CONTEXT_KEYS } from '../../src/utils/aichatRooms';
 import { PRACTICE_KEYS } from '../../src/utils/practiceIntegrity';
+import { LABEL_KEYS as REPORT_LABEL_KEYS, OTHER_KEYS as REPORT_OTHER_KEYS } from '../../src/utils/interviewReport/model';
 import { TOUR_KEYS } from '../../src/utils/tourSteps';
 import { ASSISTANT_KEYS } from '../../src/utils/assistantEngine';
 import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
@@ -718,6 +719,15 @@ const dynamicStrings = new Set<string>([
     ...ASSISTANT_KEYS,
     ...REASON_KEYS,
     ...Object.values(KIND_LABELS),
+    /*
+      The downloadable interview report's headings and captions. The report is
+      built in a plain module and every label is spent as `tr(LABEL_KEYS[key])`,
+      so no source file holds the literal. A heading that reverted to English
+      would be printed into a PDF somebody keeps -- the one place a
+      half-translated page cannot be refreshed away.
+    */
+    ...Object.values(REPORT_LABEL_KEYS),
+    ...REPORT_OTHER_KEYS,
 ]);
 
 for (const [id, catalogue] of CATALOGUES) {
