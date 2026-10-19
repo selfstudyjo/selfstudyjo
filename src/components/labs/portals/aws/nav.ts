@@ -8,7 +8,9 @@
 
 export type ServiceId =
     | 'home' | 's3' | 'ec2' | 'vpc' | 'iam' | 'lambda'
-    | 'dynamodb' | 'rds' | 'sqs' | 'sns' | 'cloudwatch';
+    | 'dynamodb' | 'rds' | 'sqs' | 'sns' | 'cloudwatch'
+    | 'kms' | 'glue' | 'athena' | 'lakeformation' | 'kinesis' | 'redshift'
+    | 'stepfunctions' | 'billing';
 
 export interface Route {
     svc: ServiceId;
@@ -110,9 +112,13 @@ export const SERVICES: ServiceDef[] = [
                 title: 'Virtual private cloud', links: [
                     { label: 'Your VPCs', route: r('vpc', 'vpcs') },
                     { label: 'Subnets', route: r('vpc', 'subnets') },
-                    off('Route tables'), off('Internet gateways'), off('Egress-only internet gateways'),
+                    { label: 'Route tables', route: r('vpc', 'routes') },
+                    off('Internet gateways'), off('Egress-only internet gateways'),
                     off('DHCP option sets'), off('Elastic IPs'), off('Managed prefix lists'),
-                    off('NAT gateways'), off('Peering connections'),
+                    { label: 'Endpoints', route: r('vpc', 'endpoints') },
+                    off('Endpoint services'),
+                    { label: 'NAT gateways', route: r('vpc', 'nats') },
+                    off('Peering connections'),
                 ],
             },
             {
@@ -206,7 +212,8 @@ export const SERVICES: ServiceDef[] = [
         description: 'Monitor Resources and Applications',
         category: 'Management & Governance', color: '#e7157b', home: r('cloudwatch', 'groups'),
         nav: [
-            { links: [off('Favorites and recents'), off('Dashboards'), off('AI Operations'), off('Alarms')] },
+            { links: [off('Favorites and recents'), off('Dashboards'), off('AI Operations')] },
+            { title: 'Alarms', links: [{ label: 'All alarms', route: r('cloudwatch', 'alarms') }] },
             {
                 title: 'Logs', links: [
                     { label: 'Log groups', route: r('cloudwatch', 'groups') },
@@ -214,6 +221,87 @@ export const SERVICES: ServiceDef[] = [
                 ],
             },
             { title: 'Metrics', links: [off('All metrics'), off('Explorer'), off('Streams')] },
+        ],
+    },
+    {
+        id: 'kms', name: 'Key Management Service', short: 'KMS', title: 'Key Management Service (KMS)',
+        description: 'Securely Generate and Manage AWS Encryption Keys',
+        category: 'Security, Identity, & Compliance', color: '#dd344c', home: r('kms', 'keys'),
+        nav: [{ links: [off('AWS managed keys'), { label: 'Customer managed keys', route: r('kms', 'keys') },
+            off('Custom key stores')] }],
+    },
+    {
+        id: 'glue', name: 'AWS Glue', short: 'Glue', title: 'AWS Glue',
+        description: 'Simple, scalable, and serverless data integration',
+        category: 'Analytics', color: '#8c4fff', home: r('glue', 'databases'),
+        nav: [
+            { links: [off('Getting started')] },
+            { title: 'ETL jobs', links: [off('Visual ETL'), off('Notebooks'),
+                { label: 'Jobs', route: r('glue', 'jobs') }, off('Job run monitoring')] },
+            { title: 'Data Catalog', links: [
+                { label: 'Databases', route: r('glue', 'databases') },
+                { label: 'Tables', route: r('glue', 'tables') },
+                { label: 'Connections', route: r('glue', 'connections') },
+                { label: 'Crawlers', route: r('glue', 'crawlers') },
+                off('Classifiers'), off('Catalog settings')] },
+        ],
+    },
+    {
+        id: 'athena', name: 'Athena', short: 'Athena', title: 'Amazon Athena',
+        description: 'Serverless interactive analytics service',
+        category: 'Analytics', color: '#8c4fff', home: r('athena', 'editor'),
+        nav: [
+            { links: [{ label: 'Query editor', route: r('athena', 'editor') }, off('Notebook editor')] },
+            { title: 'Administration', links: [{ label: 'Workgroups', route: r('athena', 'workgroups') },
+                off('Capacity reservations'), off('Data sources and catalogs')] },
+        ],
+    },
+    {
+        id: 'lakeformation', name: 'AWS Lake Formation', short: 'Lake Formation', title: 'AWS Lake Formation',
+        description: 'Build, manage, and secure your data lake',
+        category: 'Analytics', color: '#8c4fff', home: r('lakeformation', 'permissions'),
+        nav: [
+            { links: [off('Dashboard')] },
+            { title: 'Data Catalog', links: [{ label: 'Databases', route: r('glue', 'databases') },
+                { label: 'Tables', route: r('glue', 'tables') }] },
+            { title: 'Permissions', links: [{ label: 'Data lake permissions', route: r('lakeformation', 'permissions') },
+                { label: 'LF-Tags and permissions', route: r('lakeformation', 'tags') }] },
+            { title: 'Administration', links: [{ label: 'Administrative roles and tasks', route: r('lakeformation', 'admins') },
+                { label: 'Data lake locations', route: r('lakeformation', 'locations') }] },
+        ],
+    },
+    {
+        id: 'kinesis', name: 'Kinesis', short: 'Kinesis', title: 'Amazon Kinesis',
+        description: 'Work with Real-Time Streaming Data',
+        category: 'Analytics', color: '#8c4fff', home: r('kinesis', 'streams'),
+        nav: [{ links: [{ label: 'Data streams', route: r('kinesis', 'streams') },
+            { label: 'Amazon Data Firehose', route: r('kinesis', 'firehose') }, off('Managed Apache Flink')] }],
+    },
+    {
+        id: 'redshift', name: 'Amazon Redshift', short: 'Redshift', title: 'Redshift Serverless',
+        description: 'Fast, Simple, Cost-Effective Data Warehousing',
+        category: 'Analytics', color: '#8c4fff', home: r('redshift', 'serverless'),
+        nav: [
+            { links: [{ label: 'Serverless dashboard', route: r('redshift', 'serverless') },
+                { label: 'Query editor v2', route: r('redshift', 'editor') }] },
+            { links: [off('Provisioned clusters dashboard'), off('Datashares')] },
+        ],
+    },
+    {
+        id: 'stepfunctions', name: 'Step Functions', short: 'Step Functions', title: 'Step Functions',
+        description: 'Coordination for Distributed Applications',
+        category: 'Application Integration', color: '#e7157b', home: r('stepfunctions', 'machines'),
+        nav: [{ links: [{ label: 'State machines', route: r('stepfunctions', 'machines') }, off('Activities')] }],
+    },
+    {
+        id: 'billing', name: 'Billing and Cost Management', short: 'Billing', title: 'Billing and Cost Management',
+        description: 'Budgets, Cost Explorer and cost allocation tags',
+        category: 'Cloud Financial Management', color: '#7aa116', home: r('billing', 'explorer'),
+        nav: [
+            { links: [off('Home')] },
+            { title: 'Cost and usage analysis', links: [{ label: 'Cost Explorer', route: r('billing', 'explorer') }] },
+            { title: 'Budgets and planning', links: [{ label: 'Budgets', route: r('billing', 'budgets') }] },
+            { title: 'Cost organization', links: [{ label: 'Cost allocation tags', route: r('billing', 'tags') }] },
         ],
     },
 ];
@@ -301,8 +389,52 @@ export function urlFor(route: Route, region: string): string {
         case 'sg': return `${base}SecurityGroup:groupId=${p.id}`;
         case 'sg-create': return `${base}CreateSecurityGroup:`;
         case 'sg-inbound': return `${base}ModifyInboundSecurityGroupRules:securityGroupId=${p.id}`;
+        case 'routes': return `${base}RouteTables:`;
+        case 'nats': return `${base}NatGateways:`;
+        case 'endpoints': return `${base}Endpoints:`;
+        case 'endpoint-create': return `${base}CreateVpcEndpoint:`;
         default: return `${base}vpcs:`;
         }
+    }
+    case 'kms':
+        return `${host}/kms/home${q}#/kms/keys${p.id ? '/' + enc(p.id) : ''}${route.page === 'create' ? '/create' : ''}`;
+    case 'glue': {
+        const base = `${host}/glue/home${q}#/v2/`;
+        switch (route.page) {
+        case 'tables': return `${base}data-catalog/tables`;
+        case 'table': return `${base}data-catalog/tables/view/${enc(p.name)}?database=${enc(p.db)}`;
+        case 'crawlers': return `${base}data-catalog/crawlers`;
+        case 'connections': return `${base}data-catalog/connections`;
+        case 'jobs': return `${base}etl-configuration/jobs`;
+        case 'job': return `${base}edit-job/script?jobName=${enc(p.name)}&tab=${p.tab || 'runs'}`;
+        default: return `${base}data-catalog/databases`;
+        }
+    }
+    case 'athena':
+        return route.page === 'workgroups' ? `${host}/athena/home${q}#/workgroups`
+            : `${host}/athena/home${q}#/query-editor`;
+    case 'lakeformation':
+        return `${host}/lakeformation/home${q}#${{ permissions: 'permissions-list', tags: 'lf-tags',
+            admins: 'administrative-roles-and-tasks', locations: 'data-lake-locations' }[route.page] || 'permissions-list'}`;
+    case 'kinesis':
+        if (route.page === 'firehose') return `${host}/firehose/home${q}#/streams`;
+        if (route.page === 'stream') return `${host}/kinesis/home${q}#/streams/details/${enc(p.name)}/${p.tab || 'monitoring'}`;
+        return `${host}/kinesis/home${q}#/streams/list`;
+    case 'redshift':
+        return route.page === 'editor' ? `${host}/sqlworkbench/home${q}#/client`
+            : `${host}/redshiftv2/home${q}#/serverless-dashboard`;
+    case 'stepfunctions': {
+        const base = `${host}/states/home${q}#/`;
+        if (route.page === 'machine') return `${base}statemachines/view/${enc(p.arn)}`;
+        if (route.page === 'execution') return `${base}v2/executions/details/${enc(p.arn)}`;
+        if (route.page === 'create') return `${base}statemachines/create`;
+        return `${base}statemachines`;
+    }
+    case 'billing': {
+        const base = 'https://us-east-1.console.aws.amazon.com/costmanagement/home#/';
+        if (route.page === 'budgets') return `${base}budgets`;
+        if (route.page === 'tags') return `${base}tags`;
+        return `${base}cost-explorer`;
     }
     case 'iam': {
         const base = `https://us-east-1.console.aws.amazon.com/iam/home${q}#/`;
@@ -354,6 +486,7 @@ export function urlFor(route: Route, region: string): string {
         return `${base}topics`;
     }
     case 'cloudwatch': {
+        if (route.page === 'alarms') return `${host}/cloudwatch/home${q}#alarmsV2:`;
         const base = `${host}/cloudwatch/home${q}#logsV2:log-groups`;
         if (route.page === 'group') return `${base}/log-group/${enc(enc(p.name))}`;
         if (route.page === 'create') return `${base}/create-log-group`;

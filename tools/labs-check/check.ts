@@ -7157,6 +7157,188 @@ VIEWS.fabric = {
 // both. Aliased here rather than copied so the two cannot drift: a copy would
 // let a `cowork` panel point at a key `claudecode` no longer sends and still
 // pass.
+// Dumped from app 11's sim:dataplat after a `lake` stage run with the small_files
+// fault and one Spark SQL query (view()['lake'], trimmed).
+VIEWS.dataplat = {
+    "lake": {
+        "tables": [
+            {
+                "name": "silver.web_events",
+                "format": "delta",
+                "kind": "managed",
+                "location": "s3://shopflow-lake/silver/web_events/",
+                "rows": 30000,
+                "files": 400,
+                "size_bytes": 927453,
+                "storage_bytes": 927453,
+                "partition_by": [],
+                "spec_id": 0,
+                "version": 7,
+                "snapshots": [
+                    {
+                        "version": 0,
+                        "snapshot_id": null,
+                        "operation": "STREAMING UPDATE",
+                        "at": -480,
+                        "timestamp": "2026-11-01 22:00:00",
+                        "rows_added": 3750,
+                        "rows_removed": 0,
+                        "files_added": 50,
+                        "files_removed": 0
+                    },
+                    {
+                        "version": 1,
+                        "snapshot_id": null,
+                        "operation": "STREAMING UPDATE",
+                        "at": -420,
+                        "timestamp": "2026-11-01 23:00:00",
+                        "rows_added": 3750,
+                        "rows_removed": 0,
+                        "files_added": 50,
+                        "files_removed": 0
+                    }
+                ],
+                "schema": [
+                    {
+                        "name": "event_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "user_id",
+                        "type": "bigint"
+                    },
+                    {
+                        "name": "session_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "event_type",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "type": "string"
+                    },
+                    {
+                        "name": "product_id",
+                        "type": "bigint"
+                    },
+                    {
+                        "name": "event_ts",
+                        "type": "timestamp"
+                    },
+                    {
+                        "name": "device",
+                        "type": "string"
+                    },
+                    {
+                        "name": "event_date",
+                        "type": "date"
+                    }
+                ],
+                "schema_version": 0,
+                "properties": {
+                    "delta.minReaderVersion": "1",
+                    "delta.minWriterVersion": "2"
+                },
+                "small_files": 400,
+                "zorder": [],
+                "last_optimize": null,
+                "last_vacuum": null
+            }
+        ],
+        "files": [
+            {
+                "path": "s3://shopflow-lake/landing/customers/customers_2026-10-25.json",
+                "format": "json",
+                "rows": 134,
+                "bytes": 25445,
+                "row_groups": 0,
+                "compression": "none",
+                "columns": [
+                    "customer_id",
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "phone",
+                    "country",
+                    "city",
+                    "segment",
+                    "marketing_opt_in",
+                    "created_at",
+                    "updated_at"
+                ],
+                "partition": {},
+                "created": -10365,
+                "via": "nightly_export"
+            },
+            {
+                "path": "s3://shopflow-lake/landing/customers/customers_2026-10-26.json",
+                "format": "json",
+                "rows": 134,
+                "bytes": 25573,
+                "row_groups": 0,
+                "compression": "none",
+                "columns": [
+                    "customer_id",
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "phone",
+                    "country",
+                    "city",
+                    "segment",
+                    "marketing_opt_in",
+                    "created_at",
+                    "updated_at"
+                ],
+                "partition": {},
+                "created": -8925,
+                "via": "nightly_export"
+            },
+            {
+                "path": "s3://shopflow-lake/landing/customers/customers_2026-10-27.json",
+                "format": "json",
+                "rows": 149,
+                "bytes": 28267,
+                "row_groups": 0,
+                "compression": "none",
+                "columns": [
+                    "customer_id",
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "phone",
+                    "country",
+                    "city",
+                    "segment",
+                    "marketing_opt_in",
+                    "created_at",
+                    "updated_at"
+                ],
+                "partition": {},
+                "created": -7485,
+                "via": "nightly_export"
+            }
+        ],
+        "queries": [
+            {
+                "id": "lakeq-000001",
+                "sql": "SELECT COUNT(*) FROM silver.web_events",
+                "rows": 1,
+                "files_scanned": 400,
+                "files_pruned": 0,
+                "pruned_by_partition": 0,
+                "skipped_by_stats": 0,
+                "tables": [
+                    "silver.web_events"
+                ],
+                "at": 0
+            }
+        ]
+    }
+};
+
 VIEWS.cowork = VIEWS.claudecode;
 
 for (const [family, panels] of Object.entries(GUI_PANELS)) {
@@ -8704,13 +8886,14 @@ section('17. Portals: the product consoles, and the command line they write');
     const workspace = source('src/views/LabWorkspace.vue');
     const skins = [...host.matchAll(/(\w+): lazy\(\(\) => import\('\.\/([\w/]+\.vue)'\)\)/g)]
         .map(m => ({ skin: m[1], path: `src/components/labs/portals/${m[2]}` }));
-    check('LabPortal knows all fourteen skins',
+    check('LabPortal knows all twenty-one skins',
           ['aws', 'awsops', 'azure', 'ambari', 'sparkui', 'fabric', 'jira', 'servicenow',
-           'docker', 'k8s', 'jenkins', 'hcpterraform', 'githubdesktop', 'mlflow']
+           'docker', 'k8s', 'jenkins', 'hcpterraform', 'githubdesktop', 'mlflow',
+           'pgadmin', 'snowflake', 'airflow', 'dbt', 'confluent', 'flink', 'datahub']
               .every(s => skins.some(row => row.skin === s)), skins.map(s => s.skin));
     check('every skin is an ASYNC chunk with an error component (rule 47)',
           /defineAsyncComponent\(\{[\s\S]*?errorComponent/.test(host)
-          && !/^import \w+ from '\.\/(aws|awsops|azure|ambari|spark|fabric|jira|servicenow|docker|k8s|jenkins|terraform|github|mlflow)\//m.test(host));
+          && !/^import \w+ from '\.\/(aws|awsops|azure|ambari|spark|fabric|jira|servicenow|docker|k8s|jenkins|terraform|github|mlflow|pgadmin|snowflake|airflow|dbt|confluent|flink|datahub)\//m.test(host));
     check('the host declares the simulation in the frame (rule 21)',
           /sl-portal__sim/.test(host) && /tool\.fidelity/.test(host));
     check('the workspace renders a portal tool with LabPortal',
@@ -8752,7 +8935,9 @@ section('17. Portals: the product consoles, and the command line they write');
          * to it, and the engine reads it whole.
          */
         const CLI_HEAD = '(aws|az|hdfs|hadoop|yarn|spark-submit|spark-sql|kubectl|helm|docker|'
-            + 'mgr|snow|fab|git|terraform|jenkins|mlflow|curl|ops|bicep|mlx|torchserve|vllm)\\b';
+            + 'mgr|snow|fab|git|terraform|jenkins|mlflow|curl|ops|bicep|mlx|torchserve|vllm|'
+            + 'psql|snowsql|dbt|airflow|kafka-[a-z-]+|connect|schema-registry|flink|gx|'
+            + 'contract|monitor|datahub|feast|lake|platform)\\b';
         check(`${name}: never builds a shell command by concatenation or template (use cli())`,
               !new RegExp('\\.exec\\(\\s*`\\s*' + CLI_HEAD).test(text)
               && !new RegExp('\\.exec\\(\\s*[\'"]\\s*' + CLI_HEAD + '[^\'"]*[\'"]\\s*\\+').test(text));

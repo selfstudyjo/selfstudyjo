@@ -39,7 +39,14 @@
         <h4 class="spk-h4"><span class="arrow-open"></span> RDDs</h4>
         <div class="table-wrap"><table class="table table-bordered table-sm">
           <thead><tr><th>ID</th><th>RDD Name</th><th>Storage Level</th><th>Cached Partitions</th><th>Fraction Cached</th><th>Size in Memory</th><th>Size on Disk</th></tr></thead>
-          <tbody><tr><td colspan="7" class="spk-empty">No RDDs have been persisted. Call <code>df.cache()</code> or <code>CACHE TABLE t</code> to see one here.</td></tr></tbody>
+          <tbody>
+            <tr v-for="(r, i) in storage" :key="r.name">
+              <td>{{ i + 1 }}</td><td>In-memory table {{ r.name }}</td><td>{{ r.storage_level }}</td>
+              <td>{{ r.cached_partitions }}</td><td>{{ Math.round(Number(r.fraction_cached || 0) * 100) }}%</td>
+              <td>{{ bytes(Number(r.memory_bytes || 0)) }}</td><td>{{ bytes(Number(r.disk_bytes || 0)) }}</td>
+            </tr>
+            <tr v-if="!storage.length"><td colspan="7" class="spk-empty">No RDDs have been persisted. Call <code>df.cache()</code> or <code>CACHE TABLE t</code> to see one here.</td></tr>
+          </tbody>
         </table></div>
       </section>
       <SparkEnvironment v-else-if="route.page === 'environment'" :app="cur" :view="view" />
@@ -62,8 +69,8 @@
 import { computed, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import type { LabTool } from '@/utils/labCatalogue';
-import { pick } from '@/utils/portalKit';
-import { locationFor, sparkApps, type SparkApp, type SparkPage, type SparkRoute } from './spark';
+import { pick, rows } from '@/utils/portalKit';
+import { bytes, locationFor, sparkApps, type SparkApp, type SparkPage, type SparkRoute } from './spark';
 import SparkHistory from './SparkHistory.vue';
 import SparkJobs from './SparkJobs.vue';
 import SparkJobDetail from './SparkJobDetail.vue';
@@ -86,6 +93,7 @@ const route = ref<SparkRoute>({ page: 'history' });
 const menuOpen = ref(false);
 const version = computed(() => String(pick(props.view, 'versions.spark', '3.5.1')));
 const apps = computed(() => sparkApps(props.view));
+const storage = computed(() => rows(props.view, 'spark.storage'));
 const app = computed(() => (route.value.app ? apps.value.find(a => a.id === route.value.app) || null : null));
 const EMPTY: SparkApp = { id: '', name: '', user: '', state: '', final: '', started: 0, ended: 0, durationMs: 0, completed: true, jobs: [], stages: [] };
 const cur = computed<SparkApp>(() => app.value || EMPTY);

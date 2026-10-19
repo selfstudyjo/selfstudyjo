@@ -32,6 +32,10 @@
         <a href="#" @click.prevent="$emit('navigate', { page: 'job', app: app.id, id: job.jobId })">{{ job.jobId }}</a></li>
     </ul>
     <pre class="sql__text">{{ job.description }}</pre>
+    <div v-if="job.error" class="alert-danger">{{ job.error }}</div>
+    <ul v-if="job.notes.length" class="list-unstyled sql__notes">
+      <li v-for="(n, i) in job.notes" :key="i">{{ n }}</li>
+    </ul>
     <div class="sql__plan">
       <template v-for="(node, i) in [...plan].reverse()" :key="i">
         <div class="sql__node">
@@ -45,22 +49,24 @@
     </div>
     <h4 class="spk-h4" @click="details = !details"><span :class="details ? 'arrow-open' : 'arrow-closed'"></span><a href="#" @click.prevent>Details</a></h4>
     <pre v-if="details" class="sql__text">== Physical Plan ==
-AdaptiveSparkPlan isFinalPlan=true
-{{ plan.map((n, i) => ' '.repeat(i * 3) + '+- ' + n).join('\n') }}</pre>
+{{ planLines(job).join('\n') }}<template v-if="job.aqe && job.initialPlan.length">
+
+== Initial Plan ==
+{{ planLines(job, true).join('\n') }}</template></pre>
   </section>
   <p v-else>No information to display for query {{ queryId }}</p>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { bytes, date, duration, physicalPlan, type SparkApp } from './spark';
+import { bytes, date, duration, planLines, planOperators, type SparkApp } from './spark';
 
 const props = defineProps<{ app: SparkApp; queryId: number | null }>();
 defineEmits<{ (event: 'navigate', route: any): void }>();
 
 const details = ref(false);
 const job = computed(() => props.app.jobs.find(j => j.jobId === props.queryId));
-const plan = computed(() => (job.value ? physicalPlan(job.value) : []));
+const plan = computed(() => (job.value ? [...planOperators(job.value)].reverse() : []));
 const scanned = computed(() => job.value?.stages[0]?.inputRows ?? 0);
 const shuffle = computed(() => (job.value?.stages || []).reduce((n, s) => n + s.shuffleWrite, 0));
 </script>
@@ -75,4 +81,5 @@ const shuffle = computed(() => (job.value?.stages || []).reduce((n, s) => n + s.
 .sql__node { background: #E5F2FF; border: 1px solid #3EC0FF; border-radius: 4px; padding: 8px 14px; min-width: min(240px, 100%); max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; text-align: center; display: flex; flex-direction: column; align-items: center; font-size: 12px; }
 .sql__node strong { font-size: 13px; }
 .sql__edge { color: #666; font-size: 16px; }
+.sql__notes { font-size: 13px; color: #155724; }
 </style>

@@ -69,6 +69,14 @@
                 <td>{{ comp.display }}</td>
                 <td><a href="#" @click.prevent="$emit('navigate', { page: 'service', id: comp.service })">{{ serviceName(comp.service) }}</a></td>
                 <td>{{ comp.category === 'CLIENT' ? 'Installed' : comp.state === 'STARTED' ? 'Started' : 'Stopped' }}</td>
+                <td class="host__act">
+                  <template v-if="comp.name === 'DATANODE'">
+                    <button v-if="comp.state === 'STARTED'" type="button" class="btn btn-default btn-sm"
+                            :disabled="busy" @click="ask(comp, 'INSTALLED')">Stop</button>
+                    <button v-else type="button" class="btn btn-success btn-sm" :disabled="busy"
+                            @click="ask(comp, 'STARTED')">Start</button>
+                  </template>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -96,15 +104,47 @@
     </div>
   </div>
   <div v-else class="empty">Host {{ host }} is not part of this cluster.</div>
+  <AmbModal v-if="confirm" :title="confirm.state === 'INSTALLED' ? 'Confirmation' : 'Start DataNode'" @close="confirm = null">
+    <p>{{ confirm.state === 'INSTALLED'
+      ? `Are you sure you want to stop DataNode on ${detail?.fqdn}? Blocks it holds will be under-replicated, or missing if it held the only replica.`
+      : `Start DataNode on ${detail?.fqdn}?` }}</p>
+    <template #footer>
+      <button type="button" class="btn btn-default" @click="confirm = null">Cancel</button>
+      <button type="button" :class="confirm.state === 'INSTALLED' ? 'btn btn-danger' : 'btn btn-success'"
+              :disabled="busy" @click="perform">{{ confirm.state === 'INSTALLED' ? 'Stop' : 'Start' }}</button>
+    </template>
+  </AmbModal>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { matches, rows } from '@/utils/portalKit';
-import { SERVICE_NAMES } from './ambari';
+import type { PortalApi } from '../usePortal';
+import { matches, pick, rows } from '@/utils/portalKit';
+import { SERVICE_NAMES, ambariCurl } from './ambari';
 import AmbIcon from './AmbIcon.vue';
+import AmbModal from './AmbModal.vue';
 
-const props = defineProps<{ view: Record<string, any>; host?: string }>();
+const props = defineProps<{ view: Record<string, any>; host?: string; api?: PortalApi; busy?: boolean }>();
+const confirm = ref<{ name: string; state: 'STARTED' | 'INSTALLED' } | null>(null);
+
+function ask(comp: Record<string, any>, state: 'STARTED' | 'INSTALLED') {
+  confirm.value = { name: String(comp.name), state };
+}
+
+async function perform() {
+  const target = confirm.value;
+  const host = detail.value;
+  if (!target || !host || !props.api) return;
+  const verb = target.state === 'STARTED' ? 'Start' : 'Stop';
+  const cluster = String(pick(props.view, 'ambari.api.cluster', pick(props.view, 'cluster', 'cluster')));
+  const command = ambariCurl(cluster, 'PUT', `/hosts/${host.fqdn}/host_components/${target.name}`, {
+    RequestInfo: { context: `${verb} DataNode` },
+    Body: { HostRoles: { state: target.state } },
+  });
+  const result = await props.api.exec(command, { success: `${verb} DataNode on ${host.fqdn}: completed`,
+                                                 failure: 'Ambari could not complete the request' });
+  if (result.ok) confirm.value = null;
+}
 defineEmits<{ (event: 'navigate', route: any): void }>();
 
 const filter = ref('');
@@ -131,6 +171,7 @@ function serviceName(id: string) {
 
 <style scoped>
 .hosts__filter { max-width: 340px; }
+.host__act { width: 70px; text-align: right; }
 .hosts__check { width: 30px; }
 .hosts__name { white-space: nowrap; }
 .hosts__name a { margin-left: 6px; }

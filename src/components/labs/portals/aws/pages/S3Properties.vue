@@ -62,10 +62,40 @@
     </section>
 
     <section class="cs-container">
-      <div class="cs-container__head"><CsHeader title="Default encryption" :level="2" description="Server-side encryption is automatically applied to new objects stored in this bucket." /></div>
+      <div class="cs-container__head">
+        <CsHeader title="Default encryption" :level="2" description="Server-side encryption is automatically applied to new objects stored in this bucket.">
+          <template #actions><button v-if="edit !== 'encryption'" type="button" class="cs-btn" @click="startEncryption">Edit</button></template>
+        </CsHeader>
+      </div>
       <div class="cs-container__body">
-        <dl class="cs-kv"><div><dt>Encryption type</dt><dd>Server-side encryption with Amazon S3 managed keys (SSE-S3)</dd></div>
-          <div><dt>Bucket Key</dt><dd>Enabled</dd></div></dl>
+        <template v-if="edit === 'encryption'">
+          <span class="cs-label">Encryption type</span>
+          <div class="cs-stack s3p__radios">
+            <label class="cs-radio"><input v-model="enc.algorithm" type="radio" value="AES256" /> Server-side encryption with Amazon S3 managed keys (SSE-S3)</label>
+            <label class="cs-radio"><input v-model="enc.algorithm" type="radio" value="aws:kms" /> Server-side encryption with AWS Key Management Service keys (SSE-KMS)</label>
+          </div>
+          <template v-if="enc.algorithm === 'aws:kms'">
+            <div class="cs-field s3p__gap"><label class="cs-label" for="s3p-key">AWS KMS key</label>
+              <select id="s3p-key" v-model="enc.key" class="cs-select">
+                <option value="">Choose from your AWS KMS keys</option>
+                <option v-for="k in kmsKeys" :key="k.id" :value="k.aliases[0] || k.arn">{{ k.aliases[0] || k.id }}</option></select></div>
+            <span class="cs-label s3p__gap">Bucket Key</span>
+            <div class="cs-stack s3p__radios">
+              <label class="cs-radio"><input v-model="enc.bucketKey" type="radio" :value="false" /> Disable</label>
+              <label class="cs-radio"><input v-model="enc.bucketKey" type="radio" :value="true" /> Enable
+                <small>Reduces the cost of SSE-KMS by lowering calls to AWS KMS.</small></label>
+            </div>
+          </template>
+          <div class="cs-form-actions">
+            <button type="button" class="cs-btn cs-btn--link" @click="edit = ''">Cancel</button>
+            <button type="button" class="cs-btn cs-btn--primary" :disabled="busy || (enc.algorithm === 'aws:kms' && !enc.key)" @click="saveEncryption">Save changes</button>
+          </div>
+        </template>
+        <dl v-else class="cs-kv">
+          <div><dt>Encryption type</dt><dd>{{ bucket.encryption === 'aws:kms' ? 'Server-side encryption with AWS Key Management Service keys (SSE-KMS)' : 'Server-side encryption with Amazon S3 managed keys (SSE-S3)' }}</dd></div>
+          <div v-if="bucket.encryption === 'aws:kms'"><dt>Encryption key ARN</dt><dd class="cs-mono">{{ bucket.kms_key_arn || bucket.kms_key }}</dd></div>
+          <div><dt>Bucket Key</dt><dd>{{ bucket.encryption === 'aws:kms' ? (bucket.bucket_key ? 'Enabled' : 'Disabled') : 'Enabled' }}</dd></div>
+        </dl>
       </div>
     </section>
 
@@ -128,7 +158,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
-import { cli } from '@/utils/portalKit';
+import { cli, rows } from '@/utils/portalKit';
 import CsHeader from '../CsHeader.vue';
 import CsIcon from '../CsIcon.vue';
 import TagEditor, { type Tag } from '../TagEditor.vue';
@@ -138,11 +168,31 @@ import { regionName } from '../nav';
 
 const props = defineProps<{ bucket: Record<string, any> }>();
 const ctx = useAws();
-const edit = ref<'' | 'versioning' | 'tags' | 'website'>('');
+const edit = ref<'' | 'versioning' | 'tags' | 'website' | 'encryption'>('');
 const busy = ref(false);
 const versioning = ref('Enabled');
 const tags = ref<Tag[]>([]);
 const site = reactive({ enabled: false, index: 'index.html', error: '' });
+const enc = reactive({ algorithm: 'AES256', key: '', bucketKey: true });
+const kmsKeys = computed(() => rows(ctx.view.value, 'kms.keys'));
+
+function startEncryption() {
+  enc.algorithm = props.bucket.encryption === 'aws:kms' ? 'aws:kms' : 'AES256';
+  enc.key = props.bucket.kms_key || '';
+  enc.bucketKey = props.bucket.encryption === 'aws:kms' ? Boolean(props.bucket.bucket_key) : true;
+  edit.value = 'encryption';
+}
+async function saveEncryption() {
+  busy.value = true;
+  const rule: Record<string, unknown> = { ApplyServerSideEncryptionByDefault: enc.algorithm === 'aws:kms'
+    ? { SSEAlgorithm: 'aws:kms', KMSMasterKeyID: enc.key } : { SSEAlgorithm: 'AES256' } };
+  if (enc.algorithm === 'aws:kms') rule.BucketKeyEnabled = enc.bucketKey;
+  const result = await ctx.run(cli(['aws', 's3api', 'put-bucket-encryption'], {
+    '--bucket': props.bucket.name, '--server-side-encryption-configuration': JSON.stringify({ Rules: [rule] }),
+  }), 'Successfully edited default encryption.');
+  busy.value = false;
+  if (result.ok) edit.value = '';
+}
 
 const tagList = computed(() => Object.entries(props.bucket.tags || {}).map(([key, value]) => ({ key, value: String(value) })));
 

@@ -121,8 +121,8 @@
         <AmbService v-else-if="route.page === 'service'" :key="route.id" :view="view" :api="api"
                     :busy="busy" :service-id="route.id || 'HDFS'" :tab="route.tab || 'summary'"
                     @navigate="go" />
-        <AmbHosts v-else-if="route.page === 'hosts' || route.page === 'host'" :view="view"
-                  :host="route.page === 'host' ? route.id : ''" @navigate="go" />
+        <AmbHosts v-else-if="route.page === 'hosts' || route.page === 'host'" :view="view" :api="api"
+                  :busy="busy" :host="route.page === 'host' ? route.id : ''" @navigate="go" />
         <AmbAlerts v-else-if="route.page === 'alerts'" :view="view" @navigate="go" />
         <AmbAdmin v-else-if="route.page === 'admin'" :view="view" />
         <AmbFilesView v-else-if="route.page === 'files'" :view="view" :api="api" :busy="busy" />

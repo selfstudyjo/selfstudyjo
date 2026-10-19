@@ -71,6 +71,11 @@ export function crumbsFor(route: Route): Crumb[] {
         case 'sg-create': return [root, sgs, { text: 'Create security group' }];
         case 'sg-inbound': return [root, sgs, { text: p.id, route: at('vpc', 'sg', { id: p.id }) },
             { text: 'Edit inbound rules' }];
+        case 'routes': return [root, { text: 'Route tables' }];
+        case 'nats': return [root, { text: 'NAT gateways' }];
+        case 'endpoints': return [root, { text: 'Endpoints' }];
+        case 'endpoint-create': return [root, { text: 'Endpoints', route: at('vpc', 'endpoints') },
+            { text: 'Create endpoint' }];
         default: return [root, { text: 'Your VPCs' }];
         }
     }
@@ -142,12 +147,66 @@ export function crumbsFor(route: Route): Crumb[] {
     }
     case 'cloudwatch': {
         const root: Crumb = { text: 'CloudWatch', route: at('cloudwatch', 'groups') };
+        if (route.page === 'alarms') return [root, { text: 'Alarms' }];
         const groups: Crumb = { text: 'Log groups', route: at('cloudwatch', 'groups') };
         if (route.page === 'group') return [root, groups, { text: p.name }];
         if (route.page === 'create') return [root, groups, { text: 'Create log group' }];
         return [root, { text: 'Log groups' }];
     }
     default:
-        return [];
+        return dataCrumbs(route);
     }
+}
+
+const TITLES: Record<string, [string, ServiceId, string]> = {
+    'kms/keys': ['Key Management Service (KMS)', 'kms', 'Customer managed keys'],
+    'kms/create': ['Key Management Service (KMS)', 'kms', 'Create key'],
+    'kms/key': ['Key Management Service (KMS)', 'kms', ''],
+    'glue/databases': ['AWS Glue', 'glue', 'Databases'],
+    'glue/tables': ['AWS Glue', 'glue', 'Tables'],
+    'glue/table': ['AWS Glue', 'glue', ''],
+    'glue/crawlers': ['AWS Glue', 'glue', 'Crawlers'],
+    'glue/connections': ['AWS Glue', 'glue', 'Connections'],
+    'glue/jobs': ['AWS Glue', 'glue', 'Jobs'],
+    'glue/job': ['AWS Glue', 'glue', ''],
+    'athena/editor': ['Amazon Athena', 'athena', 'Query editor'],
+    'athena/workgroups': ['Amazon Athena', 'athena', 'Workgroups'],
+    'lakeformation/permissions': ['AWS Lake Formation', 'lakeformation', 'Data lake permissions'],
+    'lakeformation/tags': ['AWS Lake Formation', 'lakeformation', 'LF-Tags and permissions'],
+    'lakeformation/admins': ['AWS Lake Formation', 'lakeformation', 'Administrative roles and tasks'],
+    'lakeformation/locations': ['AWS Lake Formation', 'lakeformation', 'Data lake locations'],
+    'kinesis/streams': ['Amazon Kinesis', 'kinesis', 'Data streams'],
+    'kinesis/stream': ['Amazon Kinesis', 'kinesis', ''],
+    'kinesis/firehose': ['Amazon Data Firehose', 'kinesis', 'Firehose streams'],
+    'redshift/serverless': ['Amazon Redshift', 'redshift', 'Serverless dashboard'],
+    'redshift/editor': ['Amazon Redshift', 'redshift', 'Query editor v2'],
+    'stepfunctions/machines': ['Step Functions', 'stepfunctions', 'State machines'],
+    'stepfunctions/create': ['Step Functions', 'stepfunctions', 'Create state machine'],
+    'stepfunctions/machine': ['Step Functions', 'stepfunctions', ''],
+    'stepfunctions/execution': ['Step Functions', 'stepfunctions', ''],
+    'billing/explorer': ['Billing and Cost Management', 'billing', 'Cost Explorer'],
+    'billing/budgets': ['Billing and Cost Management', 'billing', 'Budgets'],
+    'billing/tags': ['Billing and Cost Management', 'billing', 'Cost allocation tags'],
+};
+
+function dataCrumbs(route: Route): Crumb[] {
+    const entry = TITLES[`${route.svc}/${route.page}`];
+    if (!entry) return [];
+    const p = route.params || {};
+    const svc = entry[1];
+    const home: Record<string, string> = { kms: 'keys', glue: 'databases', athena: 'editor',
+        lakeformation: 'permissions', kinesis: 'streams', redshift: 'serverless',
+        stepfunctions: 'machines', billing: 'explorer' };
+    const root: Crumb = { text: entry[0], route: at(svc, home[svc] || route.page) };
+    if (entry[2]) return [root, { text: entry[2] }];
+    const parent: Record<string, Crumb> = {
+        'kms/key': { text: 'Customer managed keys', route: at('kms', 'keys') },
+        'glue/table': { text: 'Tables', route: at('glue', 'tables') },
+        'glue/job': { text: 'Jobs', route: at('glue', 'jobs') },
+        'kinesis/stream': { text: 'Data streams', route: at('kinesis', 'streams') },
+        'stepfunctions/machine': { text: 'State machines', route: at('stepfunctions', 'machines') },
+        'stepfunctions/execution': { text: 'State machines', route: at('stepfunctions', 'machines') },
+    };
+    const middle = parent[`${route.svc}/${route.page}`];
+    return middle ? [root, middle, { text: p.name || p.id || '' }] : [root, { text: p.name || p.id || '' }];
 }

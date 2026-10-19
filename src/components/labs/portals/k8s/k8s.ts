@@ -21,13 +21,14 @@ export interface KindDef {
     group: 'workloads' | 'service' | 'config' | 'cluster' | 'crd';
     scalable?: boolean;
     restartable?: boolean;
+    triggerable?: boolean;   // a CronJob: "Trigger" runs its job template now
     source?: 'objects' | 'namespaces' | 'nodes' | 'pvs' | 'storageClasses'
         | 'clusterRoles' | 'events' | 'crds';
     readOnly?: boolean;      // nothing in the engine backs a write
 }
 
 export const KINDS: KindDef[] = [
-    { kind: 'CronJob', route: 'cronjob', title: 'Cron Jobs', singular: 'cronjob', namespaced: true, group: 'workloads' },
+    { kind: 'CronJob', route: 'cronjob', title: 'Cron Jobs', singular: 'cronjob', namespaced: true, group: 'workloads', triggerable: true },
     { kind: 'DaemonSet', route: 'daemonset', title: 'Daemon Sets', singular: 'daemonset', namespaced: true, group: 'workloads' },
     { kind: 'Deployment', route: 'deployment', title: 'Deployments', singular: 'deployment', namespaced: true, group: 'workloads', scalable: true, restartable: true },
     { kind: 'Job', route: 'job', title: 'Jobs', singular: 'job', namespaced: true, group: 'workloads' },
@@ -201,6 +202,20 @@ export function deleteCommand(def: KindDef, namespace: string, name: string): st
 
 export function scaleCommand(def: KindDef, namespace: string, name: string, replicas: number): string {
     return cli(['kubectl', 'scale', '-n', namespace, def.singular, name], { '--replicas': replicas });
+}
+
+/**
+ * The Dashboard's "Trigger" on a cron job: a one-off Job from its job template,
+ * named `<cronjob>-manual-<suffix>` as the real Dashboard names it. kubectl
+ * spells it `kubectl create job NAME --from=cronjob/CRONJOB`.
+ */
+export function triggerJobName(cronJob: string, now: number = Date.now()): string {
+    const suffix = Math.floor(now / 1000).toString(36).slice(-5).toLowerCase();
+    return `${cronJob}-manual-${suffix}`.slice(0, 63);
+}
+
+export function triggerCommand(namespace: string, cronJob: string, jobName: string): string {
+    return cli(['kubectl', 'create', 'job', jobName, '-n', namespace], { '--from': `cronjob/${cronJob}` });
 }
 
 export function restartCommand(namespace: string, name: string): string {

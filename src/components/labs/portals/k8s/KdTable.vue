@@ -228,6 +228,7 @@ function menuFor(row: Row): { type: string; label: string; icon: string }[] {
   }
   if (props.def.scalable) items.push({ type: 'scale', label: 'Scale', icon: 'scale' });
   if (props.def.restartable) items.push({ type: 'restart', label: 'Restart', icon: 'restart' });
+  if (props.def.triggerable) items.push({ type: 'trigger', label: 'Trigger', icon: 'play' });
   items.push({ type: 'edit', label: 'Edit', icon: 'edit' });
   items.push({ type: 'delete', label: 'Delete', icon: 'delete' });
   return items;

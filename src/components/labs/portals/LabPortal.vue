@@ -162,6 +162,13 @@ const SKINS: Record<string, Component> = {
   hcpterraform: lazy(() => import('./terraform/HcpTerraform.vue')),
   githubdesktop: lazy(() => import('./github/GitHubDesktop.vue')),
   mlflow: lazy(() => import('./mlflow/MlflowUi.vue')),
+  pgadmin: lazy(() => import('./pgadmin/PgAdmin.vue')),
+  snowflake: lazy(() => import('./snowflake/Snowsight.vue')),
+  airflow: lazy(() => import('./airflow/AirflowUi.vue')),
+  dbt: lazy(() => import('./dbt/DbtCloud.vue')),
+  confluent: lazy(() => import('./confluent/ControlCenter.vue')),
+  flink: lazy(() => import('./flink/FlinkDashboard.vue')),
+  datahub: lazy(() => import('./datahub/DataHub.vue')),
 };
 
 const skin = computed<Component | null>(() => SKINS[String(props.tool.skin || '')] || null);
@@ -186,6 +193,13 @@ const DEFAULT_LOCATIONS: Record<string, string> = {
   hcpterraform: 'https://app.terraform.io/app/selfstudy/workspaces',
   githubdesktop: 'x-github-desktop://repository/changes',
   mlflow: 'http://mlflow.lab.internal:5000/#/experiments',
+  pgadmin: 'http://pgadmin.shopflow.internal/browser/',
+  snowflake: 'https://app.snowflake.com/eu-west-1/shopflow-xy12345/#/homepage',
+  airflow: 'http://airflow.shopflow.internal:8080/home',
+  dbt: 'https://cloud.getdbt.com/deploy/71203/projects/40112/',
+  confluent: 'http://control-center.shopflow.internal:9021/clusters',
+  flink: 'http://flink-jobmanager.shopflow.internal:8081/#/overview',
+  datahub: 'http://datahub.shopflow.internal:9002/',
 };
 
 const location = ref(DEFAULT_LOCATIONS[String(props.tool.skin || '')] || 'about:blank');

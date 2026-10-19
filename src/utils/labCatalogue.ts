@@ -467,6 +467,10 @@ const FAMILY_LABELS: Record<string, string> = {
     // six dashboards are one simulated tenant, `sim:fabric`, and one
     // pane. The label is the track's own title, as for cloudops.
     fabric: 'Microsoft Fabric Data Engineering',
+    // The ShopFlow data platform (`sim:dataplat`): PostgreSQL, Snowflake, the
+    // lakehouse, Airflow, dbt, Kafka, Flink, data quality and Feast are one
+    // simulated platform over real data, so one pane holds all of them.
+    dataplat: 'ShopFlow Data Platform',
     ai: 'AI Tutor',
 };
 
@@ -2459,6 +2463,34 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
     // semantic model, governance and security, and CI/CD. Every path is a key
     // of that engine's `view()`; the fixture in `tools/labs-check/check.ts` is
     // dumped from it after `_fablabs.py` drives and grades all twenty labs.
+    // The ShopFlow data platform (app 11's `sim:dataplat`). Its products have
+    // interactive portals; the one read-only dashboard is the Lakehouse
+    // Explorer, because a lake has no single vendor console to replicate.
+    // Paths are into `view.lake` of that engine.
+    dataplat: [
+        {
+            id: 'lake_tables', title: 'Lakehouse tables', kind: 'table', path: 'lake.tables',
+            tool: 'lake_gui', empty: 'No Delta or Iceberg tables yet',
+            columns: [col('name', 'Table', 'code'), col('format', 'Format', 'badge'),
+                col('rows', 'Rows', 'number'), col('files', 'Files', 'number'),
+                col('size_bytes', 'Size (bytes)', 'number'), col('version', 'Version', 'number'),
+                col('partition_by', 'Partitioned by', 'list'), col('location', 'Location', 'code')],
+        },
+        {
+            id: 'lake_files', title: 'Objects in s3://shopflow-lake', kind: 'table', path: 'lake.files',
+            tool: 'lake_gui', empty: 'The bucket is empty',
+            columns: [col('path', 'Path', 'code'), col('format', 'Format', 'badge'),
+                col('compression', 'Compression', 'badge'), col('rows', 'Rows', 'number'),
+                col('bytes', 'Bytes', 'number'), col('row_groups', 'Row groups', 'number')],
+        },
+        {
+            id: 'lake_queries', title: 'Recent lake queries', kind: 'table', path: 'lake.queries',
+            tool: 'lake_gui', empty: 'No queries yet',
+            columns: [col('sql', 'Query', 'code'), col('rows', 'Rows', 'number'),
+                col('files_scanned', 'Files scanned', 'number'),
+                col('files_pruned', 'Files pruned', 'number')],
+        },
+    ],
     fabric: [
         { id: 'clock', title: 'Environment', kind: 'stats', path: 'clock', tool: 'fabric_workspace_gui' },
         {

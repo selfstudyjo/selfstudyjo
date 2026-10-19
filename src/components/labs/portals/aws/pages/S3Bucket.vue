@@ -13,6 +13,7 @@
     <S3Objects v-if="tab === 'objects'" :bucket="bucket" :prefix="prefix" />
     <S3Properties v-else-if="tab === 'properties'" :bucket="bucket" />
     <S3Permissions v-else-if="tab === 'permissions'" :bucket="bucket" />
+    <S3Management v-else-if="tab === 'management'" :bucket="bucket" />
     <S3DeleteBucket v-if="modal === 'delete'" :bucket="bucket" @close="modal = ''" />
     <S3EmptyBucket v-if="modal === 'empty'" :bucket="bucket" @close="modal = ''" />
   </div>
@@ -31,6 +32,7 @@ import CsIcon from '../CsIcon.vue';
 import { useAws } from '../ctx';
 import S3DeleteBucket from './S3DeleteBucket.vue';
 import S3EmptyBucket from './S3EmptyBucket.vue';
+import S3Management from './S3Management.vue';
 import S3Objects from './S3Objects.vue';
 import S3Permissions from './S3Permissions.vue';
 import S3Properties from './S3Properties.vue';
@@ -46,7 +48,7 @@ const bucket = computed(() => rows(ctx.view.value, 's3.buckets').find(b => b.nam
 const tabs = [
   { id: 'objects', text: 'Objects' }, { id: 'metadata', text: 'Metadata', off: true },
   { id: 'properties', text: 'Properties' }, { id: 'permissions', text: 'Permissions' },
-  { id: 'metrics', text: 'Metrics', off: true }, { id: 'management', text: 'Management', off: true },
+  { id: 'metrics', text: 'Metrics', off: true }, { id: 'management', text: 'Management' },
   { id: 'access', text: 'Access Points', off: true },
 ];
 

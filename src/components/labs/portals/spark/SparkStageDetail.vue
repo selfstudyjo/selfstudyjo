@@ -8,6 +8,8 @@
       <li v-if="stage.inputBytes"><strong>Input Size / Records:</strong> {{ bytes(stage.inputBytes) }} / {{ stage.inputRows }}</li>
       <li v-if="stage.shuffleRead"><strong>Shuffle Read Size / Records:</strong> {{ bytes(stage.shuffleRead) }} / {{ Math.round(stage.shuffleRead / 24) }}</li>
       <li v-if="stage.shuffleWrite"><strong>Shuffle Write Size / Records:</strong> {{ bytes(stage.shuffleWrite) }} / {{ Math.round(stage.shuffleWrite / 24) }}</li>
+      <li v-if="stage.spillDisk"><strong>Spill (Memory):</strong> {{ bytes(stage.spillMemory) }}</li>
+      <li v-if="stage.spillDisk"><strong>Spill (Disk):</strong> {{ bytes(stage.spillDisk) }}</li>
       <li><strong>Associated Job Ids:</strong>{{ ' ' }}
         <a href="#" @click.prevent="$emit('navigate', { page: 'job', app: app.id, id: stage.jobId })">{{ stage.jobId }}</a></li>
     </ul>
@@ -24,6 +26,8 @@
           <tr v-if="stage.inputBytes"><td>Input Size / Records</td><td v-for="(v, i) in q(tasks.map(t => t.inputBytes))" :key="i">{{ bytes(v) }} / {{ Math.round(v / 90) }}</td></tr>
           <tr v-if="stage.shuffleRead"><td>Shuffle Read Size / Records</td><td v-for="(v, i) in q(tasks.map(t => t.shuffleRead))" :key="i">{{ bytes(v) }} / {{ Math.round(v / 24) }}</td></tr>
           <tr v-if="stage.shuffleWrite"><td>Shuffle Write Size / Records</td><td v-for="(v, i) in q(tasks.map(t => t.shuffleWrite))" :key="i">{{ bytes(v) }} / {{ Math.round(v / 24) }}</td></tr>
+          <tr v-if="stage.spillDisk"><td>Spill (memory)</td><td v-for="(v, i) in q(tasks.map(t => t.spillMemory))" :key="i">{{ bytes(v) }}</td></tr>
+          <tr v-if="stage.spillDisk"><td>Spill (disk)</td><td v-for="(v, i) in q(tasks.map(t => t.spillDisk))" :key="i">{{ bytes(v) }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -46,7 +50,8 @@
       <table class="table table-bordered table-sm">
         <thead>
           <tr><th>Index</th><th>Task ID</th><th>Attempt</th><th>Status</th><th>Locality Level</th><th>Executor ID</th><th>Host</th>
-            <th>Launch Time</th><th>Duration</th><th>GC Time</th><th>Shuffle Read Size / Records</th><th>Shuffle Write Size / Records</th><th>Errors</th></tr>
+            <th>Launch Time</th><th>Duration</th><th>GC Time</th><th>Shuffle Read Size / Records</th><th>Shuffle Write Size / Records</th>
+            <template v-if="stage.spillDisk"><th>Spill (Memory)</th><th>Spill (Disk)</th></template><th>Errors</th></tr>
         </thead>
         <tbody>
           <tr v-for="t in tasks" :key="t.taskId">
@@ -56,6 +61,7 @@
             <td>{{ duration(t.durationMs) }}</td><td>{{ t.gcMs ? duration(t.gcMs) : '' }}</td>
             <td>{{ t.shuffleRead ? bytes(t.shuffleRead) + ' / ' + Math.round(t.shuffleRead / 24) : '' }}</td>
             <td>{{ t.shuffleWrite ? bytes(t.shuffleWrite) + ' / ' + Math.round(t.shuffleWrite / 24) : '' }}</td>
+            <template v-if="stage.spillDisk"><td>{{ t.spillMemory ? bytes(t.spillMemory) : '' }}</td><td>{{ t.spillDisk ? bytes(t.spillDisk) : '' }}</td></template>
             <td></td>
           </tr>
         </tbody>

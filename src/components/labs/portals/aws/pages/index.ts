@@ -44,6 +44,18 @@ import SqsQueues from './SqsQueues.vue';
 import Subnets from './Subnets.vue';
 import Volumes from './Volumes.vue';
 import VpcList from './VpcList.vue';
+import Athena from './Athena.vue';
+import Billing from './Billing.vue';
+import CwAlarms from './CwAlarms.vue';
+import GlueCatalog from './GlueCatalog.vue';
+import GlueCrawlers from './GlueCrawlers.vue';
+import GlueJobs from './GlueJobs.vue';
+import Kinesis from './Kinesis.vue';
+import KmsKeys from './KmsKeys.vue';
+import LakeFormation from './LakeFormation.vue';
+import Redshift from './Redshift.vue';
+import StepFunctions from './StepFunctions.vue';
+import VpcNetwork from './VpcNetwork.vue';
 
 const PAGES: Record<string, Component> = {
   'home/home': Home,
@@ -104,6 +116,39 @@ const PAGES: Record<string, Component> = {
   'cloudwatch/groups': CwGroups,
   'cloudwatch/create': CwGroups,
   'cloudwatch/group': CwGroup,
+  'cloudwatch/alarms': CwAlarms,
+  'vpc/routes': VpcNetwork,
+  'vpc/nats': VpcNetwork,
+  'vpc/endpoints': VpcNetwork,
+  'vpc/endpoint-create': VpcNetwork,
+  'kms/keys': KmsKeys,
+  'kms/create': KmsKeys,
+  'kms/key': KmsKeys,
+  'glue/databases': GlueCatalog,
+  'glue/tables': GlueCatalog,
+  'glue/table': GlueCatalog,
+  'glue/connections': GlueCatalog,
+  'glue/crawlers': GlueCrawlers,
+  'glue/jobs': GlueJobs,
+  'glue/job': GlueJobs,
+  'athena/editor': Athena,
+  'athena/workgroups': Athena,
+  'lakeformation/permissions': LakeFormation,
+  'lakeformation/tags': LakeFormation,
+  'lakeformation/admins': LakeFormation,
+  'lakeformation/locations': LakeFormation,
+  'kinesis/streams': Kinesis,
+  'kinesis/stream': Kinesis,
+  'kinesis/firehose': Kinesis,
+  'redshift/serverless': Redshift,
+  'redshift/editor': Redshift,
+  'stepfunctions/machines': StepFunctions,
+  'stepfunctions/create': StepFunctions,
+  'stepfunctions/machine': StepFunctions,
+  'stepfunctions/execution': StepFunctions,
+  'billing/explorer': Billing,
+  'billing/budgets': Billing,
+  'billing/tags': Billing,
 };
 
 export function pageFor(route: Route): Component {

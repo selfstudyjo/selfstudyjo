@@ -35,6 +35,16 @@ export interface SparkStage {
   shuffleWrite: number;
   inputRows: number;
   inputBytes: number;
+  /** Catalyst-planned stages carry their task distribution and spill. */
+  kind?: string;
+  spillMemory: number;
+  spillDisk: number;
+  spillTasks: number;
+  taskMs?: number[];
+  taskRead?: number[];
+  taskSpill?: number[];
+  hot?: number[][];
+  skewed?: boolean;
 }
 
 export interface SparkJob {
@@ -47,6 +57,12 @@ export interface SparkJob {
   stages: SparkStage[];
   tasks: number;
   rowsReturned: number;
+  error: string;
+  plan: string[];
+  initialPlan: string[];
+  aqe: boolean;
+  joinStrategies: string[];
+  notes: string[];
 }
 
 export interface SparkApp {
@@ -74,6 +90,8 @@ export interface SparkTask {
   shuffleRead: number;
   shuffleWrite: number;
   inputBytes: number;
+  spillMemory: number;
+  spillDisk: number;
 }
 
 export function locationFor(route: SparkRoute): string {
@@ -123,7 +141,17 @@ export function sparkApps(view: unknown): SparkApp[] {
           shuffleRead: Number(raw.shuffle_read || 0),
           shuffleWrite: Number(raw.shuffle_write || 0),
           inputRows: Number(raw.input_rows || 0),
-          inputBytes: index === 0 ? Number(raw.input_rows || 0) * 90 : 0,
+          inputBytes: stage.input_bytes !== undefined ? Number(stage.input_bytes || 0)
+            : index === 0 ? Number(raw.input_rows || 0) * 90 : 0,
+          kind: stage.kind ? String(stage.kind) : undefined,
+          spillMemory: Number(stage.spill_memory || 0),
+          spillDisk: Number(stage.spill_disk || 0),
+          spillTasks: Number(stage.spill_tasks || 0),
+          taskMs: numbers(stage.task_ms),
+          taskRead: numbers(stage.task_read),
+          taskSpill: numbers(stage.task_spill),
+          hot: Array.isArray(stage.hot) ? stage.hot.map((h: unknown) => numbers(h) || []) : undefined,
+          skewed: Boolean(stage.skewed),
         };
         offset += s.durationMs;
         return s;
@@ -138,6 +166,12 @@ export function sparkApps(view: unknown): SparkApp[] {
         stages,
         tasks: stages.reduce((n, s) => n + s.tasks, 0),
         rowsReturned: Number(job.rows_returned || 0),
+        error: String(job.error || ''),
+        plan: strings(job.plan),
+        initialPlan: strings(job.initial_plan),
+        aqe: Boolean(job.aqe),
+        joinStrategies: strings(job.join_strategies),
+        notes: strings(job.notes),
       };
     });
     const started = Number(app.started_epoch || 0) * 1000 || epoch(app.started);
@@ -160,6 +194,14 @@ export function sparkApps(view: unknown): SparkApp[] {
       stages: appJobs.flatMap(j => j.stages),
     };
   });
+}
+
+function numbers(value: unknown): number[] | undefined {
+  return Array.isArray(value) ? value.map(v => Number(v) || 0) : undefined;
+}
+
+function strings(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(v => String(v)) : [];
 }
 
 function stageDescription(name: string, index: number): string {
@@ -205,6 +247,7 @@ export function executorsFor(view: unknown): SparkExecutor[] {
 
 /** The tasks of one stage, expanded deterministically from its totals. */
 export function tasksFor(stage: SparkStage, executors: SparkExecutor[], taskIdBase: number): SparkTask[] {
+  if (stage.taskMs && stage.taskMs.length === 5 && stage.tasks > 0) return measuredTasks(stage, executors, taskIdBase);
   const workers = executors.filter(e => e.id !== 'driver');
   const slots = Math.max(1, workers.reduce((n, e) => n + e.cores, 0));
   const waves = Math.max(1, Math.ceil(stage.tasks / slots));
@@ -226,9 +269,72 @@ export function tasksFor(stage: SparkStage, executors: SparkExecutor[], taskIdBa
       shuffleRead: Math.round(stage.shuffleRead / stage.tasks),
       shuffleWrite: Math.round(stage.shuffleWrite / stage.tasks),
       inputBytes: Math.round(stage.inputBytes / stage.tasks),
+      spillMemory: 0,
+      spillDisk: 0,
     });
   }
   return out;
+}
+
+/** Interpolate a value at rank r in [0, 1] through the five quantiles. */
+function atRank(q: number[], r: number): number {
+  const pos = r * 4;
+  const i = Math.min(3, Math.floor(pos));
+  return q[i] + (q[i + 1] - q[i]) * (pos - i);
+}
+
+/**
+ * The tasks of a Catalyst-planned stage. The engine sends the min / quartiles /
+ * max of each metric and the slowest tasks by index; every other task is drawn
+ * through those quantiles, so the Summary Metrics table and the task list agree
+ * with each other and with the stage totals the engine computed.
+ */
+function measuredTasks(stage: SparkStage, executors: SparkExecutor[], taskIdBase: number): SparkTask[] {
+  const workers = executors.filter(e => e.id !== 'driver');
+  const slots = Math.max(1, workers.reduce((n, e) => n + e.cores, 0));
+  const n = stage.tasks;
+  const hot = (stage.hot || []).filter(h => h.length >= 4 && h[0] < n);
+  const hotIndex = new Set(hot.map(h => h[0]));
+  const order = Array.from({ length: n }, (_, i) => i).filter(i => !hotIndex.has(i))
+    .sort((a, b) => unit(`${stage.key}:o:${a}`) - unit(`${stage.key}:o:${b}`));
+  const rest = n - hot.length;
+  const rank = new Map<number, number>();
+  order.forEach((index, k) => rank.set(index, rest > 1 ? k / (rest - 1) * (hot.length ? 0.97 : 1) : 0));
+  const out: SparkTask[] = [];
+  const launchAt: number[] = Array(slots).fill(stage.submitted);
+  for (let i = 0; i < n; i++) {
+    const h = hot.find(x => x[0] === i);
+    const r = rank.get(i) ?? 1;
+    const ms = Math.max(1, Math.round(h ? h[1] : atRank(stage.taskMs as number[], r)));
+    const read = Math.round(h ? h[2] : atRank(stage.taskRead || [0, 0, 0, 0, 0], r));
+    const spill = Math.round(h ? h[3] : atRank(stage.taskSpill || [0, 0, 0, 0, 0], r));
+    const slot = launchAt.indexOf(Math.min(...launchAt));
+    const exec = workers[slot % Math.max(1, workers.length)] || executors[0];
+    out.push({
+      index: i, taskId: taskIdBase + i, executor: exec.id, host: exec.host, launch: launchAt[slot],
+      durationMs: ms, gcMs: Math.round(ms * (spill ? 0.12 : 0.04) * unit(`gc:${stage.key}:${i}`)),
+      shuffleRead: stage.kind === 'scan' ? 0 : read,
+      shuffleWrite: Math.round(stage.shuffleWrite / n),
+      inputBytes: stage.kind === 'scan' ? Math.round(stage.inputBytes / n) : 0,
+      spillMemory: spill ? Math.round(spill * 2) : 0, spillDisk: spill,
+    });
+    launchAt[slot] += ms;
+  }
+  return out;
+}
+
+/** The engine's physical plan when it sent one, else a sketch from the stages. */
+export function planLines(job: SparkJob, initial = false): string[] {
+  const lines = initial ? job.initialPlan : job.plan;
+  if (lines && lines.length) return lines;
+  const nodes = physicalPlan(job);
+  return ['AdaptiveSparkPlan isFinalPlan=true', ...nodes.map((n, i) => ' '.repeat(i * 3) + '+- ' + n)];
+}
+
+/** Operator names, bottom (scan) to top, for the SQL tab's diagram. */
+export function planOperators(job: SparkJob): string[] {
+  return planLines(job).map(line => line.replace(/^[\s+-]*/, '').trim())
+    .filter(Boolean).reverse();
 }
 
 /** The first task id of each stage in an application, counting in order. */

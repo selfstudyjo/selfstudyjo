@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { pick } from '@/utils/portalKit';
+import { pick, rows } from '@/utils/portalKit';
 import type { SparkApp } from './spark';
 
 const props = defineProps<{ app: SparkApp; view: Record<string, any> }>();
@@ -49,6 +49,8 @@ const blocks = computed(() => {
     ['spark.submit.deployMode', 'client'],
     ['spark.yarn.historyServer.address', 'spark-history.lab.internal:18080'],
     ...Object.entries(spark),
+    ...rows(props.view, 'spark.session_conf').filter(r => r.source === 'session')
+      .map(r => [String(r.key), String(r.value)] as [string, string]),
   ].sort((a, b) => a[0].localeCompare(b[0])) as [string, string][];
   return [
     { title: 'Runtime Information', head: ['Name', 'Value'], rows: [

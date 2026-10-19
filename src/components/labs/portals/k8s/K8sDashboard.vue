@@ -62,6 +62,7 @@
         <button v-if="currentDef.kind === 'Pod' && current.status === 'Running'" type="button" class="kd-abtn" title="Exec into pod" aria-label="Exec into pod" @click="act('exec', current, currentDef)"><KIcon name="exec" /></button>
         <button v-if="currentDef.scalable" type="button" class="kd-abtn" title="Scale resource" aria-label="Scale resource" @click="act('scale', current, currentDef)"><KIcon name="scale" /></button>
         <button v-if="currentDef.restartable" type="button" class="kd-abtn" title="Restart" aria-label="Restart" @click="act('restart', current, currentDef)"><KIcon name="restart" /></button>
+        <button v-if="currentDef.triggerable" type="button" class="kd-abtn" title="Trigger" aria-label="Trigger" @click="act('trigger', current, currentDef)"><KIcon name="play" /></button>
         <button type="button" class="kd-abtn" title="Edit resource" aria-label="Edit resource" @click="act('edit', current, currentDef)"><KIcon name="edit" /></button>
         <button type="button" class="kd-abtn" title="Delete resource" aria-label="Delete resource" @click="act('delete', current, currentDef)"><KIcon name="delete" /></button>
       </template>

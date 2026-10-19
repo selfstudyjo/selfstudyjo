@@ -44,6 +44,18 @@
       </div>
     </div>
 
+    <!-- TRIGGER (cron job) -->
+    <div v-else-if="dialog.type === 'trigger'" class="kd-dialog" role="dialog" aria-label="Trigger a cron job">
+      <h2 class="kd-dialog__title">Trigger a resource</h2>
+      <p class="kd-text">Run cron job <strong>{{ dialog.row.name }}</strong> in namespace <strong>{{ dialog.row.namespace }}</strong> now? A job named <strong>{{ triggerName }}</strong> is created from its job template.</p>
+      <div class="kd-equiv"><span>This action is equivalent to:</span><code>{{ triggerLine }}</code></div>
+      <p v-if="error" class="kd-error">{{ error }}</p>
+      <div class="kd-actions">
+        <button type="button" class="kd-btn kd-btn--primary" :disabled="working" @click="run(triggerLine, `Job ${triggerName} created`)">Trigger</button>
+        <button type="button" class="kd-btn" @click="close">Cancel</button>
+      </div>
+    </div>
+
     <!-- ROLLBACK -->
     <div v-else-if="dialog.type === 'rollback'" class="kd-dialog" role="dialog" aria-label="Rollback a deployment">
       <h2 class="kd-dialog__title">Rollback a resource</h2>
@@ -132,7 +144,7 @@ import type { PortalApi } from '../usePortal';
 import KIcon from './KIcon.vue';
 import { createConfigMapCommand, createCronJobCommand, createNamespaceCommand, createSecretCommand,
   createServiceCommand, dash, deleteCommand, getYamlCommand, replaceCommand, restartCommand, scaleCommand,
-  undoCommand, validateName, type DialogState, type Row } from './k8s';
+  triggerCommand, triggerJobName, undoCommand, validateName, type DialogState, type Row } from './k8s';
 
 const props = defineProps<{ dialog: DialogState | null; view: Record<string, any>; api: PortalApi }>();
 const emit = defineEmits<{ (e: 'close'): void; (e: 'deleted', d: DialogState): void }>();
@@ -161,6 +173,7 @@ watch(() => props.dialog, async d => {
   working.value = false;
   if (!d) return;
   if (d.type === 'scale') replicas.value = Number(d.row.desired ?? 0);
+  if (d.type === 'trigger') triggerName.value = triggerJobName(d.row.name);
   if (d.type === 'edit') { format.value = 'yaml'; await load(); }
   if (d.type === 'create') {
     createName.value = '';
@@ -173,6 +186,8 @@ watch(() => props.dialog, async d => {
 const deleteLine = computed(() => props.dialog ? deleteCommand(props.dialog.def, ns.value, props.dialog.row.name) : '');
 const scaleLine = computed(() => props.dialog ? scaleCommand(props.dialog.def, ns.value, props.dialog.row.name, replicas.value) : '');
 const restartLine = computed(() => props.dialog ? restartCommand(ns.value, props.dialog.row.name) : '');
+const triggerName = ref('');
+const triggerLine = computed(() => props.dialog ? triggerCommand(ns.value, props.dialog.row.name, triggerName.value) : '');
 const undoLine = computed(() => props.dialog ? undoCommand(ns.value, props.dialog.row.name, props.dialog.revision) : '');
 const replicasError = computed(() => (Number.isInteger(replicas.value) && replicas.value >= 0 ? '' : 'Desired replicas must be a whole number, 0 or more'));
 const lineCount = computed(() => Math.max(16, body.value.split('\n').length));

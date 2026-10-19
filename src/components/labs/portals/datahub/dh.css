@@ -1,0 +1,117 @@
+/* DataHub's shared furniture (the antd-based DataHub web UI), scoped into each
+   component with <style scoped src="./dh.css">. Every colour is spent from
+   the custom properties set on DataHub.vue's root (.dh-app). */
+
+.dh-page { display: flex; flex-direction: column; min-width: 0; padding: 20px 28px 28px; gap: 16px; }
+.dh-page-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.dh-page-head > div:first-child { flex: 1; min-width: 220px; }
+.dh-title { margin: 0; font-size: 22px; line-height: 30px; font-weight: 700; color: var(--dh-text); overflow-wrap: anywhere; }
+.dh-subtitle { margin: 2px 0 0; color: var(--dh-text-2); font-size: 14px; }
+.dh-h3 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 700; color: var(--dh-text); }
+.dh-h4 { margin: 0; font-size: 14px; line-height: 22px; font-weight: 700; color: var(--dh-text); }
+.dh-muted { color: var(--dh-text-2); }
+.dh-mono { font-family: var(--dh-mono); font-size: 12px; overflow-wrap: anywhere; }
+.dh-spacer { flex: 1; }
+.dh-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+
+.dh-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px;
+  padding: 0 14px; border-radius: 6px; border: 1px solid var(--dh-border-2);
+  background: #fff; color: var(--dh-text); font: inherit; font-size: 14px; line-height: 22px;
+  cursor: pointer; white-space: nowrap; box-shadow: 0 2px 0 rgba(0, 0, 0, .02);
+}
+.dh-btn:hover:not(:disabled) { border-color: var(--dh-primary); color: var(--dh-primary); }
+.dh-btn--primary { background: var(--dh-primary); border-color: var(--dh-primary); color: #fff; box-shadow: 0 2px 0 rgba(5, 145, 255, .1); }
+.dh-btn--primary:hover:not(:disabled) { background: var(--dh-primary-hover); border-color: var(--dh-primary-hover); color: #fff; }
+.dh-btn--danger { background: var(--dh-danger); border-color: var(--dh-danger); color: #fff; }
+.dh-btn--danger:hover:not(:disabled) { background: #a8071a; border-color: #a8071a; color: #fff; }
+.dh-btn--text { border-color: transparent; background: transparent; box-shadow: none; padding: 0 8px; }
+.dh-btn--text:hover:not(:disabled) { background: var(--dh-hover); border-color: transparent; color: var(--dh-text); }
+.dh-btn--link { border-color: transparent; background: transparent; box-shadow: none; color: var(--dh-link); padding: 0 4px; }
+.dh-btn--link:hover:not(:disabled) { border-color: transparent; color: var(--dh-primary-hover); }
+.dh-btn--sm { height: 26px; padding: 0 8px; font-size: 13px; border-radius: 4px; }
+.dh-btn--icon { width: 32px; padding: 0; }
+.dh-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.dh-link { color: var(--dh-link); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-align: left; text-decoration: none; overflow-wrap: anywhere; }
+.dh-link:hover { color: var(--dh-primary-hover); text-decoration: underline; }
+
+.dh-input, .dh-select, .dh-textarea {
+  height: 32px; border: 1px solid var(--dh-border-2); border-radius: 6px; background: #fff;
+  padding: 0 11px; font: inherit; font-size: 14px; color: var(--dh-text); min-width: 0; box-sizing: border-box; width: 100%;
+}
+.dh-textarea { height: auto; padding: 6px 11px; resize: vertical; line-height: 22px; }
+.dh-input:hover, .dh-select:hover, .dh-textarea:hover { border-color: var(--dh-primary); }
+.dh-input:focus, .dh-select:focus, .dh-textarea:focus { outline: none; border-color: var(--dh-primary); box-shadow: 0 0 0 2px rgba(22, 119, 255, .15); }
+.dh-input::placeholder, .dh-textarea::placeholder { color: #8c8c8c; }
+.dh-field { display: flex; flex-direction: column; gap: 6px; }
+.dh-label { font-size: 14px; color: var(--dh-text); }
+.dh-label b { color: var(--dh-danger); font-weight: 400; margin-right: 4px; }
+.dh-hint { font-size: 12px; color: var(--dh-text-2); }
+.dh-error-text { font-size: 13px; color: var(--dh-danger); overflow-wrap: anywhere; }
+
+.dh-card { background: #fff; border: 1px solid var(--dh-border); border-radius: 8px; min-width: 0; }
+.dh-card__head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--dh-border); flex-wrap: wrap; }
+.dh-card__body { padding: 16px; min-width: 0; }
+
+.dh-table-wrap { overflow: auto; min-width: 0; border: 1px solid var(--dh-border); border-radius: 8px; background: #fff; }
+.dh-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dh-table th {
+  text-align: left; font-weight: 600; color: var(--dh-text); background: #fafafa; padding: 10px 12px;
+  border-bottom: 1px solid var(--dh-border); white-space: nowrap; font-size: 13px;
+}
+.dh-table td { padding: 10px 12px; border-bottom: 1px solid var(--dh-border); vertical-align: top; color: var(--dh-text); min-width: 0; }
+.dh-table tbody tr:hover td { background: #fafafa; }
+.dh-table tbody tr:last-child td { border-bottom: 0; }
+.dh-table .dh-actions { white-space: nowrap; text-align: right; }
+
+.dh-tag {
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 7px; border: 1px solid var(--dh-border-2);
+  border-radius: 4px; background: #fff; font-size: 12px; color: var(--dh-text); max-width: 100%; white-space: nowrap;
+}
+.dh-tag__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dh-tag__text { overflow: hidden; text-overflow: ellipsis; }
+.dh-tag__x { min-width: 16px; min-height: 16px; border-radius: 3px; border: 0; background: none; padding: 0; margin-left: 1px; color: #8c8c8c; cursor: pointer; display: inline-grid; place-items: center; }
+.dh-tag__x:hover { color: var(--dh-text); }
+.dh-term { border-color: #d3adf7; background: #f9f0ff; }
+.dh-term .dh-ico { color: #722ed1; }
+.dh-add {
+  display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; border: 1px dashed var(--dh-border-2);
+  border-radius: 4px; background: #fff; color: var(--dh-text-2); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+.dh-add:hover { color: var(--dh-primary); border-color: var(--dh-primary); }
+
+.dh-pill { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dh-pill--ok { background: #f6ffed; color: #237804; border: 1px solid #b7eb8f; }
+.dh-pill--bad { background: #fff1f0; color: #a8071a; border: 1px solid #ffa39e; }
+.dh-pill--warn { background: #fff7e6; color: #ad4e00; border: 1px solid #ffd591; }
+.dh-pill--info { background: #e6f4ff; color: #0958d9; border: 1px solid #91caff; }
+.dh-pill--grey { background: #fafafa; color: #595959; border: 1px solid var(--dh-border-2); }
+
+.dh-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--dh-border); overflow-x: auto; min-width: 0; }
+.dh-tabs button {
+  border: 0; background: none; padding: 10px 0; font: inherit; font-size: 14px; color: var(--dh-text); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+}
+.dh-tabs button:hover { color: var(--dh-primary); }
+.dh-tabs button.is-active { color: var(--dh-primary); border-bottom-color: var(--dh-primary); font-weight: 600; }
+.dh-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f0f0f0; color: #595959; font-size: 11px; font-weight: 600; }
+
+.dh-empty { padding: 32px 16px; text-align: center; color: var(--dh-text-2); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dh-empty .dh-ico { color: #bfbfbf; width: 40px; height: 40px; }
+
+.dh-alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; font-size: 14px; overflow-wrap: anywhere; }
+.dh-alert--info { background: #e6f4ff; border: 1px solid #91caff; }
+.dh-alert--info > .dh-ico { color: #1677ff; }
+.dh-alert--error { background: #fff2f0; border: 1px solid #ffccc7; }
+.dh-alert--error > .dh-ico { color: #cf1322; }
+.dh-alert--success { background: #f6ffed; border: 1px solid #b7eb8f; }
+.dh-alert--success > .dh-ico { color: #389e0d; }
+.dh-alert--warning { background: #fffbe6; border: 1px solid #ffe58f; }
+.dh-alert--warning > .dh-ico { color: #d48806; }
+.dh-alert > div { flex: 1; min-width: 0; }
+
+.dh-pre {
+  margin: 0; padding: 12px; background: #f6f8fa; border: 1px solid var(--dh-border); border-radius: 6px;
+  font-family: var(--dh-mono); font-size: 12px; line-height: 18px; white-space: pre-wrap; overflow-wrap: anywhere; color: #1f2328; max-height: 360px; overflow: auto;
+}

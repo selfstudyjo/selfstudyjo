@@ -1,0 +1,169 @@
+/* Airflow 2.9's shared furniture, scoped into each component with
+   <style scoped src="./af.css">. The Flask-AppBuilder pages (lists, forms)
+   are Bootstrap 3 in Airflow's palette; the DAG page is Chakra UI. Every
+   colour is spent from the custom properties on AirflowUi's root (.af-app). */
+
+.af-page { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 16px 24px 24px; gap: 12px; }
+.af-page > * { flex-shrink: 0; }
+.af-h2 { margin: 0; font-size: 26px; line-height: 32px; font-weight: 500; color: var(--af-text); letter-spacing: normal; }
+.af-h3 { margin: 0; font-size: 18px; line-height: 24px; font-weight: 500; color: var(--af-text); letter-spacing: normal; }
+.af-h4 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--af-text); letter-spacing: normal; }
+.af-muted { color: var(--af-text-2); }
+.af-small { font-size: 12px; }
+.af-spacer { flex: 1; }
+.af-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+
+.af-link { color: var(--af-link); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: none; text-align: left; overflow-wrap: anywhere; }
+.af-link:hover { color: var(--af-link-hover); text-decoration: underline; }
+.af-link--strong { font-weight: 600; }
+
+/* Bootstrap 3 buttons, as Airflow re-themes them. */
+.af-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px;
+  border: 1px solid var(--af-border-strong); border-radius: 4px; background: #fff; color: var(--af-text);
+  font: inherit; font-size: 14px; line-height: 1; cursor: pointer; white-space: nowrap;
+}
+.af-btn:hover:not(:disabled) { background: #e6e6e6; border-color: #adadad; }
+.af-btn:disabled { opacity: .55; cursor: not-allowed; }
+.af-btn--primary { background: var(--af-primary); border-color: var(--af-primary-dark); color: #fff; }
+.af-btn--primary:hover:not(:disabled) { background: var(--af-primary-dark); border-color: var(--af-primary-darker); }
+.af-btn--danger { background: #d9534f; border-color: #d43f3a; color: #fff; }
+.af-btn--danger:hover:not(:disabled) { background: #c9302c; border-color: #ac2925; }
+.af-btn--success { background: #5cb85c; border-color: #4cae4c; color: #fff; }
+.af-btn--success:hover:not(:disabled) { background: #449d44; border-color: #398439; }
+.af-btn--sm { height: 26px; padding: 0 8px; font-size: 12px; }
+.af-btn--xs { height: 22px; padding: 0 6px; font-size: 12px; }
+.af-btn--icon { width: 32px; padding: 0; }
+.af-btn--icon.af-btn--sm { width: 26px; }
+.af-btn.is-active { background: #e6e6e6; box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125); border-color: #adadad; }
+.af-btn--primary.is-active { background: var(--af-primary-darker); color: #fff; }
+.af-btn-group { display: inline-flex; flex-wrap: wrap; }
+.af-btn-group > .af-btn { border-radius: 0; margin-left: -1px; }
+.af-btn-group > .af-btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.af-btn-group > .af-btn:last-child { border-radius: 0 4px 4px 0; }
+.af-btn-group > .af-btn:only-child { border-radius: 4px; }
+
+/* Chakra toggle buttons used in the task actions. */
+.af-toggle {
+  height: 26px; padding: 0 10px; border: 1px solid var(--af-border-strong); background: #fff; color: var(--af-text);
+  font: inherit; font-size: 12px; cursor: pointer; margin-left: -1px;
+}
+.af-toggle:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.af-toggle:last-child { border-radius: 0 4px 4px 0; }
+.af-toggle.is-on { background: var(--af-primary); border-color: var(--af-primary); color: #fff; position: relative; z-index: 1; }
+
+/* Fields */
+.af-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.af-label { font-size: 13px; font-weight: 700; color: var(--af-text); }
+.af-label i { font-style: normal; font-weight: 400; color: var(--af-text-2); }
+.af-help { font-size: 12px; color: var(--af-text-2); }
+.af-input, .af-select, .af-textarea {
+  height: 32px; padding: 4px 10px; border: 1px solid var(--af-border-strong); border-radius: 4px; background: #fff;
+  color: var(--af-text); font: inherit; font-size: 14px; min-width: 0; box-sizing: border-box; width: 100%;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+}
+.af-textarea { height: auto; min-height: 120px; padding: 8px 10px; resize: vertical; font-family: var(--af-mono); font-size: 13px; line-height: 18px; }
+.af-input:focus, .af-select:focus, .af-textarea:focus { outline: 0; border-color: #66afe9; box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6); }
+.af-input--error { border-color: #a94442; }
+.af-error-text { color: #a94442; font-size: 12px; }
+.af-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: var(--af-text); }
+.af-check input { width: 15px; height: 15px; margin: 0; accent-color: var(--af-primary); }
+
+/* Bootstrap alerts (the flash messages and the import-error banner). */
+.af-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 15px; border: 1px solid transparent; border-radius: 4px; font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+.af-alert--info { background: #d9edf7; border-color: #bce8f1; color: #31708f; }
+.af-alert--success { background: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
+.af-alert--warning { background: #fcf8e3; border-color: #faebcc; color: #8a6d3b; }
+.af-alert--error { background: #f2dede; border-color: #ebccd1; color: #a94442; }
+.af-alert__body { flex: 1; min-width: 0; }
+.af-alert__x { border: 0; background: none; color: inherit; opacity: .6; cursor: pointer; padding: 0; font-size: 18px; line-height: 18px; }
+.af-alert__x:hover { opacity: 1; }
+
+/* FAB list pages */
+.af-panel { border: 1px solid var(--af-border); border-radius: 4px; background: #fff; min-width: 0; display: flex; flex-direction: column; }
+.af-panel__head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f5f5f5; border-bottom: 1px solid var(--af-border); flex-wrap: wrap; }
+.af-panel__title { font-size: 16px; font-weight: 500; margin: 0; color: var(--af-text); letter-spacing: normal; }
+.af-panel__body { padding: 12px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.af-panel__foot { padding: 8px 12px; border-top: 1px solid var(--af-border); font-size: 13px; color: var(--af-text-2); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.af-table-wrap { overflow: auto; min-width: 0; }
+.af-table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--af-text); }
+.af-table th { text-align: left; font-weight: 700; padding: 8px; border-bottom: 2px solid var(--af-border); white-space: nowrap; background: #fff; vertical-align: bottom; }
+.af-table td { padding: 8px; border-top: 1px solid var(--af-border); vertical-align: middle; }
+.af-table--bordered th, .af-table--bordered td { border: 1px solid var(--af-border); }
+.af-table--striped tbody tr:nth-child(odd) td { background: #f9f9f9; }
+.af-table tbody tr:hover td { background: #f0f6fd; }
+.af-table td.af-num, .af-table th.af-num { text-align: right; font-variant-numeric: tabular-nums; }
+.af-table .af-nowrap { white-space: nowrap; }
+.af-table .af-actions-col { width: 1%; white-space: nowrap; }
+.af-sort { cursor: pointer; user-select: none; }
+.af-sort:hover { color: var(--af-link); }
+.af-empty-cell { text-align: center; color: var(--af-text-2); padding: 18px 8px; }
+
+.af-mono { font-family: var(--af-mono); font-size: 13px; }
+.af-code {
+  margin: 0; padding: 12px; background: #f8f8f8; border: 1px solid var(--af-border); border-radius: 4px; overflow: auto;
+  font-family: var(--af-mono); font-size: 12.5px; line-height: 19px; white-space: pre; color: #24292e; tab-size: 4;
+}
+.af-code--wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.af-tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 12px; line-height: 20px;
+  background: var(--af-tag-bg); color: var(--af-tag-ink); border: 0; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.af-tag:hover { background: var(--af-tag-hover); }
+.af-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; background: #f0f0f0; color: var(--af-text); white-space: nowrap; font-family: var(--af-mono); }
+
+/* A state badge (Chakra) - the state's own colour. */
+.af-state { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.af-state i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(0, 0, 0, .15); flex: none; }
+.af-state--round i { border-radius: 50%; }
+
+.af-kv { width: 100%; border-collapse: collapse; font-size: 14px; }
+.af-kv th, .af-kv td { padding: 6px 10px; border-bottom: 1px solid var(--af-border-light); text-align: left; vertical-align: top; }
+.af-kv th { width: 40%; color: var(--af-text); font-weight: 600; }
+.af-kv td { overflow-wrap: anywhere; color: var(--af-text); }
+.af-kv tr.af-kv__section th { background: #f5f5f5; font-size: 13px; text-transform: none; color: var(--af-text-2); }
+
+/* Chakra tabs */
+.af-tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--af-border-light); overflow-x: auto; scrollbar-width: none; flex: none; }
+.af-tab {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 8px 12px; margin-bottom: -2px; font: inherit;
+  font-size: 14px; color: var(--af-text-2); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.af-tab:hover { color: var(--af-text); }
+.af-tab.is-active { color: var(--af-primary); border-bottom-color: var(--af-primary); font-weight: 600; }
+
+/* The paused / active switch (Bootstrap-toggle in the list, Chakra in the DAG header). */
+.af-switch { position: relative; width: 34px; height: 18px; border-radius: 9px; border: 0; background: #bdbdbd; cursor: pointer; padding: 0; flex: none; }
+.af-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+.af-switch.is-on { background: var(--af-primary); }
+.af-switch.is-on::after { left: 18px; }
+.af-switch:disabled { opacity: .5; cursor: not-allowed; }
+.af-switch:focus-visible { outline: 2px solid #66afe9; outline-offset: 2px; }
+
+.af-menu {
+  position: absolute; z-index: 40; min-width: 180px; background: #fff; border: 1px solid rgba(0, 0, 0, .15); border-radius: 4px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .175); padding: 5px 0; display: flex; flex-direction: column;
+}
+.af-menu button { border: 0; background: none; text-align: left; padding: 6px 16px; font: inherit; font-size: 14px; color: var(--af-text); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.af-menu button:hover:not(:disabled) { background: #f5f5f5; }
+.af-menu button:disabled { color: #aaa; cursor: not-allowed; }
+.af-menu button.is-danger { color: #a94442; }
+.af-menu hr { border: 0; border-top: 1px solid #e5e5e5; margin: 5px 0; }
+.af-menu__head { padding: 3px 16px; font-size: 12px; color: #777; }
+.af-menu-anchor { position: relative; display: inline-flex; }
+
+.af-empty { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; padding: 40px 16px; color: var(--af-text-2); }
+.af-empty strong { color: var(--af-text); font-size: 15px; }
+
+/* The platform's global floor styles bare elements for the galaxy themes;
+   Airflow is not a galaxy, so those are put back here. */
+code, kbd, samp { background: #f6f6f6; color: #c7254e; border-radius: 3px; padding: 1px 4px; font-family: var(--af-mono); font-size: 12px; }
+pre { border-radius: 4px; }
+h1, h2, h3, h4 { letter-spacing: normal; text-wrap: wrap; }
+
+@container sl-portal (max-width: 640px) {
+  .af-page { padding: 12px; }
+  .af-h2 { font-size: 22px; }
+}
