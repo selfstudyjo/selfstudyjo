@@ -92,24 +92,49 @@
       <div class="tm-transcript-head">
         <h4>
           {{ $t('Your Live Transcript') }}
-          <span v-if="isSpeakingRef" class="tm-transcript-live">{{ $t('🎤 Recording (Whisper AI)') }}</span>
+          <span v-if="isSpeakingRef && speechPaused" class="tm-transcript-live is-paused">{{ $t('⏸ paused') }}</span>
+          <span v-else-if="isSpeakingRef" class="tm-transcript-live" :class="{ hearing: micSpeaking }">
+            {{ micSpeaking ? $t('🗣️ hearing you…') : $t('🎤 listening…') }}
+          </span>
+          <span v-if="isSpeakingRef && pendingTranscripts > 0" class="tm-transcript-pending">{{ $t('✍️ transcribing…') }}</span>
         </h4>
         <span class="tm-transcript-words">{{ $t('{v0} words', { v0: transcriptWords }) }}</span>
       </div>
 
-      <textarea
-        ref="transcriptEl"
-        class="tm-transcript-input"
-        :value="answer.text"
-        :readonly="!isSpeakingRef && !answer.text"
-        @input="onTranscriptTyped"
-        @select="trackSelection"
-        @keyup="trackSelection"
-        @mouseup="trackSelection"
-        :placeholder="transcriptPlaceholder"
-        spellcheck="true"
-        rows="4"
-      ></textarea>
+      <!--
+        THE CONTROLS, ABOVE THE BOX THEY ACT ON -- the Job Interview room's.
+
+        Pause stops the microphone AND the speech timer (and its lights), so the
+        minute spent fixing a transcript is not counted as speaking time; the
+        sentence in progress is still transcribed. While paused, the AI repair
+        puts back words the transcription misheard -- and KEEPS every filler
+        word, because the Ah-Counter counts them. App 27 refuses any suggestion
+        that adds, removes or rewrites content.
+      -->
+      <div class="tm-transcript-controls" v-if="isSpeakingRef">
+        <button type="button" class="tm-btn-tool tm-btn-pause" v-if="!speechPaused" @click="pauseSpeech"
+                :title="$t('Stop the microphone and the timer so you can edit your transcript')">
+          {{ $t('⏸ Pause') }}
+        </button>
+        <button type="button" class="tm-btn-tool tm-btn-resume" v-else @click="resumeSpeech"
+                :title="$t('Turn the microphone back on and carry on with your speech')">
+          {{ $t('▶ Continue') }}
+        </button>
+        <button type="button" class="tm-btn-tool tm-btn-enhance" v-if="speechPaused"
+                :disabled="enhancing || pendingTranscripts > 0 || !answer.text.trim()"
+                @click="enhanceSpeech"
+                :title="$t('Replace words the transcription misheard, using the topic as context. Filler words are kept, and nothing is added or rewritten.')">
+          {{ enhancing ? $t('✨ Checking your words…')
+            : pendingTranscripts > 0 ? $t('✍️ Finishing transcription…')
+            : $t('✨ Context enhancement using AI') }}
+        </button>
+        <span class="tm-mic-meter" v-if="!speechPaused" :class="{ hearing: micSpeaking }"
+              role="meter" aria-valuemin="0" aria-valuemax="100"
+              :aria-valuenow="Math.round(micLevel * 100)" :aria-label="$t('Microphone level')"
+              :title="$t('Microphone level')">
+          <span class="tm-mic-meter-fill" :style="{ inlineSize: Math.round(micLevel * 100) + '%' }"></span>
+        </span>
+      </div>
 
       <div class="tm-transcript-tools" v-if="isSpeakingRef">
         <button type="button" class="tm-btn-tool" :disabled="!hasSelection"
@@ -130,6 +155,33 @@
                :title="$t('Turn off if the speech is about a subject where you say these words for real')">
           <input type="checkbox" v-model="voiceEditing"> {{ $t('spoken corrections') }}
         </label>
+      </div>
+
+      <textarea
+        ref="transcriptEl"
+        class="tm-transcript-input"
+        :value="answer.text"
+        :readonly="!isSpeakingRef && !answer.text"
+        @input="onTranscriptTyped"
+        @select="trackSelection"
+        @keyup="trackSelection"
+        @mouseup="trackSelection"
+        :placeholder="transcriptPlaceholder"
+        spellcheck="true"
+        rows="4"
+      ></textarea>
+
+
+      <div class="tm-enhance-notice" v-if="enhanceNotice" :class="'is-' + enhanceNotice.kind" role="status">
+        <span>{{ enhanceNotice.text }}</span>
+        <span class="tm-enhance-changes" v-if="enhanceNotice.changes.length">
+          <span v-for="(c, i) in enhanceNotice.changes" :key="i" class="tm-enhance-change">
+            <del dir="auto">{{ c.from }}</del> → <ins dir="auto">{{ c.to }}</ins>
+          </span>
+        </span>
+        <button type="button" class="tm-btn-tool" v-if="enhanceUndoAvailable" @click="undoEnhance">
+          {{ $t('↩︎ Undo') }}
+        </button>
       </div>
 
       <div class="tm-transcript-caret" v-if="answer.caret !== null">
@@ -241,6 +293,8 @@ import { SEATS, actorById, seatByKey, seatGenders, seatLabel } from '@/cast/acto
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService } from '@/services/toastmasters.service';
+import { MicCapture } from '@/utils/micCapture';
+import { OrderedResults, transcriptContext } from '@/utils/speechSegmenter';
 import { serviceRegistry } from '@/services/config';
 
 const route = useRoute();
@@ -397,6 +451,17 @@ const dbgVisibility = ref(0);
 const recordingStatus = ref('—');
 const isSpeakingRef = ref(false);
 const chunksProcessed = ref(0);
+/** Paused mid-speech: microphone and speech timer stopped, transcript editable. */
+const speechPaused = ref(false);
+/** The microphone level, 0..1, and whether the segmenter hears speech. */
+const micLevel = ref(0);
+const micSpeaking = ref(false);
+/** Utterances sent and not yet applied. */
+const pendingTranscripts = ref(0);
+/** The AI repair of misheard words. */
+const enhancing = ref(false);
+const enhanceNotice = ref<null | { kind: 'ok' | 'info' | 'error'; text: string; changes: { from: string; to: string }[] }>(null);
+const enhanceUndoAvailable = ref(false);
 const roleTaskInfo = ref('');
 
 // Skip buttons
@@ -427,8 +492,23 @@ let nativeFaceDetector: any = null;
 let analysisInterval: any = null;
 let detectionCanvas: HTMLCanvasElement | null = null;
 let videoIsMirrored: boolean | null = null;
-let currentRecorder: MediaRecorder | null = null;
-let recordingLoopActive = false;
+/**
+ * The speech microphone -- the Job Interview room's pipeline (see
+ * src/utils/micCapture.ts): filtered, level-measured, cut into utterances at
+ * pauses, silence never sent. It replaced a fixed 3.5-second chunk, which sent
+ * silence for Whisper to caption ("Thank you.") and cut words in half.
+ */
+let capture: MicCapture | null = null;
+let captureStream: MediaStream | null = null;
+/** Transcripts applied in spoken order; one per turn. */
+let ordered: OrderedResults | null = null;
+/** Bumped per turn, so a late transcript cannot land in the next one. */
+let turnGeneration = 0;
+/** Milliseconds this speech spent paused, excluded from its timing. */
+let speechPausedMs = 0;
+let speechPausedAt = 0;
+/** The text before the last AI repair, for Undo. */
+let enhanceUndoText: string | null = null;
 
 const blStats = {
   frames: 0, faceVisibleFrames: 0, lookingForwardFrames: 0, lookingAwayFrames: 0, absentFrames: 0,
@@ -912,6 +992,8 @@ function applyChunk(text: string) {
 function onTranscriptTyped(event: Event) {
   const el = event.target as HTMLTextAreaElement;
   answer.value = setTypedText(answer.value, el.value);
+  // An Undo after hand edits would throw the edits away with the repair.
+  dropEnhanceUndo();
 }
 
 function trackSelection() {
@@ -1060,96 +1142,190 @@ async function initMedia(): Promise<boolean> {
   return true;
 }
 
-// ═══════ WHISPER TRANSCRIPTION (identical to original) ═══════
-function getPreferredMimeType(): string {
-  const types = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'];
-  for (const t of types) { if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) return t; }
-  return '';
-}
-async function transcribeAudioBlob(blob: Blob, chunkIndex: number): Promise<void> {
-  if (blob.size < 1000) return;
+// ═══════ WHISPER TRANSCRIPTION ═══════
+/**
+ * Send one utterance and apply what comes back -- in spoken order. The topic
+ * and the end of the speech so far travel with it as Whisper's prompt.
+ */
+async function transcribeSegment(blob: Blob): Promise<void> {
+  const results = ordered;
+  const generation = turnGeneration;
+  if (!results) return;
+  const seq = results.issue();
+  pendingTranscripts.value = results.pending;
+  let text = '';
   try {
     const baseUrl = await serviceRegistry.getRandomToastmastersReplica();
     if (!baseUrl) return;
     const formData = new FormData();
     formData.append('audio', blob, 'audio.webm');
     formData.append('language', aiLanguage());
+    formData.append('question', displayTopic.value || '');
+    formData.append('context', transcriptContext(answer.value.text));
     const token = import.meta.env.VITE_AUTH_TOKEN;
     const response = await fetch(`${baseUrl}/api/toastmasters/transcribe`, {
-      method: 'POST', headers: {
-   'Authorization': `Token ${token}`,
- // The language the answer is being SPOKEN in, so Whisper transcribes it
- // rather than transliterating it. Sent as a form field as well as a
- // header: this is a multipart upload, and `language.py` reads the body
- // first — but `request.get_json(silent=True)` sees nothing in a multipart
- // request, so the header is what actually carries it here. Both are sent
- // so that neither the service nor a future proxy has to be the one that
- // works.
-   ...aiLanguageHeaders(),
- }, body: formData
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${token}`,
+        // The language the speech is SPOKEN in, so Whisper transcribes rather
+        // than transliterates. Header and form field both -- a multipart body
+        // has no JSON for `language.py` to read.
+        ...aiLanguageHeaders(),
+      },
+      body: formData,
     });
     if (response.ok) {
       const result = await response.json();
-      const text = (result.text || '').trim();
-      if (text) { applyChunk(text); chunksProcessed.value++; }
+      text = String(result.text || '').trim();
+      if (text) chunksProcessed.value++;
     }
-  } catch (e: any) { console.error(`[Whisper] Chunk #${chunkIndex} error:`, e.message); }
-}
-async function recordOneChunk(chunkIndex: number, durationMs: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (!mediaStream) { resolve(); return; }
-    const audioTracks = mediaStream.getAudioTracks();
-    if (!audioTracks.length) { resolve(); return; }
-    const audioStream = new MediaStream(audioTracks);
-    const mimeType = getPreferredMimeType();
-    let recorder: MediaRecorder;
-    try { recorder = mimeType ? new MediaRecorder(audioStream, { mimeType, audioBitsPerSecond: 64000 }) : new MediaRecorder(audioStream); }
-    catch { resolve(); return; }
-    const chunks: Blob[] = [];
-    let stopTimeout: any = null;
-    recorder.ondataavailable = (e: BlobEvent) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-    recorder.onerror = (e: any) => console.error('[Recorder]', e.error?.name || e);
-    recorder.onstop = () => {
-      if (stopTimeout) clearTimeout(stopTimeout);
-      if (chunks.length > 0) { const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }); transcribeAudioBlob(blob, chunkIndex); }
-      currentRecorder = null; resolve();
-    };
-    currentRecorder = recorder;
-    try { recorder.start(); } catch { resolve(); return; }
-    stopTimeout = setTimeout(() => { if (recorder.state === 'recording') try { recorder.stop(); } catch {} }, durationMs);
-  });
-}
-async function startContinuousRecording() {
-  if (recordingLoopActive) return;
-  recordingLoopActive = true; recordingStatus.value = '🎤 Recording'; chunksProcessed.value = 0;
-  let chunkIndex = 0;
-  while (isSpeaking && micEnabled.value) {
-    chunkIndex++;
-    await recordOneChunk(chunkIndex, 3500);
-    if (isSpeaking) await new Promise(r => setTimeout(r, 50));
+  } catch (e: any) {
+    console.error('[Whisper] error:', e?.message || e);
+  } finally {
+    // Resolved even on failure, as empty -- one dropped upload must not hold
+    // the rest of the speech back.
+    if (generation === turnGeneration) results.resolve(seq, text);
+    pendingTranscripts.value = generation === turnGeneration ? results.pending : 0;
   }
-  recordingLoopActive = false; recordingStatus.value = '—';
 }
-function stopCurrentRecording() {
-  if (currentRecorder && currentRecorder.state === 'recording') try { currentRecorder.stop(); } catch {}
-  currentRecorder = null;
+
+/** The capture for the current microphone stream, built on first use. */
+function ensureCapture(): MicCapture | null {
+  if (!mediaStream || !mediaStream.getAudioTracks().length) return null;
+  if (capture && captureStream === mediaStream) return capture;
+  capture?.dispose();
+  captureStream = mediaStream;
+  capture = new MicCapture(new MediaStream(mediaStream.getAudioTracks()), {
+    onSegment: segment => { void transcribeSegment(segment.blob); },
+    onLevel: (level, speaking) => { micLevel.value = level; micSpeaking.value = speaking; },
+  });
+  return capture;
+}
+
+async function startContinuousRecording() {
+  const c = ensureCapture();
+  if (!c) throw new Error('No microphone stream');
+  recordingStatus.value = '🎤 Recording';
+  await c.start();
+}
+
+/** Stop listening; the utterance in progress is still sent if it held speech. */
+function stopCurrentRecording(): Promise<void> {
+  micSpeaking.value = false;
+  micLevel.value = 0;
+  return capture ? capture.pause() : Promise.resolve();
+}
+
+/** Wait, within a bound, for every utterance of this speech to come back. */
+async function waitForTranscripts(limitMs = 9000): Promise<void> {
+  const until = Date.now() + limitMs;
+  while (pendingTranscripts.value > 0 && Date.now() < until) {
+    await new Promise(r => setTimeout(r, 120));
+  }
+}
+
+// ═══════ PAUSE, CONTINUE, AND REPAIRING MISHEARD WORDS ═══════
+async function pauseSpeech() {
+  if (!isSpeakingRef.value || speechPaused.value) return;
+  speechPaused.value = true;
+  speechPausedAt = Date.now();
+  // The speech timer stops too: fixing a transcript is not speaking time, and
+  // the green/amber/red lights must not move while nobody is talking.
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  enhanceNotice.value = null;
+  recordingStatus.value = '⏸ Paused';
+  captionText.value = t('Paused — correct anything in your transcript, then press Continue.');
+  await stopCurrentRecording();
+}
+
+async function resumeSpeech() {
+  if (!isSpeakingRef.value || !speechPaused.value) return;
+  if (!micEnabled.value) { alert(t('Please unmute your microphone first.')); return; }
+  speechPaused.value = false;
+  speechPausedMs += Date.now() - speechPausedAt;
+  enhanceNotice.value = null;
+  dropEnhanceUndo();
+  startTimer(false);
+  captionText.value = t('🎤 Listening again — carry on with your speech.');
+  try {
+    await startContinuousRecording();
+  } catch (e) {
+    console.error('[Recording]', e);
+    captionText.value = t('The microphone could not be restarted. You can still type your speech.');
+  }
+}
+
+function dropEnhanceUndo() {
+  enhanceUndoText = null;
+  enhanceUndoAvailable.value = false;
+}
+
+/**
+ * Put back the words the speaker SAID, where the transcription misheard them --
+ * keeping every filler word, which the Ah-Counter counts. App 27 polices the
+ * result and refuses anything more than a word repair; this says which of the
+ * outcomes happened and keeps an Undo for the one that changed something.
+ */
+async function enhanceSpeech() {
+  const text = answer.value.text.trim();
+  if (!text || enhancing.value || pendingTranscripts.value > 0) return;
+  enhancing.value = true;
+  enhanceNotice.value = null;
+  try {
+    const result = await toastmastersService.enhanceSpeech({
+      text, topic: displayTopic.value, speech_type: speechType,
+    });
+    if (!result || result.refused === 'unavailable') {
+      enhanceNotice.value = { kind: 'error', changes: [],
+        text: t('The AI could not be reached just now. Your transcript is unchanged — you can try again or fix words by hand.') };
+    } else if (result.refused) {
+      enhanceNotice.value = { kind: 'info', changes: [],
+        text: t('The AI suggested more than word fixes, so your transcript was kept exactly as you said it.') };
+    } else if (!result.changed || !result.text) {
+      enhanceNotice.value = { kind: 'ok', changes: [],
+        text: t('No misheard words found — your transcript is unchanged.') };
+    } else {
+      enhanceUndoText = answer.value.text;
+      enhanceUndoAvailable.value = true;
+      answer.value = setTypedText(answer.value, result.text);
+      enhanceNotice.value = { kind: 'ok', changes: result.changes.slice(0, 12),
+        text: t('Fixed {v0} misheard word(s):', { v0: result.changes.length }) };
+    }
+  } finally {
+    enhancing.value = false;
+  }
+}
+
+function undoEnhance() {
+  if (enhanceUndoText === null) return;
+  answer.value = setTypedText(answer.value, enhanceUndoText);
+  dropEnhanceUndo();
+  enhanceNotice.value = null;
 }
 
 function toggleMic() {
   micEnabled.value = !micEnabled.value;
   if (mediaStream) mediaStream.getAudioTracks().forEach(t => t.enabled = micEnabled.value);
-  if (!micEnabled.value && currentRecorder) stopCurrentRecording();
+  if (!micEnabled.value) void stopCurrentRecording();
+  // Unmuting mid-speech listens again; the old loop ended for good on mute.
+  else if (isSpeakingRef.value && !speechPaused.value) {
+    startContinuousRecording().catch(e => console.error('[Recording]', e));
+  }
 }
 function toggleCamera() {
   cameraEnabled.value = !cameraEnabled.value;
   if (mediaStream) mediaStream.getVideoTracks().forEach(t => t.enabled = cameraEnabled.value);
 }
 
-function startTimer() {
-  startTime = Date.now();
+function startTimer(reset = true) {
+  if (reset) {
+    startTime = Date.now();
+    speechPausedMs = 0;
+  }
   const minSec = minTime * 60, maxSec = maxTime * 60, midSec = (minSec + maxSec) / 2;
   timerInterval = setInterval(() => {
-    const el = Math.floor((Date.now() - startTime) / 1000);
+    const el = Math.floor((Date.now() - startTime - speechPausedMs) / 1000);
     timerDisplay.value = `${String(Math.floor(el / 60)).padStart(2, '0')}:${String(el % 60).padStart(2, '0')}`;
     lightGreen.value = el >= minSec; lightYellow.value = el >= midSec; lightRed.value = el >= maxSec;
   }, 200);
@@ -1165,8 +1341,8 @@ function countFillers(text: string): { counts: Record<string, number>; total: nu
 }
 
 function doLeave() {
-  isSpeaking = false; recordingLoopActive = false;
-  stopCurrentRecording(); stopCameraAnalysis();
+  isSpeaking = false; turnGeneration++;
+  capture?.dispose(); capture = null; stopCameraAnalysis();
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();
@@ -1315,6 +1491,12 @@ function userSpeak() {
   // PER TURN, so a second turn cannot be paid for on the strength of the first
   // one having been spoken.
   spokeThisTurn = false;
+  turnGeneration++;
+  ordered = new OrderedResults(applyChunk);
+  pendingTranscripts.value = 0;
+  speechPaused.value = false;
+  enhanceNotice.value = null;
+  dropEnhanceUndo();
   showSkipIntro.value = false;
   startContinuousRecording().catch(e => console.error('[Recording]', e));
   startTimer();
@@ -1324,13 +1506,21 @@ function userSpeak() {
 
 // ─── User finishes ───
 async function userFinish() {
+  if (speechPaused.value) speechPausedMs += Date.now() - speechPausedAt;
+  speechPaused.value = false;
   isSpeaking = false; isSpeakingRef.value = false;
-  stopCurrentRecording();
-  await new Promise(r => setTimeout(r, 800));
+  if (timerInterval) clearInterval(timerInterval);
   captionText.value = t('Finalizing transcription…');
-  await new Promise(r => setTimeout(r, 1500));
-  clearInterval(timerInterval); currentSpeaker.value = null;
-  const duration = Math.floor((Date.now() - startTime) / 1000);
+  // The last utterance is flushed, sent and WAITED FOR -- not the fixed 2.3
+  // seconds that lost the end of a speech whenever the replica was cold.
+  await stopCurrentRecording();
+  await waitForTranscripts();
+  recordingStatus.value = '—';
+  dropEnhanceUndo();
+  enhanceNotice.value = null;
+  currentSpeaker.value = null;
+  // Speaking time only: a pause to fix the transcript is not part of the speech.
+  const duration = Math.floor((Date.now() - startTime - speechPausedMs) / 1000);
   finishBtnDisabled.value = true;
 
   showSkipReports.value = true; didSkipReports.value = false;
@@ -1519,8 +1709,8 @@ async function saveSessionData(role: string, duration: number, fillers: { counts
 }
 
 onUnmounted(() => {
-  isSpeaking = false; recordingLoopActive = false;
-  stopCurrentRecording(); stopCameraAnalysis();
+  isSpeaking = false; turnGeneration++;
+  capture?.dispose(); capture = null; stopCameraAnalysis();
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   speechSynthesis.cancel();

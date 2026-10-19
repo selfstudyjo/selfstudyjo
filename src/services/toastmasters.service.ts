@@ -1,4 +1,5 @@
 import { apiService } from './api';
+import type { EnhanceResult } from './jobinterview.service';
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
 
@@ -57,6 +58,8 @@ export interface BotCallBody {
     sample_duration?: number;
 }
 
+export type { EnhanceResult };
+
 class ToastmastersService {
     private async getBaseUrl(): Promise<string> {
         const url = await serviceRegistry.getRandomToastmastersReplica();
@@ -74,6 +77,23 @@ class ToastmastersService {
             return r.text;
         } catch (e) {
             console.error(`Bot ${endpoint} failed:`, e);
+            return null;
+        }
+    }
+
+    /**
+     * Fix the words speech recognition misheard in a speech -- and nothing else.
+     *
+     * App 27 keeps every filler word (the Ah-Counter counts them) and refuses
+     * any suggestion that adds, removes or rewrites content, returning the
+     * speech untouched with `refused` set. Null only when unreachable.
+     */
+    async enhanceSpeech(body: { text: string; topic?: string; speech_type?: string }): Promise<EnhanceResult | null> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            return await apiService.post<EnhanceResult>(baseUrl, `/api/toastmasters/enhance-speech`, body);
+        } catch (e) {
+            console.error('Enhance speech failed:', e);
             return null;
         }
     }

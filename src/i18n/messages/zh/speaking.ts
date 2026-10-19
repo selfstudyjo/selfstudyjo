@@ -262,7 +262,6 @@ const speaking: Catalogue = {
     '📋 Task:': '📋 任务：',
     '👤 You ({v0}) —': '👤 你（{v0}）——',
     'Your Live Transcript': '你的实时逐字稿',
-    '🎤 Recording (Whisper AI)': '🎤 正在录音（Whisper AI）',
     '✋ I\'m Done': '✋ 我讲完了',
     '📋 Meeting Reports': '📋 会议报告',
     'Camera Off': '摄像头已关闭',
@@ -516,6 +515,16 @@ const speaking: Catalogue = {
     'The AI suggested more than word fixes, so your answer was kept exactly as you said it.': '人工智能建议的修改超出了纠正词语的范围，因此你的回答保持原样。',
     'No misheard words found — your answer is unchanged.': '没有发现听错的词语 — 你的回答未被修改。',
     'Fixed {v0} misheard word(s):': '已修正 {v0} 处听错的词语：',
+    // Toastmasters: pausing a speech, and repairing misheard words (2026-10-19).
+    'Stop the microphone and the timer so you can edit your transcript': '暂停麦克风和计时，以便编辑你的转写文本',
+    'Turn the microphone back on and carry on with your speech': '重新打开麦克风，继续你的演讲',
+    'Replace words the transcription misheard, using the topic as context. Filler words are kept, and nothing is added or rewritten.': '根据主题的上下文，替换转写时听错的词语。口头填充词会保留，不会添加或改写任何内容。',
+    'Paused — correct anything in your transcript, then press Continue.': '已暂停 — 修改转写文本后，点击“继续”。',
+    '🎤 Listening again — carry on with your speech.': '🎤 重新开始聆听 — 请继续你的演讲。',
+    'The microphone could not be restarted. You can still type your speech.': '无法重新启动麦克风。你仍然可以输入演讲内容。',
+    'The AI could not be reached just now. Your transcript is unchanged — you can try again or fix words by hand.': '暂时无法连接人工智能。你的转写文本未被修改 — 可以重试，或手动修改词语。',
+    'The AI suggested more than word fixes, so your transcript was kept exactly as you said it.': '人工智能建议的修改超出了纠正词语的范围，因此你的转写文本保持原样。',
+    'No misheard words found — your transcript is unchanged.': '没有发现听错的词语 — 你的转写文本未被修改。',
 };
 
 export default speaking;

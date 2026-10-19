@@ -270,7 +270,6 @@ const speaking: Catalogue = {
     '📋 Task:': '📋 المهمة:',
     '👤 You ({v0}) —': '👤 أنت ({v0}) —',
     'Your Live Transcript': 'نصّك المباشر',
-    '🎤 Recording (Whisper AI)': '🎤 جارٍ التسجيل (Whisper AI)',
     '✋ I\'m Done': '✋ انتهيت',
     '📋 Meeting Reports': '📋 تقارير الاجتماع',
     'Camera Off': 'الكاميرا مغلقة',
@@ -523,6 +522,16 @@ const speaking: Catalogue = {
     'The AI suggested more than word fixes, so your answer was kept exactly as you said it.': 'اقترح الذكاء الاصطناعي أكثر من تصحيح كلمات، لذا بقيت إجابتك تمامًا كما قلتها.',
     'No misheard words found — your answer is unchanged.': 'لم يُعثر على كلمات أُسيء سماعها — إجابتك لم تتغيّر.',
     'Fixed {v0} misheard word(s):': 'تم تصحيح {v0} من الكلمات التي أُسيء سماعها:',
+    // Toastmasters: pausing a speech, and repairing misheard words (2026-10-19).
+    'Stop the microphone and the timer so you can edit your transcript': 'أوقف الميكروفون والمؤقت لتتمكن من تعديل النص',
+    'Turn the microphone back on and carry on with your speech': 'أعد تشغيل الميكروفون وتابع خطابك',
+    'Replace words the transcription misheard, using the topic as context. Filler words are kept, and nothing is added or rewritten.': 'استبدال الكلمات التي أخطأ التدوين في سماعها، اعتمادًا على الموضوع كسياق. تبقى كلمات الحشو كما هي، ولا يُضاف شيء ولا يُعاد صياغة شيء.',
+    'Paused — correct anything in your transcript, then press Continue.': 'متوقف مؤقتًا — صحّح ما تريد في النص، ثم اضغط «متابعة».',
+    '🎤 Listening again — carry on with your speech.': '🎤 أستمع مجددًا — تابع خطابك.',
+    'The microphone could not be restarted. You can still type your speech.': 'تعذّر إعادة تشغيل الميكروفون. لا يزال بإمكانك كتابة خطابك.',
+    'The AI could not be reached just now. Your transcript is unchanged — you can try again or fix words by hand.': 'تعذّر الوصول إلى الذكاء الاصطناعي الآن. النص لم يتغيّر — يمكنك المحاولة مرة أخرى أو تصحيح الكلمات يدويًا.',
+    'The AI suggested more than word fixes, so your transcript was kept exactly as you said it.': 'اقترح الذكاء الاصطناعي أكثر من تصحيح كلمات، لذا بقي النص تمامًا كما قلته.',
+    'No misheard words found — your transcript is unchanged.': 'لم يُعثر على كلمات أُسيء سماعها — النص لم يتغيّر.',
 };
 
 export default speaking;

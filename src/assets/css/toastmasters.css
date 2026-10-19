@@ -788,7 +788,70 @@
 
 .tm-transcript-tools {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-  margin-top: 0.6rem;
+  margin: 0.5rem 0 0.6rem;
+}
+
+/* ---- Pause / Continue / AI repair / level meter, ABOVE the transcript -----
+   The Job Interview room's controls, in this room's own tokens. Each fill
+   states its own ink, so they read the same in all ten galaxies. */
+.tm-transcript-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.tm-transcript-controls .tm-btn-pause {
+  border-color: var(--sfs-warning, #f59e0b);
+  color: var(--sfs-warning-text, #fcd34d);
+}
+.tm-transcript-controls .tm-btn-resume {
+  background: var(--sfs-success, #22c55e);
+  border-color: var(--sfs-success, #22c55e);
+  color: var(--sfs-on-success, #ffffff);
+}
+.tm-transcript-controls .tm-btn-resume:hover:not(:disabled) {
+  background: var(--sfs-success, #22c55e); filter: brightness(1.08);
+}
+.tm-transcript-controls .tm-btn-enhance {
+  background: var(--sfs-accent, #6366f1);
+  border-color: var(--sfs-accent, #6366f1);
+  color: var(--sfs-on-accent, #ffffff);
+}
+.tm-transcript-controls .tm-btn-enhance:hover:not(:disabled) {
+  background: var(--sfs-accent, #6366f1); filter: brightness(1.08);
+}
+.tm-mic-meter {
+  position: relative; display: inline-block;
+  inline-size: 7rem; block-size: 0.5rem; margin-inline-start: auto;
+  border-radius: 999px; overflow: hidden;
+  background: var(--tm-glass-2);
+  border: 1px solid var(--tm-border-2);
+}
+.tm-mic-meter-fill {
+  position: absolute; inset-block: 0; inset-inline-start: 0;
+  background: var(--tm-text-mute, #94a3b8);
+  transition: inline-size 60ms linear;
+}
+.tm-mic-meter.hearing .tm-mic-meter-fill { background: var(--sfs-success, #22c55e); }
+.tm-transcript-live.hearing { font-weight: 700; }
+.tm-transcript-live.is-paused { color: var(--sfs-warning-text, #fcd34d); }
+.tm-transcript-pending { margin-inline-start: 0.5rem; font-size: 0.78rem; color: var(--tm-text-mute); }
+
+.tm-enhance-notice {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem;
+  margin-top: 0.6rem; padding: 0.55rem 0.75rem;
+  border-radius: var(--tm-r-sm); font-size: 0.85rem;
+  border: 1px solid var(--tm-border-2);
+  background: var(--tm-glass-2);
+  color: var(--tm-text-soft);
+}
+.tm-enhance-notice.is-ok { border-color: var(--sfs-success, #22c55e); }
+.tm-enhance-notice.is-info { border-color: var(--sfs-warning, #f59e0b); }
+.tm-enhance-notice.is-error { border-color: var(--sfs-danger, #ef4444); }
+.tm-enhance-changes { display: flex; flex-wrap: wrap; gap: 0.3rem 0.7rem; flex-basis: 100%; }
+.tm-enhance-change { unicode-bidi: isolate; }
+.tm-enhance-change del { color: var(--sfs-danger-text, #fca5a5); }
+.tm-enhance-change ins { color: var(--sfs-success-text, #86efac); text-decoration: none; font-weight: 700; }
+@media (max-width: 480px) {
+  .tm-mic-meter { inline-size: 100%; margin-inline-start: 0; }
 }
 .tm-btn-tool {
   /* 44px on a touch device: `responsive.css` scales the root font size, so
