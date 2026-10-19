@@ -287,6 +287,15 @@ export interface ModelAnswersBody {
     questions?: string[];
 }
 
+/** What `/bot/enhance-answer` returns. */
+export interface EnhanceResult {
+    text: string;
+    changed: boolean;
+    changes: { from: string; to: string }[];
+    /** Why the model's suggestion was not applied: it did more than fix words. */
+    refused?: 'added_content' | 'removed_content' | 'too_many_changes' | 'empty' | 'unavailable' | string;
+}
+
 export interface EvaluationResult {
     score: number;
     summary: string;
@@ -340,6 +349,27 @@ class JobInterviewService {
             return r.text;
         } catch (e) {
             console.error('Interviewer bot failed:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Fix the words speech recognition misheard -- and nothing else.
+     *
+     * App 27 asks a model to put back what the candidate SAID, then measures the
+     * edit against the original and refuses anything that added, removed or
+     * rewrote content (`refused`), handing the answer back untouched. Null only
+     * when the service could not be reached at all.
+     */
+    async enhanceAnswer(body: {
+        question: string; answer: string; interview_type?: string; topic?: string;
+    }): Promise<EnhanceResult | null> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            return await apiService.post<EnhanceResult>(
+                baseUrl, `/api/jobinterview/bot/enhance-answer`, body);
+        } catch (e) {
+            console.error('Enhance answer failed:', e);
             return null;
         }
     }

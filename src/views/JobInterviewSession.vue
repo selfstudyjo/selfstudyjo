@@ -100,7 +100,11 @@
       <div class="ji-answer-head">
         <h4>
           {{ $t('✍️ Your answer') }}
-          <span class="ji-answer-live" v-if="phase === 'answering'">{{ $t('🎤 transcribing…') }}</span>
+          <span class="ji-answer-live is-paused" v-if="phase === 'answering' && answerPaused">{{ $t('⏸ paused') }}</span>
+          <span class="ji-answer-live" :class="{ hearing: micSpeaking }" v-else-if="phase === 'answering'">
+            {{ micSpeaking ? $t('🗣️ hearing you…') : $t('🎤 listening…') }}
+          </span>
+          <span class="ji-answer-pending" v-if="phase === 'answering' && pendingTranscripts > 0">{{ $t('✍️ transcribing…') }}</span>
         </h4>
         <div class="ji-answer-meta">
           <!--
@@ -115,19 +119,45 @@
         </div>
       </div>
 
-      <textarea
-        ref="answerEl"
-        class="ji-answer-input"
-        :value="answer.text"
-        :readonly="phase !== 'answering' && phase !== 'awaiting'"
-        @input="onAnswerTyped"
-        @select="trackSelection"
-        @keyup="trackSelection"
-        @mouseup="trackSelection"
-        :placeholder="answerPlaceholder"
-        spellcheck="true"
-        rows="4"
-      ></textarea>
+      <!--
+        THE CONTROLS, ABOVE THE BOX THEY ACT ON.
+
+        Pause and Continue first: pausing stops the microphone (whatever was
+        being said is still transcribed) and the answer clock, so the candidate
+        can read and fix their transcript without new words landing under the
+        cursor. While paused, the AI repair is offered -- an accent turns
+        "Kubernetes" into "cube in eighties", and this puts back the words they
+        SAID. It never answers or rewrites; app 27 refuses any suggestion that
+        does more than fix misheard words.
+      -->
+      <div class="ji-answer-controls" v-if="phase === 'answering'">
+        <button type="button" class="ji-btn-tool ji-btn-pause" v-if="!answerPaused" @click="pauseAnswering"
+                :title="$t('Stop the microphone and the clock so you can edit your answer')">
+          {{ $t('⏸ Pause') }}
+        </button>
+        <button type="button" class="ji-btn-tool ji-btn-resume" v-else @click="resumeAnswering"
+                :title="$t('Turn the microphone back on and carry on answering')">
+          {{ $t('▶ Continue') }}
+        </button>
+        <button type="button" class="ji-btn-tool ji-btn-enhance" v-if="answerPaused"
+                :disabled="enhancing || pendingTranscripts > 0 || !answer.text.trim()"
+                @click="enhanceAnswer"
+                :title="$t('Replace words the transcription misheard, using the question as context. Nothing is added or rewritten.')">
+          {{ enhancing ? $t('✨ Checking your words…')
+            : pendingTranscripts > 0 ? $t('✍️ Finishing transcription…')
+            : $t('✨ Context enhancement using AI') }}
+        </button>
+        <!--
+          A level meter: the only way to see that the microphone hears you
+          before a single word has been transcribed, and what a too-quiet or a
+          muted microphone looks like.
+        -->
+        <span class="ji-mic-meter" v-if="!answerPaused" :class="{ hearing: micSpeaking }"
+              :title="$t('Microphone level')" role="meter" aria-valuemin="0" aria-valuemax="100"
+              :aria-valuenow="Math.round(micLevel * 100)" :aria-label="$t('Microphone level')">
+          <span class="ji-mic-meter-fill" :style="{ inlineSize: Math.round(micLevel * 100) + '%' }"></span>
+        </span>
+      </div>
 
       <div class="ji-answer-tools" v-if="phase === 'answering'">
         <!--
@@ -155,6 +185,34 @@
         <label class="ji-answer-toggle" :title="$t('Turn off if the interview is about a subject where you say these words for real')">
           <input type="checkbox" v-model="voiceEditing"> {{ $t('spoken corrections') }}
         </label>
+      </div>
+
+      <textarea
+        ref="answerEl"
+        class="ji-answer-input"
+        :value="answer.text"
+        :readonly="phase !== 'answering' && phase !== 'awaiting'"
+        @input="onAnswerTyped"
+        @select="trackSelection"
+        @keyup="trackSelection"
+        @mouseup="trackSelection"
+        :placeholder="answerPlaceholder"
+        spellcheck="true"
+        rows="4"
+      ></textarea>
+
+
+      <!-- What the AI repair did, in words, with a way back. -->
+      <div class="ji-enhance-notice" v-if="enhanceNotice" :class="'is-' + enhanceNotice.kind" role="status">
+        <span>{{ enhanceNotice.text }}</span>
+        <span class="ji-enhance-changes" v-if="enhanceNotice.changes.length">
+          <span v-for="(c, i) in enhanceNotice.changes" :key="i" class="ji-enhance-change">
+            <del dir="auto">{{ c.from }}</del> → <ins dir="auto">{{ c.to }}</ins>
+          </span>
+        </span>
+        <button type="button" class="ji-btn-tool" v-if="enhanceUndoAvailable" @click="undoEnhance">
+          {{ $t('↩︎ Undo') }}
+        </button>
       </div>
 
       <div class="ji-answer-caret" v-if="answer.caret !== null">
@@ -368,6 +426,8 @@ import {
   applyTranscript, caretHint, emptyAnswer, replaceSelection, resumeAtEnd,
   setTypedText, undoSegments, wordCount, type AnswerState,
 } from '@/utils/answerEditing';
+import { MicCapture } from '@/utils/micCapture';
+import { OrderedResults, transcriptContext } from '@/utils/speechSegmenter';
 import {
   VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, hasVideoInput,
   mediaUnsupportedReason,
@@ -587,6 +647,18 @@ const selection = ref<{ start: number; end: number }>({ start: 0, end: 0 });
 /** Seconds spent on the current answer, for the per-answer clock. */
 const answerElapsed = ref(0);
 
+/** Paused mid-answer: microphone and answer clock stopped, the box editable. */
+const answerPaused = ref(false);
+/** The microphone level, 0..1, and whether the segmenter thinks it is speech. */
+const micLevel = ref(0);
+const micSpeaking = ref(false);
+/** Segments sent and not yet applied -- what "transcribing…" means now. */
+const pendingTranscripts = ref(0);
+/** The AI repair of misheard words. */
+const enhancing = ref(false);
+const enhanceNotice = ref<null | { kind: 'ok' | 'info' | 'error'; text: string; changes: { from: string; to: string }[] }>(null);
+const enhanceUndoAvailable = ref(false);
+
 /**
  * The areas this interview is planned to cover, one per question.
  *
@@ -649,8 +721,23 @@ let timerInterval: any = null;
 let answerTimer: any = null;
 let answerStartedAt = 0;
 let isAnswering = false;
-let recordingLoopActive = false;
-let currentRecorder: MediaRecorder | null = null;
+/**
+ * The microphone pipeline for answers (see src/utils/micCapture.ts): filtered,
+ * level-measured, cut into utterances at pauses, silence never sent. Built on
+ * the first answer -- inside the click, which is what lets its AudioContext
+ * start -- and rebuilt only if the microphone stream itself was replaced.
+ */
+let capture: MicCapture | null = null;
+let captureStream: MediaStream | null = null;
+/** Transcripts applied in the order they were spoken; one per answer. */
+let ordered: OrderedResults | null = null;
+/** Bumped per answer, so a late transcript cannot land in the next one. */
+let answerGeneration = 0;
+/** Milliseconds this answer has spent paused, so the clock excludes them. */
+let answerPausedMs = 0;
+let answerPausedAt = 0;
+/** The text before the last AI repair, for Undo. */
+let enhanceUndoText: string | null = null;
 let voices: SpeechSynthesisVoice[] = [];
 
 // ====== The answer editor ======
@@ -713,6 +800,8 @@ function applyChunk(text: string) {
 function onAnswerTyped(event: Event) {
   const el = event.target as HTMLTextAreaElement;
   answer.value = setTypedText(answer.value, el.value);
+  // An Undo after hand edits would throw the edits away with the repair.
+  dropEnhanceUndo();
 }
 
 function trackSelection() {
@@ -1391,7 +1480,12 @@ function setCameraTracks(on: boolean) {
 function toggleMic() {
   micEnabled.value = !micEnabled.value;
   if (audioStream) audioStream.getAudioTracks().forEach(t => (t.enabled = micEnabled.value));
-  if (!micEnabled.value) stopCurrentRecording();
+  if (!micEnabled.value) void stopCurrentRecording();
+  // Unmuting mid-answer listens again -- the old loop simply ended when the
+  // mic was muted and never came back, so the rest of the answer was lost.
+  else if (phase.value === 'answering' && !answerPaused.value) {
+    startContinuousRecording().catch(e => console.error('[Recording]', e));
+  }
 }
 
 async function toggleCamera() {
@@ -1410,14 +1504,6 @@ async function retryMicrophone() {
 }
 
 // ====== Whisper transcription ======
-function getPreferredMimeType(): string {
-  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
-  for (const t of types) {
-    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) return t;
-  }
-  return '';
-}
-
 /**
  * Consecutive failed transcriptions.
  *
@@ -1436,45 +1522,47 @@ function noteTranscribeFailure(reason: string) {
   }
 }
 
-async function transcribeAudioBlob(blob: Blob): Promise<void> {
-  if (blob.size < 1000) return;
+/**
+ * Send one utterance to Whisper and apply what comes back -- in spoken order.
+ *
+ * The question and the end of the answer so far travel with it: app 27 hands
+ * them to Whisper as the prompt it conditions on, which is what turns an
+ * accented "cube in eighties" back into the "Kubernetes" the question said.
+ */
+async function transcribeSegment(blob: Blob): Promise<void> {
+  const results = ordered;
+  const generation = answerGeneration;
+  if (!results) return;
+  const seq = results.issue();
+  pendingTranscripts.value = results.pending;
+  let text = '';
   try {
     const baseUrl = await jobInterviewService.resolveBaseUrl();
     if (!baseUrl) { noteTranscribeFailure('the transcription service is unreachable'); return; }
     const formData = new FormData();
     formData.append('audio', blob, 'audio.webm');
     formData.append('language', aiLanguage());
+    formData.append('question', currentQuestionText.value || '');
+    formData.append('context', transcriptContext(answer.value.text));
     const token = import.meta.env.VITE_AUTH_TOKEN;
     const response = await fetch(`${baseUrl}/api/jobinterview/transcribe`, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${token}`,
-      // The language the answer is being SPOKEN in, so Whisper transcribes it
-      // rather than transliterating it. Sent as a form field as well as a
-      // header: this is a multipart upload, and `language.py` reads the body
-      // first — but `request.get_json(silent=True)` sees nothing in a multipart
-      // request, so the header is what actually carries it here. Both are sent
-      // so that neither the service nor a future proxy has to be the one that
-      // works.
+        // The language the answer is SPOKEN in, so Whisper transcribes rather
+        // than transliterates. Header and form field both -- `language.py`
+        // reads the body first, and a multipart body has no JSON for it.
         ...aiLanguageHeaders(),
       },
-      body: formData
+      body: formData,
     });
     if (response.ok) {
       const result = await response.json();
-      const text = (result.text || '').trim();
-      // A silent chunk legitimately transcribes to nothing, so an empty result
-      // is a success and must reset the counter — otherwise a candidate who
-      // pauses to think is told transcription is broken.
+      text = String(result.text || '').trim();
+      // An utterance that came back empty is a success: app 27 dropped what
+      // Whisper invented for noise, which is the filter working.
       transcribeFailures = 0;
       recordingError.value = '';
-      // Through the editor rather than straight onto a buffer: this is where a
-      // spoken "sorry" takes the last clause back, and where a chunk lands at
-      // the caret instead of at the end after a highlighted passage was
-      // replaced. Anything the candidate typed by hand in the meantime is in
-      // `answer` already and survives, which a private buffer would not have
-      // allowed.
-      if (text) applyChunk(text);
     } else {
       console.warn('[Whisper] HTTP', response.status);
       noteTranscribeFailure(`the server answered ${response.status}`);
@@ -1482,70 +1570,134 @@ async function transcribeAudioBlob(blob: Blob): Promise<void> {
   } catch (e: any) {
     console.error('[Whisper] error:', e?.message || e);
     noteTranscribeFailure('the connection failed');
+  } finally {
+    // Resolved even on failure -- as empty -- or one dropped upload would
+    // hold every later utterance of this answer back for ever.
+    if (generation === answerGeneration) results.resolve(seq, text);
+    pendingTranscripts.value = generation === answerGeneration ? results.pending : 0;
   }
 }
 
-async function recordOneChunk(durationMs: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (!audioStream) { resolve(); return; }
-    const audioTracks = audioStream.getAudioTracks();
-    if (audioTracks.length === 0) { resolve(); return; }
-    // NOT `audioStream`. That is the module-level stream this function reads two
-    // lines above, and a `const` of the same name puts the whole function body
-    // in its temporal dead zone — so both reads above throw
-    // "Cannot access 'audioStream' before initialization", every chunk, and the
-    // only symptom is the transcript box sitting on "Listening…" for ever.
-    const chunkStream = new MediaStream(audioTracks);
-    const mimeType = getPreferredMimeType();
-    let recorder: MediaRecorder;
-    try {
-      recorder = mimeType
-        ? new MediaRecorder(chunkStream, { mimeType, audioBitsPerSecond: 64000 })
-        : new MediaRecorder(chunkStream);
-    } catch { resolve(); return; }
-    const chunks: Blob[] = [];
-    let stopTimeoutId: any = null;
-    recorder.ondataavailable = (e: BlobEvent) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-    recorder.onstop = () => {
-      if (stopTimeoutId) clearTimeout(stopTimeoutId);
-      if (chunks.length > 0) {
-        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        transcribeAudioBlob(blob);
-      }
-      currentRecorder = null;
-      resolve();
-    };
-    currentRecorder = recorder;
-    try { recorder.start(); } catch { resolve(); return; }
-    stopTimeoutId = setTimeout(() => {
-      if (recorder.state === 'recording') { try { recorder.stop(); } catch {} }
-    }, durationMs);
+/** The capture for the current microphone stream, built on first use. */
+function ensureCapture(): MicCapture | null {
+  if (!audioStream) return null;
+  if (capture && captureStream === audioStream) return capture;
+  capture?.dispose();
+  captureStream = audioStream;
+  capture = new MicCapture(audioStream, {
+    onSegment: segment => { void transcribeSegment(segment.blob); },
+    onLevel: (level, speaking) => { micLevel.value = level; micSpeaking.value = speaking; },
   });
+  return capture;
 }
 
 async function startContinuousRecording() {
-  if (recordingLoopActive) return;
-  recordingLoopActive = true;
-  // try/finally, because the flag is a latch: without it one thrown chunk
-  // leaves `recordingLoopActive` true for the rest of the session and the
-  // `return` above then silently refuses every later answer. That is what
-  // turned a single ReferenceError into "the transcript never appears again",
-  // and it would have hidden any future fault the same way.
-  try {
-    while (isAnswering && micEnabled.value) {
-      await recordOneChunk(3500);
-      if (isAnswering) await new Promise(r => setTimeout(r, 50));
-    }
-  } finally {
-    recordingLoopActive = false;
+  const c = ensureCapture();
+  if (!c) throw new Error('No microphone stream');
+  await c.start();
+}
+
+/** Stop listening; the utterance in progress is still sent if it held speech. */
+function stopCurrentRecording(): Promise<void> {
+  micSpeaking.value = false;
+  micLevel.value = 0;
+  return capture ? capture.pause() : Promise.resolve();
+}
+
+/**
+ * Wait for every utterance of this answer to come back, within a bound.
+ *
+ * Replaces a fixed 1.4-second sleep, which was too short for a cold replica and
+ * too long for a warm one. Bounded, because a transcript that never returns
+ * must not hold the interview: the answer then goes in with what has arrived.
+ */
+async function waitForTranscripts(limitMs = 9000): Promise<void> {
+  const until = Date.now() + limitMs;
+  while (pendingTranscripts.value > 0 && Date.now() < until) {
+    await new Promise(r => setTimeout(r, 120));
   }
 }
 
-function stopCurrentRecording() {
-  if (currentRecorder && currentRecorder.state === 'recording') {
-    try { currentRecorder.stop(); } catch {}
+// ====== Pause, continue, and repairing misheard words ======
+
+async function pauseAnswering() {
+  if (phase.value !== 'answering' || answerPaused.value) return;
+  answerPaused.value = true;
+  answerPausedAt = Date.now();
+  stopAnswerTimer();
+  enhanceNotice.value = null;
+  captionSpeaker.value = 'System';
+  captionText.value = t('Paused — correct anything in your answer, then press Continue.');
+  await stopCurrentRecording();
+}
+
+async function resumeAnswering() {
+  if (phase.value !== 'answering' || !answerPaused.value) return;
+  if (!micEnabled.value) { alert(t('Please unmute your microphone first.')); return; }
+  answerPaused.value = false;
+  answerPausedMs += Date.now() - answerPausedAt;
+  enhanceNotice.value = null;
+  dropEnhanceUndo();
+  startAnswerTimer(false);
+  captionSpeaker.value = 'You';
+  captionText.value = t('🎤 Listening again — carry on with your answer.');
+  try {
+    await startContinuousRecording();
+  } catch (e) {
+    console.error('[Recording]', e);
+    recordingError.value = t('The microphone could not be restarted. You can still type your answer.');
   }
-  currentRecorder = null;
+}
+
+function dropEnhanceUndo() {
+  enhanceUndoText = null;
+  enhanceUndoAvailable.value = false;
+}
+
+/**
+ * Put back the words the candidate SAID, where the transcription misheard them.
+ *
+ * App 27 does the work and polices it: a suggestion that adds, removes or
+ * rewrites content is refused there and the answer comes back untouched, so
+ * nothing here has to trust the model. What this does is say, in words, which
+ * of the three outcomes happened -- and keep an Undo for the one that changed
+ * something.
+ */
+async function enhanceAnswer() {
+  const text = answer.value.text.trim();
+  if (!text || enhancing.value || pendingTranscripts.value > 0) return;
+  enhancing.value = true;
+  enhanceNotice.value = null;
+  try {
+    const result = await jobInterviewService.enhanceAnswer({
+      question: currentQuestionText.value, answer: text, interview_type: interviewType, topic,
+    });
+    if (!result || result.refused === 'unavailable') {
+      enhanceNotice.value = { kind: 'error', changes: [],
+        text: t('The AI could not be reached just now. Your answer is unchanged — you can try again or fix words by hand.') };
+    } else if (result.refused) {
+      enhanceNotice.value = { kind: 'info', changes: [],
+        text: t('The AI suggested more than word fixes, so your answer was kept exactly as you said it.') };
+    } else if (!result.changed || !result.text) {
+      enhanceNotice.value = { kind: 'ok', changes: [],
+        text: t('No misheard words found — your answer is unchanged.') };
+    } else {
+      enhanceUndoText = answer.value.text;
+      enhanceUndoAvailable.value = true;
+      answer.value = setTypedText(answer.value, result.text);
+      enhanceNotice.value = { kind: 'ok', changes: result.changes.slice(0, 12),
+        text: t('Fixed {v0} misheard word(s):', { v0: result.changes.length }) };
+    }
+  } finally {
+    enhancing.value = false;
+  }
+}
+
+function undoEnhance() {
+  if (enhanceUndoText === null) return;
+  answer.value = setTypedText(answer.value, enhanceUndoText);
+  dropEnhanceUndo();
+  enhanceNotice.value = null;
 }
 
 // ====== Timer ======
@@ -1557,12 +1709,17 @@ function stopCurrentRecording() {
  * thinking, and "you spoke for four minutes" is a line in the report rather
  * than something they could have acted on at the time.
  */
-function startAnswerTimer() {
-  answerStartedAt = Date.now();
-  answerElapsed.value = 0;
+function startAnswerTimer(reset = true) {
+  if (reset) {
+    answerStartedAt = Date.now();
+    answerPausedMs = 0;
+    answerElapsed.value = 0;
+  }
   if (answerTimer) clearInterval(answerTimer);
+  // Paused time is excluded: "you spoke for 2:10" must mean speaking, not the
+  // minute spent fixing a transcript.
   answerTimer = setInterval(() => {
-    answerElapsed.value = Math.floor((Date.now() - answerStartedAt) / 1000);
+    answerElapsed.value = Math.floor((Date.now() - answerStartedAt - answerPausedMs) / 1000);
   }, 500);
 }
 
@@ -1986,6 +2143,12 @@ function startAnswering() {
   spokeThisAnswer = false;
   recordingError.value = '';
   transcribeFailures = 0;
+  answerGeneration++;
+  ordered = new OrderedResults(applyChunk);
+  pendingTranscripts.value = 0;
+  answerPaused.value = false;
+  enhanceNotice.value = null;
+  dropEnhanceUndo();
   isAnswering = true;
   phase.value = 'answering';
   startAnswerTimer();
@@ -2002,14 +2165,19 @@ function startAnswering() {
 async function submitAnswer() {
   if (phase.value !== 'answering') return;
   isAnswering = false;
+  if (answerPaused.value) answerPausedMs += Date.now() - answerPausedAt;
+  answerPaused.value = false;
   phase.value = 'processing';
-  stopCurrentRecording();
   stopAnswerTimer();
   captionText.value = t('Finalizing your answer…');
-  // Long enough for the chunk that was mid-recording when Submit was pressed to
-  // come back from Whisper. It is the last second or two of what the candidate
-  // said, so losing it costs the end of every answer in the report.
-  await new Promise(r => setTimeout(r, 1400));
+  // The utterance in progress when Submit was pressed is the last thing the
+  // candidate said -- flushed, sent, and WAITED FOR, rather than the fixed
+  // 1.4 seconds that was too short on a cold replica and lost the end of the
+  // answer. Bounded, so a transcript that never returns cannot hold the room.
+  await stopCurrentRecording();
+  await waitForTranscripts();
+  dropEnhanceUndo();
+  enhanceNotice.value = null;
 
   const spokenText = answer.value.text.trim();
   qaPairs.value.push({
@@ -2097,7 +2265,7 @@ function settleWithin<T>(jobs: Promise<T>[], ms: number): Promise<unknown> {
 async function endInterview() {
   if (phase.value === 'done') return;
   isAnswering = false;
-  stopCurrentRecording();
+  void stopCurrentRecording();
   stopAnswerTimer();
   if (timerInterval) clearInterval(timerInterval);
   phase.value = 'processing';
@@ -2307,8 +2475,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   isAnswering = false;
-  recordingLoopActive = false;
-  stopCurrentRecording();
+  answerGeneration++;
+  capture?.dispose();
+  capture = null;
   stopAnswerTimer();
   stopSpeechKeepAlive();
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
