@@ -37,6 +37,7 @@
             <template v-else>
               <template v-if="kind === 'tables'">
                 <button type="button" @click="loadData"><SfIcon name="upload" /> Load data</button>
+                <button type="button" @click="unloadData"><SfIcon name="download" /> Unload data</button>
                 <button type="button" @click="cloneTable"><SfIcon name="clone" /> Clone</button>
                 <button type="button" @click="renameObject"><SfIcon name="edit" /> Rename</button>
                 <button type="button" @click="editRetention"><SfIcon name="history" /> Edit Time Travel retention</button>
@@ -46,6 +47,8 @@
                 <button type="button" @click="rowPolicy"><SfIcon name="policy" /> {{ table?.row_access_policy ? 'Remove' : 'Add' }} row access policy</button>
               </template>
               <button v-if="kind === 'views'" type="button" @click="renameObject"><SfIcon name="edit" /> Rename</button>
+              <button v-if="kind === 'tables' || kind === 'views'" type="button" @click="grantOn"><SfIcon name="key" /> Grant privileges</button>
+              <button v-if="kind === 'tables'" type="button" class="is-danger" @click="truncateTable"><SfIcon name="stop" /> Truncate</button>
               <button v-if="kind === 'pipes'" type="button" @click="refreshPipe"><SfIcon name="refresh" /> Refresh pipe</button>
               <hr />
               <button type="button" class="is-danger" @click="dropObject"><SfIcon name="trash" /> Drop</button>
@@ -295,6 +298,10 @@ async function listFiles() {
   previewing.value = false;
 }
 watch(() => props.kind, k => { if (k === 'stages') void listFiles(); }, { immediate: true });
+// A context menu can open the page on a given tab ("Preview data", "Show definition").
+watch(() => (sf.route.value.page === 'databases' ? sf.route.value.tab : ''), t => {
+  if (t && tableTabs.value.includes(t) && table.value) void setTab(t);
+}, { immediate: true });
 
 async function clusteringInfo() {
   const key = clusterColumns(table.value?.clustering_key);
@@ -312,11 +319,23 @@ function timeTravel() {
 }
 function loadData() {
   menu.value = false;
-  const stageName = list.stages(view.value)[0]?.fqn || 'RAW.SHOP.LAKE_STAGE';
-  sf.openWorksheet(`-- Load files from a stage into ${props.fqn}\nLIST @${stageName};\n\nCOPY INTO ${props.fqn}\nFROM @${stageName}\nPATTERN = '.*\\.csv'\nFILE_FORMAT = (FORMAT_NAME = 'RAW.SHOP.CSV_FMT')\nON_ERROR = 'ABORT_STATEMENT';\n`, 'Load ' + name.value);
+  sf.dialog({ kind: 'load', table: props.fqn });
+}
+function unloadData() {
+  menu.value = false;
+  sf.dialog({ kind: 'unload', table: props.fqn });
 }
 function loadFromStage() {
-  sf.openWorksheet(`COPY INTO <database>.<schema>.<table>\nFROM @${props.fqn}\nFILE_FORMAT = (FORMAT_NAME = 'RAW.SHOP.CSV_FMT')\nON_ERROR = 'CONTINUE';\n`, 'Load from ' + name.value);
+  sf.dialog({ kind: 'load', stage: props.fqn });
+}
+async function truncateTable() {
+  menu.value = false;
+  const ok = await sf.confirm({ title: `Truncate ${name.value}?`, message: `Every row of ${props.fqn} will be deleted. The previous rows stay reachable with Time Travel for the retention period.`, yes: 'Truncate', danger: true });
+  if (ok) await sf.sql(`TRUNCATE TABLE ${fqnSql(props.fqn)}`, { success: `${name.value} truncated` });
+}
+function grantOn() {
+  menu.value = false;
+  sf.dialog({ kind: 'grant', onKind: props.kind === 'views' ? 'VIEW' : 'TABLE', onName: props.fqn });
 }
 
 const prompt = ref<null | { title: string; subtitle?: string; message?: string; okText?: string; danger?: boolean; fields: PromptField[]; build: (v: Record<string, string>) => string | string[]; success?: string; then?: (v: Record<string, string>) => void }>(null);

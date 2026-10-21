@@ -169,7 +169,7 @@ import TfSettings from './TfSettings.vue';
 import TfOrgPages from './TfOrgPages.vue';
 import { TF, type ConfirmRequest, type RunOptions } from './tfContext';
 import {
-  cmdInit, cmdWorkspace, org, routeUrl, runsOf, variablesOf, workspacesOf, WS_PAGES,
+  cmdConfirm, cmdInit, cmdWorkspace, org, routeUrl, runsOf, variablesOf, workspacesOf, WS_PAGES,
   type Page, type Route,
 } from './tfKit';
 
@@ -207,9 +207,15 @@ const mainEl = ref<HTMLElement | null>(null);
 watch([route, orgName], () => emit('location', routeUrl(route.value, orgName.value)), { immediate: true, deep: true });
 watch(route, () => { if (mainEl.value) mainEl.value.scrollTop = 0; }, { deep: true });
 
-// A workspace deleted from the console must not leave the page on it.
+// A workspace deleted from the console must not leave the page on it - but a
+// RENAMED one (same ID, new name) keeps the page, with the new name.
+let lastWsId = '';
+watch(workspace, ws => { if (ws?.id) lastWsId = ws.id; }, { immediate: true });
 watch(workspaces, list => {
-  if (route.value.ws && !list.some(item => item.name === route.value.ws)) go({ page: 'workspaces' });
+  if (!route.value.ws || list.some(item => item.name === route.value.ws)) return;
+  const renamed = lastWsId ? list.find(item => item.id === lastWsId) : undefined;
+  if (renamed) route.value = { ...route.value, ws: renamed.name };
+  else go({ page: 'workspaces' });
 });
 
 async function run(command: string, options: RunOptions = {}): Promise<PortalResult> {
@@ -236,6 +242,22 @@ async function openWorkspace(name: string, page: Page = 'overview') {
     if (!result.ok) return;
   }
   go({ page, ws: name });
+}
+
+/**
+ * Auto-apply: a workspace whose Apply Method is "Auto apply" confirms a
+ * successful plan by itself, as HCP Terraform does. Here that is the same
+ * `terraform apply tfplan` the Confirm & apply button runs.
+ */
+async function maybeAutoApply(runId: string): Promise<void> {
+  const item = runs.value.find(entry => entry.id === runId);
+  if (!item || item.status !== 'planned' || item.operation === 'plan_only') return;
+  const ws = workspaces.value.find(entry => entry.name === item.workspace);
+  if (!ws?.auto_apply) return;
+  await run(cmdConfirm(item), {
+    success: item.operation === 'destroy' ? 'Auto-applied the destroy plan' : 'Auto-applied the plan',
+    failure: 'Auto-apply errored',
+  });
 }
 
 async function ensureInit(): Promise<boolean> {
@@ -268,7 +290,7 @@ function answer(value: boolean) {
 
 provide(TF, {
   view, org: orgName, route, now, busy: busyNow, workspaces, workspace, runs, variables,
-  go, openWorkspace, run, ensureInit, notify, confirm,
+  go, openWorkspace, run, ensureInit, maybeAutoApply, notify, confirm,
 });
 
 // ---- navigation ------------------------------------------------------------

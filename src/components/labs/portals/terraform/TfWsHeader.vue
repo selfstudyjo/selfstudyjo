@@ -15,6 +15,10 @@
           <span class="tf-badge tf-badge--neutral"><TfIcon name="terraform" :size="14" /> Terraform v{{ workspace.version }}</span>
           <span class="tf-faint tf-small">Updated {{ ago(updated, now) }}</span>
         </div>
+        <p v-if="workspace.description" class="wh__desc">{{ workspace.description }}</p>
+        <div v-if="workspace.tags?.length" class="wh__tags">
+          <span v-for="tag in workspace.tags" :key="tag" class="wh__tag">{{ tag }}</span>
+        </div>
       </div>
       <div class="wh__actions">
         <div class="wh__menu-wrap">
@@ -28,20 +32,26 @@
             <button v-else type="button" class="tf-menu__item" @click="unlock">
               <TfIcon name="unlock" /><span>Unlock workspace<small>Locked by {{ workspace.lock?.user }}</small></span>
             </button>
+            <button type="button" class="tf-menu__item" @click="openRun('plan')">
+              <TfIcon name="play" /><span>Start plan-only run<small>A speculative plan that cannot be applied</small></span>
+            </button>
             <button type="button" class="tf-menu__item" @click="go({ page: 'variables', ws: workspace.name })">
               <TfIcon name="code" /><span>Variables</span>
+            </button>
+            <button type="button" class="tf-menu__item" @click="go({ page: 'settings', ws: workspace.name })">
+              <TfIcon name="settings" /><span>Settings<small>Name, description, apply method</small></span>
             </button>
             <button type="button" class="tf-menu__item is-critical" @click="go({ page: 'destruction', ws: workspace.name })">
               <TfIcon name="trash" /><span>Destruction and Deletion</span>
             </button>
           </div>
         </div>
-        <button type="button" class="tf-btn tf-btn--primary" :disabled="busy" @click="newRunOpen = true">
+        <button type="button" class="tf-btn tf-btn--primary" :disabled="busy" @click="openRun('apply')">
           <TfIcon name="plus" /> New run
         </button>
       </div>
     </div>
-    <TfNewRun v-if="newRunOpen" @close="newRunOpen = false" />
+    <TfNewRun v-if="newRunOpen" :initial="newRunKind" @close="newRunOpen = false" />
   </div>
 </template>
 
@@ -55,6 +65,11 @@ import { ago, cmdLock, cmdUnlock } from './tfKit';
 const { workspace, runs, now, go, run, notify, confirm, busy } = useTf();
 const menuOpen = ref(false);
 const newRunOpen = ref(false);
+const newRunKind = ref<'apply' | 'plan' | 'destroy'>('apply');
+function openRun(kind: 'apply' | 'plan' | 'destroy') {
+  newRunKind.value = kind;
+  newRunOpen.value = true;
+}
 
 const updated = computed(() => {
   const latest = runs.value.find(item => item.workspace === workspace.value?.name);
@@ -96,6 +111,9 @@ async function unlock() {
 .wh__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .wh__id { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tf-fg-faint); }
 .wh__id:hover { color: var(--tf-fg-action); }
+.wh__desc { margin-top: 8px; max-width: 720px; color: var(--tf-fg-primary); white-space: pre-line; overflow-wrap: anywhere; }
+.wh__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wh__tag { padding: 0 8px; border-radius: 12px; background: var(--tf-surface-strong); border: 1px solid var(--tf-border); font-size: 12px; line-height: 20px; color: var(--tf-fg-strong); }
 .wh__dot { width: 3px; height: 3px; border-radius: 50%; background: var(--tf-fg-faint); }
 .wh__actions { display: flex; gap: 8px; align-items: center; margin-left: auto; position: relative; }
 .wh__menu-wrap { position: static; }

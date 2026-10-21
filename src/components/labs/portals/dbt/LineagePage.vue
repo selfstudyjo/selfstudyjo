@@ -1,5 +1,5 @@
 <template>
-  <div class="ln">
+  <div ref="lnEl" class="ln">
     <form class="ln__bar" @submit.prevent="apply">
       <label class="ln__sel">
         <span class="ln__sel-label">--select</span>
@@ -19,7 +19,7 @@
       <div class="ln__graph">
         <LineageGraph :graph="graph" :highlight="highlight" :active-id="activeId"
                       :empty-text="dbt.parsed.value ? 'This project has no nodes.' : 'Parse the project (dbt parse) to draw its lineage.'"
-                      @select="selectNode" />
+                      @select="selectNode" @menu="nodeMenu" />
       </div>
       <aside v-if="active" class="ln__panel">
         <div class="ln__panel-head">
@@ -46,6 +46,8 @@
         <p v-if="buildCommand" class="dbt-help">Runs <code class="dbt-mono">{{ buildCommand }}</code></p>
       </aside>
     </div>
+    <DbtContextMenu v-if="ctxMenu" :key="ctxMenu.key" :x="ctxMenu.x" :y="ctxMenu.y" :title="ctxMenu.title" :items="ctxMenu.items"
+                    @close="ctxMenu = null" />
   </div>
 </template>
 
@@ -54,9 +56,10 @@ import { computed, ref } from 'vue';
 import { cli } from '@/utils/portalKit';
 import DbtIcon from './DbtIcon.vue';
 import LineageGraph from './LineageGraph.vue';
+import DbtContextMenu from './DbtContextMenu.vue';
 import StatusChip from './StatusChip.vue';
 import { useDbt } from './dbtContext';
-import { KIND_LABEL, selectNodes } from './dbt';
+import { KIND_LABEL, selectNodes, type DbtMenuItem } from './dbt';
 
 const dbt = useDbt();
 const initial = dbt.route.value.page === 'lineage' ? dbt.route.value.select || '' : '';
@@ -100,6 +103,65 @@ const buildCommand = computed(() => {
   return '';
 });
 const buildLabel = computed(() => ({ model: 'Build', seed: 'Seed', snapshot: 'Snapshot', test: 'Run test', source: 'Check freshness' } as Record<string, string>)[active.value?.kind || ''] || 'Run');
+const lnEl = ref<HTMLElement | null>(null);
+const ctxMenu = ref<{ key: number; x: number; y: number; title: string; items: DbtMenuItem[] } | null>(null);
+let ctxSeq = 0;
+
+async function runLine(line: string, label: string) {
+  const result = await dbt.run(line, { quiet: true });
+  if (result.ok) dbt.notify('success', `${label}: done`, line);
+  else dbt.notify('error', `${label}: errors`, 'See the Equivalent CLI drawer for the log.');
+}
+
+/** Right-click a node: select around it, run it, open it. */
+function nodeMenu(event: MouseEvent, id: string) {
+  const n = graph.value.nodes.get(id);
+  if (!n) return;
+  activeId.value = id;
+  const busy = dbt.busy.value;
+  const items: DbtMenuItem[] = [
+    { label: `Select +${n.name}`, icon: 'lineage', hint: 'parents', action: () => focus('+' + n.name) },
+    { label: `Select ${n.name}+`, icon: 'lineage', hint: 'children', action: () => focus(n.name + '+') },
+    { label: `Select +${n.name}+`, icon: 'lineage', action: () => focus('+' + n.name + '+') },
+    { label: 'Exclude from graph', icon: 'close', action: () => {
+      draftExclude.value = [draftExclude.value.trim(), n.name].filter(Boolean).join(' ');
+      if (!draft.value.trim()) draft.value = '*';
+      apply();
+    } },
+    { divider: true, label: '' },
+  ];
+  if (n.kind === 'model') {
+    items.push(
+      { label: 'Build', icon: 'hammer', hint: 'dbt build', disabled: busy, action: () => runLine(cli(['dbt', 'build'], { '--select': n.name }), 'Build') },
+      { label: 'Build with upstream', icon: 'hammer', hint: '+' + n.name, disabled: busy,
+        action: () => runLine(cli(['dbt', 'build'], { '--select': '+' + n.name }), 'Build') },
+      { label: 'Build with downstream', icon: 'hammer', hint: n.name + '+', disabled: busy,
+        action: () => runLine(cli(['dbt', 'build'], { '--select': n.name + '+' }), 'Build') },
+      { label: 'Run', icon: 'play', hint: 'dbt run', disabled: busy, action: () => runLine(cli(['dbt', 'run'], { '--select': n.name }), 'Run') },
+      { label: 'Test', icon: 'test', hint: 'dbt test', disabled: busy, action: () => runLine(cli(['dbt', 'test'], { '--select': n.name }), 'Test') },
+    );
+  } else if (n.kind === 'seed') {
+    items.push({ label: 'Seed', icon: 'seed', disabled: busy, action: () => runLine(cli(['dbt', 'seed'], { '--select': n.name }), 'Seed') },
+      { label: 'Build downstream', icon: 'hammer', disabled: busy, action: () => runLine(cli(['dbt', 'build'], { '--select': n.name + '+' }), 'Build') });
+  } else if (n.kind === 'snapshot') {
+    items.push({ label: 'Snapshot', icon: 'snapshot', disabled: busy, action: () => runLine(cli(['dbt', 'snapshot'], { '--select': n.name }), 'Snapshot') });
+  } else if (n.kind === 'test') {
+    items.push({ label: 'Run test', icon: 'test', disabled: busy, action: () => runLine(cli(['dbt', 'test'], { '--select': n.name }), 'Run test') });
+  } else if (n.kind === 'source') {
+    items.push({ label: 'Check freshness', icon: 'clock', disabled: busy,
+      action: () => runLine(cli(['dbt', 'source', 'freshness'], { '--select': 'source:' + n.name }), 'Check freshness') },
+    { label: 'Build everything downstream', icon: 'hammer', disabled: busy,
+      action: () => runLine(cli(['dbt', 'build'], { '--select': 'source:' + n.name + '+' }), 'Build') });
+  }
+  items.push({ divider: true, label: '' },
+    { label: 'View details', icon: 'info', action: () => dbt.go({ page: 'resource', id: n.id }) });
+  if (n.path && dbt.files.value.some(f => f.path === n.path)) {
+    items.push({ label: 'Open in Studio IDE', icon: 'code', action: () => dbt.go({ page: 'develop' }) });
+  }
+  const box = lnEl.value?.getBoundingClientRect();
+  ctxMenu.value = { key: ++ctxSeq, x: event.clientX - (box?.left || 0), y: event.clientY - (box?.top || 0), title: n.name, items };
+}
+
 async function build() {
   const line = buildCommand.value;
   if (!line) return;
@@ -111,7 +173,7 @@ async function build() {
 
 <style scoped src="./dbt.css"></style>
 <style scoped>
-.ln { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ln { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .ln__bar { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--dbt-border); flex-wrap: wrap; }
 .ln__sel { display: flex; align-items: center; flex: 1 1 260px; min-width: 0; border: 1px solid var(--dbt-border-strong); border-radius: 6px; overflow: hidden; }
 .ln__sel--ex { flex: 0 1 200px; }

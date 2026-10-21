@@ -265,6 +265,33 @@ export function execCommand(namespace: string, pod: string, container: string, w
     return cli(['kubectl', 'exec', '-n', namespace, pod, '-c', container, '--', ...words]);
 }
 
+export interface LogOptions { container?: string; tail?: number; timestamps?: boolean; allContainers?: boolean }
+
+/** The log viewer's read: `kubectl logs` with the viewer's options as flags. */
+export function logsOptionsCommand(namespace: string, pod: string, options: LogOptions): string {
+    return cli(['kubectl', 'logs', '-n', namespace, pod], {
+        '-c': options.allContainers ? null : (options.container || null),
+        '--all-containers': Boolean(options.allContainers),
+        '--tail': options.tail && options.tail > 0 ? String(options.tail) : null,
+        '--timestamps': Boolean(options.timestamps),
+    });
+}
+
+/**
+ * One line of the "Exec into pod" terminal. kubectl exec has no working
+ * directory flag, so the terminal carries the directory a `cd` left it in the
+ * way a student would by hand: `sh -c "cd /dir && <line>"`.
+ */
+export function shellCommand(namespace: string, pod: string, container: string, cwd: string, line: string): string {
+    const script = cwd && cwd !== '/' ? `cd ${shellQuote(cwd)} && ${line}` : line;
+    return execCommand(namespace, pod, container, ['sh', '-c', script]);
+}
+
+/** One word for an `sh -c` script, single-quoted when it needs to be. */
+export function shellQuote(text: string): string {
+    return /^[A-Za-z0-9_./-]+$/.test(text) ? text : "'" + String(text).replace(/'/g, "'\\''") + "'";
+}
+
 /**
  * A command that reads a manifest from STDIN, written as the heredoc every
  * tutorial pastes. The delimiter is quoted, so nothing in the body is expanded

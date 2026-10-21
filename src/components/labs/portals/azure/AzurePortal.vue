@@ -47,8 +47,8 @@
       <div class="az-mast__tools">
         <button type="button" class="az-mast__btn az-mast__hide-s" title="Copilot" aria-label="Copilot"
                 @click="togglePanel('copilot')"><AzIcon name="copilot" :size="18" /></button>
-        <button type="button" class="az-mast__btn az-mast__hide-s" title="Cloud Shell" aria-label="Cloud Shell"
-                @click="togglePanel('shell')"><AzIcon name="shell" :size="18" /></button>
+        <button type="button" class="az-mast__btn az-mast__hide-s" :class="{ 'is-on': shellOpen }" title="Cloud Shell"
+                aria-label="Cloud Shell" @click="togglePanel('shell')"><AzIcon name="shell" :size="18" /></button>
         <button type="button" class="az-mast__btn az-mast__bell" title="Notifications"
                 aria-label="Notifications" @click="togglePanel('notes')">
           <AzIcon name="bell" :size="18" />
@@ -149,14 +149,6 @@
               <button type="button" class="az-x" aria-label="Dismiss" @click="dropNote(n.id)"><AzIcon name="close" :size="12" /></button>
             </div>
           </template>
-          <template v-else-if="panel === 'shell'">
-            <p class="az-p">Cloud Shell in this lab is the <strong>Azure CLI</strong> console beside the portal.
-              Every action you take here is the <code>az</code> command it ran — open the
-              equivalent-CLI strip below the portal to copy one.</p>
-            <div class="az-section-title">Recent commands from the portal</div>
-            <div v-if="!api.history.value.length" class="az-empty az-empty--small">Nothing yet.</div>
-            <pre v-for="h in api.history.value.slice(0, 8)" :key="h.id" class="az-code" :class="{ 'is-bad': !h.ok }">{{ h.command }}</pre>
-          </template>
           <template v-else-if="panel === 'account'">
             <div class="az-acct">
               <span class="az-mast__avatar az-mast__avatar--big">LS</span>
@@ -197,6 +189,9 @@
         </div>
       </aside>
     </div>
+
+    <!-- ===== Cloud Shell, docked at the bottom ===== -->
+    <AzCloudShell v-if="shellOpen" :api="api" @close="shellOpen = false" />
 
     <!-- ===== Toasts (the portal's notification pop-ups, top right) ===== -->
     <div class="az-toasts" aria-live="polite">
@@ -270,6 +265,7 @@ import ResourceBlade from './ResourceBlade.vue';
 import CreateWizard from './CreateWizard.vue';
 import DeploymentBlade from './DeploymentBlade.vue';
 import ServiceBlade from './ServiceBlade.vue';
+import AzCloudShell from './AzCloudShell.vue';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
 const emit = defineEmits<{ (event: 'location', url: string): void; (event: 'refresh'): void }>();
@@ -415,8 +411,10 @@ const MORE = [
   { key: 'settings', label: 'Settings', icon: 'gear' }, { key: 'help', label: 'Support + Troubleshooting', icon: 'help' },
   { key: 'feedback', label: 'Feedback', icon: 'feedback' },
 ];
+const shellOpen = ref(false);
 function togglePanel(name: string) {
   moreOpen.value = false;
+  if (name === 'shell') { shellOpen.value = !shellOpen.value; return; }
   panel.value = panel.value === name ? '' : name;
   if (name === 'notes') notes.value = notes.value.map(n => ({ ...n, read: true }));
 }
@@ -747,6 +745,15 @@ onBeforeUnmount(() => {
 .az-root :deep(.az-cmd:hover:not(:disabled)) { background: var(--az-hover); }
 .az-root :deep(.az-cmd:disabled) { color: #bdbdbd; cursor: not-allowed; }
 .az-root :deep(.az-cmd:disabled svg) { color: #bdbdbd; }
+.az-mast__btn.is-on { background: var(--az-mast-hover); }
+/* a command-bar button with a dropdown (VM "Connect") */
+.az-root :deep(.az-cmdmenu) { position: relative; display: inline-flex; }
+.az-root :deep(.az-cmdmenu__list) { position: absolute; z-index: 30; top: 34px; left: 0; min-width: 210px; padding: 4px 0; background: #fff;
+  border-radius: var(--az-radius); box-shadow: var(--az-shadow16); display: flex; flex-direction: column; }
+.az-root :deep(.az-cmdmenu__list button) { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px; border: 0;
+  background: none; color: var(--az-fg); font: 13px var(--az-font); text-align: left; cursor: pointer; white-space: nowrap; }
+.az-root :deep(.az-cmdmenu__list button svg) { color: var(--az-brand); }
+.az-root :deep(.az-cmdmenu__list button:hover) { background: var(--az-hover); }
 .az-root :deep(.az-cmd--danger svg) { color: var(--az-danger); }
 .az-root :deep(.az-cmdsep) { width: 1px; height: 20px; margin: 0 4px; background: var(--az-stroke2); }
 

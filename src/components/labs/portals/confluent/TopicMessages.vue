@@ -67,6 +67,15 @@
       <label class="cc-field"><span class="cc-label">Value <em>*</em></span>
         <textarea v-model="pValue" class="cc-textarea" rows="9" spellcheck="false"></textarea>
         <span class="cc-hint">JSON is sent compacted to one line, as the console producer reads one record per line.</span></label>
+      <div class="cc-field">
+        <span class="cc-label">Headers</span>
+        <div v-for="(h, i) in pHeaders" :key="i" class="tm-hrow">
+          <input v-model="h[0]" class="cc-input" type="text" placeholder="Key" spellcheck="false" :aria-label="'Header ' + (i + 1) + ' key'" />
+          <input v-model="h[1]" class="cc-input" type="text" placeholder="Value" spellcheck="false" :aria-label="'Header ' + (i + 1) + ' value'" />
+          <button type="button" class="cc-kebab" :aria-label="'Remove header ' + (i + 1)" @click="pHeaders.splice(i, 1)"><CcIcon name="close" /></button>
+        </div>
+        <button type="button" class="cc-btn cc-btn--ghost cc-btn--sm tm-addh" @click="pHeaders.push(['', ''])"><CcIcon name="plus" />Add header</button>
+      </div>
       <div v-if="pError" class="cc-alert cc-alert--error"><CcIcon name="x-circle" /><span>{{ pError }}</span></div>
     </CcModal>
   </div>
@@ -79,7 +88,7 @@ import CcIcon from './CcIcon.vue';
 import CcJson from './CcJson.vue';
 import CcModal from './CcModal.vue';
 import { useCc } from './ccContext';
-import { consumeCommand, oneLine, parseConsumed, produceCommand, timeLabel, type CcMessage, type CcTopic } from './confluent';
+import { consumeCommand, oneLine, parseConsumed, produceWithHeaders, timeLabel, type CcMessage, type CcTopic } from './confluent';
 
 const props = defineProps<{ topic: CcTopic }>();
 const cc = useCc();
@@ -119,14 +128,22 @@ async function browse(logged: boolean) {
   messages.value = parseConsumed(String(result.output || ''));
   if (selected.value && !messages.value.some(isSel)) selected.value = null;
 }
-onMounted(() => { if (props.topic.messages > 0) browse(false); else loaded.value = true; });
+onMounted(() => {
+  if (props.topic.messages > 0) browse(false); else loaded.value = true;
+  if (cc.route.value.page === 'topic' && cc.route.value.produce) {
+    openProduce();
+    cc.route.value = { page: 'topic', name: props.topic.name, tab: 'messages' };
+  }
+});
 
 const produceOpen = ref(false);
 const pKey = ref('');
 const pValue = ref('');
 const pError = ref('');
+const pHeaders = ref<[string, string][]>([]);
 function openProduce() {
   pKey.value = '';
+  pHeaders.value = [];
   pValue.value = '{\n  "order_id": 1001,\n  "status": "CREATED"\n}';
   pError.value = '';
   produceOpen.value = true;
@@ -135,7 +152,9 @@ async function produce() {
   const value = oneLine(pValue.value);
   if (value.error) { pError.value = value.error; return; }
   if (/[\r\n]/.test(pKey.value)) { pError.value = 'The key must be on a single line.'; return; }
-  const result = await cc.run(produceCommand(props.topic.name, pKey.value, value.text),
+  if (pHeaders.value.some(([k, v]) => /[\r\n]/.test(k + v))) { pError.value = 'Header keys and values must be on a single line.'; return; }
+  if (pHeaders.value.some(([k, v]) => !k.trim() && v.trim())) { pError.value = 'A header needs a key.'; return; }
+  const result = await cc.run(produceWithHeaders(props.topic.name, pKey.value, value.text, pHeaders.value),
     { success: `Produced a message to ${props.topic.name}`, quiet: true });
   if (!result.ok) { pError.value = errorText(result); return; }
   produceOpen.value = false;
@@ -159,6 +178,8 @@ async function produce() {
 .tm-detail { position: sticky; top: 8px; min-width: 0; }
 .tm-detail__body { display: flex; flex-direction: column; gap: 10px; }
 .tm-p { margin: 0; }
+.tm-hrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 28px; gap: 6px; align-items: center; }
+.tm-addh { align-self: flex-start; }
 @container sl-portal (max-width: 1100px) {
   .tm-split.has-detail { grid-template-columns: minmax(0, 1fr); }
   .tm-detail { position: static; }

@@ -65,6 +65,7 @@ const planning = computed(() => [
   { id: 'timeline' as PageId, label: 'Timeline', icon: 'timeline', count: 0 },
   { id: 'backlog' as PageId, label: 'Backlog', icon: 'backlog', count: 0 },
   { id: 'board' as PageId, label: 'Board', icon: 'board', count: 0 },
+  { id: 'issues' as PageId, label: 'Issues', icon: 'list', count: 0 },
   { id: 'goals' as PageId, label: 'Goals', icon: 'goals', count: 0 },
   { id: 'reports' as PageId, label: 'Reports', icon: 'reports', count: 0 },
 ]);

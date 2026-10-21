@@ -1,13 +1,17 @@
 <template>
   <div v-if="group">
-    <!-- Edit inbound rules is its own page in the console -->
+    <!-- Edit inbound / outbound rules are pages of their own in the console -->
     <template v-if="editMode">
-      <CsHeader title="Edit inbound rules" description="Inbound rules control the incoming traffic that's allowed to reach the instance." />
+      <CsHeader :title="`Edit ${direction} rules`" :description="editBlurb" />
       <section class="cs-container">
-        <div class="cs-container__head"><CsHeader title="Inbound rules" :level="2" /></div>
-        <div class="cs-container__body"><SgRuleEditor v-model="draft" show-ids /></div>
+        <div class="cs-container__head"><CsHeader :title="direction === 'inbound' ? 'Inbound rules' : 'Outbound rules'" :level="2" /></div>
+        <div class="cs-container__body"><SgRuleEditor v-model="draft" show-ids :direction="direction" /></div>
       </section>
-      <div v-if="draft.some(r => r.cidr.trim() === '0.0.0.0/0')" class="cs-alert cs-alert--warning">
+      <div v-if="direction === 'outbound' && !draft.length" class="cs-alert cs-alert--warning">
+        <CsIcon name="status-warning" class="cs-alert__icon" />
+        <div>With no outbound rules, instances in this group cannot reach anything - not package repositories, not AWS endpoints, not Systems Manager.</div>
+      </div>
+      <div v-if="direction === 'inbound' && draft.some(r => r.cidr.trim() === '0.0.0.0/0')" class="cs-alert cs-alert--warning">
         <CsIcon name="status-warning" class="cs-alert__icon" />
         <div>Rules with source of 0.0.0.0/0 or ::/0 allow all IP addresses to access your instance. We recommend setting security group rules to allow access from known IP addresses only.</div>
       </div>
@@ -36,7 +40,7 @@
             <div><dt>VPC ID</dt><dd><a href="#" class="cs-link" @click.prevent="ctx.to('vpc', 'vpcs')">{{ group.vpc }}</a></dd></div>
             <div><dt>Owner</dt><dd>{{ ctx.account.value }}</dd></div>
             <div><dt>Inbound rules count</dt><dd>{{ (group.ingress || []).length }} Permission entries</dd></div>
-            <div><dt>Outbound rules count</dt><dd>{{ (group.egress || []).length || 1 }} Permission entry</dd></div>
+            <div><dt>Outbound rules count</dt><dd>{{ (group.egress || []).length }} Permission {{ (group.egress || []).length === 1 ? 'entry' : 'entries' }}</dd></div>
           </dl>
         </div>
       </section>
@@ -48,7 +52,7 @@
           <CsHeader :title="`${tab} (${shown.length})`" :level="2">
             <template #actions>
               <button v-if="tab === 'Inbound rules'" type="button" class="cs-btn" @click="ctx.to(svc, 'sg-inbound', { id: group.id })">Edit inbound rules</button>
-              <button v-else type="button" class="cs-btn" disabled>Edit outbound rules</button>
+              <button v-else type="button" class="cs-btn" @click="ctx.to(svc, 'sg-outbound', { id: group.id })">Edit outbound rules</button>
             </template>
           </CsHeader>
         </div>
@@ -62,7 +66,7 @@
                 <td>{{ rule.cidr }}</td><td>–</td>
               </tr>
               <tr v-if="!shown.length"><td colspan="8" class="cs-empty"><strong>No security group rules found</strong>
-                <button type="button" class="cs-btn" @click="ctx.to(svc, 'sg-inbound', { id: group.id })">Edit inbound rules</button></td></tr>
+                <button type="button" class="cs-btn" @click="ctx.to(svc, tab === 'Inbound rules' ? 'sg-inbound' : 'sg-outbound', { id: group.id })">Edit {{ tab === 'Inbound rules' ? 'inbound' : 'outbound' }} rules</button></td></tr>
             </tbody>
           </table>
         </div>
@@ -103,7 +107,11 @@ import { protocolLabel, ruleOf, ruleProblem, sameRule, typeOf, type EditRule } f
 const ctx = useAws();
 const svc = computed<ServiceId>(() => (ctx.route.value.svc === 'vpc' ? 'vpc' : 'ec2'));
 const id = computed(() => ctx.route.value.params?.id || '');
-const editMode = computed(() => ctx.route.value.page === 'sg-inbound');
+const editMode = computed(() => ctx.route.value.page === 'sg-inbound' || ctx.route.value.page === 'sg-outbound');
+const direction = computed<'inbound' | 'outbound'>(() => (ctx.route.value.page === 'sg-outbound' ? 'outbound' : 'inbound'));
+const editBlurb = computed(() => (direction.value === 'inbound'
+  ? "Inbound rules control the incoming traffic that's allowed to reach the instance."
+  : "Outbound rules control the outgoing traffic that's allowed to leave the instance."));
 const group = computed(() => rows(ctx.view.value, 'ec2.security_groups').find(g => g.id === id.value) || null);
 const tab = ref('Inbound rules');
 const tagging = ref(false);
@@ -111,25 +119,39 @@ const deleting = ref(false);
 const busy = ref(false);
 const draft = ref<EditRule[]>([]);
 
-const shown = computed(() => (tab.value === 'Inbound rules' ? group.value?.ingress || []
-  : (group.value?.egress?.length ? group.value.egress : [{ protocol: 'all', port: '', cidr: '0.0.0.0/0' }])));
+const shown = computed(() => ((tab.value === 'Inbound rules' ? group.value?.ingress : group.value?.egress) || [])
+  .map((r: any) => ({ ...r, port: r.port === 'all' ? '' : r.port, cidr: r.cidr || r.source_group || '' })));
 
 const actions = [
-  { id: 'inbound', text: 'Edit inbound rules' }, { id: 'tags', text: 'Manage tags' },
+  { id: 'inbound', text: 'Edit inbound rules' }, { id: 'outbound', text: 'Edit outbound rules' }, { id: 'tags', text: 'Manage tags' },
   { id: 'delete', text: 'Delete security groups' },
 ];
 
 function act(action: string) {
   if (action === 'inbound' && group.value) ctx.to(svc.value, 'sg-inbound', { id: group.value.id });
+  if (action === 'outbound' && group.value) ctx.to(svc.value, 'sg-outbound', { id: group.value.id });
   if (action === 'tags') tagging.value = true;
   if (action === 'delete') deleting.value = true;
 }
 
-watch([editMode, group], () => {
-  if (editMode.value && group.value && !draft.value.length) {
-    draft.value = (group.value.ingress || []).map((r: any) => ({
-      original: { protocol: r.protocol, port: String(r.port || ''), cidr: r.cidr },
-      type: typeOf(r), port: String(r.port || ''), cidr: r.cidr,
+/** A stored rule in the editor's spelling: `-1` is "all", and so is a port of `all`. */
+function plain(r: any) {
+  const protocol = String(r.protocol) === '-1' ? 'all' : String(r.protocol);
+  const port = String(r.port || '') === 'all' ? '' : String(r.port || '');
+  return { protocol, port, cidr: String(r.cidr || '') };
+}
+function current() {
+  if (!group.value) return [];
+  return ((direction.value === 'inbound' ? group.value.ingress : group.value.egress) || []).map(plain);
+}
+const seededFor = ref('');
+watch([editMode, direction, group], () => {
+  if (!editMode.value) { draft.value = []; seededFor.value = ''; return; }
+  const key = `${id.value}/${direction.value}`;
+  if (group.value && seededFor.value !== key) {
+    seededFor.value = key;
+    draft.value = current().map((r: { protocol: string; port: string; cidr: string }) => ({
+      original: r, type: typeOf(r), port: r.port, cidr: r.cidr,
       source: r.cidr === '0.0.0.0/0' ? 'Anywhere-IPv4' : 'Custom', description: '',
     }));
   }
@@ -138,26 +160,29 @@ watch([editMode, group], () => {
 async function saveRules() {
   if (!group.value) return;
   busy.value = true;
-  const before = (group.value.ingress || []).map((r: any) => ({ protocol: r.protocol, port: String(r.port || ''), cidr: r.cidr }));
+  const which = direction.value === 'inbound' ? 'ingress' : 'egress';
+  const before = current();
   const after = draft.value.map(ruleOf);
   let ok = true;
   for (const rule of before) {
     if (after.some(next => sameRule(next, rule))) continue;
-    const result = await ctx.run(cli(['aws', 'ec2', 'revoke-security-group-ingress'], {
+    const result = await ctx.run(cli(['aws', 'ec2', `revoke-security-group-${which}`], {
       '--group-id': group.value.id, '--protocol': rule.protocol, '--port': rule.port, '--cidr': rule.cidr,
     }));
     ok = ok && result.ok;
   }
   for (const rule of after) {
-    if (before.some((old: any) => sameRule(old, rule))) continue;
-    const result = await ctx.run(cli(['aws', 'ec2', 'authorize-security-group-ingress'], {
+    if (before.some((old: { protocol: string; port: string; cidr: string }) => sameRule(old, rule))) continue;
+    const result = await ctx.run(cli(['aws', 'ec2', `authorize-security-group-${which}`], {
       '--group-id': group.value.id, '--protocol': rule.protocol, '--port': rule.port, '--cidr': rule.cidr,
     }));
     ok = ok && result.ok;
   }
   busy.value = false;
   if (ok) {
-    ctx.api.notify('success', `Inbound security group rules successfully modified on security group (${group.value.id} | ${group.value.name})`);
+    const label = direction.value === 'inbound' ? 'Inbound' : 'Outbound';
+    ctx.api.notify('success', `${label} security group rules successfully modified on security group (${group.value.id} | ${group.value.name})`);
+    tab.value = `${label} rules`;
     draft.value = [];
     ctx.to(svc.value, 'sg', { id: group.value.id });
   }

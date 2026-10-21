@@ -68,7 +68,37 @@ export interface SfContext {
     useWarehouse: (warehouse: string) => Promise<boolean>;
     /** Open one of the shared create dialogs ("+ Create" and every page's Create button). */
     create: (kind: CreateKind, defaults?: Record<string, string>) => void;
+    /** Open the object context menu at the pointer (right-click). */
+    menu: (event: MouseEvent, items: SfMenuItem[], title?: string) => void;
+    /** Open a shell-level dialog: Load data, Unload, Grant privileges, a one-statement prompt. */
+    dialog: (request: SfDialogRequest) => void;
 }
+
+export interface SfMenuItem {
+    label?: string;
+    icon?: string;
+    shortcut?: string;
+    hint?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    sep?: boolean;
+    action?: () => void;
+}
+
+/** A field of the shared one-statement dialog (PromptDialog). */
+export interface SfPromptField {
+    key: string; label: string; value?: string; placeholder?: string; hint?: string;
+    options?: [string, string][]; type?: 'text' | 'textarea' | 'check'; numeric?: boolean;
+}
+
+/** The shell-level dialogs a context menu can open. */
+export type SfDialogRequest =
+    | { kind: 'load'; table?: string; stage?: string }
+    | { kind: 'unload'; table: string; stage?: string }
+    | { kind: 'grant'; onKind: string; onName: string }
+    | { kind: 'prompt'; title: string; subtitle?: string; message?: string; okText?: string; danger?: boolean;
+        fields: SfPromptField[]; build: (values: Record<string, string>) => string | string[]; success?: string;
+        then?: (values: Record<string, string>) => void };
 
 export type CreateKind = 'database' | 'schema' | 'table' | 'view' | 'stage' | 'file-format' | 'warehouse'
     | 'role' | 'user' | 'monitor' | 'masking-policy' | 'row-access-policy' | 'stream' | 'task' | 'pipe';

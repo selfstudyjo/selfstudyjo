@@ -1,8 +1,9 @@
 <template>
   <div class="page">
     <SnList title="Incidents" :columns="COLUMNS" :rows="rowsShown" :crumbs="crumbs" :initial-text="text"
-            :bulk-actions="['Delete']" default-sort="" @new="$emit('navigate', { page: 'incident', id: '-1' })"
-            @open="open" @bulk="bulk">
+            :bulk-actions="['Assign to me', 'Delete']" default-sort="" table="incident" :text-of="textOf" :api="api"
+            :row-actions="ROW_ACTIONS" @new="$emit('navigate', { page: 'incident', id: '-1' })"
+            @open="open" @bulk="bulk" @row-action="rowAction">
       <template #filters>
         <div class="seg" role="tablist" aria-label="Incident filters">
           <button v-for="f in FILTERS" :key="f.id" type="button" class="seg__btn" :class="{ 'is-on': filter === f.id }"
@@ -39,7 +40,7 @@
 /** incident_list.do: the queue, with the four standard filters and SLA bars. */
 import { computed, ref } from 'vue';
 import type { PortalApi } from '../usePortal';
-import SnList, { type Column } from './SnList.vue';
+import SnList, { type Column, type RowAction } from './SnList.vue';
 import SnModal from './SnModal.vue';
 import SlaBar from './SlaBar.vue';
 import { PRIORITY_LABEL, cmd, isOpen, myGroups, personName, worstSla, type Incident, type Model } from './snow';
@@ -66,6 +67,25 @@ const FILTERS: { id: IncidentFilter; label: string }[] = [
 ];
 
 const pendingDelete = ref<string[]>([]);
+
+const ROW_ACTIONS: RowAction<Incident>[] = [
+  { id: 'assign', label: 'Assign to me', disabled: row => !['New', 'In Progress', 'On Hold'].includes(row.state) || (row.state === 'In Progress' && row.assigned_to === props.model.user) },
+  { id: 'workspace', label: 'Open in Service Operations Workspace' },
+  { id: 'delete', label: 'Delete' },
+];
+/** The text each cell shows - what Show Matching, group by and export use. */
+function textOf(row: Incident, key: string): string {
+  if (key === 'priority') return PRIORITY_LABEL[row.priority] || String(row.priority);
+  if (key === 'caller') return personName(props.model, row.caller) || row.caller || '';
+  if (key === 'assigned_to') return personName(props.model, row.assigned_to) || row.assigned_to || '';
+  if (key === 'sla') { const s = worstSla(row); return s ? `${s.percent}%` : ''; }
+  return String((row as any)[key] ?? '');
+}
+async function rowAction(action: string, row: Incident) {
+  if (action === 'assign') await props.api.exec(cmd.incidentAck(row.number), { success: `${row.number} assigned to you and In Progress` });
+  else if (action === 'workspace') emit('navigate', { page: 'sow-record', id: row.number });
+  else if (action === 'delete') pendingDelete.value = [row.number];
+}
 
 function inFilter(row: Incident, f: IncidentFilter): boolean {
   const m = props.model;
@@ -97,8 +117,14 @@ const crumbs = computed(() => CRUMB[props.filter].map((label, i) => ({
 
 function slug(text: string) { return text.toLowerCase().replace(/\s+/g, '-'); }
 function open(row: Incident) { emit('navigate', { page: 'incident', id: row.number }); }
-function bulk(action: string, keys: string[]) {
+async function bulk(action: string, keys: string[]) {
   if (action === 'Delete' && keys.length) pendingDelete.value = keys;
+  if (action === 'Assign to me') {
+    for (const number of keys) {
+      const result = await props.api.exec(cmd.incidentAck(number), { success: `${number} assigned to you`, failure: `${number} was not assigned` });
+      if (!result.ok) break;
+    }
+  }
 }
 async function confirmDelete() {
   const keys = pendingDelete.value;

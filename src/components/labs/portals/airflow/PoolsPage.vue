@@ -13,6 +13,7 @@
         </span>
       </div>
       <div class="af-panel__body">
+        <FileIoBar noun="pools" label="Pools" default-file="pools.json" />
         <div class="af-table-wrap">
           <table class="af-table af-table--bordered af-table--striped">
             <thead>
@@ -70,6 +71,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { sortBy } from '@/utils/portalKit';
 import AfIcon from './AfIcon.vue';
+import FileIoBar from './FileIoBar.vue';
 import { useAf } from './afContext';
 import { CMD, type AfPool } from './airflow';
 

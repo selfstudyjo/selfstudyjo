@@ -1250,6 +1250,18 @@ const labs: Catalogue = {
     'Equivalent CLI commands': '等效的 CLI 命令',
     'Nothing yet. Every action you take in the console above appears here as the command it ran.': '暂无记录。您在上方控制台中执行的每个操作都会以其实际运行的命令显示在这里。',
     'This build does not include that console yet.': '此版本尚未包含该控制台。',
+    'You can do this in the GUI or in the terminal:': '此任务可以在图形界面或终端中完成：',
+    'Do this one in the terminal or the Files tool.': '此任务请在终端或文件工具中完成。',
+    'Review the lesson': '复习课程',
+    'Prefer a GUI?': '更喜欢图形界面？',
+    'This lab includes the console of the real product. You can solve the tasks there or in the terminal - the console runs the same commands, and its "Equivalent CLI commands" drawer shows each one. Tasks that can be done in the GUI say so.': '本实验包含真实产品的控制台。您可以在控制台或终端中完成任务——控制台运行的是相同的命令，其“等效 CLI 命令”抽屉会显示每一条命令。可以在图形界面中完成的任务会注明。',
+    'Lessons for this lab': '本实验的课程',
+    'Loading the lesson...': '正在加载课程...',
+    'No lesson is linked to this lab yet. The brief and the tasks have everything you need.': '此实验尚未关联课程。简介和任务中已包含您需要的全部内容。',
+    'Open the full lesson page': '打开完整课程页面',
+    'Back to the lab': '返回实验',
+    'Could not load the lesson. Check your connection and try again.': '无法加载课程。请检查网络连接后重试。',
+    'Reading material': '阅读材料',
 };
 
 export default labs;

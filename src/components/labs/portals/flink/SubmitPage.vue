@@ -1,24 +1,7 @@
 <template>
   <div class="fk-page">
-    <!-- ===== The real page's JAR area, honestly unavailable ===== -->
-    <section class="fk-card">
-      <header class="fk-card__head">
-        <span class="fk-card__title">Uploaded Jars</span>
-        <span class="fk-card__extra">
-          <button type="button" class="fk-btn fk-btn--primary" disabled title="JAR upload is not available in this simulation">
-            <FkIcon name="upload" />+ Add New
-          </button>
-        </span>
-      </header>
-      <div class="fk-card__body">
-        <div class="fk-alert">
-          <FkIcon name="info" />
-          <span>JAR upload is not available in this simulated cluster - there is no JVM to run a JAR's <code class="fk-mono">main()</code>.
-            Jobs here are Flink SQL: submit them through the <strong>SQL Gateway</strong> below, exactly as the SQL Client
-            beside this dashboard would. An <code class="fk-mono">INSERT INTO ... SELECT</code> submits a streaming job.</span>
-        </div>
-      </div>
-    </section>
+    <!-- ===== Uploaded Jars: the playground JARs, through the REST API ===== -->
+    <JarsCard />
 
     <!-- ===== SQL Gateway ===== -->
     <section class="fk-card">
@@ -150,6 +133,7 @@
 import { computed, nextTick, ref } from 'vue';
 import { errorText } from '@/utils/portalKit';
 import FkIcon from './FkIcon.vue';
+import JarsCard from './JarsCard.vue';
 import { useFk } from './fkContext';
 import { fmtTime, gridsOf, sqlString, type FkGridData, type FkSavepoint } from './flink';
 

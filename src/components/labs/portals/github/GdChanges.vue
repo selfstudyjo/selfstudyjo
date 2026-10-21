@@ -39,6 +39,14 @@
     </div>
 
     <form class="gd-commit" @submit.prevent="submit">
+      <div v-if="amend" class="gd-amend">
+        <GdIcon name="alert" :size="14" />
+        <span>
+          <template v-if="amend.pushed">You're amending a commit that has already been pushed. Pushing it again will require a <b>force push</b>.</template>
+          <template v-else>You're amending the last commit. Staged changes will be added to it.</template>
+        </span>
+        <button type="button" class="gd-amend__x" aria-label="Stop amending" @click="$emit('cancel-amend')"><GdIcon name="x" :size="12" /></button>
+      </div>
       <div class="gd-commit__summary">
         <span class="gd-avatar" :title="`${v.user.name} <${v.user.email}>`"><GdIcon name="person" :size="14" /></span>
         <input v-model="summary" class="gd-input" type="text" placeholder="Summary (required)"
@@ -48,12 +56,20 @@
         <textarea v-model="description" class="gd-textarea" placeholder="Description"
                   aria-label="Commit description" :disabled="busy"></textarea>
         <div class="gd-commit__tools">
-          <button type="button" class="gd-commit__coauthor" title="Add co-authors" aria-label="Add co-authors"
-                  disabled><GdIcon name="personAdd" :size="14" /></button>
+          <button type="button" class="gd-commit__coauthor" :class="{ 'is-on': coOpen }"
+                  :title="coOpen ? 'Remove co-authors' : 'Add co-authors'"
+                  :aria-label="coOpen ? 'Remove co-authors' : 'Add co-authors'" :disabled="busy"
+                  @click="coOpen = !coOpen"><GdIcon name="personAdd" :size="14" /></button>
+        </div>
+        <div v-if="coOpen" class="gd-commit__co">
+          <input v-model="coText" class="gd-input" type="text" placeholder="Name <email>, Name <email>"
+                 aria-label="Co-authors" :disabled="busy" />
+          <span v-if="coError" class="gd-commit__coerr">{{ coError }}</span>
         </div>
       </div>
       <button type="submit" class="gd-btn gd-btn--primary gd-commit__go" :disabled="!canCommit">
-        <template v-if="v.merging || v.sequencer">Commit merge</template>
+        <template v-if="amend">Amend last commit</template>
+        <template v-else-if="v.merging || v.sequencer">Commit merge</template>
         <template v-else>Commit {{ stagedCount > 1 ? plural(stagedCount, 'file') + ' ' : '' }}to <b>{{ v.detached ? 'detached HEAD' : v.branch }}</b></template>
       </button>
     </form>
@@ -71,23 +87,26 @@
  */
 import { computed, ref, watch } from 'vue';
 import GdIcon from './GdIcon.vue';
-import { plural, relTime, splitPath, statusLabel, type Change, type GdView } from './gd';
+import { plural, relTime, splitPath, statusLabel, withCoAuthors, type Change, type GdView } from './gd';
 
 const props = defineProps<{
   v: GdView;
   selected: string;
   busy: boolean;
   undo: { summary: string; at: string } | null;
+  amend: { summary: string; body: string; pushed: boolean } | null;
   act: {
     toggle: (change: Change) => void;
     toggleAll: (allStaged: boolean) => void;
     commit: (summary: string, description: string) => Promise<boolean>;
+    amend: (summary: string, description: string) => Promise<boolean>;
     undo: () => void;
   };
 }>();
 const emit = defineEmits<{
   (event: 'select', path: string): void;
   (event: 'context', ev: MouseEvent, change: Change): void;
+  (event: 'cancel-amend'): void;
 }>();
 
 const ICON: Record<string, string> = {
@@ -97,6 +116,16 @@ const ICON: Record<string, string> = {
 
 const summary = ref('');
 const description = ref('');
+const coOpen = ref(false);
+const coText = ref('');
+const coAuthors = computed(() => coOpen.value ? coText.value.split(',').map(a => a.trim()).filter(Boolean) : []);
+const coError = computed(() => coAuthors.value.some(a => !/^[^<>]+<[^\s@<>]+@[^\s@<>]+>$/.test(a))
+  ? 'Each co-author is "Name <email>".' : '');
+
+// Amending pre-fills the last commit's message, as Desktop does.
+watch(() => props.amend, amend => {
+  if (amend) { summary.value = amend.summary; description.value = amend.body; }
+}, { immediate: true });
 
 const stageable = computed(() => props.v.changes.filter(c =>
   !(c.status === 'conflicted' && (c.markers || 0) > 0)));
@@ -107,8 +136,9 @@ const allState = computed(() => {
 });
 const stash = computed(() => props.v.stashes.find(s => s.desktop && s.branch === props.v.branch) || null);
 const canCommit = computed(() => {
-  if (props.busy || !summary.value.trim()) return false;
-  if (props.v.conflicts.length) return false;
+  if (props.busy || !summary.value.trim() || coError.value) return false;
+  if (props.v.conflicts.length || props.v.rebasing) return false;
+  if (props.amend) return true;
   if (props.v.merging || props.v.sequencer) return true;
   return stagedCount.value > 0;
 });
@@ -135,10 +165,14 @@ watch(() => props.v.merging?.message || props.v.sequencer?.message || '', messag
 
 async function submit() {
   if (!canCommit.value) return;
-  const ok = await props.act.commit(summary.value.trim(), description.value);
+  const body = withCoAuthors(description.value, coAuthors.value);
+  const ok = props.amend ? await props.act.amend(summary.value.trim(), body)
+    : await props.act.commit(summary.value.trim(), body);
   if (ok) {
     summary.value = '';
     description.value = '';
+    coText.value = '';
+    coOpen.value = false;
   }
 }
 
@@ -213,7 +247,16 @@ function toggleSelected() {
 .gd-commit__desc:focus-within { border-color: var(--gd-blue); box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.3); }
 .gd-textarea { border: 0; height: 70px; resize: none; display: block; }
 .gd-commit__tools { display: flex; justify-content: flex-end; padding: 2px 4px; border-top: 1px solid #eaecef; }
-.gd-commit__coauthor { border: 0; background: none; color: var(--gd-text-secondary); padding: 2px; display: inline-flex; }
+.gd-commit__coauthor { border: 0; background: none; color: var(--gd-text-secondary); padding: 2px; display: inline-flex; cursor: default; }
+.gd-commit__coauthor.is-on { color: var(--gd-blue); }
+.gd-commit__co { padding: 4px; border-top: 1px solid #eaecef; display: flex; flex-direction: column; gap: 2px; }
+.gd-commit__coerr { font-size: 11px; color: var(--gd-red); }
+.gd-amend {
+  display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-radius: 3px; font-size: 11px;
+  background: #fffbdd; border: 1px solid #f9c513; color: #735c0f;
+}
+.gd-amend > span { flex: 1; }
+.gd-amend__x { border: 0; background: none; color: inherit; padding: 0; display: inline-flex; cursor: default; }
 .gd-commit__go { width: 100%; justify-content: center; height: 28px; }
 .gd-commit__go b { font-weight: 600; margin-left: 3px; }
 @container sl-portal (max-width: 700px) {

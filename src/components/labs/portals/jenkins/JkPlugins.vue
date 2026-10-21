@@ -13,13 +13,18 @@
         </div>
 
         <template v-if="tab === 'installed'">
+          <div v-if="restart" class="jk-alert jk-alert--warning jk-pl__restart">Changes will take effect when you restart Jenkins.</div>
           <div class="jk-table-wrap">
             <table class="jk-table">
               <thead><tr><th>Name ↓</th><th>Enabled</th></tr></thead>
               <tbody>
                 <tr v-for="p in installed" :key="p.id">
                   <td><div class="jk-pl__name">{{ p.name }} <span class="jk-pl__ver">{{ p.version }}</span></div><div class="jk-muted jk-pl__id">{{ p.id }}</div></td>
-                  <td><span class="jk-pl__switch is-on" title="Enabled"><span></span></span></td>
+                  <td>
+                    <button type="button" class="jk-pl__switch" :class="{ 'is-on': p.enabled !== false }" role="switch"
+                            :aria-checked="p.enabled !== false" :aria-label="(p.enabled !== false ? 'Disable ' : 'Enable ') + p.name"
+                            :title="p.enabled !== false ? 'Enabled' : 'Disabled'" :disabled="busy" @click="toggle(p.id, p.enabled === false)"><span></span></button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -96,6 +101,19 @@ const available = computed(() => CATALOGUE
   .filter(p => !ctx.plugins.value.some(i => i.id === p.id))
   .filter(p => !needle.value || `${p.name} ${p.id} ${p.desc}`.toLowerCase().includes(needle.value)));
 
+const restart = ref(false);
+
+async function toggle(id: string, enable: boolean) {
+  busy.value = true;
+  try {
+    const result = await ctx.run(jcli([enable ? 'enable-plugin' : 'disable-plugin', id]),
+                                 { success: `${id} ${enable ? 'enabled' : 'disabled'}` });
+    if (result.ok) restart.value = true;
+  } finally {
+    busy.value = false;
+  }
+}
+
 async function install(id: string) {
   busy.value = true;
   try {
@@ -120,9 +138,12 @@ async function install(id: string) {
 .jk-pl__name { font-weight: 600; }
 .jk-pl__ver { color: var(--jk-secondary); font-weight: 500; margin-left: 4.8px; }
 .jk-pl__id { font-size: 12.48px; }
-.jk-pl__switch { display: inline-block; position: relative; width: 36.8px; height: 20.8px; border-radius: 16px; background: rgba(119, 118, 124, 0.35); }
+.jk-pl__switch { display: inline-block; position: relative; width: 36.8px; height: 20.8px; padding: 0; border: 0; border-radius: 16px; background: rgba(119, 118, 124, 0.35); cursor: pointer; transition: background 0.15s; }
 .jk-pl__switch.is-on { background: var(--jk-accent); }
-.jk-pl__switch span { position: absolute; top: 2.72px; left: 18.4px; width: 15.36px; height: 15.36px; border-radius: 50%; background: #fff; }
+.jk-pl__switch:disabled { opacity: 0.6; cursor: progress; }
+.jk-pl__switch span { position: absolute; top: 2.72px; left: 2.72px; width: 15.36px; height: 15.36px; border-radius: 50%; background: #fff; transition: left 0.15s; }
+.jk-pl__switch.is-on span { left: 18.4px; }
+.jk-pl__restart { margin-bottom: 12px; }
 .jk-pl__install { min-height: 30.4px; padding: 3.2px 12px; }
 .jk-pl__h2 { margin: 0 0 12.8px; font-size: 16.8px; }
 @container sl-portal (max-width: 900px) {

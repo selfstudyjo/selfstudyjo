@@ -55,6 +55,60 @@
       </div>
     </section>
 
+    <!-- Burndown -->
+    <section v-else-if="tab === 'burndown'">
+      <p class="j-muted rr__intro">Track the work remaining in a sprint against the ideal line. In this simulation the team delivers
+        when the sprint completes (mgr advance), so the remaining line stays flat and drops on the last day — the gap to the
+        guideline is the honest picture of a sprint whose work lands at the end.</p>
+      <div class="j-field rr__pick"><label class="j-label" for="rr-bd">Sprint</label>
+        <select id="rr-bd" v-model.number="bdSprint" class="j-select">
+          <option v-for="s in [...sprints].reverse()" :key="s.n" :value="s.n">{{ sprintName(s.n) }} ({{ s.status === 'closed' ? 'complete' : s.status }})</option>
+        </select></div>
+      <div v-if="bd" class="rr__chart" role="img" :aria-label="`Burndown for ${sprintName(bd.n)}`">
+        <div class="rr__legend" aria-hidden="true">
+          <span><i class="rr__swatch rr__swatch--guide" /> Guideline</span>
+          <span><i class="rr__swatch rr__swatch--remain" /> Remaining story points</span>
+        </div>
+        <svg :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="none" class="rr__svg">
+          <g v-for="tick in bdTicks" :key="tick">
+            <line :x1="PAD" :x2="W - 8" :y1="by(tick)" :y2="by(tick)" class="rr__grid" />
+            <text :x="PAD - 6" :y="by(tick) + 4" class="rr__tick" text-anchor="end">{{ tick }}</text>
+          </g>
+          <line :x1="bx(0)" :y1="by(bd.committed)" :x2="bx(days)" :y2="by(0)" class="rr__guide" />
+          <polyline :points="bdPoints" class="rr__remain" />
+          <text v-for="d in [0, Math.round(days / 2), days]" :key="d" :x="bx(d)" :y="H - 8" class="rr__tick" text-anchor="middle">Day {{ d }}</text>
+        </svg>
+        <p class="j-small">Committed {{ bd.committed }} · Completed {{ bd.delivered }} · Remaining {{ Math.max(0, bd.committed - bd.delivered) }}
+          <template v-if="bd.status !== 'closed'"> · not completed yet</template></p>
+      </div>
+      <div v-else class="j-empty"><h3>No sprint data yet</h3><p>Plan and start a sprint to see its burndown.</p></div>
+    </section>
+
+    <!-- Burnup -->
+    <section v-else-if="tab === 'burnup'">
+      <p class="j-muted rr__intro">Completed work accumulating sprint by sprint, against the total scope of the backlog today.
+        The distance between the two lines is the work still to do.</p>
+      <div v-if="!closed.length" class="j-empty"><h3>No completed sprints yet</h3><p>Complete a sprint to start the burnup.</p></div>
+      <div v-else class="rr__chart" role="img" aria-label="Burnup chart">
+        <div class="rr__legend" aria-hidden="true">
+          <span><i class="rr__swatch rr__swatch--done" /> Completed (cumulative)</span>
+          <span><i class="rr__swatch rr__swatch--cap" /> Total scope</span>
+        </div>
+        <svg :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="none" class="rr__svg">
+          <g v-for="tick in buTicks" :key="tick">
+            <line :x1="PAD" :x2="W - 8" :y1="uy(tick)" :y2="uy(tick)" class="rr__grid" />
+            <text :x="PAD - 6" :y="uy(tick) + 4" class="rr__tick" text-anchor="end">{{ tick }}</text>
+          </g>
+          <line :x1="PAD" :x2="W - 8" :y1="uy(scope)" :y2="uy(scope)" class="rr__cap" />
+          <polyline :points="buPoints" class="rr__burnup" />
+          <circle v-for="(p, i) in buSeries" :key="i" :cx="ux(i)" :cy="uy(p)" r="4" class="rr__dot" />
+          <text v-for="(s, i) in closed" :key="s.n" :x="ux(i)" :y="H - 8" class="rr__tick" text-anchor="middle">Sprint {{ s.n }}</text>
+        </svg>
+        <p class="j-small">{{ buSeries[buSeries.length - 1] }} of {{ scope }} story points completed
+          ({{ scope ? Math.round(100 * buSeries[buSeries.length - 1] / scope) : 0 }}%).</p>
+      </div>
+    </section>
+
     <!-- Sprint report -->
     <section v-else-if="tab === 'sprint'">
       <form class="rr__retro" @submit.prevent="saveRetro">
@@ -140,7 +194,8 @@ import { useJira } from './useJira';
 
 interface Sprint { n: number; status: string; capacity: number; committed: number; delivered: number; carried: number; say_do: string }
 const { ctx } = useJira();
-const titles: Record<string, string> = { velocity: 'Velocity report', sprint: 'Sprint report', health: 'Team health', cost: 'Cost report' };
+const titles: Record<string, string> = { velocity: 'Velocity report', burndown: 'Sprint burndown chart', burnup: 'Burnup report',
+  sprint: 'Sprint report', health: 'Team health', cost: 'Cost report' };
 const tab = ref('velocity');
 const hover = ref(-1);
 const rightsize = ref<{ line: string; save: string } | null>(null);
@@ -170,6 +225,26 @@ const ticks = computed(() => { const step = Math.ceil(max.value / 4 / 5) * 5; re
 const top = computed(() => ticks.value[ticks.value.length - 1] || 10);
 const y = (v: number) => 16 + (H - 40) * (1 - (Number(v) || 0) / top.value);
 const groupX = (i: number) => PAD + 16 + i * ((W - PAD - 40) / Math.max(1, closed.value.length));
+const days = computed(() => Number(pick(ctx.view.value, 'org.sprint_days', 14)));
+const bdSprint = ref(Number(pick(ctx.view.value, 'stats.sprint', 1)));
+const bd = computed(() => sprints.value.find(s => s.n === bdSprint.value) || sprints.value[sprints.value.length - 1] || null);
+const bdTop = computed(() => { const m = Math.max(10, bd.value?.committed || 0); return Math.ceil(m / 5) * 5; });
+const bdTicks = computed(() => [0, 1, 2, 3, 4].map(i => Math.round(i * bdTop.value / 4)));
+const bx = (d: number) => PAD + 8 + (W - PAD - 24) * d / Math.max(1, days.value);
+const by = (v: number) => 16 + (H - 40) * (1 - v / bdTop.value);
+const bdPoints = computed(() => {
+  const s = bd.value;
+  if (!s) return '';
+  const end = s.status === 'closed' ? Math.max(0, s.committed - s.delivered) : s.committed;
+  return [[0, s.committed], [days.value, s.committed], [days.value, end]].map(([d, v]) => `${bx(d)},${by(v)}`).join(' ');
+});
+const scope = computed(() => rows<Record<string, any>>(ctx.view.value, 'board').reduce((a, r) => a + Number(r.points || 0), 0));
+const buSeries = computed(() => { let sum = 0; return closed.value.map(s => (sum += Number(s.delivered || 0))); });
+const buTop = computed(() => Math.ceil(Math.max(10, scope.value, ...buSeries.value) / 10) * 10);
+const buTicks = computed(() => [0, 1, 2, 3, 4].map(i => Math.round(i * buTop.value / 4)));
+const ux = (i: number) => PAD + 24 + (W - PAD - 48) * i / Math.max(1, closed.value.length - 1);
+const uy = (v: number) => 16 + (H - 40) * (1 - v / buTop.value);
+const buPoints = computed(() => buSeries.value.map((v, i) => `${ux(i)},${uy(v)}`).join(' '));
 const tone = (n: number | undefined) => (n ?? 0) >= 70 ? 'green' : (n ?? 0) >= 50 ? 'yellow' : 'red';
 const money = (n: unknown) => (Number(n) || 0).toLocaleString('en-US');
 
@@ -209,6 +284,13 @@ async function doRightsize() {
 .rr__bar--commit { fill: #8C8F97; } .rr__bar--done { fill: #1F845A; }
 .rr__bar { cursor: pointer; }
 .rr__cap { stroke: #1868DB; stroke-width: 2; stroke-dasharray: 4 3; }
+.rr__guide { stroke: #8C8F97; stroke-width: 1.5; }
+.rr__remain { fill: none; stroke: #C9372C; stroke-width: 2; }
+.rr__burnup { fill: none; stroke: #1F845A; stroke-width: 2; }
+.rr__dot { fill: #1F845A; }
+.rr__swatch--guide { height: 2px; background: #8C8F97; }
+.rr__swatch--remain { height: 2px; background: #C9372C; }
+.rr__pick { max-width: 280px; }
 .rr__tip { position: absolute; top: 4px; transform: translateX(-50%); padding: 8px 12px; border-radius: 4px; background: #292A2E; color: #fff; font-size: 12px; line-height: 16px; white-space: nowrap; pointer-events: none; }
 .rr__gap { margin-top: 16px; margin-right: 8px; }
 .rr__signals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-width: 820px; }

@@ -16,7 +16,10 @@
           <td>{{ stage.stageId }}</td>
           <td class="st__desc">
             <a href="#" @click.prevent="$emit('open', stage.stageId)">{{ stage.description }}</a>
-            <span class="expand-details">+details</span>
+            <span class="expand-details" role="button" tabindex="0" @click="toggleRow(stage.key)"
+                  @keydown.enter="toggleRow(stage.key)">{{ openRows.includes(stage.key) ? '-details' : '+details' }}</span>
+            <pre v-if="openRows.includes(stage.key)" class="st__details">{{ stage.name }} at ThreadPoolExecutor.java:1149
+{{ stage.tasks }} task(s) · {{ duration(stage.durationMs) }}</pre>
           </td>
           <td class="st__nowrap">{{ date(stage.submitted) }}</td>
           <td>{{ duration(stage.durationMs) }}</td>
@@ -40,6 +43,10 @@ const props = defineProps<{ stages: SparkStage[] }>();
 defineEmits<{ (event: 'open', stageId: number): void }>();
 
 const key = ref<keyof SparkStage>('stageId');
+const openRows = ref<string[]>([]);
+function toggleRow(k: string) {
+  openRows.value = openRows.value.includes(k) ? openRows.value.filter(x => x !== k) : [...openRows.value, k];
+}
 const dir = ref<'asc' | 'desc'>('desc');
 const sorted = computed(() => [...props.stages].sort((a, b) => {
   const order = Number(a[key.value]) - Number(b[key.value]);
@@ -57,5 +64,6 @@ function arrow(k: string) {
 <style scoped>
 .st__desc { max-width: 420px; }
 .st__nowrap { white-space: nowrap; }
+.st__details { margin: 6px 0 0; font-size: 12px; white-space: pre-wrap; background: #f7f7f7; border: 1px solid #ddd; padding: 6px; }
 .expand-details { font-size: 12px; color: #6c757d; margin-left: 6px; cursor: pointer; white-space: nowrap; }
 </style>

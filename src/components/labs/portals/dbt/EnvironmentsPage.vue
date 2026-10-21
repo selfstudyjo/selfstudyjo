@@ -15,6 +15,7 @@
           </p>
         </div>
         <div class="dbt-head__actions">
+          <button type="button" class="dbt-btn" :disabled="dbt.busy.value" @click="openEdit(current)"><DbtIcon name="settings" />Edit settings</button>
           <button v-if="current.type === 'deployment'" type="button" class="dbt-btn" :disabled="dbt.busy.value" @click="remove(current)">
             <DbtIcon name="trash" />Delete environment
           </button>
@@ -26,7 +27,8 @@
       </div>
       <div class="ev-grid">
         <section class="dbt-card">
-          <div class="dbt-card__head"><h3>Settings</h3></div>
+          <div class="dbt-card__head"><h3>Settings</h3>
+            <button type="button" class="dbt-btn dbt-btn--sm" @click="openEdit(current)"><DbtIcon name="pencil" />Edit</button></div>
           <div class="dbt-card__body">
             <dl class="dbt-dl">
               <dt>dbt version</dt><dd>{{ versionLabel(current.dbt_version) }}</dd>
@@ -88,14 +90,15 @@
       </section>
     </template>
 
-    <DbtModal v-if="creating" title="Create environment" ok-text="Save" :ok-disabled="!!createProblem || saving" :busy="saving" :width="580"
-              @close="creating = false" @ok="create">
+    <DbtModal v-if="creating" :title="editing ? 'Edit ' + editing.name : 'Create environment'" ok-text="Save"
+              :ok-disabled="!!createProblem || saving" :busy="saving" :width="580"
+              @close="creating = false" @ok="editing ? saveEdit() : create()">
       <div v-if="createError" class="dbt-error">{{ createError }}</div>
       <label class="dbt-field"><span>Environment name *</span><input v-model="form.name" class="dbt-input" placeholder="Staging" /></label>
-      <div class="dbt-field">
+      <div v-if="!editing || editing.type === 'deployment'" class="dbt-field">
         <span>Set deployment type</span>
-        <label class="dbt-check"><input v-model="form.dtype" type="radio" value="production" :disabled="hasProd" />
-          <span><strong>PROD</strong> - the environment that builds production data{{ hasProd ? ' (this project already has one)' : '' }}</span></label>
+        <label class="dbt-check"><input v-model="form.dtype" type="radio" value="production" :disabled="prodTaken" />
+          <span><strong>PROD</strong> - the environment that builds production data{{ prodTaken ? ' (this project already has one)' : '' }}</span></label>
         <label class="dbt-check"><input v-model="form.dtype" type="radio" value="staging" /> <span><strong>Staging</strong> - pre-production checks</span></label>
         <label class="dbt-check"><input v-model="form.dtype" type="radio" value="general" /> <span><strong>General</strong> - anything else</span></label>
       </div>
@@ -103,6 +106,7 @@
         <span>dbt version</span>
         <select v-model="form.version" class="dbt-select">
           <option value="versionless">Latest (versionless)</option>
+          <option value="1.9">1.9</option>
           <option value="1.8">1.8</option>
           <option value="1.7">1.7</option>
         </select>
@@ -114,7 +118,7 @@
       </div>
       <label class="dbt-field"><span>Custom branch</span><input v-model="form.branch" class="dbt-input is-mono" placeholder="(default branch)" />
         <small>The git branch jobs in this environment check out.</small></label>
-      <p class="dbt-help">Runs <code class="dbt-mono">{{ createCommand }}</code></p>
+      <p class="dbt-help">Runs <code class="dbt-mono">{{ editing ? editCommand : createCommand }}</code></p>
     </DbtModal>
   </div>
 </template>
@@ -124,7 +128,7 @@ import { computed, reactive, ref } from 'vue';
 import { cli, parseJson } from '@/utils/portalKit';
 import DbtIcon from './DbtIcon.vue';
 import DbtModal from './DbtModal.vue';
-import { useDbt } from './dbtContext';
+import { textFlag, useDbt } from './dbtContext';
 import { cronText, type CloudEnv } from './dbt';
 
 const dbt = useDbt();
@@ -142,10 +146,48 @@ function cap(s: string) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
 function versionLabel(v: string) { return v === 'versionless' ? 'Latest (versionless)' : v; }
 
 const creating = ref(false);
+const editing = ref<CloudEnv | null>(null);
+const prodTaken = computed(() => dbt.envs.value.some(e => e.deployment_type === 'production' && e.id !== editing.value?.id));
 const saving = ref(false);
 const createError = ref('');
 const form = reactive({ name: '', dtype: 'staging', version: 'versionless', target: 'staging', threads: 4, branch: '' });
+function openEdit(env: CloudEnv) {
+  editing.value = env;
+  Object.assign(form, { name: env.name, dtype: env.deployment_type || 'general', version: env.dbt_version || 'versionless',
+                        target: env.target_name || 'default', threads: Number(env.threads) || 4, branch: env.custom_branch || '' });
+  createError.value = '';
+  creating.value = true;
+}
+const editCommand = computed(() => {
+  const env = editing.value;
+  if (!env) return '';
+  return textFlag(['dbt-cloud', 'environment', 'update'], {
+    '--environment-id': env.id, '--name': form.name.trim(),
+    '--deployment-type': env.type === 'deployment' ? form.dtype : '',
+    '--dbt-version': form.version, '--target-name': form.target.trim() || 'default', '--threads': form.threads,
+  }, { '--custom-branch': form.branch.trim() });
+});
+async function saveEdit() {
+  if (createProblem.value || !editing.value) return;
+  saving.value = true;
+  createError.value = '';
+  try {
+    const result = await dbt.run(editCommand.value, { quiet: true });
+    if (!result.ok) {
+      const doc = parseJson<any>(result.error || result.output);
+      createError.value = doc?.status?.user_message || String(result.error || result.output || 'The request failed');
+      return;
+    }
+    dbt.notify('success', 'Environment saved', form.name.trim());
+    creating.value = false;
+    editing.value = null;
+  } finally {
+    saving.value = false;
+  }
+}
+
 function openCreate() {
+  editing.value = null;
   Object.assign(form, { name: '', dtype: hasProd.value ? 'staging' : 'production', version: 'versionless',
                         target: hasProd.value ? 'staging' : 'prod', threads: 4, branch: '' });
   createError.value = '';

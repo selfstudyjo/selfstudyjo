@@ -44,7 +44,7 @@
       <button type="button" class="btn btn-link fv__clear" @click="selected = []">Clear</button>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap fv__area" @contextmenu.prevent="areaMenu">
       <table class="table fv__table">
         <thead>
           <tr>
@@ -61,7 +61,8 @@
             <td colspan="6"><a href="#" @click.prevent="openDir(parentOf(cwd))"><AmbIcon name="folder" :size="15" /> ..</a></td>
           </tr>
           <tr v-for="row in entries" :key="row.path" :class="{ 'is-selected': selected.includes(row.path) }"
-              @dblclick="row.type === 'dir' ? openDir(row.path) : openFile(row)">
+              @dblclick="row.type === 'dir' ? openDir(row.path) : openFile(row)"
+              @contextmenu.prevent.stop="rowMenu($event, row)">
             <td class="fv__check"><input v-model="selected" type="checkbox" :value="row.path" :aria-label="`Select ${row.name}`" /></td>
             <td class="fv__name">
               <AmbIcon :name="row.type === 'dir' ? 'folder' : 'file'" :size="15" :class="row.type === 'dir' ? 'fv__folder' : 'fv__file'" />
@@ -77,7 +78,26 @@
       </table>
       <div v-if="!entries.length" class="empty">{{ search ? 'No files match your search' : 'No files or folders' }}</div>
     </div>
-    <div class="fv__foot text-muted">{{ entries.length }} item{{ entries.length === 1 ? '' : 's' }} · {{ cwd }}</div>
+    <div class="fv__foot text-muted">{{ entries.length }} item{{ entries.length === 1 ? '' : 's' }} · {{ cwd }} · right-click for actions</div>
+
+    <AmbContextMenu v-if="ctx" :x="ctx.x" :y="ctx.y" :items="ctx.items" @close="ctx = null" />
+
+    <!-- INFO -->
+    <AmbModal v-if="modal === 'info' && info" :title="info.name" ok-text="" cancel-text="Close" @close="modal = ''">
+      <table class="table fv__info">
+        <tbody>
+          <tr><th>Path</th><td class="mono">{{ info.path }}</td></tr>
+          <tr><th>Type</th><td>{{ info.type === 'dir' ? 'Directory' : 'File' }}</td></tr>
+          <tr v-if="info.type !== 'dir'"><th>Size</th><td>{{ bytes(info.size) }} ({{ info.size }} bytes)</td></tr>
+          <tr v-if="info.type !== 'dir'"><th>Replication</th><td>{{ info.replication }}</td></tr>
+          <tr v-if="info.type !== 'dir'"><th>Blocks</th><td>{{ info.blocks }}</td></tr>
+          <tr><th>Owner</th><td>{{ info.owner }}</td></tr>
+          <tr><th>Group</th><td>{{ info.group }}</td></tr>
+          <tr><th>Permission</th><td class="mono">{{ info.perm }} ({{ permOctal(info.perm) }})</td></tr>
+          <tr><th>Last Modified</th><td>{{ shortStamp(info.mtime) }}</td></tr>
+        </tbody>
+      </table>
+    </AmbModal>
 
     <!-- NEW FOLDER -->
     <AmbModal v-if="modal === 'mkdir'" title="Add New Folder" ok-text="Add" :ok-disabled="!!folderError || !folderName"
@@ -182,7 +202,8 @@
 import { computed, ref } from 'vue';
 import type { PortalApi } from '../usePortal';
 import { cli, pick, rows, sortBy } from '@/utils/portalKit';
-import { bytes, joinPath, parentOf, permOctal, shortStamp } from './ambari';
+import { bytes, joinPath, parentOf, permOctal, shortStamp, type AmbMenuItem } from './ambari';
+import AmbContextMenu from './AmbContextMenu.vue';
 import AmbIcon from './AmbIcon.vue';
 import AmbModal from './AmbModal.vue';
 
@@ -229,6 +250,50 @@ function arrow(key: string) {
 function toggleAll() {
   selected.value = allChecked.value ? [] : entries.value.map(r => r.path);
 }
+// ---- right-click menus ----
+const ctx = ref<{ x: number; y: number; items: AmbMenuItem[] } | null>(null);
+const info = ref<Record<string, any> | null>(null);
+function rowMenu(event: MouseEvent, row: Record<string, any>) {
+  if (!selected.value.includes(row.path)) selected.value = [row.path];
+  const many = selected.value.length > 1;
+  const files = selectedFiles.value.length;
+  const items: AmbMenuItem[] = [
+    { header: true, label: many ? `${selected.value.length} items` : row.name },
+  ];
+  if (!many) {
+    items.push(row.type === 'dir'
+      ? { label: 'Open', icon: 'folder', run: () => openDir(row.path) }
+      : { label: 'Open', icon: 'file', run: () => openFile(row) });
+    items.push({ label: 'Rename', icon: 'edit', disabled: props.busy, run: () => startRename() });
+  }
+  items.push(
+    { label: 'Permissions', icon: 'lock', disabled: props.busy, run: () => startPermissions() },
+    { label: 'Replication', icon: 'copy', disabled: props.busy || !files, run: () => startReplication() },
+    { sep: true },
+    { label: 'Copy to...', icon: 'copy', disabled: props.busy, run: () => startTransfer('copy') },
+    { label: 'Move to...', icon: 'move', disabled: props.busy, run: () => startTransfer('move') },
+    { label: 'Download', icon: 'download', disabled: !files, run: () => download() },
+  );
+  if (files > 1 && files === selected.value.length) items.push({ label: 'Concatenate', icon: 'list', run: () => concatenate() });
+  if (!many) items.push({ label: 'Info', icon: 'info', run: () => { info.value = row; modal.value = 'info'; } });
+  items.push({ sep: true }, { label: 'Delete', icon: 'trash', danger: true, disabled: props.busy, run: () => { modal.value = 'delete'; } });
+  ctx.value = { x: event.clientX, y: event.clientY, items };
+}
+function areaMenu(event: MouseEvent) {
+  ctx.value = {
+    x: event.clientX, y: event.clientY,
+    items: [
+      { header: true, label: cwd.value },
+      { label: 'New Folder', icon: 'plus', disabled: props.busy, run: () => openNewFolder() },
+      { label: 'Upload', icon: 'upload', disabled: props.busy, run: () => openUpload() },
+      { label: 'Refresh', icon: 'refresh', run: () => openDir(cwd.value) },
+      { sep: true },
+      { label: 'Go up', icon: 'folder', disabled: cwd.value === '/', run: () => openDir(parentOf(cwd.value)) },
+      { label: 'Select all', icon: 'list', disabled: !entries.value.length, run: () => { selected.value = entries.value.map(r => r.path); } },
+    ],
+  };
+}
+
 function depth(dir: string) {
   return dir === '/' ? 0 : dir.split('/').length - 1;
 }
@@ -442,4 +507,7 @@ async function remove() {
   .fv__tools .btn { padding: 0 10px; flex: 1 1 0; }
   .fv__actions .btn-link { height: 32px; }
 }
+.fv__area { min-height: 160px; }
+.fv__info th { width: 34%; font-weight: 400; color: #666; border-bottom: 0; border-top: 1px solid #ddd; }
+.fv__info td { word-break: break-all; }
 </style>

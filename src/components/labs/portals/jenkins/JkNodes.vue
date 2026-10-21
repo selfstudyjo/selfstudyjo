@@ -40,6 +40,7 @@
         <div class="jk-app-bar">
           <h1 class="jk-h1"><JkIcon name="computer" class="jk-nd__h1-icon" />{{ label(node.name) }}</h1>
           <div class="jk-nd__bar">
+            <button type="button" class="jk-btn" :class="{ 'jk-btn--primary': editing }" @click="startEdit"><JkIcon name="gear" />Configure</button>
             <button v-if="node.online" type="button" class="jk-btn" @click="setOnline(false)">Mark this node temporarily offline</button>
             <button v-else type="button" class="jk-btn jk-btn--primary" @click="setOnline(true)">Bring this node back online</button>
             <button v-if="node.name !== 'built-in'" type="button" class="jk-btn jk-btn--text-danger" @click="remove"><JkIcon name="trash" />Delete Agent</button>
@@ -47,10 +48,26 @@
         </div>
         <div v-if="!node.online" class="jk-alert jk-alert--warning">Disconnected by {{ ctx.user.value }}. A pipeline whose agent needs only this node's labels now fails with “no node matches the label”.</div>
         <p>{{ node.name === 'built-in' ? 'The Jenkins controller\'s built-in node.' : 'Permanent agent.' }}</p>
+        <form v-if="editing" class="jk-card jk-nd__edit" @submit.prevent="saveEdit">
+          <div class="jk-field">
+            <label class="jk-label" for="jk-nd-edit-exec">Number of executors</label>
+            <input id="jk-nd-edit-exec" v-model.number="editExec" class="jk-input jk-nd__num" type="number" :min="node.name === 'built-in' ? 0 : 1" />
+            <p v-if="!editExecOk" class="jk-error">Number of executors must be {{ node.name === 'built-in' ? '0' : '1' }} or more</p>
+          </div>
+          <div class="jk-field">
+            <label class="jk-label" for="jk-nd-edit-labels">Labels</label>
+            <input id="jk-nd-edit-labels" v-model="editLabels" class="jk-input" type="text" />
+            <p class="jk-help">Separate labels with spaces. A pipeline's <code>agent { label '…' }</code> is matched against these.</p>
+          </div>
+          <div class="jk-bottom-bar">
+            <button type="submit" class="jk-btn jk-btn--primary" :disabled="busy || !editExecOk">Save</button>
+            <button type="button" class="jk-btn" @click="editing = false">Cancel</button>
+          </div>
+        </form>
         <h2 class="jk-h2">Labels</h2>
         <div class="jk-nd__labels"><span v-for="l in node.labels" :key="l" class="jk-nd__label">{{ l }}</span></div>
         <h2 class="jk-h2">Executors</h2>
-        <p>{{ node.executors }} executor{{ node.executors === 1 ? '' : 's' }}, all idle.</p>
+        <p>{{ node.executors }} executor{{ node.executors === 1 ? '' : 's' }}{{ node.executors ? ', all idle' : '' }}.</p>
         <h2 class="jk-h2">Projects tied to {{ label(node.name) }}</h2>
         <p class="jk-muted">None</p>
       </template>
@@ -142,6 +159,37 @@ async function create() {
   }
 }
 
+// ---- Configure (update-node) ----
+const editing = ref(false);
+const editExec = ref(1);
+const editLabels = ref('');
+const editExecOk = computed(() => Number.isInteger(editExec.value) && editExec.value >= (node.value?.name === 'built-in' ? 0 : 1));
+
+function startEdit() {
+  if (!node.value) return;
+  editExec.value = Number(node.value.executors);
+  editLabels.value = node.value.labels.join(' ');
+  editing.value = !editing.value;
+}
+
+async function saveEdit() {
+  if (!node.value || !editExecOk.value) return;
+  const n = node.value.name;
+  const words = ['update-node', n];
+  const flags: Record<string, string> = {};
+  if (editExec.value !== Number(node.value.executors)) flags['--executors'] = String(editExec.value);
+  const nextLabels = editLabels.value.trim().split(/\s+/).filter(Boolean).join(' ');
+  if (nextLabels !== node.value.labels.join(' ')) words.push('--labels', nextLabels);
+  if (words.length === 2 && !Object.keys(flags).length) { editing.value = false; return; }
+  busy.value = true;
+  try {
+    const result = await ctx.run(jcli(words, flags), { success: `Saved ${label(n)}` });
+    if (result.ok) editing.value = false;
+  } finally {
+    busy.value = false;
+  }
+}
+
 async function setOnline(online: boolean) {
   if (!node.value) return;
   await ctx.run(jcli([online ? 'online-node' : 'offline-node', node.value.name]),
@@ -173,4 +221,5 @@ async function remove() {
 .jk-nd__label { padding: 1.6px 9.6px; border-radius: 8px; background: var(--jk-btn-bg); font-weight: 600; font-size: 13px; }
 .jk-nd__form { max-width: 704px; }
 .jk-nd__num { max-width: 128px; }
+.jk-nd__edit { max-width: 640px; margin: 12px 0 8px; }
 </style>

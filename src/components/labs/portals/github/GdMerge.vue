@@ -1,5 +1,6 @@
 <template>
-  <GdDialog :title="`Merge into ${v.branch}`" width="md" @close="$emit('close')">
+  <GdDialog :title="mode === 'rebase' ? `Rebase ${v.branch}` : mode === 'squash' ? `Squash and merge into ${v.branch}` : `Merge into ${v.branch}`"
+            width="md" @close="$emit('close')">
     <div class="gd-merge__filter">
       <GdIcon name="search" :size="13" />
       <input ref="filterEl" v-model="filter" type="search" placeholder="Filter" aria-label="Filter branches" />
@@ -14,19 +15,22 @@
     </ul>
     <template #footer>
       <div class="gd-merge__status">
-        <template v-if="!selected">Choose a branch to merge into <b>{{ v.branch }}</b>.</template>
+        <template v-if="!selected">Choose a branch to {{ mode === 'rebase' ? 'rebase' : 'merge into' }} <b>{{ v.branch }}</b>{{ mode === 'rebase' ? ' onto' : '' }}.</template>
         <template v-else-if="ahead === 0"><GdIcon name="check" :size="14" class="gd-ok" /> <b>{{ v.branch }}</b>&nbsp;is already up to date with <b>&nbsp;{{ selected }}</b>.</template>
+        <template v-else-if="mode === 'rebase'"><GdIcon name="check" :size="14" class="gd-ok" /> This will update&nbsp;<b>{{ v.branch }}</b>&nbsp;by applying its&nbsp;<b>{{ plural(mine, 'commit') }}</b>&nbsp;on top of&nbsp;<b>{{ selected }}</b>.</template>
+        <template v-else-if="mode === 'squash'"><GdIcon name="check" :size="14" class="gd-ok" /> This will squash&nbsp;<b>{{ plural(ahead, 'commit') }}</b>&nbsp;from&nbsp;<b>{{ selected }}</b>&nbsp;into one commit on&nbsp;<b>{{ v.branch }}</b>.</template>
         <template v-else><GdIcon name="check" :size="14" class="gd-ok" /> This will merge&nbsp;<b>{{ plural(ahead, 'commit') }}</b>&nbsp;from&nbsp;<b>{{ selected }}</b>&nbsp;into&nbsp;<b>{{ v.branch }}</b>.</template>
       </div>
       <div class="gd-merge__split">
-        <button type="button" class="gd-btn gd-btn--primary" :disabled="busy || !selected || ahead === 0" @click="merge">Create a merge commit</button>
+        <button type="button" class="gd-btn gd-btn--primary" :disabled="busy || !selected || ahead === 0" @click="merge">{{ LABEL[mode] }}</button>
         <button type="button" class="gd-btn gd-btn--primary gd-merge__caret" aria-label="Merge options" @click="menu = !menu">
           <GdIcon name="triangleDown" :size="14" />
         </button>
         <ul v-if="menu" class="gd-merge__menu">
-          <li class="is-on"><GdIcon name="check" :size="12" /> <span><b>Create a merge commit</b><br />The commits from the selected branch will be added to the current branch via a merge commit.</span></li>
-          <li class="is-off"><span><b>Squash and merge</b><br />Not available in this lab.</span></li>
-          <li class="is-off"><span><b>Rebase</b><br />Not available in this lab: rebase is not simulated.</span></li>
+          <li v-for="opt in OPTIONS" :key="opt.id" :class="mode === opt.id ? 'is-on' : 'is-off'"
+              @click="mode = opt.id; menu = false">
+            <GdIcon v-if="mode === opt.id" name="check" :size="12" /> <span><b>{{ LABEL[opt.id] }}</b><br />{{ opt.text }}</span>
+          </li>
         </ul>
       </div>
     </template>
@@ -44,7 +48,17 @@ import GdDialog from './GdDialog.vue';
 import GdIcon from './GdIcon.vue';
 import { plural, type GdView } from './gd';
 
-const props = defineProps<{ v: GdView; busy: boolean; onMerge: (branch: string) => Promise<void> }>();
+type Mode = 'merge' | 'squash' | 'rebase';
+const props = defineProps<{ v: GdView; busy: boolean; mode?: Mode;
+  onMerge: (branch: string, mode: Mode) => Promise<void> }>();
+
+const LABEL: Record<Mode, string> = { merge: 'Create a merge commit', squash: 'Squash and merge', rebase: 'Rebase' };
+const OPTIONS: { id: Mode; text: string }[] = [
+  { id: 'merge', text: 'The commits from the selected branch will be added to the current branch via a merge commit.' },
+  { id: 'squash', text: 'The commits in the selected branch will be combined into one commit in the current branch.' },
+  { id: 'rebase', text: 'The commits from the current branch will be rebased onto the selected branch (git rebase).' },
+];
+const mode = ref<Mode>(props.mode || 'merge');
 defineEmits<{ (event: 'close'): void }>();
 
 const filter = ref('');
@@ -83,9 +97,19 @@ const ahead = computed(() => {
   return count;
 });
 
+/** Commits a rebase replays: the current branch's, not on the selected one. */
+const mine = computed(() => {
+  const branch = props.v.branches.find(b => b.name === selected.value);
+  if (!branch) return 0;
+  const theirs = reach(branch.full);
+  let count = 0;
+  for (const s of reach(props.v.head.sha)) if (!theirs.has(s)) count++;
+  return count;
+});
+
 async function merge() {
   if (!selected.value || ahead.value === 0 || props.busy) return;
-  await props.onMerge(selected.value);
+  await props.onMerge(selected.value, mode.value);
 }
 </script>
 
@@ -113,5 +137,7 @@ async function merge() {
 }
 .gd-merge__menu li { display: flex; gap: 6px; padding: 6px 10px; font-size: 11px; color: var(--gd-text-secondary); }
 .gd-merge__menu li b { color: var(--gd-text); font-size: 12px; }
-.gd-merge__menu li.is-off { opacity: 0.6; padding-left: 28px; }
+.gd-merge__menu li { cursor: default; }
+.gd-merge__menu li:hover { background: var(--gd-hover); }
+.gd-merge__menu li.is-off { padding-left: 28px; }
 </style>

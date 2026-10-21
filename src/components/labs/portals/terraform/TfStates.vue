@@ -46,7 +46,23 @@
           </div>
           <div class="tf-page-head__actions">
             <button type="button" class="tf-btn tf-btn--secondary" @click="copyJson"><TfIcon name="copy" /> Copy JSON</button>
+            <button v-if="!isLatest" type="button" class="tf-btn tf-btn--secondary" :disabled="busy || !workspace.locked" @click="rollback">
+              <TfIcon name="refresh" /> Rollback to this state version
+            </button>
           </div>
+        </div>
+        <div v-if="!isLatest && !workspace.locked" class="tf-alert tf-alert--neutral st-note">
+          <TfIcon name="info" />
+          <div>
+            <span class="tf-alert__title">Rolling back requires a locked workspace</span>
+            Lock the workspace first so no run writes state while it is being replaced.
+            <div><button type="button" class="tf-link-btn" :disabled="busy" @click="lockForRollback">Lock {{ workspace.name }}</button></div>
+          </div>
+        </div>
+        <div v-if="current.rollback_of" class="tf-alert tf-alert--neutral st-note">
+          <TfIcon name="info" />
+          <div>This state version is a rollback to
+            <a href="#" @click.prevent="go({ page: 'state', ws: workspace.name, id: current.rollback_of })">#{{ current.rollback_of }}</a>.</div>
         </div>
         <dl class="tf-dl st-dl">
           <dt>Serial</dt><dd>{{ current.serial }}</dd>
@@ -96,11 +112,11 @@ import { rows } from '@/utils/portalKit';
 import TfIcon from './TfIcon.vue';
 import TfWsHeader from './TfWsHeader.vue';
 import { useTf } from './tfContext';
-import { ago, fmtValue, longDate } from './tfKit';
+import { ago, cmdLock, cmdRollback, fmtValue, longDate } from './tfKit';
 
-interface StateVersion { id: string; workspace: string; serial: number; run: string; created_at: string; resources: number; outputs: Record<string, unknown>; tfstate: any }
+interface StateVersion { id: string; workspace: string; serial: number; run: string; created_at: string; resources: number; outputs: Record<string, unknown>; tfstate: any; rollback_of?: string }
 
-const { view, workspace, runs, route, go, now, notify } = useTf();
+const { view, workspace, runs, route, go, now, notify, run, confirm, busy } = useTf();
 const tabName = ref('Resources');
 const versions = computed(() => rows<StateVersion>(view.value, 'state_versions').filter(v => v.workspace === workspace.value?.name));
 const current = computed(() => versions.value.find(v => v.id === route.value.id) || null);
@@ -108,7 +124,34 @@ const isLatest = computed(() => versions.value[0]?.id === current.value?.id);
 const stateResources = computed(() => (current.value?.tfstate?.resources || []) as Record<string, any>[]);
 const json = computed(() => JSON.stringify(current.value?.tfstate || {}, null, 2));
 
-function hasRun(id: string) { return runs.value.some(run => run.id === id); }
+function hasRun(id: string) { return runs.value.some(entry => entry.id === id); }
+
+async function lockForRollback() {
+  const ws = workspace.value;
+  if (ws) await run(cmdLock(ws.id, 'Rolling back state'), { success: `Workspace ${ws.name} locked` });
+}
+
+/**
+ * Rollback: POST /workspaces/:id/state-versions naming this version as the
+ * rollback-state-version. A NEW state version is created with this one's
+ * content and the next serial - history is never rewritten.
+ */
+async function rollback() {
+  const ws = workspace.value;
+  const version = current.value;
+  if (!ws || !version) return;
+  const ok = await confirm({
+    title: 'Rollback to this state version?',
+    message: `A new state version will be created with the content of #${version.id} (serial ${version.serial}, ${version.resources} resource(s)). Terraform will then plan against the rolled-back state; any real infrastructure that differs is NOT changed until the next apply.`,
+    yes: 'Rollback state', destructive: true,
+  });
+  if (!ok) return;
+  const result = await run(cmdRollback(ws.id, version.id), { success: 'State rolled back', failure: 'Rollback failed' });
+  if (result.ok) {
+    const newest = versions.value[0];
+    if (newest) go({ page: 'state', ws: ws.name, id: newest.id });
+  }
+}
 
 async function copyJson() {
   try {
@@ -130,6 +173,7 @@ async function copyJson() {
 .st-cur { margin-left: 8px; font-size: 12px; }
 .st-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 12px; }
 .st-dl { margin-bottom: 20px; }
+.st-note { margin-bottom: 16px; }
 .st-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--tf-border); margin-bottom: 16px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .st-tab { flex: none; padding: 8px 12px; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--tf-fg-faint); font-weight: 500; white-space: nowrap; }
 .st-tab.is-active { color: var(--tf-fg-action); border-bottom-color: var(--tf-fg-action); }

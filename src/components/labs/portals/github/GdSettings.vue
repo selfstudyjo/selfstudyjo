@@ -6,7 +6,13 @@
                 @click="tab = t.id"><GdIcon :name="t.icon" :size="14" /> {{ t.label }}</button>
       </nav>
       <section class="gd-set__pane">
-        <template v-if="tab === 'remote'">
+        <template v-if="tab === 'remote' && primary">
+          <div class="gd-field"><label for="gd-remote-url">Primary remote repository ({{ primary.name }})</label>
+            <input id="gd-remote-url" v-model="remoteUrl" class="gd-input" autocomplete="off" spellcheck="false" /></div>
+          <p class="gd-dim">This remote lives inside the lab: pushing, pulling and fetching work against it, and nothing leaves your browser.</p>
+          <p v-if="otherRemotes.length" class="gd-dim">Other remotes: {{ otherRemotes.join(', ') }}</p>
+        </template>
+        <template v-else-if="tab === 'remote'">
           <div class="gd-set__empty">
             <GdIcon name="mark" :size="28" />
             <p><b>Publish your repository to GitHub</b></p>
@@ -66,18 +72,24 @@ const tab = ref(props.initialTab || 'remote');
 const ignore = ref(props.v.gitignore);
 const scope = ref('local');
 const name = ref(props.v.user.name || '');
+const primary = computed(() => props.v.remotes.find(r => r.name === 'origin') || props.v.remotes[0] || null);
+const otherRemotes = computed(() => props.v.remotes.filter(r => r !== primary.value).map(r => `${r.name} (${r.url})`));
+const remoteUrl = ref(primary.value?.url || '');
 const email = ref(props.v.user.email || '');
 
 const emailError = computed(() => email.value && !/^[^\s@]+@[^\s@]+$/.test(email.value)
   ? 'This email address does not look valid.' : '');
 const dirty = computed(() => ignore.value !== props.v.gitignore || name.value !== props.v.user.name
-  || email.value !== props.v.user.email);
+  || email.value !== props.v.user.email || (Boolean(primary.value) && remoteUrl.value.trim() !== primary.value!.url));
 
 async function save() {
   const commands: string[] = [];
   if (name.value !== props.v.user.name) commands.push(cmd.config('user.name', name.value.trim()));
   if (email.value !== props.v.user.email) commands.push(cmd.config('user.email', email.value.trim()));
   if (ignore.value !== props.v.gitignore) commands.push(cmd.write('.gitignore', ignore.value));
+  if (primary.value && remoteUrl.value.trim() && remoteUrl.value.trim() !== primary.value.url) {
+    commands.push(cmd.remoteSetUrl(primary.value.name, remoteUrl.value.trim()));
+  }
   if (await props.run(commands, 'Repository settings saved')) emit('close');
 }
 </script>

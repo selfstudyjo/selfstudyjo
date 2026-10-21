@@ -55,7 +55,8 @@
       <table class="sf-table">
         <thead><tr><th>Name</th><th>Status</th><th>Size</th><th>Clusters</th><th>Auto-suspend</th><th class="sf-num">Credits used</th><th>Resource monitor</th><th>Owner</th><th class="sf-actions"></th></tr></thead>
         <tbody>
-          <tr v-for="w in shown" :key="w.name" class="is-clickable" @click="sf.go({ page: 'warehouses', name: w.name })">
+          <tr v-for="w in shown" :key="w.name" class="is-clickable" @click="sf.go({ page: 'warehouses', name: w.name })"
+              @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'warehouse', name: w.name, state: w.state }), w.name)">
             <td><span class="sf-cell-name"><SfIcon name="warehouse" /><b>{{ w.name }}</b><span v-if="w.name === sf.current.value.warehouse" class="sf-badge sf-badge--run">In use</span></span></td>
             <td><span class="wh__state"><span class="sf-dot" :class="isStarted(w) ? 'sf-dot--ok' : ''"></span>{{ isStarted(w) ? 'Started' : 'Suspended' }}</span></td>
             <td>{{ sizeLabel(w.size) }}</td>
@@ -91,6 +92,7 @@ import SfIcon from './SfIcon.vue';
 import GrantsTable from './GrantsTable.vue';
 import PromptDialog, { type PromptField } from './PromptDialog.vue';
 import { useSf } from './sfContext';
+import { objectMenu } from './sfActions';
 import { matches } from '@/utils/portalKit';
 import { fmtCredits, fmtMs, fmtSuspend, ident, list, oneLine, sizeCredits, sizeId, sizeLabel, SIZES, str, type SfWarehouse } from './snowflake';
 

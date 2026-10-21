@@ -23,7 +23,8 @@
              { 'is-active': p.id === activeId, 'is-dim': isDim(p.id), 'is-hit': isHit(p.id) }]"
            :transform="`translate(${p.x} ${p.y})`" tabindex="0" role="button"
            :aria-label="kindLabel(p.id) + ' ' + nodeOf(p.id).name"
-           @mousedown.stop @click.stop="$emit('select', p.id)" @keydown.enter="$emit('select', p.id)">
+           @mousedown.stop @click.stop="$emit('select', p.id)" @keydown.enter="$emit('select', p.id)"
+           @contextmenu.prevent.stop="$emit('menu', $event, p.id)">
           <title>{{ kindLabel(p.id) }}: {{ nodeOf(p.id).name }}{{ nodeOf(p.id).status ? ' (' + nodeOf(p.id).status + ')' : '' }}</title>
           <rect class="lg__box" :width="W" :height="H" rx="6" />
           <rect class="lg__bar" width="5" :height="H" rx="2" />
@@ -60,7 +61,7 @@ const props = withDefaults(defineProps<{
   emptyText?: string;
 }>(), { ids: null, highlight: null, activeId: '', compact: false, emptyText: 'Nothing to show yet.' });
 
-defineEmits<{ (event: 'select', id: string): void }>();
+defineEmits<{ (event: 'select', id: string): void; (event: 'menu', e: MouseEvent, id: string): void }>();
 
 const W = 168;
 const H = 36;

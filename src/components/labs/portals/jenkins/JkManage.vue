@@ -35,7 +35,7 @@ interface Item { title: string; desc: string; icon: string; go?: Route }
 
 const GROUPS: { title: string; items: Item[] }[] = [
   { title: 'System Configuration', items: [
-    { title: 'System', icon: 'gear', desc: 'Configure global settings and paths.' },
+    { title: 'System', icon: 'gear', desc: 'Configure global settings and paths.', go: { page: 'system' } },
     { title: 'Tools', icon: 'hammer', desc: 'Configure tools, their locations and automatic installers.' },
     { title: 'Plugins', icon: 'puzzle', desc: 'Add, remove, disable or enable plugins that can extend the functionality of Jenkins.', go: { page: 'plugins' } },
     { title: 'Nodes', icon: 'computer', desc: 'Add, remove, control and monitor the various nodes that Jenkins runs jobs on.', go: { page: 'nodes' } },

@@ -14,7 +14,7 @@ import { pick, rows } from '@/utils/portalKit';
 export const HISTORY_BASE = 'http://spark-history.lab.internal:18080';
 
 export type SparkPage = 'history' | 'jobs' | 'job' | 'stages' | 'stage' | 'storage' | 'environment'
-  | 'executors' | 'sql' | 'query';
+  | 'executors' | 'sql' | 'query' | 'rdd';
 
 export interface SparkRoute {
   page: SparkPage;
@@ -102,6 +102,7 @@ export function locationFor(route: SparkRoute): string {
     case 'stages': return `${base}/stages/`;
     case 'stage': return `${base}/stages/stage/?id=${route.id ?? 0}&attempt=0`;
     case 'storage': return `${base}/storage/`;
+    case 'rdd': return `${base}/storage/rdd/?id=${route.id ?? 0}`;
     case 'environment': return `${base}/environment/`;
     case 'executors': return `${base}/executors/`;
     case 'sql': return `${base}/SQL/`;

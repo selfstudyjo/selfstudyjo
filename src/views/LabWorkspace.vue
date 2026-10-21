@@ -138,6 +138,32 @@
           </div>
 
           <div v-show="activePane === '__brief'" class="sl-bench__panel">
+            <!-- REVIEW THE LESSON without leaving the lab: a modal over the
+                 workspace, so nothing here is unmounted while it is open. -->
+            <div class="sl-brief-tools">
+              <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
+                      @click="lessonOpen = true">
+                <BookOpen class="sl-i" aria-hidden="true" /> {{ $t('Review the lesson') }}
+              </button>
+            </div>
+            <!--
+              THE GUI ROUTE. A portal writes by running the same command line the
+              console accepts, so every task the grader says a portal can reach is
+              done equally well there - and a brief that only ever shows commands
+              hides that. Named here once, and on each task card that qualifies.
+            -->
+            <div v-if="labPortals.length" class="sl-brief-gui">
+              <p>
+                <strong>{{ $t('Prefer a GUI?') }}</strong>
+                {{ $t('This lab includes the console of the real product. You can solve the tasks there or in the terminal - the console runs the same commands, and its "Equivalent CLI commands" drawer shows each one. Tasks that can be done in the GUI say so.') }}
+              </p>
+              <div class="sl-brief-gui__tools">
+                <button v-for="tool in labPortals" :key="tool.id" type="button"
+                        class="sl-btn sl-btn--primary sl-btn--sm" @click="openTool(tool.id)">
+                  <MonitorSmartphone class="sl-i" aria-hidden="true" /> {{ tool.label }}
+                </button>
+              </div>
+            </div>
             <LabBrief :text="$td(lab, 'brief')" />
             <div v-if="objectives.length" class="sl-objectives">
               <h4>{{ $t('By the end of this lab') }}</h4>
@@ -402,6 +428,8 @@
             @grade="grade0"
             @ask="askTutor"
             @self-mark="selfMark"
+            :tools="lab.tool_detail"
+            @open-tool="openTool"
           />
           <div v-if="lab.datasets.length" class="sl-side__datasets">
             <h4>{{ $t('Datasets in this lab') }}</h4>
@@ -414,6 +442,8 @@
           </div>
         </aside>
       </div>
+      <LabLessonModal :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
+                      @close="lessonOpen = false" />
     </template>
   </div>
 </template>
@@ -451,20 +481,21 @@
 import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  AlertTriangle, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
-  RotateCcw, RotateCw, X,
+  AlertTriangle, BookOpen, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
+  MonitorSmartphone, RotateCcw, RotateCw, X,
 } from 'lucide-vue-next';
 import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
 import { labService } from '@/services/lab.service';
 import { labsService } from '@/services/labs.service';
 import {
-  STATUS_LABELS, canEmbed, defaultPane, gradeReport, toolPanes,
+  STATUS_LABELS, canEmbed, defaultPane, gradeReport, portalTools, toolPanes,
   taskQuestion,
   type GradeReport, type Lab, type LabGrade, type LabTask, type LabTool,
   type ToolPane,
 } from '@/utils/labCatalogue';
 import LabBrief from '@/components/labs/LabBrief.vue';
+import LabLessonModal from '@/components/labs/LabLessonModal.vue';
 import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabFiles from '@/components/labs/LabFiles.vue';
@@ -686,6 +717,17 @@ function activeTool(family: string): string {
 function pickTool(family: string, toolId: string) {
   chosenTool.value = { ...chosenTool.value, [family]: toolId };
 }
+
+/** Open a tool wherever it lives: its pane, then that tool inside the pane. */
+function openTool(toolId: string) {
+  const pane = panes.value.find(row => row.tools.some(tool => tool.id === toolId));
+  if (!pane) return;
+  pickTool(pane.family, toolId);
+  showPane(pane.family);
+}
+
+const labPortals = computed(() => portalTools(lab.value?.tool_detail || []));
+const lessonOpen = ref(false);
 
 function showPane(family: string) {
   activePane.value = family;

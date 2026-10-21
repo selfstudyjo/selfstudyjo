@@ -8,10 +8,12 @@ import DdbExplore from './DdbExplore.vue';
 import DdbItemCreate from './DdbItemCreate.vue';
 import DdbTable from './DdbTable.vue';
 import DdbTables from './DdbTables.vue';
+import Ec2Connect from './Ec2Connect.vue';
 import Ec2Dashboard from './Ec2Dashboard.vue';
 import Ec2Instance from './Ec2Instance.vue';
 import Ec2Instances from './Ec2Instances.vue';
 import Ec2Launch from './Ec2Launch.vue';
+import Ec2Terminal from './Ec2Terminal.vue';
 import Home from './Home.vue';
 import IamDashboard from './IamDashboard.vue';
 import IamPolicies from './IamPolicies.vue';
@@ -67,6 +69,10 @@ const PAGES: Record<string, Component> = {
   'ec2/instances': Ec2Instances,
   'ec2/launch': Ec2Launch,
   'ec2/instance': Ec2Instance,
+  'ec2/connect': Ec2Connect,
+  'ec2/terminal': Ec2Terminal,
+  'ec2/sg-outbound': SgDetail,
+  'vpc/sg-outbound': SgDetail,
   'ec2/amis': Amis,
   'ec2/sgs': SecurityGroups,
   'ec2/sg': SgDetail,

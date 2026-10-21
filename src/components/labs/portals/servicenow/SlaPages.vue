@@ -1,11 +1,11 @@
 <template>
-  <SnList v-if="route.page === 'sla_defs'" title="SLA Definitions" :columns="DEF_COLUMNS" :rows="definitions" row-key="name" new-label="">
+  <SnList v-if="route.page === 'sla_defs'" title="SLA Definitions" :columns="DEF_COLUMNS" :rows="definitions" row-key="name" new-label="" table="contract_sla" :api="api">
     <template #cell="{ row, col }">
       <span v-if="col.key === 'name'" class="strong">{{ row.name }}</span>
       <template v-else>{{ (row as any)[col.key] }}</template>
     </template>
   </SnList>
-  <SnList v-else title="Task SLAs" :columns="TASK_COLUMNS" :rows="taskSlas" row-key="id" new-label=""
+  <SnList v-else title="Task SLAs" :columns="TASK_COLUMNS" :rows="taskSlas" row-key="id" new-label="" table="task_sla" :api="api"
           @open="r => $emit('navigate', { page: 'incident', id: r.task })">
     <template #cell="{ row, col }">
       <button v-if="col.key === 'task'" type="button" class="link" @click="$emit('navigate', { page: 'incident', id: row.task })">{{ row.task }}</button>

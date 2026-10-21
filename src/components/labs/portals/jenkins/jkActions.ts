@@ -59,5 +59,28 @@ export function useActions(ctx: JkContext) {
         return result.ok;
     }
 
-    return { buildNow, deleteJob, deleteBuild, setEnabled };
+    async function deleteView(name: string): Promise<boolean> {
+        const ok = await ctx.confirm({
+            title: `Delete the view ‘${name}’?`,
+            message: 'The jobs in it are not deleted; they stay in All.',
+            yes: 'Yes', destructive: true,
+        });
+        if (!ok) return false;
+        const result = await ctx.run(jcli(['delete-view', name]), { success: `Deleted the view ‘${name}’` });
+        if (result.ok) ctx.go({ page: 'dashboard' });
+        return result.ok;
+    }
+
+    async function wipeWorkspace(name: string): Promise<boolean> {
+        const ok = await ctx.confirm({
+            title: 'Wipe Out Current Workspace',
+            message: `Are you sure about wiping out the workspace of ‘${name}’? The next build checks everything out again.`,
+            yes: 'Yes', destructive: true,
+        });
+        if (!ok) return false;
+        const result = await ctx.run(jcli(['wipe-workspace', name]), { success: 'Workspace wiped out' });
+        return result.ok;
+    }
+
+    return { buildNow, deleteJob, deleteBuild, setEnabled, deleteView, wipeWorkspace };
 }

@@ -50,7 +50,7 @@
         <div class="table-wrap">
           <table class="table">
             <tbody>
-              <tr v-for="comp in components" :key="comp.name">
+              <tr v-for="comp in components" :key="comp.name" @contextmenu.prevent="compMenu($event, comp)">
                 <td class="svc__status">
                   <AmbIcon v-if="comp.category !== 'CLIENT'" :name="comp.started === comp.total ? 'ok' : 'down'"
                            :class="comp.started === comp.total ? 'health-ok' : 'health-down'" />
@@ -64,6 +64,12 @@
                 <td class="svc__hosts">
                   <a v-if="comp.total === 1" href="#" @click.prevent="$emit('navigate', { page: 'host', id: comp.hosts[0] })">{{ comp.hosts[0] }}.lab.internal</a>
                   <a v-else href="#" @click.prevent="$emit('navigate', { page: 'hosts' })">{{ comp.total }} hosts</a>
+                </td>
+                <td class="svc__rowact">
+                  <button v-if="comp.category !== 'CLIENT'" type="button" class="svc__kebab" :disabled="busy"
+                          :aria-label="`${comp.display} actions`" title="Actions" @click.stop="compMenu($event, comp)">
+                    <AmbIcon name="gear" :size="13" /><AmbIcon name="caret" :size="10" />
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -85,18 +91,36 @@
     <!-- CONFIGS -->
     <div v-else-if="tab === 'configs'" class="cfg">
       <div class="cfg__versions">
-        <div v-for="v in versions" :key="v.version" class="cfg__version" :class="{ 'is-current': v.current }">
-          <strong>V{{ v.version }}</strong>
-          <span>{{ v.user }} · {{ v.at }}</span>
-          <span v-if="v.current" class="label label-ok">Current</span>
-          <span class="cfg__note" :title="v.note">{{ v.note }}</span>
+        <div v-for="v in versions" :key="v.version" class="cfg__version"
+             :class="{ 'is-current': v.current, 'is-viewing': viewingNumber === v.version }">
+          <button type="button" class="cfg__vbtn" :title="`View V${v.version}`" @click="viewVersion(v.version)">
+            <strong>V{{ v.version }}</strong>
+            <span>{{ v.user }} · {{ v.at }}</span>
+            <span class="cfg__note" :title="v.note">{{ v.note || 'No notes' }}</span>
+          </button>
+          <div class="cfg__vfoot">
+            <span v-if="v.current" class="label label-ok">Current</span>
+            <template v-else>
+              <a href="#" @click.prevent="compareWith(v.version)">Compare</a>
+              <a href="#" @click.prevent="askRevert(v.version)">Make Current</a>
+            </template>
+          </div>
         </div>
+      </div>
+      <div v-if="viewing && !viewing.current" class="alert alert-info cfg__viewing">
+        <AmbIcon name="info" :size="14" />
+        <span>Viewing <strong>V{{ viewing.version }}</strong> ({{ viewing.note || 'no notes' }}), saved by
+          {{ viewing.user }} on {{ viewing.at }}. Properties are read-only.</span>
+        <button type="button" class="btn btn-default btn-sm" @click="compareWith(viewing.version)">Compare</button>
+        <button type="button" class="btn btn-success btn-sm" :disabled="busy" @click="askRevert(viewing.version)">Make V{{ viewing.version }} Current</button>
+        <button type="button" class="btn btn-link btn-sm" @click="viewingNumber = null">Back to current</button>
       </div>
       <div class="cfg__bar">
         <input v-model="filter" class="form-control cfg__filter" placeholder="Filter..." aria-label="Filter properties" />
+        <label class="cfg__only"><input v-model="onlyChanged" type="checkbox" /> Changed properties only</label>
         <span class="spacer"></span>
-        <button type="button" class="btn btn-default" :disabled="!dirty || busy" @click="discard">Discard</button>
-        <button type="button" class="btn btn-success" :disabled="!dirty || busy || hasErrors" @click="saving = true">Save</button>
+        <button type="button" class="btn btn-default" :disabled="!dirty || busy || readOnly" @click="discard">Discard</button>
+        <button type="button" class="btn btn-success" :disabled="!dirty || busy || hasErrors || readOnly" @click="saving = true">Save</button>
       </div>
       <div v-for="type in types" :key="type" class="panel">
         <button type="button" class="panel-heading cfg__head" @click="toggle(type)">
@@ -109,11 +133,14 @@
                :class="{ 'has-error': errorFor(type, key), 'is-changed': edits[type]?.[key] !== undefined }">
             <label class="cfg__key" :for="`cfg-${type}-${key}`">{{ key }}</label>
             <div class="cfg__val">
-              <input :id="`cfg-${type}-${key}`" class="form-control" :value="valueOf(type, key)"
+              <input :id="`cfg-${type}-${key}`" class="form-control" :value="shownValue(type, key)"
+                     :readonly="readOnly" :class="{ 'is-ro': readOnly }"
                      @input="edit(type, key, ($event.target as HTMLInputElement).value)" />
+              <span v-if="!readOnly && differsFromStock(type, key)" class="cfg__stock" :title="`Default: ${stockValue(type, key)}`">
+                Default: {{ stockValue(type, key) || '(empty)' }}</span>
               <span v-if="errorFor(type, key)" class="help-block">{{ errorFor(type, key) }}</span>
             </div>
-            <button v-if="edits[type]?.[key] !== undefined" type="button" class="btn btn-link" title="Undo"
+            <button v-if="!readOnly && edits[type]?.[key] !== undefined" type="button" class="btn btn-link" title="Undo"
                     @click="undo(type, key)"><AmbIcon name="refresh" :size="12" /></button>
           </div>
         </div>
@@ -144,6 +171,53 @@
       <p class="text-muted">{{ changeCount }} propert{{ changeCount === 1 ? 'y' : 'ies' }} will change in
         {{ changedTypes.join(', ') }}. Affected components need a restart.</p>
     </AmbModal>
+
+    <!-- A component across its hosts: Start / Stop / Restart. -->
+    <AmbModal v-if="compAsk" title="Confirmation" :ok-text="compAsk.verb" :danger="compAsk.verb === 'Stop'"
+              :busy="busy" @close="compAsk = null" @ok="performComp">
+      <p>You are about to {{ compAsk.verb.toLowerCase() }} {{ compAsk.label }}. Are you sure?</p>
+      <div v-if="compAsk.verb === 'Stop' && compAsk.key" class="alert alert-warning">
+        {{ compAsk.label }} is what clients of {{ display }} connect to: they will fail until it is started again.
+      </div>
+    </AmbModal>
+
+    <!-- Compare two service config versions. -->
+    <AmbModal v-if="comparing" :title="`Compare V${comparing.left.version} with V${comparing.right.version}`"
+              ok-text="" cancel-text="Close" wide @close="comparing = null">
+      <p class="text-muted">V{{ comparing.left.version }}: {{ comparing.left.note || 'no notes' }} ·
+        V{{ comparing.right.version }}: {{ comparing.right.note || 'no notes' }}</p>
+      <div v-if="!compareRows.length" class="alert alert-success">The two versions have identical properties.</div>
+      <div v-else class="table-wrap">
+        <table class="table cfg__diff">
+          <thead><tr><th>Config type</th><th>Property</th><th>V{{ comparing.left.version }}</th><th>V{{ comparing.right.version }}</th></tr></thead>
+          <tbody>
+            <tr v-for="row in compareRows" :key="row.type + row.key">
+              <td>{{ row.type }}</td><td class="mono">{{ row.key }}</td>
+              <td class="mono cfg__old">{{ row.left ?? '(not set)' }}</td>
+              <td class="mono cfg__new">{{ row.right ?? '(not set)' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <template #footer>
+        <button type="button" class="btn btn-default" @click="comparing = null">Close</button>
+        <button v-if="!comparing.left.current" type="button" class="btn btn-success" :disabled="busy"
+                @click="askRevert(comparing.left.version); comparing = null">Make V{{ comparing.left.version }} Current</button>
+      </template>
+    </AmbModal>
+
+    <!-- Make Current -->
+    <AmbModal v-if="reverting" title="Make Current Confirmation" ok-text="Make Current" :busy="busy"
+              @close="reverting = null" @ok="revert">
+      <p>Are you sure you want to make <strong>V{{ reverting.version }}</strong> the current configuration of
+        {{ display }}? A new version is created from it; affected components need a restart.</p>
+      <div class="form-group">
+        <label for="cfg-revert-notes">Notes</label>
+        <textarea id="cfg-revert-notes" v-model="revertNotes" class="form-control" rows="2"></textarea>
+      </div>
+    </AmbModal>
+
+    <AmbContextMenu v-if="ctx" :x="ctx.x" :y="ctx.y" :items="ctx.items" @close="ctx = null" />
   </div>
 </template>
 
@@ -152,9 +226,11 @@ import { computed, reactive, ref } from 'vue';
 import type { PortalApi } from '../usePortal';
 import { pick, rows } from '@/utils/portalKit';
 import {
-  configCommand, maintenanceCommand, requestCommand, serviceStateCommand, SERVICE_NAMES, shortStamp, uptime,
+  componentStateCommand, configCommand, maintenanceCommand, requestCommand, restartComponentsCommand,
+  revertConfigCommand, serviceStateCommand, SERVICE_NAMES, shortStamp, uptime, type AmbMenuItem,
 } from './ambari';
 import AmbChart from './AmbChart.vue';
+import AmbContextMenu from './AmbContextMenu.vue';
 import AmbIcon from './AmbIcon.vue';
 import AmbModal from './AmbModal.vue';
 
@@ -266,6 +342,20 @@ function openLink(link: { label: string; url: string }) {
 }
 
 // ---- summary ----
+function compRow(name: string) {
+  return components.value.find(c => c.name === name);
+}
+function upCount(name: string): number {
+  const row = compRow(name);
+  if (!row) return started.value ? 1 : 0;
+  return Number(row.started || 0);
+}
+function compText(name: string): string {
+  const row = compRow(name);
+  if (!row) return started.value ? 'Started' : 'Stopped';
+  if (Number(row.total) === 1) return row.started ? 'Started' : 'Stopped';
+  return `${row.started}/${row.total} Started`;
+}
 const summaryRows = computed<[string, string][]>(() => {
   const nn = pick<Record<string, any>>(props.view, 'namenode', {});
   const yarn = pick<Record<string, any>>(props.view, 'yarn', {});
@@ -276,10 +366,10 @@ const summaryRows = computed<[string, string][]>(() => {
   switch (props.serviceId) {
     case 'HDFS':
       return [
-        ['NameNode', on ? 'Started' : 'Stopped'], ['SNameNode', on ? 'Started' : 'Stopped'],
-        ['DataNodes', `${on ? dn : 0}/${dn} Started`],
-        ['DataNodes Status', `${on ? dn : 0} live / ${on ? 0 : dn} dead / 0 decommissioning`],
-        ['NameNode Uptime', on ? uptime(m.uptime_s || 0) : 'Not Running'],
+        ['NameNode', compText('NAMENODE')], ['SNameNode', compText('SECONDARY_NAMENODE')],
+        ['DataNodes', compText('DATANODE')],
+        ['DataNodes Status', `${upCount('DATANODE')} live / ${dn - upCount('DATANODE')} dead / 0 decommissioning`],
+        ['NameNode Uptime', upCount('NAMENODE') ? uptime(m.uptime_s || 0) : 'Not Running'],
         ['NameNode Heap', `${Number(m.namenode_heap_used_mb || 0).toFixed(0)} MB / ${m.namenode_heap_max_mb || 1024} MB`],
         ['Disk Usage (DFS Used)', `${nn.used_h || '0B'} / ${nn.capacity_h || '0B'} (${nn.used_percent || 0}%)`],
         ['Disk Remaining', `${nn.remaining_h || '0B'} / ${nn.capacity_h || '0B'}`],
@@ -293,9 +383,9 @@ const summaryRows = computed<[string, string][]>(() => {
       const apps = rows(yarn, 'apps');
       const count = (s: string) => apps.filter(a => a.state === s).length;
       return [
-        ['ResourceManager', on ? 'Started' : 'Stopped'],
-        ['NodeManagers Status', `${on ? dn : 0} active / 0 lost / 0 unhealthy / 0 rebooted / 0 decommissioned`],
-        ['ResourceManager Uptime', on ? uptime(m.uptime_s || 0) : 'Not Running'],
+        ['ResourceManager', compText('RESOURCEMANAGER')],
+        ['NodeManagers Status', `${upCount('NODEMANAGER')} active / ${dn - upCount('NODEMANAGER')} lost / 0 unhealthy / 0 rebooted / 0 decommissioned`],
+        ['ResourceManager Uptime', upCount('RESOURCEMANAGER') ? uptime(m.uptime_s || 0) : 'Not Running'],
         ['Applications', `${apps.length} submitted / ${count('RUNNING')} running / 0 pending / ${count('FINISHED')} completed / ${count('KILLED')} killed / ${count('FAILED')} failed`],
         ['Cluster Memory', `${m.yarn_memory_used_mb || 0} MB used / ${m.yarn_memory_total_mb || 0} MB total`],
         ['Queues', `${rows(yarn, 'queues').length || 1} Queues`],
@@ -303,24 +393,24 @@ const summaryRows = computed<[string, string][]>(() => {
     }
     case 'HIVE':
       return [
-        ['HiveServer2', on ? 'Started' : 'Stopped'], ['Hive Metastore', on ? 'Started' : 'Stopped'],
+        ['HiveServer2', compText('HIVE_SERVER')], ['Hive Metastore', compText('HIVE_METASTORE')],
         ['Databases', String(pick<string[]>(hive, 'databases', []).length)],
         ['Tables', String(rows(hive, 'tables').length)],
         ['HiveServer2 JDBC URL', 'jdbc:hive2://hiveserver.lab.internal:10000/default'],
       ];
     case 'SPARK2':
       return [
-        ['Spark2 History Server', on ? 'Started' : 'Stopped'], ['Spark2 Thrift Server', on ? 'Started' : 'Stopped'],
+        ['Spark2 History Server', compText('SPARK2_JOBHISTORYSERVER')], ['Spark2 Thrift Server', compText('SPARK2_THRIFTSERVER')],
         ['Applications in history', String(rows(props.view, 'spark.applications').length)],
         ['Jobs in history', String(rows(props.view, 'spark.jobs').length)],
       ];
     case 'MAPREDUCE2':
       return [
-        ['History Server', on ? 'Started' : 'Stopped'],
+        ['History Server', compText('HISTORYSERVER')],
         ['MapReduce jobs', String(rows(props.view, 'spark.jobs').filter(j => j.engine === 'mapreduce').length)],
       ];
     default:
-      return [['ZooKeeper Servers', `${on ? 3 : 0}/3 Started`], ['Quorum', on ? 'OK' : 'Lost']];
+      return [['ZooKeeper Servers', compText('ZOOKEEPER_SERVER')], ['Quorum', upCount('ZOOKEEPER_SERVER') >= 2 ? 'OK' : 'Lost']];
   }
 });
 
@@ -331,8 +421,9 @@ const types = computed(() => Object.keys(configs.value).filter(t => configs.valu
 function keysOf(type: string) {
   const keys = Object.keys(pick<Record<string, string>>(configs.value, `${type}.properties`, {}));
   const needle = filter.value.trim().toLowerCase();
-  return needle ? keys.filter(k => k.toLowerCase().includes(needle)
-    || String(valueOf(type, k)).toLowerCase().includes(needle)) : keys;
+  const shown = onlyChanged.value ? keys.filter(k => differsFromStock(type, k)) : keys;
+  return needle ? shown.filter(k => k.toLowerCase().includes(needle)
+    || String(shownValue(type, k)).toLowerCase().includes(needle)) : shown;
 }
 function stored(type: string, key: string) {
   return String(pick<Record<string, string>>(configs.value, `${type}.properties`, {})[key] ?? '');
@@ -389,12 +480,139 @@ async function save() {
   notes.value = '';
 }
 
-const versions = computed(() => {
+interface CfgVersion {
+  version: number; user: string; at: string; note: string; current: boolean;
+  snapshot: Record<string, Record<string, string>> | null;
+}
+const versions = computed<CfgVersion[]>(() => {
+  const full = rows(props.view, `ambari.config_versions.${props.serviceId}`);
+  if (full.length) {
+    return full.map(v => ({ version: Number(v.version), user: String(v.user || 'admin'), at: shortStamp(v.at) || 'Initial',
+                            note: String(v.note || ''), current: !!v.current, snapshot: v.snapshot || null }));
+  }
+  // A replica a release behind sends only the history list, without snapshots.
   const list = rows(props.view, 'ambari.config_history').filter(h => h.service === props.serviceId);
-  const out = list.map((h, i) => ({ version: h.version, user: h.user, at: shortStamp(h.at), note: h.note, current: i === 0 }));
-  out.push({ version: 1, user: 'admin', at: 'Initial', note: `Initial configurations for ${display.value}`, current: !list.length });
+  const out: CfgVersion[] = list.map((h, i) => ({ version: h.version, user: h.user, at: shortStamp(h.at), note: h.note,
+                                                  current: i === 0, snapshot: null }));
+  out.push({ version: 1, user: 'admin', at: 'Initial', note: `Initial configurations for ${display.value}`,
+             current: !list.length, snapshot: null });
   return out;
 });
+const viewingNumber = ref<number | null>(null);
+const viewing = computed(() => versions.value.find(v => v.version === viewingNumber.value) || null);
+const readOnly = computed(() => !!viewing.value && !viewing.value.current);
+const onlyChanged = ref(false);
+const stock = computed(() => versions.value.find(v => v.version === 1)?.snapshot || null);
+
+function viewVersion(version: number) {
+  const target = versions.value.find(v => v.version === version);
+  if (!target) return;
+  if (target.current) { viewingNumber.value = null; return; }
+  if (!target.snapshot) {
+    props.api.notify('info', `V${version} cannot be displayed`, 'This replica has not sent version snapshots yet.');
+    return;
+  }
+  if (dirty.value) {
+    props.api.notify('warning', 'You have unsaved changes', 'Save or discard them before viewing another version.');
+    return;
+  }
+  viewingNumber.value = version;
+}
+function shownValue(type: string, key: string) {
+  if (readOnly.value) return String(viewing.value?.snapshot?.[type]?.[key] ?? '');
+  return valueOf(type, key);
+}
+function stockValue(type: string, key: string) {
+  return String(stock.value?.[type]?.[key] ?? '');
+}
+function differsFromStock(type: string, key: string) {
+  return !!stock.value && stockValue(type, key) !== valueOf(type, key);
+}
+
+// Compare: the chosen version (left) against the current one (right).
+const comparing = ref<{ left: CfgVersion; right: CfgVersion } | null>(null);
+function compareWith(version: number) {
+  const left = versions.value.find(v => v.version === version);
+  const right = versions.value.find(v => v.current);
+  if (!left || !right) return;
+  if (!left.snapshot || !right.snapshot) {
+    props.api.notify('info', 'Compare is not available', 'This replica has not sent version snapshots yet.');
+    return;
+  }
+  comparing.value = { left, right };
+}
+const compareRows = computed(() => {
+  const c = comparing.value;
+  if (!c || !c.left.snapshot || !c.right.snapshot) return [];
+  const out: { type: string; key: string; left: string | null; right: string | null }[] = [];
+  const typeNames = Array.from(new Set([...Object.keys(c.left.snapshot), ...Object.keys(c.right.snapshot)])).sort();
+  for (const type of typeNames) {
+    const a = c.left.snapshot[type] || {};
+    const b = c.right.snapshot[type] || {};
+    for (const key of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) {
+      if (a[key] !== b[key]) out.push({ type, key, left: a[key] ?? null, right: b[key] ?? null });
+    }
+  }
+  return out;
+});
+
+const reverting = ref<CfgVersion | null>(null);
+const revertNotes = ref('');
+function askRevert(version: number) {
+  const target = versions.value.find(v => v.version === version);
+  if (!target || target.current) return;
+  revertNotes.value = `Created from service config version V${version}`;
+  reverting.value = target;
+}
+async function revert() {
+  const target = reverting.value;
+  if (!target) return;
+  const result = await props.api.exec(
+    revertConfigCommand(cluster.value, props.serviceId, target.version, revertNotes.value.trim()),
+    { success: `V${target.version} of ${display.value} is now current`, failure: 'The version could not be made current' });
+  if (result.ok) {
+    reverting.value = null;
+    viewingNumber.value = null;
+  }
+}
+
+// ---- components: the row actions menu ----
+const ctx = ref<{ x: number; y: number; items: AmbMenuItem[] } | null>(null);
+const compAsk = ref<{ verb: 'Start' | 'Stop' | 'Restart'; label: string; comp: Record<string, any>; key: boolean } | null>(null);
+const KEY_COMPONENTS = ['NAMENODE', 'RESOURCEMANAGER', 'HIVE_SERVER', 'HIVE_METASTORE'];
+
+function compMenu(event: MouseEvent, comp: Record<string, any>) {
+  if (comp.category === 'CLIENT') return;
+  const many = Number(comp.total || 0) > 1;
+  const label = many ? `all ${comp.display}s` : comp.display;
+  const allUp = Number(comp.started || 0) === Number(comp.total || 0);
+  const allDown = Number(comp.started || 0) === 0;
+  const items: AmbMenuItem[] = [
+    { header: true, label: comp.display },
+    { label: `Start ${label}`, icon: 'play', disabled: allUp, run: () => askComp('Start', comp, label) },
+    { label: `Stop ${label}`, icon: 'stop', disabled: allDown, run: () => askComp('Stop', comp, label) },
+    { label: `Restart ${label}`, icon: 'refresh', run: () => askComp('Restart', comp, label) },
+    { sep: true },
+  ];
+  for (const host of (comp.hosts || []).slice(0, 6)) {
+    items.push({ label: `Go to ${host}.lab.internal`, icon: 'hosts', run: () => emit('navigate', { page: 'host', id: host }) });
+  }
+  ctx.value = { x: event.clientX, y: event.clientY, items };
+}
+function askComp(verb: 'Start' | 'Stop' | 'Restart', comp: Record<string, any>, label: string) {
+  compAsk.value = { verb, label, comp, key: KEY_COMPONENTS.includes(comp.name) };
+}
+async function performComp() {
+  const ask = compAsk.value;
+  if (!ask) return;
+  const { comp } = ask;
+  const context = `${ask.verb} ${ask.label}`;
+  const command = ask.verb === 'Restart'
+    ? restartComponentsCommand(cluster.value, props.serviceId, comp.name, comp.hosts || [], context)
+    : componentStateCommand(cluster.value, props.serviceId, comp.name, ask.verb === 'Start' ? 'STARTED' : 'INSTALLED', context);
+  const result = await props.api.exec(command, { success: `${context}: completed`, failure: 'Ambari could not complete the request' });
+  if (result.ok) compAsk.value = null;
+}
 
 // ---- metrics ----
 const charts = computed(() => {
@@ -434,6 +652,20 @@ const charts = computed(() => {
   gap: 2px; font-size: 12px; color: #666;
 }
 .cfg__version strong { color: #333; font-size: 14px; }
+.cfg__version.is-viewing { border-color: #1491c1; box-shadow: inset 0 3px 0 #1491c1; }
+.cfg__vbtn { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; min-width: 0; width: 100%; }
+.cfg__vfoot { display: flex; gap: 10px; align-items: center; margin-top: 4px; min-height: 18px; }
+.cfg__viewing { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cfg__viewing span { flex: 1 1 260px; }
+.cfg__only { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #555; white-space: nowrap; }
+.cfg__stock { display: block; margin-top: 3px; font-size: 11px; color: #8a6d3b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-control.is-ro { background: #f5f5f5; color: #555; }
+.cfg__diff td { word-break: break-all; white-space: normal; }
+.cfg__old { background: #fdecea; }
+.cfg__new { background: #e6f4e3; }
+.svc__rowact { width: 48px; text-align: right; }
+.svc__kebab { display: inline-flex; align-items: center; gap: 2px; border: 1px solid #ccc; background: #fff; border-radius: 3px; padding: 3px 6px; color: #666; cursor: pointer; }
+.svc__kebab:hover:not(:disabled) { background: #f5f5f5; color: #333; }
 .cfg__version.is-current { border-color: #3FAE2A; box-shadow: inset 0 3px 0 #3FAE2A; }
 .cfg__note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cfg__bar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; position: sticky; top: -20px; background: #f0f0f0; padding: 6px 0; z-index: 2; }

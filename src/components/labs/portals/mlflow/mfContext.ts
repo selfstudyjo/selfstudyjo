@@ -19,6 +19,19 @@ export interface ConfirmRequest {
     danger?: boolean;
 }
 
+/** One entry of a row menu (the "⋮" button, or a right-click on the row). */
+export interface MenuItem {
+    label?: string;
+    icon?: string;
+    hint?: string;
+    title?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    divider?: boolean;
+    heading?: string;
+    action?: () => void;
+}
+
 export interface MfContext {
     version: ComputedRef<string>;
     experiments: ComputedRef<MfExperiment[]>;
@@ -36,6 +49,10 @@ export interface MfContext {
     experiment: (id: string) => MfExperiment | undefined;
     findRun: (id: string) => MfRun | undefined;
     model: (name: string) => MfModel | undefined;
+    /** Open the shared row menu at the pointer (right-click) or under the clicked button. */
+    menu: (event: MouseEvent, items: MenuItem[], label?: string) => void;
+    /** Copy to the clipboard and say so, the way MLflow's copy buttons do. */
+    copy: (text: string, what: string) => void;
 }
 
 export const MF: InjectionKey<MfContext> = Symbol('mlflow');

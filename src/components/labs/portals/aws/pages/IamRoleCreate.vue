@@ -176,6 +176,16 @@ async function create() {
   for (const arn of policies.value) {
     await ctx.run(cli(['aws', 'iam', 'attach-role-policy'], { '--role-name': name.value, '--policy-arn': arn }));
   }
+  // The console makes an instance profile of the same name for a role EC2 can assume,
+  // which is what "Modify IAM role" and the launch wizard then list.
+  if (entity.value === 'service' && service.value === 'ec2.amazonaws.com') {
+    const profile = await ctx.run(cli(['aws', 'iam', 'create-instance-profile'], { '--instance-profile-name': name.value }));
+    if (profile.ok) {
+      await ctx.run(cli(['aws', 'iam', 'add-role-to-instance-profile'], {
+        '--instance-profile-name': name.value, '--role-name': name.value,
+      }));
+    }
+  }
   busy.value = false;
   ctx.api.notify('success', `Role ${name.value} created.`);
   ctx.to('iam', 'roles');

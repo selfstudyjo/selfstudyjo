@@ -48,7 +48,8 @@
               <option v-for="l in locs" :key="l" :value="l">{{ locName(l) }}</option></select></label>
           </div>
           <div class="az-count">Showing {{ list.length ? 1 : 0 }} to {{ list.length }} of {{ list.length }} records.</div>
-          <AzTable v-model:selected="selected" :columns="cols" :rows="list" row-key="id" selectable>
+          <AzTable v-model:selected="selected" :columns="cols" :rows="list" row-key="id" selectable
+                 menu @menu="(row, x, y) => (ctx = { row, x, y })">
             <template #cell-name="{ row }">
               <button type="button" class="az-link az-namecell" @click="az.go({ page: 'resource', id: row.id })">
                 <AzIcon :name="meta(row.kind).icon" /> {{ row.name }}</button></template>
@@ -120,6 +121,7 @@
         <button type="button" class="az-btn" @click="tagSelected = false">Cancel</button>
       </template>
     </AzPane>
+    <AzResMenu v-if="ctx" :target="ctx.row" :x="ctx.x" :y="ctx.y" @close="ctx = null" />
   </div>
 </template>
 
@@ -129,6 +131,7 @@ import { computed, ref, watch } from 'vue';
 import { cli, errorText, matches, pick, rows } from '@/utils/portalKit';
 import AzIcon from './AzIcon';
 import AzTable from './AzTable.vue';
+import AzResMenu from './AzResMenu.vue';
 import AzPane from './AzPane.vue';
 import AzEssentials, { type EssItem } from './AzEssentials.vue';
 import AzActivityLog from './AzActivityLog.vue';
@@ -140,6 +143,7 @@ import { AzJsonPane, AzLocks, AzMovePane } from './AzMisc';
 import { allResources, deleteCommand, deleteOrder, locName, meta, tagCommand, tagPairs, useAz } from './azure';
 
 const az = useAz();
+const ctx = ref<{ row: Record<string, any>; x: number; y: number } | null>(null);
 const name = computed(() => String(az.route.value.name || ''));
 const tab = computed(() => az.route.value.tab || 'overview');
 const group = computed(() => rows(az.p.value, 'groups').find(g => g.name === name.value) || null);

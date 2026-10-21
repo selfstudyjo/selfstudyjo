@@ -47,6 +47,12 @@ const ICONS: Record<string, string[]> = {
   dot: ['M12 13a1 1 0 100-2 1 1 0 000 2z'],
   file: ['M6 3h8l4 4v14H6z', 'M14 3v4h4'],
   filter: ['M4 5h16l-6 8v6l-4-2v-4z'],
+  more: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'],
+  stream: ['M3 7c3-3 6 3 9 0s6 3 9 0', 'M3 12c3-3 6 3 9 0s6 3 9 0', 'M3 17c3-3 6 3 9 0s6 3 9 0'],
+  table: ['M4 5h16v14H4z', 'M4 10h16', 'M10 5v14'],
+  stop: ['M6 6h12v12H6z'],
+  eye: ['M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
+  'arrow-right': ['M5 12h14', 'M13 6l6 6-6 6'],
 };
 
 const paths = computed(() => ICONS[props.name] || ICONS.dot);

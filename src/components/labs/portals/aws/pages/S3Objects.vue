@@ -12,6 +12,8 @@
       description="Objects are the fundamental entities stored in Amazon S3. You can use Amazon S3 inventory to get a list of all objects in your bucket. For others to access your objects, you'll need to explicitly grant them permissions."
       empty-title="No objects"
       empty-text="You don't have any objects in this bucket."
+      :row-menu="objectMenu"
+      @row-action="objectAction"
     >
       <template #actions>
         <button type="button" class="cs-btn cs-btn--icon" aria-label="Refresh" @click="ctx.api.notify('info', 'Objects refreshed')"><CsIcon name="refresh" /></button>
@@ -33,6 +35,19 @@
         </span>
       </template>
     </CsTable>
+
+    <CsModal v-if="renameFrom" title="Rename object" @close="renameFrom = ''">
+      <p class="s3o__p">Renaming copies the object to a new key and deletes the original (aws s3 mv).</p>
+      <div class="cs-field">
+        <label class="cs-label" for="s3o-rename">New object name</label>
+        <input id="s3o-rename" v-model="renameTo" class="cs-input" :class="{ 'is-invalid': renameError }" />
+        <div v-if="renameError" class="cs-error-text">{{ renameError }}</div>
+      </div>
+      <template #footer>
+        <button type="button" class="cs-btn cs-btn--link" @click="renameFrom = ''">Cancel</button>
+        <button type="button" class="cs-btn cs-btn--primary" :disabled="!!renameError || busy" @click="rename">Save changes</button>
+      </template>
+    </CsModal>
 
     <CsModal v-if="folderOpen" title="Create folder" @close="folderOpen = false">
       <p class="s3o__p">Use folders to group objects in buckets. When you create a folder, S3 creates an object using the name that you specify followed by a slash (/). This object then appears as a folder on the console.</p>
@@ -173,6 +188,52 @@ const actionItems = computed<DdItem[]>(() => [
   { id: 'calc', text: 'Calculate total size', disabled: !selectedRows.value.length },
 ]);
 
+function objectMenu(row: Entry): DdItem[] {
+  if (row.folder) {
+    return [
+      { id: 'open', text: 'Open' },
+      { id: 'copy-uri', text: 'Copy S3 URI' },
+      { id: 'calc', text: 'Calculate total size' },
+      { id: 'g', text: 'Manage', group: true },
+      { id: 'delete', text: 'Delete', nested: true },
+    ];
+  }
+  return [
+    { id: 'open', text: 'Open' },
+    { id: 'details', text: 'View details' },
+    { id: 'download', text: 'Download' },
+    { id: 'g1', text: 'Copy', group: true },
+    { id: 'copy-uri', text: 'Copy S3 URI', nested: true },
+    { id: 'copy-url', text: 'Copy URL', nested: true },
+    { id: 'share', text: 'Share with a presigned URL', nested: true },
+    { id: 'g2', text: 'Manage', group: true },
+    { id: 'rename', text: 'Rename object', nested: true },
+    { id: 'delete', text: 'Delete', nested: true },
+  ];
+}
+function objectAction(id: string, row: Entry) {
+  if (id === 'open') { if (row.folder) openRow(row); else openObject(); }
+  else if (id === 'details') openRow(row);
+  else if (id === 'download') download();
+  else if (id === 'copy-uri') copyUri();
+  else if (id === 'delete') deleting.value = true;
+  else if (id === 'rename') { renameFrom.value = row.key; renameTo.value = row.name; }
+  else action(id);
+}
+const renameFrom = ref('');
+const renameTo = ref('');
+const renameError = computed(() => (!renameTo.value.trim() ? 'Enter a name.'
+  : renameTo.value.includes('/') ? 'Object names can\'t contain "/" here.' : ''));
+async function rename() {
+  const from = renameFrom.value;
+  const to = props.prefix + renameTo.value.trim();
+  if (!from || renameError.value || to === from) return;
+  busy.value = true;
+  const result = await ctx.run(cli(['aws', 's3', 'mv', uri(from), uri(to)]),
+    `Successfully renamed "${leaf(from)}" to "${renameTo.value.trim()}"`);
+  busy.value = false;
+  if (result.ok) { renameFrom.value = ''; selected.value = []; }
+}
 const folderError = computed(() => (folderName.value.includes('/') ? 'Folder names can\'t contain "/".' : ''));
 
 function leaf(path: string) {

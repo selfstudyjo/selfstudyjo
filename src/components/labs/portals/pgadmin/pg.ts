@@ -41,7 +41,11 @@ export interface PgModel {
   roles: PgRole[]; queries: PgQuery[]; analyzed: string[]; foreignKeys: PgForeignKey[];
   cdc: { lsn: number; walLevel: string; slots: Record<string, any>[] };
   stats: Record<string, any>;
+  /** The lab workspace's data files (Import/Export, Backup and Restore browse them). */
+  files: PgFile[];
 }
+
+export interface PgFile { path: string; bytes: number; archive: boolean }
 
 function str(value: unknown, fallback = ''): string {
   return value === null || value === undefined ? fallback : String(value);
@@ -200,6 +204,8 @@ export function readModel(view: unknown): PgModel {
     cdc: { lsn: num(pick(src, 'cdc.lsn', 0)), walLevel: str(pick(src, 'cdc.wal_level', 'logical')),
       slots: rows(src, 'cdc.slots') },
     stats: pick<Record<string, any>>(src, 'stats', {}),
+    files: rows(src, 'files').map(f => ({ path: str(f.path), bytes: num(f.bytes), archive: Boolean(f.archive) }))
+      .filter(f => f.path),
   };
 }
 
@@ -1127,4 +1133,128 @@ export function queryToolUrl(trans: number, db: string, objType = '', objName = 
 /** The fake OIDs pgAdmin's Properties tab shows: stable per object name. */
 export function oidOf(name: string): number {
   return 16384 + (hash(name) % 40000);
+}
+
+/* ──────────────── Import/Export Data, Backup, Restore, Grant Wizard ──────────────── */
+
+/** A workspace path a dialog may write into a statement: no quotes, no control characters, no traversal. */
+export function safePath(path: string): boolean {
+  const p = String(path || '').trim();
+  return Boolean(p) && !/['"\\s]/.test(p) && !p.split('/').some(seg => seg === '..' || seg === '') && !p.startsWith('/');
+}
+
+/** A one-character option (delimiter, quote, escape) as a SQL literal. */
+function charLiteral(ch: string): string {
+  return "'" + String(ch).replace(/'/g, "''") + "'";
+}
+
+export interface CopySpec {
+  direction: 'import' | 'export';
+  schema: string; table: string; columns: string[]; allColumns: boolean;
+  file: string; format: 'csv' | 'text';
+  header: boolean; delimiter: string; quote: string; escape: string; nullString: string; encoding: string;
+  /** Export only: a query instead of the table (pgAdmin's "Query" export source). */
+  query?: string;
+}
+
+/**
+ * The `\copy` pgAdmin's Import/Export dialog runs through psql - client side,
+ * so the file is the lab workspace's, not the database server's.
+ */
+export function copySql(spec: CopySpec): string {
+  const cols = spec.allColumns || !spec.columns.length ? '' : ` (${spec.columns.map(qi).join(', ')})`;
+  const source = spec.direction === 'export' && spec.query?.trim()
+    ? `(${spec.query.trim().replace(/;\s*$/, '')})`
+    : `${fqn(spec.schema, spec.table)}${cols}`;
+  const parts = [`\copy ${source} ${spec.direction === 'export' ? 'TO' : 'FROM'} '${spec.file.trim()}'`];
+  if (spec.delimiter) parts.push(`DELIMITER ${charLiteral(spec.delimiter)}`);
+  if (spec.format === 'csv') {
+    parts.push('CSV');
+    if (spec.header) parts.push('HEADER');
+  }
+  if (spec.encoding) parts.push(`ENCODING ${charLiteral(spec.encoding)}`);
+  if (spec.format === 'csv') {
+    if (spec.quote) parts.push(`QUOTE ${charLiteral(spec.quote)}`);
+    if (spec.escape) parts.push(`ESCAPE ${charLiteral(spec.escape)}`);
+  }
+  if (spec.nullString) parts.push(`NULL ${charLiteral(spec.nullString)}`);
+  return parts.join(' ') + ';';
+}
+
+export interface BackupSpec {
+  file: string; format: 'c' | 't' | 'p' | 'd'; encoding: string; role: string;
+  dataOnly: boolean; schemaOnly: boolean; noOwner: boolean; noPrivileges: boolean;
+  inserts: boolean; columnInserts: boolean; clean: boolean; ifExists: boolean; verbose: boolean;
+  /** Tables to include; empty means the whole database. */
+  tables: string[]; server: string; database: string;
+}
+
+/** pg_dump's argv as pgAdmin's Backup dialog builds it (words; build the line with cli()). */
+export function backupArgs(spec: BackupSpec): { base: string[]; flags: Record<string, string | boolean | string[]> } {
+  return {
+    base: ['pg_dump'],
+    flags: {
+      '--file': spec.file.trim(), '--host': spec.server, '--port': '5432', '--username': 'postgres',
+      '--role': spec.role, '--verbose': spec.verbose, '--format': spec.format, '--encoding': spec.encoding,
+      '--data-only': spec.dataOnly, '--schema-only': spec.schemaOnly, '--no-owner': spec.noOwner,
+      '--no-privileges': spec.noPrivileges, '--inserts': spec.inserts && !spec.columnInserts,
+      '--column-inserts': spec.columnInserts, '--clean': spec.clean, '--if-exists': spec.clean && spec.ifExists,
+      '--table': spec.tables.map(t => `public.${t}`), '--dbname': spec.database,
+    },
+  };
+}
+
+export interface RestoreSpec {
+  file: string; format: 'archive' | 'p'; role: string;
+  dataOnly: boolean; schemaOnly: boolean; clean: boolean; ifExists: boolean; exitOnError: boolean;
+  noOwner: boolean; verbose: boolean; tables: string[]; server: string; database: string;
+}
+
+/** Restore: pg_restore for an archive, psql -f for a plain-text dump (what pgAdmin runs for each). */
+export function restoreArgs(spec: RestoreSpec): { base: string[]; flags: Record<string, string | boolean | string[]> } {
+  if (spec.format === 'p') {
+    return { base: ['psql'], flags: { '--host': spec.server, '--port': '5432', '--username': 'postgres',
+      '--dbname': spec.database, '--file': spec.file.trim() } };
+  }
+  return {
+    base: ['pg_restore'],
+    flags: {
+      '--host': spec.server, '--port': '5432', '--username': 'postgres', '--dbname': spec.database,
+      '--role': spec.role, '--data-only': spec.dataOnly, '--schema-only': spec.schemaOnly, '--clean': spec.clean,
+      '--if-exists': spec.clean && spec.ifExists, '--exit-on-error': spec.exitOnError, '--no-owner': spec.noOwner,
+      '--verbose': spec.verbose, '--table': spec.tables,
+    },
+  };
+}
+
+export const TABLE_PRIVILEGES = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'] as const;
+
+export interface GrantSpec { objects: { kind: 'TABLE' | 'VIEW' | 'MATERIALIZED VIEW'; name: string }[]; grantee: string; privileges: string[]; grantOption: boolean; revoke: boolean }
+
+/** The Grant Wizard's statements: one GRANT (or REVOKE) per object, as pgAdmin generates them. */
+export function grantSql(spec: GrantSpec): string {
+  if (!spec.objects.length || !spec.grantee || !spec.privileges.length) return '';
+  const all = TABLE_PRIVILEGES.every(p => spec.privileges.includes(p));
+  const privs = all ? 'ALL' : spec.privileges.join(', ');
+  const who = spec.grantee.toUpperCase() === 'PUBLIC' ? 'PUBLIC' : qi(spec.grantee);
+  return spec.objects.map(o => spec.revoke
+    ? `REVOKE ${privs} ON TABLE ${fqn('public', o.name)} FROM ${who};`
+    : `GRANT ${privs} ON TABLE ${fqn('public', o.name)} TO ${who}${spec.grantOption ? ' WITH GRANT OPTION' : ''};`).join('\n');
+}
+
+export function fmtBytes(n: number): string {
+  if (n < 1024) return `${n} bytes`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} kB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** Rows as CSV (Query Tool > Save results to file). */
+export function gridCsv(grid: Grid, delimiter = ',', quote = '"'): string {
+  const cell = (v: unknown) => {
+    if (v === null || v === undefined) return '';
+    const text = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return /[",\n\r]/.test(text) || text.includes(delimiter)
+      ? quote + text.split(quote).join(quote + quote) + quote : text;
+  };
+  return [grid.columns.map(cell).join(delimiter), ...grid.rows.map(r => r.map(cell).join(delimiter))].join('\n') + '\n';
 }

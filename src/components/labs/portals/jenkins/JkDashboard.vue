@@ -1,7 +1,10 @@
 <template>
-  <div class="jk-dash">
+  <div ref="root" class="jk-dash" @keydown.esc="menu = null">
+    <!-- System message (Manage Jenkins > System) -->
+    <div v-if="ctx.systemMessage.value" class="jk-dash__sysmsg" role="note">{{ ctx.systemMessage.value }}</div>
+
     <!-- Welcome, when there is nothing yet -->
-    <section v-if="!jobs.length" class="jk-welcome">
+    <section v-if="!jobs.length && !ctx.views.value.length" class="jk-welcome">
       <h1 class="jk-welcome__title">Welcome to Jenkins!</h1>
       <p class="jk-welcome__lead">This page is where your Jenkins jobs will be displayed. To get started, you can set up distributed builds or start building a software project.</p>
       <h2 class="jk-welcome__h2">Start building your software project</h2>
@@ -22,11 +25,18 @@
 
     <template v-else>
       <div class="jk-tabs" role="tablist">
-        <button type="button" class="jk-tabs__tab is-active" role="tab" aria-selected="true">All</button>
-        <button type="button" class="jk-tabs__tab jk-tabs__add" title="New View"
-                @click="ctx.notify('info', 'This lab has a single view, All.')"><JkIcon name="plus" /></button>
+        <button type="button" class="jk-tabs__tab" :class="{ 'is-active': !viewName }" role="tab" :aria-selected="!viewName"
+                @click="ctx.go({ page: 'dashboard' })">All</button>
+        <button v-for="v in ctx.views.value" :key="v.name" type="button" class="jk-tabs__tab" :class="{ 'is-active': viewName === v.name }"
+                role="tab" :aria-selected="viewName === v.name" @click="ctx.go({ page: 'dashboard', view: v.name })">{{ v.name }}</button>
+        <button type="button" class="jk-tabs__tab jk-tabs__add" title="New View" aria-label="New View"
+                @click="ctx.go({ page: 'newView' })"><JkIcon name="plus" /></button>
       </div>
-      <div class="jk-table-wrap">
+      <p v-if="currentView && currentView.description" class="jk-dash__desc">{{ currentView.description }}</p>
+      <div v-if="currentView && !sorted.length" class="jk-dash__empty">
+        <p>This view has no jobs associated with it. You can either <button type="button" class="jk-link" @click="ctx.go({ page: 'editView', view: currentView.name })">add some existing jobs to this view</button> or <button type="button" class="jk-link" @click="ctx.go({ page: 'newItem' })">create a new job</button> in this view.</p>
+      </div>
+      <div v-else class="jk-table-wrap">
         <table class="jk-table jk-dash__table">
           <thead>
             <tr>
@@ -48,6 +58,9 @@
               </td>
               <td class="jk-dash__name">
                 <button type="button" class="jk-link jk-dash__job" @click="ctx.go({ page: 'job', job: row.job.name })">{{ row.job.name }}</button>
+                <button type="button" class="jk-dash__chev" :class="{ 'is-open': menu?.job === row.job.name }"
+                        :aria-label="`Open the menu for ${row.job.name}`" aria-haspopup="menu" :aria-expanded="menu?.job === row.job.name"
+                        @click.stop="openMenu($event, row.job.name)"><JkIcon name="chevron-down" /></button>
                 <span v-if="row.job.disabled" class="jk-dash__badge">Disabled</span>
               </td>
               <td>
@@ -93,21 +106,36 @@
         <div><JkWeather icon="storm" :size="18" /> Project health is less than 20%.</div>
       </div>
     </template>
+
+    <!-- The job's dropdown (the chevron beside a job name, as in Jenkins 2.4xx) -->
+    <div v-if="menu && menuJob" class="jk-dash__menu" role="menu" :style="{ top: menu.top + 'px', left: menu.left + 'px' }" @click.stop>
+      <template v-for="(item, index) in menuItems" :key="index">
+        <div v-if="item.separator" class="jk-dash__menu-sep" role="separator"></div>
+        <button v-else type="button" class="jk-dash__menu-item" :class="{ 'is-danger': item.danger }" role="menuitem"
+                :disabled="item.disabled" @click="choose(item)">
+          <JkIcon :name="item.icon || 'chevron'" />{{ item.label }}
+        </button>
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import JkIcon from './JkIcon.vue';
 import JkStatus from './JkStatus.vue';
 import JkWeather from './JkWeather.vue';
 import { useJk } from './jkContext';
-import { useActions } from './jkActions';
-import { ballOf, duration, lastWhere, parseStamp, since, weatherOf } from './jenkinsKit';
+import { deleteLabel, hasParameters, useActions } from './jkActions';
+import { ballOf, duration, jcli, lastWhere, parseStamp, since, weatherOf } from './jenkinsKit';
 
 const ctx = useJk();
 const actions = useActions(ctx);
-const jobs = computed(() => ctx.jobs.value);
+const viewName = computed(() => String((ctx.route.value as any).view || ''));
+const currentView = computed(() => ctx.views.value.find(v => v.name === viewName.value));
+const jobs = computed(() => (currentView.value
+  ? ctx.jobs.value.filter(job => currentView.value!.jobs.includes(job.name))
+  : ctx.jobs.value));
 const legend = ref(false);
 const key = ref('name');
 const dir = ref<1 | -1>(1);
@@ -149,9 +177,97 @@ const sorted = computed(() => {
     return order * dir.value || a.index - b.index;
   }).map(entry => entry.row);
 });
+
+// ---- The job dropdown ----
+const root = ref<HTMLElement | null>(null);
+const menu = ref<{ job: string; top: number; left: number } | null>(null);
+const menuJob = computed(() => (menu.value ? ctx.job(menu.value.job) : undefined));
+
+interface MenuItem { label: string; icon?: string; run?: () => void; danger?: boolean; disabled?: boolean; separator?: boolean }
+
+const menuItems = computed<MenuItem[]>(() => {
+  const job = menuJob.value;
+  if (!job) return [];
+  const name = job.name;
+  const go = ctx.go;
+  const folder = job.type === 'folder';
+  const pipeline = job.type === 'pipeline' || job.type === 'multibranch';
+  const items: MenuItem[] = [];
+  if (!folder) {
+    items.push({ label: 'Changes', icon: 'changes', run: () => go({ page: 'changes', job: name }) });
+    items.push({ label: 'Workspace', icon: 'folder', run: () => go({ page: 'workspace', job: name }) });
+    items.push(hasParameters(job)
+      ? { label: 'Build with Parameters', icon: 'clock-play', disabled: job.disabled, run: () => go({ page: 'buildParams', job: name }) }
+      : { label: job.type === 'multibranch' ? 'Scan Multibranch Pipeline Now' : 'Build Now', icon: 'clock-play', disabled: job.disabled, run: () => { void actions.buildNow(name); } });
+  }
+  items.push({ label: 'Configure', icon: 'gear', run: () => go({ page: 'configure', job: name }) });
+  if (!folder) {
+    items.push(job.disabled
+      ? { label: 'Enable Project', icon: 'power', run: () => { void actions.setEnabled(name, true); } }
+      : { label: 'Disable Project', icon: 'power', run: () => { void actions.setEnabled(name, false); } });
+  }
+  if (pipeline) items.push({ label: 'Full Stage View', icon: 'stages', run: () => go({ page: 'stageView', job: name }) });
+  items.push({ label: 'Rename', icon: 'pencil', run: () => go({ page: 'rename', job: name }) });
+  if (pipeline) items.push({ label: 'Pipeline Syntax', icon: 'help', run: () => go({ page: 'syntax', job: name }) });
+  const view = currentView.value?.name;
+  if (view) {
+    items.push({ label: 'Remove from this view', icon: 'views',
+                 run: () => { void ctx.run(jcli(['remove-job-from-view', view, name]), { success: 'Removed from the view' }); } });
+  }
+  items.push({ label: '', separator: true });
+  items.push({ label: deleteLabel(job), icon: 'trash', danger: true, run: () => { void actions.deleteJob(name); } });
+  return items;
+});
+
+function openMenu(event: MouseEvent, job: string) {
+  if (menu.value?.job === job) { menu.value = null; return; }
+  const button = event.currentTarget as HTMLElement;
+  const host = root.value;
+  if (!host) return;
+  const a = button.getBoundingClientRect();
+  const b = host.getBoundingClientRect();
+  const width = 248;
+  const left = Math.max(0, Math.min(a.left - b.left, b.width - width));
+  menu.value = { job, top: a.bottom - b.top + 4, left };
+}
+
+function choose(item: MenuItem) {
+  menu.value = null;
+  item.run?.();
+}
+
+function close() { menu.value = null; }
+onMounted(() => document.addEventListener('click', close));
+onBeforeUnmount(() => document.removeEventListener('click', close));
 </script>
 
 <style scoped>
+.jk-dash { position: relative; }
+.jk-dash__sysmsg { margin-bottom: 16px; padding: 12px 16px; border-radius: 10.56px; background: var(--jk-table-bg); white-space: pre-wrap; }
+.jk-dash__desc { margin: 0 0 12px; white-space: pre-wrap; }
+.jk-dash__empty { padding: 24px; border-radius: 10.56px; background: var(--jk-table-bg); }
+.jk-dash__empty p { margin: 0; }
+.jk-dash__chev {
+  display: inline-flex; vertical-align: middle; margin-left: 4px; padding: 2px; border: 0; border-radius: 6px;
+  background: none; color: var(--jk-secondary); cursor: pointer; opacity: 0; transition: opacity 0.1s;
+}
+.jk-dash__chev .jk-icon { width: 14px; height: 14px; }
+tr:hover .jk-dash__chev, .jk-dash__chev:focus-visible, .jk-dash__chev.is-open { opacity: 1; }
+.jk-dash__chev:hover, .jk-dash__chev.is-open { background: var(--jk-btn-hover); color: var(--jk-text); }
+.jk-dash__menu {
+  position: absolute; z-index: 30; width: 248px; padding: 6.4px; border-radius: 12px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(20, 20, 31, 0.08), 0 12px 32px rgba(20, 20, 31, 0.18);
+}
+.jk-dash__menu-item {
+  display: flex; align-items: center; gap: 9.6px; width: 100%; padding: 6.4px 9.6px; border: 0; border-radius: 8px;
+  background: none; font: inherit; font-weight: 500; color: var(--jk-text); text-align: left; cursor: pointer;
+}
+.jk-dash__menu-item .jk-icon { width: 17.6px; height: 17.6px; flex: none; }
+.jk-dash__menu-item:hover:not(:disabled) { background: var(--jk-btn-hover); }
+.jk-dash__menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.jk-dash__menu-item.is-danger, .jk-dash__menu-item.is-danger .jk-icon { color: var(--jk-red); }
+.jk-dash__menu-sep { height: 1px; margin: 4.8px 0; background: var(--jk-border); }
+@media (hover: none) { .jk-dash__chev { opacity: 1; } }
 .jk-welcome { max-width: 736px; }
 .jk-welcome__title { font-size: 29.6px; font-weight: 700; margin: 6.4px 0 9.6px; }
 .jk-welcome__lead { color: var(--jk-text); margin: 0 0 25.6px; }

@@ -35,7 +35,10 @@
             <h1 class="dh-title">{{ name }}</h1>
           </div>
         </div>
-        <div v-if="domain && domain.owner" class="dh-dom-owner"><DhIcon name="user" /> Owner <b>{{ domain.owner }}</b></div>
+        <div class="dh-row">
+          <div v-if="domain && domain.owner" class="dh-dom-owner"><DhIcon name="user" /> Owner <b>{{ domain.owner }}</b></div>
+          <DhMenu v-if="domain" label="Domain actions" :items="domainActions" />
+        </div>
       </div>
       <section class="dh-card">
         <div class="dh-card__head"><h2 class="dh-h4">Entities</h2><span class="dh-count">{{ assets.length }}</span></div>
@@ -47,10 +50,17 @@
             <span class="dh-muted dh-mono">{{ a.urn }}</span>
             <span class="dh-spacer" />
             <span v-for="t in a.tags" :key="t" class="dh-tag"><span class="dh-tag__dot" :style="{ background: tagColor(t) }" />{{ t }}</span>
+            <button type="button" class="dh-btn dh-btn--text" :title="'Remove ' + shortName(a.urn) + ' from ' + name" @click="unset(a.urn)"><DhIcon name="close" /> Remove</button>
           </div>
         </div>
       </section>
     </template>
+
+    <DhModal v-if="ownerEdit !== null" title="Edit Owner" ok-text="Save" :ok-disabled="!ownerEdit.trim()" :busy="dh.busy.value"
+             @close="ownerEdit = null" @ok="saveOwner">
+      <div class="dh-field"><span class="dh-label"><b>*</b>Owner</span>
+        <input v-model="ownerEdit" class="dh-input" aria-label="Domain owner" /></div>
+    </DhModal>
 
     <DhModal v-if="form" title="Create New Domain" ok-text="Create" :ok-disabled="!form.name.trim() || !form.owner.trim()" :busy="dh.busy.value"
              @close="form = null" @ok="create">
@@ -68,8 +78,9 @@
 import { computed, ref } from 'vue';
 import DhIcon from './DhIcon.vue';
 import DhModal from './DhModal.vue';
+import DhMenu from './DhMenu.vue';
 import PlatformIcon from './PlatformIcon.vue';
-import { dh as cmd, shortName, tagColor, useDh } from './dhContext';
+import { dh as cmd, shortName, tagColor, useDh, type DhMenuItem } from './dhContext';
 
 const dh = useDh();
 const filter = ref('');
@@ -85,6 +96,38 @@ function color(text: string) {
   let h = 0;
   for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return palette[h % palette.length] as string;
+}
+
+const domainActions = computed<DhMenuItem[]>(() => {
+  const editable = Boolean(domain.value?.owner);
+  return [
+    { label: 'Edit owner', icon: 'user', disabled: !editable, run: () => { ownerEdit.value = domain.value?.owner || ''; } },
+    { label: 'Copy URN', icon: 'copy', run: () => navigator.clipboard?.writeText(`urn:li:domain:${name.value}`).then(() => dh.notify('success', 'Copied URN')) },
+    { divider: true },
+    { label: 'Delete', icon: 'trash', danger: true, disabled: !editable, run: removeDomain },
+  ];
+});
+const ownerEdit = ref<string | null>(null);
+async function saveOwner() {
+  const owner = (ownerEdit.value || '').trim();
+  const result = await dh.run(cmd(['datahub', 'domain', 'update'], { '--name': name.value, '--owner': owner }), { success: 'Domain updated' });
+  if (result.ok) ownerEdit.value = null;
+}
+async function removeDomain() {
+  const ok = await dh.confirm({
+    title: `Delete ${name.value}?`,
+    message: assets.value.length
+      ? `${assets.value.length} asset(s) still belong to this domain; DataHub refuses to delete it until they are removed from it.`
+      : 'The domain will be permanently deleted.',
+    yes: 'Delete', danger: true,
+  });
+  if (!ok) return;
+  const result = await dh.run(cmd(['datahub', 'domain', 'delete'], { '--name': name.value }), { success: `Deleted domain ${name.value}` });
+  if (result.ok) dh.go({ page: 'domains' });
+}
+async function unset(urn: string) {
+  const ok = await dh.confirm({ title: 'Remove from domain?', message: `${shortName(urn)} will no longer belong to ${name.value}.`, yes: 'Remove' });
+  if (ok) await dh.run(cmd(['datahub', 'domain', 'unset'], { '--urn': urn }), { success: 'Removed from domain' });
 }
 
 async function create() {

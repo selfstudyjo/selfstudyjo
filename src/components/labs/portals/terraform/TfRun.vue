@@ -23,6 +23,9 @@
         </div>
         <div class="rd-head__actions">
           <button v-if="item.status === 'planned'" type="button" class="tf-btn tf-btn--secondary" @click="startDiscard">Discard run</button>
+          <button v-if="item.status === 'errored' || item.status === 'discarded'" type="button" class="tf-btn tf-btn--secondary" :disabled="busy" @click="retry">
+            <TfIcon name="refresh" /> Retry run
+          </button>
           <button type="button" class="tf-btn tf-btn--secondary" @click="openComment">
             <TfIcon name="message" /> Add comment
           </button>
@@ -163,9 +166,9 @@ import TfIcon from './TfIcon.vue';
 import TfStatus from './TfStatus.vue';
 import TfPlanDiff from './TfPlanDiff.vue';
 import { useTf } from './tfContext';
-import { ago, cmdComment, cmdConfirm, cmdDiscard, longDate, operationLabel } from './tfKit';
+import { ago, cmdComment, cmdConfirm, cmdDiscard, cmdPlan, longDate, operationLabel } from './tfKit';
 
-const { workspace, runs, route, go, now, run, busy } = useTf();
+const { workspace, runs, route, go, now, run, busy, ensureInit, maybeAutoApply } = useTf();
 const item = computed(() => runs.value.find(entry => entry.id === route.value.id) || null);
 const planOpen = ref(true);
 const planLog = ref(false);
@@ -237,6 +240,22 @@ async function confirmApply() {
     success: value.operation === 'destroy' ? 'Destroy applied' : 'Apply finished', failure: 'Apply errored',
   });
   if (result.ok) { mode.value = ''; comment.value = ''; }
+}
+
+/** Retry run: queue the same kind of run again, with the same -replace list. */
+async function retry() {
+  const value = item.value;
+  const ws = workspace.value;
+  if (!value || !ws) return;
+  if (!(await ensureInit())) return;
+  const kind = value.operation === 'destroy' ? 'destroy' : value.operation === 'plan_only' ? 'plan' : 'apply';
+  const before = runs.value[0]?.id || '';
+  await run(cmdPlan(kind, kind === 'destroy' ? [] : (value.replace || [])), { success: 'Run queued', failure: 'Run errored' });
+  const latest = runs.value.find(entry => entry.workspace === ws.name);
+  if (latest && latest.id !== before) {
+    await maybeAutoApply(latest.id);
+    go({ page: 'run', ws: ws.name, id: latest.id });
+  }
 }
 
 function startDiscard() {

@@ -12,10 +12,16 @@
             Run #{{ run.id }}
             <span class="dbt-badge" :class="'dbt-badge--' + (run.status === 10 ? 'ok' : run.status === 20 ? 'bad' : '')">{{ run.status_humanized }}</span>
           </h1>
-          <p>{{ run.trigger.cause }} · {{ ago(run.started_at, dbt.nowStamp.value) }}</p>
+          <p>{{ run.trigger.cause }} · {{ ago(run.started_at, dbt.nowStamp.value) }}
+            <template v-if="run.retried_from"> · <button type="button" class="dbt-link" @click="dbt.go({ page: 'run', id: run.retried_from })">retry of #{{ run.retried_from }}</button></template>
+          </p>
         </div>
         <div class="dbt-head__actions">
           <button type="button" class="dbt-btn" @click="dbt.go({ page: 'job', id: run.job_definition_id })"><DbtIcon name="jobs" />View job</button>
+          <button v-if="run.status === 20" type="button" class="dbt-btn" :disabled="dbt.busy.value || !jobExists"
+                  title="Re-run the failed step as dbt retry, then the steps after it" @click="rerunFromFailure">
+            <DbtIcon name="history" />Rerun from failure
+          </button>
           <button type="button" class="dbt-btn dbt-btn--primary" :disabled="dbt.busy.value || !jobExists" @click="rerun">
             <DbtIcon name="refresh" />Rerun now
           </button>
@@ -94,6 +100,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import DbtIcon from './DbtIcon.vue';
+import { cli, errorText, parseJson } from '@/utils/portalKit';
 import { runJob, useDbt } from './dbtContext';
 import { ago, duration, logTone, statusTone } from './dbt';
 
@@ -118,6 +125,18 @@ const maxTime = computed(() => Math.max(0.01, ...timing.value.map(t => t.executi
 function icon(s: string | number) { const t = statusTone(s); return t === 'ok' ? 'ok' : t === 'bad' ? 'bad' : t === 'warn' ? 'warn' : 'skip'; }
 function kindOf(uid: string): string { return String(uid).split('.')[0] ?? ''; }
 function openNode(uid: string) { dbt.go({ page: 'resource', id: uid }); }
+
+async function rerunFromFailure() {
+  const r = run.value;
+  if (!r) return;
+  const result = await dbt.run(cli(['dbt-cloud', 'run', 'retry'], { '--run-id': r.id }), { quiet: true });
+  const doc = parseJson<any>(result.ok ? result.output : result.error || result.output);
+  const next = Number(doc?.data?.id || 0) || null;
+  if (result.ok) dbt.notify('success', `Run #${next} succeeded`, `Rerun from failure of run #${r.id}.`);
+  else if (next) dbt.notify('error', `Run #${next} failed`, 'The retried step failed again - open the run for its logs.');
+  else dbt.notify('error', 'Could not rerun from failure', errorText(result));
+  if (next) dbt.go({ page: 'run', id: next });
+}
 
 async function rerun() {
   const r = run.value;

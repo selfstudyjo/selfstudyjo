@@ -55,7 +55,8 @@
     <template v-else>
       <div v-for="section in sections" :key="section.label">
         <div v-if="grouping" class="az-grouphead">{{ section.label }} ({{ section.rows.length }})</div>
-        <AzTable v-model:selected="selected" :columns="columns" :rows="section.rows" row-key="id" selectable>
+        <AzTable v-model:selected="selected" :columns="columns" :rows="section.rows" row-key="id" selectable
+                 menu @menu="(row, x, y) => (ctx = { row, x, y })">
           <template #cell-name="{ row }">
             <button type="button" class="az-link az-namecell" @click="open(row)">
               <AzIcon :name="kind === 'groups' ? 'group' : meta(row.kind).icon" /> {{ row.name }}</button>
@@ -79,6 +80,7 @@
         <button type="button" class="az-btn" @click="tagging = false">Cancel</button>
       </template>
     </AzPane>
+    <AzResMenu v-if="ctx" :target="ctx.row" :x="ctx.x" :y="ctx.y" @close="ctx = null" />
   </div>
 </template>
 
@@ -89,10 +91,12 @@ import { cli, errorText, matches, pick, rows } from '@/utils/portalKit';
 import AzIcon from './AzIcon';
 import AzPane from './AzPane.vue';
 import AzTable from './AzTable.vue';
+import AzResMenu from './AzResMenu.vue';
 import AzTagEditor from './AzTagEditor.vue';
 import { allResources, CREATABLE, deleteCommand, deleteOrder, locName, meta, tagPairs, useAz } from './azure';
 
 const az = useAz();
+const ctx = ref<{ row: Record<string, any>; x: number; y: number } | null>(null);
 const kind = computed(() => az.route.value.kind || 'all');
 const account = computed(() => pick(az.p.value, 'account', {} as Record<string, any>));
 const title = computed(() => (kind.value === 'all' ? 'All resources' : kind.value === 'groups' ? 'Resource groups'

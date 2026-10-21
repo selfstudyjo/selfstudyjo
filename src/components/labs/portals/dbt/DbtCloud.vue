@@ -155,6 +155,10 @@ const envs = computed(() => rows<CloudEnv>(v.value, 'dbt.cloud.environments'));
 const jobs = computed(() => rows<CloudJob>(v.value, 'dbt.cloud.jobs'));
 const cloudRuns = computed(() => rows<CloudRun>(v.value, 'dbt.cloud.runs'));
 const files = computed(() => rows<FileItem>(v.value, 'dbt.files.items'));
+const fileDirs = computed(() => {
+  const list = pick<unknown>(v.value, 'dbt.files.dirs', []);
+  return Array.isArray(list) ? list.map(String) : [];
+});
 const docsGenerated = computed(() => Boolean(pick(v.value, 'dbt.docs_generated', false)));
 const parsed = computed(() => Boolean(project.value.name) || models.value.length > 0 || sources.value.length > 0);
 const nowStamp = computed(() => clockStamp(Number(pick(v.value, 'clock', 0))));
@@ -243,7 +247,7 @@ function nameOf(uid: string): string {
 
 const ctx: DbtContext = {
   version, project, models, sources, seeds, snapshots, tests, exposures, coreRuns, envs, jobs, cloudRuns,
-  files, docsGenerated, parsed, nowStamp, busy, graph, route, go, run, confirm, notify, ide, ideRun, nameOf,
+  files, fileDirs, docsGenerated, parsed, nowStamp, busy, graph, route, go, run, confirm, notify, ide, ideRun, nameOf,
 };
 provide(DBT, ctx);
 </script>

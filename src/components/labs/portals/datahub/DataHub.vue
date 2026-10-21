@@ -46,6 +46,7 @@
           <div v-if="menu === 'govern'" class="dh-drop">
             <button type="button" @click="go({ page: 'glossary' })"><DhIcon name="book" /><span><b>Glossary</b><small>View and modify your data dictionary</small></span></button>
             <button type="button" @click="go({ page: 'domains' })"><DhIcon name="domain" /><span><b>Domains</b><small>Manage related groups of data assets</small></span></button>
+            <button type="button" @click="go({ page: 'tags' })"><DhIcon name="tag" /><span><b>Tags</b><small>Create, describe and delete tags</small></span></button>
           </div>
         </div>
         <div class="dh-nav__menu">
@@ -108,6 +109,7 @@
       <ContractsPage v-else-if="route.page === 'contracts'" />
       <GxPage v-else-if="route.page === 'gx'" />
       <IngestionPage v-else-if="route.page === 'ingestion'" />
+      <TagsPage v-else-if="route.page === 'tags'" />
       <PiiPage v-else-if="route.page === 'pii'" />
       <ErasurePage v-else />
     </main>
@@ -159,13 +161,14 @@ import IncidentsPage from './IncidentsPage.vue';
 import ContractsPage from './ContractsPage.vue';
 import GxPage from './GxPage.vue';
 import IngestionPage from './IngestionPage.vue';
+import TagsPage from './TagsPage.vue';
 import PiiPage from './PiiPage.vue';
 import ErasurePage from './ErasurePage.vue';
 import {
   DH, browsePath, dh, platformLabel, routeUrl, searchDatasets, shortName,
   type ConfirmRequest, type DhCheckpoint, type DhContext, type DhContract, type DhContractFile, type DhDataset,
   type DhDiff, type DhDomain, type DhEdge, type DhErasure, type DhIncident, type DhIngest, type DhMonitor,
-  type DhProfile, type DhRecipeFile, type DhResult, type DhRoute, type DhSuite, type DhTerm, type RunOptions,
+  type DhProfile, type DhRecipeFile, type DhSource, type DhTagDef, type DhResult, type DhRoute, type DhSuite, type DhTerm, type RunOptions,
 } from './dhContext';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
@@ -178,6 +181,8 @@ const datasets = computed(() => q('catalog.datasets') as DhDataset[]);
 const edges = computed(() => q('catalog.lineage') as DhEdge[]);
 const terms = computed(() => q('catalog.terms') as DhTerm[]);
 const domains = computed(() => q('catalog.domains') as DhDomain[]);
+const tags = computed(() => q('catalog.tags') as DhTagDef[]);
+const sources = computed(() => q('sources') as DhSource[]);
 const suites = computed(() => q('suites') as DhSuite[]);
 const suiteErrors = computed(() => q('suite_errors') as { path: string; error: string }[]);
 const checkpoints = computed(() => q('checkpoints') as DhCheckpoint[]);
@@ -208,7 +213,7 @@ const menu = ref('');
 
 const section = computed(() => {
   const page = route.value.page;
-  if (page === 'glossary' || page === 'domains') return 'govern';
+  if (page === 'glossary' || page === 'domains' || page === 'tags') return 'govern';
   if (['monitors', 'incidents', 'contracts', 'gx'].includes(page)) return 'observe';
   if (page === 'pii' || page === 'erasure') return 'compliance';
   if (page === 'ingestion') return 'ingestion';
@@ -305,7 +310,7 @@ function help() {
 }
 
 const ctx: DhContext = {
-  datasets, edges, terms, domains, suites, suiteErrors, checkpoints, results, contracts, contractFiles, recipeFiles,
+  datasets, edges, terms, domains, tags, sources, suites, suiteErrors, checkpoints, results, contracts, contractFiles, recipeFiles,
   diffs, monitors, incidents, erasures, ingests, profiles, piiUnmasked, lastAudit, docsBuilt, clockText, clock,
   busy: busyRef,
   route,

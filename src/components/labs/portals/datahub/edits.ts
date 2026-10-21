@@ -63,3 +63,20 @@ export async function setDocs(ctx: DhContext, urn: string, description: string, 
                       { '--description': description }),
                    { success: 'Description Updated' });
 }
+
+export async function unsetDomain(ctx: DhContext, urn: string, domain: string) {
+    const ok = await ctx.confirm({
+        title: `Do you want to remove ${domain} domain?`,
+        message: `Are you sure you want to remove this dataset from the ${domain} domain?`,
+        yes: 'Yes',
+    });
+    if (!ok) return null;
+    return ctx.run(dh(['datahub', 'domain', 'unset'], { '--urn': urn }), { success: 'Removed Domain' });
+}
+
+/** DataHub's "Mark as deprecated": the deprecation aspect, written with `datahub put`. */
+export async function setDeprecation(ctx: DhContext, urn: string, deprecated: boolean, note = '') {
+    const aspect = JSON.stringify(deprecated ? { deprecated: true, note, actor: 'urn:li:corpuser:datahub' } : { deprecated: false });
+    return ctx.run(dh(['datahub', 'put'], { '--urn': urn, '--aspect': 'deprecation', '-d': aspect }),
+                   { success: deprecated ? 'Marked as deprecated' : 'Marked as un-deprecated' });
+}

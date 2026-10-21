@@ -2,15 +2,18 @@
   <li class="ft" role="treeitem" :aria-expanded="node.dir ? isOpen : undefined">
     <button type="button" class="ft__row" :class="{ 'is-active': !node.dir && node.path === active, 'is-generated': generated }"
             :style="{ paddingLeft: 10 + depth * 14 + 'px' }" :title="node.path"
-            @click="node.dir ? $emit('toggle', node.path) : $emit('open', node.path)">
+            @click="node.dir ? $emit('toggle', node.path) : $emit('open', node.path)"
+            @contextmenu.prevent.stop="$emit('menu', $event, node)">
       <DbtIcon v-if="node.dir" :name="isOpen ? 'chevron-down' : 'chevron-right'" class="ft__chev" />
       <span v-else class="ft__chev"></span>
       <DbtIcon :name="node.dir ? (isOpen ? 'folder-open' : 'folder') : icon" class="ft__icon" :class="'ft__icon--' + icon" />
       <span class="ft__name">{{ node.name }}</span>
+      <span v-if="!node.dir && dirty && dirty.has(node.path)" class="ft__dirty" title="Unsaved changes" aria-label="Unsaved changes"></span>
     </button>
     <ul v-if="node.dir && isOpen" class="ft__kids" role="group">
       <FileTreeRow v-for="child in node.children" :key="child.path" :node="child" :depth="depth + 1"
-                   :open-dirs="openDirs" :active="active" @toggle="p => $emit('toggle', p)" @open="p => $emit('open', p)" />
+                   :open-dirs="openDirs" :active="active" :dirty="dirty" @toggle="p => $emit('toggle', p)" @open="p => $emit('open', p)"
+                   @menu="(e, n) => $emit('menu', e, n)" />
     </ul>
   </li>
 </template>
@@ -20,8 +23,12 @@ import { computed } from 'vue';
 import DbtIcon from './DbtIcon.vue';
 import type { TreeNode } from './dbt';
 
-const props = defineProps<{ node: TreeNode; depth: number; openDirs: Set<string>; active: string }>();
-defineEmits<{ (event: 'toggle', path: string): void; (event: 'open', path: string): void }>();
+const props = defineProps<{ node: TreeNode; depth: number; openDirs: Set<string>; active: string; dirty?: Set<string> }>();
+defineEmits<{
+  (event: 'toggle', path: string): void;
+  (event: 'open', path: string): void;
+  (event: 'menu', e: MouseEvent, node: TreeNode): void;
+}>();
 
 const isOpen = computed(() => props.openDirs.has(props.node.path));
 const generated = computed(() => props.node.path === 'target' || props.node.path.startsWith('target/'));
@@ -45,4 +52,5 @@ const icon = computed(() => (/\.sql$/.test(props.node.name) ? 'sql' : /\.ya?ml$/
 .ft__icon--yaml { color: #A33B22; }
 .ft__icon--seed { color: #7A5AA8; }
 .ft__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ft__dirty { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #FF694A; margin-left: auto; }
 </style>

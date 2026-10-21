@@ -43,6 +43,13 @@ export function crumbsFor(route: Route): Crumb[] {
         case 'instances': return [root, { text: 'Instances' }];
         case 'launch': return [root, inst, { text: 'Launch an instance' }];
         case 'instance': return [root, inst, { text: p.id }];
+        case 'connect': return [root, inst, { text: p.id, route: at('ec2', 'instance', { id: p.id }) },
+            { text: 'Connect to instance' }];
+        case 'terminal': return [root, inst, { text: p.id, route: at('ec2', 'instance', { id: p.id }) },
+            { text: 'Connect to instance', route: at('ec2', 'connect', { id: p.id }) },
+            { text: p.via === 'ssm' ? 'Session Manager' : 'EC2 Instance Connect' }];
+        case 'sg-outbound': return [root, sgs, { text: p.id, route: at('ec2', 'sg', { id: p.id }) },
+            { text: 'Edit outbound rules' }];
         case 'sgs': return [root, { text: 'Security Groups' }];
         case 'sg': return [root, sgs, { text: p.id }];
         case 'sg-create': return [root, sgs, { text: 'Create security group' }];
@@ -71,6 +78,8 @@ export function crumbsFor(route: Route): Crumb[] {
         case 'sg-create': return [root, sgs, { text: 'Create security group' }];
         case 'sg-inbound': return [root, sgs, { text: p.id, route: at('vpc', 'sg', { id: p.id }) },
             { text: 'Edit inbound rules' }];
+        case 'sg-outbound': return [root, sgs, { text: p.id, route: at('vpc', 'sg', { id: p.id }) },
+            { text: 'Edit outbound rules' }];
         case 'routes': return [root, { text: 'Route tables' }];
         case 'nats': return [root, { text: 'NAT gateways' }];
         case 'endpoints': return [root, { text: 'Endpoints' }];

@@ -16,6 +16,8 @@
  *   New workspace              terraform workspace new NAME
  *   Lock / Unlock / Discard    the HCP Terraform API call with curl - the product
  *                              has no CLI verb for them
+ *   General settings / tags    PATCH /workspaces/:id, /relationships/tags (curl)
+ *   Rollback state version     POST /workspaces/:id/state-versions (curl)
  */
 import { cli, pick, quote, rows } from '@/utils/portalKit';
 
@@ -113,6 +115,10 @@ export interface TfWorkspace {
                 counts: TfRun['counts'] } | null;
   runs: number;
   version: string;
+  description?: string;
+  tags?: string[];
+  auto_apply?: boolean;
+  execution_mode?: 'local' | 'remote' | string;
 }
 
 export interface TfVariable {
@@ -268,6 +274,27 @@ export function cmdComment(runId: string, body: string): string {
   return apiCall('POST', `${API}/runs/${runId}/comments`,
                  { data: { type: 'comments', attributes: { body } } });
 }
+
+/** General settings: PATCH /workspaces/:id with the attributes that changed. */
+export function cmdUpdateWorkspace(wsId: string, attributes: Record<string, unknown>): string {
+  return apiCall('PATCH', `${API}/workspaces/${wsId}`, { data: { type: 'workspaces', attributes } });
+}
+
+export function cmdTags(wsId: string, tags: string[], remove = false): string {
+  return apiCall(remove ? 'DELETE' : 'POST', `${API}/workspaces/${wsId}/relationships/tags`,
+                 { data: tags.map(name => ({ type: 'tags', attributes: { name } })) });
+}
+
+/** Rollback: a new state version whose content is an older one's. */
+export function cmdRollback(wsId: string, versionId: string): string {
+  return apiCall('POST', `${API}/workspaces/${wsId}/state-versions`, {
+    data: { type: 'state-versions', relationships: {
+      'rollback-state-version': { data: { type: 'state-versions', id: versionId } } } },
+  });
+}
+
+export const TAG_NAME = /^[a-z0-9][a-z0-9:_-]{0,254}$/;
+export const WS_NAME = /^[A-Za-z0-9_.-]{1,90}$/;
 
 export function cmdWorkspace(verb: 'new' | 'select' | 'delete', name: string, force = false): string {
   return cli(['terraform', 'workspace', verb, name], { '-force': force });

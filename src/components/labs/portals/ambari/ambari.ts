@@ -108,6 +108,94 @@ export function configCommand(cluster: string, type: string, properties: Record<
   });
 }
 
+/** Make Current: restore an older service config version as a new one. */
+export function revertConfigCommand(cluster: string, service: string, version: number, note: string): string {
+  return ambariCurl(cluster, 'PUT', '', {
+    Clusters: {
+      desired_service_config_versions: {
+        service_name: service,
+        service_config_version: version,
+        service_config_version_note: note,
+      },
+    },
+  });
+}
+
+/** Start / stop a component on every host it runs on. */
+export function componentStateCommand(cluster: string, service: string, component: string,
+                                      state: 'STARTED' | 'INSTALLED', context: string): string {
+  return ambariCurl(cluster, 'PUT', `/services/${service}/components/${component}`, {
+    RequestInfo: { context },
+    Body: { ServiceComponentInfo: { state } },
+  });
+}
+
+/** Start / stop one component on one host. */
+export function hostComponentCommand(cluster: string, host: string, component: string,
+                                     state: 'STARTED' | 'INSTALLED', context: string): string {
+  return ambariCurl(cluster, 'PUT', `/hosts/${host}.lab.internal/host_components/${component}`, {
+    RequestInfo: { context },
+    Body: { HostRoles: { state } },
+  });
+}
+
+/** Host Actions > Start / Stop All Components. */
+export function hostAllComponentsCommand(cluster: string, host: string, state: 'STARTED' | 'INSTALLED',
+                                         context: string): string {
+  return ambariCurl(cluster, 'PUT', `/hosts/${host}.lab.internal/host_components`, {
+    RequestInfo: { context },
+    Body: { HostRoles: { state } },
+  });
+}
+
+export function hostMaintenanceCommand(cluster: string, host: string, on: boolean): string {
+  return ambariCurl(cluster, 'PUT', `/hosts/${host}.lab.internal`, {
+    RequestInfo: { context: `Turn ${on ? 'On' : 'Off'} Maintenance Mode for ${host}.lab.internal` },
+    Body: { Hosts: { maintenance_state: on ? 'ON' : 'OFF' } },
+  });
+}
+
+/** Restart a component on the named hosts (one host or all of them). */
+export function restartComponentsCommand(cluster: string, service: string, component: string,
+                                         hosts: string[], context: string): string {
+  return ambariCurl(cluster, 'POST', '/requests', {
+    RequestInfo: { command: 'RESTART', context },
+    'Requests/resource_filters': [{
+      service_name: service,
+      component_name: component,
+      hosts: hosts.map(h => `${h}.lab.internal`).join(','),
+    }],
+  });
+}
+
+/** Host Actions > Restart All Components: one request, one filter per component. */
+export function restartHostCommand(cluster: string, host: string,
+                                   components: { service: string; component: string }[]): string {
+  return ambariCurl(cluster, 'POST', '/requests', {
+    RequestInfo: { command: 'RESTART', context: `Restart all components on ${host}.lab.internal` },
+    'Requests/resource_filters': components.map(c => ({
+      service_name: c.service, component_name: c.component, hosts: `${host}.lab.internal`,
+    })),
+  });
+}
+
+/** Alerts > an alert definition: enable / disable / edit the check interval. */
+export function alertDefinitionCommand(cluster: string, id: number,
+                                       body: { enabled?: boolean; interval?: number }): string {
+  return ambariCurl(cluster, 'PUT', `/alert_definitions/${id}`, { AlertDefinition: body });
+}
+
+/** One entry of a right-click / row-actions menu. */
+export interface AmbMenuItem {
+  label?: string;
+  icon?: string;
+  danger?: boolean;
+  disabled?: boolean;
+  sep?: boolean;
+  header?: boolean;
+  run?: () => void;
+}
+
 /** Split a worksheet into statements on `;`, ignoring semicolons in quotes. */
 export function splitStatements(text: string): string[] {
   const out: string[] = [];

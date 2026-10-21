@@ -19,12 +19,14 @@
       <table class="table table-bordered table-sm sortable">
         <thead>
           <tr>
-            <th>Job Id ▾</th><th>Description</th><th>Submitted</th><th>Duration</th>
+            <th class="is-sortable" @click="sortBy('jobId')">Job Id {{ arrow('jobId') }}</th><th>Description</th>
+            <th class="is-sortable" @click="sortBy('submitted')">Submitted {{ arrow('submitted') }}</th>
+            <th class="is-sortable" @click="sortBy('durationMs')">Duration {{ arrow('durationMs') }}</th>
             <th>Stages: Succeeded/Total</th><th>Tasks (for all stages): Succeeded/Total</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="job in [...done].reverse()" :key="job.jobId">
+          <tr v-for="job in sortedDone" :key="job.jobId">
             <td>{{ job.jobId }}</td>
             <td class="jobs__desc">
               <span class="jobs__sql" :title="job.description">{{ job.description }}</span><br />
@@ -67,7 +69,20 @@ const props = defineProps<{ app: SparkApp; view: Record<string, any> }>();
 defineEmits<{ (event: 'navigate', route: any): void }>();
 
 const openCompleted = ref(true);
+const sortKey = ref<'jobId' | 'submitted' | 'durationMs'>('jobId');
+const sortDir = ref<'asc' | 'desc'>('desc');
+function sortBy(key: typeof sortKey.value) {
+  if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
+  else { sortKey.value = key; sortDir.value = 'desc'; }
+}
+function arrow(key: string) {
+  return sortKey.value === key ? (sortDir.value === 'asc' ? '▴' : '▾') : '';
+}
 const done = computed(() => props.app.jobs.filter(j => j.status !== 'FAILED'));
+const sortedDone = computed(() => [...done.value].sort((a, b) => {
+  const order = Number(a[sortKey.value]) - Number(b[sortKey.value]);
+  return sortDir.value === 'asc' ? order : -order;
+}));
 const failed = computed(() => {
   const own = props.app.jobs.filter(j => j.status === 'FAILED')
     .map(j => ({ id: j.jobId, name: j.description, at: j.submitted, ms: j.durationMs, reason: j.error || 'Job aborted' }));
@@ -85,5 +100,7 @@ const executorEvents = computed(() => executorsFor(props.view).map((e, i) => ({ 
 .jobs__desc { max-width: 520px; min-width: 200px; }
 .jobs__sql { display: inline-block; max-width: min(520px, 55cqw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .jobs__nowrap { white-space: nowrap; }
+th.is-sortable { cursor: pointer; user-select: none; }
+th.is-sortable:hover { background: #eef5fb; }
 .jobs__fdesc { min-width: 200px; }
 </style>

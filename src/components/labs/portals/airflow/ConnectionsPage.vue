@@ -14,6 +14,7 @@
         </span>
       </div>
       <div class="af-panel__body">
+        <FileIoBar noun="connections" label="Connections" default-file="connections.json" />
         <div class="af-cn__search"><AfIcon name="search" />
           <input v-model="query" class="af-input" type="search" placeholder="Search Conn Id, Conn Type, Host" aria-label="Search connections" /></div>
         <div class="af-table-wrap">
@@ -84,6 +85,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { matches, sortBy } from '@/utils/portalKit';
 import AfIcon from './AfIcon.vue';
+import FileIoBar from './FileIoBar.vue';
 import { useAf } from './afContext';
 import { CMD, CONN_TYPES, type AfConnection } from './airflow';
 

@@ -73,19 +73,33 @@
         </div>
         <div v-if="exTab === 'db'" class="ws__tree">
           <template v-for="db in databases" :key="db.name">
-            <button type="button" class="ws__node" @click="toggle(db.name)">
+            <button type="button" class="ws__node" @click="toggle(db.name)"
+                    @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'database', name: db.name }, hooks), db.name)">
               <SfIcon :name="expanded[db.name] ? 'chevron-down' : 'chevron-right'" class="ws__chev" /><SfIcon name="database" /><span>{{ db.name }}</span>
             </button>
             <template v-if="expanded[db.name]">
               <template v-for="sc in schemasOf(db.name)" :key="db.name + '.' + sc.name">
-                <button type="button" class="ws__node ws__node--2" @click="toggle(db.name + '.' + sc.name)">
+                <button type="button" class="ws__node ws__node--2" @click="toggle(db.name + '.' + sc.name)"
+                        @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'schema', db: db.name, name: sc.name }, hooks), db.name + '.' + sc.name)">
                   <SfIcon :name="expanded[db.name + '.' + sc.name] ? 'chevron-down' : 'chevron-right'" class="ws__chev" /><SfIcon name="schema" /><span>{{ sc.name }}</span>
                 </button>
                 <template v-if="expanded[db.name + '.' + sc.name]">
-                  <button v-for="t in tablesOf(db.name, sc.name)" :key="t.fqn" type="button" class="ws__node ws__node--3"
-                          :title="'Insert ' + t.fqn" @click="insertText(t.fqn)">
-                    <SfIcon :name="String(t.kind).toUpperCase() === 'VIEW' ? 'view' : 'table'" /><span>{{ t.name }}</span>
-                  </button>
+                  <template v-for="t in tablesOf(db.name, sc.name)" :key="t.fqn">
+                    <div class="ws__trow">
+                      <button type="button" class="ws__twist" :aria-label="(expanded[t.fqn] ? 'Collapse ' : 'Expand ') + t.name" @click="toggle(t.fqn)">
+                        <SfIcon :name="expanded[t.fqn] ? 'chevron-down' : 'chevron-right'" class="ws__chev" /></button>
+                      <button type="button" class="ws__node ws__node--3" :title="'Insert ' + t.fqn + ' (right-click for actions)'" @click="insertText(t.fqn)"
+                              @contextmenu="sf.menu($event, objectMenu(sf, { kind: String(t.kind).toUpperCase() === 'VIEW' ? 'view' : 'table', fqn: t.fqn }, hooks), t.fqn)">
+                        <SfIcon :name="String(t.kind).toUpperCase() === 'VIEW' ? 'view' : 'table'" /><span>{{ t.name }}</span>
+                      </button>
+                    </div>
+                    <template v-if="expanded[t.fqn]">
+                      <button v-for="c in t.columns || []" :key="c.name" type="button" class="ws__node ws__node--4" :title="c.name + ' ' + c.type"
+                              @click="insertText(ident(c.name))" @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'column', table: t.fqn, name: c.name }, hooks), c.name)">
+                        <span class="ws__col">{{ c.name }}</span><span class="ws__ctype">{{ c.type }}</span>
+                      </button>
+                    </template>
+                  </template>
                   <span v-if="!tablesOf(db.name, sc.name).length" class="ws__none">No tables</span>
                 </template>
               </template>
@@ -156,6 +170,7 @@ import ResultPane from './ResultPane.vue';
 import { useSf } from './sfContext';
 import { matches } from '@/utils/portalKit';
 import { ident, inSchema, list, sizeLabel, statementAt } from './snowflake';
+import { objectMenu, type MenuHooks } from './sfActions';
 
 const sf = useSf();
 const cur = sf.current;
@@ -294,6 +309,12 @@ function runCurrent() {
 }
 function runAll() { return execute(text.value); }
 
+/** The explorer's context menu works on THIS worksheet: place a name at the caret, preview into the result pane. */
+const hooks: MenuHooks = {
+  place: (snippet: string) => insertText(snippet),
+  preview: (statement: string) => { void execute(statement); },
+};
+
 function openQuery(id: string) {
   sf.go({ page: 'query-history', queryId: id, tab: 'profile' });
 }
@@ -351,7 +372,14 @@ function share() {
 .ws__node .sf-ico { width: 14px; height: 14px; color: var(--sf-text-2); }
 .ws__node .ws__chev { width: 12px; height: 12px; color: var(--sf-text-3); }
 .ws__node--2 { padding-left: 20px; }
-.ws__node--3 { padding-left: 52px; }
+.ws__node--3 { padding-left: 4px; }
+.ws__trow { display: flex; align-items: center; padding-left: 34px; }
+.ws__twist { flex: none; width: 18px; height: 22px; border: 0; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; color: var(--sf-text-3); border-radius: 4px; }
+.ws__twist:hover { background: var(--sf-hover); }
+.ws__trow .ws__node { flex: 1; min-width: 0; }
+.ws__node--4 { padding-left: 76px; height: 22px; font-size: 11.5px; }
+.ws__col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--sf-mono); }
+.ws__ctype { color: var(--sf-text-3); font-size: 10.5px; }
 .ws__none { padding: 2px 0 4px 52px; font-size: 11px; color: var(--sf-text-3); }
 
 .ws__work { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }

@@ -33,7 +33,7 @@
           <table class="table">
             <thead><tr><th>Table Name</th><th>Type</th><th>Format</th><th>Rows</th><th>Size</th><th>Location</th></tr></thead>
             <tbody>
-              <tr v-for="t in dbTables" :key="t.name">
+              <tr v-for="t in dbTables" :key="t.name" @contextmenu.prevent="rowMenu($event, t)">
                 <td><a href="#" @click.prevent="open(t.name)"><AmbIcon name="table" :size="13" /> {{ t.name }}</a></td>
                 <td>{{ t.external ? 'EXTERNAL_TABLE' : 'MANAGED_TABLE' }}</td>
                 <td>{{ t.format }}</td>
@@ -188,6 +188,7 @@
       <p v-if="!table.external" class="alert alert-warning">This is a MANAGED table: its data in
         <span class="mono">{{ table.location }}</span> is deleted with it.</p>
     </AmbModal>
+    <AmbContextMenu v-if="ctx" :x="ctx.x" :y="ctx.y" :items="ctx.items" @close="ctx = null" />
   </div>
 </template>
 
@@ -195,12 +196,13 @@
 import { computed, reactive, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import { cli, pick, rows } from '@/utils/portalKit';
-import { HIVE_TYPES, IDENT } from './ambari';
+import { HIVE_TYPES, IDENT, type AmbMenuItem } from './ambari';
+import AmbContextMenu from './AmbContextMenu.vue';
 import AmbIcon from './AmbIcon.vue';
 import AmbModal from './AmbModal.vue';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; busy?: boolean }>();
-defineEmits<{ (event: 'query', sql: string): void }>();
+const emit = defineEmits<{ (event: 'query', sql: string): void }>();
 
 const DETAIL_TABS = ['Columns', 'DDL', 'Storage Information', 'Detailed Information', 'Statistics'];
 const TYPES = HIVE_TYPES.filter(t => !t.includes('('));
@@ -374,6 +376,23 @@ async function dropTable() {
   if (!t) return;
   const result = await props.api.exec(cli(['DROP', 'TABLE', `${t.db}.${t.name}`]), { success: `Table ${t.db}.${t.name} deleted` });
   if (result.ok) { dropping.value = false; opened.value = ''; }
+}
+
+// ---- right-click on a table row ----
+const ctx = ref<{ x: number; y: number; items: AmbMenuItem[] } | null>(null);
+function rowMenu(event: MouseEvent, t: Record<string, any>) {
+  ctx.value = {
+    x: event.clientX, y: event.clientY,
+    items: [
+      { header: true, label: `${t.db}.${t.name}` },
+      { label: 'Open', icon: 'table', run: () => open(t.name) },
+      { label: 'Query (SELECT * ... LIMIT 100)', icon: 'play', run: () => emit('query', `SELECT * FROM ${t.db}.${t.name} LIMIT 100`) },
+      { label: 'Describe', icon: 'list', run: () => emit('query', `DESCRIBE ${t.db}.${t.name}`) },
+      { label: 'Edit', icon: 'edit', disabled: props.busy, run: () => { open(t.name); openEdit(); } },
+      { sep: true },
+      { label: 'Delete', icon: 'trash', danger: true, disabled: props.busy, run: () => { open(t.name); dropping.value = true; } },
+    ],
+  };
 }
 </script>
 

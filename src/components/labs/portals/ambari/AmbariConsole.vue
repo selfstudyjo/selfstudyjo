@@ -123,7 +123,7 @@
                     @navigate="go" />
         <AmbHosts v-else-if="route.page === 'hosts' || route.page === 'host'" :view="view" :api="api"
                   :busy="busy" :host="route.page === 'host' ? route.id : ''" @navigate="go" />
-        <AmbAlerts v-else-if="route.page === 'alerts'" :view="view" @navigate="go" />
+        <AmbAlerts v-else-if="route.page === 'alerts'" :view="view" :api="api" :busy="busy" @navigate="go" />
         <AmbAdmin v-else-if="route.page === 'admin'" :view="view" />
         <AmbFilesView v-else-if="route.page === 'files'" :view="view" :api="api" :busy="busy" />
         <AmbHiveView v-else-if="route.page === 'hive'" :view="view" :api="api" :busy="busy"

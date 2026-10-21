@@ -11,7 +11,7 @@
             </th>
             <th v-for="run in runs" :key="run.run_id" class="af-grid__bar-col" :class="{ 'is-sel': run.run_id === runId }">
               <button type="button" class="af-grid__bar-btn" :title="runTitle(run)" :aria-label="'Select run ' + run.run_id"
-                      @click="$emit('select', run.run_id)">
+                      @click="$emit('select', run.run_id)" @contextmenu="af.openMenu($event, 'DAG run ' + run.run_id, runMenu(af, dag, run))">
                 <span class="af-grid__bar" :style="{ height: barHeight(run) + 'px', background: stateColor(run.state), borderColor: normState(run.state) === 'none' ? '#ccc' : stateColor(run.state) }"></span>
                 <span v-if="run.run_type === 'manual'" class="af-grid__manual" aria-hidden="true">▶</span>
                 <span v-else-if="run.run_type === 'backfill'" class="af-grid__manual" aria-hidden="true">⇤</span>
@@ -29,7 +29,8 @@
           <tr v-for="task in tasks" :key="task.task_id" :class="{ 'is-sel': task.task_id === taskId }">
             <th class="af-grid__task" scope="row">
               <button type="button" class="af-grid__task-btn" :title="`${task.task_id} (${task.operator})`"
-                      @click="$emit('select', runId || runs[runs.length - 1]?.run_id || '', task.task_id)">
+                      @click="$emit('select', runId || runs[runs.length - 1]?.run_id || '', task.task_id)"
+                      @contextmenu="taskMenu($event, task.task_id)">
                 <span class="af-grid__task-name">{{ task.task_id }}</span><span v-if="task.mapped" class="af-grid__mapped"> [ ]</span>
               </button>
             </th>
@@ -38,7 +39,8 @@
                       :class="{ 'is-sel': run.run_id === runId && task.task_id === taskId, 'is-none': normState(cell(run.run_id, task.task_id)?.state) === 'none' }"
                       :style="{ background: normState(cell(run.run_id, task.task_id)?.state) === 'none' ? '#fff' : stateColor(cell(run.run_id, task.task_id)?.state) }"
                       :title="cellTitle(run.run_id, task.task_id)" :aria-label="cellTitle(run.run_id, task.task_id)"
-                      @click="$emit('select', run.run_id, task.task_id)"></button>
+                      @click="$emit('select', run.run_id, task.task_id)"
+                      @contextmenu="af.openMenu($event, task.task_id, tiMenu(af, dag, run, task.task_id))"></button>
             </td>
           </tr>
         </tbody>
@@ -53,6 +55,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAf } from './afContext';
+import { runMenu, tiMenu } from './tiActions';
 import { fmtDate, fmtDuration, normState, secondsBetween, stateColor, stateLabel, topoOrder, type AfDag, type AfRun } from './airflow';
 
 const props = defineProps<{ dag: AfDag; runs: AfRun[]; runId: string; taskId: string }>();
@@ -69,6 +72,11 @@ const cells = computed(() => {
   return map;
 });
 function cell(runId: string, taskId: string) { return cells.value.get(runId + '\u0000' + taskId); }
+
+function taskMenu(event: MouseEvent, taskId: string) {
+  const run = props.runs.find(r => r.run_id === props.runId) || props.runs[props.runs.length - 1];
+  af.openMenu(event, taskId, tiMenu(af, props.dag, run, taskId));
+}
 
 function runDur(run: AfRun) {
   return secondsBetween(run.start, run.end) ?? (normState(run.state) === 'running' ? secondsBetween(run.start, af.airflowView.value?.now || run.start) : null) ?? 0;

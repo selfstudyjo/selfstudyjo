@@ -1,5 +1,5 @@
 <template>
-  <div class="cc-app" dir="ltr">
+  <div ref="rootEl" class="cc-app" dir="ltr">
     <!-- ===== Header: logo, home breadcrumb, help / notifications / user ===== -->
     <header class="cc-header">
       <button type="button" class="cc-header__burger" aria-label="Menu" :aria-expanded="navOpen" @click="navOpen = !navOpen">
@@ -76,9 +76,13 @@
           <ConnectorPage v-else-if="route.page === 'connector'" :key="'c-' + route.name" />
           <RegistryPage v-else-if="route.page === 'registry'" />
           <SubjectPage v-else-if="route.page === 'subject'" :key="'s-' + route.subject" />
+          <KsqlPage v-else-if="route.page === 'ksql'" />
         </template>
       </main>
     </div>
+
+    <CcMenu v-if="menuState" :items="menuState.items" :x="menuState.x" :y="menuState.y" :bounds="menuState.bounds"
+            @close="menuState = null" />
 
     <CcModal v-if="pending" :title="pending.title" :ok-text="pending.yes || 'Confirm'" :danger="pending.danger"
              :ok-disabled="Boolean(pending.typeToConfirm) && typed !== pending.typeToConfirm"
@@ -108,6 +112,8 @@ import type { LabTool } from '@/utils/labCatalogue';
 import { pick, rows } from '@/utils/portalKit';
 import CcIcon from './CcIcon.vue';
 import CcModal from './CcModal.vue';
+import CcMenu from './CcMenu.vue';
+import KsqlPage from './KsqlPage.vue';
 import HomePage from './HomePage.vue';
 import OverviewPage from './OverviewPage.vue';
 import BrokersPage from './BrokersPage.vue';
@@ -121,10 +127,10 @@ import AddConnectorPage from './AddConnectorPage.vue';
 import ConnectorPage from './ConnectorPage.vue';
 import RegistryPage from './RegistryPage.vue';
 import SubjectPage from './SubjectPage.vue';
-import { CC, type CcContext, type ConfirmRequest, type RunOptions } from './ccContext';
+import { CC, type CcContext, type CcMenuItem, type ConfirmRequest, type RunOptions } from './ccContext';
 import {
   BOOTSTRAP, CLUSTER_NAME, kafkaTopics, routeUrl,
-  type CcBroker, type CcConnector, type CcGroup, type CcRoute, type CcSubject, type CcTopic,
+  type CcBroker, type CcConnector, type CcGroup, type CcKsql, type CcRoute, type CcSubject, type CcTopic,
 } from './confluent';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
@@ -143,6 +149,10 @@ const connectors = computed(() => rows<CcConnector>(kafka.value, 'connectors'));
 const plugins = computed(() => pick<string[]>(kafka.value, 'connect.plugins', []).map(String));
 const registryCompat = computed(() => String(pick(kafka.value, 'registry.compatibility', 'BACKWARD') || 'BACKWARD'));
 const producer = computed(() => pick<Record<string, any>>(kafka.value, 'producer', {}));
+const ksql = computed<CcKsql>(() => {
+  const raw = pick<Record<string, any>>(kafka.value, 'ksql', {}) || {};
+  return { server: raw.server, version: raw.version, streams: rows(raw, 'streams'), queries: rows(raw, 'queries') };
+});
 const busyRef = computed(() => Boolean(props.busy) || props.api.busy.value);
 
 const healthy = computed(() => brokers.value.every(b => b.status === 'online')
@@ -160,6 +170,7 @@ const section = computed(() => {
   if (p === 'group') return 'consumers';
   if (p === 'add-connector' || p === 'connector') return 'connect';
   if (p === 'subject') return 'registry';
+  if (p === 'ksql') return 'ksql';
   return p;
 });
 
@@ -168,6 +179,7 @@ const navItems = computed(() => [
   { key: 'brokers', label: 'Brokers', icon: 'brokers', route: { page: 'brokers' } as CcRoute, count: brokers.value.length },
   { key: 'topics', label: 'Topics', icon: 'topics', route: { page: 'topics' } as CcRoute, count: topics.value.length },
   { key: 'connect', label: 'Connect', icon: 'connect', route: { page: 'connect' } as CcRoute, count: connectors.value.length },
+  { key: 'ksql', label: 'ksqlDB', icon: 'ksql', route: { page: 'ksql', tab: 'editor' } as CcRoute, count: ksql.value.streams.length + ksql.value.queries.length },
   { key: 'consumers', label: 'Consumers', icon: 'consumers', route: { page: 'consumers' } as CcRoute, count: groups.value.length },
   { key: 'registry', label: 'Schema Registry', icon: 'schema', route: { page: 'registry' } as CcRoute, count: subjects.value.length },
 ]);
@@ -225,10 +237,28 @@ function help() {
 
 const shownFlashes = computed(() => props.api.flashes.value.slice(0, 3));
 
+const rootEl = ref<HTMLElement | null>(null);
+const menuState = ref<{ items: CcMenuItem[]; x: number; y: number; bounds: { w: number; h: number } } | null>(null);
+function openMenu(event: MouseEvent, items: CcMenuItem[]) {
+  event.preventDefault();
+  event.stopPropagation();
+  const root = rootEl.value;
+  if (!root) return;
+  const box = root.getBoundingClientRect();
+  let x = event.clientX - box.left;
+  let y = event.clientY - box.top;
+  if (event.type === 'click' && event.currentTarget instanceof HTMLElement) {
+    const b = event.currentTarget.getBoundingClientRect();
+    x = b.right - box.left - 190;
+    y = b.bottom - box.top + 2;
+  }
+  menuState.value = { items, x, y, bounds: { w: box.width, h: box.height } };
+}
+
 const ctx: CcContext = {
-  installed, clusterId, version, brokers, topics, groups, subjects, connectors, plugins, registryCompat, producer,
+  installed, clusterId, version, brokers, topics, groups, subjects, connectors, plugins, registryCompat, producer, ksql,
   busy: busyRef,
-  route, go, run, confirm, notify,
+  route, go, run, confirm, notify, menu: openMenu,
   topic: name => topics.value.find(t => t.name === name),
   subject: name => subjects.value.find(s => s.subject === name),
 };

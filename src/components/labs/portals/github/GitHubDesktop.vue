@@ -18,9 +18,14 @@
           </button>
         </div>
         <GdChanges v-if="tab === 'changes' && v.initialised" :v="v" :selected="selectedPath" :busy="busy"
-                   :undo="undoInfo" :act="changesAct" @select="selectPath" @context="changeContext" />
-        <GdHistory v-else-if="tab === 'history' && v.initialised" :commits="historyList" :selected="selectedSha"
-                   :unborn="v.head.unborn" @select="selectCommit" @context="commitContext" />
+                   :undo="undoInfo" :amend="amendInfo" :act="changesAct" @select="selectPath" @context="changeContext"
+                   @cancel-amend="amending = false" />
+        <GdHistory v-else-if="tab === 'history' && v.initialised" :commits="historyList" :all="v.commits"
+                   :selected="selectedSha" :unborn="v.head.unborn" :head="v.head.sha" :current="v.branch"
+                   :branches="v.branches" :remote-branches="v.remoteBranches" :tags="v.tags"
+                   :upstream="v.tracking && !v.tracking.gone ? v.tracking.upstream : ''"
+                   :can-merge="!v.detached && !busyOp && !busy" @select="selectCommit" @context="commitContext"
+                   @merge="b => doMerge(b, 'merge')" />
         <div v-else class="gd-side__none">No repository</div>
       </aside>
 
@@ -47,7 +52,7 @@
             <GdDiff v-else-if="selectedChange" :path="selectedChange.path" :hunks="selectedChange.hunks"
                     :status="selectedChange.status" :additions="selectedChange.additions"
                     :deletions="selectedChange.deletions" />
-            <GdBlank v-else kind="clean" :v="v" :busy="busy" @publish="dialog = { type: 'publish' }" />
+            <GdBlank v-else kind="clean" :v="v" :busy="busy" @publish="dialog = { type: 'publish' }" @sync="syncAction" />
           </template>
           <template v-else>
             <GdCommitDetail v-if="selectedCommitObj" :commit="selectedCommitObj" :file="selectedCommitFile"
@@ -61,8 +66,8 @@
     <!-- Desktop shows one popup at a time: an Error raised from a dialog replaces it on
          screen (the dialog keeps its state underneath and comes back on Close). -->
     <GdDialogs v-if="dialog" v-show="!errorDialog" :key="dialogKey" :d="dialog" :v="v" :busy="busy" :run="run" @close="dialog = null" />
-    <GdMerge v-if="mergeOpen" :v="v" :busy="busy" :on-merge="doMerge" @close="mergeOpen = false" />
-    <GdConflicts v-if="conflictsOpen && (v.conflicts.length || v.merging || v.sequencer)" :v="v" :busy="busy"
+    <GdMerge v-if="mergeOpen" :v="v" :busy="busy" :mode="mergeMode" :on-merge="doMerge" @close="mergeOpen = false" />
+    <GdConflicts v-if="conflictsOpen && (v.conflicts.length || v.merging || v.sequencer || v.rebasing)" :v="v" :busy="busy"
                  :run="run" @close="conflictsOpen = false" @done="conflictsOpen = false" />
     <GdSettings v-if="settingsOpen" v-show="!errorDialog" :v="v" :busy="busy" :run="run" :initial-tab="settingsTab"
                 @close="settingsOpen = false" @publish="settingsOpen = false; dialog = { type: 'publish' }" />
@@ -118,11 +123,13 @@ const tab = ref<'changes' | 'history'>('changes');
 const selectedPath = ref('');
 const selectedSha = ref('');
 const selectedCommitFile = ref('');
-const dropdown = ref<'repo' | 'branch' | null>(null);
+const dropdown = ref<'repo' | 'branch' | 'push' | null>(null);
 const dialog = ref<Record<string, any> | null>(null);
 const dialogKey = ref(0);
 const errorDialog = ref<Record<string, any> | null>(null);
 const mergeOpen = ref(false);
+const mergeMode = ref<'merge' | 'squash' | 'rebase'>('merge');
+const amending = ref(false);
 const conflictsOpen = ref(false);
 const settingsOpen = ref(false);
 const settingsTab = ref('remote');
@@ -184,8 +191,24 @@ watch(() => v.value.conflicts.length, (count, before) => {
 const undoInfo = computed(() => lastCommit.value && lastCommit.value.sha === v.value.head.sha
   && !v.value.merging ? lastCommit.value : null);
 
+const busyOp = computed(() => Boolean(v.value.merging || v.value.sequencer || v.value.rebasing
+  || v.value.conflicts.length));
+const remoteName = computed(() => v.value.tracking?.remote || v.value.remotes[0]?.name || 'origin');
+const headCommit = computed(() => v.value.commits.find(c => c.full === v.value.head.sha) || null);
+const amendInfo = computed(() => {
+  if (!amending.value || !headCommit.value || v.value.merging) return null;
+  const pushed = v.value.remoteBranches.some(b => b.full === headCommit.value!.full)
+    || (v.value.tracking ? v.value.tracking.ahead === 0 && !!v.value.tracking.upstream && !v.value.tracking.gone : false);
+  return { summary: headCommit.value.summary, body: headCommit.value.body, pushed };
+});
+watch(() => v.value.head.unborn, unborn => { if (unborn) amending.value = false; });
+
 const conflictBanner = computed(() => {
   if (conflictsOpen.value) return '';
+  if (v.value.rebasing) {
+    return v.value.conflicts.length ? `Resolve conflicts to continue rebasing ${v.value.rebasing.branch}.`
+      : `A rebase of ${v.value.rebasing.branch} is in progress.`;
+  }
   if (v.value.conflicts.length) return 'Resolve conflicts and then commit.';
   if (v.value.merging) return 'All conflicts resolved. Commit the merge to finish.';
   if (v.value.sequencer) return `A ${v.value.sequencer.op} is in progress.`;
@@ -251,6 +274,11 @@ const changesAct = {
     }
     return ok;
   },
+  async amend(summary: string, description: string) {
+    const ok = await run([cmd.amend(summary, description)], 'Amended the last commit');
+    if (ok) amending.value = false;
+    return ok;
+  },
   undo() {
     const root = v.value.head.parents.length === 0;
     run([cmd.undo(root)], 'Undid the last commit').then(ok => { if (ok) lastCommit.value = null; });
@@ -275,15 +303,60 @@ function switchTo(name: string) {
 const toolbarAct = {
   switchTo,
   newBranch(initial: string) { dropdown.value = null; dialog.value = { type: 'newBranch', initial }; },
-  mergeInto() { dropdown.value = null; mergeOpen.value = true; },
+  mergeInto() { dropdown.value = null; openMerge('merge'); },
   publish() { dropdown.value = null; dialog.value = { type: 'publish' }; },
   createRepo() { dropdown.value = null; dialog.value = { type: 'createRepo' }; },
+  syncAction,
 };
 
-async function doMerge(branch: string) {
-  const ok = await run([cmd.merge(branch)], `Successfully merged ${branch} into ${v.value.branch}`);
+function openMerge(mode: 'merge' | 'squash' | 'rebase') {
+  mergeMode.value = mode;
+  mergeOpen.value = true;
+}
+
+async function doMerge(branch: string, mode: 'merge' | 'squash' | 'rebase' = 'merge') {
+  const into = v.value.branch;
+  let ok: boolean;
+  if (mode === 'rebase') {
+    ok = await run([cmd.rebase(branch)], `Rebased ${into} onto ${branch}`);
+  } else if (mode === 'squash') {
+    // Desktop commits a squash with the branch's name as the summary.
+    ok = await run([cmd.squashMerge(branch), cmd.commit(branch, `Squashed commits from ${branch}`)],
+                   `Successfully squashed and merged ${branch} into ${into}`);
+  } else {
+    ok = await run([cmd.merge(branch)], `Successfully merged ${branch} into ${into}`);
+  }
   mergeOpen.value = false;
   if (!ok && v.value.conflicts.length) conflictsOpen.value = true;
+}
+
+/** The push/pull/fetch button and its dropdown. */
+function syncAction(kind: string) {
+  dropdown.value = null;
+  const remote = remoteName.value;
+  const branch = v.value.branch;
+  if (kind === 'publishRepo') { dialog.value = { type: 'publish' }; return; }
+  if (kind === 'publishBranch') {
+    if (v.value.detached) return;
+    run([cmd.publishBranch(remote, branch)], `Published ${branch} to ${remote}`);
+    return;
+  }
+  if (kind === 'fetch') { run([cmd.fetchRemote(remote)], `Fetched ${remote}`); return; }
+  if (kind === 'pull') {
+    run([cmd.pull(remote)], `Pulled ${v.value.tracking?.upstream || remote} into ${branch}`).then(ok => {
+      if (!ok && v.value.conflicts.length) conflictsOpen.value = true;
+    });
+    return;
+  }
+  if (kind === 'push') {
+    if (v.value.tracking && v.value.tracking.behind) {
+      dialog.value = { type: 'pushRejected', remote };
+      return;
+    }
+    run([cmd.pushTo(remote)], `Pushed ${branch} to ${remote}`);
+    return;
+  }
+  if (kind === 'forcePush') { dialog.value = { type: 'forcePush', remote }; }
 }
 
 function restoreStash(stash: Stash) {
@@ -292,7 +365,7 @@ function restoreStash(stash: Stash) {
   });
 }
 
-function toggleDropdown(which: 'repo' | 'branch') {
+function toggleDropdown(which: 'repo' | 'branch' | 'push') {
   dropdown.value = dropdown.value === which ? null : which;
 }
 
@@ -356,25 +429,35 @@ function changeContext(ev: MouseEvent, change: Change) {
 function commitContext(ev: MouseEvent, commit: Commit) {
   selectCommit(commit.full);
   const isHead = commit.full === v.value.head.sha;
-  const busyOp = Boolean(v.value.merging || v.value.sequencer || v.value.conflicts.length);
-  const items: MenuItem[] = [
+  const op = busyOp.value;
+  const items: MenuItem[] = [];
+  if (isHead) {
+    items.push({ label: 'Amend commit…', disabled: op || commit.merge,
+                 action: () => { amending.value = true; setTab('changes'); } });
+  }
+  items.push(
     isHead
-      ? { label: 'Undo commit…', disabled: busyOp || commit.merge, action: () => changesAct.undo() }
-      : { label: 'Reset to commit…', disabled: busyOp, action: () => { dialog.value = { type: 'resetTo', commit }; } },
-    { label: 'Checkout commit', disabled: busyOp || (Boolean(v.value.detached) && v.value.detached === commit.full),
+      ? { label: 'Undo commit…', disabled: op || commit.merge, action: () => changesAct.undo() }
+      : { label: 'Reset to commit…', disabled: op, action: () => { dialog.value = { type: 'resetTo', commit }; } },
+    { label: 'Checkout commit', disabled: op || (Boolean(v.value.detached) && v.value.detached === commit.full),
       action: () => { dialog.value = { type: 'checkoutCommit', commit }; } },
     { label: 'Reorder commit', disabled: true },
-    { label: 'Revert changes in commit', disabled: busyOp,
+    { label: 'Revert changes in commit', disabled: op,
       action: () => run([cmd.revert(commit.full, commit.merge)], `Reverted ${commit.sha}`) },
     { separator: true },
     { label: 'Create branch from commit', action: () => { dialog.value = { type: 'newBranch', sha: commit.full }; } },
     { label: 'Create tag…', action: () => { dialog.value = { type: 'tag', commit }; } },
-  ];
+  );
   for (const t of commit.tags) {
     items.push({ label: `Delete tag ${t}…`, action: () => { dialog.value = { type: 'deleteTag', tag: t }; } });
+    const tag = v.value.tags.find(x => x.name === t);
+    if (v.value.remotes.length && tag && tag.pushed === false) {
+      items.push({ label: `Push tag ${t}`,
+                   action: () => run([cmd.pushTag(remoteName.value, t)], `Pushed tag ${t} to ${remoteName.value}`) });
+    }
   }
   items.push(
-    { label: 'Cherry-pick commit…', disabled: busyOp || hasLocalChanges() || v.value.branches.length < 2,
+    { label: 'Cherry-pick commit…', disabled: op || hasLocalChanges() || v.value.branches.length < 2,
       action: () => { dialog.value = { type: 'cherryPick', commit }; } },
     { separator: true },
     { label: 'Copy SHA', action: () => copy(commit.full) },
@@ -392,24 +475,45 @@ function branchContext(ev: MouseEvent, branch: Branch) {
       { label: 'Copy branch name', action: () => copy(branch.name) },
       { label: 'View branch on GitHub', disabled: true },
       { separator: true },
-      { label: 'Delete…', disabled: branch.current,
-        action: () => { dropdown.value = null; dialog.value = { type: 'deleteBranch', branch: branch.name }; } },
+      { label: `Merge into ${v.value.branch}`, disabled: branch.current || Boolean(v.value.detached) || busyOp.value,
+        action: () => { dropdown.value = null; doMerge(branch.name, 'merge'); } },
+      { separator: true },
+      { label: 'Delete…', action: () => { dropdown.value = null; deleteBranch(branch); } },
     ],
   };
+}
+
+/** Desktop deletes the CURRENT branch too: it switches to the default branch first. */
+function deleteBranch(branch: Branch | undefined) {
+  if (!branch) return;
+  const fallback = v.value.branches.find(b => b.name === 'main' && b.name !== branch.name)?.name
+    || v.value.branches.find(b => b.name !== branch.name)?.name || '';
+  if (branch.current && (!fallback || hasLocalChanges())) {
+    errorDialog.value = { type: 'error', id: ++errorSeq,
+      message: !fallback ? `${branch.name} is the only branch in this repository and cannot be deleted.`
+        : 'You have uncommitted changes. Commit, stash or discard them before deleting the current branch.' };
+    return;
+  }
+  const remoteBranch = branch.upstream && !branch.gone ? branch.upstream : '';
+  dialog.value = { type: 'deleteBranch', branch: branch.name, current: branch.current, fallback, remoteBranch };
 }
 
 // ---------------------------------------------------------------- menus ---
 const menus = computed(() => {
   const ready = v.value.initialised;
-  const busyOp = Boolean(v.value.merging || v.value.sequencer || v.value.conflicts.length);
+  const op = busyOp.value;
   const current = v.value.detached ? '' : v.value.branch;
+  const hasRemote = v.value.remotes.length > 0;
+  const upstream = v.value.tracking && v.value.tracking.upstream && !v.value.tracking.gone ? v.value.tracking.upstream : '';
+  const currentBranch = v.value.branches.find(b => b.current);
   return [
     { label: 'File', items: [
       { label: 'New repository…', shortcut: 'Ctrl+N', disabled: ready, action: () => { dialog.value = { type: 'createRepo' }; } },
       { label: 'Add local repository…', shortcut: 'Ctrl+O', disabled: true },
       { label: 'Clone repository…', shortcut: 'Ctrl+Shift+O', disabled: true },
       { separator: true },
-      { label: 'Options…', shortcut: 'Ctrl+,', disabled: true },
+      { label: 'Options…', shortcut: 'Ctrl+,', disabled: !ready,
+        action: () => { settingsTab.value = 'config'; settingsOpen.value = true; } },
       { separator: true },
       { label: 'Exit', disabled: true },
     ] },
@@ -428,9 +532,10 @@ const menus = computed(() => {
       { label: 'Go to summary', shortcut: 'Ctrl+G', disabled: true },
     ] },
     { label: 'Repository', items: [
-      { label: 'Push', shortcut: 'Ctrl+P', disabled: !ready, action: () => { dialog.value = { type: 'publish' }; } },
-      { label: 'Pull', shortcut: 'Ctrl+Shift+P', disabled: true },
-      { label: 'Fetch', shortcut: 'Ctrl+Shift+T', disabled: true },
+      { label: hasRemote ? 'Push' : 'Publish repository…', shortcut: 'Ctrl+P', disabled: !ready || Boolean(v.value.detached),
+        action: () => syncAction(!hasRemote ? 'publishRepo' : upstream ? 'push' : 'publishBranch') },
+      { label: 'Pull', shortcut: 'Ctrl+Shift+P', disabled: !ready || !upstream || op, action: () => syncAction('pull') },
+      { label: 'Fetch', shortcut: 'Ctrl+Shift+T', disabled: !ready || !hasRemote, action: () => syncAction('fetch') },
       { label: 'Remove…', shortcut: 'Ctrl+Backspace', disabled: true },
       { separator: true },
       { label: 'View on GitHub', shortcut: 'Ctrl+Shift+G', disabled: true },
@@ -444,21 +549,25 @@ const menus = computed(() => {
       { label: 'New branch…', shortcut: 'Ctrl+Shift+N', disabled: !ready, action: () => toolbarAct.newBranch('') },
       { label: 'Rename…', shortcut: 'Ctrl+Shift+R', disabled: !ready || !current,
         action: () => { dialog.value = { type: 'rename', branch: current, initial: current }; } },
-      { label: 'Delete…', shortcut: 'Ctrl+Shift+D', disabled: true },
+      { label: 'Delete…', shortcut: 'Ctrl+Shift+D', disabled: !ready || !currentBranch || op,
+        action: () => deleteBranch(currentBranch) },
       { separator: true },
-      { label: 'Discard all changes…', shortcut: 'Ctrl+Shift+Backspace', disabled: !v.value.changes.length || busyOp,
+      { label: 'Discard all changes…', shortcut: 'Ctrl+Shift+Backspace', disabled: !v.value.changes.length || op,
         action: () => { dialog.value = { type: 'discardAll' }; } },
-      { label: 'Stash all changes', shortcut: 'Ctrl+Shift+S', disabled: !v.value.changes.length || busyOp || !current,
+      { label: 'Stash all changes', shortcut: 'Ctrl+Shift+S', disabled: !v.value.changes.length || op || !current,
         action: () => stashAll() },
       { separator: true },
-      { label: `Update from main`, shortcut: 'Ctrl+Shift+U', disabled: !ready || current === 'main' || busyOp
+      { label: `Update from main`, shortcut: 'Ctrl+Shift+U', disabled: !ready || current === 'main' || op
           || !v.value.branches.some(b => b.name === 'main'),
         action: () => doMerge('main') },
-      { label: 'Compare to branch', shortcut: 'Ctrl+Shift+B', disabled: true },
-      { label: 'Merge into current branch…', shortcut: 'Ctrl+Shift+M', disabled: !ready || !current || busyOp,
-        action: () => { mergeOpen.value = true; } },
-      { label: 'Squash and merge into current branch…', shortcut: 'Ctrl+Shift+H', disabled: true },
-      { label: 'Rebase current branch…', shortcut: 'Ctrl+Shift+E', disabled: true },
+      { label: 'Compare to branch', shortcut: 'Ctrl+Shift+B', disabled: !ready || v.value.head.unborn,
+        action: () => setTab('history') },
+      { label: 'Merge into current branch…', shortcut: 'Ctrl+Shift+M', disabled: !ready || !current || op,
+        action: () => openMerge('merge') },
+      { label: 'Squash and merge into current branch…', shortcut: 'Ctrl+Shift+H', disabled: !ready || !current || op,
+        action: () => openMerge('squash') },
+      { label: 'Rebase current branch…', shortcut: 'Ctrl+Shift+E', disabled: !ready || !current || op || hasLocalChanges(),
+        action: () => openMerge('rebase') },
       { separator: true },
       { label: 'Compare on GitHub', shortcut: 'Ctrl+Shift+C', disabled: true },
       { label: 'Create pull request', shortcut: 'Ctrl+R', disabled: true },
@@ -486,7 +595,15 @@ function onKey(ev: KeyboardEvent) {
   else if (!ev.shiftKey && key === 'b') { toggleDropdown('branch'); ev.preventDefault(); }
   else if (!ev.shiftKey && key === 't') { toggleDropdown('repo'); ev.preventDefault(); }
   else if (ev.shiftKey && key === 'n') { toolbarAct.newBranch(''); ev.preventDefault(); }
-  else if (ev.shiftKey && key === 'm') { mergeOpen.value = true; ev.preventDefault(); }
+  else if (ev.shiftKey && key === 'm') { openMerge('merge'); ev.preventDefault(); }
+  else if (ev.shiftKey && key === 'h') { openMerge('squash'); ev.preventDefault(); }
+  else if (ev.shiftKey && key === 'e') { if (!hasLocalChanges()) openMerge('rebase'); ev.preventDefault(); }
+  else if (ev.shiftKey && key === 't' && v.value.remotes.length) { syncAction('fetch'); ev.preventDefault(); }
+  else if (ev.shiftKey && key === 'p' && v.value.tracking?.upstream) { syncAction('pull'); ev.preventDefault(); }
+  else if (!ev.shiftKey && key === 'p') {
+    syncAction(!v.value.remotes.length ? 'publishRepo' : v.value.tracking?.upstream ? 'push' : 'publishBranch');
+    ev.preventDefault();
+  }
 }
 
 </script>

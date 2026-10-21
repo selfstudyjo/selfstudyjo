@@ -593,6 +593,47 @@ export const cmd = {
             drain ? '--drain' : null, jid]),
 };
 
+/* ---------------------------------------------------------------- JARs */
+
+export const JOBMANAGER = 'http://flink-jobmanager.shopflow.internal:8081';
+
+export interface FkJar { id: string; name: string; uploaded: number; size?: number; entry: { name: string }[]; args?: string }
+export interface FkPlaygroundJar { path: string; name: string; size: number; entry: string; args: string }
+
+export function jarsOf(view: unknown): FkJar[] {
+    return rows<FkJar>(view, 'flink.jars');
+}
+export function playgroundJarsOf(view: unknown): FkPlaygroundJar[] {
+    return rows<FkPlaygroundJar>(view, 'flink.playground_jars');
+}
+
+/** What the dashboard calls: the JobManager's REST API, as curl. */
+export const rest = {
+    upload: (localPath: string) => cli(['curl', '-s', '-X', 'POST', '-H', 'Expect:', '-F', `jarfile=@${localPath}`,
+        `${JOBMANAGER}/jars/upload`]),
+    remove: (id: string) => cli(['curl', '-s', '-X', 'DELETE', `${JOBMANAGER}/jars/${encodeURIComponent(id)}`]),
+    plan: (id: string, parallelism: number | null) => cli(['curl', '-s', '-X', 'POST', '-H', 'Content-Type: application/json',
+        '--data', JSON.stringify(parallelism ? { parallelism } : {}), `${JOBMANAGER}/jars/${encodeURIComponent(id)}/plan`]),
+    run: (id: string, body: { entryClass?: string; parallelism?: number | null; programArgs?: string; savepointPath?: string; allowNonRestoredState?: boolean }) => {
+        const clean: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(body)) if (v !== '' && v !== null && v !== undefined && v !== false) clean[k] = v;
+        return cli(['curl', '-s', '-X', 'POST', '-H', 'Content-Type: application/json', '--data', JSON.stringify(clean),
+            `${JOBMANAGER}/jars/${encodeURIComponent(id)}/run`]);
+    },
+};
+
+/** A REST answer's body, or its error message (Flink answers `{"errors": [...]}`). */
+export function restAnswer(output: string | undefined): { body: any; error: string } {
+    const text = String(output || '').trim();
+    try {
+        const body = JSON.parse(text);
+        if (body && Array.isArray(body.errors)) return { body, error: body.errors.map(String).join('\n') };
+        return { body, error: '' };
+    } catch {
+        return { body: null, error: text };
+    }
+}
+
 /** A Flink SQL string literal. */
 export function sqlString(value: string): string {
     return `'${String(value).replace(/'/g, "''")}'`;

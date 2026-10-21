@@ -15,7 +15,7 @@ export const SITE = 'https://selfstudy.atlassian.net';
 export const PROJECT = { key: 'PLAT', name: 'Platform', board: 1 };
 
 export type PageId = 'timeline' | 'backlog' | 'board' | 'goals' | 'reports'
-    | 'risks' | 'incidents' | 'stakeholders' | 'team';
+    | 'risks' | 'incidents' | 'stakeholders' | 'team' | 'issues';
 
 export const PAGE_URL: Record<PageId, string> = {
     timeline: `${SITE}/jira/software/projects/PLAT/boards/1/timeline`,
@@ -27,6 +27,7 @@ export const PAGE_URL: Record<PageId, string> = {
     incidents: `${SITE}/jira/servicedesk/projects/PLAT/incidents`,
     stakeholders: `${SITE}/jira/software/projects/PLAT/pages/stakeholders`,
     team: `${SITE}/jira/people/team/platform-engineering`,
+    issues: `${SITE}/jira/software/projects/PLAT/issues`,
 };
 
 // ---- the view, typed loosely (a replica a release behind sends less) -----
@@ -52,6 +53,11 @@ export interface Issue {
     comments: { sprint: number; author: string; body: string }[];
     events: { sprint: number; seq: number; text: string }[];
     raci: Record<string, string[] | string> | null;
+    flagged: boolean;
+    labels: string[];
+    links: { type: string; key: string }[];
+    subtasks: { n: number; title: string; done: boolean }[];
+    watching: boolean;
 }
 
 export interface Person {
@@ -90,6 +96,11 @@ export function issues(view: unknown): Issue[] {
         description: row.description || '',
         assignee_id: row.assignee_id || '',
         comments: Array.isArray(row.comments) ? row.comments : [],
+        flagged: Boolean(row.flagged),
+        labels: Array.isArray(row.labels) ? row.labels.map(String) : [],
+        links: Array.isArray(row.links) ? row.links : [],
+        subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
+        watching: Boolean(row.watching),
         events: Array.isArray(row.events) ? row.events : [],
         done_points: Number(row.done_points || 0),
         points: Number(row.points || 0),
@@ -142,6 +153,21 @@ export const SKILL_HINT: Record<string, string> = {
     python: 'python', leadership: 'leadership', data: 'data',
 };
 
+/** Jira's issue link types, as the engine spells them (`mgr backlog link --type`). */
+export const LINK_TYPES: { value: string; label: string }[] = [
+    { value: 'blocks', label: 'blocks' },
+    { value: 'is-blocked-by', label: 'is blocked by' },
+    { value: 'relates', label: 'relates to' },
+    { value: 'duplicates', label: 'duplicates' },
+    { value: 'is-duplicated-by', label: 'is duplicated by' },
+    { value: 'clones', label: 'clones' },
+    { value: 'is-cloned-by', label: 'is cloned by' },
+];
+
+export function issueUrl(key: string): string {
+    return `${SITE}/browse/${key}`;
+}
+
 /** The created key out of `Added PLAT-15 (5 pts, azure): …`. */
 export function createdKey(result: PortalResult): string {
     const match = String(result.output || '').match(/\b(PLAT-\d+)\b/);
@@ -186,6 +212,23 @@ export interface JiraContext {
     flag: (type: 'success' | 'error' | 'info' | 'warning', title: string, detail?: string) => void;
     showOutput: (title: string, output: string) => void;
     search: Ref<string>;
+    /** The dialogs any page's card menu opens (labels, link issue, flag). */
+    openDialog: (kind: IssueDialogKind, key: string) => void;
+    /** A right-click menu at the pointer, shared by every page. */
+    openMenu: (event: MouseEvent, items: DropMenuItem[], onSelect: (value: string) => void) => void;
+    /** The JQL a page wants the Issues page to open with. */
+    jql: Ref<string>;
+}
+
+export type IssueDialogKind = 'labels' | 'link' | 'flag';
+
+export interface DropMenuItem {
+    label: string;
+    value: string;
+    disabled?: boolean;
+    hint?: string;
+    danger?: boolean;
+    section?: string;
 }
 
 export interface ConfirmOptions {

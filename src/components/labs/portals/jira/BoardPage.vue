@@ -20,6 +20,7 @@
       </div>
     </div>
     <p v-if="sprint.goal" class="bp__goal"><strong>Sprint goal:</strong> {{ sprint.goal }}</p>
+    <SprintEditDialog v-if="editing" @close="editing = false" />
 
     <div class="bp__filters">
       <div class="bp__search">
@@ -78,22 +79,30 @@
         <ul class="bp__cards">
           <li v-for="issue in column.items" :key="issue.id">
             <article class="bp__card" tabindex="0" draggable="true"
-                     :class="{ 'is-dragging': dragging === issue.id }"
+                     :class="{ 'is-dragging': dragging === issue.id, 'is-flagged': issue.flagged }"
                      :aria-label="`${issue.id} ${issue.title}. ${STATUS_LABEL[issue.status]}. Shift plus arrow keys move it.`"
                      @dragstart="onDragStart($event, issue)" @dragend="dragging = ''; dropTarget = ''"
                      @click="ctx.openIssue(issue.id)" @keydown.enter.prevent="ctx.openIssue(issue.id)"
+                     @contextmenu="contextMenu($event, issue)" @keydown.shift.f10.prevent="keyMenu($event, issue)"
                      @keydown.shift.right.prevent="shift(issue, 1)" @keydown.shift.left.prevent="shift(issue, -1)">
               <div class="bp__card-top">
                 <p class="bp__summary">{{ issue.title }}</p>
-                <JiraDropdown :items="cardMenu(issue)" label="Card actions" align="right"
-                              trigger-class="bp__card-more" @click.stop @select="v => onCardMenu(issue, v)">
+                <JiraDropdown :items="issueMenu(issue)" label="Card actions" align="right"
+                              trigger-class="bp__card-more" @click.stop @select="v => onIssueMenu(issue, v)">
                   <template #trigger><JiraIcon name="more" /></template>
                 </JiraDropdown>
               </div>
-              <span v-if="issue.skill" class="bp__label">{{ issue.skill }}</span>
+              <div v-if="issue.labels.length || issue.skill" class="bp__labels">
+                <span v-for="l in issue.labels" :key="l" class="bp__tag">{{ l }}</span>
+                <span v-if="issue.skill" class="bp__label" :title="'Component: ' + issue.skill">{{ issue.skill }}</span>
+              </div>
               <div class="bp__card-foot">
                 <JiraIcon :name="issue.type" kind="type" />
                 <span class="j-key" :class="{ 'j-key--done': issue.status === 'done' }">{{ issue.id }}</span>
+                <JiraIcon v-if="issue.flagged" name="flag" :size="14" class="bp__flag" title="Flagged" />
+                <span v-if="issue.subtasks.length" class="bp__subs" :title="`${subsDone(issue)} of ${issue.subtasks.length} subtasks done`">
+                  <JiraIcon name="subtask" :size="14" /> {{ subsDone(issue) }}/{{ issue.subtasks.length }}</span>
+                <JiraIcon v-if="issue.links.length" name="link" :size="14" class="bp__muted" :title="`${issue.links.length} linked work item(s)`" />
                 <span class="bp__spacer" />
                 <span v-if="issue.carried" class="bp__carried" :title="`Carried over ${issue.carried} time(s)`">↻{{ issue.carried }}</span>
                 <span class="j-points" :class="'j-points--' + issue.status"
@@ -121,10 +130,19 @@ import { pick } from '@/utils/portalKit';
 import JiraIcon from './JiraIcon.vue';
 import JiraAvatar from './JiraAvatar.vue';
 import JiraDropdown, { type DropItem } from './JiraDropdown.vue';
+import SprintEditDialog from './SprintEditDialog.vue';
 import { PRIORITY_LABEL, sprintName, STATUS_LABEL, TYPE_LABEL, type Issue } from './jiraKit';
 import { useJira } from './useJira';
 
-const { ctx, all, team, sprint, move, moveToBacklog, deleteIssue, startSprint, completeSprint } = useJira();
+const { ctx, all, team, sprint, move, startSprint, completeSprint, issueMenu, onIssueMenu, contextMenu } = useJira();
+const editing = ref(false);
+const subsDone = (issue: Issue) => issue.subtasks.filter(sub => sub.done).length;
+
+/** Shift+F10 / the menu key: the context menu, anchored to the focused card. */
+function keyMenu(event: KeyboardEvent, issue: Issue) {
+  const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  contextMenu(new MouseEvent('contextmenu', { clientX: box.left + 24, clientY: box.top + 24 }), issue);
+}
 const busy = ctx.busy;
 const sprintDays = computed(() => Number(pick(ctx.view.value, 'org.sprint_days', 14)));
 
@@ -193,30 +211,15 @@ async function shift(issue: Issue, delta: number) {
   if (next !== issue.status) await move(issue, next);
 }
 
-function cardMenu(issue: Issue): DropItem[] {
-  return [
-    ...ORDER.filter(id => id !== issue.status).map(id => ({
-      label: `Move to ${STATUS_LABEL[id]}`, value: 'move:' + id, section: id === ORDER.find(o => o !== issue.status) ? 'Move work item' : undefined,
-    })),
-    { label: 'Move to Backlog', value: 'backlog', section: 'Sprint' },
-    { label: 'Open issue', value: 'open', section: 'Issue' },
-    { label: 'Delete', value: 'delete', danger: true },
-  ];
-}
-
-async function onCardMenu(issue: Issue, value: string) {
-  if (value.startsWith('move:')) await move(issue, value.slice(5) as 'todo' | 'doing' | 'done');
-  else if (value === 'backlog') await moveToBacklog([issue.id]);
-  else if (value === 'open') ctx.openIssue(issue.id);
-  else if (value === 'delete') await deleteIssue(issue);
-}
-
 const boardMenu: DropItem[] = [
+  { label: 'Edit sprint', value: 'edit' },
   { label: 'Go to backlog', value: 'backlog' }, { label: 'View sprint reports', value: 'reports' },
-  { label: 'Board settings', value: 'settings', disabled: true },
+  { label: 'Search work items', value: 'issues' },
+  { label: 'Board settings', value: 'settings', disabled: true, hint: 'Columns follow the engine\'s three states' },
 ];
 function onBoardMenu(value: string) {
-  if (value === 'backlog' || value === 'reports') ctx.go(value);
+  if (value === 'edit') editing.value = true;
+  else if (value === 'backlog' || value === 'reports' || value === 'issues') ctx.go(value);
 }
 </script>
 
@@ -266,6 +269,14 @@ function onBoardMenu(value: string) {
   font-size: 12px; font-weight: 700; text-transform: uppercase; line-height: 16px;
 }
 .bp__card-foot { display: flex; align-items: center; gap: 6px; }
+.bp__card.is-flagged { background: #FFF7D6; }
+.bp__card.is-flagged:hover { background: #FFF0B3; }
+.bp__flag { color: #C9372C; }
+.bp__subs { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; color: var(--j-text-subtle); }
+.bp__muted { color: var(--j-text-subtle); }
+.bp__labels { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.bp__labels .bp__label { margin-bottom: 0; }
+.bp__tag { padding: 0 4px; border-radius: 3px; background: var(--j-neutral); color: var(--j-text); font-size: 12px; line-height: 16px; }
 .bp__spacer { flex: 1; }
 .bp__carried { font-size: 12px; color: #A54800; font-weight: 600; }
 .bp__none { padding: 12px 4px; font-size: 12px; color: var(--j-text-subtlest); text-align: center; }

@@ -1,5 +1,5 @@
 <template>
-  <div class="af-app" dir="ltr">
+  <div ref="appEl" class="af-app" dir="ltr">
     <!-- ===== The 2.9 navbar: pinwheel, DAGs / Cluster Activity / Datasets / Security / Browse / Admin / Docs, clock, user ===== -->
     <header class="af-nav">
       <a href="#" class="af-nav__brand" @click.prevent="go({ page: 'home' })">
@@ -74,8 +74,12 @@
       <ConnectionsPage v-else-if="route.page === 'connections'" />
       <VariablesPage v-else-if="route.page === 'variables'" />
       <PoolsPage v-else-if="route.page === 'pools'" />
+      <JobsPage v-else-if="route.page === 'jobs'" />
       <InfoPages v-else />
     </main>
+
+    <AfContextMenu v-if="ctxMenu" :key="ctxMenu.key" :x="ctxMenu.x" :y="ctxMenu.y" :title="ctxMenu.title" :items="ctxMenu.items"
+                   @close="ctxMenu = null" />
 
     <AfModal v-if="pending" :title="pending.title" :ok-text="pending.yes || 'OK'" :danger="pending.danger"
              @close="answer(false)" @ok="answer(true)">
@@ -106,6 +110,7 @@ import type { LabTool } from '@/utils/labCatalogue';
 import { pick, rows } from '@/utils/portalKit';
 import AfIcon from './AfIcon.vue';
 import AfModal from './AfModal.vue';
+import AfContextMenu from './AfContextMenu.vue';
 import DagsPage from './DagsPage.vue';
 import DagPage from './DagPage.vue';
 import ClusterActivity from './ClusterActivity.vue';
@@ -116,8 +121,9 @@ import ConnectionsPage from './ConnectionsPage.vue';
 import VariablesPage from './VariablesPage.vue';
 import PoolsPage from './PoolsPage.vue';
 import InfoPages from './InfoPages.vue';
-import { AF, type AfContext, type ConfirmRequest, type RunOptions } from './afContext';
-import { CMD, fmtDate, routeUrl, type AfConnection, type AfDag, type AfPool, type AfRoute, type AfRun, type AfTi, type AfVariable, type AfXcom } from './airflow';
+import JobsPage from './JobsPage.vue';
+import { AF, type AfContext, type ConfirmRequest, type CtxItem, type RunOptions } from './afContext';
+import { CMD, fmtDate, routeUrl, type AfConnection, type AfDag, type AfPool, type AfRoute, type AfRun, type AfTi, type AfVariable, type AfXcom, type AfJob } from './airflow';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
 const emit = defineEmits<{ (event: 'location', url: string): void; (event: 'refresh'): void }>();
@@ -144,6 +150,7 @@ const variables = computed(() => rows<AfVariable>(af.value, 'variables'));
 const pools = computed(() => rows<AfPool>(af.value, 'pools'));
 const xcom = computed(() => rows<AfXcom>(af.value, 'xcom'));
 const slaMisses = computed(() => rows(af.value, 'sla_misses'));
+const jobs = computed(() => rows<AfJob>(af.value, 'jobs'));
 const scheduler = computed<Record<string, any>>(() => pick(af.value, 'scheduler', {}));
 // The banner is for a scheduler that is installed and has stopped - not for a
 // lab whose platform has not been started by its first command yet.
@@ -170,6 +177,7 @@ const MENUS: { label: string; key: string; items: MenuItem[] }[] = [
     { label: 'DAG Runs', route: { page: 'dagruns' } },
     { label: 'Task Instances', route: { page: 'tis' } },
     { label: 'SLA Misses', route: { page: 'sla' } },
+    { label: 'Jobs', route: { page: 'jobs' } },
     { label: 'Audit Logs', route: { page: 'audit' } },
   ] },
   { label: 'Admin', key: 'admin', items: [
@@ -192,7 +200,7 @@ const section = computed(() => {
   if (p === 'home' || p === 'dag') return 'dags';
   if (p === 'cluster' || p === 'datasets') return p;
   if (p === 'security') return 'security';
-  if (p === 'dagruns' || p === 'tis' || p === 'sla' || p === 'audit') return 'browse';
+  if (p === 'dagruns' || p === 'tis' || p === 'sla' || p === 'audit' || p === 'jobs') return 'browse';
   return 'admin';
 });
 
@@ -232,6 +240,18 @@ function answer(value: boolean) {
   resolver = null;
 }
 
+const appEl = ref<HTMLElement | null>(null);
+const ctxMenu = ref<{ key: number; x: number; y: number; title: string; items: CtxItem[] } | null>(null);
+let ctxSeq = 0;
+function openMenu(event: MouseEvent, title: string, items: CtxItem[]) {
+  event.preventDefault();
+  event.stopPropagation();
+  const box = appEl.value?.getBoundingClientRect();
+  const x = event.clientX - (box?.left || 0);
+  const y = event.clientY - (box?.top || 0);
+  ctxMenu.value = { key: ++ctxSeq, x, y, title, items };
+}
+
 function notify(type: 'success' | 'error' | 'info' | 'warning', title: string, detail = '') {
   props.api.notify(type, title, detail);
 }
@@ -259,6 +279,7 @@ const ctx: AfContext = {
   pools,
   xcom,
   slaMisses,
+  jobs,
   scheduler,
   airflowView: af,
   clock,
@@ -268,6 +289,7 @@ const ctx: AfContext = {
   go,
   run,
   confirm,
+  openMenu,
   notify,
   refresh: () => emit('refresh'),
   dag: id => dags.value.find(d => d.dag_id === id),

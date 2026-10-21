@@ -199,6 +199,9 @@
                 <tr><td>Max. Number of Execution Retries</td><td>Restart with fixed delay (1 s). #3 restart attempts.</td></tr>
                 <tr><td>Job Parallelism</td><td>{{ job.parallelism }}</td></tr>
                 <tr><td>Object Reuse Mode</td><td>false</td></tr>
+                <tr v-if="(job as any).jar"><td>Jar</td><td class="fk-mono">{{ (job as any).jar }}</td></tr>
+                <tr v-if="(job as any).entry_class"><td>Entry Class</td><td class="fk-mono">{{ (job as any).entry_class }}</td></tr>
+                <tr v-if="(job as any).jar"><td>Program Arguments</td><td class="fk-mono">{{ ((job as any).program_args || []).join(' ') || '(none)' }}</td></tr>
                 <tr v-if="job.sink"><td>Sink</td><td>{{ job.sink }}<span v-if="job.sink_connector"> ({{ job.sink_connector }}{{ job.transactional ? ', transactional' : '' }})</span></td></tr>
                 <tr v-if="job.transactional"><td>Pending (uncommitted) records</td><td>{{ fmtCount(job.pending) }}</td></tr>
               </tbody>

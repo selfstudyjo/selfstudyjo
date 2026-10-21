@@ -4,12 +4,13 @@
     <aside class="dbx__tree">
       <div class="dbx__treehead">
         <div class="sf-search"><SfIcon name="search" /><input v-model="filter" class="sf-input" placeholder="Search" aria-label="Search databases" /></div>
-        <button type="button" class="sf-btn sf-btn--ghost sf-btn--icon sf-btn--sm" title="Refresh" aria-label="Refresh" @click="sf.notify('info', 'Objects refreshed')"><SfIcon name="refresh" /></button>
+        <button type="button" class="sf-btn sf-btn--ghost sf-btn--icon sf-btn--sm" title="Refresh" aria-label="Refresh" @click="refreshObjects"><SfIcon name="refresh" /></button>
       </div>
       <label class="sf-check dbx__dropped"><input v-model="showDropped" type="checkbox" /> Show dropped objects</label>
       <div class="dbx__nodes">
         <template v-for="db in treeDbs" :key="db.name">
-          <div class="dbx__node" :class="{ 'is-active': isSel(db.name), 'is-dropped': db.dropped }">
+          <div class="dbx__node" :class="{ 'is-active': isSel(db.name), 'is-dropped': db.dropped }"
+               @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'database', name: db.name, dropped: db.dropped }), db.name)">
             <button type="button" class="dbx__twist" :aria-label="(open[db.name] ? 'Collapse ' : 'Expand ') + db.name" @click="open[db.name] = !open[db.name]">
               <SfIcon :name="open[db.name] ? 'chevron-down' : 'chevron-right'" />
             </button>
@@ -17,7 +18,8 @@
           </div>
           <template v-if="open[db.name]">
             <template v-for="sc in schemasOf(db.name)" :key="db.name + '.' + sc.name">
-              <div class="dbx__node dbx__node--2" :class="{ 'is-active': isSel(db.name, sc.name), 'is-dropped': sc.dropped }">
+              <div class="dbx__node dbx__node--2" :class="{ 'is-active': isSel(db.name, sc.name), 'is-dropped': sc.dropped }"
+                   @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'schema', db: db.name, name: sc.name, dropped: sc.dropped }), db.name + '.' + sc.name)">
                 <button type="button" class="dbx__twist" :aria-label="'Expand ' + sc.name" @click="open[db.name + '.' + sc.name] = !open[db.name + '.' + sc.name]">
                   <SfIcon :name="open[db.name + '.' + sc.name] ? 'chevron-down' : 'chevron-right'" />
                 </button>
@@ -35,7 +37,8 @@
                   </div>
                   <template v-if="open[db.name + '.' + sc.name + ':' + group.kind]">
                     <div v-for="item in group.items" :key="item.fqn" class="dbx__node dbx__node--4"
-                         :class="{ 'is-active': route.object === item.fqn, 'is-dropped': item.dropped }">
+                         :class="{ 'is-active': route.object === item.fqn, 'is-dropped': item.dropped }"
+                         @contextmenu="sf.menu($event, objectMenu(sf, itemTarget(group.kind, item)), item.fqn)">
                       <button type="button" class="dbx__label" @click="select({ db: db.name, schema: sc.name, kind: group.kind, object: item.fqn })">
                         <SfIcon :name="group.icon" /><span>{{ item.name }}</span>
                       </button>
@@ -97,7 +100,8 @@
             <thead><tr><th>Name</th><th>Type</th><th class="sf-num">Rows</th><th class="sf-num">Bytes</th><th>Owner</th></tr></thead>
             <tbody>
               <tr v-for="item in currentGroup?.items || []" :key="item.fqn" class="is-clickable"
-                  @click="select({ db: route.db, schema: route.schema, kind: currentGroup!.kind, object: item.fqn })">
+                  @click="select({ db: route.db, schema: route.schema, kind: currentGroup!.kind, object: item.fqn })"
+                  @contextmenu="sf.menu($event, objectMenu(sf, itemTarget(currentGroup!.kind, item)), item.fqn)">
                 <td><span class="sf-cell-name"><SfIcon :name="currentGroup!.icon" /><span>{{ item.name }}</span>
                   <span v-if="item.dropped" class="sf-badge sf-badge--bad">Dropped</span></span></td>
                 <td class="sf-muted">{{ item.type }}</td>
@@ -147,7 +151,8 @@
           <table class="sf-table">
             <thead><tr><th>Name</th><th>Owner</th><th class="sf-num">Objects</th><th>Managed access</th></tr></thead>
             <tbody>
-              <tr v-for="sc in schemasOf(route.db)" :key="sc.name" class="is-clickable" @click="select({ db: route.db, schema: sc.name })">
+              <tr v-for="sc in schemasOf(route.db)" :key="sc.name" class="is-clickable" @click="select({ db: route.db, schema: sc.name })"
+                  @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'schema', db: route.db!, name: sc.name, dropped: sc.dropped }), route.db + '.' + sc.name)">
                 <td><span class="sf-cell-name"><SfIcon name="schema" />{{ sc.name }}<span v-if="sc.dropped" class="sf-badge sf-badge--bad">Dropped</span></span></td>
                 <td class="sf-muted">{{ sc.owner || '' }}</td>
                 <td class="sf-num">{{ groupsOf(route.db, sc.name).reduce((n, g) => n + g.items.length, 0) }}</td>
@@ -172,7 +177,8 @@
           <table class="sf-table">
             <thead><tr><th>Name</th><th>Source</th><th>Owner</th><th>Retention</th><th>Comment</th><th class="sf-actions"></th></tr></thead>
             <tbody>
-              <tr v-for="db in allDbs" :key="db.name" class="is-clickable" @click="select({ db: db.name })">
+              <tr v-for="db in allDbs" :key="db.name" class="is-clickable" @click="select({ db: db.name })"
+                  @contextmenu="sf.menu($event, objectMenu(sf, { kind: 'database', name: db.name, dropped: db.dropped }), db.name)">
                 <td><span class="sf-cell-name"><SfIcon name="database" />{{ db.name }}<span v-if="db.dropped" class="sf-badge sf-badge--bad">Dropped</span></span></td>
                 <td class="sf-muted">{{ db.clone_of ? 'Clone of ' + db.clone_of : db.transient ? 'Transient' : 'Local' }}</td>
                 <td class="sf-muted">{{ db.owner || '' }}</td>
@@ -212,6 +218,7 @@ import GrantsTable from './GrantsTable.vue';
 import PromptDialog, { type PromptField } from './PromptDialog.vue';
 import { useSf, type CreateKind } from './sfContext';
 import { fmtBytes, fmtMinute, fmtNum, ident, inSchema, leaf, list, str } from './snowflake';
+import { objectMenu, type SfTarget } from './sfActions';
 
 const sf = useSf();
 const view = sf.view;
@@ -275,6 +282,16 @@ const schema = computed(() => schemasOf(route.value.db).find(s => s.name.toUpper
 const schemaTab = computed(() => route.value.kind || 'tables');
 const currentGroup = computed(() => groupsOf(route.value.db, route.value.schema).find(g => g.kind === schemaTab.value));
 
+const GROUP_TARGET: Record<string, 'table' | 'view' | 'stage' | 'pipe' | 'stream' | 'task' | 'file-format' | 'policy'> = {
+  tables: 'table', views: 'view', stages: 'stage', pipes: 'pipe', streams: 'stream', tasks: 'task', 'file-formats': 'file-format', policies: 'policy',
+};
+/** Which context menu an explorer item gets (right-click). */
+function itemTarget(groupKind: string, item: { fqn: string; dropped?: boolean }): SfTarget {
+  const kind = GROUP_TARGET[groupKind] || 'table';
+  if (kind === 'table' || kind === 'view') return { kind, fqn: item.fqn, dropped: item.dropped };
+  return { kind, fqn: item.fqn };
+}
+
 function select(target: { db?: string; schema?: string; kind?: string; object?: string }) {
   if (target.db) open[target.db] = true;
   if (target.db && target.schema) open[target.db + '.' + target.schema] = true;
@@ -288,6 +305,10 @@ function isSel(db: string, schema?: string) {
   return !r.object && !r.kind && r.db === db && (schema ? r.schema === schema : !r.schema);
 }
 // Open the session's current database in the tree on arrival.
+async function refreshObjects() {
+  const r = await sf.sql('SHOW DATABASES', { quiet: true, unlogged: true });
+  sf.notify(r.ok ? 'success' : 'error', r.ok ? 'Objects refreshed' : 'Refresh failed');
+}
 const curDb = sf.current.value.database;
 if (curDb) { open[curDb] = true; if (sf.current.value.schema) open[curDb + '.' + sf.current.value.schema] = true; }
 watch(() => route.value.db, () => { dbTab.value = 'schemas'; });

@@ -21,7 +21,8 @@
         </defs>
         <path v-for="e in edges" :key="e.key" :d="e.d" fill="none" :stroke="e.hot ? '#017cee' : '#b0b0b0'" :stroke-width="e.hot ? 2 : 1.3" marker-end="url(#af-arrow)" />
         <g v-for="n in nodes" :key="n.task.task_id" class="af-graph__node" :transform="`translate(${n.x},${n.y})`" role="button" tabindex="0"
-           :aria-label="`${n.task.task_id}: ${stateLabel(n.state)}`" @click="$emit('select-task', n.task.task_id)" @keydown.enter="$emit('select-task', n.task.task_id)">
+           :aria-label="`${n.task.task_id}: ${stateLabel(n.state)}`" @click="$emit('select-task', n.task.task_id)" @keydown.enter="$emit('select-task', n.task.task_id)"
+           @contextmenu="af.openMenu($event, n.task.task_id, tiMenu(af, dag, run, n.task.task_id))">
           <title>{{ n.task.task_id }} ({{ n.task.operator }}) - {{ stateLabel(n.state) }}</title>
           <rect :width="NODE_W" :height="NODE_H" rx="6" fill="#fff" :stroke="n.task.task_id === taskId ? '#017cee' : n.state === 'none' ? '#c4c4c4' : stateColor(n.state)"
                 :stroke-width="n.task.task_id === taskId ? 4 : 3" />
@@ -44,6 +45,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useAf } from './afContext';
+import { tiMenu } from './tiActions';
 import { layers, normState, operatorColor, stateColor, stateLabel, type AfDag, type AfRun } from './airflow';
 
 const props = defineProps<{ dag: AfDag; run?: AfRun; taskId: string }>();

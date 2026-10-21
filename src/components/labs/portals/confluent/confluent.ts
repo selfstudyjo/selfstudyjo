@@ -15,6 +15,8 @@ export const CONNECT_URL = 'http://connect.shopflow.internal:8083';
 export const REGISTRY_URL = 'http://schema-registry.shopflow.internal:8081';
 export const CLUSTER_NAME = 'controlcenter.cluster';
 export const CONNECT_CLUSTER = 'connect-default';
+export const KSQL_URL = 'http://ksqldb-server.shopflow.internal:8088';
+export const KSQL_CLUSTER = 'ksqldb1';
 
 export interface CcBroker { id: number; host: string; port?: number; status: string; controller: boolean }
 export interface CcPartition { partition: number; leader: number; replicas: number[]; isr: number[]; end_offset: number; start_offset?: number }
@@ -35,20 +37,34 @@ export interface CcConnector {
     topics: string[]; config: Record<string, string>; records?: number; errors?: number; dlq_records?: number;
 }
 
+export interface CcKsqlColumn { name: string; type: string; key: boolean }
+export interface CcKsqlSource {
+    name: string; type: 'STREAM' | 'TABLE'; topic: string; key_format: string; value_format: string;
+    windowed: boolean; query: string | null; sql: string; columns: CcKsqlColumn[];
+}
+export interface CcKsqlQuery {
+    id: string; type: string; state: string; source: string; sink: string; sink_topic: string; sql: string;
+    processed: number; emitted: number; error: string | null;
+}
+export interface CcKsql { server?: string; version?: string; streams: CcKsqlSource[]; queries: CcKsqlQuery[] }
+
+export type KsqlTab = 'editor' | 'flow' | 'streams' | 'tables' | 'queries';
+
 export type CcRoute =
     | { page: 'home' }
     | { page: 'overview' }
     | { page: 'brokers' }
     | { page: 'topics' }
     | { page: 'new-topic' }
-    | { page: 'topic'; name: string; tab: 'overview' | 'messages' | 'schema' | 'configuration' }
+    | { page: 'topic'; name: string; tab: 'overview' | 'messages' | 'schema' | 'configuration'; produce?: boolean }
     | { page: 'consumers' }
     | { page: 'group'; group: string }
     | { page: 'connect' }
     | { page: 'add-connector' }
     | { page: 'connector'; name: string; tab: 'overview' | 'settings' }
     | { page: 'registry' }
-    | { page: 'subject'; subject: string };
+    | { page: 'subject'; subject: string }
+    | { page: 'ksql'; tab: KsqlTab; sql?: string };
 
 const BASE = 'http://control-center.shopflow.internal:9021';
 const CLUSTER_ID = 'Kx3pQ7y2TOm4bWv0sYw1Ag';
@@ -73,6 +89,7 @@ export function routeUrl(route: CcRoute, clusterId = CLUSTER_ID): string {
         case 'connector': return `${c}/connect/${CONNECT_CLUSTER}/connectors/${e(route.name)}${route.tab === 'settings' ? '/settings' : ''}`;
         case 'registry': return `${c}/schema-registry/subjects`;
         case 'subject': return `${c}/schema-registry/subjects/${e(route.subject)}`;
+        case 'ksql': return `${c}/ksql/${KSQL_CLUSTER}/${route.tab === 'editor' ? 'editor' : route.tab}`;
     }
     return c;
 }
@@ -134,6 +151,62 @@ export function produceCommand(topic: string, key: string, value: string): strin
     const sep = keySeparator(key);
     return withStdin(cli(['kafka-console-producer', '--bootstrap-server', BOOTSTRAP, '--topic', topic,
         '--property', 'parse.key=true', '--property', `key.separator=${sep}`]), [key + sep + value]);
+}
+
+/** One character from `choices` that none of `texts` contains. */
+function freeChar(texts: string[], choices: string[]): string {
+    for (const ch of choices) if (!texts.some(t => t.includes(ch))) return ch;
+    return '\u001f';
+}
+
+/**
+ * A producer line with record headers (KIP-798, Kafka 3.2+): the headers come
+ * first, then the key, then the value - each separator chosen so it occurs in
+ * nothing it separates.
+ */
+export function produceWithHeaders(topic: string, key: string, value: string, headers: [string, string][]): string {
+    const pairs = headers.filter(([k]) => k.trim() !== '');
+    if (!pairs.length) return produceCommand(topic, key, value);
+    const texts = pairs.flatMap(([k, v]) => [k, v]);
+    const hsep = freeChar(texts, [',', ';', '&']);
+    const hkv = freeChar(pairs.map(([k]) => k), [':', '=']);
+    const head = pairs.map(([k, v]) => k + hkv + v).join(hsep);
+    const delim = freeChar([head, key], ['|', '#', '~', '^', '!']);
+    const words: PortalValue[] = ['kafka-console-producer', '--bootstrap-server', BOOTSTRAP, '--topic', topic,
+        '--property', 'parse.headers=true', '--property', `headers.delimiter=${delim}`,
+        '--property', `headers.separator=${hsep}`, '--property', `headers.key.separator=${hkv}`];
+    let line = head + delim;
+    if (key !== '') {
+        const sep = freeChar([key], [':', '|', '#', '~', '^'].filter(ch => ch !== delim));
+        words.push('--property', 'parse.key=true', '--property', `key.separator=${sep}`);
+        line += key + sep;
+    }
+    return withStdin(cli(words), [line + value]);
+}
+
+/** Statements for the ksqlDB server, as `ksql <server> --execute '...'`. */
+export function ksqlCommand(statements: string, offsetReset: 'earliest' | 'latest' | '' = ''): string {
+    let text = statements.trim();
+    if (text && !text.endsWith(';')) text += ';';
+    if (offsetReset) text = `SET 'auto.offset.reset' = '${offsetReset}'; ` + text;
+    return cli(['ksql', KSQL_URL, '--execute', text]);
+}
+
+/** A ksqlDB identifier: bare when it can be, back-quoted otherwise. */
+export function ksqlIdent(name: string): string {
+    return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : '`' + name.replace(/`/g, '') + '`';
+}
+
+/** A ksqlDB string literal. */
+export function ksqlString(text: string): string {
+    return "'" + text.replace(/'/g, "''") + "'";
+}
+
+export interface KsqlGrid { columns: string[]; rows: unknown[][]; total?: number; title?: string }
+
+export function gridsOfResult(data: unknown): KsqlGrid[] {
+    const grids = (data as any)?.grids;
+    return Array.isArray(grids) ? grids.filter(g => Array.isArray(g?.columns)) : [];
 }
 
 /** A value as one line: JSON is compacted, anything else must already be one line. */

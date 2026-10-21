@@ -38,6 +38,10 @@
                 :class="{ 'j-btn--primary': sprintItems.length }" :disabled="!sprintItems.length || busy"
                 @click="start">Start sprint</button>
         <button v-else type="button" class="j-btn" :disabled="busy" @click="completeSprint">Complete sprint</button>
+        <JiraDropdown :items="sprintMenu" label="Sprint actions" align="right" trigger-class="j-btn j-btn--subtle j-btn--icon"
+                      @select="onSprintMenu">
+          <template #trigger><JiraIcon name="more" /></template>
+        </JiraDropdown>
       </header>
       <div v-if="openSprint" class="bl__capacity">
         <div class="bl__cap-bar" :title="`${sprint.committedPoints} of ${sprint.capacity} points`">
@@ -53,7 +57,8 @@
       </div>
       <ul v-if="openSprint" class="bl__list">
         <BacklogRow v-for="issue in sprintItems" :key="issue.id" :issue="issue" in-sprint
-                    @dragstart="dragging = issue.id" @dragend="dragging = ''" />
+                    @dragstart="dragging = issue.id" @dragend="dragging = ''"
+                    @rank-drop="key => rankDrop(key, 'sprint')" />
         <li v-if="!sprintItems.length" class="bl__drop">Plan a sprint by dragging issues here from the backlog,
           or with each row's ••• menu.</li>
       </ul>
@@ -75,15 +80,19 @@
           <span class="j-points j-points--doing">{{ backlogItems.filter(i => i.status === 'doing').reduce((a, i) => a + i.points, 0) }}</span>
           <span class="j-points j-points--done">0</span>
         </span>
-        <button type="button" class="j-btn" @click="ctx.openCreate()">Create issue</button>
+        <button type="button" class="j-btn" disabled
+                title="The next sprint is created by the simulation when this one completes (mgr advance)">Create sprint</button>
       </header>
       <ul v-if="openBacklog" class="bl__list">
         <BacklogRow v-for="issue in backlogItems" :key="issue.id" :issue="issue"
-                    @dragstart="dragging = issue.id" @dragend="dragging = ''" />
+                    @dragstart="dragging = issue.id" @dragend="dragging = ''"
+                    @rank-drop="key => rankDrop(key, 'backlog')" />
         <li v-if="!backlogItems.length" class="bl__drop">Your backlog is empty.</li>
       </ul>
       <InlineCreate v-if="openBacklog" :to-sprint="false" />
     </section>
+
+    <SprintEditDialog v-if="editingSprint" @close="editingSprint = false" />
 
     <section v-if="showDone && doneItems.length" class="bl__section">
       <header class="bl__head"><h2 class="bl__title bl__title--pad">Done</h2>
@@ -100,10 +109,50 @@ import JiraIcon from './JiraIcon.vue';
 import JiraDropdown, { type DropItem } from './JiraDropdown.vue';
 import BacklogRow from './BacklogRow.vue';
 import InlineCreate from './InlineCreate.vue';
+import SprintEditDialog from './SprintEditDialog.vue';
 import { sprintName } from './jiraKit';
 import { useJira } from './useJira';
 
-const { ctx, all, sprint, addToSprint, moveToBacklog, startSprint, completeSprint } = useJira();
+const { ctx, all, sprint, addToSprint, moveToBacklog, startSprint, completeSprint, rank } = useJira();
+const editingSprint = ref(false);
+
+const sprintMenu = computed<DropItem[]>(() => [
+  { label: 'Edit sprint', value: 'edit' },
+  sprint.value.status === 'active' ? { label: 'Complete sprint', value: 'complete' }
+    : { label: 'Start sprint', value: 'start', disabled: !sprint.value.committed.length, hint: 'Plan some work into it first' },
+  { label: 'Move all to backlog', value: 'empty', disabled: !sprint.value.committed.length },
+  { label: 'Delete sprint', value: 'delete', disabled: true, hint: 'Sprints are part of the simulation history' },
+]);
+
+async function onSprintMenu(value: string) {
+  if (value === 'edit') editingSprint.value = true;
+  else if (value === 'start') await start();
+  else if (value === 'complete') await completeSprint();
+  else if (value === 'empty') {
+    const yes = await ctx.confirm({ title: 'Move all issues to the backlog?',
+      body: `All ${sprint.value.committed.length} issues in ${sprintName(sprint.value.n)} will move back to the backlog.`,
+      confirm: 'Move to backlog' });
+    if (yes) await moveToBacklog([...sprint.value.committed]);
+  }
+}
+
+/** Drop on a row: move into that container if needed, then rank before the row. */
+async function rankDrop(before: string, which: 'sprint' | 'backlog') {
+  const key = dragging.value;
+  dragging.value = '';
+  target.value = '';
+  if (!key || before === key) return;
+  if (!(await dropInto(key, which))) return;
+  const issue = all.value.find(row => row.id === key);
+  if (issue) await rank(issue, { before });
+}
+
+async function dropInto(key: string, which: 'sprint' | 'backlog') {
+  const inSprint = sprint.value.committed.includes(key);
+  if (which === 'sprint' && !inSprint) return addToSprint([key]);
+  if (which === 'backlog' && inSprint) return moveToBacklog([key]);
+  return true;
+}
 const busy = ctx.busy;
 
 const text = ref('');
@@ -151,9 +200,7 @@ async function dropOn(which: 'sprint' | 'backlog') {
   dragging.value = '';
   target.value = '';
   if (!key) return;
-  const inSprint = sprint.value.committed.includes(key);
-  if (which === 'sprint' && !inSprint) await addToSprint([key]);
-  if (which === 'backlog' && inSprint) await moveToBacklog([key]);
+  await dropInto(key, which);
 }
 
 async function start() {

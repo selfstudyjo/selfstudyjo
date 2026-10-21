@@ -56,8 +56,11 @@
   <GdDialog v-else-if="d.type === 'deleteBranch'" title="Delete branch" type="warning" @close="close">
     <p>Are you sure you want to delete the branch <b>{{ d.branch }}</b>?</p>
     <p class="gd-dim">This action cannot be undone.</p>
+    <p v-if="d.current" class="gd-help">You are on this branch: GitHub Desktop will switch to <b>{{ d.fallback }}</b> first.</p>
+    <label v-if="d.remoteBranch" class="gd-checkrow"><input v-model="alsoRemote" type="checkbox" />
+      Yes, delete this branch on the remote (<b>{{ d.remoteBranch }}</b>)</label>
     <template #footer>
-      <button type="button" class="gd-btn gd-btn--danger" :disabled="busy" @click="go([cmd.deleteBranch(d.branch)], `Deleted branch ${d.branch}`)">Delete</button>
+      <button type="button" class="gd-btn gd-btn--danger" :disabled="busy" @click="deleteBranch">Delete</button>
       <button type="button" class="gd-btn" @click="close">Cancel</button>
     </template>
   </GdDialog>
@@ -161,12 +164,35 @@
   <!-- Publish -->
   <GdDialog v-else-if="d.type === 'publish'" title="Publish repository" @close="close">
     <div class="gd-tabs2"><span class="is-active">GitHub.com</span><span>GitHub Enterprise</span></div>
-    <div class="gd-field"><label>Name</label><input class="gd-input" :value="v.repository.name" /></div>
-    <div class="gd-field"><label>Description</label><input v-model="text" class="gd-input" /></div>
-    <label class="gd-checkrow"><input type="checkbox" checked /> Keep this code private</label>
-    <p class="gd-dim">This lab has no network and no remote: publishing runs <code>git push</code>, and git will tell you why there is nowhere to push to.</p>
+    <form @submit.prevent="publish">
+      <div class="gd-field"><label for="gd-pub-name">Name</label>
+        <input id="gd-pub-name" ref="focusEl" v-model="pubName" class="gd-input" autocomplete="off" /></div>
+      <p v-if="pubName && pubClean !== pubName" class="gd-warn"><GdIcon name="alert" :size="14" /> Will be published as <b>{{ pubClean }}</b>.</p>
+      <div class="gd-field"><label for="gd-pub-owner">Owner</label>
+        <input id="gd-pub-owner" v-model="pubOwner" class="gd-input" autocomplete="off" /></div>
+      <p class="gd-help">Remote URL: <code>{{ pubUrl }}</code></p>
+      <p class="gd-dim">Publishing runs <code>git remote add origin</code> and <code>git push -u origin {{ v.branch }}</code>. The GitHub you publish to is simulated inside this lab - nothing leaves your browser.</p>
+    </form>
     <template #footer>
-      <button type="button" class="gd-btn gd-btn--primary" :disabled="busy" @click="go([cmd.push()], 'Published repository')">Publish repository</button>
+      <button type="button" class="gd-btn gd-btn--primary" :disabled="busy || !pubClean || Boolean(v.detached)" @click="publish">Publish repository</button>
+      <button type="button" class="gd-btn" @click="close">Cancel</button>
+    </template>
+  </GdDialog>
+
+  <!-- Push rejected: the remote has commits this branch does not -->
+  <GdDialog v-else-if="d.type === 'pushRejected'" title="Newer commits on remote" type="warning" @close="close">
+    <p>Desktop is unable to push commits to this branch because there are commits on the remote that are not present on your local branch. Fetch these new commits before pushing in order to reconcile them with your local commits.</p>
+    <template #footer>
+      <button type="button" class="gd-btn gd-btn--primary" :disabled="busy" @click="go([cmd.pull(d.remote)], `Pulled ${d.remote} into ${v.branch}`)">Pull</button>
+      <button type="button" class="gd-btn" @click="close">Cancel</button>
+    </template>
+  </GdDialog>
+
+  <!-- Force push -->
+  <GdDialog v-else-if="d.type === 'forcePush'" title="Are you sure you want to force push?" type="warning" @close="close">
+    <p>A force push will rewrite history on <b>{{ v.tracking?.upstream }}</b>. Any collaborators working on this branch will need to reset their own local branch to match the history of the remote.</p>
+    <template #footer>
+      <button type="button" class="gd-btn gd-btn--danger" :disabled="busy" @click="go([cmd.forcePush(d.remote)], `Force pushed ${v.branch} to ${d.remote}`)">I'm sure</button>
       <button type="button" class="gd-btn" @click="close">Cancel</button>
     </template>
   </GdDialog>
@@ -199,7 +225,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import GdDialog from './GdDialog.vue';
 import GdIcon from './GdIcon.vue';
-import { branchNameError, cmd, sanitizeBranch, type GdView } from './gd';
+import { branchNameError, cmd, publishUrl, sanitizeBranch, type GdView } from './gd';
 
 const props = defineProps<{
   d: Record<string, any>;
@@ -213,6 +239,11 @@ const text = ref(String(props.d.initial || ''));
 const base = ref('');
 const choice = ref<'leave' | 'bring'>('leave');
 const focusEl = ref<HTMLInputElement | null>(null);
+const alsoRemote = ref(false);
+const pubName = ref(props.v.repository.name || 'workspace');
+const pubOwner = ref(String(props.v.user.email || '').split('@')[0] || 'student');
+const pubClean = computed(() => pubName.value.trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^[-.]+|-+$/g, ''));
+const pubUrl = computed(() => publishUrl(pubOwner.value, pubClean.value || 'repository'));
 
 onMounted(() => nextTick(() => focusEl.value?.focus()));
 
@@ -273,6 +304,25 @@ function switchBranch() {
   go(commands, `Switched to branch ${props.d.target}`);
 }
 
+function deleteBranch() {
+  const commands: string[] = [];
+  if (props.d.current) commands.push(cmd.checkout(props.d.fallback));
+  commands.push(cmd.deleteBranch(props.d.branch));
+  if (props.d.remoteBranch && alsoRemote.value) {
+    const [remote, ...rest] = String(props.d.remoteBranch).split('/');
+    commands.push(cmd.deleteRemoteBranch(remote, rest.join('/')));
+  }
+  go(commands, `Deleted branch ${props.d.branch}`);
+}
+
+function publish() {
+  if (!pubClean.value || props.v.detached) return;
+  const commands: string[] = [];
+  if (!props.v.remotes.some(r => r.name === 'origin')) commands.push(cmd.remoteAdd('origin', pubUrl.value));
+  commands.push(cmd.publishBranch('origin', props.v.branch));
+  go(commands, `Published ${pubClean.value} to GitHub`);
+}
+
 function cherryPick() {
   if (!text.value) return;
   go([cmd.checkout(text.value), cmd.cherryPick(props.d.commit.full)],
@@ -314,6 +364,7 @@ function cherryPick() {
 .gd-tabs2 span { padding: 6px 0; color: var(--gd-text-secondary); }
 .gd-tabs2 .is-active { color: var(--gd-text); font-weight: 600; border-bottom: 2px solid var(--gd-blue); }
 .gd-errmsg { white-space: pre-wrap; margin: 0; }
+.gd-help code { font-family: var(--gd-mono); font-size: 11px; word-break: break-all; }
 .gd-errcmd code, .gd-dim code { font-family: var(--gd-mono); font-size: 11px; }
 p { margin: 0 0 8px; }
 </style>

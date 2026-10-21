@@ -8,7 +8,7 @@
       <div class="az-props">
         <section><h3 class="az-section-title"><AzIcon name="vm" /> Virtual machine</h3>
           <div class="az-kv"><span>Computer name</span><span>{{ res.name }}</span></div>
-          <div class="az-kv"><span>Operating system</span><span>Linux ({{ p.image }})</span></div>
+          <div class="az-kv"><span>Operating system</span><span>{{ String(p.image || '').startsWith('Win') ? 'Windows' : 'Linux' }} ({{ p.image }})</span></div>
           <div class="az-kv"><span>VM generation</span><span>V2</span></div>
           <div class="az-kv"><span>Agent status</span><span>{{ running ? 'Ready' : 'Not Ready' }}</span></div>
           <div class="az-kv"><span>Admin username</span><span>{{ p.admin }}</span></div>
@@ -26,22 +26,16 @@
           <div class="az-kv"><span>OS disk</span><span>{{ res.name }}_OsDisk_1</span></div>
           <div class="az-kv"><span>Size</span><span>{{ p.os_disk_gb || 30 }} GiB</span></div>
           <div class="az-kv"><span>Encryption at host</span><span>Disabled</span></div></section>
+        <section><h3 class="az-section-title"><AzIcon name="monitor" /> Monitoring</h3>
+          <div class="az-kv"><span>Boot diagnostics</span><span><button type="button" class="az-link" @click="$emit('tab', 'bootdiag')">{{ p.boot_diagnostics ? 'Enabled' : 'Disabled' }}</button></span></div>
+          <div class="az-kv"><span>Installed packages</span><span>{{ (p.shell && p.shell.packages && p.shell.packages.length) ? p.shell.packages.join(', ') : '—' }}</span></div></section>
+        <section><h3 class="az-section-title"><AzIcon name="bastion" /> Connect</h3>
+          <div class="az-kv"><span>Bastion</span><span><button type="button" class="az-link" @click="$emit('tab', 'bastion')">{{ bastionName || 'Not configured' }}</button></span></div>
+          <div class="az-kv"><span>SSH</span><span><button type="button" class="az-link" @click="$emit('tab', 'connect')">Connect</button></span></div></section>
       </div>
     </template>
 
-    <template v-else-if="tab === 'connect'">
-      <h2 class="az-h2">Connect</h2>
-      <div class="az-card">
-        <h3>Native SSH</h3>
-        <p class="az-muted">Connect from your local machine with an SSH client.</p>
-        <pre class="az-code">ssh {{ p.auth === 'password' ? '' : '-i ~/.ssh/id_rsa ' }}{{ p.admin }}@{{ p.public_ip || p.private_ip }}</pre>
-        <div v-if="!p.public_ip" class="az-banner is-warning"><AzIcon name="warning" />
-          <span>This VM has no public IP address. Connect from inside the virtual network or through Azure Bastion.</span></div>
-        <div v-if="!sshOpen" class="az-banner is-warning"><AzIcon name="warning" />
-          <span>No inbound rule on {{ p.nsg || 'the NSG' }} allows port 22, so SSH from the internet is blocked by DenyAllInBound.
-            <button type="button" class="az-link" @click="$emit('tab', 'networking')">Add an inbound port rule</button></span></div>
-      </div>
-    </template>
+    <AzVmConnect v-else-if="CONNECT_TABS.includes(tab)" :res="res" :tab="tab" @tab="$emit('tab', $event)" />
 
     <template v-else-if="tab === 'networking'">
       <h2 class="az-h2">Network settings</h2>
@@ -105,14 +99,17 @@ import { cli, rows } from '@/utils/portalKit';
 import AzIcon from './AzIcon';
 import AzTable from './AzTable.vue';
 import AzRulePane from './AzRulePane.vue';
+import AzVmConnect from './AzVmConnect.vue';
 import { useAz } from './azure';
 
 const props = defineProps<{ res: Record<string, any>; tab: string }>();
 defineEmits<{ (event: 'tab', tab: string): void }>();
 const az = useAz();
+const CONNECT_TABS = ['connect', 'bastion', 'serial', 'runcommand', 'bootdiag'];
 function any(v: unknown) { return v === '*' || v === undefined || v === '' ? 'Any' : String(v); }
 const p = computed(() => props.res.props || {});
 const running = computed(() => p.value.power === 'VM running');
+const bastionName = computed(() => rows(az.p.value, 'resources').find(r => r.kind === 'bastion' && r.props?.vnet === p.value.vnet)?.name || '');
 const nsg = computed(() => rows(az.p.value, 'nsgs').find(n => n.name === p.value.nsg && n.group === props.res.group) || null);
 const dir = ref<'Inbound' | 'Outbound'>('Inbound');
 const ruleRows = computed(() => {
@@ -127,8 +124,6 @@ const ruleCols = [{ key: 'priority', label: 'Priority' }, { key: 'name', label: 
                   { key: 'protocol', label: 'Protocol' }, { key: 'source', label: 'Source' },
                   { key: 'destination', label: 'Destination' }, { key: 'access', label: 'Action' },
                   { key: 'actions', label: '', sortable: false }];
-const sshOpen = computed(() => (nsg.value?.rules || []).some((r: any) => r.direction === 'Inbound' && r.access === 'Allow'
-  && String(r.destinationPortRange).split(',').some((x: string) => x === '22' || x === '*')));
 const taken = computed(() => (nsg.value?.rules || []).map((r: any) => Number(r.priority)));
 const ruleDir = ref<'Inbound' | 'Outbound' | null>(null);
 const editing = ref<Record<string, any> | null>(null);

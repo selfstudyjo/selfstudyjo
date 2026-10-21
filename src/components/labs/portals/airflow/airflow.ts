@@ -74,6 +74,9 @@ export interface AfConnection { conn_id: string; conn_type: string; host: string
 export interface AfVariable { key: string; value: string; description?: string; }
 export interface AfPool { pool: string; slots: number; running: number; queued: number; description?: string; [key: string]: any; }
 export interface AfXcom { dag_id: string; run_id: string; task_id: string; key: string; value: any; map_index?: number; }
+export interface AfJob { id: number; job_type: string; state: string; hostname: string; executor_class: string | null;
+    start_date: string | null; end_date: string | null; latest_heartbeat: string | null; dag_id: string | null;
+    task_id?: string; run_id?: string; }
 
 /** The tabs of the 2.9 DAG page's right-hand panel (the Grid is always on the left). */
 export type DagTab = 'details' | 'graph' | 'gantt' | 'code' | 'calendar' | 'logs' | 'xcom' | 'rendered';
@@ -88,6 +91,7 @@ export type AfRoute =
     | { page: 'tis' }
     | { page: 'sla' }
     | { page: 'audit' }
+    | { page: 'jobs' }
     | { page: 'variables' }
     | { page: 'config' }
     | { page: 'connections' }
@@ -115,6 +119,7 @@ export function routeUrl(route: AfRoute): string {
         case 'tis': return `${BASE_URL}/taskinstance/list/`;
         case 'sla': return `${BASE_URL}/slamiss/list/`;
         case 'audit': return `${BASE_URL}/log/list/`;
+        case 'jobs': return `${BASE_URL}/job/list/`;
         case 'variables': return `${BASE_URL}/variable/list/`;
         case 'config': return `${BASE_URL}/configuration`;
         case 'connections': return `${BASE_URL}/connection/list/`;
@@ -310,6 +315,9 @@ export function taskRegex(taskId: string): string {
  * The commands. Every one an `airflow ...` line a student could type.
  * ------------------------------------------------------------------------- */
 
+/** The states the UI's "Mark state as" can set on a task instance. */
+export type TiTarget = 'success' | 'failed' | 'skipped' | 'up_for_retry';
+
 export function airflow(words: PortalValue[], flags: Record<string, PortalFlagValue> = {}): string {
     return cli(['airflow', ...words], flags);
 }
@@ -351,7 +359,7 @@ export const CMD = {
      * same action as `airflow tasks set-state`, so the drawer still shows a
      * line the console accepts.
      */
-    markTask: (dagId: string, taskId: string, runId: string, state: 'success' | 'failed',
+    markTask: (dagId: string, taskId: string, runId: string, state: TiTarget,
                opts: { downstream?: boolean; upstream?: boolean; past?: boolean; future?: boolean } = {}) =>
         airflow(['tasks', 'set-state', dagId, taskId, runId, state], {
             '--downstream': Boolean(opts.downstream), '--upstream': Boolean(opts.upstream),
@@ -359,6 +367,16 @@ export const CMD = {
         }),
     markRun: (dagId: string, runId: string, state: 'success' | 'failed' | 'queued') =>
         airflow(['dags', 'set-state', dagId, runId, state]),
+    /** The DAG Runs list's Delete (a lab verb beside `set-state`, no stock CLI equivalent). */
+    deleteRun: (dagId: string, runId: string) => airflow(['dags', 'delete-run', dagId, runId]),
+    exportConnections: (file: string) => airflow(['connections', 'export', file]),
+    importConnections: (file: string, overwrite = false) =>
+        airflow(['connections', 'import', file], { '--overwrite': overwrite }),
+    exportPools: (file: string) => airflow(['pools', 'export', file]),
+    importPools: (file: string) => airflow(['pools', 'import', file]),
+    exportVariables: (file: string) => airflow(['variables', 'export', file]),
+    importVariablesFile: (file: string) => airflow(['variables', 'import', file]),
+    jobsCheck: (jobType: string) => airflow(['jobs', 'check'], { '--job-type': jobType }),
     taskLogs: (dagId: string, taskId: string, runId: string, tryNumber: number) =>
         airflow(['tasks', 'logs', dagId, taskId, runId], { '--try': tryNumber }),
     renderTask: (dagId: string, taskId: string, date: string) => airflow(['tasks', 'render', dagId, taskId, date]),

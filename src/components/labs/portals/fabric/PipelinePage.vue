@@ -35,10 +35,12 @@
           <div class="pl-col">
             <button v-for="ai in level" :key="acts[ai].name" type="button" class="pl-act"
                     :class="['is-' + statusOf(acts[ai].name).toLowerCase(), { 'is-sel': selected === ai }]"
-                    @click.stop="selected = ai">
+                    @click.stop="selected = ai" @contextmenu.prevent.stop="selected = ai; openMenu($event, actMenu(ai))"
+                    @keydown.delete="selected = ai; removeActivity()">
               <span class="pl-act__type"><FxIcon :name="iconFor(acts[ai].type)" :size="14" />{{ labelFor(acts[ai].type) }}</span>
               <span class="pl-act__name">{{ acts[ai].name }}</span>
               <span v-if="statusOf(acts[ai].name)" class="pl-act__status">{{ statusOf(acts[ai].name) }}</span>
+              <span v-if="depLabel(acts[ai])" class="pl-act__dep">{{ depLabel(acts[ai]) }}</span>
             </button>
           </div>
           <div v-if="li < levels.length - 1" class="pl-arrow" aria-hidden="true">
@@ -54,9 +56,12 @@
         <template v-if="sel">
           <button type="button" class="fx-tab" :class="{ 'is-active': actTab === 'general' }" @click="actTab = 'general'">General</button>
           <button type="button" class="fx-tab" :class="{ 'is-active': actTab === 'settings' }" @click="actTab = 'settings'">Settings</button>
+          <span class="fx-cmdbar__grow" />
+          <button type="button" class="fx-iconbtn pl-panemore" :aria-label="'More options for ' + sel.name" @click.stop="openMenu($event, actMenu(selected))"><FxIcon name="more" /></button>
         </template>
         <template v-else>
           <button type="button" class="fx-tab" :class="{ 'is-active': pane === 'parameters' }" @click="pane = 'parameters'">Parameters</button>
+          <button type="button" class="fx-tab" :class="{ 'is-active': pane === 'variables' }" @click="pane = 'variables'">Variables</button>
           <button type="button" class="fx-tab" :class="{ 'is-active': pane === 'output' }" @click="pane = 'output'">Output</button>
         </template>
       </div>
@@ -66,20 +71,65 @@
             <div class="pl-grid">
               <div class="fx-field"><label for="pl-name">Name<span class="fx-field__req">*</span></label>
                 <input id="pl-name" :value="sel.name" class="fx-input" @change="rename(($event.target as HTMLInputElement).value)" /></div>
-              <div class="fx-field"><span class="fx-field__label">Depends on (on success)</span>
+              <div class="fx-field"><span class="fx-field__label">Depends on</span>
                 <select class="fx-select" :value="(sel.dependsOn || [])[0]?.activity || ''" aria-label="Depends on"
                         @change="setDepends(($event.target as HTMLSelectElement).value)">
                   <option value="">(none)</option>
                   <option v-for="a in acts.filter(x => x.name !== sel!.name)" :key="a.name" :value="a.name">{{ a.name }}</option>
                 </select></div>
+              <div class="fx-field"><span class="fx-field__label">Run when the previous activity</span>
+                <select class="fx-select" :value="(sel.dependsOn || [])[0]?.dependencyConditions?.[0] || 'Succeeded'" aria-label="Dependency condition"
+                        :disabled="!(sel.dependsOn || []).length" @change="setCondition(($event.target as HTMLSelectElement).value)">
+                  <option value="Succeeded">On success</option>
+                  <option value="Failed">On fail</option>
+                  <option value="Completed">On completion</option>
+                  <option value="Skipped">On skip</option>
+                </select></div>
+              <div class="fx-field"><label for="pl-desc">Description</label>
+                <input id="pl-desc" :value="sel.description || ''" class="fx-input" @change="setTop('description', ($event.target as HTMLInputElement).value)" /></div>
               <div class="fx-field"><label for="pl-retry">Retry</label>
                 <input id="pl-retry" :value="sel.policy?.retry || 0" class="fx-input" type="number" min="0" max="10"
                        @change="setRetry(Number(($event.target as HTMLInputElement).value))" /></div>
+              <div class="fx-field"><label for="pl-timeout">Timeout</label>
+                <input id="pl-timeout" :value="sel.policy?.timeout || '0.12:00:00'" class="fx-input fx-mono"
+                       @change="setPolicy('timeout', ($event.target as HTMLInputElement).value)" /></div>
             </div>
             <button type="button" class="fx-btn fx-btn--sm" @click="removeActivity"><FxIcon name="delete" :size="12" />Delete activity</button>
           </template>
           <template v-else>
-            <div v-if="sel.type === 'TridentNotebook'" class="fx-field"><span class="fx-field__label">Notebook<span class="fx-field__req">*</span></span>
+            <CopyActivitySettings v-if="sel.type === 'Copy'" :key="sel.name" :tp="sel.typeProperties || {}" :ws="wsName"
+                                  @change="v => setTypeProps(v)" />
+            <template v-else-if="sel.type === 'Script'">
+              <div class="fx-field"><span class="fx-field__label">Warehouse<span class="fx-field__req">*</span></span>
+                <select class="fx-select" :value="sel.typeProperties?.warehouse || ''" aria-label="Script warehouse" @change="setProp('warehouse', ($event.target as HTMLSelectElement).value)">
+                  <option value="">Select…</option>
+                  <option v-for="w in warehouses" :key="w.name" :value="w.name">{{ w.name }}</option></select></div>
+              <div class="fx-field"><label for="pl-script">Script<span class="fx-field__req">*</span></label>
+                <textarea id="pl-script" class="fx-code pl-script" spellcheck="false" :value="scriptText"
+                          @change="setProp('scripts', [{ type: 'Query', text: ($event.target as HTMLTextAreaElement).value }])" /></div>
+            </template>
+            <template v-else-if="sel.type === 'SetVariable'">
+              <div class="pl-grid">
+                <div class="fx-field"><span class="fx-field__label">Name<span class="fx-field__req">*</span></span>
+                  <select class="fx-select" :value="sel.typeProperties?.variableName || ''" aria-label="Variable" @change="setProp('variableName', ($event.target as HTMLSelectElement).value)">
+                    <option value="">Select…</option>
+                    <option v-for="v in variableNames" :key="v" :value="v">{{ v }}</option></select>
+                  <span class="fx-field__help">Add variables on the pipeline's Variables tab.</span></div>
+                <div class="fx-field"><label for="pl-varval">Value</label>
+                  <input id="pl-varval" class="fx-input fx-mono" :value="sel.typeProperties?.value ?? ''" @change="setProp('value', ($event.target as HTMLInputElement).value)" /></div>
+              </div>
+            </template>
+            <template v-else-if="sel.type === 'TeamsNotification' || sel.type === 'Office365Outlook'">
+              <div class="pl-grid">
+                <div class="fx-field"><label for="pl-to">{{ sel.type === 'TeamsNotification' ? 'Channel or chat' : 'To' }}<span class="fx-field__req">*</span></label>
+                  <input id="pl-to" class="fx-input" :value="sel.typeProperties?.to || ''" @change="setProp('to', ($event.target as HTMLInputElement).value)" /></div>
+                <div class="fx-field"><label for="pl-subj">{{ sel.type === 'TeamsNotification' ? 'Title' : 'Subject' }}</label>
+                  <input id="pl-subj" class="fx-input" :value="sel.typeProperties?.subject || ''" @change="setProp('subject', ($event.target as HTMLInputElement).value)" /></div>
+              </div>
+              <div class="fx-field"><label for="pl-body">{{ sel.type === 'TeamsNotification' ? 'Message' : 'Body' }}</label>
+                <textarea id="pl-body" class="fx-code pl-script" :value="sel.typeProperties?.body || ''" @change="setProp('body', ($event.target as HTMLTextAreaElement).value)" /></div>
+            </template>
+            <div v-else-if="sel.type === 'TridentNotebook'" class="fx-field"><span class="fx-field__label">Notebook<span class="fx-field__req">*</span></span>
               <select class="fx-select" :value="sel.typeProperties?.notebookId || ''" aria-label="Notebook"
                       @change="setProp('notebookId', ($event.target as HTMLSelectElement).value)">
                 <option value="">Select…</option>
@@ -108,12 +158,20 @@
             <pre v-else class="pl-json">{{ JSON.stringify(sel.typeProperties || {}, null, 2) }}</pre>
           </template>
         </template>
-        <template v-else-if="pane === 'parameters'">
-          <table class="fx-table"><thead><tr><th>Name</th><th>Default value</th></tr></thead>
+        <template v-else-if="pane === 'parameters' || pane === 'variables'">
+          <button type="button" class="fx-btn fx-btn--sm pl-newparam" @click="addEntry(paneKey)"><FxIcon name="plus" :size="12" />New</button>
+          <table class="fx-table"><thead><tr><th>Name</th><th>Type</th><th>Default value</th><th aria-label="Remove" /></tr></thead>
             <tbody>
-              <tr v-for="(v, k) in params" :key="k"><td>{{ k }}</td><td class="fx-mono">{{ v }}</td></tr>
-              <tr v-if="!Object.keys(params).length"><td colspan="2" class="fx-muted">No parameters</td></tr>
+              <tr v-for="(v, k) in entries(paneKey)" :key="k">
+                <td><input class="fx-input" :value="k" :aria-label="'Name of ' + k" @change="renameEntry(paneKey, String(k), ($event.target as HTMLInputElement).value)" /></td>
+                <td><select class="fx-select" :value="v.type || 'String'" :aria-label="'Type of ' + k" @change="setEntry(paneKey, String(k), 'type', ($event.target as HTMLSelectElement).value)">
+                  <option v-for="t in ['String', 'Int', 'Float', 'Bool', 'Array', 'Object']" :key="t" :value="t">{{ t }}</option></select></td>
+                <td><input class="fx-input fx-mono" :value="v.defaultValue ?? ''" :aria-label="'Default value of ' + k" @change="setEntry(paneKey, String(k), 'defaultValue', ($event.target as HTMLInputElement).value)" /></td>
+                <td><button type="button" class="fx-iconbtn" :aria-label="'Remove ' + k" @click="removeEntry(paneKey, String(k))"><FxIcon name="delete" :size="14" /></button></td>
+              </tr>
+              <tr v-if="!Object.keys(entries(paneKey)).length"><td colspan="4" class="fx-muted">No {{ pane }}</td></tr>
             </tbody></table>
+          <p v-if="dirty" class="fx-muted pl-hint">Save the pipeline to keep these changes.</p>
         </template>
         <template v-else>
           <table class="fx-table">
@@ -141,6 +199,7 @@
         <button type="button" class="fx-btn" @click="json = null">Cancel</button>
       </template>
     </FxModal>
+    <FxMenu v-if="menu" :at="menu.at" :items="menu.items" @close="menu = null" />
     <ItemSettingsPanel v-if="settings && item" :item="item" :tab="settings" @close="settings = ''" />
   </div>
 </template>
@@ -149,9 +208,12 @@
 import { computed, ref, watch } from 'vue';
 import FxIcon from './FxIcon.vue';
 import FxModal from './FxModal.vue';
+import FxMenu from './FxMenu.vue';
+import CopyActivitySettings from './CopyActivitySettings.vue';
 import ItemHeader from './ItemHeader.vue';
 import ItemSettingsPanel from './ItemSettingsPanel.vue';
 import { cli, errorText, itemPath, rows, useFabric } from './fabric';
+import { menuAt, type MenuAt, type MenuEntry } from './menu';
 
 const { portal, view, route, run, api } = useFabric();
 const wsName = computed(() => String(route.value.ws || ''));
@@ -177,11 +239,16 @@ const json = ref<string | null>(null);
 const jsonError = ref('');
 
 const palette = [
+  { type: 'Copy', label: 'Copy data', icon: 'DataPipeline' },
   { type: 'TridentNotebook', label: 'Notebook', icon: 'Notebook' },
+  { type: 'Script', label: 'Script', icon: 'code' },
+  { type: 'SetVariable', label: 'Set variable', icon: 'edit' },
   { type: 'Wait', label: 'Wait', icon: 'calendar' },
   { type: 'SqlServerStoredProcedure', label: 'Stored procedure', icon: 'Procedure' },
   { type: 'ExecutePipeline', label: 'Invoke pipeline', icon: 'DataPipeline' },
   { type: 'Fail', label: 'Fail', icon: 'error' },
+  { type: 'TeamsNotification', label: 'Teams', icon: 'people' },
+  { type: 'Office365Outlook', label: 'Office 365 Outlook', icon: 'bell' },
 ];
 const LABELS: Record<string, string> = { TridentNotebook: 'Notebook', Copy: 'Copy data', Lookup: 'Lookup',
   ForEach: 'ForEach', Script: 'Script', SqlServerStoredProcedure: 'Stored procedure', SetVariable: 'Set variable',
@@ -208,13 +275,101 @@ watch(stored, load, { immediate: true, deep: true });
 
 const acts = computed<Record<string, any>[]>(() => doc.value.properties.activities);
 const sel = computed(() => (selected.value >= 0 ? acts.value[selected.value] : null));
-const params = computed(() => {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(doc.value.properties.parameters || {})) {
-    out[k] = v && typeof v === 'object' ? (v as any).defaultValue : v;
+// Parameters and variables: { name: { type, defaultValue } } on the pipeline's properties.
+type EntryKey = 'parameters' | 'variables';
+const paneKey = computed<EntryKey>(() => (pane.value === 'variables' ? 'variables' : 'parameters'));
+function entries(key: EntryKey): Record<string, Record<string, any>> {
+  const out: Record<string, Record<string, any>> = {};
+  for (const [k, v] of Object.entries(doc.value.properties[key] || {})) {
+    out[k] = v && typeof v === 'object' ? (v as Record<string, any>) : { type: 'String', defaultValue: v };
   }
   return out;
+}
+function writeEntries(key: EntryKey, next: Record<string, Record<string, any>>) {
+  doc.value.properties[key] = next;
+  if (!Object.keys(next).length) delete doc.value.properties[key];
+  dirty.value = true;
+}
+function addEntry(key: EntryKey) {
+  const list = entries(key);
+  let n = 1;
+  const base = key === 'parameters' ? 'parameter' : 'variable';
+  while (list[`${base}${n}`]) n++;
+  writeEntries(key, { ...list, [`${base}${n}`]: { type: 'String', defaultValue: '' } });
+}
+function renameEntry(key: EntryKey, old: string, name: string) {
+  const next = name.trim();
+  if (!next || next === old || !/^[A-Za-z_]\w*$/.test(next)) return;
+  const list = entries(key);
+  if (list[next]) { api.notify('error', `A ${key === 'parameters' ? 'parameter' : 'variable'} named ${next} already exists`); return; }
+  writeEntries(key, Object.fromEntries(Object.entries(list).map(([k, v]) => [k === old ? next : k, v])));
+}
+function setEntry(key: EntryKey, name: string, field: string, value: string) {
+  const list = entries(key);
+  writeEntries(key, { ...list, [name]: { ...list[name], [field]: value } });
+}
+function removeEntry(key: EntryKey, name: string) {
+  const list = entries(key);
+  delete list[name];
+  writeEntries(key, list);
+}
+const variableNames = computed(() => Object.keys(entries('variables')));
+const scriptText = computed(() => {
+  const scripts = sel.value?.typeProperties?.scripts || [];
+  return scripts.map((x: any) => (typeof x === 'string' ? x : x?.text || '')).join('\n');
 });
+
+// Context menu on an activity: the canvas "..." and right-click.
+const menu = ref<{ at: MenuAt; items: MenuEntry[] } | null>(null);
+function openMenu(event: MouseEvent, items: MenuEntry[]) {
+  menu.value = { at: menuAt(event, 240, Math.min(360, items.length * 34 + 12)), items };
+}
+function actMenu(index: number): MenuEntry[] {
+  const a = acts.value[index];
+  if (!a) return [];
+  return [
+    { label: 'Settings', icon: 'settings', action: () => { selected.value = index; actTab.value = 'settings'; } },
+    { label: 'Duplicate', icon: 'copy', action: () => duplicate(index) },
+    { label: 'Run from this activity', icon: 'play', disabled: !acts.value.length, title: 'Saves and runs the pipeline', action: runNow },
+    { sep: true },
+    { label: 'View JSON', icon: 'code', action: openJson },
+    { label: 'Delete', icon: 'delete', danger: true, action: () => { selected.value = index; removeActivity(); } },
+  ];
+}
+function duplicate(index: number) {
+  const a = acts.value[index];
+  if (!a) return;
+  const copy = JSON.parse(JSON.stringify(a));
+  copy.name = uniqueName(`${String(a.name).replace(/_?copy\d*$/i, '')}_copy`);
+  copy.dependsOn = [];
+  acts.value.push(copy);
+  selected.value = acts.value.length - 1;
+  dirty.value = true;
+}
+function depLabel(a: Record<string, any>) {
+  const cond = (a.dependsOn || [])[0]?.dependencyConditions?.[0];
+  return cond && cond !== 'Succeeded' ? `On ${cond === 'Completed' ? 'completion' : cond.toLowerCase()}` : '';
+}
+function setCondition(value: string) {
+  if (!sel.value || !(sel.value.dependsOn || []).length) return;
+  sel.value.dependsOn = sel.value.dependsOn.map((d: any) => ({ ...d, dependencyConditions: [value] }));
+  dirty.value = true;
+}
+function setTop(key: string, value: string) {
+  if (!sel.value) return;
+  if (value) sel.value[key] = value; else delete sel.value[key];
+  dirty.value = true;
+}
+function setPolicy(key: string, value: string) {
+  if (!sel.value) return;
+  sel.value.policy = { ...(sel.value.policy || {}), [key]: value };
+  dirty.value = true;
+}
+function setTypeProps(value: Record<string, any>) {
+  if (!sel.value) return;
+  sel.value.typeProperties = value;
+  dirty.value = true;
+}
 watch(selected, () => { actTab.value = 'general'; });
 
 // Lay the activities out left to right by dependency depth.
@@ -257,6 +412,16 @@ function addActivity(type: string) {
   if (type === 'Fail') act.typeProperties = { message: 'Failed by the pipeline', errorCode: 'UserFail' };
   if (type === 'SqlServerStoredProcedure') act.typeProperties = { warehouse: warehouses.value[0]?.name || '', storedProcedureName: '' };
   if (type === 'ExecutePipeline') act.typeProperties = { pipeline: { referenceName: pipelines.value[0]?.name || '', type: 'PipelineReference' } };
+  if (type === 'Copy') {
+    const lh = String(rows(portal.value, 'items').find(i => i.type === 'Lakehouse' && i.workspace === wsName.value)?.name || '');
+    act.typeProperties = { source: { type: 'LakehouseTableSource', lakehouse: lh },
+      sink: { type: 'LakehouseTableSink', lakehouse: lh, tableActionOption: 'Append' } };
+  }
+  if (type === 'Script') act.typeProperties = { warehouse: warehouses.value[0]?.name || '', scripts: [{ type: 'Query', text: 'SELECT 1 AS ok' }] };
+  if (type === 'SetVariable') act.typeProperties = { variableName: variableNames.value[0] || '', value: '' };
+  if (type === 'TeamsNotification' || type === 'Office365Outlook') {
+    act.typeProperties = { to: '', subject: `Pipeline @{pipeline().Pipeline} finished`, body: 'Run @{pipeline().RunId}' };
+  }
   const last = acts.value[acts.value.length - 1];
   if (last) act.dependsOn = [{ activity: last.name, dependencyConditions: ['Succeeded'] }];
   acts.value.push(act);
@@ -275,7 +440,8 @@ function rename(value: string) {
 }
 function setDepends(value: string) {
   if (!sel.value) return;
-  sel.value.dependsOn = value ? [{ activity: value, dependencyConditions: ['Succeeded'] }] : [];
+  const cond = (sel.value.dependsOn || [])[0]?.dependencyConditions || ['Succeeded'];
+  sel.value.dependsOn = value ? [{ activity: value, dependencyConditions: cond }] : [];
   dirty.value = true;
 }
 function setRetry(value: number) {
@@ -359,6 +525,11 @@ async function saveJson() {
 .pl-pane { flex: 0 0 auto; height: 40%; min-height: 160px; display: flex; flex-direction: column; border-top: 1px solid #e0e0e0; }
 .pl-panebody { flex: 1; overflow: auto; padding: 12px var(--fx-gutter); --fx-edge: 0px; }
 .pl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; }
+.pl-act__dep { font-size: 11px; color: #8a5a00; }
+.pl-script { min-height: 90px; border: 1px solid #d1d1d1; border-radius: 4px; }
+.pl-newparam { margin-bottom: 8px; }
+.pl-hint { font-size: 12px; margin: 8px 0 0; }
+.pl-panemore { align-self: center; }
 .pl-err { max-width: 320px; overflow: hidden; text-overflow: ellipsis; color: #c50f1f; }
 .pl-json, .pl-jsoned { font: 12px Consolas, monospace; }
 .pl-jsoned { min-height: 360px; border: 1px solid #d1d1d1; }

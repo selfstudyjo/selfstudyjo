@@ -13,14 +13,9 @@
           <button v-if="listHidden" type="button" class="mf-btn mf-btn--icon" title="Show experiment list" aria-label="Show experiment list"
                   @click="listHidden = false"><MfIcon name="menu" /></button>
           <h1 class="mf-title">{{ experiment.name }}</h1>
-          <span class="mf-menu-anchor">
-            <button type="button" class="mf-btn mf-btn--icon" aria-label="Experiment actions" :aria-expanded="menuOpen"
-                    @click="menuOpen = !menuOpen"><MfIcon name="kebab" /></button>
-            <div v-if="menuOpen" class="mf-menu mf-exp__menu" @mouseleave="menuOpen = false">
-              <button type="button" :disabled="experiment.default" @click="startRename">Rename</button>
-              <button type="button" class="is-danger" :disabled="experiment.default" @click="startDelete">Delete</button>
-            </div>
-          </span>
+          <span v-if="experiment.lifecycle_stage === 'deleted'" class="mf-tag mf-exp__deleted">Deleted</span>
+          <button type="button" class="mf-btn mf-btn--icon" aria-label="Experiment actions" title="More actions"
+                  @click="expMenu"><MfIcon name="kebab" /></button>
           <span class="mf-spacer"></span>
           <span class="mf-muted mf-exp__id">Experiment ID: <span class="mf-mono">{{ experiment.id }}</span></span>
         </div>
@@ -68,11 +63,27 @@
           <select v-model="sortKey" class="mf-select" aria-label="Sort">
             <option value="created">Sort: Created</option>
             <option value="run_name">Sort: Run Name</option>
+            <option value="duration">Sort: Duration</option>
             <option v-for="key in metricKeys" :key="key" :value="'metric:' + key">Sort: {{ key }}</option>
+            <option v-for="key in paramKeys" :key="'p' + key" :value="'param:' + key">Sort: params.{{ key }}</option>
           </select>
+          <button type="button" class="mf-btn mf-btn--icon" :title="sort.dir === 'asc' ? 'Ascending' : 'Descending'"
+                  :aria-label="'Sort direction: ' + (sort.dir === 'asc' ? 'ascending' : 'descending')"
+                  @click="sort = { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' }">{{ sort.dir === 'asc' ? '↑' : '↓' }}</button>
           <button type="button" class="mf-btn mf-btn--icon" title="Refresh" aria-label="Refresh" @click="mf.notify('info', 'Runs are up to date')">
             <MfIcon name="refresh" />
           </button>
+        </div>
+
+        <div v-if="experiment.lifecycle_stage === 'deleted'" class="mf-alert mf-alert--warning">
+          <MfIcon name="warning" /><span>This experiment is deleted. Its runs stay in the tracking store until it is restored.</span>
+          <button type="button" class="mf-btn mf-btn--sm" @click="restoreExperiment">Restore experiment</button>
+        </div>
+
+        <!-- Experiment tags, as the header shows them -->
+        <div v-if="expTags.length" class="mf-tags mf-exp__tags">
+          <span v-for="[k, v] in expTags" :key="k" class="mf-tag" :title="k + ': ' + v"><b>{{ k }}</b><template v-if="v">: {{ v }}</template></span>
+          <button type="button" class="mf-btn mf-btn--link mf-btn--sm" @click="startTags"><MfIcon name="pencil" />Edit tags</button>
         </div>
 
         <div v-if="filter.error" class="mf-alert mf-alert--error">
@@ -90,7 +101,8 @@
         </div>
 
         <div class="mf-exp__content">
-          <RunsTable v-if="mode === 'table'" v-model:selected="selected" :runs="filtered" :deleted="lifecycle === 'deleted'" />
+          <RunsTable v-if="mode === 'table'" v-model:selected="selected" v-model:sort="sort" :runs="filtered"
+                     :deleted="lifecycle === 'deleted'" @action="onRunAction" />
           <RunsCharts v-else-if="mode === 'chart'" :runs="filtered" />
           <EvaluationView v-else-if="mode === 'evaluation'" :runs="filtered" />
           <div v-else class="mf-empty">
@@ -118,6 +130,20 @@
       </label>
     </MfModal>
 
+    <MfModal v-if="descRun" title="Edit description" ok-text="Save" :busy="saving" @close="descRun = null" @ok="saveRunDesc">
+      <label class="mf-field">
+        <span class="mf-label">Description of {{ descRun.run_name }}</span>
+        <textarea v-model="runDescDraft" class="mf-textarea" rows="5" aria-label="Run description"></textarea>
+        <span class="mf-hint">Stored as the run's <code class="mf-mono">mlflow.note.content</code> tag. Leave it empty to clear it.</span>
+      </label>
+    </MfModal>
+
+    <RegisterModelModal v-if="registerRun" :run-id="registerRun" @close="registerRun = ''"
+                        @done="(name, version) => { registerRun = ''; mf.go({ page: 'version', name, version }); }" />
+
+    <TagEditorModal v-if="taggingExp && experiment" :title="`Add/Edit tags for ${experiment.name}`" :tags="experiment.tags"
+                    :busy="saving" :error="formError" @close="taggingExp = false" @save="saveExpTags" />
+
     <MfModal v-if="runDeleting" title="Delete Experiment Runs" ok-text="Delete" danger @close="runDeleting = false" @ok="deleteRuns">
       <p class="mf-p">{{ selected.length }} experiment run{{ selected.length === 1 ? '' : 's' }} will be deleted.</p>
       <p class="mf-p mf-muted">Deleted runs can be restored from the State: Deleted view.</p>
@@ -133,8 +159,11 @@ import ExperimentList from './ExperimentList.vue';
 import RunsTable from './RunsTable.vue';
 import RunsCharts from './RunsCharts.vue';
 import EvaluationView from './EvaluationView.vue';
-import { DESCRIPTION_TAG, parseFilter, parseStamp, runMatches, type RunsViewMode } from './mlflow';
-import { mlflow, useMf } from './mfContext';
+import RegisterModelModal from './RegisterModelModal.vue';
+import TagEditorModal from './TagEditorModal.vue';
+import { DESCRIPTION_TAG, parseFilter, parseStamp, runMatches, sortRuns, userTags, type MfRun, type RunAction,
+         type RunsSort, type RunsViewMode } from './mlflow';
+import { applyTags, mlflow, useMf } from './mfContext';
 
 const mf = useMf();
 const expId = computed(() => (mf.route.value.page === 'experiments' ? mf.route.value.expId : '0'));
@@ -158,7 +187,6 @@ onBeforeUnmount(() => observer?.disconnect());
 function onPicked() {
   if (wasNarrow) listHidden.value = true;
 }
-const menuOpen = ref(false);
 
 const modes: { id: RunsViewMode; label: string; icon: string }[] = [
   { id: 'table', label: 'Table', icon: 'table' },
@@ -176,12 +204,21 @@ function applySearch() { search.value = searchDraft.value; }
 const filter = computed(() => parseFilter(search.value));
 const timeWindow = ref('all');
 const lifecycle = ref<'active' | 'deleted'>('active');
-const sortKey = ref('created');
+const sort = ref<RunsSort>({ key: 'created', dir: 'desc' });
+/** The toolbar's "Sort:" select and the table's headers drive one sort. */
+const sortKey = computed({
+  get: () => sort.value.key,
+  set: (key: string) => {
+    sort.value = { key, dir: key === 'run_name' || key.startsWith('param:') ? 'asc' : 'desc' };
+  },
+});
 const selected = ref<string[]>([]);
 watch(lifecycle, () => { selected.value = []; });
 
 const expRuns = computed(() => mf.runs.value.filter(r => r.experiment_id === expId.value));
 const metricKeys = computed(() => [...new Set(expRuns.value.flatMap(r => Object.keys(r.metrics)))].sort());
+const paramKeys = computed(() => [...new Set(expRuns.value.flatMap(r => Object.keys(r.params)))].sort());
+const expTags = computed(() => userTags(experiment.value?.tags || {}));
 
 const filtered = computed(() => {
   const windows: Record<string, number> = { '1h': 3600e3, '24h': 86400e3, '7d': 7 * 86400e3 };
@@ -189,24 +226,29 @@ const filtered = computed(() => {
   let list = expRuns.value.filter(r => r.lifecycle_stage === lifecycle.value);
   if (limit) list = list.filter(r => mf.now.value - parseStamp(r.start_time) <= limit);
   if (!filter.value.error) list = list.filter(r => runMatches(r, filter.value.clauses));
-  const key = sortKey.value;
-  const sorted = [...list];
-  if (key === 'run_name') sorted.sort((a, b) => a.run_name.localeCompare(b.run_name));
-  else if (key.startsWith('metric:')) {
-    const m = key.slice(7);
-    sorted.sort((a, b) => (b.metrics[m] ?? -Infinity) - (a.metrics[m] ?? -Infinity));
-  } else {
-    sorted.reverse(); // newest first
-  }
-  return sorted;
+  return sortRuns(list, sort.value);
 });
 
 // --- experiment rename / delete / description ---
 const renaming = ref(false);
 const renameDraft = ref('');
 const formError = ref('');
+function expMenu(event: MouseEvent) {
+  const exp = experiment.value;
+  if (!exp) return;
+  const gone = exp.lifecycle_stage === 'deleted';
+  mf.menu(event, [
+    { label: 'Rename', icon: 'pencil', disabled: exp.default || gone, action: startRename },
+    { label: 'Edit description', icon: 'pencil', disabled: gone, action: startDesc },
+    { label: 'Edit tags', icon: 'tag', disabled: gone, action: startTags },
+    { label: 'Copy experiment ID', icon: 'copy', action: () => mf.copy(exp.id, 'experiment ID') },
+    { divider: true },
+    gone
+      ? { label: 'Restore', icon: 'restore', action: restoreExperiment }
+      : { label: 'Delete', icon: 'trash', danger: true, disabled: exp.default, action: startDelete },
+  ], exp.name);
+}
 function startRename() {
-  menuOpen.value = false;
   renameDraft.value = experiment.value?.name || '';
   formError.value = '';
   renaming.value = true;
@@ -221,7 +263,6 @@ async function saveRename() {
   renaming.value = false;
 }
 async function startDelete() {
-  menuOpen.value = false;
   const exp = experiment.value;
   if (!exp) return;
   const yes = await mf.confirm({ title: 'Delete Experiment', yes: 'Delete', danger: true,
@@ -251,6 +292,62 @@ async function saveDesc() {
   if (!text.trim() && !exp.description) { editingDesc.value = false; return; }
   const result = await mf.run(command);
   if (result.ok) editingDesc.value = false;
+}
+
+async function restoreExperiment() {
+  const exp = experiment.value;
+  if (!exp) return;
+  await mf.run(mlflow(['experiments', 'restore'], { '--experiment-id': exp.id }), { success: `Experiment "${exp.name}" restored` });
+}
+const saving = ref(false);
+const taggingExp = ref(false);
+function startTags() { formError.value = ''; taggingExp.value = true; }
+async function saveExpTags(changes: { set: [string, string][]; remove: string[] }) {
+  const exp = experiment.value;
+  if (!exp) return;
+  saving.value = true;
+  formError.value = await applyTags(mf, 'experiments', { '--experiment-id': exp.id }, changes);
+  saving.value = false;
+  if (!formError.value) taggingExp.value = false;
+}
+
+// --- a row's menu in the runs table ---
+const registerRun = ref('');
+const descRun = ref<MfRun | null>(null);
+const runDescDraft = ref('');
+async function onRunAction(kind: RunAction, run: MfRun) {
+  if (kind === 'compare') {
+    mf.go({ page: 'compare', runIds: [...new Set([...selected.value, run.run_id])] });
+  } else if (kind === 'rename') {
+    runRenaming.value = run.run_id;
+    runNameDraft.value = run.run_name;
+  } else if (kind === 'description') {
+    descRun.value = run;
+    runDescDraft.value = run.description;
+  } else if (kind === 'register') {
+    registerRun.value = run.run_id;
+  } else if (kind === 'restore') {
+    await mf.run(mlflow(['runs', 'restore'], { '--run-id': run.run_id }), { success: `Run "${run.run_name}" restored` });
+    selected.value = selected.value.filter(id => id !== run.run_id);
+  } else if (kind === 'delete') {
+    const yes = await mf.confirm({ title: 'Delete Experiment Runs', yes: 'Delete', danger: true,
+      message: `1 experiment run ("${run.run_name}") will be deleted. Deleted runs can be restored from the State: Deleted view.` });
+    if (!yes) return;
+    const result = await mf.run(mlflow(['runs', 'delete'], { '--run-id': run.run_id }), { success: `Run "${run.run_name}" deleted` });
+    if (result.ok) selected.value = selected.value.filter(id => id !== run.run_id);
+  }
+}
+async function saveRunDesc() {
+  const run = descRun.value;
+  if (!run) return;
+  const text = runDescDraft.value;
+  if (!text.trim() && !run.description) { descRun.value = null; return; }
+  saving.value = true;
+  const result = await mf.run(text.trim()
+    ? mlflow(['runs', 'set-tag'], { '--run-id': run.run_id, '--key': DESCRIPTION_TAG }, { '--value': text })
+    : mlflow(['runs', 'delete-tag'], { '--run-id': run.run_id, '--key': DESCRIPTION_TAG }), { success: 'Description saved' });
+  saving.value = false;
+  if (result.ok) descRun.value = null;
 }
 
 // --- runs: compare / rename / delete / restore ---
@@ -302,7 +399,8 @@ async function restoreRuns() {
 .mf-exp__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 16px 24px 16px; overflow: hidden; }
 .mf-exp__head { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .mf-exp__id { font-size: 12px; }
-.mf-exp__menu { top: 34px; left: 0; }
+.mf-exp__deleted { color: var(--mf-danger); }
+.mf-exp__tags { align-items: center; }
 .mf-exp__desc { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .mf-exp__desc-btn { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; }
 .mf-exp__desc-edit { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 720px; }

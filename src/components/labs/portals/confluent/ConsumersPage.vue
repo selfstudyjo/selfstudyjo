@@ -17,16 +17,17 @@
     <div class="cc-table-wrap">
       <table class="cc-table">
         <thead><tr><th>Consumer group ID</th><th>State</th><th class="is-num">Messages behind</th><th class="is-num">Number of consumers</th>
-          <th class="is-num">Number of topics</th><th>Topics</th></tr></thead>
+          <th class="is-num">Number of topics</th><th>Topics</th><th><span class="cg-sr">Actions</span></th></tr></thead>
         <tbody>
-          <tr v-if="!shown.length"><td colspan="6" class="cc-empty">{{ cc.groups.value.length ? 'No consumer groups match your search.' : 'No consumer groups have committed offsets yet.' }}</td></tr>
-          <tr v-for="g in shown" :key="g.group">
+          <tr v-if="!shown.length"><td colspan="7" class="cc-empty">{{ cc.groups.value.length ? 'No consumer groups match your search.' : 'No consumer groups have committed offsets yet.' }}</td></tr>
+          <tr v-for="g in shown" :key="g.group" @contextmenu="cc.menu($event, actions(g))">
             <td><button type="button" class="cc-link cg-name" @click="cc.go({ page: 'group', group: g.group })">{{ g.group }}</button></td>
             <td><span class="cc-status" :class="g.state === 'Stable' ? 'cc-status--ok' : g.state === 'Rebalancing' ? 'cc-status--warn' : 'cc-status--off'">{{ g.state }}</span></td>
             <td class="is-num" :class="{ lag: g.lag > 0 }">{{ num(g.lag) }}</td>
             <td class="is-num">{{ g.members }}</td>
             <td class="is-num">{{ (g.topics || []).length }}</td>
             <td class="cc-mono">{{ (g.topics || []).join(', ') }}</td>
+            <td class="cc-actions"><button type="button" class="cc-kebab" :aria-label="'Actions for ' + g.group" @click="cc.menu($event, actions(g))"><CcIcon name="more" /></button></td>
           </tr>
         </tbody>
       </table>
@@ -39,17 +40,37 @@ import { computed, ref } from 'vue';
 import { matches } from '@/utils/portalKit';
 import CcIcon from './CcIcon.vue';
 import { useCc } from './ccContext';
-import { CLUSTER_NAME, num } from './confluent';
+import type { CcMenuItem } from './ccContext';
+import { CLUSTER_NAME, kafkaGroups, num, type CcGroup } from './confluent';
 
 const cc = useCc();
 const query = ref('');
 const stable = computed(() => cc.groups.value.filter(g => g.state === 'Stable').length);
 const totalLag = computed(() => cc.groups.value.reduce((n, g) => n + Number(g.lag || 0), 0));
 const shown = computed(() => cc.groups.value.filter(g => matches(g as any, query.value, ['group', 'topics'])));
+
+function actions(g: CcGroup): CcMenuItem[] {
+  return [
+    { label: 'View consumer lag', icon: 'eye', run: () => cc.go({ page: 'group', group: g.group }) },
+    { label: 'Reset offsets', icon: 'refresh', disabled: g.state === 'Stable',
+      run: () => cc.go({ page: 'group', group: g.group }) },
+    { divider: true },
+    { label: 'Delete consumer group', icon: 'trash', danger: true, disabled: g.state === 'Stable', run: () => remove(g.group) },
+  ];
+}
+async function remove(group: string) {
+  const ok = await cc.confirm({
+    title: 'Delete consumer group',
+    message: `The committed offsets of ${group} will be deleted. A consumer that joins it again starts from auto.offset.reset.`,
+    yes: 'Delete', danger: true, typeToConfirm: group,
+  });
+  if (ok) await cc.run(kafkaGroups(['--delete', '--group', group]), { success: `Consumer group ${group} deleted` });
+}
 </script>
 
 <style scoped src="./cc.css"></style>
 <style scoped>
 .cg-name { font-weight: 600; }
+.cg-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .lag { color: var(--cc-warning-text); font-weight: 600; }
 </style>

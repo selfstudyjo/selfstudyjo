@@ -11,7 +11,12 @@
             <td>{{ job.jobId }}</td>
             <td class="sql__desc">
               <a href="#" :title="job.description" @click.prevent="$emit('navigate', { page: 'query', app: app.id, id: job.jobId })">{{ job.description }}</a>
-              <span class="expand-details">+details</span>
+              <span class="expand-details" role="button" tabindex="0" @click="toggleRow(job.jobId)"
+                    @keydown.enter="toggleRow(job.jobId)">{{ openRows.includes(job.jobId) ? '-details' : '+details' }}</span>
+              <pre v-if="openRows.includes(job.jobId)" class="sql__text sql__inline">{{ job.description }}
+
+== Physical Plan ==
+{{ planLines(job).join('\n') }}</pre>
             </td>
             <td class="sql__nowrap">{{ date(job.submitted) }}</td>
             <td>{{ duration(job.durationMs) }}</td>
@@ -65,6 +70,10 @@ const props = defineProps<{ app: SparkApp; queryId: number | null }>();
 defineEmits<{ (event: 'navigate', route: any): void }>();
 
 const details = ref(false);
+const openRows = ref<number[]>([]);
+function toggleRow(id: number) {
+  openRows.value = openRows.value.includes(id) ? openRows.value.filter(x => x !== id) : [...openRows.value, id];
+}
 const job = computed(() => props.app.jobs.find(j => j.jobId === props.queryId));
 const plan = computed(() => (job.value ? [...planOperators(job.value)].reverse() : []));
 const scanned = computed(() => job.value?.stages[0]?.inputRows ?? 0);
@@ -73,9 +82,11 @@ const shuffle = computed(() => (job.value?.stages || []).reduce((n, s) => n + s.
 
 <style scoped>
 .sql__desc { max-width: min(560px, 60cqw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sql__desc:has(.sql__inline) { white-space: normal; }
 .sql__desc a { display: inline-block; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 .sql__nowrap { white-space: nowrap; }
-.expand-details { font-size: 12px; color: #6c757d; margin-left: 6px; }
+.expand-details { font-size: 12px; color: #6c757d; margin-left: 6px; cursor: pointer; }
+.sql__inline { margin: 6px 0 0; white-space: pre-wrap; font-size: 12px; max-width: 100%; }
 .sql__text { background: #f7f7f7; border: 1px solid #ddd; padding: 10px; white-space: pre-wrap; }
 .sql__plan { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px; border: 1px solid #eee; margin-bottom: 10px; }
 .sql__node { background: #E5F2FF; border: 1px solid #3EC0FF; border-radius: 4px; padding: 8px 14px; min-width: min(240px, 100%); max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; text-align: center; display: flex; flex-direction: column; align-items: center; font-size: 12px; }

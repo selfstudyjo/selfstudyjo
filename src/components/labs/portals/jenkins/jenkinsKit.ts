@@ -76,6 +76,27 @@ export interface Plugin {
     id: string;
     name: string;
     version: string;
+    /** Absent from a replica a release behind: read as enabled. */
+    enabled?: boolean;
+}
+
+/** A List View (`create-view`). The primary view, All, is not in the list. */
+export interface View {
+    name: string;
+    description: string;
+    jobs: string[];
+}
+
+export function viewsOf(view: unknown): View[] {
+    return rows<View>(view, 'portal.views').map(v => ({
+        name: String(v.name || ''),
+        description: String(v.description || ''),
+        jobs: Array.isArray(v.jobs) ? v.jobs.map(String) : [],
+    })).filter(v => v.name);
+}
+
+export function systemMessageOf(view: unknown): string {
+    return String(pick(view, 'portal.system_message', '') || '');
 }
 
 /** What `jenkins-cli get-job NAME` hands back as `data`. */
@@ -282,7 +303,11 @@ export function uuid(): string {
 }
 
 export type Route =
-    | { page: 'dashboard' }
+    | { page: 'dashboard'; view?: string }
+    | { page: 'newView' }
+    | { page: 'editView'; view: string }
+    | { page: 'system' }
+    | { page: 'workspace'; job: string; path?: string }
     | { page: 'newItem' }
     | { page: 'history' }
     | { page: 'manage' }
@@ -307,7 +332,11 @@ export type Route =
 export function routeUrl(route: Route, base: string): string {
     const job = 'job' in route ? `job/${encodeURIComponent(route.job)}/` : '';
     switch (route.page) {
-        case 'dashboard': return base;
+        case 'dashboard': return route.view ? `${base}view/${encodeURIComponent(route.view)}/` : base;
+        case 'newView': return `${base}newView`;
+        case 'editView': return `${base}view/${encodeURIComponent(route.view)}/configure`;
+        case 'system': return `${base}manage/configure`;
+        case 'workspace': return `${base}${job}ws/${route.path ? route.path.split('/').map(encodeURIComponent).join('/') : ''}`;
         case 'newItem': return `${base}view/all/newJob`;
         case 'history': return `${base}view/all/builds`;
         case 'manage': return `${base}manage/`;

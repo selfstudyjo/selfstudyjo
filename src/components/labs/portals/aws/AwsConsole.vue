@@ -3,7 +3,7 @@
     <TopNav
       :region="region" :regions="regions" :account="account" :user="user" :alias="alias"
       :recent="recent" :show-menu-button="!!service"
-      @go="go" @region="changeRegion" @toggle-nav="navOpen = !navOpen"
+      @go="go" @region="changeRegion" @toggle-nav="navOpen = !navOpen" @cloudshell="shellOpen = !shellOpen"
     />
     <div class="awsc__body">
       <aside v-if="service && navOpen" class="awsc__nav">
@@ -25,6 +25,7 @@
         </div>
       </main>
     </div>
+    <CloudShell v-if="shellOpen" @close="shellOpen = false" />
   </div>
 </template>
 
@@ -46,6 +47,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import type { LabTool } from '@/utils/labCatalogue';
 import { cli, pick } from '@/utils/portalKit';
+import CloudShell from './CloudShell.vue';
 import CsIcon from './CsIcon.vue';
 import Flashbar from './Flashbar.vue';
 import SideNav from './SideNav.vue';
@@ -63,6 +65,7 @@ const main = ref<HTMLElement | null>(null);
 const route = ref<Route>({ svc: 'home', page: 'home' });
 const recent = ref<ServiceId[]>([]);
 const navOpen = ref(true);
+const shellOpen = ref(false);
 
 const view = computed(() => props.view || {});
 const region = computed(() => String(pick(view.value, 'region', 'me-central-1')));

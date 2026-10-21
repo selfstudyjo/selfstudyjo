@@ -1262,6 +1262,18 @@ const labs: Catalogue = {
     'Equivalent CLI commands': 'أوامر CLI المكافئة',
     'Nothing yet. Every action you take in the console above appears here as the command it ran.': 'لا شيء بعد. كل إجراء تقوم به في وحدة التحكم أعلاه يظهر هنا على شكل الأمر الذي نفّذه.',
     'This build does not include that console yet.': 'هذا الإصدار لا يتضمن وحدة التحكم هذه بعد.',
+    'You can do this in the GUI or in the terminal:': 'يمكنك تنفيذ هذه المهمة من الواجهة الرسومية أو من الطرفية:',
+    'Do this one in the terminal or the Files tool.': 'نفّذ هذه المهمة من الطرفية أو من أداة الملفات.',
+    'Review the lesson': 'راجع الدرس',
+    'Prefer a GUI?': 'تفضّل واجهة رسومية؟',
+    'This lab includes the console of the real product. You can solve the tasks there or in the terminal - the console runs the same commands, and its "Equivalent CLI commands" drawer shows each one. Tasks that can be done in the GUI say so.': 'يتضمن هذا المختبر وحدة التحكم الخاصة بالمنتج الحقيقي. يمكنك حل المهام فيها أو في الطرفية - فوحدة التحكم تنفّذ الأوامر نفسها، ويعرض درج "أوامر CLI المكافئة" كل أمر منها. المهام التي يمكن إنجازها من الواجهة الرسومية تذكر ذلك.',
+    'Lessons for this lab': 'دروس هذا المختبر',
+    'Loading the lesson...': 'جارٍ تحميل الدرس...',
+    'No lesson is linked to this lab yet. The brief and the tasks have everything you need.': 'لا يوجد درس مرتبط بهذا المختبر بعد. الشرح والمهام يحتويان على كل ما تحتاجه.',
+    'Open the full lesson page': 'افتح صفحة الدرس كاملة',
+    'Back to the lab': 'العودة إلى المختبر',
+    'Could not load the lesson. Check your connection and try again.': 'تعذّر تحميل الدرس. تحقق من اتصالك وحاول مرة أخرى.',
+    'Reading material': 'مواد القراءة',
 };
 
 export default labs;

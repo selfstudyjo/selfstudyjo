@@ -99,6 +99,10 @@
     <CreateViewDialog v-else-if="dialog?.kind === 'create-view'" :materialized="dialog.materialized" @close="dialog = null" />
     <MaintenanceDialog v-else-if="dialog?.kind === 'maintenance'" :request="dialog" @close="dialog = null" />
     <DropDialog v-else-if="dialog?.kind === 'drop' || dialog?.kind === 'truncate'" :request="dialog" @close="dialog = null" />
+    <ImportExportDialog v-else-if="dialog?.kind === 'import-export'" :table="dialog.table" @close="dialog = null" />
+    <BackupDialog v-else-if="dialog?.kind === 'backup'" :request="dialog" @close="dialog = null" />
+    <RestoreDialog v-else-if="dialog?.kind === 'restore'" :request="dialog" @close="dialog = null" />
+    <GrantWizard v-else-if="dialog?.kind === 'grant-wizard'" :table="dialog.table" @close="dialog = null" />
   </div>
 </template>
 
@@ -133,6 +137,10 @@ import ColumnDialog from './ColumnDialog.vue';
 import CreateViewDialog from './CreateViewDialog.vue';
 import MaintenanceDialog from './MaintenanceDialog.vue';
 import DropDialog from './DropDialog.vue';
+import ImportExportDialog from './ImportExportDialog.vue';
+import BackupDialog from './BackupDialog.vue';
+import RestoreDialog from './RestoreDialog.vue';
+import GrantWizard from './GrantWizard.vue';
 import { PG, type DialogRequest, type MenuItem, type PgContext, type Process, type QueryTab, type RunSqlOptions } from './pgContext';
 import {
   browserUrl, buildTree, gridsOf, indexDdl, indexTree, readModel, roleDdl, tableDdl, tableScript, viewDdl, type TreeNode,
@@ -231,6 +239,11 @@ watch(index, idx => {
     : id.startsWith('mv:') ? 'public/mviews' : 'server:1';
 });
 
+function openSearch() {
+  if (!searchOpen.value) toggleSearch();
+  else nextTick(() => searchBox.value?.focus());
+}
+
 function toggleSearch() {
   searchOpen.value = !searchOpen.value;
   if (!searchOpen.value) treeFilter.value = '';
@@ -245,6 +258,10 @@ function psqlTool() {
 
 async function runSql(sql: string, options: RunSqlOptions = {}) {
   return props.api.exec(sql, { surface: 'pg_sql', success: options.success, quiet: options.quiet, unlogged: options.unlogged });
+}
+
+async function runCli(line: string, options: RunSqlOptions = {}) {
+  return props.api.exec(line, { surface: 'psql_cli', success: options.success, quiet: options.quiet, unlogged: options.unlogged });
 }
 
 function openQueryTool(sql = '', autorun = false) {
@@ -324,18 +341,32 @@ function itemsFor(node: TreeNode | null): MenuItem[] {
     case 'server':
       return [REFRESH, { sep: true }, qt, { sep: true }, propsAction(node)];
     case 'database':
-      return [REFRESH, { label: 'Maintenance...', icon: 'refresh', action: () => openDialog({ kind: 'maintenance', target: 'database', name: model.value.database }) },
-        { sep: true }, { label: 'Create', children: [{ label: 'Table...', icon: 'table', action: () => openDialog({ kind: 'create-table' }) },
-          { label: 'View...', icon: 'view', action: () => openDialog({ kind: 'create-view' }) }] }, { sep: true }, qt, { sep: true }, propsAction(node)];
+      return [REFRESH, { sep: true },
+        { label: 'Create', children: [{ label: 'Table...', icon: 'table', action: () => openDialog({ kind: 'create-table' }) },
+          { label: 'View...', icon: 'view', action: () => openDialog({ kind: 'create-view' }) },
+          { label: 'Materialized View...', icon: 'mview', action: () => openDialog({ kind: 'create-view', materialized: true }) }] },
+        { sep: true },
+        { label: 'Backup...', icon: 'backup', action: () => openDialog({ kind: 'backup', target: 'database' }) },
+        { label: 'Restore...', icon: 'restore', action: () => openDialog({ kind: 'restore', target: 'database' }) },
+        { label: 'Maintenance...', icon: 'refresh', action: () => openDialog({ kind: 'maintenance', target: 'database', name: model.value.database }) },
+        { label: 'Grant Wizard...', icon: 'grant', action: () => openDialog({ kind: 'grant-wizard' }) },
+        { label: 'Search Objects...', icon: 'search', action: openSearch },
+        { sep: true }, qt, { sep: true }, propsAction(node)];
     case 'schema':
       return [{ label: 'Create', children: [
         { label: 'Table...', icon: 'table', action: () => openDialog({ kind: 'create-table' }) },
         { label: 'View...', icon: 'view', action: () => openDialog({ kind: 'create-view' }) },
         { label: 'Materialized View...', icon: 'mview', action: () => openDialog({ kind: 'create-view', materialized: true }) },
         { label: 'Index...', icon: 'index', action: () => openDialog({ kind: 'create-index' }) },
-      ] }, REFRESH, { sep: true }, qt, { sep: true }, propsAction(node)];
+      ] }, REFRESH, { sep: true },
+        { label: 'Backup...', icon: 'backup', action: () => openDialog({ kind: 'backup', target: 'schema' }) },
+        { label: 'Restore...', icon: 'restore', action: () => openDialog({ kind: 'restore', target: 'schema' }) },
+        { label: 'Grant Wizard...', icon: 'grant', action: () => openDialog({ kind: 'grant-wizard' }) },
+        { label: 'Search Objects...', icon: 'search', action: openSearch },
+        { sep: true }, qt, { sep: true }, propsAction(node)];
     case 'tables':
-      return [{ label: 'Create', children: [{ label: 'Table...', icon: 'table', action: () => openDialog({ kind: 'create-table' }) }] }, REFRESH, { sep: true }, qt];
+      return [{ label: 'Create', children: [{ label: 'Table...', icon: 'table', action: () => openDialog({ kind: 'create-table' }) }] }, REFRESH,
+        { label: 'Grant Wizard...', icon: 'grant', action: () => openDialog({ kind: 'grant-wizard' }) }, { sep: true }, qt];
     case 'table':
       return [
         { label: 'Count Rows', action: () => countRows(t) },
@@ -352,7 +383,11 @@ function itemsFor(node: TreeNode | null): MenuItem[] {
           { label: 'Truncate Restart Identity', action: () => openDialog({ kind: 'truncate', table: t, mode: 'restart' }) },
         ] },
         REFRESH,
+        { label: 'Restore...', icon: 'restore', action: () => openDialog({ kind: 'restore', target: 'table', table: t }) },
+        { label: 'Backup...', icon: 'backup', action: () => openDialog({ kind: 'backup', target: 'table', table: t }) },
+        { label: 'Import/Export Data...', icon: 'import-export', action: () => openDialog({ kind: 'import-export', table: t }) },
         { label: 'Maintenance...', icon: 'refresh', action: () => openDialog({ kind: 'maintenance', target: 'table', name: t }) },
+        { label: 'Grant Wizard...', icon: 'grant', action: () => openDialog({ kind: 'grant-wizard', table: t }) },
         { sep: true },
         { label: 'Scripts', icon: 'sql', children: scriptItems(node) },
         { label: 'View/Edit Data', icon: 'grid', children: [
@@ -361,6 +396,7 @@ function itemsFor(node: TreeNode | null): MenuItem[] {
           { label: 'Last 100 Rows', action: () => openData(t, 'last') },
           { label: 'Filtered Rows...', action: () => openData(t, 'all', true) },
         ] },
+        { label: 'Search Objects...', icon: 'search', action: openSearch },
         { sep: true }, qt, { sep: true }, propsAction(node),
       ];
     case 'columns':
@@ -496,8 +532,15 @@ function openTopMenu(name: string, event: MouseEvent) {
     items = [
       { label: 'Query Tool', icon: 'query-tool', shortcut: 'Alt+Shift+Q', action: () => openQueryTool() },
       { label: 'PSQL Tool', icon: 'terminal', action: psqlTool },
-      { label: 'Search Objects...', icon: 'search', action: () => { if (!searchOpen.value) toggleSearch(); } },
+      { label: 'Search Objects...', icon: 'search', action: openSearch },
       { sep: true },
+      { label: 'Import/Export Data...', icon: 'import-export', disabled: !selectedTable.value,
+        action: () => openDialog({ kind: 'import-export', table: selectedTable.value }) },
+      { label: 'Backup...', icon: 'backup', action: () => openDialog(selectedTable.value
+        ? { kind: 'backup', target: 'table', table: selectedTable.value } : { kind: 'backup', target: 'database' }) },
+      { label: 'Restore...', icon: 'restore', action: () => openDialog(selectedTable.value
+        ? { kind: 'restore', target: 'table', table: selectedTable.value } : { kind: 'restore', target: 'database' }) },
+      { label: 'Grant Wizard...', icon: 'grant', action: () => openDialog({ kind: 'grant-wizard', table: selectedTable.value || undefined }) },
       { label: 'Maintenance...', icon: 'refresh', action: () => {
         const n = selected.value;
         if (n?.kind === 'table') openDialog({ kind: 'maintenance', target: 'table', name: n.table || '' });
@@ -559,6 +602,7 @@ const ctx: PgContext = {
   selected,
   processes,
   runSql,
+  runCli,
   openQueryTool,
   openData,
   openDialog,

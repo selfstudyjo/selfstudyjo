@@ -4,7 +4,7 @@
               :description="`Updated less than a minute ago`">
       <template #actions>
         <button type="button" class="cs-btn cs-btn--icon" aria-label="Refresh" @click="ctx.api.notify('info', 'Instance refreshed')"><CsIcon name="refresh" /></button>
-        <button type="button" class="cs-btn" disabled>Connect</button>
+        <button type="button" class="cs-btn" :disabled="!running" @click="ctx.to('ec2', 'connect', { id: inst.id })">Connect</button>
         <Ec2InstanceActions :instances="[inst]" />
       </template>
     </CsHeader>
@@ -46,7 +46,21 @@
           <div><dt>vCPUs</dt><dd>{{ inst.cpus }}</dd></div>
           <div><dt>Memory (GiB)</dt><dd>{{ inst.memory }}</dd></div>
           <div><dt>Owner</dt><dd>{{ ctx.account.value }}</dd></div>
+          <div><dt>IAM Role</dt><dd>{{ inst.iam_role || '–' }}</dd></div>
+          <div><dt>Instance profile</dt><dd>{{ inst.iam_profile || '–' }}</dd></div>
+          <div><dt>User data</dt><dd>{{ inst.user_data ? 'Yes' : 'No' }}</dd></div>
         </dl>
+      </div>
+    </section>
+
+    <section v-else-if="tab === 'Monitoring'" class="cs-container">
+      <div class="cs-container__head"><CsHeader title="Monitoring" :level="2" description="Basic monitoring sends metrics to CloudWatch every 5 minutes." /></div>
+      <div class="cs-container__body cs-grid-3">
+        <div v-for="m in metrics" :key="m.name" class="ei2__metric">
+          <strong>{{ m.name }}</strong><small>{{ m.unit }}</small>
+          <svg viewBox="0 0 120 40" class="ei2__spark" aria-hidden="true"><polyline :points="m.points" /></svg>
+          <span class="cs-muted">{{ running ? m.now : 'No data available' }}</span>
+        </div>
       </div>
     </section>
 
@@ -65,7 +79,9 @@
         <div class="cs-container__head"><CsHeader title="Security details" :level="2" /></div>
         <div class="cs-container__body">
           <dl class="cs-kv">
-            <div><dt>IAM Role</dt><dd>–</dd></div>
+            <div><dt>IAM Role</dt><dd>
+              <a v-if="inst.iam_role" href="#" class="cs-link" @click.prevent="ctx.to('iam', 'role', { name: inst.iam_role })">{{ inst.iam_role }}</a>
+              <span v-else>–</span></dd></div>
             <div><dt>Owner ID</dt><dd>{{ ctx.account.value }}</dd></div>
             <div><dt>Security groups</dt><dd>
               <div v-for="g in instGroups" :key="g.id"><a href="#" class="cs-link" @click.prevent="ctx.to('ec2', 'sg', { id: g.id })">{{ g.id }} ({{ g.name }})</a></div>
@@ -160,4 +176,24 @@ const inbound = computed(() => instGroups.value.flatMap(g => (g.ingress || []).m
 }))));
 const volumes = computed(() => rows(ctx.view.value, 'ec2.volumes').filter(v => v.instance === id.value));
 const tagList = computed(() => Object.entries(inst.value?.tags || {}));
+/** A deterministic sparkline per metric, flat while the instance is not running. */
+const metrics = computed(() => {
+  const seed = String(inst.value?.id || '').split('').reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 9973, 7);
+  const line = (base: number, swing: number, salt: number) => Array.from({ length: 12 }, (_, i) => {
+    const y = running.value ? base + ((seed * (i + 3) * salt) % swing) : 38;
+    return `${i * 10.9},${Math.max(2, Math.min(38, 40 - y))}`;
+  }).join(' ');
+  return [
+    { name: 'CPU utilization (%)', unit: 'Percent', points: line(4, 10, 3), now: `${(seed % 7) + 1}.${seed % 10} %` },
+    { name: 'Network in (bytes)', unit: 'Bytes', points: line(6, 20, 5), now: `${(seed % 90) + 10} KB` },
+    { name: 'Status check failed (any)', unit: 'Count', points: line(2, 1, 1), now: '0' },
+  ];
+});
 </script>
+
+<style scoped>
+.ei2__metric { display: flex; flex-direction: column; gap: 2px; border: 1px solid #ebebf0; border-radius: 12px; padding: 10px 14px; }
+.ei2__metric small { color: #656871; font-size: 12px; }
+.ei2__spark { width: 100%; height: 48px; margin: 6px 0; }
+.ei2__spark polyline { fill: none; stroke: #006ce0; stroke-width: 1.5; }
+</style>

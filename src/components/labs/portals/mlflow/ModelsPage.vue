@@ -30,10 +30,11 @@
             <th>Created by</th>
             <th>Last modified</th>
             <th>Tags</th>
+            <th class="mf-models__kebabcol"><span class="mf-sr">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="m in shown" :key="m.name">
+          <tr v-for="m in shown" :key="m.name" @contextmenu="rowMenu($event, m)">
             <td><button type="button" class="mf-link mf-models__name" @click="mf.go({ page: 'model', name: m.name })">{{ m.name }}</button></td>
             <td>
               <button v-if="m.latest_version" type="button" class="mf-link" @click="mf.go({ page: 'version', name: m.name, version: m.latest_version })">Version {{ m.latest_version }}</button>
@@ -54,8 +55,11 @@
             <td class="mf-models__nowrap">{{ fullTime(m.updated) }}</td>
             <td><span class="mf-tags"><span v-for="[k, v] in Object.entries(m.tags)" :key="k" class="mf-tag"><b>{{ k }}</b><template v-if="v">: {{ v }}</template></span>
               <span v-if="!Object.keys(m.tags).length" class="mf-muted">-</span></span></td>
+            <td class="mf-models__kebabcol">
+              <button type="button" class="mf-models__kebab" :aria-label="'Actions for ' + m.name" title="More actions"
+                      @click.stop="rowMenu($event, m)"><MfIcon name="kebab" /></button></td>
           </tr>
-          <tr v-if="!shown.length"><td :colspan="aliasUi ? 6 : 7" class="mf-muted">No models match the filter.</td></tr>
+          <tr v-if="!shown.length"><td :colspan="aliasUi ? 7 : 8" class="mf-muted">No models match the filter.</td></tr>
         </tbody>
       </table>
     </div>
@@ -66,8 +70,33 @@
         <span v-if="taken" class="mf-error-text">Model "{{ name.trim() }}" already exists.</span></label>
       <label class="mf-field"><span class="mf-label">Description <span class="mf-muted">(optional)</span></span>
         <textarea v-model="description" class="mf-textarea" rows="3" aria-label="Description"></textarea></label>
+      <fieldset class="mf-models__newtags">
+        <legend class="mf-label">Tags <span class="mf-muted">(optional)</span></legend>
+        <div v-for="(row, i) in newTags" :key="i" class="mf-models__tagrow">
+          <input v-model="row.key" class="mf-input" placeholder="Key" :aria-label="'Tag key ' + (i + 1)" />
+          <input v-model="row.value" class="mf-input" placeholder="Value" :aria-label="'Tag value ' + (i + 1)" />
+          <button type="button" class="mf-btn mf-btn--icon" :aria-label="'Remove tag ' + (i + 1)" @click="newTags.splice(i, 1)">
+            <MfIcon name="close" /></button>
+        </div>
+        <button type="button" class="mf-btn mf-btn--link mf-btn--sm" @click="newTags.push({ key: '', value: '' })"><MfIcon name="plus" />Add tag</button>
+      </fieldset>
       <div v-if="error" class="mf-alert mf-alert--error"><MfIcon name="x-circle" /><span>{{ error }}</span></div>
     </MfModal>
+
+    <MfModal v-if="renaming" title="Rename Model" ok-text="Save" :ok-disabled="!nameDraft.trim()" :busy="saving"
+             @close="renaming = null" @ok="saveRename">
+      <label class="mf-field"><span class="mf-label">New Model Name</span>
+        <input v-model="nameDraft" class="mf-input" aria-label="New Model Name" @keydown.enter="saveRename" /></label>
+      <div v-if="error" class="mf-alert mf-alert--error"><MfIcon name="x-circle" /><span>{{ error }}</span></div>
+    </MfModal>
+
+    <MfModal v-if="describing" :title="`Edit description of ${describing.name}`" ok-text="Save" :busy="saving"
+             @close="describing = null" @ok="saveDesc">
+      <textarea v-model="descDraft" class="mf-textarea" rows="5" aria-label="Model description"></textarea>
+    </MfModal>
+
+    <TagEditorModal v-if="tagging" :title="`Add/Edit tags for ${tagging.name}`" :tags="tagging.tags" :busy="saving" :error="error"
+                    @close="tagging = null" @save="saveTags" />
   </div>
 </template>
 
@@ -75,7 +104,8 @@
 import { computed, defineComponent, h, ref, type PropType } from 'vue';
 import MfIcon from './MfIcon.vue';
 import MfModal from './MfModal.vue';
-import { mlflow, useMf } from './mfContext';
+import TagEditorModal from './TagEditorModal.vue';
+import { applyTags, mlflow, useMf } from './mfContext';
 import { fullTime, type MfModel } from './mlflow';
 
 const mf = useMf();
@@ -109,10 +139,12 @@ const description = ref('');
 const saving = ref(false);
 const error = ref('');
 const taken = computed(() => Boolean(mf.model(name.value.trim())));
+const newTags = ref<{ key: string; value: string }[]>([]);
 function startCreate() {
   creating.value = true;
   name.value = '';
   description.value = '';
+  newTags.value = [];
   error.value = '';
 }
 async function create() {
@@ -123,9 +155,79 @@ async function create() {
     description.value.trim() ? { '--description': description.value } : {}), { quiet: true });
   saving.value = false;
   if (!result.ok) { error.value = String(result.error || result.output || '').trim(); return; }
+  // MlflowClient.create_registered_model(name, tags=...) - one set-tag per tag, as the client sends them.
+  const tags = newTags.value.map(t => [t.key.trim(), t.value] as [string, string]).filter(([k]) => k);
+  if (tags.length) {
+    const failed = await applyTags(mf, 'models', { '--name': modelName }, { set: tags, remove: [] });
+    if (failed) mf.notify('error', 'The model was created but a tag was refused', failed);
+  }
   creating.value = false;
   mf.notify('success', `Successfully registered model '${modelName}'`);
   mf.go({ page: 'model', name: modelName });
+}
+
+// --- a row's menu ("⋮" or right-click) ---
+const BLOCK = "You cannot delete a model with versions in active stages ('Staging' or 'Production'). "
+  + "Transition them to 'Archived' first.";
+function activeIn(m: MfModel) { return m.versions.some(v => v.stage === 'Staging' || v.stage === 'Production'); }
+function rowMenu(event: MouseEvent, m: MfModel) {
+  mf.menu(event, [
+    { label: 'Open', icon: 'chevron-right', action: () => mf.go({ page: 'model', name: m.name }) },
+    { label: 'Latest version', icon: 'model', disabled: !m.latest_version,
+      action: () => mf.go({ page: 'version', name: m.name, version: m.latest_version }) },
+    { divider: true },
+    { label: 'Rename', icon: 'pencil', action: () => { error.value = ''; nameDraft.value = m.name; renaming.value = m; } },
+    { label: 'Edit description', icon: 'pencil', action: () => { descDraft.value = m.description; describing.value = m; } },
+    { label: 'Edit tags', icon: 'tag', action: () => { error.value = ''; tagging.value = m; } },
+    { label: 'Copy model URI', icon: 'copy', disabled: !m.latest_version,
+      action: () => mf.copy(`models:/${m.name}/${m.latest_version}`, 'model URI') },
+    { divider: true },
+    { label: 'Delete', icon: 'trash', danger: true, disabled: activeIn(m), title: activeIn(m) ? BLOCK : '', action: () => remove(m) },
+  ], m.name);
+}
+
+const renaming = ref<MfModel | null>(null);
+const nameDraft = ref('');
+async function saveRename() {
+  const m = renaming.value;
+  const next = nameDraft.value.trim();
+  if (!m || !next || saving.value) return;
+  if (next === m.name) { renaming.value = null; return; }
+  saving.value = true;
+  const result = await mf.run(mlflow(['models', 'rename'], { '--name': m.name, '--new-name': next }), { success: `Renamed to ${next}` });
+  saving.value = false;
+  if (!result.ok) { error.value = String(result.error || '').trim(); return; }
+  renaming.value = null;
+}
+
+const describing = ref<MfModel | null>(null);
+const descDraft = ref('');
+async function saveDesc() {
+  const m = describing.value;
+  if (!m || saving.value) return;
+  saving.value = true;
+  const result = await mf.run(mlflow(['models', 'update'], { '--name': m.name }, { '--description': descDraft.value }),
+                              { success: 'Description saved' });
+  saving.value = false;
+  if (result.ok) describing.value = null;
+}
+
+const tagging = ref<MfModel | null>(null);
+async function saveTags(changes: { set: [string, string][]; remove: string[] }) {
+  const m = tagging.value;
+  if (!m) return;
+  saving.value = true;
+  error.value = await applyTags(mf, 'models', { '--name': m.name }, changes);
+  saving.value = false;
+  if (!error.value) tagging.value = null;
+}
+
+async function remove(m: MfModel) {
+  if (activeIn(m)) { mf.notify('warning', 'Cannot delete model', BLOCK); return; }
+  const yes = await mf.confirm({ title: 'Delete Model', yes: 'Delete', danger: true,
+    message: `Are you sure you want to delete ${m.name}? Its ${m.versions.length} version(s) are deleted with it. This cannot be undone.` });
+  if (!yes) return;
+  await mf.run(mlflow(['models', 'delete'], { '--name': m.name }), { success: `Deleted model ${m.name}` });
 }
 </script>
 
@@ -139,5 +241,12 @@ async function create() {
 .mf-models__alias { border: 0; cursor: pointer; }
 .mf-models__nowrap { white-space: nowrap; }
 .mf-models__table td { white-space: nowrap; }
+.mf-models__kebabcol { width: 36px; text-align: right; }
+.mf-models__kebab { border: 0; background: none; color: var(--mf-text-2); width: 28px; height: 28px; border-radius: var(--mf-radius);
+  cursor: pointer; display: inline-grid; place-items: center; }
+.mf-models__kebab:hover { background: var(--mf-border-light); color: var(--mf-text); }
+.mf-models__newtags { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.mf-models__tagrow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; width: 100%; }
+.mf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @container sl-portal (max-width: 900px) { .mf-models { padding: 12px; } }
 </style>

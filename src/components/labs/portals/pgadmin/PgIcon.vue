@@ -166,6 +166,28 @@
     <template v-else-if="name === 'sql'"><text x="8" y="11" text-anchor="middle" font-size="6.5" font-family="Arial" font-weight="700" fill="currentColor">SQL</text></template>
     <template v-else-if="name === 'macro'"><path d="M2.5 12.5V4l3 4.5 3-4.5v8.5M10.5 4v8.5h3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" /></template>
     <template v-else-if="name === 'format'"><path d="M2.5 3.5h11M5 6.5h8.5M5 9.5h8.5M2.5 12.5h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></template>
+    <template v-else-if="name === 'import-export'">
+      <path d="M4 2v9M1.5 8.5 4 11l2.5-2.5M12 14V5M9.5 7.5 12 5l2.5 2.5" fill="none" stroke="#326690" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'backup'">
+      <ellipse cx="7" cy="3.5" rx="5" ry="1.8" fill="#dbe8f4" stroke="#326690" stroke-width=".8" />
+      <path d="M2 3.5v7c0 1 2.2 1.8 5 1.8M12 3.5V7" fill="none" stroke="#326690" stroke-width=".8" />
+      <path d="M12 9v5.5M9.8 12.3 12 14.5l2.2-2.2" fill="none" stroke="#2e8b57" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'restore'">
+      <ellipse cx="7" cy="3.5" rx="5" ry="1.8" fill="#dbe8f4" stroke="#326690" stroke-width=".8" />
+      <path d="M2 3.5v7c0 1 2.2 1.8 5 1.8M12 3.5V7" fill="none" stroke="#326690" stroke-width=".8" />
+      <path d="M12 14.5V9M9.8 11.2 12 9l2.2 2.2" fill="none" stroke="#c77700" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'grant'">
+      <circle cx="5" cy="6" r="2.5" fill="none" stroke="#326690" stroke-width="1.1" />
+      <path d="M1.5 14c0-2.4 1.6-3.8 3.5-3.8S8.5 11.6 8.5 14" fill="none" stroke="#326690" stroke-width="1.1" />
+      <path d="M10 4.5h4.5M10 7.5h4.5M10 10.5h3" stroke="#2e8b57" stroke-width="1.2" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'rename'">
+      <path d="M2 12.5 10.5 4l1.5 1.5L3.5 14H2z" fill="#fff" stroke="#326690" stroke-width="1" stroke-linejoin="round" />
+      <path d="M9.5 5 11 6.5M12 2.5l1.5 1.5" stroke="#326690" stroke-width="1" />
+    </template>
     <template v-else>
       <!-- an empty collection folder -->
       <path d="M1.5 4h4.5l1.5 1.5h7v7.5h-13z" fill="#ffe08a" stroke="#c9a227" stroke-width=".8" stroke-linejoin="round" />

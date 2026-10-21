@@ -48,6 +48,8 @@
     <template v-else-if="name === 'lock'"><rect x="3" y="7" width="10" height="7" rx="1" /><path d="M5 7V5a3 3 0 0 1 6 0v2" /></template>
     <template v-else-if="name === 'clock'"><circle cx="8" cy="8" r="5.8" /><path d="M8 4.8V8l2.2 1.4" /></template>
     <template v-else-if="name === 'docs'"><path d="M2.5 3.5c2-1 4-1 5.5.5 1.5-1.5 3.5-1.5 5.5-.5v9c-2-1-4-1-5.5.5-1.5-1.5-3.5-1.5-5.5-.5z" /><path d="M8 4v9" /></template>
+    <template v-else-if="name === 'more'"><circle cx="8" cy="3.5" r="1" fill="currentColor" /><circle cx="8" cy="8" r="1" fill="currentColor" /><circle cx="8" cy="12.5" r="1" fill="currentColor" /></template>
+    <template v-else-if="name === 'deprecated'"><circle cx="8" cy="8" r="6" /><path d="m3.8 3.8 8.4 8.4" /></template>
     <template v-else><circle cx="8" cy="8" r="2" /></template>
   </svg>
 </template>

@@ -1,13 +1,16 @@
 <template>
-  <li class="br" draggable="true" :class="{ 'is-done': issue.status === 'done' }"
-      @dragstart="onDragStart">
+  <li class="br" draggable="true" :class="{ 'is-done': issue.status === 'done', 'is-flagged': issue.flagged, 'is-over': over }"
+      @dragstart="onDragStart" @contextmenu="contextMenu($event, issue)"
+      @dragover.prevent="over = true" @dragleave="over = false" @drop.prevent.stop="onDrop">
     <span class="br__grip" aria-hidden="true"><JiraIcon name="drag" :size="14" /></span>
     <JiraIcon :name="issue.type" kind="type" />
     <button type="button" class="br__key j-key" :class="{ 'j-key--done': issue.status === 'done' }"
             @click="ctx.openIssue(issue.id)">{{ issue.id }}</button>
     <button type="button" class="br__summary" @click="ctx.openIssue(issue.id)">{{ issue.title }}</button>
+    <JiraIcon v-if="issue.flagged" name="flag" :size="14" class="br__flag" title="Flagged" />
+    <span v-for="l in issue.labels" :key="l" class="br__tag">{{ l }}</span>
     <span v-if="issue.kr" class="br__kr" :title="'Rolls up to ' + issue.kr">{{ issue.kr }}</span>
-    <span class="br__label" :title="'Label: ' + issue.skill">{{ issue.skill }}</span>
+    <span class="br__label" :title="'Component: ' + issue.skill">{{ issue.skill }}</span>
     <JiraDropdown :items="statusItems" :selected="issue.status" label="Change status"
                   trigger-class="br__status" @select="onStatus">
       <template #trigger>
@@ -27,8 +30,8 @@
                   trigger-class="br__assignee" heading="Assign to" @select="v => assign(issue, v)">
       <template #trigger><JiraAvatar :name="issue.assignee" :size="24" /></template>
     </JiraDropdown>
-    <JiraDropdown :items="menu" label="More actions" align="right" trigger-class="br__more"
-                  @select="onMenu">
+    <JiraDropdown :items="issueMenu(issue)" label="More actions" align="right" trigger-class="br__more"
+                  @select="v => onIssueMenu(issue, v)">
       <template #trigger><JiraIcon name="more" /></template>
     </JiraDropdown>
   </li>
@@ -41,11 +44,19 @@ import { cli } from '@/utils/portalKit';
 import JiraIcon from './JiraIcon.vue';
 import JiraAvatar from './JiraAvatar.vue';
 import JiraDropdown, { type DropItem } from './JiraDropdown.vue';
-import { sprintName, STATUS_LABEL, type Issue } from './jiraKit';
+import { STATUS_LABEL, type Issue } from './jiraKit';
 import { useJira } from './useJira';
 
 const props = withDefaults(defineProps<{ issue: Issue; inSprint?: boolean }>(), { inSprint: false });
-const { ctx, team, sprint, move, assign, addToSprint, moveToBacklog, deleteIssue } = useJira();
+const emit = defineEmits<{ (event: 'rank-drop', target: string): void }>();
+const { ctx, team, move, assign, issueMenu, onIssueMenu, contextMenu } = useJira();
+const over = ref(false);
+
+/** A card dropped ON this row is ranked before it (and moved into this container). */
+function onDrop() {
+  over.value = false;
+  emit('rank-drop', props.issue.id);
+}
 
 const editing = ref(false);
 const points = ref('');
@@ -92,21 +103,6 @@ async function saveEstimate() {
   });
 }
 
-const menu = computed<DropItem[]>(() => [
-  props.inSprint
-    ? { label: 'Move to Backlog', value: 'backlog', section: 'Move to' }
-    : { label: `Move to ${sprintName(sprint.value.n)}`, value: 'sprint', section: 'Move to',
-        disabled: props.issue.status === 'done', hint: 'Done work is not planned again' },
-  { label: 'Open issue', value: 'open' },
-  { label: 'Delete', value: 'delete', danger: true },
-]);
-
-async function onMenu(value: string) {
-  if (value === 'sprint') await addToSprint([props.issue.id]);
-  else if (value === 'backlog') await moveToBacklog([props.issue.id]);
-  else if (value === 'open') ctx.openIssue(props.issue.id);
-  else if (value === 'delete') await deleteIssue(props.issue);
-}
 </script>
 
 <style scoped>
@@ -115,6 +111,10 @@ async function onMenu(value: string) {
   background: var(--j-surface); box-shadow: 0 1px 0 var(--j-border); cursor: grab;
 }
 .br:hover { background: #F8F8F8; }
+.br.is-flagged { background: #FFF7D6; }
+.br.is-over { box-shadow: inset 0 2px 0 var(--j-brand), 0 1px 0 var(--j-border); }
+.br__flag { color: #C9372C; }
+.br__tag { padding: 0 4px; border-radius: 3px; background: var(--j-neutral); font-size: 12px; line-height: 16px; white-space: nowrap; }
 .br:first-child { border-radius: 3px 3px 0 0; }
 .br:last-child { border-radius: 0 0 3px 3px; }
 .br__grip { color: var(--j-text-subtlest); opacity: 0; display: inline-flex; }
@@ -144,7 +144,7 @@ async function onMenu(value: string) {
 @container sl-portal (max-width: 700px) {
   .br { flex-wrap: wrap; padding: 6px 8px; row-gap: 4px; }
   .br__summary { flex-basis: calc(100% - 90px); white-space: normal; }
-  .br__label, .br__kr, .br__grip { display: none; }
+  .br__label, .br__kr, .br__grip, .br__tag { display: none; }
   .br__key, .br__summary { min-height: 32px; }
   .br :deep(.br__status), .br :deep(.br__assignee), .br :deep(.br__more) { min-height: 32px; min-width: 32px; justify-content: center; }
   .br .br__points.j-points { height: 28px; min-width: 28px; line-height: 28px; border-radius: 14px; }

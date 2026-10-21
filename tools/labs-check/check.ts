@@ -51,6 +51,8 @@ import {
     filterLabs,
     gradeReport,
     groupByTrack,
+    guiToolsFor,
+    portalTools,
     humanKey,
     panelsFor,
     pick,
@@ -9005,6 +9007,39 @@ section('17. Portals: the product consoles, and the command line they write');
           /\.sl-portal__frame :is\(input, textarea, select, button\)\s*\{[^}]*color:\s*revert/.test(css));
     check('...and the 44px touch minimum that breaks dense product tables',
           /@media \(pointer: coarse\)\s*\{[^}]*\.sl-portal__frame[\s\S]{0,200}min-height:\s*revert/.test(css));
+}
+
+/* ─────────────────── the GUI route and the lesson modal ─────────────────── */
+
+section('18. Which tasks the GUI can do, and Review the lesson');
+{
+    const t = (id: string, kind: LabTool['kind']) => ({ id, kind, label: id } as LabTool);
+    const tools = [t('terminal', 'console'), t('aws_console', 'portal'), t('azure_portal', 'portal')];
+    check('portalTools keeps only the portals',
+          portalTools(tools).map(x => x.id).join() === 'aws_console,azure_portal');
+    check('guiToolsFor names only portals the lab actually has',
+          guiToolsFor({ gui: ['aws_console', 'gone_portal', 'terminal'] }, tools)
+              .map(x => x.id).join() === 'aws_console');
+    check('a task from a replica a release behind (no `gui`) has no GUI route, never an error',
+          guiToolsFor({}, tools).length === 0);
+    const tasks = source('src/components/labs/LabTasks.vue');
+    check('a task card offers its portal as a button that opens the tool',
+          /@click="\$emit\('open-tool', tool\.id\)"/.test(tasks) && /guiFor\(task\)/.test(tasks));
+    check('...and says nothing about a GUI in a lab that has none',
+          /v-if="hasPortals && task\.gui/.test(tasks));
+    const bench = source('src/views/LabWorkspace.vue');
+    check('the brief names the portals and opens them',
+          /v-if="labPortals\.length"/.test(bench) && /@click="openTool\(tool\.id\)"/.test(bench));
+    check('the brief has a Review the lesson button wired to the modal',
+          /@click="lessonOpen = true"/.test(bench) && /<LabLessonModal :open="lessonOpen"/.test(bench));
+    const modal = source('src/components/labs/LabLessonModal.vue');
+    check('the lesson modal renders with LabBrief (same parser) and never v-html',
+          /<LabBrief v-if="content"/.test(modal) && !/v-html/.test(stripComments(modal)));
+    check("the lesson modal is teleported out of the workbench's stacking context",
+          /<Teleport to="body">/.test(modal));
+    const svc = source('src/services/course.service.ts');
+    check('the lesson lookup filters by lab_id client-side too (an old replica ignores ?lab_id=)',
+          /lab_id=\$\{encodeURIComponent\(labId\)\}/.test(svc) && /row\.lab_id \|\| ''\) === labId/.test(svc));
 }
 
 /* ─────────────────── report ─────────────────── */

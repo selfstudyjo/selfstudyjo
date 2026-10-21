@@ -28,7 +28,15 @@
     <div class="gd-blank__inner">
       <h1 class="gd-blank__title">No local changes</h1>
       <p class="gd-blank__lead">There are no uncommitted changes in this repository. Here are some friendly suggestions for what to do next.</p>
-      <div class="gd-card">
+      <div v-if="suggest" class="gd-card">
+        <div class="gd-card__text">
+          <h3>{{ suggest.title }}</h3>
+          <p>{{ suggest.text }}</p>
+          <p class="gd-dim">Always available in the toolbar or <kbd>Ctrl</kbd> <kbd>{{ suggest.kind === 'pull' ? 'Shift' : 'P' }}</kbd><template v-if="suggest.kind === 'pull'"> <kbd>P</kbd></template></p>
+        </div>
+        <button type="button" class="gd-btn gd-btn--primary" :disabled="busy" @click="$emit('sync', suggest.kind)">{{ suggest.button }}</button>
+      </div>
+      <div v-else-if="!v.remotes.length" class="gd-card">
         <div class="gd-card__text">
           <h3>Publish your repository to GitHub</h3>
           <p>This repository is currently only available on your local machine. By publishing it on GitHub you can share it, and collaborate with others.</p>
@@ -70,9 +78,33 @@ const props = defineProps<{ kind: 'norepo' | 'stash' | 'clean'; v: GdView; busy:
 defineEmits<{
   (event: 'create'): void;
   (event: 'publish'): void;
+  (event: 'sync', kind: string): void;
   (event: 'restore', stash: Stash): void;
   (event: 'discard-stash', stash: Stash): void;
 }>();
+
+/** With a remote, Desktop's first suggestion is whatever the branch needs next. */
+const suggest = computed(() => {
+  if (!props.v.remotes.length || props.v.detached) return null;
+  const t = props.v.tracking;
+  const remote = t?.remote || props.v.remotes[0]?.name || 'origin';
+  if (!t || !t.upstream || t.gone) {
+    return { kind: 'publishBranch', title: 'Publish your branch',
+             text: `The current branch (${props.v.branch}) hasn't been published to the remote yet. By publishing it to GitHub you can share it, open a pull request, and collaborate with others.`,
+             button: 'Publish branch' };
+  }
+  if (t.behind) {
+    return { kind: 'pull', title: `Pull ${t.behind} commit${t.behind === 1 ? '' : 's'} from the ${remote} remote`,
+             text: `The current branch (${props.v.branch}) has changes on the remote that do not exist on your machine.`,
+             button: `Pull ${remote}` };
+  }
+  if (t.ahead) {
+    return { kind: 'push', title: `Push ${t.ahead} commit${t.ahead === 1 ? '' : 's'} to the ${remote} remote`,
+             text: `You have ${t.ahead} local commit${t.ahead === 1 ? '' : 's'} waiting to be pushed to GitHub.`,
+             button: `Push ${remote}` };
+  }
+  return null;
+});
 
 const otherStashes = computed(() => props.v.stashes.filter(s => s.desktop && s.branch !== props.v.branch).length);
 </script>

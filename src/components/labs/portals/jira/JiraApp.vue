@@ -1,5 +1,5 @@
 <template>
-  <div class="jira" dir="ltr">
+  <div ref="rootEl" class="jira" dir="ltr">
     <JiraTopNav :page="page" :issues="allIssues" :signals="signals"
                 @toggle-nav="navOpen = !navOpen" @create="openCreate()" @go="go"
                 @open-issue="openIssue" />
@@ -14,6 +14,9 @@
 
     <IssueView v-if="issueKey" :issue-key="issueKey" @close="closeIssue" />
     <CreateIssue v-if="createPreset" :preset="createPreset" @close="createPreset = null" />
+    <IssueDialogs v-if="dialog" :kind="dialog.kind" :issue-key="dialog.key" @close="dialog = null" />
+    <JiraContextMenu v-if="menu" :items="menu.items" :x="menu.x" :y="menu.y" :root="rootEl" label="Actions"
+                     @select="onMenuSelect" @close="menu = null" />
 
     <JiraModal v-if="confirmState" :title="confirmState.title" width="small"
                :icon="confirmState.danger ? 'error' : (confirmState.warning ? 'warning' : '')"
@@ -62,6 +65,9 @@ import JiraModal from './JiraModal.vue';
 import JiraFlags from './JiraFlags.vue';
 import IssueView from './IssueView.vue';
 import CreateIssue from './CreateIssue.vue';
+import IssueDialogs from './IssueDialogs.vue';
+import JiraContextMenu from './JiraContextMenu.vue';
+import IssuesPage from './IssuesPage.vue';
 import BoardPage from './BoardPage.vue';
 import BacklogPage from './BacklogPage.vue';
 import TimelinePage from './TimelinePage.vue';
@@ -71,7 +77,8 @@ import RisksPage from './RisksPage.vue';
 import IncidentsPage from './IncidentsPage.vue';
 import StakeholdersPage from './StakeholdersPage.vue';
 import TeamPage from './TeamPage.vue';
-import { issues, JIRA, PAGE_URL, PROJECT, SITE, type ConfirmOptions, type PageId } from './jiraKit';
+import { issues, JIRA, PAGE_URL, PROJECT, SITE, type ConfirmOptions, type DropMenuItem, type IssueDialogKind,
+         type PageId } from './jiraKit';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
 const emit = defineEmits<{ (event: 'location', url: string): void; (event: 'refresh'): void }>();
@@ -79,7 +86,7 @@ const emit = defineEmits<{ (event: 'location', url: string): void; (event: 'refr
 const pages: Record<PageId, Component> = {
   timeline: TimelinePage, backlog: BacklogPage, board: BoardPage, goals: GoalsPage,
   reports: ReportsPage, risks: RisksPage, incidents: IncidentsPage,
-  stakeholders: StakeholdersPage, team: TeamPage,
+  stakeholders: StakeholdersPage, team: TeamPage, issues: IssuesPage,
 };
 
 const page = ref<PageId>('board');
@@ -90,6 +97,22 @@ const confirmState = shallowRef<(ConfirmOptions & { resolve: (yes: boolean) => v
 const output = shallowRef<{ title: string; text: string } | null>(null);
 const search = ref('');
 const mainEl = ref<HTMLElement | null>(null);
+const rootEl = ref<HTMLElement | null>(null);
+const dialog = shallowRef<{ kind: IssueDialogKind; key: string } | null>(null);
+const menu = shallowRef<{ items: DropMenuItem[]; x: number; y: number; onSelect: (value: string) => void } | null>(null);
+const jql = ref('');
+
+function openMenu(event: MouseEvent, items: DropMenuItem[], onSelect: (value: string) => void) {
+  event.preventDefault();
+  event.stopPropagation();
+  menu.value = { items, x: event.clientX, y: event.clientY, onSelect };
+}
+
+function onMenuSelect(value: string) {
+  const current = menu.value;
+  menu.value = null;
+  current?.onSelect(value);
+}
 
 const view = computed(() => props.view || {});
 const allIssues = computed(() => issues(view.value));
@@ -152,6 +175,9 @@ provide(JIRA, {
   },
   showOutput: (title, text) => { output.value = { title, text }; },
   search,
+  openDialog: (kind, key) => { dialog.value = { kind, key }; },
+  openMenu,
+  jql,
 });
 </script>
 

@@ -50,7 +50,7 @@
                   :class="{ 'is-active': bottom === t.id }" @click="bottom = t.id">{{ t.label }}</button>
         </div>
         <PgDataGrid v-if="bottom === 'data'" :grid="grid" :types="gridTypes" :editable="editable" :pk-index="pkIndex"
-                    :read-only-why="readOnlyWhy" @save="saveData" @copied="n => ctx.notify('info', `${n} row(s) copied to the clipboard.`)" />
+                    :read-only-why="readOnlyWhy" @save="saveData" @copied="n => ctx.notify('info', `${n} row(s) copied to the clipboard.`)" @downloaded="(f, n) => ctx.notify('success', 'Data download completed', `${n} row(s) saved to ${f}`)" />
         <pre v-else-if="bottom === 'messages'" class="pg-qt__msgs" :class="{ 'is-err': lastError }">{{ messages || 'No messages.' }}</pre>
         <div v-else-if="bottom === 'notifications'" class="pg-qt__note">No notifications. <span class="pg-muted">(LISTEN/NOTIFY payloads received on this connection appear here.)</span></div>
         <PgExplain v-else-if="bottom === 'explain'" :plan="plan" />

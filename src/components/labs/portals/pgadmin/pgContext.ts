@@ -45,7 +45,11 @@ export type DialogRequest =
   | { kind: 'maintenance'; target: 'table' | 'index' | 'database'; name: string; table?: string }
   | { kind: 'drop'; objType: 'TABLE' | 'INDEX' | 'VIEW' | 'MATERIALIZED VIEW' | 'SEQUENCE' | 'COLUMN' | 'CONSTRAINT';
       name: string; names?: string[]; table?: string; cascade: boolean }
-  | { kind: 'truncate'; table: string; mode: 'plain' | 'cascade' | 'restart' };
+  | { kind: 'truncate'; table: string; mode: 'plain' | 'cascade' | 'restart' }
+  | { kind: 'import-export'; table: string }
+  | { kind: 'backup'; target: 'database' | 'schema' | 'table'; table?: string }
+  | { kind: 'restore'; target: 'database' | 'schema' | 'table'; table?: string }
+  | { kind: 'grant-wizard'; table?: string };
 
 export interface MenuItem {
   label?: string;
@@ -65,6 +69,8 @@ export interface PgContext {
   selected: Ref<TreeNode | null>;
   processes: Ref<Process[]>;
   runSql: (sql: string, options?: RunSqlOptions) => Promise<PortalResult>;
+  /** A command line (pg_dump, pg_restore, psql) on the psql console's surface - built with cli(). */
+  runCli: (line: string, options?: RunSqlOptions) => Promise<PortalResult>;
   openQueryTool: (sql?: string, autorun?: boolean) => void;
   openData: (table: string, limit: 'all' | 'first' | 'last', filter?: boolean) => void;
   openDialog: (request: DialogRequest) => void;

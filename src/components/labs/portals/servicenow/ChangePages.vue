@@ -1,5 +1,5 @@
 <template>
-  <SnList v-if="route.page === 'change_list'" title="Change Requests" :columns="COLUMNS" :rows="model.changes"
+  <SnList v-if="route.page === 'change_list'" title="Change Requests" :columns="COLUMNS" :rows="model.changes" table="change_request" :api="api"
           @new="$emit('navigate', { page: 'change_new' })" @open="r => $emit('navigate', { page: 'change', id: r.number })">
     <template #cell="{ row, col }">
       <button v-if="col.key === 'number'" type="button" class="link" @click="$emit('navigate', { page: 'change', id: row.number })">{{ row.number }}</button>

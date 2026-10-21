@@ -48,6 +48,7 @@ export interface DhDataset {
     upstream: number;
     downstream: number;
     ingested: boolean;
+    deprecation?: { note: string; actor: string; at: number; decommission_time?: string | null } | null;
     created: number;
     updated: number;
 }
@@ -154,12 +155,27 @@ export interface DhProfile { asset: string; rows: number; at: number; columns: {
 
 export interface DhRoute {
     page: 'home' | 'search' | 'entity' | 'glossary' | 'domains' | 'monitors' | 'incidents'
-        | 'contracts' | 'gx' | 'ingestion' | 'pii' | 'erasure';
+        | 'contracts' | 'gx' | 'ingestion' | 'pii' | 'erasure' | 'tags';
     query?: string;
     platforms?: string[];
     urn?: string;
     tab?: string;
     name?: string;
+}
+
+export interface DhMenuItem {
+    label?: string;
+    icon?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    divider?: boolean;
+    run?: () => void;
+}
+
+export interface DhTagDef { name: string; description: string; color: string; datasets: number; fields: number }
+export interface DhSource {
+    name: string; type: string; recipe: string; schedule: string | null; urn: string;
+    runs: number; last_status: string | null; last_run?: number; last_datasets?: number;
 }
 
 export interface RunOptions { success?: string; quiet?: boolean; failure?: string }
@@ -178,6 +194,8 @@ export interface DhContext {
     edges: ComputedRef<DhEdge[]>;
     terms: ComputedRef<DhTerm[]>;
     domains: ComputedRef<DhDomain[]>;
+    tags: ComputedRef<DhTagDef[]>;
+    sources: ComputedRef<DhSource[]>;
     suites: ComputedRef<DhSuite[]>;
     suiteErrors: ComputedRef<{ path: string; error: string }[]>;
     checkpoints: ComputedRef<DhCheckpoint[]>;
@@ -400,6 +418,7 @@ export function routeUrl(route: DhRoute): string {
         case 'contracts': return `${base}/observe/data-contracts`;
         case 'gx': return `${base}/observe/assertions?source=great-expectations`;
         case 'ingestion': return `${base}/ingestion`;
+        case 'tags': return `${base}/tags`;
         case 'pii': return `${base}/govern/compliance/pii`;
         case 'erasure': return `${base}/govern/compliance/erasure`;
         default: return `${base}/`;

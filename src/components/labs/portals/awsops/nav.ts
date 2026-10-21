@@ -125,7 +125,7 @@ export const SERVICES: ServiceDef[] = [
             { title: 'Images', links: [l('AMIs', 'ec2', 'amis'), off('AMI Catalog')] },
             { title: 'Elastic Block Store', links: [off('Volumes'), l('Snapshots', 'ec2', 'snapshots')] },
             { title: 'Network & Security', links: [l('Security Groups', 'ec2', 'sgs'), off('Elastic IPs'),
-                off('Key Pairs')] },
+                off('Key Pairs'), l('EC2 Instance Connect Endpoints', 'ec2', 'eices')] },
             { title: 'Load Balancing', links: [l('Load Balancers', 'ec2', 'load-balancers'),
                 l('Target Groups', 'ec2', 'target-groups')] },
             { title: 'Auto Scaling', links: [l('Auto Scaling Groups', 'ec2', 'asgs')] },
@@ -174,7 +174,9 @@ export const SERVICES: ServiceDef[] = [
             { links: [off('Favorites and recents'), off('Dashboards')] },
             { title: 'Alarms', links: [l('All alarms', 'cloudwatch', 'alarms')] },
             { title: 'Metrics', links: [l('All metrics', 'cloudwatch', 'metrics')] },
-            { links: [off('Logs'), off('Application Signals')] },
+            { title: 'Logs', links: [l('Log groups', 'cloudwatch', 'log-groups'),
+                l('Logs Insights', 'cloudwatch', 'insights')] },
+            { links: [off('Application Signals')] },
         ],
     },
     {
@@ -287,6 +289,9 @@ export const FEATURES: { title: string; svc: ServiceId; page: string; words: str
     { title: 'Session Manager', svc: 'ssm', page: 'sessions', words: 'session shell' },
     { title: 'Backup vaults', svc: 'backup', page: 'vaults', words: 'vault recovery point restore lock' },
     { title: 'Alarms', svc: 'cloudwatch', page: 'alarms', words: 'alarm cpu metric' },
+    { title: 'Log groups', svc: 'cloudwatch', page: 'log-groups', words: 'logs log group retention stream' },
+    { title: 'Logs Insights', svc: 'cloudwatch', page: 'insights', words: 'logs insights query' },
+    { title: 'EC2 Instance Connect Endpoints', svc: 'ec2', page: 'eices', words: 'instance connect endpoint ssh eice' },
     { title: 'Findings', svc: 'guardduty', page: 'findings', words: 'finding threat' },
     { title: 'Event history', svc: 'cloudtrail', page: 'events', words: 'event cloudtrail lookup' },
     { title: 'Stacks', svc: 'cloudformation', page: 'stacks', words: 'stack change set drift' },
@@ -384,6 +389,8 @@ const PAGES: Record<string, Record<string, PageMeta>> = {
     ec2: {
         dashboard: P('Dashboard', '#Home:'), instances: P('Instances', '#Instances:'),
         instance: P('Instance', '#InstanceDetails:instanceId={id}', 'instances', 'id'),
+        connect: P('Connect to instance', '#ConnectToInstance:instanceId={id}', 'instances', 'id'),
+        eices: P('EC2 Instance Connect Endpoints', '#InstanceConnectEndpoints:'),
         'launch-templates': P('Launch templates', '#LaunchTemplates:'),
         'launch-template': P('Launch template', '#LaunchTemplateDetails:launchTemplateId={id}', 'launch-templates', 'name'),
         amis: P('AMIs', '#Images:visibility=owned-by-me'), snapshots: P('Snapshots', '#Snapshots:'),
@@ -421,6 +428,9 @@ const PAGES: Record<string, Record<string, PageMeta>> = {
     cloudwatch: {
         alarms: P('All alarms', '#alarmsV2:'), alarm: P('Alarm', '#alarmsV2:alarm/{name}', 'alarms', 'name'),
         'alarm-create': P('Create alarm', '#alarmsV2:create', 'alarms'), metrics: P('All metrics', '#metricsV2'),
+        'log-groups': P('Log groups', '#logsV2:log-groups'),
+        'log-group': P('Log group', '#logsV2:log-groups/log-group/{name}', 'log-groups', 'name'),
+        insights: P('Logs Insights', '#logsV2:logs-insights'),
     },
     sns: {
         topics: P('Topics', '#/topics'), topic: P('Topic', '#/topic/{arn}', 'topics', 'name'),

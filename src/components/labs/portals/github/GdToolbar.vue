@@ -85,24 +85,51 @@
             </button>
           </div>
         </template>
-        <div v-else class="gd-pop__prs">
+        <div v-else-if="!hasRemote" class="gd-pop__prs">
           <GdIcon name="mark" :size="32" />
           <h3>This repository is not published to GitHub</h3>
           <p>Publish your repository to GitHub to see pull requests.</p>
           <button type="button" class="gd-btn gd-btn--primary" @click="act.publish()">Publish repository</button>
         </div>
+        <div v-else class="gd-pop__prs">
+          <GdIcon name="branch" :size="32" />
+          <h3>You're all set!</h3>
+          <p>No open pull requests in <b>{{ v.remotes[0]?.url }}</b>.</p>
+          <p class="gd-dim">Pull requests are reviewed on GitHub.com, which this lab does not include: merge locally with <b>Merge into current branch</b> instead.</p>
+        </div>
       </div>
     </div>
 
     <!-- Fetch / publish / push -->
-    <div class="gd-tb gd-tb--push">
-      <button type="button" class="gd-tb__btn" :disabled="!v.initialised || busy" @click="act.publish()">
-        <GdIcon name="upload" :size="16" class="gd-tb__icon" />
-        <span class="gd-tb__text">
-          <span class="gd-tb__value">Publish repository</span>
-          <span class="gd-tb__label">Publish this repository to GitHub</span>
-        </span>
-      </button>
+    <div class="gd-tb gd-tb--push" :class="{ 'is-open': open === 'push' }">
+      <div class="gd-tb__split">
+        <button type="button" class="gd-tb__btn" :disabled="!v.initialised || busy || Boolean(v.detached && pushState.kind !== 'publishRepo')"
+                :title="pushState.title" @click="act.syncAction(pushState.kind)">
+          <GdIcon :name="pushState.icon" :size="16" class="gd-tb__icon" />
+          <span class="gd-tb__text">
+            <span class="gd-tb__value">{{ pushState.label }}
+              <span v-if="pushState.ahead" class="gd-tb__badge"><GdIcon name="arrowUp" :size="10" />{{ pushState.ahead }}</span>
+              <span v-if="pushState.behind" class="gd-tb__badge"><GdIcon name="arrowDown" :size="10" />{{ pushState.behind }}</span>
+            </span>
+            <span class="gd-tb__label">{{ pushState.caption }}</span>
+          </span>
+        </button>
+        <button v-if="hasRemote" type="button" class="gd-tb__more" aria-label="More push and pull options"
+                :aria-expanded="open === 'push'" :disabled="!v.initialised || busy" @click="$emit('toggle', 'push')">
+          <GdIcon name="triangleDown" :size="16" />
+        </button>
+      </div>
+      <ul v-if="open === 'push'" class="gd-pop gd-pop--push" role="menu" aria-label="Push and pull">
+        <li><button type="button" role="menuitem" @click="act.syncAction('fetch')">
+          <GdIcon name="sync" :size="14" /><span><b>Fetch {{ remoteName }}</b><br />Update your remote-tracking branch for {{ v.branch }}</span></button></li>
+        <li><button type="button" role="menuitem" :disabled="!tracking || !tracking.upstream || tracking.gone" @click="act.syncAction('pull')">
+          <GdIcon name="download" :size="14" /><span><b>Pull {{ remoteName }}</b><br />Merge {{ tracking?.upstream || 'the upstream branch' }} into {{ v.branch }}</span></button></li>
+        <li><button type="button" role="menuitem" :disabled="!tracking || !tracking.upstream" @click="act.syncAction('push')">
+          <GdIcon name="upload" :size="14" /><span><b>Push {{ remoteName }}</b><br />Send your commits on {{ v.branch }} to the remote</span></button></li>
+        <li><button type="button" role="menuitem" :disabled="!tracking || !tracking.upstream || !(tracking.ahead && tracking.behind)"
+                    @click="act.syncAction('forcePush')">
+          <GdIcon name="alert" :size="14" /><span><b>Force push {{ remoteName }}</b><br />Overwrite any changes on the remote with your local changes</span></button></li>
+      </ul>
     </div>
     <div class="gd-toolbar__fill"></div>
   </div>
@@ -117,11 +144,11 @@
  */
 import { computed, ref, watch } from 'vue';
 import GdIcon from './GdIcon.vue';
-import type { Branch, GdView } from './gd';
+import { fetchedCaption, type Branch, type GdView } from './gd';
 
 const props = defineProps<{
   v: GdView;
-  open: 'repo' | 'branch' | null;
+  open: 'repo' | 'branch' | 'push' | null;
   busy: boolean;
   act: {
     switchTo: (name: string) => void;
@@ -129,14 +156,47 @@ const props = defineProps<{
     mergeInto: () => void;
     publish: () => void;
     createRepo: () => void;
+    syncAction: (kind: string) => void;
   };
 }>();
 defineEmits<{
-  (event: 'toggle', which: 'repo' | 'branch'): void;
+  (event: 'toggle', which: 'repo' | 'branch' | 'push'): void;
   (event: 'branch-context', ev: MouseEvent, branch: Branch): void;
 }>();
 
 const repoFilter = ref('');
+
+const hasRemote = computed(() => props.v.remotes.length > 0);
+const tracking = computed(() => props.v.tracking);
+const remoteName = computed(() => tracking.value?.remote || props.v.remotes[0]?.name || 'origin');
+
+/** The third toolbar button is whichever action Desktop would put there. */
+const pushState = computed(() => {
+  const t = tracking.value;
+  const caption = fetchedCaption(props.v.fetchedAt);
+  if (!hasRemote.value) {
+    return { kind: 'publishRepo', label: 'Publish repository', caption: 'Publish this repository to GitHub',
+             icon: 'upload', ahead: 0, behind: 0, title: '' };
+  }
+  if (props.v.detached) {
+    return { kind: 'fetch', label: `Fetch ${remoteName.value}`, caption, icon: 'sync', ahead: 0, behind: 0,
+             title: 'You are not on a branch' };
+  }
+  if (!t || !t.upstream || t.gone) {
+    return { kind: 'publishBranch', label: 'Publish branch', caption: 'Publish this branch to GitHub',
+             icon: 'upload', ahead: 0, behind: 0, title: '' };
+  }
+  if (t.behind) {
+    return { kind: 'pull', label: `Pull ${remoteName.value}`, caption, icon: 'download', ahead: t.ahead,
+             behind: t.behind, title: `Pull ${t.behind} commit${t.behind === 1 ? '' : 's'} from ${t.upstream}` };
+  }
+  if (t.ahead) {
+    return { kind: 'push', label: `Push ${remoteName.value}`, caption, icon: 'upload', ahead: t.ahead, behind: 0,
+             title: `Push ${t.ahead} commit${t.ahead === 1 ? '' : 's'} to ${t.upstream}` };
+  }
+  return { kind: 'fetch', label: `Fetch ${remoteName.value}`, caption, icon: 'sync', ahead: 0, behind: 0,
+           title: `Fetch the latest changes from ${remoteName.value}` };
+});
 const branchFilter = ref('');
 const branchTab = ref<'branches' | 'prs'>('branches');
 const addOpen = ref(false);
@@ -199,6 +259,29 @@ function shortAgo(at: string) {
 .gd-tb__label { font-size: 11px; color: #959da5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gd-tb__value { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gd-tb--push .gd-tb__label { font-size: 11px; }
+.gd-tb__split { display: flex; height: 100%; }
+.gd-tb__split > .gd-tb__btn { flex: 1; min-width: 0; }
+.gd-tb__more {
+  flex: none; width: 28px; border: 0; border-left: 1px solid #141414; border-radius: 0; background: transparent;
+  color: #fff; display: inline-grid; place-items: center; cursor: default;
+}
+.gd-tb__more:hover:not(:disabled) { background: var(--gd-toolbar-hover); }
+.gd-tb.is-open .gd-tb__more { background: #fff; color: var(--gd-text); }
+.gd-tb__badge {
+  display: inline-flex; align-items: center; gap: 1px; margin-left: 6px; padding: 0 5px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18); font-size: 11px; font-weight: 600; line-height: 15px; vertical-align: 1px;
+}
+.gd-pop--push { left: auto; right: 0; width: 300px; list-style: none; margin: 0; padding: 4px 0; }
+.gd-pop--push button {
+  display: flex; align-items: flex-start; gap: 8px; width: 100%; border: 0; background: none; text-align: left;
+  padding: 6px 12px; font-size: 12px; color: var(--gd-text); cursor: default; line-height: 16px;
+}
+.gd-pop--push button > .gd-icon { margin-top: 2px; flex: none; }
+.gd-pop--push button span { color: var(--gd-text-secondary); }
+.gd-pop--push button b { color: var(--gd-text); font-weight: 600; }
+.gd-pop--push button:hover:not(:disabled) { background: var(--gd-blue); }
+.gd-pop--push button:hover:not(:disabled) span, .gd-pop--push button:hover:not(:disabled) b { color: #fff; }
+.gd-pop--push button:disabled { opacity: 0.5; }
 .gd-tb__caret { flex: none; }
 .gd-pop {
   position: absolute; left: 0; top: 100%; width: 365px; max-width: calc(100cqw - 8px); background: #fff;
@@ -263,7 +346,8 @@ function shortAgo(at: string) {
   .gd-tb__caret { display: none; }
   .gd-tb__btn { gap: 6px; padding: 0 8px; }
   .gd-tb--push .gd-tb__value { font-size: 0; }
-  .gd-tb--push { flex: none; width: 44px; }
+  .gd-tb--push { flex: none; width: 72px; }
+  .gd-tb__badge { display: none; }
   .gd-tb--push .gd-tb__text { display: none; }
   .gd-tb { position: static; }
   .gd-pop { left: 0; right: 0; width: auto; max-width: none; }

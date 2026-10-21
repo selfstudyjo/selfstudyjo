@@ -17,10 +17,11 @@
           <span class="iv__key">{{ issue.id }}</span>
         </nav>
         <div class="iv__tools">
-          <button type="button" class="j-btn j-btn--subtle j-btn--icon" title="Watch options" aria-label="Watch options">
-            <JiraIcon name="eye" /></button>
-          <button type="button" class="j-btn j-btn--subtle j-btn--icon" title="Like" aria-label="Like"><JiraIcon name="like" /></button>
-          <button type="button" class="j-btn j-btn--subtle j-btn--icon" title="Share" aria-label="Share"><JiraIcon name="share" /></button>
+          <button type="button" class="j-btn j-btn--subtle iv__watch" :class="{ 'is-on': issue.watching }"
+                  :title="issue.watching ? 'Stop watching' : 'Start watching'" :aria-pressed="issue.watching"
+                  @click="watch_(issue!, !issue.watching)"><JiraIcon name="eye" /> {{ issue.watching ? 1 : 0 }}</button>
+          <button type="button" class="j-btn j-btn--subtle j-btn--icon" title="Copy link" aria-label="Copy link"
+                  @click="copy(issueUrl(issue.id), 'Link')"><JiraIcon name="share" /></button>
           <JiraDropdown :items="actionItems" label="Actions" align="right" trigger-class="j-btn j-btn--subtle j-btn--icon"
                         @select="onAction">
             <template #trigger><JiraIcon name="more" /></template>
@@ -43,6 +44,11 @@
           <h1 v-else class="iv__title" tabindex="0" role="button" title="Click to edit the summary"
               @click="startTitle" @keydown.enter.prevent="startTitle">{{ issue.title }}</h1>
 
+          <div v-if="issue.flagged" class="j-msg j-msg--warning iv__flagged">
+            <JiraIcon name="flag" :size="16" />
+            <div><div class="j-msg__title">Flagged</div>This work item is impeded.</div>
+            <button type="button" class="j-btn j-btn--compact" @click="setFlag(issue!, false)">Remove flag</button>
+          </div>
           <div class="iv__buttons">
             <button type="button" class="j-btn" disabled title="Attachments are not part of this simulation"><JiraIcon name="attach" /> Attach</button>
             <JiraDropdown :items="krItems" :selected="issue.kr" label="Link key result" trigger-class="j-btn"
@@ -50,6 +56,8 @@
               <template #trigger><JiraIcon name="link" /> Link key result</template>
             </JiraDropdown>
             <button type="button" class="j-btn" @click="showDelegate = !showDelegate"><JiraIcon name="team" /> Delegate</button>
+            <button type="button" class="j-btn" @click="addingSub = true"><JiraIcon name="subtask" /> Add subtask</button>
+            <button type="button" class="j-btn" @click="ctx.openDialog('link', issue.id)"><JiraIcon name="link" /> Link work item</button>
           </div>
 
           <form v-if="showDelegate" class="iv__panel" @submit.prevent="delegate">
@@ -86,6 +94,59 @@
                  @click="startDesc" @keydown.enter.prevent="startDesc">
               {{ issue.description || 'Add a description…' }}
             </div>
+          </section>
+
+          <section class="iv__section">
+            <div class="iv__sec-head"><h2 class="j-h3">Subtasks</h2>
+              <span v-if="issue.subtasks.length" class="j-small">{{ subsDone }} of {{ issue.subtasks.length }} done</span>
+              <span class="iv__spacer" />
+              <button type="button" class="j-btn j-btn--subtle j-btn--icon j-btn--compact" aria-label="Add subtask" title="Add subtask"
+                      @click="addingSub = true"><JiraIcon name="plus" /></button></div>
+            <div v-if="issue.subtasks.length" class="j-progress j-progress--green iv__subbar"><span :style="{ width: (100 * subsDone / issue.subtasks.length) + '%' }" /></div>
+            <ul class="iv__subs">
+              <li v-for="sub in issue.subtasks" :key="sub.n" class="iv__sub" :class="{ 'is-done': sub.done }"
+                  @contextmenu="subMenu($event, sub)">
+                <input type="checkbox" :checked="sub.done" :aria-label="'Done: ' + sub.title" :disabled="busy"
+                       @change="subtask(sub.done ? '--todo' : '--done', String(sub.n), sub.done ? 'Subtask reopened' : 'Subtask done')" />
+                <JiraIcon name="subtask" :size="14" class="iv__sub-icon" />
+                <span class="j-key">{{ issue.id }}-{{ sub.n }}</span>
+                <form v-if="renaming === sub.n" class="iv__sub-form" @submit.prevent="renameSub(sub.n)">
+                  <input v-model="subTitle" class="j-input iv__select" aria-label="Subtask title" autofocus @keydown.esc="renaming = 0" />
+                  <button type="submit" class="j-btn j-btn--primary j-btn--compact">Save</button>
+                </form>
+                <span v-else class="iv__sub-title">{{ sub.title }}</span>
+                <span class="j-lozenge" :class="sub.done ? 'j-lozenge--done' : 'j-lozenge--todo'">{{ sub.done ? 'Done' : 'To Do' }}</span>
+                <button type="button" class="j-btn j-btn--subtle j-btn--icon j-btn--compact" :aria-label="'Actions for subtask ' + sub.n"
+                        @click="subMenu($event, sub)"><JiraIcon name="more" /></button>
+              </li>
+            </ul>
+            <form v-if="addingSub" class="iv__sub-new" @submit.prevent="addSub">
+              <input v-model="newSub" class="j-input iv__select" placeholder="What needs to be done?" aria-label="New subtask"
+                     maxlength="255" autofocus @keydown.esc="addingSub = false" />
+              <button type="submit" class="j-btn j-btn--primary j-btn--compact" :disabled="!newSub.trim() || busy">Create</button>
+              <button type="button" class="j-btn j-btn--subtle j-btn--compact" @click="addingSub = false">Cancel</button>
+            </form>
+            <p v-if="!issue.subtasks.length && !addingSub" class="j-small">Break this work item into smaller steps. Ticking them off does not deliver points — a sprint does.</p>
+          </section>
+
+          <section class="iv__section">
+            <div class="iv__sec-head"><h2 class="j-h3">Linked work items</h2><span class="iv__spacer" />
+              <button type="button" class="j-btn j-btn--subtle j-btn--icon j-btn--compact" aria-label="Link work item" title="Link work item"
+                      @click="ctx.openDialog('link', issue.id)"><JiraIcon name="plus" /></button></div>
+            <template v-for="group in linkGroups" :key="group.type">
+              <div class="j-small iv__link-type">{{ group.type }}</div>
+              <ul class="iv__subs">
+                <li v-for="link in group.links" :key="link.key" class="iv__sub">
+                  <JiraIcon :name="link.issue?.type || 'story'" kind="type" />
+                  <button type="button" class="j-link j-nowrap" @click="ctx.openIssue(link.key)">{{ link.key }}</button>
+                  <span class="iv__sub-title">{{ link.issue?.title || '(deleted)' }}</span>
+                  <span v-if="link.issue" class="j-lozenge" :class="'j-lozenge--' + link.issue.status">{{ STATUS_LABEL[link.issue.status] }}</span>
+                  <button type="button" class="j-btn j-btn--subtle j-btn--icon j-btn--compact" :aria-label="'Remove link to ' + link.key"
+                          title="Remove link" @click="unlinkIssue(issue!, link.key)"><JiraIcon name="close" :size="14" /></button>
+                </li>
+              </ul>
+            </template>
+            <p v-if="!issue.links.length" class="j-small">No linked work items. Link one to record that it blocks, duplicates or relates to this one.</p>
           </section>
 
           <section class="iv__section">
@@ -148,9 +209,26 @@
                 <JiraAvatar name="You Manager" :size="32" />
                 <div>
                   <div class="iv__entry-head"><strong>You</strong>
+                    <span v-if="entry.edited" class="j-small">(edited)</span>
                     <span v-if="entry.kind === 'history'">{{ entry.text }}</span>
                     <span class="j-small">Sprint {{ entry.sprint }}</span></div>
-                  <div v-if="entry.kind === 'comment'" class="iv__entry-body">{{ entry.text }}</div>
+                  <template v-if="entry.kind === 'comment'">
+                    <div v-if="editingComment === entry.order" class="iv__gap">
+                      <textarea v-model="commentDraft" class="j-textarea" rows="3" aria-label="Edit comment" />
+                      <div class="j-actions iv__gap">
+                        <button type="button" class="j-btn j-btn--primary" :disabled="!commentDraft.trim()" @click="saveCommentEdit(entry.order)">Save</button>
+                        <button type="button" class="j-btn j-btn--subtle" @click="editingComment = -1">Cancel</button>
+                      </div>
+                    </div>
+                    <template v-else>
+                      <div class="iv__entry-body">{{ entry.text }}</div>
+                      <div class="iv__entry-actions">
+                        <button type="button" class="j-link" @click="startCommentEdit(entry.order, entry.text)">Edit</button>
+                        <span aria-hidden="true">·</span>
+                        <button type="button" class="j-link" @click="deleteComment(entry.order)">Delete</button>
+                      </div>
+                    </template>
+                  </template>
                 </div>
               </li>
               <li v-if="!activity.length" class="j-small">Nothing here yet.</li>
@@ -180,8 +258,15 @@
               <dd><span class="iv__field-static"><JiraAvatar name="You Manager" :size="24" /> You</span></dd>
               <dt>Labels</dt>
               <dd>
-                <select class="j-select iv__select" :value="issue.skill" aria-label="Labels"
-                        @change="e => edit({ '--skill': (e.target as HTMLSelectElement).value }, 'Labels updated')">
+                <button type="button" class="iv__labels" title="Edit labels" @click="ctx.openDialog('labels', issue.id)">
+                  <span v-for="l in issue.labels" :key="l" class="iv__label">{{ l }}</span>
+                  <span v-if="!issue.labels.length" class="j-muted">None</span>
+                </button>
+              </dd>
+              <dt>Component</dt>
+              <dd>
+                <select class="j-select iv__select" :value="issue.skill" aria-label="Component"
+                        @change="e => edit({ '--skill': (e.target as HTMLSelectElement).value }, 'Component updated')">
                   <option v-for="skill in skills" :key="skill" :value="skill">{{ skill }}</option>
                 </select>
               </dd>
@@ -215,7 +300,8 @@
               </dd>
             </dl>
           </details>
-          <p class="j-small iv__dates">Created Sprint {{ issue.created }}<br />
+          <p class="j-small iv__dates">
+            <JiraIcon v-if="issue.flagged" name="flag" :size="12" class="iv__flag" /> {{ issue.flagged ? 'Flagged · ' : '' }}Created Sprint {{ issue.created }}<br />
             Updated Sprint {{ lastSprint }}</p>
         </aside>
       </div>
@@ -231,12 +317,15 @@ import JiraModal from './JiraModal.vue';
 import JiraIcon from './JiraIcon.vue';
 import JiraAvatar from './JiraAvatar.vue';
 import JiraDropdown, { type DropItem } from './JiraDropdown.vue';
-import { PRIORITY_LABEL, sprintName, STATUS_LABEL } from './jiraKit';
+import { issueUrl, PRIORITY_LABEL, sprintName, STATUS_LABEL } from './jiraKit';
 import { useJira } from './useJira';
 
 const props = defineProps<{ issueKey: string }>();
 const emit = defineEmits<{ (event: 'close'): void }>();
-const { ctx, all, team, sprint, move, assign, addToSprint, moveToBacklog, deleteIssue } = useJira();
+const { ctx, all, team, sprint, move, assign, addToSprint, moveToBacklog, deleteIssue, setFlag, watch: watchIssue,
+        unlinkIssue, copy } = useJira();
+const busy = ctx.busy;
+const watch_ = watchIssue;
 
 const issue = computed(() => all.value.find(row => row.id === props.issueKey) || null);
 const skills = computed(() => {
@@ -308,9 +397,77 @@ const statusItems = computed<DropItem[]>(() => {
 const actionItems = computed<DropItem[]>(() => [
   issue.value?.in_sprint ? { label: 'Move to Backlog', value: 'backlog' }
     : { label: `Move to ${sprintName(sprint.value.n)}`, value: 'sprint', disabled: issue.value?.status === 'done' },
+  { label: issue.value?.flagged ? 'Remove flag' : 'Add flag', value: issue.value?.flagged ? 'unflag' : 'flag' },
+  { label: 'Add label', value: 'labels' },
+  { label: 'Link work item', value: 'link' },
+  { label: 'Add subtask', value: 'subtask' },
+  { label: issue.value?.watching ? 'Stop watching' : 'Watch', value: 'watch' },
   { label: 'Delegate…', value: 'delegate' },
-  { label: 'Delete', value: 'delete', danger: true },
+  { label: 'Copy link', value: 'copy-link', section: 'Share' },
+  { label: 'Copy key', value: 'copy-key' },
+  { label: 'Delete', value: 'delete', danger: true, section: 'Danger zone' },
 ]);
+
+const subsDone = computed(() => (issue.value?.subtasks || []).filter(sub => sub.done).length);
+const addingSub = ref(false);
+const newSub = ref('');
+const renaming = ref(0);
+const subTitle = ref('');
+
+async function subtask(flag: string, value: string, success: string, extra: Record<string, string> = {}) {
+  if (!issue.value) return false;
+  const result = await ctx.exec(cli(['mgr', 'backlog', 'subtask', issue.value.id], { [flag]: value, ...extra }), { success });
+  return result.ok;
+}
+async function addSub() {
+  const title = newSub.value.trim();
+  if (title && await subtask('--add', title, 'Subtask created')) newSub.value = '';
+}
+async function renameSub(n: number) {
+  const title = subTitle.value.trim();
+  if (title && await subtask('--rename', String(n), 'Subtask renamed', { '--title': title })) renaming.value = 0;
+}
+function subMenu(event: MouseEvent, sub: { n: number; title: string; done: boolean }) {
+  ctx.openMenu(event, [
+    { label: sub.done ? 'Mark as To Do' : 'Mark as Done', value: 'toggle' },
+    { label: 'Rename', value: 'rename' },
+    { label: 'Delete', value: 'delete', danger: true },
+  ], async value => {
+    if (value === 'toggle') await subtask(sub.done ? '--todo' : '--done', String(sub.n), sub.done ? 'Subtask reopened' : 'Subtask done');
+    else if (value === 'rename') { renaming.value = sub.n; subTitle.value = sub.title; }
+    else if (value === 'delete' && await ctx.confirm({ title: `Delete subtask ${issue.value?.id}-${sub.n}?`,
+      body: `"${sub.title}" will be permanently deleted.`, confirm: 'Delete', danger: true })) {
+      await subtask('--remove', String(sub.n), 'Subtask deleted');
+    }
+  });
+}
+
+const linkGroups = computed(() => {
+  const groups: { type: string; links: { key: string; issue: typeof issue.value }[] }[] = [];
+  for (const link of issue.value?.links || []) {
+    let group = groups.find(g => g.type === link.type);
+    if (!group) { group = { type: link.type, links: [] }; groups.push(group); }
+    group.links.push({ key: link.key, issue: all.value.find(row => row.id === link.key) || null });
+  }
+  return groups;
+});
+
+const editingComment = ref(-1);
+const commentDraft = ref('');
+function startCommentEdit(index: number, text: string) { editingComment.value = index; commentDraft.value = text; }
+async function saveCommentEdit(index: number) {
+  if (!issue.value || !commentDraft.value.trim()) return;
+  const result = await ctx.exec(cli(['mgr', 'backlog', 'comment', issue.value.id],
+    { '--edit': String(index + 1), '--body': commentDraft.value.trim() }), { success: 'Comment updated' });
+  if (result.ok) editingComment.value = -1;
+}
+async function deleteComment(index: number) {
+  if (!issue.value) return;
+  const yes = await ctx.confirm({ title: 'Delete this comment?', body: "Once you delete, it's gone for good.",
+                                  confirm: 'Delete', danger: true });
+  if (yes) await ctx.exec(cli(['mgr', 'backlog', 'comment', issue.value.id], { '--delete': String(index + 1) }),
+                          { success: 'Comment deleted' });
+}
 
 async function edit(flags: Record<string, string>, success: string) {
   if (!issue.value) return false;
@@ -397,13 +554,21 @@ async function onAction(value: string) {
   if (value === 'sprint') await addToSprint([issue.value.id]);
   else if (value === 'backlog') await moveToBacklog([issue.value.id]);
   else if (value === 'delegate') showDelegate.value = true;
+  else if (value === 'flag') ctx.openDialog('flag', issue.value.id);
+  else if (value === 'unflag') await setFlag(issue.value, false);
+  else if (value === 'labels' || value === 'link') ctx.openDialog(value, issue.value.id);
+  else if (value === 'subtask') addingSub.value = true;
+  else if (value === 'watch') await watch_(issue.value, !issue.value.watching);
+  else if (value === 'copy-link') await copy(issueUrl(issue.value.id), 'Link');
+  else if (value === 'copy-key') await copy(issue.value.id, 'Key');
   else if (value === 'delete' && await deleteIssue(issue.value)) emit('close');
 }
 
 const activity = computed(() => {
   if (!issue.value) return [];
-  const comments = issue.value.comments.map((c, index) => ({ kind: 'comment', text: c.body, sprint: c.sprint, order: index }));
-  const history = issue.value.events.map((e, index) => ({ kind: 'history', text: e.text, sprint: e.sprint, order: index }));
+  const comments = issue.value.comments.map((c: any, index) => ({ kind: 'comment', text: c.body, sprint: c.sprint, order: index,
+                                                                    edited: Boolean(c.edited) }));
+  const history = issue.value.events.map((e, index) => ({ kind: 'history', text: e.text, sprint: e.sprint, order: index, edited: false }));
   const list = tab.value === 'Comments' ? comments : tab.value === 'History' ? history : [...comments, ...history];
   return list.sort((a, b) => b.sprint - a.sprint || b.order - a.order);
 });
@@ -446,6 +611,33 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 .iv__desc.is-empty { color: var(--j-text-subtlest); }
 .iv__gap { margin-top: 8px; }
 .iv__delivery { display: flex; align-items: center; gap: 12px; }
+.iv__flagged { align-items: center; }
+.iv__flagged > .ji { color: #C9372C; }
+.iv__flagged > div { flex: 1; }
+.iv__flag { color: #C9372C; }
+.iv :deep(.iv__watch.is-on), .iv__watch.is-on { background: var(--j-selected); color: var(--j-selected-text); }
+.iv__sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.iv__sec-head .j-h3 { margin: 0; }
+.iv__spacer { flex: 1; }
+.iv__subbar { margin-bottom: 8px; }
+.iv__subs { list-style: none; margin: 0; padding: 0; border: 1px solid var(--j-border); border-radius: 4px; }
+.iv__subs:empty { display: none; }
+.iv__sub { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 8px; border-bottom: 1px solid var(--j-border); }
+.iv__sub:last-child { border-bottom: 0; }
+.iv__sub:hover { background: var(--j-sunken); }
+.iv__sub input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--j-brand); }
+.iv__sub-icon { color: #1868DB; }
+.iv__sub-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.iv__sub.is-done .iv__sub-title { text-decoration: line-through; color: var(--j-text-subtle); }
+.iv__sub-form, .iv__sub-new { display: flex; flex: 1; gap: 6px; align-items: center; }
+.iv__sub-new { margin-top: 8px; }
+.iv__link-type { margin: 8px 0 4px; font-weight: 600; }
+.iv__entry-actions { display: flex; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--j-text-subtlest); }
+.iv__entry-actions .j-link { font-size: 12px; color: var(--j-text-subtle); }
+.iv__labels { display: flex; flex-wrap: wrap; gap: 4px; min-height: 32px; width: 100%; align-items: center; padding: 4px 6px; margin-left: -6px;
+  border: 0; border-radius: 3px; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.iv__labels:hover { background: var(--j-neutral); }
+.iv__label { padding: 0 4px; border-radius: 3px; background: var(--j-neutral); font-size: 12px; line-height: 18px; }
 .iv__delivery .j-progress { width: 200px; }
 .iv__toggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: inherit; font-weight: 653; color: var(--j-text); cursor: pointer; }
 .iv__raci-sum { font-weight: 400; color: var(--j-text-subtle); font-size: 12px; }

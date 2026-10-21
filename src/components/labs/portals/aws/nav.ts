@@ -366,6 +366,11 @@ export function urlFor(route: Route, region: string): string {
         case 'instances': return `${base}Instances:`;
         case 'launch': return `${base}LaunchInstances:`;
         case 'instance': return `${base}InstanceDetails:instanceId=${p.id}`;
+        case 'connect': return `${base}ConnectToInstance:instanceId=${p.id}`;
+        case 'terminal': return p.via === 'ssm'
+            ? `${host}/systems-manager/session-manager/${p.id}${q}`
+            : `${host}/ec2-instance-connect/ssh${q}&connType=standard&instanceId=${p.id}&osUser=${enc(p.user || '')}&sshPort=22#/`;
+        case 'sg-outbound': return `${base}ModifyOutboundSecurityGroupRules:securityGroupId=${p.id}`;
         case 'sgs': return `${base}SecurityGroups:`;
         case 'sg': return `${base}SecurityGroup:groupId=${p.id}`;
         case 'sg-create': return `${base}CreateSecurityGroup:`;
@@ -389,6 +394,7 @@ export function urlFor(route: Route, region: string): string {
         case 'sg': return `${base}SecurityGroup:groupId=${p.id}`;
         case 'sg-create': return `${base}CreateSecurityGroup:`;
         case 'sg-inbound': return `${base}ModifyInboundSecurityGroupRules:securityGroupId=${p.id}`;
+        case 'sg-outbound': return `${base}ModifyOutboundSecurityGroupRules:securityGroupId=${p.id}`;
         case 'routes': return `${base}RouteTables:`;
         case 'nats': return `${base}NatGateways:`;
         case 'endpoints': return `${base}Endpoints:`;

@@ -5,7 +5,7 @@
  */
 import { inject, type ComputedRef, type InjectionKey, type Ref } from 'vue';
 import type { PortalResult } from '@/utils/portalKit';
-import type { AfConnection, AfDag, AfPool, AfRoute, AfRun, AfTi, AfVariable, AfXcom } from './airflow';
+import type { AfConnection, AfDag, AfPool, AfRoute, AfRun, AfTi, AfVariable, AfXcom, AfJob } from './airflow';
 
 export interface RunOptions {
     success?: string;
@@ -20,6 +20,17 @@ export interface ConfirmRequest {
     danger?: boolean;
 }
 
+/** One row of a right-click menu. */
+export interface CtxItem {
+    label: string;
+    hint?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    divider?: boolean;
+    header?: boolean;
+    action?: () => void;
+}
+
 export interface AfContext {
     version: ComputedRef<string>;
     executor: ComputedRef<string>;
@@ -32,6 +43,7 @@ export interface AfContext {
     pools: ComputedRef<AfPool[]>;
     xcom: ComputedRef<AfXcom[]>;
     slaMisses: ComputedRef<Record<string, any>[]>;
+    jobs: ComputedRef<AfJob[]>;
     scheduler: ComputedRef<Record<string, any>>;
     airflowView: ComputedRef<Record<string, any>>;
     clock: ComputedRef<string>;
@@ -41,6 +53,8 @@ export interface AfContext {
     go: (route: AfRoute) => void;
     run: (command: string, options?: RunOptions) => Promise<PortalResult>;
     confirm: (request: ConfirmRequest) => Promise<boolean>;
+    /** Open a right-click menu at the pointer. */
+    openMenu: (event: MouseEvent, title: string, items: CtxItem[]) => void;
     notify: (type: 'success' | 'error' | 'info' | 'warning', title: string, detail?: string) => void;
     refresh: () => void;
     dag: (id: string) => AfDag | undefined;

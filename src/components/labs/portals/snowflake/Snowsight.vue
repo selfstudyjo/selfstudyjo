@@ -1,5 +1,5 @@
 <template>
-  <div class="sf-app" :class="{ 'is-collapsed': collapsed }" dir="ltr">
+  <div ref="appEl" class="sf-app" :class="{ 'is-collapsed': collapsed }" dir="ltr">
     <!-- ===== Left navigation (Snowsight 2024+) ===== -->
     <aside class="sf-nav" :class="{ 'is-open': navOpen }" aria-label="Snowsight">
       <div class="sf-nav__top">
@@ -125,6 +125,15 @@
 
     <SfCreate v-if="creating" :kind="creating.kind" :defaults="creating.defaults" @close="creating = null" />
 
+    <SfContextMenu v-if="ctxMenu" :key="ctxMenu.seq" :items="ctxMenu.items" :x="ctxMenu.x" :y="ctxMenu.y" :bounds="ctxMenu.bounds"
+                   :title="ctxMenu.title" @close="ctxMenu = null" />
+    <LoadDataDialog v-if="shellDialog?.kind === 'load'" :table="shellDialog.table" :stage="shellDialog.stage" @close="shellDialog = null" />
+    <UnloadDialog v-else-if="shellDialog?.kind === 'unload'" :table="shellDialog.table" :stage="shellDialog.stage" @close="shellDialog = null" />
+    <GrantDialog v-else-if="shellDialog?.kind === 'grant'" mode="privilege" :on-kind="shellDialog.onKind" :on-name="shellDialog.onName" @close="shellDialog = null" />
+    <PromptDialog v-else-if="shellDialog?.kind === 'prompt'" :title="shellDialog.title" :subtitle="shellDialog.subtitle" :message="shellDialog.message"
+                  :ok-text="shellDialog.okText" :danger="shellDialog.danger" :fields="shellDialog.fields" :build="shellDialog.build"
+                  :success="shellDialog.success" @close="shellDialog = null" @done="promptDone" />
+
     <SfModal v-if="pending" :title="pending.title" :ok-text="pending.yes || 'OK'" :danger="pending.danger"
              :ok-disabled="Boolean(pending.typeToConfirm) && confirmText.trim().toUpperCase() !== String(pending.typeToConfirm).toUpperCase()"
              :width="480" @close="answer(false)" @ok="answer(true)">
@@ -155,6 +164,11 @@ import { errorText, pick, type PortalResult } from '@/utils/portalKit';
 import SfIcon from './SfIcon.vue';
 import SfModal from './SfModal.vue';
 import SfCreate from './SfCreate.vue';
+import SfContextMenu from './SfContextMenu.vue';
+import LoadDataDialog from './LoadDataDialog.vue';
+import UnloadDialog from './UnloadDialog.vue';
+import GrantDialog from './GrantDialog.vue';
+import PromptDialog from './PromptDialog.vue';
 import HomePage from './HomePage.vue';
 import WorksheetsPage from './WorksheetsPage.vue';
 import WorksheetPage from './WorksheetPage.vue';
@@ -166,7 +180,8 @@ import GovernancePage from './GovernancePage.vue';
 import WarehousesPage from './WarehousesPage.vue';
 import CostPage from './CostPage.vue';
 import UsersRolesPage from './UsersRolesPage.vue';
-import { SF, type ConfirmRequest, type CreateKind, type QueryResult, type RunOptions, type SfContext, type Worksheet } from './sfContext';
+import { SF, type ConfirmRequest, type CreateKind, type QueryResult, type RunOptions, type SfContext, type SfDialogRequest,
+  type SfMenuItem, type Worksheet } from './sfContext';
 import { current, gridsOf, ident, initials, list, readProfile, routeUrl, sizeLabel, SURFACE, type Profile, type SfRoute } from './snowflake';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
@@ -346,11 +361,45 @@ function notify(type: 'success' | 'error' | 'info' | 'warning', title: string, d
 }
 const shownFlashes = computed(() => props.api.flashes.value.slice(0, 3));
 
+/* ------------------------------------------------- context menu, shell dialogs */
+
+const appEl = ref<HTMLElement | null>(null);
+let menuSeq = 0;
+const ctxMenu = ref<{ seq: number; items: SfMenuItem[]; x: number; y: number; bounds: { width: number; height: number }; title?: string } | null>(null);
+function openMenu(event: MouseEvent, items: SfMenuItem[], title?: string) {
+  event.preventDefault();
+  event.stopPropagation();
+  const box = appEl.value?.getBoundingClientRect();
+  if (!box || !items.length) return;
+  let x = event.clientX - box.left;
+  let y = event.clientY - box.top;
+  if (!event.clientX && !event.clientY) {
+    // Opened from the keyboard (the context-menu key, Shift+F10): at the element.
+    const r = (event.target as HTMLElement | null)?.getBoundingClientRect();
+    x = (r ? r.left - box.left + 24 : 24);
+    y = (r ? r.bottom - box.top : 24);
+  }
+  ctxMenu.value = { seq: ++menuSeq, items, x, y, bounds: { width: box.width, height: box.height }, title };
+}
+function closeMenu() { ctxMenu.value = null; }
+
+const shellDialog = ref<SfDialogRequest | null>(null);
+function openDialog(request: SfDialogRequest) {
+  ctxMenu.value = null;
+  shellDialog.value = request;
+}
+function promptDone(values: Record<string, string>) {
+  const d = shellDialog.value;
+  if (d && d.kind === 'prompt') d.then?.(values);
+}
+
 function onKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') { ctxOpen.value = false; createOpen.value = false; }
+  if (event.key === 'Escape') { ctxOpen.value = false; createOpen.value = false; ctxMenu.value = null; }
 }
 onMounted(() => {
   window.addEventListener('keydown', onKey);
+  window.addEventListener('mousedown', closeMenu);
+  window.addEventListener('scroll', closeMenu, true);
   // A lab's platform is built on its first statement. Signing in to Snowsight
   // runs the session's context query, which is what builds it here - so the
   // explorer and the warehouses are populated before the student types.
@@ -358,7 +407,11 @@ onMounted(() => {
     void sql('SELECT CURRENT_ACCOUNT(), CURRENT_ROLE(), CURRENT_WAREHOUSE()', { quiet: true, unlogged: true });
   }
 });
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey);
+  window.removeEventListener('mousedown', closeMenu);
+  window.removeEventListener('scroll', closeMenu, true);
+});
 
 const ctx: SfContext = {
   view: viewRef,
@@ -376,6 +429,8 @@ const ctx: SfContext = {
   useRole,
   useWarehouse,
   create: startCreate,
+  menu: openMenu,
+  dialog: openDialog,
 };
 provide(SF, ctx);
 </script>

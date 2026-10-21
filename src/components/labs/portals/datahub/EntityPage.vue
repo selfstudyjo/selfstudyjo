@@ -27,6 +27,12 @@
           <span class="dh-spacer" />
           <button type="button" class="dh-btn" @click="setTab('Lineage')"><DhIcon name="lineage" /> Lineage</button>
           <button type="button" class="dh-btn" @click="impact"><DhIcon name="diff" /> Impact Analysis</button>
+          <DhMenu label="Entity actions" :items="entityActions" />
+        </div>
+        <div v-if="entity.deprecation" class="dh-alert dh-alert--warning dh-deprecated">
+          <DhIcon name="deprecated" />
+          <span><b>Deprecated</b> by {{ (entity.deprecation.actor || '').replace('urn:li:corpuser:', '') }}<template v-if="entity.deprecation.note"> - {{ entity.deprecation.note }}</template></span>
+          <button type="button" class="dh-btn dh-btn--link dh-btn--sm" @click="undeprecate">Mark as un-deprecated</button>
         </div>
         <div class="dh-entity__stats">
           <span><DhIcon name="column" :size="13" /> {{ entity.columns.length }} columns</span>
@@ -111,6 +117,11 @@
 
     <EntitySidebar :entity="entity" @edit="editing = $event" />
 
+    <DhModal v-if="deprecateNote !== null" title="Add Deprecation Details" ok-text="Ok" :busy="dh.busy.value"
+             @close="deprecateNote = null" @ok="deprecate">
+      <div class="dh-field"><span class="dh-label">Reason</span>
+        <textarea v-model="deprecateNote" class="dh-textarea" rows="3" placeholder="Add Reason" aria-label="Deprecation reason" /></div>
+    </DhModal>
     <EditModal v-if="editing" :mode="editing.mode" :urn="entity.urn" :column="editing.column" :initial="editing.initial"
                @close="editing = null" />
   </div>
@@ -127,8 +138,11 @@ import ContractTab from './ContractTab.vue';
 import IncidentsList from './IncidentsList.vue';
 import EntitySidebar from './EntitySidebar.vue';
 import EditModal from './EditModal.vue';
+import DhMenu from './DhMenu.vue';
+import DhModal from './DhModal.vue';
+import { setDeprecation } from './edits';
 import {
-  browsePath, dh as cmd, fullUrn, platformLabel, sameDataset, shortName, subtypeOf, useDh,
+  browsePath, dh as cmd, fullUrn, platformLabel, sameDataset, shortName, subtypeOf, useDh, type DhMenuItem,
 } from './dhContext';
 
 const dh = useDh();
@@ -180,6 +194,26 @@ function setTab(name: string) {
   dh.route.value = { ...dh.route.value, tab: name };
 }
 
+const entityActions = computed<DhMenuItem[]>(() => {
+  const e = entity.value;
+  return [
+    e?.deprecation
+      ? { label: 'Mark as un-deprecated', icon: 'deprecated', run: undeprecate }
+      : { label: 'Mark as deprecated', icon: 'deprecated', run: () => { deprecateNote.value = ''; } },
+    { label: 'Edit documentation', icon: 'pencil', run: () => { editing.value = { mode: 'docs', initial: e?.description || '' }; } },
+    { label: 'Set domain', icon: 'domain', run: () => { editing.value = { mode: 'domain', initial: e?.domain || '' }; } },
+    { label: 'Add owners', icon: 'user', run: () => { editing.value = { mode: 'owner' }; } },
+    { divider: true },
+    { label: 'Copy URN', icon: 'copy', run: copyUrn },
+  ];
+});
+const deprecateNote = ref<string | null>(null);
+async function deprecate() {
+  const result = await setDeprecation(dh, urn.value, true, (deprecateNote.value || '').trim());
+  if (result.ok) deprecateNote.value = null;
+}
+async function undeprecate() { await setDeprecation(dh, urn.value, false); }
+
 async function copyUrn() {
   try {
     await navigator.clipboard.writeText(fullUrn(urn.value));
@@ -199,6 +233,7 @@ async function impact() {
 
 <style scoped src="./dh.css"></style>
 <style scoped>
+.dh-deprecated { margin-top: 10px; align-items: center; }
 .dh-entity { display: flex; min-height: 100%; align-items: stretch; }
 .dh-entity__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dh-entity__head { background: #fff; padding: 16px 24px 12px; display: flex; flex-direction: column; gap: 8px; }

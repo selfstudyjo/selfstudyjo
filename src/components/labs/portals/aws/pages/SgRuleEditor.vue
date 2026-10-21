@@ -4,7 +4,7 @@
       <table class="cs-table-mini re__table">
         <thead>
           <tr><th v-if="showIds">Security group rule ID</th><th>Type <span class="re__info">Info</span></th><th>Protocol</th><th>Port range</th>
-            <th>Source</th><th>Description - optional</th><th></th></tr>
+            <th>{{ peer }}</th><th>Description - optional</th><th></th></tr>
         </thead>
         <tbody>
           <tr v-for="(row, index) in modelValue" :key="index">
@@ -16,19 +16,19 @@
                        :disabled="!isCustom(row)" placeholder="0" :aria-label="'Port range ' + (index + 1)"
                        @input="set(index, 'port', ($event.target as HTMLInputElement).value)" /></td>
             <td class="re__src">
-              <select class="cs-select re__srcsel" :value="row.source" :aria-label="'Source type ' + (index + 1)"
+              <select class="cs-select re__srcsel" :value="row.source" :aria-label="peer + ' type ' + (index + 1)"
                       @change="setSource(index, ($event.target as HTMLSelectElement).value)">
                 <option>Custom</option><option>Anywhere-IPv4</option><option>My IP</option>
               </select>
               <input class="cs-input re__cidr" :class="{ 'is-invalid': problem(row) && !isCustom(row) || (problem(row).startsWith('Source')) }"
-                     :value="row.cidr" placeholder="CIDR blocks" :aria-label="'Source CIDR ' + (index + 1)"
+                     :value="row.cidr" placeholder="CIDR blocks" :aria-label="peer + ' CIDR ' + (index + 1)"
                      @input="set(index, 'cidr', ($event.target as HTMLInputElement).value)" />
             </td>
             <td><input class="cs-input" :value="row.description" :aria-label="'Description ' + (index + 1)"
                        @input="set(index, 'description', ($event.target as HTMLInputElement).value)" /></td>
             <td><button type="button" class="cs-btn" @click="remove(index)">Delete</button></td>
           </tr>
-          <tr v-if="!modelValue.length"><td :colspan="showIds ? 7 : 6" class="cs-muted">This security group has no inbound rules.</td></tr>
+          <tr v-if="!modelValue.length"><td :colspan="showIds ? 7 : 6" class="cs-muted">This security group has no {{ direction }} rules.</td></tr>
         </tbody>
       </table>
     </div>
@@ -40,9 +40,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { RULE_TYPES, protocolLabel, ruleOf, ruleProblem, type EditRule } from './sgRules';
 
-const props = withDefaults(defineProps<{ modelValue: EditRule[]; showIds?: boolean }>(), { showIds: false });
+const props = withDefaults(defineProps<{ modelValue: EditRule[]; showIds?: boolean; direction?: 'inbound' | 'outbound' }>(),
+  { showIds: false, direction: 'inbound' });
+const peer = computed(() => (props.direction === 'outbound' ? 'Destination' : 'Source'));
 const emit = defineEmits<{ (e: 'update:modelValue', value: EditRule[]): void }>();
 
 function patch(index: number, change: Partial<EditRule>) {
@@ -77,7 +80,8 @@ function portOf(row: EditRule) {
   return port || 'All';
 }
 function problem(row: EditRule) {
-  return ruleProblem(row);
+  const text = ruleProblem(row);
+  return props.direction === 'outbound' ? text.replace(/^Source/, 'Destination') : text;
 }
 </script>
 

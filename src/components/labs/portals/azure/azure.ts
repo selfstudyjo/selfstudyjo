@@ -238,6 +238,7 @@ export function deleteCommand(res: Record<string, any>): string {
     case 'privatednszone': return cli(['az', 'network', 'private-dns', 'zone', 'delete'], { '-g': g, '-n': n, '--yes': true });
     case 'firewall': return cli(['az', 'network', 'firewall', 'delete'], { '-g': g, '-n': n });
     case 'gateway': return cli(['az', 'network', 'vnet-gateway', 'delete'], { '-g': g, '-n': n });
+    case 'bastion': return cli(['az', 'network', 'bastion', 'delete'], { '-g': g, '-n': n });
     case 'natgateway': return cli(['az', 'network', 'nat', 'gateway', 'delete'], { '-g': g, '-n': n });
     case 'workspace': return cli(['az', 'monitor', 'log-analytics', 'workspace', 'delete'],
                                  { '-g': g, '--workspace-name': n, '--yes': true });

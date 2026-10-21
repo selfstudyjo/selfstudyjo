@@ -23,6 +23,14 @@
       <span v-if="result && result.ok && grid" class="rp__meta">
         {{ fmtNum(grid.total) }} row{{ grid.total === 1 ? '' : 's' }}<template v-if="grid.total > grid.rows.length"> · showing first {{ grid.rows.length }}</template>
       </span>
+      <span v-if="grid && result && result.ok" class="sf-rel rp__dl">
+        <button type="button" class="sf-btn sf-btn--ghost sf-btn--sm" title="Copy results" aria-label="Copy results" @click="copyRows"><SfIcon name="copy" /></button>
+        <button type="button" class="sf-btn sf-btn--ghost sf-btn--sm" title="Download results" aria-label="Download results" :aria-expanded="dlOpen" @click="dlOpen = !dlOpen"><SfIcon name="download" /></button>
+        <span v-if="dlOpen" class="sf-menu rp__dlmenu" @mouseleave="dlOpen = false">
+          <button type="button" @click="download(',')">Download as .csv</button>
+          <button type="button" @click="download('\t')">Download as .tsv</button>
+        </span>
+      </span>
       <button v-if="grid" type="button" class="sf-btn sf-btn--ghost sf-btn--sm" :title="showSide ? 'Hide details' : 'Show details'" @click="showSide = !showSide">
         <SfIcon name="panel-left" />
       </button>
@@ -149,6 +157,34 @@ watch(() => props.result?.id, () => {
 });
 
 const grid = computed(() => props.result?.grids[gridIndex.value] || null);
+
+/* ---------- Copy / Download results (as Snowsight's result toolbar) ---------- */
+const dlOpen = ref(false);
+function delimited(sep: string): string {
+  const g = grid.value;
+  if (!g) return '';
+  const cell = (v: unknown) => {
+    const text = v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return sep === ',' && /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text.replace(/[\t\n\r]/g, ' ');
+  };
+  return [g.columns.map(cell).join(sep), ...g.rows.map(r => r.map(cell).join(sep))].join('\n') + '\n';
+}
+function download(sep: string) {
+  dlOpen.value = false;
+  const text = delimited(sep);
+  if (!text) return;
+  const ext = sep === ',' ? 'csv' : 'tsv';
+  const url = URL.createObjectURL(new Blob([text], { type: ext === 'csv' ? 'text/csv;charset=utf-8' : 'text/tab-separated-values;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(props.result?.queryId || 'results').slice(0, 36)}.${ext}`;
+  a.rel = 'noopener';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function copyRows() {
+  try { await navigator.clipboard.writeText(delimited('\t')); } catch { /* refused by the browser */ }
+}
 const stats = computed(() => (grid.value ? grid.value.columns.map((_, i) => columnStats(grid.value!, i)) : []));
 const numericCols = computed(() => stats.value.map((s, i) => (s.kind === 'number' ? i : -1)).filter(i => i >= 0));
 const chartable = computed(() => numericCols.value.length > 0);
@@ -239,4 +275,8 @@ const chart = computed(() => {
 @container sl-portal (max-width: 900px) {
   .rp__side { display: none; }
 }
+</style>
+<style scoped>
+.rp__dl { display: inline-flex; gap: 2px; }
+.rp__dlmenu { right: 0; top: calc(100% + 4px); min-width: 170px; }
 </style>

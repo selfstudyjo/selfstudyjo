@@ -51,6 +51,8 @@
         <button v-if="entity.domain" type="button" class="dh-tag dh-domain" @click="dh.go({ page: 'domains', name: entity.domain })">
           <DhIcon name="domain" :size="12" /><span class="dh-tag__text">{{ entity.domain }}</span>
         </button>
+        <button v-if="entity.domain" type="button" class="dh-tag__x dh-domain-x" :aria-label="'Remove domain ' + entity.domain"
+                @click="unsetDomain(dh, entity.urn, entity.domain)"><DhIcon name="close" :size="10" /></button>
         <button type="button" class="dh-add" @click="$emit('edit', { mode: 'domain', initial: entity.domain })">
           <DhIcon :name="entity.domain ? 'pencil' : 'plus'" :size="12" /> {{ entity.domain ? 'Change Domain' : 'Set Domain' }}
         </button>
@@ -86,7 +88,7 @@
 import { computed } from 'vue';
 import DhIcon from './DhIcon.vue';
 import { ownerTypeLabel, sameDataset, tagColor, useDh, type DhDataset } from './dhContext';
-import { removeOwner, removeTag, removeTerm } from './edits';
+import { removeOwner, removeTag, removeTerm, unsetDomain } from './edits';
 
 const props = defineProps<{ entity: DhDataset }>();
 defineEmits<{ (event: 'edit', value: { mode: 'tag' | 'term' | 'owner' | 'domain' | 'docs'; initial?: string }): void }>();
@@ -131,6 +133,8 @@ function avatarColor(name: string) {
 .dh-termlink:hover { text-decoration: underline; }
 .dh-domain { cursor: pointer; font: inherit; font-size: 12px; }
 .dh-domain:hover { border-color: var(--dh-primary); }
+.dh-domain-x { border: 0; background: none; color: var(--dh-text-2); cursor: pointer; padding: 2px; margin-left: -6px; }
+.dh-domain-x:hover { color: var(--dh-danger); }
 .dh-side__line { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .dh-side__line > .dh-ico { color: var(--dh-text-2); }
 .dh-side__line > .dh-ico.is-ok { color: #52c41a; }

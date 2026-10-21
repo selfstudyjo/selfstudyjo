@@ -36,6 +36,8 @@ export interface TfShell {
   openWorkspace: (name: string, page?: Route['page']) => Promise<void>;
   run: (command: string, options?: RunOptions) => Promise<PortalResult>;
   ensureInit: () => Promise<boolean>;
+  /** Confirms a fresh plan when the run's workspace has auto-apply on. */
+  maybeAutoApply: (runId: string) => Promise<void>;
   notify: (type: 'success' | 'error' | 'info' | 'warning', title: string, detail?: string) => void;
   confirm: (request: ConfirmRequest) => Promise<boolean>;
 }

@@ -12,11 +12,14 @@
       :filter-fields="['name', 'id', 'state', 'type', 'az', 'public_ip', 'private_ip', 'key']"
       empty-title="No instances"
       empty-text="You do not have any instances in this region"
+      :row-menu="() => actions?.menuItems || []"
+      @row-action="(id: string) => actions?.act(id)"
     >
       <template #actions>
         <button type="button" class="cs-btn cs-btn--icon" aria-label="Refresh" @click="ctx.api.notify('info', 'Instances refreshed')"><CsIcon name="refresh" /></button>
-        <button type="button" class="cs-btn" disabled>Connect</button>
-        <Ec2InstanceActions :instances="chosen" />
+        <button type="button" class="cs-btn" :disabled="chosen.length !== 1 || chosen[0].state !== 'running'"
+                @click="ctx.to('ec2', 'connect', { id: chosen[0].id })">Connect</button>
+        <Ec2InstanceActions ref="actions" :instances="chosen" />
         <button type="button" class="cs-btn cs-btn--primary" @click="ctx.to('ec2', 'launch')">Launch instances</button>
       </template>
       <template #empty>
@@ -59,6 +62,7 @@ import Ec2InstanceActions from './Ec2InstanceActions.vue';
 
 const ctx = useAws();
 const selected = ref<string[]>([]);
+const actions = ref<InstanceType<typeof Ec2InstanceActions> | null>(null);
 const editing = ref('');
 const draft = ref('');
 

@@ -130,6 +130,13 @@
     <template v-else-if="name === 'project'"><rect x="2" y="2" width="12" height="12" rx="2" /></template>
     <template v-else-if="name === 'code'"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5" /></template>
     <template v-else-if="name === 'grid'"><rect x="2.5" y="2.5" width="11" height="11" rx="1" /><path d="M2.5 6.2h11M2.5 9.8h11M6.2 2.5v11M9.8 2.5v11" /></template>
+    <template v-else-if="name === 'flag'"><path d="M3.5 14V2.5" /><path d="M3.5 3h8.5l-2 3 2 3H3.5" fill="currentColor" /></template>
+    <template v-else-if="name === 'subtask'"><rect x="2.5" y="2.5" width="11" height="11" rx="2" /><path d="M5.5 6h5M5.5 8.5v-2.5M5.5 8.5h3" /></template>
+    <template v-else-if="name === 'copy'"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5v-2a1 1 0 00-1-1h-6a1 1 0 00-1 1v6a1 1 0 001 1h2" /></template>
+    <template v-else-if="name === 'label'"><path d="M2.5 2.5h5.3l5.7 5.7-5.3 5.3-5.7-5.7z" /><circle cx="5.3" cy="5.3" r=".9" fill="currentColor" /></template>
+    <template v-else-if="name === 'list'"><path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><path d="M2.5 4h.1M2.5 8h.1M2.5 12h.1" /></template>
+    <template v-else-if="name === 'arrow-up'"><path d="M8 13V3M4 7l4-4 4 4" /></template>
+    <template v-else-if="name === 'arrow-down'"><path d="M8 3v10M4 9l4 4 4-4" /></template>
     <template v-else><circle cx="8" cy="8" r="5" /></template>
   </svg>
 </template>

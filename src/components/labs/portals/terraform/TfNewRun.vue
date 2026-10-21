@@ -39,6 +39,10 @@
           <TfIcon name="info" />
           <div>The working directory has not been initialized yet - HCP Terraform runs <code class="tf-mono">terraform init</code> before the plan.</div>
         </div>
+        <div v-if="workspace?.auto_apply && kind !== 'plan'" class="tf-alert tf-alert--info nr__note">
+          <TfIcon name="info" />
+          <div><span class="tf-alert__title">Auto-apply is on</span>A successful plan is applied without waiting for confirmation (Settings &gt; General &gt; Apply Method).</div>
+        </div>
         <div v-if="locked" class="tf-alert tf-alert--warning nr__note">
           <TfIcon name="lock" />
           <div><span class="tf-alert__title">This workspace is locked</span>A run cannot acquire the state lock until the workspace is unlocked.</div>
@@ -62,7 +66,7 @@ import { cmdComment, cmdPlan } from './tfKit';
 const props = withDefaults(defineProps<{ initial?: 'apply' | 'plan' | 'destroy' }>(), { initial: 'apply' });
 const emit = defineEmits<{ (event: 'close'): void }>();
 
-const { view, workspace, runs, run, ensureInit, go, busy } = useTf();
+const { view, workspace, runs, run, ensureInit, maybeAutoApply, go, busy } = useTf();
 const reason = ref('');
 const kind = ref<'apply' | 'plan' | 'destroy'>(props.initial);
 const replace = ref<string[]>([]);
@@ -85,6 +89,7 @@ async function start() {
   const latest = runs.value.find(item => item.workspace === workspace.value?.name);
   if (latest && latest.id !== before) {
     if (reason.value.trim()) await run(cmdComment(latest.id, reason.value.trim()), { quiet: true });
+    await maybeAutoApply(latest.id);
     emit('close');
     go({ page: 'run', ws: workspace.value.name, id: latest.id });
   } else if (result.ok) {

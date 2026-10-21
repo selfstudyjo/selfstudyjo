@@ -288,3 +288,38 @@ export const cmd = {
     }),
   ruleDelete: (name: string) => cli(['snow', 'event', 'rule', 'delete'], { '--name': name }),
 };
+
+// ---------------------------------------------------------------------------
+// Record identity: the 32-hex sys_id and the URL a record lives at
+// ---------------------------------------------------------------------------
+
+/**
+ * A stable 32-character sys_id for a record. The simulated instance keys its
+ * records by number, so the sys_id is DERIVED from (table, number) - the same
+ * record always copies the same sys_id, and two records never share one.
+ */
+export function sysId(table: string, key: string): string {
+  let out = '';
+  let seed = 0x811c9dc5;
+  const text = `${table}:${key}`;
+  for (let round = 0; round < 4; round += 1) {
+    let h = seed ^ round;
+    for (let i = 0; i < text.length; i += 1) {
+      h ^= text.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    seed = h;
+    out += h.toString(16).padStart(8, '0');
+  }
+  return out;
+}
+
+export function recordUrl(table: string, key: string): string {
+  return `${BASE}/${table}.do?sys_id=${sysId(table, key)}`;
+}
+
+/** One CSV cell, quoted when it needs to be (RFC 4180). */
+export function csvCell(value: unknown): string {
+  const text = value === null || value === undefined ? '' : String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}

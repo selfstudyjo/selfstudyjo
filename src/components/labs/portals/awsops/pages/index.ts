@@ -7,6 +7,7 @@ import CloudFormation from './CloudFormation.vue';
 import CloudTrail from './CloudTrail.vue';
 import CloudWatch from './CloudWatch.vue';
 import Config from './Config.vue';
+import Connect from './Connect.vue';
 import ControlTower from './ControlTower.vue';
 import Cost from './Cost.vue';
 import Ec2Misc from './Ec2Misc.vue';
@@ -14,6 +15,7 @@ import Endpoints from './Endpoints.vue';
 import GuardDuty from './GuardDuty.vue';
 import Home from './Home.vue';
 import IamMisc from './IamMisc.vue';
+import Logs from './Logs.vue';
 import IamPolicies from './IamPolicies.vue';
 import IamRoles from './IamRoles.vue';
 import IamUsers from './IamUsers.vue';
@@ -56,7 +58,7 @@ const PAGES: Record<string, Component> = {
   'vpc/endpoints': Endpoints, 'vpc/endpoint-create': Endpoints,
   'vpc/reachability': Reachability, 'vpc/reachability-path': Reachability,
   'vpc/tgws': TransitVpn, 'vpc/tgw-attachments': TransitVpn, 'vpc/tgw-route-tables': TransitVpn, 'vpc/vpn': TransitVpn,
-  'ec2/instances': Instances, 'ec2/instance': Instances,
+  'ec2/instances': Instances, 'ec2/instance': Instances, 'ec2/connect': Connect, 'ec2/eices': Connect,
   'ec2/load-balancers': LoadBalancing, 'ec2/target-groups': LoadBalancing, 'ec2/target-group': LoadBalancing,
   'ec2/asgs': AutoScaling, 'ec2/asg': AutoScaling,
   'ec2/*': Ec2Misc,
@@ -64,6 +66,7 @@ const PAGES: Record<string, Component> = {
   'ssm/patch': SsmPatch, 'ssm/baseline': SsmPatch,
   'ssm/windows': SsmWindows, 'ssm/window': SsmWindows,
   'ssm/run-command': SsmRun, 'ssm/command': SsmRun, 'ssm/parameters': SsmRun,
+  'cloudwatch/log-groups': Logs, 'cloudwatch/log-group': Logs, 'cloudwatch/insights': Logs,
   'imagebuilder/*': ImageBuilder, 'backup/*': Backup, 'cloudwatch/*': CloudWatch, 'sns/*': Sns,
   'securityhub/*': SecurityHub, 'guardduty/*': GuardDuty, 'config/*': Config, 'cloudtrail/*': CloudTrail,
   'waf/*': Waf, 'cloudformation/*': CloudFormation, 's3/*': S3, 'secrets/*': Secrets, 'route53/*': Route53, 'cost/*': Cost,

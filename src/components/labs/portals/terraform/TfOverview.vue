@@ -118,8 +118,8 @@
         <div class="tf-card ov-side">
           <dl class="ov-side__dl">
             <div><dt>Project</dt><dd><a href="#" @click.prevent="go({ page: 'projects' })">Default Project</a></dd></div>
-            <div><dt>Execution mode</dt><dd>Local</dd></div>
-            <div><dt>Auto-apply</dt><dd>Off</dd></div>
+            <div><dt>Execution mode</dt><dd>{{ workspace.execution_mode === 'remote' ? 'Remote' : 'Local' }}</dd></div>
+            <div><dt>Auto-apply</dt><dd>{{ workspace.auto_apply ? 'On' : 'Off' }}</dd></div>
             <div><dt>Workflow</dt><dd>CLI-driven</dd></div>
             <div><dt>Terraform version</dt><dd>v{{ workspace.version }}</dd></div>
             <div><dt>State serial</dt><dd>{{ workspace.serial }}</dd></div>
@@ -127,6 +127,27 @@
             <div v-if="workspace.locked"><dt>Locked</dt><dd>By {{ workspace.lock?.user }}<br><span class="tf-faint tf-small">{{ workspace.lock?.reason }}</span></dd></div>
             <div><dt>Created</dt><dd>{{ ago(workspace.created_at, now) }}</dd></div>
           </dl>
+        </div>
+        <div class="tf-card ov-side">
+          <div class="ov-side__head">
+            <span class="ov-side__title">Tags</span>
+            <button v-if="!tagging" type="button" class="tf-link-btn" @click="startTagging">Manage tags</button>
+          </div>
+          <div class="ov-tags">
+            <span v-for="tag in tags" :key="tag" class="ov-chip">
+              {{ tag }}
+              <button v-if="tagging" type="button" class="ov-chip__x" :aria-label="'Remove tag ' + tag" :disabled="busy" @click="removeTag(tag)"><TfIcon name="x" :size="12" /></button>
+            </span>
+            <span v-if="!tags.length && !tagging" class="tf-faint tf-small">No tags. Tags group workspaces and filter the workspace list.</span>
+          </div>
+          <form v-if="tagging" class="ov-tagform" @submit.prevent="addTags">
+            <input v-model="newTag" class="tf-input ov-tagform__input" :class="{ 'is-invalid': tagError }" placeholder="e.g. team:platform, env-dev" aria-label="Add tags (comma-separated)" />
+            <p v-if="tagError" class="ov-tagerr">{{ tagError }}</p>
+            <div class="ov-tagform__btns">
+              <button type="submit" class="tf-btn tf-btn--primary tf-btn--small" :disabled="busy || !newTag.trim() || Boolean(tagError)">Add</button>
+              <button type="button" class="tf-btn tf-btn--secondary tf-btn--small" @click="tagging = false; newTag = ''">Done</button>
+            </div>
+          </form>
         </div>
         <div class="tf-card ov-side">
           <div class="ov-side__title">Providers</div>
@@ -147,9 +168,32 @@ import TfIcon from './TfIcon.vue';
 import TfStatus from './TfStatus.vue';
 import TfWsHeader from './TfWsHeader.vue';
 import { useTf } from './tfContext';
-import { ago, cloudBlock, fmtValue, operationLabel, type TfRun } from './tfKit';
+import { ago, cloudBlock, cmdTags, fmtValue, operationLabel, TAG_NAME, type TfRun } from './tfKit';
 
-const { view, workspace, runs, now, go, org } = useTf();
+const { view, workspace, runs, now, go, org, run, busy } = useTf();
+
+// ---- tags: POST / DELETE /workspaces/:id/relationships/tags ------------------
+const tags = computed(() => workspace.value?.tags || []);
+const tagging = ref(false);
+const newTag = ref('');
+const pendingTags = computed(() => newTag.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean));
+const tagError = computed(() => {
+  const bad = pendingTags.value.find(tag => !TAG_NAME.test(tag));
+  return bad ? `"${bad}" is not a valid tag: use lowercase letters, numbers, colons, hyphens and underscores.` : '';
+});
+function startTagging() { tagging.value = true; newTag.value = ''; }
+async function addTags() {
+  const ws = workspace.value;
+  const fresh = pendingTags.value.filter(tag => !tags.value.includes(tag));
+  if (!ws || tagError.value) return;
+  if (!fresh.length) { newTag.value = ''; return; }
+  const result = await run(cmdTags(ws.id, fresh), { success: fresh.length === 1 ? `Tag ${fresh[0]} added` : 'Tags added' });
+  if (result.ok) newTag.value = '';
+}
+async function removeTag(tag: string) {
+  const ws = workspace.value;
+  if (ws) await run(cmdTags(ws.id, [tag], true), { success: `Tag ${tag} removed` });
+}
 const filter = ref('');
 const latest = computed(() => runs.value.find(run => run.workspace === workspace.value?.name) || null);
 const resources = computed(() => rows<Record<string, any>>(view.value, 'state.resources'));
@@ -223,6 +267,16 @@ const readmeBlocks = computed(() => {
 .ov-side__dl dt { font-size: 13px; color: var(--tf-fg-faint); }
 .ov-side__dl dd { margin: 0; font-weight: 500; color: var(--tf-fg-strong); }
 .ov-side__title { font-weight: 600; color: var(--tf-fg-strong); margin-bottom: 8px; }
+.ov-side__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ov-side__head .ov-side__title { margin-bottom: 0; }
+.ov-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ov-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 12px; background: var(--tf-surface-strong); border: 1px solid var(--tf-border); font-size: 13px; color: var(--tf-fg-strong); overflow-wrap: anywhere; }
+.ov-chip__x { display: inline-grid; place-items: center; padding: 1px; border-radius: 50%; color: var(--tf-fg-faint); }
+.ov-chip__x:hover { background: rgba(0, 0, 0, 0.08); color: var(--tf-fg-strong); }
+.ov-tagform { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.ov-tagform__input { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+.ov-tagform__btns { display: flex; gap: 6px; }
+.ov-tagerr { font-size: 12px; line-height: 16px; color: var(--tf-fg-critical); }
 .ov-prov { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; }
 @container sl-portal (max-width: 1100px) {
   .ov { grid-template-columns: minmax(0, 1fr); }

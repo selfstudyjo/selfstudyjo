@@ -16,6 +16,9 @@
           <button type="button" class="mf-btn mf-btn--icon" aria-label="Version actions" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
             <MfIcon name="kebab" /></button>
           <div v-if="menuOpen" class="mf-menu mf-ver__menu" @mouseleave="menuOpen = false">
+            <button type="button" @click="menuOpen = false; copying = true">Copy to another model</button>
+            <button type="button" @click="menuOpen = false; mf.copy(`models:/${name}/${ver.version}`, 'model URI')">Copy model URI</button>
+            <hr />
             <button type="button" class="is-danger" :disabled="active" :title="active ? blockText : ''" @click="remove">Delete</button>
           </div>
         </span>
@@ -122,6 +125,9 @@
       <div v-if="formError" class="mf-alert mf-alert--error"><MfIcon name="x-circle" /><span>{{ formError }}</span></div>
     </MfModal>
 
+    <CopyVersionModal v-if="copying && ver" :name="name" :version="ver.version" @close="copying = false"
+                      @done="(dst, v) => { copying = false; mf.go({ page: 'version', name: dst, version: v }); }" />
+
     <TagEditorModal v-if="editingTags && ver" title="Add/Edit tags" :tags="ver.tags" :busy="saving" :error="formError"
                     @close="editingTags = false" @save="saveTags" />
   </div>
@@ -132,6 +138,7 @@ import { computed, ref } from 'vue';
 import MfIcon from './MfIcon.vue';
 import MfModal from './MfModal.vue';
 import TagEditorModal from './TagEditorModal.vue';
+import CopyVersionModal from './CopyVersionModal.vue';
 import { applyTags, mlflow, useMf } from './mfContext';
 import { fullTime, num } from './mlflow';
 
@@ -143,6 +150,7 @@ const ver = computed(() => model.value?.versions.find(v => v.version === number.
 const active = computed(() => ver.value?.stage === 'Staging' || ver.value?.stage === 'Production');
 const blockText = "You cannot delete a model version in an active stage. To delete this model version, transition it to the 'Archived' stage first.";
 const menuOpen = ref(false);
+const copying = ref(false);
 const stageOpen = ref(false);
 const saving = ref(false);
 const formError = ref('');

@@ -5,7 +5,7 @@
  */
 import { inject, type ComputedRef, type InjectionKey, type Ref } from 'vue';
 import type { PortalResult } from '@/utils/portalKit';
-import type { Credential, Job, Node, Plugin, Route } from './jenkinsKit';
+import type { Credential, Job, Node, Plugin, Route, View } from './jenkinsKit';
 
 export interface RunOptions {
     /** The green notification bar text; omit for a read. */
@@ -31,6 +31,8 @@ export interface JkContext {
     nodes: ComputedRef<Node[]>;
     credentials: ComputedRef<Credential[]>;
     plugins: ComputedRef<Plugin[]>;
+    views: ComputedRef<View[]>;
+    systemMessage: ComputedRef<string>;
     branch: ComputedRef<string>;
     user: ComputedRef<string>;
     base: ComputedRef<string>;

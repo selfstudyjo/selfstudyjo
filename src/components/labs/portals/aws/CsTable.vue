@@ -103,8 +103,8 @@
               </div>
             </td>
           </tr>
-          <tr v-for="row in pageRows" :key="keyOf(row)" :class="{ 'is-selected': isSelected(row) }"
-              @click="selectionType === 'single' && choose(row)">
+          <tr v-for="row in pageRows" :key="keyOf(row)" :class="{ 'is-selected': isSelected(row), 'is-ctx': ctxKey === keyOf(row) }"
+              @click="selectionType === 'single' && choose(row)" @contextmenu="openMenu($event, row)">
             <td v-if="selectionType" class="cs-table__sel" @click.stop>
               <input v-if="selectionType === 'multi'" type="checkbox" class="cs-cb" :checked="isSelected(row)"
                      :aria-label="'Select ' + keyOf(row)" @change="toggle(row)" />
@@ -118,12 +118,15 @@
         </tbody>
       </table>
     </div>
+    <CsContextMenu v-if="rowMenu" ref="ctxMenu" :items="ctxItems" @select="ctxPick" @close="ctxKey = ''" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { matches, sortBy } from '@/utils/portalKit';
+import CsContextMenu from './CsContextMenu.vue';
+import type { DdItem } from './CsDropdown.vue';
 import CsIcon from './CsIcon.vue';
 
 export interface Column {
@@ -150,13 +153,38 @@ const props = withDefaults(defineProps<{
   info?: boolean;
   loading?: boolean;
   counter?: boolean;
+  /** The right-click menu for a row - the same entries as the page's "Actions" menu. */
+  rowMenu?: (row: any) => DdItem[];
 }>(), {
   selectionType: '', selected: () => [], filterPlaceholder: 'Find resources',
   filterFields: () => [], emptyTitle: 'No resources', emptyText: '', description: '',
   variant: 'container', info: true, loading: false, counter: true,
 });
 
-const emit = defineEmits<{ (e: 'update:selected', value: string[]): void }>();
+const emit = defineEmits<{
+  (e: 'update:selected', value: string[]): void;
+  (e: 'row-action', id: string, row: any): void;
+}>();
+
+const ctxMenu = ref<InstanceType<typeof CsContextMenu> | null>(null);
+const ctxItems = ref<DdItem[]>([]);
+const ctxKey = ref('');
+let ctxRow: Record<string, any> | null = null;
+
+/** Right-click selects the row (unless it is already part of the selection) and opens its menu. */
+async function openMenu(event: MouseEvent, row: Record<string, any>) {
+  if (!props.rowMenu) return;
+  event.preventDefault();
+  if (props.selectionType && !isSelected(row)) emit('update:selected', [keyOf(row)]);
+  ctxRow = row;
+  ctxKey.value = keyOf(row);
+  await nextTick();
+  ctxItems.value = props.rowMenu(row);
+  ctxMenu.value?.show(event);
+}
+function ctxPick(id: string) {
+  if (ctxRow) emit('row-action', id, ctxRow);
+}
 
 const filter = ref('');
 const page = ref(1);
@@ -272,6 +300,7 @@ table.is-wrap td { white-space: normal; word-break: break-word; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: #f3f3f7; }
 tbody tr.is-selected td { background: #f0fbff; border-bottom-color: #006ce0; }
+tbody tr.is-ctx td { background: #e6f5ff; }
 tbody tr.is-selected td:first-child { box-shadow: inset 2px 0 0 #006ce0; }
 .cs-table__sel { width: 20px; padding-right: 0; }
 .cs-cb, .cs-rb { accent-color: #006ce0; width: 14px; height: 14px; margin: 2px 0 0; cursor: pointer; }

@@ -37,7 +37,7 @@
         </div>
       </div>
       <div class="tn__right">
-        <button type="button" class="tn__icon tn__hide-sm" aria-label="AWS CloudShell" title="CloudShell"><CsIcon name="cloudshell" /></button>
+        <button type="button" class="tn__icon" aria-label="AWS CloudShell" title="CloudShell" @click="$emit('cloudshell')"><CsIcon name="cloudshell" /></button>
         <button type="button" class="tn__icon tn__hide-sm" aria-label="Notifications" title="Notifications"><CsIcon name="notification" /></button>
         <button type="button" class="tn__icon tn__hide-sm" aria-label="Support" title="Support"><CsIcon name="support" /></button>
         <button type="button" class="tn__icon tn__hide-sm" aria-label="Settings" title="Settings"><CsIcon name="settings" /></button>
@@ -120,6 +120,7 @@ const emit = defineEmits<{
   (e: 'go', route: Route): void;
   (e: 'region', code: string): void;
   (e: 'toggle-nav'): void;
+  (e: 'cloudshell'): void;
 }>();
 
 const root = ref<HTMLElement | null>(null);

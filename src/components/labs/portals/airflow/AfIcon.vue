@@ -41,6 +41,8 @@
     <template v-else-if="name === 'dataset'"><ellipse cx="8" cy="4" rx="5" ry="1.8" /><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8" /></template>
     <template v-else-if="name === 'pause'"><path d="M5.5 3.5v9M10.5 3.5v9" /></template>
     <template v-else-if="name === 'copy'"><rect x="5" y="5" width="8.5" height="8.5" rx="1" /><path d="M3 10.5V3.5c0-.6.4-1 1-1h6.5" /></template>
+    <template v-else-if="name === 'heart'"><path d="M8 13.5S2 9.8 2 5.8A3 3 0 0 1 8 4.4a3 3 0 0 1 6 1.4c0 4-6 7.7-6 7.7z" /></template>
+    <template v-else-if="name === 'retry'"><path d="M3 3.5v3h3" /><path d="M3.4 6.5A5 5 0 1 1 3 9" /></template>
     <template v-else-if="name === 'expand'"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" /></template>
     <template v-else><circle cx="8" cy="8" r="2" /></template>
   </svg>

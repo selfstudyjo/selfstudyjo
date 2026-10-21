@@ -156,9 +156,19 @@
             <CsIcon :name="advanced ? 'caret-down' : 'caret-right'" /> <strong>Advanced details</strong></button></div>
           <div v-if="advanced" class="cs-container__body cs-stack">
             <div class="cs-field"><span class="cs-label">Domain join directory</span><select class="cs-select" disabled><option>Select</option></select></div>
-            <div class="cs-field"><span class="cs-label">IAM instance profile</span><select class="cs-select" disabled><option>Select</option></select></div>
+            <div class="cs-field"><label class="cs-label" for="lw-profile">IAM instance profile</label>
+              <div class="cs-row lw__name">
+                <select id="lw-profile" v-model="iamProfile" class="cs-select">
+                  <option value="">Select</option>
+                  <option v-for="p in profiles" :key="p.name" :value="p.name">{{ p.name }}</option>
+                </select>
+                <a href="#" class="cs-link" @click.prevent="ctx.to('iam', 'role-create')">Create new IAM profile <CsIcon name="external" size="small" /></a>
+              </div>
+              <div class="cs-constraint">An instance profile passes an IAM role to the instance. Session Manager needs one whose role has AmazonSSMManagedInstanceCore.</div></div>
             <div class="cs-field"><span class="cs-label">Shutdown behavior</span><select class="cs-select" disabled><option>Stop</option></select></div>
-            <div class="cs-field"><span class="cs-label">User data - <em>optional</em></span><textarea class="cs-textarea" disabled placeholder="#!/bin/bash" /></div>
+            <div class="cs-field"><label class="cs-label" for="lw-ud">User data - <em>optional</em></label>
+              <div class="cs-desc">Enter user data in the field. Shell scripts that start with #!/bin/bash run as root at first boot; the output lands in /var/log/cloud-init-output.log.</div>
+              <textarea id="lw-ud" v-model="userData" class="cs-textarea cs-mono" placeholder="#!/bin/bash" spellcheck="false" /></div>
           </div>
         </section>
       </div>
@@ -245,6 +255,9 @@ const allowHttp = ref(false);
 const sgIds = ref<string[]>([]);
 const count = ref(1);
 const advanced = ref(false);
+const iamProfile = ref('');
+const userData = ref('');
+const profiles = computed(() => rows(ctx.view.value, 'ec2.instance_profiles'));
 const busy = ref(false);
 const keyModal = ref(false);
 const keyName = ref('');
@@ -332,6 +345,8 @@ async function launch() {
     '--subnet-id': subnet.value || subnets.value[0]?.id || '',
     '--security-group-ids': groupIds,
     '--tag-specifications': tagSpec('instance', allTags),
+    '--iam-instance-profile': iamProfile.value ? `Name=${iamProfile.value}` : '',
+    '--user-data': userData.value.trim() ? userData.value : '',
   }));
   log.value.push({ text: 'Launching instance', ok: run.ok });
   busy.value = false;

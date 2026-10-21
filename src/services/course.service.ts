@@ -316,6 +316,21 @@ class CourseService {
         return ordered;
     }
 
+    /**
+     * The lessons that practise one lab - the lab workspace's "Review the
+     * lesson" button. App 19 filters with `?lab_id=`; the filter is applied
+     * here AGAIN because a replica a release behind ignores the parameter and
+     * answers with every lesson, and a modal listing the whole platform would
+     * be worse than one saying there is no lesson.
+     */
+    async getLessonsForLab(labId: string, baseUrl?: string): Promise<Lesson[]> {
+        const url = baseUrl || await this.getRandomCourseReplica();
+        if (!url) throw new Error('No course service replicas available');
+        const response = await apiService.get<any>(url, `/lessons/?lab_id=${encodeURIComponent(labId)}`);
+        const list = normalizePaginatedResponse<Lesson>(response).results;
+        return list.filter(row => String(row.lab_id || '') === labId);
+    }
+
     async getLesson(lessonId: string, baseUrl?: string): Promise<Lesson> {
         const url = baseUrl || await this.getRandomCourseReplica();
         if (!url) throw new Error('No course service replicas available');

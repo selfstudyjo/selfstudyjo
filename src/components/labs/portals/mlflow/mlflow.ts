@@ -113,6 +113,42 @@ export interface MfServing {
 
 export type RunsViewMode = 'table' | 'chart' | 'evaluation' | 'traces';
 
+/** The runs table's sort: `created`, `run_name`, `duration`, `metric:<key>` or `param:<key>`. */
+export interface RunsSort { key: string; dir: 'asc' | 'desc' }
+export type RunAction = 'open' | 'rename' | 'delete' | 'restore' | 'register' | 'compare' | 'description';
+
+/**
+ * Sort runs the way the table header says. A run missing the sorted metric or
+ * parameter goes LAST in both directions, as in MLflow - a blank is not a
+ * small number. Parameters compare numerically when both values are numbers.
+ */
+export function sortRuns(list: MfRun[], sort: RunsSort): MfRun[] {
+    const sign = sort.dir === 'asc' ? 1 : -1;
+    const value = (run: MfRun): string | number | undefined => {
+        if (sort.key === 'created') return parseStamp(run.start_time) || 0;
+        if (sort.key === 'run_name') return run.run_name.toLowerCase();
+        if (sort.key === 'duration') return run.duration_s;
+        if (sort.key.startsWith('metric:')) return run.metrics[sort.key.slice(7)];
+        if (sort.key.startsWith('param:')) {
+            const raw = run.params[sort.key.slice(6)];
+            if (raw === undefined || raw === '') return undefined;
+            const n = Number(raw);
+            return Number.isNaN(n) ? raw.toLowerCase() : n;
+        }
+        return undefined;
+    };
+    return list.map((run, index) => ({ run, index, v: value(run) }))
+        .sort((a, b) => {
+            if (a.v === undefined && b.v === undefined) return a.index - b.index;
+            if (a.v === undefined) return 1;
+            if (b.v === undefined) return -1;
+            const cmp = typeof a.v === 'number' && typeof b.v === 'number' ? a.v - b.v
+                : String(a.v).localeCompare(String(b.v));
+            return cmp ? cmp * sign : a.index - b.index;
+        })
+        .map(entry => entry.run);
+}
+
 export type MfRoute =
     | { page: 'experiments'; expId: string; mode: RunsViewMode }
     | { page: 'run'; expId: string; runId: string; tab: 'overview' | 'metrics' | 'system' | 'artifacts' }

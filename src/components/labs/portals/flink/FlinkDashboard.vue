@@ -114,8 +114,8 @@
  * into the Flink CLI or the SQL Client beside it: Cancel Job runs `flink cancel`,
  * Trigger Savepoint `flink savepoint`, Stop with savepoint `flink stop
  * --savepointPath`, and "Submit New Job" sends Flink SQL through the
- * `flink_sql` surface. The real dashboard uploads JARs; there are none in this
- * simulation, so that area says so and offers the SQL Gateway instead.
+ * `flink_sql` surface. Uploaded Jars are the JobManager REST calls (as curl)
+ * for the Flink operations playground JARs, which run as real jobs.
  */
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';

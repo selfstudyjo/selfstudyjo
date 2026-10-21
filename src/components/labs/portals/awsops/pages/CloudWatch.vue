@@ -1,13 +1,13 @@
 <template>
   <!-- Alarms -->
-  <div v-if="page === 'alarms'">
+  <div v-if="page === 'alarms'" @contextmenu="onRowMenu">
     <CsTable variant="full-page" title="Alarms" :items="alarms" :columns="cols" track-by="name" selection-type="multi" v-model:selected="sel"
              filter-placeholder="Search" empty-title="No alarms" empty-text="Create an alarm to watch a metric.">
       <template #actions>
         <CsDropdown :items="actions" :disabled="!sel.length" @select="act" />
         <button type="button" class="cs-btn cs-btn--primary" @click="ctx.to('cloudwatch', 'alarm-create')">Create alarm</button>
       </template>
-      <template #cell-name="{ row }"><a href="#" class="cs-link" @click.prevent="ctx.to('cloudwatch', 'alarm', { name: row.name })">{{ row.name }}</a></template>
+      <template #cell-name="{ row }"><a href="#" class="cs-link" :data-row="row.name" @click.prevent="ctx.to('cloudwatch', 'alarm', { name: row.name })">{{ row.name }}</a></template>
       <template #cell-state="{ row }"><CsStatus :type="stateKind(row.state)" :label="stateLabel(row.state)" /></template>
       <template #cell-actions="{ row }">{{ row.actions_enabled ? (row.alarm_actions.length ? 'Actions enabled' : 'No actions') : 'Actions disabled' }}</template>
     </CsTable>
@@ -17,6 +17,7 @@
   <div v-else-if="page === 'alarm' && alarm">
     <CsHeader :title="alarm.name">
       <template #actions>
+        <CsDropdown :items="oneActions" @select="oneAct" />
         <button type="button" class="cs-btn" @click="deleting = [alarm.name]">Delete</button>
         <button v-if="!alarm.composite" type="button" class="cs-btn" @click="ctx.to('cloudwatch', 'alarm-create', { edit: alarm.name })">Edit</button>
       </template>
@@ -114,6 +115,27 @@
     </div></section>
   </div>
 
+  <CsModal v-if="stating" title="Set alarm state" @close="stating = ''">
+    <div class="cs-stack">
+      <p class="cw__p">Temporarily set the state of <strong>{{ stating }}</strong>. The alarm returns to its actual state at its next evaluation; use this to test that its actions (SNS topics, incidents) fire.</p>
+      <div class="cs-field"><span class="cs-label">State</span>
+        <div class="cs-tiles">
+          <label v-for="s in ['ALARM', 'OK', 'INSUFFICIENT_DATA']" :key="s" class="cs-tile" :class="{ 'is-checked': stateValue === s }">
+            <input v-model="stateValue" type="radio" :value="s" /><span><strong>{{ stateLabel(s) }}</strong></span></label>
+        </div></div>
+      <div class="cs-field"><label class="cs-label" for="cw-reason">Reason</label>
+        <input id="cw-reason" v-model="stateReason" class="cs-input" :class="{ 'is-invalid': stateTried && !stateReason.trim() }" />
+        <span v-if="stateTried && !stateReason.trim()" class="cs-error-text">A reason is required.</span></div>
+    </div>
+    <template #footer>
+      <button type="button" class="cs-btn cs-btn--link" @click="stating = ''">Cancel</button>
+      <button type="button" class="cs-btn cs-btn--primary" :disabled="busy" @click="setState">Set state</button>
+    </template>
+  </CsModal>
+
+  <RowMenu v-if="rm.menu.value" :x="rm.menu.value.x" :y="rm.menu.value.y" :title="rm.menu.value.key" :items="menuItems"
+           @select="menuAct" @close="rm.close" />
+
   <CsDelete v-if="deleting.length" title="Delete alarms" word="confirm" action="Delete" :busy="busy" @close="deleting = []" @confirm="remove">
     <p class="cw__p">Delete {{ deleting.join(', ') }}?</p>
   </CsDelete>
@@ -125,6 +147,9 @@ import { cli, parseJson, rows } from '@/utils/portalKit';
 import CsDelete from '../../aws/CsDelete.vue';
 import CsDropdown from '../../aws/CsDropdown.vue';
 import CsHeader from '../../aws/CsHeader.vue';
+import CsModal from '../../aws/CsModal.vue';
+import RowMenu from '../RowMenu.vue';
+import { copyText, useRowMenu, type MenuItem } from '../rowmenu';
 import CsStatus from '../../aws/CsStatus.vue';
 import CsTable from '../../aws/CsTable.vue';
 import { useOps } from '../ctx';
@@ -149,9 +174,69 @@ function stateLabel(s: string) { return s === 'ALARM' ? 'In alarm' : s === 'OK' 
 const cols = [{ id: 'name', header: 'Name', sortKey: 'name' }, { id: 'state', header: 'State', sortKey: 'state' },
   { id: 'changed', header: 'Last state update (shift)' }, { id: 'conditions', header: 'Conditions' }, { id: 'actions', header: 'Actions' }];
 const histCols = [{ id: 'time', header: 'Date (shift)' }, { id: 'summary', header: 'Summary' }, { id: 'reason', header: 'Reason' }];
-const actions = [{ id: 'delete', text: 'Delete' }, { id: 'disable', text: 'Disable actions' }, { id: 'enable', text: 'Enable actions' }];
+const actions = computed(() => [
+  { id: 'edit', text: 'Edit', disabled: sel.value.length !== 1 || Boolean(alarms.value.find(a => a.name === sel.value[0])?.composite) },
+  { id: 'state', text: 'Set alarm state', disabled: sel.value.length !== 1 },
+  { id: 'delete', text: 'Delete' }, { id: 'disable', text: 'Disable actions' }, { id: 'enable', text: 'Enable actions' },
+]);
+const oneActions = computed(() => [
+  { id: 'state', text: 'Set alarm state' },
+  { id: alarm.value?.actions_enabled ? 'disable' : 'enable', text: alarm.value?.actions_enabled ? 'Disable actions' : 'Enable actions' },
+  { id: 'copy-arn', text: 'Copy ARN' },
+]);
+async function oneAct(action: string) {
+  if (!alarm.value) return;
+  sel.value = [alarm.value.name];
+  if (action === 'copy-arn') { await copy(alarm.value.arn); return; }
+  await act(action);
+}
+const stating = ref('');
+const stateValue = ref('ALARM');
+const stateReason = ref('');
+const stateTried = ref(false);
+async function setState() {
+  stateTried.value = true;
+  if (!stateReason.value.trim()) return;
+  const name = stating.value;
+  const result = await ctx.run(cli(['aws', 'cloudwatch', 'set-alarm-state'], {
+    '--alarm-name': name, '--state-value': stateValue.value, '--state-reason': stateReason.value.trim(),
+  }), `Alarm ${name} set to ${stateLabel(stateValue.value)}.`);
+  if (result.ok) stating.value = '';
+}
+async function copy(text: string) {
+  const ok = await copyText(text);
+  ctx.api.notify(ok ? 'success' : 'error', ok ? 'Copied to clipboard' : 'Could not copy to the clipboard');
+}
+const rm = useRowMenu();
+const menuAlarm = computed<any>(() => alarms.value.find(a => a.name === rm.menu.value?.key) || null);
+const menuItems = computed<MenuItem[]>(() => {
+  const a = menuAlarm.value;
+  if (!a) return [];
+  return [
+    { id: 'view', text: 'View details' },
+    { id: 'edit', text: 'Edit', disabled: Boolean(a.composite), disabledReason: 'A composite alarm is edited from the CLI.' },
+    { id: 'state', text: 'Set alarm state' },
+    { id: a.actions_enabled ? 'disable' : 'enable', text: a.actions_enabled ? 'Disable actions' : 'Enable actions' },
+    { id: 'd1', divider: true },
+    { id: 'copy-name', text: 'Copy alarm name' }, { id: 'copy-arn', text: 'Copy ARN' },
+    { id: 'd2', divider: true },
+    { id: 'delete', text: 'Delete', danger: true },
+  ];
+});
+function onRowMenu(event: MouseEvent) { rm.open(event, key => { sel.value = [key]; }); }
+async function menuAct(action: string) {
+  const a = menuAlarm.value;
+  if (!a) return;
+  sel.value = [a.name];
+  if (action === 'view') ctx.to('cloudwatch', 'alarm', { name: a.name });
+  else if (action === 'copy-name') await copy(a.name);
+  else if (action === 'copy-arn') await copy(a.arn);
+  else await act(action);
+}
 async function act(action: string) {
   if (action === 'delete') { deleting.value = [...sel.value]; return; }
+  if (action === 'edit') { ctx.to('cloudwatch', 'alarm-create', { edit: sel.value[0] }); return; }
+  if (action === 'state') { stating.value = sel.value[0]; stateValue.value = 'ALARM'; stateReason.value = 'Testing the alarm actions'; stateTried.value = false; return; }
   busy.value = true;
   await ctx.run(cli(['aws', 'cloudwatch', `${action}-alarm-actions`], { '--alarm-names': sel.value }), `Actions ${action}d for ${sel.value.length} alarm(s).`);
   busy.value = false;

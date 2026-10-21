@@ -68,10 +68,11 @@
           <table class="mf-table mf-model__table">
             <thead>
               <tr><th class="mf-model__chk"></th><th>Version</th><th>Registered at</th><th>Created by</th><th>Tags</th>
-                <th>Aliases</th><th>Stage</th><th>Description</th></tr>
+                <th>Aliases</th><th>Stage</th><th>Description</th><th class="mf-model__kebabcol"><span class="mf-sr">Actions</span></th></tr>
             </thead>
             <tbody>
-              <tr v-for="v in sortedVersions" :key="v.version" :class="{ 'is-selected': picked.includes(v.version) }">
+              <tr v-for="v in sortedVersions" :key="v.version" :class="{ 'is-selected': picked.includes(v.version) }"
+                  @contextmenu="versionMenu($event, v)">
                 <td class="mf-model__chk"><input type="checkbox" class="mf-check" :checked="picked.includes(v.version)"
                                                  :aria-label="'Select version ' + v.version" @change="toggle(v.version)" /></td>
                 <td><button type="button" class="mf-link mf-model__ver" @click="mf.go({ page: 'version', name: model.name, version: v.version })">Version {{ v.version }}</button></td>
@@ -83,6 +84,9 @@
                   <span v-if="!v.aliases.length" class="mf-muted">-</span></span></td>
                 <td><span class="mf-stage" :class="'mf-stage--' + v.stage">{{ v.stage }}</span></td>
                 <td class="mf-model__desc">{{ v.description || '' }}</td>
+                <td class="mf-model__kebabcol">
+                  <button type="button" class="mf-model__kebab" :aria-label="'Actions for version ' + v.version" title="More actions"
+                          @click.stop="versionMenu($event, v)"><MfIcon name="kebab" /></button></td>
               </tr>
             </tbody>
           </table>
@@ -91,6 +95,17 @@
 
       <ServingPanel :model="model" />
     </template>
+
+    <CopyVersionModal v-if="copying && model" :name="model.name" :version="copying" @close="copying = 0"
+                      @done="(dst, v) => { copying = 0; mf.go({ page: 'version', name: dst, version: v }); }" />
+
+    <MfModal v-if="transitioning && model" title="Stage Transition" ok-text="OK" :busy="savingTags" @close="transitioning = null" @ok="transition">
+      <p class="mf-p">Transition model version {{ transitioning.version }} from
+        <span class="mf-stage" :class="'mf-stage--' + transitioning.from">{{ transitioning.from }}</span> to
+        <span class="mf-stage" :class="'mf-stage--' + transitioning.to">{{ transitioning.to }}</span>.</p>
+      <p v-if="transitioning.to === 'Production'" class="mf-p mf-muted">Existing Production versions of {{ model.name }} move to Archived.</p>
+      <div v-if="formError" class="mf-alert mf-alert--error"><MfIcon name="x-circle" /><span>{{ formError }}</span></div>
+    </MfModal>
 
     <TagEditorModal v-if="editingTags && model" title="Add/Edit tags" :tags="model.tags" :busy="savingTags" :error="tagError"
                     @close="editingTags = false" @save="saveTags" />
@@ -108,8 +123,9 @@ import MfIcon from './MfIcon.vue';
 import MfModal from './MfModal.vue';
 import TagEditorModal from './TagEditorModal.vue';
 import ServingPanel from './ServingPanel.vue';
-import { applyTags, mlflow, useMf } from './mfContext';
-import { fullTime } from './mlflow';
+import CopyVersionModal from './CopyVersionModal.vue';
+import { applyTags, mlflow, useMf, type MenuItem } from './mfContext';
+import { fullTime, type MfVersion } from './mlflow';
 
 const mf = useMf();
 const name = computed(() => (mf.route.value.page === 'model' ? mf.route.value.name : ''));
@@ -163,6 +179,55 @@ async function saveRename() {
   renaming.value = false;
   mf.go({ page: 'model', name: next });
 }
+// --- a version row's menu ("⋮" or right-click) ---
+const copying = ref(0);
+const transitioning = ref<{ version: number; from: string; to: string } | null>(null);
+function versionMenu(event: MouseEvent, v: MfVersion) {
+  const m = model.value;
+  if (!m) return;
+  const live = v.stage === 'Staging' || v.stage === 'Production';
+  const items: MenuItem[] = [
+    { label: 'Open version', icon: 'chevron-right', action: () => mf.go({ page: 'version', name: m.name, version: v.version }) },
+    { label: 'Open source run', icon: 'chevron-right', disabled: !mf.findRun(v.run_id), action: () => {
+      const run = mf.findRun(v.run_id);
+      if (run) mf.go({ page: 'run', expId: run.experiment_id, runId: run.run_id, tab: 'overview' });
+    } },
+    { heading: 'Transition to' },
+    ...['Staging', 'Production', 'Archived', 'None'].filter(s => s !== v.stage).map(stage => ({
+      label: stage, icon: 'chevron-right',
+      action: () => { formError.value = ''; transitioning.value = { version: v.version, from: v.stage, to: stage }; },
+    })),
+    { divider: true },
+    { label: 'Copy to another model', icon: 'copy', action: () => { copying.value = v.version; } },
+    { label: 'Copy model URI', icon: 'copy', action: () => mf.copy(`models:/${m.name}/${v.version}`, 'model URI') },
+    { divider: true },
+    { label: 'Delete version', icon: 'trash', danger: true, disabled: live,
+      title: live ? "Transition it to 'Archived' before deleting it" : '', action: () => deleteVersion(v) },
+  ];
+  mf.menu(event, items, `Version ${v.version}`);
+}
+async function transition() {
+  const t = transitioning.value;
+  const m = model.value;
+  if (!t || !m || savingTags.value) return;
+  savingTags.value = true;
+  const result = await mf.run(mlflow(['models', 'transition'], { '--name': m.name, '--version': t.version, '--stage': t.to }), { quiet: true });
+  savingTags.value = false;
+  if (!result.ok) { formError.value = String(result.error || '').trim(); return; }
+  mf.notify('success', `Version ${t.version} transitioned to ${t.to}`, String(result.output || '').split('\n').slice(1).join(' ').trim());
+  transitioning.value = null;
+}
+async function deleteVersion(v: MfVersion) {
+  const m = model.value;
+  if (!m) return;
+  const yes = await mf.confirm({ title: 'Delete Model Version', yes: 'Delete', danger: true,
+    message: `Are you sure you want to delete model version ${v.version}? This cannot be undone.` });
+  if (!yes) return;
+  await mf.run(mlflow(['models', 'delete-version'], { '--name': m.name, '--version': v.version }),
+               { success: `Deleted version ${v.version} of ${m.name}` });
+  picked.value = picked.value.filter(x => x !== v.version);
+}
+
 async function startDelete() {
   menuOpen.value = false;
   const m = model.value;
@@ -190,5 +255,11 @@ async function startDelete() {
 .mf-model__ver { font-weight: 600; }
 .mf-model__table td { white-space: nowrap; }
 .mf-model__desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.mf-model__kebabcol { width: 36px; text-align: right; }
+.mf-model__kebab { border: 0; background: none; color: var(--mf-text-2); width: 28px; height: 28px; border-radius: var(--mf-radius);
+  cursor: pointer; display: inline-grid; place-items: center; }
+.mf-model__kebab:hover { background: var(--mf-border-light); color: var(--mf-text); }
+.mf-p { margin: 0; }
+.mf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @container sl-portal (max-width: 900px) { .mf-model { padding: 12px; } }
 </style>

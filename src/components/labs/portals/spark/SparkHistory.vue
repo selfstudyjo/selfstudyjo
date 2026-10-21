@@ -6,16 +6,26 @@
       <li><strong>Client local time zone:</strong> {{ zone }}</li>
     </ul>
 
+    <div class="hist__bar">
+      <span class="spk-muted">{{ sorted.length }} application{{ sorted.length === 1 ? '' : 's' }}</span>
+      <span class="hist__spacer"></span>
+      <label>Search: <input v-model="search" class="hist__search" aria-label="Search applications" /></label>
+    </div>
     <div class="table-wrap">
       <table class="table table-bordered table-sm sortable" aria-label="Applications">
         <thead>
           <tr>
-            <th>Version</th><th>App ID</th><th>App Name</th><th>Started</th><th v-if="!showIncomplete">Completed</th>
-            <th>Duration</th><th>Spark User</th><th>Last Updated</th><th>Event Log</th>
+            <th>Version</th>
+            <th class="is-sortable" @click="sortBy('id')">App ID {{ arrow('id') }}</th>
+            <th class="is-sortable" @click="sortBy('name')">App Name {{ arrow('name') }}</th>
+            <th class="is-sortable" @click="sortBy('started')">Started {{ arrow('started') }}</th>
+            <th v-if="!showIncomplete" class="is-sortable" @click="sortBy('ended')">Completed {{ arrow('ended') }}</th>
+            <th class="is-sortable" @click="sortBy('durationMs')">Duration {{ arrow('durationMs') }}</th>
+            <th class="is-sortable" @click="sortBy('user')">Spark User {{ arrow('user') }}</th><th>Last Updated</th><th>Event Log</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="app in listed" :key="app.id">
+          <tr v-for="app in sorted" :key="app.id">
             <td>{{ version }}</td>
             <td><a href="#" @click.prevent="$emit('navigate', { page: 'jobs', app: app.id })">{{ app.id }}</a></td>
             <td class="hist__name" :title="app.name">{{ app.name }}</td>
@@ -29,6 +39,7 @@
         </tbody>
       </table>
     </div>
+    <p v-if="listed.length && !sorted.length" class="spk-muted">No applications match "{{ search }}".</p>
     <p v-if="!listed.length" class="hist__none">
       {{ showIncomplete ? 'No incomplete applications found!' : 'No completed applications found!' }}
       <span v-if="!showIncomplete" class="spk-muted"><br />Did you specify the correct logging directory? Run a Spark SQL query below,
@@ -56,6 +67,23 @@
             <option v-for="file in scripts" :key="file" :value="file">{{ file }}</option>
           </select>
           <p v-if="!scripts.length" class="spk-muted">No .py file in this lab's workspace yet — write one with the Files tool.</p>
+          <div class="hist__opts">
+            <label>--name <input v-model="appName" class="form-control" placeholder="(the file name)" /></label>
+            <label>--num-executors <input v-model="numExecutors" class="form-control" placeholder="2" inputmode="numeric" /></label>
+            <label>--executor-memory <input v-model="executorMemory" class="form-control" placeholder="2g" /></label>
+            <label>--executor-cores <input v-model="executorCores" class="form-control" placeholder="2" inputmode="numeric" /></label>
+          </div>
+          <div class="hist__confs">
+            <div v-for="(c, i) in confs" :key="i" class="hist__conf">
+              <span class="spk-muted">--conf</span>
+              <input v-model="c.key" class="form-control" placeholder="spark.sql.shuffle.partitions" aria-label="Conf key" />
+              <span>=</span>
+              <input v-model="c.value" class="form-control" placeholder="8" aria-label="Conf value" />
+              <button type="button" class="btn btn-secondary btn-sm" @click="confs.splice(i, 1)">Remove</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" @click="confs.push({ key: '', value: '' })">Add --conf</button>
+          </div>
+          <p v-if="optionError" class="alert-danger hist__err">{{ optionError }}</p>
         </template>
         <p class="hist__cmd"><code>{{ command || ' ' }}</code></p>
         <button type="button" class="btn btn-primary" :disabled="busy || running || !command" @click="submit">
@@ -81,6 +109,28 @@ const open = ref(true);
 const mode = ref<'sql' | 'submit'>('sql');
 const sql = ref('SELECT country, COUNT(*) AS orders FROM orders GROUP BY country ORDER BY orders DESC');
 const script = ref('');
+const appName = ref('');
+const numExecutors = ref('');
+const executorMemory = ref('');
+const executorCores = ref('');
+const confs = ref<{ key: string; value: string }[]>([]);
+const search = ref('');
+const sortKey = ref<'id' | 'name' | 'started' | 'ended' | 'durationMs' | 'user'>('started');
+const sortDir = ref<'asc' | 'desc'>('desc');
+function sortBy(key: typeof sortKey.value) {
+  if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
+  else { sortKey.value = key; sortDir.value = 'desc'; }
+}
+function arrow(key: string) {
+  return sortKey.value === key ? (sortDir.value === 'asc' ? '▴' : '▾') : '';
+}
+const optionError = computed(() => {
+  if (numExecutors.value.trim() && !/^\d+$/.test(numExecutors.value.trim())) return '--num-executors takes a whole number';
+  if (executorCores.value.trim() && !/^\d+$/.test(executorCores.value.trim())) return '--executor-cores takes a whole number';
+  if (executorMemory.value.trim() && !/^\d+[kmgt]?b?$/i.test(executorMemory.value.trim())) return '--executor-memory takes a size such as 2g or 512m';
+  if (confs.value.some(c => c.key.trim() && !/^spark\.[\w.-]+$/.test(c.key.trim()))) return 'A --conf key looks like spark.something';
+  return '';
+});
 const running = ref(false);
 const error = ref('');
 
@@ -90,10 +140,28 @@ const eventLogDir = computed(() => String(pick<Record<string, string>>(props.vie
 const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const lastUpdated = computed(() => date(Math.max(0, ...props.apps.map(a => a.ended || a.started))) || date(Date.now()));
 const listed = computed(() => props.apps.filter(a => (showIncomplete.value ? !a.completed : a.completed)));
+const sorted = computed(() => {
+  const needle = search.value.trim().toLowerCase();
+  const list = needle ? listed.value.filter(a => [a.id, a.name, a.user].some(v => String(v).toLowerCase().includes(needle)))
+    : listed.value;
+  const key = sortKey.value;
+  return [...list].sort((a, b) => {
+    const x = a[key];
+    const y = b[key];
+    const order = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
+    return sortDir.value === 'asc' ? order : -order;
+  });
+});
 const scripts = computed(() => pick<string[]>(props.view, 'local_files', []).filter(f => /\.py$/.test(f)));
 const command = computed(() => {
   if (mode.value === 'sql') return sql.value.trim() ? cli(['spark-sql', '-e', sql.value.trim()]) : '';
-  return script.value ? cli(['spark-submit'], { '--master': 'yarn', '--deploy-mode': 'client' }) + ' ' + cli([script.value]) : '';
+  if (!script.value || optionError.value) return '';
+  const conf = confs.value.filter(c => c.key.trim()).map(c => `${c.key.trim()}=${c.value.trim()}`);
+  return cli(['spark-submit'], {
+    '--master': 'yarn', '--deploy-mode': 'client', '--name': appName.value.trim() || null,
+    '--num-executors': numExecutors.value.trim() || null, '--executor-memory': executorMemory.value.trim() || null,
+    '--executor-cores': executorCores.value.trim() || null,
+  }) + conf.map(c => ' ' + cli(['--conf', c])).join('') + ' ' + cli([script.value]);
 });
 
 async function submit() {
@@ -147,4 +215,14 @@ function downloadLog(app: SparkApp) {
 .hist__select { max-width: 420px; }
 .hist__cmd { margin: 8px 0; word-break: break-all; }
 .hist__err { margin-top: 10px; }
+.hist__bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-bottom: 6px; }
+.hist__spacer { flex: 1; }
+.hist__search { border: 1px solid #ced4da; border-radius: 3px; padding: 2px 6px; font: inherit; font-size: 13px; width: 180px; background: #fff; color: #212529; }
+th.is-sortable { cursor: pointer; user-select: none; }
+th.is-sortable:hover { background: #eef5fb; }
+.hist__opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 8px; margin: 10px 0; }
+.hist__opts label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; font-family: SFMono-Regular, Menlo, Consolas, monospace; }
+.hist__confs { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-bottom: 8px; }
+.hist__conf { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; }
+.hist__conf .form-control { flex: 1 1 160px; min-width: 0; }
 </style>

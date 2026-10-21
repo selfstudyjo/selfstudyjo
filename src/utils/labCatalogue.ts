@@ -102,6 +102,12 @@ export interface LabTask {
     note: string;
     requires: string;
     manual: boolean;
+    /**
+     * The lab's PORTALS that can do this task - decided by app 11's grader,
+     * beside the check, because the browser never sees a check. Empty means
+     * terminal (or Files) only; absent means a replica a release behind.
+     */
+    gui?: string[];
 }
 
 export interface LabGrade {
@@ -3141,4 +3147,22 @@ export function tutorPrompt(lab: Lab | null, context: string): string {
         lines.push(context.slice(0, 9000));
     }
     return lines.join('\n');
+}
+
+
+/**
+ * The portal tools a task can be done in, in the lab's own tool order.
+ *
+ * Only ids the lab actually has: `gui` comes from the grader and the tools from
+ * the catalogue, and a replica a release apart on either side must produce
+ * "no GUI route" rather than a button that opens nothing.
+ */
+export function guiToolsFor(task: Pick<LabTask, 'gui'>, tools: LabTool[]): LabTool[] {
+    const wanted = new Set((task.gui || []).map(String));
+    return tools.filter(tool => tool.kind === 'portal' && wanted.has(tool.id));
+}
+
+/** Every portal in a lab - the "you can use the GUI" callout in the brief. */
+export function portalTools(tools: LabTool[]): LabTool[] {
+    return tools.filter(tool => tool.kind === 'portal');
 }

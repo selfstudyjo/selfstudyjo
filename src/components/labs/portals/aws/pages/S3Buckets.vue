@@ -32,6 +32,8 @@
       description="Buckets are containers for data stored in S3."
       empty-title="No buckets"
       empty-text="You don't have any buckets."
+      :row-menu="bucketMenu"
+      @row-action="bucketAction"
     >
       <template #actions>
         <button type="button" class="cs-btn cs-btn--icon" aria-label="Refresh" @click="refresh"><CsIcon name="refresh" /></button>
@@ -59,6 +61,7 @@
 import { computed, ref } from 'vue';
 import { rows } from '@/utils/portalKit';
 import CsHeader from '../CsHeader.vue';
+import type { DdItem } from '../CsDropdown.vue';
 import CsIcon from '../CsIcon.vue';
 import CsTable, { type Column } from '../CsTable.vue';
 import { awsDate, bytes, useAws } from '../ctx';
@@ -82,6 +85,27 @@ const columns: Column[] = [
   { id: 'created', header: 'Creation date', sortKey: 'created', cell: row => awsDate(row.created) },
 ];
 
+function bucketMenu(): DdItem[] {
+  return [
+    { id: 'open', text: 'Open' },
+    { id: 'properties', text: 'Properties' },
+    { id: 'permissions', text: 'Permissions' },
+    { id: 'copy-arn', text: 'Copy ARN' },
+    { id: 'copy-name', text: 'Copy bucket name' },
+    { id: 'g', text: 'Manage', group: true },
+    { id: 'empty', text: 'Empty', nested: true },
+    { id: 'delete', text: 'Delete', nested: true },
+  ];
+}
+async function bucketAction(id: string, row: Record<string, any>) {
+  if (id === 'open') ctx.to('s3', 'bucket', { name: row.name });
+  else if (id === 'properties' || id === 'permissions') ctx.to('s3', 'bucket', { name: row.name, tab: id });
+  else if (id === 'copy-arn') copyArn();
+  else if (id === 'copy-name') {
+    try { await navigator.clipboard.writeText(row.name); } catch { /* ignored */ }
+    ctx.api.notify('success', `Bucket name copied: ${row.name}`);
+  } else if (id === 'empty' || id === 'delete') modal.value = id;
+}
 function refresh() {
   ctx.api.notify('info', 'Bucket list refreshed');
 }

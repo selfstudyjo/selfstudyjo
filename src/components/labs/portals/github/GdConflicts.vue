@@ -3,6 +3,7 @@
     <template v-if="!editing">
       <p class="gd-cf__lead">
         <template v-if="op === 'merge'">Resolve the following conflicts before merging <b>{{ theirsLabel }}</b> into <b>{{ oursLabel }}</b>.</template>
+        <template v-else-if="op === 'rebase'">Resolve the following conflicts before continuing to rebase <b>{{ v.rebasing?.branch }}</b> onto <b>{{ v.rebasing?.onto }}</b>.</template>
         <template v-else-if="op === 'stash'">Restoring your stash conflicted with changes on <b>{{ v.branch }}</b>. Resolve the files, then mark them resolved.</template>
         <template v-else>Resolve the following conflicts before continuing the {{ op }} of <b>{{ v.sequencer?.commit }}</b>.</template>
       </p>
@@ -76,16 +77,20 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ (event: 'close'): void; (event: 'done'): void }>();
 
-const op = computed(() => props.v.merging ? 'merge' : props.v.sequencer ? props.v.sequencer.op : 'stash');
+const op = computed(() => props.v.merging ? 'merge' : props.v.rebasing ? 'rebase'
+  : props.v.sequencer ? props.v.sequencer.op : 'stash');
 const opWord = computed(() => op.value === 'stash' ? '' : op.value);
 const title = computed(() => ({
   merge: 'Resolve conflicts before merging',
   revert: 'Resolve conflicts before reverting',
   'cherry-pick': 'Resolve conflicts before cherry-picking',
+  rebase: 'Resolve conflicts before rebasing',
 } as Record<string, string>)[op.value] || 'Resolve conflicts');
 const oursLabel = computed(() => op.value === 'stash' ? 'Updated upstream'
+  : op.value === 'rebase' ? (props.v.rebasing?.onto || 'HEAD')
   : props.v.detached ? 'HEAD' : props.v.branch);
 const theirsLabel = computed(() => op.value === 'merge' ? (props.v.merging?.branch || 'MERGE_HEAD')
+  : op.value === 'rebase' ? (props.v.rebasing?.branch || 'the branch')
   : op.value === 'stash' ? 'Stashed changes' : props.v.sequencer?.commit || 'the commit');
 
 // GitHub Desktop keeps showing a file it has resolved, ticked, until you continue.
@@ -136,7 +141,8 @@ async function finish() {
   if (op.value === 'merge') commands.push(cmd.mergeContinue());
   else if (op.value !== 'stash') commands.push(cmd.seqContinue(op.value));
   const message = op.value === 'merge' ? `Successfully merged ${theirsLabel.value} into ${oursLabel.value}`
-    : op.value === 'stash' ? 'Conflicts resolved' : `Finished the ${op.value}`;
+    : op.value === 'stash' ? 'Conflicts resolved'
+    : op.value === 'rebase' ? `Rebased ${props.v.rebasing?.branch || ''}`.trim() : `Finished the ${op.value}`;
   if (await props.run(commands, message)) emit('done');
 }
 

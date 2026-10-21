@@ -28,12 +28,13 @@
         </div>
         <div v-else class="dh-table-wrap">
           <table class="dh-table">
-            <thead><tr><th>Term</th><th>Definition</th><th>Related entities</th></tr></thead>
+            <thead><tr><th>Term</th><th>Definition</th><th>Related entities</th><th></th></tr></thead>
             <tbody>
               <tr v-for="t in filtered" :key="t.name">
                 <td><button type="button" class="dh-link dh-gl__termlink" @click="dh.go({ page: 'glossary', name: t.name })"><DhIcon name="book" :size="13" /> {{ t.name }}</button></td>
                 <td>{{ t.definition }}</td>
                 <td>{{ related(t.name).length }}</td>
+                <td class="dh-gl__act"><DhMenu :label="'Actions for ' + t.name" :items="termActions(t)" /></td>
               </tr>
             </tbody>
           </table>
@@ -49,9 +50,11 @@
               <div class="dh-muted dh-small">Glossary Term</div>
               <h1 class="dh-title"><DhIcon name="book" :size="22" class="dh-gl__ticon" /> {{ term.name }}</h1>
             </div>
+            <DhMenu label="Term actions" :items="termActions(term)" />
           </div>
           <section class="dh-card">
-            <div class="dh-card__head"><h2 class="dh-h4">Definition</h2></div>
+            <div class="dh-card__head"><h2 class="dh-h4">Definition</h2>
+              <button type="button" class="dh-btn dh-btn--text" @click="openEdit(term)"><DhIcon name="pencil" /> Edit</button></div>
             <div class="dh-card__body"><p class="dh-gl__def">{{ term.definition }}</p></div>
           </section>
           <section class="dh-card">
@@ -70,6 +73,13 @@
       </template>
     </div>
 
+    <DhModal v-if="editing" title="Edit Definition" ok-text="Save" :ok-disabled="!editing.definition.trim()" :busy="dh.busy.value"
+             @close="editing = null" @ok="saveEdit">
+      <p class="dh-muted">Glossary term <b>{{ editing.name }}</b></p>
+      <div class="dh-field"><span class="dh-label"><b>*</b>Definition</span>
+        <textarea v-model="editing.definition" class="dh-textarea" rows="5" aria-label="Definition" /></div>
+    </DhModal>
+
     <DhModal v-if="form" title="Create Glossary Term" ok-text="Create" :ok-disabled="!form.name.trim() || !form.definition.trim()" :busy="dh.busy.value"
              @close="form = null" @ok="create">
       <div class="dh-field"><span class="dh-label"><b>*</b>Name</span>
@@ -85,8 +95,9 @@
 import { computed, ref } from 'vue';
 import DhIcon from './DhIcon.vue';
 import DhModal from './DhModal.vue';
+import DhMenu from './DhMenu.vue';
 import PlatformIcon from './PlatformIcon.vue';
-import { dh as cmd, shortName, useDh } from './dhContext';
+import { dh as cmd, shortName, useDh, type DhMenuItem, type DhTerm } from './dhContext';
 
 const dh = useDh();
 const filter = ref('');
@@ -103,6 +114,35 @@ function related(termName: string) {
     for (const c of d.columns) if (c.terms.includes(termName)) out.push({ urn: d.urn, platform: d.platform, column: c.name });
   }
   return out;
+}
+
+function termActions(t: DhTerm): DhMenuItem[] {
+  return [
+    { label: 'Edit definition', icon: 'pencil', run: () => openEdit(t) },
+    { label: 'Copy URN', icon: 'copy', run: () => navigator.clipboard?.writeText(`urn:li:glossaryTerm:${t.name}`).then(() => dh.notify('success', 'Copied URN')) },
+    { divider: true },
+    { label: 'Delete', icon: 'trash', danger: true, run: () => removeTerm(t) },
+  ];
+}
+const editing = ref<{ name: string; definition: string } | null>(null);
+function openEdit(t: DhTerm) { editing.value = { name: t.name, definition: t.definition }; }
+async function saveEdit() {
+  const e = editing.value;
+  if (!e) return;
+  const result = await dh.run(cmd(['datahub', 'term', 'update'], { '--name': e.name }, { '--definition': e.definition.trim() }),
+                              { success: 'Updated Glossary Term' });
+  if (result.ok) editing.value = null;
+}
+async function removeTerm(t: DhTerm) {
+  const uses = related(t.name).length;
+  const ok = await dh.confirm({
+    title: `Delete ${t.name}?`,
+    message: `The term is removed from the glossary${uses ? ` and from the ${uses} dataset(s) and field(s) it is attached to` : ''}. This cannot be undone.`,
+    yes: 'Delete', danger: true,
+  });
+  if (!ok) return;
+  const result = await dh.run(cmd(['datahub', 'term', 'delete'], { '--name': t.name }), { success: `Deleted Glossary Term ${t.name}` });
+  if (result.ok && name.value === t.name) dh.go({ page: 'glossary' });
 }
 
 async function create() {
@@ -137,6 +177,7 @@ async function create() {
 .dh-gl__def { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .dh-gl__rel { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--dh-border); flex-wrap: wrap; }
 .dh-gl__rel:last-child { border-bottom: 0; }
+.dh-gl__act { width: 48px; text-align: right; }
 .dh-small { font-size: 12px; }
 @container sl-portal (max-width: 760px) {
   .dh-gl { flex-direction: column; }

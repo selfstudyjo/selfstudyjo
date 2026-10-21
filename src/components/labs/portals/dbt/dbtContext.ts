@@ -45,6 +45,8 @@ export interface DbtContext {
     jobs: ComputedRef<CloudJob[]>;
     cloudRuns: ComputedRef<CloudRun[]>;
     files: ComputedRef<FileItem[]>;
+    /** Folders under the project root, including empty ones (New folder). */
+    fileDirs: ComputedRef<string[]>;
     docsGenerated: ComputedRef<boolean>;
     parsed: ComputedRef<boolean>;
     nowStamp: ComputedRef<string>;

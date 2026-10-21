@@ -1,9 +1,11 @@
 <template>
-  <div class="ide">
+  <div ref="ideEl" class="ide">
     <!-- ===== IDE top bar: branch, environment ===== -->
     <div class="ide__top">
-      <span class="ide__branch" title="The lab project is not connected to a git remote - commit and sync are not available here.">
-        <DbtIcon name="branch" /> main <span class="ide__ro">read-only</span>
+      <span class="ide__branch" title="The lab project is not connected to a git remote - commit and sync are not available here. Saved files are what dbt runs.">
+        <DbtIcon name="branch" /> main
+        <span v-if="dirtyPaths.size" class="ide__ro ide__ro--dirty">{{ dirtyPaths.size }} unsaved</span>
+        <span v-else class="ide__ro">all saved</span>
       </span>
       <span class="ide__env"><DbtIcon name="env" /> Development · target <code class="dbt-mono">{{ devTarget }}</code></span>
       <span class="dbt-spacer"></span>
@@ -18,6 +20,14 @@
         <header class="ide__pane-head">
           <span>File explorer</span>
           <span class="dbt-spacer"></span>
+          <button type="button" class="ide__icon-btn" title="Create file" aria-label="Create file"
+                  :disabled="!tree.length || !!running" @click="promptNewFile('')">
+            <DbtIcon name="plus" />
+          </button>
+          <button type="button" class="ide__icon-btn" title="Create folder" aria-label="Create folder"
+                  :disabled="!tree.length || !!running" @click="promptNewFolder('')">
+            <DbtIcon name="folder" />
+          </button>
           <button type="button" class="ide__icon-btn" title="Parse project (dbt parse)" aria-label="Parse project"
                   :disabled="!!running" @click="exec(cli(['dbt', 'parse']))">
             <DbtIcon name="refresh" />
@@ -34,9 +44,9 @@
                   @click="exec(cli(['dbt', 'init', initName.trim()]))">Initialize dbt project</button>
           <small class="dbt-help">Runs <code class="dbt-mono">dbt init {{ initName.trim() || '<name>' }}</code>.</small>
         </div>
-        <ul v-else class="ide__tree" role="tree">
+        <ul v-else class="ide__tree" role="tree" @contextmenu.prevent="rootMenu">
           <FileTreeRow v-for="node in tree" :key="node.path" :node="node" :depth="0" :open-dirs="openDirs"
-                       :active="activePath" @toggle="toggleDir" @open="openFile" />
+                       :active="activePath" :dirty="dirtyPaths" @toggle="toggleDir" @open="openFile" @menu="nodeMenu" />
         </ul>
       </section>
 
@@ -47,6 +57,7 @@
                   :class="{ 'is-active': path === activePath }" :aria-selected="path === activePath" @click="activePath = path">
             <DbtIcon :name="iconFor(path)" />
             <span class="ide__tab-name">{{ baseName(path) }}</span>
+            <span v-if="dirtyPaths.has(path)" class="ide__tab-dot" title="Unsaved changes" aria-label="Unsaved changes"></span>
             <span class="ide__tab-x" role="button" aria-label="Close tab" @click.stop="closeTab(path)"><DbtIcon name="close" /></span>
           </button>
         </div>
@@ -54,6 +65,14 @@
         <div class="ide__toolbar">
           <span class="ide__path dbt-mono" :title="activePath">{{ activePath || 'No file open' }}</span>
           <span class="dbt-spacer"></span>
+          <template v-if="editable">
+            <button type="button" class="dbt-btn dbt-btn--sm" :disabled="!isDirty || !!running" title="Revert to the saved file"
+                    @click="revert(activePath)">Revert</button>
+            <button type="button" class="dbt-btn dbt-btn--sm" :class="{ 'dbt-btn--primary': isDirty && !node }" :disabled="!isDirty || !!running"
+                    title="Save (Ctrl+S)" @click="save(activePath)">
+              <DbtIcon name="ok" />{{ saving ? 'Saving…' : 'Save' }}
+            </button>
+          </template>
           <template v-if="node">
             <button v-if="node.kind !== 'seed'" type="button" class="dbt-btn dbt-btn--sm" :disabled="!!running" @click="compile">
               <DbtIcon name="code" />Compile
@@ -94,14 +113,20 @@
               <h3>{{ activeFile.generated ? 'Generated artifact' : 'File too large to display' }}</h3>
               <p v-if="activeFile.generated">Files under <code class="dbt-mono">target/</code> are written by dbt on every invocation and are not shown in the editor.</p>
             </div>
-            <div v-else class="ide__code" role="region" :aria-label="activePath">
-              <div v-for="(line, i) in codeLines" :key="i" class="ide__line">
-                <span class="ide__ln">{{ i + 1 }}</span>
-                <span class="ide__lc"><span v-for="(t, j) in line" :key="j" :class="'tk-' + t.kind">{{ t.text }}</span></span>
+            <div v-else class="ide__code ide__code--edit" role="region" :aria-label="activePath">
+              <div class="ide__gutter" aria-hidden="true"><span v-for="n in codeLines.length" :key="n">{{ n }}</span></div>
+              <div class="ide__stack">
+                <div class="ide__hl" aria-hidden="true">
+                  <div v-for="(line, i) in codeLines" :key="i" class="ide__hl-line"><span v-for="(t, j) in line" :key="j" :class="'tk-' + t.kind">{{ t.text }}</span></div>
+                </div>
+                <textarea ref="editorEl" class="ide__ta" :value="displayed" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off"
+                          :aria-label="'Editor: ' + activePath" @input="onInput" @keydown="onEditorKey"></textarea>
               </div>
             </div>
             <div class="ide__note">
-              <DbtIcon name="info" /><span>Edit this file in the lab's <strong>Files</strong> tool; the IDE reads the saved file. Save, then Compile or Build here.</span>
+              <DbtIcon name="info" />
+              <span v-if="isDirty"><strong>Unsaved changes.</strong> Press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save - Compile, Preview and Build save first, because dbt runs the saved file.</span>
+              <span v-else>Saved. Changes are written with <code class="dbt-mono">dbt-cloud ide save</code>, the same file the lab's Files tool shows.</span>
             </div>
           </template>
         </div>
@@ -204,6 +229,20 @@
       </section>
     </div>
 
+    <!-- ===== Right-click menu and the name prompt ===== -->
+    <DbtContextMenu v-if="ctxMenu" :key="ctxMenu.key" :x="ctxMenu.x" :y="ctxMenu.y" :title="ctxMenu.title" :items="ctxMenu.items"
+                    @close="ctxMenu = null" />
+    <DbtModal v-if="prompt" :title="prompt.title" :ok-text="prompt.ok" :ok-disabled="!!promptError || promptBusy" :busy="promptBusy"
+              @close="prompt = null" @ok="submitPrompt">
+      <label class="dbt-field">
+        <span>{{ prompt.label }}</span>
+        <input ref="promptInput" v-model="promptValue" class="dbt-input dbt-mono" spellcheck="false" autocomplete="off"
+               @keydown.enter.prevent="!promptError && submitPrompt()" />
+      </label>
+      <small v-if="promptError && promptValue.trim()" class="dbt-error">{{ promptError }}</small>
+      <small class="dbt-help">Runs <code class="dbt-mono">{{ prompt.preview(promptValue.trim() || '…') }}</code></small>
+    </DbtModal>
+
     <!-- ===== Command bar ===== -->
     <form class="ide__cmdbar" @submit.prevent="submit">
       <DbtIcon name="terminal" class="ide__cmdbar-icon" />
@@ -218,13 +257,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { cli } from '@/utils/portalKit';
 import DbtIcon from './DbtIcon.vue';
+import DbtModal from './DbtModal.vue';
+import DbtContextMenu from './DbtContextMenu.vue';
 import FileTreeRow from './FileTreeRow.vue';
 import LineageGraph from './LineageGraph.vue';
-import { useDbt } from './dbtContext';
-import { fileTree, langOf, logTone, selectNodes, statusTone, tokenize, type GNode } from './dbt';
+import { textFlag, useDbt } from './dbtContext';
+import { fileTree, langOf, logTone, selectNodes, statusTone, tokenize, validIdePath, type DbtMenuItem, type GNode, type TreeNode } from './dbt';
 
 const dbt = useDbt();
 
@@ -245,7 +286,7 @@ const devTarget = computed(() => {
   return env?.target_name || dbt.project.value.target || 'dev';
 });
 
-const tree = computed(() => fileTree(dbt.files.value));
+const tree = computed(() => fileTree(dbt.files.value, dbt.fileDirs.value));
 const openDirs = ref(new Set<string>(['models', 'models/staging', 'models/marts']));
 const openTabs = ref<string[]>([]);
 const activePath = ref('');
@@ -263,7 +304,11 @@ function openFile(path: string) {
   for (let i = 1; i < parts.length; i++) next.add(parts.slice(0, i).join('/'));
   openDirs.value = next;
 }
-function closeTab(path: string) {
+async function closeTab(path: string) {
+  if (dirtyPaths.value.has(path) && !await dbt.confirm({
+    title: 'Close without saving?', message: `${path} has unsaved changes. Close the tab and discard them?`, yes: 'Discard', danger: true,
+  })) return;
+  dropBuffer(path);
   const idx = openTabs.value.indexOf(path);
   openTabs.value = openTabs.value.filter(p => p !== path);
   if (activePath.value === path) activePath.value = openTabs.value[Math.max(0, idx - 1)] || '';
@@ -278,11 +323,286 @@ watch(() => dbt.files.value.length, () => {
 }, { immediate: true });
 
 const activeFile = computed(() => dbt.files.value.find(f => f.path === activePath.value) || null);
-const codeLines = computed(() => {
-  const text = activeFile.value?.content ?? '';
-  const lang = langOf(activePath.value);
-  return text.replace(/\n$/, '').split('\n').map(line => tokenize(line, lang));
+
+/* ---- the editor: unsaved buffers per file, saved with `dbt-cloud ide save` ---- */
+const buffers = ref<Record<string, string>>({});
+const saving = ref(false);
+const editorEl = ref<HTMLTextAreaElement | null>(null);
+const editable = computed(() => !!activeFile.value && activeFile.value.content !== null && !activeFile.value.generated);
+const displayed = computed(() => {
+  const path = activePath.value;
+  return path in buffers.value ? buffers.value[path] ?? '' : activeFile.value?.content ?? '';
 });
+const dirtyPaths = computed(() => {
+  const out = new Set<string>();
+  for (const [path, text] of Object.entries(buffers.value)) {
+    const file = dbt.files.value.find(f => f.path === path);
+    if (!file || file.content !== text) out.add(path);
+  }
+  return out;
+});
+const isDirty = computed(() => dirtyPaths.value.has(activePath.value));
+const codeLines = computed(() => {
+  const lang = langOf(activePath.value);
+  return displayed.value.split('\n').map(line => tokenize(line, lang));
+});
+
+function dropBuffer(path: string) {
+  if (!(path in buffers.value)) return;
+  const next = { ...buffers.value };
+  delete next[path];
+  buffers.value = next;
+}
+function onInput(event: Event) {
+  const value = (event.target as HTMLTextAreaElement).value;
+  buffers.value = { ...buffers.value, [activePath.value]: value };
+}
+function onEditorKey(event: KeyboardEvent) {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    save(activePath.value);
+    return;
+  }
+  if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    // Two spaces, as the IDE indents SQL and YAML. Shift+Tab leaves the editor.
+    if (event.shiftKey) return;
+    event.preventDefault();
+    const el = event.target as HTMLTextAreaElement;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const value = el.value.slice(0, start) + '  ' + el.value.slice(end);
+    buffers.value = { ...buffers.value, [activePath.value]: value };
+    nextTick(() => { if (editorEl.value) editorEl.value.selectionStart = editorEl.value.selectionEnd = start + 2; });
+  }
+}
+async function save(path: string): Promise<boolean> {
+  if (!dirtyPaths.value.has(path)) return true;
+  const content = buffers.value[path] ?? '';
+  saving.value = true;
+  try {
+    const result = await dbt.run(textFlag(['dbt-cloud', 'ide', 'save'], { '--path': path }, { '--content': content }),
+      { success: `Saved ${path}` });
+    if (result.ok) dropBuffer(path);
+    return result.ok;
+  } finally {
+    saving.value = false;
+  }
+}
+async function saveIfDirty(): Promise<boolean> {
+  return save(activePath.value);
+}
+async function revert(path: string) {
+  if (!dirtyPaths.value.has(path)) return;
+  if (!await dbt.confirm({ title: 'Revert changes', message: `Discard your unsaved changes to ${path}?`, yes: 'Revert', danger: true })) return;
+  dropBuffer(path);
+}
+
+/* ---- the explorer: right-click menus and the name prompt ---- */
+const ideEl = ref<HTMLElement | null>(null);
+const ctxMenu = ref<{ key: number; x: number; y: number; title: string; items: DbtMenuItem[] } | null>(null);
+let ctxSeq = 0;
+function openCtx(event: MouseEvent, title: string, items: DbtMenuItem[]) {
+  event.preventDefault();
+  const box = ideEl.value?.getBoundingClientRect();
+  ctxMenu.value = { key: ++ctxSeq, x: event.clientX - (box?.left || 0), y: event.clientY - (box?.top || 0), title, items };
+}
+
+interface Prompt { title: string; label: string; ok: string; preview: (value: string) => string; submit: (value: string) => Promise<boolean>; taken?: (value: string) => boolean }
+const prompt = ref<Prompt | null>(null);
+const promptValue = ref('');
+const promptBusy = ref(false);
+const promptInput = ref<HTMLInputElement | null>(null);
+const promptError = computed(() => {
+  if (!prompt.value) return '';
+  const bad = validIdePath(promptValue.value);
+  if (bad) return bad;
+  if (prompt.value.taken?.(promptValue.value.trim().replace(/^\/+|\/+$/g, ''))) return 'A file or folder with that name already exists.';
+  return '';
+});
+function ask(request: Prompt, initial: string) {
+  prompt.value = request;
+  promptValue.value = initial;
+  nextTick(() => {
+    const el = promptInput.value;
+    if (!el) return;
+    el.focus();
+    const dot = initial.lastIndexOf('.');
+    const slash = initial.lastIndexOf('/');
+    el.setSelectionRange(slash + 1, dot > slash ? dot : initial.length);
+  });
+}
+async function submitPrompt() {
+  if (!prompt.value || promptError.value) return;
+  promptBusy.value = true;
+  try {
+    const value = promptValue.value.trim().replace(/^\/+|\/+$/g, '');
+    if (await prompt.value.submit(value)) prompt.value = null;
+  } finally {
+    promptBusy.value = false;
+  }
+}
+function exists(path: string) {
+  return dbt.files.value.some(f => f.path === path) || dbt.fileDirs.value.includes(path);
+}
+function expand(path: string) {
+  const parts = path.split('/');
+  const next = new Set(openDirs.value);
+  for (let i = 1; i <= parts.length; i++) next.add(parts.slice(0, i).join('/'));
+  openDirs.value = next;
+}
+
+const newFileLine = (path: string) => textFlag(['dbt-cloud', 'ide', 'new-file'], { '--path': path }, { '--content': '' });
+function promptNewFile(folder: string) {
+  ask({
+    title: 'Create file', label: 'File name (path from the project root)', ok: 'Create',
+    preview: newFileLine, taken: exists,
+    submit: async value => {
+      const result = await dbt.run(newFileLine(value), { success: `Created ${value}` });
+      if (result.ok) openFile(value);
+      return result.ok;
+    },
+  }, folder ? folder + '/' : 'models/');
+}
+function promptNewFolder(folder: string) {
+  const line = (path: string) => cli(['dbt-cloud', 'ide', 'mkdir'], { '--path': path });
+  ask({
+    title: 'Create folder', label: 'Folder name (path from the project root)', ok: 'Create', preview: line, taken: exists,
+    submit: async value => {
+      const result = await dbt.run(line(value), { success: `Created folder ${value}` });
+      if (result.ok) expand(value);
+      return result.ok;
+    },
+  }, folder ? folder + '/' : 'models/');
+}
+function promptRename(node: TreeNode) {
+  const line = (to: string) => cli(['dbt-cloud', 'ide', 'rename'], { '--path': node.path, '--to': to });
+  ask({
+    title: node.dir ? 'Rename folder' : 'Rename file', label: 'New path', ok: 'Rename', preview: line,
+    taken: value => value !== node.path && exists(value),
+    submit: async to => {
+      if (to === node.path) return true;
+      if (dirtyPaths.value.has(node.path) && !await save(node.path)) return false;
+      const result = await dbt.run(line(to), { success: `Renamed ${node.path} to ${to}` });
+      if (!result.ok) return false;
+      const move = (p: string) => (p === node.path ? to : p.startsWith(node.path + '/') ? to + p.slice(node.path.length) : p);
+      openTabs.value = openTabs.value.map(move);
+      activePath.value = move(activePath.value);
+      const nextBuffers: Record<string, string> = {};
+      for (const [p, text] of Object.entries(buffers.value)) nextBuffers[move(p)] = text;
+      buffers.value = nextBuffers;
+      expand(node.dir ? to : to.split('/').slice(0, -1).join('/'));
+      return true;
+    },
+  }, node.path);
+}
+async function duplicate(node: TreeNode) {
+  const file = dbt.files.value.find(f => f.path === node.path);
+  if (!file || file.content === null) return;
+  const dot = node.path.lastIndexOf('.');
+  const slash = node.path.lastIndexOf('/');
+  const stem = dot > slash ? node.path.slice(0, dot) : node.path;
+  const ext = dot > slash ? node.path.slice(dot) : '';
+  let target = `${stem}_copy${ext}`;
+  for (let n = 2; exists(target); n++) target = `${stem}_copy${n}${ext}`;
+  const content = buffers.value[node.path] ?? file.content;
+  const result = await dbt.run(textFlag(['dbt-cloud', 'ide', 'new-file'], { '--path': target }, { '--content': content }),
+    { success: `Duplicated to ${target}` });
+  if (result.ok) openFile(target);
+}
+async function removeNode(node: TreeNode) {
+  const inside = node.dir ? dbt.files.value.filter(f => f.path.startsWith(node.path + '/')).length : 0;
+  const yes = await dbt.confirm({
+    title: node.dir ? 'Delete folder' : 'Delete file',
+    message: node.dir
+      ? `Delete ${node.path}${inside ? ` and the ${inside} file${inside === 1 ? '' : 's'} in it` : ''}? This cannot be undone.`
+      : `Delete ${node.path}? This cannot be undone.`,
+    yes: 'Delete', danger: true,
+  });
+  if (!yes) return;
+  const result = await dbt.run(cli(['dbt-cloud', 'ide', 'delete'], { '--path': node.path, '--recursive': node.dir && inside > 0 }),
+    { success: `Deleted ${node.path}` });
+  if (!result.ok) return;
+  const gone = (p: string) => p === node.path || p.startsWith(node.path + '/');
+  openTabs.value = openTabs.value.filter(p => !gone(p));
+  if (gone(activePath.value)) activePath.value = openTabs.value[openTabs.value.length - 1] || '';
+  for (const p of Object.keys(buffers.value)) if (gone(p)) dropBuffer(p);
+}
+async function copyPath(path: string) {
+  try {
+    await navigator.clipboard.writeText(path);
+    dbt.notify('success', 'Path copied', path);
+  } catch {
+    dbt.notify('info', 'Copy path', path);
+  }
+}
+function nodeFor(path: string) {
+  for (const n of dbt.graph().nodes.values()) {
+    if (n.path === path && (n.kind === 'model' || n.kind === 'seed' || n.kind === 'snapshot')) return n;
+  }
+  return null;
+}
+async function onFile(path: string, then: () => void | Promise<void>) {
+  openFile(path);
+  await nextTick();
+  await then();
+}
+
+function nodeMenu(event: MouseEvent, node: TreeNode) {
+  if (node.dir) {
+    openCtx(event, node.path, [
+      { label: 'Create file', icon: 'plus', action: () => promptNewFile(node.path) },
+      { label: 'Create folder', icon: 'folder', action: () => promptNewFolder(node.path) },
+      { divider: true, label: '' },
+      { label: 'Rename', icon: 'pencil', action: () => promptRename(node) },
+      { label: 'Copy path', icon: 'copy', action: () => copyPath(node.path) },
+      { label: 'Build models in this folder', icon: 'hammer', hint: 'path:', disabled: !!running.value,
+        action: () => { lower.value = 'commands'; exec(cli(['dbt', 'build'], { '--select': 'path:' + node.path })); } },
+      { divider: true, label: '' },
+      { label: 'Delete', icon: 'trash', danger: true, action: () => removeNode(node) },
+    ]);
+    return;
+  }
+  const file = dbt.files.value.find(f => f.path === node.path);
+  const target = nodeFor(node.path);
+  const locked = !file || file.generated;
+  const items: DbtMenuItem[] = [{ label: 'Open', icon: 'file', action: () => openFile(node.path) }];
+  if (target && target.kind === 'model') {
+    items.push(
+      { divider: true, label: '' },
+      { label: 'Compile', icon: 'code', disabled: !!running.value, action: () => onFile(node.path, compile) },
+      { label: 'Preview', icon: 'eye', disabled: !!running.value, action: () => onFile(node.path, preview) },
+      { label: 'Build model', icon: 'hammer', disabled: !!running.value, action: () => onFile(node.path, () => buildAction(actions.value[0]!)) },
+      { label: 'Build +model+ (up & downstream)', icon: 'hammer', disabled: !!running.value,
+        action: () => onFile(node.path, () => buildAction({ label: '', command: cli(['dbt', 'build'], { '--select': '+' + target.name + '+' }) })) },
+      { label: 'Test model', icon: 'test', disabled: !!running.value,
+        action: () => onFile(node.path, () => buildAction({ label: '', command: cli(['dbt', 'test'], { '--select': target.name }) })) },
+      { label: 'View lineage', icon: 'lineage', action: () => dbt.go({ page: 'lineage', select: '+' + target.name + '+' }) },
+    );
+  } else if (target && target.kind === 'seed') {
+    items.push({ divider: true, label: '' },
+      { label: 'Seed', icon: 'seed', disabled: !!running.value,
+        action: () => onFile(node.path, () => buildAction({ label: '', command: cli(['dbt', 'seed'], { '--select': target.name }) })) });
+  }
+  items.push(
+    { divider: true, label: '' },
+    { label: 'Rename', icon: 'pencil', disabled: locked || node.path === 'dbt_project.yml', action: () => promptRename(node) },
+    { label: 'Duplicate', icon: 'copy', disabled: locked || file?.content === null, action: () => duplicate(node) },
+    { label: 'Copy path', icon: 'copy', action: () => copyPath(node.path) },
+    { label: 'Revert changes', icon: 'refresh', disabled: !dirtyPaths.value.has(node.path), action: () => revert(node.path) },
+    { divider: true, label: '' },
+    { label: 'Delete', icon: 'trash', danger: true, disabled: locked || node.path === 'dbt_project.yml', action: () => removeNode(node) },
+  );
+  openCtx(event, node.path, items);
+}
+function rootMenu(event: MouseEvent) {
+  openCtx(event, 'Project', [
+    { label: 'Create file', icon: 'plus', action: () => promptNewFile('') },
+    { label: 'Create folder', icon: 'folder', action: () => promptNewFolder('') },
+    { divider: true, label: '' },
+    { label: 'Parse project', icon: 'refresh', hint: 'dbt parse', disabled: !!running.value, action: () => exec(cli(['dbt', 'parse'])) },
+    { label: 'Collapse all folders', icon: 'chevron-right', action: () => { openDirs.value = new Set(); } },
+  ]);
+}
 
 function baseName(path: string) { return path.split('/').pop() || path; }
 function iconFor(path: string) { return /\.sql$/.test(path) ? 'sql' : /\.ya?ml$/.test(path) ? 'yaml' : 'file'; }
@@ -354,6 +674,7 @@ function firstError(text: string) {
 
 async function buildAction(action: Action) {
   menuOpen.value = false;
+  if (!await saveIfDirty()) return;
   lower.value = 'commands';
   await exec(action.command);
 }
@@ -361,6 +682,7 @@ async function buildAction(action: Action) {
 async function preview() {
   const n = node.value;
   if (!n) return;
+  if (!await saveIfDirty()) return;
   previewError.value = '';
   lower.value = 'results';
   const line = cli(['dbt', 'show'], { '--select': n.name, '--limit': 100 });
@@ -372,6 +694,7 @@ const lastCompile = ref<Record<string, string>>({});
 async function compile() {
   const n = node.value;
   if (!n) return;
+  if (!await saveIfDirty()) return;
   lower.value = 'compiled';
   const ok = await exec(cli(['dbt', 'compile'], { '--select': n.name }));
   const out = dbt.ide.value[0]?.output || '';
@@ -442,7 +765,7 @@ function historyStep(delta: number) {
 
 <style scoped src="./dbt.css"></style>
 <style scoped>
-.ide { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; }
+.ide { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; }
 .ide__top { flex: none; display: flex; align-items: center; gap: 14px; padding: 6px 14px; border-bottom: 1px solid var(--dbt-border); background: var(--dbt-bg-2); font-size: 12px; flex-wrap: wrap; }
 .ide__branch, .ide__env { display: inline-flex; align-items: center; gap: 6px; color: var(--dbt-ink-2); white-space: nowrap; }
 .ide__ro { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--dbt-muted); border: 1px solid var(--dbt-border); border-radius: 4px; padding: 0 4px; }
@@ -482,6 +805,22 @@ function historyStep(delta: number) {
 .ide__line { display: flex; white-space: pre; }
 .ide__ln { flex: none; width: 46px; text-align: right; padding-right: 14px; color: #8A92A6; user-select: none; }
 .ide__lc { flex: 1; padding-right: 16px; }
+.ide__ro--dirty { color: #B54708; border-color: #F7B27A; background: #FFF4EC; }
+.ide__tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dbt-orange); flex: none; }
+/* The editor: a transparent textarea over the highlighted text, both sized by
+   the highlight layer, so the caret sits exactly on the coloured characters. */
+.ide__code--edit { display: flex; align-items: flex-start; padding: 0; }
+.ide__gutter { flex: none; position: sticky; left: 0; z-index: 1; display: flex; flex-direction: column; width: 46px; padding: 8px 14px 8px 0;
+  text-align: right; color: #8A92A6; background: #fff; user-select: none; box-sizing: content-box; }
+.ide__gutter span { display: block; height: 20px; }
+.ide__stack { position: relative; flex: 1; min-width: max-content; }
+.ide__hl { padding: 8px 16px 8px 2px; pointer-events: none; }
+.ide__hl-line { white-space: pre; min-height: 20px; }
+.ide__ta { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; border: 0; padding: 8px 16px 8px 2px; resize: none; overflow: hidden;
+  background: transparent; color: transparent; caret-color: #262A38; font: inherit; line-height: 20px; white-space: pre; tab-size: 2;
+  outline: none; box-sizing: border-box; }
+.ide__ta::selection { background: rgba(11, 126, 163, .22); color: transparent; }
+.ide__note kbd { font: 11px var(--dbt-mono); border: 1px solid var(--dbt-border); border-bottom-width: 2px; border-radius: 3px; padding: 0 3px; background: #fff; }
 .tk-kw { color: #0B5FA8; font-weight: 600; }
 .tk-jinja { color: #A33B22; background: #FFF1EC; }
 .tk-str { color: #1D7A3E; }

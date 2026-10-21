@@ -1,6 +1,6 @@
 <template>
   <div class="form-page" :class="{ 'is-ws': variant === 'workspace' }">
-    <div class="bar form-bar">
+    <div class="bar form-bar" @contextmenu="formMenu">
       <button v-if="variant !== 'workspace'" type="button" class="icon-btn" aria-label="Back" title="Back to list"
               @click="$emit('navigate', { page: 'incident_list', filter: 'open' })">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" /></svg>
@@ -10,6 +10,11 @@
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
         </button>
         <div v-if="menuOpen && record" class="ctx card" role="menu">
+          <button type="button" class="ctx__item" role="menuitem" :disabled="busy || isLocked" @click="menuOpen = false; update(false)">Save</button>
+          <button type="button" class="ctx__item" role="menuitem" :disabled="busy" @click="menuOpen = false; insert()">Insert</button>
+          <button type="button" class="ctx__item" role="menuitem" @click="menuOpen = false; copyWhat('url')">Copy URL</button>
+          <button type="button" class="ctx__item" role="menuitem" @click="menuOpen = false; copyWhat('sys')">Copy sys_id</button>
+          <div class="ctx__sep" role="separator"></div>
           <button type="button" class="ctx__item" role="menuitem" @click="act('problem')">Create Problem</button>
           <button type="button" class="ctx__item" role="menuitem" @click="act('normal')">Create Normal Change</button>
           <button type="button" class="ctx__item" role="menuitem" @click="act('emergency')">Create Emergency Change</button>
@@ -30,8 +35,11 @@
       </template>
       <template v-else-if="record">
         <button v-if="canAck" type="button" class="btn" :disabled="busy" @click="assignToMe">Assign to me</button>
-        <button type="button" class="btn btn--primary" :disabled="busy || isLocked" @click="update">Update</button>
+        <button type="button" class="btn btn--primary" :disabled="busy || isLocked" @click="update(variant !== 'workspace')">Update</button>
+        <button v-if="['New', 'In Progress'].includes(record.state)" type="button" class="btn" :disabled="busy" @click="openHold">On Hold</button>
+        <button v-if="record.state === 'On Hold'" type="button" class="btn" :disabled="busy" @click="resume">Resume</button>
         <button v-if="['New', 'In Progress', 'On Hold'].includes(record.state)" type="button" class="btn" :disabled="busy" @click="resolve">Resolve</button>
+        <button v-if="['New', 'In Progress', 'On Hold'].includes(record.state)" type="button" class="btn" :disabled="busy" @click="dialog = 'cancel'; cancelReason = ''">Cancel Incident</button>
         <button v-if="record.state === 'Resolved'" type="button" class="btn" :disabled="busy" @click="close">Close Incident</button>
         <button type="button" class="btn btn--danger" :disabled="busy" @click="confirmDelete = true">Delete</button>
       </template>
@@ -184,9 +192,16 @@
             </div>
             <p class="field__help">A work note is internal and does not stop the response SLA; only a customer-visible comment does.</p>
           </div>
-          <h3 class="section-title">Activity: {{ notes.length }}</h3>
+          <div class="stream-bar">
+            <h3 class="section-title">Activity: {{ notes.length }}</h3>
+            <span class="bar__spacer"></span>
+            <label class="stream-filter">Show
+              <select v-model="streamFilter" class="select" aria-label="Filter the activity stream">
+                <option value="">All</option><option value="work">Work notes</option><option value="customer">Additional comments</option><option value="system">Field changes</option>
+              </select></label>
+          </div>
           <ul class="stream">
-            <li v-for="(n, i) in notes" :key="i" class="stream__item" :class="'is-' + n.kind">
+            <li v-for="(n, i) in notes.filter(x => !streamFilter || x.kind === streamFilter)" :key="i" class="stream__item" :class="'is-' + n.kind">
               <div class="stream__head">
                 <span class="stream__avatar">{{ initials(n.by) }}</span>
                 <b>{{ personName(model, n.by) || n.by }}</b>
@@ -347,6 +362,32 @@
       </template>
     </SnModal>
 
+    <SnModal v-if="dialog === 'hold'" title="Place on hold" size="sm" @close="dialog = ''">
+      <p class="muted">Only <b>Awaiting Caller</b> pauses the resolution SLA. A P1 cannot be placed On Hold.</p>
+      <div class="field"><label class="field__label" for="hold-why">On hold reason</label>
+        <select id="hold-why" v-model="holdReason" class="select">
+          <option v-for="h in model.choices.hold_reasons" :key="h" :value="h">{{ HOLD_LABEL[h] || h }}</option>
+        </select>
+      </div>
+      <template #footer>
+        <button type="button" class="btn" @click="dialog = ''">Cancel</button>
+        <button type="button" class="btn btn--primary" :disabled="busy || !holdReason" @click="hold">Place on hold</button>
+      </template>
+    </SnModal>
+
+    <SnModal v-if="dialog === 'cancel'" title="Cancel incident" size="sm" @close="dialog = ''">
+      <p class="muted">A canceled incident is kept as a record. Say why it is being canceled (for example, a duplicate of another incident).</p>
+      <div class="field"><label class="field__label" for="cancel-why">Reason</label>
+        <input id="cancel-why" v-model="cancelReason" class="input" placeholder="duplicate of INC0010001" />
+      </div>
+      <template #footer>
+        <button type="button" class="btn" @click="dialog = ''">Close</button>
+        <button type="button" class="btn btn--danger-solid" :disabled="busy || !cancelReason.trim()" @click="cancelIncident">Cancel Incident</button>
+      </template>
+    </SnModal>
+
+    <SnMenu v-if="ctxMenu" :x="ctxMenu.x" :y="ctxMenu.y" :items="formMenuItems" label="Form context menu" @select="formPick" @close="ctxMenu = null" />
+
     <SnModal v-if="dialog === 'child'" title="Add child incident" @close="dialog = ''">
       <p class="muted">Resolving the parent resolves its children.</p>
       <div class="field"><label class="field__label" for="child-pick">Incident</label>
@@ -373,10 +414,12 @@
 import { computed, reactive, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import SnModal from './SnModal.vue';
+import SnMenu, { type SnMenuItem } from './SnMenu.vue';
+import { copyText } from './clip';
 import SlaBar from './SlaBar.vue';
 import {
   HOLD_LABEL, LEVEL_LABEL, PRIORITY_LABEL, SLA_LABEL, STAGE_LABEL, cap, cmd, mintedNumber, nextNumber,
-  personName, priorityOf, type Incident, type Model,
+  personName, priorityOf, recordUrl, sysId, type Incident, type Model,
 } from './snow';
 import type { Route } from './route';
 
@@ -415,6 +458,10 @@ const menuOpen = ref(false);
 const dialog = ref('');
 const majorManager = ref('l.chen');
 const childPick = ref('');
+const streamFilter = ref('');
+const holdReason = ref('awaiting-caller');
+const cancelReason = ref('');
+const ctxMenu = ref<{ x: number; y: number } | null>(null);
 
 function load() {
   const r = record.value;
@@ -554,7 +601,7 @@ function plan(): { line: string; success: string }[] | null {
   return out;
 }
 
-async function update() {
+async function update(back = false) {
   const steps = plan();
   if (!steps) return;
   if (!steps.length) {
@@ -567,7 +614,75 @@ async function update() {
     draft.reason = '';
     missing.value = [];
     invalid.value = [];
+    if (back) emit('navigate', { page: 'incident_list', filter: 'open' });
   }
+}
+function openHold() {
+  holdReason.value = props.model.choices.hold_reasons[0] || 'awaiting-caller';
+  dialog.value = 'hold';
+}
+async function hold() {
+  const ok = await run([{ line: cmd.incidentHold(props.number, holdReason.value), success: `${props.number} placed On Hold` }]);
+  if (ok) dialog.value = '';
+}
+async function resume() {
+  await run([{ line: cmd.incidentResume(props.number), success: `${props.number} resumed - In Progress` }]);
+}
+async function cancelIncident() {
+  const ok = await run([{ line: cmd.incidentCancel(props.number, cancelReason.value.trim()), success: `${props.number} canceled` }]);
+  if (ok) dialog.value = '';
+}
+function copyLine() {
+  return cmd.incidentCreate({
+    short: draft.short, description: draft.description, caller: draft.caller, category: draft.category,
+    subcategory: draft.subcategory, channel: draft.channel, ci: draft.ci, impact: draft.impact, urgency: draft.urgency,
+    group: draft.group, assigned_to: '',
+  });
+}
+/** Insert: a NEW incident from this form's values (the platform's "Insert" on a record). */
+async function insert(stay = false) {
+  if (!requireFields([['Caller', draft.caller], ['Short description', draft.short]])) return;
+  const result = await props.api.exec(copyLine(), { success: stay ? 'Record inserted (you stayed on this one)' : 'Record inserted' });
+  const number = result.ok ? mintedNumber(result.output, 'INC') : '';
+  if (number && !stay) emit('navigate', { page: props.variant === 'workspace' ? 'sow-record' : 'incident', id: number });
+}
+async function copyWhat(what: 'url' | 'sys' | 'number') {
+  const value = what === 'url' ? recordUrl('incident', props.number) : what === 'sys' ? sysId('incident', props.number) : props.number;
+  const ok = await copyText(value);
+  const label = what === 'url' ? 'URL' : what === 'sys' ? 'sys_id' : 'Number';
+  props.api.notify(ok ? 'success' : 'error', ok ? `${label} copied to clipboard` : 'Could not copy to the clipboard');
+}
+function formMenu(event: MouseEvent) {
+  if (isNew.value || !record.value) return;
+  if ((event.target as HTMLElement).closest('input, textarea, select')) return;
+  event.preventDefault();
+  ctxMenu.value = { x: event.clientX, y: event.clientY };
+}
+const formMenuItems = computed<SnMenuItem[]>(() => [
+  { id: 'save', text: 'Save', disabled: busy.value || isLocked.value },
+  { id: 'insert', text: 'Insert' },
+  { id: 'insert-stay', text: 'Insert and Stay' },
+  { id: 'reload', text: 'Reload form' },
+  { id: 'd1', divider: true },
+  { id: 'copy-url', text: 'Copy URL' }, { id: 'copy-sys', text: 'Copy sys_id' }, { id: 'copy-number', text: 'Copy number' },
+  { id: 'd2', divider: true },
+  { id: 'h1', text: 'Create', heading: true },
+  { id: 'problem', text: 'Create Problem', sub: true }, { id: 'normal', text: 'Create Normal Change', sub: true },
+  { id: 'emergency', text: 'Create Emergency Change', sub: true },
+  { id: 'd3', divider: true },
+  { id: 'assign', text: 'Assign to me', disabled: !canAck.value },
+  { id: 'sla', text: 'Show Task SLAs' },
+]);
+async function formPick(id: string) {
+  if (id === 'save') await update(false);
+  else if (id === 'insert') await insert();
+  else if (id === 'insert-stay') await insert(true);
+  else if (id === 'reload') { load(); journal.value = ''; missing.value = []; invalid.value = []; props.api.notify('info', 'Form reloaded'); }
+  else if (id === 'copy-url') await copyWhat('url');
+  else if (id === 'copy-sys') await copyWhat('sys');
+  else if (id === 'copy-number') await copyWhat('number');
+  else if (id === 'assign') await assignToMe();
+  else await act(id);
 }
 async function resolve() {
   draft.state = 'Resolved';
@@ -635,6 +750,10 @@ async function act(what: string) {
 .ctx__item { padding: 7.2px 14.4px; border: 0; background: none; color: var(--sn-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .ctx__item:hover:not(:disabled) { background: var(--sn-row-hover); }
 .ctx__item:disabled { color: var(--sn-text-faint); cursor: not-allowed; }
+.ctx__sep { height: 1px; margin: 4px 0; background: var(--sn-border); }
+.stream-bar { display: flex; align-items: center; gap: 8px; }
+.stream-filter { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sn-text-muted); }
+.stream-filter .select { width: auto; }
 .form-scroll { flex: 1; min-height: 0; overflow: auto; padding-bottom: 32px; }
 .sheet { padding: 9.6px 24px 6.4px 8px; }
 .mandatory { margin: 9.6px 16px 0; padding: 8.8px 12.8px; border-radius: var(--sn-radius); background: var(--sn-critical-bg); color: var(--sn-critical-ink); font-size: 13px; }

@@ -113,6 +113,9 @@
         <button v-if="runnable(menu.row.type)" type="button" @click="openSettings(menu.row, 'schedule')"><FxIcon name="calendar" />Schedule</button>
         <button type="button" @click="openSettings(menu.row, 'about')"><FxIcon name="settings" />Settings</button>
         <button type="button" @click="openSettings(menu.row, 'share')"><FxIcon name="share" />Manage permissions</button>
+        <button v-if="menu.row.type === 'Lakehouse'" type="button" @click="go({ page: 'item', ws: wsName, item: menu.row.name, type: 'SQLEndpoint' }); menu = null"><FxIcon name="SQLEndpoint" />Open SQL analytics endpoint</button>
+        <button v-if="runnable(menu.row.type)" type="button" @click="go({ page: 'monitor' }); menu = null"><FxIcon name="monitor" />View recent runs</button>
+        <button type="button" @click="mode = 'lineage'; menu = null"><FxIcon name="lineage" />View lineage</button>
         <hr />
         <button type="button" @click="startRename(menu.row)"><FxIcon name="edit" />Rename</button>
         <button type="button" @click="startMove(menu.row)"><FxIcon name="Folder" />Move to</button>

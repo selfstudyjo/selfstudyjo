@@ -181,6 +181,23 @@ export const cmd = {
     write: (name: string, path: string, body: string) =>
         cli(['docker', 'exec', name, 'sh', '-c', `printf %s ${shellWord(body)} > ${shellWord(path)}`]),
     rmFile: (name: string, path: string) => cli(['docker', 'exec', name, 'rm', path]),
+    /** The Exec tab: one line of the container shell, in the directory the
+     *  previous line left it in (Docker's own `-w`). */
+    execIn: (name: string, cwd: string, command: string) =>
+        cli(cwd ? ['docker', 'exec', '-w', cwd, name, 'sh', '-c', command]
+                : ['docker', 'exec', name, 'sh', '-c', command]),
+    /** The Files tab's listing: long form, dot files, `/` after directories. */
+    diff: (name: string) => cli(['docker', 'diff', name]),
+    lsLong: (name: string, path: string) => cli(['docker', 'exec', name, 'ls', '-lAp', path]),
+    mkdir: (name: string, path: string) => cli(['docker', 'exec', name, 'mkdir', '-p', path]),
+    rmTree: (name: string, path: string) => cli(['docker', 'exec', name, 'rm', '-rf', path]),
+    rename: (name: string, from: string, to: string) => cli(['docker', 'exec', name, 'mv', from, to]),
+    /** Files tab "Save as": out of the container into the lab workspace. */
+    cpOut: (name: string, path: string, dest: string) => cli(['docker', 'cp', `${name}:${path}`, dest]),
+    /** Files tab "Import": a workspace file into a directory of the container. */
+    cpIn: (source: string, name: string, dir: string) => cli(['docker', 'cp', source, `${name}:${dir}`]),
+    logsTail: (name: string, tail: number, stamps: boolean) =>
+        cli(['docker', 'logs'], { '--tail': tail > 0 ? String(tail) : '', '-t': stamps }) + ' ' + cli([name]),
     pull: (ref: string) => cli(['docker', 'pull', ref]),
     push: (ref: string) => cli(['docker', 'push', ref]),
     tag: (source: string, target: string) => cli(['docker', 'tag', source, target]),

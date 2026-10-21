@@ -99,6 +99,28 @@
             <span v-if="task.note" class="sl-task__note">{{ task.note }}</span>
           </p>
 
+          <!--
+            WHERE THIS TASK CAN BE DONE. A portal writes by running the same
+            command line the console accepts, so a task the grader says a
+            portal can reach is done equally well in either - and saying so is
+            the difference between a GUI a student uses and one they never
+            open because the brief only ever showed commands. Only drawn in a
+            lab that HAS a portal; a terminal-only lab needs no sentence about it.
+          -->
+          <p v-if="hasPortals && task.gui && task.status !== 'passed'" class="sl-task__route">
+            <template v-if="guiFor(task).length">
+              <MonitorSmartphone class="sl-i" aria-hidden="true" />
+              <span>{{ $t('You can do this in the GUI or in the terminal:') }}</span>
+              <button v-for="tool in guiFor(task)" :key="tool.id" type="button"
+                      class="sl-btn sl-btn--ghost sl-btn--sm"
+                      @click="$emit('open-tool', tool.id)">{{ tool.label }}</button>
+            </template>
+            <template v-else>
+              <TerminalSquare class="sl-i" aria-hidden="true" />
+              <span>{{ $t('Do this one in the terminal or the Files tool.') }}</span>
+            </template>
+          </p>
+
           <p v-if="task.status === 'unavailable'" class="sl-task__warn">
             {{ $t('This lab cannot check that here. Tell an operator - the task names an environment the lab does not provide.') }}
           </p>
@@ -170,12 +192,13 @@
  */
 import { computed, ref } from 'vue';
 import {
-  AlertTriangle, Check, CheckCheck, Circle, Lightbulb, Sparkles,
+  AlertTriangle, Check, CheckCheck, Circle, Lightbulb, MonitorSmartphone, Sparkles,
+  TerminalSquare,
 } from 'lucide-vue-next';
 import ReadAloud from '@/components/ReadAloud.vue';
 import {
-  TASK_STATUS_LABELS, type GradeReport, type LabGrade, type LabTask,
-  type TaskStatus,
+  TASK_STATUS_LABELS, guiToolsFor, type GradeReport, type LabGrade, type LabTask,
+  type LabTool, type TaskStatus,
 } from '@/utils/labCatalogue';
 
 const props = defineProps<{
@@ -183,7 +206,14 @@ const props = defineProps<{
   busy?: boolean;
   /** What the last grading run did. See `gradeReport`. */
   report?: GradeReport | null;
+  /** The lab's tools, so a task can name the portal it can be done in. */
+  tools?: LabTool[];
 }>();
+
+const hasPortals = computed(() => (props.tools || []).some(tool => tool.kind === 'portal'));
+function guiFor(task: LabTask): LabTool[] {
+  return guiToolsFor(task, props.tools || []);
+}
 
 /**
  * The task list as something a voice can read: each title, then its detail.
@@ -207,6 +237,7 @@ defineEmits<{
   (event: 'grade'): void;
   (event: 'ask', task: LabTask): void;
   (event: 'self-mark', taskId: string): void;
+  (event: 'open-tool', toolId: string): void;
 }>();
 
 const open = ref(new Set<string>());

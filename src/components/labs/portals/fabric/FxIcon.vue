@@ -408,6 +408,35 @@
     <template v-else-if="name === 'Sustainability'">
       <path d="M16.5 3.5C9 3.5 4 6.8 4 12.2c0 1.7.6 3 1.6 4.1C7 11 10 8.4 13.5 7 10.5 9 8.3 11.6 7 15.6c1 .6 2.2.9 3.5.9 4.6 0 6-5.4 6-13z" fill="#107c10" />
     </template>
+    <!-- Menu glyphs: monochrome, currentColor, 1.2 stroke like the Fluent regular set -->
+    <template v-else-if="name === 'blank'" />
+    <template v-else-if="name === 'copy'">
+      <rect x="6.5" y="6.5" width="9" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2" />
+      <path d="M4.5 13.5V5a1.5 1.5 0 0 1 1.5-1.5h6.5" fill="none" stroke="currentColor" stroke-width="1.2" />
+    </template>
+    <template v-else-if="name === 'arrowUp'">
+      <path d="M10 16V4M5.5 8.5 10 4l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'arrowDown'">
+      <path d="M10 4v12M5.5 11.5 10 16l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'eraser'">
+      <path d="m8.5 16.5-4-4a1.4 1.4 0 0 1 0-2l6.6-6.6a1.4 1.4 0 0 1 2 0l3.4 3.4a1.4 1.4 0 0 1 0 2l-7 7.2zM7.5 7.5l5 5M8.5 16.5h8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+    </template>
+    <template v-else-if="name === 'insertAbove'">
+      <rect x="3.5" y="10" width="13" height="6.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.2" />
+      <path d="M10 2.5v5M7.5 5h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'insertBelow'">
+      <rect x="3.5" y="3.5" width="13" height="6.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.2" />
+      <path d="M10 12.5v5M7.5 15h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'link'">
+      <path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-.9.9M11.5 8.5a3 3 0 0 0-4.2 0L4.7 11.1a3 3 0 0 0 4.2 4.2l.9-.9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'open'">
+      <path d="M11 3.5h5.5V9M16.5 3.5 9.5 10.5M14.5 12v3a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    </template>
     <template v-else>
       <rect x="3.5" y="3.5" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" />
     </template>

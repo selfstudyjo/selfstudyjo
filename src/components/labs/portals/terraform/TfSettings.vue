@@ -5,38 +5,55 @@
     <!-- ===== General ===== -->
     <template v-if="route.page === 'settings'">
       <h2 class="tf-h2">General Settings</h2>
-      <div class="tf-card se-card">
+      <form class="tf-card se-card" @submit.prevent="saveGeneral">
         <div class="tf-field">
           <span class="tf-label">ID</span>
           <code class="tf-mono se-id">{{ workspace.id }}</code>
         </div>
         <div class="tf-field">
           <label class="tf-label" for="se-name">Name</label>
-          <input id="se-name" class="tf-input" :value="workspace.name" disabled />
-          <p class="tf-help">A CLI workspace cannot be renamed - the Terraform CLI has no rename. Create a new workspace instead.</p>
+          <input id="se-name" v-model.trim="form.name" class="tf-input" :class="{ 'is-invalid': nameError }"
+                 :disabled="workspace.name === 'default'" maxlength="90" autocomplete="off" />
+          <p v-if="nameError" class="se-error">{{ nameError }}</p>
+          <p v-else-if="workspace.name === 'default'" class="tf-help">The <strong>default</strong> workspace cannot be renamed - Terraform requires a workspace with that name.</p>
+          <p v-else class="tf-help">The name of your workspace is unique and used in tools, routing, and UI. Dashes, underscores, dots and alphanumeric characters are permitted. Renaming keeps the workspace ID, its state and its runs.</p>
+        </div>
+        <div class="tf-field">
+          <label class="tf-label" for="se-desc">Description <span class="tf-label__opt">(optional)</span></label>
+          <textarea id="se-desc" v-model="form.description" class="tf-textarea" maxlength="1000"></textarea>
         </div>
         <div class="tf-field">
           <span class="tf-label">Project</span>
           <select class="tf-select" disabled><option>Default Project</option></select>
+          <p class="tf-help">This organization has one project.</p>
         </div>
         <fieldset class="se-radios">
           <legend class="tf-label">Execution Mode</legend>
-          <label class="tf-check"><input type="radio" disabled /> <span>Organization default <span class="tf-check__sub">Remote</span></span></label>
-          <label class="tf-check"><input type="radio" disabled /> <span>Remote <span class="tf-check__sub">Your plans and applies occur on HCP Terraform's infrastructure.</span></span></label>
-          <label class="tf-check"><input type="radio" checked disabled /> <span>Local (custom) <span class="tf-check__sub">Your planning and applying jobs are performed on your own machines - here, the lab's terraform CLI. HCP Terraform is only used to store and synchronize state.</span></span></label>
+          <label class="tf-check"><input v-model="form.executionMode" type="radio" value="remote" />
+            <span>Remote <span class="tf-check__sub">Your plans and applies occur on HCP Terraform's infrastructure. You and your team can review and collaborate on runs within the app.</span></span></label>
+          <label class="tf-check"><input v-model="form.executionMode" type="radio" value="local" />
+            <span>Local (custom) <span class="tf-check__sub">Your planning and applying jobs are performed on your own machines. HCP Terraform is only used to store and synchronize state.</span></span></label>
+          <label class="tf-check se-disabled"><input type="radio" disabled />
+            <span>Agent <span class="tf-check__sub">Requires an agent pool - this organization has none.</span></span></label>
+          <p class="tf-help">In this lab every run executes on the lab's terraform CLI; the mode is recorded on the workspace.</p>
         </fieldset>
         <fieldset class="se-radios">
           <legend class="tf-label">Apply Method</legend>
-          <label class="tf-check"><input type="radio" disabled /> <span>Auto apply <span class="tf-check__sub">Automatically apply changes when a Terraform plan is successful.</span></span></label>
-          <label class="tf-check"><input type="radio" checked disabled /> <span>Manual apply <span class="tf-check__sub">Require an operator to confirm the result of the Terraform plan before applying.</span></span></label>
+          <label class="tf-check"><input v-model="form.autoApply" type="radio" :value="true" />
+            <span>Auto apply <span class="tf-check__sub">Automatically apply changes when a Terraform plan is successful. Plans that have no changes will not be applied.</span></span></label>
+          <label class="tf-check"><input v-model="form.autoApply" type="radio" :value="false" />
+            <span>Manual apply <span class="tf-check__sub">Require an operator to confirm the result of the Terraform plan before applying.</span></span></label>
         </fieldset>
         <div class="tf-field">
-          <span class="tf-label">Terraform Version</span>
-          <select class="tf-select" disabled><option>{{ workspace.version }}</option></select>
-          <p class="tf-help">The version of Terraform to use for this workspace (the lab's Terraform).</p>
+          <label class="tf-label" for="se-ver">Terraform Version</label>
+          <select id="se-ver" class="tf-select"><option>{{ workspace.version }}</option></select>
+          <p class="tf-help">The version of Terraform to use for this workspace. This lab has one installed.</p>
         </div>
-        <p class="tf-faint tf-small">These settings are fixed by the lab environment.</p>
-      </div>
+        <div class="se-actions">
+          <button type="submit" class="tf-btn tf-btn--primary" :disabled="busy || !dirty || Boolean(nameError)">Save settings</button>
+          <button v-if="dirty" type="button" class="tf-btn tf-btn--secondary" @click="resetForm">Reset</button>
+        </div>
+      </form>
     </template>
 
     <!-- ===== Locking ===== -->
@@ -97,15 +114,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { cli } from '@/utils/portalKit';
 import TfIcon from './TfIcon.vue';
 import TfWsHeader from './TfWsHeader.vue';
 import { useTf } from './tfContext';
-import { ago, cmdLock, cmdPlan, cmdUnlock, cmdWorkspace } from './tfKit';
+import { ago, cmdLock, cmdPlan, cmdUnlock, cmdUpdateWorkspace, cmdWorkspace, WS_NAME } from './tfKit';
 
-const { workspace, workspaces, runs, route, now, run, go, confirm, ensureInit, busy } = useTf();
+const { workspace, workspaces, runs, route, now, run, go, confirm, ensureInit, maybeAutoApply, busy } = useTf();
 const reason = ref('');
+
+// ---- General: one PATCH /workspaces/:id with only what changed ---------------
+const form = reactive({ name: '', description: '', executionMode: 'local', autoApply: false });
+function resetForm() {
+  const ws = workspace.value;
+  form.name = ws?.name || '';
+  form.description = ws?.description || '';
+  form.executionMode = ws?.execution_mode || 'local';
+  form.autoApply = Boolean(ws?.auto_apply);
+}
+watch(() => [workspace.value?.id, workspace.value?.name, workspace.value?.description,
+             workspace.value?.execution_mode, workspace.value?.auto_apply], resetForm, { immediate: true });
+
+const changes = computed(() => {
+  const ws = workspace.value;
+  const out: Record<string, unknown> = {};
+  if (!ws) return out;
+  if (form.name !== ws.name) out.name = form.name;
+  if (form.description !== (ws.description || '')) out.description = form.description;
+  if (form.executionMode !== (ws.execution_mode || 'local')) out['execution-mode'] = form.executionMode;
+  if (form.autoApply !== Boolean(ws.auto_apply)) out['auto-apply'] = form.autoApply;
+  return out;
+});
+const dirty = computed(() => Object.keys(changes.value).length > 0);
+const nameError = computed(() => {
+  const ws = workspace.value;
+  if (!ws || form.name === ws.name) return '';
+  if (!form.name) return 'Name is required';
+  if (!WS_NAME.test(form.name)) return 'Name can only include letters, numbers, -, _ and .';
+  if (workspaces.value.some(item => item.name === form.name)) return 'Name has already been taken';
+  return '';
+});
+
+async function saveGeneral() {
+  const ws = workspace.value;
+  if (!ws || !dirty.value || nameError.value) return;
+  await run(cmdUpdateWorkspace(ws.id, changes.value), {
+    success: 'Your settings have been saved', failure: 'Settings could not be saved',
+  });
+}
 const deleteMode = ref<'safe' | 'force'>('safe');
 
 async function lock() {
@@ -143,7 +200,10 @@ async function queueDestroy() {
   const before = runs.value[0]?.id || '';
   await run(cmdPlan('destroy'), { success: 'Destroy plan queued', failure: 'Destroy plan errored' });
   const latest = runs.value.find(item => item.workspace === ws.name);
-  if (latest && latest.id !== before) go({ page: 'run', ws: ws.name, id: latest.id });
+  if (latest && latest.id !== before) {
+    await maybeAutoApply(latest.id);
+    go({ page: 'run', ws: ws.name, id: latest.id });
+  }
 }
 
 async function deleteWs() {
@@ -188,4 +248,6 @@ async function deleteWs() {
 .se-help { margin-top: 10px; }
 .se-reason { margin-top: 16px; }
 .se-p { margin: 8px 0 14px; }
+.se-disabled { color: var(--tf-fg-disabled); cursor: not-allowed; }
+.se-error { margin-top: 4px; font-size: 13px; line-height: 18px; color: var(--tf-fg-critical); }
 </style>

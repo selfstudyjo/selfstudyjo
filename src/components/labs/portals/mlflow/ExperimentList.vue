@@ -13,21 +13,30 @@
       <MfIcon name="search" />
       <input v-model="query" class="mf-input" type="search" placeholder="Search Experiments" aria-label="Search Experiments" />
     </div>
-    <ul class="mf-explist__items">
-      <li v-for="exp in shown" :key="exp.id" class="mf-explist__item" :class="{ 'is-active': exp.id === activeId }"
-          @click="open(exp.id)">
-        <input type="checkbox" class="mf-check" :checked="exp.id === activeId" :aria-label="'Select ' + exp.name"
+    <ul class="mf-explist__items" :aria-label="showDeleted ? 'Deleted experiments' : 'Experiments'">
+      <li v-for="exp in shown" :key="exp.id" class="mf-explist__item"
+          :class="{ 'is-active': exp.id === activeId, 'is-deleted': exp.lifecycle_stage === 'deleted' }"
+          @click="exp.lifecycle_stage === 'deleted' ? null : open(exp.id)" @contextmenu="rowMenu($event, exp)">
+        <input v-if="!showDeleted" type="checkbox" class="mf-check" :checked="exp.id === activeId" :aria-label="'Select ' + exp.name"
                @click.stop="open(exp.id)" />
+        <MfIcon v-else name="trash" class="mf-muted" />
         <span class="mf-explist__name" :title="exp.name">{{ exp.name }}</span>
-        <span class="mf-explist__acts">
-          <button type="button" class="mf-iconbtn mf-iconbtn--sm" title="Rename experiment" :aria-label="'Rename ' + exp.name"
-                  :disabled="exp.default" @click.stop="openRename(exp)"><MfIcon name="pencil" /></button>
-          <button type="button" class="mf-iconbtn mf-iconbtn--sm" title="Delete experiment" :aria-label="'Delete ' + exp.name"
-                  :disabled="exp.default" @click.stop="openDelete(exp)"><MfIcon name="trash" /></button>
+        <button v-if="exp.lifecycle_stage === 'deleted'" type="button" class="mf-btn mf-btn--sm mf-explist__restore"
+                :aria-label="'Restore ' + exp.name" @click.stop="restore(exp)">Restore</button>
+        <span v-else class="mf-explist__acts">
+          <button type="button" class="mf-iconbtn mf-iconbtn--sm" :aria-label="'Actions for ' + exp.name" title="More actions"
+                  @click.stop="rowMenu($event, exp)"><MfIcon name="kebab" /></button>
         </span>
       </li>
-      <li v-if="!shown.length" class="mf-explist__none">No experiments found</li>
+      <li v-if="!shown.length" class="mf-explist__none">{{ showDeleted ? 'No deleted experiments' : 'No experiments found' }}</li>
     </ul>
+    <button type="button" class="mf-explist__toggle" :aria-pressed="showDeleted" @click="showDeleted = !showDeleted">
+      <MfIcon :name="showDeleted ? 'chevron-left' : 'trash'" />
+      {{ showDeleted ? 'Back to active experiments' : `Deleted experiments (${deletedCount})` }}
+    </button>
+
+    <TagEditorModal v-if="tagging" :title="`Add/Edit tags for ${tagging.name}`" :tags="tagging.tags" :busy="saving" :error="formError"
+                    @close="tagging = null" @save="saveTags" />
 
     <MfModal v-if="creating" title="Create Experiment" ok-text="Create" :ok-disabled="!createName.trim()" :busy="saving"
              @close="creating = false" @ok="create">
@@ -67,7 +76,8 @@ import { computed, ref } from 'vue';
 import { matches } from '@/utils/portalKit';
 import MfIcon from './MfIcon.vue';
 import MfModal from './MfModal.vue';
-import { mlflow, useMf } from './mfContext';
+import TagEditorModal from './TagEditorModal.vue';
+import { applyTags, mlflow, useMf } from './mfContext';
 import type { MfExperiment } from './mlflow';
 
 defineProps<{ collapsed?: boolean }>();
@@ -76,10 +86,13 @@ const emit = defineEmits<{ (event: 'collapse'): void; (event: 'picked'): void }>
 const mf = useMf();
 const query = ref('');
 const activeId = computed(() => (mf.route.value.page === 'experiments' ? mf.route.value.expId : ''));
+const showDeleted = ref(false);
 const live = computed(() => mf.experiments.value.filter(e => e.lifecycle_stage !== 'deleted'));
+const deleted = computed(() => mf.experiments.value.filter(e => e.lifecycle_stage === 'deleted'));
+const deletedCount = computed(() => deleted.value.length);
 const shown = computed(() => {
   // MLflow lists the newest experiment first, with Default last.
-  const list = live.value.filter(e => matches(e as any, query.value, ['name']));
+  const list = (showDeleted.value ? deleted.value : live.value).filter(e => matches(e as any, query.value, ['name', 'id']));
   return [...list].sort((a, b) => Number(b.id) - Number(a.id));
 });
 
@@ -159,6 +172,48 @@ async function remove() {
   }
 }
 
+function rowMenu(event: MouseEvent, exp: MfExperiment) {
+  if (exp.lifecycle_stage === 'deleted') {
+    mf.menu(event, [
+      { label: 'Restore', icon: 'restore', action: () => restore(exp) },
+      { label: 'Copy experiment ID', icon: 'copy', action: () => mf.copy(exp.id, 'experiment ID') },
+    ], exp.name);
+    return;
+  }
+  mf.menu(event, [
+    { label: 'Open', icon: 'chevron-right', action: () => open(exp.id) },
+    { label: 'Compare runs (Chart view)', icon: 'chart',
+      action: () => { emit('picked'); mf.go({ page: 'experiments', expId: exp.id, mode: 'chart' }); } },
+    { divider: true },
+    { label: 'Rename', icon: 'pencil', disabled: exp.default, title: exp.default ? 'The Default experiment cannot be renamed' : '',
+      action: () => openRename(exp) },
+    { label: 'Edit tags', icon: 'tag', action: () => { formError.value = ''; tagging.value = exp; } },
+    { label: 'Copy experiment ID', icon: 'copy', action: () => mf.copy(exp.id, 'experiment ID') },
+    { label: 'Copy artifact location', icon: 'copy', action: () => mf.copy(exp.artifact_location, 'artifact location') },
+    { divider: true },
+    { label: 'Delete', icon: 'trash', danger: true, disabled: exp.default,
+      title: exp.default ? 'The Default experiment cannot be deleted' : '', action: () => openDelete(exp) },
+  ], exp.name);
+}
+
+async function restore(exp: MfExperiment) {
+  const result = await mf.run(mlflow(['experiments', 'restore'], { '--experiment-id': exp.id }),
+                              { success: `Experiment "${exp.name}" restored` });
+  if (result.ok) {
+    if (!deleted.value.length) showDeleted.value = false;
+  }
+}
+
+const tagging = ref<MfExperiment | null>(null);
+async function saveTags(changes: { set: [string, string][]; remove: string[] }) {
+  const exp = tagging.value;
+  if (!exp) return;
+  saving.value = true;
+  formError.value = await applyTags(mf, 'experiments', { '--experiment-id': exp.id }, changes);
+  saving.value = false;
+  if (!formError.value) tagging.value = null;
+}
+
 defineExpose({ openCreate });
 </script>
 
@@ -181,8 +236,14 @@ defineExpose({ openCreate });
 .mf-explist__acts { display: none; gap: 0; }
 .mf-explist__item:hover .mf-explist__acts, .mf-explist__item.is-active .mf-explist__acts { display: inline-flex; }
 .mf-explist__none { color: var(--mf-text-2); padding: 8px; }
+.mf-explist__item.is-deleted { cursor: default; color: var(--mf-text-2); }
+.mf-explist__restore { flex: none; }
+.mf-explist__toggle { display: flex; align-items: center; gap: 6px; border: 0; border-top: 1px solid var(--mf-border-light); background: none;
+  padding: 8px 4px 0; color: var(--mf-link); font: inherit; font-size: 12px; cursor: pointer; text-align: left; }
+.mf-explist__toggle:hover { color: var(--mf-link-hover); text-decoration: underline; }
 .mf-p { margin: 0; }
 @container sl-portal (max-width: 900px) {
   .mf-explist { position: absolute; top: 0; bottom: 0; left: 0; z-index: 15; box-shadow: var(--mf-shadow-lg); padding-left: 16px; }
+  .mf-explist__acts { display: inline-flex; }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="mf-app" dir="ltr">
+  <div ref="appEl" class="mf-app" dir="ltr">
     <!-- ===== The MLflow 2.x header: logo, version, Experiments / Models / Prompts, Docs and GitHub ===== -->
     <header class="mf-header">
       <a href="#" class="mf-header__brand" @click.prevent="go({ page: 'experiments', expId: defaultExpId, mode: 'table' })">
@@ -49,6 +49,9 @@
       <PromptsPage v-else />
     </main>
 
+    <MfContextMenu v-if="ctxMenu" :key="ctxMenu.key" :x="ctxMenu.x" :y="ctxMenu.y" :items="ctxMenu.items" :label="ctxMenu.label"
+                   :bound-w="ctxMenu.w" :bound-h="ctxMenu.h" @close="ctxMenu = null" />
+
     <MfModal v-if="pending" :title="pending.title" :ok-text="pending.yes || 'OK'" :danger="pending.danger"
              @close="answer(false)" @ok="answer(true)">
       <p class="mf-confirm-text">{{ pending.message }}</p>
@@ -74,6 +77,7 @@ import { pick, rows } from '@/utils/portalKit';
 import MfIcon from './MfIcon.vue';
 import MfLogo from './MfLogo.vue';
 import MfModal from './MfModal.vue';
+import MfContextMenu from './MfContextMenu.vue';
 import ExperimentsPage from './ExperimentsPage.vue';
 import RunPage from './RunPage.vue';
 import ComparePage from './ComparePage.vue';
@@ -81,7 +85,7 @@ import ModelsPage from './ModelsPage.vue';
 import ModelPage from './ModelPage.vue';
 import VersionPage from './VersionPage.vue';
 import PromptsPage from './PromptsPage.vue';
-import { MF, type ConfirmRequest, type MfContext, type RunOptions } from './mfContext';
+import { MF, type ConfirmRequest, type MenuItem, type MfContext, type RunOptions } from './mfContext';
 import { routeUrl, type MfEval, type MfExperiment, type MfModel, type MfRoute, type MfRun, type MfServing } from './mlflow';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
@@ -148,6 +152,32 @@ function notify(type: 'success' | 'error' | 'info' | 'warning', title: string, d
   props.api.notify(type, title, detail);
 }
 
+const appEl = ref<HTMLElement | null>(null);
+const ctxMenu = ref<{ key: number; x: number; y: number; w: number; h: number; items: MenuItem[]; label: string } | null>(null);
+let menuSeq = 0;
+function menu(event: MouseEvent, items: MenuItem[], label = '') {
+  event.preventDefault();
+  event.stopPropagation();
+  const root = appEl.value;
+  if (!root || !items.length) return;
+  const box = root.getBoundingClientRect();
+  let x = event.clientX - box.left;
+  let y = event.clientY - box.top;
+  // From a "⋮" button (a click, or the keyboard): open under the button, right-aligned to it.
+  const button = (event.currentTarget as HTMLElement | null);
+  if (event.type !== 'contextmenu' && button && typeof button.getBoundingClientRect === 'function') {
+    const r = button.getBoundingClientRect();
+    x = r.right - box.left - 180;
+    y = r.bottom - box.top + 4;
+  }
+  ctxMenu.value = { key: ++menuSeq, x, y, w: box.width, h: box.height, items, label };
+}
+function copy(text: string, what: string) {
+  navigator.clipboard?.writeText(text).catch(() => undefined);
+  notify('success', `Copied ${what}`, text.length > 60 ? text.slice(0, 57) + '…' : text);
+}
+watch(route, () => { ctxMenu.value = null; }, { deep: true });
+
 const shownFlashes = computed(() => props.api.flashes.value.slice(0, 3));
 
 function openDocs() {
@@ -174,6 +204,8 @@ const ctx: MfContext = {
   experiment: id => experiments.value.find(e => e.id === id),
   findRun: id => runs.value.find(r => r.run_id === id || r.run_id.startsWith(id)),
   model: name => models.value.find(m => m.name === name),
+  menu,
+  copy,
 };
 provide(MF, ctx);
 </script>

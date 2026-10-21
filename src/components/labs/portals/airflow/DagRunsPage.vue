@@ -12,6 +12,8 @@
             <button type="button" role="menuitem" @click="markSelected('queued')">Set state to 'queued'</button>
             <button type="button" role="menuitem" @click="markSelected('success')">Set state to 'success'</button>
             <button type="button" role="menuitem" @click="markSelected('failed')">Set state to 'failed'</button>
+            <hr />
+            <button type="button" role="menuitem" class="is-danger" @click="deleteSelected">Delete</button>
           </div>
         </span>
         <button type="button" class="af-btn af-btn--sm af-btn--icon" title="Refresh" aria-label="Refresh" @click="af.refresh()"><AfIcon name="refresh" /></button>
@@ -38,7 +40,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in shown" :key="r.dag_id + r.run_id">
+              <tr v-for="r in shown" :key="r.dag_id + r.run_id" @contextmenu="rowMenu($event, r)">
                 <td class="af-actions-col"><input type="checkbox" :checked="selected.has(key(r))" :aria-label="'Select ' + r.run_id" @change="toggle(r)" /></td>
                 <td><span class="af-state"><i :style="{ background: stateColor(r.state) }"></i>{{ normState(r.state) }}</span></td>
                 <td><button type="button" class="af-link" @click="af.go({ page: 'dag', dagId: r.dag_id, tab: 'details' })">{{ r.dag_id }}</button></td>
@@ -66,6 +68,7 @@ import { sortBy } from '@/utils/portalKit';
 import AfIcon from './AfIcon.vue';
 import { useAf } from './afContext';
 import { CMD, fmtDate, normState, stateColor, type AfRun } from './airflow';
+import { runMenu } from './tiActions';
 
 const af = useAf();
 const fDag = ref(''); const fState = ref(''); const fType = ref(''); const fRun = ref('');
@@ -98,6 +101,22 @@ async function clearSelected() {
   let ok = 0;
   for (const r of list) if ((await af.run(CMD.clear(r.dag_id, { start: r.logical_date, end: r.logical_date }), { quiet: false })).ok) ok += 1;
   if (ok) af.notify('success', `${ok} dag runs and their task instances were cleared`);
+  selected.value = new Set();
+}
+
+function rowMenu(event: MouseEvent, r: AfRun) {
+  const dag = af.dag(r.dag_id);
+  if (dag) af.openMenu(event, r.run_id, runMenu(af, dag, r));
+}
+
+async function deleteSelected() {
+  actions.value = false;
+  const list = picked();
+  if (!await af.confirm({ title: 'Delete', message: `Are you sure you want to delete the ${list.length} selected DAG run(s)? Their task instances are deleted with them.`,
+    lines: list.map(r => `${r.dag_id} - ${r.run_id}`), yes: 'Delete', danger: true })) return;
+  let ok = 0;
+  for (const r of list) if ((await af.run(CMD.deleteRun(r.dag_id, r.run_id))).ok) ok += 1;
+  if (ok) af.notify('success', `Deleted ${ok} record(s)`);
   selected.value = new Set();
 }
 

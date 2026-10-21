@@ -78,6 +78,7 @@ export interface CloudRun {
     status: number; status_humanized: string; git_branch: string; git_sha: string;
     created_at: string; started_at: string; finished_at: string; duration_s: number;
     run_steps: number; steps: CloudStep[]; results: DbtResult[]; docs_generated: boolean;
+    retried_from?: number;
 }
 
 export interface FileItem { path: string; size: number; generated: boolean; content: string | null }
@@ -383,10 +384,48 @@ export function statusTone(status: string | number | null | undefined): 'ok' | '
     return 'none';
 }
 
+/** One row of a right-click menu in the Studio IDE. */
+export interface DbtMenuItem {
+    label: string;
+    icon?: string;
+    hint?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    divider?: boolean;
+    action?: () => void;
+}
+
+/** A file or folder name the IDE accepts - the same rule `dbt-cloud ide` enforces. */
+export function validIdePath(path: string): string {
+    const rel = path.trim().replace(/^\/+|\/+$/g, '');
+    if (!rel) return 'Enter a name.';
+    const parts = rel.split('/');
+    if (parts.some(p => !/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(p))) {
+        return "Use letters, digits, '_', '-' and '.', separated by '/'.";
+    }
+    if (['target', 'dbt_packages', 'logs'].includes(parts[0] ?? '')) return `'${parts[0]}/' is written by dbt and is read-only.`;
+    return '';
+}
+
 export interface TreeNode { name: string; path: string; dir: boolean; children: TreeNode[]; item?: FileItem }
 
-export function fileTree(items: FileItem[]): TreeNode[] {
+export function fileTree(items: FileItem[], dirs: string[] = []): TreeNode[] {
     const root: TreeNode = { name: '', path: '', dir: true, children: [] };
+    // Empty folders (made with New folder) carry no file, so they come in
+    // separately and are added as directory chains first.
+    for (const dir of dirs) {
+        const parts = String(dir || '').split('/').filter(Boolean);
+        let node = root;
+        parts.forEach((part, i) => {
+            const path = parts.slice(0, i + 1).join('/');
+            let child = node.children.find(c => c.name === part && c.dir);
+            if (!child) {
+                child = { name: part, path, dir: true, children: [] };
+                node.children.push(child);
+            }
+            node = child;
+        });
+    }
     for (const item of items) {
         const parts = item.path.split('/');
         let node = root;

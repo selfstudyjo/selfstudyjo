@@ -11,6 +11,8 @@
       filter-placeholder="Find resources by attribute or tag"
       :filter-fields="['label', 'id', 'name', 'vpc', 'description']"
       empty-title="No security groups"
+      :row-menu="() => actions"
+      @row-action="(id: string) => act(id)"
     >
       <template #actions>
         <button type="button" class="cs-btn cs-btn--icon" aria-label="Refresh" @click="ctx.api.notify('info', 'Security groups refreshed')"><CsIcon name="refresh" /></button>
@@ -71,7 +73,7 @@ const columns: Column[] = [
 const actions = computed<DdItem[]>(() => [
   { id: 'details', text: 'View details', disabled: !single.value },
   { id: 'inbound', text: 'Edit inbound rules', disabled: !single.value },
-  { id: 'outbound', text: 'Edit outbound rules', disabled: true },
+  { id: 'outbound', text: 'Edit outbound rules', disabled: !single.value },
   { id: 'tags', text: 'Manage tags', disabled: !single.value },
   { id: 'copy', text: 'Copy to new security group', disabled: true },
   { id: 'delete', text: 'Delete security groups', disabled: !chosen.value.length },
@@ -80,6 +82,7 @@ const actions = computed<DdItem[]>(() => [
 function act(id: string) {
   if (id === 'details' && single.value) ctx.to(svc.value, 'sg', { id: single.value.id });
   if (id === 'inbound' && single.value) ctx.to(svc.value, 'sg-inbound', { id: single.value.id });
+  if (id === 'outbound' && single.value) ctx.to(svc.value, 'sg-outbound', { id: single.value.id });
   if (id === 'tags') tagging.value = true;
   if (id === 'delete') deleting.value = true;
 }

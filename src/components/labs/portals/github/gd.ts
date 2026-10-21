@@ -40,12 +40,15 @@ export interface Commit {
     sha: string; full: string; message: string; summary: string; body: string;
     author: string; email: string; at: string; parents: string[]; merge: boolean;
     refs: string[]; tags: string[]; head: boolean; reachable: boolean; changes: CommitFile[];
+    remoteRefs?: string[];
 }
 
 export interface Branch {
     name: string; sha: string; full: string; current: boolean; message: string; at: string;
-    merged: boolean;
+    merged: boolean; upstream: string; ahead: number; behind: number; gone: boolean;
 }
+
+export interface Tracking { upstream: string; remote: string; ahead: number; behind: number; gone: boolean }
 
 export interface Stash {
     index: number; ref: string; message: string; branch: string; files: string[]; desktop: boolean;
@@ -59,7 +62,10 @@ export function readView(view: unknown) {
         branch: String(pick(view, 'branch', 'main')),
         detached: String(pick(view, 'detached', '')),
         user: pick<Record<string, string>>(view, 'user', { name: '', email: '' }),
-        branches: rows<Branch>(view, 'branches'),
+        branches: rows<Branch>(view, 'branches').map(b => ({
+            ...b, upstream: String(b.upstream || ''), ahead: Number(b.ahead) || 0,
+            behind: Number(b.behind) || 0, gone: Boolean(b.gone),
+        })),
         commits: rows<Commit>(view, 'commits').map(c => ({
             ...c,
             summary: c.summary ?? String(c.message || '').split('\n')[0],
@@ -67,11 +73,19 @@ export function readView(view: unknown) {
             changes: Array.isArray(c.changes) ? c.changes : [],
             tags: Array.isArray(c.tags) ? c.tags : [],
             refs: Array.isArray(c.refs) ? c.refs : [],
+            remoteRefs: Array.isArray((c as any).remote_refs) ? (c as any).remote_refs as string[] : [],
         })),
         changes: rows<Change>(view, 'changes'),
         conflicts: pick<string[]>(view, 'status.conflicts', []),
         stashes: rows<Stash>(view, 'stashes'),
-        tags: rows<{ name: string; sha: string }>(view, 'tags'),
+        tags: rows<{ name: string; sha: string; full?: string; pushed?: boolean }>(view, 'tags'),
+        remotes: pick<{ name: string; url: string }[]>(view, 'repository.remotes', []),
+        remoteBranches: rows<{ name: string; remote: string; branch: string; sha: string; full: string }>(
+            view, 'remote_branches'),
+        tracking: pick<Tracking | null>(view, 'tracking', null),
+        fetchedAt: String(pick(view, 'fetched_at', '')),
+        rebasing: pick<{ branch: string; onto: string; remaining: number; total: number } | null>(
+            view, 'rebasing', null),
         log: pick<string[]>(view, 'log', []),
         merging: pick<{ sha: string; branch: string; message: string } | null>(view, 'merging', null),
         sequencer: pick<{ op: string; commit: string; message: string } | null>(view, 'sequencer', null),
@@ -138,7 +152,47 @@ export const cmd = {
     tagDelete: (name: string) => cli(['git', 'tag', '-d', name]),
     config: (key: string, value: string) => cli(['git', 'config', key, value]),
     push: () => cli(['git', 'push']),
+    // The remote (a server simulated inside the lab - see git.py).
+    remoteAdd: (name: string, url: string) => cli(['git', 'remote', 'add', name, url]),
+    remoteSetUrl: (name: string, url: string) => cli(['git', 'remote', 'set-url', name, url]),
+    remoteRemove: (name: string) => cli(['git', 'remote', 'remove', name]),
+    publishBranch: (remote: string, branch: string) => cli(['git', 'push', '-u', remote, branch]),
+    pushTo: (remote: string) => cli(['git', 'push', remote, '--follow-tags']),
+    forcePush: (remote: string) => cli(['git', 'push', remote, '--force-with-lease']),
+    pull: (remote: string) => cli(['git', 'pull', remote]),
+    fetchRemote: (remote: string) => cli(['git', 'fetch', remote]),
+    deleteRemoteBranch: (remote: string, branch: string) => cli(['git', 'push', remote, '--delete', branch]),
+    pushTag: (remote: string, tag: string) => cli(['git', 'push', remote, tag]),
+    // Branch operations Desktop offers beside a merge commit.
+    squashMerge: (branch: string) => cli(['git', 'merge', '--squash', branch]),
+    rebase: (branch: string) => cli(['git', 'rebase', branch]),
+    amend: (summary: string, description: string) => {
+        let line = cli(['git', 'commit', '--amend'], { '-m': summary });
+        if (description.trim()) line += ' ' + cli([], { '-m': description });
+        return line;
+    },
 };
+
+/** GitHub Desktop's co-author trailers, appended to the description. */
+export function withCoAuthors(description: string, coAuthors: string[]): string {
+    const trailers = coAuthors.map(a => a.trim()).filter(Boolean).map(a => `Co-authored-by: ${a}`);
+    if (!trailers.length) return description;
+    const body = description.replace(/\s+$/, '');
+    return (body ? body + '\n\n' : '') + trailers.join('\n');
+}
+
+/** The URL GitHub Desktop would create for a repository published as `name`. */
+export function publishUrl(login: string, name: string): string {
+    const owner = (login || 'student').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'student';
+    return `https://github.com/${owner}/${name}.git`;
+}
+
+/** "Last fetched 5 minutes ago" - Desktop's caption under Fetch origin. */
+export function fetchedCaption(at: string): string {
+    if (!at) return 'Never fetched';
+    const rel = relTime(at);
+    return rel ? `Last fetched ${rel}` : 'Never fetched';
+}
 
 // ----------------------------------------------------------------- helpers ---
 /** `src/app/main.py` -> ['src/app/', 'main.py'] — the dir is drawn grey. */

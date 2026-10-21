@@ -1,6 +1,6 @@
 <template>
   <!-- Instances -->
-  <div v-if="page === 'instances'">
+  <div v-if="page === 'instances'" @contextmenu="onRowMenu">
     <CsTable variant="full-page" title="Instances" :items="list" :columns="cols" track-by="id" selection-type="multi"
              v-model:selected="sel" filter-placeholder="Find Instance by attribute or tag (case-sensitive)">
       <template #actions>
@@ -10,7 +10,7 @@
         <CsDropdown :items="actionItems" :disabled="!sel.length" @select="act" />
         <button type="button" class="cs-btn cs-btn--primary" disabled title="This estate's instances are launched by Auto Scaling and Terraform">Launch instances</button>
       </template>
-      <template #cell-id="{ row }"><a href="#" class="cs-link" @click.prevent="ctx.to('ec2', 'instance', { id: row.id })">{{ row.id }}</a></template>
+      <template #cell-id="{ row }"><a href="#" class="cs-link" :data-row="row.id" @click.prevent="ctx.to('ec2', 'instance', { id: row.id })">{{ row.id }}</a></template>
       <template #cell-state="{ row }"><CsStatus :state="row.state" /></template>
       <template #cell-status="{ row }">
         <span v-if="row.state !== 'running'" class="cs-muted">-</span>
@@ -90,6 +90,9 @@
   </div>
   <NotFound v-else what="Instance" :id="id" back="instances" />
 
+  <RowMenu v-if="rm.menu.value" :x="rm.menu.value.x" :y="rm.menu.value.y" :title="menuTitle" :items="menuItems"
+           @select="menuAct" @close="rm.close" />
+
   <!-- State change confirmations -->
   <CsDelete v-if="confirm" :title="confirm.title" :action="confirm.action" :busy="busy" :word="confirm.verb === 'terminate' ? 'terminate' : ''"
             :warning="confirm.warning" @close="confirm = null" @confirm="doState">
@@ -163,6 +166,8 @@ import CsModal from '../../aws/CsModal.vue';
 import CsStatus from '../../aws/CsStatus.vue';
 import CsTable from '../../aws/CsTable.vue';
 import TagEditor from '../../aws/TagEditor.vue';
+import RowMenu from '../RowMenu.vue';
+import { copyText, useRowMenu, type MenuItem } from '../rowmenu';
 import { tagProblem, tagWords, type TagPair } from '../../aws/commands';
 import { useOps } from '../ctx';
 import { awsDate, tagList } from '../kit';
@@ -206,8 +211,18 @@ const cols = [
   { id: 'az', header: 'Availability Zone', sortKey: 'az' }, { id: 'ip', header: 'Private IPv4 address', sortKey: 'ip' },
   { id: 'public_ip', header: 'Public IPv4 address' },
 ];
-const stateItems = [{ id: 'stop', text: 'Stop instance' }, { id: 'start', text: 'Start instance' },
-  { id: 'reboot', text: 'Reboot instance', disabled: true }, { id: 'terminate', text: 'Terminate (delete) instance' }];
+const stateItems = computed(() => {
+  const list = targets.value;
+  const running = list.length > 0 && list.every(i => i.state === 'running');
+  const stopped = list.length > 0 && list.every(i => i.state === 'stopped');
+  const gone = list.some(i => i.state === 'terminated');
+  return [
+    { id: 'stop', text: 'Stop instance', disabled: !running, disabledReason: 'Only a running instance can be stopped.' },
+    { id: 'start', text: 'Start instance', disabled: !stopped, disabledReason: 'Only a stopped instance can be started.' },
+    { id: 'reboot', text: 'Reboot instance', disabled: !running, disabledReason: 'Only a running instance can be rebooted.' },
+    { id: 'terminate', text: 'Terminate (delete) instance', disabled: gone || !list.length },
+  ];
+});
 const actionItems = computed(() => [
   { id: 'g-settings', text: 'Instance settings', group: true },
   { id: 'type', text: 'Change instance type', nested: true, disabled: targets.value.length !== 1 },
@@ -230,7 +245,53 @@ function sgRules(gid: string) {
 function roleOf(profile: string) { return rows<any>(ctx.c.value, 'iam.profiles').find(p => p.name === profile)?.role || profile; }
 
 function connect() { if (one.value) connectOne(one.value); }
-function connectOne(i: any) { ctx.to('ssm', 'sessions', { target: i.id }); }
+function connectOne(i: any) { ctx.to('ec2', 'connect', { id: i.id }); }
+
+// ---- Right-click menu on a row ----
+const rm = useRowMenu();
+const menuInst = computed<any>(() => all.value.find(i => i.id === rm.menu.value?.key) || null);
+const menuTitle = computed(() => (menuInst.value ? `${menuInst.value.id} (${menuInst.value.name || 'no name'})` : ''));
+const menuItems = computed<MenuItem[]>(() => {
+  const i = menuInst.value;
+  if (!i) return [];
+  const states = stateItems.value;
+  return [
+    { id: 'connect', text: 'Connect', disabled: i.state !== 'running', disabledReason: 'Start the instance to connect to it.' },
+    { id: 'details', text: 'View details' },
+    { id: 'g-state', text: 'Instance state', group: true },
+    ...states.map(x => ({ ...x, nested: true, danger: x.id === 'terminate' })),
+    { id: 'g-settings', text: 'Instance settings', group: true },
+    { id: 'type', text: 'Change instance type', nested: true },
+    { id: 'protect', text: 'Change termination protection', nested: true },
+    { id: 'tags', text: 'Manage tags', nested: true },
+    { id: 'g-sec', text: 'Security', group: true },
+    { id: 'sgs', text: 'Change security groups', nested: true },
+    { id: 'g-storage', text: 'Storage', group: true },
+    { id: 'snapshot', text: 'Create snapshot', nested: true },
+    { id: 'g-monitor', text: 'Monitor and troubleshoot', group: true },
+    { id: 'alarms', text: 'Manage CloudWatch alarms', nested: true },
+    { id: 'logs', text: 'View logs in CloudWatch', nested: true },
+    { id: 'fleet', text: 'View in Fleet Manager', nested: true },
+    { id: 'div', divider: true },
+    { id: 'copy-id', text: 'Copy instance ID' },
+    { id: 'copy-ip', text: 'Copy private IPv4 address' },
+  ];
+});
+function onRowMenu(event: MouseEvent) { rm.open(event, key => { sel.value = [key]; }); }
+async function menuAct(action: string) {
+  const i = menuInst.value || one.value;
+  if (!i) return;
+  if (action === 'connect') connectOne(i);
+  else if (action === 'details') ctx.to('ec2', 'instance', { id: i.id });
+  else if (['stop', 'start', 'reboot', 'terminate'].includes(action)) stateAct(action);
+  else if (action === 'alarms') ctx.to('cloudwatch', 'alarms');
+  else if (action === 'logs') ctx.to('cloudwatch', 'log-groups');
+  else if (action === 'fleet') ctx.to('ssm', 'fleet');
+  else if (action === 'copy-id' || action === 'copy-ip') {
+    const ok = await copyText(action === 'copy-id' ? i.id : i.ip);
+    ctx.api.notify(ok ? 'success' : 'error', ok ? 'Copied to clipboard' : 'Could not copy to the clipboard');
+  } else act(action);
+}
 
 function stateAct(verb: string) {
   const list = targets.value;
@@ -238,6 +299,7 @@ function stateAct(verb: string) {
   const plural = list.length > 1 ? 'instances' : 'instance';
   if (verb === 'stop') confirm.value = { verb, title: `Stop ${plural}?`, action: 'Stop', text: `Are you sure you want to stop these ${plural}?`, warning: '' };
   if (verb === 'start') confirm.value = { verb, title: `Start ${plural}?`, action: 'Start', text: `Start these ${plural}?`, warning: '' };
+  if (verb === 'reboot') confirm.value = { verb, title: `Reboot ${plural}?`, action: 'Reboot', text: `Are you sure you want to reboot these ${plural}? Open sessions to them will be disconnected.`, warning: '' };
   if (verb === 'terminate') confirm.value = { verb, title: `Terminate (delete) ${plural}?`, action: 'Terminate (delete)',
     text: 'On an EBS-backed instance, the default action is for the root EBS volume to be deleted when the instance is terminated. Storage on any local drives will be lost.',
     warning: 'Terminating an instance destroys its volumes. Take a snapshot first if it may be evidence.' };
@@ -249,7 +311,7 @@ async function doState() {
   const region = regionFlag(list[0]);
   const result = await ctx.run(cli(['aws', 'ec2', `${verb}-instances`], {
     '--region': region, '--instance-ids': list.map(i => i.id),
-  }), { stop: 'Successfully stopped', start: 'Successfully started', terminate: 'Successfully initiated termination of' }[verb as 'stop']
+  }), { stop: 'Successfully stopped', start: 'Successfully started', reboot: 'Successfully rebooted', terminate: 'Successfully initiated termination of' }[verb as 'stop']
     + ` ${list.map(i => i.id).join(', ')}`);
   busy.value = false;
   confirm.value = null;

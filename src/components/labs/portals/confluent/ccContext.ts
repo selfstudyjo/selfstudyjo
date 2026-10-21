@@ -5,7 +5,7 @@
  */
 import { inject, type ComputedRef, type InjectionKey, type Ref } from 'vue';
 import type { PortalResult } from '@/utils/portalKit';
-import type { CcBroker, CcConnector, CcGroup, CcRoute, CcSubject, CcTopic } from './confluent';
+import type { CcBroker, CcConnector, CcGroup, CcKsql, CcRoute, CcSubject, CcTopic } from './confluent';
 
 export interface RunOptions {
     success?: string;
@@ -22,6 +22,16 @@ export interface ConfirmRequest {
     typeToConfirm?: string;
 }
 
+/** One entry of a row's actions menu ("..." button or right-click). */
+export interface CcMenuItem {
+    label?: string;
+    icon?: string;
+    danger?: boolean;
+    disabled?: boolean;
+    divider?: boolean;
+    run?: () => void;
+}
+
 export interface CcContext {
     installed: ComputedRef<boolean>;
     clusterId: ComputedRef<string>;
@@ -34,12 +44,15 @@ export interface CcContext {
     plugins: ComputedRef<string[]>;
     registryCompat: ComputedRef<string>;
     producer: ComputedRef<Record<string, any>>;
+    ksql: ComputedRef<CcKsql>;
     busy: ComputedRef<boolean>;
     route: Ref<CcRoute>;
     go: (route: CcRoute) => void;
     run: (command: string, options?: RunOptions) => Promise<PortalResult>;
     confirm: (request: ConfirmRequest) => Promise<boolean>;
     notify: (type: 'success' | 'error' | 'info' | 'warning', title: string, detail?: string) => void;
+    /** Open the actions menu at a right-click, or under the "..." button that was clicked. */
+    menu: (event: MouseEvent, items: CcMenuItem[]) => void;
     topic: (name: string) => CcTopic | undefined;
     subject: (name: string) => CcSubject | undefined;
 }

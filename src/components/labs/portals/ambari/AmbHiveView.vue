@@ -19,7 +19,8 @@
         </div>
         <ul class="hv__tree">
           <li v-for="t in shownTables" :key="t.name">
-            <button type="button" class="hv__tnode" @click="toggleTable(t.name)">
+            <button type="button" class="hv__tnode" title="Right-click for table actions" @click="toggleTable(t.name)"
+                    @contextmenu.prevent="tableMenu($event, t)">
               <AmbIcon :name="expanded.includes(t.name) ? 'caret' : 'chev-right'" :size="10" />
               <AmbIcon name="table" :size="13" /> <span>{{ t.name }}</span>
             </button>
@@ -170,6 +171,16 @@
         <input id="hv-save" v-model="saveName" class="form-control" @keydown.enter="saveQuery" />
       </div>
     </AmbModal>
+    <AmbContextMenu v-if="ctx" :x="ctx.x" :y="ctx.y" :items="ctx.items" @close="ctx = null" />
+    <AmbModal v-if="dropping" title="Drop Table" ok-text="Drop" danger small :busy="busy" @close="dropping = null" @ok="dropTable">
+      <p>Are you sure you want to drop <strong>{{ dropping.db }}.{{ dropping.name }}</strong>?
+        <template v-if="!dropping.external"> Its data in HDFS is deleted with it.</template>
+        <template v-else> It is an external table: its data stays in HDFS.</template></p>
+    </AmbModal>
+    <AmbModal v-if="deletingSaved !== null" title="Delete Saved Query" ok-text="Delete" danger small
+              @close="deletingSaved = null" @ok="confirmDeleteSaved">
+      <p>Are you sure you want to delete the saved query <strong>{{ saved[deletingSaved]?.name }}</strong>?</p>
+    </AmbModal>
   </div>
 </template>
 
@@ -177,7 +188,8 @@
 import { computed, reactive, ref, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import { cli, errorText, pick, rows } from '@/utils/portalKit';
-import { shortStamp, splitStatements } from './ambari';
+import { shortStamp, splitStatements, type AmbMenuItem } from './ambari';
+import AmbContextMenu from './AmbContextMenu.vue';
 import AmbIcon from './AmbIcon.vue';
 import AmbModal from './AmbModal.vue';
 import AmbHiveTables from './AmbHiveTables.vue';
@@ -366,8 +378,55 @@ function openSaved(q: { name: string; sql: string }) {
   emit('navigate', { page: 'hive', tab: 'query' });
 }
 function deleteSaved(i: number) {
+  deletingSaved.value = i;
+}
+function confirmDeleteSaved() {
+  const i = deletingSaved.value;
+  if (i === null) return;
+  const name = saved.value[i]?.name;
   saved.value = saved.value.filter((_, index) => index !== i);
   persist();
+  deletingSaved.value = null;
+  props.api.notify('success', `Saved query "${name}" deleted`);
+}
+const deletingSaved = ref<number | null>(null);
+
+// ---- the table tree's right-click menu ----
+const ctx = ref<{ x: number; y: number; items: AmbMenuItem[] } | null>(null);
+const dropping = ref<Record<string, any> | null>(null);
+function qualified(t: Record<string, any>) {
+  return `${t.db}.${t.name}`;
+}
+async function runInNewSheet(sql: string, name: string) {
+  addSheet(`${sql};`);
+  sheet.value.name = name;
+  rtab.value = 'results';
+  await runStatements([sql]);
+}
+function tableMenu(event: MouseEvent, t: Record<string, any>) {
+  ctx.value = {
+    x: event.clientX, y: event.clientY,
+    items: [
+      { header: true, label: qualified(t) },
+      { label: 'Preview Data', icon: 'table', disabled: props.busy || running.value,
+        run: () => runInNewSheet(`SELECT * FROM ${qualified(t)} LIMIT 100`, `Preview ${t.name}`) },
+      { label: 'Describe', icon: 'list', disabled: props.busy || running.value,
+        run: () => runInNewSheet(`DESCRIBE ${qualified(t)}`, `Describe ${t.name}`) },
+      { label: 'Count Rows', icon: 'ops', disabled: props.busy || running.value,
+        run: () => runInNewSheet(`SELECT COUNT(*) AS row_count FROM ${qualified(t)}`, `Count ${t.name}`) },
+      { label: 'Insert SELECT into worksheet', icon: 'edit', run: () => insertSelect(t) },
+      { label: 'Open in Tables', icon: 'database', run: () => emit('navigate', { page: 'hive', tab: 'tables' }) },
+      { sep: true },
+      { label: 'Drop Table', icon: 'trash', danger: true, disabled: props.busy, run: () => { dropping.value = t; } },
+    ],
+  };
+}
+async function dropTable() {
+  const t = dropping.value;
+  if (!t) return;
+  const result = await props.api.exec(`DROP TABLE ${qualified(t)}`, { success: `Table ${qualified(t)} dropped`,
+                                                                       failure: 'The table could not be dropped' });
+  if (result.ok) dropping.value = null;
 }
 
 watch(colFilter, () => { page.value = 0; });

@@ -133,9 +133,12 @@ import JkNodes from './JkNodes.vue';
 import JkPlugins from './JkPlugins.vue';
 import JkHistory from './JkHistory.vue';
 import JkMisc from './JkMisc.vue';
+import JkViews from './JkViews.vue';
+import JkWorkspace from './JkWorkspace.vue';
+import JkSystem from './JkSystem.vue';
 import { JK, type ConfirmRequest, type RunOptions } from './jkContext';
 import {
-  baseUrl, credentialsOf, jobsOf, multiline, nodesOf, pluginsOf, routeUrl, type Route,
+  baseUrl, credentialsOf, jobsOf, multiline, nodesOf, pluginsOf, routeUrl, systemMessageOf, viewsOf, type Route,
 } from './jenkinsKit';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: LabTool; busy?: boolean }>();
@@ -146,6 +149,8 @@ const jobs = computed(() => jobsOf(view.value));
 const nodes = computed(() => nodesOf(view.value));
 const credentials = computed(() => credentialsOf(view.value));
 const plugins = computed(() => pluginsOf(view.value));
+const views = computed(() => viewsOf(view.value));
+const systemMessage = computed(() => systemMessageOf(view.value));
 const branch = computed(() => String(pick(view.value, 'portal.branch', '') || pick(view.value, 'branch', 'main')));
 const user = computed(() => String(pick(view.value, 'portal.user', 'admin')));
 const version = computed(() => String(pick(view.value, 'version', '2.440.1')));
@@ -174,6 +179,11 @@ watch(route, () => { if (mainEl.value) mainEl.value.scrollTop = 0; }, { deep: tr
 watch(jobs, list => {
   const r = route.value as any;
   if (r.job && !list.some(job => job.name === r.job)) go({ page: 'dashboard' });
+});
+// Likewise a view deleted from the console.
+watch(views, list => {
+  const r = route.value as any;
+  if (r.view && (r.page === 'dashboard' || r.page === 'editView') && !list.some(v => v.name === r.view)) go({ page: 'dashboard' });
 });
 
 async function run(command: string, options: RunOptions = {}): Promise<PortalResult> {
@@ -228,7 +238,7 @@ function onSideClick(event: MouseEvent) {
 }
 
 provide(JK, {
-  view, jobs, nodes, credentials, plugins, branch, user, base, now,
+  view, jobs, nodes, credentials, plugins, views, systemMessage, branch, user, base, now,
   busy: computed(() => Boolean(props.busy)),
   route, go, run, confirm, notify,
   job: (name: string) => jobs.value.find(job => job.name === name),
@@ -236,6 +246,10 @@ provide(JK, {
 
 const PAGES: Record<string, Component> = {
   dashboard: JkDashboard,
+  newView: JkViews,
+  editView: JkViews,
+  workspace: JkWorkspace,
+  system: JkSystem,
   newItem: JkNewItem,
   history: JkHistory,
   manage: JkManage,
@@ -273,11 +287,20 @@ const pageKey = computed(() => JSON.stringify(route.value));
 const crumbs = computed(() => {
   const r = route.value as any;
   const out: { label: string; route?: Route }[] = [{ label: 'Dashboard', route: { page: 'dashboard' } }];
+  if (r.view && (r.page === 'dashboard' || r.page === 'editView')) out.push({ label: r.view, route: { page: 'dashboard', view: r.view } });
   if (r.job) out.push({ label: r.job, route: { page: 'job', job: r.job } });
   const manage = () => out.push({ label: 'Manage Jenkins', route: { page: 'manage' } });
   switch (r.page) {
     case 'newItem': out.push({ label: 'All', route: { page: 'dashboard' } }); out.push({ label: 'New Item' }); break;
     case 'history': out.push({ label: 'Build History' }); break;
+    case 'newView': out.push({ label: 'New view' }); break;
+    case 'editView': out.push({ label: 'Edit View' }); break;
+    case 'system': manage(); out.push({ label: 'System' }); break;
+    case 'workspace': {
+      out.push({ label: 'Workspace', route: { page: 'workspace', job: r.job } });
+      if (r.path) out.push({ label: r.path });
+      break;
+    }
     case 'manage': out.push({ label: 'Manage Jenkins' }); break;
     case 'plugins': manage(); out.push({ label: 'Plugins' }); break;
     case 'nodes': manage(); out.push({ label: 'Nodes' }); break;

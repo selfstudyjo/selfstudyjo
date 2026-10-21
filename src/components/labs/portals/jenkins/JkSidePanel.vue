@@ -137,6 +137,7 @@ const tasks = computed<Task[]>(() => {
     ];
     if (!folder) {
       list.push({ label: 'Changes', icon: 'changes', active: page === 'changes', run: () => go({ page: 'changes', job: name }) });
+      list.push({ label: 'Workspace', icon: 'folder', active: page === 'workspace', run: () => go({ page: 'workspace', job: name }) });
       list.push(hasParameters(job.value)
         ? { label: 'Build with Parameters', icon: 'clock-play', active: page === 'buildParams', disabled: job.value.disabled, run: () => go({ page: 'buildParams', job: name }) }
         : { label: job.value.type === 'multibranch' ? 'Scan Multibranch Pipeline Now' : 'Build Now', icon: 'clock-play', disabled: job.value.disabled, run: () => { void actions.buildNow(name); } });
@@ -148,12 +149,21 @@ const tasks = computed<Task[]>(() => {
     if (pipeline) list.push({ label: 'Pipeline Syntax', icon: 'help', active: page === 'syntax', run: () => go({ page: 'syntax', job: name }) });
     return list;
   }
-  return [
+  const view = page === 'dashboard' && r.value.view ? String(r.value.view) : '';
+  const global: Task[] = [
     { label: 'New Item', icon: 'plus', active: page === 'newItem', run: () => go({ page: 'newItem' }) },
     { label: 'Build History', icon: 'history', active: page === 'history', run: () => go({ page: 'history' }) },
-    { label: 'Manage Jenkins', icon: 'gear', active: ['manage', 'plugins', 'nodes', 'node', 'nodeNew', 'credentials', 'credentialNew', 'credential', 'cli', 'about'].includes(page), run: () => go({ page: 'manage' }) },
-    { label: 'My Views', icon: 'views', active: page === 'dashboard', run: () => go({ page: 'dashboard' }) },
+    { label: 'Manage Jenkins', icon: 'gear', active: ['manage', 'plugins', 'nodes', 'node', 'nodeNew', 'credentials', 'credentialNew', 'credential', 'cli', 'about', 'system'].includes(page), run: () => go({ page: 'manage' }) },
+    { label: 'My Views', icon: 'views', active: page === 'dashboard' && !view, run: () => go({ page: 'dashboard' }) },
+    { label: 'New View', icon: 'plus', active: page === 'newView', run: () => go({ page: 'newView' }) },
   ];
+  if (view) {
+    global.push(
+      { label: 'Edit View', icon: 'gear', run: () => go({ page: 'editView', view }) },
+      { label: 'Delete View', icon: 'trash', danger: true, run: () => { void actions.deleteView(view); } },
+    );
+  }
+  return global;
 });
 </script>
 

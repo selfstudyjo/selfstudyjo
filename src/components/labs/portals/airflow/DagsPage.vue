@@ -67,7 +67,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="dag in shown" :key="dag.dag_id" :class="{ 'is-paused': dag.paused }">
+            <tr v-for="dag in shown" :key="dag.dag_id" :class="{ 'is-paused': dag.paused }" @contextmenu="rowMenu($event, dag)">
               <td class="af-dags__toggle-col">
                 <button type="button" class="af-switch" :class="{ 'is-on': !dag.paused }" role="switch" :aria-checked="!dag.paused"
                         :title="dag.paused ? 'DAG is Paused' : 'DAG is Active'" :aria-label="'Pause/Unpause DAG ' + dag.dag_id"
@@ -175,6 +175,24 @@ const LINKS: { label: string; tab: DagTab; icon: string }[] = [
 ];
 
 function closeMenus() { menuFor.value = ''; linksFor.value = ''; }
+
+/** Right-click a DAG row: the row's actions and links in one menu. */
+function rowMenu(event: MouseEvent, dag: AfDag) {
+  closeMenus();
+  af.openMenu(event, dag.dag_id, [
+    { label: 'Trigger DAG', hint: 'dags trigger', action: () => triggerNow(af, dag.dag_id) },
+    { label: 'Trigger DAG w/ config', action: () => { triggering.value = dag.dag_id; } },
+    { label: dag.paused ? 'Unpause DAG' : 'Pause DAG', hint: dag.paused ? 'dags unpause' : 'dags pause', action: () => togglePause(af, dag) },
+    { divider: true, label: '' },
+    ...LINKS.map(link => ({ label: link.label, action: () => af.go({ page: 'dag', dagId: dag.dag_id, tab: link.tab }) })),
+    { label: 'DAG Runs', action: () => af.go({ page: 'dagruns' }) },
+    { divider: true, label: '' },
+    { label: 'Filter by owner: ' + (dag.owner || 'airflow'), action: () => { query.value = String(dag.owner || 'airflow'); } },
+    ...dag.tags.slice(0, 4).map(t => ({ label: 'Filter by tag: ' + t, action: () => { tagFilter.value = t; } })),
+    { divider: true, label: '' },
+    { label: 'Delete DAG', danger: true, action: () => { deleteDag(af, dag.dag_id); } },
+  ]);
+}
 onMounted(() => window.addEventListener('click', closeMenus));
 onBeforeUnmount(() => window.removeEventListener('click', closeMenus));
 

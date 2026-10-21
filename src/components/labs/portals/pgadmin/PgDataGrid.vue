@@ -1,11 +1,13 @@
 <template>
-  <div class="pg-dg">
+  <div ref="rootEl" class="pg-dg" @mousedown="menu = null">
     <div class="pg-dg__bar" role="toolbar" aria-label="Data output">
       <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Add row" :disabled="!editable" @click="addRow"><PgIcon name="plus" :size="14" /></button>
-      <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Copy" :disabled="!grid" @click="copy"><PgIcon name="copy" :size="14" /></button>
+      <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Copy" :disabled="!grid" @click="copy(true)"><PgIcon name="copy" :size="14" /></button>
       <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Paste" :disabled="!editable || !clip" @click="paste"><PgIcon name="paste" :size="14" /></button>
       <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Delete" :disabled="!editable || !selectedRows.length" @click="markDelete"><PgIcon name="trash" :size="14" /></button>
       <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Save Data Changes (F6)" :disabled="!dirty" @click="save"><PgIcon name="save-data" :size="14" /></button>
+      <span class="pg-dg__sep" />
+      <button type="button" class="pg-btn pg-btn--icon pg-btn--sm" title="Save results to file" :disabled="!grid" @click="download"><PgIcon name="download" :size="14" /></button>
       <span class="pg-dg__sep" />
       <span v-if="!editable && grid" class="pg-dg__ro" :title="readOnlyWhy"><PgIcon name="info" :size="13" /> Read-only</span>
       <span v-if="dirty" class="pg-dg__dirty">{{ changeCount }} pending change{{ changeCount === 1 ? '' : 's' }}</span>
@@ -25,9 +27,9 @@
         <tbody>
           <tr v-for="(row, ri) in shownRows" :key="row.key"
               :class="{ 'is-sel': selectedRows.includes(row.key), 'is-del': deleted.has(row.key), 'is-new': row.isNew }">
-            <td class="pg-dg__num" @click="selectRow(row.key, $event)">{{ row.isNew ? '*' : ri + 1 }}</td>
+            <td class="pg-dg__num" @click="selectRow(row.key, $event)" @contextmenu.prevent="openMenu($event, row, -1)">{{ row.isNew ? '*' : ri + 1 }}</td>
             <td v-for="(cell, ci) in row.cells" :key="ci" :class="{ 'is-null': cell === null, 'is-edited': isEdited(row, ci), 'is-num': isNum(ci) }"
-                :title="cell === null ? 'NULL' : String(cell)" @dblclick="startEdit(row, ci)">
+                :title="cell === null ? 'NULL' : String(cell)" @dblclick="startEdit(row, ci)" @contextmenu.prevent="openMenu($event, row, ci)">
               <input v-if="editing && editing.key === row.key && editing.col === ci" v-model="editing.value" v-focus class="pg-dg__edit"
                      :aria-label="'Edit ' + grid.columns[ci]" @keydown.enter.prevent="commitEdit" @keydown.esc.prevent="editing = null" @blur="commitEdit" />
               <template v-else>{{ cell === null ? '[null]' : String(cell) }}</template>
@@ -36,6 +38,7 @@
         </tbody>
       </table>
     </div>
+    <PgMenu v-if="menu" :items="menu.items" :x="menu.x" :y="menu.y" @close="menu = null" />
   </div>
 </template>
 
@@ -49,13 +52,16 @@
  */
 import { computed, ref, watch } from 'vue';
 import PgIcon from './PgIcon.vue';
-import type { DataChanges, Grid } from './pg';
+import PgMenu from './PgMenu.vue';
+import { gridCsv, type DataChanges, type Grid } from './pg';
+import type { MenuItem } from './pgContext';
 
 
 const props = withDefaults(defineProps<{
   grid: Grid | null; types: string[]; editable?: boolean; pkIndex?: number; empty?: string; readOnlyWhy?: string;
 }>(), { editable: false, pkIndex: -1, empty: 'No data output. Execute a query to get output.', readOnlyWhy: '' });
-const emit = defineEmits<{ (event: 'save', changes: DataChanges): void; (event: 'copied', rows: number): void }>();
+const emit = defineEmits<{ (event: 'save', changes: DataChanges): void; (event: 'copied', rows: number): void;
+  (event: 'downloaded', file: string, rows: number): void }>();
 
 const vFocus = { mounted: (el: HTMLInputElement) => { el.focus(); el.select(); } };
 
@@ -154,14 +160,65 @@ function markDelete() {
   selectedRows.value = [];
 }
 
-async function copy() {
+async function copy(withHeaders = true) {
   const g = props.grid;
   if (!g) return;
   const picked = selectedRows.value.length ? shownRows.value.filter(r => selectedRows.value.includes(r.key)) : shownRows.value;
   clip.value = picked.map(r => r.cells.slice());
-  const text = [g.columns.join('\t'), ...picked.map(r => r.cells.map(c => (c === null ? '' : String(c))).join('\t'))].join('\n');
+  const body = picked.map(r => r.cells.map(c => (c === null ? '' : String(c))).join('\t'));
+  const text = (withHeaders ? [g.columns.join('\t'), ...body] : body).join('\n');
   try { await navigator.clipboard.writeText(text); } catch { /* the in-grid paste still works */ }
   emit('copied', picked.length);
+}
+
+/* ---------- right-click menu, Save results to file ---------- */
+
+const rootEl = ref<HTMLElement | null>(null);
+const menu = ref<{ items: MenuItem[]; x: number; y: number } | null>(null);
+
+function setNull(row: Row, col: number) {
+  editing.value = { key: row.key, col, value: '' };
+  commitEdit();
+}
+
+function openMenu(event: MouseEvent, row: Row, col: number) {
+  if (!selectedRows.value.includes(row.key)) selectedRows.value = [row.key];
+  const canEdit = props.editable && !deleted.value.has(row.key);
+  const items: MenuItem[] = [
+    { label: 'Copy', icon: 'copy', shortcut: 'Ctrl+C', action: () => copy(false) },
+    { label: 'Copy with headers', icon: 'copy', action: () => copy(true) },
+    { label: 'Paste', icon: 'paste', disabled: !props.editable || !clip.value, action: paste },
+    { sep: true },
+    { label: 'Add row', icon: 'plus', disabled: !props.editable, action: addRow },
+    { label: deleted.value.has(row.key) ? 'Undo delete' : 'Delete row(s)', icon: 'trash', disabled: !props.editable, action: markDelete },
+  ];
+  if (col >= 0) {
+    items.push({ label: 'Edit cell', icon: 'format', disabled: !canEdit || (col === props.pkIndex && !row.isNew), action: () => startEdit(row, col) });
+    items.push({ label: 'Set NULL', disabled: !canEdit || (col === props.pkIndex && !row.isNew) || row.cells[col] === null, action: () => setNull(row, col) });
+  }
+  items.push({ sep: true }, { label: 'Save Data Changes', icon: 'save-data', shortcut: 'F6', disabled: !dirty.value, action: save },
+    { label: 'Save results to file', icon: 'download', action: download });
+  const box = rootEl.value?.getBoundingClientRect();
+  const height = items.reduce((h, item) => h + (item.sep ? 9 : 30), 10);
+  const x = box ? Math.max(4, Math.min(event.clientX - box.left, box.width - 236)) : 0;
+  const y = box ? Math.max(4, Math.min(event.clientY - box.top, box.height - height)) : 0;
+  menu.value = { items, x, y };
+}
+
+/** Query Tool > Save results to file: the result set as CSV, downloaded by the browser (nothing leaves the page). */
+function download() {
+  const g = props.grid;
+  if (!g) return;
+  const csv = gridCsv({ ...g, rows: shownRows.value.filter(r => !r.isNew).map(r => r.cells) });
+  const name = `data-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '')}.csv`;
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.rel = 'noopener';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  emit('downloaded', name, g.rows.length);
 }
 
 function paste() {
@@ -197,6 +254,7 @@ function save() {
 }
 
 function onKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') menu.value = null;
   if (event.key === 'F6' && dirty.value) {
     event.preventDefault();
     save();
@@ -208,7 +266,7 @@ defineExpose({ save, dirty });
 
 <style scoped src="./pg.css"></style>
 <style scoped>
-.pg-dg { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pg-dg { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .pg-dg__bar { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-bottom: 1px solid var(--pg-border); background: var(--pg-grey-200); }
 .pg-dg__sep { width: 1px; height: 18px; background: var(--pg-border); margin: 0 4px; }
 .pg-dg__ro { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--pg-muted); }

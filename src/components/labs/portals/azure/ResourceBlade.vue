@@ -1,5 +1,5 @@
 <template>
-  <div class="az-blade">
+  <div class="az-blade" @click="connectOpen = false">
     <div class="az-blade__head">
       <AzIcon :name="m.icon" :size="32" class="az-blade__icon" />
       <div class="az-blade__titles">
@@ -26,10 +26,18 @@
         <template v-if="tab === 'overview'">
           <div class="az-cmdbar">
             <template v-if="res.kind === 'vm'">
-              <button type="button" class="az-cmd" @click="setTab('connect')"><AzIcon name="connect" /> Connect</button>
+              <span class="az-cmdmenu">
+                <button type="button" class="az-cmd" :aria-expanded="connectOpen" @click.stop="connectOpen = !connectOpen">
+                  <AzIcon name="connect" /> Connect <AzIcon name="chevrondown" :size="10" /></button>
+                <span v-if="connectOpen" class="az-cmdmenu__list" role="menu">
+                  <button type="button" role="menuitem" @click="connectOpen = false; setTab('connect')"><AzIcon name="connect" /> Connect</button>
+                  <button type="button" role="menuitem" @click="connectOpen = false; setTab('bastion')"><AzIcon name="bastion" /> Connect via Bastion</button>
+                  <button type="button" role="menuitem" @click="connectOpen = false; setTab('serial')"><AzIcon name="shell" /> Serial console</button>
+                </span>
+              </span>
               <button type="button" class="az-cmd" :disabled="running" @click="vmPower('start')"><AzIcon name="play" /> Start</button>
               <button type="button" class="az-cmd" :disabled="!running" @click="vmPower('restart')"><AzIcon name="restart" /> Restart</button>
-              <button type="button" class="az-cmd" :disabled="!running" @click="vmPower('stop')"><AzIcon name="stop" /> Stop</button>
+              <button type="button" class="az-cmd" :disabled="res.props.power === 'VM deallocated'" @click="vmPower('stop')"><AzIcon name="stop" /> Stop</button>
             </template>
             <template v-if="res.kind === 'webapp'">
               <button type="button" class="az-cmd" @click="az.note('info', 'Browse', 'https://' + res.props.host)"><AzIcon name="webapp" /> Browse</button>
@@ -107,9 +115,14 @@ const account = computed(() => pick(az.p.value, 'account', {} as Record<string, 
 
 interface MenuItem { key: string; label: string; icon?: string; group?: boolean }
 const KIND_MENU: Record<string, MenuItem[]> = {
-  vm: [{ key: 'connect', label: 'Connect', icon: 'connect' }, { key: 'networking', label: 'Networking', icon: 'vnet' },
+  vm: [{ key: 'g-connect', label: 'Connect', group: true },
+       { key: 'connect', label: 'Connect', icon: 'connect' }, { key: 'bastion', label: 'Bastion', icon: 'bastion' },
+       { key: 'g-net', label: 'Networking', group: true },
+       { key: 'networking', label: 'Network settings', icon: 'vnet' },
+       { key: 'g-settings', label: 'Settings', group: true },
        { key: 'disks', label: 'Disks', icon: 'storage' }, { key: 'size', label: 'Size', icon: 'vm' }],
   storage: [{ key: 'containers', label: 'Containers', icon: 'container' }, { key: 'keys', label: 'Access keys', icon: 'key' },
+            { key: 'sas', label: 'Shared access signature', icon: 'key' },
             { key: 'configuration', label: 'Configuration', icon: 'settings' }, { key: 'networking', label: 'Networking', icon: 'vnet' }],
   vnet: [{ key: 'address', label: 'Address space', icon: 'vnet' }, { key: 'subnets', label: 'Subnets', icon: 'vnet' },
          { key: 'peerings', label: 'Peerings', icon: 'gateway' }, { key: 'devices', label: 'Connected devices', icon: 'nic' }],
@@ -149,12 +162,17 @@ const menu = computed<MenuItem[]>(() => {
     { key: 'activity', label: 'Activity log', icon: 'activity' },
     { key: 'iam', label: 'Access control (IAM)', icon: 'iam' },
     { key: 'tags', label: 'Tags', icon: 'tag' },
-    { key: 'g-settings', label: 'Settings', group: true },
+    ...(KIND_MENU[kind]?.[0]?.group ? [] : [{ key: 'g-settings', label: 'Settings', group: true }]),
     ...(KIND_MENU[kind] || []),
     { key: 'properties', label: 'Properties', icon: 'props' },
     { key: 'locks', label: 'Locks', icon: 'lock' },
+    ...(kind === 'vm' ? [{ key: 'g-ops', label: 'Operations', group: true },
+                         { key: 'runcommand', label: 'Run command', icon: 'play' }] : []),
     { key: 'g-mon', label: 'Monitoring', group: true },
     { key: 'diagnostics', label: 'Diagnostic settings', icon: 'monitor' },
+    ...(kind === 'vm' ? [{ key: 'g-help', label: 'Help', group: true },
+                         { key: 'bootdiag', label: 'Boot diagnostics', icon: 'monitor' },
+                         { key: 'serial', label: 'Serial console', icon: 'shell' }] : []),
   ];
   const q = menuNeedle.value.toLowerCase();
   return items.filter(i => i.group ? !q : i.label.toLowerCase().includes(q));
@@ -283,13 +301,23 @@ async function remove() {
   const result = await az.run(deleteCommand(r), `Successfully deleted '${r.name}'`);
   if (result.ok) az.go({ page: 'group', name: r.group });
 }
+/**
+ * The portal's Stop DEALLOCATES (compute billing stops, status "Stopped
+ * (deallocated)"), which is `az vm deallocate` - not `az vm stop`, which only
+ * powers the OS off and keeps billing. The confirmation says so.
+ */
 async function vmPower(verb: 'start' | 'restart' | 'stop') {
   const r = res.value!;
   if (verb === 'stop' && !(await az.confirm({ title: 'Stop this virtual machine',
-    message: `Do you want to stop '${r.name}'? The public IP address is kept because it is Static.`, confirmLabel: 'Yes' }))) return;
-  await az.run(cli(['az', 'vm', verb], { '-g': r.group, '-n': r.name }),
+    message: `Do you want to stop '${r.name}'? It will be deallocated: compute charges stop, any open sessions are closed, and the Static public IP address is kept.`,
+    confirmLabel: 'Yes' }))) return;
+  if (verb === 'restart' && !(await az.confirm({ title: 'Restart this virtual machine',
+    message: `Do you want to restart '${r.name}'? Open sessions to it will be disconnected.`, confirmLabel: 'Yes' }))) return;
+  const cmd = verb === 'stop' ? 'deallocate' : verb;
+  await az.run(cli(['az', 'vm', cmd], { '-g': r.group, '-n': r.name }),
                `Successfully ${verb === 'start' ? 'started' : verb === 'stop' ? 'stopped' : 'restarted'} virtual machine '${r.name}'`);
 }
+const connectOpen = ref(false);
 async function webPower(verb: 'start' | 'stop' | 'restart') {
   const r = res.value!;
   await az.run(cli(['az', 'webapp', verb], { '-g': r.group, '-n': r.name }),

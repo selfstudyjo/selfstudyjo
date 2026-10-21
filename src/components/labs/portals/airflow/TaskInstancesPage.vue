@@ -11,6 +11,8 @@
             <button type="button" role="menuitem" @click="clearSelected">Clear</button>
             <button type="button" role="menuitem" @click="markSelected('success')">Set state to 'success'</button>
             <button type="button" role="menuitem" @click="markSelected('failed')">Set state to 'failed'</button>
+            <button type="button" role="menuitem" @click="markSelected('skipped')">Set state to 'skipped'</button>
+            <button type="button" role="menuitem" @click="markSelected('up_for_retry')">Set state to 'up_for_retry'</button>
           </div>
         </span>
         <button type="button" class="af-btn af-btn--sm af-btn--icon" title="Refresh" aria-label="Refresh" @click="af.refresh()"><AfIcon name="refresh" /></button>
@@ -34,7 +36,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="t in shown" :key="key(t)">
+              <tr v-for="t in shown" :key="key(t)" @contextmenu="rowMenu($event, t)">
                 <td class="af-actions-col"><input type="checkbox" :checked="selected.has(key(t))" :aria-label="'Select ' + t.task_id" @change="toggle(t)" /></td>
                 <td><span class="af-state"><i :style="{ background: normState(t.state) === 'none' ? '#fff' : stateColor(t.state) }"></i>{{ stateLabel(t.state) }}</span></td>
                 <td><button type="button" class="af-link" @click="af.go({ page: 'dag', dagId: t.dag_id, tab: 'details' })">{{ t.dag_id }}</button></td>
@@ -63,7 +65,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import AfIcon from './AfIcon.vue';
 import { useAf } from './afContext';
-import { CMD, fmtDate, fmtDuration, normState, stateColor, stateLabel, taskRegex, type AfTi, type DagTab } from './airflow';
+import { CMD, fmtDate, fmtDuration, normState, stateColor, stateLabel, taskRegex, type AfTi, type DagTab, type TiTarget } from './airflow';
+import { tiMenu } from './tiActions';
 
 const af = useAf();
 const fDag = ref(''); const fState = ref(''); const fTask = ref('');
@@ -103,7 +106,12 @@ async function clearSelected() {
   selected.value = new Set();
 }
 
-async function markSelected(state: 'success' | 'failed') {
+function rowMenu(event: MouseEvent, t: AfTi) {
+  const dag = af.dag(t.dag_id);
+  if (dag) af.openMenu(event, `${t.dag_id}.${t.task_id}`, tiMenu(af, dag, runOf(t), t.task_id));
+}
+
+async function markSelected(state: TiTarget) {
   actions.value = false;
   const list = picked();
   if (!await af.confirm({ title: `Set state to '${state}'`, message: `Set the ${list.length} selected task instance(s) to ${state}?`,
