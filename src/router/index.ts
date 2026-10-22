@@ -294,6 +294,17 @@ const routes = [
                 component: Leaderboard,
                 meta: { title: 'Leaderboard', requiresAuth: false }
             },
+            // The desktop Interview Helper's download page. Public, like the
+            // Leaderboard: a visitor deciding whether to subscribe has to be able
+            // to read what the app does. The APP is what needs ai_feature, and it
+            // is enforced on app 27 for every request. Lazy, so its chunk is
+            // never in the entry bundle (working rule 47).
+            {
+                path: 'interview-helper',
+                name: 'InterviewHelper',
+                component: () => import('../views/InterviewHelper.vue'),
+                meta: { title: 'Interview Helper', requiresAuth: false }
+            },
             {
                 path: 'exams',
                 name: 'Exams',

@@ -390,6 +390,12 @@ const AI_CHAT: NavEntry = { to: '/ai-chat', text: 'AI Chat Assistant', icon: 'ai
 const RESEARCH: NavEntry = { to: '/research', text: 'Research Flow', icon: 'research', keywords: 'papers sources literature review academic citation', requires: 'research' };
 const TOASTMASTERS: NavEntry = { to: '/toastmasters', text: 'Toastmasters', icon: 'toastmasters', keywords: 'public speaking speech presentation pathways', requires: 'toastmasters' };
 const JOB_INTERVIEW: NavEntry = { to: '/job-interview', text: 'Job Interview', icon: 'jobInterview', keywords: 'hiring practice questions mock career recruiter', requires: 'ai' };
+/*
+  The desktop Interview Helper (selfstudyjo-desktop-interview-helper). The page
+  is a download page and public; the application itself needs ai_feature, which
+  app 27 enforces on every request. Filed under the Job Interview section.
+*/
+const INTERVIEW_HELPER: NavEntry = { to: '/interview-helper', text: 'Interview Helper (Desktop)', icon: 'jobInterview', keywords: 'desktop app download windows mac macos linux live real interview zoom teams meet answers arabic simple english helper', requires: 'public' };
 const CV_BUILDER: NavEntry = { to: '/cv-builder', text: 'CV Builder', icon: 'cvBuilder', keywords: 'resume curriculum vitae pdf docx export photo voice', requires: 'ai' };
 const ROBLOX: NavEntry = { to: '/roblox-tool', text: 'Roblox Studio', icon: 'roblox', keywords: 'game lua scripting studio animation', requires: 'ai' };
 
@@ -602,12 +608,13 @@ export const APP_SECTIONS: AppSection[] = [
         title: 'Job Interview',
         subtitle: 'Mock interviews and feedback',
         icon: 'jobInterview',
-        match: ['/job-interview'],
+        match: ['/job-interview', '/interview-helper'],
         home: '/job-interview',
         items: [
             { to: '/job-interview', text: 'Overview', icon: 'jobInterview', keywords: 'home start interviews', requires: 'ai' },
             { to: '/job-interview/pre-session', text: 'Prepare Interview', icon: 'play', keywords: 'new begin setup role job description', requires: 'ai' },
             { to: '/job-interview/results', text: 'My Results', icon: 'results', keywords: 'scores feedback history evaluation', requires: 'ai' },
+            INTERVIEW_HELPER,
         ],
         related: [CV_BUILDER, TOASTMASTERS, AI_CHAT],
     },
@@ -718,7 +725,7 @@ export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
-        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX] },
+        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, INTERVIEW_HELPER, CV_BUILDER, ROBLOX] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);

@@ -67,6 +67,7 @@ const ALL_ROUTES = [
     ['certificates', '/all-certificates'],
     ['leaderboard', '/leaderboard'],
     ['newscast', '/newscast'],
+    ['interview-helper', '/interview-helper'],
 ];
 const ROUTES = ONLY.length ? ALL_ROUTES.filter(r => ONLY.includes(r[0])) : ALL_ROUTES;
 
