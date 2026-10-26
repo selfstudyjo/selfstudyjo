@@ -1472,6 +1472,52 @@
 }
 .sl-tree__icon:disabled:hover { background: transparent; }
 
+/* REFRESH IN PROGRESS: the button stays at full ink and spins - disabled so a
+   second press cannot overlap, but not dimmed, because a dimmed button reads
+   as "unavailable" rather than as "working". */
+.sl-tree__icon[aria-busy='true'] {
+    opacity: 1;
+    cursor: progress;
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+.sl-tree__spin { animation: sl-spin 0.8s linear infinite; }
+
+/* An indeterminate bar under the toolbar while the listing is re-read. */
+.sl-tree__progress {
+    position: relative;
+    height: 2px;
+    overflow: hidden;
+    background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.18);
+}
+.sl-tree__progress::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 35%;
+    background: var(--sfs-accent, #6366f1);
+    animation: sl-tree-progress 1s ease-in-out infinite;
+}
+@keyframes sl-tree-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+}
+[dir='rtl'] .sl-tree__progress::before { animation-direction: reverse; }
+
+.sl-tree__status {
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    border-bottom: var(--sl-line);
+    font-size: 0.74rem;
+    color: var(--sfs-success-text, #6ee7b7);
+}
+.sl-tree__status.is-bad { color: var(--sfs-danger-text, #fca5a5); }
+
+@media (prefers-reduced-motion: reduce) {
+    .sl-tree__spin,
+    .sl-tree__progress::before { animation-duration: 2.4s; }
+}
+
 .sl-tree__filter {
     display: flex;
     align-items: center;
@@ -2129,6 +2175,33 @@
     font-size: 0.74rem;
     font-weight: 700;
     color: var(--sfs-text-muted, #b7bdcc);
+}
+
+.sl-task__title-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* The "i": a round, quiet button that reads as information, not as an action. */
+.sl-task__info {
+    flex: none;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: max(1.6rem, 26px);
+    height: max(1.6rem, 26px);
+    padding: 0;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--sfs-accent-text, #a5b4fc);
+    cursor: pointer;
+}
+.sl-task__info:hover,
+.sl-task__info:focus-visible {
+    background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.16);
+    border-color: var(--sfs-accent-text, #a5b4fc);
+}
+@media (pointer: coarse) {
+    .sl-task__info { width: 36px; height: 36px; }
 }
 
 .sl-task__detail,

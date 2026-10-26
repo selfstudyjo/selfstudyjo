@@ -39,6 +39,7 @@ import {
     DIFFICULTY_LABELS,
     FAMILY_LABEL_KEYS,
     GRADE_REPORT_KEYS,
+    GUIDE_KEYS,
     GUI_PANELS,
     PANEL_TITLE_KEYS,
     STATUS_LABELS,
@@ -52,6 +53,8 @@ import {
     gradeReport,
     groupByTrack,
     guiToolsFor,
+    guideFor,
+    keepVerified,
     portalTools,
     humanKey,
     panelsFor,
@@ -7567,6 +7570,7 @@ const COMPONENTS = [
     'src/components/labs/LabPreview.vue',
     'src/components/labs/LabMobile.vue',
     'src/components/labs/LabTasks.vue',
+    'src/components/labs/LabTaskGuide.vue',
     'src/components/labs/LabTutor.vue',
     'src/components/TopBar.vue',
     'src/views/Labs.vue',
@@ -8537,12 +8541,25 @@ section('14. The file explorer: the tree, the names and the moves');
           && /v-else-if="row\.hasChildren"/.test(files));
 
     /* The console can write a file underneath us at any time — every console in
-       a lab is a shell — and `refresh` runs after every command. Re-reading the
-       open buffer there is the bug `refreshViews` on the workspace already had
-       to be taught. */
-    check('refresh does NOT re-read the open buffer',
-          /if \(!files\.value\.some\(entry => entry\.path === path\.value\)\)/
-          .test(files));
+       a lab is a shell. REFRESH RE-READS THE OPEN FILE, but only while it is
+       CLEAN: skipping it entirely was the reported bug (`echo x >> f`, Refresh,
+       and the old text stayed until the student opened another file), and
+       overwriting a DIRTY buffer would throw away what they had typed. */
+    check('refresh re-reads the open file',
+          /const text = await props\.read\(target\)/.test(files));
+    check('...but never over unsaved typing',
+          /if \(!dirty\.value\) \{\s*content\.value = text;/.test(files));
+    check('a manual refresh says what it did, and spins while it works',
+          /refresh\(\{ manual: true \}\)/.test(files)
+          && /role="progressbar"/.test(files) && /aria-busy="refreshing"/.test(files));
+    check('an older refresh cannot land after a newer one',
+          /if \(seq !== refreshSeq\) return;/.test(files));
+    /* The Files pane sits inside the panes' v-for, where a string ref is an
+       ARRAY - `filesPane.value?.refresh?.()` then found nothing and the
+       explorer never followed a console command. */
+    check('the workspace binds the Files pane with a function ref',
+          /:ref="bindFilesPane"/.test(source('src/views/LabWorkspace.vue'))
+          && !/\sref="filesPane"/.test(source('src/views/LabWorkspace.vue')));
     check('a dirty buffer is never discarded silently',
           /if \(dirty\.value && !window\.confirm\(/.test(files));
     check('Ctrl+S saves, because this is an editor',
@@ -9040,6 +9057,104 @@ section('18. Which tasks the GUI can do, and Review the lesson');
     const svc = source('src/services/course.service.ts');
     check('the lesson lookup filters by lab_id client-side too (an old replica ignores ?lab_id=)',
           /lab_id=\$\{encodeURIComponent\(labId\)\}/.test(svc) && /row\.lab_id \|\| ''\) === labId/.test(svc));
+}
+
+/* ─────────────────── a verified task stays verified ─────────────────── */
+{
+    const task = (id: string, status: 'passed' | 'pending' | 'unavailable', points = 2) => ({
+        id, title: id, detail: '', hint: '', points, status, note: '', requires: '', manual: false,
+    });
+    const grade = (tasks: any[]) => ({
+        tasks, done: tasks.filter(t => t.status === 'passed').length, total: tasks.length,
+        earned: tasks.filter(t => t.status === 'passed').reduce((n, t) => n + t.points, 0),
+        possible: tasks.reduce((n, t) => n + t.points, 0), percent: 0,
+        status: 'in_progress' as const, unavailable: [],
+    });
+    // The reported fault, in miniature: t2 passed, then t3 passed and the
+    // grader (reading only the current state) answered t2 as pending.
+    const before = grade([task('t1', 'passed'), task('t2', 'passed'), task('t3', 'pending')]);
+    const after = grade([task('t1', 'passed'), task('t2', 'pending'), task('t3', 'passed')]);
+    const kept = keepVerified(after as any, before as any);
+    check('a task verified earlier stays done after a later task passes',
+          kept.tasks.find(t => t.id === 't2')?.status === 'passed');
+    check('...it is marked kept', kept.tasks.find(t => t.id === 't2')?.kept === true);
+    check('...and the totals are recomputed from the rows',
+          kept.done === 3 && kept.earned === 6 && kept.percent === 100 && kept.status === 'completed');
+    check('the progress record counts as verified too (a reset, an old replica)',
+          keepVerified(grade([task('t1', 'pending')]) as any, null, ['t1']).tasks[0].status === 'passed');
+    check('an id the lab no longer has does not come back as a phantom row',
+          keepVerified(grade([task('t1', 'pending')]) as any, null, ['gone']).tasks.length === 1);
+    check('nothing to keep returns the grade unchanged',
+          keepVerified(after as any) === (after as any));
+    const ws = source('src/views/LabWorkspace.vue');
+    check('the workspace keeps verified tasks on open and on Check my work',
+          /keepVerified\(payload\.grade, null, payload\.progress\?\.tasks_done/.test(ws)
+          && /keepVerified\(result\.grade, before\)/.test(ws));
+    check('switching labs clears the grade, so ids like t1 do not leak between labs',
+          /grade\.value = \{ tasks: \[\], done: 0/.test(ws));
+}
+
+/* ─────────────────── the task information window ─────────────────── */
+{
+    const tools = [
+        { id: 'sql', label: 'SQL', kind: 'query', engine: 'sqlite', family: 'sql' },
+        { id: 'editor', label: 'Files', kind: 'editor', engine: 'files', family: 'shell' },
+    ] as any[];
+    const base = { id: 't2', title: 'Count Jordan', detail: 'Count the orders from Jordan.',
+                   hint: 'Use WHERE', points: 1, status: 'pending', note: '',
+                   requires: '', manual: false } as any;
+    const sql = guideFor({ ...base, guide: {
+        kinds: ['sql_result'], combine: '', where: ['sql', 'gone'], files: [], parts: [],
+        tables: ['orders'], families: [], commands: ["SELECT COUNT(*) FROM orders WHERE country = 'JO';"],
+        hint_commands: [], negative: false, refusal: false, must_succeed: false,
+        steps: ['the query SELECT ... answers at least 1'] } }, tools);
+    check('the guide names only tools this lab has', sql.where.map(t => t.id).join() === 'sql');
+    check('a SQL task names its table as a literal',
+          sql.steps.some(step => (step.code || []).includes('orders')));
+    check('every step is a catalogue key check:i18n can see',
+          [...sql.steps, ...sql.tips, ...sql.mistakes].every(step => GUIDE_KEYS.includes(step.key)));
+    check('the last step is Check my work',
+          sql.steps[sql.steps.length - 1].key.startsWith('Press "Check my work"'));
+    check('the grader\'s own sentences are kept for "How it is checked"', sql.checks.length === 1);
+    const legacy = guideFor(base, tools);
+    check('a task from a replica a release behind still gets a window, never an empty one',
+          legacy.steps.length >= 2 && legacy.tips.length >= 2);
+    const manual = guideFor({ ...base, manual: true }, tools);
+    check('a self-marked task ends on "I have done this", not on Check my work',
+          manual.steps.some(step => step.key.includes('"I have done this"'))
+          && !manual.steps.some(step => step.key.startsWith('Press "Check my work"')));
+    const already = guideFor({ ...base,
+        note: 'already true when you started - it counts once you have done this step yourself' }, tools);
+    check('a task withheld because it was true at the start says why',
+          already.baseline && already.tips[0].key.startsWith('This was already true'));
+    const file = guideFor({ ...base, guide: {
+        kinds: ['file_contains'], combine: '', where: ['editor'], files: ['Dockerfile'], parts: [],
+        tables: [], families: [], commands: [], hint_commands: [], negative: false,
+        refusal: false, must_succeed: false, steps: [] } }, tools);
+    check('a file task tells the student to save',
+          file.steps.some(step => step.key.startsWith('Save the file')));
+    const tasks = source('src/components/labs/LabTasks.vue');
+    check('every task card has an "i" button that opens the guide',
+          /class="sl-task__info"/.test(tasks) && /@click="infoAt = at"/.test(tasks)
+          && /<LabTaskGuide :task="infoTask"/.test(tasks));
+    const guide = source('src/components/labs/LabTaskGuide.vue');
+    check('the guide is teleported out of the workbench', /<Teleport to="body">/.test(guide));
+    check('the guide keeps the hint behind a press', /v-if="hintOpen" class="sltg-hint"/.test(guide));
+    check('commands and paths in the guide are LTR literals', /class="sltg-code" dir="ltr"/.test(guide));
+    check('Escape closes the guide', /@keydown\.esc="\$emit\('close'\)"/.test(guide));
+}
+
+/* ─────────────────── review the lesson: only a lesson that links here ─────────────────── */
+{
+    const ws = source('src/views/LabWorkspace.vue');
+    check('the Review the lesson button is drawn only when a lesson links this lab',
+          /<div v-if="lessonsForLab && lessonsForLab\.length" class="sl-brief-tools">/.test(ws));
+    check('a remembered origin is trusted only when it is one of the linked lessons',
+          /linked\.some\(row => row\.external_lesson_id === raw\.lessonId\)/.test(ws));
+    const modal = source('src/components/labs/LabLessonModal.vue');
+    check('the modal never fetches an unlinked origin lesson on its own',
+          !/getLesson\(origin\.lessonId\)/.test(stripComments(modal))
+          && /String\(row\.lab_id \|\| ''\) === props\.labId/.test(modal));
 }
 
 /* ─────────────────── report ─────────────────── */

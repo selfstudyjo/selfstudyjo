@@ -36,8 +36,9 @@
               <ChevronsDownUp class="sl-i" />
             </button>
             <button type="button" class="sl-tree__icon" :title="$t('Refresh')"
-                    :aria-label="$t('Refresh')" @click="refresh">
-              <RotateCw class="sl-i" />
+                    :aria-label="$t('Refresh')" :aria-busy="refreshing"
+                    :disabled="refreshing" @click="refresh({ manual: true })">
+              <RotateCw class="sl-i" :class="{ 'sl-tree__spin': refreshing }" />
             </button>
             <!--
               DOWNLOAD ALL, as one ZIP, wrapped in a folder named after the lab.
@@ -54,6 +55,16 @@
             </button>
           </div>
         </div>
+
+        <!--
+          WHAT REFRESH IS DOING. A bar while the listing (and the open file) is
+          being re-read, and one sentence afterwards, so pressing the button is
+          never answered by nothing. `role="status"` so a screen reader hears it.
+        -->
+        <div v-if="refreshing" class="sl-tree__progress" role="progressbar"
+             :aria-label="$t('Refreshing files...')"></div>
+        <p v-if="refreshNote" class="sl-tree__status"
+           :class="{ 'is-bad': refreshFailed }" role="status">{{ refreshNote }}</p>
 
         <div class="sl-tree__filter">
           <Search class="sl-i" />
@@ -487,10 +498,63 @@ const createDepth = computed(() => (createIn.value
 
 /* ── loading ───────────────────────────────────────────────────────────── */
 
-async function refresh() {
+/** A refresh in flight, and what the last manual one said. */
+const refreshing = ref(false);
+const refreshNote = ref('');
+const refreshFailed = ref(false);
+let refreshSeq = 0;
+let noteTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Re-read the listing AND the open file.
+ *
+ * `manual` is the Refresh button: it always re-reads the open file and says
+ * what it found. The automatic refresh after every console command re-reads the
+ * open file only when its size changed, which is the cheap signal - a manual
+ * press is the way to be sure.
+ *
+ * THE OPEN FILE USED TO BE SKIPPED ENTIRELY, so `echo x >> notes.txt` in the
+ * terminal followed by Refresh showed the old contents until the student opened
+ * another file and came back. It is re-read now whenever the buffer is CLEAN;
+ * a buffer with unsaved typing is never overwritten - the student is told the
+ * file changed on disk instead, which is the one case where silently picking
+ * either version would lose somebody's work.
+ *
+ * A sequence number, because a manual press and a command's auto-refresh can
+ * overlap and the older answer must not land last.
+ */
+async function refresh(options: { manual?: boolean } = {}) {
+  const manual = options?.manual === true;
+  const seq = ++refreshSeq;
+  const sizeBefore = files.value.find(entry => entry.path === path.value)?.bytes;
+  refreshing.value = true;
+  if (manual) {
+    if (noteTimer) clearTimeout(noteTimer);
+    refreshFailed.value = false;
+    refreshNote.value = t('Refreshing files...');
+  }
+  try {
+    await reload(seq, manual, sizeBefore);
+  } catch {
+    if (seq === refreshSeq && manual) {
+      refreshFailed.value = true;
+      refreshNote.value = t('Could not refresh the files. Check your connection and try again.');
+    }
+  } finally {
+    if (seq === refreshSeq) {
+      refreshing.value = false;
+      if (manual && !refreshFailed.value) {
+        noteTimer = setTimeout(() => { refreshNote.value = ''; }, 4000);
+      }
+    }
+  }
+}
+
+async function reload(seq: number, manual: boolean, sizeBefore?: number) {
   const listing = props.tree
     ? await props.tree()
     : { files: await props.list(), dirs: [] };
+  if (seq !== refreshSeq) return;
   files.value = listing.files || [];
   dirs.value = listing.dirs || [];
   // The first load opens the folders that lead to something, so a lab that
@@ -506,16 +570,37 @@ async function refresh() {
     const first = files.value.find(entry => !entry.path.includes('/'))
       || files.value[0];
     if (first) await open(first.path);
+    if (manual) refreshNote.value = t('Up to date - {v0} files.', { v0: files.value.length });
     return;
   }
-  // THE OPEN BUFFER IS NOT RE-READ. Any console in this lab is a shell, so
-  // `echo x > f` and `nano f` land here at any moment and `refresh` runs after
-  // every command — re-reading would throw away whatever the student had typed,
-  // which is the bug `refreshViews` on the workspace already had to be taught.
-  if (!files.value.some(entry => entry.path === path.value)) {
+  const entry = files.value.find(row => row.path === path.value);
+  if (!entry) {
     path.value = '';
     content.value = '';
     saved.value = '';
+    if (manual) refreshNote.value = t('The open file was deleted, so it has been closed.');
+    return;
+  }
+  let changed = false;
+  if (manual || entry.bytes !== sizeBefore) {
+    const target = path.value;
+    const text = await props.read(target);
+    if (seq !== refreshSeq || target !== path.value) return;
+    if (text !== saved.value) {
+      if (!dirty.value) {
+        content.value = text;
+        saved.value = text;
+        changed = true;
+      } else if (manual) {
+        refreshNote.value = t('{v0} changed on disk. Your unsaved edits are kept - save to overwrite, or discard them to see the new version.', { v0: basename(target) });
+        return;
+      }
+    }
+  }
+  if (manual) {
+    refreshNote.value = changed
+      ? t('Updated - {v0} was changed outside the editor.', { v0: basename(path.value) })
+      : t('Up to date - {v0} files.', { v0: files.value.length });
   }
 }
 
@@ -982,6 +1067,7 @@ function say(text: string, bad = false) {
   }, 6000);
 }
 
+onBeforeUnmount(() => { if (noteTimer) clearTimeout(noteTimer); });
 defineExpose({ refresh });
 
 onMounted(() => {

@@ -17,6 +17,7 @@
  *   ?state=error         openLab answers null
  */
 import baseFixtures from './labs.fixture.json';
+import GUIDES from './guides.fixture.json';
 /* A CARLA lab plus the four answers the Simulator pane asks for - catalogue,
    one town's map, and a replay - all dumped from app 11 after a REAL run of the
    reference solution (see `_carla_solutions.py` in app 11). */
@@ -215,6 +216,10 @@ function evaluate(lab: AnyRec, selfMarked: string[]) {
             note: verdict[1],
             requires: describe(check),
             manual: check.type === 'manual',
+            // The task information window's structure, dumped from app 11's own
+            // `labgrade.guide()` - a stub written from a guess would prove
+            // nothing about the window that reads it.
+            guide: (GUIDES as AnyRec)[lab.id]?.[task.id || String(index)],
         };
     });
     const passed = tasks.filter((t: AnyRec) => t.status === 'passed');

@@ -91,7 +91,7 @@ import { ASSISTANT_KEYS } from '../../src/utils/assistantEngine';
 import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
 import {
-    DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GRADE_REPORT_KEYS, GUI_PANELS,
+    DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GRADE_REPORT_KEYS, GUIDE_KEYS, GUI_PANELS,
     PANEL_TITLE_KEYS,
     STATUS_LABELS, TASK_STATUS_LABELS,
 } from '../../src/utils/labCatalogue';
@@ -622,6 +622,9 @@ const LAB_STRINGS: string[] = [...new Set([
       still not answering the reader.
     */
     ...GRADE_REPORT_KEYS,
+    // The task information window's sentences, composed by `guideFor` and
+    // spent as `$t(step.key, step.params)`.
+    ...GUIDE_KEYS,
     ...PANEL_TITLE_KEYS,
     ...Object.values(GUI_PANELS).flat()
         .flatMap(panel => (panel.columns || []).map(column => column.label))

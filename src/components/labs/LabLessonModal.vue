@@ -65,9 +65,12 @@
  * "Review the lesson" from inside a lab: the write-up of the lesson that
  * practises this lab, in a modal over the workspace.
  *
- * Which lesson: the one the student CAME from if the workspace knows it
- * (`origin`, from the query or remembered), else every lesson app 19 says links
- * to this lab. Rendered with `LabBrief`, i.e. the same `lessonContent` parser
+ * Which lesson: ONLY lessons app 19 says link to this lab (`lab_id`), handed
+ * in by the workspace, which fetched them to decide whether to draw the button
+ * at all. The one the student came from (`origin`) is selected first when it is
+ * one of them. An origin that is NOT one of them is ignored rather than
+ * fetched: that fallback is how a lab with no course opened an unrelated
+ * lesson. Rendered with `LabBrief`, i.e. the same `lessonContent` parser
  * the lesson page uses, so a heading or a code block reads identically in both
  * places - and nothing reaches `v-html`.
  */
@@ -82,6 +85,8 @@ const props = defineProps<{
   open: boolean;
   labId: string;
   origin?: LessonRef | null;
+  /** The lessons that link this lab, already fetched by the workspace. */
+  lessons?: Lesson[];
 }>();
 defineEmits<{ (event: 'close'): void }>();
 
@@ -109,19 +114,13 @@ async function load() {
   loading.value = true;
   error.value = '';
   try {
-    const linked = await courseService.getLessonsForLab(props.labId);
-    let rows = linked;
+    const rows = (props.lessons && props.lessons.length)
+      ? props.lessons
+      : await courseService.getLessonsForLab(props.labId);
     const origin = props.origin;
-    if (origin && !rows.some(row => row.external_lesson_id === origin.lessonId)) {
-      // The lesson the student came from may link here only by a button on its
-      // page rather than by `lab_id`; fetch it on its own.
-      try {
-        rows = [await courseService.getLesson(origin.lessonId), ...rows];
-      } catch { /* keep the linked ones */ }
-    }
-    lessons.value = rows;
-    currentId.value = (origin && rows.some(row => row.external_lesson_id === origin.lessonId))
-      ? origin.lessonId : (rows[0]?.external_lesson_id || '');
+    lessons.value = rows.filter(row => String(row.lab_id || '') === props.labId);
+    currentId.value = (origin && lessons.value.some(row => row.external_lesson_id === origin.lessonId))
+      ? origin.lessonId : (lessons.value[0]?.external_lesson_id || '');
     loadedFor = props.labId;
   } catch {
     error.value = t('Could not load the lesson. Check your connection and try again.');
@@ -137,10 +136,19 @@ watch(() => props.open, async (isOpen) => {
   await load();
 });
 watch(() => props.labId, () => { loadedFor = ''; lessons.value = []; });
+watch(() => props.lessons, () => { loadedFor = ''; });
 </script>
 
 <style scoped>
 .sll-overlay {
+  /* The lab's tokens. This window is teleported to <body>, OUTSIDE the
+     `.sl-workspace` root that declares them, so the shared `.sl-btn` had no
+     border, radius or surface here - a ghost button rendered as bare text. */
+  --sl-radius: 12px;
+  --sl-radius-sm: 8px;
+  --sl-line: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+  --sl-surface: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  --sl-surface-2: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1);
   position: fixed;
   inset: 0;
   z-index: 2000;

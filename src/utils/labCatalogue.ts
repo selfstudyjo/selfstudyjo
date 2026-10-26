@@ -108,6 +108,38 @@ export interface LabTask {
      * terminal (or Files) only; absent means a replica a release behind.
      */
     gui?: string[];
+    /**
+     * True when the task passed earlier and the environment has since moved on
+     * (a later task changed what it looked at). It still counts: a verified
+     * task stays verified. Absent on a replica a release behind.
+     */
+    kept?: boolean;
+    /** The structure the task's information window is drawn from. */
+    guide?: TaskGuide;
+}
+
+/**
+ * What app 11's grader says about HOW a task is done, read off its check.
+ *
+ * Structure, not sentences: the browser composes those in the reader's
+ * language (`guideFor`), and paths, tables and commands stay as they are
+ * because a translated command is one that does not run.
+ */
+export interface TaskGuide {
+    kinds: string[];
+    combine: '' | 'all' | 'any';
+    where: string[];
+    files: string[];
+    parts: string[];
+    tables: string[];
+    families: string[];
+    commands: string[];
+    hint_commands: string[];
+    negative: boolean;
+    refusal: boolean;
+    must_succeed: boolean;
+    /** The grader's own sentence per check, English, rendered LTR. */
+    steps: string[];
 }
 
 export interface LabGrade {
@@ -3165,4 +3197,221 @@ export function guiToolsFor(task: Pick<LabTask, 'gui'>, tools: LabTool[]): LabTo
 /** Every portal in a lab - the "you can use the GUI" callout in the brief. */
 export function portalTools(tools: LabTool[]): LabTool[] {
     return tools.filter(tool => tool.kind === 'portal');
+}
+
+/* ─────────────────── a verified task stays verified ─────────────────── */
+
+/**
+ * The grade with every task the student has ALREADY been credited for kept as
+ * done.
+ *
+ * App 11 does this itself now (`tasks_verified` in the environment, unioned
+ * with the replicated progress record). It is done here as well for the reason
+ * the self-marked set is: a deploy is per replica, so for a while a grade can
+ * come back from a replica that still reads only the CURRENT state - and that
+ * is exactly the reported fault, task 2 turning back to "to do" the moment task
+ * 3 went green. Whichever end answers, the tick a student has seen stays.
+ *
+ * `earlier` is the previous grade in this tab and `recorded` the progress
+ * record's `tasks_done`. Only ids present in `next` are touched, so a task an
+ * operator deleted from the lab does not come back as a phantom row, and the
+ * totals are recomputed from the rows rather than adjusted, so they cannot
+ * disagree with what is drawn.
+ */
+export function keepVerified(
+    next: LabGrade,
+    earlier: LabGrade | null = null,
+    recorded: string[] = [],
+): LabGrade {
+    const kept = new Set<string>(recorded.map(String));
+    for (const task of earlier?.tasks || []) {
+        if (task.status === 'passed') kept.add(task.id);
+    }
+    if (!kept.size || !next?.tasks?.length) return next;
+    let changed = false;
+    const tasks = next.tasks.map(task => {
+        if (task.status === 'passed' || !kept.has(task.id)) return task;
+        changed = true;
+        return { ...task, status: 'passed' as TaskStatus, kept: true,
+                 note: 'verified earlier - it stays done' };
+    });
+    if (!changed) return next;
+    const done = tasks.filter(task => task.status === 'passed').length;
+    const earned = tasks.reduce((sum, task) =>
+        sum + (task.status === 'passed' ? Number(task.points) || 0 : 0), 0);
+    const possible = next.possible
+        || tasks.reduce((sum, task) => sum + (Number(task.points) || 0), 0) || 1;
+    const total = tasks.length;
+    return {
+        ...next,
+        tasks,
+        done,
+        earned,
+        percent: Math.round((100 * earned) / possible),
+        status: total && done === total ? 'completed'
+            : (done ? 'in_progress' : next.status),
+        unavailable: tasks.filter(task => task.status === 'unavailable').map(task => task.id),
+    };
+}
+
+/* ─────────────────── the task's information window ─────────────────── */
+
+/** One line of the guide: a catalogue key, its parameters, and any literals. */
+export interface GuideLine {
+    key: string;
+    params?: Record<string, string | number>;
+    /** Commands, paths or table names, shown as code and never translated. */
+    code?: string[];
+}
+
+export interface GuideView {
+    where: LabTool[];
+    steps: GuideLine[];
+    checks: string[];
+    tips: GuideLine[];
+    mistakes: GuideLine[];
+    commands: string[];
+    hintCommands: string[];
+    /** The task is green only because it was verified before. */
+    kept: boolean;
+    /** The task was already true at the start and has not been done yet. */
+    baseline: boolean;
+}
+
+const G = {
+    read: 'Read the requirement under the task title - that line says exactly what has to be true.',
+    open: 'Open {v0} (the buttons under "Where to work" take you there).',
+    all: 'Every part listed under "How it is checked" must be true at the same time.',
+    any: 'Any one of the routes listed under "How it is checked" is enough.',
+    fileCreate: 'Create the file with the Files tool (New File), or from the terminal - the path must match exactly:',
+    fileEdit: 'Open the file and add what the task asks for. The checker reads the file itself:',
+    fileSave: 'Save the file (the Save button, or Ctrl+S). Unsaved edits are not checked.',
+    web: 'In the web playground, edit the {v0} part.',
+    webRun: 'Press Run to see the result in the preview, then make sure it is saved.',
+    sql: 'Write the query in the SQL editor. It works with these tables:',
+    sqlNoTable: 'Write the query in the SQL editor.',
+    sqlRun: 'Run it and read the result - check that it answers the question the task asks.',
+    state: 'Use the console to change the {v0} environment the way the task describes.',
+    stateCommands: 'From the task - the commands to type and the names to use. Type them yourself so you see what each one does:',
+    stateVerify: 'Confirm the change with a command that lists or shows the current state before you check.',
+    negative: 'This task asks for something to be gone or fixed - so the earlier steps must have created it first. Then remove or resolve it.',
+    commandOk: 'Run the command in the console and make sure it finishes without an error.',
+    commandRan: 'Run the command in the console. The checker looks for it in your command history.',
+    refusal: 'Run it exactly as the brief has it. This task is about seeing it refused - read the error message, that is the lesson.',
+    manual: 'Do the step, then press "I have done this". This lab cannot inspect it for you.',
+    check: 'Press "Check my work". A task that has been verified stays done, even if a later task changes the environment.',
+    tipCase: 'File names and paths are case-sensitive: {v0} is not the same as a differently capitalised name.',
+    tipTool: 'Work in the tool this task names - a command typed into a different tool is not seen by this check.',
+    tipTutor: 'Stuck? "Ask the tutor" writes a question about this task for you. It gives a nudge, not the answer.',
+    tipReset: 'If the environment gets into a mess, "Reset environment" starts it again. Tasks you have completed stay completed.',
+    tipBaseline: 'This was already true when you started, so it does not count yet. Do the step yourself - edit the file or run the command - and it will.',
+    tipKept: 'Already verified. The environment has moved on since, which is fine - this task stays done.',
+    mFileSave: 'Editing the file but not saving it.',
+    mFilePlace: 'Creating the file in the wrong folder, or with a different name.',
+    mCommand: 'A typo in the command - read the output, an error means nothing changed.',
+    mWrongTool: 'Running the command in a different console from the one this task uses.',
+    mSql: 'Querying the wrong table, or leaving out the JOIN, WHERE or GROUP BY the task asks for.',
+    mWeb: 'Typing in the wrong part (HTML, CSS or JS) of the playground.',
+    mNegative: 'Trying to remove something before the earlier steps have created it.',
+} as const;
+
+/** Every sentence `guideFor` can produce, so `check:i18n` sees them all. */
+export const GUIDE_KEYS: string[] = Object.values(G);
+
+function joinOr(items: string[]): string {
+    return items.filter(Boolean).join(', ');
+}
+
+/**
+ * The step-by-step guide for one task, composed from the grader's structure.
+ *
+ * Plain and total: a task from a replica a release behind has no `guide`, and
+ * it still gets a useful window - the requirement, the tools, Check my work and
+ * the tips - rather than an empty one.
+ */
+export function guideFor(task: LabTask, tools: LabTool[] = []): GuideView {
+    const guide = task.guide;
+    const byId = new Map(tools.map(tool => [tool.id, tool]));
+    const where = (guide?.where || [])
+        .map(id => byId.get(id))
+        .filter((tool): tool is LabTool => Boolean(tool));
+    const kinds = new Set(guide?.kinds || (task.manual ? ['manual'] : []));
+    const steps: GuideLine[] = [];
+    const tips: GuideLine[] = [];
+    const mistakes: GuideLine[] = [];
+    const files = guide?.files || [];
+    const commands = guide?.commands || [];
+
+    if (task.detail) steps.push({ key: G.read });
+    if (where.length) steps.push({ key: G.open, params: { v0: joinOr(where.map(tool => tool.label)) } });
+    if (guide?.combine === 'all' && (guide.steps || []).length > 1) steps.push({ key: G.all });
+    if (guide?.combine === 'any') steps.push({ key: G.any });
+
+    if (kinds.has('file_exists') && !kinds.has('file_contains')) {
+        steps.push({ key: G.fileCreate, code: files });
+        mistakes.push({ key: G.mFilePlace });
+    }
+    if (kinds.has('file_contains')) {
+        steps.push({ key: G.fileEdit, code: files });
+        steps.push({ key: G.fileSave });
+        mistakes.push({ key: G.mFileSave }, { key: G.mFilePlace });
+    }
+    if (files.length) tips.push({ key: G.tipCase, params: { v0: files[0] } });
+    if (kinds.has('web_contains')) {
+        steps.push({ key: G.web, params: { v0: joinOr((guide?.parts || ['html']).map(p => p.toUpperCase())) } });
+        steps.push({ key: G.webRun });
+        mistakes.push({ key: G.mWeb });
+    }
+    if (kinds.has('sql_result')) {
+        const tables = guide?.tables || [];
+        steps.push(tables.length ? { key: G.sql, code: tables } : { key: G.sqlNoTable });
+        steps.push({ key: G.sqlRun });
+        mistakes.push({ key: G.mSql });
+    }
+    if (kinds.has('state')) {
+        steps.push({ key: G.state, params: { v0: joinOr(guide?.families || []) || '-' } });
+        if (commands.length) steps.push({ key: G.stateCommands, code: commands });
+        if (guide?.negative) {
+            steps.push({ key: G.negative });
+            mistakes.push({ key: G.mNegative });
+        }
+        steps.push({ key: G.stateVerify });
+    }
+    if (kinds.has('command_refused')) steps.push({ key: G.refusal });
+    else if (kinds.has('command_ok')) steps.push({ key: G.commandOk });
+    else if (kinds.has('command_ran')) steps.push({ key: G.commandRan });
+    if ((kinds.has('command_ok') || kinds.has('command_ran') || kinds.has('command_refused'))
+        && commands.length && !kinds.has('state')) {
+        steps.push({ key: G.stateCommands, code: commands });
+    }
+    if (kinds.has('state') || kinds.has('command_ok') || kinds.has('command_ran')) {
+        mistakes.push({ key: G.mCommand }, { key: G.mWrongTool });
+        tips.push({ key: G.tipTool });
+    }
+    if (kinds.has('manual')) steps.push({ key: G.manual });
+    else steps.push({ key: G.check });
+
+    const baseline = task.status === 'pending' && /^already true/i.test(task.note || '');
+    if (baseline) tips.unshift({ key: G.tipBaseline });
+    if (task.kept) tips.unshift({ key: G.tipKept });
+    tips.push({ key: G.tipTutor }, { key: G.tipReset });
+
+    const seen = new Set<string>();
+    const unique = (lines: GuideLine[]) => lines.filter(line => {
+        const id = line.key + JSON.stringify(line.params || {}) + (line.code || []).join('|');
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+    });
+    return {
+        where,
+        steps: unique(steps),
+        checks: (guide?.steps || []).filter(Boolean),
+        tips: unique(tips),
+        mistakes: unique(mistakes),
+        commands,
+        hintCommands: guide?.hint_commands || [],
+        kept: Boolean(task.kept),
+        baseline,
+    };
 }

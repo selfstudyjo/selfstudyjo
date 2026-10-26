@@ -70,7 +70,7 @@
     </p>
 
     <ol class="sl-tasks__list">
-      <li v-for="task in grade.tasks" :key="task.id" class="sl-task"
+      <li v-for="(task, at) in grade.tasks" :key="task.id" class="sl-task"
           :class="`sl-task--${task.status}`">
         <div class="sl-task__mark" aria-hidden="true">
           <Check v-if="task.status === 'passed'" class="sl-i" />
@@ -79,8 +79,20 @@
         </div>
         <div class="sl-task__body">
           <p class="sl-task__title">
-            {{ task.title }}
+            <span class="sl-task__title-text">{{ task.title }}</span>
             <span class="sl-task__points">{{ task.points }}</span>
+            <!--
+              THE "i": how to do this task, step by step, in a window. On the
+              title row rather than among the actions, because it is the first
+              thing somebody stuck on a task looks for - and it changes nothing,
+              so a task that is done stays done however often it is opened.
+            -->
+            <button type="button" class="sl-task__info"
+                    :title="$t('How to do this task')"
+                    :aria-label="$t('How to do this task: {v0}', { v0: task.title })"
+                    @click="infoAt = at">
+              <Info class="sl-i" aria-hidden="true" />
+            </button>
           </p>
           <p v-if="task.detail" class="sl-task__detail">{{ task.detail }}</p>
 
@@ -96,7 +108,8 @@
             <span class="sl-badge" :class="`sl-badge--${badge(task.status)}`">
               {{ $t(statusLabel(task.status)) }}
             </span>
-            <span v-if="task.note" class="sl-task__note">{{ task.note }}</span>
+            <span v-if="task.kept" class="sl-task__note">{{ $t('Verified earlier - it stays done.') }}</span>
+            <span v-else-if="task.note" class="sl-task__note">{{ task.note }}</span>
           </p>
 
           <!--
@@ -177,6 +190,12 @@
       <input v-model="showChecks" type="checkbox">
       {{ $t('Show what each task checks') }}
     </label>
+
+    <LabTaskGuide :task="infoTask" :index="infoAt ?? 0" :total="grade.tasks.length"
+                  :tools="tools || []" @close="infoAt = null"
+                  @ask="task => $emit('ask', task)"
+                  @open-tool="id => $emit('open-tool', id)"
+                  @self-mark="id => $emit('self-mark', id)" />
   </div>
 </template>
 
@@ -192,10 +211,11 @@
  */
 import { computed, ref } from 'vue';
 import {
-  AlertTriangle, Check, CheckCheck, Circle, Lightbulb, MonitorSmartphone, Sparkles,
+  AlertTriangle, Check, CheckCheck, Circle, Info, Lightbulb, MonitorSmartphone, Sparkles,
   TerminalSquare,
 } from 'lucide-vue-next';
 import ReadAloud from '@/components/ReadAloud.vue';
+import LabTaskGuide from '@/components/labs/LabTaskGuide.vue';
 import {
   TASK_STATUS_LABELS, guiToolsFor, type GradeReport, type LabGrade, type LabTask,
   type LabTool, type TaskStatus,
@@ -242,6 +262,14 @@ defineEmits<{
 
 const open = ref(new Set<string>());
 const showChecks = ref(false);
+/**
+ * Which task's information window is open, by POSITION in the live grade, so
+ * the window shows the task as it is now - a Check my work while it is open
+ * updates its status in place rather than leaving a stale copy on screen.
+ */
+const infoAt = ref<number | null>(null);
+const infoTask = computed<LabTask | null>(() =>
+  (infoAt.value === null ? null : props.grade.tasks[infoAt.value] || null));
 
 /** Is there anything here Check my work could ever move on its own? */
 const allManual = computed(() => props.grade.tasks.length > 0

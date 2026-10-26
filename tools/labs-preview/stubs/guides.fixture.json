@@ -1,0 +1,495 @@
+{
+ "docker-01-first": {
+  "t1": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "docker",
+    "docker_desktop",
+    "docker_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "docker"
+   ],
+   "commands": [
+    "docker pull nginx",
+    "docker images"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "docker.images.repository at least 1"
+   ]
+  },
+  "t2": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "docker",
+    "docker_desktop",
+    "docker_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "docker"
+   ],
+   "commands": [
+    "docker run -d --name web nginx"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "docker.containers matching name=web, status=running at least 1"
+   ]
+  },
+  "t3": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "docker",
+    "docker_desktop",
+    "docker_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "docker"
+   ],
+   "commands": [
+    "docker run --name hello hello-world",
+    "docker ps -a"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "docker.containers matching status=exited at least 1"
+   ]
+  },
+  "t4": {
+   "kinds": [
+    "command_ran"
+   ],
+   "combine": "",
+   "where": [
+    "docker",
+    "terminal"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "docker logs web"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "a command matching /^\\s*docker\\s+logs\\b/"
+   ]
+  },
+  "t5": {
+   "kinds": [
+    "command_ran",
+    "state"
+   ],
+   "combine": "all",
+   "where": [
+    "docker",
+    "terminal",
+    "docker_desktop",
+    "docker_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "docker"
+   ],
+   "commands": [
+    "docker rm hello"
+   ],
+   "hint_commands": [],
+   "negative": true,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "a command matching /^\\s*docker\\s+rm\\b/",
+    "docker.containers matching name=hello equal to 0"
+   ]
+  }
+ },
+ "net-01-addressing": {
+  "t1": {
+   "kinds": [
+    "manual"
+   ],
+   "combine": "",
+   "where": [
+    "terminal",
+    "netsim"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "your own confirmation"
+   ]
+  },
+  "t2": {
+   "kinds": [
+    "manual"
+   ],
+   "combine": "",
+   "where": [
+    "terminal",
+    "netsim"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "your own confirmation"
+   ]
+  },
+  "t3": {
+   "kinds": [
+    "manual"
+   ],
+   "combine": "",
+   "where": [
+    "terminal",
+    "netsim"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "your own confirmation"
+   ]
+  },
+  "t4": {
+   "kinds": [
+    "manual"
+   ],
+   "combine": "",
+   "where": [
+    "terminal",
+    "netsim"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "your own confirmation"
+   ]
+  },
+  "t5": {
+   "kinds": [
+    "manual"
+   ],
+   "combine": "",
+   "where": [
+    "terminal",
+    "netsim"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "your own confirmation"
+   ]
+  }
+ },
+ "web-01-html": {
+  "t1": {
+   "kinds": [
+    "web_contains"
+   ],
+   "combine": "all",
+   "where": [
+    "web"
+   ],
+   "files": [],
+   "parts": [
+    "html"
+   ],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "<h1>",
+    "<p>"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "the html containing /<h1[^>]*>/",
+    "the html containing /<p[^>]*>/"
+   ]
+  },
+  "t2": {
+   "kinds": [
+    "web_contains"
+   ],
+   "combine": "all",
+   "where": [
+    "web"
+   ],
+   "files": [],
+   "parts": [
+    "html"
+   ],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "<ul>",
+    "<li>"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "the html containing /<(ul|ol)[^>]*>/",
+    "the html containing /(<li[^>]*>[\\s\\S]*){2}/"
+   ]
+  },
+  "t3": {
+   "kinds": [
+    "web_contains"
+   ],
+   "combine": "",
+   "where": [
+    "web"
+   ],
+   "files": [],
+   "parts": [
+    "html"
+   ],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "<a href=\"https://...\">text</a>"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "the html containing /<a\\s+[^>]*href\\s*=\\s*[\\'\\\"][^\\'\\\"]+/"
+   ]
+  },
+  "t4": {
+   "kinds": [
+    "web_contains"
+   ],
+   "combine": "all",
+   "where": [
+    "web"
+   ],
+   "files": [],
+   "parts": [
+    "html"
+   ],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "<img>"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "the html containing /<img\\s/",
+    "the html containing /<img[^>]*\\salt\\s*=/"
+   ]
+  }
+ },
+ "dj-08-admin": {
+  "t1": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "django",
+    "django_preview",
+    "django_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "django"
+   ],
+   "commands": [
+    "makemigrations",
+    "migrate",
+    "auth_user"
+   ],
+   "hint_commands": [],
+   "negative": true,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "django.pending equal to 0"
+   ]
+  },
+  "t2": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "django",
+    "django_preview",
+    "django_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "django"
+   ],
+   "commands": [
+    "python manage.py createsuperuser --username admin --email admin@example.com"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "django.superusers at least 1"
+   ]
+  },
+  "t3": {
+   "kinds": [
+    "file_contains"
+   ],
+   "combine": "",
+   "where": [
+    "editor",
+    "terminal"
+   ],
+   "files": [
+    "shop/admin.py"
+   ],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "shop/admin.py"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "shop/admin.py containing /admin\\.site\\.register/"
+   ]
+  },
+  "t4": {
+   "kinds": [
+    "file_contains"
+   ],
+   "combine": "",
+   "where": [
+    "editor",
+    "terminal"
+   ],
+   "files": [
+    "shop/models.py"
+   ],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "Product object (1)"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "shop/models.py containing /def\\s+__str__\\s*\\(\\s*self/"
+   ]
+  },
+  "t5": {
+   "kinds": [
+    "command_ran"
+   ],
+   "combine": "any",
+   "where": [
+    "terminal"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [
+    "python manage.py dbshell",
+    "SELECT username, is_superuser FROM auth_user;"
+   ],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "a command matching /select\\s+.*auth_user/",
+    "a command matching /dbshell/"
+   ]
+  }
+ }
+}

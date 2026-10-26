@@ -140,7 +140,13 @@
           <div v-show="activePane === '__brief'" class="sl-bench__panel">
             <!-- REVIEW THE LESSON without leaving the lab: a modal over the
                  workspace, so nothing here is unmounted while it is open. -->
-            <div class="sl-brief-tools">
+            <!--
+              Drawn ONLY when a lesson really practises this lab (app 19's
+              `lab_id`). A lab no course links to used to offer the button
+              anyway and open whatever lesson the browser last remembered -
+              an unrelated one. No linked lesson, no button.
+            -->
+            <div v-if="lessonsForLab && lessonsForLab.length" class="sl-brief-tools">
               <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
                       @click="lessonOpen = true">
                 <BookOpen class="sl-i" aria-hidden="true" /> {{ $t('Review the lesson') }}
@@ -232,7 +238,7 @@
                 />
                 <LabFiles
                   v-else-if="tool.kind === 'editor'"
-                  ref="filesPane"
+                  :ref="bindFilesPane"
                   :list="listFiles"
                   :tree="listTree"
                   :read="readFile"
@@ -443,7 +449,7 @@
         </aside>
       </div>
       <LabLessonModal :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
-                      @close="lessonOpen = false" />
+                      :lessons="lessonsForLab || []" @close="lessonOpen = false" />
     </template>
   </div>
 </template>
@@ -488,9 +494,10 @@ import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
 import { labService } from '@/services/lab.service';
 import { labsService } from '@/services/labs.service';
+import { courseService, type Lesson } from '@/services/course.service';
 import {
-  STATUS_LABELS, canEmbed, defaultPane, gradeReport, portalTools, toolPanes,
-  taskQuestion,
+  STATUS_LABELS, canEmbed, defaultPane, gradeReport, keepVerified, portalTools,
+  toolPanes, taskQuestion,
   type GradeReport, type Lab, type LabGrade, type LabTask, type LabTool,
   type ToolPane,
 } from '@/utils/labCatalogue';
@@ -626,6 +633,16 @@ const selfMarked = ref<string[]>([]);
 const report = ref<GradeReport | null>(null);
 const tutor = ref<any>(null);
 const filesPane = ref<any>(null);
+/*
+  A FUNCTION REF, because the Files pane is rendered inside the panes' `v-for`
+  and Vue collects a template ref there into an ARRAY - so
+  `filesPane.value?.refresh?.()` read a method off an array, found nothing, and
+  the explorer never followed a single console command. The same trap the
+  tutor's ref fell into.
+*/
+function bindFilesPane(el: any) {
+  if (el) filesPane.value = el;
+}
 
 /* ------------------------------------------------------------------ *
  * The practice record
@@ -680,9 +697,44 @@ const labId = computed(() => String(props.labId || route.params.labId || ''));
   still finds the same lesson - several lessons can share one lab, and the one
   the student actually came from is the one "back" should mean.
 */
+/*
+  THE LESSONS THAT REALLY PRACTISE THIS LAB - app 19's `lab_id` - fetched once
+  per lab. `null` until known, `[]` when no course links here.
+
+  A remembered or query origin is only TRUSTED when it is one of these. A
+  lesson page only links to a lab its record names, so an origin that is not in
+  the list is stale (the lesson was re-linked, the browser remembered another
+  lab) - and following it was how "Review the lesson" opened an unrelated
+  lesson.
+*/
+const lessonsForLab = ref<Lesson[] | null>(null);
+let lessonsLoadedFor = '';
+
+async function loadLessonsForLab() {
+  const id = labId.value;
+  if (!id || lessonsLoadedFor === id) return;
+  try {
+    const rows = await courseService.getLessonsForLab(id);
+    if (id !== labId.value) return;
+    lessonsForLab.value = rows;
+    lessonsLoadedFor = id;
+  } catch {
+    // Unknown is not "none": keep the button hidden and try again next open.
+    if (id === labId.value) lessonsForLab.value = null;
+  }
+}
+
+function courseOfLesson(row: Lesson): string {
+  return String(row.course_external_id || (row as any).course || '');
+}
+
 const lessonOrigin = computed<LessonRef | null>(() => {
-  if (!labId.value) return null;
-  return originFromQuery(route.query) || recallOrigin(browserStore(), labId.value);
+  if (!labId.value || !lessonsForLab.value) return null;
+  const linked = lessonsForLab.value;
+  const raw = originFromQuery(route.query) || recallOrigin(browserStore(), labId.value);
+  if (raw && linked.some(row => row.external_lesson_id === raw.lessonId)) return raw;
+  const first = linked.find(row => courseOfLesson(row));
+  return first ? { courseId: courseOfLesson(first), lessonId: first.external_lesson_id } : null;
 });
 const lessonOriginLink = computed(() =>
   lessonOrigin.value ? lessonPath(lessonOrigin.value.courseId, lessonOrigin.value.lessonId) : '/labs');
@@ -765,7 +817,15 @@ async function open() {
       return;
     }
     lab.value = payload.lab;
-    grade.value = payload.grade;
+    void loadLessonsForLab();
+    /*
+      A VERIFIED TASK STAYS VERIFIED, on arrival too: the progress record's
+      `tasks_done` is what the platform has already credited, so a replica a
+      release behind (which grades only the CURRENT state) cannot show a task
+      the student finished last week as "to do". Never merged with the grade
+      of whatever lab was open before - task ids like `t1` repeat across labs.
+    */
+    grade.value = keepVerified(payload.grade, null, payload.progress?.tasks_done || []);
     /*
       The ledger opens with the lab.
 
@@ -914,18 +974,21 @@ async function grade0() {
       userId: userId.value,
       selfMarked: selfMarked.value,
     });
-    if (result?.grade) {
-      grade.value = result.grade;
+    // Kept against THIS lab's previous grade: a task the student saw go green
+    // does not go back to "to do" because a later task moved the environment.
+    const fresh = result?.grade ? keepVerified(result.grade, before) : null;
+    if (fresh) {
+      grade.value = fresh;
       // Keep the tick list in step with what the server now believes, so a task
       // it has recorded is not re-posted for ever and one it has not is.
-      selfMarked.value = result.grade.tasks
+      selfMarked.value = fresh.tasks
         .filter(task => task.manual && task.status === 'passed')
         .map(task => task.id);
     }
     if (result?.views && Object.keys(result.views).length) {
       views.value = result.views as any;
     }
-    report.value = gradeReport(before, result?.grade ?? null);
+    report.value = gradeReport(before, fresh);
     /*
       RECORDED ON WHAT IT FOUND, not on the press.
 
@@ -936,7 +999,7 @@ async function grade0() {
       would pay for pressing a button.
     */
     sitting.note('lab.checked');
-    if ((result?.grade?.earned ?? 0) > (before.earned ?? 0)) {
+    if ((fresh?.earned ?? 0) > (before.earned ?? 0)) {
       sitting.note('lab.persisted');
     }
     /*
@@ -945,7 +1008,7 @@ async function grade0() {
       gone. Read off the fresh grade rather than the ref - the award depends on
       the state AFTER this grading.
     */
-    if (result?.grade?.status === 'completed') {
+    if (fresh?.status === 'completed') {
       sitting.note('lab.clean_session');
     }
     /*
@@ -961,7 +1024,7 @@ async function grade0() {
       the completion award. Awaited so the close has left
       the browser before anything else can end the page.
     */
-    if (result?.grade?.status === 'completed') await sitting.complete();
+    if (fresh?.status === 'completed') await sitting.complete();
   } finally {
     grading.value = false;
   }
@@ -1127,6 +1190,9 @@ watch(labId, () => {
   chosenTool.value = {};
   selfMarked.value = [];
   report.value = null;
+  grade.value = { tasks: [], done: 0, total: 0, earned: 0, possible: 0, percent: 0,
+                  status: 'not_started', unavailable: [] };
+  lessonsForLab.value = null;
   if (hasLabAccess.value) open();
 });
 
