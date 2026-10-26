@@ -8131,7 +8131,7 @@ section('13. The console and tutor wiring');
           /fillQuestion\?\.\(question\)/.test(workspace)
           && !/askAboutTask/.test(workspace), 'fill not send');
     check('the question comes from the checked module, not the call site',
-          /taskQuestion\(lab\.value, task, position, tasks\.length\)/
+          /taskQuestion\(lab\.value, task, position, tasks\.length(, focus)?\)/
           .test(workspace));
     check('the console is given a completion source and a save path',
           /:complete="completeIn"/.test(workspace)
@@ -9142,6 +9142,32 @@ section('18. Which tasks the GUI can do, and Review the lesson');
     check('the guide keeps the hint behind a press', /v-if="hintOpen" class="sltg-hint"/.test(guide));
     check('commands and paths in the guide are LTR literals', /class="sltg-code" dir="ltr"/.test(guide));
     check('Escape closes the guide', /@keydown\.esc="\$emit\('close'\)"/.test(guide));
+}
+
+/* ─────────────────── the card shows the task in full ─────────────────── */
+{
+    const tasks = source('src/components/labs/LabTasks.vue');
+    check('the card draws the written goal, steps and done-when',
+          /task\.instructions\.goal/.test(tasks) && /task\.instructions\.steps/.test(tasks)
+          && /task\.instructions\.done_when/.test(tasks));
+    check('the steps are open on the CURRENT task by default',
+          /at === currentAt\.value/.test(tasks));
+    check('every unfinished task invites the student to ask the AI tutor',
+          /task\.status !== 'passed' && task\.instructions\.ask_ai/.test(tasks)
+          && /\$emit\('ask', task, task\.instructions\.ask_ai\)/.test(tasks));
+    check('a task without instructions still shows its detail',
+          /<p v-else-if="task\.detail" class="sl-task__detail">/.test(tasks));
+    const q = taskQuestion(null, {
+        id: 't1', title: 'Compare', detail: 'Orders above the average.', hint: '', points: 1,
+        status: 'pending', note: '', requires: '', manual: false,
+        instructions: { goal: 'List the orders above the average total_amount', steps: ['a', 'b'],
+                        done_when: 'You have run a query with a subquery', ask_ai: 'Why?' },
+    } as any, 1, 3, 'Why does the subquery run once?');
+    check('the tutor question carries the goal and the done-when, not the terse detail',
+          q.includes('List the orders above the average') && q.includes('You have run a query')
+          && !q.includes('Orders above the average.'));
+    check('...and the suggested question replaces the generic ending',
+          q.includes('Why does the subquery run once?') && !q.includes('Give me one nudge'));
 }
 
 /* ─────────────────── review the lesson: only a lesson that links here ─────────────────── */

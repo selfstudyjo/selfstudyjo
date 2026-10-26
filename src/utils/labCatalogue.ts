@@ -116,6 +116,20 @@ export interface LabTask {
     kept?: boolean;
     /** The structure the task's information window is drawn from. */
     guide?: TaskGuide;
+    /**
+     * What the student is to do, in full: written per task so nothing is left
+     * to guess. `done_when` is written FROM the grader's check. English;
+     * absent on a task nobody has written one for, and the card then shows the
+     * manifest's own detail.
+     */
+    instructions?: TaskInstructions | null;
+}
+
+export interface TaskInstructions {
+    goal: string;
+    steps: string[];
+    done_when: string;
+    ask_ai: string;
 }
 
 /**
@@ -3078,14 +3092,17 @@ function sentence(text: string): string {
 }
 
 export function taskQuestion(lab: Lab | null, task: LabTask,
-                             position = 0, total = 0): string {
+                             position = 0, total = 0, focus = ''): string {
     const parts: string[] = [];
     const where = [lab?.title, lab?.track].filter(Boolean).join(' — ');
     const which = position > 0 && total > 0 ? `task ${position} of ${total}` : 'a task';
     parts.push(where
         ? `I am working through the "${where}" lab, on ${which}: "${task.title}".`
         : `I am stuck on ${which}: "${task.title}".`);
-    if (task.detail) parts.push(`The lab asks: ${sentence(task.detail)}`);
+    const plan = task.instructions;
+    if (plan?.goal) parts.push(`The goal: ${sentence(plan.goal)}`);
+    else if (task.detail) parts.push(`The lab asks: ${sentence(task.detail)}`);
+    if (plan?.done_when) parts.push(`It counts as done when: ${sentence(plan.done_when)}`);
     if (task.status === 'passed') {
         parts.push('It is already marked as done, and I want to understand why '
             + 'it works rather than just move on.');
@@ -3100,8 +3117,12 @@ export function taskQuestion(lab: Lab | null, task: LabTask,
                 + 'whether I have got it right.');
         }
     }
-    parts.push('What should I look at next? Give me one nudge rather than the '
-        + 'answer, and tell me why it works.');
+    if (focus) {
+        parts.push(sentence(focus));
+    } else {
+        parts.push('What should I look at next? Give me one nudge rather than the '
+            + 'answer, and tell me why it works.');
+    }
     return parts.join(' ');
 }
 

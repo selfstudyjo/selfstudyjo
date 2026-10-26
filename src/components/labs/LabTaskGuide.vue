@@ -42,7 +42,10 @@
 
           <section class="sltg-section">
             <h3>{{ $t('What you need to do') }}</h3>
-            <p class="sltg-detail">{{ task.detail || task.title }}</p>
+            <p class="sltg-detail">{{ task.instructions?.goal || task.detail || task.title }}</p>
+            <p v-if="task.instructions?.done_when" class="sltg-done">
+              <strong>{{ $t('Done when') }}:</strong> {{ task.instructions.done_when }}
+            </p>
           </section>
 
           <section v-if="view.where.length" class="sltg-section">
@@ -58,6 +61,12 @@
 
           <section class="sltg-section">
             <h3>{{ $t('Step by step') }}</h3>
+            <!-- The task's own written steps first; the generated ones follow
+                 as the general checklist. -->
+            <ol v-if="task.instructions?.steps?.length" class="sltg-steps sltg-steps--own">
+              <li v-for="(step, n) in task.instructions.steps" :key="'own' + n">{{ step }}</li>
+            </ol>
+            <h3 v-if="task.instructions?.steps?.length" class="sltg-subhead">{{ $t('Before you check') }}</h3>
             <ol class="sltg-steps">
               <li v-for="(step, at) in view.steps" :key="at">
                 <span>{{ $t(step.key, step.params || {}) }}</span>
@@ -125,7 +134,7 @@
 
         <footer class="sltg-foot">
           <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
-                  @click="$emit('ask', task); $emit('close')">
+                  @click="$emit('ask', task, task.instructions?.ask_ai || ''); $emit('close')">
             <Sparkles class="sltg-i" aria-hidden="true" /> {{ $t('Ask the tutor') }}
           </button>
           <button v-if="task.manual && task.status !== 'passed'" type="button"
@@ -167,7 +176,7 @@ const props = defineProps<{
 }>();
 defineEmits<{
   (event: 'close'): void;
-  (event: 'ask', task: LabTask): void;
+  (event: 'ask', task: LabTask, focus?: string): void;
   (event: 'open-tool', toolId: string): void;
   (event: 'self-mark', taskId: string): void;
 }>();
@@ -308,6 +317,18 @@ watch(() => props.task?.id, async (id) => {
   unicode-bidi: plaintext;
   overflow-wrap: anywhere;
 }
+
+.sltg-done {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border-inline-start: 3px solid var(--sfs-success-text, #6ee7b7);
+  border-radius: 6px;
+  background: rgb(var(--sfs-success-rgb, 16 185 129) / 0.1);
+  line-height: 1.5;
+  unicode-bidi: plaintext;
+}
+.sltg-section h3.sltg-subhead { margin-block-start: 0.8rem; }
+.sltg-steps--own li { unicode-bidi: plaintext; }
 
 .sltg-callout {
   display: flex;

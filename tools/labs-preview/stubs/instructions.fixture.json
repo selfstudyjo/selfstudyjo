@@ -1,0 +1,210 @@
+{
+ "docker-01-first": {
+  "t1": {
+   "goal": "Download the nginx image with docker pull nginx and confirm it appears in docker images.",
+   "steps": [
+    "Open the Docker CLI.",
+    "Type: docker pull nginx",
+    "Type: docker images",
+    "Check nginx is listed in the REPOSITORY column."
+   ],
+   "done_when": "At least one image is present in the Docker engine's image list.",
+   "ask_ai": "What is the difference between an image and a container?"
+  },
+  "t2": {
+   "goal": "Start a detached container named web from the nginx image so it is running in the background.",
+   "steps": [
+    "Open the Docker CLI.",
+    "Type: docker run -d --name web nginx",
+    "Type: docker ps and check web is listed with status Up."
+   ],
+   "done_when": "A container named web exists with status running.",
+   "ask_ai": "What does -d change, and what happens to my terminal without it?"
+  },
+  "t3": {
+   "goal": "Run the hello-world image as a container named hello, let it exit, and find it again with docker ps -a.",
+   "steps": [
+    "Open the Docker CLI.",
+    "Type: docker run --name hello hello-world",
+    "Type: docker ps - hello is not there because it is not running.",
+    "Type: docker ps -a and check hello shows as Exited (0)."
+   ],
+   "done_when": "At least one container exists with status exited.",
+   "ask_ai": "Why does an exited container still block its name from being reused?"
+  },
+  "t4": {
+   "goal": "Read the output of the web container with docker logs web.",
+   "steps": [
+    "Open the Docker CLI.",
+    "Type: docker logs web",
+    "Read the nginx startup lines it prints."
+   ],
+   "done_when": "You have run a docker logs command.",
+   "ask_ai": "Where do container logs come from - what does the app have to write to?"
+  },
+  "t5": {
+   "goal": "Remove the exited hello container with docker rm hello so it no longer exists.",
+   "steps": [
+    "Open the Docker CLI.",
+    "Type: docker rm hello",
+    "Type: docker ps -a and check hello is gone (web is still there)."
+   ],
+   "done_when": "You have run a docker rm command and no container named hello exists any more.",
+   "ask_ai": "When would I use docker rm -f, and what is the risk?"
+  }
+ },
+ "net-01-addressing": {
+  "t1": {
+   "goal": "Build a topology of two PCs connected to one switch in the Network Simulator studio.",
+   "steps": [
+    "Open the Network Simulator.",
+    "Drag one switch and two PCs onto the canvas.",
+    "Connect each PC to a different port on the switch with a cable.",
+    "Check both links show as up."
+   ],
+   "done_when": "You press 'I have done this' once two PCs are cabled to one switch and the links are up.",
+   "ask_ai": "What does a switch do with a frame when it does not yet know where the destination MAC lives?"
+  },
+  "t2": {
+   "goal": "Give the PCs 192.168.10.10/24 and 192.168.10.11/24 and ping one from the other successfully.",
+   "steps": [
+    "Open the Network Simulator and select the first PC; set its IP to 192.168.10.10 with mask 255.255.255.0 (/24).",
+    "Set the second PC to 192.168.10.11 with mask 255.255.255.0.",
+    "From the first PC, ping 192.168.10.11.",
+    "Open the packet trace and find the ARP request and ARP reply before the ping replies."
+   ],
+   "done_when": "You press 'I have done this' once the ping between the two /24 hosts succeeds and you have seen the ARP exchange.",
+   "ask_ai": "Why does the first ping need an ARP exchange, and why does the second ping not?"
+  },
+  "t3": {
+   "goal": "Open one ping packet in the trace and read its frame, IP packet and ICMP payload layer by layer.",
+   "steps": [
+    "Open the Network Simulator and ping between the two PCs again.",
+    "Open the packet trace and expand one hop.",
+    "Read the Ethernet frame (source and destination MAC), the IP packet (source and destination IP, TTL) and the ICMP payload (echo request or reply)."
+   ],
+   "done_when": "You press 'I have done this' once you have expanded a packet and identified its frame, packet and ICMP layers.",
+   "ask_ai": "Which fields change at each hop and which stay the same end to end?"
+  },
+  "t4": {
+   "goal": "Change one host to a /25 mask, move the other to 192.168.10.200/24, ping, and explain why it fails from the /25 side.",
+   "steps": [
+    "Open the Network Simulator and change the first PC's mask to 255.255.255.128 (/25), keeping 192.168.10.10.",
+    "Change the second PC's address to 192.168.10.200/24.",
+    "Ping 192.168.10.200 from the /25 host and watch the trace: it looks for a gateway because .200 is outside 192.168.10.0 - 192.168.10.127.",
+    "Put the masks back to /24 and confirm the ping works again."
+   ],
+   "done_when": "You press 'I have done this' once you have reproduced the mask-mismatch failure and can explain which host thinks the other is off-net.",
+   "ask_ai": "Why is a subnet mask mismatch not symmetrical between the two hosts?"
+  },
+  "t5": {
+   "goal": "Work out by hand the network, broadcast and host range for 10.20.30.45/26, then check it in the simulator.",
+   "steps": [
+    "On paper, compute the block size: 256 - 192 = 64, so the networks are .0, .64, .128 and .192.",
+    "Write down the network address, broadcast address and usable host range for 10.20.30.45 (you should get 10.20.30.0, 10.20.30.63 and .1 - .62).",
+    "Open the Network Simulator, give a host 10.20.30.45/26 and confirm the simulator's network and broadcast match yours.",
+    "Repeat the paper calculation for two more addresses of your choice."
+   ],
+   "done_when": "You press 'I have done this' once your hand calculation for the /26 matches what the simulator shows.",
+   "ask_ai": "How do I quickly find the block size for any mask like /27 or /28?"
+  }
+ },
+ "web-01-html": {
+  "t1": {
+   "goal": "Add one <h1> heading and one <p> paragraph to the HTML of your page in the Web Playground.",
+   "steps": [
+    "Open the Web Playground and click into the HTML editor.",
+    "Type: <h1>My page</h1>",
+    "Below it type: <p>A paragraph with <strong>important</strong> words in it.</p>",
+    "Press Run and check the heading and paragraph appear in the result pane."
+   ],
+   "done_when": "Your page's HTML contains an <h1> element and a <p> element.",
+   "ask_ai": "Why should a page have only one <h1>, with headings in order?"
+  },
+  "t2": {
+   "goal": "Add a list (<ul> or <ol>) with at least two <li> items to your page's HTML.",
+   "steps": [
+    "Open the Web Playground and click into the HTML editor.",
+    "Type: <ul> then <li>First</li> and <li>Second</li> on their own lines, then </ul>",
+    "Press Run and check two bullet points appear."
+   ],
+   "done_when": "Your page's HTML contains a <ul> or <ol> and at least two <li> items.",
+   "ask_ai": "When should I use an ordered list instead of an unordered one?"
+  },
+  "t3": {
+   "goal": "Add a link with a real href, for example <a href=\"https://selfstudy.jo\">Self Study</a>, to your page.",
+   "steps": [
+    "Open the Web Playground and click into the HTML editor.",
+    "Type: <a href=\"https://selfstudy.jo\" title=\"Go there\">Self Study</a>",
+    "Press Run and check the link text appears underlined in the result pane."
+   ],
+   "done_when": "Your page's HTML contains an <a> element with a non-empty href attribute.",
+   "ask_ai": "What is the difference between an absolute link and a link like href=\"#section\"?"
+  },
+  "t4": {
+   "goal": "Add an <img> element that has an alt attribute describing the image.",
+   "steps": [
+    "Open the Web Playground and click into the HTML editor.",
+    "Type: <img src=\"https://picsum.photos/200\" alt=\"A random photo\">",
+    "Press Run and check the image shows, and that your tag includes alt=\"...\"."
+   ],
+   "done_when": "Your page's HTML contains an <img> element and that <img> has an alt attribute.",
+   "ask_ai": "How should I write good alt text, and when is an empty alt=\"\" correct?"
+  }
+ },
+ "dj-08-admin": {
+  "t1": {
+   "goal": "Run makemigrations and migrate so auth_user and every other table exist and nothing is unapplied.",
+   "steps": [
+    "Open the Django console.",
+    "Type: python manage.py makemigrations",
+    "Type: python manage.py migrate",
+    "Check the Project pane says nothing is unapplied."
+   ],
+   "done_when": "Django reports zero unapplied migrations.",
+   "ask_ai": "Which built-in Django apps create tables when I run migrate for the first time?"
+  },
+  "t2": {
+   "goal": "Create a superuser named admin with python manage.py createsuperuser --username admin --email admin@example.com.",
+   "steps": [
+    "Open the Django console.",
+    "Type: python manage.py createsuperuser --username admin --email admin@example.com",
+    "Enter a password when asked.",
+    "Check the Project pane lists the superuser."
+   ],
+   "done_when": "Django has at least one superuser.",
+   "ask_ai": "Why does createsuperuser fail with no such table: auth_user before migrate?"
+  },
+  "t3": {
+   "goal": "Register your models with the admin using admin.site.register in shop/admin.py.",
+   "steps": [
+    "In the Files tool, open shop/admin.py.",
+    "Add: from django.contrib import admin and from .models import Category, Product",
+    "Add: admin.site.register(Category) and admin.site.register(Product), then save."
+   ],
+   "done_when": "shop/admin.py calls admin.site.register.",
+   "ask_ai": "What does registering a model with the admin give me for free?"
+  },
+  "t4": {
+   "goal": "Give a model in shop/models.py a __str__(self) method that returns its name.",
+   "steps": [
+    "In the Files tool, open shop/models.py.",
+    "Inside class Product add: def __str__(self): with body return self.name (indented correctly).",
+    "Save the file."
+   ],
+   "done_when": "shop/models.py defines a __str__(self method.",
+   "ask_ai": "Where else, besides the admin, does __str__ make my models easier to read?"
+  },
+  "t5": {
+   "goal": "Find your superuser in the database with python manage.py dbshell and SELECT username, is_superuser FROM auth_user;.",
+   "steps": [
+    "Open the Django console.",
+    "Type: python manage.py dbshell",
+    "Type: SELECT username, email, is_superuser FROM auth_user;",
+    "Check the admin row has is_superuser set to 1."
+   ],
+   "done_when": "You have run dbshell or a SELECT ... auth_user query.",
+   "ask_ai": "Why is the password column in auth_user not the password I typed?"
+  }
+ }
+}

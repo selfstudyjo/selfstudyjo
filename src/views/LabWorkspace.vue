@@ -432,7 +432,7 @@
             :busy="grading"
             :report="report"
             @grade="grade0"
-            @ask="askTutor"
+            @ask="(task, focus) => askTutor(task, focus)"
             @self-mark="selfMark"
             :tools="lab.tool_detail"
             @open-tool="openTool"
@@ -1060,12 +1060,12 @@ function selfMark(taskId: string) {
  * `npm run check:labs` drives it, because what makes it a good question is the
  * checker's own note and the task's position in the lab, and neither is obvious.
  */
-async function askTutor(task: LabTask) {
+async function askTutor(task: LabTask, focus = '') {
   const pane = panes.value.find(row => row.tools.some(t => t.kind === 'ai'));
   if (pane) showPane(pane.family);
   const tasks = grade.value.tasks || [];
   const position = tasks.findIndex(row => row.id === task.id) + 1;
-  const question = taskQuestion(lab.value, task, position, tasks.length);
+  const question = taskQuestion(lab.value, task, position, tasks.length, focus);
   // The tutor mounts inside a `v-if`, so it may not exist until the pane is
   // shown. Waiting a frame is what makes the click work the first time rather
   // than the second.

@@ -1317,6 +1317,12 @@ const labs: Catalogue = {
     'Typing in the wrong part (HTML, CSS or JS) of the playground.': '在练习区中错误的部分（HTML、CSS 或 JS）里输入。',
     'Trying to remove something before the earlier steps have created it.': '在前面的步骤创建它之前就试图移除它。',
     'From the task - the commands to type and the names to use. Type them yourself so you see what each one does:': '来自任务——需要输入的命令和要使用的名称。请亲自输入，看看每条命令的作用：',
+    /* The task card's written plan (2026-10-26). */
+    'Done when': '完成条件',
+    'Hide the steps': '隐藏步骤',
+    'Show the {v0} steps': '显示 {v0} 个步骤',
+    'Stuck, or curious? Ask the AI tutor - for example:': '卡住了，或者想了解更多？问问 AI 导师——例如：',
+    'Before you check': '检查之前',
 };
 
 export default labs;

@@ -94,7 +94,53 @@
               <Info class="sl-i" aria-hidden="true" />
             </button>
           </p>
-          <p v-if="task.detail" class="sl-task__detail">{{ task.detail }}</p>
+          <!--
+            WHAT TO DO, IN FULL. A title and a one-line detail were not enough
+            to act on ("Compare a row against an aggregate"), so every task
+            carries a goal, numbered steps and the exact thing the grader
+            verifies - visible on the card, not behind a click. The steps are
+            open on the task the student is working on (the first not done)
+            and one press away on the others, so twelve cards do not become a
+            wall of text.
+          -->
+          <div v-if="task.instructions" class="sl-task__plan">
+            <p class="sl-task__goal">
+              <span class="sl-task__label">{{ $t('Goal') }}</span>
+              <span class="sl-task__text">{{ task.instructions.goal }}</span>
+            </p>
+            <template v-if="task.instructions.steps.length">
+              <ol v-if="stepsOpen(task, at)" class="sl-task__steps">
+                <li v-for="(step, n) in task.instructions.steps" :key="n">{{ step }}</li>
+              </ol>
+              <button type="button" class="sl-task__steps-toggle"
+                      :aria-expanded="stepsOpen(task, at)" @click="toggleSteps(task, at)">
+                <ChevronDown v-if="!stepsOpen(task, at)" class="sl-i" aria-hidden="true" />
+                <ChevronUp v-else class="sl-i" aria-hidden="true" />
+                {{ stepsOpen(task, at)
+                  ? $t('Hide the steps')
+                  : $t('Show the {v0} steps', { v0: task.instructions.steps.length }) }}
+              </button>
+            </template>
+            <p v-if="task.instructions.done_when" class="sl-task__done">
+              <span class="sl-task__label">{{ $t('Done when') }}</span>
+              <span class="sl-task__text">{{ task.instructions.done_when }}</span>
+            </p>
+            <!--
+              USE THE AI. Said on every task that is not done, with a question
+              worth asking about THIS task, because a student who is stuck and
+              does not ask learns nothing - and the tutor gives a nudge, not
+              the answer.
+            -->
+            <p v-if="task.status !== 'passed' && task.instructions.ask_ai" class="sl-task__ai">
+              <Sparkles class="sl-i" aria-hidden="true" />
+              <span>
+                {{ $t('Stuck, or curious? Ask the AI tutor - for example:') }}
+                <button type="button" class="sl-task__ai-ask"
+                        @click="$emit('ask', task, task.instructions.ask_ai)">"{{ task.instructions.ask_ai }}"</button>
+              </span>
+            </p>
+          </div>
+          <p v-else-if="task.detail" class="sl-task__detail">{{ task.detail }}</p>
 
           <!--
             The status LINE is always visible text, never colour alone.
@@ -109,7 +155,12 @@
               {{ $t(statusLabel(task.status)) }}
             </span>
             <span v-if="task.kept" class="sl-task__note">{{ $t('Verified earlier - it stays done.') }}</span>
-            <span v-else-if="task.note" class="sl-task__note">{{ task.note }}</span>
+            <!-- The grader's raw note ("nothing at images.repository") is
+                 jargon beside a written "Done when", so with instructions it
+                 lives in the "i" window - except when it says something the
+                 student must know (the task was already true at the start). -->
+            <span v-else-if="isBaseline(task)" class="sl-task__note">{{ $t('This was already true when you started, so it does not count yet. Do the step yourself - edit the file or run the command - and it will.') }}</span>
+            <span v-else-if="task.note && showNote(task)" class="sl-task__note">{{ task.note }}</span>
           </p>
 
           <!--
@@ -193,7 +244,7 @@
 
     <LabTaskGuide :task="infoTask" :index="infoAt ?? 0" :total="grade.tasks.length"
                   :tools="tools || []" @close="infoAt = null"
-                  @ask="task => $emit('ask', task)"
+                  @ask="(task, focus) => $emit('ask', task, focus)"
                   @open-tool="id => $emit('open-tool', id)"
                   @self-mark="id => $emit('self-mark', id)" />
   </div>
@@ -211,8 +262,8 @@
  */
 import { computed, ref } from 'vue';
 import {
-  AlertTriangle, Check, CheckCheck, Circle, Info, Lightbulb, MonitorSmartphone, Sparkles,
-  TerminalSquare,
+  AlertTriangle, Check, CheckCheck, ChevronDown, ChevronUp, Circle, Info, Lightbulb,
+  MonitorSmartphone, Sparkles, TerminalSquare,
 } from 'lucide-vue-next';
 import ReadAloud from '@/components/ReadAloud.vue';
 import LabTaskGuide from '@/components/labs/LabTaskGuide.vue';
@@ -250,12 +301,14 @@ function guiFor(task: LabTask): LabTool[] {
  */
 const spokenTasks = computed(() => props.grade.tasks.flatMap((task, at) => {
   const lines = [`${at + 1}. ${task.title}`];
-  if (task.detail) lines.push(task.detail);
+  // The goal is the requirement in full; the detail was often a fragment.
+  const goal = task.instructions?.goal || task.detail;
+  if (goal) lines.push(goal);
   return lines;
 }));
 defineEmits<{
   (event: 'grade'): void;
-  (event: 'ask', task: LabTask): void;
+  (event: 'ask', task: LabTask, focus?: string): void;
   (event: 'self-mark', taskId: string): void;
   (event: 'open-tool', toolId: string): void;
 }>();
@@ -268,6 +321,24 @@ const showChecks = ref(false);
  * updates its status in place rather than leaving a stale copy on screen.
  */
 const infoAt = ref<number | null>(null);
+
+/**
+ * Whose steps are open. By default the CURRENT task's - the first one not
+ * done - so the student always sees how to do the next thing; a press opens
+ * or closes any other. Keyed on the id, so a Check my work that moves the
+ * current task along does not shut a card the student opened deliberately.
+ */
+const stepsToggled = ref(new Map<string, boolean>());
+const currentAt = computed(() => props.grade.tasks.findIndex(task => task.status !== 'passed'));
+function stepsOpen(task: LabTask, at: number): boolean {
+  const chosen = stepsToggled.value.get(task.id);
+  return chosen === undefined ? at === currentAt.value : chosen;
+}
+function toggleSteps(task: LabTask, at: number) {
+  const next = new Map(stepsToggled.value);
+  next.set(task.id, !stepsOpen(task, at));
+  stepsToggled.value = next;
+}
 const infoTask = computed<LabTask | null>(() =>
   (infoAt.value === null ? null : props.grade.tasks[infoAt.value] || null));
 
@@ -280,6 +351,13 @@ function toggle(id: string) {
   if (next.has(id)) next.delete(id);
   else next.add(id);
   open.value = next;
+}
+
+function isBaseline(task: LabTask): boolean {
+  return task.status === 'pending' && /^already true/i.test(task.note || '');
+}
+function showNote(task: LabTask): boolean {
+  return !task.instructions?.done_when || task.status === 'unavailable';
 }
 
 function statusLabel(status: TaskStatus): string {

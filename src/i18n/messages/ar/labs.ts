@@ -1329,6 +1329,12 @@ const labs: Catalogue = {
     'Typing in the wrong part (HTML, CSS or JS) of the playground.': 'الكتابة في الجزء الخطأ (HTML أو CSS أو JS) من ساحة اللعب.',
     'Trying to remove something before the earlier steps have created it.': 'محاولة إزالة شيء قبل أن تنشئه الخطوات السابقة.',
     'From the task - the commands to type and the names to use. Type them yourself so you see what each one does:': 'من المهمة - الأوامر التي تكتبها والأسماء التي تستخدمها. اكتبها بنفسك لترى ما يفعله كل منها:',
+    /* The task card's written plan (2026-10-26). */
+    'Done when': 'تكتمل عندما',
+    'Hide the steps': 'إخفاء الخطوات',
+    'Show the {v0} steps': 'إظهار الخطوات ({v0})',
+    'Stuck, or curious? Ask the AI tutor - for example:': 'عالق أو فضولي؟ اسأل المدرّب الذكي - مثلًا:',
+    'Before you check': 'قبل أن تتحقق',
 };
 
 export default labs;
