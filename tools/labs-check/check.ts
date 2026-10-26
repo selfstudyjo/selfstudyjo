@@ -107,15 +107,27 @@ import {
     applyReadline,
     atCommandWord,
     completeLine,
-    editorHelp,
-    editorKey,
     expandHistory,
-    openEditor,
     searchHistory,
     wordAt,
     type CompletionSource,
-    type EditorState,
 } from '../../src/utils/labTerminal';
+
+import {
+    contentOf,
+    nanoKey,
+    nanoShortcuts,
+    openNano,
+    openPager,
+    openVi,
+    pagerBottom,
+    pagerKey,
+    viKey,
+    type KeyInput,
+    type NanoState,
+    type PagerState,
+    type ViState,
+} from '../../src/utils/termEditor';
 
 let passed = 0;
 const failures: string[] = [];
@@ -7967,75 +7979,140 @@ check('!! with no history is left alone, never turned into an empty command',
 check('an ordinary line is untouched',
       expandHistory('ls -la', HISTORY) === 'ls -la');
 
-/* -- nano and vi ---------------------------------------------------------- */
-const REQUEST = { program: 'nano' as const, path: 'notes.txt',
-                  name: 'notes.txt', content: 'one\ntwo', existing: true };
-
-check('nano has no modes, which is the whole reason people reach for it',
-      openEditor(REQUEST).mode === 'insert');
-/* vi opens in NORMAL mode. A vi that let you type straight into the buffer
-   teaches a student the opposite of the one thing vi is famous for. */
-check('VI OPENS IN NORMAL MODE',
-      openEditor({ ...REQUEST, program: 'vi' }).mode === 'normal');
-check('a file that does not exist yet says so',
-      openEditor({ ...REQUEST, existing: false }).status.includes('New File'));
+/* -- nano, vi and the pager: full-screen programs, real keys ----------------
+   termEditor.ts is what LabTermScreen.vue drives. A student who learns ^O/^X
+   or i/Esc/:wq here can use the same keys on any Linux machine, so these
+   assertions are about the REAL shortcuts, not about a Save button. */
+const FILE = { program: 'nano', path: 'notes.txt', name: 'notes.txt',
+               content: 'one\ntwo\n', existing: true };
+const k = (key: string, mods: Partial<KeyInput> = {}): KeyInput => ({ key, ...mods });
+function nanoType(state: NanoState, keys: KeyInput[]) {
+    let action: any = { kind: 'none' };
+    for (const key of keys) ({ state, action } = nanoKey(state, key));
+    return { state, action };
+}
+function viType(state: ViState, keys: (string | KeyInput)[]) {
+    let action: any = { kind: 'none' };
+    for (const key of keys) ({ state, action } = viKey(state, typeof key === 'string' ? k(key) : key));
+    return { state, action };
+}
+const chars = (text: string) => [...text].map(c => k(c));
 
 {
-    const nano = openEditor(REQUEST);
-    check('^O writes', editorKey(nano, 'o', { ctrl: true }).kind === 'save');
-    check('^X on a clean buffer leaves',
-          editorKey(nano, 'x', { ctrl: true }).kind === 'close');
-    /* ASKING on a dirty buffer is the honest thing: the alternative is a
-       shortcut that silently discards an afternoon of typing. */
-    const dirty: EditorState = { ...nano, dirty: true };
-    check('^X ON A DIRTY BUFFER ASKS RATHER THAN DISCARDING',
-          editorKey(dirty, 'x', { ctrl: true }).kind === 'none'
-          && editorKey(dirty, 'x', { ctrl: true }).state.status.includes('Ctrl+O'),
-          editorKey(dirty, 'x', { ctrl: true }));
-    check('^Q discards deliberately',
-          editorKey(dirty, 'q', { ctrl: true }).kind === 'discard');
-    check('an ordinary letter in nano is just typing',
-          editorKey(nano, 'a').kind === 'none'
-          && editorKey(nano, 'a').state.mode === 'insert');
+    const nano = openNano(FILE);
+    check('nano opens on the file, cursor at the top, nothing changed',
+          nano.buf.lines.join('|') === 'one|two' && nano.buf.row === 0 && !nano.dirty,
+          nano.buf);
+    check('a trailing newline is not shown as an extra empty line, and is written back',
+          contentOf(nano) === 'one\ntwo\n', contentOf(nano));
+    check('the shortcut bar carries the real ^G ^O ^W ^K ^U ^X',
+          ['^G', '^O', '^W', '^K', '^U', '^X'].every(key =>
+              nanoShortcuts(nano).flat().some(pair => pair[0] === key)),
+          nanoShortcuts(nano));
+
+    const typed = nanoType(nano, chars('hi '));
+    check('in nano a letter is just typing - there are no modes',
+          typed.state.buf.lines[0] === 'hi one' && typed.state.dirty, typed.state.buf.lines);
+
+    const clean = nanoKey(nano, k('x', { ctrl: true }));
+    check('^X on an unchanged file exits at once', clean.action.kind === 'exit', clean.action);
+
+    const ask = nanoKey(typed.state, k('x', { ctrl: true }));
+    check('^X ON A MODIFIED BUFFER ASKS "Save modified buffer?" rather than discarding',
+          ask.action.kind === 'none' && ask.state.prompt?.kind === 'save-changes', ask.state.prompt);
+    const no = nanoKey(ask.state, k('n'));
+    check('...N discards and exits', no.action.kind === 'exit', no.action);
+    const yes = nanoType(ask.state, [k('y'), k('Enter')]);
+    check('...Y then Enter (File Name to Write) saves and exits',
+          yes.action.kind === 'save' && yes.action.then === 'exit'
+          && yes.action.name === 'notes.txt', yes.action);
+
+    const writeOut = nanoType(typed.state, [k('o', { ctrl: true }), k('Enter')]);
+    check('^O then Enter writes and STAYS in the editor',
+          writeOut.action.kind === 'save' && writeOut.action.then === 'stay', writeOut.action);
+
+    const cut = nanoKey(nano, k('k', { ctrl: true }));
+    check('^K cuts the current line', cut.state.buf.lines.join('|') === 'two', cut.state.buf.lines);
+    const uncut = nanoKey(cut.state, k('u', { ctrl: true }));
+    check('^U pastes it back', uncut.state.buf.lines.includes('one'), uncut.state.buf.lines);
+
+    const found = nanoType(nano, [k('w', { ctrl: true }), ...chars('two'), k('Enter')]);
+    check('^W searches and moves the cursor to the match', found.state.buf.row === 1, found.state.buf);
+
+    /* Real nano lets you edit an unwritable file and refuses at ^O; it says so
+       on opening. vim the same, with [readonly]. */
+    check('an unwritable file (/etc/shadow without sudo) says so on opening, as nano does',
+          openNano({ ...FILE, readonly: true }).status.includes('unwritable'));
+    check('vim marks it [readonly] and :w refuses with E45',
+          openVi({ ...FILE, program: 'vi', readonly: true }).status.includes('[readonly]')
+          && viType(openVi({ ...FILE, program: 'vi', readonly: true }), [':', 'w', 'Enter'])
+             .state.status.includes('E45'));
 }
 
 {
-    const vi = openEditor({ ...REQUEST, program: 'vi' });
-    check('i enters insert mode', editorKey(vi, 'i').state.mode === 'insert');
-    check('Esc goes back to normal',
-          editorKey({ ...vi, mode: 'insert' }, 'Escape').state.mode === 'normal');
-    check(': opens the command line',
-          editorKey(vi, ':').state.mode === 'command'
-          && editorKey(vi, ':').state.pending === ':');
-    const typed = { ...vi, mode: 'command' as const, pending: ':wq' };
-    check(':wq writes and closes',
-          editorKey(typed, 'Enter').kind === 'save-and-close');
-    check(':w writes and stays',
-          editorKey({ ...typed, pending: ':w' }, 'Enter').kind === 'save');
-    /* `:q` on a dirty buffer is E37 in every vi ever shipped, and quietly
-       closing would throw the buffer away. */
-    check(':q ON A DIRTY BUFFER IS REFUSED WITH THE REAL ERROR',
-          editorKey({ ...typed, pending: ':q', dirty: true }, 'Enter').kind === 'none'
-          && editorKey({ ...typed, pending: ':q', dirty: true }, 'Enter')
-             .state.status.includes('E37'));
-    check(':q! discards',
-          editorKey({ ...typed, pending: ':q!', dirty: true }, 'Enter').kind
-          === 'discard');
+    const vi = openVi({ ...FILE, program: 'vi' });
+    check('VI OPENS IN NORMAL MODE - typing x deletes a character, it does not insert one',
+          vi.mode === 'normal' && viType(vi, ['x']).state.buf.lines[0] === 'ne');
+    const inserted = viType(vi, ['i', 'A', 'B', 'Escape']);
+    check('i inserts, Esc returns to normal mode',
+          inserted.state.buf.lines[0] === 'ABone' && inserted.state.mode === 'normal',
+          inserted.state.buf.lines);
+    check('dd deletes the line, u undoes it',
+          viType(vi, ['d', 'd']).state.buf.lines.join('|') === 'two'
+          && viType(vi, ['d', 'd', 'u']).state.buf.lines.join('|') === 'one|two');
+    check('yy then p duplicates the line below',
+          viType(vi, ['y', 'y', 'p']).state.buf.lines.join('|') === 'one|one|two');
+    check('o opens a line below in insert mode',
+          viType(vi, ['o', 'z', 'Escape']).state.buf.lines.join('|') === 'one|z|two');
+    check('a count works: 2dd deletes two lines',
+          viType(vi, ['2', 'd', 'd']).state.buf.lines.join('|') === '');
+    check('G goes to the last line, gg back to the first',
+          viType(vi, ['G']).state.buf.row === 1 && viType(vi, ['G', 'g', 'g']).state.buf.row === 0);
+
+    const dirty = inserted.state;
+    const quit = viType(dirty, [':', 'q', 'Enter']);
+    check(':q ON A MODIFIED BUFFER IS REFUSED WITH THE REAL E37',
+          quit.action.kind === 'none' && quit.state.status.includes('E37'), quit.state.status);
+    check(':q! discards', viType(dirty, [':', 'q', '!', 'Enter']).action.kind === 'exit');
+    const wq = viType(dirty, [':', 'w', 'q', 'Enter']);
+    check(':wq writes and quits', wq.action.kind === 'save' && wq.action.then === 'exit', wq.action);
+    const w = viType(dirty, [':', 'w', 'Enter']);
+    check(':w writes and stays', w.action.kind === 'save' && w.action.then === 'stay', w.action);
+    check('ZZ writes and quits like :x', viType(dirty, ['Z', 'Z']).action.kind === 'save');
     check('an unknown : command reports E492 rather than doing nothing',
-          editorKey({ ...typed, pending: ':frobnicate' }, 'Enter')
-          .state.status.includes('E492'));
-    check('Backspace on the : line rubs out, and empties back to normal',
-          editorKey({ ...typed, pending: ':w' }, 'Backspace').state.pending === ':'
-          && editorKey({ ...typed, pending: ':' }, 'Backspace').state.mode
-             === 'normal');
+          viType(vi, [':', 'f', 'o', 'o', 'Enter']).state.status.includes('E492'));
+    check(':%s/one/1/ substitutes',
+          viType(vi, [...':%s/one/1/'.split(''), 'Enter']).state.buf.lines[0] === '1');
+    check('/pattern searches forward',
+          viType(vi, ['/', 't', 'w', 'Enter']).state.buf.row === 1);
 }
 
-/* The help line has to carry the REAL shortcuts: a student who learns ^O and
-   ^X here can use nano on a real machine, and one who learns a Save button
-   cannot. */
-check('the help line names the real shortcuts',
-      editorHelp('nano').includes('^O') && editorHelp('nano').includes('^X')
-      && editorHelp('vi').includes(':wq') && editorHelp('vi').includes('Esc'));
+{
+    const text = Array.from({ length: 60 }, (_, i) => `line ${i}`).join('\n');
+    let pager: PagerState = openPager(text, 'man ls', 20);
+    check('the pager opens at the top', pager.top === 0);
+    pager = pagerKey(pager, k(' ')).state;
+    check('SPACE pages forward', pager.top === 19, pager.top);
+    check('G goes to the end and the prompt says (END)',
+          pagerBottom(pagerKey(pager, k('G')).state) === '(END)');
+    check('q quits', pagerKey(pager, k('q')).quit === true);
+    let search = openPager(text, '', 20);
+    for (const key of ['/', '4', '2', 'Enter']) search = pagerKey(search, k(key)).state;
+    check('/pattern finds a line', search.top >= 22, search.top);
+}
+
+/* The console hands full-screen programs to LabTermScreen, and the
+   transcript has the terminal's own right-click menu. */
+{
+    const consoleSource = source('src/components/labs/LabConsole.vue');
+    check('the console draws nano/vi/less/top through LabTermScreen',
+          /<LabTermScreen[\s\S]*?:editor="editor"[\s\S]*?:screen="screen"/.test(consoleSource));
+    check('the transcript opens the terminal context menu on right-click',
+          consoleSource.includes('@contextmenu.prevent="openMenu"')
+          && consoleSource.includes('menuCopy') && consoleSource.includes('navigator.clipboard'));
+    check('a click that ends a selection does not steal it',
+          /function focusField[\s\S]*?getSelection[\s\S]*?if \(selected\) return/.test(consoleSource));
+}
 
 /* =====================================================================
    12. Ask the tutor

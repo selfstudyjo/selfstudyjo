@@ -383,6 +383,46 @@ footer{background:#047857;color:#fff;padding:22px 24px;font-weight:700}</style><
                 existing: env.files[target] !== undefined,
             } });
         }
+        /* Full-screen programs, shaped exactly as app 11's Linux layer answers
+           (utils/sims/_linux/screen.py): a first frame plus a SCREEN request. */
+        if (head === 'less' || head === 'man') {
+            const text = head === 'man'
+                ? ['LS(1)                     User Commands                    LS(1)', '', 'NAME',
+                   '       ls - list directory contents', '', 'SYNOPSIS', '       ls [OPTION]... [FILE]...', '',
+                   'DESCRIPTION', ...Array.from({ length: 60 }, (_v, i) => `       option ${i + 1}: an explanation of what it does`)].join('\n')
+                : String(env.files[argv[1]] ?? Array.from({ length: 80 }, (_v, i) => `line ${i + 1}`).join('\n'));
+            return answer({ output: text.split('\n').slice(0, 20).join('\n'),
+                            screen: { program: 'pager', text, title: head === 'man' ? 'Manual page ls(1)' : argv[1] || '' } });
+        }
+        if (head === 'top' && !argv.includes('-b')) {
+            return answer({ output: 'top frame', screen: { program: 'live', command: 'top -b -n 1', interval: 3, title: 'top' } });
+        }
+        if (head === 'top') {
+            const now = new Date().toTimeString().slice(0, 8);
+            return answer({ output: [
+                `top - ${now} up 6 days, 17:45,  1 user,  load average: 0.16, 0.13, 0.11`,
+                'Tasks: 122 total,   1 running, 121 sleeping,   0 stopped,   0 zombie',
+                '%Cpu(s):  1.9 us,  0.7 sy,  0.0 ni, 97.2 id,  0.2 wa,  0.0 hi,  0.0 si,  0.0 st',
+                'MiB Mem :   3932.1 total,   1063.3 free,   1100.9 used,   1767.9 buff/cache',
+                'MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   2831.2 avail Mem', '',
+                '    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND',
+                '      1 root      20   0  167884  13012   8320 S   0.0   0.3   0:04.11 systemd',
+                '    702 root      20   0   15432   9100   7600 S   0.0   0.2   0:00.02 sshd',
+                '   1188 root      20   0   55180   1580    500 S   0.0   0.0   0:00.00 nginx'].join('\n') });
+        }
+        if (head === 'ping' && argv[1] === '--sfs-tick') {
+            return answer({ output: `64 bytes from 127.0.0.1: icmp_seq=${Number(argv[2]) + 1} ttl=64 time=0.041 ms` });
+        }
+        if (head === 'ping' && argv[1] === '--sfs-stop') {
+            const n = Number(argv[2]) + 1;
+            return answer({ output: ['^C', '--- 127.0.0.1 ping statistics ---',
+                `${n} packets transmitted, ${n} received, 0% packet loss, time ${n * 1000}ms`].join('\n') });
+        }
+        if (head === 'ping' && !argv.includes('-c')) {
+            return answer({ output: 'PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.050 ms',
+                            screen: { program: 'stream', tick: 'ping --sfs-tick {n} 127.0.0.1',
+                                      stop: 'ping --sfs-stop {n} 127.0.0.1', interval: 0.4, title: 'ping', limit: 600 } });
+        }
         const redirect = line.match(/^echo\s+(.*?)\s*>\s*(\S+)$/);
         if (redirect) {
             env.files[redirect[2]] = redirect[1].replace(/^["']|["']$/g, '') + '\n';

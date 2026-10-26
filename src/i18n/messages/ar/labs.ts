@@ -384,7 +384,6 @@ const labs: Catalogue = {
     'open a file in an editor': 'فتح ملف في محرّر',
     'Type help to see every command, or press Tab to complete one.':
         'اكتب help لعرض كل الأوامر، أو اضغط Tab لإكمال أحدها.',
-    'Modified': 'مُعدّل',
 
     // ------------------------------------------------------------------
     // Ansible - app 11's thirteenth track.
@@ -1335,6 +1334,11 @@ const labs: Catalogue = {
     'Show the {v0} steps': 'إظهار الخطوات ({v0})',
     'Stuck, or curious? Ask the AI tutor - for example:': 'عالق أو فضولي؟ اسأل المدرّب الذكي - مثلًا:',
     'Before you check': 'قبل أن تتحقق',
+    'Paste': 'لصق',
+    'Select all': 'تحديد الكل',
+    'Right-click': 'النقر بزر الفأرة الأيمن',
+    'copy the selection / paste': 'نسخ التحديد / لصق',
+    'Copy, Paste, Select all, Clear': 'نسخ، لصق، تحديد الكل، مسح',
 };
 
 export default labs;

@@ -376,7 +376,6 @@ const labs: Catalogue = {
     'open a file in an editor': '在编辑器中打开文件',
     'Type help to see every command, or press Tab to complete one.':
         '输入 help 查看全部命令，或按 Tab 补全命令。',
-    'Modified': '已修改',
 
     // ------------------------------------------------------------------
     // Ansible - app 11's thirteenth track.
@@ -1323,6 +1322,11 @@ const labs: Catalogue = {
     'Show the {v0} steps': '显示 {v0} 个步骤',
     'Stuck, or curious? Ask the AI tutor - for example:': '卡住了，或者想了解更多？问问 AI 导师——例如：',
     'Before you check': '检查之前',
+    'Paste': '粘贴',
+    'Select all': '全选',
+    'Right-click': '右键单击',
+    'copy the selection / paste': '复制所选内容 / 粘贴',
+    'Copy, Paste, Select all, Clear': '复制、粘贴、全选、清除',
 };
 
 export default labs;

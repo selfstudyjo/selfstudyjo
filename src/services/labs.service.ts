@@ -80,6 +80,22 @@ export interface ToolResult {
         name: string;
         content: string;
         existing: boolean;
+        /** An absolute path outside the workspace (`/tmp/x`, `/etc/hosts`). */
+        system?: string;
+        readonly?: boolean;
+        sudo?: boolean;
+    };
+    /** A full-screen program the console runs: less/man, top/watch, ping. */
+    screen?: {
+        program: 'live' | 'stream' | 'pager';
+        command?: string;
+        tick?: string;
+        stop?: string;
+        interval?: number;
+        title?: string;
+        text?: string;
+        search?: string;
+        limit?: number;
     };
     ran_on?: string;
     note?: string;

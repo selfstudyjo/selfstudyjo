@@ -45,6 +45,8 @@
         <div><dt>Up / Down</dt><dd>{{ $t('walk through history') }}</dd></div>
         <div><dt>!!</dt><dd>{{ $t('run the previous command again') }}</dd></div>
         <div><dt>nano / vi</dt><dd>{{ $t('open a file in an editor') }}</dd></div>
+        <div><dt>Ctrl+Shift+C / V</dt><dd>{{ $t('copy the selection / paste') }}</dd></div>
+        <div><dt>{{ $t('Right-click') }}</dt><dd>{{ $t('Copy, Paste, Select all, Clear') }}</dd></div>
       </dl>
     </div>
 
@@ -57,6 +59,19 @@
       a command that does not run. `rtl.css` pins every `<pre>` for the same
       reason; this says it locally as well because this element is built here.
     -->
+    <!--
+      THE SCREEN: the transcript, and over it any full-screen program the shell
+      started (nano, vi, less, man, top, watch, ping...). The program covers
+      exactly the terminal area - the console's own header stays - because that
+      is what these programs do in a real terminal: they take the screen and
+      give it back when they quit.
+
+      The right-click menu is the terminal's own (Copy, Paste, Select all,
+      Clear), and a click no longer steals a selection: focusing the input
+      used to collapse whatever the student had just highlighted.
+    -->
+    <div class="sl-console__screen" :class="{ 'is-program': editor || screen }"
+         @mousedown="rememberSelection" @contextmenu.prevent="openMenu">
     <div ref="scroller" class="sl-console__body" dir="ltr" @click="focusField">
       <div v-if="lines.length === 0" class="sl-console__hello">
         <p>{{ $t(tool.summary) }}</p>
@@ -138,45 +153,39 @@
       </form>
     </div>
 
-    <!--
-      nano and vi, as an overlay over the console.
-
-      There is no pseudo-terminal anywhere in this design, so a real curses
-      editor cannot exist — the backend answers `nano notes.txt` with the file's
-      contents and this is what opens. The shortcuts are the real ones (^O, ^X,
-      :w, :wq, i, Esc) because a student who learns those can use nano and vi on
-      a real machine and one who learns a Save button cannot.
-    -->
-    <div v-if="editor" class="sl-editor" dir="ltr" role="dialog"
-         :aria-label="`${editor.program} ${editor.name}`">
-      <div class="sl-editor__bar">
-        <span class="sl-editor__name">
-          {{ editor.program === 'nano' ? 'GNU nano' : 'VIM' }} &middot; {{ editor.name }}
-          <span v-if="editor.dirty" class="sl-editor__dirty">{{ $t('Modified') }}</span>
-        </span>
-        <span v-if="editor.program === 'vi'" class="sl-editor__mode">
-          {{ editor.mode === 'insert' ? '-- INSERT --'
-             : editor.mode === 'command' ? editor.pending : '-- NORMAL --' }}
-        </span>
-      </div>
-      <textarea
-        ref="buffer"
-        v-model="editor.text"
-        class="sl-editor__text"
-        spellcheck="false"
-        :readonly="editor.program === 'vi' && editor.mode !== 'insert'"
-        @keydown="onEditorKey"
-        @input="editor.dirty = true"
-      ></textarea>
-      <!-- The status on the left and the shortcuts on the right, and the
-           status is EMPTY when there is nothing to say. Falling back to the
-           help line there printed the shortcuts twice, side by side, which
-           reads as a rendering fault rather than as a quiet editor. -->
-      <div class="sl-editor__foot">
-        <span class="sl-editor__status">{{ editor.status }}</span>
-        <span class="sl-editor__hint">{{ editorHelpLine }}</span>
-      </div>
+      <LabTermScreen
+        v-if="editor || screen"
+        ref="program"
+        :editor="editor"
+        :screen="screen"
+        :run="runForScreen"
+        :save="save"
+        @exit="onProgramExit"
+        @menu="openMenu"
+      />
     </div>
+
+    <!-- The terminal's right-click menu. Teleported so no card's stacking
+         context can put it under the sidebar. -->
+    <Teleport to="body">
+      <div v-if="menu" class="sl-termmenu" role="menu"
+           :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
+           @mousedown.stop @contextmenu.prevent>
+        <button type="button" role="menuitem" class="sl-termmenu__item"
+                :disabled="!menu.selection" @click="menuCopy">
+          <span>{{ $t('Copy') }}</span><kbd>Ctrl+Shift+C</kbd>
+        </button>
+        <button type="button" role="menuitem" class="sl-termmenu__item" @click="menuPaste">
+          <span>{{ $t('Paste') }}</span><kbd>Ctrl+Shift+V</kbd>
+        </button>
+        <button type="button" role="menuitem" class="sl-termmenu__item" @click="menuSelectAll">
+          <span>{{ $t('Select all') }}</span>
+        </button>
+        <button type="button" role="menuitem" class="sl-termmenu__item" @click="menuClear">
+          <span>{{ $t('Clear') }}</span><kbd>Ctrl+L</kbd>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -229,10 +238,12 @@ import {
 } from 'lucide-vue-next';
 import type { LabTool } from '@/utils/labCatalogue';
 import {
-  applyReadline, completeLine, editorHelp, editorKey, expandHistory, openEditor,
-  searchHistory, type CompletionSource, type EditorRequest, type EditorState,
+  applyReadline, completeLine, expandHistory,
+  searchHistory, type CompletionSource,
   type ReadlineKey, type SearchState,
 } from '@/utils/labTerminal';
+import type { EditorRequest } from '@/utils/termEditor';
+import LabTermScreen, { type ScreenRequest } from '@/components/labs/LabTermScreen.vue';
 
 const props = defineProps<{
   tool: LabTool;
@@ -252,6 +263,8 @@ interface ConsoleAnswer {
   cwd?: string;
   prompt?: string;
   editor?: EditorRequest;
+  /** A full-screen program: less/man (pager), top/watch (live), ping/tail -f (stream). */
+  screen?: ScreenRequest;
   /** The active virtual environment's name, from the CS471 web labs. */
   venv?: string;
   /** `>>> ` / `sqlite> ` while manage.py shell or dbshell is open. */
@@ -267,9 +280,11 @@ const history = ref<string[]>([]);
 const cursor = ref(-1);
 const scroller = ref<HTMLElement | null>(null);
 const field = ref<HTMLInputElement | null>(null);
-const buffer = ref<HTMLTextAreaElement | null>(null);
 const keysOpen = ref(false);
-const editor = ref<EditorState | null>(null);
+const editor = ref<EditorRequest | null>(null);
+const screen = ref<ScreenRequest | null>(null);
+const program = ref<any>(null);
+const menu = ref<{ x: number; y: number; selection: string } | null>(null);
 const yank = ref('');
 const search = ref<SearchState | null>(null);
 /** Where the shell is. Drawn in the prompt and the key for the Tab cache. */
@@ -319,8 +334,6 @@ const prompt = computed(() => {
  * that block is drawn under exactly the same condition.
  */
 const placeholder = computed(() => props.tool.summary.split('.')[0]);
-const editorHelpLine = computed(() => (editor.value
-  ? editorHelp(editor.value.program) : ''));
 const searchLabel = computed(() => {
   if (!search.value) return '';
   const hit = searchHistory(history.value, search.value);
@@ -329,7 +342,117 @@ const searchLabel = computed(() => {
 });
 
 function focusField() {
-  if (!editor.value) field.value?.focus();
+  if (editor.value || screen.value) {
+    program.value?.focus?.();
+    return;
+  }
+  // A click that ends a drag-selection must not steal it: focusing the input
+  // collapses the document selection, which is why highlighting output and
+  // copying it never worked here.
+  const selected = window.getSelection?.()?.toString() || '';
+  if (selected) return;
+  field.value?.focus();
+}
+
+/* --------------------------------------------------------------------- */
+/* Copy and paste, as a terminal does them                               */
+/* --------------------------------------------------------------------- */
+
+function selectionText(): string {
+  return window.getSelection?.()?.toString() || '';
+}
+
+async function copyText(text: string) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // A locked-down browser: fall back to the old execCommand route.
+    try { document.execCommand('copy'); } catch { /* nothing else to try */ }
+  }
+}
+
+async function pasteText() {
+  let text = '';
+  try { text = await navigator.clipboard.readText(); } catch { return; }
+  if (!text) return;
+  if (editor.value || screen.value) {
+    program.value?.paste?.(text);
+    return;
+  }
+  const element = field.value;
+  const caret = element?.selectionStart ?? entry.value.length;
+  const pasted = text.replace(/(\r?\n)+$/, '');
+  // A multi-line paste runs line by line, as in a real terminal: each full
+  // line is a command.
+  if (/\r?\n/.test(pasted)) {
+    const parts = pasted.split(/\r?\n/);
+    entry.value = entry.value.slice(0, caret) + parts[0] + entry.value.slice(caret);
+    await submit();
+    for (const part of parts.slice(1)) {
+      entry.value = part;
+      await submit();
+    }
+    return;
+  }
+  entry.value = entry.value.slice(0, caret) + pasted + entry.value.slice(caret);
+  moveCaret(caret + pasted.length);
+  field.value?.focus();
+}
+
+let heldSelection = '';
+function rememberSelection(event: MouseEvent) {
+  if (event.button === 2) heldSelection = selectionText();
+}
+
+function openMenu(event: MouseEvent) {
+  const x = Math.min(event.clientX, window.innerWidth - 230);
+  const y = Math.min(event.clientY, window.innerHeight - 200);
+  // The selection as it was when the right button went DOWN: a browser may
+  // collapse it before `contextmenu` fires when the click lands just outside
+  // the highlighted text, and Copy would then come up disabled.
+  menu.value = { x, y, selection: selectionText() || heldSelection };
+  heldSelection = '';
+  const close = () => {
+    menu.value = null;
+    window.removeEventListener('mousedown', close);
+    window.removeEventListener('keydown', close);
+    window.removeEventListener('scroll', close, true);
+  };
+  setTimeout(() => {
+    window.addEventListener('mousedown', close);
+    window.addEventListener('keydown', close);
+    window.addEventListener('scroll', close, true);
+  });
+}
+
+async function menuCopy() {
+  const text = menu.value?.selection || selectionText();
+  menu.value = null;
+  await copyText(text);
+  focusField();
+}
+
+async function menuPaste() {
+  menu.value = null;
+  await pasteText();
+}
+
+function menuSelectAll() {
+  menu.value = null;
+  const element = scroller.value;
+  if (!element) return;
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
+function menuClear() {
+  menu.value = null;
+  lines.value = [];
+  focusField();
 }
 
 function push(kind: Line['kind'], text: string, at?: string) {
@@ -356,9 +479,12 @@ async function submit() {
     if (result?.clear) {
       lines.value = [];
     } else {
-      if (result?.output) push('out', result.output);
+      // A full-screen program leaves nothing in the scrollback when it quits
+      // (less, man, top) - or leaves what it streamed (ping). Its first frame
+      // is for a console that cannot draw screens, so it is not printed here.
+      if (result?.output && !result?.screen) push('out', result.output);
       if (result?.error) push('err', result.error);
-      if (!result?.output && !result?.error && !result?.editor) {
+      if (!result?.output && !result?.error && !result?.editor && !result?.screen) {
         // A real tool that answers with nothing has succeeded, and a console
         // that shows nothing at all reads as the command having been swallowed.
         push('note', '(no output)');
@@ -377,6 +503,10 @@ async function submit() {
       }
     }
     if (result?.editor) openBuffer(result.editor);
+    // A stream (ping, tail -f, yes) carries on from its first frame - the
+    // `PING ...` header and the first reply - so that frame seeds the screen.
+    else if (result?.screen) screen.value = result.screen.program === 'stream' && !result.screen.text
+      ? { ...result.screen, text: result.output || '' } : result.screen;
   } finally {
     busy.value = false;
     await scrollDown();
@@ -510,6 +640,12 @@ function onKey(event: KeyboardEvent) {
     return;
   }
 
+  if (ctrl && event.shiftKey && key.toLowerCase() === 'c') {
+    event.preventDefault(); copyText(selectionText()); return;
+  }
+  if ((ctrl && event.shiftKey && key.toLowerCase() === 'v') || (event.shiftKey && key === 'Insert')) {
+    event.preventDefault(); pasteText(); return;
+  }
   if (key === 'Tab') { event.preventDefault(); tab(); return; }
   if (key === 'ArrowUp') { event.preventDefault(); recall(-1); return; }
   if (key === 'ArrowDown') { event.preventDefault(); recall(1); return; }
@@ -525,6 +661,13 @@ function onKey(event: KeyboardEvent) {
     };
     if (letter === 'l') { event.preventDefault(); lines.value = []; return; }
     if (letter === 'r') { event.preventDefault(); beginSearch(); return; }
+    if (letter === 'c' && selectionText() && !event.shiftKey) {
+      // With text highlighted, Ctrl+C copies it - as Windows Terminal and most
+      // modern terminal emulators do - instead of abandoning the line.
+      event.preventDefault();
+      copyText(selectionText());
+      return;
+    }
     if (letter === 'c') {
       event.preventDefault();
       // A shell echoes the abandoned line with a `^C` rather than silently
@@ -564,80 +707,30 @@ function onKey(event: KeyboardEvent) {
 /* --------------------------------------------------------------------- */
 
 function openBuffer(request: EditorRequest) {
-  editor.value = openEditor(request);
-  nextTick(() => {
-    const element = buffer.value;
-    if (!element) return;
-    element.focus();
-    element.setSelectionRange(0, 0);
-  });
+  screen.value = null;
+  editor.value = request;
 }
 
-async function writeBuffer(): Promise<boolean> {
-  const state = editor.value;
-  if (!state) return false;
-  if (!props.save) {
-    editor.value = { ...state, status: 'This lab cannot save from the editor' };
-    return false;
+/**
+ * The shell a full-screen program talks to: `top` re-runs `top -b -n 1`,
+ * `ping` runs its next tick, and a system file is saved with a here-document.
+ * Plain - no transcript, no history - because none of it is something the
+ * student typed.
+ */
+async function runForScreen(line: string) {
+  try {
+    const result = await props.run(line);
+    return { output: result?.output, error: result?.error };
+  } catch (problem: any) {
+    return { error: problem?.message || 'failed' };
   }
-  const result = await props.save(state.path, state.text);
-  if (!result?.ok) {
-    editor.value = { ...state,
-                     status: result?.error || 'The file could not be written' };
-    return false;
-  }
-  const written = state.text.split('\n').length;
-  editor.value = { ...state, dirty: false,
-                   status: `[ Wrote ${written} lines ]` };
-  return true;
 }
 
-function closeBuffer(note: string) {
-  const state = editor.value;
+function onProgramExit(payload: { lines: { kind: 'out' | 'err' | 'note'; text: string }[] }) {
   editor.value = null;
-  if (state && note) push('note', note);
+  screen.value = null;
+  for (const row of payload?.lines || []) if (row.text) push(row.kind, row.text);
   nextTick(() => { focusField(); scrollDown(); });
-}
-
-async function onEditorKey(event: KeyboardEvent) {
-  const state = editor.value;
-  if (!state) return;
-  const ctrl = event.ctrlKey || event.metaKey;
-
-  // In vi's NORMAL mode a keypress is a command, so the textarea must not
-  // receive it — that is the whole difference between vi and a text box, and a
-  // `readonly` textarea alone would still scroll and beep.
-  if (state.program === 'vi' && state.mode !== 'insert'
-      && !ctrl && event.key.length === 1) {
-    event.preventDefault();
-  }
-  if (state.program === 'vi' && state.mode === 'command'
-      && (event.key === 'Enter' || event.key === 'Backspace')) {
-    event.preventDefault();
-  }
-  if (state.program === 'nano' && ctrl
-      && 'oxqk'.includes(event.key.toLowerCase())) {
-    event.preventDefault();
-  }
-  if (event.key === 'Escape') event.preventDefault();
-
-  const action = editorKey(state, event.key,
-                           { ctrl, shift: event.shiftKey });
-  editor.value = action.state;
-  if (action.state.mode === 'insert' && state.mode !== 'insert') {
-    nextTick(() => buffer.value?.focus());
-  }
-
-  if (action.kind === 'save') { await writeBuffer(); return; }
-  if (action.kind === 'save-and-close') {
-    const saved = await writeBuffer();
-    if (saved) closeBuffer(`"${state.name}" written`);
-    return;
-  }
-  if (action.kind === 'close') { closeBuffer(''); return; }
-  if (action.kind === 'discard') {
-    closeBuffer(state.dirty ? `"${state.name}" not written` : '');
-  }
 }
 
 async function scrollDown() {
@@ -651,6 +744,7 @@ watch(() => props.tool.id, () => {
   lines.value = [];
   history.value = [];
   editor.value = null;
+  screen.value = null;
   search.value = null;
   candidates.value = {};
   cwd.value = '~';

@@ -1227,6 +1227,56 @@
    sidebar. Working rule 17. */
 .sl-console { position: relative; }
 
+/* The terminal area: the transcript, and over it a full-screen program
+   (nano, vi, less, man, top, ping...). While a program runs the area has a
+   FIXED height, because an editor needs rows to draw and a transcript that
+   collapsed to two lines would give it two. */
+.sl-console__screen { position: relative; }
+.sl-console__screen.is-program .sl-console__body {
+    height: clamp(18rem, 52vh, 34rem);
+    max-height: none;
+    visibility: hidden;
+}
+.sl-console__screen.is-program .sl-ts { border-radius: var(--sl-radius-sm); }
+
+/* The terminal's right-click menu. */
+.sl-termmenu {
+    position: fixed;
+    z-index: 3000;
+    min-width: 13rem;
+    padding: 0.3rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 8px;
+    background: var(--sfs-space, #0b0e1a);
+    color: var(--sfs-text, #e6e8ef);
+    box-shadow: 0 12px 30px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+}
+
+.sl-termmenu__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.85rem;
+    text-align: start;
+    cursor: pointer;
+}
+.sl-termmenu__item:hover:not(:disabled),
+.sl-termmenu__item:focus-visible { background: rgb(var(--sfs-accent-rgb, 99 102 241) / 0.18); }
+.sl-termmenu__item:disabled { opacity: 0.45; cursor: default; }
+.sl-termmenu__item kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+
 @media (max-width: 640px) {
     .sl-console__prompt { max-width: 42%; }
     .sl-console__keys dt { min-width: 5.5rem; }
