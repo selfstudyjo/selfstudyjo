@@ -170,6 +170,5 @@
   "WPA2-Personal",
   "WPA3-Enterprise",
   "WPA3-Personal (SAE)",
-  "www.lab.local",
-  "{v0}@lab-server:~$"
+  "www.lab.local"
 ]

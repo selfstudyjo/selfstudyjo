@@ -172,88 +172,13 @@
       <div v-else-if="activeTab === 'linux'" class="tab-content">
         <div class="linux-container">
           <div class="terminal-wrapper">
-            <!-- Terminal Header -->
-            <div class="terminal-header">
-              <div class="terminal-title">
-                <Terminal class="lab-i" />
-                {{ $t('Linux Terminal - {v0}@lab-server', { v0: username }) }}
-                <span class="terminal-status" v-if="runningProcess">
-                  <Loader2 class="lab-i lab-i--spin" /> {{ $t('Process running...') }}
-                </span>
-              </div>
-              <div class="terminal-actions">
-                <button class="btn btn-sm" @click="clearTerminal" :title="$t('Clear terminal')">
-                  <Eraser class="lab-i" /> {{ $t('Clear') }}
-                </button>
-                <button class="btn btn-sm btn-danger" @click="killProcess"
-                        :disabled="!runningProcess" :title="$t('Stop current process')">
-                  <Square class="lab-i" /> {{ $t('Stop') }}
-                </button>
-                <button class="btn btn-sm" @click="copyTerminalContent" :title="$t('Copy terminal content')">
-                  <Copy class="lab-i" /> {{ $t('Copy') }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Terminal Content -->
-            <div class="terminal-content" ref="terminalContent" @click="focusCommandInput">
-              <!-- Welcome message -->
-              <div v-if="terminalLines.length === 0" class="terminal-welcome">
-                <div class="welcome-line">{{ $t('🌐 Welcome to Linux Terminal Lab!') }}</div>
-                <div class="welcome-line">{{ $t('📁 Type \'help\' for available commands') }}</div>
-                <div class="welcome-line">{{ $t('💡 Press ↑/↓ for command history • Tab for auto-completion') }}</div>
-                <!--
-                  Empty on purpose. It used to hold 46 literal `─` box-drawing
-                  characters, which a screen reader reads out one by one and which
-                  have no break opportunity — so at 390px the run was 18px wider
-                  than the terminal and extended its scrollable width. The rule in
-                  lab.css already draws the line as a 1px gradient, which is what
-                  the characters were imitating.
-                -->
-                <div class="welcome-separator" aria-hidden="true"></div>
-              </div>
-
-              <!-- Terminal Lines -->
-              <div v-for="(line, index) in terminalLines" :key="index" :class="['terminal-line', line.type]">
-                <span class="line-prompt" v-if="line.type === 'command'">{{ line.prompt || `${username}@lab-server:~$` }}</span>
-                <span class="line-content">{{ line.content }}</span>
-              </div>
-
-              <!-- Current Command Input Line -->
-              <div class="terminal-input-line">
-                <span class="input-prompt">{{ $t('{v0}@lab-server:~$', { v0: username }) }}</span>
-                <div class="input-wrapper">
-                  <input
-                    v-model="currentCommand"
-                    type="text"
-                    class="command-input"
-                    :placeholder="commandHistory.length > 0 ? '' : $t('Type a command and press Enter...')"
-                    :disabled="runningProcess"
-                    @keydown.enter="runLinuxCommand"
-                    @keydown.up.prevent="commandHistoryUp"
-                    @keydown.down.prevent="commandHistoryDown"
-                    @keydown.tab.prevent="handleTabCompletion"
-                    @keydown.ctrl.c.prevent="handleCtrlC"
-                    ref="commandInput"
-                    spellcheck="false"
-                    autocomplete="off"
-                    autocorrect="off"
-                    autocapitalize="off"
-                  />
-                  <!--
-                    The fake cursor was here — a `█` or a `|` after the input.
-                    `.command-input` is `flex: 1`, so both were pushed to the FAR
-                    RIGHT of the terminal, hundreds of pixels from the text being
-                    typed, at every width; they also made the row two pixels wider
-                    than its own box. The native caret is in the right place by
-                    construction and already takes `caret-color: --code-green`.
-                  -->
-                  <span class="running-indicator" v-if="runningProcess">
-                    <Loader2 class="lab-i lab-i--spin" />
-                  </span>
-                </div>
-              </div>
-            </div>
+            <!--
+              THE SAME CONSOLE AS EVERY LAB AND THE TOP BAR. This page had its own
+              terminal, which could not draw nano, vi, top, less or a ping that
+              runs until Ctrl+C, and had no Tab, Ctrl+R or right-click copy. One
+              component means a fix to the terminal lands here too.
+            -->
+            <LabConsole ref="linuxConsole" :tool="LINUX_TOOL" :run="runShell" />
 
             <!-- Terminal Help Section -->
             <div class="terminal-help">
@@ -413,6 +338,20 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { labService, type Student } from '@/services/lab.service';
+import LabConsole from '@/components/labs/LabConsole.vue';
+import type { LabTool } from '@/utils/labCatalogue';
+
+const LINUX_TOOL: LabTool = {
+  id: 'terminal', label: 'Linux Terminal', kind: 'console', engine: 'linux',
+  icon: 'terminal', summary: 'A shell in your own workspace directory.',
+} as LabTool;
+const linuxConsole = ref<{ insert: (text: string) => void } | null>(null);
+
+/** The console's `run`: the whole answer, so `top`, `nano` and `ping` can take the screen. */
+async function runShell(line: string) {
+  const result: any = await labService.runLinuxCommand(username.value, line);
+  return { ...result, ok: !result?.error };
+}
 
 const authStore = useAuthStore();
 const terminalContent = ref<HTMLElement | null>(null);
@@ -802,13 +741,7 @@ const killProcess = async () => {
 };
 
 const insertCommand = (command: string) => {
-  currentCommand.value = command;
-  nextTick(() => {
-    if (commandInput.value) {
-      commandInput.value.focus();
-      commandInput.value.setSelectionRange(command.length, command.length);
-    }
-  });
+  linuxConsole.value?.insert(command);
 };
 
 const commandHistoryUp = () => {

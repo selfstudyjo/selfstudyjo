@@ -247,8 +247,10 @@ async function runShell(line: string) {
   if (!(await ensureStudent())) {
     return { ok: false, error: 'Your workspace could not be opened.' };
   }
-  const result = await labService.runLinuxCommand(username.value, line);
-  return { ok: !result.error, output: result.output, error: result.error };
+  const result: any = await labService.runLinuxCommand(username.value, line);
+  // The WHOLE answer: `screen` (top, ping, less), `editor` (nano, vi) and
+  // `clear` are what let those programs take the console as they do in a lab.
+  return { ...result, ok: !result?.error };
 }
 
 async function runPython(code: string) {

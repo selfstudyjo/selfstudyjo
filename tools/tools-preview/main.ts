@@ -8,6 +8,8 @@ import '@/assets/css/responsive.css';
 import '@/style.css';
 import '@/assets/css/ui.css';
 import '@/assets/css/rtl.css';
+// The /tools Linux tab is LabConsole now, and labs.css is GLOBAL in the app (main.ts).
+import '@/assets/css/labs.css';
 import { THEMES, applyTheme } from '@/theme/apply';
 import { i18n, setLocale } from '@/i18n/runtime';
 import type { LocaleId } from '@/i18n/locales';

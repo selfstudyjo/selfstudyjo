@@ -749,4 +749,15 @@ watch(() => props.tool.id, () => {
   candidates.value = {};
   cwd.value = '~';
 });
+
+/** Put a command on the line without running it (the /tools Quick Commands). */
+function insert(text: string) {
+  entry.value = String(text || '');
+  nextTick(() => {
+    field.value?.focus();
+    moveCaret(entry.value.length);
+  });
+}
+
+defineExpose({ insert });
 </script>
