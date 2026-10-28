@@ -22,6 +22,7 @@
     <div class="fx-cmdbar wp-toolbar">
       <button type="button" class="fx-btn fx-btn--primary" @click="newItem = true"><FxIcon name="plus" />New item</button>
       <button type="button" class="fx-cmd" @click="openFolderDialog"><FxIcon name="folderAdd" />New folder</button>
+      <button type="button" class="fx-cmd" @click="openImport"><FxIcon name="upload" />Import</button>
       <button type="button" class="fx-cmd" @click="panel = 'git'"><FxIcon name="git" />{{ ws?.git ? 'Branch' : 'Git integration' }}</button>
       <button type="button" class="fx-cmd" :disabled="!selected.length" @click="bulkDelete"><FxIcon name="delete" />Delete</button>
       <span class="fx-cmdbar__grow" />
@@ -138,6 +139,39 @@
       </div>
       <template #footer>
         <button type="button" class="fx-btn fx-btn--primary" :disabled="!dialogName.trim()" @click="createFolder">Create</button>
+        <button type="button" class="fx-btn" @click="dialog = ''">Cancel</button>
+      </template>
+    </FxModal>
+
+    <!-- Import: Fabric's "Import -> Notebook / Pipeline / Model -> From this computer". "This computer"
+         is the lab's Files tool, so the list is the lab's own files; it runs the same `fab import`
+         line the console takes, so a task checked against the console passes either way. -->
+    <FxModal v-if="dialog === 'import'" title="Import" @close="dialog = ''">
+      <div v-if="dialogError" class="fx-msgbar fx-msgbar--error"><FxIcon name="error" />{{ dialogError }}</div>
+      <p v-if="!importable.length" class="fx-muted">There is nothing to import yet: the lab has no notebook (.py, .ipynb), pipeline (.json) or model (.tmdl) file. Create one in the Files tool, then come back.</p>
+      <template v-else>
+        <div class="fx-field">
+          <label for="wp-imp-file">File from your lab's Files<span class="fx-field__req">*</span></label>
+          <select id="wp-imp-file" v-model="importPath" class="fx-select" @change="importPicked">
+            <option v-for="f in importable" :key="f.path" :value="f.path">{{ f.path }}</option>
+          </select>
+        </div>
+        <div class="fx-field">
+          <label for="wp-imp-type">Item type<span class="fx-field__req">*</span></label>
+          <select id="wp-imp-type" v-model="importType" class="fx-select">
+            <option value="Notebook">Notebook</option>
+            <option value="DataPipeline">Data pipeline</option>
+            <option value="SemanticModel">Semantic model</option>
+          </select>
+        </div>
+        <div class="fx-field">
+          <label for="wp-imp-name">Name<span class="fx-field__req">*</span></label>
+          <input id="wp-imp-name" v-model="importName" class="fx-input" @keydown.enter="doImport" />
+          <span class="fx-field__help">Imported into {{ wsName }}. An item with the same name is replaced.</span>
+        </div>
+      </template>
+      <template #footer>
+        <button type="button" class="fx-btn fx-btn--primary" :disabled="!importPath || !importName.trim()" @click="doImport">Import</button>
         <button type="button" class="fx-btn" @click="dialog = ''">Cancel</button>
       </template>
     </FxModal>
@@ -360,6 +394,37 @@ async function createFolder() {
   if (!name) return;
   const full = folder.value ? `${folder.value}/${name}` : name;
   const result = await run(cli(['fab', 'mkdir', folderPath(wsName.value, full)]), `Created folder ${name}`, { quiet: true });
+  if (!result.ok) { dialogError.value = errorText(result); return; }
+  dialog.value = '';
+}
+
+const IMPORT_TYPES: Record<string, string> = { py: 'Notebook', ipynb: 'Notebook', json: 'DataPipeline', tmdl: 'SemanticModel' };
+const importable = computed(() => rows(portal.value, 'local_files')
+  .filter(f => IMPORT_TYPES[String(f.path).split('.').pop()!.toLowerCase()]));
+const importPath = ref('');
+const importType = ref('Notebook');
+const importName = ref('');
+
+function importPicked() {
+  const path = importPath.value;
+  const base = path.split('/').pop() || '';
+  const dot = base.lastIndexOf('.');
+  importName.value = dot > 0 ? base.slice(0, dot) : base;
+  importType.value = IMPORT_TYPES[base.slice(dot + 1).toLowerCase()] || 'Notebook';
+}
+
+function openImport() {
+  dialogError.value = '';
+  importPath.value = importable.value[0]?.path || '';
+  importPicked();
+  dialog.value = 'import';
+}
+
+async function doImport() {
+  const name = importName.value.trim();
+  if (!importPath.value || !name) return;
+  const result = await run(cli(['fab', 'import', itemPath(wsName.value, name, importType.value)], { '-i': importPath.value }),
+    `Imported ${name}`, { quiet: true });
   if (!result.ok) { dialogError.value = errorText(result); return; }
   dialog.value = '';
 }

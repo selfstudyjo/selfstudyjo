@@ -68,6 +68,69 @@
    "verify": "The new item appears in the workspace list."
   },
   {
+   "id": "import-item",
+   "title": "Import a notebook, pipeline or semantic model from your Files",
+   "match": "fab\\s+import\\s+([\\w.-]+)\\.Workspace/([\\w.-]+)\\.(Notebook|DataPipeline|SemanticModel)\\s+-i\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open Workspaces in the left navigation.",
+     "screen": "Workspaces",
+     "nav": "Workspaces",
+     "zone": "nav",
+     "action": "click",
+     "target": "Workspaces"
+    },
+    {
+     "say": "Open the workspace {1}.",
+     "screen": "Workspaces",
+     "nav": "Workspaces",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Import in the toolbar.",
+     "screen": "{1}",
+     "nav": "Workspaces",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Import"
+    },
+    {
+     "say": "Pick {4} - it is a file in your lab's Files tool.",
+     "screen": "Import",
+     "zone": "dialog",
+     "action": "select",
+     "target": "File from your lab's Files",
+     "value": "{4}"
+    },
+    {
+     "say": "Check the Item type is {3}.",
+     "screen": "Import",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Item type",
+     "value": "{3}"
+    },
+    {
+     "say": "Check the Name is {2}.",
+     "screen": "Import",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Import.",
+     "screen": "Import",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Import"
+    }
+   ],
+   "verify": "{2} now appears in the {1} workspace list - you can open it and set its lakehouse."
+  },
+  {
    "id": "create-workspace",
    "title": "Create a workspace",
    "match": "fab\\s+mkdir\\s+([\\w.-]+)\\.Workspace(?!/)(?:\\s+-P\\s+capacityName=([\\w.-]+))?",
