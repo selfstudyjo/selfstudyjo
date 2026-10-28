@@ -1,0 +1,4251 @@
+{
+ "skin": "aws",
+ "product": "AWS Management Console",
+ "brand": "#ff9900",
+ "top": "AWS Management Console",
+ "nav": [
+  "Console Home",
+  "EC2",
+  "S3",
+  "VPC",
+  "IAM",
+  "Lambda",
+  "RDS",
+  "AWS Glue",
+  "Athena"
+ ],
+ "recipes": [
+  {
+   "id": "s3-delete-bucket-force",
+   "title": "Empty and delete a bucket",
+   "match": "aws\\s+s3\\s+rb\\s+s3://([\\w.-]+)\\s+--force",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Select the bucket {1} in the list.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Empty, confirm, and wait until the bucket is empty.",
+     "screen": "Empty bucket",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Empty"
+    },
+    {
+     "say": "Select the bucket again and press Delete.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete"
+    },
+    {
+     "say": "Type the bucket name {1} to confirm and press Delete bucket.",
+     "screen": "Delete bucket",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete bucket"
+    }
+   ],
+   "verify": "The bucket is no longer in the General purpose buckets list."
+  },
+  {
+   "id": "s3-delete-bucket",
+   "title": "Delete a bucket",
+   "match": "aws\\s+s3\\s+rb\\s+s3://([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Select the bucket {1} in the list.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Delete above the table.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete"
+    },
+    {
+     "say": "Type the bucket name and press Delete bucket. A bucket with objects must be emptied first.",
+     "screen": "Delete bucket",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete bucket"
+    }
+   ],
+   "verify": "The bucket disappears, or the dialog says the bucket is not empty."
+  },
+  {
+   "id": "s3-create-bucket",
+   "title": "Create a bucket",
+   "match": "aws\\s+s3(?:\\s+mb\\s+s3://|api\\s+create-bucket\\s+--bucket\\s+)([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Press Create bucket.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create bucket"
+    },
+    {
+     "say": "Type the bucket name {1}.",
+     "screen": "Create bucket",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "type",
+     "target": "Bucket name",
+     "value": "{1}"
+    },
+    {
+     "say": "Leave the other settings and press Create bucket at the bottom.",
+     "screen": "Create bucket",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "Create bucket"
+    }
+   ],
+   "verify": "The new bucket appears in the General purpose buckets list."
+  },
+  {
+   "id": "s3-download",
+   "title": "Download an object",
+   "match": "aws\\s+s3\\s+cp\\s+s3://([\\w.-]+)/(\\S+)\\s+(?!s3://)([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the folders down to the object {2} and select it.",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "check",
+     "target": "{2}"
+    },
+    {
+     "say": "Press Download. The file lands in your lab workspace.",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Download"
+    }
+   ],
+   "verify": "A message says the object was downloaded to your lab workspace."
+  },
+  {
+   "id": "s3-upload",
+   "title": "Upload a file to a bucket",
+   "match": "aws\\s+s3\\s+cp\\s+(?!s3://)([\\w./-]+\\.\\w+)\\s+s3://([\\w.-]+)/?(\\S*)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {2}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Open the folder for the key {3} (use Create folder if it is missing).",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Press Upload.",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Upload"
+    },
+    {
+     "say": "Tick the workspace file {1}.",
+     "screen": "Upload",
+     "zone": "dialog",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Upload to send it.",
+     "screen": "Upload",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Upload"
+    }
+   ],
+   "verify": "A green banner says the upload succeeded and the object is listed."
+  },
+  {
+   "id": "s3-list-objects",
+   "title": "See the objects in a bucket",
+   "match": "aws\\s+s3\\s+ls\\s+s3://([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Objects tab; open a folder to see what is inside it.",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "see",
+     "target": "Objects"
+    }
+   ]
+  },
+  {
+   "id": "s3-list-buckets",
+   "title": "See your buckets",
+   "match": "aws\\s+(?:s3\\s+ls|s3api\\s+list-buckets)\\b",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Read the bucket names in the General purpose buckets table.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "see",
+     "target": "General purpose buckets"
+    }
+   ]
+  },
+  {
+   "id": "s3-list-objects-v2",
+   "title": "Browse a prefix in a bucket",
+   "match": "aws\\s+s3api\\s+list-objects-v2\\s+--bucket\\s+([\\w.-]+)(?:\\s+--prefix\\s+(\\S+))?",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the folders of the prefix {2}; each folder shown is one common prefix.",
+     "screen": "Objects",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "see",
+     "target": "{2}",
+     "optional": true
+    }
+   ]
+  },
+  {
+   "id": "s3-versioning-set",
+   "title": "Turn on bucket versioning",
+   "match": "aws\\s+s3api\\s+put-bucket-versioning\\s+--bucket\\s+([\\w.-]+).*?Status=(\\w+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Properties tab.",
+     "screen": "Properties",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "click",
+     "target": "Properties"
+    },
+    {
+     "say": "In Bucket Versioning press Edit.",
+     "screen": "Properties",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit"
+    },
+    {
+     "say": "Choose Enable ({2}).",
+     "screen": "Bucket Versioning",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "select",
+     "target": "Bucket Versioning",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Bucket Versioning",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ],
+   "verify": "Bucket Versioning on the Properties tab shows the new state."
+  },
+  {
+   "id": "s3-properties-see",
+   "title": "See bucket versioning and encryption",
+   "match": "aws\\s+s3api\\s+(?:get-bucket-versioning|get-bucket-encryption|head-object|list-object-versions)\\s+--bucket\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Properties tab and read Bucket Versioning and Default encryption.",
+     "screen": "Properties",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "see",
+     "target": "Properties"
+    }
+   ]
+  },
+  {
+   "id": "s3-public-access-see",
+   "title": "See Block Public Access",
+   "match": "aws\\s+s3api\\s+get-public-access-block\\s+--bucket\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Permissions tab and read Block public access (bucket settings).",
+     "screen": "Permissions",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "see",
+     "target": "Permissions"
+    }
+   ]
+  },
+  {
+   "id": "s3-lifecycle-put",
+   "title": "Create a lifecycle rule",
+   "match": "aws\\s+s3api\\s+put-bucket-lifecycle-configuration\\s+--bucket\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Management tab.",
+     "screen": "Management",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "click",
+     "target": "Management"
+    },
+    {
+     "say": "Press Create lifecycle rule.",
+     "screen": "Management",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "Create lifecycle rule"
+    },
+    {
+     "say": "Type the rule name and Prefix, then add each transition with its Storage class and days.",
+     "screen": "Create lifecycle rule",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Lifecycle rule name"
+    },
+    {
+     "say": "Press Create rule.",
+     "screen": "Create lifecycle rule",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create rule"
+    }
+   ],
+   "verify": "The rule is listed under Lifecycle rules."
+  },
+  {
+   "id": "s3-lifecycle-see",
+   "title": "See the lifecycle rules",
+   "match": "aws\\s+s3api\\s+get-bucket-lifecycle-configuration\\s+--bucket\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type S3 in the Search box at the top and open S3.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "S3"
+    },
+    {
+     "say": "Choose General purpose buckets in the left navigation.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "nav",
+     "action": "click",
+     "target": "General purpose buckets"
+    },
+    {
+     "say": "Open the bucket {1}.",
+     "screen": "General purpose buckets",
+     "nav": "General purpose buckets",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Management tab and read Lifecycle rules.",
+     "screen": "Management",
+     "nav": "General purpose buckets",
+     "zone": "tab",
+     "action": "see",
+     "target": "Management"
+    }
+   ]
+  },
+  {
+   "id": "vpc-create",
+   "title": "Create a VPC",
+   "match": "aws\\s+ec2\\s+create-vpc\\s+--cidr-block\\s+([\\d./]+)",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Your VPCs in the left navigation.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Your VPCs"
+    },
+    {
+     "say": "Press Create VPC.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create VPC"
+    },
+    {
+     "say": "Keep VPC only and type {1} in IPv4 CIDR.",
+     "screen": "Create VPC",
+     "nav": "Your VPCs",
+     "zone": "main",
+     "action": "type",
+     "target": "IPv4 CIDR",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create VPC.",
+     "screen": "Create VPC",
+     "nav": "Your VPCs",
+     "zone": "main",
+     "action": "click",
+     "target": "Create VPC"
+    }
+   ],
+   "verify": "The new VPC is listed with its VPC ID - copy it."
+  },
+  {
+   "id": "vpc-delete",
+   "title": "Delete a VPC",
+   "match": "aws\\s+ec2\\s+delete-vpc\\s+--vpc-id\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Your VPCs in the left navigation.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Your VPCs"
+    },
+    {
+     "say": "Select the VPC {1}.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Actions and choose Delete VPC.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete VPC"
+    },
+    {
+     "say": "Confirm the deletion.",
+     "screen": "Delete VPC",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "vpc-list",
+   "title": "See your VPCs",
+   "match": "aws\\s+ec2\\s+describe-vpcs\\b",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Your VPCs in the left navigation.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Your VPCs"
+    },
+    {
+     "say": "Read each VPC's IPv4 CIDR and Default VPC columns.",
+     "screen": "Your VPCs",
+     "nav": "Your VPCs",
+     "zone": "main",
+     "action": "see",
+     "target": "Your VPCs"
+    }
+   ]
+  },
+  {
+   "id": "subnet-create",
+   "title": "Create a subnet",
+   "match": "aws\\s+ec2\\s+create-subnet\\s+--vpc-id\\s+(<[^>]+>|[\\w:/.-]+)\\s+--cidr-block\\s+([\\d./]+)(?:\\s+--availability-zone\\s+([\\w-]+))?",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Subnets in the left navigation.",
+     "screen": "Subnets",
+     "nav": "Subnets",
+     "zone": "nav",
+     "action": "click",
+     "target": "Subnets"
+    },
+    {
+     "say": "Press Create subnet.",
+     "screen": "Subnets",
+     "nav": "Subnets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create subnet"
+    },
+    {
+     "say": "Choose the VPC {1} in VPC ID.",
+     "screen": "Create subnet",
+     "nav": "Subnets",
+     "zone": "main",
+     "action": "select",
+     "target": "VPC ID",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Availability Zone {3}.",
+     "screen": "Create subnet",
+     "nav": "Subnets",
+     "zone": "main",
+     "action": "select",
+     "target": "Availability Zone",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} in IPv4 subnet CIDR block.",
+     "screen": "Create subnet",
+     "nav": "Subnets",
+     "zone": "main",
+     "action": "type",
+     "target": "IPv4 subnet CIDR block",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Create subnet.",
+     "screen": "Create subnet",
+     "nav": "Subnets",
+     "zone": "main",
+     "action": "click",
+     "target": "Create subnet"
+    }
+   ],
+   "verify": "The subnet is listed with its CIDR and Availability Zone."
+  },
+  {
+   "id": "subnet-list",
+   "title": "See your subnets",
+   "match": "aws\\s+ec2\\s+describe-subnets\\b",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Subnets in the left navigation.",
+     "screen": "Subnets",
+     "nav": "Subnets",
+     "zone": "nav",
+     "action": "click",
+     "target": "Subnets"
+    },
+    {
+     "say": "Read the Subnet ID, CIDR and Availability Zone of each row.",
+     "screen": "Subnets",
+     "nav": "Subnets",
+     "zone": "main",
+     "action": "see",
+     "target": "Subnets"
+    }
+   ]
+  },
+  {
+   "id": "route-delete",
+   "title": "Remove a route",
+   "match": "aws\\s+ec2\\s+delete-route\\s+--route-table-id\\s+(<[^>]+>|[\\w:/.-]+)\\s+--destination-cidr-block\\s+([\\d./]+)",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Route tables in the left navigation.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Route tables"
+    },
+    {
+     "say": "Select the route table {1}.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Edit routes.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit routes"
+    },
+    {
+     "say": "Press Remove on the route to {2}.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "main",
+     "action": "click",
+     "target": "Remove"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "route-list",
+   "title": "See a route table",
+   "match": "aws\\s+ec2\\s+describe-route-tables\\b",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Route tables in the left navigation.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Route tables"
+    },
+    {
+     "say": "Select the route table and read its Routes.",
+     "screen": "Route tables",
+     "nav": "Route tables",
+     "zone": "main",
+     "action": "see",
+     "target": "Routes"
+    }
+   ]
+  },
+  {
+   "id": "endpoint-create",
+   "title": "Create a VPC endpoint",
+   "match": "aws\\s+ec2\\s+create-vpc-endpoint\\s+--vpc-id\\s+(<[^>]+>|[\\w:/.-]+)\\s+--service-name\\s+(\\S+)(?:\\s+--vpc-endpoint-type\\s+(\\w+))?",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Endpoints in the left navigation.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "nav",
+     "action": "click",
+     "target": "Endpoints"
+    },
+    {
+     "say": "Press Create endpoint.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create endpoint"
+    },
+    {
+     "say": "Pick the service {2} under Services.",
+     "screen": "Create endpoint",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "select",
+     "target": "Service name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the type {3}.",
+     "screen": "Create endpoint",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "select",
+     "target": "Type",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Choose the VPC {1} and tick its route tables or subnets.",
+     "screen": "Create endpoint",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "select",
+     "target": "VPC",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create endpoint.",
+     "screen": "Create endpoint",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "click",
+     "target": "Create endpoint"
+    }
+   ],
+   "verify": "The endpoint is listed as Available."
+  },
+  {
+   "id": "endpoint-policy",
+   "title": "Change an endpoint policy",
+   "match": "aws\\s+ec2\\s+modify-vpc-endpoint\\s+--vpc-endpoint-id\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Endpoints in the left navigation.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "nav",
+     "action": "click",
+     "target": "Endpoints"
+    },
+    {
+     "say": "Select the endpoint {1}.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Actions and choose Manage policy.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Manage policy"
+    },
+    {
+     "say": "Choose Custom and paste the policy JSON from the file.",
+     "screen": "Manage policy",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Policy"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Manage policy",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "endpoint-list",
+   "title": "See your VPC endpoints",
+   "match": "aws\\s+ec2\\s+describe-vpc-endpoints\\b",
+   "steps": [
+    {
+     "say": "Type VPC in the Search box at the top and open VPC.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "VPC"
+    },
+    {
+     "say": "Choose Endpoints in the left navigation.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "nav",
+     "action": "click",
+     "target": "Endpoints"
+    },
+    {
+     "say": "Read the endpoint IDs, types and status.",
+     "screen": "Endpoints",
+     "nav": "Endpoints",
+     "zone": "main",
+     "action": "see",
+     "target": "Endpoints"
+    }
+   ]
+  },
+  {
+   "id": "sg-create",
+   "title": "Create a security group",
+   "match": "aws\\s+ec2\\s+create-security-group\\s+--group-name\\s+([\\w.-]+)\\s+--vpc-id\\s+(<[^>]+>|[\\w:/.-]+)(?:\\s+--description\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Security Groups in the left navigation.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Security Groups"
+    },
+    {
+     "say": "Press Create security group.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create security group"
+    },
+    {
+     "say": "Type {1} as the Security group name.",
+     "screen": "Create security group",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "type",
+     "target": "Security group name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Description {3}.",
+     "screen": "Create security group",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "type",
+     "target": "Description",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Choose the VPC {2}.",
+     "screen": "Create security group",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "select",
+     "target": "VPC",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Create security group.",
+     "screen": "Create security group",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "click",
+     "target": "Create security group"
+    }
+   ],
+   "verify": "The group opens with its Security group ID - copy it."
+  },
+  {
+   "id": "sg-ingress",
+   "title": "Add an inbound rule",
+   "match": "aws\\s+ec2\\s+authorize-security-group-ingress\\s+--group-id\\s+(<[^>]+>|[\\w:/.-]+)\\s+--protocol\\s+(\\w+)\\s+--port\\s+(\\d+)\\s+--cidr\\s+([\\d./]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Security Groups in the left navigation.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Security Groups"
+    },
+    {
+     "say": "Open the security group {1}.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Edit inbound rules.",
+     "screen": "Inbound rules",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit inbound rules"
+    },
+    {
+     "say": "Press Add rule.",
+     "screen": "Edit inbound rules",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "click",
+     "target": "Add rule"
+    },
+    {
+     "say": "Choose Custom TCP (or the matching type) and type port {3}.",
+     "screen": "Edit inbound rules",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "type",
+     "target": "Port range",
+     "value": "{3}"
+    },
+    {
+     "say": "Choose Custom and type the source CIDR {4}.",
+     "screen": "Edit inbound rules",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "type",
+     "target": "CIDR blocks",
+     "value": "{4}"
+    },
+    {
+     "say": "Press Save rules.",
+     "screen": "Edit inbound rules",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "click",
+     "target": "Save rules"
+    }
+   ],
+   "verify": "The rule is listed on the Inbound rules tab."
+  },
+  {
+   "id": "sg-list",
+   "title": "See your security groups",
+   "match": "aws\\s+ec2\\s+describe-security-groups\\b",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Security Groups in the left navigation.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Security Groups"
+    },
+    {
+     "say": "Open a group and read its Inbound rules tab.",
+     "screen": "Security Groups",
+     "nav": "Security Groups",
+     "zone": "main",
+     "action": "see",
+     "target": "Security Groups"
+    }
+   ]
+  },
+  {
+   "id": "ec2-key-create",
+   "title": "Create a key pair",
+   "match": "aws\\s+ec2\\s+create-key-pair\\s+--key-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Key Pairs in the left navigation.",
+     "screen": "Key pairs",
+     "nav": "Key Pairs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Key Pairs"
+    },
+    {
+     "say": "Press Create key pair.",
+     "screen": "Key pairs",
+     "nav": "Key Pairs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create key pair"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "Create key pair",
+     "nav": "Key Pairs",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create key pair.",
+     "screen": "Create key pair",
+     "nav": "Key Pairs",
+     "zone": "main",
+     "action": "click",
+     "target": "Create key pair"
+    }
+   ]
+  },
+  {
+   "id": "ec2-key-list",
+   "title": "See your key pairs",
+   "match": "aws\\s+ec2\\s+describe-key-pairs\\b",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Key Pairs in the left navigation.",
+     "screen": "Key pairs",
+     "nav": "Key Pairs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Key Pairs"
+    },
+    {
+     "say": "Read the key pair names and types.",
+     "screen": "Key pairs",
+     "nav": "Key Pairs",
+     "zone": "main",
+     "action": "see",
+     "target": "Key pairs"
+    }
+   ]
+  },
+  {
+   "id": "ec2-run",
+   "title": "Launch an instance",
+   "match": "aws\\s+ec2\\s+run-instances\\s+--image-id\\s+([\\w-]+)\\s+--instance-type\\s+([\\w.]+)(?:\\s+--key-name\\s+([\\w.-]+))?",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Press Launch instances.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Launch instances"
+    },
+    {
+     "say": "Pick the AMI {1} under Application and OS Images.",
+     "screen": "Launch an instance",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "select",
+     "target": "Amazon Machine Image (AMI)",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Instance type {2}.",
+     "screen": "Launch an instance",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "select",
+     "target": "Instance type",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Key pair name {3}.",
+     "screen": "Launch an instance",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "select",
+     "target": "Key pair name",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Set the Subnet and security group under Network settings if the task names them.",
+     "screen": "Launch an instance",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "select",
+     "target": "Network settings"
+    },
+    {
+     "say": "Press Launch instance.",
+     "screen": "Launch an instance",
+     "nav": "Instances",
+     "zone": "panel",
+     "action": "click",
+     "target": "Launch instance"
+    }
+   ],
+   "verify": "Success: the instance appears under Instances as Pending, then Running."
+  },
+  {
+   "id": "ec2-start",
+   "title": "Start instance",
+   "match": "aws\\s+ec2\\s+start-instances\\s+--instance-ids\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Select the instance {1}.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Instance state and choose Start instance.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Start instance"
+    }
+   ],
+   "verify": "The Instance state column shows Running."
+  },
+  {
+   "id": "ec2-stop",
+   "title": "Stop instance",
+   "match": "aws\\s+ec2\\s+stop-instances\\s+--instance-ids\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Select the instance {1}.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Instance state and choose Stop instance.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Stop instance"
+    }
+   ],
+   "verify": "The Instance state column shows Stopped."
+  },
+  {
+   "id": "ec2-terminate",
+   "title": "Terminate",
+   "match": "aws\\s+ec2\\s+terminate-instances\\s+--instance-ids\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Select the instance {1}.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Instance state and choose Terminate (delete) instance.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Terminate (delete) instance"
+    },
+    {
+     "say": "Press Terminate (delete) to confirm.",
+     "screen": "Terminate (delete) instance?",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Terminate (delete)"
+    }
+   ],
+   "verify": "The Instance state column shows Terminated."
+  },
+  {
+   "id": "ec2-tags",
+   "title": "Tag an instance",
+   "match": "aws\\s+ec2\\s+create-tags\\s+--resources\\s+(<[^>]+>|[\\w:/.-]+)\\s+--tags\\s+Key=(\\w+),Value=([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Select the instance {1}.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Actions > Instance settings > Manage tags.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Manage tags"
+    },
+    {
+     "say": "Add the tag {2} with value {3}, and any other tags the task names.",
+     "screen": "Manage tags",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Key",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Manage tags",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save"
+    }
+   ],
+   "verify": "The Tags tab of the instance lists the new tags."
+  },
+  {
+   "id": "ec2-list",
+   "title": "See your instances",
+   "match": "aws\\s+ec2\\s+describe-instances\\b",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose Instances in the left navigation.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "nav",
+     "action": "click",
+     "target": "Instances"
+    },
+    {
+     "say": "Read the Instance ID and Instance state of each row.",
+     "screen": "Instances",
+     "nav": "Instances",
+     "zone": "main",
+     "action": "see",
+     "target": "Instances"
+    }
+   ]
+  },
+  {
+   "id": "ec2-amis",
+   "title": "See the available images",
+   "match": "aws\\s+ec2\\s+describe-images\\b",
+   "steps": [
+    {
+     "say": "Type EC2 in the Search box at the top and open EC2.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "EC2"
+    },
+    {
+     "say": "Choose AMIs in the left navigation.",
+     "screen": "AMIs",
+     "nav": "AMIs",
+     "zone": "nav",
+     "action": "click",
+     "target": "AMIs"
+    },
+    {
+     "say": "Read the AMI IDs and names.",
+     "screen": "AMIs",
+     "nav": "AMIs",
+     "zone": "main",
+     "action": "see",
+     "target": "AMIs"
+    }
+   ]
+  },
+  {
+   "id": "iam-create-role",
+   "title": "Create a role",
+   "match": "aws\\s+iam\\s+create-role\\s+--role-name\\s+([\\w.+=@-]+)",
+   "steps": [
+    {
+     "say": "Type IAM in the Search box at the top and open IAM.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "IAM"
+    },
+    {
+     "say": "Choose Roles in the left navigation.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "nav",
+     "action": "click",
+     "target": "Roles"
+    },
+    {
+     "say": "Press Create role.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create role"
+    },
+    {
+     "say": "Choose Custom trust policy and paste the trust policy from the file.",
+     "screen": "Select trusted entity",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "Custom trust policy"
+    },
+    {
+     "say": "Press Next, add any permissions, and press Next again.",
+     "screen": "Add permissions",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "Next"
+    },
+    {
+     "say": "Type {1} as the Role name.",
+     "screen": "Name, review, and create",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "type",
+     "target": "Role name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create role.",
+     "screen": "Name, review, and create",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "Create role"
+    }
+   ],
+   "verify": "The role is listed under Roles."
+  },
+  {
+   "id": "iam-attach-role-policy",
+   "title": "Attach a policy to a role",
+   "match": "aws\\s+iam\\s+attach-role-policy\\s+--role-name\\s+([\\w.+=@-]+)\\s+--policy-arn\\s+\\S*/([\\w-]+)",
+   "steps": [
+    {
+     "say": "Type IAM in the Search box at the top and open IAM.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "IAM"
+    },
+    {
+     "say": "Choose Roles in the left navigation.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "nav",
+     "action": "click",
+     "target": "Roles"
+    },
+    {
+     "say": "Open the role {1}.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Add permissions.",
+     "screen": "Role",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "Add permissions"
+    },
+    {
+     "say": "Search for {2} and tick it.",
+     "screen": "Add permissions",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "check",
+     "target": "{2}"
+    },
+    {
+     "say": "Press Add permissions to attach it.",
+     "screen": "Add permissions",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "Add permissions"
+    }
+   ],
+   "verify": "The policy is listed under Permissions policies."
+  },
+  {
+   "id": "iam-list-role-policies",
+   "title": "See a role's policies",
+   "match": "aws\\s+iam\\s+list-attached-role-policies\\s+--role-name\\s+([\\w.+=@-]+)",
+   "steps": [
+    {
+     "say": "Type IAM in the Search box at the top and open IAM.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "IAM"
+    },
+    {
+     "say": "Choose Roles in the left navigation.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "nav",
+     "action": "click",
+     "target": "Roles"
+    },
+    {
+     "say": "Open the role {1}.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Permissions policies list.",
+     "screen": "Role",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "see",
+     "target": "Permissions policies"
+    }
+   ]
+  },
+  {
+   "id": "iam-list-roles",
+   "title": "See your roles",
+   "match": "aws\\s+iam\\s+list-roles\\b",
+   "steps": [
+    {
+     "say": "Type IAM in the Search box at the top and open IAM.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "IAM"
+    },
+    {
+     "say": "Choose Roles in the left navigation.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "nav",
+     "action": "click",
+     "target": "Roles"
+    },
+    {
+     "say": "Read the role names.",
+     "screen": "Roles",
+     "nav": "Roles",
+     "zone": "main",
+     "action": "see",
+     "target": "Roles"
+    }
+   ]
+  },
+  {
+   "id": "lambda-create",
+   "title": "Create a function",
+   "match": "aws\\s+lambda\\s+create-function\\s+--function-name\\s+([\\w-]+)\\s+--runtime\\s+([\\w.]+)",
+   "steps": [
+    {
+     "say": "Type Lambda in the Search box at the top and open Lambda.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lambda"
+    },
+    {
+     "say": "Choose Functions in the left navigation.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "nav",
+     "action": "click",
+     "target": "Functions"
+    },
+    {
+     "say": "Press Create function.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create function"
+    },
+    {
+     "say": "Keep Author from scratch and type {1} as the Function name.",
+     "screen": "Create function",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "type",
+     "target": "Function name",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Runtime {2}.",
+     "screen": "Create function",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "select",
+     "target": "Runtime",
+     "value": "{2}"
+    },
+    {
+     "say": "Open Change default execution role, choose Use an existing role and pick the role.",
+     "screen": "Create function",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "select",
+     "target": "Existing role"
+    },
+    {
+     "say": "Press Create function.",
+     "screen": "Create function",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "click",
+     "target": "Create function"
+    }
+   ],
+   "verify": "The function page opens with a success banner."
+  },
+  {
+   "id": "lambda-invoke",
+   "title": "Test a function",
+   "match": "aws\\s+lambda\\s+invoke\\s+--function-name\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Type Lambda in the Search box at the top and open Lambda.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lambda"
+    },
+    {
+     "say": "Choose Functions in the left navigation.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "nav",
+     "action": "click",
+     "target": "Functions"
+    },
+    {
+     "say": "Open the function {1}.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Test tab.",
+     "screen": "{1}",
+     "nav": "Functions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Test"
+    },
+    {
+     "say": "Press Test.",
+     "screen": "Test event",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "click",
+     "target": "Test"
+    },
+    {
+     "say": "Read the response and the Log output.",
+     "screen": "Test event",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "see",
+     "target": "Log output"
+    }
+   ]
+  },
+  {
+   "id": "lambda-list",
+   "title": "See your functions",
+   "match": "aws\\s+lambda\\s+list-functions\\b",
+   "steps": [
+    {
+     "say": "Type Lambda in the Search box at the top and open Lambda.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lambda"
+    },
+    {
+     "say": "Choose Functions in the left navigation.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "nav",
+     "action": "click",
+     "target": "Functions"
+    },
+    {
+     "say": "Read the function names and runtimes.",
+     "screen": "Functions",
+     "nav": "Functions",
+     "zone": "main",
+     "action": "see",
+     "target": "Functions"
+    }
+   ]
+  },
+  {
+   "id": "logs-tail",
+   "title": "Read a function's logs",
+   "match": "aws\\s+logs\\s+tail\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type CloudWatch in the Search box at the top and open CloudWatch.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "CloudWatch"
+    },
+    {
+     "say": "Choose Log groups in the left navigation.",
+     "screen": "Log groups",
+     "nav": "Log groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Log groups"
+    },
+    {
+     "say": "Open the log group {1}.",
+     "screen": "Log groups",
+     "nav": "Log groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the log events.",
+     "screen": "Log group",
+     "nav": "Log groups",
+     "zone": "main",
+     "action": "see",
+     "target": "Log events"
+    }
+   ]
+  },
+  {
+   "id": "rds-create",
+   "title": "Create a database",
+   "match": "aws\\s+rds\\s+create-db-instance\\s+--db-instance-identifier\\s+([\\w-]+)\\s+--engine\\s+(\\w+)\\s+--db-instance-class\\s+([\\w.]+)(?:\\s+--allocated-storage\\s+(\\d+))?",
+   "steps": [
+    {
+     "say": "Type RDS in the Search box at the top and open RDS.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "RDS"
+    },
+    {
+     "say": "Choose Databases in the left navigation.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "nav",
+     "action": "click",
+     "target": "Databases"
+    },
+    {
+     "say": "Press Create database.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create database"
+    },
+    {
+     "say": "Choose the engine {2} under Engine options.",
+     "screen": "Create database",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Type {1} as the DB instance identifier and set a master password.",
+     "screen": "Create database",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "type",
+     "target": "DB instance identifier",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the DB instance class {3}.",
+     "screen": "Create database",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "select",
+     "target": "DB instance class",
+     "value": "{3}"
+    },
+    {
+     "say": "Type {4} GiB in Allocated storage.",
+     "screen": "Create database",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "type",
+     "target": "Allocated storage",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Create database.",
+     "screen": "Create database",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "click",
+     "target": "Create database"
+    }
+   ],
+   "verify": "The database is listed under Databases."
+  },
+  {
+   "id": "rds-list",
+   "title": "See your databases",
+   "match": "aws\\s+rds\\s+describe-db-instances\\b",
+   "steps": [
+    {
+     "say": "Type RDS in the Search box at the top and open RDS.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "RDS"
+    },
+    {
+     "say": "Choose Databases in the left navigation.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "nav",
+     "action": "click",
+     "target": "Databases"
+    },
+    {
+     "say": "Open a database and read its endpoint and status.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "main",
+     "action": "see",
+     "target": "Databases"
+    }
+   ]
+  },
+  {
+   "id": "ddb-create",
+   "title": "Create a table",
+   "match": "aws\\s+dynamodb\\s+create-table\\s+--table-name\\s+([\\w.-]+).*?AttributeName=(\\w+)",
+   "steps": [
+    {
+     "say": "Type DynamoDB in the Search box at the top and open DynamoDB.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "DynamoDB"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Press Create table.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create table"
+    },
+    {
+     "say": "Type {1} as the Table name.",
+     "screen": "Create table",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "type",
+     "target": "Table name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type {2} as the Partition key and keep String.",
+     "screen": "Create table",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "type",
+     "target": "Partition key",
+     "value": "{2}"
+    },
+    {
+     "say": "Keep Default settings (on-demand) and press Create table.",
+     "screen": "Create table",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "click",
+     "target": "Create table"
+    }
+   ],
+   "verify": "The table is listed and becomes Active."
+  },
+  {
+   "id": "ddb-put",
+   "title": "Create an item",
+   "match": "aws\\s+dynamodb\\s+put-item\\s+--table-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type DynamoDB in the Search box at the top and open DynamoDB.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "DynamoDB"
+    },
+    {
+     "say": "Choose Explore items in the left navigation.",
+     "screen": "Explore items",
+     "nav": "Explore items",
+     "zone": "nav",
+     "action": "click",
+     "target": "Explore items"
+    },
+    {
+     "say": "Choose the table {1} on the left.",
+     "screen": "Explore items",
+     "nav": "Explore items",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Create item.",
+     "screen": "Explore items",
+     "nav": "Explore items",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create item"
+    },
+    {
+     "say": "Type each attribute value from the item JSON.",
+     "screen": "Create item",
+     "nav": "Explore items",
+     "zone": "main",
+     "action": "type",
+     "target": "Value"
+    },
+    {
+     "say": "Press Create item.",
+     "screen": "Create item",
+     "nav": "Explore items",
+     "zone": "main",
+     "action": "click",
+     "target": "Create item"
+    }
+   ]
+  },
+  {
+   "id": "ddb-describe",
+   "title": "See a table",
+   "match": "aws\\s+dynamodb\\s+describe-table\\s+--table-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type DynamoDB in the Search box at the top and open DynamoDB.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "DynamoDB"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Open the table {1}.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Overview tab.",
+     "screen": "{1}",
+     "nav": "Tables",
+     "zone": "tab",
+     "action": "see",
+     "target": "Overview"
+    }
+   ]
+  },
+  {
+   "id": "ddb-list",
+   "title": "See your tables",
+   "match": "aws\\s+dynamodb\\s+list-tables\\b",
+   "steps": [
+    {
+     "say": "Type DynamoDB in the Search box at the top and open DynamoDB.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "DynamoDB"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Read the table names.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "see",
+     "target": "Tables"
+    }
+   ]
+  },
+  {
+   "id": "glue-create-db",
+   "title": "Create a Glue database",
+   "match": "aws\\s+glue\\s+create-database\\s+--database-input\\s+'?\\{\\\"Name\\\":\\\"(\\w+)\\\"(?:,\\\"Description\\\":\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Databases in the left navigation.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "nav",
+     "action": "click",
+     "target": "Databases"
+    },
+    {
+     "say": "Press Add database.",
+     "screen": "Databases",
+     "nav": "Databases",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add database"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "Create a database",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Description {2}.",
+     "screen": "Create a database",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Description",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Press Create database.",
+     "screen": "Create a database",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create database"
+    }
+   ]
+  },
+  {
+   "id": "glue-create-connection",
+   "title": "Create a Glue connection",
+   "match": "aws\\s+glue\\s+create-connection\\b",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Connections in the left navigation.",
+     "screen": "Connections",
+     "nav": "Connections",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connections"
+    },
+    {
+     "say": "Press Create connection.",
+     "screen": "Connections",
+     "nav": "Connections",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create connection"
+    },
+    {
+     "say": "Fill in the name, Connection type, Subnet and Security group from the JSON file.",
+     "screen": "Create connection",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name"
+    },
+    {
+     "say": "Press Create connection.",
+     "screen": "Create connection",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create connection"
+    }
+   ]
+  },
+  {
+   "id": "glue-create-crawler",
+   "title": "Create a crawler",
+   "match": "aws\\s+glue\\s+create-crawler\\s+--name\\s+([\\w.-]+)\\s+--role\\s+([\\w.-]+)\\s+--database-name\\s+(\\w+).*?\\\"Path\\\":\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Crawlers in the left navigation.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "nav",
+     "action": "click",
+     "target": "Crawlers"
+    },
+    {
+     "say": "Press Create crawler.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create crawler"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "Create crawler",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type {4} as the Data source - S3 path.",
+     "screen": "Create crawler",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Data source - S3 path",
+     "value": "{4}"
+    },
+    {
+     "say": "Choose the IAM role {2}.",
+     "screen": "Create crawler",
+     "zone": "dialog",
+     "action": "select",
+     "target": "IAM role",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Target database {3}.",
+     "screen": "Create crawler",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Target database",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Create crawler.",
+     "screen": "Create crawler",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create crawler"
+    }
+   ]
+  },
+  {
+   "id": "glue-start-crawler",
+   "title": "Run a crawler",
+   "match": "aws\\s+glue\\s+start-crawler\\s+--name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Crawlers in the left navigation.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "nav",
+     "action": "click",
+     "target": "Crawlers"
+    },
+    {
+     "say": "Select the crawler {1}.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Run.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run"
+    }
+   ],
+   "verify": "The crawler shows Running, then Ready with the last run Succeeded."
+  },
+  {
+   "id": "glue-get-crawler",
+   "title": "See a crawler's last run",
+   "match": "aws\\s+glue\\s+get-crawler\\s+--name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Crawlers in the left navigation.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "nav",
+     "action": "click",
+     "target": "Crawlers"
+    },
+    {
+     "say": "Read the crawler {1} row: status and last run.",
+     "screen": "Crawlers",
+     "nav": "Crawlers",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "glue-reset-bookmark",
+   "title": "Reset a job bookmark",
+   "match": "aws\\s+glue\\s+reset-job-bookmark\\s+--job-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Jobs in the left navigation.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Open the job {1}.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Reset job bookmark.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Reset job bookmark"
+    }
+   ]
+  },
+  {
+   "id": "glue-start-job",
+   "title": "Run a Glue job",
+   "match": "aws\\s+glue\\s+start-job-run\\s+--job-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Jobs in the left navigation.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Open the job {1}.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Run.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the new row on the Runs tab.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "tab",
+     "action": "see",
+     "target": "Runs"
+    }
+   ],
+   "verify": "A new run appears on the Runs tab and ends Succeeded."
+  },
+  {
+   "id": "glue-update-job",
+   "title": "Change a Glue job",
+   "match": "aws\\s+glue\\s+update-job\\s+--job-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Jobs in the left navigation.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Open the job {1}.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Job details tab.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "tab",
+     "action": "click",
+     "target": "Job details"
+    },
+    {
+     "say": "Change the fields the update file names (for example Job parameters).",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "type",
+     "target": "Job parameters"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "glue-job-runs",
+   "title": "See a job's runs",
+   "match": "aws\\s+glue\\s+get-job-runs\\s+--job-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Jobs in the left navigation.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Open the job {1}.",
+     "screen": "Your jobs",
+     "nav": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the newest row on the Runs tab: its state and error.",
+     "screen": "{1}",
+     "nav": "Jobs",
+     "zone": "tab",
+     "action": "see",
+     "target": "Runs"
+    }
+   ]
+  },
+  {
+   "id": "glue-partitions",
+   "title": "See a table's partitions",
+   "match": "aws\\s+glue\\s+get-partitions\\s+--database-name\\s+(\\w+)\\s+--table-name\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Open the table {2} of database {1}.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Open the Partitions tab.",
+     "screen": "{2}",
+     "nav": "Tables",
+     "zone": "tab",
+     "action": "see",
+     "target": "Partitions"
+    }
+   ]
+  },
+  {
+   "id": "glue-get-table",
+   "title": "See a table's schema",
+   "match": "aws\\s+glue\\s+get-table\\s+--database-name\\s+(\\w+)\\s+--name\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Open the table {2} of database {1}.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Read the Schema and Table properties tabs.",
+     "screen": "{2}",
+     "nav": "Tables",
+     "zone": "tab",
+     "action": "see",
+     "target": "Schema"
+    }
+   ]
+  },
+  {
+   "id": "glue-get-tables",
+   "title": "See the tables of a database",
+   "match": "aws\\s+glue\\s+get-tables\\s+--database-name\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type AWS Glue in the Search box at the top and open AWS Glue.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "AWS Glue"
+    },
+    {
+     "say": "Choose Tables in the left navigation.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "nav",
+     "action": "click",
+     "target": "Tables"
+    },
+    {
+     "say": "Read the tables whose Database is {1}.",
+     "screen": "Tables",
+     "nav": "Tables",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "athena-create-wg",
+   "title": "Create a workgroup",
+   "match": "aws\\s+athena\\s+create-work-group\\s+--name\\s+([\\w.-]+).*?OutputLocation=([^,}]+)",
+   "steps": [
+    {
+     "say": "Type Athena in the Search box at the top and open Athena.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Athena"
+    },
+    {
+     "say": "Choose Workgroups in the left navigation.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Workgroups"
+    },
+    {
+     "say": "Press Create workgroup.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create workgroup"
+    },
+    {
+     "say": "Type {1} as the Workgroup name.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Workgroup name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type {2} as the Location of query result.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Location of query result",
+     "value": "{2}"
+    },
+    {
+     "say": "Tick Override client-side settings and Publish query metrics to AWS CloudWatch.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "check",
+     "target": "Override client-side settings"
+    },
+    {
+     "say": "Press Create workgroup.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create workgroup"
+    }
+   ]
+  },
+  {
+   "id": "athena-update-wg",
+   "title": "Edit a workgroup",
+   "match": "aws\\s+athena\\s+update-work-group\\s+--work-group\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Athena in the Search box at the top and open Athena.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Athena"
+    },
+    {
+     "say": "Choose Workgroups in the left navigation.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Workgroups"
+    },
+    {
+     "say": "Select the workgroup {1}.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Edit.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Edit"
+    },
+    {
+     "say": "Set Per query data usage control to 1 GB and keep Override client-side settings on.",
+     "screen": "Edit workgroup",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Per query data usage control"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Edit workgroup",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "athena-get-wg",
+   "title": "See a workgroup",
+   "match": "aws\\s+athena\\s+get-work-group\\s+--work-group\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Athena in the Search box at the top and open Athena.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Athena"
+    },
+    {
+     "say": "Choose Workgroups in the left navigation.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Workgroups"
+    },
+    {
+     "say": "Read the settings of the workgroup {1}.",
+     "screen": "Workgroups",
+     "nav": "Workgroups",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "athena-query",
+   "title": "Run a query",
+   "match": "aws\\s+athena\\s+start-query-execution(?:\\s+--work-group\\s+([\\w.-]+))?\\s+--query-string\\s+\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Type Athena in the Search box at the top and open Athena.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Athena"
+    },
+    {
+     "say": "Choose Query editor in the left navigation.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Query editor"
+    },
+    {
+     "say": "Choose the workgroup {1}.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "toolbar",
+     "action": "select",
+     "target": "Workgroup",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type the query in the editor.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "editor",
+     "action": "type",
+     "target": "Query",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Run.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "editor",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read Query results: status and data scanned.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "main",
+     "action": "see",
+     "target": "Query results"
+    }
+   ]
+  },
+  {
+   "id": "athena-results",
+   "title": "See a query's result",
+   "match": "aws\\s+athena\\s+get-query-(?:execution|results)\\b",
+   "steps": [
+    {
+     "say": "Type Athena in the Search box at the top and open Athena.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Athena"
+    },
+    {
+     "say": "Choose Query editor in the left navigation.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Query editor"
+    },
+    {
+     "say": "Open the Recent queries tab.",
+     "screen": "Query editor",
+     "nav": "Query editor",
+     "zone": "tab",
+     "action": "click",
+     "target": "Recent queries"
+    },
+    {
+     "say": "Read the status, data scanned and error of the query.",
+     "screen": "Recent queries",
+     "nav": "Query editor",
+     "zone": "main",
+     "action": "see",
+     "target": "Recent queries"
+    }
+   ]
+  },
+  {
+   "id": "lf-register",
+   "title": "Register a data lake location",
+   "match": "aws\\s+lakeformation\\s+register-resource\\s+--resource-arn\\s+arn:aws:s3:::(\\S+)",
+   "steps": [
+    {
+     "say": "Type Lake Formation in the Search box at the top and open Lake Formation.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lake Formation"
+    },
+    {
+     "say": "Choose Data lake locations in the left navigation.",
+     "screen": "Data lake locations",
+     "nav": "Data lake locations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data lake locations"
+    },
+    {
+     "say": "Press Register location.",
+     "screen": "Data lake locations",
+     "nav": "Data lake locations",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Register location"
+    },
+    {
+     "say": "Type s3://{1} as the Amazon S3 path.",
+     "screen": "Register location",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Amazon S3 path",
+     "value": "s3://{1}"
+    },
+    {
+     "say": "Keep the service-linked role and press Register location.",
+     "screen": "Register location",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Register location"
+    }
+   ]
+  },
+  {
+   "id": "lf-revoke",
+   "title": "Revoke IAMAllowedPrincipals",
+   "match": "aws\\s+lakeformation\\s+revoke-permissions\\s+--principal\\s+DataLakePrincipalIdentifier=IAM_ALLOWED_PRINCIPALS",
+   "steps": [
+    {
+     "say": "Type Lake Formation in the Search box at the top and open Lake Formation.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lake Formation"
+    },
+    {
+     "say": "Choose Data lake permissions in the left navigation.",
+     "screen": "Data permissions",
+     "nav": "Data lake permissions",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data lake permissions"
+    },
+    {
+     "say": "Find the IAMAllowedPrincipals row for the table.",
+     "screen": "Data permissions",
+     "nav": "Data lake permissions",
+     "zone": "main",
+     "action": "check",
+     "target": "IAMAllowedPrincipals"
+    },
+    {
+     "say": "Press Revoke.",
+     "screen": "Data permissions",
+     "nav": "Data lake permissions",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Revoke"
+    }
+   ]
+  },
+  {
+   "id": "lf-list",
+   "title": "See data lake permissions",
+   "match": "aws\\s+lakeformation\\s+list-permissions\\b",
+   "steps": [
+    {
+     "say": "Type Lake Formation in the Search box at the top and open Lake Formation.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Lake Formation"
+    },
+    {
+     "say": "Choose Data lake permissions in the left navigation.",
+     "screen": "Data permissions",
+     "nav": "Data lake permissions",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data lake permissions"
+    },
+    {
+     "say": "Filter by the principal and read its permissions.",
+     "screen": "Data permissions",
+     "nav": "Data lake permissions",
+     "zone": "main",
+     "action": "see",
+     "target": "Data permissions"
+    }
+   ]
+  },
+  {
+   "id": "kms-create-key",
+   "title": "Create a KMS key",
+   "match": "aws\\s+kms\\s+create-key\\s+--description\\s+\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Type Key Management Service in the Search box at the top and open Key Management Service.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Key Management Service"
+    },
+    {
+     "say": "Choose Customer managed keys in the left navigation.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "nav",
+     "action": "click",
+     "target": "Customer managed keys"
+    },
+    {
+     "say": "Press Create key.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create key"
+    },
+    {
+     "say": "Keep Symmetric and Encrypt and decrypt.",
+     "screen": "Configure key",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "see",
+     "target": "Key type"
+    },
+    {
+     "say": "Type the Description {1} and add the tag.",
+     "screen": "Add labels",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "type",
+     "target": "Description",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Finish.",
+     "screen": "Create key",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "Finish"
+    }
+   ],
+   "verify": "The key is listed - copy its Key ID."
+  },
+  {
+   "id": "kms-alias",
+   "title": "Add an alias to a key",
+   "match": "aws\\s+kms\\s+create-alias\\s+--alias-name\\s+alias/([\\w/-]+)",
+   "steps": [
+    {
+     "say": "Type Key Management Service in the Search box at the top and open Key Management Service.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Key Management Service"
+    },
+    {
+     "say": "Choose Customer managed keys in the left navigation.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "nav",
+     "action": "click",
+     "target": "Customer managed keys"
+    },
+    {
+     "say": "Open the key.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "Key ID"
+    },
+    {
+     "say": "Open the Aliases tab.",
+     "screen": "Key",
+     "nav": "Customer managed keys",
+     "zone": "tab",
+     "action": "click",
+     "target": "Aliases"
+    },
+    {
+     "say": "Type {1} as the new alias.",
+     "screen": "Aliases",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "type",
+     "target": "New alias",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create alias.",
+     "screen": "Aliases",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "Create alias"
+    }
+   ]
+  },
+  {
+   "id": "kms-rotation",
+   "title": "Turn on key rotation",
+   "match": "aws\\s+kms\\s+(?:enable-key-rotation|get-key-rotation-status)\\s+--key-id\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type Key Management Service in the Search box at the top and open Key Management Service.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Key Management Service"
+    },
+    {
+     "say": "Choose Customer managed keys in the left navigation.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "nav",
+     "action": "click",
+     "target": "Customer managed keys"
+    },
+    {
+     "say": "Open the key {1}.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Key rotation tab.",
+     "screen": "Key",
+     "nav": "Customer managed keys",
+     "zone": "tab",
+     "action": "click",
+     "target": "Key rotation"
+    },
+    {
+     "say": "Turn on the Automatic key rotation switch (or read whether it is Enabled).",
+     "screen": "Key rotation",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "check",
+     "target": "Automatic key rotation"
+    }
+   ]
+  },
+  {
+   "id": "kms-put-policy",
+   "title": "Edit a key policy",
+   "match": "aws\\s+kms\\s+put-key-policy\\s+--key-id\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type Key Management Service in the Search box at the top and open Key Management Service.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Key Management Service"
+    },
+    {
+     "say": "Choose Customer managed keys in the left navigation.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "nav",
+     "action": "click",
+     "target": "Customer managed keys"
+    },
+    {
+     "say": "Open the key {1}.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "On the Key policy tab press Edit.",
+     "screen": "Key policy",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit"
+    },
+    {
+     "say": "Paste the policy JSON from the file.",
+     "screen": "Key policy",
+     "nav": "Customer managed keys",
+     "zone": "editor",
+     "action": "type",
+     "target": "Key policy"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Key policy",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "kms-get-policy",
+   "title": "See a key policy",
+   "match": "aws\\s+kms\\s+get-key-policy\\s+--key-id\\s+(<[^>]+>|[\\w:/.-]+)",
+   "steps": [
+    {
+     "say": "Type Key Management Service in the Search box at the top and open Key Management Service.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Key Management Service"
+    },
+    {
+     "say": "Choose Customer managed keys in the left navigation.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "nav",
+     "action": "click",
+     "target": "Customer managed keys"
+    },
+    {
+     "say": "Open the key {1}.",
+     "screen": "Customer managed keys",
+     "nav": "Customer managed keys",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Key policy tab.",
+     "screen": "Key policy",
+     "nav": "Customer managed keys",
+     "zone": "tab",
+     "action": "see",
+     "target": "Key policy"
+    }
+   ]
+  },
+  {
+   "id": "kinesis-create",
+   "title": "Create a data stream",
+   "match": "aws\\s+kinesis\\s+create-stream\\s+--stream-name\\s+([\\w.-]+)\\s+--shard-count\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Type Kinesis in the Search box at the top and open Kinesis.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Kinesis"
+    },
+    {
+     "say": "Choose Data streams in the left navigation.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data streams"
+    },
+    {
+     "say": "Press Create data stream.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create data stream"
+    },
+    {
+     "say": "Type {1} as the Data stream name.",
+     "screen": "Create data stream",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "type",
+     "target": "Data stream name",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose Provisioned and set {2} shards.",
+     "screen": "Create data stream",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "select",
+     "target": "Provisioned shards",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Create data stream.",
+     "screen": "Create data stream",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "Create data stream"
+    }
+   ]
+  },
+  {
+   "id": "kinesis-put",
+   "title": "Put records into a stream",
+   "match": "aws\\s+kinesis\\s+put-records?\\s+--stream-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Kinesis in the Search box at the top and open Kinesis.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Kinesis"
+    },
+    {
+     "say": "Choose Data streams in the left navigation.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data streams"
+    },
+    {
+     "say": "Open the stream {1}.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Put record tab.",
+     "screen": "{1}",
+     "nav": "Data streams",
+     "zone": "tab",
+     "action": "click",
+     "target": "Put record"
+    },
+    {
+     "say": "Type a Partition key and the Data of one record from the file.",
+     "screen": "Put record",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "type",
+     "target": "Partition key"
+    },
+    {
+     "say": "Press Put record (repeat for each record).",
+     "screen": "Put record",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "Put record"
+    }
+   ]
+  },
+  {
+   "id": "kinesis-get",
+   "title": "Read records from a shard",
+   "match": "aws\\s+kinesis\\s+get-(?:records|shard-iterator)\\b",
+   "steps": [
+    {
+     "say": "Type Kinesis in the Search box at the top and open Kinesis.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Kinesis"
+    },
+    {
+     "say": "Choose Data streams in the left navigation.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data streams"
+    },
+    {
+     "say": "Open the stream.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "Stream"
+    },
+    {
+     "say": "Open the Data viewer tab and choose the Shard and Trim horizon.",
+     "screen": "Data viewer",
+     "nav": "Data streams",
+     "zone": "tab",
+     "action": "click",
+     "target": "Data viewer"
+    },
+    {
+     "say": "Press Get records.",
+     "screen": "Data viewer",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "Get records"
+    }
+   ]
+  },
+  {
+   "id": "kinesis-describe",
+   "title": "See a stream's shards",
+   "match": "aws\\s+kinesis\\s+(?:describe-stream-summary|list-shards)\\s+--stream-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Kinesis in the Search box at the top and open Kinesis.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Kinesis"
+    },
+    {
+     "say": "Choose Data streams in the left navigation.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "nav",
+     "action": "click",
+     "target": "Data streams"
+    },
+    {
+     "say": "Open the stream {1}.",
+     "screen": "Data streams",
+     "nav": "Data streams",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Data stream summary and the Shards tab.",
+     "screen": "{1}",
+     "nav": "Data streams",
+     "zone": "tab",
+     "action": "see",
+     "target": "Shards"
+    }
+   ]
+  },
+  {
+   "id": "cw-set-state",
+   "title": "Set an alarm's state",
+   "match": "aws\\s+cloudwatch\\s+set-alarm-state\\s+--alarm-name\\s+([\\w.-]+)\\s+--state-value\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type CloudWatch in the Search box at the top and open CloudWatch.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "CloudWatch"
+    },
+    {
+     "say": "Choose All alarms in the left navigation.",
+     "screen": "Alarms",
+     "nav": "All alarms",
+     "zone": "nav",
+     "action": "click",
+     "target": "All alarms"
+    },
+    {
+     "say": "Select the alarm {1}.",
+     "screen": "Alarms",
+     "nav": "All alarms",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Open Actions and choose Set state: In alarm (test actions).",
+     "screen": "Alarms",
+     "nav": "All alarms",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Set state: In alarm"
+    }
+   ]
+  },
+  {
+   "id": "cw-alarm-see",
+   "title": "See an alarm and its history",
+   "match": "aws\\s+cloudwatch\\s+describe-alarm(?:s|-history)\\s+--alarm-names?\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type CloudWatch in the Search box at the top and open CloudWatch.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "CloudWatch"
+    },
+    {
+     "say": "Choose All alarms in the left navigation.",
+     "screen": "Alarms",
+     "nav": "All alarms",
+     "zone": "nav",
+     "action": "click",
+     "target": "All alarms"
+    },
+    {
+     "say": "Open the alarm {1}.",
+     "screen": "Alarms",
+     "nav": "All alarms",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read its state and the History list.",
+     "screen": "{1}",
+     "nav": "All alarms",
+     "zone": "main",
+     "action": "see",
+     "target": "History"
+    }
+   ]
+  },
+  {
+   "id": "sns-subs",
+   "title": "See a topic's subscriptions",
+   "match": "aws\\s+sns\\s+list-subscriptions-by-topic\\b",
+   "steps": [
+    {
+     "say": "Type SNS in the Search box at the top and open SNS.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "SNS"
+    },
+    {
+     "say": "Choose Topics in the left navigation.",
+     "screen": "Topics",
+     "nav": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Open the topic.",
+     "screen": "Topics",
+     "nav": "Topics",
+     "zone": "main",
+     "action": "click",
+     "target": "Topic"
+    },
+    {
+     "say": "Read the Subscriptions table.",
+     "screen": "Topic",
+     "nav": "Topics",
+     "zone": "main",
+     "action": "see",
+     "target": "Subscriptions"
+    }
+   ]
+  },
+  {
+   "id": "redshift-create-wg",
+   "title": "Create a Redshift workgroup",
+   "match": "aws\\s+redshift-serverless\\s+create-workgroup\\s+--workgroup-name\\s+([\\w.-]+)\\s+--namespace-name\\s+([\\w.-]+)(?:\\s+--base-capacity\\s+(\\d+))?",
+   "steps": [
+    {
+     "say": "Type Amazon Redshift in the Search box at the top and open Amazon Redshift.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Amazon Redshift"
+    },
+    {
+     "say": "Choose Serverless dashboard in the left navigation.",
+     "screen": "Serverless dashboard",
+     "nav": "Serverless dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Serverless dashboard"
+    },
+    {
+     "say": "Press Create workgroup.",
+     "screen": "Serverless dashboard",
+     "nav": "Serverless dashboard",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create workgroup"
+    },
+    {
+     "say": "Type {1} as the Workgroup name.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Workgroup name",
+     "value": "{1}"
+    },
+    {
+     "say": "Set Base capacity (RPUs) to {3}.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Base capacity (RPUs)",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Namespace name.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Namespace name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create workgroup",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "redshift-get-wg",
+   "title": "See a Redshift workgroup",
+   "match": "aws\\s+redshift-serverless\\s+get-workgroup\\s+--workgroup-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Amazon Redshift in the Search box at the top and open Amazon Redshift.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Amazon Redshift"
+    },
+    {
+     "say": "Choose Serverless dashboard in the left navigation.",
+     "screen": "Serverless dashboard",
+     "nav": "Serverless dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Serverless dashboard"
+    },
+    {
+     "say": "Read the workgroup {1} in the Workgroups table.",
+     "screen": "Serverless dashboard",
+     "nav": "Serverless dashboard",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "redshift-sql",
+   "title": "Run SQL in Redshift",
+   "match": "aws\\s+redshift-data\\s+execute-statement\\s+--workgroup-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Amazon Redshift in the Search box at the top and open Amazon Redshift.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Amazon Redshift"
+    },
+    {
+     "say": "Choose Query editor v2 in the left navigation.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "nav",
+     "action": "click",
+     "target": "Query editor v2"
+    },
+    {
+     "say": "Type the SQL statement in the editor.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "editor",
+     "action": "type",
+     "target": "SQL"
+    },
+    {
+     "say": "Press Run.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "editor",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the Result: Finished means it worked.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "main",
+     "action": "see",
+     "target": "Result"
+    }
+   ]
+  },
+  {
+   "id": "redshift-describe",
+   "title": "See a statement's status",
+   "match": "aws\\s+redshift-data\\s+describe-statement\\b",
+   "steps": [
+    {
+     "say": "Type Amazon Redshift in the Search box at the top and open Amazon Redshift.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Amazon Redshift"
+    },
+    {
+     "say": "Choose Query editor v2 in the left navigation.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "nav",
+     "action": "click",
+     "target": "Query editor v2"
+    },
+    {
+     "say": "Read the status in the Result panel.",
+     "screen": "Query editor v2",
+     "nav": "Query editor v2",
+     "zone": "main",
+     "action": "see",
+     "target": "Result"
+    }
+   ]
+  },
+  {
+   "id": "sfn-create",
+   "title": "Create a state machine",
+   "match": "aws\\s+stepfunctions\\s+create-state-machine\\s+--name\\s+([\\w.-]+)\\s+--role-arn\\s+\\S*/([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Step Functions in the Search box at the top and open Step Functions.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Step Functions"
+    },
+    {
+     "say": "Choose State machines in the left navigation.",
+     "screen": "State machines",
+     "nav": "State machines",
+     "zone": "nav",
+     "action": "click",
+     "target": "State machines"
+    },
+    {
+     "say": "Press Create state machine.",
+     "screen": "State machines",
+     "nav": "State machines",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create state machine"
+    },
+    {
+     "say": "Type {1} as the State machine name.",
+     "screen": "Create state machine",
+     "zone": "dialog",
+     "action": "type",
+     "target": "State machine name",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Execution role {2}.",
+     "screen": "Create state machine",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Execution role",
+     "value": "{2}"
+    },
+    {
+     "say": "Paste the Definition from the file.",
+     "screen": "Create state machine",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Definition"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create state machine",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "sfn-execution",
+   "title": "See an execution",
+   "match": "aws\\s+stepfunctions\\s+describe-execution\\b",
+   "steps": [
+    {
+     "say": "Type Step Functions in the Search box at the top and open Step Functions.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Step Functions"
+    },
+    {
+     "say": "Choose State machines in the left navigation.",
+     "screen": "State machines",
+     "nav": "State machines",
+     "zone": "nav",
+     "action": "click",
+     "target": "State machines"
+    },
+    {
+     "say": "Open the state machine.",
+     "screen": "State machines",
+     "nav": "State machines",
+     "zone": "main",
+     "action": "click",
+     "target": "State machine"
+    },
+    {
+     "say": "Open the execution in the Executions table and read its Status.",
+     "screen": "Executions",
+     "nav": "State machines",
+     "zone": "main",
+     "action": "see",
+     "target": "Executions"
+    }
+   ]
+  },
+  {
+   "id": "ce-tags-activate",
+   "title": "Activate a cost allocation tag",
+   "match": "aws\\s+ce\\s+update-cost-allocation-tags-status\\s+--cost-allocation-tags-status\\s+TagKey=([\\w.:-]+)",
+   "steps": [
+    {
+     "say": "Type Billing and Cost Management in the Search box at the top and open Billing and Cost Management.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Billing and Cost Management"
+    },
+    {
+     "say": "Choose Cost allocation tags in the left navigation.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "nav",
+     "action": "click",
+     "target": "Cost allocation tags"
+    },
+    {
+     "say": "Find the tag key {1}.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Activate on its row.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "main",
+     "action": "click",
+     "target": "Activate"
+    }
+   ]
+  },
+  {
+   "id": "ce-backfill",
+   "title": "Backfill cost allocation tags",
+   "match": "aws\\s+ce\\s+start-cost-allocation-tag-backfill\\s+--backfill-from\\s+(\\d{4}-\\d{2}-\\d{2})",
+   "steps": [
+    {
+     "say": "Type Billing and Cost Management in the Search box at the top and open Billing and Cost Management.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Billing and Cost Management"
+    },
+    {
+     "say": "Choose Cost allocation tags in the left navigation.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "nav",
+     "action": "click",
+     "target": "Cost allocation tags"
+    },
+    {
+     "say": "Set Backfill from to {1}.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "main",
+     "action": "type",
+     "target": "Backfill from",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Backfill tags.",
+     "screen": "Cost allocation tags",
+     "nav": "Cost allocation tags",
+     "zone": "main",
+     "action": "click",
+     "target": "Backfill tags"
+    }
+   ]
+  },
+  {
+   "id": "ce-cost",
+   "title": "Report cost and usage",
+   "match": "aws\\s+ce\\s+get-cost-and-usage\\s+--time-period\\s+Start=([\\d-]+),End=([\\d-]+).*?--group-by\\s+Type=(\\w+),Key=([\\w.:-]+)",
+   "steps": [
+    {
+     "say": "Type Billing and Cost Management in the Search box at the top and open Billing and Cost Management.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Billing and Cost Management"
+    },
+    {
+     "say": "Choose Cost Explorer in the left navigation.",
+     "screen": "Cost Explorer",
+     "nav": "Cost Explorer",
+     "zone": "nav",
+     "action": "click",
+     "target": "Cost Explorer"
+    },
+    {
+     "say": "Set Start to {1} and End to {2}.",
+     "screen": "Cost Explorer",
+     "nav": "Cost Explorer",
+     "zone": "main",
+     "action": "type",
+     "target": "Start",
+     "value": "{1}"
+    },
+    {
+     "say": "Keep Granularity Monthly and choose Group by {4} ({3}).",
+     "screen": "Cost Explorer",
+     "nav": "Cost Explorer",
+     "zone": "main",
+     "action": "select",
+     "target": "Group by",
+     "value": "{4}"
+    },
+    {
+     "say": "Press Apply and read the breakdown.",
+     "screen": "Cost Explorer",
+     "nav": "Cost Explorer",
+     "zone": "main",
+     "action": "click",
+     "target": "Apply"
+    }
+   ]
+  },
+  {
+   "id": "budgets-see",
+   "title": "See your budgets",
+   "match": "aws\\s+budgets\\s+describe-budgets\\b",
+   "steps": [
+    {
+     "say": "Type Billing and Cost Management in the Search box at the top and open Billing and Cost Management.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "Billing and Cost Management"
+    },
+    {
+     "say": "Choose Budgets in the left navigation.",
+     "screen": "Budgets",
+     "nav": "Budgets",
+     "zone": "nav",
+     "action": "click",
+     "target": "Budgets"
+    },
+    {
+     "say": "Read the budgets and their amounts.",
+     "screen": "Budgets",
+     "nav": "Budgets",
+     "zone": "main",
+     "action": "see",
+     "target": "Budgets"
+    }
+   ]
+  },
+  {
+   "id": "sts-identity",
+   "title": "See who you are signed in as",
+   "match": "aws\\s+sts\\s+get-caller-identity(?!\\s+--profile)",
+   "steps": [
+    {
+     "say": "Open the account menu at the right of the top bar.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "click",
+     "target": "Account"
+    },
+    {
+     "say": "Read Account ID and IAM user.",
+     "screen": "Console Home",
+     "zone": "top",
+     "action": "see",
+     "target": "Account ID"
+    }
+   ]
+  }
+ ]
+}

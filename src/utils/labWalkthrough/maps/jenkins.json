@@ -1,0 +1,622 @@
+{
+ "skin": "jenkins",
+ "product": "Jenkins",
+ "brand": "#d24939",
+ "top": "Jenkins",
+ "nav": [
+  "New Item",
+  "Build History",
+  "Manage Jenkins",
+  "My Views",
+  "New View"
+ ],
+ "recipes": [
+  {
+   "id": "build-params",
+   "title": "Build with parameters",
+   "match": "jenkins-cli\\s+build\\s+([\\w.-]+)((?:\\s+-p\\s+[\\w.]+=\\S+)+)(?:\\s+-[vsf])*(?=\\s|$)(?![^\\n]*--branch)",
+   "steps": [
+    {
+     "say": "Click the job {1} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Build with Parameters in the side panel.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Build with Parameters"
+    },
+    {
+     "say": "Set each parameter to match: {2}",
+     "screen": "Build with Parameters",
+     "zone": "main",
+     "action": "type",
+     "target": "Parameters",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Build.",
+     "screen": "Build with Parameters",
+     "zone": "main",
+     "action": "click",
+     "target": "Build"
+    },
+    {
+     "say": "Open the new build and its Console Output to read the log.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Console Output"
+    }
+   ],
+   "verify": "A new build appears in the job's Builds list."
+  },
+  {
+   "id": "build",
+   "title": "Build a job",
+   "match": "jenkins-cli\\s+build\\s+([\\w.-]+)(?:\\s+-[vsf])*(?![\\w-]|\\s+-p|[^\\n]*--branch)|press Build Now on ([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Click the job {1} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Click the job {2} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Press Build Now in the side panel.",
+     "screen": "Job",
+     "zone": "nav",
+     "action": "click",
+     "target": "Build Now"
+    },
+    {
+     "say": "Click the new build number, then Console Output, and read the log to Finished:.",
+     "screen": "Job",
+     "zone": "nav",
+     "action": "click",
+     "target": "Console Output"
+    }
+   ],
+   "verify": "The Stage View shows the new build."
+  },
+  {
+   "id": "create-job-script",
+   "title": "Create a pipeline with a script path",
+   "match": "jenkins-cli\\s+create-job\\s+([\\w.-]+)\\s+--script\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Press New Item in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "New Item"
+    },
+    {
+     "say": "Type {1} in Enter an item name.",
+     "screen": "New Item",
+     "zone": "main",
+     "action": "type",
+     "target": "Enter an item name",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose Pipeline and press OK.",
+     "screen": "New Item",
+     "zone": "main",
+     "action": "click",
+     "target": "OK"
+    },
+    {
+     "say": "Under Pipeline set Definition to Pipeline script from SCM.",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "select",
+     "target": "Definition",
+     "value": "Pipeline script from SCM"
+    },
+    {
+     "say": "Type {2} as the Script Path.",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "type",
+     "target": "Script Path",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "create-job",
+   "title": "Create a pipeline job",
+   "match": "jenkins-cli\\s+create-job\\s+([\\w.-]+)(?!\\s+--script)|click New Item, name it ([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Press New Item in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "New Item"
+    },
+    {
+     "say": "Type {1} in Enter an item name.",
+     "screen": "New Item",
+     "zone": "main",
+     "action": "type",
+     "target": "Enter an item name",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} in Enter an item name.",
+     "screen": "New Item",
+     "zone": "main",
+     "action": "type",
+     "target": "Enter an item name",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Choose Pipeline and press OK.",
+     "screen": "New Item",
+     "zone": "main",
+     "action": "click",
+     "target": "OK"
+    },
+    {
+     "say": "Keep Pipeline script from SCM with Script Path Jenkinsfile and press Save.",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ],
+   "verify": "The job appears on the Dashboard."
+  },
+  {
+   "id": "delete-job",
+   "title": "Delete a job",
+   "match": "jenkins-cli\\s+delete-job\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Click the job {1} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Delete Pipeline in the side panel.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Delete Pipeline"
+    },
+    {
+     "say": "Press Yes.",
+     "screen": "Delete the Pipeline",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Yes"
+    }
+   ]
+  },
+  {
+   "id": "lint",
+   "title": "Validate a Jenkinsfile",
+   "match": "jenkins-cli\\s+declarative-linter\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Click the job on the Dashboard (any Pipeline job).",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "Name"
+    },
+    {
+     "say": "Press Pipeline Syntax in the side panel.",
+     "screen": "Job",
+     "zone": "nav",
+     "action": "click",
+     "target": "Pipeline Syntax"
+    },
+    {
+     "say": "Under Declarative Pipeline Linter type {1}.",
+     "screen": "Pipeline Syntax",
+     "zone": "main",
+     "action": "type",
+     "target": "Jenkinsfile path",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Validate and read the result.",
+     "screen": "Pipeline Syntax",
+     "zone": "main",
+     "action": "click",
+     "target": "Validate"
+    }
+   ]
+  },
+  {
+   "id": "console",
+   "title": "Read a build's log",
+   "match": "jenkins-cli\\s+console\\s+([\\w.-]+)(?:\\s+(\\d+))?",
+   "steps": [
+    {
+     "say": "Click the job {1} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Click build #{2} in the Builds list.",
+     "screen": "{1}",
+     "zone": "main",
+     "action": "click",
+     "target": "#{2}",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Click the build in the Builds list (the newest if no number).",
+     "screen": "{1}",
+     "zone": "main",
+     "action": "click",
+     "target": "Builds"
+    },
+    {
+     "say": "Press Console Output in the side panel.",
+     "screen": "Build",
+     "zone": "nav",
+     "action": "click",
+     "target": "Console Output"
+    },
+    {
+     "say": "Read the log; secrets show as ****.",
+     "screen": "Console Output",
+     "zone": "main",
+     "action": "see",
+     "target": "Console Output"
+    }
+   ]
+  },
+  {
+   "id": "build-history",
+   "title": "See build history",
+   "match": "jenkins-cli\\s+build-history\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Click the job {1} on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the Builds list: each number with its result icon.",
+     "screen": "{1}",
+     "zone": "main",
+     "action": "see",
+     "target": "Builds"
+    }
+   ]
+  },
+  {
+   "id": "list-jobs",
+   "title": "See your jobs",
+   "match": "jenkins-cli\\s+list-jobs\\b",
+   "steps": [
+    {
+     "say": "Open the Dashboard (click Jenkins at the top left).",
+     "screen": "Dashboard",
+     "zone": "top",
+     "action": "click",
+     "target": "Jenkins"
+    },
+    {
+     "say": "Read the job names and their last results.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "see",
+     "target": "Name"
+    }
+   ]
+  },
+  {
+   "id": "set-branch",
+   "title": "Set the branch a job builds",
+   "match": "jenkins-cli\\s+set-branch\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Click the job on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "Name"
+    },
+    {
+     "say": "Press Configure in the side panel.",
+     "screen": "Job",
+     "zone": "nav",
+     "action": "click",
+     "target": "Configure"
+    },
+    {
+     "say": "Type {1} in Branch Specifier (blank for 'any').",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "type",
+     "target": "Branch Specifier",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Configure",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "create-credential",
+   "title": "Add a credential",
+   "match": "jenkins-cli\\s+create-credential\\s+([\\w.-]+)\\s+(\\S+)(?:\\s+--username\\s+([\\w.@-]+))?|Add Credentials, Username with password, ID ([\\w.-]+), username ([\\w.@-]+)",
+   "steps": [
+    {
+     "say": "Press Manage Jenkins in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Manage Jenkins"
+    },
+    {
+     "say": "Open Credentials.",
+     "screen": "Manage Jenkins",
+     "zone": "main",
+     "action": "click",
+     "target": "Credentials"
+    },
+    {
+     "say": "Press Add Credentials; keep Kind as Username with password.",
+     "screen": "Global credentials",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add Credentials"
+    },
+    {
+     "say": "Type {3} as the Username.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "Username",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type {5} as the Username.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "Username",
+     "value": "{5}",
+     "optional": true
+    },
+    {
+     "say": "Type the secret as the Password.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "Password",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Type {1} as the ID.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "ID",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {4} as the ID.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "ID",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Create.",
+     "screen": "New credentials",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ],
+   "verify": "The credential is listed under Global credentials."
+  },
+  {
+   "id": "update-credential",
+   "title": "Update a credential",
+   "match": "jenkins-cli\\s+update-credential\\s+([\\w.-]+)\\s+(\\S+)(?:\\s+--username\\s+([\\w.@-]+))?",
+   "steps": [
+    {
+     "say": "Press Manage Jenkins in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Manage Jenkins"
+    },
+    {
+     "say": "Open Credentials.",
+     "screen": "Manage Jenkins",
+     "zone": "main",
+     "action": "click",
+     "target": "Credentials"
+    },
+    {
+     "say": "Click the credential {1}.",
+     "screen": "Global credentials",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Type {3} as the Username.",
+     "screen": "Update credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "Username",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type the new value as the Password.",
+     "screen": "Update credentials",
+     "zone": "main",
+     "action": "type",
+     "target": "Password",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Update credentials",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "list-credentials",
+   "title": "See your credentials",
+   "match": "jenkins-cli\\s+list-credentials\\b",
+   "steps": [
+    {
+     "say": "Press Manage Jenkins in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Manage Jenkins"
+    },
+    {
+     "say": "Open Credentials.",
+     "screen": "Manage Jenkins",
+     "zone": "main",
+     "action": "click",
+     "target": "Credentials"
+    },
+    {
+     "say": "Read each ID and Kind; the secret itself is never shown.",
+     "screen": "Global credentials",
+     "zone": "main",
+     "action": "see",
+     "target": "Kind"
+    }
+   ]
+  },
+  {
+   "id": "list-nodes",
+   "title": "See the agents and their labels",
+   "match": "jenkins-cli\\s+list-nodes\\b",
+   "steps": [
+    {
+     "say": "Press Manage Jenkins in the side panel.",
+     "screen": "Dashboard",
+     "zone": "nav",
+     "action": "click",
+     "target": "Manage Jenkins"
+    },
+    {
+     "say": "Open Nodes.",
+     "screen": "Manage Jenkins",
+     "zone": "main",
+     "action": "click",
+     "target": "Nodes"
+    },
+    {
+     "say": "Read each node and its labels.",
+     "screen": "Nodes",
+     "zone": "main",
+     "action": "see",
+     "target": "Name"
+    }
+   ]
+  },
+  {
+   "id": "stage-view",
+   "title": "Read a build's Stage View",
+   "match": "(?:stage view|Stage View)|shows NOT_EXECUTED|show NOT_EXECUTED|is NOT_EXECUTED in the Jenkins",
+   "steps": [
+    {
+     "say": "Click the job on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "Name"
+    },
+    {
+     "say": "Read the Stage View: one column per stage, green, red, or grey for NOT_EXECUTED.",
+     "screen": "Job",
+     "zone": "main",
+     "action": "see",
+     "target": "Stage View"
+    }
+   ]
+  },
+  {
+   "id": "artifacts",
+   "title": "See archived artifacts",
+   "match": "Build Artifacts|non-zero artifact count",
+   "steps": [
+    {
+     "say": "Click the job on the Dashboard.",
+     "screen": "Dashboard",
+     "zone": "main",
+     "action": "click",
+     "target": "Name"
+    },
+    {
+     "say": "Click the newest build number.",
+     "screen": "Job",
+     "zone": "main",
+     "action": "click",
+     "target": "Builds"
+    },
+    {
+     "say": "Read Build Artifacts on the build Status page.",
+     "screen": "Build",
+     "zone": "main",
+     "action": "see",
+     "target": "Build Artifacts"
+    }
+   ]
+  }
+ ]
+}

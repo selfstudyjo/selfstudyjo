@@ -206,5 +206,88 @@
    "done_when": "You have run dbshell or a SELECT ... auth_user query.",
    "ask_ai": "Why is the password column in auth_user not the password I typed?"
   }
+ },
+ "fab-01-platform": {
+  "t1": {
+   "goal": "Create the workspaces ws-ops-dev and ws-ops-prod, both assigned to the capacity cap-ops-f8.",
+   "steps": [
+    "In the Fabric CLI look around first: fab ls .capacities and fab get .capacities/cap-ops-f8.Capacity",
+    "Create the dev workspace: fab mkdir ws-ops-dev.Workspace -P capacityName=cap-ops-f8",
+    "Create the prod workspace: fab mkdir ws-ops-prod.Workspace -P capacityName=cap-ops-f8",
+    "Confirm with fab ls -a that both workspaces are listed.",
+    "Press Check my work."
+   ],
+   "done_when": "Workspaces named ws-ops-dev and ws-ops-prod both exist on the capacity cap-ops-f8.",
+   "ask_ai": "Why is one workspace per environment safer than putting dev and prod items in the same workspace?"
+  },
+  "t2": {
+   "goal": "Try to create the lakehouse lh_test in a workspace ws-sandbox that has no capacity, and see Fabric refuse it.",
+   "steps": [
+    "In the Fabric CLI create a workspace with no capacity: fab mkdir ws-sandbox.Workspace",
+    "Try to add an item to it: fab mkdir ws-sandbox.Workspace/lh_test.Lakehouse - read the refusal.",
+    "Then fix and clean up: fab assign .capacities/cap-ops-f8.Capacity -W ws-sandbox.Workspace, fab mkdir ws-sandbox.Workspace/lh_test.Lakehouse, and fab rm ws-sandbox.Workspace -f",
+    "Press Check my work."
+   ],
+   "done_when": "You have run fab mkdir ws-sandbox.Workspace/lh_test.Lakehouse and it was refused.",
+   "ask_ai": "Why does a workspace need a capacity before it can hold any Fabric item?"
+  },
+  "t3": {
+   "goal": "Create the lakehouses lh_bronze, lh_silver and lh_gold and the warehouse wh_gold in ws-ops-dev.",
+   "steps": [
+    "In the Fabric CLI run: fab mkdir ws-ops-dev.Workspace/lh_bronze.Lakehouse",
+    "Run: fab mkdir ws-ops-dev.Workspace/lh_silver.Lakehouse and fab mkdir ws-ops-dev.Workspace/lh_gold.Lakehouse",
+    "Run: fab mkdir ws-ops-dev.Workspace/wh_gold.Warehouse",
+    "Confirm with: fab ls ws-ops-dev.Workspace -l (three lakehouses and one warehouse).",
+    "Press Check my work."
+   ],
+   "done_when": "ws-ops-dev holds at least three Lakehouse items and at least one Warehouse item.",
+   "ask_ai": "What belongs in bronze, silver and gold, and why keep them as separate lakehouses?"
+  },
+  "t4": {
+   "goal": "Grant sg-data-engineers the Contributor role on ws-ops-dev and sg-ops-analysts the Viewer role on ws-ops-prod.",
+   "steps": [
+    "In the Fabric CLI run: fab acl set ws-ops-dev.Workspace -I sg-data-engineers -R Contributor",
+    "Run: fab acl set ws-ops-prod.Workspace -I sg-fabric-admins -R Admin",
+    "Run: fab acl set ws-ops-prod.Workspace -I sg-ops-analysts -R Viewer",
+    "Confirm with fab acl ls ws-ops-dev.Workspace and fab acl ls ws-ops-prod.Workspace.",
+    "Press Check my work."
+   ],
+   "done_when": "sg-data-engineers is Contributor on ws-ops-dev and sg-ops-analysts is Viewer on ws-ops-prod.",
+   "ask_ai": "Why grant workspace roles to groups rather than to individual people?"
+  },
+  "t5": {
+   "goal": "Remove the sg-all-staff grant from the legacy workspace ws-ops-legacy so that group has no workspace role anywhere.",
+   "steps": [
+    "In the Fabric CLI see who has access: fab acl ls ws-ops-legacy.Workspace",
+    "Remove the everybody grant: fab acl rm ws-ops-legacy.Workspace -I sg-all-staff",
+    "Run fab acl ls ws-ops-legacy.Workspace again and check sg-all-staff is gone.",
+    "Press Check my work."
+   ],
+   "done_when": "The group sg-all-staff holds no workspace role in any workspace.",
+   "ask_ai": "What risks come from a workspace shared with every member of staff?"
+  },
+  "t6": {
+   "goal": "Turn on a workspace identity for ws-ops-prod.",
+   "steps": [
+    "In the Fabric CLI run: fab set ws-ops-prod.Workspace -q identity -i true",
+    "Optionally describe dev: fab set ws-ops-dev.Workspace -q description -i \"Service Operations data platform - development\"",
+    "Confirm with: fab get ws-ops-prod.Workspace and look for the identity.",
+    "Press Check my work."
+   ],
+   "done_when": "The workspace ws-ops-prod has a workspace identity enabled.",
+   "ask_ai": "How does a workspace identity remove the need for stored secrets or personal accounts in pipelines?"
+  },
+  "t7": {
+   "goal": "Write platform.md explaining why dev and prod are separate workspaces, why roles go to groups, and what each of the four roles may do.",
+   "steps": [
+    "In the Files tool create platform.md (or in the Linux Terminal: nano platform.md).",
+    "Write a short section on why development and production are separate workspaces.",
+    "Write why roles are granted to groups, and one line each for Admin, Member, Contributor and Viewer.",
+    "Save and re-read the file.",
+    "Press Check my work."
+   ],
+   "done_when": "The file platform.md exists.",
+   "ask_ai": "What is the practical difference between the Member and Contributor roles?"
+  }
  }
 }

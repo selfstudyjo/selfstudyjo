@@ -10,7 +10,7 @@
       however often it is opened.
     -->
     <div v-if="task" class="sltg-overlay" role="presentation" @click.self="$emit('close')">
-      <div ref="dialog" class="sltg-dialog" role="dialog" aria-modal="true"
+      <div ref="dialog" class="sltg-dialog" :class="{ 'is-wide': mode === 'gui' }" role="dialog" aria-modal="true"
            :aria-labelledby="titleId" tabindex="-1" @keydown.esc="$emit('close')">
         <header class="sltg-head">
           <div class="sltg-head__text">
@@ -48,41 +48,64 @@
             </p>
           </section>
 
-          <section v-if="view.where.length" class="sltg-section">
-            <h3>{{ $t('Where to work') }}</h3>
-            <div class="sltg-tools">
-              <button v-for="tool in view.where" :key="tool.id" type="button"
-                      class="sl-btn sl-btn--ghost sl-btn--sm"
-                      @click="$emit('open-tool', tool.id); $emit('close')">
-                {{ tool.label }}
-              </button>
-            </div>
-          </section>
+          <!--
+            TERMINAL OR GUI. The same task two ways: the commands, or the clicks
+            in the product's own console - which runs the very same commands, so
+            the grader cannot tell them apart. The GUI tab is its own chunk
+            (recipes, the walkthrough and three.js), fetched on first press.
+          -->
+          <div class="sltg-tabs" role="tablist" :aria-label="$t('How to do it')">
+            <button type="button" role="tab" class="sltg-tab" :class="{ 'is-active': mode === 'terminal' }"
+                    :aria-selected="mode === 'terminal'" @click="mode = 'terminal'">
+              <TerminalSquare class="sltg-i" aria-hidden="true" /> {{ $t('Terminal') }}
+            </button>
+            <button type="button" role="tab" class="sltg-tab" :class="{ 'is-active': mode === 'gui' }"
+                    :aria-selected="mode === 'gui'" @click="mode = 'gui'">
+              <MousePointerClick class="sltg-i" aria-hidden="true" /> {{ $t('Graphical interface (GUI)') }}
+            </button>
+          </div>
 
-          <section class="sltg-section">
-            <h3>{{ $t('Step by step') }}</h3>
-            <!-- The task's own written steps first; the generated ones follow
-                 as the general checklist. -->
-            <ol v-if="task.instructions?.steps?.length" class="sltg-steps sltg-steps--own">
-              <li v-for="(step, n) in task.instructions.steps" :key="'own' + n">{{ step }}</li>
-            </ol>
-            <h3 v-if="task.instructions?.steps?.length" class="sltg-subhead">{{ $t('Before you check') }}</h3>
-            <ol class="sltg-steps">
-              <li v-for="(step, at) in view.steps" :key="at">
-                <span>{{ $t(step.key, step.params || {}) }}</span>
-                <span v-if="step.code && step.code.length" class="sltg-codes">
-                  <span v-for="code in step.code" :key="code" class="sltg-code" dir="ltr">
-                    <code>{{ code }}</code>
-                    <button type="button" class="sltg-copy" :title="$t('Copy')"
-                            :aria-label="$t('Copy')" @click="copy(code)">
-                      <Check v-if="copied === code" class="sltg-i" aria-hidden="true" />
-                      <Copy v-else class="sltg-i" aria-hidden="true" />
-                    </button>
+          <div v-if="mode === 'terminal'" role="tabpanel">
+            <section v-if="view.where.length" class="sltg-section">
+              <h3>{{ $t('Where to work') }}</h3>
+              <div class="sltg-tools">
+                <button v-for="tool in view.where" :key="tool.id" type="button"
+                        class="sl-btn sl-btn--ghost sl-btn--sm"
+                        @click="$emit('open-tool', tool.id); $emit('close')">
+                  {{ tool.label }}
+                </button>
+              </div>
+            </section>
+
+            <section class="sltg-section">
+              <h3>{{ $t('Step by step') }}</h3>
+              <!-- The task's own written steps first; the generated ones follow
+                   as the general checklist. -->
+              <ol v-if="task.instructions?.steps?.length" class="sltg-steps sltg-steps--own">
+                <li v-for="(step, n) in task.instructions.steps" :key="'own' + n">{{ step }}</li>
+              </ol>
+              <h3 v-if="task.instructions?.steps?.length" class="sltg-subhead">{{ $t('Before you check') }}</h3>
+              <ol class="sltg-steps">
+                <li v-for="(step, at) in view.steps" :key="at">
+                  <span>{{ $t(step.key, step.params || {}) }}</span>
+                  <span v-if="step.code && step.code.length" class="sltg-codes">
+                    <span v-for="code in step.code" :key="code" class="sltg-code" dir="ltr">
+                      <code>{{ code }}</code>
+                      <button type="button" class="sltg-copy" :title="$t('Copy')"
+                              :aria-label="$t('Copy')" @click="copy(code)">
+                        <Check v-if="copied === code" class="sltg-i" aria-hidden="true" />
+                        <Copy v-else class="sltg-i" aria-hidden="true" />
+                      </button>
+                    </span>
                   </span>
-                </span>
-              </li>
-            </ol>
-          </section>
+                </li>
+              </ol>
+            </section>
+          </div>
+          <div v-else role="tabpanel" class="sltg-section">
+            <TaskGuiGuide :task="task" :tools="tools || []"
+                          @open-tool="id => { $emit('open-tool', id); $emit('close'); }" />
+          </div>
 
           <section v-if="view.checks.length" class="sltg-section">
             <h3>{{ $t('How it is checked') }}</h3>
@@ -160,9 +183,10 @@
  * command, path and table name stays exactly as it must be typed. Nothing here
  * reaches `v-html` - a task's text arrives over the network.
  */
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
 import {
-  AlertTriangle, Check, CheckCircle2, Copy, Info, Lightbulb, Sparkles, X,
+  AlertTriangle, Check, CheckCircle2, Copy, Info, Lightbulb, MousePointerClick, Sparkles,
+  TerminalSquare, X,
 } from 'lucide-vue-next';
 import {
   TASK_STATUS_LABELS, guideFor, type LabTask, type LabTool,
@@ -181,8 +205,12 @@ defineEmits<{
   (event: 'self-mark', taskId: string): void;
 }>();
 
+const TaskGuiGuide = defineAsyncComponent(() => import('@/components/labs/docs/TaskGuiGuide.vue'));
+
 const dialog = ref<HTMLElement | null>(null);
 const hintOpen = ref(false);
+/** Terminal or GUI. Kept across tasks: a student who prefers clicking keeps preferring it. */
+const mode = ref<'terminal' | 'gui'>('terminal');
 const copied = ref('');
 const titleId = `sltg-title-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -243,6 +271,31 @@ watch(() => props.task?.id, async (id) => {
   box-shadow: var(--sfs-shadow-strong, 0 20px 50px rgb(0 0 0 / 0.45));
   outline: none;
 }
+
+.sltg-dialog.is-wide { width: min(100%, 64rem); }
+
+.sltg-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.75rem;
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+
+.sltg-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--sfs-text-muted, #a3a9b8);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sltg-tab.is-active { color: var(--sfs-text, #e6e8ef); border-bottom-color: var(--sfs-accent, #667eea); }
 
 .sltg-head {
   display: flex;

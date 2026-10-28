@@ -1,0 +1,498 @@
+{
+ "skin": "dbt",
+ "product": "dbt Cloud",
+ "brand": "#ff694b",
+ "top": "dbt",
+ "nav": [
+  "Studio IDE",
+  "Run history",
+  "Jobs",
+  "Environments",
+  "Catalog"
+ ],
+ "recipes": [
+  {
+   "id": "job-create",
+   "title": "Create a deploy job",
+   "match": "dbt-cloud\\s+job\\s+create\\s+--name\\s+\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Open Jobs under Deploy in the left navigation.",
+     "screen": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Press Create job and choose Deploy job.",
+     "screen": "Jobs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Deploy job"
+    },
+    {
+     "say": "Type the Job name {1}.",
+     "screen": "Create deploy job",
+     "zone": "main",
+     "action": "type",
+     "target": "Job name *",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Production environment.",
+     "screen": "Create deploy job",
+     "zone": "main",
+     "action": "select",
+     "target": "Environment *",
+     "value": "Production"
+    },
+    {
+     "say": "Under Commands type dbt build; tick Run source freshness to run dbt source freshness first.",
+     "screen": "Create deploy job",
+     "zone": "main",
+     "action": "type",
+     "target": "Command 1",
+     "value": "dbt build"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Create deploy job",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Save"
+    }
+   ],
+   "verify": "The job appears on the Jobs page; Run now starts it."
+  },
+  {
+   "id": "job-run",
+   "title": "Run a job now",
+   "match": "dbt-cloud\\s+job\\s+run\\s+--job-id",
+   "steps": [
+    {
+     "say": "Open Jobs under Deploy in the left navigation.",
+     "screen": "Jobs",
+     "zone": "nav",
+     "action": "click",
+     "target": "Jobs"
+    },
+    {
+     "say": "Press Run now on the job row.",
+     "screen": "Jobs",
+     "zone": "main",
+     "action": "click",
+     "target": "Run now"
+    },
+    {
+     "say": "Open Run history to follow the run.",
+     "screen": "Run history",
+     "zone": "nav",
+     "action": "see",
+     "target": "Run history"
+    }
+   ]
+  },
+  {
+   "id": "environment-list",
+   "title": "See the environments",
+   "match": "dbt-cloud\\s+environment\\s+list",
+   "steps": [
+    {
+     "say": "Open Environments under Deploy in the left navigation.",
+     "screen": "Environments",
+     "zone": "nav",
+     "action": "click",
+     "target": "Environments"
+    },
+    {
+     "say": "Read the list; click Production to see its id and settings.",
+     "screen": "Environments",
+     "zone": "main",
+     "action": "see",
+     "target": "Production"
+    }
+   ]
+  },
+  {
+   "id": "build-upstream",
+   "title": "Build a model and everything above it",
+   "match": "dbt\\s+build\\s+--select\\s+\\+(\\w+)(?![\\w+])",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the file of {1} (for example models/.../{1}.sql).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press the arrow next to the Build button (More build options).",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "More build options"
+    },
+    {
+     "say": "Choose Build +model (upstream).",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Build +model (upstream)"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ],
+   "verify": "Every model and test upstream of {1} shows a green status."
+  },
+  {
+   "id": "build-children",
+   "title": "Build a model and its children",
+   "match": "dbt\\s+build\\s+--select\\s+(\\w+)\\+",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the file of {1} (for example models/.../{1}.sql).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press the arrow next to the Build button (More build options).",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "More build options"
+    },
+    {
+     "say": "Choose Build model +children.",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Build model +children"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ]
+  },
+  {
+   "id": "run-model",
+   "title": "Run one model",
+   "match": "dbt\\s+run\\s+--select\\s+(\\w+)(?![\\w+:])",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the file of {1} (for example models/.../{1}.sql).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press the arrow next to the Build button (More build options).",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "More build options"
+    },
+    {
+     "say": "Choose Run model.",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run model"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ]
+  },
+  {
+   "id": "test-model",
+   "title": "Test one model",
+   "match": "dbt\\s+test\\s+--select\\s+(\\w+)(?![\\w+:])",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the file of {1} (for example models/.../{1}.sql).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press the arrow next to the Build button (More build options).",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "More build options"
+    },
+    {
+     "say": "Choose Test model.",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Test model"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ]
+  },
+  {
+   "id": "compile-model",
+   "title": "Compile a model",
+   "match": "dbt\\s+compile\\s+--select\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the file of {1} (for example models/.../{1}.sql).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Compile above the editor.",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Compile"
+    },
+    {
+     "say": "Open the Compiled code tab at the bottom to read the SQL dbt sends to Snowflake.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Compiled code"
+    }
+   ]
+  },
+  {
+   "id": "snapshot",
+   "title": "Run a snapshot",
+   "match": "dbt\\s+snapshot\\s+--select\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "In the File explorer open the snapshot file of {1} (under snapshots/).",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Snapshot in the toolbar above the editor.",
+     "screen": "Studio IDE",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Snapshot"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ]
+  },
+  {
+   "id": "docs-generate",
+   "title": "Generate the documentation",
+   "match": "dbt\\s+docs\\s+generate",
+   "steps": [
+    {
+     "say": "Open Catalog under Explore in the left navigation.",
+     "screen": "Catalog",
+     "zone": "nav",
+     "action": "click",
+     "target": "Catalog"
+    },
+    {
+     "say": "Press Generate docs.",
+     "screen": "Catalog",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Generate docs"
+    }
+   ]
+  },
+  {
+   "id": "source-freshness",
+   "title": "Check source freshness",
+   "match": "dbt\\s+source\\s+freshness",
+   "steps": [
+    {
+     "say": "Open Catalog under Explore in the left navigation.",
+     "screen": "Catalog",
+     "zone": "nav",
+     "action": "click",
+     "target": "Catalog"
+    },
+    {
+     "say": "Press Check source freshness and read the status of each source.",
+     "screen": "Catalog",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Check source freshness"
+    }
+   ]
+  },
+  {
+   "id": "parse",
+   "title": "Parse the project",
+   "match": "dbt\\s+parse(?!\\s+--)",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "Press the Parse project button at the top of the File explorer.",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "Parse project"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ]
+  },
+  {
+   "id": "explore-model",
+   "title": "Read a model in the Catalog",
+   "match": "(?:Explore and read\\s+|open\\s+(?=\\w+\\s+in\\s+Explore))(\\w+)",
+   "steps": [
+    {
+     "say": "Open Catalog under Explore in the left navigation.",
+     "screen": "Catalog",
+     "zone": "nav",
+     "action": "click",
+     "target": "Catalog"
+    },
+    {
+     "say": "Click the model {1} in the list.",
+     "screen": "Catalog",
+     "zone": "main",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Read its description, columns, tests and lineage.",
+     "screen": "Catalog",
+     "zone": "main",
+     "action": "see",
+     "target": "Lineage"
+    }
+   ]
+  },
+  {
+   "id": "command-bar",
+   "title": "Run any dbt command in the IDE",
+   "match": "\\b(dbt\\s+(?:build|run|test|compile|snapshot|seed|ls|list|parse|debug|show|deps|clean|retry)\\b(?:\\s+(?!and\\b|then\\b|or\\b|in\\b|to\\b|first\\b|again\\b|is\\b|it\\b|from\\b|with\\b|after\\b)(?:--?[\\w-]+|\\\"[^\\\"]*\\\"|[+\\w:.@/][+\\w:.@/-]*\\+?))*)",
+   "steps": [
+    {
+     "say": "Open Studio IDE in the left navigation.",
+     "screen": "Studio IDE",
+     "zone": "nav",
+     "action": "click",
+     "target": "Studio IDE"
+    },
+    {
+     "say": "Click the command bar at the bottom of the IDE.",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "dbt command"
+    },
+    {
+     "say": "Type the command: {1}",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "type",
+     "target": "dbt command",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Run.",
+     "screen": "Studio IDE",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the result in the Commands tab at the bottom.",
+     "screen": "Studio IDE",
+     "zone": "tab",
+     "action": "see",
+     "target": "Commands"
+    }
+   ],
+   "verify": "The Commands tab lists the run with the status of each model and test."
+  }
+ ]
+}

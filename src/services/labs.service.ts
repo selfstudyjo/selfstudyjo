@@ -32,6 +32,7 @@ import type { FileExport } from '@/utils/zipArchive';
 import type {
     Lab, LabGrade, LabProgress, LabSummary, LabTool, LabTrack,
 } from '@/utils/labCatalogue';
+import type { GlossaryIndexRow, GlossaryTerm, LabDefinitions } from '@/utils/labDocs';
 
 export interface OpenLabResponse {
     ok: boolean;
@@ -201,6 +202,47 @@ class LabsService {
             const payload = await apiService.get<{ lab: Lab }>(
                 replica, `/api/labs/${encodeURIComponent(labId)}/`);
             return payload?.lab || null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * The Definitions window's payload: the track overview and every term the
+     * lab uses. Fetched only when the window opens - it is teaching text most
+     * visits never read. `null` on any failure, and the window says so.
+     */
+    async getDefinitions(labId: string): Promise<LabDefinitions | null> {
+        const replica = await this.catalogueReplica();
+        if (!replica) return null;
+        try {
+            return await apiService.get<LabDefinitions>(
+                replica, `/api/labs/${encodeURIComponent(labId)}/definitions/`);
+        } catch {
+            return null;
+        }
+    }
+
+    /** Every term in the glossary, one line each - for "search all terms". */
+    async getGlossaryIndex(): Promise<GlossaryIndexRow[]> {
+        const replica = await this.catalogueReplica();
+        if (!replica) return [];
+        try {
+            const payload = await apiService.get<{ terms: GlossaryIndexRow[] }>(
+                replica, '/api/labs/glossary/');
+            return payload?.terms || [];
+        } catch {
+            return [];
+        }
+    }
+
+    async getGlossaryTerm(termId: string): Promise<GlossaryTerm | null> {
+        const replica = await this.catalogueReplica();
+        if (!replica) return null;
+        try {
+            const payload = await apiService.get<{ term: GlossaryTerm }>(
+                replica, `/api/labs/glossary/${encodeURIComponent(termId)}/`);
+            return payload?.term || null;
         } catch {
             return null;
         }

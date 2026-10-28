@@ -1,0 +1,416 @@
+{
+ "skin": "mlflow",
+ "product": "MLflow",
+ "brand": "#0194e2",
+ "top": "mlflow",
+ "nav": [
+  "Experiments",
+  "Models",
+  "Prompts"
+ ],
+ "recipes": [
+  {
+   "id": "experiment-create",
+   "title": "Create an experiment",
+   "match": "mlflow\\s+experiments\\s+create\\s+(?:--experiment-name|-n)\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Experiments in the top bar.",
+     "screen": "Experiments",
+     "zone": "top",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "In the Experiments list on the left, press the plus button (New Experiment).",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "New Experiment"
+    },
+    {
+     "say": "Type {1} as the Experiment Name.",
+     "screen": "Create Experiment",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Experiment Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create Experiment",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ],
+   "verify": "The new experiment appears in the Experiments list and opens."
+  },
+  {
+   "id": "model-register",
+   "title": "Register a run's model",
+   "match": "mlflow\\s+models\\s+register\\s+--name\\s+([\\w.-]+)\\s+--run-id\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Experiments in the top bar and pick the experiment that holds the run.",
+     "screen": "Experiments",
+     "zone": "top",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "In the runs table, click the Run Name of the run you want (its run ID is {2}).",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "Run Name"
+    },
+    {
+     "say": "On the run page, press Register model.",
+     "screen": "Run",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Register model"
+    },
+    {
+     "say": "In Model, choose + Create New Model, or pick {1} if it already exists.",
+     "screen": "Register Model",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Model",
+     "value": "+ Create New Model"
+    },
+    {
+     "say": "Type {1} as the Model Name.",
+     "screen": "Register Model",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Model Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Register.",
+     "screen": "Register Model",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Register"
+    }
+   ],
+   "verify": "A new version of the model appears under Models."
+  },
+  {
+   "id": "model-transition",
+   "title": "Transition a model version to a stage",
+   "match": "mlflow\\s+models\\s+transition\\s+--name\\s+([\\w.-]+)\\s+--version\\s+(\\d+)\\s+--stage\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Models in the top bar.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Click the model {1}.",
+     "screen": "Registered Models",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the Versions table, press the actions button at the end of the Version {2} row.",
+     "screen": "Model",
+     "zone": "main",
+     "action": "click",
+     "target": "Actions for version {2}"
+    },
+    {
+     "say": "Under Transition to, choose {3}.",
+     "screen": "Model",
+     "zone": "main",
+     "action": "click",
+     "target": "{3}"
+    },
+    {
+     "say": "Read the Stage Transition message and press OK.",
+     "screen": "Stage Transition",
+     "zone": "dialog",
+     "action": "click",
+     "target": "OK"
+    }
+   ],
+   "verify": "The Stage column of that version shows the new stage."
+  },
+  {
+   "id": "model-set-alias",
+   "title": "Give a model version an alias",
+   "match": "mlflow\\s+models\\s+set-alias\\s+--name\\s+([\\w.-]+)\\s+--alias\\s+([\\w.-]+)\\s+--version\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Open Models in the top bar.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Click the model {1}.",
+     "screen": "Registered Models",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the Versions table, click Version {3}.",
+     "screen": "Model",
+     "zone": "main",
+     "action": "click",
+     "target": "Version {3}"
+    },
+    {
+     "say": "Next to Aliases, press Add.",
+     "screen": "Model version",
+     "zone": "main",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Type {2} in the alias box and press Add.",
+     "screen": "Add/Edit alias",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Alias",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save aliases.",
+     "screen": "Add/Edit alias",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save aliases"
+    }
+   ],
+   "verify": "The version shows @ {2} next to Aliases."
+  },
+  {
+   "id": "model-create",
+   "title": "Create an empty registered model",
+   "match": "mlflow\\s+models\\s+create\\s+--name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Models in the top bar.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Press Create Model.",
+     "screen": "Registered Models",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create Model"
+    },
+    {
+     "say": "Type {1} as the Model name.",
+     "screen": "Create Model",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Model name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create Model",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "torchserve-start",
+   "title": "Serve a model with TorchServe",
+   "match": "torchserve\\s+--start\\s+--models\\s+([\\w.-]+)=([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Models in the top bar.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Click the model {1}.",
+     "screen": "Registered Models",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Under Serving endpoints, press Deploy.",
+     "screen": "Model",
+     "zone": "main",
+     "action": "click",
+     "target": "Deploy"
+    },
+    {
+     "say": "Pick the version to deploy.",
+     "screen": "Deploy model version",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Version"
+    },
+    {
+     "say": "Set Deployment target to TorchServe.",
+     "screen": "Deploy model version",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Deployment target",
+     "value": "TorchServe"
+    },
+    {
+     "say": "Press Deploy.",
+     "screen": "Deploy model version",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Deploy"
+    }
+   ],
+   "verify": "The endpoint appears as Ready under Serving endpoints."
+  },
+  {
+   "id": "torchserve-list",
+   "title": "See what is being served",
+   "match": "torchserve\\s+--list",
+   "steps": [
+    {
+     "say": "Open Models in the top bar and click the model.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Read the Serving endpoints table: each row is a running endpoint.",
+     "screen": "Model",
+     "zone": "main",
+     "action": "see",
+     "target": "Serving endpoints"
+    }
+   ]
+  },
+  {
+   "id": "models-list",
+   "title": "See the registered models",
+   "match": "mlflow\\s+models\\s+list",
+   "steps": [
+    {
+     "say": "Open Models in the top bar.",
+     "screen": "Registered Models",
+     "zone": "top",
+     "action": "click",
+     "target": "Models"
+    },
+    {
+     "say": "Read the list; click a model to see its versions and their Stage.",
+     "screen": "Registered Models",
+     "zone": "main",
+     "action": "see",
+     "target": "Registered Models"
+    }
+   ]
+  },
+  {
+   "id": "runs-list",
+   "title": "See the runs",
+   "match": "mlflow\\s+runs\\s+list",
+   "steps": [
+    {
+     "say": "Open Experiments in the top bar.",
+     "screen": "Experiments",
+     "zone": "top",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "Pick the experiment in the list on the left.",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "Read the runs table: Run Name, status and metrics. Click a run to see its run ID.",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "see",
+     "target": "Run Name"
+    }
+   ]
+  },
+  {
+   "id": "experiment-delete",
+   "title": "Delete an experiment",
+   "match": "mlflow\\s+experiments\\s+delete\\s+--experiment-id\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Experiments in the top bar.",
+     "screen": "Experiments",
+     "zone": "top",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "In the Experiments list, press the More actions button beside the experiment.",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "More actions"
+    },
+    {
+     "say": "Choose Delete.",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "Delete"
+    },
+    {
+     "say": "Confirm with Delete.",
+     "screen": "Delete Experiment",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "run-delete",
+   "title": "Delete a run",
+   "match": "mlflow\\s+runs\\s+delete\\s+--run-id\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Experiments in the top bar and pick the experiment.",
+     "screen": "Experiments",
+     "zone": "top",
+     "action": "click",
+     "target": "Experiments"
+    },
+    {
+     "say": "Click the run in the runs table.",
+     "screen": "Experiments",
+     "zone": "main",
+     "action": "click",
+     "target": "Run Name"
+    },
+    {
+     "say": "On the run page, press Delete.",
+     "screen": "Run",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  }
+ ]
+}

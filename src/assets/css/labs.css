@@ -2431,6 +2431,22 @@
 
 .sl-brief-gui p { margin: 0 0 0.5rem; }
 
+/* The brief's Definitions card: first thing in the pane, for somebody new. */
+.sl-defs-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    margin: 0 0 1rem;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgb(var(--sfs-accent-2-rgb, 244 114 182) / 0.4);
+    border-radius: var(--sl-radius-sm);
+    background: linear-gradient(120deg, rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14), rgb(var(--sfs-accent-2-rgb, 244 114 182) / 0.1));
+    color: var(--sfs-text, #e6e8ef);
+}
+
+.sl-defs-card__text { flex: 1 1 18rem; min-width: 0; font-size: 0.92rem; line-height: 1.5; }
+
 .sl-brief-gui__tools {
     display: flex;
     flex-wrap: wrap;

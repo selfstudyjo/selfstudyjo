@@ -1,0 +1,1812 @@
+{
+ "skin": "servicenow",
+ "product": "ServiceNow",
+ "brand": "#032d42",
+ "top": "ServiceNow",
+ "nav": [
+  "All",
+  "Incident",
+  "Major Incidents",
+  "Problem",
+  "Change",
+  "On-Call Scheduling",
+  "Event Management",
+  "Service Level Management"
+ ],
+ "recipes": [
+  {
+   "id": "inc-create",
+   "title": "Create an incident",
+   "match": "snow\\s+incident\\s+create\\s+--short\\s+\\\"([^\\\"]*)\\\"(?:\\s+--ci\\s+([\\w.-]+))?(?:\\s+--impact\\s+(\\d))?(?:\\s+--urgency\\s+(\\d))?(?:\\s+--group\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose Create New.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "Create New"
+    },
+    {
+     "say": "Type the Short description: {1}",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "type",
+     "target": "Short description",
+     "value": "{1}"
+    },
+    {
+     "say": "Pick the Configuration item {2}.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Configuration item",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Set Impact to {3}.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Impact",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Set Urgency to {4}.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Urgency",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Set Assignment group to {5}.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Assignment group",
+     "value": "{5}",
+     "optional": true
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "Incident - New record",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Submit"
+    }
+   ],
+   "verify": "The new incident number (INC...) appears in the list."
+  },
+  {
+   "id": "inc-ack",
+   "title": "Acknowledge an incident",
+   "match": "snow\\s+incident\\s+ack\\s+(INC\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Assign to me. This starts work and stops the pick-up clock.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Assign to me"
+    }
+   ],
+   "verify": "State becomes In Progress and Assigned to shows your name."
+  },
+  {
+   "id": "inc-assign",
+   "title": "Assign an incident to a group",
+   "match": "snow\\s+incident\\s+assign\\s+(INC\\d+)\\s+--group\\s+\\\"([^\\\"]*)\\\"",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Set Assignment group to {2}.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Assignment group",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Update.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Update"
+    }
+   ]
+  },
+  {
+   "id": "inc-priority",
+   "title": "Change an incident's priority",
+   "match": "snow\\s+incident\\s+priority\\s+(INC\\d+)\\s+--impact\\s+(\\d)\\s+--urgency\\s+(\\d)(?:\\s+--reason\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Set Impact to {2}.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Impact",
+     "value": "{2}"
+    },
+    {
+     "say": "Set Urgency to {3}. Priority is calculated from the two.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Urgency",
+     "value": "{3}"
+    },
+    {
+     "say": "Type the Reason for priority change.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "type",
+     "target": "Reason for priority change",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Update.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Update"
+    }
+   ],
+   "verify": "Priority shows the new value."
+  },
+  {
+   "id": "inc-comment",
+   "title": "Post a customer comment",
+   "match": "snow\\s+incident\\s+comment\\s+(INC\\d+)\\s+--text\\s+\\\"([^\\\"]*)\\\"",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "On the Notes tab, choose Additional comments (Customer visible).",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "tab",
+     "action": "click",
+     "target": "Additional comments"
+    },
+    {
+     "say": "Type the comment.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "type",
+     "target": "Additional comments",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Post.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "Post"
+    }
+   ],
+   "verify": "The comment appears in the activity stream."
+  },
+  {
+   "id": "inc-worknote",
+   "title": "Add a work note",
+   "match": "snow\\s+incident\\s+worknote\\s+(INC\\d+)\\s+--text\\s+\\\"([^\\\"]*)\\\"",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "On the Notes tab, choose Work notes.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "tab",
+     "action": "click",
+     "target": "Work notes"
+    },
+    {
+     "say": "Type the work note.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "type",
+     "target": "Work notes",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Post.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "Post"
+    }
+   ],
+   "verify": "The work note appears in the activity stream (only the team sees it)."
+  },
+  {
+   "id": "inc-hold",
+   "title": "Put an incident on hold",
+   "match": "snow\\s+incident\\s+hold\\s+(INC\\d+)\\s+--reason\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press On Hold.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "On Hold"
+    },
+    {
+     "say": "Choose the On hold reason ({2}).",
+     "screen": "Place on hold",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Reason",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Place on hold.",
+     "screen": "Place on hold",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Place on hold"
+    }
+   ],
+   "verify": "State shows On Hold, or a message explains why it was refused."
+  },
+  {
+   "id": "inc-resolve",
+   "title": "Resolve an incident",
+   "match": "snow\\s+incident\\s+resolve\\s+(INC\\d+)\\s+--code\\s+\\\"([^\\\"]*)\\\"(?:\\s+--notes\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Resolution Information tab.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "tab",
+     "action": "click",
+     "target": "Resolution Information"
+    },
+    {
+     "say": "Choose the Resolution code {2}.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "select",
+     "target": "Resolution code",
+     "value": "{2}"
+    },
+    {
+     "say": "Type the Resolution notes.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "type",
+     "target": "Resolution notes",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Press Resolve.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Resolve"
+    }
+   ],
+   "verify": "State becomes Resolved."
+  },
+  {
+   "id": "inc-show",
+   "title": "Open an incident",
+   "match": "snow\\s+incident\\s+show\\s+(INC\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the incident {1} from the list.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read State, Priority, Assignment group and the activity stream.",
+     "screen": "{1}",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "see",
+     "target": "State"
+    }
+   ]
+  },
+  {
+   "id": "inc-list",
+   "title": "See the incident list",
+   "match": "snow\\s+incident\\s+list\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Incident, choose All.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Read each incident's priority, state and assignment.",
+     "screen": "Incidents",
+     "nav": "Incident",
+     "zone": "main",
+     "action": "see",
+     "target": "Incidents"
+    }
+   ]
+  },
+  {
+   "id": "inc-sla",
+   "title": "See an incident's SLAs",
+   "match": "snow\\s+sla(?:\\s+(INC\\d+))?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Service Level Management, choose Task SLAs.",
+     "screen": "Task SLAs",
+     "nav": "Service Level Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Task SLAs"
+    },
+    {
+     "say": "Find the incident's rows and read Stage, Business time left and Has breached.",
+     "screen": "Task SLAs",
+     "nav": "Service Level Management",
+     "zone": "main",
+     "action": "see",
+     "target": "Stage"
+    }
+   ]
+  },
+  {
+   "id": "prb-create",
+   "title": "Create a problem",
+   "match": "snow\\s+problem\\s+create\\s+--short\\s+\\\"([^\\\"]*)\\\"(?:\\s+--incidents\\s+([\\w,]+))?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose Create New.",
+     "screen": "Problem - New record",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "Create New"
+    },
+    {
+     "say": "Type the Problem statement: {1}",
+     "screen": "Problem - New record",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "type",
+     "target": "Problem statement",
+     "value": "{1}"
+    },
+    {
+     "say": "Under Related incidents add {2}.",
+     "screen": "Problem - New record",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "click",
+     "target": "Add incident",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "Problem - New record",
+     "nav": "Problem",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Submit"
+    }
+   ],
+   "verify": "The new problem number (PRB...) is shown."
+  },
+  {
+   "id": "prb-rca",
+   "title": "Record the cause notes",
+   "match": "snow\\s+problem\\s+rca\\s+(PRB\\d+)\\s+--cause\\s+\\\"([^\\\"]*)\\\"",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the problem {1}.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Type the Cause notes.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "type",
+     "target": "Cause notes",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Update and read any refusal.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Update"
+    }
+   ]
+  },
+  {
+   "id": "prb-workaround",
+   "title": "Record the workaround",
+   "match": "snow\\s+problem\\s+workaround\\s+(PRB\\d+)\\s+--text\\s+\\\"([^\\\"]*)\\\"",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the problem {1}.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Type the Workaround.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "type",
+     "target": "Workaround",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Update and read any refusal.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Update"
+    }
+   ]
+  },
+  {
+   "id": "prb-fix",
+   "title": "Link the fix change",
+   "match": "snow\\s+problem\\s+fix\\s+(PRB\\d+)\\s+--change\\s+(CHG\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the problem {1}.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Set Fix change to {2}.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "select",
+     "target": "Fix change",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Update.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Update"
+    }
+   ]
+  },
+  {
+   "id": "prb-close",
+   "title": "Resolve a problem",
+   "match": "snow\\s+problem\\s+close\\s+(PRB\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the problem {1}.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Resolve.",
+     "screen": "{1}",
+     "nav": "Problem",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Resolve"
+    }
+   ]
+  },
+  {
+   "id": "prb-show",
+   "title": "Open a problem",
+   "match": "snow\\s+problem\\s+show\\s+(PRB\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the problem {1} and read State, Cause notes, Workaround and Fix change.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "prb-list",
+   "title": "See the problem list",
+   "match": "snow\\s+problem\\s+list\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Problem, choose All.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Read the problems and their states.",
+     "screen": "Problems",
+     "nav": "Problem",
+     "zone": "main",
+     "action": "see",
+     "target": "Problems"
+    }
+   ]
+  },
+  {
+   "id": "chg-standard",
+   "title": "Create a standard change",
+   "match": "snow\\s+change\\s+create\\s+--type\\s+standard\\s+--template\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose Create New.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "Create New"
+    },
+    {
+     "say": "Find the template {1} under Standard Change Templates.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Use template.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "Use template"
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Submit"
+    }
+   ]
+  },
+  {
+   "id": "chg-create",
+   "title": "Create a normal or emergency change",
+   "match": "snow\\s+change\\s+create\\s+--type\\s+(normal|emergency)(?:\\s+--short\\s+\\\"([^\\\"]*)\\\")?(?:.*?--start\\s+(\\+\\w+))?(?:.*?--duration\\s+(\\w+))?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose Create New.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "Create New"
+    },
+    {
+     "say": "Choose the change model {1}.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Type the Short description: {2}",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "main",
+     "action": "type",
+     "target": "Short description",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Fill in Risk, Implementation plan, Backout plan and Test plan from the brief.",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "main",
+     "action": "type",
+     "target": "Implementation plan"
+    },
+    {
+     "say": "Set Planned start date to {3}.",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "main",
+     "action": "type",
+     "target": "Planned start date",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Set Duration to {4}.",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "main",
+     "action": "type",
+     "target": "Duration",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "Change Request",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Submit"
+    }
+   ],
+   "verify": "The new change number (CHG...) is shown in state New."
+  },
+  {
+   "id": "chg-submit",
+   "title": "Request approval for a change",
+   "match": "snow\\s+change\\s+submit\\s+(CHG\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose All.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the change {1}.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Request Approval and read any refusal.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Request Approval"
+    }
+   ]
+  },
+  {
+   "id": "chg-approve",
+   "title": "Approve a change",
+   "match": "snow\\s+change\\s+approve\\s+(CHG\\d+)(?:\\s+--as\\s+(\\w+))?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose All.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the change {1}.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Approve (CAB, or ECAB for an emergency change) and read any refusal.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Approve (CAB)"
+    }
+   ]
+  },
+  {
+   "id": "chg-implement",
+   "title": "Start implementing a change",
+   "match": "snow\\s+change\\s+implement\\s+(CHG\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose All.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the change {1}.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Implement.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Implement"
+    }
+   ]
+  },
+  {
+   "id": "chg-complete",
+   "title": "Complete a change",
+   "match": "snow\\s+change\\s+complete\\s+(CHG\\d+)\\s+--result\\s+(\\w+)(?:\\s+--notes\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose All.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Open the change {1}.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose the Result {2}.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "main",
+     "action": "select",
+     "target": "Result",
+     "value": "{2}"
+    },
+    {
+     "say": "Type the Close notes.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "main",
+     "action": "type",
+     "target": "Close notes",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Press Complete.",
+     "screen": "{1}",
+     "nav": "Change",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Complete"
+    }
+   ]
+  },
+  {
+   "id": "chg-templates",
+   "title": "See the standard change templates",
+   "match": "snow\\s+change\\s+templates\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose Create New.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "Create New"
+    },
+    {
+     "say": "Read the Standard Change Templates.",
+     "screen": "Create New Change",
+     "nav": "Change",
+     "zone": "main",
+     "action": "see",
+     "target": "Standard Change Templates"
+    }
+   ]
+  },
+  {
+   "id": "chg-list",
+   "title": "See the change list",
+   "match": "snow\\s+change\\s+(?:list|show)\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Change, choose All.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "nav",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Read each change's number, type and state.",
+     "screen": "Change Requests",
+     "nav": "Change",
+     "zone": "main",
+     "action": "see",
+     "target": "Change Requests"
+    }
+   ]
+  },
+  {
+   "id": "mim-declare",
+   "title": "Promote to a major incident",
+   "match": "snow\\s+major\\s+declare\\s+(INC\\d+)\\s+--manager\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Find {1} under Major incidents and candidates and press Promote.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Promote"
+    },
+    {
+     "say": "Choose {2} as the Major incident manager.",
+     "screen": "Promote to Major Incident",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Major incident manager",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Promote.",
+     "screen": "Promote to Major Incident",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Promote"
+    }
+   ]
+  },
+  {
+   "id": "mim-bridge",
+   "title": "Open the bridge",
+   "match": "snow\\s+major\\s+bridge\\s+(INC\\d+)\\s+--url\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Open the major incident {1}.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Type the Bridge URL.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "type",
+     "target": "Bridge URL",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Open bridge.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Open bridge"
+    }
+   ]
+  },
+  {
+   "id": "mim-update",
+   "title": "Send a communications update",
+   "match": "snow\\s+major\\s+update\\s+(INC\\d+)\\s+--audience\\s+([\\w|]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Open the major incident {1}.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose the Audience ({2}).",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "select",
+     "target": "Audience",
+     "value": "{2}"
+    },
+    {
+     "say": "Type the update: impact, action, next update time.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "type",
+     "target": "Update text"
+    },
+    {
+     "say": "Press Send update.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Send update"
+    }
+   ]
+  },
+  {
+   "id": "mim-resolve",
+   "title": "Stand down a major incident",
+   "match": "snow\\s+major\\s+resolve\\s+(INC\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Open the major incident {1}.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Under Stand down press Resolve major incident.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Resolve major incident"
+    }
+   ]
+  },
+  {
+   "id": "mim-pir",
+   "title": "Attach the post-incident review",
+   "match": "snow\\s+major\\s+pir\\s+(INC\\d+)\\s+--file\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Open the major incident {1}.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Under Post Incident Review choose the file {2}.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "select",
+     "target": "PIR file",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Attach PIR and read any refusal.",
+     "screen": "MAJOR INCIDENT",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Attach PIR"
+    }
+   ]
+  },
+  {
+   "id": "mim-show",
+   "title": "Open a major incident",
+   "match": "snow\\s+major\\s+show\\s+(INC\\d+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Major Incidents, choose Major Incident Workbench.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Major Incident Workbench"
+    },
+    {
+     "say": "Open {1} and read Bridge, Updates sent and Missed cadence.",
+     "screen": "Major Incident Workbench",
+     "nav": "Major Incidents",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "oc-set",
+   "title": "Set the on-call rota",
+   "match": "snow\\s+oncall\\s+set\\s+--group\\s+\\\"([^\\\"]*)\\\"\\s+--primary\\s+([\\w.-]+)\\s+--secondary\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under On-Call Scheduling, choose My On-Call Schedule.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "nav",
+     "action": "click",
+     "target": "My On-Call Schedule"
+    },
+    {
+     "say": "Choose the Group {1}.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "select",
+     "target": "Group",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose {2} as Primary.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "select",
+     "target": "Primary",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose {3} as Secondary.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "select",
+     "target": "Secondary",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Save and read any refusal.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "oc-policy",
+   "title": "Set the escalation policy",
+   "match": "snow\\s+oncall\\s+policy\\s+--group\\s+\\\"([^\\\"]*)\\\"\\s+--steps\\s+([\\w:,]+)",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under On-Call Scheduling, choose My On-Call Schedule.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "nav",
+     "action": "click",
+     "target": "My On-Call Schedule"
+    },
+    {
+     "say": "Choose the Group {1}.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "select",
+     "target": "Group",
+     "value": "{1}"
+    },
+    {
+     "say": "Under Escalation policy press Add escalation step for each step in {2}.",
+     "screen": "Escalation policy",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "click",
+     "target": "Add escalation step"
+    },
+    {
+     "say": "Set Notify and After (minutes unacknowledged) for each step.",
+     "screen": "Escalation policy",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "type",
+     "target": "After (minutes)"
+    },
+    {
+     "say": "Press Save policy.",
+     "screen": "Escalation policy",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "click",
+     "target": "Save policy"
+    }
+   ]
+  },
+  {
+   "id": "oc-show",
+   "title": "See who is on call",
+   "match": "snow\\s+(?:oncall\\s+show|group\\s+show)\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under On-Call Scheduling, choose My On-Call Schedule.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "nav",
+     "action": "click",
+     "target": "My On-Call Schedule"
+    },
+    {
+     "say": "Read Primary, Secondary, the escalation policy and Pages.",
+     "screen": "On-Call Scheduling",
+     "nav": "On-Call Scheduling",
+     "zone": "main",
+     "action": "see",
+     "target": "Pages"
+    }
+   ]
+  },
+  {
+   "id": "em-rule",
+   "title": "Add an event rule",
+   "match": "snow\\s+event\\s+rule\\s+add\\s+--name\\s+([\\w.-]+)\\s+--source\\s+(\\w+)\\s+--match\\s+node=(\\S+)\\s+--impact\\s+(\\d)\\s+--urgency\\s+(\\d)(?:\\s+--group\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Event Management, choose Event Rules.",
+     "screen": "Event Management",
+     "nav": "Event Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Event Rules"
+    },
+    {
+     "say": "Press New.",
+     "screen": "Event Rules",
+     "nav": "Event Management",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "New"
+    },
+    {
+     "say": "Type {1} as the Name and choose Source {2}.",
+     "screen": "New Event Rule",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Node pattern {3}.",
+     "screen": "New Event Rule",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Pattern",
+     "value": "{3}"
+    },
+    {
+     "say": "Set Impact {4} and Urgency {5}.",
+     "screen": "New Event Rule",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Impact",
+     "value": "{4}"
+    },
+    {
+     "say": "Choose the Assignment group {6}.",
+     "screen": "New Event Rule",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Assignment group",
+     "value": "{6}",
+     "optional": true
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "New Event Rule",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Submit"
+    }
+   ]
+  },
+  {
+   "id": "em-rules",
+   "title": "See event rules",
+   "match": "snow\\s+event\\s+rule\\s+list\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Event Management, choose Event Rules.",
+     "screen": "Event Management",
+     "nav": "Event Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Event Rules"
+    },
+    {
+     "say": "Read the rules, their filters and priorities.",
+     "screen": "Event Rules",
+     "nav": "Event Management",
+     "zone": "main",
+     "action": "see",
+     "target": "Event Rules"
+    }
+   ]
+  },
+  {
+   "id": "em-connector",
+   "title": "Add an inbound connector",
+   "match": "snow\\s+integration\\s+add\\s+(\\w+)(?:\\s+--group\\s+\\\"([^\\\"]*)\\\")?",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Event Management, choose Connectors.",
+     "screen": "Event Management",
+     "nav": "Event Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connectors"
+    },
+    {
+     "say": "Press New.",
+     "screen": "Connectors",
+     "nav": "Event Management",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "New"
+    },
+    {
+     "say": "Choose the Connector definition for {1}.",
+     "screen": "Connector",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Connector definition",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Default assignment group {2}.",
+     "screen": "Connector",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Default assignment group",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Tick Auto-resolve on OK and press Submit.",
+     "screen": "Connector",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Submit"
+    }
+   ]
+  },
+  {
+   "id": "em-events",
+   "title": "See incoming events",
+   "match": "snow\\s+event\\s+list\\b",
+   "steps": [
+    {
+     "say": "Open the All menu in the top bar.",
+     "screen": "Service Operations",
+     "zone": "top",
+     "action": "click",
+     "target": "All"
+    },
+    {
+     "say": "Under Event Management, choose All Events.",
+     "screen": "Event Management",
+     "nav": "Event Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "All Events"
+    },
+    {
+     "say": "Read the events and the incidents they opened.",
+     "screen": "All Events",
+     "nav": "Event Management",
+     "zone": "main",
+     "action": "see",
+     "target": "All Events"
+    }
+   ]
+  }
+ ]
+}

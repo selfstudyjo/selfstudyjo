@@ -1,0 +1,59 @@
+{
+  "skin": "workspace",
+  "product": "Lab workspace",
+  "brand": "#4f46e5",
+  "top": "Lab workspace",
+  "nav": ["Brief", "Files", "Terminal", "Query", "Web", "Tutor"],
+  "recipes": [
+    {
+      "id": "create-file",
+      "title": "Create the file in the Files explorer",
+      "match": "(?!)(.)",
+      "steps": [
+        {"say": "Open the Files tab at the top of the workbench.", "screen": "Explorer", "nav": "Files", "zone": "tab", "action": "click", "target": "Files"},
+        {"say": "Press New File (or right-click a folder and choose New File).", "screen": "Explorer", "nav": "Files", "zone": "toolbar", "action": "click", "target": "New File"},
+        {"say": "Type the full path, folders included: {1}", "screen": "Explorer", "nav": "Files", "zone": "main", "action": "type", "target": "file name", "value": "{1}"},
+        {"say": "Write the contents the task asks for in the editor on the right.", "screen": "{1}", "nav": "Files", "zone": "editor", "action": "type", "target": "File contents", "value": "..."},
+        {"say": "Press Save (or Ctrl+S). The dot for unsaved changes disappears.", "screen": "{1}", "nav": "Files", "zone": "toolbar", "action": "click", "target": "Save"}
+      ],
+      "verify": "The file appears in the tree, and the terminal sees it too: try ls or cat."
+    },
+    {
+      "id": "edit-file",
+      "title": "Edit the file in the Files explorer",
+      "match": "(?!)(.)",
+      "steps": [
+        {"say": "Open the Files tab at the top of the workbench.", "screen": "Explorer", "nav": "Files", "zone": "tab", "action": "click", "target": "Files"},
+        {"say": "Expand the folders and click the file {1}. Use Filter files if the tree is long.", "screen": "Explorer", "nav": "Files", "zone": "main", "action": "click", "target": "{1}"},
+        {"say": "Change the contents in the editor exactly as the task says.", "screen": "{1}", "nav": "Files", "zone": "editor", "action": "type", "target": "File contents", "value": "..."},
+        {"say": "Press Save (or Ctrl+S). An unsaved file is not seen by the checker.", "screen": "{1}", "nav": "Files", "zone": "toolbar", "action": "click", "target": "Save"}
+      ],
+      "verify": "Reopen the file: your change is still there after Refresh."
+    },
+    {
+      "id": "run-query",
+      "title": "Run the statement in the query editor",
+      "match": "(?!)(.)",
+      "steps": [
+        {"say": "Open the query editor tab at the top of the workbench.", "screen": "Query", "nav": "Query", "zone": "tab", "action": "click", "target": "Query"},
+        {"say": "Write the statement in the editor. Table names must match exactly, e.g. {1}.", "screen": "Query", "nav": "Query", "zone": "editor", "action": "type", "target": "Statement", "value": "SELECT ... FROM {1}", "optional": true},
+        {"say": "Press Run (or Ctrl+Enter).", "screen": "Query", "nav": "Query", "zone": "toolbar", "action": "click", "target": "Run"},
+        {"say": "Read the result grid below the editor and compare it with what the task asks.", "screen": "Query", "nav": "Query", "zone": "main", "action": "see", "target": "Results"}
+      ],
+      "verify": "The result grid shows the rows the task describes."
+    },
+    {
+      "id": "edit-web",
+      "title": "Build it in the web playground",
+      "match": "(?!)(.)",
+      "steps": [
+        {"say": "Open the web playground tab.", "screen": "Web", "nav": "Web", "zone": "tab", "action": "click", "target": "Web"},
+        {"say": "Pick the {1} editor.", "screen": "Web", "nav": "Web", "zone": "toolbar", "action": "click", "target": "{1}"},
+        {"say": "Write the code the task asks for.", "screen": "Web", "nav": "Web", "zone": "editor", "action": "type", "target": "{1}", "value": "..."},
+        {"say": "Press Run to render the page in the result pane.", "screen": "Web", "nav": "Web", "zone": "toolbar", "action": "click", "target": "Run"},
+        {"say": "Look at the result and check it matches the task.", "screen": "Web", "nav": "Web", "zone": "main", "action": "see", "target": "Result"}
+      ],
+      "verify": "Run saves the code too, so Check my work grades what you see."
+    }
+  ]
+}

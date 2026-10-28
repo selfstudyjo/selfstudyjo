@@ -1,0 +1,1151 @@
+{
+ "skin": "datahub",
+ "product": "DataHub",
+ "brand": "#1890ff",
+ "top": "DataHub",
+ "nav": [
+  "Glossary",
+  "Domains",
+  "Monitors",
+  "Incidents",
+  "Data Contracts",
+  "Great Expectations",
+  "PII Audit",
+  "GDPR Erasure",
+  "Ingestion"
+ ],
+ "recipes": [
+  {
+   "id": "term-add-column",
+   "title": "Attach a glossary term to a column",
+   "match": "datahub\\s+term\\s+add\\s+--urn\\s+(\\S+)\\s+--term\\s+\\\"([^\\\"]+)\\\"\\s+--column\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Schema tab.",
+     "screen": "Dataset",
+     "zone": "tab",
+     "action": "click",
+     "target": "Schema"
+    },
+    {
+     "say": "In the {3} row press Add Term.",
+     "screen": "Dataset",
+     "zone": "main",
+     "action": "click",
+     "target": "Add Term"
+    },
+    {
+     "say": "Pick the term {2}.",
+     "screen": "Add Glossary Terms",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Glossary Term",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add Glossary Terms",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "term-add",
+   "title": "Attach a glossary term to a dataset",
+   "match": "datahub\\s+term\\s+add\\s+--urn\\s+(\\S+)\\s+--term\\s+\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the right sidebar press Add Terms.",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add Terms"
+    },
+    {
+     "say": "Pick the term {2}.",
+     "screen": "Add Glossary Terms",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Glossary Term",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add Glossary Terms",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "term-create",
+   "title": "Create a glossary term",
+   "match": "datahub\\s+term\\s+create\\s+--name\\s+\\\"([^\\\"]+)\\\"|New term:\\s+([\\w ]+?)\\s+\\(",
+   "steps": [
+    {
+     "say": "Open Glossary in the left navigation.",
+     "screen": "Glossary",
+     "zone": "nav",
+     "action": "click",
+     "target": "Glossary"
+    },
+    {
+     "say": "Press Add Term.",
+     "screen": "Glossary",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add Term"
+    },
+    {
+     "say": "Type the Name and the business Definition from the brief.",
+     "screen": "Create Glossary Term",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Term name"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create Glossary Term",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "domain-create",
+   "title": "Create a domain",
+   "match": "datahub\\s+domain\\s+create\\s+--name\\s+(\\S+?),?\\s+--owner\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Domains in the left navigation.",
+     "screen": "Domains",
+     "zone": "nav",
+     "action": "click",
+     "target": "Domains"
+    },
+    {
+     "say": "Press New Domain.",
+     "screen": "Domains",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "New Domain"
+    },
+    {
+     "say": "Type {1} as the Name and {2} as the Owner.",
+     "screen": "Create New Domain",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Domain name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create New Domain",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "domain-set",
+   "title": "Put a dataset in a domain",
+   "match": "datahub\\s+domain\\s+set\\s+--urn\\s+(\\S+)\\s+--domain\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the right sidebar press Set Domain (or Change Domain).",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "click",
+     "target": "Set Domain"
+    },
+    {
+     "say": "Choose {2}.",
+     "screen": "Set Domain",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Domain",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Set Domain.",
+     "screen": "Set Domain",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Set Domain"
+    }
+   ]
+  },
+  {
+   "id": "owner-add",
+   "title": "Add an owner to a dataset",
+   "match": "datahub\\s+owner\\s+add\\s+--urn\\s+(\\S+)\\s+--owner\\s+([\\w.-]+)\\s+--type\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the right sidebar press Add Owners.",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add Owners"
+    },
+    {
+     "say": "Type {2} as the Owner.",
+     "screen": "Add Owners",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Owner",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Ownership type {3}.",
+     "screen": "Add Owners",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Ownership type",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add Owners",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "tag-add",
+   "title": "Tag a dataset",
+   "match": "datahub\\s+tag\\s+add\\s+--urn\\s+(\\S+)\\s+--tag\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the right sidebar press Add Tags.",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add Tags"
+    },
+    {
+     "say": "Type the tag {2}.",
+     "screen": "Add Tags",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Tag",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add Tags",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "docs-set",
+   "title": "Write a dataset description",
+   "match": "datahub\\s+docs\\s+set\\s+--urn\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "In the right sidebar press Edit description (or Add Description).",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "click",
+     "target": "Edit description"
+    },
+    {
+     "say": "Type the description from the brief.",
+     "screen": "Edit Description",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Description"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Edit Description",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "impact",
+   "title": "See what depends on a dataset",
+   "match": "datahub\\s+impact\\s+--urn\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Lineage tab and look downstream: every asset and owner that would be affected.",
+     "screen": "Dataset",
+     "zone": "tab",
+     "action": "see",
+     "target": "Lineage"
+    }
+   ]
+  },
+  {
+   "id": "lineage",
+   "title": "Follow the lineage of a dataset",
+   "match": "datahub\\s+lineage\\s+--urn\\s+(\\S+)(?:\\s+--(upstream|downstream))?",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Lineage tab.",
+     "screen": "Dataset",
+     "zone": "tab",
+     "action": "click",
+     "target": "Lineage"
+    },
+    {
+     "say": "Follow the arrows {2}: each box is a dataset, a job or a feature.",
+     "screen": "Dataset",
+     "zone": "main",
+     "action": "see",
+     "target": "Lineage"
+    }
+   ]
+  },
+  {
+   "id": "get",
+   "title": "Open a dataset page",
+   "match": "datahub\\s+get\\s+--urn\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type the dataset name from {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Click the dataset in the results to open its page.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the sidebar: description, owners, tags, terms, domain and contract.",
+     "screen": "Dataset",
+     "zone": "panel",
+     "action": "see",
+     "target": "About"
+    }
+   ]
+  },
+  {
+   "id": "search",
+   "title": "Search the catalog",
+   "match": "datahub\\s+search\\s+(\\\"[^\\\"]+\\\"|\\S+)",
+   "steps": [
+    {
+     "say": "Type {1} in the search box at the top and press Enter.",
+     "screen": "Search",
+     "zone": "top",
+     "action": "type",
+     "target": "Search",
+     "value": "{1}"
+    },
+    {
+     "say": "Read the results: datasets, glossary terms and their platforms.",
+     "screen": "Search",
+     "zone": "main",
+     "action": "see",
+     "target": "Results"
+    }
+   ]
+  },
+  {
+   "id": "ingest",
+   "title": "Run an ingestion recipe",
+   "match": "datahub\\s+ingest\\s+-c\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Ingestion in the left navigation.",
+     "screen": "Ingestion",
+     "zone": "nav",
+     "action": "click",
+     "target": "Ingestion"
+    },
+    {
+     "say": "On the Sources tab find the recipe {1}.",
+     "screen": "Ingestion",
+     "zone": "tab",
+     "action": "see",
+     "target": "Sources"
+    },
+    {
+     "say": "Press Execute on its row and read the result in Details.",
+     "screen": "Ingestion",
+     "zone": "main",
+     "action": "click",
+     "target": "Execute"
+    }
+   ]
+  },
+  {
+   "id": "pii-audit",
+   "title": "Run the PII audit",
+   "match": "datahub\\s+audit\\s+pii",
+   "steps": [
+    {
+     "say": "Open PII Audit in the left navigation.",
+     "screen": "PII Audit",
+     "zone": "nav",
+     "action": "click",
+     "target": "PII Audit"
+    },
+    {
+     "say": "Press Run PII audit and read which PII columns are not masked.",
+     "screen": "PII Audit",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run PII audit"
+    }
+   ]
+  },
+  {
+   "id": "erase-execute",
+   "title": "Execute a GDPR erasure",
+   "match": "datahub\\s+erase\\s+--subject\\s+customer:(\\d+)\\s+--execute",
+   "steps": [
+    {
+     "say": "Open GDPR Erasure in the left navigation.",
+     "screen": "GDPR Erasure",
+     "zone": "nav",
+     "action": "click",
+     "target": "GDPR Erasure"
+    },
+    {
+     "say": "Type {1} as the Data subject.",
+     "screen": "GDPR Erasure",
+     "zone": "main",
+     "action": "type",
+     "target": "Customer id",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Plan erasure (dry run) first, then press Execute erasure.",
+     "screen": "GDPR Erasure",
+     "zone": "main",
+     "action": "click",
+     "target": "Execute erasure"
+    },
+    {
+     "say": "Type the subject to confirm, press Erase, then read the result per system.",
+     "screen": "Execute GDPR erasure?",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Erase"
+    }
+   ]
+  },
+  {
+   "id": "erase-plan",
+   "title": "Plan a GDPR erasure",
+   "match": "datahub\\s+erase\\s+--subject\\s+customer:(\\d+)",
+   "steps": [
+    {
+     "say": "Open GDPR Erasure in the left navigation.",
+     "screen": "GDPR Erasure",
+     "zone": "nav",
+     "action": "click",
+     "target": "GDPR Erasure"
+    },
+    {
+     "say": "Type {1} as the Data subject.",
+     "screen": "GDPR Erasure",
+     "zone": "main",
+     "action": "type",
+     "target": "Customer id",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Plan erasure (dry run) and read what would be deleted and what is retained.",
+     "screen": "GDPR Erasure",
+     "zone": "main",
+     "action": "click",
+     "target": "Plan erasure (dry run)"
+    }
+   ]
+  },
+  {
+   "id": "gx-suite-new",
+   "title": "Create an expectation suite",
+   "match": "gx\\s+suite\\s+new\\s+(\\w+)\\s+--asset\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Expectation Suites tab and press New Suite.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "New Suite"
+    },
+    {
+     "say": "Type {1} as the Suite name and pick the Asset {2}.",
+     "screen": "New Expectation Suite",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Suite name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "New Expectation Suite",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "gx-suite-add",
+   "title": "Add an expectation",
+   "match": "gx\\s+suite\\s+add\\s+(\\w+)\\s+(expect_\\w+)(?:\\s+--column\\s+(\\w+))?(?:\\s+--mostly\\s+([\\d.]+))?",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Expectation Suites tab and press Add Expectation on the suite {1}.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "Add Expectation"
+    },
+    {
+     "say": "Choose the Expectation {2}.",
+     "screen": "Add Expectation",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Expectation",
+     "value": "{2}"
+    },
+    {
+     "say": "Pick the Column {3}.",
+     "screen": "Add Expectation",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Column",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type {4} in Mostly.",
+     "screen": "Add Expectation",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Mostly",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add Expectation",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "gx-suite-remove",
+   "title": "Remove an expectation",
+   "match": "gx\\s+suite\\s+remove\\s+(\\w+)\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Expectation Suites tab and find the suite {1}.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "Expectation Suites"
+    },
+    {
+     "say": "Press the delete button on expectation number {2}.",
+     "screen": "Great Expectations",
+     "zone": "main",
+     "action": "click",
+     "target": "Remove expectation {2}"
+    }
+   ]
+  },
+  {
+   "id": "gx-validate",
+   "title": "Validate a suite",
+   "match": "gx\\s+validate\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Expectation Suites tab and press Validate on the suite {1}.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "Validate"
+    },
+    {
+     "say": "Read the result on the Validation Results tab.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "see",
+     "target": "Validation Results"
+    }
+   ]
+  },
+  {
+   "id": "gx-checkpoint-new",
+   "title": "Create a checkpoint",
+   "match": "gx\\s+checkpoint\\s+new\\s+(\\w+)\\s+--suite\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Checkpoints tab and press New Checkpoint.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "New Checkpoint"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "New Checkpoint",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Checkpoint name",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose {2} as the Expectation suite.",
+     "screen": "New Checkpoint",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Expectation suite",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "New Checkpoint",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "gx-checkpoint-run",
+   "title": "Run a checkpoint",
+   "match": "gx\\s+checkpoint\\s+run\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Checkpoints tab and press Run on {1}.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the result on the Validation Results tab.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "see",
+     "target": "Validation Results"
+    }
+   ]
+  },
+  {
+   "id": "gx-docs",
+   "title": "Build the Data Docs",
+   "match": "gx\\s+docs\\s+build",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Press Build Data Docs.",
+     "screen": "Great Expectations",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Build Data Docs"
+    }
+   ]
+  },
+  {
+   "id": "gx-profile",
+   "title": "Profile a dataset",
+   "match": "gx\\s+profile\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Open the Profiling tab.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "click",
+     "target": "Profiling"
+    },
+    {
+     "say": "Choose {1} as the asset to profile.",
+     "screen": "Great Expectations",
+     "zone": "main",
+     "action": "select",
+     "target": "Asset to profile",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Profile and read the column statistics.",
+     "screen": "Great Expectations",
+     "zone": "main",
+     "action": "click",
+     "target": "Profile"
+    }
+   ]
+  },
+  {
+   "id": "gx-list",
+   "title": "See the suites and checkpoints",
+   "match": "gx\\s+(?:suite\\s+(?:list|show)|checkpoint\\s+list|results)",
+   "steps": [
+    {
+     "say": "Open Great Expectations in the left navigation.",
+     "screen": "Great Expectations",
+     "zone": "nav",
+     "action": "click",
+     "target": "Great Expectations"
+    },
+    {
+     "say": "Read the Expectation Suites, Checkpoints and Validation Results tabs.",
+     "screen": "Great Expectations",
+     "zone": "tab",
+     "action": "see",
+     "target": "Expectation Suites"
+    }
+   ]
+  },
+  {
+   "id": "monitor-create",
+   "title": "Create a monitor",
+   "match": "monitor\\s+create\\s+(freshness|volume|schema|distribution)\\s+--dataset\\s+(\\S+)(?:\\s+--(?:field|column)\\s+(\\w+))?(?:\\s+--threshold\\s+([\\w%]+))?",
+   "steps": [
+    {
+     "say": "Open Monitors in the left navigation.",
+     "screen": "Monitors",
+     "zone": "nav",
+     "action": "click",
+     "target": "Monitors"
+    },
+    {
+     "say": "Press Create monitor.",
+     "screen": "Monitors",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create monitor"
+    },
+    {
+     "say": "Choose the Monitor type {1}.",
+     "screen": "Create Monitor",
+     "zone": "dialog",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose the Asset {2}.",
+     "screen": "Create Monitor",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Asset",
+     "value": "{2}"
+    },
+    {
+     "say": "Pick the field or column {3}.",
+     "screen": "Create Monitor",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Timestamp field or Column",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type {4} as the threshold.",
+     "screen": "Create Monitor",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Max age or Allowed change",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create Monitor",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "monitor-baseline",
+   "title": "Reset a monitor baseline",
+   "match": "monitor\\s+baseline\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Monitors in the left navigation.",
+     "screen": "Monitors",
+     "zone": "nav",
+     "action": "click",
+     "target": "Monitors"
+    },
+    {
+     "say": "Press Reset baseline on the monitor {1}.",
+     "screen": "Monitors",
+     "zone": "main",
+     "action": "click",
+     "target": "Reset baseline"
+    }
+   ]
+  },
+  {
+   "id": "monitor-run-one",
+   "title": "Run one monitor",
+   "match": "monitor\\s+run\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Monitors in the left navigation.",
+     "screen": "Monitors",
+     "zone": "nav",
+     "action": "click",
+     "target": "Monitors"
+    },
+    {
+     "say": "Press Run on the monitor {1} and read its status.",
+     "screen": "Monitors",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    }
+   ]
+  },
+  {
+   "id": "monitor-run",
+   "title": "Run all monitors",
+   "match": "monitor\\s+run(?![\\w-])",
+   "steps": [
+    {
+     "say": "Open Monitors in the left navigation.",
+     "screen": "Monitors",
+     "zone": "nav",
+     "action": "click",
+     "target": "Monitors"
+    },
+    {
+     "say": "Press Run all and read each status.",
+     "screen": "Monitors",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run all"
+    }
+   ]
+  },
+  {
+   "id": "monitor-list",
+   "title": "See the monitors",
+   "match": "monitor\\s+list",
+   "steps": [
+    {
+     "say": "Open Monitors in the left navigation.",
+     "screen": "Monitors",
+     "zone": "nav",
+     "action": "click",
+     "target": "Monitors"
+    },
+    {
+     "say": "Read each monitor, its asset and its status (OK or failing).",
+     "screen": "Monitors",
+     "zone": "main",
+     "action": "see",
+     "target": "Monitors"
+    }
+   ]
+  },
+  {
+   "id": "incident-resolve",
+   "title": "Resolve an incident",
+   "match": "monitor\\s+resolve\\s+(INC-\\d+)",
+   "steps": [
+    {
+     "say": "Open Incidents in the left navigation.",
+     "screen": "Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Incidents"
+    },
+    {
+     "say": "Press Resolve on {1}.",
+     "screen": "Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Resolve"
+    },
+    {
+     "say": "Type the Resolution note from the brief.",
+     "screen": "Resolve Incident",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Resolution note"
+    },
+    {
+     "say": "Press Resolve.",
+     "screen": "Resolve Incident",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Resolve"
+    }
+   ]
+  },
+  {
+   "id": "incident-ack",
+   "title": "Acknowledge an incident",
+   "match": "monitor\\s+ack\\s+(INC-\\d+)",
+   "steps": [
+    {
+     "say": "Open Incidents in the left navigation.",
+     "screen": "Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Incidents"
+    },
+    {
+     "say": "Press Acknowledge on {1}.",
+     "screen": "Incidents",
+     "zone": "main",
+     "action": "click",
+     "target": "Acknowledge"
+    },
+    {
+     "say": "Type the note from the brief.",
+     "screen": "Acknowledge Incident",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Note (optional)"
+    },
+    {
+     "say": "Press Acknowledge.",
+     "screen": "Acknowledge Incident",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Acknowledge"
+    }
+   ]
+  },
+  {
+   "id": "incidents",
+   "title": "See the incidents",
+   "match": "monitor\\s+incidents",
+   "steps": [
+    {
+     "say": "Open Incidents in the left navigation.",
+     "screen": "Incidents",
+     "zone": "nav",
+     "action": "click",
+     "target": "Incidents"
+    },
+    {
+     "say": "Read the open incidents; switch the filter to see resolved ones too.",
+     "screen": "Incidents",
+     "zone": "main",
+     "action": "see",
+     "target": "Incidents"
+    }
+   ]
+  },
+  {
+   "id": "open-page",
+   "title": "Open a DataHub page",
+   "match": "DataHub,? (?:and )?go to (?:the )?(Quality|Contracts|PII|Monitors|Ingestion|Erasure|Glossary)",
+   "steps": [
+    {
+     "say": "Open {1} in the left navigation.",
+     "screen": "DataHub",
+     "zone": "nav",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Use the page as the step describes.",
+     "screen": "{1}",
+     "zone": "main",
+     "action": "see",
+     "target": "{1}"
+    }
+   ]
+  }
+ ]
+}

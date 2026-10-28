@@ -23,6 +23,8 @@ import INSTRUCTIONS from './instructions.fixture.json';
    one town's map, and a replay - all dumped from app 11 after a REAL run of the
    reference solution (see `_carla_solutions.py` in app 11). */
 import carlaFixture from './carla.fixture.json';
+// The Definitions window's payloads, dumped from app 11's real route (see _labdocs/dump_defs.py).
+import DEFINITIONS from './definitions.fixture.json';
 const fixtures: AnyRec = { ...(baseFixtures as AnyRec),
     [(carlaFixture as AnyRec).lab.id]: (carlaFixture as AnyRec).lab,
     ...((carlaFixture as AnyRec).extra_labs || {}) };
@@ -270,6 +272,19 @@ let current: AnyRec = (fixtures as AnyRec)['web-01-html'];
 let shellCwd = '';
 
 export const labsService = {
+    getDefinitions(labId: string) {
+        const all = DEFINITIONS as AnyRec;
+        return delay(all[labId] || all[Object.keys(all)[0]] || null, 300);
+    },
+    getGlossaryIndex() {
+        const rows: AnyRec[] = [];
+        for (const payload of Object.values(DEFINITIONS as AnyRec)) for (const t of payload.terms || []) rows.push({ id: t.id, term: t.term, short: t.short, category: t.category });
+        return delay(rows);
+    },
+    getGlossaryTerm(id: string) {
+        for (const payload of Object.values(DEFINITIONS as AnyRec)) for (const t of payload.terms || []) if (t.id === id) return delay(t);
+        return delay(null);
+    },
     openLab(_username: string, labId: string) {
         if (state === 'loading') return new Promise(() => { /* never resolves */ });
         if (state === 'error') return delay(null);

@@ -1,0 +1,634 @@
+{
+ "skin": "githubdesktop",
+ "product": "GitHub Desktop",
+ "brand": "#0969da",
+ "top": "GitHub Desktop",
+ "nav": [
+  "File",
+  "Edit",
+  "View",
+  "Repository",
+  "Branch",
+  "Help"
+ ],
+ "recipes": [
+  {
+   "id": "ui-commit",
+   "title": "Commit from the Changes tab",
+   "match": "tick (?:it|both files), type the summary (.+?) and press Commit to ([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Tick the checkbox next to each file to commit.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "check",
+     "target": "Changes"
+    },
+    {
+     "say": "Type the Summary: {1}",
+     "screen": "Changes",
+     "zone": "panel",
+     "action": "type",
+     "target": "Summary (required)",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Commit to {2}.",
+     "screen": "Changes",
+     "zone": "panel",
+     "action": "click",
+     "target": "Commit to {2}"
+    }
+   ],
+   "verify": "The commit appears at the top of History."
+  },
+  {
+   "id": "commit",
+   "title": "Commit staged changes",
+   "match": "git\\s+commit\\s+(?:-a\\s+)?-m\\s+\"([^\"]+)\"",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Make sure the files to commit are ticked.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "check",
+     "target": "Changes"
+    },
+    {
+     "say": "Type {1} as the Summary.",
+     "screen": "Changes",
+     "zone": "panel",
+     "action": "type",
+     "target": "Summary (required)",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Commit to <branch> at the bottom.",
+     "screen": "Changes",
+     "zone": "panel",
+     "action": "click",
+     "target": "Commit to"
+    }
+   ],
+   "verify": "The commit appears at the top of History."
+  },
+  {
+   "id": "add-all",
+   "title": "Stage every change",
+   "match": "git\\s+add\\s+(?:\\.|-A|--all)(?![\\w/])",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Tick the checkbox at the top of the list to include every changed file.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "check",
+     "target": "changed files"
+    }
+   ]
+  },
+  {
+   "id": "add",
+   "title": "Stage a file",
+   "match": "git\\s+add\\s+([\\w./-]+\\.[\\w]+)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Tick the checkbox next to {1}.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "unstage",
+   "title": "Unstage a file",
+   "match": "git\\s+restore\\s+--staged\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Untick the checkbox next to {1}.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "discard",
+   "title": "Discard changes to a file",
+   "match": "git\\s+(?:restore|checkout\\s+--)\\s+(?!--)([\\w./-]+\\.[\\w]+)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Right-click {1} and choose Discard changes...",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "click",
+     "target": "Discard changes…"
+    },
+    {
+     "say": "Press Discard changes.",
+     "screen": "Confirm discard changes",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Discard changes"
+    }
+   ]
+  },
+  {
+   "id": "init",
+   "title": "Create a repository",
+   "match": "git\\s+init\\b",
+   "steps": [
+    {
+     "say": "Open the File menu and choose New repository….",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "New repository…"
+    },
+    {
+     "say": "Press Create repository.",
+     "screen": "Create a new repository",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create repository"
+    }
+   ]
+  },
+  {
+   "id": "config",
+   "title": "Set your Git name and email",
+   "match": "git\\s+config\\s+(?:--local\\s+)?user\\.(name|email)\\s+\"([^\"]+)\"",
+   "steps": [
+    {
+     "say": "Open the File menu and choose Options….",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "Options…"
+    },
+    {
+     "say": "Open the Git config tab and choose Use a local Git config.",
+     "screen": "Repository settings",
+     "zone": "tab",
+     "action": "click",
+     "target": "Git config"
+    },
+    {
+     "say": "Type {2} in the {1} box (Name or Email).",
+     "screen": "Repository settings",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Repository settings",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "new-branch",
+   "title": "Create and switch to a branch",
+   "match": "git\\s+(?:checkout\\s+-b|switch\\s+-c)\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open the Branch menu and choose New branch….",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "New branch…"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "Create a branch",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create branch.",
+     "screen": "Create a branch",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create branch"
+    }
+   ],
+   "verify": "Current branch now shows the new branch."
+  },
+  {
+   "id": "rebase-continue",
+   "title": "Continue a rebase",
+   "match": "git\\s+(rebase|merge)\\s+--continue",
+   "steps": [
+    {
+     "say": "Open the Resolve conflicts dialog (Changes tab banner).",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "click",
+     "target": "Resolve conflicts…"
+    },
+    {
+     "say": "When All conflicts resolved shows, press Continue {1}.",
+     "screen": "Resolve conflicts",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Continue {1}"
+    }
+   ]
+  },
+  {
+   "id": "rebase",
+   "title": "Rebase the current branch",
+   "match": "git\\s+rebase\\s+(?!-)([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open the Branch menu and choose Rebase current branch….",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "Rebase current branch…"
+    },
+    {
+     "say": "Pick {1} in the branch list.",
+     "screen": "Rebase",
+     "zone": "dialog",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Rebase.",
+     "screen": "Rebase",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Rebase"
+    }
+   ]
+  },
+  {
+   "id": "merge",
+   "title": "Merge a branch into the current one",
+   "match": "git\\s+merge\\s+(?!-)([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Open the Branch menu and choose Merge into current branch….",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "Merge into current branch…"
+    },
+    {
+     "say": "Pick {1} in the branch list.",
+     "screen": "Merge into",
+     "zone": "dialog",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Create a merge commit.",
+     "screen": "Merge into",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create a merge commit"
+    }
+   ],
+   "verify": "History shows the merged commits."
+  },
+  {
+   "id": "branch-delete",
+   "title": "Delete a branch",
+   "match": "git\\s+branch\\s+-[dD]\\s+([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Press Current branch in the toolbar.",
+     "screen": "GitHub Desktop",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Current branch"
+    },
+    {
+     "say": "Right-click {1} and choose Delete...",
+     "screen": "Branches",
+     "zone": "panel",
+     "action": "click",
+     "target": "Delete…"
+    },
+    {
+     "say": "Press Delete.",
+     "screen": "Delete branch",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "checkout",
+   "title": "Switch branch",
+   "match": "git\\s+(?:checkout|switch)\\s+(?!-)([\\w./-]+)",
+   "steps": [
+    {
+     "say": "Press Current branch in the toolbar.",
+     "screen": "GitHub Desktop",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Current branch"
+    },
+    {
+     "say": "Click {1} in the branch list.",
+     "screen": "Branches",
+     "zone": "panel",
+     "action": "click",
+     "target": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "branch-list",
+   "title": "See your branches",
+   "match": "git\\s+branch(?:\\s+-[va]+)?(?![\\w-]|\\s+-[dDm])",
+   "steps": [
+    {
+     "say": "Press Current branch in the toolbar.",
+     "screen": "GitHub Desktop",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Current branch"
+    },
+    {
+     "say": "Read the branch list; the current branch has a check mark.",
+     "screen": "Branches",
+     "zone": "panel",
+     "action": "see",
+     "target": "Current branch"
+    }
+   ]
+  },
+  {
+   "id": "stash-pop",
+   "title": "Restore stashed changes",
+   "match": "git\\s+stash\\s+(?:pop|apply)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Click Stashed changes at the bottom of the list.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "click",
+     "target": "Stashed changes"
+    },
+    {
+     "say": "Press Restore.",
+     "screen": "Stashed changes",
+     "zone": "main",
+     "action": "click",
+     "target": "Restore"
+    }
+   ]
+  },
+  {
+   "id": "stash",
+   "title": "Stash your changes",
+   "match": "git\\s+stash(?:\\s+push)?(?![\\w-]|\\s+(?:pop|apply|list|drop))",
+   "steps": [
+    {
+     "say": "Open the Branch menu and choose Stash all changes.",
+     "screen": "GitHub Desktop",
+     "zone": "top",
+     "action": "click",
+     "target": "Stash all changes"
+    },
+    {
+     "say": "Your edits move to Stashed changes and the Changes list is empty.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "see",
+     "target": "Stashed changes"
+    }
+   ]
+  },
+  {
+   "id": "reset-commit",
+   "title": "Undo the last commit",
+   "match": "git\\s+reset\\s+(?:--mixed\\s+)?HEAD~1?\\b",
+   "steps": [
+    {
+     "say": "Open the History tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "History"
+    },
+    {
+     "say": "Right-click the commit below the one to undo and choose Reset to commit...",
+     "screen": "History",
+     "zone": "main",
+     "action": "click",
+     "target": "Reset to commit…"
+    },
+    {
+     "say": "Confirm Reset to commit; the changes come back in the Changes list.",
+     "screen": "Reset to commit",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Reset to commit"
+    }
+   ]
+  },
+  {
+   "id": "tag",
+   "title": "Tag a commit",
+   "match": "git\\s+tag\\s+(?!-|and\\b|is\\b)([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open the History tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "History"
+    },
+    {
+     "say": "Right-click the newest commit and choose Create tag...",
+     "screen": "History",
+     "zone": "main",
+     "action": "click",
+     "target": "Create tag…"
+    },
+    {
+     "say": "Type {1} as the Name.",
+     "screen": "Create a tag",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create tag.",
+     "screen": "Create a tag",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Create tag"
+    }
+   ]
+  },
+  {
+   "id": "tag-list",
+   "title": "See your tags",
+   "match": "git\\s+tag(?=\\s+and\\b|\\s*$)",
+   "steps": [
+    {
+     "say": "Open the History tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "History"
+    },
+    {
+     "say": "Read the tag labels next to the commits.",
+     "screen": "History",
+     "zone": "main",
+     "action": "see",
+     "target": "History"
+    }
+   ]
+  },
+  {
+   "id": "log",
+   "title": "See the commit history",
+   "match": "git\\s+log\\b",
+   "steps": [
+    {
+     "say": "Open the History tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "History"
+    },
+    {
+     "say": "Read the commits, newest first, with their tags and branch merges.",
+     "screen": "History",
+     "zone": "main",
+     "action": "see",
+     "target": "History"
+    }
+   ]
+  },
+  {
+   "id": "diff",
+   "title": "See your changes",
+   "match": "git\\s+diff\\b(?!\\s+main\\.\\.\\.)",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Click a changed file and read its diff on the right.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "see",
+     "target": "Diff"
+    }
+   ]
+  },
+  {
+   "id": "status",
+   "title": "See the working tree status",
+   "match": "git\\s+status\\b",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Read the Changes list: each changed file and whether it is ticked (staged).",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "see",
+     "target": "Changes"
+    }
+   ]
+  },
+  {
+   "id": "ui-changes",
+   "title": "Read diffs in GitHub Desktop",
+   "match": "Open GitHub Desktop and read both diffs in the Changes tab",
+   "steps": [
+    {
+     "say": "Open the Changes tab on the left.",
+     "screen": "GitHub Desktop",
+     "zone": "tab",
+     "action": "click",
+     "target": "Changes"
+    },
+    {
+     "say": "Click each file and read its diff.",
+     "screen": "Changes",
+     "zone": "main",
+     "action": "see",
+     "target": "Diff"
+    }
+   ]
+  }
+ ]
+}

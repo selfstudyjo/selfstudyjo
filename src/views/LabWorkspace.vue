@@ -146,6 +146,22 @@
               anyway and open whatever lesson the browser last remembered -
               an unrelated one. No linked lesson, no button.
             -->
+            <!--
+              DEFINITIONS FIRST. A student can land in an advanced lab without
+              the ones before it; the brief then assumes words they have never
+              met. The window explains the lab, the product and every term the
+              lab uses - with diagrams and 3D illustrations - and is its own
+              chunk, fetched on the first press.
+            -->
+            <div class="sl-defs-card">
+              <div class="sl-defs-card__text">
+                <strong>{{ $t('New to this topic?') }}</strong>
+                {{ $t('Open Definitions for a short lesson: what this lab is about, what the platform is, how the lab flows, and every term it uses explained from zero - with diagrams and 3D illustrations.') }}
+              </div>
+              <button type="button" class="sl-btn sl-btn--primary sl-btn--sm" @click="openDefinitions()">
+                <BookMarked class="sl-i" aria-hidden="true" /> {{ $t('Definitions') }}
+              </button>
+            </div>
             <div v-if="lessonsForLab && lessonsForLab.length" class="sl-brief-tools">
               <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
                       @click="lessonOpen = true">
@@ -448,6 +464,9 @@
           </div>
         </aside>
       </div>
+      <LabDefinitions v-if="defsMounted && lab" :open="defsOpen" :lab="lab" :tasks="definitionTasks"
+                      :tools="lab.tool_detail || []" :start="defsStart"
+                      @close="defsOpen = false" @open-tool="openTool" />
       <LabLessonModal :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
                       :lessons="lessonsForLab || []" @close="lessonOpen = false" />
     </template>
@@ -487,7 +506,7 @@
 import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  AlertTriangle, BookOpen, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
+  AlertTriangle, BookMarked, BookOpen, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
   MonitorSmartphone, RotateCcw, RotateCw, X,
 } from 'lucide-vue-next';
 import { t, tdl, tdn } from '@/i18n/runtime';
@@ -503,6 +522,9 @@ import {
 } from '@/utils/labCatalogue';
 import LabBrief from '@/components/labs/LabBrief.vue';
 import LabLessonModal from '@/components/labs/LabLessonModal.vue';
+// The Definitions window is the largest lab component most visits never open:
+// its own chunk, mounted on the first press (working rule 47).
+const LabDefinitions = defineAsyncComponent(() => import('@/components/labs/docs/LabDefinitions.vue'));
 import LabCode from '@/components/labs/LabCode.vue';
 import LabConsole from '@/components/labs/LabConsole.vue';
 import LabFiles from '@/components/labs/LabFiles.vue';
@@ -780,6 +802,16 @@ function openTool(toolId: string) {
 
 const labPortals = computed(() => portalTools(lab.value?.tool_detail || []));
 const lessonOpen = ref(false);
+const defsOpen = ref(false);
+const defsMounted = ref(false);
+const defsStart = ref('about');
+/** The tasks the Definitions window walks through: the graded ones when known (they carry instructions). */
+const definitionTasks = computed(() => (localGrade.value?.tasks?.length ? localGrade.value.tasks : (lab.value?.tasks || [])) as any[]);
+function openDefinitions(start = 'about') {
+  defsStart.value = start;
+  defsMounted.value = true;
+  defsOpen.value = true;
+}
 
 function showPane(family: string) {
   activePane.value = family;

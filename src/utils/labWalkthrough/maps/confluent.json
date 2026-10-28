@@ -1,0 +1,802 @@
+{
+ "skin": "confluent",
+ "product": "Confluent Control Center",
+ "brand": "#173361",
+ "top": "Confluent Control Center",
+ "nav": [
+  "Cluster overview",
+  "Brokers",
+  "Topics",
+  "Connect",
+  "ksqlDB",
+  "Consumers",
+  "Schema Registry"
+ ],
+ "recipes": [
+  {
+   "id": "topic-create",
+   "title": "Create a topic",
+   "match": "kafka-topics\\s+(?:--bootstrap-server\\s+\\S+\\s+|\\.\\.\\.\\s+)?--create\\s+--topic\\s+([\\w.-]+)(?:\\s+--partitions\\s+(\\d+))?(?:\\s+--replication-factor\\s+(\\d+))?(?:\\s+(?:\\.\\.\\.\\s+)?--config\\s+min\\.insync\\.replicas=(\\d+))?",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Press Add a topic.",
+     "screen": "Topics",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add a topic"
+    },
+    {
+     "say": "Type {1} as the Topic name.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "type",
+     "target": "Topic name",
+     "value": "{1}"
+    },
+    {
+     "say": "Type {2} as the Number of partitions.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "type",
+     "target": "Number of partitions",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Press Customize settings.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Customize settings"
+    },
+    {
+     "say": "Set the Replication factor to {3}.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "select",
+     "target": "Replication factor",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Set Min in-sync replicas to {4}.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "select",
+     "target": "Min in-sync replicas",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Set any other --config from the command (cleanup policy, retention), then press Save & create.",
+     "screen": "New topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Save & create"
+    }
+   ],
+   "verify": "The topic appears in the Topics list."
+  },
+  {
+   "id": "topic-config",
+   "title": "Change a topic setting",
+   "match": "kafka-configs\\s+[^\\n]*--alter[^\\n]*--entity-name\\s+([\\w.-]+)[^\\n]*--add-config\\s+([\\w.]+)=(\\S+)",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Click the topic {1}.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Configuration tab.",
+     "screen": "Topic",
+     "zone": "tab",
+     "action": "click",
+     "target": "Configuration"
+    },
+    {
+     "say": "Press Edit settings.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit settings"
+    },
+    {
+     "say": "Change {2} to {3}.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "type",
+     "target": "{2}",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "topic-config-tab",
+   "title": "Change a topic setting",
+   "match": "Configuration tab and set ([\\w.]+) to (\\S+)",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Click the topic and open its Configuration tab.",
+     "screen": "Topic",
+     "zone": "tab",
+     "action": "click",
+     "target": "Configuration"
+    },
+    {
+     "say": "Press Edit settings.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit settings"
+    },
+    {
+     "say": "Change {1} to {2}.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "type",
+     "target": "{1}",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "topic-describe-urp",
+   "title": "See under-replicated partitions",
+   "match": "kafka-topics\\s+[^\\n]*--describe\\s+--under-replicated-partitions",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Read the Under replicated partitions column, or tick Show only topics with issues.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "check",
+     "target": "Show only topics with issues"
+    }
+   ]
+  },
+  {
+   "id": "topic-describe",
+   "title": "Describe a topic",
+   "match": "kafka-topics\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--describe\\s+--topic\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Click the topic {1}.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Overview tab.",
+     "screen": "Topic",
+     "zone": "tab",
+     "action": "click",
+     "target": "Overview"
+    },
+    {
+     "say": "Read the partitions, their leaders, replicas and in-sync replicas.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "see",
+     "target": "Overview"
+    }
+   ]
+  },
+  {
+   "id": "topic-list",
+   "title": "List the topics",
+   "match": "kafka-topics\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--list",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Read the list of topics with their partitions, messages and size.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "see",
+     "target": "Topic name"
+    }
+   ]
+  },
+  {
+   "id": "consume",
+   "title": "Read the messages of a topic",
+   "match": "kafka-(?:avro-)?console-consumer\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--topic\\s+([\\w.-]+)(?![^\\n]*--group)",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Click the topic {1}.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Messages tab.",
+     "screen": "Topic",
+     "zone": "tab",
+     "action": "click",
+     "target": "Messages"
+    },
+    {
+     "say": "Set Max messages if the command uses --max-messages, then press Fetch messages.",
+     "screen": "Topic",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Fetch messages"
+    },
+    {
+     "say": "Click a message to read its key, value, partition and offset.",
+     "screen": "Topic",
+     "zone": "main",
+     "action": "see",
+     "target": "Messages"
+    }
+   ]
+  },
+  {
+   "id": "produce",
+   "title": "Produce messages to a topic",
+   "match": "kafka-console-producer\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--topic\\s+([\\w.-]+)(?![^\\n]*--file)",
+   "steps": [
+    {
+     "say": "Open Topics in the left navigation.",
+     "screen": "Topics",
+     "zone": "nav",
+     "action": "click",
+     "target": "Topics"
+    },
+    {
+     "say": "Click the topic {1}.",
+     "screen": "Topics",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Messages tab.",
+     "screen": "Topic",
+     "zone": "tab",
+     "action": "click",
+     "target": "Messages"
+    },
+    {
+     "say": "Press Produce a new message to this topic.",
+     "screen": "Topic",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Produce a new message"
+    },
+    {
+     "say": "Type the Key (the part before the colon) and the Value of one record.",
+     "screen": "Produce a new message",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Value"
+    },
+    {
+     "say": "Press Produce. Repeat for each record in the block.",
+     "screen": "Produce a new message",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Produce"
+    }
+   ]
+  },
+  {
+   "id": "group-reset",
+   "title": "Reset the offsets of a consumer group",
+   "match": "kafka-consumer-groups\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--reset-offsets\\s+--group\\s+([\\w.-]+)\\s+--topic\\s+([\\w.-]+)\\s+--(to-earliest|to-latest|to-datetime|by-duration|to-offset|shift-by)(?:\\s+([\\w:.-]+))?",
+   "steps": [
+    {
+     "say": "Open Consumers in the left navigation.",
+     "screen": "Consumer groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Consumers"
+    },
+    {
+     "say": "Click the consumer group {1}.",
+     "screen": "Consumer groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Reset offsets.",
+     "screen": "Consumer group",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Reset offsets"
+    },
+    {
+     "say": "Choose the Topic {2}.",
+     "screen": "Reset offsets",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Topic",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Reset to option that matches --{3}.",
+     "screen": "Reset offsets",
+     "zone": "dialog",
+     "action": "select",
+     "target": "Reset to",
+     "value": "{3}"
+    },
+    {
+     "say": "Type {4} as the value.",
+     "screen": "Reset offsets",
+     "zone": "dialog",
+     "action": "type",
+     "target": "Value",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Press Dry run and read the new offsets; to apply them press Execute reset.",
+     "screen": "Reset offsets",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Dry run"
+    }
+   ],
+   "verify": "The group lag changes to match the new offsets."
+  },
+  {
+   "id": "group-delete",
+   "title": "Delete a consumer group",
+   "match": "kafka-consumer-groups\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--delete\\s+--group\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Consumers in the left navigation.",
+     "screen": "Consumer groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Consumers"
+    },
+    {
+     "say": "Click the consumer group {1}.",
+     "screen": "Consumer groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Delete consumer group.",
+     "screen": "Consumer group",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete consumer group"
+    },
+    {
+     "say": "Confirm the deletion.",
+     "screen": "Delete consumer group",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Confirm"
+    }
+   ]
+  },
+  {
+   "id": "group-describe",
+   "title": "See a consumer group and its lag",
+   "match": "kafka-consumer-groups\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--describe\\s+--group\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Consumers in the left navigation.",
+     "screen": "Consumer groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Consumers"
+    },
+    {
+     "say": "Click the consumer group {1}.",
+     "screen": "Consumer groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read Consumer lag: current offset, end offset and lag per partition, and the members.",
+     "screen": "Consumer group",
+     "zone": "main",
+     "action": "see",
+     "target": "Consumer lag"
+    }
+   ]
+  },
+  {
+   "id": "group-list",
+   "title": "List the consumer groups",
+   "match": "kafka-consumer-groups\\s+(?:--bootstrap-server\\s+\\S+\\s+)?--list",
+   "steps": [
+    {
+     "say": "Open Consumers in the left navigation.",
+     "screen": "Consumer groups",
+     "zone": "nav",
+     "action": "click",
+     "target": "Consumers"
+    },
+    {
+     "say": "Read the list of groups with their state and lag.",
+     "screen": "Consumer groups",
+     "zone": "main",
+     "action": "see",
+     "target": "Consumer groups"
+    }
+   ]
+  },
+  {
+   "id": "connect-pause-resume",
+   "title": "Pause, resume or restart a connector",
+   "match": "connect\\s+(pause|resume|restart)\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Connect in the left navigation.",
+     "screen": "Connect",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connect"
+    },
+    {
+     "say": "Click the connector {2}.",
+     "screen": "Connect",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Press the {1} button at the top of the connector page.",
+     "screen": "Connector",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the connector and task state on the Overview tab.",
+     "screen": "Connector",
+     "zone": "main",
+     "action": "see",
+     "target": "Tasks"
+    }
+   ]
+  },
+  {
+   "id": "connect-config",
+   "title": "Change a connector configuration",
+   "match": "connect\\s+config\\s+([\\w.-]+)\\s+-f\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Connect in the left navigation.",
+     "screen": "Connect",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connect"
+    },
+    {
+     "say": "Click the connector {1}.",
+     "screen": "Connect",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Open the Settings tab.",
+     "screen": "Connector",
+     "zone": "tab",
+     "action": "click",
+     "target": "Settings"
+    },
+    {
+     "say": "Press Edit.",
+     "screen": "Connector",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit"
+    },
+    {
+     "say": "Change the properties to match {2}.",
+     "screen": "Connector",
+     "zone": "main",
+     "action": "type",
+     "target": "Settings"
+    },
+    {
+     "say": "Press Save changes.",
+     "screen": "Connector",
+     "zone": "main",
+     "action": "click",
+     "target": "Save changes"
+    }
+   ]
+  },
+  {
+   "id": "connect-status",
+   "title": "See a connector and its tasks",
+   "match": "connect\\s+status\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Connect in the left navigation.",
+     "screen": "Connect",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connect"
+    },
+    {
+     "say": "Click the connector {1}.",
+     "screen": "Connect",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read the connector state and, under Tasks, each task state. A FAILED task has View trace.",
+     "screen": "Connector",
+     "zone": "main",
+     "action": "see",
+     "target": "Tasks"
+    }
+   ]
+  },
+  {
+   "id": "connect-list",
+   "title": "List the connectors",
+   "match": "connect\\s+list\\b",
+   "steps": [
+    {
+     "say": "Open Connect in the left navigation.",
+     "screen": "Connect",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connect"
+    },
+    {
+     "say": "Read the list of connectors and their status.",
+     "screen": "Connect",
+     "zone": "main",
+     "action": "see",
+     "target": "Connect"
+    }
+   ]
+  },
+  {
+   "id": "sr-compat-set",
+   "title": "Set a subject compatibility mode",
+   "match": "schema-registry\\s+config\\s+--subject\\s+([\\w.-]+)\\s+--set\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Open Schema Registry in the left navigation.",
+     "screen": "Schema Registry",
+     "zone": "nav",
+     "action": "click",
+     "target": "Schema Registry"
+    },
+    {
+     "say": "Click the subject {1}.",
+     "screen": "Schema Registry",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Edit compatibility mode.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit compatibility mode"
+    },
+    {
+     "say": "Choose {2}.",
+     "screen": "Edit compatibility mode",
+     "zone": "dialog",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Edit compatibility mode",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "sr-compat-check",
+   "title": "Test a new schema for compatibility",
+   "match": "schema-registry\\s+compatibility\\s+--subject\\s+([\\w.-]+)\\s+--schema-file\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Schema Registry in the left navigation.",
+     "screen": "Schema Registry",
+     "zone": "nav",
+     "action": "click",
+     "target": "Schema Registry"
+    },
+    {
+     "say": "Click the subject {1}.",
+     "screen": "Schema Registry",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Evolve schema.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "click",
+     "target": "Evolve schema"
+    },
+    {
+     "say": "Paste the new schema from {2} into the editor.",
+     "screen": "Subject",
+     "zone": "editor",
+     "action": "type",
+     "target": "Schema"
+    },
+    {
+     "say": "Press Validate and read whether it is compatible.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "click",
+     "target": "Validate"
+    }
+   ]
+  },
+  {
+   "id": "sr-register",
+   "title": "Register a new schema version",
+   "match": "schema-registry\\s+register\\s+--subject\\s+([\\w.-]+)\\s+--schema-file\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Open Schema Registry in the left navigation.",
+     "screen": "Schema Registry",
+     "zone": "nav",
+     "action": "click",
+     "target": "Schema Registry"
+    },
+    {
+     "say": "Click the subject {1}.",
+     "screen": "Schema Registry",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Evolve schema.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "click",
+     "target": "Evolve schema"
+    },
+    {
+     "say": "Paste the new schema from {2} into the editor.",
+     "screen": "Subject",
+     "zone": "editor",
+     "action": "type",
+     "target": "Schema"
+    },
+    {
+     "say": "Press Save. A refusal means the schema breaks the compatibility mode.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "sr-show",
+   "title": "Read a subject and its versions",
+   "match": "schema-registry\\s+(?:get|versions|config)\\s+--subject\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Open Schema Registry in the left navigation.",
+     "screen": "Schema Registry",
+     "zone": "nav",
+     "action": "click",
+     "target": "Schema Registry"
+    },
+    {
+     "say": "Click the subject {1}.",
+     "screen": "Schema Registry",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Pick a Version to read the schema; the compatibility mode is shown beside it.",
+     "screen": "Subject",
+     "zone": "main",
+     "action": "select",
+     "target": "Version"
+    }
+   ]
+  },
+  {
+   "id": "sr-subjects",
+   "title": "List the schema subjects",
+   "match": "schema-registry\\s+subjects",
+   "steps": [
+    {
+     "say": "Open Schema Registry in the left navigation.",
+     "screen": "Schema Registry",
+     "zone": "nav",
+     "action": "click",
+     "target": "Schema Registry"
+    },
+    {
+     "say": "Read the list of subjects and the topics they belong to.",
+     "screen": "Schema Registry",
+     "zone": "main",
+     "action": "see",
+     "target": "Schema Registry"
+    }
+   ]
+  }
+ ]
+}

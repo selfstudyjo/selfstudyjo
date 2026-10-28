@@ -491,5 +491,185 @@
     "a command matching /dbshell/"
    ]
   }
+ },
+ "fab-01-platform": {
+  "t1": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "all",
+   "where": [
+    "fabric_cli",
+    "fabric_portal",
+    "fabric_workspace_gui",
+    "fabric_gov_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "fabric"
+   ],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "fabric.workspaces matching capacity=cap-ops-f8, name=ws-ops-dev at least 1",
+    "fabric.workspaces matching capacity=cap-ops-f8, name=ws-ops-prod at least 1"
+   ]
+  },
+  "t2": {
+   "kinds": [
+    "command_refused"
+   ],
+   "combine": "",
+   "where": [
+    "terminal"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": true,
+   "must_succeed": false,
+   "steps": [
+    "a command matching /mkdir ws-sandbox\\.Workspace/lh_test\\.Lakehouse/ that was REFUSED"
+   ]
+  },
+  "t3": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "all",
+   "where": [
+    "fabric_cli",
+    "fabric_portal",
+    "fabric_workspace_gui",
+    "fabric_gov_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "fabric"
+   ],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "fabric.items matching type=Lakehouse, workspace=ws-ops-dev at least 3",
+    "fabric.items matching type=Warehouse, workspace=ws-ops-dev at least 1"
+   ]
+  },
+  "t4": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "all",
+   "where": [
+    "fabric_cli",
+    "fabric_portal",
+    "fabric_workspace_gui",
+    "fabric_gov_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "fabric"
+   ],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "fabric.workspace_roles matching principal=sg-data-engineers, role=Contributor, workspace=ws-ops-dev at least 1",
+    "fabric.workspace_roles matching principal=sg-ops-analysts, role=Viewer, workspace=ws-ops-prod at least 1"
+   ]
+  },
+  "t5": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "fabric_cli",
+    "fabric_portal",
+    "fabric_workspace_gui",
+    "fabric_gov_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "fabric"
+   ],
+   "commands": [],
+   "hint_commands": [],
+   "negative": true,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "fabric.workspace_roles matching principal=sg-all-staff"
+   ]
+  },
+  "t6": {
+   "kinds": [
+    "state"
+   ],
+   "combine": "",
+   "where": [
+    "fabric_cli",
+    "fabric_portal",
+    "fabric_workspace_gui",
+    "fabric_gov_gui"
+   ],
+   "files": [],
+   "parts": [],
+   "tables": [],
+   "families": [
+    "fabric"
+   ],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "fabric.workspaces matching identity=True, name=ws-ops-prod at least 1"
+   ]
+  },
+  "t7": {
+   "kinds": [
+    "file_exists"
+   ],
+   "combine": "",
+   "where": [
+    "editor",
+    "terminal"
+   ],
+   "files": [
+    "platform.md"
+   ],
+   "parts": [],
+   "tables": [],
+   "families": [],
+   "commands": [],
+   "hint_commands": [],
+   "negative": false,
+   "refusal": false,
+   "must_succeed": false,
+   "steps": [
+    "the file platform.md"
+   ]
+  }
  }
 }

@@ -1,0 +1,3529 @@
+{
+ "skin": "azure",
+ "product": "Microsoft Azure portal",
+ "brand": "#0078d4",
+ "top": "Microsoft Azure",
+ "nav": [
+  "Home",
+  "Dashboard",
+  "All services",
+  "Resource groups",
+  "Virtual networks",
+  "Policy",
+  "Monitor",
+  "Cost Management"
+ ],
+ "recipes": [
+  {
+   "id": "group-create",
+   "title": "Create a resource group",
+   "match": "az\\s+group\\s+create\\s+(?:-n|--name)\\s+([\\w.-]+)\\s+(?:-l|--location)\\s+([\\w-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Resource groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Type {1} as the Resource group name.",
+     "screen": "Create a resource group",
+     "zone": "main",
+     "action": "type",
+     "target": "Resource group",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Region {2}.",
+     "screen": "Create a resource group",
+     "zone": "main",
+     "action": "select",
+     "target": "Region",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a resource group",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a resource group",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ],
+   "verify": "The group appears in Resource groups."
+  },
+  {
+   "id": "group-delete",
+   "title": "Delete a resource group",
+   "match": "az\\s+group\\s+delete\\s+(?:-n|--name)\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Delete resource group.",
+     "screen": "{1}",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete resource group"
+    },
+    {
+     "say": "Type the name {1} to confirm and press Delete.",
+     "screen": "Delete a resource group",
+     "zone": "dialog",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "group-show",
+   "title": "Open a resource group",
+   "match": "az\\s+(?:group\\s+show\\s+-n|resource\\s+list\\s+-g)\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Read Overview: the resources in it and its Resource ID under Properties.",
+     "screen": "{1}",
+     "zone": "main",
+     "action": "see",
+     "target": "Resources"
+    }
+   ]
+  },
+  {
+   "id": "group-list",
+   "title": "See your resource groups",
+   "match": "az\\s+group\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Read the resource group names and regions.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "see",
+     "target": "Resource groups"
+    }
+   ]
+  },
+  {
+   "id": "resource-show",
+   "title": "See a resource's properties",
+   "match": "az\\s+resource\\s+show\\s+--ids\\b",
+   "steps": [
+    {
+     "say": "Type All resources in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "All resources"
+    },
+    {
+     "say": "Open the resource and choose Properties.",
+     "screen": "All resources",
+     "zone": "main",
+     "action": "see",
+     "target": "Properties"
+    }
+   ]
+  },
+  {
+   "id": "resource-tag",
+   "title": "Tag a resource",
+   "match": "az\\s+resource\\s+tag\\s+-n\\s+([\\w.-]+)\\s+--tags\\s+(\\w+)=([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type All resources in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "All resources"
+    },
+    {
+     "say": "Tick {1}.",
+     "screen": "All resources",
+     "zone": "main",
+     "action": "check",
+     "target": "{1}"
+    },
+    {
+     "say": "Press Assign tags.",
+     "screen": "All resources",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Assign tags"
+    },
+    {
+     "say": "Type the tag {2} with value {3}.",
+     "screen": "Assign tags",
+     "zone": "panel",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Assign tags",
+     "zone": "panel",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "mg-create",
+   "title": "Create a management group",
+   "match": "az\\s+account\\s+management-group\\s+create\\s+-n\\s+([\\w.-]+)(?:\\s+--display-name\\s+\\\"([^\\\"]*)\\\")?(?:\\s+--parent\\s+([\\w.-]+))?",
+   "steps": [
+    {
+     "say": "Type Management groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Management groups"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Management groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Type {1} as the Management group ID.",
+     "screen": "Create management group",
+     "zone": "panel",
+     "action": "type",
+     "target": "Management group ID",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Management group display name {2}.",
+     "screen": "Create management group",
+     "zone": "panel",
+     "action": "type",
+     "target": "Management group display name",
+     "value": "{2}",
+     "optional": true
+    },
+    {
+     "say": "Choose the Parent management group {3}.",
+     "screen": "Create management group",
+     "zone": "panel",
+     "action": "select",
+     "target": "Parent management group",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Press Submit.",
+     "screen": "Create management group",
+     "zone": "panel",
+     "action": "click",
+     "target": "Submit"
+    }
+   ],
+   "verify": "The group appears in the hierarchy."
+  },
+  {
+   "id": "mg-add-sub",
+   "title": "Move a subscription into a management group",
+   "match": "az\\s+account\\s+management-group\\s+subscription\\s+add\\s+--name\\s+([\\w.-]+)\\s+--subscription\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Management groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Management groups"
+    },
+    {
+     "say": "Press Add subscription.",
+     "screen": "Management groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add subscription"
+    },
+    {
+     "say": "Choose the Subscription {2}.",
+     "screen": "Add subscription",
+     "zone": "panel",
+     "action": "select",
+     "target": "Subscription",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Management group {1}.",
+     "screen": "Add subscription",
+     "zone": "panel",
+     "action": "select",
+     "target": "Management group",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Add subscription",
+     "zone": "panel",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "sub-create",
+   "title": "Create a subscription",
+   "match": "az\\s+account\\s+create\\s+-n\\s+([\\w.-]+)\\s+--management-group\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Management groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Management groups"
+    },
+    {
+     "say": "Press New subscription.",
+     "screen": "Management groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "New subscription"
+    },
+    {
+     "say": "Type {1} as the Subscription name and choose the Management group {2}.",
+     "screen": "Create a subscription",
+     "zone": "panel",
+     "action": "type",
+     "target": "Subscription name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create a subscription",
+     "zone": "panel",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "mg-list",
+   "title": "See the management group hierarchy",
+   "match": "az\\s+account\\s+(?:management-group\\s+(?:list|show)|subscription)\\b",
+   "steps": [
+    {
+     "say": "Type Management groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Management groups"
+    },
+    {
+     "say": "Read the hierarchy and open a group to see its Path.",
+     "screen": "Management groups",
+     "zone": "main",
+     "action": "see",
+     "target": "Path"
+    }
+   ]
+  },
+  {
+   "id": "role-assign",
+   "title": "Add a role assignment",
+   "match": "az\\s+role\\s+assignment\\s+create\\s+--assignee\\s+([\\w.-]+)\\s+--role\\s+(\\\"[^\\\"]+\\\"|[\\w-]+)\\s+--scope\\s+(?:mg|rg|sub):([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open the scope {3} (a management group, subscription or resource group).",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{3}"
+    },
+    {
+     "say": "Choose Access control (IAM) in the blade menu on the left.",
+     "screen": "{3}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access control (IAM)"
+    },
+    {
+     "say": "Press Add role assignment.",
+     "screen": "Access control (IAM)",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add role assignment"
+    },
+    {
+     "say": "Pick the Role {2} and press Next.",
+     "screen": "Add role assignment",
+     "zone": "main",
+     "action": "select",
+     "target": "Role",
+     "value": "{2}"
+    },
+    {
+     "say": "Press + Select members and pick {1}.",
+     "screen": "Add role assignment",
+     "zone": "main",
+     "action": "click",
+     "target": "+ Select members",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Review + assign.",
+     "screen": "Add role assignment",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + assign"
+    }
+   ],
+   "verify": "The assignment is listed on the Role assignments tab."
+  },
+  {
+   "id": "role-deny",
+   "title": "Add a deny assignment",
+   "match": "az\\s+role\\s+assignment\\s+create-deny\\s+--assignee\\s+([\\w.-]+)\\s+--scope\\s+(?:mg|rg|sub):([\\w.-]+)\\s+--actions\\s+\\\"([^\\\"]+)\\\"\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open the resource group {2}.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Access control (IAM) in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access control (IAM)"
+    },
+    {
+     "say": "Press Add deny assignment.",
+     "screen": "Access control (IAM)",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add deny assignment"
+    },
+    {
+     "say": "Type {4} as the Name, choose {1} and type {3} as Denied actions.",
+     "screen": "Add deny assignment",
+     "zone": "panel",
+     "action": "type",
+     "target": "Denied actions",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Add deny assignment",
+     "zone": "panel",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "role-check",
+   "title": "Check access",
+   "match": "az\\s+role\\s+assignment\\s+check\\s+--assignee\\s+([\\w.-]+)\\s+--action\\s+\\\"([^\\\"]+)\\\"\\s+--scope\\s+(?:mg|rg|sub):([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open the scope {3}.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{3}"
+    },
+    {
+     "say": "Choose Access control (IAM) in the blade menu on the left.",
+     "screen": "{3}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access control (IAM)"
+    },
+    {
+     "say": "On Check access choose the Principal {1}.",
+     "screen": "Access control (IAM)",
+     "zone": "main",
+     "action": "select",
+     "target": "Principal",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Action {2}.",
+     "screen": "Access control (IAM)",
+     "zone": "main",
+     "action": "type",
+     "target": "Action",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Check access and read the answer.",
+     "screen": "Access control (IAM)",
+     "zone": "main",
+     "action": "click",
+     "target": "Check access"
+    }
+   ]
+  },
+  {
+   "id": "role-list",
+   "title": "See role assignments",
+   "match": "az\\s+role\\s+assignment\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Subscriptions in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Subscriptions"
+    },
+    {
+     "say": "Choose Access control (IAM) in the blade menu on the left.",
+     "screen": "Subscription",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access control (IAM)"
+    },
+    {
+     "say": "Open Role assignments and read who has which role where.",
+     "screen": "Access control (IAM)",
+     "zone": "tab",
+     "action": "see",
+     "target": "Role assignments"
+    }
+   ]
+  },
+  {
+   "id": "role-def",
+   "title": "See a role's permissions",
+   "match": "az\\s+role\\s+definition\\s+(?:show|list)\\b",
+   "steps": [
+    {
+     "say": "Type Subscriptions in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Subscriptions"
+    },
+    {
+     "say": "Choose Access control (IAM) in the blade menu on the left.",
+     "screen": "Subscription",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access control (IAM)"
+    },
+    {
+     "say": "Open Roles and select a role to read its Permissions.",
+     "screen": "Access control (IAM)",
+     "zone": "tab",
+     "action": "see",
+     "target": "Roles"
+    }
+   ]
+  },
+  {
+   "id": "identity-create",
+   "title": "Create a managed identity",
+   "match": "az\\s+identity\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Managed Identities in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Managed Identities"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Managed Identities",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create User Assigned Identity",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create User Assigned Identity",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create User Assigned Identity",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create User Assigned Identity",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "identity-list",
+   "title": "See managed identities",
+   "match": "az\\s+identity\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Managed Identities in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Managed Identities"
+    },
+    {
+     "say": "Read the identities.",
+     "screen": "Managed Identities",
+     "zone": "main",
+     "action": "see",
+     "target": "Managed Identities"
+    }
+   ]
+  },
+  {
+   "id": "policy-assign",
+   "title": "Assign a policy",
+   "match": "az\\s+policy\\s+assignment\\s+create\\s+--policy\\s+([\\w.-]+)\\s+--scope\\s+(?:mg|rg|sub):([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Policy in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Policy"
+    },
+    {
+     "say": "Choose Assignments in the blade menu on the left.",
+     "screen": "Policy",
+     "zone": "nav",
+     "action": "click",
+     "target": "Assignments"
+    },
+    {
+     "say": "Press Assign policy.",
+     "screen": "Assignments",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Assign policy"
+    },
+    {
+     "say": "Choose the Scope {2} and the Policy definition {1}.",
+     "screen": "Assign policy",
+     "zone": "main",
+     "action": "select",
+     "target": "Policy definition",
+     "value": "{1}"
+    },
+    {
+     "say": "Fill in Parameters (for allowed locations, the regions) and, on Remediation, Create a Managed Identity if asked.",
+     "screen": "Assign policy",
+     "zone": "tab",
+     "action": "click",
+     "target": "Parameters"
+    },
+    {
+     "say": "Press Review + create, then Create.",
+     "screen": "Assign policy",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    }
+   ],
+   "verify": "The assignment is listed under Assignments."
+  },
+  {
+   "id": "policy-exempt",
+   "title": "Create a policy exemption",
+   "match": "az\\s+policy\\s+exemption\\s+create\\s+-n\\s+([\\w.-]+)\\s+--policy-assignment\\s+([\\w.-]+)\\s+--scope\\s+(?:mg|rg|sub):([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Policy in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Policy"
+    },
+    {
+     "say": "Choose Exemptions in the blade menu on the left.",
+     "screen": "Policy",
+     "zone": "nav",
+     "action": "click",
+     "target": "Exemptions"
+    },
+    {
+     "say": "Press Create exemption.",
+     "screen": "Exemptions",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create exemption"
+    },
+    {
+     "say": "Choose the Policy assignment {2} and the Exemption scope {3}.",
+     "screen": "Create exemption",
+     "zone": "panel",
+     "action": "select",
+     "target": "Policy assignment",
+     "value": "{2}"
+    },
+    {
+     "say": "Type {1} as the Exemption name, choose Waiver, set the Expiration date and description.",
+     "screen": "Create exemption",
+     "zone": "panel",
+     "action": "type",
+     "target": "Exemption name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Create exemption",
+     "zone": "panel",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "policy-list",
+   "title": "See policy assignments",
+   "match": "az\\s+policy\\s+assignment\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Policy in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Policy"
+    },
+    {
+     "say": "Choose Assignments in the blade menu on the left.",
+     "screen": "Policy",
+     "zone": "nav",
+     "action": "click",
+     "target": "Assignments"
+    },
+    {
+     "say": "Read each assignment's effect, scope and managed identity.",
+     "screen": "Assignments",
+     "zone": "main",
+     "action": "see",
+     "target": "Assignments"
+    }
+   ]
+  },
+  {
+   "id": "policy-state",
+   "title": "See policy compliance",
+   "match": "az\\s+policy\\s+state\\s+(?:list|summarize)\\b",
+   "steps": [
+    {
+     "say": "Type Policy in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Policy"
+    },
+    {
+     "say": "Choose Compliance in the blade menu on the left.",
+     "screen": "Policy",
+     "zone": "nav",
+     "action": "click",
+     "target": "Compliance"
+    },
+    {
+     "say": "Press Summarize (or Trigger scan first) and read the non-compliant resources.",
+     "screen": "Compliance",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Summarize"
+    }
+   ]
+  },
+  {
+   "id": "policy-defs",
+   "title": "See policy definitions",
+   "match": "az\\s+policy\\s+definition\\s+(?:list|show)\\b",
+   "steps": [
+    {
+     "say": "Type Policy in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Policy"
+    },
+    {
+     "say": "Choose Definitions in the blade menu on the left.",
+     "screen": "Policy",
+     "zone": "nav",
+     "action": "click",
+     "target": "Definitions"
+    },
+    {
+     "say": "Read the definitions and their effects.",
+     "screen": "Definitions",
+     "zone": "main",
+     "action": "see",
+     "target": "Definitions"
+    }
+   ]
+  },
+  {
+   "id": "vnet-create",
+   "title": "Create a virtual network",
+   "match": "az\\s+network\\s+vnet\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--address-prefix\\s+([\\d./]+)\\s+--subnet-name\\s+([\\w.-]+)\\s+--subnet-prefix\\s+([\\d./]+)",
+   "steps": [
+    {
+     "say": "Type Virtual networks in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual networks"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Virtual networks",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create virtual network",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Virtual network name.",
+     "screen": "Create virtual network",
+     "zone": "main",
+     "action": "type",
+     "target": "Virtual network name",
+     "value": "{2}"
+    },
+    {
+     "say": "On IP addresses set the address space {3}.",
+     "screen": "Create virtual network",
+     "zone": "tab",
+     "action": "type",
+     "target": "IP address range",
+     "value": "{3}"
+    },
+    {
+     "say": "Add a subnet named {4} with range {5}.",
+     "screen": "Create virtual network",
+     "zone": "main",
+     "action": "click",
+     "target": "Add a subnet",
+     "value": "{4}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create virtual network",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create virtual network",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ],
+   "verify": "The VNet and its subnet appear in Virtual networks."
+  },
+  {
+   "id": "subnet-create",
+   "title": "Add a subnet",
+   "match": "az\\s+network\\s+vnet\\s+subnet\\s+create\\s+(?:-g\\s+[\\w.-]+\\s+)?--vnet-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--address-prefix(?:es)?\\s+([\\d./]+)",
+   "steps": [
+    {
+     "say": "Type Virtual networks in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual networks"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Virtual networks",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Subnets in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Subnets"
+    },
+    {
+     "say": "Press Subnet to add one.",
+     "screen": "Subnets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Subnet"
+    },
+    {
+     "say": "Type {2} as the Name and {3} as the range.",
+     "screen": "Add a subnet",
+     "zone": "panel",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add a subnet",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "subnet-update",
+   "title": "Associate an NSG or route table with a subnet",
+   "match": "az\\s+network\\s+vnet\\s+subnet\\s+update\\s+--vnet-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--(nsg|route-table)\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Virtual networks in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual networks"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Virtual networks",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Subnets in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Subnets"
+    },
+    {
+     "say": "Open the subnet {2}.",
+     "screen": "Subnets",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Set the {3} field to {4}.",
+     "screen": "{2}",
+     "zone": "panel",
+     "action": "select",
+     "target": "Network security group",
+     "value": "{4}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "{2}",
+     "zone": "panel",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "peering-create",
+   "title": "Add a peering",
+   "match": "az\\s+network\\s+vnet\\s+peering\\s+create\\s+--vnet-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--remote-vnet\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Virtual networks in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual networks"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Virtual networks",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Peerings in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Peerings"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Peerings",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Type {2} as the Peering link name and choose the remote Virtual network {3}.",
+     "screen": "Add peering",
+     "zone": "panel",
+     "action": "type",
+     "target": "Peering link name",
+     "value": "{2}"
+    },
+    {
+     "say": "Tick forwarded traffic or remote gateways as the command asks.",
+     "screen": "Add peering",
+     "zone": "panel",
+     "action": "check",
+     "target": "Allow forwarded traffic"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add peering",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add"
+    }
+   ],
+   "verify": "The peering is listed; it shows Connected once both sides exist."
+  },
+  {
+   "id": "vnet-list",
+   "title": "See virtual networks and peerings",
+   "match": "az\\s+network\\s+vnet\\s+(?:list|peering\\s+list|subnet\\s+list)\\b",
+   "steps": [
+    {
+     "say": "Type Virtual networks in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual networks"
+    },
+    {
+     "say": "Open a VNet and read its Subnets and Peerings.",
+     "screen": "Virtual networks",
+     "zone": "main",
+     "action": "see",
+     "target": "Peerings"
+    }
+   ]
+  },
+  {
+   "id": "nsg-create",
+   "title": "Create a network security group",
+   "match": "az\\s+network\\s+nsg\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Network security groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network security groups"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Network security groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create network security group",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create network security group",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create network security group",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create network security group",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "nsg-rule",
+   "title": "Add a security rule",
+   "match": "az\\s+network\\s+nsg\\s+rule\\s+create\\s+(?:-g\\s+[\\w.-]+\\s+)?--nsg-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--priority\\s+(\\d+)(?:\\s+--direction\\s+(\\w+))?",
+   "steps": [
+    {
+     "say": "Type Network security groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network security groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Network security groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Inbound security rules in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Inbound security rules"
+    },
+    {
+     "say": "Press Add (for an Outbound rule, open Outbound security rules first).",
+     "screen": "Inbound security rules",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Set Source, Destination, port ranges, Protocol and Action from the command.",
+     "screen": "Add inbound security rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Destination port ranges"
+    },
+    {
+     "say": "Type {3} as the Priority and {2} as the Name.",
+     "screen": "Add inbound security rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Priority",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add inbound security rule",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "nsg-rule-delete",
+   "title": "Delete a security rule",
+   "match": "az\\s+network\\s+nsg\\s+rule\\s+delete\\s+--nsg-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Network security groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network security groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Network security groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Outbound security rules in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Outbound security rules"
+    },
+    {
+     "say": "Select the rule {2} and press Delete.",
+     "screen": "Outbound security rules",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "nsg-rule-list",
+   "title": "See security rules",
+   "match": "az\\s+network\\s+nsg\\s+rule\\s+list\\s+(?:-g\\s+[\\w.-]+\\s+)?--nsg-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Network security groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network security groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Network security groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Inbound security rules in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Inbound security rules"
+    },
+    {
+     "say": "Read the rules in priority order.",
+     "screen": "Inbound security rules",
+     "zone": "main",
+     "action": "see",
+     "target": "Priority"
+    }
+   ]
+  },
+  {
+   "id": "rt-create",
+   "title": "Create a route table",
+   "match": "az\\s+network\\s+route-table\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Route tables in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Route tables"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Route tables",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create Route table",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create Route table",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create Route table",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create Route table",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "route-create",
+   "title": "Add a route",
+   "match": "az\\s+network\\s+route-table\\s+route\\s+create\\s+--route-table-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--address-prefix\\s+([\\d./]+)\\s+--next-hop-type\\s+(\\w+)(?:\\s+--next-hop-ip-address\\s+([\\d.]+))?",
+   "steps": [
+    {
+     "say": "Type Route tables in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Route tables"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Route tables",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Routes in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Routes"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Routes",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Type {2} as the Route name and {3} as the destination range.",
+     "screen": "Add route",
+     "zone": "panel",
+     "action": "type",
+     "target": "Route name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Next hop type {4}.",
+     "screen": "Add route",
+     "zone": "panel",
+     "action": "select",
+     "target": "Next hop type",
+     "value": "{4}"
+    },
+    {
+     "say": "Type the Next hop address {5}.",
+     "screen": "Add route",
+     "zone": "panel",
+     "action": "type",
+     "target": "Next hop address",
+     "value": "{5}",
+     "optional": true
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add route",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "route-list",
+   "title": "See a route table's routes",
+   "match": "az\\s+network\\s+route-table\\s+route\\s+list\\s+--route-table-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Route tables in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Route tables"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Route tables",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Routes in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Routes"
+    },
+    {
+     "say": "Read the routes.",
+     "screen": "Routes",
+     "zone": "main",
+     "action": "see",
+     "target": "Routes"
+    }
+   ]
+  },
+  {
+   "id": "dns-zone",
+   "title": "Create a private DNS zone",
+   "match": "az\\s+network\\s+private-dns\\s+zone\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Private DNS zones in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private DNS zones"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Private DNS zones",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create Private DNS zone",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create Private DNS zone",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create Private DNS zone",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create Private DNS zone",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "dns-link",
+   "title": "Link a private DNS zone to a VNet",
+   "match": "az\\s+network\\s+private-dns\\s+link\\s+vnet\\s+create\\s+--zone-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--virtual-network\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Private DNS zones in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private DNS zones"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Private DNS zones",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Virtual Network Links in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Virtual Network Links"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Virtual Network Links",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Type {2} as the Link name and choose the Virtual network {3}.",
+     "screen": "Add virtual network link",
+     "zone": "panel",
+     "action": "type",
+     "target": "Link name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press OK.",
+     "screen": "Add virtual network link",
+     "zone": "panel",
+     "action": "click",
+     "target": "OK"
+    }
+   ]
+  },
+  {
+   "id": "dns-unlink",
+   "title": "Remove a VNet link",
+   "match": "az\\s+network\\s+private-dns\\s+link\\s+vnet\\s+delete\\s+--zone-name\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Private DNS zones in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private DNS zones"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Private DNS zones",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Virtual Network Links in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Virtual Network Links"
+    },
+    {
+     "say": "Select the link {2} and press Delete.",
+     "screen": "Virtual Network Links",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Delete"
+    }
+   ]
+  },
+  {
+   "id": "dns-list",
+   "title": "See private DNS zones",
+   "match": "az\\s+network\\s+private-dns\\s+zone\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Private DNS zones in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private DNS zones"
+    },
+    {
+     "say": "Open a zone and read its Virtual Network Links.",
+     "screen": "Private DNS zones",
+     "zone": "main",
+     "action": "see",
+     "target": "Virtual Network Links"
+    }
+   ]
+  },
+  {
+   "id": "pe-create",
+   "title": "Create a private endpoint",
+   "match": "az\\s+network\\s+private-endpoint\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--vnet-name\\s+([\\w.-]+)\\s+--subnet\\s+([\\w.-]+)\\s+--private-connection-resource-id\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Private endpoints in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private endpoints"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Private endpoints",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create a private endpoint",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create a private endpoint",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "On Resource pick the target {5} and its sub-resource.",
+     "screen": "Create a private endpoint",
+     "zone": "tab",
+     "action": "select",
+     "target": "Resource",
+     "value": "{5}"
+    },
+    {
+     "say": "On Virtual Network choose {3} and the subnet {4}.",
+     "screen": "Create a private endpoint",
+     "zone": "tab",
+     "action": "select",
+     "target": "Virtual network",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a private endpoint",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a private endpoint",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "pe-dns",
+   "title": "Add a DNS zone group to an endpoint",
+   "match": "az\\s+network\\s+private-endpoint\\s+dns-zone-group\\s+create\\s+--endpoint-name\\s+([\\w.-]+).*?--private-dns-zone\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type Private endpoints in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private endpoints"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Private endpoints",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose DNS configuration in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "DNS configuration"
+    },
+    {
+     "say": "Press Add configuration.",
+     "screen": "DNS configuration",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add configuration"
+    },
+    {
+     "say": "Choose the Private DNS zone {2} and press Add.",
+     "screen": "Add DNS configuration",
+     "zone": "panel",
+     "action": "select",
+     "target": "Private DNS zone",
+     "value": "{2}"
+    }
+   ]
+  },
+  {
+   "id": "pe-list",
+   "title": "See private endpoints",
+   "match": "az\\s+network\\s+private-endpoint\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Private endpoints in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Private endpoints"
+    },
+    {
+     "say": "Read each endpoint's private IP and connection status.",
+     "screen": "Private endpoints",
+     "zone": "main",
+     "action": "see",
+     "target": "Private endpoints"
+    }
+   ]
+  },
+  {
+   "id": "fw-create",
+   "title": "Create a firewall",
+   "match": "az\\s+network\\s+firewall\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--vnet-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Firewalls in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Firewalls"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Firewalls",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create a firewall",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create a firewall",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Virtual network {3}.",
+     "screen": "Create a firewall",
+     "zone": "main",
+     "action": "select",
+     "target": "Virtual network",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a firewall",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a firewall",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "fw-rule",
+   "title": "Add a firewall rule",
+   "match": "az\\s+network\\s+firewall\\s+(network|application)-rule\\s+create\\s+-f\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--collection-name\\s+([\\w.-]+)\\s+--priority\\s+(\\d+)\\s+--action\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type Firewalls in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Firewalls"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Firewalls",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Rules (classic) in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Rules (classic)"
+    },
+    {
+     "say": "Open the {1} rule collection tab and press Add rule.",
+     "screen": "Rules (classic)",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add rule"
+    },
+    {
+     "say": "Type {4} as the Rule collection name, {5} as the Priority and choose {6}.",
+     "screen": "Add rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Rule collection name",
+     "value": "{4}"
+    },
+    {
+     "say": "Type {3} as the Rule name and fill in sources, protocol, destinations, ports or FQDNs.",
+     "screen": "Add rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Rule name",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Add rule",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add"
+    }
+   ]
+  },
+  {
+   "id": "fw-list",
+   "title": "See firewalls",
+   "match": "az\\s+network\\s+firewall\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Firewalls in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Firewalls"
+    },
+    {
+     "say": "Read the firewalls.",
+     "screen": "Firewalls",
+     "zone": "main",
+     "action": "see",
+     "target": "Firewalls"
+    }
+   ]
+  },
+  {
+   "id": "watcher-test",
+   "title": "Test a connection",
+   "match": "az\\s+network\\s+watcher\\s+test-connectivity\\s+--source\\s+(\\S+)\\s+--destination\\s+(\\S+)\\s+--port\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Type Network Watcher in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network Watcher"
+    },
+    {
+     "say": "Choose Connection troubleshoot in the blade menu on the left.",
+     "screen": "Network Watcher",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connection troubleshoot"
+    },
+    {
+     "say": "Choose the Source subnet {1}.",
+     "screen": "Connection troubleshoot",
+     "zone": "main",
+     "action": "select",
+     "target": "Source",
+     "value": "{1}"
+    },
+    {
+     "say": "Type the Destination {2}.",
+     "screen": "Connection troubleshoot",
+     "zone": "main",
+     "action": "type",
+     "target": "Destination",
+     "value": "{2}"
+    },
+    {
+     "say": "Type the Destination port {3}.",
+     "screen": "Connection troubleshoot",
+     "zone": "main",
+     "action": "type",
+     "target": "Destination port",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Run diagnostic tests and read the result and each hop.",
+     "screen": "Connection troubleshoot",
+     "zone": "main",
+     "action": "click",
+     "target": "Run diagnostic tests"
+    }
+   ]
+  },
+  {
+   "id": "watcher-rules",
+   "title": "See effective security rules",
+   "match": "az\\s+network\\s+watcher\\s+show-effective-rules\\b",
+   "steps": [
+    {
+     "say": "Type Network Watcher in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network Watcher"
+    },
+    {
+     "say": "Choose Effective security rules in the blade menu on the left.",
+     "screen": "Network Watcher",
+     "zone": "nav",
+     "action": "click",
+     "target": "Effective security rules"
+    },
+    {
+     "say": "Choose the subnet and read the rules in priority order.",
+     "screen": "Effective security rules",
+     "zone": "main",
+     "action": "see",
+     "target": "Priority"
+    }
+   ]
+  },
+  {
+   "id": "watcher-routes",
+   "title": "See effective routes",
+   "match": "az\\s+network\\s+watcher\\s+show-effective-route-table\\b",
+   "steps": [
+    {
+     "say": "Type Network Watcher in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Network Watcher"
+    },
+    {
+     "say": "Choose Next hop / Effective routes in the blade menu on the left.",
+     "screen": "Network Watcher",
+     "zone": "nav",
+     "action": "click",
+     "target": "Next hop / Effective routes"
+    },
+    {
+     "say": "Choose the subnet and read the routes and next hops.",
+     "screen": "Effective routes",
+     "zone": "main",
+     "action": "see",
+     "target": "Next hop"
+    }
+   ]
+  },
+  {
+   "id": "diag-create",
+   "title": "Send a resource's logs to a workspace",
+   "match": "az\\s+monitor\\s+diagnostic-settings\\s+create\\s+--resource\\s+(<name>|[\\w.-]+)\\s+--workspace\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Monitor in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Monitor"
+    },
+    {
+     "say": "Choose Diagnostic settings in the blade menu on the left.",
+     "screen": "Monitor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Diagnostic settings"
+    },
+    {
+     "say": "Press Edit setting on the resource {1}.",
+     "screen": "Diagnostic settings",
+     "zone": "main",
+     "action": "click",
+     "target": "Edit setting"
+    },
+    {
+     "say": "Press Add diagnostic setting.",
+     "screen": "Diagnostic settings",
+     "zone": "panel",
+     "action": "click",
+     "target": "Add diagnostic setting"
+    },
+    {
+     "say": "Type {3} as the name, tick allLogs and AllMetrics, and Send to Log Analytics workspace {2}.",
+     "screen": "Diagnostic setting",
+     "zone": "panel",
+     "action": "select",
+     "target": "Log Analytics workspace",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "Diagnostic setting",
+     "zone": "panel",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "diag-list",
+   "title": "See diagnostic settings",
+   "match": "az\\s+monitor\\s+diagnostic-settings\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Monitor in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Monitor"
+    },
+    {
+     "say": "Choose Diagnostic settings in the blade menu on the left.",
+     "screen": "Monitor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Diagnostic settings"
+    },
+    {
+     "say": "Read the Diagnostics status of each resource.",
+     "screen": "Diagnostic settings",
+     "zone": "main",
+     "action": "see",
+     "target": "Diagnostics status"
+    }
+   ]
+  },
+  {
+   "id": "law-create",
+   "title": "Create a Log Analytics workspace",
+   "match": "az\\s+monitor\\s+log-analytics\\s+workspace\\s+create\\s+-g\\s+([\\w.-]+)\\s+--workspace-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Log Analytics workspaces in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Log Analytics workspaces"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Log Analytics workspaces",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create Log Analytics workspace",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name.",
+     "screen": "Create Log Analytics workspace",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create Log Analytics workspace",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create Log Analytics workspace",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "law-query",
+   "title": "Run a log query",
+   "match": "az\\s+monitor\\s+log-analytics\\s+query\\s+-q\\s+\\\"",
+   "steps": [
+    {
+     "say": "Type Monitor in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Monitor"
+    },
+    {
+     "say": "Choose Logs in the blade menu on the left.",
+     "screen": "Monitor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Logs"
+    },
+    {
+     "say": "Type the KQL query in the editor.",
+     "screen": "Logs",
+     "zone": "editor",
+     "action": "type",
+     "target": "Query editor"
+    },
+    {
+     "say": "Press Run and read the Results.",
+     "screen": "Logs",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Run"
+    }
+   ]
+  },
+  {
+   "id": "law-tables",
+   "title": "See a workspace's tables",
+   "match": "az\\s+monitor\\s+log-analytics\\s+workspace\\s+table\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Log Analytics workspaces in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Log Analytics workspaces"
+    },
+    {
+     "say": "Open the workspace and choose Tables.",
+     "screen": "Log Analytics workspaces",
+     "zone": "main",
+     "action": "see",
+     "target": "Tables"
+    }
+   ]
+  },
+  {
+   "id": "alert-create",
+   "title": "Create an alert rule",
+   "match": "az\\s+monitor\\s+metrics\\s+alert\\s+create\\s+-n\\s+([\\w.-]+)\\s+-g\\s+([\\w.-]+).*?--action\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Monitor in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Monitor"
+    },
+    {
+     "say": "Choose Alerts in the blade menu on the left.",
+     "screen": "Monitor",
+     "zone": "nav",
+     "action": "click",
+     "target": "Alerts"
+    },
+    {
+     "say": "Press Create alert rule.",
+     "screen": "Alerts",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create alert rule"
+    },
+    {
+     "say": "Choose the Resource, the Signal name and the threshold from the condition.",
+     "screen": "Create an alert rule",
+     "zone": "panel",
+     "action": "select",
+     "target": "Signal name"
+    },
+    {
+     "say": "Choose the Action group {3} and type {1} as the Alert rule name.",
+     "screen": "Create an alert rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Alert rule name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create an alert rule",
+     "zone": "panel",
+     "action": "click",
+     "target": "Review + create"
+    }
+   ]
+  },
+  {
+   "id": "deploy",
+   "title": "Deploy a template",
+   "match": "az\\s+deployment\\s+(group|sub)\\s+(create|what-if)\\s+(?:-g\\s+([\\w.-]+)\\s+)?(?:--location\\s+[\\w-]+\\s+)?--template-file\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type Deploy a custom template in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Deploy a custom template"
+    },
+    {
+     "say": "Choose the Template file {4} from the lab workspace.",
+     "screen": "Custom deployment",
+     "zone": "main",
+     "action": "select",
+     "target": "Template file",
+     "value": "{4}"
+    },
+    {
+     "say": "Choose the Deployment scope ({1}).",
+     "screen": "Custom deployment",
+     "zone": "main",
+     "action": "select",
+     "target": "Deployment scope",
+     "value": "{1}"
+    },
+    {
+     "say": "Choose the Resource group {3}.",
+     "screen": "Custom deployment",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{3}",
+     "optional": true
+    },
+    {
+     "say": "Type the Parameters, one name=value per line, and pick the Deployment mode.",
+     "screen": "Custom deployment",
+     "zone": "main",
+     "action": "type",
+     "target": "Parameters"
+    },
+    {
+     "say": "Press What-if to preview, or Review + create to deploy ({2}).",
+     "screen": "Custom deployment",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    }
+   ],
+   "verify": "The Deployment page shows the result and outputs."
+  },
+  {
+   "id": "storage-create",
+   "title": "Create a storage account",
+   "match": "az\\s+storage\\s+account\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Storage accounts",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group"
+    },
+    {
+     "say": "Type the Storage account name {2} (lowercase letters and numbers only).",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "type",
+     "target": "Storage account name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "storage-create-n",
+   "title": "Create a storage account",
+   "match": "az\\s+storage\\s+account\\s+create\\s+-n\\s+([\\w.-]+)\\s+-g\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Storage accounts",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group"
+    },
+    {
+     "say": "Type the Storage account name {1} (lowercase letters and numbers only).",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "type",
+     "target": "Storage account name",
+     "value": "{1}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a storage account",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "storage-keys",
+   "title": "See the access keys",
+   "match": "az\\s+storage\\s+account\\s+keys\\s+list\\s+--account-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Storage accounts",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Access keys in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Access keys"
+    },
+    {
+     "say": "Read key1 and key2 and the connection string.",
+     "screen": "Access keys",
+     "zone": "main",
+     "action": "see",
+     "target": "Access keys"
+    }
+   ]
+  },
+  {
+   "id": "container-create",
+   "title": "Create a blob container",
+   "match": "az\\s+storage\\s+container\\s+create\\s+--name\\s+([\\w.-]+)\\s+--account-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Storage accounts",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Containers in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Containers"
+    },
+    {
+     "say": "Press + Container.",
+     "screen": "Containers",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Container"
+    },
+    {
+     "say": "Type {1} as the name and press Create.",
+     "screen": "New container",
+     "zone": "panel",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "blob-upload",
+   "title": "Upload a blob",
+   "match": "az\\s+storage\\s+blob\\s+upload\\s+--account-name\\s+([\\w.-]+)\\s+--container-name\\s+([\\w.-]+)\\s+--file\\s+(\\S+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Storage accounts",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Containers in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Containers"
+    },
+    {
+     "say": "Open the container {2}.",
+     "screen": "Containers",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Press Upload.",
+     "screen": "{2}",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Upload"
+    },
+    {
+     "say": "Choose the workspace file {3} and press Upload.",
+     "screen": "Upload blob",
+     "zone": "panel",
+     "action": "select",
+     "target": "File",
+     "value": "{3}"
+    }
+   ]
+  },
+  {
+   "id": "blob-list",
+   "title": "See containers and blobs",
+   "match": "az\\s+storage\\s+(?:container|blob)\\s+list\\s+--account-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Storage accounts",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Containers in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Containers"
+    },
+    {
+     "say": "Read the containers and open one to see its blobs.",
+     "screen": "Containers",
+     "zone": "main",
+     "action": "see",
+     "target": "Containers"
+    }
+   ]
+  },
+  {
+   "id": "storage-list",
+   "title": "See storage accounts",
+   "match": "az\\s+storage\\s+account\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Storage accounts in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Storage accounts"
+    },
+    {
+     "say": "Read the storage accounts.",
+     "screen": "Storage accounts",
+     "zone": "main",
+     "action": "see",
+     "target": "Storage accounts"
+    }
+   ]
+  },
+  {
+   "id": "vm-create",
+   "title": "Create a virtual machine",
+   "match": "az\\s+vm\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--image\\s+(\\w+)\\s+--size\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type Virtual machines in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual machines"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Virtual machines",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Virtual machine name.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "type",
+     "target": "Virtual machine name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Image {3} and the Size {4}.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "select",
+     "target": "Image",
+     "value": "{3}"
+    },
+    {
+     "say": "Keep SSH public key and the Username azureuser.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "see",
+     "target": "Authentication type"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a virtual machine",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "vm-stop",
+   "title": "Stop (deallocate) a VM",
+   "match": "az\\s+vm\\s+deallocate\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Virtual machines in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual machines"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Virtual machines",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Press Stop and confirm. The VM is deallocated and stops costing compute.",
+     "screen": "{2}",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Stop"
+    }
+   ]
+  },
+  {
+   "id": "vm-port",
+   "title": "Open a port on a VM",
+   "match": "az\\s+vm\\s+open-port\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--port\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Type Virtual machines in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual machines"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Virtual machines",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Network settings in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Network settings"
+    },
+    {
+     "say": "Press Add inbound port rule.",
+     "screen": "Network settings",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add inbound port rule"
+    },
+    {
+     "say": "Type {3} in Destination port ranges and press Add.",
+     "screen": "Add inbound security rule",
+     "zone": "panel",
+     "action": "type",
+     "target": "Destination port ranges",
+     "value": "{3}"
+    }
+   ]
+  },
+  {
+   "id": "vm-list",
+   "title": "See virtual machines",
+   "match": "az\\s+vm\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Virtual machines in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Virtual machines"
+    },
+    {
+     "say": "Read each VM's power state.",
+     "screen": "Virtual machines",
+     "zone": "main",
+     "action": "see",
+     "target": "Virtual machines"
+    }
+   ]
+  },
+  {
+   "id": "plan-create",
+   "title": "Create an App Service plan",
+   "match": "az\\s+appservice\\s+plan\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--sku\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Type App Service plans in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "App Service plans"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "App Service plans",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create App Service Plan",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name, choose Linux and the pricing plan {3}.",
+     "screen": "Create App Service Plan",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create App Service Plan",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create App Service Plan",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "webapp-create",
+   "title": "Create a web app",
+   "match": "az\\s+webapp\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--plan\\s+([\\w.-]+)\\s+--runtime\\s+\\\"([^\\\"]+)\\\"",
+   "steps": [
+    {
+     "say": "Type App Services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "App Services"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "App Services",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create Web App",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Name and choose the Runtime stack {4}.",
+     "screen": "Create Web App",
+     "zone": "main",
+     "action": "type",
+     "target": "Name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the plan {3}.",
+     "screen": "Create Web App",
+     "zone": "main",
+     "action": "select",
+     "target": "Linux Plan",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create Web App",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create Web App",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "webapp-settings",
+   "title": "Set app settings",
+   "match": "az\\s+webapp\\s+config\\s+appsettings\\s+set\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type App Services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "App Services"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "App Services",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Environment variables in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Environment variables"
+    },
+    {
+     "say": "Press Add for each setting and type its name and value.",
+     "screen": "App settings",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Press Save.",
+     "screen": "App settings",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Save"
+    }
+   ]
+  },
+  {
+   "id": "webapp-settings-list",
+   "title": "See app settings",
+   "match": "az\\s+webapp\\s+config\\s+appsettings\\s+list\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type App Services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "App Services"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "App Services",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Environment variables in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Environment variables"
+    },
+    {
+     "say": "Read the App settings.",
+     "screen": "App settings",
+     "zone": "main",
+     "action": "see",
+     "target": "App settings"
+    }
+   ]
+  },
+  {
+   "id": "webapp-list",
+   "title": "See web apps",
+   "match": "az\\s+webapp\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type App Services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "App Services"
+    },
+    {
+     "say": "Read the apps and their state.",
+     "screen": "App Services",
+     "zone": "main",
+     "action": "see",
+     "target": "App Services"
+    }
+   ]
+  },
+  {
+   "id": "sql-server",
+   "title": "Create a SQL server",
+   "match": "az\\s+sql\\s+server\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--admin-user\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type SQL servers in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "SQL servers"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "SQL servers",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create SQL Database Server",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Server name.",
+     "screen": "Create SQL Database Server",
+     "zone": "main",
+     "action": "type",
+     "target": "Server name",
+     "value": "{2}"
+    },
+    {
+     "say": "Type {3} as the admin login and set a password.",
+     "screen": "Create SQL Database Server",
+     "zone": "main",
+     "action": "type",
+     "target": "Server admin login",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create SQL Database Server",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create SQL Database Server",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "sql-db",
+   "title": "Create a SQL database",
+   "match": "az\\s+sql\\s+db\\s+create\\s+-g\\s+([\\w.-]+)\\s+--server\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type SQL servers in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "SQL servers"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "SQL servers",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose SQL databases in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "SQL databases"
+    },
+    {
+     "say": "Press Create database.",
+     "screen": "SQL databases",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create database"
+    },
+    {
+     "say": "Type {3} as the Database name, then Review + create and Create.",
+     "screen": "Create SQL Database",
+     "zone": "main",
+     "action": "type",
+     "target": "Database name",
+     "value": "{3}"
+    }
+   ]
+  },
+  {
+   "id": "sql-show",
+   "title": "See a SQL server",
+   "match": "az\\s+sql\\s+server\\s+show\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type SQL servers in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "SQL servers"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "SQL servers",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Read the Overview.",
+     "screen": "{2}",
+     "zone": "main",
+     "action": "see",
+     "target": "Overview"
+    }
+   ]
+  },
+  {
+   "id": "kv-create",
+   "title": "Create a key vault",
+   "match": "az\\s+keyvault\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Key vaults in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Key vaults"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Key vaults",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create a key vault",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Key vault name.",
+     "screen": "Create a key vault",
+     "zone": "main",
+     "action": "type",
+     "target": "Key vault name",
+     "value": "{2}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create a key vault",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create a key vault",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "aks-list",
+   "title": "See Kubernetes clusters",
+   "match": "az\\s+aks\\s+list\\b",
+   "steps": [
+    {
+     "say": "Type Kubernetes services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Kubernetes services"
+    },
+    {
+     "say": "Read each cluster's nodes and state.",
+     "screen": "Kubernetes services",
+     "zone": "main",
+     "action": "see",
+     "target": "Kubernetes services"
+    }
+   ]
+  },
+  {
+   "id": "aks-scale",
+   "title": "Scale a node pool",
+   "match": "az\\s+aks\\s+scale\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--node-count\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Type Kubernetes services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Kubernetes services"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Kubernetes services",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Node pools in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Node pools"
+    },
+    {
+     "say": "Press Scale node pool, type {3} as the Node count and press Apply.",
+     "screen": "Node pools",
+     "zone": "main",
+     "action": "type",
+     "target": "Node count",
+     "value": "{3}"
+    }
+   ]
+  },
+  {
+   "id": "budget-create",
+   "title": "Create a budget",
+   "match": "az\\s+consumption\\s+budget\\s+create\\s+--budget-name\\s+([\\w.-]+)\\s+--amount\\s+(\\d+)",
+   "steps": [
+    {
+     "say": "Type Cost Management in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Cost Management"
+    },
+    {
+     "say": "Choose Budgets in the blade menu on the left.",
+     "screen": "Cost Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Budgets"
+    },
+    {
+     "say": "Press Add.",
+     "screen": "Budgets",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Add"
+    },
+    {
+     "say": "Type {1} as the Name and {2} as the Amount.",
+     "screen": "Create budget",
+     "zone": "panel",
+     "action": "type",
+     "target": "Amount",
+     "value": "{2}"
+    },
+    {
+     "say": "Set the alert conditions and recipients, then press Create.",
+     "screen": "Create budget",
+     "zone": "panel",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "cost-usage",
+   "title": "Analyse costs",
+   "match": "az\\s+consumption\\s+(?:usage|budget\\s+list)\\b",
+   "steps": [
+    {
+     "say": "Type Cost Management in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Cost Management"
+    },
+    {
+     "say": "Choose Cost analysis in the blade menu on the left.",
+     "screen": "Cost Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Cost analysis"
+    },
+    {
+     "say": "Choose Group by (Resource group name or Tag: owner) and read the costs.",
+     "screen": "Cost analysis",
+     "zone": "toolbar",
+     "action": "select",
+     "target": "Group by"
+    }
+   ]
+  },
+  {
+   "id": "cost-rightsize",
+   "title": "See rightsizing advice",
+   "match": "az\\s+consumption\\s+(?:rightsize|reservation)\\b",
+   "steps": [
+    {
+     "say": "Type Cost Management in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Cost Management"
+    },
+    {
+     "say": "Choose Advisor recommendations in the blade menu on the left.",
+     "screen": "Cost Management",
+     "zone": "nav",
+     "action": "click",
+     "target": "Advisor recommendations"
+    },
+    {
+     "say": "Press Refresh recommendations and read them (Reservations for purchases).",
+     "screen": "Advisor recommendations",
+     "zone": "main",
+     "action": "click",
+     "target": "Refresh recommendations"
+    }
+   ]
+  },
+  {
+   "id": "aks-create",
+   "title": "Create a Kubernetes cluster",
+   "match": "az\\s+aks\\s+create\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)\\s+--node-count\\s+(\\d+)(?:\\s+--node-vm-size\\s+(\\w+))?",
+   "steps": [
+    {
+     "say": "Type Kubernetes services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Kubernetes services"
+    },
+    {
+     "say": "Press Create.",
+     "screen": "Kubernetes services",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "Create"
+    },
+    {
+     "say": "Choose the Resource group {1}.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "select",
+     "target": "Resource group",
+     "value": "{1}",
+     "optional": true
+    },
+    {
+     "say": "Type {2} as the Kubernetes cluster name.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "type",
+     "target": "Kubernetes cluster name",
+     "value": "{2}"
+    },
+    {
+     "say": "Choose the Node size {4}.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "select",
+     "target": "Node size",
+     "value": "{4}",
+     "optional": true
+    },
+    {
+     "say": "Set the Node count to {3}.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "type",
+     "target": "Node count",
+     "value": "{3}"
+    },
+    {
+     "say": "Press Review + create.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "click",
+     "target": "Review + create"
+    },
+    {
+     "say": "When validation passes, press Create.",
+     "screen": "Create Kubernetes cluster",
+     "zone": "main",
+     "action": "click",
+     "target": "Create"
+    }
+   ]
+  },
+  {
+   "id": "aks-creds",
+   "title": "Get the cluster credentials",
+   "match": "az\\s+aks\\s+get-credentials\\s+-g\\s+([\\w.-]+)\\s+-n\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Kubernetes services in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Kubernetes services"
+    },
+    {
+     "say": "Open {2} in the list.",
+     "screen": "Kubernetes services",
+     "zone": "main",
+     "action": "click",
+     "target": "{2}"
+    },
+    {
+     "say": "Choose Connect in the blade menu on the left.",
+     "screen": "{2}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Connect"
+    },
+    {
+     "say": "Press Run get-credentials.",
+     "screen": "Connect",
+     "zone": "main",
+     "action": "click",
+     "target": "Run get-credentials"
+    }
+   ]
+  },
+  {
+   "id": "ad-group",
+   "title": "Create a Microsoft Entra group",
+   "match": "az\\s+ad\\s+group\\s+create\\s+--display-name\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Microsoft Entra ID in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Microsoft Entra ID"
+    },
+    {
+     "say": "Choose Groups in the blade menu on the left.",
+     "screen": "Microsoft Entra ID",
+     "zone": "nav",
+     "action": "click",
+     "target": "Groups"
+    },
+    {
+     "say": "Press New group.",
+     "screen": "Groups",
+     "zone": "toolbar",
+     "action": "click",
+     "target": "New group"
+    },
+    {
+     "say": "Type {1} as the Name and press Create.",
+     "screen": "New group",
+     "zone": "panel",
+     "action": "type",
+     "target": "Name",
+     "value": "{1}"
+    }
+   ]
+  },
+  {
+   "id": "deploy-list",
+   "title": "See a group's deployments",
+   "match": "az\\s+deployment\\s+group\\s+list\\s+-g\\s+([\\w.-]+)",
+   "steps": [
+    {
+     "say": "Type Resource groups in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Resource groups"
+    },
+    {
+     "say": "Open {1} in the list.",
+     "screen": "Resource groups",
+     "zone": "main",
+     "action": "click",
+     "target": "{1}"
+    },
+    {
+     "say": "Choose Deployments in the blade menu on the left.",
+     "screen": "{1}",
+     "zone": "nav",
+     "action": "click",
+     "target": "Deployments"
+    },
+    {
+     "say": "Read each deployment's status.",
+     "screen": "Deployments",
+     "zone": "main",
+     "action": "see",
+     "target": "Deployments"
+    }
+   ]
+  },
+  {
+   "id": "account-show",
+   "title": "See your subscription",
+   "match": "az\\s+account\\s+(?:show|list-locations)\\b",
+   "steps": [
+    {
+     "say": "Type Subscriptions in the search box at the top and open it.",
+     "screen": "Home",
+     "zone": "top",
+     "action": "type",
+     "target": "Search resources, services",
+     "value": "Subscriptions"
+    },
+    {
+     "say": "Read the subscription name, ID and state.",
+     "screen": "Subscriptions",
+     "zone": "main",
+     "action": "see",
+     "target": "Subscriptions"
+    }
+   ]
+  }
+ ]
+}
