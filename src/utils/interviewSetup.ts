@@ -60,6 +60,14 @@ export interface InterviewConfig {
     sessionSeed?: number;
     /** Whether spoken corrections ("sorry", "scratch that") edit the answer. */
     voiceEditing?: boolean;
+    /**
+     * LIVE INTERVIEW: no turn buttons. The microphone listens continuously and
+     * turns are taken by voice -- a pause of about two seconds ends an answer --
+     * and talking over the interviewer is detected, stops them, and is counted
+     * in the report as an interruption. Absent or false is the button-driven
+     * interview every config before 2026-10-29 describes.
+     */
+    liveInterview?: boolean;
     /** Which of the six conducts it; see src/cast/actors.ts. */
     interviewer?: string;
     /** The CV the candidate attached, if any. */
@@ -457,6 +465,7 @@ export function redoConfigFrom(
         interviewer?: string; avoidQuestions?: string[];
         minutes?: number; questions?: number; sessionSeed?: number;
         voiceEditing?: boolean;
+        liveInterview?: boolean;
         /** Override the stored list -- e.g. to re-shuffle it for this sitting. */
         customQuestions?: string[];
     } = {},
@@ -487,6 +496,7 @@ export function redoConfigFrom(
         // that list is capped at MAX_AVOID_QUESTIONS.
         sessionSeed: extra.sessionSeed ?? newSessionSeed(),
         voiceEditing: extra.voiceEditing,
+        liveInterview: extra.liveInterview,
         interviewer: extra.interviewer,
         cvId: String(session.cv_id ?? '') || undefined,
         cvTitle: String(session.cv_title ?? '') || undefined,

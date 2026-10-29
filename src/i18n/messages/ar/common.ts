@@ -16,6 +16,19 @@
 import type { Catalogue } from '../../index';
 
 const common: Catalogue = {
+    // Selecting several records and deleting them (BulkDeleteBar).
+    "Select this item": "تحديد هذا العنصر",
+    "{n} selected": "تم تحديد {n}",
+    "Delete selected": "حذف المحدد",
+    "Delete all": "حذف الكل",
+    "Clear selection": "إلغاء التحديد",
+    "Delete {n} selected?": "حذف العناصر المحددة ({n})؟",
+    "Delete all {n}?": "حذف جميع العناصر ({n})؟",
+    "They will be permanently deleted. This cannot be undone.": "سيتم حذفها نهائيًا، ولا يمكن التراجع عن ذلك.",
+    "Deleting…": "جارٍ الحذف…",
+    "{n} deleted.": "تم حذف {n}.",
+    "{n} deleted, {v0} could not be deleted. Try again.": "تم حذف {n}، وتعذّر حذف {v0}. حاول مرة أخرى.",
+    "Nothing could be deleted. Try again.": "تعذّر حذف أي عنصر. حاول مرة أخرى.",
     /* ---------------------------------------------------------------- *
      * Actions
      * ---------------------------------------------------------------- */

@@ -198,10 +198,22 @@
         <p>{{ $t('You have no CVs yet. Upload one, dictate one, or start from blank — all three end up in the same editor.') }}</p>
       </div>
 
-      <div v-else class="cv-grid">
-        <article v-for="cv in filteredCvs" :key="cv.id" class="cv-card">
+      <template v-else>
+      <BulkDeleteBar ref="bulkBar" show-select-all :count="selection.count.value" :total="cvs.length"
+                     :all-selected="selection.allSelected.value" :some-selected="selection.someSelected.value"
+                     :busy="bulkBusy" danger-class="btn btn-danger btn-sm" ghost-class="btn btn-ghost btn-sm"
+                     @toggle-all="selection.toggleAll()" @clear="selection.clear()"
+                     @delete-selected="bulkDelete(selection.ids.value)"
+                     @delete-all="bulkDelete(cvs.map(c => c.id))" />
+      <div class="cv-grid">
+        <article v-for="cv in filteredCvs" :key="cv.id" class="cv-card"
+                 :class="{ 'is-selected': selection.isSelected(cv.id) }">
           <div class="cv-card-top" :style="{ background: cv.accent_color || accentFor(cv.template) }">
-            <span class="cv-card-template">{{ templateName(cv.template) }}</span>
+            <label class="cv-card-select">
+              <input type="checkbox" :checked="selection.isSelected(cv.id)" :disabled="bulkBusy"
+                     :aria-label="$t('Select this item')" @change="selection.toggle(cv.id)" />
+              <span class="cv-card-template">{{ templateName(cv.template) }}</span>
+            </label>
             <span v-if="cv.tailored_to_job" class="cv-card-badge">
               {{ $t('Tailored{v0}', { v0: cv.match_score !== null ? ` · ${cv.match_score}%` : '' }) }}
             </span>
@@ -234,6 +246,7 @@
           </div>
         </article>
       </div>
+      </template>
     </section>
 
     <!-- ═══ Templates gallery ═══ -->
@@ -330,6 +343,8 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
+import BulkDeleteBar from '@/components/BulkDeleteBar.vue';
+import { useBulkSelection } from '@/composables/useBulkSelection';
 import {
   cvBuilderService,
   type CvDashboard, type CvSummary, type CvTemplate, type ExportFormat,
@@ -644,6 +659,28 @@ async function doDuplicate() {
   }
 }
 
+/* ---- Select several and delete them ------------------------------------ */
+const selection = useBulkSelection(computed(() => filteredCvs.value.map(cv => cv.id)));
+const bulkBusy = ref(false);
+const bulkBar = ref<InstanceType<typeof BulkDeleteBar> | null>(null);
+
+async function bulkDelete(ids: string[]) {
+  if (!ids.length || bulkBusy.value) return;
+  bulkBusy.value = true;
+  try {
+    const result = await cvBuilderService.bulkDeleteCvs(userId.value, ids);
+    const gone = new Set(result.deleted);
+    cvs.value = cvs.value.filter(cv => !gone.has(cv.id));
+    selection.clear();
+    bulkBar.value?.finish(result);
+    await reload();
+  } catch (e: any) {
+    bulkBar.value?.finish(null, e?.message);
+  } finally {
+    bulkBusy.value = false;
+  }
+}
+
 function confirmDelete(cv: CvSummary) {
   pendingDelete.value = cv;
 }
@@ -831,6 +868,9 @@ onMounted(async () => {
   height: 34px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 12px; font-size: 0.72rem; color: var(--sfs-text, #fff);
 }
+.cv-card-select { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; min-width: 0; }
+.cv-card-select input { width: 1rem; height: 1rem; cursor: pointer; accent-color: var(--sfs-accent, #667eea); }
+.cv-card.is-selected { border-color: var(--sfs-accent, #667eea); }
 .cv-card-template { font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
 .cv-card-badge { background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.28); padding: 2px 8px; border-radius: 20px; }
 

@@ -51,7 +51,7 @@
     "build:lab-preview": "vite build --config tools/labs-preview/vite.config.ts",
     "preview:reader": "vite --config tools/reader-preview/vite.config.ts",
     "build:reader-preview": "vite build --config tools/reader-preview/vite.config.ts",
-    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:aichat && npm run check:appnav && npm run check:theme && npm run check:linkify && npm run check:notifyevents && npm run check:cssleaks && npm run check:examshuffle && npm run check:proctorqueue && npm run check:newscast && npm run check:actors && npm run check:interview && npm run check:interviewreport && npm run check:speechcapture && npm run check:answeredit && npm run check:qacoaching && npm run check:leaderboard && npm run check:practice && npm run check:tour && npm run check:assistant && npm run check:lessoncontent && npm run check:lessonorder && npm run check:learningtrail && npm run check:reader && npm run check:labs && npm run check:labdocs && npm run check:jitypes && npm run check:i18n && npm run check:datai18n",
+    "check": "npm run check:photomask && npm run check:drawengine && npm run check:chatmedia && npm run check:aichat && npm run check:appnav && npm run check:theme && npm run check:linkify && npm run check:notifyevents && npm run check:cssleaks && npm run check:examshuffle && npm run check:proctorqueue && npm run check:newscast && npm run check:actors && npm run check:interview && npm run check:interviewreport && npm run check:speechcapture && npm run check:answeredit && npm run check:liveturns && npm run check:qacoaching && npm run check:leaderboard && npm run check:practice && npm run check:tour && npm run check:assistant && npm run check:lessoncontent && npm run check:lessonorder && npm run check:learningtrail && npm run check:reader && npm run check:labs && npm run check:labdocs && npm run check:jitypes && npm run check:i18n && npm run check:datai18n",
     "audit:contrast": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-contrast.mjs",
     "audit:ink": "vite build --config tools/theme-check/themes.config.ts && node tools/theme-check/audit-ink.mjs",
     "audit:pairs": "node tools/tokenize-colors/audit-pairs.mjs",
@@ -71,7 +71,8 @@
     "shoot:assistant": "npm run build:assistant-preview && node tools/assistant-preview/serve.mjs",
     "shoot:draw": "npm run build:draw-preview && node tools/draw-preview/shoot.mjs",
     "shoot:reader": "npm run build:reader-preview && node tools/reader-preview/shoot.mjs",
-    "netsim:extract": "vite build --config tools/netsim-i18n/vite.config.ts && node tools/netsim-i18n/dist/extract.mjs"
+    "netsim:extract": "vite build --config tools/netsim-i18n/vite.config.ts && node tools/netsim-i18n/dist/extract.mjs",
+    "check:liveturns": "vite build --config tools/liveturns-check/vite.config.ts && node tools/liveturns-check/dist/check.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

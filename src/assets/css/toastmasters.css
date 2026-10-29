@@ -1525,3 +1525,40 @@
 }
 
 .tm-rules-list li { line-height: var(--sfs-leading-snug, 1.35); }
+
+/* ===========================================================================
+   LIVE MEETING: the status strip, the interruption notice, and the option on
+   the preparation page. Same shape as the Job Interview's.
+   =========================================================================== */
+.tm-live-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem 0.65rem;
+  margin: 0 0 0.75rem; padding: 0.5rem 0.8rem;
+  font-size: 0.86rem; line-height: 1.5;
+  background: rgb(var(--sfs-success-rgb, 34 197 94) / 0.1);
+  border: 1px solid rgb(var(--sfs-success-rgb, 34 197 94) / 0.28);
+  border-radius: var(--sfs-radius-sm, 10px);
+  color: var(--sfs-success-text, #86efac);
+}
+.tm-live-strip-dot {
+  flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--sfs-success, #22c55e);
+}
+.tm-live-strip-dot.hearing { box-shadow: 0 0 0 4px rgb(var(--sfs-success-rgb, 34 197 94) / 0.3); }
+.tm-live-strip-dot.muted { background: var(--sfs-text-faint, #94a3b8); box-shadow: none; }
+.tm-live-strip-count {
+  margin-inline-start: auto; font-weight: 700;
+  color: var(--sfs-warning-text, #fcd34d);
+}
+.tm-live-interrupt {
+  margin: 0 0 0.75rem; padding: 0.45rem 0.8rem;
+  font-size: 0.86rem; font-weight: 600;
+  background: rgb(var(--sfs-warning-rgb, 245 158 11) / 0.14);
+  border: 1px solid rgb(var(--sfs-warning-rgb, 245 158 11) / 0.35);
+  border-radius: var(--sfs-radius-sm, 10px);
+  color: var(--sfs-warning-text, #fcd34d);
+}
+.tm-howto .tm-inline-check {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin: 0.25rem 0 0.4rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+}
+.tm-howto .tm-inline-check input { width: auto; margin: 0; }

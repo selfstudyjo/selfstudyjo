@@ -251,6 +251,28 @@ Example:
         </div>
 
         <!--
+          LIVE INTERVIEW. Off by default: the button-driven room is what every
+          candidate has used so far, and switching how turns are taken without
+          being asked would be a surprise in the middle of an interview.
+          Explained here, before the room, because in live mode there are no
+          buttons to discover it from.
+        -->
+        <div class="ji-howto ji-live-option">
+          <h3>{{ $t('🎙️ Live interview') }}</h3>
+          <label class="ji-inline-check">
+            <input type="checkbox" v-model="form.liveInterview">
+            {{ $t('Run it as a live interview — no buttons, just talk') }}
+          </label>
+          <ul>
+            <li>{{ $t('The microphone listens all the time. Start answering whenever you are ready — there is no “Start Answering” or “Submit” button.') }}</li>
+            <li>{{ $t('Your answer ends when you stop talking for about two seconds, and the interviewer moves on — exactly as in a real call.') }}</li>
+            <li>{{ $t('If you talk over the interviewer, they stop and listen. Each time is counted as an interruption, and your report treats it as a communication weakness.') }}</li>
+            <li>{{ $t('You can still mute your microphone, pause to edit your answer, and end the interview at any time.') }}</li>
+          </ul>
+          <p class="ji-hint">{{ $t('Use headphones if you can: they stop the interviewer’s voice reaching your microphone.') }}</p>
+        </div>
+
+        <!--
           THE RULES, BEFORE THE ROOM, and working rule 53 is unambiguous about
           why: a system that penalises somebody owes them the rule beforehand,
           the reason at the time and the evidence afterwards. The interview
@@ -330,6 +352,8 @@ const form = reactive({
   minutes: minutesForQuestions(6),
   cvId: '',
   voiceEditing: true,
+  // Off by default: see the template.
+  liveInterview: false,
   // The candidate's own questions. Off by default: the AI-planned interview is
   // still the right answer for somebody who has not been handed a list.
   customOn: false,
@@ -498,6 +522,7 @@ onMounted(async () => {
       form.questions = plannedQuestionCount(prefill);
       form.minutes = Math.max(minutesForQuestions(form.questions), clampMinutes(prefill.minutes));
       form.voiceEditing = prefill.voiceEditing !== false;
+      form.liveInterview = prefill.liveInterview === true;
       // A redo of an interview with the candidate's own list comes back with
       // the list in the box -- rehearsing the same questions again is the
       // point of pressing "practise again" on one.
@@ -645,6 +670,7 @@ async function startSession() {
       sessionSeed,
       customQuestions: own.length ? own : undefined,
       voiceEditing: form.voiceEditing,
+      liveInterview: form.liveInterview || undefined,
       // Who conducts it is decided here, once, and travels in the config for the
       // same reason the topic does: the session view is re-created by a reload,
       // and re-casting there would swap the interviewer for a different person

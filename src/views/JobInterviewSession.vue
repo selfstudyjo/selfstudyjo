@@ -86,6 +86,24 @@
     </div>
 
     <!--
+      LIVE INTERVIEW: there are no turn buttons, so this strip is the only thing
+      that says how a turn is taken and that the microphone is (or is not)
+      listening. The interruption notice is deliberately small and does not
+      block anything -- the interviewer has already stopped, which is the real
+      consequence; this only says why.
+    -->
+    <div class="ji-live-strip" v-if="liveMode && phase !== 'idle' && !reportVisible" role="status">
+      <span class="ji-live-strip-dot" :class="{ hearing: liveHearing, muted: !micEnabled }"></span>
+      <span v-if="!micEnabled">{{ $t('🔇 Live interview — your microphone is muted. Unmute it to answer.') }}</span>
+      <span v-else-if="phase === 'answering'">{{ $t('🟢 Live — just answer. Stop talking for about two seconds when you have finished.') }}</span>
+      <span v-else>{{ $t('🟢 Live — the microphone is on. Let the interviewer finish, then answer.') }}</span>
+      <span class="ji-live-strip-count" v-if="interruptions.length">{{ $t('Interruptions: {v0}', { v0: interruptions.length }) }}</span>
+    </div>
+    <div class="ji-live-interrupt" v-if="interruptNotice" role="status" aria-live="polite">
+      {{ $t('✋ You interrupted the interviewer') }}
+    </div>
+
+    <!--
       The answer, EDITABLE while it is being spoken.
 
       It was a read-only div, which is fine for a native speaker and useless for
@@ -193,6 +211,7 @@
         :value="answer.text"
         :readonly="phase !== 'answering' && phase !== 'awaiting'"
         @input="onAnswerTyped"
+        @keydown="noteTyping"
         @select="trackSelection"
         @keyup="trackSelection"
         @mouseup="trackSelection"
@@ -290,8 +309,9 @@
       <button @click="startInterview" :disabled="phase !== 'idle' || starting" class="ji-btn-primary">
         {{ startBtnText }}
       </button>
-      <button @click="startAnswering" :disabled="phase !== 'awaiting'" class="ji-btn-success">{{ $t('🎤 Start Answering') }}</button>
-      <button @click="submitAnswer" :disabled="phase !== 'answering'" class="ji-btn-warning">{{ $t('✅ Submit Answer') }}</button>
+      <!-- In a live interview turns are taken by voice, so there is nothing to press. -->
+      <button v-if="!liveMode" @click="startAnswering" :disabled="phase !== 'awaiting'" class="ji-btn-success">{{ $t('🎤 Start Answering') }}</button>
+      <button v-if="!liveMode" @click="submitAnswer" :disabled="phase !== 'answering'" class="ji-btn-warning">{{ $t('✅ Submit Answer') }}</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="ji-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
       <!--
         Enabled as soon as the MICROPHONE is ready, not the camera. Pressing it
@@ -364,6 +384,18 @@
       <div class="ji-report-card"><h3>🧠 {{ interviewType === 'HR' ? 'Competency Assessment' : 'Technical Assessment' }}</h3><p>{{ report.technical_assessment }}</p></div>
       <div class="ji-report-card"><h3>{{ $t('🗣️ Communication') }}</h3><p>{{ report.communication }}</p></div>
 
+      <!-- Only for a live interview: a button-driven one cannot interrupt anybody. -->
+      <div class="ji-report-card ji-report-live" v-if="liveMode">
+        <h3>{{ $t('🎙️ Live interview: interruptions') }}</h3>
+        <p v-if="interruptions.length">
+          {{ $t('You interrupted the interviewer {v0} time(s). In a real interview that reads as not listening — let each question finish, then answer.', { v0: interruptions.length }) }}
+        </p>
+        <p v-else>{{ $t('You never interrupted the interviewer — every question was allowed to finish.') }}</p>
+        <ul class="ji-live-list" v-if="interruptions.length">
+          <li v-for="(item, i) in interruptions" :key="i">{{ interruptionLine(item) }}</li>
+        </ul>
+      </div>
+
       <div class="ji-report-card">
         <h3>{{ $t('💬 Question-by-question coaching ({v0})', { v0: qaPairs.length }) }}</h3>
         <p class="ji-card-lead">
@@ -427,6 +459,8 @@ import {
   setTypedText, undoSegments, wordCount, type AnswerState,
 } from '@/utils/answerEditing';
 import { MicCapture } from '@/utils/micCapture';
+import { LiveTurns, cleanInterruptions, type InterruptionRecord } from '@/utils/liveTurns';
+import { LiveMonitor } from '@/utils/liveMonitor';
 import { OrderedResults, transcriptContext } from '@/utils/speechSegmenter';
 import {
   VIDEO_CONSTRAINTS, acquireInterviewMedia, describeMediaError, hasVideoInput,
@@ -643,6 +677,18 @@ const answer = ref<AnswerState>(emptyAnswer());
 const answerEl = ref<HTMLTextAreaElement>();
 /** Whether "sorry" and friends edit the answer. Off is a real choice — see below. */
 const voiceEditing = ref(cfg.voiceEditing !== false);
+/**
+ * A live interview: no turn buttons, turns taken by voice, and talking over the
+ * interviewer counted. Read once from the config, like everything else here, so
+ * a reload mid-interview is still a live one.
+ */
+const liveMode = cfg.liveInterview === true;
+/** Every time the candidate talked over the interviewer, in order. */
+const interruptions = ref<InterruptionRecord[]>([]);
+/** The small "you interrupted" notice, shown for a few seconds. */
+const interruptNotice = ref(false);
+/** The live monitor hears the candidate speaking right now. */
+const liveHearing = ref(false);
 const selection = ref<{ start: number; end: number }>({ start: 0, end: 0 });
 /** Seconds spent on the current answer, for the per-answer clock. */
 const answerElapsed = ref(0);
@@ -1166,7 +1212,7 @@ function speechTimeoutMs(text: string): number {
   return Math.min(90000, Math.max(8000, text.length * 120 + 5000));
 }
 
-function speak(text: string): Promise<void> {
+function speakLine(text: string): Promise<void> {
   // The executor is `async` because the server route below awaits a network
   // fetch. That is normally an anti-pattern — a throw inside an async executor
   // is swallowed rather than rejecting the promise — and it is safe here
@@ -1345,6 +1391,131 @@ function speak(text: string): Promise<void> {
       }
     }, 80);
   });
+}
+
+/**
+ * Stops the line being spoken RIGHT NOW, if there is one. Set by `speak` in a
+ * live interview; null otherwise.
+ */
+let abortSpeech: (() => void) | null = null;
+
+/**
+ * Say one line. Outside a live interview this IS `speakLine`, untouched.
+ *
+ * In a live interview the line can be cut off by the candidate talking over it,
+ * and the cut has to RESOLVE the promise: `speechAudio.stop()` leaves an
+ * in-flight `play()` pending for ever, so without this wrapper an interrupted
+ * server-route line would be an interview that never reaches its next question.
+ */
+function speak(text: string): Promise<void> {
+  if (!liveMode) return speakLine(text);
+  return new Promise<void>(resolve => {
+    let settled = false;
+    const end = () => {
+      if (settled) return;
+      settled = true;
+      if (abortSpeech === abort) abortSpeech = null;
+      resolve();
+    };
+    const abort = () => {
+      try { speechSynthesis.cancel(); } catch {}
+      stopServerClip();
+      stopSpeechKeepAlive();
+      speaking = null;
+      currentSpeaker.value = null;
+      end();
+    };
+    abortSpeech = abort;
+    speakLine(text).then(end, end);
+  });
+}
+
+// ====== Live interview: turns by voice, and interruptions ======
+/** Typing in the answer box holds the turn open for this long. */
+const LIVE_TYPING_HOLD_MS = 3000;
+/** How long the "you interrupted" notice stays up. */
+const INTERRUPT_NOTICE_MS = 3500;
+
+const liveTurns = new LiveTurns();
+let liveMonitor: LiveMonitor | null = null;
+let lastTypedAt = 0;
+let interruptNoticeTimer: ReturnType<typeof setTimeout> | null = null;
+
+function noteTyping() { lastTypedAt = performance.now(); }
+
+/** Start (or restart, after a microphone retry) the level monitor. */
+function startLiveMonitor() {
+  if (!liveMode || !audioStream) return;
+  liveMonitor?.dispose();
+  liveMonitor = new LiveMonitor(audioStream, onLiveFrame);
+  if (!liveMonitor.start()) {
+    liveMonitor = null;
+    recordingError.value = t('Live turn-taking is not available in this browser. Turn live mode off to use the answer buttons.');
+  }
+}
+
+function stopLiveMonitor() {
+  liveMonitor?.dispose();
+  liveMonitor = null;
+  liveHearing.value = false;
+}
+
+/** One frame of the microphone's level, every 50 ms, in a live interview. */
+function onLiveFrame(db: number) {
+  const now = performance.now();
+  // "Speaking" means AUDIBLE: the energy tracker runs only while a clip or an
+  // utterance is actually playing, so the network wait before a line is not
+  // treated as the interviewer talking.
+  const aiSpeaking = energyTimer !== null && currentSpeaker.value === 'interviewer';
+  const events = liveTurns.push({
+    db, at: now, aiSpeaking,
+    listening: phase.value === 'answering',
+    muted: !micEnabled.value,
+    // A turn is never ended under somebody who is fixing their transcript,
+    // has paused, or has muted to cough.
+    hold: answerPaused.value || !micEnabled.value || enhancing.value
+      || now - lastTypedAt < LIVE_TYPING_HOLD_MS,
+  });
+  liveHearing.value = liveTurns.speaking;
+  for (const ev of events) {
+    if (ev.type === 'interruption') noteInterruption(ev.msIntoUtterance);
+    else if (ev.type === 'turn-end' && phase.value === 'answering') void submitAnswer();
+  }
+}
+
+/** The candidate talked over the interviewer: count it, say so, and stop talking. */
+function noteInterruption(msIntoUtterance: number) {
+  interruptions.value.push({
+    at: new Date().toISOString(),
+    question: currentQuestionText.value ? questionNumber.value : 0,
+    ms_into_utterance: msIntoUtterance,
+  });
+  interruptNotice.value = true;
+  if (interruptNoticeTimer) clearTimeout(interruptNoticeTimer);
+  interruptNoticeTimer = setTimeout(() => { interruptNotice.value = false; }, INTERRUPT_NOTICE_MS);
+  // As a real interviewer would: stop, and listen. The question flow carries on
+  // from wherever `speak` was awaited -- which is straight into the answer.
+  abortSpeech?.();
+  persistSoon();
+}
+
+/** One line of the report's interruption list. */
+function interruptionLine(item: InterruptionRecord): string {
+  const secs = (item.ms_into_utterance / 1000).toFixed(1);
+  return item.question
+    ? t('Question {v0}: {v1} s into the interviewer’s line', { v0: item.question, v1: secs })
+    : t('Introduction or closing: {v0} s into the interviewer’s line', { v0: secs });
+}
+
+/** Open the answer without a button, once the question has been asked. */
+function liveBeginAnswer() {
+  if (!micEnabled.value || !audioStream) {
+    captionSpeaker.value = 'System';
+    captionText.value = t('Your microphone is muted — unmute it to answer.');
+    return;
+  }
+  startAnswering();
+  captionText.value = t('🎤 Answer whenever you are ready. When you stop talking for about two seconds, your answer is sent.');
 }
 
 // ====== Media ======
@@ -1891,6 +2062,9 @@ function sessionPayload(status: 'in_progress' | 'complete') {
     standout_moment: report.standout_moment || '',
     red_flags: report.red_flags || '',
     score_breakdown: report.score_breakdown || {},
+    live_mode: liveMode,
+    interruptions: cleanInterruptions(interruptions.value),
+    interruption_count: interruptions.value.length,
   };
 }
 
@@ -1980,6 +2154,8 @@ async function startInterview() {
     ? 'Microphone ready. Continuing without a camera — that is fine, only your voice is assessed.'
     : 'Microphone ready.';
   if (voices.length === 0) { await new Promise(r => setTimeout(r, 400)); loadVoices(); }
+  // Inside the click that started the interview, so its context is not suspended.
+  if (liveMode) startLiveMonitor();
 
   phase.value = 'intro';
   captionText.value = t('Interviewer is joining…');
@@ -2282,6 +2458,12 @@ async function endInterview() {
     interview_type: interviewType, topic, qualifications, cv_summary: cvSummary,
     qa_pairs: qaPairs.value,
     question_source: questionSource,
+    // Absent outside a live interview, so the evaluator says nothing about it.
+    ...(liveMode ? {
+      live_mode: true,
+      interruptions: cleanInterruptions(interruptions.value),
+      interruption_count: interruptions.value.length,
+    } : {}),
   });
 
   const closing = await jobInterviewService.callInterviewer({
@@ -2352,6 +2534,7 @@ async function endInterview() {
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
   await persistNow('complete');
 
+  stopLiveMonitor();
   stopAllTracks();
 }
 
@@ -2437,6 +2620,7 @@ function nextAttemptConfig() {
     // questions it was explicitly told to skip, and that list is capped.
     sessionSeed: newSessionSeed(),
     voiceEditing: voiceEditing.value,
+    liveInterview: liveMode,
     // This sitting's questions first -- they are the ones a candidate would
     // most obviously notice being asked again. The candidate's OWN questions
     // are left out of it: they are asked again on purpose, and telling the
@@ -2467,6 +2651,11 @@ function editAndRedo() {
   router.push('/job-interview/pre-session');
 }
 
+// A live interview opens the answer the moment the question has been asked --
+// and again the moment the microphone is unmuted, if it was muted then.
+watch(phase, p => { if (liveMode && p === 'awaiting') liveBeginAnswer(); });
+watch(micEnabled, on => { if (liveMode && on && phase.value === 'awaiting') liveBeginAnswer(); });
+
 onMounted(() => {
   if (!sessionStorage.getItem('jobInterviewConfig')) {
     router.replace('/job-interview/pre-session');
@@ -2478,6 +2667,8 @@ onUnmounted(() => {
   answerGeneration++;
   capture?.dispose();
   capture = null;
+  stopLiveMonitor();
+  if (interruptNoticeTimer) clearTimeout(interruptNoticeTimer);
   stopAnswerTimer();
   stopSpeechKeepAlive();
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }

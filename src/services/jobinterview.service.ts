@@ -1,4 +1,5 @@
 import { apiService } from './api';
+import { runBulkDelete, type BulkDeleteResult, type BulkResponse } from '@/utils/bulkDelete';
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
 
@@ -124,6 +125,10 @@ export interface JobInterviewSession {
      */
     custom_questions?: string[];
     question_source?: 'ai' | 'custom' | 'mixed';
+    /** A live interview (turns by voice), and how often the candidate interrupted. */
+    live_mode?: boolean;
+    interruptions?: { at: string; question?: number; ms_into_utterance: number }[];
+    interruption_count?: number;
     /**
      * `in_progress` while the interview is running, `complete` once it has been
      * evaluated.
@@ -271,6 +276,14 @@ export interface EvaluateBody {
      * the candidate chose them on purpose.
      */
     question_source?: 'ai' | 'custom' | 'mixed';
+    /**
+     * A live interview, and every time the candidate talked over the
+     * interviewer (see src/utils/liveTurns.ts). With a count above zero app 27
+     * names it as a communication weakness; absent, it says nothing.
+     */
+    live_mode?: boolean;
+    interruptions?: { at: string; question?: number; ms_into_utterance: number }[];
+    interruption_count?: number;
 }
 
 export interface ModelAnswersBody {
@@ -495,6 +508,20 @@ class JobInterviewService {
     async deleteSession(id: string, userId: string): Promise<{ success: boolean }> {
         const baseUrl = await this.getBaseUrl();
         return await apiService.delete(baseUrl, `/api/jobinterview/sessions/${id}?user_id=${encodeURIComponent(userId)}`);
+    }
+
+    /**
+     * Delete several (or all) of the user's own sessions in one request. Falls
+     * back to one DELETE per id on a replica that has not got the bulk route.
+     */
+    async bulkDeleteSessions(ids: string[], userId: string): Promise<BulkDeleteResult> {
+        const baseUrl = await this.getBaseUrl();
+        return runBulkDelete(
+            ids,
+            chunk => apiService.post<BulkResponse>(baseUrl, `/api/jobinterview/sessions/bulk-delete`,
+                                                  { ids: chunk, user_id: userId }),
+            id => this.deleteSession(id, userId),
+        );
     }
 }
 

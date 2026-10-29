@@ -12,6 +12,19 @@
 import type { Catalogue } from '../../index';
 
 const common: Catalogue = {
+    // Selecting several records and deleting them (BulkDeleteBar).
+    "Select this item": "选择此项",
+    "{n} selected": "已选择 {n} 项",
+    "Delete selected": "删除所选",
+    "Delete all": "全部删除",
+    "Clear selection": "取消选择",
+    "Delete {n} selected?": "删除所选的 {n} 项？",
+    "Delete all {n}?": "全部删除这 {n} 项？",
+    "They will be permanently deleted. This cannot be undone.": "它们将被永久删除，此操作无法撤销。",
+    "Deleting…": "正在删除…",
+    "{n} deleted.": "已删除 {n} 项。",
+    "{n} deleted, {v0} could not be deleted. Try again.": "已删除 {n} 项，{v0} 项无法删除。请重试。",
+    "Nothing could be deleted. Try again.": "没有任何内容被删除。请重试。",
     /* ---------------------------------------------------------------- *
      * Actions
      * ---------------------------------------------------------------- */

@@ -8,11 +8,22 @@
           {{ $t('Live help in real English job interviews. It listens to the interviewer on Zoom, Microsoft Teams or Google Meet and shows you a short answer in very simple English, with the question explained in Arabic.') }}
         </p>
         <div class="ih-actions">
-          <a class="ih-btn ih-btn--primary" :href="RELEASES" target="_blank" rel="noopener noreferrer">
+          <!-- A direct link to the installer for THIS computer: the download starts at once. -->
+          <a v-if="primary" class="ih-btn ih-btn--primary" :href="primary.url" download>
+            {{ primaryLabel }}
+          </a>
+          <a v-else class="ih-btn ih-btn--primary" href="#ih-downloads" @click.prevent="scrollToDownloads">
             {{ $t('Download the Interview Helper') }}
           </a>
           <router-link v-if="!hasAi" class="ih-btn" to="/plans">{{ $t('Get AI Features') }}</router-link>
         </div>
+        <p v-if="os === 'mac'" class="ih-alt">
+          <a :href="altMac.url" download>{{ primaryId === 'mac-x64' ? $t('Apple Silicon Mac (M1 and later)? Download that version') : $t('Intel Mac? Download the Intel version') }}</a>
+        </p>
+        <p v-else-if="os === 'mobile'" class="ih-alt">{{ $t('The Interview Helper runs on a computer. Open this page on your Windows, Mac or Linux computer to download it.') }}</p>
+        <p v-else-if="primary" class="ih-alt">
+          <a href="#ih-downloads" @click.prevent="scrollToDownloads">{{ $t('Other systems and versions') }}</a>
+        </p>
         <p class="ih-access" :class="{ 'ih-access--ok': hasAi }" role="status">
           <template v-if="hasAi">{{ $t('Your plan includes AI Features. Sign in to the app with your SelfStudyJo account.') }}</template>
           <template v-else-if="signedIn">{{ $t('Your plan does not include AI Features yet.') }}</template>
@@ -40,26 +51,29 @@
       </div>
     </section>
 
-    <section class="ih-section">
+    <section id="ih-downloads" ref="downloadsEl" class="ih-section">
       <h2>{{ $t('Download for your computer') }}</h2>
       <div class="ih-grid ih-grid--os">
-        <article v-for="os in systems" :key="os.name" class="ih-card">
-          <h3>{{ os.name }}</h3>
-          <p class="ih-file">{{ os.file }}</p>
-          <p>{{ $t(os.note) }}</p>
+        <article v-for="sys in systems" :key="sys.name" class="ih-card" :class="{ 'ih-card--mine': sys.mine }">
+          <h3>{{ sys.name }}</h3>
+          <p>{{ sys.note }}</p>
+          <ul class="ih-files">
+            <li v-for="f in sys.files" :key="f.id">
+              <a :href="f.url" download>{{ f.label }}</a>
+              <span class="ih-file">{{ f.file }}</span>
+            </li>
+          </ul>
         </article>
       </div>
       <p class="ih-muted">
         {{ $t('All installers are on the releases page. The first time you open it, Windows may ask you to confirm (More info, then Run anyway) and on macOS right-click the app and choose Open.') }}
-        <a :href="RELEASES" target="_blank" rel="noopener noreferrer">{{ $t('Open the releases page') }}</a>
+        <a :href="RELEASES_PAGE" target="_blank" rel="noopener noreferrer">{{ $t('Open the releases page') }}</a>
       </p>
     </section>
 
     <section class="ih-section">
       <h2>{{ $t('How to use it') }}</h2>
-      <ol class="ih-steps">
-        <li v-for="s in steps" :key="s">{{ $t(s) }}</li>
-      </ol>
+      <HelperGuide />
     </section>
 
     <section class="ih-section ih-card">
@@ -70,11 +84,48 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { t } from '@/i18n/runtime';
+import HelperGuide from '@/components/interviewhelper/HelperGuide.vue';
+import {
+  RELEASES_PAGE, installer, primaryInstaller, detectOs, macArchitecture,
+  type DetectedOs, type InstallerId,
+} from '@/utils/interviewHelperDownloads';
 
-const RELEASES = 'https://github.com/mahmoudodoo/selfstudyjo-desktop-interview-helper/releases/latest';
+// The installers live in a PUBLIC repo under stable names: the source repo is
+// private and its releases page is a 404 for every visitor.
+const os = ref<DetectedOs>('unknown');
+const macArch = ref<string | null>(null);
+const primaryId = computed(() => primaryInstaller(os.value, macArch.value));
+const primary = computed(() => (primaryId.value ? installer(primaryId.value) : null));
+const altMac = computed(() => installer(primaryId.value === 'mac-x64' ? 'mac-arm64' : 'mac-x64'));
+
+const labels = computed<Record<InstallerId, string>>(() => ({
+  windows: t('Windows installer (64-bit)'),
+  'mac-arm64': t('macOS, Apple Silicon (M1 and later)'),
+  'mac-x64': t('macOS, Intel'),
+  appimage: t('Linux AppImage (any distribution)'),
+  deb: t('Debian / Ubuntu package'),
+}));
+const primaryLabels = computed<Record<InstallerId, string>>(() => ({
+  windows: t('Download for Windows'),
+  'mac-arm64': t('Download for Mac (Apple Silicon)'),
+  'mac-x64': t('Download for Mac (Intel)'),
+  appimage: t('Download for Linux'),
+  deb: t('Download for Linux'),
+}));
+const primaryLabel = computed(() => (primaryId.value ? primaryLabels.value[primaryId.value] : ''));
+
+const downloadsEl = ref<HTMLElement | null>(null);
+function scrollToDownloads() {
+  downloadsEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+onMounted(async () => {
+  os.value = detectOs(navigator as any);
+  if (os.value === 'mac') macArch.value = await macArchitecture(navigator);
+});
 
 const auth = useAuthStore();
 const signedIn = computed(() => !!auth.isAuthenticated);
@@ -88,18 +139,11 @@ const features = computed(() => [
   { title: t('Answers in seconds'), text: t('Prepare answers to common HR questions before the interview. They appear instantly, then Self Study AI improves them for the exact question.') },
 ]);
 
+const files = (ids: InstallerId[]) => ids.map((id) => ({ ...installer(id), label: labels.value[id] }));
 const systems = computed(() => [
-  { name: 'Windows', file: '.exe', note: t('Windows 10 or 11. Computer audio works out of the box.') },
-  { name: 'macOS', file: '.dmg', note: t('macOS 13 or newer, Intel or Apple Silicon. Allow Screen Recording once so the app can hear the call.') },
-  { name: 'Linux', file: '.AppImage / .deb', note: t('Choose the “Monitor of …” device if computer audio is not offered.') },
-]);
-
-const steps = computed(() => [
-  t('Download and install the app, then sign in with your SelfStudyJo account.'),
-  t('Fill in your profile: the job, the company, your experience and a short CV summary.'),
-  t('Before the interview, press Prepare answers and read them.'),
-  t('When the call starts, press Start interview. Use headphones.'),
-  t('When the interviewer finishes a question, read the answer on the screen and say it in your own voice.'),
+  { name: 'Windows', mine: os.value === 'windows', files: files(['windows']), note: t('Windows 10 or 11. Computer audio works out of the box.') },
+  { name: 'macOS', mine: os.value === 'mac', files: files(['mac-arm64', 'mac-x64']), note: t('macOS 13 or newer, Intel or Apple Silicon. Allow Screen Recording once so the app can hear the call.') },
+  { name: 'Linux', mine: os.value === 'linux', files: files(['appimage', 'deb']), note: t('Choose the “Monitor of …” device if computer audio is not offered.') },
 ]);
 </script>
 
@@ -194,8 +238,13 @@ const steps = computed(() => [
   color: var(--sfs-text, #f1f5f9) !important;
 }
 .ih-muted { color: var(--sfs-text-muted, #cbd5e1); line-height: 1.6; margin-top: 1rem; }
-.ih-muted a { color: var(--sfs-accent-text, #a5b4fc); }
-.ih-steps { margin: 0; padding-inline-start: 1.4rem; line-height: 1.8; font-size: 1.05rem; }
+.ih-muted a, .ih-alt a, .ih-files a { color: var(--sfs-accent-text, #a5b4fc); }
+.ih-alt { margin: 0.6rem 0 0; color: var(--sfs-text-muted, #cbd5e1); }
+.ih-card--mine { border-color: var(--sfs-accent, #667eea); }
+.ih-files { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.55rem; }
+.ih-files li { display: grid; gap: 0.1rem; min-width: 0; }
+.ih-files a { font-weight: 700; }
+.ih-files .ih-file { font-size: 0.8rem; margin: 0 !important; overflow-wrap: anywhere; color: var(--sfs-text-muted, #cbd5e1) !important; }
 @media (max-width: 760px) {
   .ih-hero { grid-template-columns: 1fr; }
 }

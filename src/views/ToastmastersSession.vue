@@ -163,6 +163,7 @@
         :value="answer.text"
         :readonly="!isSpeakingRef && !answer.text"
         @input="onTranscriptTyped"
+        @keydown="noteTyping"
         @select="trackSelection"
         @keyup="trackSelection"
         @mouseup="trackSelection"
@@ -204,6 +205,22 @@
       counting breaches at somebody reading their evaluations would be counting
       nothing and reading as an accusation.
     -->
+    <!--
+      LIVE MEETING: no Speak / I'm Done buttons, so this strip is what says how
+      a turn is taken and whether the microphone is listening. The interruption
+      notice is small and blocks nothing -- the role has already stopped talking.
+    -->
+    <div class="tm-live-strip" v-if="liveMode && mediaReady && !reportsVisible" role="status">
+      <span class="tm-live-strip-dot" :class="{ hearing: liveHearing, muted: !micEnabled }"></span>
+      <span v-if="!micEnabled">{{ $t('🔇 Live meeting — your microphone is muted. Unmute it to speak.') }}</span>
+      <span v-else-if="isSpeakingRef">{{ $t('🟢 Live — it is your turn. Stop talking for about two seconds when you have finished.') }}</span>
+      <span v-else>{{ $t('🟢 Live — the microphone is on. Let each role finish; your turn opens on its own.') }}</span>
+      <span class="tm-live-strip-count" v-if="interruptions.length">{{ $t('Interruptions: {v0}', { v0: interruptions.length }) }}</span>
+    </div>
+    <div class="tm-live-interrupt" v-if="interruptNotice" role="status" aria-live="polite">
+      {{ $t('✋ You interrupted the speaker') }}
+    </div>
+
     <IntegrityMeter
       v-if="sitting.running.value && !reportsVisible"
       context="toastmasters"
@@ -214,8 +231,9 @@
     <div class="tm-controls">
       <button @click="startMeeting" :disabled="startBtnDisabled" class="tm-btn-primary">{{ startBtnText }}</button>
       <button v-if="showSkipIntro" @click="doSkipIntro" :disabled="didSkipIntro" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipIntro ? '⏩ Skipped' : '⏩ Skip Intro' }}</button>
-      <button @click="userSpeak" :disabled="speakBtnDisabled" class="tm-btn-success">{{ speakBtnLabel }}</button>
-      <button @click="userFinish" :disabled="finishBtnDisabled" class="tm-btn-warning">{{ $t('✋ I\'m Done') }}</button>
+      <!-- In a live meeting the turn is taken by voice, so there is nothing to press. -->
+      <button v-if="!liveMode" @click="userSpeak" :disabled="speakBtnDisabled" class="tm-btn-success">{{ speakBtnLabel }}</button>
+      <button v-if="!liveMode" @click="userFinish" :disabled="finishBtnDisabled" class="tm-btn-warning">{{ $t('✋ I\'m Done') }}</button>
       <button v-if="showSkipReports" @click="doSkipReports" :disabled="didSkipReports" class="tm-btn-warning" style="font-size:.9rem">{{ didSkipReports ? '⏩ Skipped' : '⏩ Skip Reports' }}</button>
       <button @click="toggleMic" :disabled="!mediaReady" class="tm-btn-control" :class="{ off: !micEnabled }">{{ micEnabled ? '🎤 Mic On' : '🔇 Mic Off' }}</button>
       <button @click="toggleCamera" :disabled="!mediaReady || !cameraAvailable" class="tm-btn-control" :class="{ off: !cameraEnabled }"
@@ -262,6 +280,12 @@
       <div class="tm-report-card"><h3>{{ $t('📋 Speech Evaluator Report') }}</h3><p>{{ reports.speechEval }}</p></div>
       <div class="tm-report-card"><h3>{{ $t('🎯 General Evaluator Report') }}</h3><p>{{ reports.generalEval }}</p></div>
       <div class="tm-report-card"><h3>{{ $t('📹 Body Language Analysis') }}</h3><p style="white-space:pre-wrap">{{ reports.bodyLang }}</p></div>
+      <!-- Only for a live meeting: with buttons nobody can talk over anybody. -->
+      <div class="tm-report-card tm-report-live" v-if="liveMode">
+        <h3>{{ $t('🎙️ Live meeting: interruptions') }}</h3>
+        <p v-if="interruptions.length">{{ $t('You talked over a meeting role {v0} time(s). In a real meeting, let each speaker finish before you begin.', { v0: interruptions.length }) }}</p>
+        <p v-else>{{ $t('You never talked over anybody — every role was allowed to finish.') }}</p>
+      </div>
       <button @click="doLeave" class="tm-btn-primary">{{ $t('View All Results →') }}</button>
     </div>
   </div>
@@ -294,6 +318,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService } from '@/services/toastmasters.service';
 import { MicCapture } from '@/utils/micCapture';
+import { LiveTurns, cleanInterruptions, type InterruptionRecord } from '@/utils/liveTurns';
+import { LiveMonitor } from '@/utils/liveMonitor';
 import { OrderedResults, transcriptContext } from '@/utils/speechSegmenter';
 import { serviceRegistry } from '@/services/config';
 
@@ -412,6 +438,15 @@ const captionText = ref(t('Click "Start Meeting" to begin.'));
 const answer = ref<AnswerState>(emptyAnswer());
 const selection = ref({ start: 0, end: 0 });
 const voiceEditing = ref(true);
+/**
+ * A live meeting: no Speak / I'm Done buttons, the turn is taken by voice, and
+ * talking over a role is counted. In the URL, so a reload is still live.
+ */
+const liveMode = route.query.live === '1';
+/** Every time the member talked over a role, in order. */
+const interruptions = ref<InterruptionRecord[]>([]);
+const interruptNotice = ref(false);
+const liveHearing = ref(false);
 const transcriptEl = ref<HTMLTextAreaElement>();
 
 /** The words the meeting will actually be judged on. */
@@ -829,7 +864,7 @@ function speechTimeoutMs(text: string): number {
  * utterance in the meeting, and the one delivered through `speakForced`) would
  * have been the one case still being cut off.
  */
-function say(text: string, botKey: string, force: boolean): Promise<void> {
+function sayLine(text: string, botKey: string, force: boolean): Promise<void> {
   // The executor is `async` because the server route below awaits a fetch.
   // That is normally an anti-pattern — a throw inside one is swallowed rather
   // than rejecting — and it is safe here precisely because nothing in this
@@ -941,6 +976,43 @@ function say(text: string, botKey: string, force: boolean): Promise<void> {
         done();
       }, speechTimeoutMs(text));
     }, force ? 100 : 80);
+  });
+}
+
+/** Stops the line being spoken right now. Set by `say` in a live meeting. */
+let abortSpeech: (() => void) | null = null;
+/** Who was speaking when the member talked over them, for the record. */
+let speakingRole = '';
+
+/**
+ * Say one line. Outside a live meeting this IS `sayLine`, untouched.
+ *
+ * In a live meeting the line can be cut off by the member talking over it, and
+ * the cut has to RESOLVE the promise -- `speechAudio.stop()` leaves an in-flight
+ * `play()` pending for ever, and a pending `say()` is a meeting that stops.
+ */
+function say(text: string, botKey: string, force: boolean): Promise<void> {
+  if (!liveMode) return sayLine(text, botKey, force);
+  return new Promise<void>(resolve => {
+    let settled = false;
+    const end = () => {
+      if (settled) return;
+      settled = true;
+      if (abortSpeech === abort) abortSpeech = null;
+      resolve();
+    };
+    const abort = () => {
+      try { speechSynthesis.cancel(); } catch { /* nothing to cancel */ }
+      speechAudio.stop();
+      stopSpeechKeepAlive();
+      trackEnergy(false);
+      speaking = null;
+      currentSpeaker.value = null;
+      end();
+    };
+    abortSpeech = abort;
+    speakingRole = force ? 'sample_speaker' : botKey;
+    sayLine(text, botKey, force).then(end, end);
   });
 }
 
@@ -1342,6 +1414,7 @@ function countFillers(text: string): { counts: Record<string, number>; total: nu
 
 function doLeave() {
   isSpeaking = false; turnGeneration++;
+  stopLiveMonitor();
   capture?.dispose(); capture = null; stopCameraAnalysis();
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
@@ -1350,6 +1423,86 @@ function doLeave() {
   speechAudio.stop();
   trackEnergy(false);
   router.push('/toastmasters/results');
+}
+
+// ═══════ LIVE MEETING: the turn by voice, and interruptions ═══════
+/** Typing in the transcript holds the turn open for this long. */
+const LIVE_TYPING_HOLD_MS = 3000;
+const INTERRUPT_NOTICE_MS = 3500;
+/**
+ * A speech is not an answer: a two-second pause for effect is normal and a
+ * speech that ended on its first breath would be a disaster, so the member has
+ * to have spoken for a while before silence can end the turn.
+ */
+const liveTurns = new LiveTurns({ endSilenceMs: 2000, minTurnVoicedMs: 4000 });
+let liveMonitor: LiveMonitor | null = null;
+let lastTypedAt = 0;
+let interruptNoticeTimer: ReturnType<typeof setTimeout> | null = null;
+
+function noteTyping() { lastTypedAt = performance.now(); }
+
+function startLiveMonitor() {
+  if (!liveMode || !mediaStream) return;
+  liveMonitor?.dispose();
+  liveMonitor = new LiveMonitor(mediaStream, onLiveFrame);
+  if (!liveMonitor.start()) {
+    liveMonitor = null;
+    alert(t('Live turn-taking is not available in this browser. Turn live mode off to use the Speak button.'));
+  }
+}
+
+function stopLiveMonitor() {
+  liveMonitor?.dispose();
+  liveMonitor = null;
+  liveHearing.value = false;
+}
+
+/** One frame of the microphone's level, every 50 ms, in a live meeting. */
+function onLiveFrame(db: number) {
+  const now = performance.now();
+  // AUDIBLE speech only: the energy tracker runs while a line is playing.
+  const aiSpeaking = energyTimer !== null && currentSpeaker.value !== null && !isSpeaking;
+  const events = liveTurns.push({
+    db, at: now, aiSpeaking,
+    listening: isSpeakingRef.value,
+    muted: !micEnabled.value,
+    hold: speechPaused.value || !micEnabled.value || enhancing.value
+      || now - lastTypedAt < LIVE_TYPING_HOLD_MS,
+  });
+  liveHearing.value = liveTurns.speaking;
+  for (const ev of events) {
+    if (ev.type === 'interruption') noteInterruption(ev.msIntoUtterance);
+    else if (ev.type === 'turn-end' && isSpeakingRef.value) void userFinish();
+  }
+}
+
+/** The member talked over a role: count it, say so, and the role stops. */
+function noteInterruption(msIntoUtterance: number) {
+  interruptions.value.push({
+    at: new Date().toISOString(),
+    role: speakingRole || String(currentSpeaker.value || ''),
+    ms_into_utterance: msIntoUtterance,
+  });
+  interruptNotice.value = true;
+  if (interruptNoticeTimer) clearTimeout(interruptNoticeTimer);
+  interruptNoticeTimer = setTimeout(() => { interruptNotice.value = false; }, INTERRUPT_NOTICE_MS);
+  abortSpeech?.();
+}
+
+/** What the evaluators are told about it -- nothing at all outside a live meeting. */
+function liveExtra(): { interruption_count?: number } {
+  return liveMode && interruptions.value.length ? { interruption_count: interruptions.value.length } : {};
+}
+
+/** The member's turn opens without a button once the room hands over. */
+function liveBeginSpeech() {
+  if (!micEnabled.value || !mediaStream) {
+    captionSpeaker.value = t('System');
+    captionText.value = t('Your microphone is muted — unmute it to speak.');
+    return;
+  }
+  userSpeak();
+  captionText.value = t('🎤 Your turn — start speaking. When you stop for about two seconds, your turn ends.');
 }
 
 // ═══════ MAIN FLOW ═══════
@@ -1381,6 +1534,7 @@ async function startMeeting() {
   if (!(await initMedia())) { startBtnDisabled.value = false; startBtnText.value = '▶️ Start Meeting'; showSkipIntro.value = false; return; }
   if (typeof MediaRecorder === 'undefined') { alert(t('Audio recording is not supported by this browser.')); startBtnDisabled.value = false; startBtnText.value = '▶️ Start Meeting'; showSkipIntro.value = false; return; }
 
+  if (liveMode) startLiveMonitor();
   if (cameraAvailable.value) {
     captionText.value = t('Loading AI face detection…');
     await startCameraAnalysis();
@@ -1398,6 +1552,7 @@ async function startMeeting() {
   speakBtnDisabled.value = false;
   captionText.value = t('Click the speak button when ready.');
   startBtnText.value = t('✓ Started');
+  if (liveMode) liveBeginSpeech();
 }
 
 // ─── Speaker Intro ───
@@ -1582,7 +1737,7 @@ async function finishSpeakerFlow(duration: number, fillers: { counts: Record<str
   reports.gram = await toastmastersService.callBot('grammarian', { stage: 'report', transcript: cleanTranscript }) || t('Good language overall.');
   if (!didSkipReports.value) await speak(reports.gram, 'grammarian');
 
-  reports.speechEval = await toastmastersService.callBot('speech-evaluator', { stage: 'report', transcript: cleanTranscript, topic: displayTopic.value, speech_type: speechType, sample_speech: sampleSpeechText }) || t('Solid effort.');
+  reports.speechEval = await toastmastersService.callBot('speech-evaluator', { stage: 'report', transcript: cleanTranscript, topic: displayTopic.value, speech_type: speechType, sample_speech: sampleSpeechText, ...liveExtra() }) || t('Solid effort.');
   if (!didSkipReports.value) await speak(reports.speechEval, 'speechEval');
 
   stopCameraAnalysis();
@@ -1601,14 +1756,15 @@ async function finishSpeakerFlow(duration: number, fillers: { counts: Record<str
     ? `${t('Engagement')}: ${blData.engagement_score}/100 | ${t('Face visible')}: ${blData.face_visibility_percent}% | ${t('Looking forward')}: ${blData.looking_forward_percent}% | ${t('Centered')}: ${blData.centered_percent}%\n\n${blAdvice}`
     : blAdvice;
 
-  reports.generalEval = await toastmastersService.callBot('general-evaluator', { stage: 'report', transcript: cleanTranscript, speech_type: speechType, topic: displayTopic.value, duration, total_fillers: fillers.total, on_time: onTime, min_time: minTime, max_time: maxTime, engagement_score: blData.engagement_score }) || t('Good meeting overall.');
+  reports.generalEval = await toastmastersService.callBot('general-evaluator', { stage: 'report', transcript: cleanTranscript, speech_type: speechType, topic: displayTopic.value, duration, total_fillers: fillers.total, on_time: onTime, min_time: minTime, max_time: maxTime, engagement_score: blData.engagement_score, ...liveExtra() }) || t('Good meeting overall.');
   if (!didSkipReports.value) await speak(reports.generalEval, 'generalEval');
 
   const timeScore = onTime ? 40 : Math.max(0, 40 - Math.abs(duration - (minTime * 60 + maxTime * 60) / 2) / 3);
   const wc = wordCount(speechText()) || 1;
   const fillerScore = Math.max(0, 30 - (fillers.total / wc) * 300);
   const bodyScore = blData.engagement_score * 0.3;
-  const overall = Math.round(timeScore + fillerScore + bodyScore);
+  // A live meeting costs 3 points per interruption, at most 15. Zero otherwise.
+  const overall = Math.max(0, Math.round(timeScore + fillerScore + bodyScore) - livePenalty());
 
   await saveSessionData('Speaker', duration, fillers, overall, blData, blAdvice);
   if (didSkipReports.value) { captionText.value = t('✅ Saved! Redirecting…'); setTimeout(() => router.push('/toastmasters/results'), 1200); }
@@ -1646,6 +1802,7 @@ async function finishRoleFlow(duration: number, fillers: { counts: Record<string
     user_timer_report: cleanTranscript, user_wod: wordOfTheDay,
     sample_duration: sampleSpeechDuration,
     min_time: minTime, max_time: maxTime,
+    ...liveExtra(),
   } as any) || `Thank you for practicing the ${userRole} role!`;
   reports.roleEval = roleEvalText;
   if (!didSkipReports.value) await speak(roleEvalText, 'generalEval');
@@ -1662,14 +1819,20 @@ async function finishRoleFlow(duration: number, fillers: { counts: Record<string
   const contentScore = Math.min(40, wc * 0.5);
   const fillerPenalty = Math.max(0, 30 - (fillers.total / Math.max(1, wc)) * 300);
   const bodyScore = blData.engagement_score * 0.3;
-  const overall = Math.round(Math.min(100, contentScore + fillerPenalty + bodyScore));
+  const overall = Math.max(0, Math.round(Math.min(100, contentScore + fillerPenalty + bodyScore)) - livePenalty());
 
   await saveSessionData(userRole, duration, fillers, overall, blData, blAdvice);
   if (didSkipReports.value) { captionText.value = t('✅ Saved! Redirecting…'); setTimeout(() => router.push('/toastmasters/results'), 1200); }
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
 }
 
+/** Points off the overall score for talking over the room, live meetings only. */
+function livePenalty(): number {
+  return liveMode ? Math.min(15, interruptions.value.length * 3) : 0;
+}
+
 async function saveSessionData(role: string, duration: number, fillers: { counts: Record<string, number>; total: number }, overall: number, blData: any, blAdvice: string) {
+  stopLiveMonitor();
   /*
     THE END OF THE MEETING, and this is the one place BOTH flows reach - a
     Speaker's and a role-holder's - which is why it is here rather than in
@@ -1703,13 +1866,23 @@ async function saveSessionData(role: string, duration: number, fillers: { counts
       speech_evaluator_report: reports.speechEval, general_evaluator_report: reports.generalEval,
       role_evaluation_report: reports.roleEval || '',
       body_language_data: blData, body_language_advice: blAdvice,
-      overall_score: overall
+      overall_score: overall,
+      live_mode: liveMode,
+      interruptions: cleanInterruptions(interruptions.value),
+      interruption_count: interruptions.value.length,
     });
   } catch (e) { console.error('Save session failed:', e); }
 }
 
+// Unmuting while the room is waiting for the member opens their turn.
+watch(micEnabled, on => {
+  if (liveMode && on && !speakBtnDisabled.value && !isSpeakingRef.value && !reportsVisible.value) liveBeginSpeech();
+});
+
 onUnmounted(() => {
   isSpeaking = false; turnGeneration++;
+  stopLiveMonitor();
+  if (interruptNoticeTimer) clearTimeout(interruptNoticeTimer);
   capture?.dispose(); capture = null; stopCameraAnalysis();
   if (timerInterval) clearInterval(timerInterval);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());

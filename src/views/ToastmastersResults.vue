@@ -26,11 +26,26 @@
       </select>
     </div>
 
+    <BulkDeleteBar ref="bulkBar" :count="selection.count.value" :total="sessions.length"
+                   :all-selected="selection.allSelected.value" :some-selected="selection.someSelected.value"
+                   :busy="bulkBusy" danger-class="tm-btn-sm tm-btn-danger" ghost-class="tm-btn-sm tm-btn-secondary"
+                   @toggle-all="selection.toggleAll()" @clear="selection.clear()"
+                   @delete-selected="bulkDelete(selection.ids.value)"
+                   @delete-all="bulkDelete(sessions.map(x => x.id))" />
+
     <div class="tm-table-wrap">
       <table class="tm-table">
-        <thead><tr><th>{{ $t('Date') }}</th><th>{{ $t('Role') }}</th><th>{{ $t('Topic') }}</th><th>{{ $t('Type') }}</th><th>{{ $t('Duration') }}</th><th>{{ $t('Fillers') }}</th><th>{{ $t('Score') }}</th><th></th></tr></thead>
+        <thead><tr><th class="tm-select-cell">
+          <input ref="headerBox" type="checkbox" :checked="selection.allSelected.value"
+                 :disabled="bulkBusy || !filtered.length" :aria-label="$t('Select all')"
+                 @change="selection.toggleAll()">
+        </th><th>{{ $t('Date') }}</th><th>{{ $t('Role') }}</th><th>{{ $t('Topic') }}</th><th>{{ $t('Type') }}</th><th>{{ $t('Duration') }}</th><th>{{ $t('Fillers') }}</th><th>{{ $t('Score') }}</th><th></th></tr></thead>
         <tbody>
           <tr v-for="s in filtered" :key="s.id">
+            <td class="tm-select-cell">
+              <input type="checkbox" :checked="selection.isSelected(s.id)" :disabled="bulkBusy"
+                     :aria-label="$t('Select this item')" @change="selection.toggle(s.id)">
+            </td>
             <td>{{ formatDate(s.created_at) }}</td>
             <td><span :style="roleBadgeStyle(s.user_role || 'Speaker')">{{ s.user_role || 'Speaker' }}</span></td>
             <td>{{ s.topic }}</td>
@@ -40,7 +55,7 @@
             <td><span :class="['tm-score-pill', scoreClass(s.overall_score)]">{{ s.overall_score }}</span></td>
             <td><button @click="viewReport(s)" class="tm-btn-sm tm-btn-primary">{{ $t('📄 View') }}</button></td>
           </tr>
-          <tr v-if="filtered.length === 0"><td colspan="8" style="text-align:center;padding:2rem;color:#64748b">{{ loading ? 'Loading...' : 'No sessions yet.' }}</td></tr>
+          <tr v-if="filtered.length === 0"><td colspan="9" style="text-align:center;padding:2rem;color:#64748b">{{ loading ? 'Loading...' : 'No sessions yet.' }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -125,9 +140,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { toastmastersService, type ToastmastersSession } from '@/services/toastmasters.service';
+import BulkDeleteBar from '@/components/BulkDeleteBar.vue';
+import { useBulkSelection } from '@/composables/useBulkSelection';
 
 const authStore = useAuthStore();
 const sessions = ref<ToastmastersSession[]>([]);
@@ -182,6 +199,31 @@ function formatDate(d: string): string { return new Date(d).toLocaleString(); }
 function scoreClass(score: number): string { return score >= 80 ? 'good' : score >= 60 ? 'mid' : 'low'; }
 function viewReport(s: ToastmastersSession) { modalSession.value = s; }
 
+/* ---- Select several and delete them ------------------------------------ */
+const selection = useBulkSelection(computed(() => filtered.value.map(s => s.id)));
+const bulkBusy = ref(false);
+const bulkBar = ref<InstanceType<typeof BulkDeleteBar> | null>(null);
+const headerBox = ref<HTMLInputElement | null>(null);
+// `indeterminate` is a DOM property with no attribute.
+watchEffect(() => { if (headerBox.value) headerBox.value.indeterminate = selection.someSelected.value; });
+
+async function bulkDelete(ids: string[]) {
+  if (!ids.length || bulkBusy.value) return;
+  bulkBusy.value = true;
+  try {
+    const result = await toastmastersService.bulkDeleteSessions(ids, authStore.user?.id || '');
+    const gone = new Set(result.deleted);
+    sessions.value = sessions.value.filter(x => !gone.has(x.id));
+    selection.clear();
+    bulkBar.value?.finish(result);
+  } catch (e: any) {
+    console.error('Bulk delete failed:', e);
+    bulkBar.value?.finish(null, e?.message);
+  } finally {
+    bulkBusy.value = false;
+  }
+}
+
 onMounted(async () => {
   try {
     if (authStore.user?.id) {
@@ -193,3 +235,9 @@ onMounted(async () => {
 </script>
 
 <style src="@/assets/css/toastmasters.css"></style>
+
+<style scoped>
+/* The select column: narrow, and the box sized for a finger as well as a mouse. */
+.tm-table th.tm-select-cell, .tm-table td.tm-select-cell { width: 2.75rem; padding-inline-end: 0; }
+.tm-select-cell input { width: 1.1rem; height: 1.1rem; cursor: pointer; accent-color: var(--sfs-accent, #667eea); }
+</style>

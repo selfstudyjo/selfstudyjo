@@ -81,6 +81,24 @@
           </p>
         </div>
 
+        <!--
+          LIVE MEETING. Off by default, and explained here because in live mode
+          there are no turn buttons in the room to discover it from.
+        -->
+        <div class="tm-howto tm-live-option">
+          <h3>{{ $t('🎙️ Live meeting') }}</h3>
+          <label class="tm-inline-check">
+            <input type="checkbox" v-model="form.live">
+            {{ $t('Run it as a live meeting — no buttons, just talk') }}
+          </label>
+          <ul class="tm-rules-list">
+            <li>{{ $t('The microphone listens all the time. When it is your turn, simply start speaking — there is no “Speak” or “I’m Done” button.') }}</li>
+            <li>{{ $t('Your turn ends when you stop talking for about two seconds, and the meeting moves on to the reports.') }}</li>
+            <li>{{ $t('If you talk over one of the meeting roles, they stop and listen. Each time is counted as an interruption and the evaluators mention it.') }}</li>
+          </ul>
+          <p class="tm-hint">{{ $t('Use headphones if you can: they stop the speakers’ voices reaching your microphone.') }}</p>
+        </div>
+
         <p class="tm-hint">{{ $t('⚠️ The next page will request camera and microphone permission.') }}</p>
         <button type="submit" class="tm-btn-primary">
           {{ form.role === 'Speaker' ? 'Join Meeting →' : `Practice ${form.role} Role →` }}
@@ -142,7 +160,9 @@ const form = reactive({
   type: 'Prepared Speech',
   topic: '',
   min_time: 5,
-  max_time: 7
+  max_time: 7,
+  // Off by default: see the template.
+  live: false
 });
 
 /**
@@ -200,7 +220,9 @@ function startSession() {
       type: form.role === 'Speaker' ? form.type : '',
       topic: topic,
       min_time: String(form.min_time),
-      max_time: String(form.max_time)
+      max_time: String(form.max_time),
+      // In the URL like everything else here, so a reload is still a live meeting.
+      ...(form.live ? { live: '1' } : {})
     }
   });
 }

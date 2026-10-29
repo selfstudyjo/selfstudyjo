@@ -8,6 +8,7 @@
 // any user. See selfstudyjo_cv_builder/README.md.
 
 import { apiService } from './api';
+import { runBulkDelete, type BulkDeleteResult, type BulkResponse } from '@/utils/bulkDelete';
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
 
@@ -531,6 +532,21 @@ class CvBuilderService {
         const baseUrl = await this.getBaseUrl();
         return apiService.delete(baseUrl, `/api/cv/cvs/${encodeURIComponent(cvId)}`,
                                  undefined, this.headers(userId));
+    }
+
+    /**
+     * Delete several of the user's own CVs. One request per batch; the backend
+     * caps a batch and reports `pending`, which `runBulkDelete` sends again.
+     * Falls back to one DELETE per id on a replica without the bulk route.
+     */
+    async bulkDeleteCvs(userId: string, cvIds: string[]): Promise<BulkDeleteResult> {
+        const baseUrl = await this.getBaseUrl();
+        return runBulkDelete(
+            cvIds,
+            chunk => apiService.post<BulkResponse>(baseUrl, '/api/cv/cvs/bulk-delete',
+                                                  { ids: chunk }, this.headers(userId)),
+            id => this.deleteCv(userId, id),
+        );
     }
 
     async setPhoto(userId: string, cvId: string, photo: Partial<CvPhoto>): Promise<{ photo: CvPhoto }> {

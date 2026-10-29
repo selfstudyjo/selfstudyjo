@@ -1,4 +1,5 @@
 import { apiService } from './api';
+import { runBulkDelete, type BulkDeleteResult, type BulkResponse } from '@/utils/bulkDelete';
 import type { EnhanceResult } from './jobinterview.service';
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
@@ -30,6 +31,10 @@ export interface ToastmastersSession {
     body_language_data: any;
     body_language_advice: string;
     overall_score: number;
+    /** A live meeting (turns by voice), and how often the member talked over a bot. */
+    live_mode?: boolean;
+    interruptions?: { at: string; role?: string; ms_into_utterance: number }[];
+    interruption_count?: number;
     created_at: string;
 }
 
@@ -56,6 +61,8 @@ export interface BotCallBody {
     user_timer_report?: string;
     user_wod?: string;
     sample_duration?: number;
+    /** Live meeting: times the member talked over a bot. Only sent when > 0. */
+    interruption_count?: number;
 }
 
 export type { EnhanceResult };
@@ -144,6 +151,20 @@ class ToastmastersService {
     async deleteSession(id: string, userId: string): Promise<{ success: boolean }> {
         const baseUrl = await this.getBaseUrl();
         return await apiService.delete(baseUrl, `/api/toastmasters/sessions/${id}?user_id=${encodeURIComponent(userId)}`);
+    }
+
+    /**
+     * Delete several (or all) of the user's own sessions in one request. Falls
+     * back to one DELETE per id on a replica that has not got the bulk route.
+     */
+    async bulkDeleteSessions(ids: string[], userId: string): Promise<BulkDeleteResult> {
+        const baseUrl = await this.getBaseUrl();
+        return runBulkDelete(
+            ids,
+            chunk => apiService.post<BulkResponse>(baseUrl, `/api/toastmasters/sessions/bulk-delete`,
+                                                  { ids: chunk, user_id: userId }),
+            id => this.deleteSession(id, userId),
+        );
     }
 }
 
