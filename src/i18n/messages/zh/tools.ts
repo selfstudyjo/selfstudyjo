@@ -365,6 +365,28 @@ const tools: Catalogue = {
     'Computer Science': '计算机科学',
     'Mar 2021': '2021 年 3 月',
     'Very Good / 3.6 GPA': '良好 / GPA 3.6',
+    // SelfStudyCode download (AI Chat page). Commands and product UI words stay in English.
+    'Download SelfStudyCode': '下载 SelfStudyCode',
+    'SelfStudyCode: your AI coding agent': 'SelfStudyCode：你的 AI 编程助手',
+    'Writes and fixes code, runs your tests, reviews changes, and makes images, videos and documents - on your own computer. Free with your AI subscription; sign in with your SelfStudyJo account.': '在你自己的电脑上编写和修复代码、运行测试、审查改动，并生成图片、视频和文档。AI 订阅用户免费使用；请用你的 SelfStudyJo 账号登录。',
+    'The installers are being built. Please check back in a few minutes.': '安装包正在构建中，请几分钟后再来查看。',
+    'Version {v0}': '版本 {v0}',
+    'Detected: {v0}': '检测到的系统：{v0}',
+    'Desktop app for {v0}': '{v0} 桌面应用',
+    'Command line (CLI) for {v0}': '{v0} 命令行工具（CLI）',
+    'Desktop app': '桌面应用',
+    'Command line (CLI)': '命令行（CLI）',
+    'How to install the command line tool': '如何安装命令行工具',
+    'Then open a project folder in a terminal and run selfstudycode.': '然后在终端中打开项目文件夹，运行 selfstudycode。',
+    'Other platforms': '其他平台',
+    'The installers are not code-signed yet: Windows may show "Windows protected your PC" (choose More info, then Run anyway), and macOS may ask you to open it from System Settings, Privacy & Security.':
+        '安装包暂未进行代码签名：Windows 可能显示 "Windows protected your PC"（请选择 More info，然后 Run anyway），macOS 可能要求你在 System Settings 的 Privacy & Security 中允许打开。',
+    'Windows': 'Windows',
+    'macOS': 'macOS',
+    'Linux': 'Linux',
+    'your system': '你的系统',
+    'Could not load the downloads right now. Please try again.': '暂时无法加载下载列表，请重试。',
+    'Could not start the download. Please try again.': '无法开始下载，请重试。',
 };
 
 export default tools;

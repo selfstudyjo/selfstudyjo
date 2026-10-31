@@ -95,10 +95,13 @@
           <p v-if="activeRoom?.topic">{{ activeRoom.topic }}</p>
           <p v-else>{{ $t('Ask me anything about your courses, labs, or general knowledge') }}</p>
         </div>
-        <button v-if="activeRoom" class="context-btn" @click="toggleContext"
-                :class="{ on: contextOpen }" :aria-expanded="contextOpen">
-          {{ $t('Memory') }}
-        </button>
+        <div class="chat-header-actions">
+          <SelfStudyCodeDownload />
+          <button v-if="activeRoom" class="context-btn" @click="toggleContext"
+                  :class="{ on: contextOpen }" :aria-expanded="contextOpen">
+            {{ $t('Memory') }}
+          </button>
+        </div>
       </div>
 
       <!--
@@ -256,6 +259,7 @@ import {
 } from '@/utils/aichatRooms';
 import { renderMarkdown } from '@/utils/aichatMarkdown';
 import RichText from '@/components/RichText.vue';
+import SelfStudyCodeDownload from '@/components/aichat/SelfStudyCodeDownload.vue';
 
 const { t } = useI18n();
 const route = useRoute();

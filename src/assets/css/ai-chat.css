@@ -863,6 +863,14 @@
   unicode-bidi: plaintext;
 }
 
+/* SelfStudyCode download + Memory: never shrink, never wrap under the title. */
+.ai-chat-container .chat-header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--aic-sp-xs);
+}
+
 /* Only on a phone -- the rail is always visible above 1024px. */
 .ai-chat-container .rooms-toggle {
   display: none;

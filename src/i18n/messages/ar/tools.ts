@@ -392,6 +392,28 @@ const tools: Catalogue = {
     'Computer Science': 'علوم الحاسوب',
     'Mar 2021': 'آذار 2021',
     'Very Good / 3.6 GPA': 'جيد جداً / معدّل 3.6',
+    // SelfStudyCode download (AI Chat page). Commands and product UI words stay in English.
+    'Download SelfStudyCode': 'تنزيل SelfStudyCode',
+    'SelfStudyCode: your AI coding agent': 'SelfStudyCode: وكيلك البرمجي بالذكاء الاصطناعي',
+    'Writes and fixes code, runs your tests, reviews changes, and makes images, videos and documents - on your own computer. Free with your AI subscription; sign in with your SelfStudyJo account.': 'يكتب الشيفرة ويصلحها، ويشغّل اختباراتك، ويراجع التغييرات، وينشئ الصور والفيديوهات والمستندات - على حاسوبك أنت. مجاني مع اشتراك الذكاء الاصطناعي؛ سجّل الدخول بحسابك في SelfStudyJo.',
+    'The installers are being built. Please check back in a few minutes.': 'يجري بناء ملفات التثبيت الآن. يرجى العودة بعد بضع دقائق.',
+    'Version {v0}': 'الإصدار {v0}',
+    'Detected: {v0}': 'النظام المكتشف: {v0}',
+    'Desktop app for {v0}': 'تطبيق سطح المكتب لنظام {v0}',
+    'Command line (CLI) for {v0}': 'أداة سطر الأوامر (CLI) لنظام {v0}',
+    'Desktop app': 'تطبيق سطح المكتب',
+    'Command line (CLI)': 'سطر الأوامر (CLI)',
+    'How to install the command line tool': 'طريقة تثبيت أداة سطر الأوامر',
+    'Then open a project folder in a terminal and run selfstudycode.': 'ثم افتح مجلد مشروع في الطرفية وشغّل الأمر selfstudycode.',
+    'Other platforms': 'أنظمة أخرى',
+    'The installers are not code-signed yet: Windows may show "Windows protected your PC" (choose More info, then Run anyway), and macOS may ask you to open it from System Settings, Privacy & Security.':
+        'ملفات التثبيت غير موقّعة رقمياً بعد: قد يعرض Windows رسالة "Windows protected your PC" (اختر More info ثم Run anyway)، وقد يطلب منك macOS فتحه من System Settings ثم Privacy & Security.',
+    'Windows': 'Windows',
+    'macOS': 'macOS',
+    'Linux': 'Linux',
+    'your system': 'نظامك',
+    'Could not load the downloads right now. Please try again.': 'تعذّر تحميل قائمة التنزيلات الآن. يرجى المحاولة مجدداً.',
+    'Could not start the download. Please try again.': 'تعذّر بدء التنزيل. يرجى المحاولة مجدداً.',
 };
 
 export default tools;
