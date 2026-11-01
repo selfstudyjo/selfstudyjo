@@ -24,6 +24,7 @@
       <p class="sscd-intro">
         {{ $t('Writes and fixes code, runs your tests, reviews changes, and makes images, videos and documents - on your own computer. Free with your AI subscription; sign in with your SelfStudyJo account.') }}
       </p>
+      <p class="sscd-note">{{ $t('No internet? It also works offline with a model running on your computer (Ollama, LM Studio or llama.cpp): run selfstudycode --offline.') }}</p>
 
       <p v-if="loading" class="sscd-note">{{ $t('Loading…') }}</p>
       <p v-else-if="error" class="sscd-note sscd-error" role="alert">{{ error }}</p>

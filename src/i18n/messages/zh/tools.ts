@@ -378,6 +378,7 @@ const tools: Catalogue = {
     'Command line (CLI)': '命令行（CLI）',
     'How to install the command line tool': '如何安装命令行工具',
     'Then open a project folder in a terminal and run selfstudycode.': '然后在终端中打开项目文件夹，运行 selfstudycode。',
+    'No internet? It also works offline with a model running on your computer (Ollama, LM Studio or llama.cpp): run selfstudycode --offline.': '没有网络？它也可以离线使用你电脑上运行的模型（Ollama、LM Studio 或 llama.cpp）：运行 selfstudycode --offline。',
     'Other platforms': '其他平台',
     'The installers are not code-signed yet: Windows may show "Windows protected your PC" (choose More info, then Run anyway), and macOS may ask you to open it from System Settings, Privacy & Security.':
         '安装包暂未进行代码签名：Windows 可能显示 "Windows protected your PC"（请选择 More info，然后 Run anyway），macOS 可能要求你在 System Settings 的 Privacy & Security 中允许打开。',

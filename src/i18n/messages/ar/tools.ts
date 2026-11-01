@@ -405,6 +405,7 @@ const tools: Catalogue = {
     'Command line (CLI)': 'سطر الأوامر (CLI)',
     'How to install the command line tool': 'طريقة تثبيت أداة سطر الأوامر',
     'Then open a project folder in a terminal and run selfstudycode.': 'ثم افتح مجلد مشروع في الطرفية وشغّل الأمر selfstudycode.',
+    'No internet? It also works offline with a model running on your computer (Ollama, LM Studio or llama.cpp): run selfstudycode --offline.': 'لا يوجد اتصال بالإنترنت؟ يعمل أيضًا دون اتصال مع نموذج يعمل على حاسوبك (Ollama أو LM Studio أو llama.cpp): شغّل الأمر selfstudycode --offline.',
     'Other platforms': 'أنظمة أخرى',
     'The installers are not code-signed yet: Windows may show "Windows protected your PC" (choose More info, then Run anyway), and macOS may ask you to open it from System Settings, Privacy & Security.':
         'ملفات التثبيت غير موقّعة رقمياً بعد: قد يعرض Windows رسالة "Windows protected your PC" (اختر More info ثم Run anyway)، وقد يطلب منك macOS فتحه من System Settings ثم Privacy & Security.',
