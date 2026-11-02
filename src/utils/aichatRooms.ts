@@ -34,6 +34,8 @@
  */
 
 /** One row of the room list. The transcript is never part of it. */
+import type { ChatAttachment } from './aichatAttachments';
+
 export interface ChatRoomSummary {
     id: string;
     title: string;
@@ -62,6 +64,8 @@ export interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
     created_at: string;
+    /** Files sent with the message: metadata and an image thumbnail, never bytes. */
+    attachments?: ChatAttachment[];
     /**
      * Set only in the browser, on a message whose send failed. Never sent to
      * the backend and never stored — it is how the bubble grows a Retry button.

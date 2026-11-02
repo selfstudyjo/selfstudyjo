@@ -294,17 +294,20 @@ const routes = [
                 component: Leaderboard,
                 meta: { title: 'Leaderboard', requiresAuth: false }
             },
-            // The desktop Interview Helper's download page. Public, like the
-            // Leaderboard: a visitor deciding whether to subscribe has to be able
-            // to read what the app does. The APP is what needs ai_feature, and it
-            // is enforced on app 27 for every request. Lazy, so its chunk is
-            // never in the entry bundle (working rule 47).
+            // SelfStudy Products: every desktop application (SelfStudyCode, the
+            // Interview Helper, the Video Editor), one tab each, with downloads
+            // from the latest release. The installers are release assets of
+            // PRIVATE repos and app 27 hands out the signed links only to an AI
+            // subscriber, so the page is gated the same way. Lazy (rule 47).
             {
-                path: 'interview-helper',
-                name: 'InterviewHelper',
-                component: () => import('../views/InterviewHelper.vue'),
-                meta: { title: 'Interview Helper', requiresAuth: false }
+                path: 'products',
+                name: 'Products',
+                component: () => import('../views/Products.vue'),
+                meta: { title: 'SelfStudy Products', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
             },
+            // The old standalone Interview Helper page, kept as a redirect so
+            // every link already sent on still lands on the right tab.
+            { path: 'interview-helper', redirect: { path: '/products', query: { tab: 'interview-helper' } } },
             {
                 path: 'exams',
                 name: 'Exams',

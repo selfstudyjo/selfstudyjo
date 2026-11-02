@@ -28,6 +28,7 @@ import { apiService, ApiError } from './api';
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
 import type { ChatContext, ChatMessage, ChatRoomSummary } from '@/utils/aichatRooms';
+import type { PendingAttachment } from '@/utils/aichatAttachments';
 
 export type { ChatContext, ChatMessage, ChatRoomSummary };
 
@@ -136,12 +137,32 @@ class AiChatService {
      * whether a retry could duplicate anything, so the status is preserved on
      * the thrown error rather than flattened into a message.
      */
-    async send(userId: string, roomId: string, id: string, content: string):
-        Promise<SendResult> {
+    async send(userId: string, roomId: string, id: string, content: string,
+               attachments: PendingAttachment[] = []): Promise<SendResult> {
         const base = await this.base();
+        // Only the fields the server reads. `kind`, `id` and the rest are the
+        // server's to decide - it classifies and limits every file again.
+        const files = attachments.map((a) => ({
+            name: a.name, type: a.type, data: a.data, ...(a.thumb ? { thumb: a.thumb } : {}),
+        }));
         return apiService.post<SendResult>(
             base, `/api/aichat/rooms/${encodeURIComponent(roomId)}/messages/`,
-            { id, content }, this.headers(userId, aiLanguageHeaders()));
+            files.length ? { id, content, attachments: files } : { id, content },
+            this.headers(userId, aiLanguageHeaders()));
+    }
+
+    /**
+     * Voice input: one recording in, its text out. The text goes into the
+     * composer to be read and corrected; it is never sent on its own. The
+     * language header is what tells Whisper which language it is hearing.
+     */
+    async transcribe(userId: string, audio: Blob, filename = 'voice.webm'): Promise<string> {
+        const base = await this.base();
+        const form = new FormData();
+        form.append('audio', audio, filename);
+        const r = await apiService.post<{ text?: string }>(
+            base, '/api/aichat/transcribe', form, this.headers(userId, aiLanguageHeaders()));
+        return (r?.text || '').trim();
     }
 
     async clearRoom(userId: string, roomId: string): Promise<ChatRoomSummary> {

@@ -1,7 +1,8 @@
-// Builds tools/sscdownloads-check/check.ts so the SelfStudyCode download picker can be
-// verified without a browser.
+// Builds tools/products-check/check.ts into something node can run, so the SelfStudy
+// Products download picker and tab parsing can be verified without a browser.
+// Replaces tools/sscdownloads-check.
 //
-//   npm run check:sscdownloads
+//   npm run check:products
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 
@@ -13,8 +14,8 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('../../src', import.meta.url)) },
   },
   build: {
-    lib: { entry: 'tools/sscdownloads-check/check.ts', formats: ['es'], fileName: () => 'check.mjs' },
-    outDir: 'tools/sscdownloads-check/dist',
+    lib: { entry: 'tools/products-check/check.ts', formats: ['es'], fileName: () => 'check.mjs' },
+    outDir: 'tools/products-check/dist',
     emptyOutDir: true,
     minify: false,
     target: 'node20',

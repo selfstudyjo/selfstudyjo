@@ -293,7 +293,8 @@ console.log('\n6. Access gating');
           !canSee({ to: '/x', text: 'x', icon: 'home' }, SIGNED_OUT));
 
     const paidPaths = ['/cv-builder', '/job-interview', '/roblox-tool', '/ai-chat',
-                       '/research', '/toastmasters', '/labs', '/network-simulator', '/runbooks'];
+                       '/research', '/toastmasters', '/labs', '/network-simulator', '/runbooks',
+                       '/products'];
     const leakedGlobal = flatten(globalGroups(BASIC)).filter(i => paidPaths.includes(i.to));
     check('a user with no features sees no gated tool in the platform menu',
           leakedGlobal.length === 0, leakedGlobal.map(i => i.to));
@@ -319,6 +320,31 @@ console.log('\n6. Access gating');
     check('the proctor group only appears for a proctor',
           !globalGroups(BASIC).some(g => g.label === 'Proctoring') &&
           globalGroups(FULL).some(g => g.label === 'Proctoring'));
+}
+
+console.log('\n6b. SelfStudy Products is for AI subscribers, and replaces /interview-helper');
+{
+    const products = APP_SECTIONS.find(s => s.id === 'products');
+    check('a products section exists and owns /products',
+          !!products && resolveSection('/products', FULL)?.id === 'products');
+    const entry = flatten(globalGroups(FULL)).find(i => i.to === '/products');
+    check('products is in the platform menu for an AI subscriber', !!entry);
+    check('and requires the ai feature', entry?.requires === 'ai', entry?.requires);
+    check('a signed-out visitor does not see it',
+          !flatten(globalGroups(SIGNED_OUT)).some(i => i.to === '/products'));
+    check('a user without AI does not see it',
+          !flatten(globalGroups(BASIC)).some(i => i.to === '/products'));
+    check('no nav entry points at the removed /interview-helper page',
+          !everyEntry.some(i => i.to === '/interview-helper'));
+    const routerSource = source('src/router/index.ts');
+    const at = routerSource.indexOf("path: 'products'");
+    const block = at >= 0 ? routerSource.slice(at, at + 400) : '';
+    check('the /products route is gated on ai_feature',
+          /requiresAuth: true/.test(block) && /requiresSubscription: true/.test(block)
+          && /requiredFeatures: \['ai_feature'\]/.test(block), block);
+    check('the /products view is lazy', block.includes("component: () => import('../views/Products.vue')"));
+    check('/interview-helper redirects to the products tab',
+          routerSource.includes("{ path: 'interview-helper', redirect: { path: '/products', query: { tab: 'interview-helper' } } }"));
 }
 
 console.log('\n7. Exactly one entry is active, and it is the deepest one');

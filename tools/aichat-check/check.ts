@@ -48,6 +48,11 @@ import {
     upsertRoom,
 } from '../../src/utils/aichatRooms';
 import { previewOf, renderMarkdown } from '../../src/utils/aichatMarkdown';
+import {
+    ACCEPT, IMAGE_TYPES, MAX_ATTACHMENTS, MAX_AUDIO_BYTES, MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_IMAGES,
+    MAX_THUMB_CHARS, TEXT_EXTENSIONS, fitWithin, insertDictation, isAcceptableThumb, kindOf,
+    pickRecordingType, refusalFor,
+} from '../../src/utils/aichatAttachments';
 
 let failures = 0;
 function check(label: string, ok: boolean, detail?: unknown) {
@@ -558,6 +563,81 @@ console.log('\n11. The service uses the shared, pinned replica resolver');
         /'X-User-ID'/.test(svc) && !/user_id=/.test(svc));
     check('a room is updated with PATCH, so a rename cannot blank the brief',
         /apiService\.patch/.test(svc) && !/apiService\.put/.test(svc));
+}
+
+// ---------------------------------------------------------------------------
+console.log('\n12. Attachments and voice input');
+// ---------------------------------------------------------------------------
+{
+    check('an image is an image', kindOf('a.PNG', 'image/png') === 'image' && kindOf('a.jpg', 'image/jpg') === 'image');
+    check('code and text are files', kindOf('main.py', '') === 'file' && kindOf('notes', 'text/plain') === 'file');
+    check('a Dockerfile with no extension is a file', kindOf('Dockerfile', '') === 'file');
+    check('docx and pdf are files (read on the server)', kindOf('r.docx', '') === 'file' && kindOf('r.pdf', 'application/pdf') === 'file');
+    check('an exe or an svg is refused', kindOf('a.exe', 'application/x-msdownload') === null
+        && kindOf('a.svg', 'image/svg+xml') === null);
+    check('one image per message', refusalFor({ name: 'b.png', type: 'image/png', size: 10 },
+        [{ kind: 'image' }])?.reason === 'one_image');
+    check('a second file next to an image is fine', refusalFor({ name: 'b.md', type: '', size: 10 },
+        [{ kind: 'image' }]) === null);
+    check('at most MAX_ATTACHMENTS', refusalFor({ name: 'b.md', type: '', size: 10 },
+        Array.from({ length: MAX_ATTACHMENTS }, () => ({ kind: 'file' as const })))?.reason === 'too_many');
+    check('a file over 1 MB is refused', refusalFor({ name: 'b.csv', type: '', size: MAX_FILE_BYTES + 1 }, [])?.reason === 'file_size');
+    check('an unknown type is refused by name', refusalFor({ name: 'x.bin', type: '', size: 1 }, [])?.reason === 'type');
+    check('fitWithin keeps the aspect ratio and never enlarges',
+        JSON.stringify(fitWithin(4000, 2000, 2048)) === JSON.stringify({ width: 2048, height: 1024 })
+        && JSON.stringify(fitWithin(100, 50, 2048)) === JSON.stringify({ width: 100, height: 50 }));
+    check('a thumbnail must be an image data URL', isAcceptableThumb('data:image/jpeg;base64,AAAA')
+        && !isAcceptableThumb('javascript:alert(1)') && !isAcceptableThumb('data:image/svg+xml;base64,AAAA')
+        && !isAcceptableThumb('data:image/jpeg;base64,' + 'A'.repeat(MAX_THUMB_CHARS)));
+    check('dictation is appended to what was typed', insertDictation('hello', 'world') === 'hello world'
+        && insertDictation('', ' hi ') === 'hi' && insertDictation('a ', 'b') === 'a b' && insertDictation('a', '') === 'a');
+    check('the recorder prefers Opus webm', pickRecordingType((x) => x.startsWith('audio/webm')) === 'audio/webm;codecs=opus');
+    check('...falls back to mp4 (Safari)', pickRecordingType((x) => x === 'audio/mp4') === 'audio/mp4');
+    check('...and to the browser default when nothing matches', pickRecordingType(() => false) === '');
+    check('the picker accepts what the model accepts', ACCEPT.includes('image/png') && ACCEPT.includes('.docx')
+        && ACCEPT.includes('.py') && !ACCEPT.includes('.exe'));
+
+    // The limits are written twice (working rule 10). Read the Python off disk
+    // so a file the browser accepts is never one the server refuses.
+    let py = '';
+    try {
+        py = readFileSync(resolve(process.cwd(), '..', 'selfstudyai', 'aichat.py'), 'utf8');
+    } catch {
+        console.log('  skip  selfstudyai is not checked out beside this repo');
+    }
+    if (py) {
+        const num = (name: string) => {
+            const m = new RegExp('^' + name + ' = ([0-9 *]+)$', 'm').exec(py);
+            return m ? m[1].split('*').reduce((n, x) => n * Number(x.trim()), 1) : NaN;
+        };
+        check('MAX_ATTACHMENTS agrees with aichat.py', num('MAX_ATTACHMENTS') === MAX_ATTACHMENTS, num('MAX_ATTACHMENTS'));
+        check('MAX_IMAGES agrees', num('MAX_IMAGES') === MAX_IMAGES);
+        check('MAX_IMAGE_BYTES agrees', num('MAX_IMAGE_BYTES') === MAX_IMAGE_BYTES, num('MAX_IMAGE_BYTES'));
+        check('MAX_FILE_BYTES agrees', num('MAX_FILE_BYTES') === MAX_FILE_BYTES);
+        check('MAX_AUDIO_BYTES agrees', num('MAX_AUDIO_BYTES') === MAX_AUDIO_BYTES);
+        check('MAX_THUMB_CHARS agrees', num('MAX_THUMB_CHARS') === MAX_THUMB_CHARS);
+        const ext = /TEXT_EXTENSIONS = frozenset\(\(([\s\S]*?)\)\)/.exec(py)?.[1] || '';
+        const pyExt = [...ext.matchAll(/'([a-z0-9]+)'/g)].map((m) => m[1]).sort();
+        check('the text extensions agree with aichat.py', pyExt.length > 20
+            && JSON.stringify(pyExt) === JSON.stringify([...TEXT_EXTENSIONS].sort()), pyExt.length);
+        check('the image types agree', /IMAGE_MIMETYPES = \('image\/png', 'image\/jpeg', 'image\/webp', 'image\/gif'\)/.test(py)
+            && IMAGE_TYPES.join(',') === 'image/png,image/jpeg,image/webp,image/gif');
+        check('the server has a transcription route', /\/api\/aichat\/transcribe/.test(py));
+        check('the server never stores attachment bytes on the message',
+            /record = \{'id': str\(uuid\.uuid4\(\)\), 'name': name, 'type': mimetype, 'size': len\(data\)\}/.test(py));
+    }
+
+    const view = codeOnly(read('src/views/AiChat.vue'));
+    check('the view still has no v-html', !/v-html/.test(view));
+    check('a thumbnail is bound as an attribute', /:src="att\.thumb"/.test(view));
+    check('dictated text goes INTO the composer, never straight out',
+        /userInput\.value = insertDictation\(/.test(view) && !/transcribe[\s\S]{0,400}deliver\(/.test(view));
+    check('the microphone is released when the page goes', /onBeforeUnmount/.test(view) && /getTracks\(\)\.forEach/.test(view));
+    check('a retry resends the same files', /retryFiles\.get\(failed\.id\)/.test(view));
+    check('the download button is gone from the chat', !/SelfStudyCodeDownload/.test(view));
+    const svc = codeOnly(read('src/services/aichat.service.ts'));
+    check('voice is uploaded as multipart, no custom header beyond the language one',
+        /new FormData\(\)/.test(svc) && /\/api\/aichat\/transcribe/.test(svc));
 }
 
 console.log('');
