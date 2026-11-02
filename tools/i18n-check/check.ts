@@ -76,6 +76,8 @@ import zhPractice from '../../src/i18n/messages/zh/practice';
 import zhTour from '../../src/i18n/messages/zh/tour';
 import zhAssistant from '../../src/i18n/messages/zh/assistant';
 import zhReader from '../../src/i18n/messages/zh/reader';
+import arSearch from '../../src/i18n/messages/ar/search';
+import zhSearch from '../../src/i18n/messages/zh/search';
 
 import {
     APP_SECTIONS, HOME_ENTRY, globalGroups, sectionGroups, type Access,
@@ -522,8 +524,8 @@ section('6. No key is declared twice');
 //
 // A new area belongs in BOTH the import block above and here.
 const MODULES: [string, Record<string, Catalogue>][] = [
-    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio, labs: arLabs, practice: arPractice, tour: arTour, assistant: arAssistant, reader: arReader }],
-    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio, labs: zhLabs, practice: zhPractice, tour: zhTour, assistant: zhAssistant, reader: zhReader }],
+    ['ar', { common: arCommon, account: arAccount, learning: arLearning, speaking: arSpeaking, tools: arTools, netsim: arNetsim, research: arResearch, studio: arStudio, labs: arLabs, practice: arPractice, tour: arTour, assistant: arAssistant, reader: arReader, search: arSearch }],
+    ['zh', { common: zhCommon, account: zhAccount, learning: zhLearning, speaking: zhSpeaking, tools: zhTools, netsim: zhNetsim, research: zhResearch, studio: zhStudio, labs: zhLabs, practice: zhPractice, tour: zhTour, assistant: zhAssistant, reader: zhReader, search: zhSearch }],
 ];
 
 for (const [id, modules] of MODULES) {

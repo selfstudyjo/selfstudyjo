@@ -271,6 +271,9 @@ const account: Catalogue = {
     'By course': '按课程',
     'No quizzes yet': '还没有小测',
     '{v0} of {v1} passed': '已通过 {v0} / {v1}',
+    /* The toggle on a capped dashboard card. */
+    'Show all': '显示全部',
+    'Show less': '收起',
 
     /* Badge names */
     'First Steps': '第一步',

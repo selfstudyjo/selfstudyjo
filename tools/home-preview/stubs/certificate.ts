@@ -12,6 +12,10 @@ const EXAM: ExamCertificate[] = [
 
 const COURSE: CourseCertificate[] = [
     { certificate_id: 'c-3', course_id: 'course-web', user_id: 'u-preview', date: '2026-05-02T10:00:00Z', hours: 42, created_at: '2026-05-02T10:00:00Z' },
+    // More than the card's cap, so its scroll region is exercised.
+    { certificate_id: 'c-4', course_id: 'course-docker', user_id: 'u-preview', date: '2026-09-30T10:00:00Z', hours: 24, created_at: '2026-09-30T10:00:00Z' },
+    { certificate_id: 'c-5', course_id: 'course-py', user_id: 'u-preview', date: '2026-10-12T10:00:00Z', hours: 36, created_at: '2026-10-12T10:00:00Z' },
+    { certificate_id: 'c-6', course_id: 'course-linux', user_id: 'u-preview', date: '2026-10-28T10:00:00Z', hours: 30, created_at: '2026-10-28T10:00:00Z' },
 ];
 
 const delay = <T,>(v: T, ms = 90): Promise<T> => new Promise(r => setTimeout(() => r(v), ms));

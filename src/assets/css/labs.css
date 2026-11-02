@@ -3058,6 +3058,141 @@
 
 .sfs-topbar__spacer { flex: 1; }
 
+/* ── the site search field ─────────────────────────────────────────────
+   The field is the only part of the search in the entry chunk; the results
+   panel is its own async chunk with its own stylesheet (site-search.css).
+   It takes the middle of the bar, so the spacer stands down while it is shown.
+   On a phone the bar is a row of icons, the field goes and a button opens the
+   panel as a full-screen sheet instead. */
+
+.sfs-topbar__search {
+    flex: 1 1 14rem;
+    min-width: 9rem;
+    display: flex;
+    justify-content: center;
+    padding-inline: 0.35rem;
+}
+
+.sfs-topbar__search ~ .sfs-topbar__spacer { display: none; }
+
+.sfs-topbar__searchfield {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: 34rem;
+    min-height: max(2rem, 36px);
+    padding-inline: 0.7rem 0.4rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 999px;
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.22);
+    color: var(--sfs-text-muted, #b7bdcc);
+    transition: border-color var(--sfs-dur-fast, 120ms) ease, box-shadow var(--sfs-dur-fast, 120ms) ease;
+}
+
+.sfs-topbar__searchfield:hover { border-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.3); }
+
+.sfs-topbar__searchfield:focus-within,
+.sfs-topbar__searchfield.is-open {
+    border-color: var(--sfs-focus, #8ea2ff);
+    box-shadow: var(--sfs-field-ring, 0 0 0 3px rgb(102 126 234 / 0.35));
+}
+
+.sfs-topbar__searchicon { width: 1rem; height: 1rem; flex: 0 0 auto; }
+
+/* The shell above carries the border and the ring; the field inside draws
+   neither (check:cssleaks section 9), at two classes so it beats ui.css. */
+.sfs-topbar__searchfield .sfs-topbar__searchinput {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    padding: 0.3rem 0;
+    border: none;
+    background: transparent;
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-size: 0.86rem;
+    outline: none;
+    box-shadow: none;
+}
+
+.sfs-topbar__searchfield .sfs-topbar__searchinput:focus,
+.sfs-topbar__searchfield .sfs-topbar__searchinput:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.sfs-topbar__searchinput::placeholder { color: var(--sfs-text-muted, #b7bdcc); opacity: 1; }
+
+/* The browser's own clear button: this field draws its own. */
+.sfs-topbar__searchinput::-webkit-search-cancel-button { appearance: none; }
+
+.sfs-topbar__searchkbd {
+    flex: 0 0 auto;
+    min-width: 1.4rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.22);
+    border-radius: 6px;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font: 600 0.72rem/1.4 var(--sfs-font-mono, ui-monospace, monospace);
+    text-align: center;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.sfs-topbar__searchclear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    cursor: pointer;
+}
+
+.sfs-topbar__searchclear:hover {
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.12);
+    color: var(--sfs-text, #e6e8ef);
+}
+
+/* Two classes: `.sfs-topbar__btn` (below) sets display at one. */
+.sfs-topbar__btn.sfs-topbar__searchbtn { display: none; }
+
+/* Room for the field: the bar's own labels go before the field gets cramped.
+   Measured on the content column (the bar is in it), not on the viewport. */
+@media (min-width: 640px) and (max-width: 1279px) {
+    .sfs-topbar__inner .sfs-topbar__label,
+    .sfs-topbar__inner .sfs-tour-btn__label,
+    .sfs-topbar__inner .sfs-bot-btn__label { display: none; }
+}
+
+@media (max-width: 639px) {
+    .sfs-topbar__search { display: none; }
+    .sfs-topbar__search ~ .sfs-topbar__spacer { display: block; }
+    .sfs-topbar__btn.sfs-topbar__searchbtn { display: inline-flex; }
+}
+
+/* A very narrow phone: eight icons have to fit, so the gaps and the side
+   padding give first; a horizontal swipe is the last resort, never a clip. */
+@media (max-width: 419px) {
+    .sfs-topbar__inner {
+        gap: 0.1rem;
+        padding-inline: 0.35rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .sfs-topbar__inner::-webkit-scrollbar { display: none; }
+    .sfs-topbar__inner .sfs-topbar__btn,
+    .sfs-topbar__inner .sfs-topbar__link { padding-inline: 0.45rem; }
+}
+
 .sfs-topbar__btn,
 .sfs-topbar__link {
     display: inline-flex;

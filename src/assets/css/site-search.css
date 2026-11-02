@@ -1,0 +1,461 @@
+/* ==========================================================================
+   The site search panel (SiteSearchPanel.vue).
+
+   Loaded with the panel's own async chunk, so it costs nothing until the
+   search is first used. EVERY selector is `sfs-gs`-prefixed - a namespace no
+   other file writes - which is what makes a script-imported (therefore
+   global) stylesheet safe (check:cssleaks section 5 gates this file).
+
+   Colours are theme tokens with fallbacks, so all ten galaxies work; the
+   active row and the match highlight are washes of the accent rather than of
+   the tint, because a white tint over a light galaxy's page is invisible.
+
+   Two shapes:
+     .sfs-gs--dropdown  under the top bar, anchored to `.sfs-topbar`
+                        (position: relative, no z-index - see labs.css)
+     .sfs-gs--sheet     a phone: the whole screen, with its own field
+   ========================================================================== */
+
+.sfs-gs {
+    --gs-line: rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    --gs-wash: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    --gs-wash-strong: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.26);
+    --gs-glyph: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.07);
+
+    display: flex;
+    flex-direction: column;
+    z-index: 960;
+    background: var(--sfs-space, #0b1020);
+    color: var(--sfs-text, #e6e8ef);
+    font-size: 0.9rem;
+    line-height: 1.35;
+    text-align: start;
+}
+
+.sfs-gs--dropdown {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    inset-inline: 0.5rem;
+    max-width: 50rem;
+    margin-inline: auto;
+    max-height: min(74vh, 46rem);
+    max-height: min(74dvh, 46rem);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 16px;
+    box-shadow: 0 22px 54px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+    overflow: hidden;
+    animation: sfs-gs-rise var(--sfs-dur-fast, 140ms) var(--sfs-ease-out, ease-out);
+}
+
+.sfs-gs--sheet {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* The reveal ENDS where the element rests, so the reduced-motion override in
+   responsive.css (which lands an animation on its last keyframe) is harmless. */
+@keyframes sfs-gs-rise {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── the phone sheet's own field ───────────────────────────────────────── */
+
+.sfs-gs__sheethead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.6rem 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--gs-line);
+}
+
+.sfs-gs__headicon { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; color: var(--sfs-text-muted, #b7bdcc); }
+
+.sfs-gs__sheethead .sfs-gs__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.4rem 0;
+    border: none;
+    background: transparent;
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-size: 1rem; /* below 16px iOS zooms on focus and never zooms back */
+    outline: none;
+    box-shadow: none;
+}
+
+.sfs-gs__sheethead .sfs-gs__input:focus,
+.sfs-gs__sheethead .sfs-gs__input:focus-visible { outline: none; box-shadow: none; }
+
+.sfs-gs__input::placeholder { color: var(--sfs-text-muted, #b7bdcc); opacity: 1; }
+.sfs-gs__input::-webkit-search-cancel-button { appearance: none; }
+
+.sfs-gs__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    cursor: pointer;
+}
+
+.sfs-gs__close:hover { background: var(--gs-glyph); color: var(--sfs-text, #e6e8ef); }
+
+/* ── the scrolling body ────────────────────────────────────────────────── */
+
+.sfs-gs__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.35rem 0.45rem 0.6rem;
+}
+
+.sfs-gs__group + .sfs-gs__group { margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid var(--gs-line); }
+
+.sfs-gs__ghead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.45rem 0.55rem 0.25rem;
+}
+
+.sfs-gs__gtitle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: var(--sfs-tracking-caps, 0.06em);
+    text-transform: uppercase;
+    text-wrap: nowrap;
+}
+
+.sfs-gs__gicon { width: 0.95rem; height: 0.95rem; flex: 0 0 auto; }
+
+.sfs-gs__count {
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: var(--gs-glyph);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.sfs-gs__updating { color: var(--sfs-text-muted, #b7bdcc); font-size: 0.72rem; }
+
+.sfs-gs__textbtn {
+    padding: 0.15rem 0.5rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--sfs-accent-text, #a5b4fc);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sfs-gs__textbtn:hover { background: var(--gs-wash); }
+
+.sfs-gs__list { list-style: none; margin: 0; padding: 0; }
+
+/* ── one result ────────────────────────────────────────────────────────── */
+
+.sfs-gs__opt { border-radius: 10px; }
+
+.sfs-gs__link,
+.sfs-gs__opt--recent,
+.sfs-gs__opt--error {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 2.9rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 10px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sfs-gs__opt.is-active,
+.sfs-gs__chipopt.is-active .sfs-gs__chip {
+    background: var(--gs-wash);
+    box-shadow: inset 0 0 0 1px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+}
+
+.sfs-gs__glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9px;
+    background: var(--gs-glyph);
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.sfs-gs__opt.is-active .sfs-gs__glyph { background: var(--gs-wash-strong); }
+
+.sfs-gs__i { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; }
+
+.sfs-gs__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* `dir="auto"` on the element itself: a record title is English on an Arabic
+   page whenever it has not been translated, and its punctuation must stay
+   where the English put it. */
+.sfs-gs__title,
+.sfs-gs__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    unicode-bidi: plaintext;
+}
+
+.sfs-gs__title { font-weight: 600; }
+
+.sfs-gs__sub { color: var(--sfs-text-muted, #b7bdcc); font-size: 0.78rem; }
+
+.sfs-gs__sub--lock { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+.sfs-gs__opt.is-locked .sfs-gs__glyph { color: var(--sfs-text-muted, #b7bdcc); }
+
+.sfs-gs__lockmini { width: 0.8rem; height: 0.8rem; flex: 0 0 auto; }
+
+.sfs-gs__mark {
+    padding: 0 0.05em;
+    border-radius: 3px;
+    background: var(--gs-wash-strong);
+    color: inherit;
+    font-weight: 700;
+}
+
+.sfs-gs__badge {
+    flex: 0 0 auto;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--gs-line);
+    border-radius: 999px;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* The Enter glyph appears on the active row only: it says what Enter does. */
+.sfs-gs__enter {
+    flex: 0 0 auto;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    opacity: 0;
+}
+
+.sfs-gs__opt.is-active .sfs-gs__enter { opacity: 1; }
+
+/* The arrow is a direction. Under dir="rtl" it points the other way. */
+.sfs-gs[dir='rtl'] .sfs-gs__enter { transform: scaleX(-1); }
+
+.sfs-gs__opt--more {
+    display: flex;
+    align-items: center;
+    min-height: 2.2rem;
+    padding: 0.25rem 0.6rem 0.25rem 3.25rem;
+    cursor: pointer;
+}
+
+.sfs-gs[dir='rtl'] .sfs-gs__opt--more { padding: 0.25rem 3.25rem 0.25rem 0.6rem; }
+
+.sfs-gs__morelabel { color: var(--sfs-accent-text, #a5b4fc); font-size: 0.8rem; font-weight: 600; }
+
+.sfs-gs__opt--error .sfs-gs__glyph { color: rgb(var(--sfs-warning-rgb, 251 191 36)); }
+
+/* ── loading ───────────────────────────────────────────────────────────── */
+
+.sfs-gs__skel {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 2.9rem;
+    padding: 0.4rem 0.55rem;
+}
+
+.sfs-gs__skelglyph,
+.sfs-gs__skellines span {
+    background: linear-gradient(90deg,
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06),
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.14),
+        rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06));
+    background-size: 200% 100%;
+    animation: sfs-gs-shimmer 1.3s linear infinite;
+}
+
+.sfs-gs__skelglyph { flex: 0 0 auto; width: 2rem; height: 2rem; border-radius: 9px; }
+
+.sfs-gs__skellines { display: flex; flex-direction: column; gap: 0.35rem; flex: 1 1 auto; }
+.sfs-gs__skellines span { display: block; height: 0.6rem; border-radius: 4px; }
+.sfs-gs__skellines span:first-child { width: 58%; }
+.sfs-gs__skellines span:last-child { width: 34%; }
+
+@keyframes sfs-gs-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+
+/* ── shortcuts: recent and "jump to" ───────────────────────────────────── */
+
+.sfs-gs__list--chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.2rem 0.55rem 0.3rem;
+}
+
+.sfs-gs__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.1rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--gs-line);
+    border-radius: 999px;
+    color: var(--sfs-text, #e6e8ef);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sfs-gs__chip:hover { border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5); }
+
+.sfs-gs__chip .sfs-gs__i { color: var(--sfs-accent-text, #a5b4fc); width: 0.95rem; height: 0.95rem; }
+
+.sfs-gs__hint {
+    margin: 0.35rem 0.55rem 0.2rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.8rem;
+}
+
+/* ── nothing found ─────────────────────────────────────────────────────── */
+
+.sfs-gs__empty { padding: 1.4rem 0.8rem 0.8rem; text-align: center; }
+
+.sfs-gs__emptyicon { width: 2rem; height: 2rem; color: var(--sfs-text-muted, #b7bdcc); }
+
+.sfs-gs__emptytitle {
+    margin: 0.5rem 0 0.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+
+.sfs-gs__tips {
+    margin: 0 auto 0.8rem;
+    padding: 0;
+    list-style: none;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.82rem;
+}
+
+.sfs-gs__browse {
+    margin: 0 0 0.2rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: var(--sfs-tracking-caps, 0.06em);
+    text-transform: uppercase;
+}
+
+.sfs-gs__empty .sfs-gs__list--chips { justify-content: center; }
+
+/* ── footer ────────────────────────────────────────────────────────────── */
+
+.sfs-gs__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    padding: 0.45rem 0.9rem;
+    border-top: 1px solid var(--gs-line);
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.74rem;
+}
+
+.sfs-gs__keys { display: inline-flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+
+.sfs-gs__keys kbd {
+    display: inline-block;
+    min-width: 1.3rem;
+    margin-inline-end: 0.15rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--gs-line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    font: 600 0.7rem/1.5 var(--sfs-font-mono, ui-monospace, monospace);
+    text-align: center;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.sfs-gs__pending { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+.sfs-gs__spin { width: 0.85rem; height: 0.85rem; animation: sfs-gs-turn 0.9s linear infinite; }
+
+@keyframes sfs-gs-turn { to { transform: rotate(360deg); } }
+
+/* A touch screen has no keyboard to describe. */
+@media (pointer: coarse) {
+    .sfs-gs__keys { display: none; }
+}
+
+.sfs-gs__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* The page behind the phone sheet does not scroll under the reader's thumb. */
+html.sfs-gs-lock,
+html.sfs-gs-lock body { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sfs-gs--dropdown { animation: none; }
+    .sfs-gs__skelglyph,
+    .sfs-gs__skellines span,
+    .sfs-gs__spin { animation: none; }
+}
+
+@media (forced-colors: active) {
+    .sfs-gs__opt.is-active,
+    .sfs-gs__chipopt.is-active .sfs-gs__chip { outline: 2px solid Highlight; }
+    .sfs-gs__mark { background: Mark; color: MarkText; }
+}
+
+@media print {
+    .sfs-gs { display: none; }
+}

@@ -8,6 +8,9 @@ import '@/assets/css/responsive.css';
 import '@/style.css';
 import '@/assets/css/ui.css';
 import '@/assets/css/rtl.css';
+// Global in the real app (main.ts); it carries html.sfs-fs-lock, the scroll
+// lock under the full-screen overlay, without which the page scrollbar stays.
+import '@/assets/css/labs.css';
 import { THEMES, applyTheme } from '@/theme/apply';
 import { i18n, setLocale } from '@/i18n/runtime';
 import type { LocaleId } from '@/i18n/locales';

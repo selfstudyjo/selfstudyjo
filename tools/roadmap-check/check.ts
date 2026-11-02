@@ -26,6 +26,7 @@ import {
     KINDS, KIND_META, cycleStatus, filterCatalogue, kindOfRoute, layout2D, layout3D, nextNode,
     normaliseRoadmap, progressStats, rectsOverlap, routeFor, safeExternal, sortRoadmaps,
     summaryPercent, truncate, withStatus, wrapLabel, distance,
+    KIND_ICON, SPRING_PEAK, easeOutCubic, kindOutline, outlinePoints, ringDash, springOut,
     type RoadmapDoc, type Specialization,
 } from '../../src/utils/roadmapLayout';
 
@@ -327,6 +328,69 @@ section('8. The route, the bundle and the markup');
         /requiresAuth:\s*true/.test(block) && !/requiresSubscription|requiredFeatures/.test(block), block);
     check('/roadmaps/:roadmapId exists', router.includes("path: 'roadmaps/:roadmapId'"));
     check('the router never imports RoadmapProvider statically', !/^import\s+\w+\s+from\s+'\.\.\/views\/RoadmapProvider/m.test(router));
+}
+
+section('9. The visual language: one shape per kind, springs that land');
+{
+    for (const k of KINDS) {
+        const o = kindOutline(k);
+        check(`${k}: an outline of at least 4 points inside the unit box`,
+            o.length >= 4 && o.every(p => Math.abs(p.x) <= 1.06 && Math.abs(p.y) <= 1.06), o.length);
+        check(`${k}: an icon to draw`, KIND_ICON[k].length > 0 && KIND_ICON[k].every(d => /^M[\d.\s-]/.test(d)));
+    }
+    check('every kind has a different silhouette', new Set(KINDS.map(k => JSON.stringify(kindOutline(k)))).size === KINDS.length);
+    check('outlinePoints flips y for SVG and scales', outlinePoints('topic', 10).startsWith('0,-10.5'), outlinePoints('topic', 10));
+    let peak = 0, monotoneEnd = true;
+    for (let i = 0; i <= 2000; i++) peak = Math.max(peak, springOut(i / 2000));
+    for (let i = 1900; i < 2000; i++) if (springOut(i / 2000) < 1 - 1e-9) monotoneEnd = false;
+    check('the spring starts at exactly 0, lands on exactly 1', springOut(0) === 0 && springOut(1) === 1 && springOut(-3) === 0 && springOut(9) === 1);
+    check(`the spring overshoots, but never past SPRING_PEAK (${peak.toFixed(3)})`, peak > 1.01 && peak <= SPRING_PEAK);
+    check('the spring settles from above, never undershooting at the end', monotoneEnd);
+    check('easeOutCubic is clamped', easeOutCubic(-1) === 0 && easeOutCubic(2) === 1);
+    check('a progress ring is empty at null and full at 100',
+        ringDash(null, 10).startsWith('0 ') && ringDash(100, 10).split(' ')[0] === ringDash(100, 10).split(' ')[1]);
+}
+
+section('10. Full screen, the 3D quality budget and the 2D map');
+{
+    const view = codeOf('src/views/RoadmapProvider.vue');
+    check('the view uses the shared useFullscreen composable', /from '@\/composables\/useFullscreen'/.test(view) && /useFullscreen\(\s*mapShell\s*\)/.test(view));
+    const shellAt = view.indexOf('ref="mapShell"');
+    const sideAt = view.indexOf('class="rmp__side"');
+    const shell = shellAt > 0 && sideAt > shellAt ? view.slice(shellAt, sideAt) : '';
+    check('the full-screen shell holds the 2D/3D toggle, the tour, both maps and the step card',
+        /rmp__seg/.test(shell) && /rmp__tourbtn/.test(shell) && /<RoadmapMap3D/.test(shell) && /<RoadmapMap2D/.test(shell) && /<RoadmapNodeCard/.test(shell),
+        shell ? 'missing a piece' : 'no shell');
+    check('the step card is not teleported out of the full-screen element', !/<Teleport[^>]*to="body"/.test(view));
+    check('a Full screen toggle and an exit button that only shows in full screen',
+        /class="[^"]*rmp__fsbtn[^"]*"[^>]*@click="toggleFs"/.test(view) && /v-if="fsActive"[^>]*class="[^"]*rmp__fsexit[^"]*"[^>]*@click="exitFs"/.test(view));
+    check('entering or leaving full screen resizes the 3D renderer', /watch\(fsActive[\s\S]{0,200}map3d\.value\?\.resize/.test(view));
+    check('the overlay fallback is fixed over everything', /\.rmp__shell\.is-overlay\s*\{[^}]*position:\s*fixed[^}]*z-index:\s*2147483000/.test(read('src/views/RoadmapProvider.vue')));
+    check('full screen hands the 3D map the whole height', /\.rmp__shell\.is-full\s*\{[^}]*--rm3d-height:\s*100%/.test(read('src/views/RoadmapProvider.vue')));
+    const map3d = codeOf('src/components/roadmap/RoadmapMap3D.vue');
+    check('the 3D map exposes resize() and takes its height from --rm3d-height',
+        /resize:\s*\(\)\s*=>\s*scene\?\.resize\(\)/.test(map3d) && /height:\s*var\(--rm3d-height/.test(read('src/components/roadmap/RoadmapMap3D.vue')));
+    const fs = codeOf('src/composables/useFullscreen.ts');
+    check('Escape leaves the overlay (the browser does it for native)', /event\.key === 'Escape'[\s\S]{0,700}exit\(\)/.test(fs));
+
+    const scene = codeOf('src/components/roadmap/roadmapScene.ts');
+    check('bloom is a second lazy import, only in the scene', /import\(\s*'three\/examples\/jsm\/postprocessing\/UnrealBloomPass\.js'\s*\)/.test(scene)
+        && !/UnrealBloomPass/.test(view) && !/UnrealBloomPass/.test(map3d));
+    check('bloom is off in a light galaxy and on a low budget', /quality === 'high' && !light/.test(scene));
+    check('a quality governor drops bloom and the pixel ratio on slow frames', /function govern\(/.test(scene) && /disableBloom\(\)/.test(scene) && /setPixelRatio\(1\)/.test(scene));
+    check('reduced motion freezes the shader clock and the flow', /if \(motion\) clock \+=/.test(scene) && /uFlow:\s*\{\s*value:\s*motion \?/.test(scene));
+    check('the scene disposes the composer, the environment map and its textures',
+        /composer\.dispose/.test(scene) && /envTex\.dispose\(\)/.test(scene) && /pmrem\.dispose\(\)/.test(scene) && /buildTextures\)\s*t\.dispose\(\)/.test(scene));
+    check('the 3D tokens are plates in the kind outline, with the kind icon', /kindOutline\(kind\)/.test(scene) && /KIND_ICON\[kind\]/.test(scene) && /ExtrudeGeometry/.test(scene));
+    check('3D labels build their icon with createElementNS, not markup', /createElementNS\(SVGNS/.test(scene));
+
+    const map2d = codeOf('src/components/roadmap/RoadmapMap2D.vue');
+    const map2dRaw = read('src/components/roadmap/RoadmapMap2D.vue');
+    check('2D draws each kind in its outline with its icon', /outlinePoints\(p\.kind/.test(map2d) && /KIND_ICON\[p\.kind\]/.test(map2d));
+    check('2D has a stage timeline that focuses a stage', /rm2d__timeline/.test(map2d) && /emit\('focus'/.test(map2d));
+    check('2D motion (draw-on, flow, springs) only without reduced motion',
+        /@media \(prefers-reduced-motion: no-preference\)\s*\{[\s\S]*rm2d-flow[\s\S]*\}/.test(map2dRaw) && !/^\.rm2d[^{]*\{[^}]*animation:/m.test(map2dRaw));
+    check('2D gradient and filter ids are per instance', /useId\(\)/.test(map2d) && /url\(#\$\{uid\}/.test(map2d));
 }
 
 console.log(failures ? `\n${failures} FAILED` : '\nPASS');

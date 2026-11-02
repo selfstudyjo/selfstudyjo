@@ -230,6 +230,10 @@ console.log('\n5. A globally loaded page stylesheet stays on its own page');
         // `lb-sheet`-, `lb-feed`-, `lb-conduct`- or `lb-list`-prefixed and used
         // by exactly one file, so there is no debt to grandfather in.
         'leaderboard-activity.css',
+        // The site search panel. Script-imported from a lazy component, so
+        // global once loaded; every class is `sfs-gs`-prefixed and gated from
+        // the day it was written.
+        'site-search.css',
     ]);
     const LAYERS = new Set(['theme.css', 'responsive.css', 'default-layout.css',
         'exam-system.css', 'side-nav.css', 'style.css', 'ui.css']);

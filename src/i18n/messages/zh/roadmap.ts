@@ -81,6 +81,7 @@ const roadmap: Catalogue = {
     'Building the 3D map…': '正在构建 3D 地图…',
     'Previous stage': '上一阶段',
     'Whole map': '整张地图',
+    'Stage timeline': '阶段时间线',
     'Next stage': '下一阶段',
     'Drag to turn · scroll or pinch to zoom · right-drag to move': '拖动旋转 · 滚动或双指缩放 · 右键拖动平移',
 

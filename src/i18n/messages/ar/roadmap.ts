@@ -83,6 +83,7 @@ const roadmap: Catalogue = {
     'Building the 3D map…': 'جارٍ بناء الخريطة ثلاثية الأبعاد…',
     'Previous stage': 'المرحلة السابقة',
     'Whole map': 'الخريطة كاملة',
+    'Stage timeline': 'الخط الزمني للمراحل',
     'Next stage': 'المرحلة التالية',
     'Drag to turn · scroll or pinch to zoom · right-drag to move':
         'اسحب للتدوير · مرّر أو اضغط بإصبعين للتكبير · اسحب بالزر الأيمن للتحريك',

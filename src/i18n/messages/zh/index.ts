@@ -55,6 +55,7 @@ import reader from './reader';
 import drive from './drive';
 import playground from './playground';
 import roadmap from './roadmap';
+import search from './search';
 
 /**
  * Assembled in one place so a duplicate key is a visible conflict rather than a
@@ -99,6 +100,8 @@ const zh: Catalogue = {
     ...playground,
     // The Roadmap Provider: a learning path drawn as a map, not a lab or a tour.
     ...roadmap,
+    // The site search in the top bar: a whole-site finder, not a list filter.
+    ...search,
 };
 
 export default zh;

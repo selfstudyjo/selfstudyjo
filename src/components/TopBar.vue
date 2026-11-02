@@ -41,6 +41,74 @@
         <span class="sfs-topbar__label">{{ $t('Playgrounds') }}</span>
       </button>
 
+      <!--
+        THE SITE SEARCH. Anything on the platform - a page, a course, a lesson,
+        a lab, a quiz, an exam, a runbook - from every page.
+
+        Only the FIELD is here, and it is all the entry chunk pays for: the
+        results panel, the scoring and the catalogue loaders are one async
+        chunk (SiteSearchPanel.vue), fetched the first time the field is used,
+        and the catalogues themselves only then. On a phone the bar is a strip
+        of icons with no room for a field, so a button opens the panel as a
+        full-screen sheet with its own.
+
+        Shortcut: "/" anywhere outside a text field, or Ctrl/Cmd+Shift+K.
+        Ctrl/Cmd+K stays with the sidebar's page filter, which had it first.
+      -->
+      <div ref="searchWrap" class="sfs-topbar__search">
+        <div class="sfs-topbar__searchfield" :class="{ 'is-open': searchOpen && searchMode === 'dropdown' }">
+          <SearchIcon class="sfs-topbar__searchicon" aria-hidden="true" />
+          <input
+            ref="searchInput"
+            v-model="searchQuery"
+            type="search"
+            class="sfs-topbar__searchinput"
+            role="combobox"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            enterkeyhint="go"
+            :placeholder="$t('Search the site…')"
+            :aria-label="$t('Search courses, lessons, labs, quizzes, exams, runbooks and pages')"
+            aria-autocomplete="list"
+            aria-controls="sfs-gs-listbox"
+            :aria-expanded="searchOpen && searchMode === 'dropdown'"
+            :aria-activedescendant="searchOpen && searchActive ? searchActive : undefined"
+            @focus="openSearch(false)"
+            @input="openSearch(false)"
+            @keydown="onSearchKey"
+            @blur="onSearchBlur"
+            @pointerenter="prefetchSearch"
+          />
+          <button
+            v-if="searchQuery"
+            type="button"
+            class="sfs-topbar__searchclear"
+            :title="$t('Clear search')"
+            :aria-label="$t('Clear search')"
+            @mousedown.prevent
+            @click="clearSearch"
+          >
+            <X class="sfs-topbar__i" aria-hidden="true" />
+          </button>
+          <kbd v-else class="sfs-topbar__searchkbd" :title="searchShortcutHint" aria-hidden="true">/</kbd>
+        </div>
+      </div>
+      <button
+        ref="searchButton"
+        type="button"
+        class="sfs-topbar__btn sfs-topbar__searchbtn"
+        :class="{ 'is-open': searchOpen && searchMode === 'sheet' }"
+        aria-haspopup="dialog"
+        :aria-expanded="searchOpen && searchMode === 'sheet'"
+        :title="$t('Search the site')"
+        :aria-label="$t('Search the site')"
+        @pointerenter="prefetchSearch"
+        @click="openSearch(true)"
+      >
+        <SearchIcon class="sfs-topbar__i" aria-hidden="true" />
+      </button>
+
       <span class="sfs-topbar__spacer"></span>
 
       <!--
@@ -81,6 +149,19 @@
         <span class="sfs-topbar__label">{{ $t('Full page') }}</span>
       </a>
     </div>
+
+    <!-- The search results: a dropdown under the bar, or a full-screen sheet on
+         a phone. Outside `__inner` for the playgrounds menu's reason below. -->
+    <SiteSearchPanel
+      v-if="searchOpen"
+      ref="searchPanel"
+      v-model:query="searchQuery"
+      :mode="searchMode"
+      listbox-id="sfs-gs-listbox"
+      @close="closeSearch"
+      @active="searchActive = $event"
+      @navigated="onSearchNavigated"
+    />
 
     <!--
       The playgrounds menu. A popover under the bar on a desktop and a bottom
@@ -250,11 +331,11 @@
  * **The dock is a panel, not a modal.** See the comment in the template - the
  * whole value is that the page behind it is still readable.
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
   ChevronDown, ChevronUp, Database, FileCode, FlaskConical, LayoutGrid,
-  Maximize2, Terminal, X,
+  Maximize2, Search as SearchIcon, Terminal, X,
 } from 'lucide-vue-next';
 import { labsService } from '@/services/labs.service';
 import { localeId } from '@/i18n/runtime';
@@ -274,6 +355,14 @@ import LabConsole from '@/components/labs/LabConsole.vue';
 import LabQuery from '@/components/labs/LabQuery.vue';
 import TourButton from '@/components/TourButton.vue';
 import AssistantButton from '@/components/assistant/AssistantButton.vue';
+
+/**
+ * The search panel, its scoring and its catalogue loaders: one async chunk,
+ * fetched the first time the field is focused (or hovered, as a prefetch), so
+ * a page load pays for a text field and nothing more (working rule 47).
+ */
+const loadSearchPanel = () => import('@/components/search/SiteSearchPanel.vue');
+const SiteSearchPanel = defineAsyncComponent(loadSearchPanel);
 
 const authStore = useAuthStore();
 
@@ -420,6 +509,7 @@ function toggleMenu() {
     closeMenu(true);
     return;
   }
+  closeSearch(false);
   tour.stop();
   open.value = '';
   menuOpen.value = true;
@@ -467,7 +557,134 @@ function onMenuKey(event: KeyboardEvent) {
   items[next]?.focus();
 }
 
+/* ─────────────── the site search ─────────────── */
+
+const searchQuery = ref('');
+const searchOpen = ref(false);
+const searchActive = ref('');
+const searchWrap = ref<HTMLElement | null>(null);
+const searchInput = ref<HTMLInputElement | null>(null);
+const searchButton = ref<HTMLButtonElement | null>(null);
+const searchPanel = ref<{ onKey: (event: KeyboardEvent) => boolean } | null>(null);
+
+const isApple = typeof navigator !== 'undefined'
+  && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const searchShortcutHint = isApple ? '/  or  ⌘⇧K' : '/  or  Ctrl+Shift+K';
+
+/**
+ * A phone gets a sheet, anything wider a dropdown. Read from a media query
+ * rather than decided once, so rotating a tablet moves between the two.
+ */
+const phoneQuery = typeof window !== 'undefined' && window.matchMedia
+  ? window.matchMedia('(max-width: 639px)') : null;
+const isPhone = ref(Boolean(phoneQuery?.matches));
+const onPhoneChange = (event: MediaQueryListEvent) => { isPhone.value = event.matches; };
+const searchMode = computed<'dropdown' | 'sheet'>(() => (isPhone.value ? 'sheet' : 'dropdown'));
+
+let prefetched = false;
+function prefetchSearch() {
+  if (prefetched) return;
+  prefetched = true;
+  void loadSearchPanel().catch(() => { prefetched = false; });
+}
+
+/** `focusField`: put the caret in the bar's field (a shortcut). */
+function openSearch(focusField: boolean) {
+  if (!searchOpen.value) {
+    tour.stop();
+    closeMenu(false);
+    searchOpen.value = true;
+  }
+  if (focusField && searchMode.value === 'dropdown') {
+    void nextTick(() => {
+      searchInput.value?.focus();
+      searchInput.value?.select();
+    });
+  }
+}
+
+/** `restore` puts focus back where the reader was: the field, or the phone's button. */
+function closeSearch(restore: boolean) {
+  if (!searchOpen.value) return;
+  searchOpen.value = false;
+  searchActive.value = '';
+  if (!restore) return;
+  void nextTick(() => {
+    if (searchMode.value === 'sheet') searchButton.value?.focus();
+    else searchInput.value?.focus();
+  });
+}
+
+function clearSearch() {
+  searchQuery.value = '';
+  searchInput.value?.focus();
+}
+
+function onSearchNavigated() {
+  searchQuery.value = '';
+  closeSearch(false);
+  searchInput.value?.blur();
+}
+
+function onSearchKey(event: KeyboardEvent) {
+  if (!searchOpen.value) {
+    if (event.key === 'Escape') {
+      if (searchQuery.value) searchQuery.value = '';
+      else searchInput.value?.blur();
+      event.preventDefault();
+    } else if (event.key === 'ArrowDown' || event.key === 'Enter') {
+      openSearch(false);
+    }
+    return;
+  }
+  searchPanel.value?.onKey(event);
+}
+
+/**
+ * Tab leaving the field closes the panel. A press INSIDE the panel never blurs
+ * the field (the panel prevents it), so this only fires when focus really went
+ * somewhere else.
+ */
+function onSearchBlur() {
+  if (searchMode.value !== 'dropdown') return;
+  setTimeout(() => {
+    const active = document.activeElement;
+    if (active && (searchWrap.value?.contains(active) || active.closest?.('.sfs-gs'))) return;
+    closeSearch(false);
+  }, 0);
+}
+
+/** A press anywhere outside the field and the panel closes the dropdown. */
+function onDocumentPointer(event: PointerEvent) {
+  if (!searchOpen.value || searchMode.value !== 'dropdown') return;
+  const target = event.target as HTMLElement | null;
+  if (!target || searchWrap.value?.contains(target) || target.closest?.('.sfs-gs')) return;
+  closeSearch(false);
+}
+
+/** Somewhere a "/" is text rather than a shortcut. */
+function isTyping(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el || !el.closest) return false;
+  return Boolean(el.closest(
+    'input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="textbox"], .sl-console'));
+}
+
+function onSearchShortcut(event: KeyboardEvent) {
+  if (!event.key || event.defaultPrevented) return;
+  const chord = event.key.toLowerCase() === 'k' && event.shiftKey && (event.ctrlKey || event.metaKey);
+  const slash = event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey
+    && !isTyping(event.target);
+  if (!chord && !slash) return;
+  event.preventDefault();
+  openSearch(searchMode.value === 'dropdown');
+}
+
 function onKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && searchOpen.value && searchMode.value === 'sheet') {
+    closeSearch(true);
+    return;
+  }
   if (event.key === 'Escape' && menuOpen.value) {
     closeMenu(true);
     return;
@@ -477,11 +694,24 @@ function onKey(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKey));
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
+onMounted(() => {
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keydown', onSearchShortcut);
+  document.addEventListener('pointerdown', onDocumentPointer, true);
+  phoneQuery?.addEventListener?.('change', onPhoneChange);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey);
+  window.removeEventListener('keydown', onSearchShortcut);
+  document.removeEventListener('pointerdown', onDocumentPointer, true);
+  phoneQuery?.removeEventListener?.('change', onPhoneChange);
+});
 
-// Following a link closes the menu; so does any other navigation.
-watch(() => route.fullPath, () => closeMenu(false));
+// Following a link closes the menu and the search; so does any other navigation.
+watch(() => route.fullPath, () => {
+  closeMenu(false);
+  closeSearch(false);
+});
 
 // A dock open while the reader signs out would keep a console pointed at a
 // username that no longer exists.

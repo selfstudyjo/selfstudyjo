@@ -52,6 +52,10 @@
   background: transparent;
   overflow-x: hidden;
   animation: fadeInUp 0.5s ease-out both;
+  /* The card grid is laid out against THIS box, not the viewport (working
+     rule 50): the sidebar takes a different width collapsed and expanded, so a
+     1280px window is anything from a 1000px to a 1200px dashboard. */
+  container: hc-page / inline-size;
 }
 
 /* Default text colors (no !important spam) */
@@ -139,9 +143,13 @@
   overflow: hidden;
   transition: transform var(--hc-t-norm), box-shadow var(--hc-t-norm), border-color var(--hc-t-norm);
   min-width: 0;
+  /* A column: the header keeps its height and the body (`.hc-scroll`) takes
+     the rest, so cards stretched to one row height line their bodies up. */
+  display: flex;
+  flex-direction: column;
 }
 .dashboard-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: var(--hc-border-strong);
   box-shadow: 0 14px 44px rgb(var(--sfs-accent-rgb, 102 126 234) / 0.22);
 }
@@ -163,7 +171,10 @@
   min-width: 0;
 }
 .card-title h2 {
-  flex: 1 1 auto;
+  /* A small basis rather than `auto`: a long title ("Assigned Homeworks")
+     then wraps onto a second line itself instead of pushing the count and the
+     Show all toggle down onto a row of their own. */
+  flex: 1 1 7rem;
   font-size: clamp(1rem, 2vw, 1.2rem);
   font-weight: 600;
   margin: 0;
@@ -213,6 +224,109 @@
 .dashboard-card > div:not(.card-header) {
   padding: clamp(1rem, 2.4vw, 1.4rem);
 }
+.card-header { flex: none; }
+
+/* ---------- The section cap ----------
+   Every card body is a scroll region (`.hc-scroll`, the attributes come from
+   `region()` in Home.vue). Four decisions:
+
+   * The cap is sized to the VIEWPORT HEIGHT, bounded both ways: `min(…dvh,
+     …rem)` so a tall monitor does not get a 900px list, and `max(15rem, …)` so
+     a phone in landscape does not get a 150px letterbox you can see two rows
+     through. `dvh`, so the mobile URL bar does not leave the bottom row under
+     it. The progress card gets a little more, because its body is three
+     meters AND a list.
+   * The header is OUTSIDE the region, so it stays in view without `sticky` —
+     which would need an opaque background, and these cards are glass.
+   * The fade is a MASK, not an overlay. An overlay has to be painted in the
+     colour of what is behind it, and behind a glass card is the galaxy, so it
+     would be the wrong colour in every theme. A mask only takes alpha away.
+     Each edge fades only while there is something past it, from the
+     `data-more-*` attributes the directive writes.
+   * The scrollbar is thin and takes the accent at half strength, which reads
+     on both a dark galaxy and a light one. */
+.hc-scroll {
+  --hc-cap: max(15rem, min(58dvh, 27rem));
+  --hc-fade: 2rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: var(--hc-cap);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5) transparent;
+}
+.card--progress .hc-scroll { --hc-cap: max(17rem, min(66dvh, 32rem)); }
+.hc-scroll > * { flex: 1 0 auto; }
+.hc-scroll.is-expanded { max-height: none; }
+
+.hc-scroll::-webkit-scrollbar { width: 8px; }
+.hc-scroll::-webkit-scrollbar-track { background: transparent; }
+.hc-scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+  border-radius: 999px;
+}
+
+.hc-scroll[data-more-below] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hc-fade)), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hc-fade)), transparent);
+}
+.hc-scroll[data-more-above] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--hc-fade));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--hc-fade));
+}
+.hc-scroll[data-more-above][data-more-below] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--hc-fade), #000 calc(100% - var(--hc-fade)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--hc-fade), #000 calc(100% - var(--hc-fade)), transparent);
+}
+/* Drawn INSIDE the box: the card is `overflow: hidden`, so the shared ring's
+   2px outward offset would be clipped away on exactly this element. */
+.hc-scroll:focus-visible {
+  outline: 2px solid var(--sfs-accent-soft, #818cf8);
+  outline-offset: -3px;
+  border-radius: var(--hc-r-md);
+}
+
+/* The rows of a list. They were stacked with no gap at all — the `gap` on
+   `.courses-list` lands on its one child, the wrapper, not on the rows. */
+.hc-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.4vw, 0.7rem);
+}
+
+/* "Show all" / "Show less". An outline pill in the accent's INK, which is
+   derived to read on the card in all ten galaxies. */
+.hc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-block: 0.25rem;
+  padding-inline: 0.75rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.45);
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.08);
+  color: var(--sfs-accent-text, #c7d2fe);
+  font: inherit;
+  font-size: clamp(0.72rem, 1.4vw, 0.8rem);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--hc-t-fast), border-color var(--hc-t-fast);
+}
+.hc-toggle:hover {
+  background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+  border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.7);
+}
+.hc-toggle__chevron {
+  width: 0.9em;
+  height: 0.9em;
+  transition: transform var(--hc-t-fast);
+}
+.hc-toggle[aria-expanded='true'] .hc-toggle__chevron { transform: rotate(180deg); }
 
 /* ---------- Generic list items ---------- */
 .courses-list,
@@ -589,6 +703,20 @@
   gap: 0.75rem;
 }
 .empty-state.small { padding: clamp(0.75rem, 2vw, 1rem); gap: 0.5rem; }
+/* A card's empty state fills its body and sits in the middle of it, inside a
+   dashed frame. In a row of stretched cards an empty one is as tall as its
+   neighbours, and a sentence pinned to its top with a void below reads as a
+   list that failed to load. Dashed, so "nothing here yet" is a SHAPE as well as
+   a sentence — it survives greyscale and forced colours. */
+.empty-state {
+  border: 1px dashed var(--hc-border-strong);
+  border-radius: var(--hc-r-lg);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.02);
+}
+.courses-list > .empty-state:not(.small),
+.quiz-results > .empty-state:not(.small),
+.homeworks-list > .empty-state:not(.small),
+.subscription-content > .empty-state:not(.small) { flex: 1 1 auto; }
 .empty-icon { color: var(--hc-text-muted); opacity: 0.65; }
 .empty-icon svg { color: currentColor; }
 .empty-text {
@@ -1156,7 +1284,45 @@
   subscription, full width — it holds a plan, its feature list and its meta in
   three columns of its own, and at 4 columns those stack into a narrow ribbon.
 */
-@media (min-width: 1024px) {
+/*
+  Container queries, not media queries (working rule 50, and the `container`
+  on `.home-container`): the spans follow the width the DASHBOARD has, which
+  the sidebar moves independently of the window.
+
+  Two columns from 40rem — a tablet, or a laptop with the sidebar open, where
+  one 900px-wide list of course titles is mostly empty space — and the
+  8/4 + 4/4/4 + 12 arrangement from 62rem. In both, the progress and the
+  subscription cards keep a full row of their own.
+*/
+@container hc-page (min-width: 40rem) {
+  .card--courses,
+  .card--certificates,
+  .card--quizzes,
+  .card--homeworks     { grid-column: span 6; }
+
+}
+
+@container hc-page (min-width: 54rem) {
+  /* A plan, its feature list and its dates side by side, which is what a
+     full-width card is for; stacked they are a ribbon down the middle of the
+     page. Not before 54rem: in thirds any narrower, a plan name wraps a word
+     to a line. */
+  .subscription-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.8fr);
+    align-items: stretch;
+  }
+  .subscription-meta {
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(0.75rem, 2vw, 1rem);
+    border-radius: var(--hc-r-lg);
+    background: var(--hc-surface-1);
+    border: 1px solid var(--hc-border);
+  }
+}
+
+@container hc-page (min-width: 62rem) {
   .card--progress      { grid-column: span 8; }
   .card--courses       { grid-column: span 4; }
   .card--certificates  { grid-column: span 4; }
@@ -1197,10 +1363,29 @@
   .quiz-item,
   .homework-item,
   .certificate-item,
-  .empty-action {
+  .empty-action,
+  .hc-toggle,
+  .hc-toggle__chevron {
     animation: none !important;
     transition: none !important;
   }
+  /* With no transition, a hover lift is a jump, not a motion. */
+  .dashboard-card:hover,
+  .course-item:hover,
+  .quiz-item:hover,
+  .homework-item:hover,
+  .certificate-item:hover { transform: none; }
+}
+
+/* A print is a page, not a viewport: every list in full. */
+@media print {
+  .hc-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+  .hc-toggle { display: none !important; }
 }
 
 /* ---------- Print ---------- */

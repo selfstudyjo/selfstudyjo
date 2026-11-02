@@ -142,8 +142,8 @@ const report = [];
 for (const width of WIDTHS) {
     /* Every variant at the two widths a reader is most likely to be on, and one
        dark English shot everywhere else: the LAYOUT does not depend on the
-       palette, but the palette is the whole point at 1440 and 390. */
-    const variants = width === 1440 || width === 390 ? VARIANTS : [VARIANTS[0]];
+       palette, but the palette is the whole point at 1440, 820 and 390. */
+    const variants = width === 1440 || width === 820 || width === 390 ? VARIANTS : [VARIANTS[0]];
     for (const variant of variants) {
         await cdp.send('Emulation.setDeviceMetricsOverride', {
             width, height: 900, deviceScaleFactor: 1, mobile: width <= 480,

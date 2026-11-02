@@ -69,11 +69,11 @@ function connect(url) {
         const w = pending.get(msg.id);
         if (!w) return;
         pending.delete(msg.id);
-        msg.error ? w.fail(new Error(msg.error.message)) : w.ok(msg.result);
+        msg.error ? w.fail(new Error(`${w.method}: ${msg.error.message}`)) : w.ok(msg.result);
     });
     return {
         ready, on: fn => listeners.push(fn),
-        send(method, params = {}) { const m = ++id; socket.send(JSON.stringify({ id: m, method, params })); return new Promise((ok, fail) => pending.set(m, { ok, fail })); },
+        send(method, params = {}) { const m = ++id; socket.send(JSON.stringify({ id: m, method, params })); return new Promise((ok, fail) => pending.set(m, { ok, fail, method })); },
         close: () => socket.close(),
     };
 }
@@ -113,7 +113,12 @@ async function shot(name) {
     writeFileSync(join(outDir, `${name}.png`), Buffer.from(r.data, 'base64'));
 }
 async function open(query, width, height) {
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 });
+    // Right after leaving native full screen the window is still settling
+    // and the protocol answers "Internal error"; it succeeds a moment later.
+    for (let attempt = 0; ; attempt++) {
+        try { await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 }); break; }
+        catch (e) { if (attempt >= 8) throw e; await sleep(400); }
+    }
     pageErrors = [];
     await cdp.send('Page.navigate', { url: `${BASE}?${query}` });
     await waitFor('document.readyState === "complete" && !!document.querySelector(".rmp")');
@@ -135,6 +140,9 @@ const VARIANTS = [
 ];
 const SIZES = [[1440, 900], [820, 1180], [390, 844]];
 
+// SHOOT_ONLY=fs runs the full-screen section alone, for iterating on it.
+const ONLY_FS = process.env.SHOOT_ONLY === "fs";
+if (!ONLY_FS) {
 for (const [w, h] of SIZES) {
     for (const v of VARIANTS) {
         const tag = `${v.id}-${w}`;
@@ -187,7 +195,7 @@ for (const [w, h] of SIZES) {
             await click('.rmp__step');
             const card3 = await waitFor('!!document.querySelector(".rmnode")', 3000);
             check(`${tag}: a step picked in 3D opens its card`, card3);
-            await evaluate('[...document.querySelectorAll(".rmp__toolbar .rmp__btn")][0].click()');
+            await evaluate('document.querySelector(".rmp__tourbtn").click()');
             const caption = await waitFor('!!document.querySelector(".rm3d__caption")', 5000);
             check(`${tag}: the tour shows a stage caption`, caption);
             if (w === 1440) {
@@ -195,7 +203,7 @@ for (const [w, h] of SIZES) {
                 await sleep(300);
                 await shot(`${tag}-tour`);
             }
-            await evaluate('[...document.querySelectorAll(".rmp__toolbar .rmp__btn")][0].click()');
+            await evaluate('document.querySelector(".rmp__tourbtn").click()');
         }
         check(`${tag}: no page errors`, pageErrors.length === 0, pageErrors.slice(0, 3).join(' | '));
     }
@@ -239,7 +247,106 @@ check('create: shows the progress state', progress);
 await shot('create-progress');
 const made = await waitFor('!!document.querySelector(".rmp__doctitle")', 15000);
 check('create: the new roadmap opens', made);
+} // not SHOOT_ONLY=fs
 
+/*
+  FULL SCREEN, in both mechanisms. The button is pressed with a REAL input
+  event (Input.dispatchMouseEvent), because requestFullscreen needs a user
+  gesture and a synthetic el.click() is not one - it would silently test the
+  overlay twice. The overlay run removes the API first, which is what iPhone
+  Safari and a refusing iframe look like.
+
+  Asserted in each: the shell covers the viewport; the 3D renderer was resized
+  to it (drawing buffer aspect = displayed aspect, and it is tall) and is still
+  painted; 2D and the tour still work inside it; a step's card opens INSIDE the
+  full-screen element and is the topmost thing at its own centre; and leaving
+  (Escape, or the exit button) puts the map back at its page size, resized.
+*/
+async function realClick(sel) {
+    const r = await evaluate(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return null; el.scrollIntoView({block:'center'}); const b = el.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()`);
+    if (!r) return false;
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: r.x, y: r.y });
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: r.x, y: r.y, button: 'left', clickCount: 1 });
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r.x, y: r.y, button: 'left', clickCount: 1 });
+    return true;
+}
+async function pressEscape() {
+    const k = { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 };
+    // Leaving native full screen resizes the page mid-event, and the
+    // protocol can answer "Internal error" for the key-up; the outcome is
+    // asserted afterwards, so a transport hiccup here is not a verdict.
+    try { await cdp.send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...k }); } catch { /* see above */ }
+    try { await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', ...k }); } catch { /* see above */ }
+}
+const CANVAS_FITS = `(() => { const c = document.querySelector('.rm3d__canvas'); if (!c || !c.clientWidth || !c.clientHeight) return false;
+    return Math.abs(c.width / c.height - c.clientWidth / c.clientHeight) < 0.03; })()`;
+const SHELL_COVERS = `(() => { const s = document.querySelector('.rmp__shell'); const b = s.getBoundingClientRect();
+    return Math.abs(b.left) < 2 && Math.abs(b.top) < 2 && Math.abs(b.width - innerWidth) < 3 && Math.abs(b.height - innerHeight) < 3; })()`;
+const CARD_ON_TOP = `(() => { const s = document.querySelector('.rmp__shell'); const c = document.querySelector('.rmnode'); if (!s || !c) return 'no card';
+    if (!s.contains(c)) return 'card outside the full-screen element';
+    const b = c.getBoundingClientRect(); const hit = document.elementFromPoint(b.left + b.width / 2, b.top + Math.min(40, b.height / 2));
+    return hit && c.contains(hit) ? '' : 'something covers the card: ' + (hit?.className?.baseVal ?? hit?.className); })()`;
+
+for (const [fsMode, w, h] of [['native', 1440, 900], ['overlay', 1440, 900], ['overlay', 390, 844], ['native', 820, 1180]]) {
+    const tag = `fs-${fsMode}-${w}`;
+    await open(`theme=${w === 820 ? 'cartwheel' : 'andromeda'}&lang=${w === 390 ? 'ar' : 'en'}&path=/roadmaps/rm-ai`, w, h);
+    await waitFor('!!document.querySelector(".rm3d__canvas[data-painted]")', 25000);
+    if (fsMode === 'overlay') {
+        await evaluate(`Object.defineProperty(Document.prototype, 'fullscreenEnabled', { get: () => false, configurable: true }), true`);
+    }
+    const pageH = await evaluate('document.querySelector(".rm3d__canvas").clientHeight');
+    await realClick('.rmp__fsbtn');
+    const entered = await waitFor('!!document.querySelector(".rmp__shell.is-full")', 5000);
+    check(`${tag}: the Full screen button enters full screen`, entered);
+    if (!entered) continue;
+    const mech = await evaluate(`document.fullscreenElement === document.querySelector('.rmp__shell') ? 'native'
+        : document.querySelector('.rmp__shell.is-overlay') && !document.fullscreenElement ? 'overlay' : 'neither'`);
+    check(`${tag}: it used the ${fsMode} mechanism`, mech === fsMode, mech);
+    await sleep(500);
+    check(`${tag}: the map shell covers the viewport`, await evaluate(SHELL_COVERS));
+    const fitted = await waitFor(`${CANVAS_FITS} && document.querySelector('.rm3d__canvas').clientHeight > innerHeight * 0.6`, 4000);
+    check(`${tag}: the 3D renderer was resized to full screen`, fitted,
+        await evaluate('(() => { const c = document.querySelector(".rm3d__canvas"); return `${c.width}x${c.height} for ${c.clientWidth}x${c.clientHeight}`; })()'));
+    const v = await evaluate('document.querySelector(".rm3d__canvas").__sfsSample?.() ?? -1');
+    check(`${tag}: and is painted (variance ${v})`, v > 40, String(v));
+    check(`${tag}: the 2D/3D toggle, Play tour and the exit button are there`,
+        await evaluate('!!document.querySelector(".rmp__shell .rmp__seg") && !!document.querySelector(".rmp__shell .rmp__tourbtn") && !!document.querySelector(".rmp__shell .rmp__fsexit")'));
+    await shot(`${tag}-3d`);
+
+    await click('.rmp__tourbtn');
+    check(`${tag}: the tour runs in full screen`, await waitFor('!!document.querySelector(".rm3d__caption")', 5000));
+    await click('.rmp__tourbtn');
+
+    await clickText('.rmp__shell .rmp__seg button', '2D');
+    check(`${tag}: switches to 2D inside full screen`, await waitFor('!!document.querySelector(".rmp__shell.is-full .rm2d__node")', 4000));
+    check(`${tag}: the 2D map fills the screen`, await evaluate(`(() => { const m = document.querySelector('.rmp__map2d').getBoundingClientRect(); return m.height > innerHeight * 0.6; })()`));
+    await click('.rm2d__node:nth-of-type(4)') || await click('.rm2d__node');
+    const card = await waitFor('!!document.querySelector(".rmnode")', 3000);
+    await sleep(400);
+    const onTop = card ? await evaluate(CARD_ON_TOP) : 'no card';
+    check(`${tag}: a step's card opens inside the full-screen element, on top`, onTop === '', onTop);
+    await shot(`${tag}-2d-card`);
+
+    await clickText('.rmp__shell .rmp__seg button', '3D');
+    await waitFor('!!document.querySelector(".rm3d__canvas[data-painted]")', 20000);
+    await sleep(400);
+    check(`${tag}: back in 3D the renderer fills the screen`, await waitFor(`${CANVAS_FITS} && document.querySelector('.rm3d__canvas').clientHeight > innerHeight * 0.6`, 4000));
+
+    // Leave: Escape first; the exit button if the browser kept Escape for itself.
+    await evaluate('document.activeElement?.blur?.()');
+    await pressEscape();
+    let left = await waitFor('!document.querySelector(".rmp__shell.is-full")', 2500);
+    let how = 'Escape';
+    if (!left) { await realClick('.rmp__fsexit'); left = await waitFor('!document.querySelector(".rmp__shell.is-full")', 2500); how = 'the exit button'; }
+    check(`${tag}: ${how} leaves full screen`, left && (fsMode === 'native' || how === 'Escape'));
+    await sleep(500);
+    const back = await evaluate('document.querySelector(".rm3d__canvas")?.clientHeight ?? 0');
+    check(`${tag}: the map is back at its page size and resized`, Math.abs(back - pageH) < 4 && await evaluate(CANVAS_FITS), `${back} vs ${pageH}`);
+    check(`${tag}: no page errors`, pageErrors.length === 0, pageErrors.slice(0, 3).join(' | '));
+}
+await evaluate(`delete Document.prototype.fullscreenEnabled`).catch(() => {});
+
+if (!ONLY_FS) {
 // With motion ON: the intro (the journey drawing itself on, stages rising,
 // the camera flying in), the travelling pulse and a tour, once - stills are
 // all reduced-motion, so this is the only pass that runs the animation code.
@@ -253,7 +360,7 @@ await sleep(3500);
 const settled = await evaluate('document.querySelector(".rm3d__canvas").__sfsSample?.() ?? -1');
 check(`motion: the animated 3D map is painted (variance ${settled})`, settled > 40, String(settled));
 await shot('motion-settled');
-await evaluate('[...document.querySelectorAll(".rmp__toolbar .rmp__btn")][0].click()');
+await evaluate('document.querySelector(".rmp__tourbtn").click()');
 await sleep(2500);
 check('motion: the tour flies to a stage', await evaluate('!!document.querySelector(".rm3d__caption")'));
 await shot('motion-tour');
@@ -261,6 +368,7 @@ await clickText('.rmp__seg button', '2D');
 await sleep(1200);
 await shot('motion-2d-reveal');
 check('motion: no page errors', pageErrors.length === 0, pageErrors.slice(0, 3).join(' | '));
+} // not SHOOT_ONLY=fs
 
 console.log(failures ? `\n${failures} FAILED` : '\nPASS');
 writeFileSync(join(outDir, 'report.txt'), report.join('\n'));

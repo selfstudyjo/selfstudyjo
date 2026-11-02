@@ -431,7 +431,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, isPracticeResult, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { VideoEmbedService } from '@/utils/videoEmbed';
@@ -444,6 +444,7 @@ import '@/assets/css/exams.css';
 import '@/assets/css/exam-system.css';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const loading = ref(false);
@@ -457,8 +458,13 @@ const videoEmbed = ref({
   embedUrl: null as string | null
 });
 
-// Search query
-const searchQuery = ref('');
+// Search query. `?q=` pre-fills it: the top bar's site search links an exam
+// here, filtered to that exam's (English) title, because an exam has no page
+// of its own - it is booked, practised and sat from this list.
+const searchQuery = ref(typeof route.query.q === 'string' ? route.query.q : '');
+watch(() => route.query.q, value => {
+  if (typeof value === 'string') searchQuery.value = value;
+});
 
 // Filtered exams based on search query
 const filteredExams = computed(() => {

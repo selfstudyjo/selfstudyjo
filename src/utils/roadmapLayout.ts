@@ -132,14 +132,88 @@ export const KIND_META: Record<NodeKind, {
     token: string;
     fallback: string;
     shape2d: 'hexagon' | 'circle' | 'square' | 'document' | 'diamond';
-    shape3d: 'octahedron' | 'sphere' | 'box' | 'cylinder' | 'tetrahedron';
+    /**
+     * The 3D token is a bevelled, extruded PLATE in the same silhouette as the
+     * 2D glyph (`kindOutline`), billboarded to face the camera, with the kind's
+     * icon on its face - one shape language across both maps.
+     */
+    shape3d: 'hex-plate' | 'disc' | 'rounded-tile' | 'document-plate' | 'diamond-plate';
+    /** The ink a filled glyph of this kind carries (`--sfs-on-*`). */
+    onToken: string;
+    onFallback: string;
 }> = {
-    course:  { token: '--sfs-accent',   fallback: '#667eea', shape2d: 'hexagon',  shape3d: 'octahedron' },
-    lesson:  { token: '--sfs-accent-2', fallback: '#764ba2', shape2d: 'circle',   shape3d: 'sphere' },
-    lab:     { token: '--sfs-accent-3', fallback: '#f093fb', shape2d: 'square',   shape3d: 'box' },
-    runbook: { token: '--sfs-info',     fallback: '#38bdf8', shape2d: 'document', shape3d: 'cylinder' },
-    topic:   { token: '--sfs-text-muted', fallback: '#94a3b8', shape2d: 'diamond', shape3d: 'tetrahedron' },
+    course:  { token: '--sfs-accent',   fallback: '#667eea', shape2d: 'hexagon',  shape3d: 'hex-plate',      onToken: '--sfs-on-accent',   onFallback: '#ffffff' },
+    lesson:  { token: '--sfs-accent-2', fallback: '#764ba2', shape2d: 'circle',   shape3d: 'disc',           onToken: '--sfs-on-accent-2', onFallback: '#ffffff' },
+    lab:     { token: '--sfs-accent-3', fallback: '#f093fb', shape2d: 'square',   shape3d: 'rounded-tile',   onToken: '--sfs-on-accent-3', onFallback: '#1f1033' },
+    runbook: { token: '--sfs-info',     fallback: '#38bdf8', shape2d: 'document', shape3d: 'document-plate', onToken: '--sfs-on-info',     onFallback: '#082f49' },
+    topic:   { token: '--sfs-text-muted', fallback: '#94a3b8', shape2d: 'diamond', shape3d: 'diamond-plate', onToken: '--sfs-surface',     onFallback: '#161a2b' },
 };
+
+/**
+ * The kind's ICON as lucide path data (24-unit box, stroked, round caps):
+ * graduation-cap, book-open, flask-conical, file-text, lightbulb - the icons
+ * RoadmapNodeCard renders as components. Plain strings, so the SVG map, the 3D
+ * labels (createElementNS) and the 3D token face (Path2D on a canvas) draw the
+ * identical glyph without importing a component into a renderer.
+ */
+export const KIND_ICON: Record<NodeKind, string[]> = {
+    course: [
+        'M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z',
+        'M22 10v6', 'M6 12.5V16a6 3 0 0 0 12 0v-3.5',
+    ],
+    lesson: [
+        'M12 7v14',
+        'M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z',
+    ],
+    lab: [
+        'M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2',
+        'M6.453 15h11.094', 'M8.5 2h7',
+    ],
+    runbook: [
+        'M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z',
+        'M14 2v5a1 1 0 0 0 1 1h5', 'M10 9H8', 'M16 13H8', 'M16 17H8',
+    ],
+    topic: [
+        'M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5',
+        'M9 18h6', 'M10 22h4',
+    ],
+};
+
+/**
+ * Each kind's silhouette as a closed outline in a unit box (-1..1, y UP), so
+ * the 2D glyph and the 3D plate are literally the same shape. The 3D side
+ * extrudes it; the 2D side scales it into a polygon (y flipped).
+ */
+export function kindOutline(kind: NodeKind): { x: number; y: number }[] {
+    const pts: { x: number; y: number }[] = [];
+    switch (KIND_META[kind].shape2d) {
+        case 'hexagon':
+            for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + i * Math.PI / 3; pts.push({ x: Math.cos(a), y: Math.sin(a) }); }
+            break;
+        case 'circle':
+            for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; pts.push({ x: Math.cos(a) * 0.95, y: Math.sin(a) * 0.95 }); }
+            break;
+        case 'square': {
+            const r = 0.3, e = 0.86;
+            const corners: [number, number, number][] = [[e - r, e - r, 0], [-(e - r), e - r, 1], [-(e - r), -(e - r), 2], [e - r, -(e - r), 3]];
+            for (const [cx, cy, q] of corners) {
+                for (let i = 0; i <= 6; i++) { const a = (q * Math.PI) / 2 + (i / 6) * (Math.PI / 2); pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }); }
+            }
+            break;
+        }
+        case 'document':
+            pts.push({ x: -0.74, y: 0.95 }, { x: 0.3, y: 0.95 }, { x: 0.78, y: 0.47 }, { x: 0.78, y: -0.95 }, { x: -0.74, y: -0.95 });
+            break;
+        default:
+            pts.push({ x: 0, y: 1.05 }, { x: -1.05, y: 0 }, { x: 0, y: -1.05 }, { x: 1.05, y: 0 });
+    }
+    return pts.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
+}
+
+/** An outline as an SVG `points` string at radius r (y flipped for SVG). */
+export function outlinePoints(kind: NodeKind, r: number): string {
+    return kindOutline(kind).map(p => `${Math.round(p.x * r * 10) / 10},${Math.round(-p.y * r * 10) / 10}`).join(' ');
+}
 
 /** Status is ONE hue per meaning, and it is the status tokens' own. */
 export const STATUS_META: Record<'done' | 'doing' | 'todo', { token: string; fallback: string }> = {
@@ -791,6 +865,33 @@ const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 
 export function distance(a: Vec3, b: Vec3): number {
     return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+/** Decelerating ease for draw-ons and fades. */
+export function easeOutCubic(t: number): number {
+    const x = Math.min(1, Math.max(0, t));
+    return 1 - Math.pow(1 - x, 3);
+}
+
+/**
+ * A spring for things popping in: overshoots a little (never past
+ * SPRING_PEAK) and lands on exactly 1. Clamped at both ends, so a stagger that
+ * has not started is 0 and one that has finished is exactly 1 - a node must
+ * never end its entrance at 1.04x.
+ */
+export const SPRING_PEAK = 1.11;
+export function springOut(t: number): number {
+    const x = Math.min(1, Math.max(0, t));
+    if (x === 0 || x === 1) return x;
+    const c1 = 1.70158, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+
+/** `stroke-dasharray` for a progress ring of radius r at `percent` (null = 0). */
+export function ringDash(percent: number | null, r: number): string {
+    const c = 2 * Math.PI * r;
+    const on = Math.max(0, Math.min(1, (percent ?? 0) / 100)) * c;
+    return `${Math.round(on * 10) / 10} ${Math.round(c * 10) / 10}`;
 }
 
 /** Ease for camera flights and reveals: smooth at both ends. */

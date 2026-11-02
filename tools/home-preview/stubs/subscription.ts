@@ -26,6 +26,25 @@ const SUBS: Subscription[] = [
             translations: { ar: { title: 'الاحترافية السنوية' } },
         },
     },
+    // A second plan, so the subscription card is taller than its cap.
+    {
+        external_id: 's-2',
+        title: 'Starter Annual',
+        user_id: 'u-preview',
+        is_active: true,
+        created_date: '2026-03-01T10:00:00Z',
+        expire_date: '2027-03-01T10:00:00Z',
+        subscription_type: {
+            external_id: 'sfs-starter-annual',
+            title: 'Starter Annual',
+            description: 'Courses, quizzes and certificates.',
+            price: '19.90',
+            features: [
+                { external_id: 'f-5', name: 'course_feature', description: 'All courses' },
+                { external_id: 'f-6', name: 'certificate_feature', description: 'Course certificates' },
+            ],
+        },
+    },
 ];
 
 const delay = <T,>(v: T, ms = 100): Promise<T> => new Promise(r => setTimeout(() => r(v), ms));

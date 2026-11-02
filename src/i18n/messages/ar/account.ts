@@ -283,6 +283,9 @@ const account: Catalogue = {
     'By course': 'حسب الدورة',
     'No quizzes yet': 'لا اختبارات قصيرة بعد',
     '{v0} of {v1} passed': 'نجحت في {v0} من {v1}',
+    /* The toggle on a capped dashboard card. */
+    'Show all': 'عرض الكل',
+    'Show less': 'عرض أقل',
 
     /* Badge names */
     'First Steps': 'الخطوات الأولى',

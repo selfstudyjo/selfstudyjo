@@ -166,10 +166,24 @@
             </div>
             <h2>{{ $t('Your progress') }}</h2>
             <span class="card-count sfs-nums">{{ summary.quizzesTaken }}</span>
+            <button
+              v-if="showToggle('progress')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('progress')"
+              aria-controls="hc-body-progress"
+              @click="toggleSection('progress')"
+            >
+              {{ isExpanded('progress') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">{{ $t('Measured from your quiz results — one attempt per quiz, your best') }}</p>
         </div>
 
+        <div v-scroll-edges="'progress'" v-bind="region('progress', $t('Your progress'))">
         <div class="progress-body">
           <div v-if="loading.quizResults || loading.courses" class="loading-placeholder">
             <div class="placeholder-item"></div>
@@ -234,6 +248,7 @@
             </ul>
           </template>
         </div>
+        </div>
       </div>
 
       <!-- Registered Courses Section -->
@@ -246,11 +261,25 @@
               </svg>
             </div>
             <h2>{{ $t('My Courses') }}</h2>
-            <span class="card-count">{{ registeredCoursesCount }}</span>
+            <span class="card-count sfs-nums">{{ registeredCoursesCount }}</span>
+            <button
+              v-if="showToggle('courses')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('courses')"
+              aria-controls="hc-body-courses"
+              @click="toggleSection('courses')"
+            >
+              {{ isExpanded('courses') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">{{ $t('Courses you\'re currently enrolled in') }}</p>
         </div>
-        
+
+        <div v-scroll-edges="'courses'" v-bind="region('courses', $t('My Courses'))">
         <div class="courses-list">
           <div v-if="loading.courses" class="loading-placeholder">
             <div class="placeholder-item"></div>
@@ -260,13 +289,13 @@
           <div v-else-if="registeredCourses.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="#94A3B8" stroke-width="1.5"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5"/>
               </svg>
             </div>
             <p class="empty-text">{{ $t('No courses enrolled yet') }}</p>
             <router-link to="/courses" class="empty-action">{{ $t('Browse Courses') }}</router-link>
           </div>
-          <div v-else>
+          <div v-else class="hc-list">
             <router-link 
               v-for="course in registeredCourses" 
               :key="course.course_external_id" 
@@ -292,6 +321,7 @@
             </router-link>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Certificates Section -->
@@ -304,11 +334,25 @@
               </svg>
             </div>
             <h2>{{ $t('Certificates') }}</h2>
-            <span class="card-count">{{ totalCertificatesCount }}</span>
+            <span class="card-count sfs-nums">{{ totalCertificatesCount }}</span>
+            <button
+              v-if="showToggle('certificates')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('certificates')"
+              aria-controls="hc-body-certificates"
+              @click="toggleSection('certificates')"
+            >
+              {{ isExpanded('certificates') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">{{ $t('Your earned certificates') }}</p>
         </div>
-        
+
+        <div v-scroll-edges="'certificates'" v-bind="region('certificates', $t('Certificates'))">
         <div class="certificates-grid">
           <!-- Exam Certificates -->
           <div class="certificate-section">
@@ -322,7 +366,7 @@
             </div>
             <div v-else class="certificate-list">
               <router-link 
-                v-for="cert in examCertificates.slice(0, 3)" 
+                v-for="cert in examCertificates" 
                 :key="cert.certificate_id" 
                 :to="{
                   path: `/certificate/${cert.certificate_id}`,
@@ -370,7 +414,7 @@
             </div>
             <div v-else class="certificate-list">
               <router-link 
-                v-for="cert in courseCertificates.slice(0, 3)" 
+                v-for="cert in courseCertificates" 
                 :key="cert.certificate_id" 
                 :to="{
                   path: `/certificate/${cert.certificate_id}`,
@@ -402,6 +446,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Quiz Results Section -->
@@ -414,11 +459,25 @@
               </svg>
             </div>
             <h2>{{ $t('Quiz Results') }}</h2>
-            <span class="card-count">{{ quizResults.length }}</span>
+            <span class="card-count sfs-nums">{{ quizResults.length }}</span>
+            <button
+              v-if="showToggle('quizzes')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('quizzes')"
+              aria-controls="hc-body-quizzes"
+              @click="toggleSection('quizzes')"
+            >
+              {{ isExpanded('quizzes') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">{{ $t('Your recent quiz performance') }}</p>
         </div>
-        
+
+        <div v-scroll-edges="'quizzes'" v-bind="region('quizzes', $t('Quiz Results'))">
         <div class="quiz-results">
           <div v-if="loading.quizResults" class="loading-placeholder">
             <div class="placeholder-item"></div>
@@ -428,13 +487,13 @@
           <div v-else-if="quizResults.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M8.5 12.5L10.5 14.5L15.5 9.5M12 3C13.1819 3 14.3522 3.23279 15.4442 3.68508C16.5361 4.13738 17.5282 4.80031 18.364 5.63604C19.1997 6.47177 19.8626 7.46392 20.3149 8.55585C20.7672 9.64778 21 10.8181 21 12C21 13.1819 20.7672 14.3522 20.3149 15.4442C19.8626 16.5361 19.1997 17.5282 18.364 18.364C17.5282 19.1997 16.5361 19.8626 15.4442 20.3149C14.3522 20.7672 13.1819 21 12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 9.61305 3.94821 7.32387 5.63604 5.63604C7.32387 3.94821 9.61305 3 12 3Z" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.5 12.5L10.5 14.5L15.5 9.5M12 3C13.1819 3 14.3522 3.23279 15.4442 3.68508C16.5361 4.13738 17.5282 4.80031 18.364 5.63604C19.1997 6.47177 19.8626 7.46392 20.3149 8.55585C20.7672 9.64778 21 10.8181 21 12C21 13.1819 20.7672 14.3522 20.3149 15.4442C19.8626 16.5361 19.1997 17.5282 18.364 18.364C17.5282 19.1997 16.5361 19.8626 15.4442 20.3149C14.3522 20.7672 13.1819 21 12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 9.61305 3.94821 7.32387 5.63604 5.63604C7.32387 3.94821 9.61305 3 12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <p class="empty-text">{{ $t('No quiz results yet') }}</p>
           </div>
-          <div v-else>
-            <div v-for="quiz in quizResults.slice(0, 5)" :key="quiz.external_id" class="quiz-item">
+          <div v-else class="hc-list">
+            <div v-for="quiz in quizResults" :key="quiz.external_id" class="quiz-item">
               <div class="quiz-score" :class="getScoreClass(quiz.score)">
                 <span class="score-value">{{ quiz.score }}%</span>
               </div>
@@ -464,6 +523,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Homeworks Section -->
@@ -476,11 +536,25 @@
               </svg>
             </div>
             <h2>{{ $t('Assigned Homeworks') }}</h2>
-            <span class="card-count">{{ totalHomeworksCount }}</span>
+            <span class="card-count sfs-nums">{{ totalHomeworksCount }}</span>
+            <button
+              v-if="showToggle('homeworks')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('homeworks')"
+              aria-controls="hc-body-homeworks"
+              @click="toggleSection('homeworks')"
+            >
+              {{ isExpanded('homeworks') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">{{ $t('Homework for your enrolled courses') }}</p>
         </div>
-        
+
+        <div v-scroll-edges="'homeworks'" v-bind="region('homeworks', $t('Assigned Homeworks'))">
         <div class="homeworks-list">
           <div v-if="loading.homeworks" class="loading-placeholder">
             <div class="placeholder-item"></div>
@@ -490,14 +564,14 @@
           <div v-else-if="homeworks.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M12 14L12 20M9 21H15M19 13C19 15.2091 17.2091 17 15 17H9C6.79086 17 5 15.2091 5 13V7C5 4.79086 6.79086 3 9 3H15C17.2091 3 19 4.79086 19 7V13Z" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M12 14L12 20M9 21H15M19 13C19 15.2091 17.2091 17 15 17H9C6.79086 17 5 15.2091 5 13V7C5 4.79086 6.79086 3 9 3H15C17.2091 3 19 4.79086 19 7V13Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
             <p class="empty-text">{{ $t('No homeworks assigned') }}</p>
           </div>
-          <div v-else>
-            <router-link 
-              v-for="homework in homeworks.slice(0, 5)" 
+          <div v-else class="hc-list">
+            <router-link
+              v-for="homework in homeworks"
               :key="homework.external_homework_id" 
               :to="{
                 path: `/course/${homework.course_external_id || 'unknown'}/lesson/${homework.lesson_external_id || 'unknown'}/homework`,
@@ -528,6 +602,7 @@
             </router-link>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Active Subscriptions Section -->
@@ -546,6 +621,19 @@
                 ? $t('{v0} Active', { v0: activeSubscriptions.length })
                 : $t('None') }}
             </span>
+            <button
+              v-if="showToggle('subscription')"
+              type="button"
+              class="hc-toggle"
+              :aria-expanded="isExpanded('subscription')"
+              aria-controls="hc-body-subscription"
+              @click="toggleSection('subscription')"
+            >
+              {{ isExpanded('subscription') ? $t('Show less') : $t('Show all') }}
+              <svg class="hc-toggle__chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <p class="card-subtitle">
             {{ $t('All your currently active subscription plans') }}
@@ -554,7 +642,8 @@
             </span>
           </p>
         </div>
-        
+
+        <div v-scroll-edges="'subscription'" v-bind="region('subscription', $t('Active Subscriptions'))">
         <div class="subscription-content">
           <div v-if="loading.subscription" class="loading-placeholder">
             <div class="placeholder-item"></div>
@@ -562,7 +651,7 @@
           <div v-else-if="activeSubscriptions.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="#94A3B8" stroke-width="1.5"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5"/>
               </svg>
             </div>
             <p class="empty-text">{{ $t('No active subscription') }}</p>
@@ -597,7 +686,7 @@
                     class="feature-item"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 12L11 14L15 10" stroke="#48BB78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <!--
                       `description`, NOT `name`. The live values of `name` are
@@ -632,13 +721,14 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, type Directive } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { courseService, type CourseRegistration, type Homework, type Course } from '@/services/course.service';
 import { certificateService, type ExamCertificate, type CourseCertificate } from '@/services/certificate.service';
@@ -867,6 +957,122 @@ const rates = computed(() => [
         fill: fillFor(summary.value.bestScore),
     },
 ]);
+
+/* -------------------------------------------------------------------------- *
+ * The section cap
+ *
+ * Every card's body is a scroll region with a viewport-sized max-height (see
+ * `.hc-scroll` in home.css), so a learner on nine courses with forty quiz
+ * attempts gets a dashboard of six cards rather than a page six screens long.
+ * The card HEADER is outside the region, so the title, the count and the
+ * toggle stay in view however far the list is scrolled.
+ *
+ * Three pieces of state, and they live in three different places on purpose:
+ *
+ *   * which sections the learner EXPANDED — a choice, so it is remembered
+ *     (localStorage, every access in a try: Safari private mode throws);
+ *   * whether a region OVERFLOWS — reactive, because it decides whether the
+ *     toggle is drawn and whether the region takes a tab stop. A region with
+ *     nothing hidden is not focusable: a tab stop that scrolls nothing is
+ *     noise for a keyboard user;
+ *   * whether there is more ABOVE or BELOW — data attributes the directive
+ *     writes straight onto the element, read only by the CSS fade. They change
+ *     on every scroll event, and routing them through Vue would re-render the
+ *     whole dashboard sixty times a second for a mask.
+ * -------------------------------------------------------------------------- */
+type SectionId = 'progress' | 'courses' | 'certificates' | 'quizzes' | 'homeworks' | 'subscription';
+
+const EXPANDED_KEY = 'sfs-dashboard-expanded';
+
+const readExpanded = (): Set<string> => {
+    try {
+        const parsed: unknown = JSON.parse(localStorage.getItem(EXPANDED_KEY) || '[]');
+        return new Set(Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : []);
+    } catch {
+        return new Set();
+    }
+};
+
+const expandedSections = ref<Set<string>>(readExpanded());
+const sectionOverflows = reactive<Record<string, boolean>>({});
+
+const isExpanded = (id: SectionId): boolean => expandedSections.value.has(id);
+
+/* Drawn when there is something to reveal, or when the section is expanded and
+   there is something to put back — never on a list that already fits. */
+const showToggle = (id: SectionId): boolean => isExpanded(id) || Boolean(sectionOverflows[id]);
+
+const toggleSection = (id: SectionId): void => {
+    const next = new Set(expandedSections.value);
+    const collapsing = next.has(id);
+    if (collapsing) next.delete(id); else next.add(id);
+    expandedSections.value = next;
+    try { localStorage.setItem(EXPANDED_KEY, JSON.stringify([...next])); } catch { /* private mode */ }
+    if (collapsing) {
+        /* Collapsing a long list from its bottom leaves the reader looking at
+           whatever card came after it. Bring this card's top back into view —
+           `nearest`, so a card already on screen does not move at all. */
+        document.getElementById(`hc-body-${id}`)
+            ?.closest('.dashboard-card')
+            ?.scrollIntoView({ block: 'nearest' });
+    }
+};
+
+/**
+ * The attributes of one section's scroll region.
+ *
+ * `role="region"` plus a name, because a focusable box with no name is
+ * announced as "group" and nothing else. The tab stop exists only while
+ * something is actually hidden.
+ */
+const region = (id: SectionId, label: string) => ({
+    id: `hc-body-${id}`,
+    class: ['hc-scroll', { 'is-expanded': isExpanded(id) }],
+    role: 'region',
+    'aria-label': label,
+    tabindex: sectionOverflows[id] ? 0 : undefined,
+});
+
+interface EdgeWatch { observer: ResizeObserver; measure: () => void }
+const edgeWatches = new WeakMap<HTMLElement, EdgeWatch>();
+
+/**
+ * `v-scroll-edges="'courses'"` — keeps the fade attributes and the overflow
+ * flag in step with the region.
+ *
+ * The ResizeObserver watches the region AND its content wrapper: once the
+ * region is at its cap its own box stops changing, so a list that grows from
+ * three rows to thirty when a slow replica finally answers is only visible as
+ * the CHILD resizing.
+ */
+const vScrollEdges: Directive<HTMLElement, SectionId> = {
+    mounted(el, binding) {
+        const id = binding.value;
+        const measure = () => {
+            const max = el.scrollHeight - el.clientHeight;
+            const overflows = max > 1;
+            el.toggleAttribute('data-more-above', overflows && el.scrollTop > 1);
+            el.toggleAttribute('data-more-below', overflows && el.scrollTop < max - 1);
+            if (sectionOverflows[id] !== overflows) sectionOverflows[id] = overflows;
+        };
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        for (const child of Array.from(el.children)) observer.observe(child);
+        el.addEventListener('scroll', measure, { passive: true });
+        edgeWatches.set(el, { observer, measure });
+        measure();
+    },
+    updated(el) {
+        edgeWatches.get(el)?.measure();
+    },
+    unmounted(el) {
+        const watch = edgeWatches.get(el);
+        if (!watch) return;
+        watch.observer.disconnect();
+        el.removeEventListener('scroll', watch.measure);
+        edgeWatches.delete(el);
+    },
+};
 
 /* ---- Badge copy ---- */
 

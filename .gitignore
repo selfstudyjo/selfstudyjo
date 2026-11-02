@@ -207,3 +207,7 @@ tools/interviewreport-preview/out/
 # Output of tools/roadmap-preview - screenshots, the report and the
 # throwaway Chrome profile.
 tools/roadmap-preview/shots/
+
+# Output of tools/search-preview/shoot.mjs (screenshots and its throwaway
+# Chrome profile). Regenerated on demand.
+tools/search-preview/shots/
