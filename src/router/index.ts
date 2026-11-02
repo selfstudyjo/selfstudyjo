@@ -155,6 +155,27 @@ const routes = [
                 meta: { title: 'Self-Driving Studio', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
             },
             {
+                // THE PLAYGROUNDS: one free-practice workspace per tool (app 11's
+                // unpublished, task-less `play-*` records), opened from the top
+                // bar's Playgrounds menu. Not labs: nothing graded, no progress.
+                // Gated like the practice tools, and lazy (rule 47).
+                path: 'playgrounds',
+                name: 'Playgrounds',
+                component: () => import('../views/Playgrounds.vue'),
+                meta: { title: 'Playgrounds', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'] }
+            },
+            {
+                // `hideTopBar` for the lab route's reason: the workspace header
+                // carries its own Tour and Assistant, and a second terminal in
+                // the dock is a student wondering which one they are typing in.
+                // The sidebar's Playgrounds section is the way to another tool.
+                path: 'playground/:playgroundId',
+                name: 'Playground',
+                component: () => import('../views/Playground.vue'),
+                meta: { title: 'Playground', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['lab_feature'], hideTopBar: true },
+                props: true
+            },
+            {
                 /*
                   ONE LAB IS A PLACE, so it is a route.
 
@@ -615,6 +636,23 @@ const routes = [
                 component: CvBuilderEditor,
                 meta: { title: 'CV Builder', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] },
                 props: true
+            },
+
+            // The Roadmap Provider (app 27, roadmaps.py). Free with an ACCOUNT,
+            // like Drawing Papers and Messages: `requiresAuth` and no subscription
+            // or feature gate. Lazy, so neither the view nor three.js (which its
+            // 3D map imports only when opened) enters the entry chunk (rule 47).
+            {
+                path: 'roadmaps',
+                name: 'Roadmaps',
+                component: () => import('../views/RoadmapProvider.vue'),
+                meta: { title: 'Roadmap Provider', requiresAuth: true }
+            },
+            {
+                path: 'roadmaps/:roadmapId',
+                name: 'Roadmap',
+                component: () => import('../views/RoadmapProvider.vue'),
+                meta: { title: 'Roadmap Provider', requiresAuth: true }
             },
 
             // Drawing papers (app 34). Auth only — no requiresSubscription and no

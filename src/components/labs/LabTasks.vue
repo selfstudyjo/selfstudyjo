@@ -1,5 +1,5 @@
 <template>
-  <div class="sl-tasks">
+  <div class="sl-tasks" :class="{ 'sl-tasks--fill': fill }">
     <div class="sl-tasks__head">
       <div>
         <h3 class="sl-tasks__title">{{ $t('Tasks') }}</h3>
@@ -26,6 +26,19 @@
                 :disabled="busy" @click="$emit('grade')">
           <CheckCheck class="sl-i" />
           {{ busy ? $t('Checking...') : $t('Check my work') }}
+        </button>
+        <!--
+          HIDE THE TASKS. The panel sits beside the workbench (and in a drawer
+          inside it in full screen), so a student who wants the whole width for
+          a console gives it back with one press - and gets it back from the
+          slim rail that replaces the panel, which carries the progress. The
+          choice is remembered per lab by the page, not here.
+        -->
+        <button v-if="collapsible" type="button" class="sl-tasks__collapse"
+                :aria-expanded="true" :aria-controls="controls || undefined"
+                :title="$t('Hide tasks')" :aria-label="$t('Hide tasks')"
+                @click="$emit('collapse')">
+          <PanelRightClose class="sl-i sfs-flip" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -69,9 +82,19 @@
       {{ $t('You mark these tasks yourself — this lab cannot inspect them for you.') }}
     </p>
 
+    <!--
+      THE LIST SCROLLS, NOT THE PAGE. A twelve-task lab with its steps open is
+      several screens tall, and as the page's own content it pushed everything
+      below the workbench a long way down and made the tasks scroll away from
+      the console they describe. Capped here (beside the workbench the page
+      sizes it to the viewport; stacked under it, to a share of the viewport)
+      with the head - Check my work, the meter, the report - kept in view.
+    -->
+    <div ref="scrollEl" class="sl-tasks__scroll" tabindex="-1">
     <ol class="sl-tasks__list">
       <li v-for="(task, at) in grade.tasks" :key="task.id" class="sl-task"
-          :class="`sl-task--${task.status}`">
+          :class="[`sl-task--${task.status}`, { 'is-current': at === currentAt }]"
+          :aria-current="at === currentAt ? 'step' : undefined">
         <div class="sl-task__mark" aria-hidden="true">
           <Check v-if="task.status === 'passed'" class="sl-i" />
           <AlertTriangle v-else-if="task.status === 'unavailable'" class="sl-i" />
@@ -79,7 +102,12 @@
         </div>
         <div class="sl-task__body">
           <p class="sl-task__title">
-            <span class="sl-task__title-text">{{ task.title }}</span>
+            <span class="sl-task__title-text">
+              <!-- THE TASK TO DO NEXT, said in words as well as by the accent
+                   edge: colour alone is no signal for some readers (rule 37). -->
+              <span v-if="at === currentAt" class="sl-task__now">{{ $t('Current task') }}</span>
+              {{ task.title }}
+            </span>
             <span class="sl-task__points">{{ task.points }}</span>
             <!--
               THE "i": how to do this task, step by step, in a window. On the
@@ -241,6 +269,7 @@
       <input v-model="showChecks" type="checkbox">
       {{ $t('Show what each task checks') }}
     </label>
+    </div>
 
     <LabTaskGuide :task="infoTask" :index="infoAt ?? 0" :total="grade.tasks.length"
                   :tools="tools || []" @close="infoAt = null"
@@ -260,10 +289,10 @@
  * not done something they cannot do, which is the one answer worse than an
  * error. `utils/labgrade.py` answers the three; this draws them.
  */
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import {
   AlertTriangle, Check, CheckCheck, ChevronDown, ChevronUp, Circle, Info, Lightbulb,
-  MonitorSmartphone, Sparkles, TerminalSquare,
+  MonitorSmartphone, PanelRightClose, Sparkles, TerminalSquare,
 } from 'lucide-vue-next';
 import ReadAloud from '@/components/ReadAloud.vue';
 import LabTaskGuide from '@/components/labs/LabTaskGuide.vue';
@@ -279,6 +308,18 @@ const props = defineProps<{
   report?: GradeReport | null;
   /** The lab's tools, so a task can name the portal it can be done in. */
   tools?: LabTool[];
+  /** Draw the "Hide tasks" control (the page owns the collapsed state). */
+  collapsible?: boolean;
+  /** The id of the region the collapse control hides, for `aria-controls`. */
+  controls?: string;
+  /** Fill a height the parent sets (beside the workbench, in the drawer). */
+  fill?: boolean;
+  /**
+   * Bumped by the page when the panel is (re)shown - the drawer opening in
+   * full screen above all - so the CURRENT task is scrolled into view rather
+   * than leaving the student at whatever row the list was last scrolled to.
+   */
+  revealKey?: number;
 }>();
 
 const hasPortals = computed(() => (props.tools || []).some(tool => tool.kind === 'portal'));
@@ -307,6 +348,7 @@ const spokenTasks = computed(() => props.grade.tasks.flatMap((task, at) => {
   return lines;
 }));
 defineEmits<{
+  (event: 'collapse'): void;
   (event: 'grade'): void;
   (event: 'ask', task: LabTask, focus?: string): void;
   (event: 'self-mark', taskId: string): void;
@@ -339,6 +381,25 @@ function toggleSteps(task: LabTask, at: number) {
   next.set(task.id, !stepsOpen(task, at));
   stepsToggled.value = next;
 }
+/**
+ * Bring the current task into view INSIDE the list's own scroll box.
+ *
+ * Not `scrollIntoView`: that scrolls every scrollable ancestor too, so opening
+ * the panel would also jump the page (or the full-screen workbench) under the
+ * student. Only the list moves, and only when the task is not already visible.
+ */
+const scrollEl = ref<HTMLElement | null>(null);
+function revealCurrent() {
+  const box = scrollEl.value;
+  const row = box?.querySelector<HTMLElement>('.sl-task.is-current');
+  if (!box || !row) return;
+  const boxRect = box.getBoundingClientRect();
+  const rowRect = row.getBoundingClientRect();
+  if (rowRect.top >= boxRect.top && rowRect.bottom <= boxRect.bottom) return;
+  box.scrollTop += rowRect.top - boxRect.top - 8;
+}
+watch(() => props.revealKey, () => { void nextTick(() => requestAnimationFrame(revealCurrent)); });
+
 const infoTask = computed<LabTask | null>(() =>
   (infoAt.value === null ? null : props.grade.tasks[infoAt.value] || null));
 

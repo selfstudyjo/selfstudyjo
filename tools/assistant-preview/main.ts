@@ -202,19 +202,20 @@ if (params.has('probe')) {
         }
 
         /*
-          The window must not reach the bottom-right corner, which belongs to
-          the support chat launcher (app 9) on every page of the platform. Two
-          fixed circles in one corner is the overlap `audit:rtl` reported for
-          `ChatBox.vue` and which a reader cannot resolve — and the launcher is
-          not rendered here, so nothing else in this harness would notice.
+          The window is a CENTRED dialog now (it used to be a corner panel that
+          had to keep clear of the support chat launcher - the scrim covers the
+          launcher instead). So what is measured is the centring, and that the
+          header is reachable: a dialog off-centre by more than a couple of
+          pixels is a layout fault a reader sees at once.
         */
         if (panel) {
             const rect = panel.getBoundingClientRect();
-            const clearance = document.documentElement.clientHeight - rect.bottom;
-            lines.push(`PANEL bottom clearance ${Math.round(clearance)}px`);
-            if (clearance < 72) {
-                lines.push(`TOO CLOSE TO THE CORNER  the support chat launcher lives there`);
-            }
+            const vw = document.documentElement.clientWidth;
+            const vh = document.documentElement.clientHeight;
+            const dx = Math.abs(rect.left - (vw - rect.right));
+            const dy = Math.abs(rect.top - (vh - rect.bottom));
+            lines.push(`PANEL ${Math.round(rect.width)}x${Math.round(rect.height)}  off-centre x=${Math.round(dx)} y=${Math.round(dy)}`);
+            if (dx > 2 || dy > 2) lines.push('NOT CENTRED  the dialog is off-centre');
             if (rect.top < 0) lines.push('PANEL ABOVE THE VIEWPORT  its header is unreachable');
         }
 

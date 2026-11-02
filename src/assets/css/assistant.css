@@ -91,36 +91,104 @@
  * The window
  * ------------------------------------------------------------------ */
 
-.sfs-bot {
+/*
+  A CENTRED DIALOG over a scrim.
+
+  It used to be a panel pinned under the top bar on the inline-end side, which
+  fought the support chat launcher (app 9) for the bottom of the same corner and
+  read as a notification rather than as a conversation the reader chose to have.
+  Centred, it is unmistakably the thing on screen; the scrim says the page
+  behind is waiting, and covers the launcher rather than colliding with it.
+
+  The LAYER is the fixed, full-viewport part and centres the window with a grid;
+  the window carries its own size. `100dvh` beside `100vh`, because a phone's
+  `100vh` includes the browser bar that is covering the bottom of the page, and
+  safe-area padding so nothing sits under a notch or the home indicator.
+*/
+.sfs-bot-layer {
     position: fixed;
-    /* LOGICAL, so the window lands on the same side as the button it came from
-       in both directions. `right` would pin it to the left of an Arabic page
-       while the top bar's button sat on the right. */
-    inset-block-start: 4.6rem;
-    inset-inline-end: 1rem;
-    inline-size: min(24.5rem, calc(100vw - 2rem));
-    /* Stops well short of the bottom-right corner, which belongs to the support
-       chat launcher (app 9) on every page. Two fixed circles in one corner is
-       the overlap `audit:rtl` reports and a reader cannot resolve. */
-    max-block-size: min(38rem, calc(100dvh - 9rem));
+    inset: 0;
+    /* Above the sidebar (1000), the read-aloud bar (1400) and the support chat
+       launcher and its window (9999 / 10000, in ChatBox.vue): a scrim that the
+       launcher floats on top of is a scrim with a hole in it. */
+    z-index: 10010;
+    display: grid;
+    place-items: center;
+    padding:
+        max(1rem, env(safe-area-inset-top, 0px))
+        max(1rem, env(safe-area-inset-right, 0px))
+        max(1rem, env(safe-area-inset-bottom, 0px))
+        max(1rem, env(safe-area-inset-left, 0px));
+    /* `--sfs-overlay` is the scrim token, dark in all ten galaxies - which is
+       what a scrim has to be in a light one too, or the window does not read as
+       being in front. */
+    background: var(--sfs-overlay, rgb(6 8 20 / 0.62));
+    animation: sfs-bot-fade 0.18s ease-out;
+}
+
+.sfs-bot {
+    position: relative;
+    inline-size: min(40rem, 100%);
+    block-size: min(46rem, 100%);
+    /* Capped as well as sized: on a short laptop screen the window is the
+       viewport minus the layer's padding, and the transcript - not the page -
+       is what scrolls. */
+    max-block-size: min(46rem, calc(100dvh - 2rem));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--sfs-radius-lg, 16px);
+    border-radius: var(--sfs-radius-lg, 18px);
     border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
-    background: var(--sfs-surface, #12142b);
-    box-shadow: 0 18px 48px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.42);
-    /* Above the sidebar (1000) and the support chat, below a page modal. */
-    z-index: 1600;
+    /* `--sfs-surface` composited over the page colour, so the window is OPAQUE
+       in every galaxy: a translucent dialog over a scrim over a busy page is
+       three layers of somebody else's content behind the text. */
+    background:
+        linear-gradient(var(--sfs-surface, #12142b), var(--sfs-surface, #12142b)),
+        var(--sfs-space, #0b1020);
+    box-shadow:
+        0 24px 64px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45),
+        0 2px 8px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.25);
+    animation: sfs-bot-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Both tracks end where the window rests, so the 0.01ms durations
+   `responsive.css` forces under reduced motion land it in place (see the
+   bottom of this file, where they are removed outright as well). */
+@keyframes sfs-bot-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes sfs-bot-rise {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+/* The page behind does not scroll under the window. */
+html.sfs-bot-lock,
+html.sfs-bot-lock body { overflow: hidden; }
+
+/* A PHONE: nearly the whole screen. A centred card with a margin on a 390px
+   screen is a transcript 300px wide with a keyboard covering half of it. */
 @media (max-width: 640px) {
-    .sfs-bot {
-        inset-inline: 0.5rem;
-        inline-size: auto;
-        inset-block-start: 4rem;
-        max-block-size: calc(100dvh - 8.5rem);
+    .sfs-bot-layer {
+        padding:
+            max(0.4rem, env(safe-area-inset-top, 0px))
+            max(0.4rem, env(safe-area-inset-right, 0px))
+            max(0.4rem, env(safe-area-inset-bottom, 0px))
+            max(0.4rem, env(safe-area-inset-left, 0px));
     }
+    .sfs-bot {
+        inline-size: 100%;
+        block-size: 100%;
+        max-block-size: none;
+        border-radius: var(--sfs-radius-lg, 14px);
+    }
+}
+
+/* A short landscape screen: the portrait gives the transcript its room. */
+@media (max-height: 560px) {
+    .sfs-bot__tile { max-block-size: 5.5rem; }
 }
 
 /* ------------------------------------------------------------------ *
@@ -171,9 +239,32 @@
 */
 .sfs-bot__tile {
     aspect-ratio: 16 / 9;
-    max-block-size: 9.5rem;
+    max-block-size: 10rem;
+    /* Capped in WIDTH as well, at the same ratio, so in a 40rem dialog the
+       portrait keeps its framing instead of being stretched into a letterbox
+       (a tile 640px wide and 160px tall is a camera aimed at her shoulders). */
+    max-inline-size: calc(10rem * 16 / 9);
+    margin-inline: auto;
     border-radius: 0;
     overflow: hidden;
+}
+
+/* The placeholder that holds the portrait's place for the moment before the
+   renderer mounts - same box, so nothing moves when she arrives. */
+.sfs-bot__poster {
+    display: grid;
+    place-items: center;
+}
+.sfs-bot__poster span {
+    display: grid;
+    place-items: center;
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    border-radius: 50%;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.25);
+    color: var(--sfs-text, #e7eaf3);
+    font-size: 1.4rem;
+    font-weight: 700;
 }
 
 /*
@@ -336,6 +427,11 @@
 
 .sfs-bot__msg--bot {
     background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08);
+    /* A hairline as well as the tint: on the opaque light surface of a light
+       galaxy the tint alone lifts the bubble by almost nothing, and the reply
+       floated on the page with no edge at all. The line channel carries the
+       ink's colour, so it reads in both modes (working rule 48). */
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
     color: var(--sfs-text, #e7eaf3);
     border-start-start-radius: 4px;
 }
@@ -563,4 +659,7 @@
        state, so only the decoration that carries no information is dropped. */
     .sfs-bot-btn__dot { animation: none; }
     .sfs-bot__typing span { animation: none; opacity: 0.65; }
+    /* The window simply appears: no fade, no rise. */
+    .sfs-bot-layer,
+    .sfs-bot { animation: none; }
 }

@@ -1,21 +1,37 @@
 <template>
   <!--
-    TELEPORTED TO <body>.
+    TELEPORTED OUT OF THE PAGE - to <body>, or into whatever is full screen.
 
     Half the page wrappers on this platform are positioned boxes with a
     `z-index`, which makes a stacking context — and a `position: fixed`
     descendant cannot escape its ancestor's, so the window would be painted at
     the wrapper's level and land under the sidebar. That is the fault the admin
     console's modals had on nine screens, and the guided tour teleports for the
-    same reason.
+    same reason. And with the native Fullscreen API only the full-screen element
+    is painted, so a window left on <body> while a lab's workbench is full
+    screen would be there, focused and invisible - `useTeleportTarget`.
+
+    A CENTRED DIALOG over a scrim, not a panel in a corner: she is a
+    conversation the reader chose to have, and a window pinned beside the top
+    bar fought the support chat launcher for the same corner and read as a
+    notification. A press on the scrim (down AND up on it, so a text selection
+    dragged out of the window does not count) closes her, as do the X and
+    Escape - and the focus goes back to the button that opened her.
   -->
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
+    <div
+      class="sfs-bot-layer"
+      @pointerdown.self="scrimDown = true"
+      @click.self="onScrimClick"
+    >
     <section
       ref="rootEl"
       class="sfs-bot"
       role="dialog"
+      aria-modal="true"
       :aria-label="$t(BUTTON_LABEL, { bot: $t(cast.name) })"
       :dir="dir"
+      @keydown.tab="trapTab"
     >
       <header class="sfs-bot__head">
         <div class="sfs-bot__stage">
@@ -26,12 +42,23 @@
             it rather than writing a second one is why a fix to the cast lands
             in all three places at once.
           -->
+          <!--
+            THE RENDERER WAITS FOR THE WINDOW. Building a WebGL scene (and
+            fetching the 3D engine on a first open) is the heaviest thing here,
+            and doing it in the same frame as the opening animation is what made
+            the window feel slow. A poster of the same size holds the place, so
+            nothing moves when the person arrives a moment later.
+          -->
           <PersonStage
+            v-if="stageReady"
             :seats="seats"
             :speaking="speaking ? cast.id : null"
             :energy="energy"
             tile-class="sfs-bot__tile"
           />
+          <div v-else class="sfs-bot__tile sfs-bot__poster" aria-hidden="true">
+            <span>{{ $t(cast.name).slice(0, 1) }}</span>
+          </div>
         </div>
 
         <p class="sfs-bot__plate">
@@ -155,6 +182,7 @@
         <p v-if="warning" class="sfs-bot__warn">{{ warning }}</p>
       </div>
     </section>
+    </div>
   </Teleport>
 </template>
 
@@ -190,6 +218,7 @@ import { useAuthStore } from '@/store/auth';
 import { dir, localeId, t } from '@/i18n/runtime';
 import { newsService } from '@/services/news.service';
 import { assistantService, isServiceRefusal, type ChatTurn } from '@/services/assistant.service';
+import { useTeleportTarget } from '@/composables/useFullscreen';
 import { createSpeechAudio } from '@/utils/speechAudio';
 import { spokenEnergy } from '@/stage3d/figures';
 import {
@@ -217,6 +246,12 @@ const route = useRoute();
 const router = useRouter();
 
 const rootEl = ref<HTMLElement | null>(null);
+/** `<body>`, or the element that is full screen right now. See the template. */
+const teleportTo = useTeleportTarget();
+/** The 3D stage mounts a moment after the window does. See the template. */
+const stageReady = ref(false);
+/** A press that STARTED on the scrim. See `onScrimClick`. */
+const scrimDown = ref(false);
 const logEl = ref<HTMLElement | null>(null);
 const inputEl = ref<HTMLTextAreaElement | null>(null);
 
@@ -747,6 +782,48 @@ function onKey(event: KeyboardEvent) {
     if (event.key === 'Escape') close();
 }
 
+/**
+ * Close on a click on the scrim - only when the press began there too. A
+ * reader selecting text in a reply often lets go outside the window, and that
+ * release must not end the conversation.
+ */
+function onScrimClick() {
+    const started = scrimDown.value;
+    scrimDown.value = false;
+    if (started) close();
+}
+
+/**
+ * Keep Tab inside the dialog. `aria-modal` tells a screen reader the page
+ * behind is inert; for a keyboard it is only true if Tab cannot walk out into
+ * a page the scrim is covering.
+ */
+function trapTab(event: KeyboardEvent) {
+    const root = rootEl.value;
+    if (!root) return;
+    const focusable = Array.from(root.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), textarea, input, select, a[href], [tabindex]:not([tabindex="-1"])'))
+        .filter(el => el.offsetParent !== null || el === document.activeElement);
+    if (!focusable.length) return;
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
+/**
+ * Whatever had the focus when she opened - the button, nearly always - gets it
+ * back when she closes, or a keyboard reader is dropped at the top of the page.
+ */
+let returnFocus: HTMLElement | null = null;
+let stageTimer: ReturnType<typeof setTimeout> | null = null;
+const LOCK_CLASS = 'sfs-bot-lock';
+
 /* ------------------------------- wiring ------------------------------ */
 
 /*
@@ -759,7 +836,13 @@ function onKey(event: KeyboardEvent) {
   the FIRST open, because `open` was already true before this component existed.
 */
 onMounted(() => {
+    const active = document.activeElement;
+    returnFocus = active instanceof HTMLElement && active !== document.body ? active : null;
+    document.documentElement.classList.add(LOCK_CLASS);
     window.addEventListener('keydown', onKey);
+    // After the opening animation (220ms), not in its frame. Reduced motion
+    // has no animation to wait for, so it is barely a delay at all.
+    stageTimer = setTimeout(() => { stageReady.value = true; }, 240);
     speech.prime();
     const name = String(authStore.user?.full_name || authStore.user?.username || '');
     const bot = t(cast.value.name);
@@ -802,6 +885,14 @@ watch(() => authStore.user?.id, () => {
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKey);
+    if (stageTimer) clearTimeout(stageTimer);
+    document.documentElement.classList.remove(LOCK_CLASS);
+    // Back to the control that opened her - or, if that has gone (a route
+    // change while she was open), to whichever assistant button is on screen.
+    const back = returnFocus && returnFocus.isConnected
+        ? returnFocus
+        : document.querySelector<HTMLElement>('.sfs-bot-btn');
+    requestAnimationFrame(() => back?.focus?.({ preventScroll: true }));
     stopMic();
     stopSpeaking();
     // `speechSynthesis` belongs to the WINDOW, not to this component: without

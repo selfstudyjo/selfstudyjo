@@ -167,7 +167,7 @@
 
     <!-- The terminal's right-click menu. Teleported so no card's stacking
          context can put it under the sidebar. -->
-    <Teleport to="body">
+    <Teleport :to="teleportTo">
       <div v-if="menu" class="sl-termmenu" role="menu"
            :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
            @mousedown.stop @contextmenu.prevent>
@@ -232,6 +232,11 @@
  * seconds is not a completion, it is a pause.
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useTeleportTarget } from '@/composables/useFullscreen';
+/* `<body>`, or the element that is full screen right now: with the native
+   Fullscreen API only that element's subtree is painted, so a window
+   teleported to <body> would open invisibly. See useFullscreen.ts. */
+const teleportTo = useTeleportTarget();
 import {
   CornerDownLeft, Eraser, Keyboard, Terminal, Boxes, Cloud, Database, FileCode,
   GitBranch, HardDrive, Layers, Server, Zap,

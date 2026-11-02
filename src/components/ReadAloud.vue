@@ -34,7 +34,7 @@
       Only the ACTIVE section renders one, so there can never be two bars: the
       reader is module-level and exactly one section can be reading.
     -->
-    <Teleport v-if="mine" to="body">
+    <Teleport v-if="mine" :to="teleportTo">
       <div class="sfs-read-bar" :dir="dir" role="group" :aria-label="$t('Reading aloud')">
         <div class="sfs-read-bar__main">
           <div class="sfs-read-bar__what">
@@ -134,6 +134,11 @@
  * longer exists.
  */
 import { computed, onBeforeUnmount, watch } from 'vue';
+import { useTeleportTarget } from '@/composables/useFullscreen';
+/* `<body>`, or the element that is full screen right now: with the native
+   Fullscreen API only that element's subtree is painted, so a window
+   teleported to <body> would open invisibly. See useFullscreen.ts. */
+const teleportTo = useTeleportTarget();
 import { onBeforeRouteLeave } from 'vue-router';
 import {
     Loader2, Pause, Play, SkipBack, SkipForward, Square, Volume2,

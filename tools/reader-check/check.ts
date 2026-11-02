@@ -641,7 +641,11 @@ console.log('\n15. The control declares what it is doing');
 
     // The bar is fixed and half these page wrappers are stacking contexts a
     // fixed descendant cannot escape.
-    check('the transport bar is teleported to <body>', /<Teleport v-if="mine" to="body">/.test(vue));
+    // To <body>, or INTO whatever is full screen: with the native Fullscreen
+    // API only that element is painted, and a lab's task list (which reads
+    // aloud) is inside the full-screen workbench. See useFullscreen.ts.
+    check('the transport bar is teleported out of the page (to <body>, or the full-screen element)',
+          /<Teleport v-if="mine" :to="teleportTo">/.test(vue) && /useTeleportTarget\(\)/.test(vue));
     // A live region announcing progress would talk over the voice reading the
     // page.
     // Measured on the comment-stripped source, because the paragraph explaining

@@ -32,7 +32,35 @@
     </div>
 
     <template v-else-if="lab">
-      <header class="sl-wshead">
+      <!--
+        PLAYGROUND MODE: an unpublished, task-less workspace record
+        (`play-docker` and friends) opened for free practice. No brief, no task
+        list, no Check my work and no practice record - only the title, one line
+        saying nothing is graded, and the workbench at the full width. The same
+        component rather than a second one, because every tool, its saved state
+        and Reset environment are exactly a lab's.
+      -->
+      <header v-if="playground" class="sl-wshead sl-wshead--play">
+        <div class="sl-wshead__row">
+          <div>
+            <p class="sl-wshead__kicker">
+              <Gamepad2 class="sl-i" aria-hidden="true" /> {{ $t('Playground') }}
+            </p>
+            <h1 class="sl-wshead__title">{{ $td(lab, 'title') }}</h1>
+            <p class="sl-wshead__sub">{{ $t('Free practice - nothing is graded.') }}</p>
+          </div>
+          <div class="sl-wshead__actions">
+            <TourButton />
+            <AssistantButton />
+            <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
+                    :disabled="busy" @click="reset">
+              <RotateCcw class="sl-i" /> {{ $t('Reset environment') }}
+            </button>
+          </div>
+        </div>
+        <p v-if="note" class="sl-wshead__note">{{ note }}</p>
+      </header>
+      <header v-else class="sl-wshead">
         <nav class="sl-crumbs" aria-label="Breadcrumb">
           <router-link to="/labs">{{ $t('Labs') }}</router-link>
           <span aria-hidden="true">/</span>
@@ -83,10 +111,15 @@
         </p>
       </header>
 
-      <div class="sl-wsbody">
+      <div class="sl-wsbody"
+           :class="{ 'is-play': playground, 'is-tasks-collapsed': !playground && tasksCollapsed }">
         <!-- The workbench -->
         <section ref="benchEl" class="sl-bench"
-                 :class="{ 'is-full': benchFs.active.value, 'is-overlay': benchFs.active.value && !benchFs.native.value }">
+                 :class="{
+                   'is-full': benchFs.active.value,
+                   'is-overlay': benchFs.active.value && !benchFs.native.value,
+                   'has-drawer': drawerOpen,
+                 }">
           <div class="sl-bench__tabs" role="tablist">
             <button
               v-for="pane in panes"
@@ -102,6 +135,7 @@
               <span v-if="pane.simulated" class="sl-bench__dot" :title="$t('Simulated')"></span>
             </button>
             <button
+              v-if="!playground"
               type="button"
               role="tab"
               class="sl-bench__tab"
@@ -117,6 +151,24 @@
               the X, and Escape.
             -->
             <span class="sl-bench__fs">
+              <!--
+                THE TASKS, IN FULL SCREEN. Only the full-screen element is
+                painted, so the task list beside the workbench is gone the
+                moment the bench fills the screen - and the student is left
+                without the thing they are working through. In full screen the
+                list moves INTO the bench (a drawer, see below) and this opens
+                and closes it, with the progress on the button itself.
+              -->
+              <button v-if="benchFs.active.value && !playground" type="button"
+                      class="sl-bench__fs-btn sl-bench__tasks-btn"
+                      :class="{ 'is-on': drawerOpen }"
+                      :aria-expanded="drawerOpen" aria-controls="sl-tasks-drawer"
+                      :title="drawerOpen ? $t('Hide tasks') : $t('Show tasks')"
+                      @click="toggleTasks">
+                <ListChecks class="sl-i" aria-hidden="true" />
+                <span class="sl-bench__fs-label">{{ $t('Tasks') }}</span>
+                <span class="sl-bench__tasks-count" dir="ltr">{{ grade.done }}/{{ grade.total }}</span>
+              </button>
               <button v-if="!benchFs.active.value" type="button" class="sl-bench__fs-btn"
                       :title="$t('Full screen')" @click="benchFs.enter()">
                 <Maximize2 class="sl-i" aria-hidden="true" />
@@ -137,7 +189,7 @@
             </span>
           </div>
 
-          <div v-show="activePane === '__brief'" class="sl-bench__panel">
+          <div v-if="!playground" v-show="activePane === '__brief'" class="sl-bench__panel">
             <!-- REVIEW THE LESSON without leaving the lab: a modal over the
                  workspace, so nothing here is unmounted while it is open. -->
             <!--
@@ -424,36 +476,84 @@
             </template>
           </div>
           </template>
+          <!--
+            THE FULL-SCREEN DRAWER. Empty on the page: while the bench is full
+            screen the task panel below is TELEPORTED in here (Vue moves the
+            live component, so open hints, open steps and the info window all
+            survive the move) and back out again on exit. A column docked beside
+            the tools on a wide screen, an overlay sheet on a narrow one.
+          -->
+          <div v-if="!playground" id="sl-tasks-drawer" class="sl-bench__drawer"
+               :class="{ 'is-open': drawerOpen }"></div>
         </section>
 
-        <!-- The tasks -->
-        <aside class="sl-side">
+        <!--
+          The tasks: BESIDE the workbench on a wide screen, at the same level as
+          the tools, sticky and sized to the viewport so the list scrolls inside
+          itself instead of making the page very long. Stacked under it on a
+          narrow one, with the list capped to a share of the viewport.
+        -->
+        <aside v-if="!playground" class="sl-side" :class="{ 'is-collapsed': tasksCollapsed }">
           <!--
-            The practice record, above the tasks.
+            COLLAPSED: a slim rail (a bar when stacked) that says where the
+            student is - "3/7" - and gives the panel back. The choice is per
+            lab and remembered, because a student who hides the tasks in one lab
+            to have room for a console wants them hidden there tomorrow too.
+          -->
+          <button v-if="tasksCollapsed" type="button" class="sl-rail"
+                  :aria-expanded="false" aria-controls="sl-tasks-panel"
+                  :title="$t('Show tasks')"
+                  :aria-label="$t('Show tasks ({v0} of {v1} done)', { v0: grade.done, v1: grade.total })"
+                  @click="toggleTasks">
+            <PanelRightOpen class="sl-i sfs-flip" aria-hidden="true" />
+            <span class="sl-rail__label">{{ $t('Tasks') }}</span>
+            <span class="sl-rail__count" dir="ltr">{{ grade.done }}/{{ grade.total }}</span>
+            <span class="sl-rail__meter" aria-hidden="true">
+              <span class="sl-rail__fill" :style="{ '--sl-rail-fill': `${grade.percent || 0}%` }"></span>
+            </span>
+            <span class="sl-rail__show">{{ $t('Show tasks') }}</span>
+          </button>
+
+          <div v-show="!tasksCollapsed" id="sl-tasks-panel" class="sl-side__tasks">
+            <!-- `defer`: the drawer is rendered in the same pass as this, so
+                 the target has to be resolved after the render. -->
+            <Teleport defer to="#sl-tasks-drawer" :disabled="!benchFs.active.value">
+              <LabTasks
+                :grade="localGrade"
+                :busy="grading"
+                :report="report"
+                collapsible
+                fill
+                :controls="benchFs.active.value ? 'sl-tasks-drawer' : 'sl-tasks-panel'"
+                :reveal-key="revealKey"
+                @collapse="toggleTasks"
+                @grade="grade0"
+                @ask="(task, focus) => askTutor(task, focus)"
+                @self-mark="selfMark"
+                :tools="lab.tool_detail"
+                @open-tool="openToolFromTasks"
+              />
+            </Teleport>
+          </div>
+
+          <!--
+            The practice record, below the tasks.
 
             A LAB'S VERSION OF THIS PANEL CANNOT FAIL ANYBODY - `FAILS_AT.lab`
             is null, so `IntegrityMeter` draws no strike pips and says so in
             words. It is here at all because the points are public and a
             student is owed the running total that produced them, not because
-            anything is being invigilated.
+            anything is being invigilated. Below the list rather than above it
+            since the list became the column's scrolling half: the tasks are
+            what a student works from, so they get the top of the column.
           -->
           <IntegrityMeter
+            v-show="!tasksCollapsed"
             context="lab"
             :verdict="sitting.verdict.value"
             :events="sitting.log.value"
           />
-
-          <LabTasks
-            :grade="localGrade"
-            :busy="grading"
-            :report="report"
-            @grade="grade0"
-            @ask="(task, focus) => askTutor(task, focus)"
-            @self-mark="selfMark"
-            :tools="lab.tool_detail"
-            @open-tool="openTool"
-          />
-          <div v-if="lab.datasets.length" class="sl-side__datasets">
+          <div v-if="lab.datasets.length" v-show="!tasksCollapsed" class="sl-side__datasets">
             <h4>{{ $t('Datasets in this lab') }}</h4>
             <ul>
               <li v-for="name in lab.datasets" :key="name" dir="ltr">{{ name }}</li>
@@ -464,10 +564,10 @@
           </div>
         </aside>
       </div>
-      <LabDefinitions v-if="defsMounted && lab" :open="defsOpen" :lab="lab" :tasks="definitionTasks"
+      <LabDefinitions v-if="defsMounted && lab && !playground" :open="defsOpen" :lab="lab" :tasks="definitionTasks"
                       :tools="lab.tool_detail || []" :start="defsStart"
                       @close="defsOpen = false" @open-tool="openTool" />
-      <LabLessonModal :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
+      <LabLessonModal v-if="!playground" :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
                       :lessons="lessonsForLab || []" @close="lessonOpen = false" />
     </template>
   </div>
@@ -503,11 +603,11 @@
  * `Check my work` is the same shape as `terraform plan` - the student decides
  * when to look. What it must not be is SILENT, which it was: see `report`.
  */
-import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  AlertTriangle, BookMarked, BookOpen, Crown, ExternalLink, FlaskConical, Maximize2, Minimize2,
-  MonitorSmartphone, RotateCcw, RotateCw, X,
+  AlertTriangle, BookMarked, BookOpen, Crown, ExternalLink, FlaskConical, Gamepad2, ListChecks,
+  Maximize2, Minimize2, MonitorSmartphone, PanelRightOpen, RotateCcw, RotateCw, X,
 } from 'lucide-vue-next';
 import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
@@ -591,6 +691,11 @@ const route = useRoute();
 const authStore = useAuthStore();
 
 const lab = ref<Lab | null>(null);
+/** A grade with nothing in it: a task-less record (a playground) may send none. */
+function emptyGrade(): LabGrade {
+  return { tasks: [], done: 0, total: 0, earned: 0, possible: 0, percent: 0,
+           status: 'not_started', unavailable: [] };
+}
 const grade = ref<LabGrade>({
   tasks: [], done: 0, total: 0, earned: 0, possible: 0, percent: 0,
   status: 'not_started', unavailable: [],
@@ -647,6 +752,10 @@ const opened = ref(new Set<string>());
 /** The workbench in full screen - any tool, tabs included. See useFullscreen. */
 const benchEl = ref<HTMLElement | null>(null);
 const benchFs = useFullscreen(benchEl);
+watch(() => benchFs.active.value, on => {
+  if (on) sheetOpen.value = false;
+  revealKey.value += 1;
+});
 /** Bumped whenever the lab is loaded from the server. See the LabWeb key. */
 const sourceEpoch = ref(0);
 const chosenTool = ref<Record<string, string>>({});
@@ -697,7 +806,7 @@ const sitting = usePracticeSitting({
  * because "asked the tutor, then the task passed" is the shape of the work.
  */
 function noteTutorAsk() {
-  sitting.note('lab.ai_asked');
+  if (!playground.value) sitting.note('lab.ai_asked');
 }
 
 const hasLabAccess = computed(() => authStore.hasLabAccess);
@@ -710,8 +819,95 @@ const userId = computed(() => String(authStore.user?.user_id || ''));
   that page on "Opening the lab..." for ever, because `open()` returns early
   on an empty id.
 */
-const props = defineProps<{ labId?: string }>();
+const props = defineProps<{
+  labId?: string;
+  /**
+   * PLAYGROUND MODE, for an unpublished task-less workspace record (the
+   * per-tool playgrounds, `play-docker` and friends). The brief, the task list,
+   * Check my work and every practice-record call are left out, and the
+   * workbench takes the full width. Nothing here is graded, so nothing here
+   * may look as if it were.
+   */
+  playground?: boolean;
+}>();
 const labId = computed(() => String(props.labId || route.params.labId || ''));
+const playground = computed(() => Boolean(props.playground));
+
+/* ------------------------------------------------------------------ *
+ * The task panel: beside the workbench, collapsible, and in full screen
+ * ------------------------------------------------------------------ */
+
+/**
+ * Hidden or shown, PER LAB, remembered.
+ *
+ * Per lab rather than global: a Docker lab with a console that wants the whole
+ * width and a SQL lab whose tasks are the point are different decisions, and
+ * the student made each one where it applied. localStorage can throw (Safari in
+ * private mode), and a panel that cannot remember is still a panel - so every
+ * access is guarded and the default is SHOWN.
+ */
+const TASKS_KEY = 'sl-tasks-collapsed:';
+const tasksCollapsed = ref(false);
+function readCollapsed(id: string): boolean {
+  try { return window.localStorage.getItem(TASKS_KEY + id) === '1'; } catch { return false; }
+}
+function writeCollapsed(id: string, value: boolean) {
+  try {
+    if (value) window.localStorage.setItem(TASKS_KEY + id, '1');
+    else window.localStorage.removeItem(TASKS_KEY + id);
+  } catch { /* nowhere to remember it; the choice lasts the visit */ }
+}
+watch(labId, id => { tasksCollapsed.value = id ? readCollapsed(id) : false; }, { immediate: true });
+
+/**
+ * Narrow screens, where the full-screen drawer is an overlay SHEET rather than
+ * a docked column - and so starts closed: a sheet that opened on its own would
+ * cover the very tool the student went full screen to use.
+ */
+const NARROW = '(max-width: 899px)';
+const narrow = ref(false);
+let narrowQuery: MediaQueryList | null = null;
+function onNarrow() { narrow.value = Boolean(narrowQuery?.matches); }
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  narrowQuery = window.matchMedia(NARROW);
+  onNarrow();
+  narrowQuery.addEventListener?.('change', onNarrow);
+}
+onBeforeUnmount(() => narrowQuery?.removeEventListener?.('change', onNarrow));
+
+/** The sheet's own state on a narrow screen in full screen. Never remembered. */
+const sheetOpen = ref(false);
+/** Bumped whenever the panel is shown, so `LabTasks` scrolls to the current task. */
+const revealKey = ref(0);
+
+/**
+ * Is the full-screen drawer open? Docked (wide), it follows the remembered
+ * choice, so hiding the tasks means the same thing in and out of full screen.
+ * As a sheet (narrow) it has its own state, opened from the tab row.
+ */
+const drawerOpen = computed(() => {
+  if (playground.value || !benchFs.active.value) return false;
+  return narrow.value ? sheetOpen.value : !tasksCollapsed.value;
+});
+
+function toggleTasks() {
+  if (benchFs.active.value && narrow.value) {
+    sheetOpen.value = !sheetOpen.value;
+  } else {
+    tasksCollapsed.value = !tasksCollapsed.value;
+    writeCollapsed(labId.value, tasksCollapsed.value);
+  }
+  revealKey.value += 1;
+}
+
+/**
+ * Opening a tool from a task card. On a narrow screen in full screen the sheet
+ * covers the tools, so it gets out of the way of the one it just opened.
+ */
+function openToolFromTasks(toolId: string) {
+  openTool(toolId);
+  if (benchFs.active.value && narrow.value) sheetOpen.value = false;
+}
 
 /*
   The lesson this lab was opened from. The query outranks memory, and a query
@@ -849,7 +1045,7 @@ async function open() {
       return;
     }
     lab.value = payload.lab;
-    void loadLessonsForLab();
+    if (!playground.value) void loadLessonsForLab();
     /*
       A VERIFIED TASK STAYS VERIFIED, on arrival too: the progress record's
       `tasks_done` is what the platform has already credited, so a replica a
@@ -857,7 +1053,8 @@ async function open() {
       the student finished last week as "to do". Never merged with the grade
       of whatever lab was open before - task ids like `t1` repeat across labs.
     */
-    grade.value = keepVerified(payload.grade, null, payload.progress?.tasks_done || []);
+    const arrived: LabGrade = payload.grade || emptyGrade();
+    grade.value = keepVerified(arrived, null, payload.progress?.tasks_done || []);
     /*
       The ledger opens with the lab.
 
@@ -865,11 +1062,19 @@ async function open() {
       start a second session - which would be a second session id and a verdict
       computed over half the work each.
     */
-    sitting.begin(
-      { id: payload.lab.id, name: payload.lab.title },
-      { userId: userId.value, username: username.value },
-    );
-    sitting.note('lab.opened');
+    /*
+      A PLAYGROUND KEEPS NO RECORD: nothing in it is graded, so a practice
+      session opened for it would be a ledger of events that can never mean
+      anything - and a "lab opened" line on a public activity record for a
+      page that is not a lab.
+    */
+    if (!playground.value) {
+      sitting.begin(
+        { id: payload.lab.id, name: payload.lab.title },
+        { userId: userId.value, username: username.value },
+      );
+      sitting.note('lab.opened');
+    }
     /*
       A LAB THAT IS ALREADY FINISHED OPENS CLOSED.
 
@@ -879,7 +1084,7 @@ async function open() {
       terminal action is capped at one per sitting, so this costs nothing when
       the same lab is opened again.
     */
-    if (payload.grade?.status === 'completed') void sitting.complete();
+    if (!playground.value && payload.grade?.status === 'completed') void sitting.complete();
     views.value = payload.views || {};
     webSource.value = (payload.views as any)?.web || {};
     note.value = payload.note || '';
@@ -892,7 +1097,7 @@ async function open() {
       now unions its own record in as well; doing both is what makes the tick
       feel permanent whichever end answers first.
     */
-    selfMarked.value = payload.grade.tasks
+    selfMarked.value = (arrived.tasks || [])
       .filter(task => task.manual && task.status === 'passed')
       .map(task => task.id);
     report.value = null;
@@ -911,8 +1116,10 @@ async function open() {
     */
     const fresh = toolPanes(payload.lab.tool_detail);
     const stillThere = fresh.some(pane => pane.family === activePane.value);
-    showPane(activePane.value && (stillThere || activePane.value === '__brief')
-      ? activePane.value : defaultPane(fresh));
+    // A playground has no Brief tab, so it never opens on (or keeps) one.
+    const keepBrief = activePane.value === '__brief' && !playground.value;
+    showPane(activePane.value && (stillThere || keepBrief)
+      ? activePane.value : (defaultPane(fresh) || fresh[0]?.family || ''));
   } catch (problem: any) {
     error.value = problem?.message || 'The lab could not be opened.';
   } finally {
@@ -998,7 +1205,7 @@ async function refreshViews() {
 }
 
 async function grade0() {
-  if (!lab.value) return;
+  if (!lab.value || playground.value) return;
   grading.value = true;
   const before = grade.value;
   try {
@@ -1204,7 +1411,7 @@ async function reset() {
     await labsService.resetLab(username.value, lab.value.id);
     // Recorded as neutral: starting again costs nothing, and a student who
     // believed otherwise would keep working in a broken environment.
-    sitting.note('lab.reset');
+    if (!playground.value) sitting.note('lab.reset');
     await open();
   } finally {
     busy.value = false;
@@ -1224,6 +1431,7 @@ watch(labId, () => {
   report.value = null;
   grade.value = { tasks: [], done: 0, total: 0, earned: 0, possible: 0, percent: 0,
                   status: 'not_started', unavailable: [] };
+  sheetOpen.value = false;
   lessonsForLab.value = null;
   if (hasLabAccess.value) open();
 });

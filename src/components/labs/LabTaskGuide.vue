@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
     <!--
       THE "i" WINDOW: how to do one task, step by step.
 
@@ -184,6 +184,11 @@
  * reaches `v-html` - a task's text arrives over the network.
  */
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
+import { useTeleportTarget } from '@/composables/useFullscreen';
+/* `<body>`, or the element that is full screen right now: with the native
+   Fullscreen API only that element's subtree is painted, so a window
+   teleported to <body> would open invisibly. See useFullscreen.ts. */
+const teleportTo = useTeleportTarget();
 import {
   AlertTriangle, Check, CheckCircle2, Copy, Info, Lightbulb, MousePointerClick, Sparkles,
   TerminalSquare, X,

@@ -559,15 +559,45 @@
 
 .sl-wsbody {
     display: grid;
-    /* One column below 1100px. The task list under the workbench rather than
-       beside it, because a 320px sidebar next to a terminal is two things too
-       narrow to use. */
+    /* One column below 1024px: the task list under the workbench rather than
+       beside it, because a 320px column next to a terminal on a tablet is two
+       things too narrow to use. From 1024px the tasks sit BESIDE the bench, at
+       the same level, so the student reads a task and does it without
+       scrolling between the two. */
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sl-gap);
+    align-items: start;
 }
 
-@media (min-width: 1100px) {
-    .sl-wsbody { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); }
+@media (min-width: 1024px) {
+    .sl-wsbody { grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem); }
+}
+
+@media (min-width: 1280px) {
+    .sl-wsbody { grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); }
+}
+
+/* Collapsed: the column shrinks to the rail and the workbench takes the room.
+   Playground: there is no column at all. Both one class more specific than the
+   width rules above, so neither depends on source order. */
+@media (min-width: 1024px) {
+    .sl-wsbody.is-tasks-collapsed { grid-template-columns: minmax(0, 1fr) auto; }
+}
+.sl-wsbody.is-play { grid-template-columns: minmax(0, 1fr); }
+
+.sl-wshead__kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.25rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.16);
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .sl-bench {
@@ -637,8 +667,14 @@
 
 .sl-bench.is-full,
 .sl-bench:fullscreen {
-    display: flex;
-    flex-direction: column;
+    /* A GRID in full screen: the tab row across the top, the open tool below
+       it, and - when the tasks are shown - the task drawer as a second column
+       beside the tool (or a sheet over it on a narrow screen). Every panel and
+       the drawer are placed explicitly, so a hidden (`v-show`) panel can never
+       shift the drawer into the wrong cell. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     width: 100%;
     height: 100vh;
     height: 100dvh;
@@ -647,6 +683,7 @@
     background: var(--sfs-space, #0b1020);
     overflow: hidden;
 }
+.sl-bench.is-full > .sl-bench__tabs { grid-column: 1 / -1; grid-row: 1; }
 .sl-bench.is-overlay {
     position: fixed;
     inset: 0;
@@ -654,9 +691,65 @@
 }
 .sl-bench.is-full > .sl-bench__panel,
 .sl-bench:fullscreen > .sl-bench__panel {
-    flex: 1 1 auto;
+    grid-column: 1;
+    grid-row: 2;
     min-height: 0;
     overflow: auto;
+}
+
+/* ── the task drawer, inside the full-screen bench ───────────────────────
+   Empty and hidden on the page; the task panel is teleported into it while
+   the bench is full screen. */
+.sl-bench__drawer { display: none; }
+.sl-bench.is-full > .sl-bench__drawer.is-open {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 0.6rem;
+    overflow: hidden;
+}
+.sl-bench__drawer > .sl-tasks {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+@media (min-width: 900px) {
+    /* Docked: a column beside the tool, which keeps the rest of the screen. */
+    .sl-bench.is-full.has-drawer { grid-template-columns: minmax(0, 1fr) minmax(20rem, 25rem); }
+    .sl-bench.is-full > .sl-bench__drawer.is-open {
+        grid-column: 2;
+        border-inline-start: var(--sl-line);
+        background: var(--sl-well);
+    }
+}
+@media (max-width: 899px) {
+    /* A sheet OVER the tool. Opaque - it is in front of a console - and in the
+       same cell as the panel, so it covers exactly the area below the tabs. */
+    .sl-bench.is-full > .sl-bench__drawer.is-open {
+        grid-column: 1;
+        justify-self: end;
+        width: min(26rem, 100%);
+        z-index: 3;
+        background:
+            linear-gradient(var(--sl-surface), var(--sl-surface)),
+            var(--sfs-space, #0b1020);
+        border-inline-start: var(--sl-line);
+        box-shadow: 0 0 2.5rem rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+    }
+}
+
+/* The Tasks control in the full-screen tab row, with the progress on it. */
+.sl-bench__tasks-btn.is-on {
+    border-color: var(--sfs-accent, #667eea);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+}
+.sl-bench__tasks-count {
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.3);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
 }
 .sl-bench::backdrop { background: var(--sfs-space, #0b1020); }
 /* A portal inside a full-screen bench takes the room it now has. */
@@ -724,6 +817,101 @@
 }
 
 .sl-side { min-width: 0; display: flex; flex-direction: column; gap: var(--sl-gap); }
+.sl-side__tasks { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.sl-side__tasks > .sl-tasks { min-height: 0; }
+
+/*
+  BESIDE THE WORKBENCH: sticky, and never taller than the viewport, so the
+  column stays level with the tools while the page scrolls and the TASK LIST
+  scrolls inside itself. The list is the part that gives way (`flex: 1`, a
+  zero minimum) - the head with Check my work stays where it is.
+*/
+@media (min-width: 1024px) {
+    .sl-side {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .sl-side__tasks { flex: 1 1 auto; min-height: min(18rem, 45vh); }
+    .sl-side__tasks > .sl-tasks { flex: 1 1 auto; }
+    .sl-side .sl-tasks--fill .sl-tasks__scroll { max-height: none; flex: 1 1 auto; min-height: 0; }
+}
+
+/* ── the collapsed rail ──────────────────────────────────────────────── */
+
+.sl-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    width: max(3.25rem, 48px);
+    padding: 0.8rem 0.3rem;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius);
+    background: var(--sl-surface);
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    cursor: pointer;
+}
+.sl-rail:hover,
+.sl-rail:focus-visible { border-color: var(--sfs-accent, #667eea); }
+.sl-rail .sl-i { color: var(--sfs-accent-text, #a5b4fc); }
+.sl-rail__label {
+    writing-mode: vertical-rl;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.sl-rail__count {
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+/* The meter fills from the bottom on the rail, from the start on the bar. It
+   is a figure, not a direction of reading, so it does not mirror. */
+.sl-rail__meter {
+    display: flex;
+    align-items: flex-end;
+    width: 0.4rem;
+    height: 5rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.35);
+    overflow: hidden;
+}
+.sl-rail__fill {
+    width: 100%;
+    height: var(--sl-rail-fill, 0%);
+    border-radius: 999px;
+    background: var(--sfs-accent, #667eea);
+}
+/* "Show tasks" is the bar's visible label; on the rail the aria-label says it. */
+.sl-rail__show { display: none; }
+
+@media (max-width: 1023px) {
+    /* Stacked under the workbench, the rail is a full-width bar. */
+    .sl-rail {
+        flex-direction: row;
+        width: 100%;
+        padding: 0.6rem 0.9rem;
+    }
+    .sl-rail__label { writing-mode: horizontal-tb; }
+    .sl-rail__meter {
+        align-items: stretch;
+        width: min(8rem, 30%);
+        height: 0.4rem;
+    }
+    .sl-rail__fill { width: var(--sl-rail-fill, 0%); height: 100%; }
+    .sl-rail__show {
+        display: inline;
+        margin-inline-start: auto;
+        color: var(--sfs-accent-text, #a5b4fc);
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+}
 
 .sl-side__datasets {
     padding: 0.85rem 1rem;
@@ -2161,6 +2349,50 @@
     background: var(--sl-surface);
 }
 
+/* Fill a height the parent decides (the sticky column, the drawer). */
+.sl-tasks--fill { display: flex; flex-direction: column; }
+.sl-tasks--fill > .sl-tasks__head,
+.sl-tasks--fill > .sl-meter,
+.sl-tasks--fill > .sl-tasks__points,
+.sl-tasks--fill > .sl-tasks__feedback { flex: none; }
+
+/* THE LIST SCROLLS INSIDE THE PANEL. Stacked under the workbench it is capped
+   to a share of the viewport; beside it (and in the drawer) the parent's
+   height decides and this only flexes. */
+.sl-tasks__scroll {
+    max-height: min(60vh, 34rem);
+    max-height: min(60dvh, 34rem);
+    margin-block-start: 0.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    /* Room for the current task's accent edge and its focus ring. */
+    padding-inline: 0.35rem;
+    margin-inline: -0.35rem;
+}
+.sl-tasks__scroll:focus { outline: none; }
+.sl-bench__drawer .sl-tasks--fill .sl-tasks__scroll { max-height: none; flex: 1 1 auto; min-height: 0; }
+
+.sl-tasks__collapse {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: max(2rem, 34px);
+    height: max(2rem, 34px);
+    padding: 0;
+    border: var(--sl-line);
+    border-radius: var(--sl-radius-sm);
+    background: transparent;
+    color: var(--sfs-text-muted, #b7bdcc);
+    cursor: pointer;
+}
+.sl-tasks__collapse:hover,
+.sl-tasks__collapse:focus-visible {
+    color: var(--sfs-text, #e6e8ef);
+    border-color: var(--sfs-accent, #667eea);
+}
+
 .sl-tasks__head {
     display: flex;
     align-items: flex-start;
@@ -2203,6 +2435,30 @@
     gap: 0.6rem;
     padding: 0.6rem 0;
     border-top: var(--sl-line);
+}
+
+/* THE TASK TO DO NEXT: an accent edge and a tint, plus the words "Current
+   task" on its title row - the edge alone is colour, and colour alone is no
+   signal for some readers (working rule 37). */
+.sl-task.is-current {
+    padding-inline: 0.55rem;
+    margin-inline: -0.35rem;
+    border-radius: var(--sl-radius-sm);
+    border-inline-start: 3px solid var(--sfs-accent, #667eea);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.09);
+}
+.sl-task__now {
+    display: inline-block;
+    margin-inline-end: 0.4rem;
+    padding: 0.02rem 0.45rem;
+    border-radius: 999px;
+    background: var(--sfs-accent, #667eea);
+    color: var(--sfs-on-accent, #fff);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: 0.1em;
 }
 
 .sl-task__mark { color: var(--sfs-text-muted, #b7bdcc); padding-top: 0.15rem; }
@@ -2932,6 +3188,168 @@
 }
 .sfs-dock__body .sl-code__editor,
 .sfs-dock__body .sl-query__editor { min-height: 7rem; }
+
+/* ── the Playgrounds menu ──────────────────────────────────────────────
+
+   A popover under the bar on a desktop, a bottom sheet on a phone. It is
+   anchored to `.sfs-topbar` (relative, deliberately with NO z-index: a
+   z-index there would make the bar a stacking context and trap the dock
+   inside it). Spans the content column, capped, so it never runs under the
+   sidebar or off the edge. The tiles are `auto-fill` over `min(100%, …)`, so
+   the grid measures the menu, not the viewport (working rule 50). */
+
+.sfs-topbar { position: relative; }
+
+.sfs-topbar__pgscrim {
+    position: fixed;
+    inset: 0;
+    z-index: 940;
+    background: transparent;
+}
+
+.sfs-topbar__pgmenu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    inset-inline: 0.5rem;
+    z-index: 950;
+    max-width: 64rem;
+    max-height: min(72vh, 44rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
+    border-radius: 14px;
+    background: var(--sfs-space, #0b1020);
+    color: var(--sfs-text, #e6e8ef);
+    box-shadow: 0 18px 44px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.45);
+    overflow: hidden;
+}
+
+.sfs-topbar__pghead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.7rem 0.4rem;
+}
+
+.sfs-topbar__pgsearch {
+    flex: 1;
+    min-width: 0;
+    min-height: max(2.1rem, 38px);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.2);
+    border-radius: 999px;
+    background: rgb(var(--sfs-sink-rgb, 0 0 0) / 0.25);
+    color: var(--sfs-text, #e6e8ef);
+    font: inherit;
+    font-size: 0.88rem;
+}
+
+.sfs-topbar__pgall {
+    flex: 0 0 auto;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    color: var(--sfs-accent-text, #a5b4fc);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.sfs-topbar__pgall:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.08); }
+
+.sfs-topbar__pgnote {
+    margin: 0;
+    padding: 0 0.95rem 0.5rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.8rem;
+}
+
+.sfs-topbar__pgbody {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.2rem 0.7rem 0.8rem;
+    overscroll-behavior: contain;
+}
+
+.sfs-topbar__pggroup + .sfs-topbar__pggroup { margin-top: 0.6rem; }
+
+.sfs-topbar__pgtitle {
+    margin: 0 0 0.35rem;
+    padding-inline: 0.25rem;
+    color: var(--sfs-text-muted, #b7bdcc);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.sfs-topbar__pggrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11.5rem), 1fr));
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sfs-topbar__pgitem {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: max(2.5rem, 44px);
+    padding: 0.35rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--sfs-text, #e6e8ef);
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sfs-topbar__pgitem:hover,
+.sfs-topbar__pgitem:focus-visible {
+    border-color: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.5);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.14);
+    outline: none;
+}
+
+.sfs-topbar__pgglyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.18);
+    color: var(--sfs-accent-text, #a5b4fc);
+}
+
+.sfs-topbar__pgglyph .sfs-pg-icon { width: 1.1rem; height: 1.1rem; }
+
+.sfs-topbar__pgname {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+
+/* A phone: a bottom sheet over a dimmed page, the whole width. */
+@media (max-width: 639px) {
+    .sfs-topbar__pgscrim { background: rgb(var(--sfs-shade-rgb, 0 0 0) / 0.5); }
+    .sfs-topbar__pgmenu {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        inset-inline: 0;
+        max-width: none;
+        max-height: 82vh;
+        max-height: 82dvh;
+        border-radius: 16px 16px 0 0;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .sfs-topbar__pggrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ── accessibility and print ───────────────────────────────────────────── */
 

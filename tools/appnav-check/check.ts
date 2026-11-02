@@ -316,6 +316,12 @@ console.log('\n6. Access gating');
     const basic = flatten(globalGroups(BASIC)).map(i => i.to);
     check('drawing papers is free with an account', basic.includes('/draw'), basic);
     check('messages is free with an account', basic.includes('/messages'), basic);
+    // The Roadmap Provider is the third: an account, no subscription.
+    check('the roadmap provider is free with an account', basic.includes('/roadmaps'), basic);
+    check('but not for a signed-out visitor',
+          !flatten(globalGroups(SIGNED_OUT)).some(i => i.to === '/roadmaps'));
+    check('a roadmap section owns /roadmaps and its detail pages',
+          resolveSection('/roadmaps/abc', BASIC)?.id === 'roadmaps');
 
     check('the proctor group only appears for a proctor',
           !globalGroups(BASIC).some(g => g.label === 'Proctoring') &&

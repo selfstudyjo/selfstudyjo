@@ -783,8 +783,17 @@ section('Source rules');
           named.length === 0, named);
 
     check('NOTHING REACHES `v-html`', !dockCode.includes('v-html'), dockCode.slice(0, 0));
-    check('the window is teleported to <body>, or a positioned page wrapper '
-        + 'paints it under the sidebar', dockCode.includes('<Teleport to="body">'));
+    check('the window is teleported out of the page (to <body>, or INTO an element '
+        + 'that is full screen, where <body> is not painted), or a positioned page '
+        + 'wrapper paints it under the sidebar',
+        dockCode.includes('<Teleport :to="teleportTo">') && dockCode.includes('useTeleportTarget()'));
+    check('it is a modal dialog: aria-modal, a scrim, Tab kept inside, the focus returned',
+          dockCode.includes('aria-modal="true"') && dockCode.includes('class="sfs-bot-layer"')
+          && /@keydown\.tab="trapTab"/.test(dockCode) && /back\?\.focus/.test(dockCode));
+    check('a click on the scrim closes it only when the press STARTED there',
+          /@pointerdown\.self="scrimDown = true"/.test(dockCode) && /if \(started\) close\(\)/.test(dockCode));
+    check('the 3D stage mounts after the window opens, not in its first frame',
+          /<PersonStage\s+v-if="stageReady"/.test(dockCode) && /stageReady\.value = true/.test(dockCode));
     check('Escape closes it — a window with no keyboard way out is a trap',
           /event\.key === 'Escape'/.test(dock));
 
@@ -872,11 +881,20 @@ section('Source rules');
     const bare = [...withoutVars.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map(m => m[0]);
     check('no colour literal outside a `var()` fallback', bare.length === 0, bare);
 
-    check('the window stops short of the bottom-right corner, which belongs to '
-        + 'the support chat launcher on every page',
-        /max-block-size:\s*min\(/.test(css));
-    check('it is placed with LOGICAL properties, so it lands on the same side '
-        + 'as its button in Arabic', css.includes('inset-inline-end'));
+    check('the window is CENTRED over a scrim, capped to the viewport, and the '
+        + 'transcript scrolls inside it',
+        /\.sfs-bot-layer \{[^}]*position: fixed;[^}]*inset: 0;[^}]*place-items: center;/.test(css)
+        && /max-block-size:\s*min\(46rem, calc\(100dvh - 2rem\)\)/.test(css)
+        && /\.sfs-bot__log \{[^}]*overflow-y: auto;/.test(css));
+    check('the scrim is above the support chat launcher (ChatBox.vue, z-index 10000)',
+          (() => { const m = css.match(/\.sfs-bot-layer \{[^}]*z-index: (\d+);/); return !!m && Number(m[1]) > 10000; })());
+    check('on a phone it is near full screen and respects the safe areas',
+          /@media \(max-width: 640px\) \{[\s\S]{0,400}env\(safe-area-inset-top/.test(css)
+          && /env\(safe-area-inset-bottom/.test(css));
+    check('the opening animation is removed under reduced motion',
+          /prefers-reduced-motion: reduce\)[\s\S]*\.sfs-bot-layer,\s*\.sfs-bot \{ animation: none; \}/.test(css));
+    check('the close button is placed with LOGICAL properties, so it lands in the '
+        + 'right corner in Arabic', css.includes('inset-inline-end'));
     check('the 3D tile is pinned LTR — the renderer positions its camera '
         + 'viewport in viewport coordinates, which do not mirror',
         /\.sfs-bot__stage\s*\{[^}]*direction:\s*ltr/.test(css));

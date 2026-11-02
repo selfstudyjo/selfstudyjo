@@ -1384,6 +1384,14 @@ const labs: Catalogue = {
     'Drag': '拖动',
     'Look at': '查看',
     'Concept': '概念',
+    /* The lab task panel (beside the workbench, collapsible, and a drawer in
+       full screen) and the playground header. */
+    'Playground': '练习场',
+    'Free practice - nothing is graded.': '自由练习 - 这里不评分。',
+    'Hide tasks': '隐藏任务',
+    'Show tasks': '显示任务',
+    'Show tasks ({v0} of {v1} done)': '显示任务（已完成 {v0} / {v1}）',
+    'Current task': '当前任务',
 };
 
 export default labs;

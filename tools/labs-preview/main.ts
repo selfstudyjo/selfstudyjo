@@ -80,7 +80,12 @@ const app = createApp({
                 // (`/simulator`) instead of a lab workspace.
                 params.get('view') === 'studio'
                     ? h(SelfDrivingStudio)
-                    : h(LabWorkspace, propOnly ? { labId: propOnly } : {})]),
+                    // `?play=1` mounts it in PLAYGROUND mode (no brief, no
+                    // tasks, nothing graded) - the per-tool playgrounds' view.
+                    : h(LabWorkspace, {
+                        ...(propOnly ? { labId: propOnly } : {}),
+                        ...(params.has('play') ? { playground: true } : {}),
+                    })]),
         ]),
     ],
 });

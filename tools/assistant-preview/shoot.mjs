@@ -200,7 +200,7 @@ for (const width of WIDTHS) {
             report.push(`\n${width}px ${variant.id}: the page never reported — it probably threw`);
         }
         const bad = lines.filter(l =>
-            /SIDEWAYS SCROLL|OVERFLOWS|OFF THE LEFT EDGE|WINDOW MISSING|TOO CLOSE|ABOVE THE VIEWPORT|NOT CLICKABLE/
+            /SIDEWAYS SCROLL|OVERFLOWS|OFF THE LEFT EDGE|WINDOW MISSING|NOT CENTRED|ABOVE THE VIEWPORT|NOT CLICKABLE/
                 .test(l));
         if (bad.length) {
             failures += bad.length;

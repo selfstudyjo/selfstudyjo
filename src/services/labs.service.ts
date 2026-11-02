@@ -33,6 +33,7 @@ import type {
     Lab, LabGrade, LabProgress, LabSummary, LabTool, LabTrack,
 } from '@/utils/labCatalogue';
 import type { GlossaryIndexRow, GlossaryTerm, LabDefinitions } from '@/utils/labDocs';
+import type { Playground } from '@/utils/playgrounds';
 
 export interface OpenLabResponse {
     ok: boolean;
@@ -246,6 +247,57 @@ class LabsService {
         } catch {
             return null;
         }
+    }
+
+    /**
+     * Every tool's free-practice workspace (app 11's `play-*` records), for
+     * the top bar's Playgrounds menu and `/playgrounds`.
+     *
+     * Cached for the life of the tab and in sessionStorage: the menu opens
+     * from every page, and a cold replica takes ~20 seconds for its first
+     * answer - paying that every time somebody opens a menu would make it a
+     * menu nobody opens twice. The list changes only on a deploy. A failure
+     * is NOT cached, so the next open asks again.
+     */
+    private playgroundCache: Playground[] | null = null;
+    private playgroundInflight: Promise<Playground[]> | null = null;
+
+    async getPlaygrounds(): Promise<Playground[]> {
+        if (this.playgroundCache) return this.playgroundCache;
+        try {
+            const stored = sessionStorage.getItem('sfs-playgrounds');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length) {
+                    this.playgroundCache = parsed;
+                    return parsed;
+                }
+            }
+        } catch {
+            /* a private window or a corrupt entry: ask the service */
+        }
+        if (!this.playgroundInflight) {
+            this.playgroundInflight = (async () => {
+                const replica = await this.catalogueReplica();
+                if (!replica) return [];
+                try {
+                    const payload = await apiService.get<{ playgrounds: Playground[] }>(
+                        replica, '/api/labs/playgrounds/');
+                    const rows = Array.isArray(payload?.playgrounds) ? payload.playgrounds : [];
+                    if (rows.length) {
+                        this.playgroundCache = rows;
+                        try {
+                            sessionStorage.setItem('sfs-playgrounds', JSON.stringify(rows));
+                        } catch { /* quota: the in-memory copy is enough */ }
+                    }
+                    return rows;
+                } catch (error) {
+                    console.warn('Could not load the playgrounds', error);
+                    return [];
+                }
+            })().finally(() => { this.playgroundInflight = null; });
+        }
+        return this.playgroundInflight;
     }
 
     async getTools(): Promise<LabTool[]> {

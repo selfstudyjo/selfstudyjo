@@ -420,6 +420,12 @@ const icons: Record<IconName, any> = {
   // A podium rather than a trophy: the page is a ranking of people, and three
   // stepped columns say "first, second, third" at 20px where a cup says
   // "winner" and nothing about the other 200 rows.
+  // A winding path between two pins: the Roadmap Provider.
+  roadmap: stroked('RoadmapIcon', '1.8', () => [
+    h('circle', { cx: '6', cy: '5', r: '2.2' }),
+    h('circle', { cx: '18', cy: '19', r: '2.2' }),
+    h('path', { d: 'M6 7.2v2.3a3 3 0 003 3h6a3 3 0 013 3v1.3' }),
+  ]),
   leaderboard: filled('LeaderboardIcon',
     'M4 13h4v8H4v-8zm6-9h4v17h-4V4zm6 5h4v12h-4V9z'),
 

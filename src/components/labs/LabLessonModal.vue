@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
     <!--
       THE LESSON, WITHOUT LEAVING THE LAB.
 
@@ -75,6 +75,11 @@
  * places - and nothing reaches `v-html`.
  */
 import { computed, nextTick, ref, watch } from 'vue';
+import { useTeleportTarget } from '@/composables/useFullscreen';
+/* `<body>`, or the element that is full screen right now: with the native
+   Fullscreen API only that element's subtree is painted, so a window
+   teleported to <body> would open invisibly. See useFullscreen.ts. */
+const teleportTo = useTeleportTarget();
 import { BookOpen, X } from 'lucide-vue-next';
 import LabBrief from '@/components/labs/LabBrief.vue';
 import { t, td } from '@/i18n/runtime';

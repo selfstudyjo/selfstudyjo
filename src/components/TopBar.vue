@@ -20,6 +20,27 @@
         <span class="sfs-topbar__label">{{ $t(tool.label) }}</span>
       </button>
 
+      <!-- EVERY TOOL'S PLAYGROUND, from every page.
+           One free-practice workspace per tool on the platform - AWS, Azure,
+           Fabric, Snowflake, Terraform, Jenkins, Docker, Kubernetes, Hive,
+           Git, Ansible and the rest - each the student's OWN saved
+           environment with the tool's consoles, dashboards and product
+           portal, and none of it a lab: nothing is graded or recorded. -->
+      <button
+        ref="pgButton"
+        type="button"
+        class="sfs-topbar__btn"
+        :class="{ 'is-open': menuOpen }"
+        :aria-expanded="menuOpen"
+        aria-haspopup="dialog"
+        aria-controls="sfs-topbar-playgrounds"
+        :title="$t('Open a playground for any tool')"
+        @click="toggleMenu"
+      >
+        <LayoutGrid class="sfs-topbar__i" />
+        <span class="sfs-topbar__label">{{ $t('Playgrounds') }}</span>
+      </button>
+
       <span class="sfs-topbar__spacer"></span>
 
       <!--
@@ -59,6 +80,81 @@
         <Maximize2 class="sfs-topbar__i" />
         <span class="sfs-topbar__label">{{ $t('Full page') }}</span>
       </a>
+    </div>
+
+    <!--
+      The playgrounds menu. A popover under the bar on a desktop and a bottom
+      sheet on a phone (labs.css). Escape closes it and returns focus to the
+      button; arrow keys move between tools; a click outside closes it.
+      Outside `__inner` on purpose: that bar has a backdrop-filter, which
+      makes it the containing block for anything `position: fixed` inside it,
+      and the phone sheet would then be pinned to a 40px strip.
+    -->
+    <div v-if="menuOpen" class="sfs-topbar__pgscrim" @click="closeMenu(true)"></div>
+    <div
+      v-if="menuOpen"
+      id="sfs-topbar-playgrounds"
+      ref="menuEl"
+      class="sfs-topbar__pgmenu"
+      role="dialog"
+      :aria-label="$t('Playgrounds')"
+      @keydown="onMenuKey"
+    >
+      <div class="sfs-topbar__pghead">
+        <input
+          ref="searchEl"
+          v-model="pgQuery"
+          type="search"
+          class="sfs-topbar__pgsearch"
+          :placeholder="$t('Search tools…')"
+          :aria-label="$t('Search tools…')"
+        />
+        <router-link to="/playgrounds" class="sfs-topbar__pgall" @click="closeMenu(false)">
+          {{ $t('All playgrounds') }}
+        </router-link>
+        <button type="button" class="sfs-dock__ctl" :title="$t('Close')"
+                :aria-label="$t('Close')" @click="closeMenu(true)">
+          <X class="sfs-topbar__i" />
+        </button>
+      </div>
+      <p class="sfs-topbar__pgnote">
+        {{ $t('Your own workspace for every tool. Practise freely - nothing is graded or recorded.') }}
+      </p>
+
+      <div class="sfs-topbar__pgbody">
+        <p v-if="!username" class="sfs-dock__gate">
+          {{ $t('Sign in to use the playgrounds.') }}
+        </p>
+        <p v-else-if="!hasLabAccess" class="sfs-dock__gate">
+          {{ $t('Your plan does not include the playgrounds.') }}
+          <router-link to="/plans" @click="closeMenu(false)">{{ $t('View Plans') }}</router-link>
+        </p>
+        <template v-else>
+          <p v-if="pgLoading && !pgRows.length" class="sfs-dock__gate">
+            {{ $t('Loading the playgrounds…') }}
+          </p>
+          <p v-else-if="!grouped.length" class="sfs-dock__gate">
+            {{ pgQuery ? $t('No tool matches that search.') : $t('The playgrounds could not be loaded.') }}
+          </p>
+          <section v-for="group in grouped" :key="group.group" class="sfs-topbar__pggroup">
+            <h3 class="sfs-topbar__pgtitle">{{ groupLabel(group.group) }}</h3>
+            <ul class="sfs-topbar__pggrid">
+              <li v-for="row in group.rows" :key="row.id">
+                <router-link
+                  :to="playgroundHref(row)"
+                  class="sfs-topbar__pgitem"
+                  data-pg-item
+                  :title="playgroundSummary(row)"
+                  @click="closeMenu(false)"
+                >
+                  <span class="sfs-topbar__pgglyph"><PlaygroundIcon :name="row.icon" /></span>
+                  <span class="sfs-topbar__pgname">{{ playgroundTitle(row) }}</span>
+                </router-link>
+              </li>
+            </ul>
+          </section>
+        </template>
+      </div>
     </div>
 
     <!--
@@ -154,11 +250,21 @@
  * **The dock is a panel, not a modal.** See the comment in the template - the
  * whole value is that the page behind it is still readable.
  */
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import {
-  ChevronDown, ChevronUp, Database, FileCode, FlaskConical, Maximize2,
-  Terminal, X,
+  ChevronDown, ChevronUp, Database, FileCode, FlaskConical, LayoutGrid,
+  Maximize2, Terminal, X,
 } from 'lucide-vue-next';
+import { labsService } from '@/services/labs.service';
+import { localeId } from '@/i18n/runtime';
+import {
+  groupPlaygrounds, playgroundHref, withLinked, type Playground,
+} from '@/utils/playgrounds';
+import {
+  groupLabel, playgroundSearchText, playgroundSummary, playgroundTitle,
+} from '@/composables/playgroundLabels';
+import PlaygroundIcon from '@/components/playgrounds/PlaygroundIcon.vue';
 import { useAuthStore } from '@/store/auth';
 import { useTour } from '@/composables/useTour';
 import { labService } from '@/services/lab.service';
@@ -225,6 +331,7 @@ function toggle(id: string) {
   // tour stops rather than being covered by something the reader just asked
   // for - they made a choice, and it was not the tour.
   tour.stop();
+  menuOpen.value = false;
   open.value = open.value === id ? '' : id;
 }
 
@@ -279,7 +386,92 @@ async function runSql(statement: string) {
   };
 }
 
+/* ─────────────── the playgrounds menu ─────────────── */
+
+const route = useRoute();
+const menuOpen = ref(false);
+const pgQuery = ref('');
+const pgRows = ref<Playground[]>([]);
+const pgLoading = ref(false);
+const pgButton = ref<HTMLButtonElement | null>(null);
+const menuEl = ref<HTMLElement | null>(null);
+const searchEl = ref<HTMLInputElement | null>(null);
+
+const grouped = computed(() => groupPlaygrounds(
+  withLinked(pgRows.value), pgQuery.value, localeId.value, playgroundSearchText));
+
+/**
+ * The list is fetched on the FIRST open, never on mount: the top bar is on
+ * every page and a page load must not wait on the lab service. The service
+ * caches it for the tab, so later opens are instant.
+ */
+async function loadPlaygrounds() {
+  if (pgRows.value.length || pgLoading.value || !username.value || !hasLabAccess.value) return;
+  pgLoading.value = true;
+  try {
+    pgRows.value = await labsService.getPlaygrounds();
+  } finally {
+    pgLoading.value = false;
+  }
+}
+
+function toggleMenu() {
+  if (menuOpen.value) {
+    closeMenu(true);
+    return;
+  }
+  tour.stop();
+  open.value = '';
+  menuOpen.value = true;
+  void loadPlaygrounds();
+  void nextTick(() => searchEl.value?.focus());
+}
+
+/** `restore` returns focus to the button - not after following a link. */
+function closeMenu(restore: boolean) {
+  if (!menuOpen.value) return;
+  menuOpen.value = false;
+  pgQuery.value = '';
+  if (restore) void nextTick(() => pgButton.value?.focus());
+}
+
+/**
+ * Arrow keys walk the tools in reading order (Left/Right as well as Up/Down,
+ * mirrored under `dir="rtl"`), Home/End jump, Down from the search box enters
+ * the grid. No focus trap: Tab leaves the menu normally, which is what a
+ * non-modal popover should do.
+ */
+function onMenuKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    event.stopPropagation();
+    closeMenu(true);
+    return;
+  }
+  const keys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  if (!keys.includes(event.key)) return;
+  const items = Array.from(menuEl.value?.querySelectorAll<HTMLElement>('[data-pg-item]') || []);
+  if (!items.length) return;
+  const at = items.indexOf(document.activeElement as HTMLElement);
+  // In the search box Left/Right/Home/End move the caret, not the focus.
+  if (at < 0 && event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  event.preventDefault();
+  const rtl = document.documentElement.dir === 'rtl';
+  const forward = event.key === 'ArrowDown'
+    || (event.key === 'ArrowRight' && !rtl) || (event.key === 'ArrowLeft' && rtl);
+  let next: number;
+  if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = items.length - 1;
+  else if (at < 0) next = forward ? 0 : items.length - 1;
+  else next = (at + (forward ? 1 : -1) + items.length) % items.length;
+  items[next]?.focus();
+}
+
 function onKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && menuOpen.value) {
+    closeMenu(true);
+    return;
+  }
   if (event.key === 'Escape' && open.value) {
     open.value = '';
   }
@@ -288,12 +480,17 @@ function onKey(event: KeyboardEvent) {
 onMounted(() => window.addEventListener('keydown', onKey));
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
+// Following a link closes the menu; so does any other navigation.
+watch(() => route.fullPath, () => closeMenu(false));
+
 // A dock open while the reader signs out would keep a console pointed at a
 // username that no longer exists.
 watch(username, value => {
   if (!value) {
     open.value = '';
     ready.value = false;
+    menuOpen.value = false;
+    pgRows.value = [];
   }
 });
 </script>

@@ -77,6 +77,8 @@ import {
     type LabTask,
 } from '../../src/utils/labCatalogue';
 import * as portal from '../../src/utils/portalKit';
+import * as pg from '../../src/utils/playgrounds';
+import { existsSync } from 'node:fs';
 
 import {
     ancestorsOf,
@@ -9091,7 +9093,46 @@ section('17. Portals: the product consoles, and the command line they write');
         check(`full screen (${label}): both states are labelled`,
               /\$t\('Full screen'\)/.test(text) && /\$t\('Exit full screen'\)/.test(text));
     }
+    /*
+     * THE TASKS AND THE "i" WINDOW IN FULL SCREEN.
+     *
+     * With the native API only the full-screen element is painted, so a dialog
+     * teleported to <body> opens, takes the focus and is INVISIBLE - the task
+     * info button looked dead in full screen. Every element this composable
+     * makes full screen is registered as the teleport host; every lab dialog
+     * (and the console menu, the read-aloud bar and the assistant) teleports to
+     * `useTeleportTarget()`, never to a literal "body".
+     */
+    check('full screen: every element made full screen is registered as the teleport host',
+          /addHost\(element\);\s*return;/.test(composable) && /addHost\(element\);\s*setLock\(true\)/.test(composable)
+          && /removeHost\(target\.value\);\s*setLock\(false\)/.test(composable));
+    check('full screen: the teleport target is the innermost host, else <body>',
+          /fullscreenHost\.value \|\| 'body'/.test(composable));
+    check('full screen: Escape in the overlay closes an open dialog first, not the workbench',
+          /closest\?\.\('\[role="dialog"\]'\)/.test(composable) && /querySelector\('\[role="dialog"\]'\)\) return;/.test(composable));
+    for (const file of [
+        'src/components/labs/LabTaskGuide.vue', 'src/components/labs/LabLessonModal.vue',
+        'src/components/labs/docs/LabDefinitions.vue', 'src/components/labs/LabConsole.vue',
+        'src/components/ReadAloud.vue', 'src/components/assistant/AssistantDock.vue',
+    ]) {
+        const text = source(file);
+        check(`full screen: ${file.split('/').pop()} teleports to the full-screen host, not <body>`,
+              !/<Teleport[^>]*\bto="body"/.test(text) && /:to="teleportTo"/.test(text)
+              && /useTeleportTarget\(\)/.test(text));
+    }
+    check('full screen: the task list is teleported into a drawer INSIDE the bench (one live instance)',
+          /id="sl-tasks-drawer"/.test(bench)
+          && /<Teleport defer to="#sl-tasks-drawer" :disabled="!benchFs\.active\.value">\s*<LabTasks/.test(bench));
+    check('full screen: the tab row has a Tasks toggle with its progress and aria-expanded',
+          /class="sl-bench__fs-btn sl-bench__tasks-btn"[\s\S]{0,200}:aria-expanded="drawerOpen"/.test(bench)
+          && /\{\{ grade\.done \}\}\/\{\{ grade\.total \}\}/.test(bench));
+    check('full screen: on a narrow screen the drawer is a sheet that starts CLOSED',
+          /if \(on\) sheetOpen\.value = false;/.test(bench) && /narrow\.value \? sheetOpen\.value : !tasksCollapsed\.value/.test(bench));
+
     const css = source('src/assets/css/labs.css');
+    check('full screen: the drawer is hidden on the page and a grid cell in full screen',
+          /\.sl-bench__drawer \{ display: none; \}/.test(css)
+          && /\.sl-bench\.is-full > \.sl-bench__drawer\.is-open \{[^}]*grid-row: 2;/.test(css));
     check('full screen: the overlay fallback is fixed over the whole viewport, for both',
           /\.sl-portal\.is-overlay\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0/.test(css)
           && /\.sl-bench\.is-overlay\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0/.test(css));
@@ -9125,12 +9166,12 @@ section('18. Which tasks the GUI can do, and Review the lesson');
     check('the brief names the portals and opens them',
           /v-if="labPortals\.length"/.test(bench) && /@click="openTool\(tool\.id\)"/.test(bench));
     check('the brief has a Review the lesson button wired to the modal',
-          /@click="lessonOpen = true"/.test(bench) && /<LabLessonModal :open="lessonOpen"/.test(bench));
+          /@click="lessonOpen = true"/.test(bench) && /<LabLessonModal (v-if="!playground" )?:open="lessonOpen"/.test(bench));
     const modal = source('src/components/labs/LabLessonModal.vue');
     check('the lesson modal renders with LabBrief (same parser) and never v-html',
           /<LabBrief v-if="content"/.test(modal) && !/v-html/.test(stripComments(modal)));
     check("the lesson modal is teleported out of the workbench's stacking context",
-          /<Teleport to="body">/.test(modal));
+          /<Teleport :to="teleportTo">/.test(modal) && /useTeleportTarget\(\)/.test(modal));
     const svc = source('src/services/course.service.ts');
     check('the lesson lookup filters by lab_id client-side too (an old replica ignores ?lab_id=)',
           /lab_id=\$\{encodeURIComponent\(labId\)\}/.test(svc) && /row\.lab_id \|\| ''\) === labId/.test(svc));
@@ -9165,7 +9206,7 @@ section('18. Which tasks the GUI can do, and Review the lesson');
           keepVerified(after as any) === (after as any));
     const ws = source('src/views/LabWorkspace.vue');
     check('the workspace keeps verified tasks on open and on Check my work',
-          /keepVerified\(payload\.grade, null, payload\.progress\?\.tasks_done/.test(ws)
+          /keepVerified\((payload\.grade|arrived), null, payload\.progress\?\.tasks_done/.test(ws)
           && /keepVerified\(result\.grade, before\)/.test(ws));
     check('switching labs clears the grade, so ids like t1 do not leak between labs',
           /grade\.value = \{ tasks: \[\], done: 0/.test(ws));
@@ -9215,10 +9256,54 @@ section('18. Which tasks the GUI can do, and Review the lesson');
           /class="sl-task__info"/.test(tasks) && /@click="infoAt = at"/.test(tasks)
           && /<LabTaskGuide :task="infoTask"/.test(tasks));
     const guide = source('src/components/labs/LabTaskGuide.vue');
-    check('the guide is teleported out of the workbench', /<Teleport to="body">/.test(guide));
+    check('the guide is teleported out of the workbench - to <body>, or INTO whatever is full screen',
+          /<Teleport :to="teleportTo">/.test(guide) && /useTeleportTarget\(\)/.test(guide));
     check('the guide keeps the hint behind a press', /v-if="hintOpen" class="sltg-hint"/.test(guide));
     check('commands and paths in the guide are LTR literals', /class="sltg-code" dir="ltr"/.test(guide));
     check('Escape closes the guide', /@keydown\.esc="\$emit\('close'\)"/.test(guide));
+}
+
+/* ─────────────────── the task panel: beside the bench, capped, collapsible ─────────────────── */
+{
+    const bench = source('src/views/LabWorkspace.vue');
+    const tasks = source('src/components/labs/LabTasks.vue');
+    const css = source('src/assets/css/labs.css');
+    check('the task list scrolls inside itself, capped, instead of making the page long',
+          /class="sl-tasks__scroll"/.test(tasks)
+          && /\.sl-tasks__scroll \{[^}]*max-height: min\(60vh, 34rem\);[^}]*overflow-y: auto;/.test(css));
+    check('beside the workbench the column is sticky and never taller than the viewport',
+          /@media \(min-width: 1024px\) \{\s*\.sl-side \{[^}]*position: sticky;[^}]*max-height: calc\(100dvh - 2rem\);/.test(css));
+    check('the tasks sit beside the workbench from 1024px, and the column gives way when collapsed',
+          /@media \(min-width: 1024px\) \{\s*\.sl-wsbody \{ grid-template-columns: minmax\(0, 1fr\) minmax\(17rem, 20rem\); \}/.test(css)
+          && /\.sl-wsbody\.is-tasks-collapsed \{ grid-template-columns: minmax\(0, 1fr\) auto; \}/.test(css));
+    check('the panel has a Hide tasks control with aria-expanded',
+          /class="sl-tasks__collapse"[\s\S]{0,120}:aria-expanded="true"/.test(tasks) && /\$emit\('collapse'\)/.test(tasks));
+    check('collapsed, a rail shows the progress and reopens it, with aria-expanded',
+          /v-if="tasksCollapsed" type="button" class="sl-rail"[\s\S]{0,80}:aria-expanded="false"/.test(bench)
+          && /class="sl-rail__count" dir="ltr">\{\{ grade\.done \}\}\/\{\{ grade\.total \}\}/.test(bench));
+    check('the choice is remembered PER LAB, and localStorage is guarded',
+          /const TASKS_KEY = 'sl-tasks-collapsed:'/.test(bench)
+          && /try \{ return window\.localStorage\.getItem\(TASKS_KEY \+ id\) === '1'; \} catch/.test(bench));
+    check('the current task is marked in words and by aria-current, and revealed in its own scroll box',
+          /'is-current': at === currentAt/.test(tasks) && /aria-current=/.test(tasks)
+          && /\$t\('Current task'\)/.test(tasks) && /box\.scrollTop \+=/.test(tasks)
+          && !/scrollIntoView/.test(stripComments(tasks)));
+    check('every panel feature is still there: Check my work, self-mark, report, tutor, info window',
+          /\$emit\('grade'\)/.test(tasks) && /\$emit\('self-mark', task\.id\)/.test(tasks)
+          && /report\.key/.test(tasks) && /\$emit\('ask', task\)/.test(tasks) && /<LabTaskGuide :task="infoTask"/.test(tasks));
+    // PLAYGROUND MODE: the contract the per-tool playgrounds depend on.
+    check('playground: an optional prop, and the labId prop still wins over the route',
+          /playground\?: boolean;/.test(bench) && /String\(props\.labId \|\| route\.params\.labId \|\| ''\)/.test(bench));
+    check('playground: no task panel, no Brief tab, no grading, no practice record',
+          /<aside v-if="!playground" class="sl-side"/.test(bench)
+          && /v-if="!playground"\s*type="button"\s*role="tab"/.test(bench)
+          && /if \(!lab\.value \|\| playground\.value\) return;/.test(bench)
+          && /if \(!playground\.value\) \{\s*sitting\.begin\(/.test(bench));
+    check('playground: says nothing is graded, and the workbench takes the full width',
+          /\$t\('Free practice - nothing is graded\.'\)/.test(bench)
+          && /\.sl-wsbody\.is-play \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
+    check('a task-less record (no grade in the payload) renders without throwing',
+          /payload\.grade \|\| emptyGrade\(\)/.test(bench) && /\(arrived\.tasks \|\| \[\]\)/.test(bench));
 }
 
 /* ─────────────────── the card shows the task in full ─────────────────── */
@@ -9258,6 +9343,57 @@ section('18. Which tasks the GUI can do, and Review the lesson');
     check('the modal never fetches an unlinked origin lesson on its own',
           !/getLesson\(origin\.lessonId\)/.test(stripComments(modal))
           && /String\(row\.lab_id \|\| ''\) === props\.labId/.test(modal));
+}
+
+/* ─────────────────── the playgrounds (play-* workspaces, not labs) ─────────────────── */
+{
+    const row = (id: string, group: string, title: string, order = 0, tools: string[] = []) => ({
+        id, group, title, summary: '', track: 't', icon: '', order,
+        tools: tools.map(t => ({ id: t, label: t, kind: 'console', icon: '', simulated: true })),
+    });
+    const rows = [row('play-b', 'cloud', 'Beta', 1), row('play-a', 'cloud', 'Alpha', 1),
+                  row('play-k', 'devops', 'Kubernetes', 0, ['kubectl']),
+                  row('play-x', 'nonsense', 'Odd', 0)];
+    const grouped = pg.groupPlaygrounds(rows as any, '', 'en');
+    check('playground groups come in GROUPS order and drop empty ones',
+          grouped.map(g => g.group).join(',') === 'cloud,devops');
+    check('an equal order is broken by the displayed title (a total order)',
+          grouped[0].rows.map(r => r.id).join(',') === 'play-a,play-b');
+    check('a row in an unknown group is filed under DevOps, not lost',
+          grouped[1].rows.some(r => r.id === 'play-x'));
+    check('the search matches a tool label, not only the title',
+          pg.groupPlaygrounds(rows as any, 'kubectl', 'en').flatMap(g => g.rows).map(r => r.id)
+              .join(',') === 'play-k');
+    check('a search that matches nothing yields no groups',
+          pg.groupPlaygrounds(rows as any, 'zzzz', 'en').length === 0);
+    check('only a play-* id is opened as a playground',
+          pg.isPlaygroundId('play-aws') && !pg.isPlaygroundId('aws-01-cli-s3')
+          && !pg.isPlaygroundId('play-../x'));
+    check('a record opens /playground/<id> and a linked studio its own route',
+          pg.playgroundHref(row('play-aws', 'cloud', 'AWS') as any) === '/playground/play-aws'
+          && pg.LINKED.every(l => pg.playgroundHref(l) === l.route && l.route!.startsWith('/')));
+    check('withLinked adds the two studios once',
+          pg.withLinked(pg.withLinked([]) as any).length === pg.LINKED.length);
+    // The CROSS-REPO contract: app 11's GROUPS must be this module's GROUPS,
+    // or a playground lands in a group the menu does not draw (and is filed
+    // under DevOps). Skipped, not passed, without the sibling checkout.
+    const py = resolve(process.cwd(), '../selfstudyuserlab/utils/labs/playgrounds.py');
+    if (existsSync(py)) {
+        const m = readFileSync(py, 'utf8').match(/GROUPS = \(([^)]*)\)/);
+        const theirs = m ? [...m[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]) : [];
+        check('app 11 and the menu agree on the playground groups',
+              theirs.join(',') === pg.GROUPS.join(','), theirs);
+    } else {
+        console.log('  skip  app 11 not checked out: playground GROUPS contract');
+    }
+    const top = stripComments(source('src/components/TopBar.vue'));
+    check('the top bar opens the playgrounds menu and keeps the three tools',
+          /aria-controls="sfs-topbar-playgrounds"/.test(top) && /v-for="tool in TOOLS"/.test(top));
+    check('the menu closes on Escape and returns focus to its button',
+          /event\.key === 'Escape'/.test(top) && /pgButton\.value\?\.focus\(\)/.test(top));
+    const view = source('src/views/Playground.vue');
+    check('a playground is the lab workspace in playground mode, keyed on the id',
+          /<LabWorkspace[^>]*:key="id"[^>]*:lab-id="id"[^>]*playground/.test(view));
 }
 
 /* ─────────────────── report ─────────────────── */

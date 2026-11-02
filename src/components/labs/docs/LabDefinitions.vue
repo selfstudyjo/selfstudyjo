@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport :to="teleportTo">
     <!--
       THE DEFINITIONS WINDOW. Teleported to <body> for the reason every lab
       dialog is: the workbench is a positioned box one z-index away from a
@@ -206,6 +206,11 @@
  * English for now; the chrome is translated. Nothing reaches `v-html`.
  */
 import { computed, nextTick, ref, watch } from 'vue';
+import { useTeleportTarget } from '@/composables/useFullscreen';
+/* `<body>`, or the element that is full screen right now: with the native
+   Fullscreen API only that element's subtree is painted, so a window
+   teleported to <body> would open invisibly. See useFullscreen.ts. */
+const teleportTo = useTeleportTarget();
 import {
   BookMarked, Boxes, Clock, Compass, Gauge, Info, Layers, ListChecks, Search, Workflow, Wrench, X,
 } from 'lucide-vue-next';

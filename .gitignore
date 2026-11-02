@@ -203,3 +203,7 @@ tools/reader-preview/shots/
 
 # The interview report preview's rendered PDFs, DOCX files and page images.
 tools/interviewreport-preview/out/
+
+# Output of tools/roadmap-preview - screenshots, the report and the
+# throwaway Chrome profile.
+tools/roadmap-preview/shots/

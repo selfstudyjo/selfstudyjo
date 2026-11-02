@@ -61,7 +61,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard' | 'car';
+    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard' | 'car' | 'roadmap';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -362,6 +362,12 @@ const ALL_CERTIFICATES: NavEntry = { to: '/all-certificates', text: 'All Certifi
 */
 const LEADERBOARD: NavEntry = { to: '/leaderboard', text: 'Leaderboard', icon: 'leaderboard', keywords: 'ranking ranks top learners points scores standings league table podium leaders stats dashboard public', requires: 'public' };
 
+/*
+  The Roadmap Provider (app 27). Free with an ACCOUNT, like Drawing Papers and
+  Messages: no `requires`, which resolves to "any signed-in user".
+*/
+const ROADMAPS: NavEntry = { to: '/roadmaps', text: 'Roadmap Provider', icon: 'roadmap', keywords: 'roadmap career path plan job role specialization field learning path track 3d map skills free' };
+
 // -- Results -------------------------------------------------------------
 const MY_RESULTS: NavEntry = { to: '/my-results', text: 'My Results', icon: 'results', keywords: 'scores grades marks exam quiz history' };
 
@@ -386,6 +392,16 @@ const NETSIM: NavEntry = { to: '/network-simulator', text: 'Network Simulator', 
   Gated like every lab tool (`lab_feature`).
 */
 const SIMULATOR: NavEntry = { to: '/simulator', text: 'Self-Driving Simulator', icon: 'car', keywords: 'carla self driving autonomous car vehicle simulator drive city traffic autopilot 3d', requires: 'lab' };
+/*
+  The PLAYGROUNDS: one free-practice workspace per tool - AWS, Azure, Fabric,
+  Snowflake, Terraform, Jenkins, Docker, Kubernetes, Hive, Git, Ansible and the
+  rest - each the student's own saved environment with the tool's consoles,
+  dashboards and product portal. App 11's unpublished, task-less `play-*`
+  records; not labs, so nothing graded and no progress. Also on the top bar of
+  every page. `/playground/:id` is in the section's `match` and not in its
+  items: one playground is a place you arrive at from the list, like a lab.
+*/
+const PLAYGROUNDS: NavEntry = { to: '/playgrounds', text: 'Playgrounds', icon: 'grid', keywords: 'playground sandbox practice free workspace aws azure fabric snowflake terraform jenkins docker kubernetes hive spark hadoop git ansible puppet chef django flask sql python linux postgres kafka airflow dbt jira servicenow mlflow claude mcp wireshark portal console', requires: 'lab' };
 const AI_CHAT: NavEntry = { to: '/ai-chat', text: 'AI Chat Assistant', icon: 'ai', keywords: 'chatbot gpt llm ask question assistant', requires: 'ai' };
 const RESEARCH: NavEntry = { to: '/research', text: 'Research Flow', icon: 'research', keywords: 'papers sources literature review academic citation', requires: 'research' };
 const TOASTMASTERS: NavEntry = { to: '/toastmasters', text: 'Toastmasters', icon: 'toastmasters', keywords: 'public speaking speech presentation pathways', requires: 'toastmasters' };
@@ -519,7 +535,7 @@ export const APP_SECTIONS: AppSection[] = [
         match: ['/labs', '/lab'],
         home: '/labs',
         items: [LABS],
-        related: [TOOL_LINUX, NETSIM, SIMULATOR, COURSES, AI_CHAT],
+        related: [PLAYGROUNDS, TOOL_LINUX, NETSIM, SIMULATOR, COURSES, AI_CHAT],
     },
     {
         id: 'tools',
@@ -530,6 +546,16 @@ export const APP_SECTIONS: AppSection[] = [
         home: '/tools',
         items: [TOOL_SQL, TOOL_LINUX, TOOL_PYTHON],
         related: [LABS, NETSIM, AI_CHAT],
+    },
+    {
+        id: 'playgrounds',
+        title: 'Playgrounds',
+        subtitle: 'Your own workspace for every tool - nothing graded',
+        icon: 'grid',
+        match: ['/playgrounds', '/playground'],
+        home: '/playgrounds',
+        items: [PLAYGROUNDS],
+        related: [LABS, TOOL_LINUX, NETSIM, SIMULATOR, AI_CHAT],
     },
     {
         id: 'simulator',
@@ -670,6 +696,16 @@ export const APP_SECTIONS: AppSection[] = [
         related: [NOTIFICATIONS, DRAW, PROFILE],
     },
     {
+        id: 'roadmaps',
+        title: 'Roadmap Provider',
+        subtitle: 'Your learning path to a role, free with an account',
+        icon: 'roadmap',
+        match: ['/roadmaps'],
+        home: '/roadmaps',
+        items: [{ ...ROADMAPS, text: 'My Roadmaps' }],
+        related: [COURSES, LABS, RUNBOOKS],
+    },
+    {
         id: 'leaderboard',
         title: 'Leaderboard',
         subtitle: 'Who is ahead across the platform',
@@ -735,8 +771,8 @@ export const APP_SECTIONS: AppSection[] = [
 export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
-        { label: 'Learn', items: [COURSES, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
-        { label: 'Tools', items: [TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX, PRODUCTS] },
+        { label: 'Learn', items: [COURSES, ROADMAPS, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
+        { label: 'Tools', items: [PLAYGROUNDS, TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX, PRODUCTS] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);
