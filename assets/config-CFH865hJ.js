@@ -1,0 +1,1 @@
+import{Vn as e}from"./index-CVtsxvnd.js";export{e as serviceRegistry};
