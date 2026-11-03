@@ -1,0 +1,1 @@
+import{Nr as e}from"./index-CMih0Pkw.js";export{e as serviceRegistry};
