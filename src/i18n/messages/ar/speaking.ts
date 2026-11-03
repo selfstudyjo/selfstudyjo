@@ -583,11 +583,19 @@ const speaking: Catalogue = {
     "Answers use short sentences and everyday words, written to be read and spoken easily by an Arabic speaker.": "تستخدم الإجابات جملًا قصيرة وكلمات يومية، وتُكتب ليسهل على المتحدث بالعربية قراءتها ونطقها.",
     "Answers in seconds": "إجابات خلال ثوانٍ",
     "Prepare answers to common HR questions before the interview. They appear instantly, then Self Study AI improves them for the exact question.": "حضّر قبل المقابلة إجابات لأسئلة الموارد البشرية الشائعة. تظهر فورًا، ثم يحسّنها Self Study AI لتناسب السؤال نفسه.",
+    // Interview Helper 1.4.0: offline with SelfStudy LM. The app's own labels
+    // (Continue offline, Settings › Local AI) stay in English, because that is
+    // what the student will find in the app; its three choices are listed by the
+    // page itself, each in a left-to-right element of its own.
+    "Works offline with SelfStudy LM": "يعمل دون إنترنت مع SelfStudy LM",
+    "On first launch, choose a model and a folder and it is downloaded: SelfStudy LM Mini (1.3 GB, for 4 GB of memory) or SelfStudy LM (3.4 GB, for 8 GB), recommended on most laptops. Offline, its instant built-in answer appears first, then the full answer is written on your computer in about 10–20 seconds on a laptop.": "عند التشغيل الأول اختر نموذجًا ومجلدًا فيُنزَّل: إما SelfStudy LM Mini بحجم 1.3 غيغابايت لذاكرة 4 غيغابايت، وإما SelfStudy LM بحجم 3.4 غيغابايت لذاكرة 8 غيغابايت، وهو الموصى به لمعظم الحواسيب المحمولة. ودون إنترنت تظهر أولًا إجابته المدمجة الفورية، ثم تُكتب الإجابة الكاملة على حاسوبك في نحو 10 إلى 20 ثانية على حاسوب محمول.",
+    "Online, offline or private": "عبر الإنترنت أو دونه أو بخصوصية تامة",
+    "No account is needed offline: the sign-in screen has Continue offline. In Settings › Local AI, choose who writes the answers:": "لا حاجة إلى حساب للعمل دون إنترنت: في شاشة تسجيل الدخول خيار Continue offline. ومن Settings › Local AI اختر مَن يكتب الإجابات:",
     "Windows 10 or 11. Computer audio works out of the box.": "Windows 10 أو 11. يعمل التقاط صوت الحاسوب مباشرة.",
     "macOS 13 or newer, Intel or Apple Silicon. Allow Screen Recording once so the app can hear the call.": "macOS 13 أو أحدث، بمعالج Intel أو Apple Silicon. اسمح بتسجيل الشاشة مرة واحدة ليتمكن التطبيق من سماع المكالمة.",
     "Choose the “Monitor of …” device if computer audio is not offered.": "اختر جهاز «Monitor of …» إذا لم يظهر خيار صوت الحاسوب.",
     "How to use it": "طريقة الاستخدام",
-    "Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers.": "يُحفظ ملفك الشخصي وإجاباتك المحضّرة وملاحظات المقابلات في مجلد على حاسوبك فقط. ويُرسل الصوت أثناء الاستماع فقط، على شكل مقاطع كلام قصيرة، ولا يُخزَّن على خوادمنا.",
+    "Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers. When you continue offline, your audio and answers never leave your computer.": "يُحفظ ملفك الشخصي وإجاباتك المحضّرة وملاحظات المقابلات في مجلد على حاسوبك فقط. ويُرسل الصوت أثناء الاستماع فقط، على شكل مقاطع كلام قصيرة، ولا يُخزَّن على خوادمنا. وعندما تتابع دون إنترنت، لا يغادر صوتك ولا إجاباتك حاسوبك أبدًا.",
     // The download buttons (one per detected system) and the 3D guide (2026-10-29).
     "Step {v0} of {v1}": "الخطوة {v0} من {v1}",
     "1. Download and install": "1. التنزيل والتثبيت",

@@ -576,11 +576,19 @@ const speaking: Catalogue = {
     "Answers use short sentences and everyday words, written to be read and spoken easily by an Arabic speaker.": "回答使用短句和日常词汇，让以阿拉伯语为母语的人容易阅读和说出。",
     "Answers in seconds": "几秒内给出回答",
     "Prepare answers to common HR questions before the interview. They appear instantly, then Self Study AI improves them for the exact question.": "面试前为常见的人事问题准备好回答。它们会立即显示，随后 Self Study AI 会针对具体问题进行改进。",
+    // Interview Helper 1.4.0: offline with SelfStudy LM. The app's own labels
+    // (Continue offline, Settings › Local AI) stay in English, because that is
+    // what the student will find in the app; its three choices are listed by the
+    // page itself.
+    "Works offline with SelfStudy LM": "借助 SelfStudy LM 离线使用",
+    "On first launch, choose a model and a folder and it is downloaded: SelfStudy LM Mini (1.3 GB, for 4 GB of memory) or SelfStudy LM (3.4 GB, for 8 GB), recommended on most laptops. Offline, its instant built-in answer appears first, then the full answer is written on your computer in about 10–20 seconds on a laptop.": "首次启动时，选择一个模型和一个文件夹，它就会开始下载：SelfStudy LM Mini（1.3 GB，适合 4 GB 内存）或 SelfStudy LM（3.4 GB，适合 8 GB 内存），后者推荐大多数笔记本电脑使用。离线时，它会先立即显示内置的快速回答，然后在你的电脑上写出完整回答，在笔记本电脑上约需 10–20 秒。",
+    "Online, offline or private": "在线、离线或私密",
+    "No account is needed offline: the sign-in screen has Continue offline. In Settings › Local AI, choose who writes the answers:": "离线使用无需账号：登录界面上有 Continue offline。在 Settings › Local AI 中，可以选择由谁来写回答：",
     "Windows 10 or 11. Computer audio works out of the box.": "Windows 10 或 11。可直接收听电脑音频。",
     "macOS 13 or newer, Intel or Apple Silicon. Allow Screen Recording once so the app can hear the call.": "macOS 13 或更新版本，Intel 或 Apple 芯片。请允许一次“屏幕录制”，以便应用收听通话。",
     "Choose the “Monitor of …” device if computer audio is not offered.": "如果没有电脑音频选项，请选择“Monitor of …”设备。",
     "How to use it": "使用方法",
-    "Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers.": "你的资料、准备好的回答和面试记录只保存在你自己电脑上的一个文件夹里。音频只在收听时以短语音片段的形式发送，不会存储在我们的服务器上。",
+    "Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers. When you continue offline, your audio and answers never leave your computer.": "你的资料、准备好的回答和面试记录只保存在你自己电脑上的一个文件夹里。音频只在收听时以短语音片段的形式发送，不会存储在我们的服务器上。选择离线继续时，你的音频和回答都不会离开你的电脑。",
     // The download buttons (one per detected system) and the 3D guide (2026-10-29).
     "Step {v0} of {v1}": "第 {v0} 步，共 {v1} 步",
     "1. Download and install": "1. 下载并安装",

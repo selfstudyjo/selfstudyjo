@@ -21,7 +21,14 @@
  *     module trusts the `os` it is handed rather than re-deriving it;
  *   - an OS with no build gets the full list, never an empty panel;
  *   - a ?tab= value that is not a product falls back to the first tab, so an
- *     old or mistyped link still lands somewhere useful.
+ *     old or mistyped link still lands somewhere useful;
+ *   - from SelfStudyCode 2.0.0 the command line comes INSIDE the desktop
+ *     installer, so the latest release has no `kind: 'cli'` asset: how the
+ *     command reaches a terminal depends on the installer format and is listed
+ *     with the visitor's own first (`cliRoutesFor`), while an older release
+ *     still gets its separate-file steps (`cliInstallCommands`);
+ *   - the SelfStudy LM table is the suite's own catalogue figures, checked
+ *     against selfstudy-lm/suite.json rather than typed in and left to drift.
  */
 
 export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor'] as const;
@@ -173,6 +180,11 @@ export function releaseDate(published: string | undefined): string {
  * How to put the SelfStudyCode CLI on the PATH once downloaded. Commands are
  * left in English and are never translated: a translated command is a command
  * that does not run.
+ *
+ * For a release BEFORE 2.0.0 only, which shipped the command line as separate
+ * `kind: 'cli'` files. From 2.0.0 the desktop installer carries the command
+ * itself (see `cliRoutesFor` below), so the latest release has no cli asset and
+ * the page shows these steps only when an older release is the one served.
  */
 export function cliInstallCommands(os: OsId, fileName: string): string[] {
     if (os === 'windows') {
@@ -190,4 +202,142 @@ export function cliInstallCommands(os: OsId, fileName: string): string[] {
         ...(os === 'macos' ? ['xattr -d com.apple.quarantine ~/.local/bin/selfstudycode 2>/dev/null || true'] : []),
         'selfstudycode login',
     ];
+}
+
+/* ------------------------------------------------------------------ *
+ * SelfStudyCode 2.0.0: one installer gives the app AND the command
+ * ------------------------------------------------------------------ */
+
+/**
+ * From 2.0.0 ONE installer per OS gives SelfStudyCode's desktop app and its
+ * `selfstudycode` command (short name `ssc`); the two share the sign-in,
+ * settings, chats and local models. How the command reaches a terminal is
+ * decided by the INSTALLER FORMAT, not by the OS alone, which is why Linux has
+ * two routes (selfstudycode/src/gui/cli-command.js is the other side of this):
+ *
+ *   windows         the .exe installer adds its bin folder (selfstudycode.cmd,
+ *                   ssc.cmd) to the user's PATH
+ *   macos           a .dmg runs no installer: the app's Settings › About ›
+ *                   Install the command links both into ~/.local/bin, or into
+ *                   /usr/local/bin when that folder is writable
+ *   linux-appimage  the same button writes ~/.local/bin/selfstudycode (and ssc),
+ *                   scripts that start the AppImage
+ *   linux-deb       the .deb installs /usr/bin/selfstudycode and /usr/bin/ssc
+ *
+ * `lines` are what the page prints in a left-to-right code box: commands and
+ * paths, never translated - a translated path is a folder that does not exist,
+ * and inside Arabic prose the bidi algorithm would move its slashes and dots.
+ */
+export type CliRoute = 'windows' | 'macos' | 'linux-appimage' | 'linux-deb';
+
+/** The fixed order, used wherever the visitor's own route does not decide it. */
+export const CLI_ROUTES: readonly CliRoute[] = ['windows', 'macos', 'linux-appimage', 'linux-deb'];
+
+export interface CliRouteInfo {
+    os: OsId;
+    /** The installer format shown beside the OS name. Never translated. */
+    format: string;
+    /**
+     * Where to click in the desktop app, when the installer does not do it: the
+     * app's own English labels (selfstudycode/src/gui/renderer/app.js), shown
+     * as they are so the student finds them, and in an element of their own so
+     * the label is not wrapped and reordered inside an Arabic sentence.
+     */
+    menu?: string;
+    lines: readonly string[];
+}
+
+/** The desktop app's menu path to its "Install the command" button. */
+export const CLI_INSTALL_MENU = 'Settings › About › Install the command';
+
+export const CLI_ROUTE_INFO: Readonly<Record<CliRoute, CliRouteInfo>> = {
+    windows: { os: 'windows', format: '.exe', lines: ['selfstudycode', 'ssc'] },
+    macos: { os: 'macos', format: '.dmg', menu: CLI_INSTALL_MENU, lines: ['~/.local/bin', '/usr/local/bin'] },
+    'linux-appimage': { os: 'linux', format: 'AppImage', menu: CLI_INSTALL_MENU, lines: ['~/.local/bin/selfstudycode', '~/.local/bin/ssc'] },
+    'linux-deb': { os: 'linux', format: '.deb', lines: ['/usr/bin/selfstudycode', '/usr/bin/ssc'] },
+};
+
+/** The route an installer belongs to, or null for a file that is none of the four. */
+export function cliRouteOf(asset: Pick<DownloadAsset, 'name' | 'os'> | undefined): CliRoute | null {
+    if (!asset) return null;
+    const name = lower(asset.name);
+    if (asset.os === 'windows' && name.endsWith('.exe')) return 'windows';
+    if (asset.os === 'macos' && name.endsWith('.dmg')) return 'macos';
+    if (asset.os === 'linux' && name.endsWith('.appimage')) return 'linux-appimage';
+    if (asset.os === 'linux' && name.endsWith('.deb')) return 'linux-deb';
+    return null;
+}
+
+/**
+ * Every route, the visitor's own first: the route of the installer their
+ * download button offers, then the rest of their OS (on Linux, the other
+ * format), then everything else in the fixed order. Each route appears exactly
+ * once whatever it is given, so an undetected OS or a phone still gets all four.
+ */
+export function cliRoutesFor(os: OsId, recommended?: Pick<DownloadAsset, 'name' | 'os'>): CliRoute[] {
+    const mine = cliRouteOf(recommended);
+    const rank = (r: CliRoute) => (r === mine ? 0 : CLI_ROUTE_INFO[r].os === os ? 1 : 2);
+    return [...CLI_ROUTES].sort((a, b) => rank(a) - rank(b) || CLI_ROUTES.indexOf(a) - CLI_ROUTES.indexOf(b));
+}
+
+/* ------------------------------------------------------------------ *
+ * SelfStudy LM: the local AI the three desktop apps share
+ * ------------------------------------------------------------------ */
+
+/**
+ * The models of the SelfStudy LM suite, for the table on the Products page.
+ *
+ * Taken from the suite's own catalogue - `selfstudy-lm/suite.json`, the file
+ * its release is built from, and the README beside it - and not invented here:
+ * `npm run check:products` reads that file off disk when the sibling checkout
+ * is present and fails on a size, a base model, a memory figure or a licence
+ * that no longer agrees with it (working rule 20). It skips rather than passes
+ * when the checkout is absent.
+ *
+ *   size     the download, in decimal GB as the apps themselves show it - the
+ *            largest variant, since the apps pick the largest one that fits
+ *   ram      the memory the model is made for; '' means any computer
+ *   smaller  the smaller file the apps fall back to when memory is short
+ *
+ * Every string here is a product name, a model name, a figure or a licence id,
+ * so none of it is translated, and the page draws each in a left-to-right
+ * element so that Arabic does not reorder `Qwen3.5-4B` or `24–32 GB`. What each
+ * model is FOR is page text, translated in Products.vue.
+ *
+ * These are open models, packaged rather than trained: the weights are the base
+ * models' own (selfstudy-lm/MODEL_CARD.md), which the page says plainly. The
+ * suite's extras (tier 'extra': Gemma 4 Vision, Qwen3.8 27B, Qwen3-Coder) are
+ * SelfStudyCode-only add-ons and deliberately not listed.
+ */
+export type LmKind = 'llm' | 'speech' | 'image' | 'embed';
+
+export interface LmModel {
+    /** The model's id in the suite catalogue. */
+    id: string;
+    name: string;
+    kind: LmKind;
+    base: string;
+    size: string;
+    ram: string;
+    licence: string;
+    recommended?: boolean;
+    smaller?: string;
+    /** Best with a graphics card (the image model). */
+    gpuHelps?: boolean;
+}
+
+export const SELFSTUDY_LM: readonly LmModel[] = [
+    { id: 'selfstudy-lm-mini', name: 'SelfStudy LM Mini', kind: 'llm', base: 'Qwen3.5-2B', smaller: 'Qwen3.5-0.8B · 0.5 GB', size: '1.3 GB', ram: '4 GB', licence: 'Apache-2.0' },
+    { id: 'selfstudy-lm', name: 'SelfStudy LM', kind: 'llm', base: 'Qwen3.5-4B', size: '3.4 GB', ram: '8 GB', licence: 'Apache-2.0', recommended: true },
+    { id: 'selfstudy-lm-pro', name: 'SelfStudy LM Pro', kind: 'llm', base: 'Qwen3.5-9B', size: '6.6 GB', ram: '16 GB', licence: 'Apache-2.0' },
+    { id: 'selfstudy-lm-max', name: 'SelfStudy LM Max', kind: 'llm', base: 'Qwen3.6-35B-A3B', size: '18.6 GB', ram: '24–32 GB', licence: 'Apache-2.0' },
+    { id: 'selfstudy-speech', name: 'SelfStudy Speech', kind: 'speech', base: 'Whisper small / base', size: '0.25 GB', ram: '', licence: 'Apache-2.0' },
+    { id: 'selfstudy-image', name: 'SelfStudy Image', kind: 'image', base: 'FLUX.2 [klein] 4B + Qwen3-4B', size: '5.3 GB', ram: '8 GB+', licence: 'Apache-2.0', gpuHelps: true },
+];
+
+/** A size or memory label ("1.3 GB", "24–32 GB", "8 GB+") as numbers, for the check. [] when it is not one. */
+export function gbFigures(label: string): number[] {
+    const m = /^(\d+(?:\.\d+)?)(?:\s*[–-]\s*(\d+(?:\.\d+)?))?\s*GB\+?$/.exec(label.trim());
+    if (!m) return [];
+    return m[2] === undefined ? [Number(m[1])] : [Number(m[1]), Number(m[2])];
 }

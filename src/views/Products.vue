@@ -12,6 +12,13 @@
   page redirects to that tab. Which installer to offer first, and the tab
   parsing, live in `utils/products.ts` (npm run check:products). Nothing here is
   rendered with v-html. Lazy-loaded (working rule 47).
+
+  Below the tabs, SelfStudy LM - the local AI all three apps share - is a section
+  of the page and deliberately NOT a fourth tab: it has no installer of its own
+  (each app downloads its models on first launch) and app 27 lists exactly three
+  products. Its table is `SELFSTUDY_LM` in utils/products.ts, checked against
+  the suite's catalogue; every model name, size and path is drawn in a dir="ltr"
+  element so Arabic does not reorder it.
 -->
 <template>
   <div class="prod-page">
@@ -128,6 +135,13 @@ Done. The total now rounds to 2 decimals.</pre>
           <article v-for="f in p.features" :key="f.title" class="prod-card">
             <h4>{{ f.title }}</h4>
             <p>{{ f.text }}</p>
+            <!-- The app's own English option labels, each isolated left-to-right. -->
+            <ul v-if="f.choices" class="prod-choices">
+              <li v-for="c in f.choices" :key="c.label">
+                <span class="prod-label" dir="ltr">{{ c.label }}</span>
+                <span v-if="c.isDefault" class="prod-choices__note">{{ $t('Default') }}</span>
+              </li>
+            </ul>
           </article>
         </div>
       </div>
@@ -138,6 +152,33 @@ Done. The total now rounds to 2 decimals.</pre>
         <HelperGuide />
       </div>
 
+      <!--
+        THE COMMAND LINE. From 2.0.0 the desktop installer carries the selfstudycode
+        command, so this is shown for every release and worded "since version 2.0"
+        to stay true when an older one is served. One card per installer format, the
+        visitor's own first; the commands and paths are never translated.
+      -->
+      <div v-if="p.id === 'selfstudycode'" class="prod-section">
+        <h3>{{ $t('The command line') }}</h3>
+        <p class="prod-muted prod-cli__lead">{{ $t('Since version 2.0, the same installer also gives you the selfstudycode command (short name: ssc). How it reaches your terminal depends on the installer:') }}</p>
+        <div class="prod-grid prod-cli">
+          <article v-for="r in cliRoutes" :key="r" class="prod-card"
+                   :class="{ 'prod-card--mine': CLI_ROUTE_INFO[r].os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(CLI_ROUTE_INFO[r].os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ CLI_ROUTE_INFO[r].format }}</span>
+              <span v-if="CLI_ROUTE_INFO[r].os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <p>{{ cliRouteText[r].lead }}</p>
+            <p v-if="CLI_ROUTE_INFO[r].menu" class="prod-cli__menu"><span class="prod-label" dir="ltr">{{ CLI_ROUTE_INFO[r].menu }}</span></p>
+            <p v-if="cliRouteText[r].rest">{{ cliRouteText[r].rest }}</p>
+            <pre class="prod-cmd" dir="ltr">{{ CLI_ROUTE_INFO[r].lines.join('\n') }}</pre>
+          </article>
+        </div>
+        <p class="prod-muted">{{ $t('Then open a new terminal in your project folder and type selfstudycode, or ssc.') }}</p>
+      </div>
+
+      <!-- A release before 2.0.0, with the command line as separate files. -->
       <div v-if="p.id === 'selfstudycode' && pickOf(p.id).cli" class="prod-section">
         <details class="prod-details">
           <summary>{{ $t('How to install the command line tool') }}</summary>
@@ -176,6 +217,72 @@ Done. The total now rounds to 2 decimals.</pre>
       <p class="prod-muted prod-note">{{ $t('The installers are not code-signed yet: Windows may show "Windows protected your PC" (choose More info, then Run anyway), and macOS may ask you to open it from System Settings, Privacy & Security.') }}</p>
       <p v-if="p.privacy" class="prod-card prod-privacy">{{ p.privacy }}</p>
     </section>
+
+    <!--
+      SELFSTUDY LM: the local AI all three apps share. Part of the page, not a tab,
+      and with no download button: each app offers its models on first launch.
+      The table keeps its semantics when a narrow container stacks it into cards
+      (explicit roles, because a `display` change drops a table's own roles in
+      some browsers), and the visible per-cell labels are aria-hidden so a screen
+      reader hears each column header once.
+    -->
+    <section class="prod-lm" aria-labelledby="prod-lm-title">
+      <h2 id="prod-lm-title">{{ $t('SelfStudy LM — the local AI of the desktop apps') }}</h2>
+      <p class="prod-lead">{{ $t('SelfStudy LM lets SelfStudyCode, Interview Helper and Video Editor work on your own computer, without the internet. It is not a new model trained from scratch: it is a packaged suite of open models, built on Qwen3.5 and Qwen3.6 (Qwen, Alibaba Cloud), Whisper (OpenAI) and FLUX.2 (Black Forest Labs).') }}</p>
+      <div class="prod-grid prod-lm__facts">
+        <article v-for="f in lmFacts" :key="f.title" class="prod-card">
+          <h3 class="prod-lm__fact">{{ f.title }}</h3>
+          <p>{{ f.text }}</p>
+        </article>
+      </div>
+
+      <h3 id="prod-lm-models" class="prod-lm__h">{{ $t('The models') }}</h3>
+      <div class="prod-lm__models">
+        <table class="prod-lm__table" role="table" aria-labelledby="prod-lm-models">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th scope="col" role="columnheader">{{ $t('Model') }}</th>
+              <th scope="col" role="columnheader">{{ $t('Built on') }}</th>
+              <th scope="col" role="columnheader">{{ $t('Download size') }}</th>
+              <th scope="col" role="columnheader">{{ $t('Memory (RAM)') }}</th>
+              <th scope="col" role="columnheader">{{ $t('Licence') }}</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
+            <tr v-for="m in lmRows" :key="m.id" role="row">
+              <th scope="row" role="rowheader">
+                <span class="prod-lm__name" dir="ltr">{{ m.name }}</span>
+                <span v-if="m.recommended" class="prod-lm__rec">{{ $t('Recommended') }}</span>
+                <span class="prod-lm__use">{{ m.use }}</span>
+              </th>
+              <td role="cell">
+                <span class="prod-lm__label" aria-hidden="true">{{ $t('Built on') }}</span>
+                <span class="prod-lm__val">
+                  <span class="prod-lm__fig" dir="ltr">{{ m.base }}</span>
+                  <span v-if="m.smaller" class="prod-lm__note">{{ $t('With less memory:') }} <span class="prod-lm__fig" dir="ltr">{{ m.smaller }}</span></span>
+                </span>
+              </td>
+              <td role="cell">
+                <span class="prod-lm__label" aria-hidden="true">{{ $t('Download size') }}</span>
+                <span class="prod-lm__val"><span class="prod-lm__fig" dir="ltr">{{ m.size }}</span></span>
+              </td>
+              <td role="cell">
+                <span class="prod-lm__label" aria-hidden="true">{{ $t('Memory (RAM)') }}</span>
+                <span class="prod-lm__val">
+                  <span v-if="m.ram" class="prod-lm__fig" dir="ltr">{{ m.ram }}</span>
+                  <template v-else>{{ $t('Any computer') }}</template>
+                  <span v-if="m.gpuHelps" class="prod-lm__note">{{ $t('A graphics card helps.') }}</span>
+                </span>
+              </td>
+              <td role="cell">
+                <span class="prod-lm__label" aria-hidden="true">{{ $t('Licence') }}</span>
+                <span class="prod-lm__val"><span class="prod-lm__fig" dir="ltr">{{ m.licence }}</span></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -188,9 +295,9 @@ import { ApiError } from '@/services/api';
 import { productsService } from '@/services/products.service';
 import HelperGuide from '@/components/interviewhelper/HelperGuide.vue';
 import {
-  PRODUCT_IDS, assetDetail, cliInstallCommands, detectOs, formatSize, groupByOs, isProductId,
-  pickAssets, releaseDate, tabFromQuery,
-  type Detected, type DownloadAsset, type ProductId, type ProductInfo,
+  CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, assetDetail, cliInstallCommands, cliRoutesFor, detectOs,
+  formatSize, groupByOs, isProductId, pickAssets, releaseDate, tabFromQuery,
+  type CliRoute, type Detected, type DownloadAsset, type ProductId, type ProductInfo,
 } from '@/utils/products';
 
 const { t } = useI18n();
@@ -212,24 +319,35 @@ const uaData = (navigator as unknown as { userAgentData?: UaData }).userAgentDat
 const detected = ref<Detected>(detectOs(navigator.userAgent, uaData?.platform || navigator.platform || '', '',
                                          navigator.maxTouchPoints || 0));
 
+/**
+ * A feature card. `choices` are a desktop app's own English option labels,
+ * listed as the app shows them (never translated: the student has to find them
+ * there) and drawn each in its own left-to-right element rather than quoted
+ * inside a translated sentence, where Arabic would wrap and reorder them.
+ */
+interface Feature { title: string; text: string; choices?: Array<{ label: string; isDefault?: boolean }> }
+
 // Every visible string is a literal t() call so `check:i18n` can see the key.
-const catalogue = computed(() => [
+const catalogue = computed<Array<{
+  id: ProductId; icon: string; name: string; eyebrow: string; lead: string;
+  features: Feature[]; requirements: string[]; privacy: string;
+}>>(() => [
   {
     id: 'selfstudycode' as ProductId,
     icon: '⌨️',
     name: 'SelfStudyCode',
-    eyebrow: t('Desktop app and command line · Windows, macOS and Linux'),
+    eyebrow: t('One installer: desktop app and command line · Windows, macOS and Linux'),
     lead: t('Your AI coding agent. It writes and fixes code, runs your tests, reviews changes, and makes images, videos and documents - on your own computer. Sign in with your SelfStudyJo account.'),
     features: [
       { title: t('Works in your project'), text: t('It reads your files, edits them, runs commands and tests, and asks before it does anything risky.') },
-      { title: t('Desktop app or terminal'), text: t('Use the desktop app, or the selfstudycode command in any terminal on Windows, macOS or Linux.') },
+      { title: t('Desktop app and command line'), text: t('One installer gives you both the desktop app and the selfstudycode command (short name: ssc). They share your sign-in, settings, chats and local models.') },
       { title: t('Explainer videos and documents'), text: t('It can turn a topic, a scanned page or a PDF into a narrated-style explainer video, diagrams and clean documents.') },
-      { title: t('Works offline too'), text: t('No internet? It also works offline with a model running on your computer (Ollama, LM Studio or llama.cpp): run selfstudycode --offline.') },
+      { title: t('Works offline too'), text: t('On first launch, in the app or the terminal, it offers to download a SelfStudy LM model sized for your computer, to a folder you choose. Then it works without the internet or an account. Ollama, LM Studio and llama.cpp work too.') },
     ],
     requirements: [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
-      t('4 GB of memory; 8 GB or more to run a local model offline.'),
-      t('About 500 MB of free disk space.'),
+      t('4 GB of memory; 8 GB or more for SelfStudy LM, the recommended offline model.'),
+      t('About 500 MB of free disk space, plus the offline model you choose.'),
       t('An internet connection to use the SelfStudyJo AI models.'),
     ],
     privacy: '',
@@ -245,14 +363,24 @@ const catalogue = computed(() => [
       { title: t('Fixes what it heard'), text: t('Misheard words and broken grammar in the interviewer’s question are corrected automatically before an answer is written.') },
       { title: t('Very simple English'), text: t('Answers use short sentences and everyday words, written to be read and spoken easily by an Arabic speaker.') },
       { title: t('Answers in seconds'), text: t('Prepare answers to common HR questions before the interview. They appear instantly, then Self Study AI improves them for the exact question.') },
+      { title: t('Works offline with SelfStudy LM'), text: t('On first launch, choose a model and a folder and it is downloaded: SelfStudy LM Mini (1.3 GB, for 4 GB of memory) or SelfStudy LM (3.4 GB, for 8 GB), recommended on most laptops. Offline, its instant built-in answer appears first, then the full answer is written on your computer in about 10–20 seconds on a laptop.') },
+      {
+        title: t('Online, offline or private'),
+        text: t('No account is needed offline: the sign-in screen has Continue offline. In Settings › Local AI, choose who writes the answers:'),
+        choices: [
+          { label: 'Self Study AI online, this computer when offline', isDefault: true },
+          { label: 'Always this computer (private, no internet needed)' },
+          { label: 'Only Self Study AI online' },
+        ],
+      },
     ],
     requirements: [
       t('Windows 10 or 11. Computer audio works out of the box.'),
       t('macOS 13 or newer, Intel or Apple Silicon. Allow Screen Recording once so the app can hear the call.'),
       t('Choose the “Monitor of …” device if computer audio is not offered.'),
-      t('4 GB of memory, a microphone, and an internet connection.'),
+      t('4 GB of memory and a microphone. An internet connection, or SelfStudy LM on your computer to work offline.'),
     ],
-    privacy: t('Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers.'),
+    privacy: t('Your profile, prepared answers and interview notes are saved only in a folder on your own computer. Audio is sent only while you are listening, as short speech segments, and is not stored on our servers. When you continue offline, your audio and answers never leave your computer.'),
   },
   {
     id: 'video-editor' as ProductId,
@@ -264,8 +392,11 @@ const catalogue = computed(() => [
       { title: t('Record lectures'), text: t('Record your screen, camera and microphone. Show the camera as a circle or a square, in a corner, at the side or anywhere you drag it, on a choice of themes. Shortcuts start, pause and stop it from any app.') },
       { title: t('A transcript in any language'), text: t('While you speak, your words are transcribed in any language or dialect and saved as a structured transcript, captions and plain text.') },
       { title: t('AI presentation overlays'), text: t('Tick one box and the AI adds arrows, highlights, flowcharts and step lists exactly where your screen shows what you are explaining, at the moment you say it.') },
-      { title: t('A real timeline'), text: t('Several video and audio tracks, split, trim, move, speed, volume, fades, text and markers.') },
+      { title: t('Highlighter'), text: t('A Highlighter draw tool marks text on the screen: press H, and hold Shift for a straight band.') },
       { title: t('Edit by asking'), text: t('Type or speak what you want. The AI answers with a plan of steps, and you see every step before it is applied.') },
+      { title: t('AI Highlights'), text: t('Type “make a 1 minute highlight reel” and it finds the best moments in the transcript. Preview each one, then make a highlight reel or mark the highlights with title cards. One Undo takes it back.') },
+      { title: t('Works offline'), text: t('With SelfStudy LM, the plan for an editing command is made on your computer, and Whisper turns voice commands and captions into text on your computer too.') },
+      { title: t('A real timeline'), text: t('Several video and audio tracks, split, trim, move, speed, volume, fades, text and markers.') },
       { title: t('One-click clean-ups'), text: t('Improve the sound, fix a dark video, stabilise, denoise, crop for vertical video, and ready-made looks.') },
       { title: t('Captions and export'), text: t('Captions from the speech in your video, burned in or saved as .srt, and export to MP4, MOV, MKV, WebM, GIF or audio only.') },
     ],
@@ -273,7 +404,7 @@ const catalogue = computed(() => [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
       t('8 GB of memory recommended for HD video.'),
       t('Free disk space for your videos and exports.'),
-      t('Your videos stay on your computer, and the text on your screen is read on your computer too. Only your speech, the text found on the screen and a short summary are sent to the AI.'),
+      t('Your videos stay on your computer, and the text on your screen is read on your computer too. Online, only your speech, the text found on the screen and a short summary are sent to the AI; working offline with SelfStudy LM, nothing is sent.'),
     ],
     privacy: '',
   },
@@ -297,6 +428,37 @@ const picks = computed(() => {
   return out;
 });
 const pickOf = (id: string) => picks.value[id];
+
+// SelfStudyCode's command line: one card per installer format, the one this
+// visitor's download button offers first (utils/products.ts → cliRoutesFor).
+const cliRoutes = computed(() => cliRoutesFor(detected.value.os, picks.value.selfstudycode?.gui));
+// What each route asks of the student. The app's menu path, the commands and the
+// paths are NOT in these sentences: each is drawn in a dir="ltr" element of its
+// own, untranslated, between `lead` and `rest`.
+const cliRouteText = computed<Record<CliRoute, { lead: string; rest?: string }>>(() => ({
+  windows: { lead: t('The installer adds both commands to your PATH, so they work in any new terminal (PowerShell or cmd):') },
+  macos: { lead: t('Open the app and choose:'), rest: t('It links both commands into one of these folders:') },
+  'linux-appimage': { lead: t('Open the app and choose:'), rest: t('It writes these two files, which start the AppImage:') },
+  'linux-deb': { lead: t('The installer adds both commands:') },
+}));
+
+// SelfStudy LM, the local AI of all three apps.
+const lmFacts = computed(() => [
+  { title: t('Downloaded once'), text: t('A model is downloaded once per computer: all three apps use the same models folder, so what one app downloads is there for the others.') },
+  { title: t('Private and offline'), text: t('It runs on your own computer and works without the internet.') },
+  { title: t('Processor or graphics card'), text: t('It runs on the computer’s processor (CPU), and faster with a graphics card.') },
+  { title: t('Chosen in each app'), text: t('On first launch each app offers the model that fits your computer and asks where to keep it. There is no download button for the models on this website.') },
+]);
+// What each model is for; the names and figures beside it come from SELFSTUDY_LM.
+const lmUse = computed<Record<string, string>>(() => ({
+  'selfstudy-lm-mini': t('Quick answers on any laptop. Installed beside a bigger SelfStudy LM model, it also makes that one faster.'),
+  'selfstudy-lm': t('The everyday model: lessons, code, video edit plans, interview answers, screenshots and scanned pages.'),
+  'selfstudy-lm-pro': t('More knowledge and better reasoning: longer code, harder questions and careful writing.'),
+  'selfstudy-lm-max': t('The strongest: agentic coding, long projects and data analysis. A mixture of experts, fast for its size.'),
+  'selfstudy-speech': t('Speech to text in 99 languages, in the Video Editor: voice commands, captions and transcripts.'),
+  'selfstudy-image': t('Pictures from a description, in SelfStudyCode: illustrations, backgrounds and thumbnails.'),
+}));
+const lmRows = computed(() => SELFSTUDY_LM.map((m) => ({ ...m, use: lmUse.value[m.id] || '' })));
 
 function selectTab(id: ProductId) {
   tab.value = id;
@@ -561,6 +723,151 @@ onMounted(async () => {
   background: var(--prod-term-bg);
   color: var(--prod-term-ink);
 }
+
+/* SelfStudyCode's command line: one card per installer format. */
+.prod-cli__lead { margin: 0 0 0.9rem; }
+.prod-cli__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+.prod-cli__fmt {
+  font-family: var(--sfs-font-mono, ui-monospace, monospace);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sfs-text-muted, #cbd5e1);
+}
+/* A word as well as the accent border: the border alone is a colour-only cue. */
+.prod-cli__here,
+.prod-choices__note {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--sfs-accent, #667eea);
+  color: var(--sfs-accent-text, #a5b4fc);
+}
+.prod-cli .prod-cmd { margin-bottom: 0; }
+.prod-card .prod-cli__menu { margin: 0.45rem 0; }
+
+/* A desktop app's own English label - a menu path, an option - as one block,
+   so a long one wraps inside itself, left to right, and never between the
+   words of an Arabic sentence. */
+.prod-label {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16);
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  color: var(--sfs-text, #f1f5f9);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.prod-choices { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.prod-choices li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; min-width: 0; }
+
+/* SelfStudy LM: the shared local AI, below the tabs. */
+.prod-lm {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+}
+.prod-lm h2 { margin: 0 0 0.6rem; font-size: clamp(1.4rem, 3.2vw, 1.9rem); }
+.prod-lm__facts { margin-bottom: 1.75rem; }
+.prod-lm__fact { margin: 0 0 0.4rem; font-size: 1.02rem; }
+.prod-lm__h { font-size: 1.25rem; margin: 0 0 0.9rem; }
+/* The container, not the viewport, decides when the table stacks: the page sits
+   beside a sidebar on a laptop and alone on a phone. */
+.prod-lm__models { position: relative; container: prodlm / inline-size; }
+.prod-lm__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.prod-lm__table th,
+.prod-lm__table td {
+  padding: 0.65rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+  overflow-wrap: break-word;
+}
+/* A model id, a size, a memory figure or a licence is one unit: "Apache-" on one
+   line and "2.0" on the next reads as two things, and so does a model name split
+   at its hyphen. The stacked layouts below always leave room for the longest. */
+.prod-lm__fig { white-space: nowrap; }
+.prod-lm__table thead th {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--sfs-text-muted, #cbd5e1);
+  border-bottom-color: rgb(var(--sfs-line-rgb, 255 255 255) / 0.24);
+}
+.prod-lm__table tbody th { font-weight: 700; }
+.prod-lm__rec {
+  display: inline-block;
+  margin-inline-start: 0.4rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--sfs-accent, #667eea);
+  color: var(--sfs-on-accent, #ffffff);
+}
+.prod-lm__use {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--sfs-text-muted, #cbd5e1);
+}
+.prod-lm__val { display: block; min-width: 0; }
+.prod-lm__note { display: block; font-size: 0.8rem; color: var(--sfs-text-muted, #cbd5e1); }
+/* The per-cell labels exist for the stacked layout only. */
+.prod-lm__label { display: none; }
+
+/* A narrow container: every row becomes a card of label / value pairs. The
+   header row is hidden visually and kept for assistive technology. */
+@container prodlm (max-width: 46rem) {
+  .prod-lm__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .prod-lm__table,
+  .prod-lm__table tbody,
+  .prod-lm__table tr,
+  .prod-lm__table th,
+  .prod-lm__table td { display: block; }
+  .prod-lm__table tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    border-radius: 0.9rem;
+    background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  }
+  .prod-lm__table tbody th,
+  .prod-lm__table tbody td { padding: 0.25rem 0; border: 0; }
+  .prod-lm__table tbody th { padding-bottom: 0.5rem; }
+  .prod-lm__table tbody td {
+    display: grid;
+    grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .prod-lm__label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--sfs-text-muted, #cbd5e1);
+  }
+}
+/* A phone at 320-360 px: the label above its value, so the value has the card's
+   whole width and the longest model id still fits on one line. */
+@container prodlm (max-width: 22rem) {
+  .prod-lm__table tbody td { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+}
+
 @media (max-width: 760px) {
   .prod-hero { grid-template-columns: 1fr; }
   .prod-mock { order: -1; }
