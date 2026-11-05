@@ -169,6 +169,12 @@ const SKINS: Record<string, Component> = {
   confluent: lazy(() => import('./confluent/ControlCenter.vue')),
   flink: lazy(() => import('./flink/FlinkDashboard.vue')),
   datahub: lazy(() => import('./datahub/DataHub.vue')),
+  qabrowser: lazy(() => import('./qa/QaBrowser.vue')),
+  qamobile: lazy(() => import('./qa/QaMobile.vue')),
+  postman: lazy(() => import('./qa/PostmanApp.vue')),
+  qarunner: lazy(() => import('./qa/QaRunner.vue')),
+  testrail: lazy(() => import('./qa/TestRailApp.vue')),
+  qabugs: lazy(() => import('./qa/QaBugs.vue')),
 };
 
 const skin = computed<Component | null>(() => SKINS[String(props.tool.skin || '')] || null);
@@ -200,6 +206,12 @@ const DEFAULT_LOCATIONS: Record<string, string> = {
   confluent: 'http://control-center.shopflow.internal:9021/clusters',
   flink: 'http://flink-jobmanager.shopflow.internal:8081/#/overview',
   datahub: 'http://datahub.shopflow.internal:9002/',
+  qabrowser: 'http://qa-shop.local/',
+  qamobile: 'simulator://Pixel 7/qa-shop.local/',
+  postman: 'postman://workspace/my-workspace',
+  qarunner: 'http://localhost:9323/',
+  testrail: 'https://qa-shop.testrail.io/index.php?/dashboard',
+  qabugs: 'https://qa-shop.atlassian.net/jira/software/projects/QA/boards/2',
 };
 
 const location = ref(DEFAULT_LOCATIONS[String(props.tool.skin || '')] || 'about:blank');
