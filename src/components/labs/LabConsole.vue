@@ -136,6 +136,7 @@
           :disabled="busy"
           :placeholder="search || lines.length ? '' : placeholder"
           @keydown="onKey"
+          @paste="onNativePaste"
         >
         <!--
           Enter is how a shell is used and this button is for the people who
@@ -377,9 +378,24 @@ async function copyText(text: string) {
   }
 }
 
+// Ctrl+V into a single-line <input> makes the browser flatten every newline
+// into a space, so a pasted heredoc arrived as one broken line
+// (`cat > f <<'EOF' a b c EOF` -> "syntax error near unexpected token").
+// A multi-line paste is therefore taken over here and run as the shell would.
+function onNativePaste(event: ClipboardEvent) {
+  const text = event.clipboardData?.getData('text/plain') || '';
+  if (!/\r?\n/.test(text.replace(/(\r?\n)+$/, ''))) return;
+  event.preventDefault();
+  void runPasted(text);
+}
+
 async function pasteText() {
   let text = '';
   try { text = await navigator.clipboard.readText(); } catch { return; }
+  await runPasted(text);
+}
+
+async function runPasted(text: string) {
   if (!text) return;
   if (editor.value || screen.value) {
     program.value?.paste?.(text);
@@ -391,6 +407,12 @@ async function pasteText() {
   // A multi-line paste runs line by line, as in a real terminal: each full
   // line is a command.
   if (/\r?\n/.test(pasted)) {
+    // A heredoc's body belongs to the command above it, so a paste holding
+    // `<<` goes to the shell as ONE script (the shell runs it line by line).
+    if (/<<-?\s*['"]?[A-Za-z_]/.test(pasted)) {
+      await submit(entry.value.slice(0, caret) + pasted + entry.value.slice(caret));
+      return;
+    }
     const parts = pasted.split(/\r?\n/);
     entry.value = entry.value.slice(0, caret) + parts[0] + entry.value.slice(caret);
     await submit();
@@ -464,10 +486,11 @@ function push(kind: Line['kind'], text: string, at?: string) {
   lines.value.push({ kind, text, at });
 }
 
-async function submit() {
+async function submit(script?: string) {
   if (search.value) { search.value = null; return; }
-  const typed = entry.value;
-  const line = expandHistory(typed, history.value).trim();
+  const typed = typeof script === 'string' ? script : entry.value;
+  const line = typeof script === 'string' ? script.trim()
+    : expandHistory(typed, history.value).trim();
   if (!line || busy.value) return;
   entry.value = '';
   cursor.value = -1;
