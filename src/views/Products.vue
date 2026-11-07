@@ -396,6 +396,8 @@ const catalogue = computed<Array<{
       { title: t('AI presentation overlays'), text: t('Tick one box and the AI adds arrows, highlights, flowcharts and step lists exactly where your screen shows what you are explaining, at the moment you say it.') },
       { title: t('Highlighter'), text: t('A Highlighter draw tool marks text on the screen: press H, and hold Shift for a straight band.') },
       { title: t('Edit by asking'), text: t('Type or speak what you want. The AI answers with a plan of steps, and you see every step before it is applied.') },
+      { title: t('Animate segments'), text: t('Press Animate where a part starts and End animate where it ends: the picture between them becomes an animation of what you are saying - titles, steps, flowcharts, numbers - while your original sound keeps playing.') },
+      { title: t('Reader voices'), text: t('A library of voices on your computer, plus your own: record a sample, it is cleaned and matched, then replace the narrator’s voice in any language or dialect, translated and timed to the original.') },
       { title: t('AI Highlights'), text: t('Type “make a 1 minute highlight reel” and it finds the best moments in the transcript. Preview each one, then make a highlight reel or mark the highlights with title cards. One Undo takes it back.') },
       { title: t('Works offline'), text: t('With SelfStudy LM, the plan for an editing command is made on your computer, and Whisper turns voice commands and captions into text on your computer too.') },
       { title: t('A real timeline'), text: t('Several video and audio tracks, split, trim, move, speed, volume, fades, text and markers.') },

@@ -452,6 +452,10 @@ const tools: Catalogue = {
     // (src/shared/highlights.mjs), so the example is one a student can type.
     "Highlighter": "قلم التظليل",
     "A Highlighter draw tool marks text on the screen: press H, and hold Shift for a straight band.": "أداة الرسم Highlighter تُبرز النص على الشاشة: اضغط H، واضغط Shift مع الاستمرار لرسم شريط مستقيم.",
+    "Animate segments": "تحريك المقاطع",
+    "Press Animate where a part starts and End animate where it ends: the picture between them becomes an animation of what you are saying - titles, steps, flowcharts, numbers - while your original sound keeps playing.": "اضغط «تحريك» حيث يبدأ الجزء و«إنهاء التحريك» حيث ينتهي: تتحول الصورة بينهما إلى رسوم متحركة لما تقوله - عناوين وخطوات ومخططات وأرقام - بينما يستمر صوتك الأصلي.",
+    "Reader voices": "أصوات القرّاء",
+    "A library of voices on your computer, plus your own: record a sample, it is cleaned and matched, then replace the narrator’s voice in any language or dialect, translated and timed to the original.": "مكتبة أصوات على جهازك، وصوتك أنت أيضاً: سجّل عيّنة فتُنظَّف وتُطابَق، ثم استبدل صوت الراوي بأي لغة أو لهجة، مترجماً ومضبوط التوقيت مع الأصل.",
     "AI Highlights": "أبرز اللقطات بالذكاء الاصطناعي",
     "Type “make a 1 minute highlight reel” and it finds the best moments in the transcript. Preview each one, then make a highlight reel or mark the highlights with title cards. One Undo takes it back.": "اكتب «اصنع مقطعاً لأبرز اللحظات مدته 1 دقيقة» فيجد أفضل اللحظات في النص المكتوب. شاهد كلّاً منها، ثم اصنع منها مقطعاً لأبرز اللحظات أو ميّزها بعلامات وبطاقات عناوين. وتراجع واحد يلغي ذلك.",
     "Works offline": "يعمل دون إنترنت",

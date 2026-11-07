@@ -425,6 +425,10 @@ const tools: Catalogue = {
     // (src/shared/highlights.mjs), so the example is one a student can type.
     "Highlighter": "荧光笔",
     "A Highlighter draw tool marks text on the screen: press H, and hold Shift for a straight band.": "荧光笔（Highlighter）绘图工具可标记屏幕上的文字：按 H，按住 Shift 可画出笔直的色带。",
+    "Animate segments": "动画片段",
+    "Press Animate where a part starts and End animate where it ends: the picture between them becomes an animation of what you are saying - titles, steps, flowcharts, numbers - while your original sound keeps playing.": "在某段开始处按“动画”，在结束处按“结束动画”：两者之间的画面会变成你所讲内容的动画——标题、步骤、流程图、数字——而原声照常播放。",
+    "Reader voices": "朗读者声音",
+    "A library of voices on your computer, plus your own: record a sample, it is cleaned and matched, then replace the narrator’s voice in any language or dialect, translated and timed to the original.": "电脑上的声音库，也可以加入你自己的声音：录一段样本，系统会清理并匹配，然后用任何语言或方言替换旁白的声音，自动翻译并与原片对齐时间。",
     "AI Highlights": "AI 精彩片段",
     "Type “make a 1 minute highlight reel” and it finds the best moments in the transcript. Preview each one, then make a highlight reel or mark the highlights with title cards. One Undo takes it back.": "输入“做一个 1 分钟的精彩集锦”，它会从文字稿中找出最精彩的时刻。逐一预览后，可以把它们做成精彩集锦，或用标题卡标记这些精彩片段。一次撤销即可还原。",
     "Works offline": "离线可用",
