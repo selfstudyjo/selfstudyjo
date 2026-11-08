@@ -354,5 +354,20 @@ if (suite) {
     }
 }
 
+console.log('9. Every product shows its own app icon');
+{
+    const vue9 = read('src/views/Products.vue');
+    const icon = (id: string) => path.resolve(process.cwd(), 'public', 'products', id + '.png');
+    const bytes: string[] = [];
+    for (const id of PRODUCT_IDS) {
+        const ok = fs.existsSync(icon(id)) && fs.readFileSync(icon(id)).subarray(1, 4).toString() === 'PNG';
+        check(`public/products/${id}.png is a PNG`, ok);
+        bytes.push(ok ? fs.readFileSync(icon(id)).toString('base64') : id);
+    }
+    check('no two products share an icon', new Set(bytes).size === bytes.length);
+    check('the tabs and the hero draw the icon file, not an emoji',
+        (vue9.match(/:src="iconSrc\(p\.id\)"/g) || []).length === 2 && !/^\s+icon: '/m.test(vue9));
+}
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

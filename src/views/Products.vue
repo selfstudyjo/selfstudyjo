@@ -41,7 +41,7 @@
         :tabindex="p.id === tab ? 0 : -1"
         @click="selectTab(p.id)"
       >
-        <span class="prod-tab__icon" aria-hidden="true">{{ p.icon }}</span>
+        <img class="prod-tab__icon" :src="iconSrc(p.id)" alt="" width="22" height="22" aria-hidden="true">
         <span>{{ p.name }}</span>
       </button>
     </div>
@@ -66,7 +66,10 @@
       <div class="prod-hero">
         <div class="prod-hero__text">
           <p class="prod-eyebrow">{{ p.eyebrow }}</p>
-          <h2>{{ p.name }}</h2>
+          <div class="prod-hero__title">
+            <img class="prod-hero__icon" :src="iconSrc(p.id)" :alt="p.name" width="56" height="56">
+            <h2>{{ p.name }}</h2>
+          </div>
           <p class="prod-hero__lead">{{ p.lead }}</p>
 
           <p v-if="loading" class="prod-muted">{{ $t('Loading…') }}</p>
@@ -365,12 +368,11 @@ interface Feature { title: string; text: string; choices?: Array<{ label: string
 
 // Every visible string is a literal t() call so `check:i18n` can see the key.
 const catalogue = computed<Array<{
-  id: ProductId; icon: string; name: string; eyebrow: string; lead: string;
+  id: ProductId; name: string; eyebrow: string; lead: string;
   features: Feature[]; requirements: string[]; privacy: string;
 }>>(() => [
   {
     id: 'selfstudycode' as ProductId,
-    icon: '⌨️',
     name: 'SelfStudyCode',
     eyebrow: t('One installer: desktop app and command line · Windows, macOS and Linux'),
     lead: t('Your AI coding agent. It writes and fixes code, runs your tests, reviews changes, and makes images, videos and documents - on your own computer. Sign in with your SelfStudyJo account.'),
@@ -392,7 +394,6 @@ const catalogue = computed<Array<{
   },
   {
     id: 'interview-helper' as ProductId,
-    icon: '🎧',
     name: t('Interview Helper'),
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
     lead: t('Live help in real English job interviews. It listens to the interviewer on Zoom, Microsoft Teams or Google Meet and shows you a short answer in very simple English, with the question explained in Arabic.'),
@@ -422,7 +423,6 @@ const catalogue = computed<Array<{
   },
   {
     id: 'video-editor' as ProductId,
-    icon: '🎬',
     name: t('Video Editor'),
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
     lead: t('A full video editor and lecture recorder. Record your screen, camera and voice, get a transcript in any language and AI presentation graphics placed right on what you explain, then edit by describing it in plain words: "remove the parts with no audio longer than 3 seconds and add Arabic captions". The work happens on your computer and one Undo takes it all back.'),
@@ -450,7 +450,6 @@ const catalogue = computed<Array<{
   },
   {
     id: 'protection' as ProductId,
-    icon: '🛡️',
     name: 'Self-Study for Protection',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
     lead: t('Protects your computer. It watches every program, every device on your network, your disks, processor and memory, checks your antivirus, firewall and sign-ins, explains problems in plain words and gives you the button that fixes them.'),
@@ -470,7 +469,6 @@ const catalogue = computed<Array<{
     privacy: t('Nothing about your computer, programs or network leaves your computer: no account, no telemetry. History and alerts are stored only in a folder on your own computer. Only scan networks you own or are allowed to monitor.'),
   },  {
     id: 'browser' as ProductId,
-    icon: '🧭',
     name: 'SelfStudy Browser',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
     lead: t('A fast, safe web browser for students. One click puts a tab on a private VPN through the Tor network, and adult and dangerous content is blocked everywhere by AI that runs on your own computer.'),
@@ -540,6 +538,10 @@ const browserSteps = computed(() => [
     t('Make the AppImage executable and run it, or install the .deb:'),
   ] },
 ]);
+
+// Each app's own icon (public/products/<id>.png, made from its build/icon.png), the
+// same picture its installer and its desktop shortcut show.
+const iconSrc = (id: string) => import.meta.env.BASE_URL + 'products/' + id + '.png';
 
 function osName(os: string): string {
   if (os === 'windows') return t('Windows');
@@ -741,6 +743,10 @@ onMounted(async () => {
   letter-spacing: 0.04em;
   color: var(--sfs-accent-text, #a5b4fc);
 }
+.prod-hero__title { display: flex; align-items: center; gap: 0.8rem; margin: 0 0 0.6rem; }
+.prod-hero__title h2 { margin: 0; }
+.prod-hero__icon { width: 56px; height: 56px; border-radius: 12px; flex: none; }
+.prod-tab__icon { width: 22px; height: 22px; border-radius: 5px; flex: none; object-fit: contain; }
 .prod-hero h2 { margin: 0 0 0.6rem; font-size: clamp(1.5rem, 3.5vw, 2.1rem); }
 .prod-hero__lead { font-size: 1.05rem; line-height: 1.65; color: var(--sfs-text-muted, #cbd5e1); margin: 0 0 1rem; }
 .prod-version { margin: 0 0 0.75rem; font-size: 0.9rem; color: var(--sfs-text-muted, #cbd5e1); }
