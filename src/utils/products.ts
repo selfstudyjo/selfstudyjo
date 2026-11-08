@@ -31,7 +31,7 @@
  *     against selfstudy-lm/suite.json rather than typed in and left to drift.
  */
 
-export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection'] as const;
+export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser'] as const;
 export type ProductId = typeof PRODUCT_IDS[number];
 
 export type OsId = 'windows' | 'macos' | 'linux' | 'other';

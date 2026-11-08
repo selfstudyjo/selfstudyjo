@@ -205,6 +205,24 @@ Done. The total now rounds to 2 decimals.</pre>
         </div>
       </div>
 
+      <!-- HOW TO INSTALL: SelfStudy Browser. Commands and file names are never translated. -->
+      <div v-if="p.id === 'browser'" class="prod-section">
+        <h3>{{ $t('How to install it') }}</h3>
+        <div class="prod-grid prod-cli">
+          <article v-for="s in browserSteps" :key="s.os" class="prod-card" :class="{ 'prod-card--mine': s.os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(s.os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ s.format }}</span>
+              <span v-if="s.os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <ol class="prod-req">
+              <li v-for="line in s.steps" :key="line">{{ line }}</li>
+            </ol>
+            <pre v-if="s.commands.length" class="prod-cmd" dir="ltr">{{ s.commands.join('\n') }}</pre>
+          </article>
+        </div>
+      </div>
+
       <!-- REQUIREMENTS -->
       <div class="prod-section">
         <h3>{{ $t('System requirements') }}</h3>
@@ -450,6 +468,26 @@ const catalogue = computed<Array<{
       t('Virus scanning uses Microsoft Defender on Windows; on macOS and Linux install the free ClamAV.'),
     ],
     privacy: t('Nothing about your computer, programs or network leaves your computer: no account, no telemetry. History and alerts are stored only in a folder on your own computer. Only scan networks you own or are allowed to monitor.'),
+  },  {
+    id: 'browser' as ProductId,
+    icon: '🧭',
+    name: 'SelfStudy Browser',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('A fast, safe web browser for students. One click puts a tab on a private VPN through the Tor network, and adult and dangerous content is blocked everywhere by AI that runs on your own computer.'),
+    features: [
+      { title: t('VPN in one click'), text: t('The VPN button sends a tab through the Tor network: sites cannot see your IP address and nothing from that tab is kept after you quit. Normal tabs stay fast. Choose an exit country or a new identity at any time.') },
+      { title: t('No adult websites'), text: t('Close to a million adult sites and over a hundred thousand phishing and scam sites are blocked. SafeSearch and YouTube Restricted Mode are always on.') },
+      { title: t('AI hides explicit content'), text: t('On YouTube, Facebook, Instagram, X and every other site, explicit pictures, videos and posts are hidden behind a red warning box while you keep scrolling. The AI runs on your computer: nothing you see is uploaded.') },
+      { title: t('Learns what you block'), text: t('Right-click a picture, or draw a box around anything, and it stays hidden on that site and everywhere the same picture appears. Signed in, what it learns is synced twice a week with your other computers.') },
+      { title: t('Virus-checked downloads'), text: t('Every download is scanned with Microsoft Defender on Windows or ClamAV on macOS and Linux, and an infected file is deleted.') },
+      { title: t('Light and up to date'), text: t('One shared AI worker that unloads itself when idle, idle tabs put to sleep, and automatic updates twice a week.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 600 MB of free disk space.'),
+      t('An account is optional: it is only used for updates and sync.'),
+    ],
+    privacy: t('Pages, pictures and videos are checked on your own computer and never uploaded. Signed in, only the sites and areas you or the browser blocked are synced. VPN tabs keep nothing after you quit.'),
   },
 ]);
 
@@ -474,6 +512,29 @@ const protectionSteps = computed(() => [
     '# or, on Debian / Ubuntu:',
     'sudo apt install ./SelfStudy-Protection-*-linux-amd64.deb',
     'sudo apt install clamav   # optional virus scanning',
+  ], steps: [
+    t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
+    t('Make the AppImage executable and run it, or install the .deb:'),
+  ] },
+]);
+
+// How to install SelfStudy Browser, per OS (artifactName in its package.json; not translated).
+const browserSteps = computed(() => [
+  { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
+    t('Download the .exe installer (or the .msi) and run it.'),
+    t('If Windows says "Windows protected your PC", choose More info, then Run anyway.'),
+    t('Choose the install folder and finish. Open the app from the Start menu or the desktop icon.'),
+  ] },
+  { os: 'macos', format: '.dmg', commands: [] as string[], steps: [
+    t('Download the .dmg for your Mac: arm64 for Apple Silicon, x64 for Intel.'),
+    t('Open the .dmg file and drag the app into Applications.'),
+    t('The first time, right-click the app, choose Open, then Open again.'),
+  ] },
+  { os: 'linux', format: 'AppImage / .deb', commands: [
+    'chmod +x SelfStudy-Browser-*-linux-x86_64.AppImage',
+    './SelfStudy-Browser-*-linux-x86_64.AppImage',
+    '# or, on Debian / Ubuntu:',
+    'sudo apt install ./SelfStudy-Browser-*-linux-amd64.deb',
   ], steps: [
     t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
     t('Make the AppImage executable and run it, or install the .deb:'),
