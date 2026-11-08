@@ -1,1 +1,0 @@
-import{Nr as e}from"./index-Cf5erwhw.js";export{e as serviceRegistry};
