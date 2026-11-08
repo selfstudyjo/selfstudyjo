@@ -41,7 +41,8 @@
         :tabindex="p.id === tab ? 0 : -1"
         @click="selectTab(p.id)"
       >
-        <img class="prod-tab__icon" :src="iconSrc(p.id)" alt="" width="22" height="22" aria-hidden="true">
+        <img v-if="!brokenIcon[p.id]" class="prod-tab__icon" :src="iconSrc(p.id)" alt="" width="22" height="22" aria-hidden="true" @error="iconFailed(p.id)">
+        <span v-else class="prod-tab__icon prod-icon--letter" aria-hidden="true">{{ p.name.charAt(0) }}</span>
         <span>{{ p.name }}</span>
       </button>
     </div>
@@ -67,7 +68,8 @@
         <div class="prod-hero__text">
           <p class="prod-eyebrow">{{ p.eyebrow }}</p>
           <div class="prod-hero__title">
-            <img class="prod-hero__icon" :src="iconSrc(p.id)" :alt="p.name" width="56" height="56">
+            <img v-if="!brokenIcon[p.id]" class="prod-hero__icon" :src="iconSrc(p.id)" :alt="p.name" width="56" height="56" @error="iconFailed(p.id)">
+            <span v-else class="prod-hero__icon prod-icon--letter" aria-hidden="true">{{ p.name.charAt(0) }}</span>
             <h2>{{ p.name }}</h2>
           </div>
           <p class="prod-hero__lead">{{ p.lead }}</p>
@@ -541,7 +543,13 @@ const browserSteps = computed(() => [
 
 // Each app's own icon (public/products/<id>.png, made from its build/icon.png), the
 // same picture its installer and its desktop shortcut show.
-const iconSrc = (id: string) => import.meta.env.BASE_URL + 'products/' + id + '.png';
+// ICON_VERSION is bumped when an icon changes: a browser or the CDN that once cached a
+// failed request (the first deploy did this to the Video Editor's) never reuses it, and an
+// icon that still fails shows a letter badge instead of a broken-image box.
+const ICON_VERSION = '2';
+const iconSrc = (id: string) => import.meta.env.BASE_URL + 'products/' + id + '.png?v=' + ICON_VERSION;
+const brokenIcon = reactive<Record<string, boolean>>({});
+const iconFailed = (id: string) => { brokenIcon[id] = true; };
 
 function osName(os: string): string {
   if (os === 'windows') return t('Windows');
@@ -746,6 +754,8 @@ onMounted(async () => {
 .prod-hero__title { display: flex; align-items: center; gap: 0.8rem; margin: 0 0 0.6rem; }
 .prod-hero__title h2 { margin: 0; }
 .prod-hero__icon { width: 56px; height: 56px; border-radius: 12px; flex: none; }
+.prod-icon--letter { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; background: var(--sfs-accent, #667eea); color: var(--sfs-on-accent, #fff); }
+.prod-hero__icon.prod-icon--letter { font-size: 1.6rem; }
 .prod-tab__icon { width: 22px; height: 22px; border-radius: 5px; flex: none; object-fit: contain; }
 .prod-hero h2 { margin: 0 0 0.6rem; font-size: clamp(1.5rem, 3.5vw, 2.1rem); }
 .prod-hero__lead { font-size: 1.05rem; line-height: 1.65; color: var(--sfs-text-muted, #cbd5e1); margin: 0 0 1rem; }
