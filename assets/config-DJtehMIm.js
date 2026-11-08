@@ -1,0 +1,1 @@
+import{Nr as e}from"./index-FX7BTEGF.js";export{e as serviceRegistry};
