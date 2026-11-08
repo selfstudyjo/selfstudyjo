@@ -1,0 +1,1 @@
+import{Nr as e}from"./index-E3_CIXyk.js";export{e as serviceRegistry};
