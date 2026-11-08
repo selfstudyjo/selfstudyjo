@@ -187,6 +187,24 @@ Done. The total now rounds to 2 decimals.</pre>
         </details>
       </div>
 
+      <!-- HOW TO INSTALL: Self-Study for Protection. Commands and file names are never translated. -->
+      <div v-if="p.id === 'protection'" class="prod-section">
+        <h3>{{ $t('How to install it') }}</h3>
+        <div class="prod-grid prod-cli">
+          <article v-for="s in protectionSteps" :key="s.os" class="prod-card" :class="{ 'prod-card--mine': s.os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(s.os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ s.format }}</span>
+              <span v-if="s.os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <ol class="prod-req">
+              <li v-for="line in s.steps" :key="line">{{ line }}</li>
+            </ol>
+            <pre v-if="s.commands.length" class="prod-cmd" dir="ltr">{{ s.commands.join('\n') }}</pre>
+          </article>
+        </div>
+      </div>
+
       <!-- REQUIREMENTS -->
       <div class="prod-section">
         <h3>{{ $t('System requirements') }}</h3>
@@ -412,6 +430,54 @@ const catalogue = computed<Array<{
     ],
     privacy: '',
   },
+  {
+    id: 'protection' as ProductId,
+    icon: '🛡️',
+    name: 'Self-Study for Protection',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('Protects your computer. It watches every program, every device on your network, your disks, processor and memory, checks your antivirus, firewall and sign-ins, explains problems in plain words and gives you the button that fixes them.'),
+    features: [
+      { title: t('Every process, explained'), text: t('Each running program with its owner, start time, live uptime, CPU, memory and digital signature, marked System, User, Suspicious or Dangerous with the reasons. Stop any program that is not part of the operating system, in a table or a 3D view of the process tree.') },
+      { title: t('Who is on your network'), text: t('Finds the devices on your Wi-Fi or cable network, with an icon for each type, its maker, address and first and last time seen. Devices that left stay listed as offline. Dangerous signs like ARP spoofing or a device scanning your computer are flagged.') },
+      { title: t('What fills your disk'), text: t('The complete Disk Usage Analyzer: what uses the space on each drive and why, the largest files, a 3D map, files that look malicious, and safe cleanup that protects system files.') },
+      { title: t('Viruses and break-ins'), text: t('Shows your antivirus and firewall status, runs quick, full, folder and file virus scans, removes threats, shows who is signed in (remote sessions are flagged) and lists programs that start automatically.') },
+      { title: t('Charts for everything'), text: t('Live 2D and 3D charts of CPU per core, memory, network traffic and disk space, with how fast each drive is filling.') },
+      { title: t('Alerts that do not bother you'), text: t('Problems appear in the app. Only urgent ones - a dangerous program, a virus, someone signed in remotely, a disk about to be full - also show a desktop notification, even when the window is closed.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 400 MB of free disk space.'),
+      t('Virus scanning uses Microsoft Defender on Windows; on macOS and Linux install the free ClamAV.'),
+    ],
+    privacy: t('Nothing about your computer, programs or network leaves your computer: no account, no telemetry. History and alerts are stored only in a folder on your own computer. Only scan networks you own or are allowed to monitor.'),
+  },
+]);
+
+// How to install Self-Study for Protection, per OS. The commands use the release's
+// real file names (artifactName in its package.json) and are not translated.
+const protectionSteps = computed(() => [
+  { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
+    t('Download the .exe installer (or the .msi) and run it.'),
+    t('If Windows says "Windows protected your PC", choose More info, then Run anyway.'),
+    t('Choose the install folder and finish. Open the app from the Start menu or the desktop icon.'),
+    t('For full detail on system processes, use Relaunch as administrator inside the app.'),
+  ] },
+  { os: 'macos', format: '.dmg', commands: ['brew install clamav'], steps: [
+    t('Open the .dmg file and drag the app into Applications.'),
+    t('The first time, right-click the app, choose Open, then Open again.'),
+    t('Optional: in System Settings, Privacy & Security, give it Full Disk Access for complete disk scans.'),
+    t('Optional: install ClamAV to scan files for viruses:'),
+  ] },
+  { os: 'linux', format: 'AppImage / .deb', commands: [
+    'chmod +x SelfStudy-Protection-*-linux-x86_64.AppImage',
+    './SelfStudy-Protection-*-linux-x86_64.AppImage',
+    '# or, on Debian / Ubuntu:',
+    'sudo apt install ./SelfStudy-Protection-*-linux-amd64.deb',
+    'sudo apt install clamav   # optional virus scanning',
+  ], steps: [
+    t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
+    t('Make the AppImage executable and run it, or install the .deb:'),
+  ] },
 ]);
 
 function osName(os: string): string {

@@ -44,7 +44,7 @@ const PHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKi
 const CROS = 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 Chrome/141.0 Safari/537.36';
 
 console.log('1. Tabs');
-check('three products, in catalogue order', PRODUCT_IDS.join(',') === 'selfstudycode,interview-helper,video-editor');
+check('four products, in catalogue order', PRODUCT_IDS.join(',') === 'selfstudycode,interview-helper,video-editor,protection');
 check('?tab=interview-helper opens that tab', tabFromQuery('interview-helper') === 'interview-helper');
 check('case and spaces are forgiven', tabFromQuery(' Video-Editor ') === 'video-editor');
 check('an unknown tab falls back to the first', tabFromQuery('nope') === 'selfstudycode');
