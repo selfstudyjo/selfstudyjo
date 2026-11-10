@@ -401,7 +401,7 @@ const tools: Catalogue = {
     "Desktop app and command line": "桌面应用和命令行",
     "One installer gives you both the desktop app and the selfstudycode command (short name: ssc). They share your sign-in, settings, chats and local models.": "一个安装包同时为你提供桌面应用和 selfstudycode 命令（简称 ssc）。两者共用你的登录、设置、对话和本地模型。",
     "Explainer videos and documents": "讲解视频和文档",
-    "Give it a folder of exam files and it makes one silent explainer video per file: questions and answers side by side with arrows, code next to its real output, cleaned scans, Arabic labels. It also makes 3D animated scenes with free sound effects.": "给它一个装着试卷文件的文件夹，它会为每个文件制作一段无声讲解视频：题目和答案并排并配有箭头，代码旁边显示真实运行结果，扫描件经过清理，标注使用阿拉伯语。它还能制作配有免费音效的 3D 动画场景。",
+    "Give it a folder of exam files and it makes one silent explainer video per file: questions and answers side by side with arrows, practical steps done for real in VS Code and a browser on a hidden desktop, cleaned scans, Arabic labels. It also makes 3D animated scenes with free sound effects and character voices.": "给它一个装着试卷文件的文件夹，它会为每个文件制作一段无声讲解视频：题目和答案并排并配有箭头，实践步骤在隐藏桌面上的 VS Code 和浏览器中真实执行，扫描件经过清理，标注使用阿拉伯语。它还能制作配有免费音效和角色配音的 3D 动画场景。",
     "Made for everyday computers": "为普通电脑而设计",
     "It watches memory and the processor and slows itself down when your computer is busy, so it keeps working on an 8 GB laptop without freezing it. Your chats are saved as you go, and a long task always ends with a report of what was done.": "它会关注内存和处理器的使用情况，在电脑繁忙时自动放慢速度，因此在 8 GB 内存的笔记本上也能持续工作而不会让电脑卡死。你的对话会随时保存，长时间的任务总会以一份完成情况报告结束。",
     "Apps that start working": "一开始就能运行的应用",
