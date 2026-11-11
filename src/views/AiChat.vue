@@ -96,6 +96,9 @@
           <p v-else>{{ $t('Ask me anything about your courses, labs, or general knowledge') }}</p>
         </div>
         <div class="chat-header-actions">
+          <button class="context-btn" @click="localOpen = !localOpen" :class="{ on: localOpen }" :aria-expanded="localOpen">
+            {{ $t('Run on my computer') }}
+          </button>
           <button v-if="activeRoom" class="context-btn" @click="toggleContext"
                   :class="{ on: contextOpen }" :aria-expanded="contextOpen">
             {{ $t('Memory') }}
@@ -110,6 +113,28 @@
         correct, and "why does it keep thinking I use Postgres" has no answer
         anywhere else on the platform.
       -->
+      <!--
+        SelfStudy LM on the student's own computer. A browser cannot run a model
+        file by itself, so the offer is the desktop app: it downloads the model
+        once (into the shared models folder) and then answers offline, privately,
+        with no account. Figures come from SELFSTUDY_LM (utils/products.ts).
+      -->
+      <div v-if="localOpen" class="context-panel local-ai-panel">
+        <p class="context-line">{{ $t('Download a SelfStudy LM model and chat with it on your own computer - offline, private, free. The desktop app downloads the model for you the first time.') }}</p>
+        <ul class="local-ai-list">
+          <li v-for="m in localModels" :key="m.id">
+            <b dir="ltr">{{ m.name }}</b>
+            <span dir="ltr">{{ m.size }}</span>
+            <span>{{ $t('needs {v0} memory', { v0: m.ram }) }}</span>
+            <em v-if="m.recommended">{{ $t('Recommended') }}</em>
+          </li>
+        </ul>
+        <p class="local-ai-actions">
+          <router-link class="context-btn on" to="/products?tab=selfstudycode">{{ $t('Download the desktop app') }}</router-link>
+          <router-link class="context-btn" to="/products">{{ $t('All SelfStudy apps') }}</router-link>
+        </p>
+      </div>
+
       <div v-if="contextOpen && activeRoom" class="context-panel">
         <p class="context-line">{{ contextLine }}</p>
         <!--
@@ -320,6 +345,7 @@ import {
 } from '@/utils/aichatAttachments';
 import { ApiError } from '@/services/api';
 import RichText from '@/components/RichText.vue';
+import { SELFSTUDY_LM } from '@/utils/products';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -346,6 +372,8 @@ const savingBrief = ref(false);
 const rebuilding = ref(false);
 const sidebarOpen = ref(false);
 const contextOpen = ref(false);
+const localOpen = ref(false);
+const localModels = SELFSTUDY_LM.filter((m) => m.kind === 'llm');
 
 const messagesContainer = ref<HTMLElement | null>(null);
 const textarea = ref<HTMLTextAreaElement | null>(null);

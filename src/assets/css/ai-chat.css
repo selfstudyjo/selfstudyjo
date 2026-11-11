@@ -1208,3 +1208,11 @@
   .ai-chat-container .attach-hint { display: none; }
   .ai-chat-container .input-area button.tool-btn { width: 36px; height: 36px; }
 }
+
+/* "Run on my computer": SelfStudy LM through the desktop app. */
+.ai-chat-container .local-ai-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--aic-sp-xs); }
+.ai-chat-container .local-ai-list li { display: flex; flex-wrap: wrap; gap: var(--aic-sp-sm); align-items: baseline; min-width: 0; }
+.ai-chat-container .local-ai-list span { color: var(--sfs-text-muted, #94a3b8); }
+.ai-chat-container .local-ai-list em { font-style: normal; font-size: .8em; color: var(--sfs-success-text, #6ee7b7); }
+.ai-chat-container .local-ai-actions { display: flex; flex-wrap: wrap; gap: var(--aic-sp-sm); margin: 0; }
+.ai-chat-container .local-ai-actions a { text-decoration: none; }

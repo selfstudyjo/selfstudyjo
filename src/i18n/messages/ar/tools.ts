@@ -577,6 +577,11 @@ const tools: Catalogue = {
     "Viruses and break-ins": "الفيروسات والاختراقات",
     "What fills your disk": "ما الذي يملأ قرصك",
     "Who is on your network": "من على شبكتك",
+    "Run on my computer": "شغّله على جهازي",
+    "Download a SelfStudy LM model and chat with it on your own computer - offline, private, free. The desktop app downloads the model for you the first time.": "نزّل نموذج SelfStudy LM وتحدث معه على جهازك - بدون إنترنت وبخصوصية ومجانًا. يقوم تطبيق سطح المكتب بتنزيل النموذج لك في المرة الأولى.",
+    "needs {v0} memory": "يحتاج ذاكرة {v0}",
+    "Download the desktop app": "نزّل تطبيق سطح المكتب",
+    "All SelfStudy apps": "كل تطبيقات SelfStudy",
 };
 
 export default tools;

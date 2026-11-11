@@ -550,6 +550,11 @@ const tools: Catalogue = {
     "Viruses and break-ins": "病毒与入侵",
     "What fills your disk": "是什么占满了磁盘",
     "Who is on your network": "谁在你的网络上",
+    "Run on my computer": "在我的电脑上运行",
+    "Download a SelfStudy LM model and chat with it on your own computer - offline, private, free. The desktop app downloads the model for you the first time.": "下载 SelfStudy LM 模型，在你自己的电脑上离线、私密、免费地与它对话。桌面应用会在第一次使用时为你下载模型。",
+    "needs {v0} memory": "需要 {v0} 内存",
+    "Download the desktop app": "下载桌面应用",
+    "All SelfStudy apps": "所有 SelfStudy 应用",
 };
 
 export default tools;
