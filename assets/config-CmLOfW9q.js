@@ -1,0 +1,1 @@
+import{Kr as e}from"./index-DicDMEcU.js";export{e as serviceRegistry};
