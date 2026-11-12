@@ -7358,6 +7358,379 @@ VIEWS.dataplat = {
     }
 };
 
+// SITE RELIABILITY: dumped from app 11's `utils/sims/sre` `view()` after
+// driving an incident, an SLO, a canary, a load test, a chaos experiment
+// and toil through the engine (see _sre/wire_frontend.py), lists trimmed
+// to six rows.
+VIEWS.sre = {
+    "overview": {
+        "clock": "2026-11-12 09:44 UTC",
+        "requests_per_s": 96.2,
+        "error_rate_pct": 1.765,
+        "p99_ms": 4957,
+        "probe": "OK",
+        "version": "2.4.0",
+        "budget_remaining_pct": 20.0,
+        "firing_alerts": 0,
+        "open_incidents": 1,
+        "session": "workstation"
+    },
+    "health": {
+        "site_up": true,
+        "error_pct": 1.765,
+        "p99_ms": 4957,
+        "rps": 96.2,
+        "nginx_config_ok": true,
+        "nginx_active": true,
+        "cert_valid_served": true,
+        "cert_valid_file": true,
+        "api1_serving": true,
+        "api2_serving": true,
+        "api1_port_shopapi": true,
+        "api2_exec_ok": true,
+        "api2_unit_active": true,
+        "api2_disk_pct": 28.5,
+        "api2_deleted_open": 0,
+        "db_cpu_ok": true,
+        "redis_reachable": true,
+        "dns_ok_api2": true,
+        "db_reachable_api2": true,
+        "db_ufw_open_to_world": false,
+        "api1_rss_mb": 240,
+        "version": "2.4.0",
+        "firing": 0
+    },
+    "hosts": [
+        {
+            "host": "lb-1",
+            "role": "load balancer (nginx, TLS)",
+            "ip": "10.0.1.10",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 27.0,
+            "mem_pct": 3.5,
+            "version": ""
+        },
+        {
+            "host": "api-1",
+            "role": "shopapi",
+            "ip": "10.0.2.11",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 28.5,
+            "mem_pct": 8.1,
+            "version": "2.4.0"
+        },
+        {
+            "host": "api-2",
+            "role": "shopapi",
+            "ip": "10.0.2.12",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 28.5,
+            "mem_pct": 8.1,
+            "version": "2.6.0"
+        },
+        {
+            "host": "db-1",
+            "role": "PostgreSQL 14",
+            "ip": "10.0.3.11",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 27.0,
+            "mem_pct": 26.8,
+            "version": ""
+        },
+        {
+            "host": "cache-1",
+            "role": "Redis 7",
+            "ip": "10.0.3.21",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 27.0,
+            "mem_pct": 8.7,
+            "version": ""
+        },
+        {
+            "host": "mon-1",
+            "role": "Prometheus, Alertmanager, Grafana",
+            "ip": "10.0.4.10",
+            "status": "healthy",
+            "failed_units": [],
+            "issues": [],
+            "disk_pct": 27.0,
+            "mem_pct": 19.4,
+            "version": ""
+        }
+    ],
+    "units": [
+        {
+            "host": "lb-1",
+            "unit": "cron",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        },
+        {
+            "host": "lb-1",
+            "unit": "nginx",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        },
+        {
+            "host": "lb-1",
+            "unit": "node_exporter",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        },
+        {
+            "host": "lb-1",
+            "unit": "ssh",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        },
+        {
+            "host": "lb-1",
+            "unit": "systemd-journald",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        },
+        {
+            "host": "api-1",
+            "unit": "cron",
+            "state": "active",
+            "since": "2026-11-03 09:00"
+        }
+    ],
+    "services": [
+        {
+            "instance": "api-1",
+            "version": "2.4.0",
+            "state": "ok",
+            "share_pct": 90.0,
+            "error_pct": 0.04,
+            "latency_add_ms": 0
+        },
+        {
+            "instance": "api-2",
+            "version": "2.6.0",
+            "state": "ok",
+            "share_pct": 10.0,
+            "error_pct": 2.0,
+            "latency_add_ms": 350
+        }
+    ],
+    "alerts": [],
+    "rules": [
+        {
+            "group": "shopapi-symptoms",
+            "name": "ShopapiHighErrorRate",
+            "type": "alert",
+            "expr": "sum(rate(http_requests_total{service=\"shopapi\",code=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"shopapi\"}[5m])) > 0.02",
+            "for": "5m",
+            "severity": "page",
+            "health": "ok",
+            "file": "monitoring/rules/shopapi.yml",
+            "runbook": "runbooks/shopapi-errors.md",
+            "summary": "shopapi is failing {{ $value }} of requests"
+        },
+        {
+            "group": "shopapi-symptoms",
+            "name": "ShopProbeFailing",
+            "type": "alert",
+            "expr": "probe_success == 0",
+            "for": "2m",
+            "severity": "page",
+            "health": "ok",
+            "file": "monitoring/rules/shopapi.yml",
+            "runbook": "",
+            "summary": "https://shop.example.com/ fails its synthetic probe"
+        }
+    ],
+    "silences": [
+        {
+            "id": "SIL-1",
+            "matchers": "alertname=ShopProbeFailing",
+            "comment": "maintenance",
+            "active": true
+        }
+    ],
+    "notifications": [
+        {
+            "time": "09:07:00",
+            "alert": "ShopapiHighErrorRate",
+            "severity": "page",
+            "receiver": "pagerduty-oncall",
+            "summary": "shopapi is failing 0.045342 of requests"
+        }
+    ],
+    "pages": [
+        {
+            "id": "PAGE-1",
+            "alert": "ShopapiHighErrorRate",
+            "to": "you",
+            "status": "acknowledged",
+            "escalated": false,
+            "ack_seconds": 20,
+            "created": "09:07:00"
+        }
+    ],
+    "slos": [
+        {
+            "name": "availability",
+            "service": "shopapi",
+            "objective": 99.9,
+            "window": "30d",
+            "sli_pct": 99.92,
+            "budget_minutes": 43.2,
+            "consumed_pct": 80.0,
+            "remaining_pct": 20.0,
+            "burn_5m": 17.65,
+            "burn_1h": 21.16,
+            "burn_6h": 5.14,
+            "burn_3d": 0.67,
+            "status": "burning"
+        }
+    ],
+    "incidents": [
+        {
+            "id": "INC-1",
+            "title": "Checkout failing",
+            "severity": "SEV2",
+            "status": "monitoring",
+            "commander": "you",
+            "comms": "sam",
+            "statuspage_updates": 1,
+            "updates": 5,
+            "mitigated": true,
+            "resolved": false,
+            "ttm_min": 13.7,
+            "postmortem": "",
+            "review": ""
+        }
+    ],
+    "timeline": [
+        "09:08:00 INC-1 Incident declared (SEV2): Checkout failing",
+        "09:08:20 INC-1 you is incident commander",
+        "09:08:20 INC-1 sam is incident comms",
+        "09:08:40 INC-1 Status page: Some checkouts fail; next update in 15 minutes.",
+        "09:20:40 INC-1 Mitigated: rollback"
+    ],
+    "deploys": [
+        {
+            "time": "2026-10-23 09:00",
+            "version": "2.3.0",
+            "strategy": "rolling",
+            "status": "complete",
+            "note": ""
+        },
+        {
+            "time": "2026-11-03 09:00",
+            "version": "2.4.0",
+            "strategy": "rolling",
+            "status": "complete",
+            "note": "from 2.3.0"
+        },
+        {
+            "time": "2026-11-12 08:38",
+            "version": "2.5.0",
+            "strategy": "rolling",
+            "status": "complete",
+            "note": "from 2.4.0"
+        },
+        {
+            "time": "2026-11-12 09:09",
+            "version": "2.4.0",
+            "strategy": "rollback",
+            "status": "complete",
+            "note": "from 2.5.0"
+        },
+        {
+            "time": "2026-11-12 09:22",
+            "version": "2.6.0",
+            "strategy": "canary 10%",
+            "status": "running",
+            "note": ""
+        }
+    ],
+    "rollout": {
+        "version": "2.6.0",
+        "status": "running",
+        "canary": "api-2",
+        "weight_pct": 10,
+        "analysis": "fail",
+        "canary_error_pct": 2.001,
+        "canary_p99_ms": 2181
+    },
+    "dashboards": [
+        {
+            "dashboard": "Golden",
+            "title": "Traffic",
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "value": "96.2 req/s"
+        }
+    ],
+    "loadtests": [
+        {
+            "id": "LT-1",
+            "rps": 300.0,
+            "replicas": 2,
+            "util_pct": 107.1,
+            "p50_ms": 206,
+            "p99_ms": 2140,
+            "error_pct": 14.57,
+            "duration": "5m"
+        }
+    ],
+    "capacity": {},
+    "replicas": 2,
+    "experiments": [
+        {
+            "id": "EXP-1",
+            "experiment": "kill-instance",
+            "target": "api-1",
+            "hypothesis": "no user errors when one dies",
+            "abort_if": "error_pct > 1",
+            "error_pct": 2.001,
+            "p99_ms": 4987,
+            "result": "hypothesis refuted (aborted)"
+        }
+    ],
+    "toil": [
+        {
+            "task": "Restart worker",
+            "minutes": 15.0,
+            "per_week": 4.0,
+            "hours_week": 1.0,
+            "automatable": "yes",
+            "manual": true,
+            "repetitive": true
+        }
+    ],
+    "toil_share_pct": 2.5,
+    "queries": [
+        {
+            "expr": "up",
+            "ok": true,
+            "rows": 12
+        }
+    ],
+    "log_queries": [],
+    "traces_viewed": false,
+    "actions": [
+        "09:09:00 api-1 stop shopapi",
+        "09:09:00 api-1 restart shopapi",
+        "09:09:00 api-2 stop shopapi",
+        "09:09:00 api-2 restart shopapi",
+        "09:21:40 api-1 ssh login",
+        "09:22:40 api-2 stop shopapi"
+    ]
+};
+
 VIEWS.cowork = VIEWS.claudecode;
 
 for (const [family, panels] of Object.entries(GUI_PANELS)) {

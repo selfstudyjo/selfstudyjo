@@ -523,6 +523,9 @@ const FAMILY_LABELS: Record<string, string> = {
     // lakehouse, Airflow, dbt, Kafka, Flink, data quality and Feast are one
     // simulated platform over real data, so one pane holds all of them.
     dataplat: 'ShopFlow Data Platform',
+    // Site reliability: the ShopFront estate (`sim:sre`) - the SRE Console and
+    // five dashboards are one pane.
+    sre: 'Site Reliability Engineering',
     ai: 'AI Tutor',
 };
 
@@ -2830,6 +2833,137 @@ export const GUI_PANELS: Record<string, GuiPanel[]> = {
             columns: [col('path', 'Path', 'code'), col('kind', 'Kind', 'badge'),
                 col('ok', 'Complete', 'badge'), col('words', 'Words', 'number'),
                 col('problems', 'Problems', 'list')],
+        },
+    ],
+    // Site reliability (app 11's `sim:sre`): the ShopFront estate behind five
+    // dashboards. Every path is a key of `utils/sims/sre/__init__.py`'s
+    // `view()`; the fixture in `tools/labs-check/check.ts` is dumped from it.
+    sre: [
+        { id: 'overview', title: 'Service overview', kind: 'stats', path: 'overview', tool: 'sre_grafana' },
+        {
+            id: 'instances', title: 'Instances', kind: 'table', path: 'services',
+            tool: 'sre_grafana',
+            columns: [col('instance', 'Instance'), col('version', 'Version'),
+                col('state', 'State', 'badge'), col('share_pct', 'Traffic %', 'number'),
+                col('error_pct', 'Errors %', 'number'),
+                col('latency_add_ms', 'Extra latency (ms)', 'number')],
+        },
+        {
+            id: 'panels', title: 'Dashboard panels', kind: 'table', path: 'dashboards',
+            tool: 'sre_grafana', empty: 'No dashboard imported yet',
+            columns: [col('dashboard', 'Dashboard'), col('title', 'Panel'),
+                col('value', 'Value'), col('expr', 'Query', 'code')],
+        },
+        {
+            id: 'queries', title: 'Your PromQL queries', kind: 'table', path: 'queries',
+            tool: 'sre_grafana', empty: 'No queries yet',
+            columns: [col('expr', 'Query', 'code'), col('ok', 'OK', 'badge'),
+                col('rows', 'Series', 'number')],
+        },
+        {
+            id: 'alerts', title: 'Alerts', kind: 'table', path: 'alerts',
+            tool: 'sre_alerts', empty: 'No alerts pending or firing',
+            columns: [col('name', 'Alert'), col('severity', 'Severity', 'badge'),
+                col('state', 'State', 'badge'), col('since', 'Since'),
+                col('summary', 'Summary'), col('silenced', 'Silenced', 'badge')],
+        },
+        {
+            id: 'rules', title: 'Rules', kind: 'table', path: 'rules',
+            tool: 'sre_alerts', empty: 'No rules loaded yet',
+            columns: [col('group', 'Group'), col('name', 'Name'), col('type', 'Type', 'badge'),
+                col('for', 'For'), col('severity', 'Severity', 'badge'),
+                col('health', 'Health', 'badge'), col('expr', 'Expression', 'code')],
+        },
+        {
+            id: 'silences', title: 'Silences', kind: 'table', path: 'silences',
+            tool: 'sre_alerts', empty: 'No silences',
+            columns: [col('id', 'Id', 'code'), col('matchers', 'Matchers', 'code'),
+                col('comment', 'Comment'), col('active', 'Active', 'badge')],
+        },
+        {
+            id: 'notifications', title: 'Notifications', kind: 'table', path: 'notifications',
+            tool: 'sre_alerts', empty: 'Nothing has been sent',
+            columns: [col('time', 'Time'), col('alert', 'Alert'),
+                col('severity', 'Severity', 'badge'), col('receiver', 'Receiver', 'badge'),
+                col('summary', 'Summary')],
+        },
+        {
+            id: 'slos', title: 'Service level objectives', kind: 'table', path: 'slos',
+            tool: 'sre_slo', empty: 'No SLO applied yet',
+            columns: [col('service', 'Service'), col('name', 'SLO'),
+                col('objective', 'Objective %', 'number'), col('window', 'Window'),
+                col('sli_pct', 'SLI %', 'number'), col('budget_minutes', 'Budget (min)', 'number'),
+                col('consumed_pct', 'Spent %', 'number'), col('remaining_pct', 'Remaining %', 'number'),
+                col('burn_1h', 'Burn 1h', 'number'), col('burn_6h', 'Burn 6h', 'number'),
+                col('status', 'Status', 'badge')],
+        },
+        {
+            id: 'pages', title: 'Pages', kind: 'table', path: 'pages',
+            tool: 'sre_incidents', empty: 'No pages',
+            columns: [col('id', 'Page', 'code'), col('alert', 'Alert'), col('to', 'To'),
+                col('status', 'Status', 'badge'), col('created', 'At'),
+                col('ack_seconds', 'Ack after (s)', 'number')],
+        },
+        {
+            id: 'incidents', title: 'Incidents', kind: 'table', path: 'incidents',
+            tool: 'sre_incidents', empty: 'No incidents',
+            columns: [col('id', 'Incident', 'code'), col('severity', 'Severity', 'badge'),
+                col('status', 'Status', 'badge'), col('title', 'Title'),
+                col('commander', 'Commander'), col('statuspage_updates', 'Status page', 'number'),
+                col('ttm_min', 'Time to mitigate (min)', 'number'),
+                col('review', 'Postmortem', 'badge')],
+        },
+        {
+            id: 'timeline', title: 'Incident timeline', kind: 'log', path: 'timeline',
+            tool: 'sre_incidents', empty: 'Nothing has happened yet',
+        },
+        {
+            id: 'deploys', title: 'Deploys', kind: 'table', path: 'deploys',
+            tool: 'sre_incidents',
+            columns: [col('time', 'Time'), col('version', 'Version'),
+                col('strategy', 'Strategy'), col('status', 'Status', 'badge'),
+                col('note', 'Note')],
+        },
+        { id: 'rollout', title: 'Canary', kind: 'stats', path: 'rollout', tool: 'sre_incidents' },
+        {
+            id: 'experiments', title: 'Chaos experiments', kind: 'table', path: 'experiments',
+            tool: 'sre_incidents', empty: 'No experiments yet',
+            columns: [col('id', 'Id', 'code'), col('experiment', 'Experiment'),
+                col('target', 'Target'), col('result', 'Result', 'badge'),
+                col('error_pct', 'Errors %', 'number')],
+        },
+        {
+            id: 'loadtests', title: 'Load tests', kind: 'table', path: 'loadtests',
+            tool: 'sre_incidents', empty: 'No load tests yet',
+            columns: [col('id', 'Id', 'code'), col('rps', 'Req/s', 'number'),
+                col('replicas', 'Replicas', 'number'), col('util_pct', 'Utilisation %', 'number'),
+                col('p99_ms', 'p99 (ms)', 'number'), col('error_pct', 'Errors %', 'number')],
+        },
+        {
+            id: 'toil', title: 'Toil', kind: 'table', path: 'toil',
+            tool: 'sre_incidents', empty: 'No toil logged yet',
+            columns: [col('task', 'Task'), col('minutes', 'Minutes', 'number'),
+                col('per_week', 'Per week', 'number'), col('hours_week', 'Hours / week', 'number'),
+                col('automatable', 'Automatable', 'badge')],
+        },
+        {
+            id: 'hosts', title: 'Hosts', kind: 'table', path: 'hosts',
+            tool: 'sre_fleet',
+            columns: [col('host', 'Host'), col('role', 'Role'), col('ip', 'IP', 'code'),
+                col('status', 'Status', 'badge'), col('failed_units', 'Failed units', 'list'),
+                col('issues', 'Issues', 'list'), col('disk_pct', 'Disk %', 'number'),
+                col('mem_pct', 'Memory %', 'number'), col('version', 'Version')],
+        },
+        { id: 'health', title: 'Health checks', kind: 'stats', path: 'health', tool: 'sre_fleet' },
+        {
+            id: 'units', title: 'systemd units', kind: 'table', path: 'units',
+            tool: 'sre_fleet',
+            columns: [col('host', 'Host'), col('unit', 'Unit', 'code'),
+                col('state', 'State', 'badge'), col('since', 'Since')],
+        },
+        {
+            id: 'actions', title: 'Your actions on the hosts', kind: 'log', path: 'actions',
+            tool: 'sre_fleet', empty: 'Nothing done on a host yet',
         },
     ],
 };
