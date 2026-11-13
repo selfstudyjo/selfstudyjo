@@ -1,0 +1,1 @@
+import{Kr as e}from"./index-C8FXcPAj.js";export{e as serviceRegistry};

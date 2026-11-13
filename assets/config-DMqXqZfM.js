@@ -1,1 +1,0 @@
-import{Kr as e}from"./index-BP7Ayn6L.js";export{e as serviceRegistry};
