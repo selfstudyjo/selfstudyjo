@@ -175,6 +175,11 @@ const SKINS: Record<string, Component> = {
   qarunner: lazy(() => import('./qa/QaRunner.vue')),
   testrail: lazy(() => import('./qa/TestRailApp.vue')),
   qabugs: lazy(() => import('./qa/QaBugs.vue')),
+  grafana: lazy(() => import('./sre/GrafanaApp.vue')),
+  prometheus: lazy(() => import('./sre/PrometheusApp.vue')),
+  grafanaslo: lazy(() => import('./sre/GrafanaSlo.vue')),
+  pagerduty: lazy(() => import('./sre/PagerDutyApp.vue')),
+  cockpit: lazy(() => import('./sre/CockpitApp.vue')),
 };
 
 const skin = computed<Component | null>(() => SKINS[String(props.tool.skin || '')] || null);
@@ -212,6 +217,11 @@ const DEFAULT_LOCATIONS: Record<string, string> = {
   qarunner: 'http://localhost:9323/',
   testrail: 'https://qa-shop.testrail.io/index.php?/dashboard',
   qabugs: 'https://qa-shop.atlassian.net/jira/software/projects/QA/boards/2',
+  grafana: 'http://grafana.shopfront.internal:3000/d/overview',
+  prometheus: 'http://mon-1:9090/graph',
+  grafanaslo: 'http://grafana.shopfront.internal:3000/a/grafana-slo-app/manage-slos',
+  pagerduty: 'https://shopfront.pagerduty.com/incidents',
+  cockpit: 'https://mon-1.shopfront.internal:9090/dashboard',
 };
 
 const location = ref(DEFAULT_LOCATIONS[String(props.tool.skin || '')] || 'about:blank');
