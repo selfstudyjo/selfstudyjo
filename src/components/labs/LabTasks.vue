@@ -138,7 +138,7 @@
             </p>
             <template v-if="task.instructions.steps.length">
               <ol v-if="stepsOpen(task, at)" class="sl-task__steps">
-                <li v-for="(step, n) in task.instructions.steps" :key="n">{{ step }}</li>
+                <li v-for="(step, n) in task.instructions.steps" :key="n"><LabStepText :step="step" /></li>
               </ol>
               <button type="button" class="sl-task__steps-toggle"
                       :aria-expanded="stepsOpen(task, at)" @click="toggleSteps(task, at)">
@@ -169,6 +169,25 @@
             </p>
           </div>
           <p v-else-if="task.detail" class="sl-task__detail">{{ task.detail }}</p>
+
+          <!--
+            A READING TASK: the value the student read off the console or a
+            dashboard is typed here and checked against the live environment
+            (the expected value never reaches the browser). Submitting is a
+            Check my work, so the result appears on this card at once.
+          -->
+          <form v-if="task.answer" class="sl-task__answer" @submit.prevent="submitAnswer(task)">
+            <label :for="'sl-answer-' + task.id">{{ task.answer.label }}</label>
+            <input :id="'sl-answer-' + task.id" v-model="drafts[task.id]" type="text" inputmode="decimal"
+                   dir="ltr" maxlength="80" autocomplete="off"
+                   :placeholder="task.answer.placeholder || $t('Your answer')"
+                   :disabled="busy || task.status === 'passed'" />
+            <span v-if="task.answer.unit" class="sl-task__answer-unit" dir="ltr">{{ task.answer.unit }}</span>
+            <button type="submit" class="sl-btn sl-btn--primary sl-btn--sm"
+                    :disabled="busy || task.status === 'passed' || !String(drafts[task.id] ?? '').trim()">
+              {{ $t('Submit answer') }}
+            </button>
+          </form>
 
           <!--
             The status LINE is always visible text, never colour alone.
@@ -296,6 +315,7 @@ import {
 } from 'lucide-vue-next';
 import ReadAloud from '@/components/ReadAloud.vue';
 import LabTaskGuide from '@/components/labs/LabTaskGuide.vue';
+import LabStepText from '@/components/labs/LabStepText.vue';
 import {
   TASK_STATUS_LABELS, guiToolsFor, type GradeReport, type LabGrade, type LabTask,
   type LabTool, type TaskStatus,
@@ -347,15 +367,29 @@ const spokenTasks = computed(() => props.grade.tasks.flatMap((task, at) => {
   if (goal) lines.push(goal);
   return lines;
 }));
-defineEmits<{
+const emit = defineEmits<{
   (event: 'collapse'): void;
   (event: 'grade'): void;
   (event: 'ask', task: LabTask, focus?: string): void;
   (event: 'self-mark', taskId: string): void;
   (event: 'open-tool', toolId: string): void;
+  (event: 'answer', taskId: string, value: string): void;
 }>();
 
 const open = ref(new Set<string>());
+/** What is typed in each reading task's box, seeded from the last saved answer. */
+const drafts = ref<Record<string, string>>({});
+watch(() => props.grade?.tasks, tasks => {
+  for (const task of tasks || []) {
+    if (task.answer && drafts.value[task.id] === undefined && task.answer_given) {
+      drafts.value[task.id] = task.answer_given;
+    }
+  }
+}, { immediate: true });
+function submitAnswer(task: LabTask) {
+  const value = String(drafts.value[task.id] ?? '').trim();
+  if (value) emit('answer', task.id, value);
+}
 const showChecks = ref(false);
 /**
  * Which task's information window is open, by POSITION in the live grade, so

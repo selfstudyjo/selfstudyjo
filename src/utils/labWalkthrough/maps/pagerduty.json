@@ -1,0 +1,149 @@
+{
+ "skin": "pagerduty",
+ "product": "PagerDuty",
+ "brand": "#06ac38",
+ "top": "PagerDuty",
+ "nav": ["Incidents", "Services", "People", "Automation"],
+ "recipes": [
+  {
+   "id": "pages",
+   "title": "See the pages",
+   "match": "oncall\\s+pages",
+   "steps": [
+    {"say": "Open Incidents - every page sent to the on-call engineer is listed here.", "screen": "Incidents", "nav": "Incidents", "zone": "nav", "action": "click", "target": "Incidents"},
+    {"say": "Open the Triggered tab: pages nobody has acknowledged yet.", "screen": "Incidents", "nav": "Incidents", "zone": "tab", "action": "see", "target": "Triggered"}
+   ]
+  },
+  {
+   "id": "ack",
+   "title": "Acknowledge a page",
+   "match": "oncall\\s+ack\\s+(PAGE-\\d+)",
+   "steps": [
+    {"say": "Open Incidents, Triggered tab.", "screen": "Incidents", "nav": "Incidents", "zone": "tab", "action": "click", "target": "Triggered"},
+    {"say": "Find {1} and press Acknowledge - it stops the escalation to the secondary and tells everyone you are on it.", "screen": "Incidents", "nav": "Incidents", "zone": "main", "action": "click", "target": "Acknowledge"}
+   ],
+   "verify": "{1} moves to the Acknowledged tab."
+  },
+  {
+   "id": "who",
+   "title": "See who is on call",
+   "match": "oncall\\s+who",
+   "steps": [
+    {"say": "Open People - the on-call schedule shows the primary and secondary right now.", "screen": "People", "nav": "People", "zone": "nav", "action": "see", "target": "Primary (now)"}
+   ]
+  },
+  {
+   "id": "declare",
+   "title": "Declare an incident",
+   "match": "incident\\s+declare\\s+--title\\s+\"([^\"]+)\"\\s+--severity\\s+SEV(\\d)\\s+--service\\s+(\\S+)",
+   "steps": [
+    {"say": "On Incidents press New Incident - declaring makes the response coordinated and recorded.", "screen": "Incidents", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "New Incident"},
+    {"say": "Choose the Impacted service {3}.", "screen": "New Incident", "zone": "dialog", "action": "select", "target": "Impacted service", "value": "{3}"},
+    {"say": "Type the Title: what users see.", "screen": "New Incident", "zone": "dialog", "action": "type", "target": "Title", "value": "{1}"},
+    {"say": "Choose the Priority P{2} (SEV{2}).", "screen": "New Incident", "zone": "dialog", "action": "select", "target": "Priority", "value": "P{2}"},
+    {"say": "Press Create Incident.", "screen": "New Incident", "zone": "dialog", "action": "click", "target": "Create Incident"}
+   ],
+   "verify": "INC-1 appears under Major incidents."
+  },
+  {
+   "id": "roles",
+   "title": "Assign the incident roles",
+   "match": "incident\\s+role\\s+(INC-\\d+)\\s+--commander\\s+(\\S+)\\s+--comms\\s+(\\S+)\\s+--ops\\s+(\\S+)",
+   "steps": [
+    {"say": "Under Major incidents open {1}.", "screen": "Incident Response", "nav": "Incidents", "zone": "main", "action": "click", "target": "{1}"},
+    {"say": "Press Assign roles - one commander decides, one person talks, one person fixes.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Assign roles"},
+    {"say": "Incident Commander: {2}.", "screen": "Assign roles", "zone": "dialog", "action": "select", "target": "Incident Commander", "value": "{2}"},
+    {"say": "Communications: {3}.", "screen": "Assign roles", "zone": "dialog", "action": "select", "target": "Communications", "value": "{3}"},
+    {"say": "Operations: {4}.", "screen": "Assign roles", "zone": "dialog", "action": "select", "target": "Operations", "value": "{4}"},
+    {"say": "Press Save.", "screen": "Assign roles", "zone": "dialog", "action": "click", "target": "Save"}
+   ]
+  },
+  {
+   "id": "statuspage",
+   "title": "Update the status page",
+   "match": "incident\\s+statuspage\\s+(INC-\\d+)\\s+--message\\s+\"([^\"]+)\"",
+   "steps": [
+    {"say": "Open {1} under Major incidents.", "screen": "Incident Response", "nav": "Incidents", "zone": "main", "action": "click", "target": "{1}"},
+    {"say": "Press Update status page - customers need to know what they see and when you will update.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Update status page"},
+    {"say": "Type the Message to customers.", "screen": "Update status page (shop.example.com)", "zone": "dialog", "action": "type", "target": "Message to customers", "value": "{2}"},
+    {"say": "Press Publish.", "screen": "Update status page (shop.example.com)", "zone": "dialog", "action": "click", "target": "Publish"}
+   ]
+  },
+  {
+   "id": "update",
+   "title": "Post a status update",
+   "match": "incident\\s+update\\s+(INC-\\d+)\\s+--status\\s+(\\w+)\\s+--note\\s+\"([^\"]+)\"",
+   "steps": [
+    {"say": "Open {1}.", "screen": "Incident Response", "nav": "Incidents", "zone": "main", "action": "click", "target": "{1}"},
+    {"say": "Press Add status update - stakeholders follow the incident through these notes.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Add status update"},
+    {"say": "Choose Status {2}.", "screen": "Add status update", "zone": "dialog", "action": "select", "target": "Status", "value": "{2}"},
+    {"say": "Type the Note: what you know, what you are doing, when the next update is.", "screen": "Add status update", "zone": "dialog", "action": "type", "target": "Note", "value": "{3}"},
+    {"say": "Press Post update.", "screen": "Add status update", "zone": "dialog", "action": "click", "target": "Post update"}
+   ]
+  },
+  {
+   "id": "mitigate",
+   "title": "Mark the incident mitigated",
+   "match": "incident\\s+mitigate\\s+(INC-\\d+)\\s+--action\\s+\"([^\"]+)\"",
+   "steps": [
+    {"say": "Open {1}.", "screen": "Incident Response", "nav": "Incidents", "zone": "main", "action": "click", "target": "{1}"},
+    {"say": "Press Mark mitigated - records the moment user impact stopped.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Mark mitigated"},
+    {"say": "Type What mitigated it.", "screen": "Mark mitigated", "zone": "dialog", "action": "type", "target": "What mitigated it", "value": "{2}"},
+    {"say": "Press Save.", "screen": "Mark mitigated", "zone": "dialog", "action": "click", "target": "Save"}
+   ]
+  },
+  {
+   "id": "resolve",
+   "title": "Resolve the incident",
+   "match": "incident\\s+resolve\\s+(INC-\\d+)",
+   "steps": [
+    {"say": "Open {1} and press Resolve once the service has been stable.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Resolve"}
+   ]
+  },
+  {
+   "id": "postmortem",
+   "title": "Start the postmortem",
+   "match": "incident\\s+postmortem\\s+(INC-\\d+)",
+   "steps": [
+    {"say": "Open {1} and press Postmortem - it creates the draft file to complete in Files.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Postmortem"}
+   ]
+  },
+  {
+   "id": "review",
+   "title": "Request the postmortem review",
+   "match": "incident\\s+review\\s+(INC-\\d+)",
+   "steps": [
+    {"say": "Open {1} and press Request review - the reviewer checks every section of the postmortem.", "screen": "{1}", "nav": "Incidents", "zone": "toolbar", "action": "click", "target": "Request review"}
+   ]
+  },
+  {
+   "id": "history",
+   "title": "Find the recent change",
+   "match": "deploy\\s+history",
+   "steps": [
+    {"say": "Open Automation and read Change Events - most incidents start right after a change.", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "see", "target": "Change Events"}
+   ]
+  },
+  {
+   "id": "rollout",
+   "title": "Start a release",
+   "match": "deploy\\s+rollout\\s+(\\S+)\\s+--version\\s+(\\S+)\\s+--strategy\\s+(\\w+)(?:\\s+--canary-weight\\s+(\\d+))?",
+   "steps": [
+    {"say": "Open Automation - releases are run from here.", "screen": "Automation", "nav": "Automation", "zone": "nav", "action": "click", "target": "Automation"},
+    {"say": "Set Release to {2}.", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "type", "target": "Release", "value": "{2}"},
+    {"say": "Choose the Strategy {3} - a canary sends only part of the traffic to the new version.", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "select", "target": "Strategy", "value": "{3}"},
+    {"say": "Set Canary weight % to {4}.", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "type", "target": "Canary weight %", "value": "{4}", "optional": true},
+    {"say": "Press Run: Deploy.", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "click", "target": "Run: Deploy"}
+   ]
+  },
+  {
+   "id": "action",
+   "title": "Analyse, promote, abort or roll back",
+   "match": "deploy\\s+(analyze|promote|abort|rollback)\\b",
+   "steps": [
+    {"say": "Open Automation.", "screen": "Automation", "nav": "Automation", "zone": "nav", "action": "click", "target": "Automation"},
+    {"say": "Press the Run button for {1} (Analyze canary compares canary and baseline; Promote ships to all; Abort and Roll back return to the stable version).", "screen": "Automation", "nav": "Automation", "zone": "main", "action": "click", "target": "Run: {1}"}
+   ]
+  }
+ ]
+}

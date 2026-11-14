@@ -82,7 +82,7 @@
               <!-- The task's own written steps first; the generated ones follow
                    as the general checklist. -->
               <ol v-if="task.instructions?.steps?.length" class="sltg-steps sltg-steps--own">
-                <li v-for="(step, n) in task.instructions.steps" :key="'own' + n">{{ step }}</li>
+                <li v-for="(step, n) in task.instructions.steps" :key="'own' + n"><LabStepText :step="step" /></li>
               </ol>
               <h3 v-if="task.instructions?.steps?.length" class="sltg-subhead">{{ $t('Before you check') }}</h3>
               <ol class="sltg-steps">
@@ -185,6 +185,7 @@
  */
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
 import { useTeleportTarget } from '@/composables/useFullscreen';
+import LabStepText from '@/components/labs/LabStepText.vue';
 /* `<body>`, or the element that is full screen right now: with the native
    Fullscreen API only that element's subtree is painted, so a window
    teleported to <body> would open invisibly. See useFullscreen.ts. */

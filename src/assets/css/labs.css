@@ -3947,3 +3947,76 @@ html.sfs-fs-lock body { overflow: hidden; }
   .sl-portal__sim { padding: 0.15rem 0.4rem; }
   .sl-portal__frame { height: clamp(520px, 80vh, 900px); }
 }
+
+/* ---------------------------------------------------------------------------
+   One written task step (LabStepText.vue): the commands as dark chips with a
+   Copy button each, and the "Why" line under them. A command is dark in every
+   galaxy, like the console it is typed into; the why is ordinary muted text.
+   --------------------------------------------------------------------------- */
+.sl-step { display: inline; }
+.sl-step__line { overflow-wrap: anywhere; }
+.sl-step__cmd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    max-width: 100%;
+    margin: 0.1rem 0.15rem;
+    padding: 0.1rem 0.15rem 0.1rem 0.45rem;
+    border-radius: 6px;
+    vertical-align: middle;
+    background: var(--sl-code-bg, #0f172a);
+    color: var(--sl-code-ink, #e2e8f0);
+    font-family: var(--sfs-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.8rem;
+    unicode-bidi: isolate;
+}
+.sl-step__cmd code {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+.sl-step__copy {
+    display: inline-flex;
+    flex: none;
+    padding: 0.2rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.75;
+}
+.sl-step__copy:hover,
+.sl-step__copy:focus-visible { opacity: 1; background: rgb(255 255 255 / 0.14); }
+.sl-step__why {
+    display: block;
+    margin-block-start: 0.15rem;
+    font-size: 0.82rem;
+    color: var(--sfs-text-muted, #94a3b8);
+}
+
+/* The answer box of a reading task ("type the value you read"). */
+.sl-task__answer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-block: 0.45rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--sl-radius-sm);
+    border: var(--sl-line);
+    background: rgb(var(--sfs-accent-rgb, 102 126 234) / 0.08);
+}
+.sl-task__answer label { font-weight: 600; font-size: 0.85rem; }
+.sl-task__answer input {
+    flex: 1 1 8rem;
+    min-width: 6rem;
+    max-width: 14rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+}
+.sl-task__answer-unit { font-size: 0.82rem; color: var(--sfs-text-muted, #94a3b8); }

@@ -1,0 +1,42 @@
+{
+ "skin": "grafanaslo",
+ "product": "Grafana SLO",
+ "brand": "#f46800",
+ "top": "SLO",
+ "nav": ["SLOs", "Report"],
+ "recipes": [
+  {
+   "id": "apply",
+   "title": "Create the SLO from its file",
+   "match": "slo\\s+(?:validate|apply)\\s+(\\S+)",
+   "steps": [
+    {"say": "On the SLOs page press Create SLO - an SLO is the reliability target users actually feel.", "screen": "SLOs", "nav": "SLOs", "zone": "toolbar", "action": "click", "target": "Create SLO"},
+    {"say": "Choose the SLO definition {1} (the file written as code in the repo).", "screen": "Create SLO", "zone": "dialog", "action": "select", "target": "SLO definition", "value": "{1}"},
+    {"say": "Press Validate to check the target, the SLI query and the window.", "screen": "Create SLO", "zone": "dialog", "action": "click", "target": "Validate"},
+    {"say": "Press Save & apply to start tracking it.", "screen": "Create SLO", "zone": "dialog", "action": "click", "target": "Save & apply"}
+   ],
+   "verify": "The SLO appears in the list with its error budget remaining."
+  },
+  {
+   "id": "report",
+   "title": "Read the error budget",
+   "match": "slo\\s+report",
+   "steps": [
+    {"say": "Open Report - it shows how much error budget is left and how fast it burns.", "screen": "Report", "nav": "Report", "zone": "nav", "action": "click", "target": "Report"},
+    {"say": "Read Error budget remaining and Burn rate 1h: a burn rate above 1 spends the budget faster than the window allows.", "screen": "Report", "nav": "Report", "zone": "main", "action": "see", "target": "Error budget remaining"}
+   ]
+  },
+  {
+   "id": "generate",
+   "title": "Generate burn-rate alert rules",
+   "match": "slo\\s+generate\\s+(\\S+)\\s+-o\\s+(\\S+)",
+   "steps": [
+    {"say": "On the SLOs page press Generate alert rules - multi-window burn-rate alerts page you when the budget burns too fast.", "screen": "SLOs", "nav": "SLOs", "zone": "toolbar", "action": "click", "target": "Generate alert rules"},
+    {"say": "Choose From SLO file {1}.", "screen": "Generate burn-rate alert rules", "zone": "dialog", "action": "select", "target": "From SLO file", "value": "{1}"},
+    {"say": "Set Write rules to {2}, where Prometheus loads rule files from.", "screen": "Generate burn-rate alert rules", "zone": "dialog", "action": "type", "target": "Write rules to", "value": "{2}"},
+    {"say": "Press Generate.", "screen": "Generate burn-rate alert rules", "zone": "dialog", "action": "click", "target": "Generate"}
+   ],
+   "verify": "The rules file exists in Files; check it with promtool in the console."
+  }
+ ]
+}

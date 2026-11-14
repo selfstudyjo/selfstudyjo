@@ -109,6 +109,13 @@ export interface LabTask {
      */
     gui?: string[];
     /**
+     * A READING task: the student types a value they read (a metric, a PID,
+     * a count). Only the box's label is sent - never the expected value.
+     */
+    answer?: { label: string; unit: string; placeholder: string } | null;
+    /** The value last submitted for a reading task. */
+    answer_given?: string;
+    /**
      * True when the task passed earlier and the environment has since moved on
      * (a later task changed what it looked at). It still counts: a verified
      * task stays verified. Absent on a replica a release behind.

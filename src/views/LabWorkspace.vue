@@ -530,6 +530,7 @@
                 @grade="grade0"
                 @ask="(task, focus) => askTutor(task, focus)"
                 @self-mark="selfMark"
+                @answer="submitAnswer"
                 :tools="lab.tool_detail"
                 @open-tool="openToolFromTasks"
               />
@@ -1212,6 +1213,7 @@ async function grade0() {
     const result = await labsService.gradeLab(username.value, lab.value.id, {
       userId: userId.value,
       selfMarked: selfMarked.value,
+      answers: answers.value,
     });
     // Kept against THIS lab's previous grade: a task the student saw go green
     // does not go back to "to do" because a later task moved the environment.
@@ -1277,6 +1279,13 @@ async function grade0() {
  * an un-tick would be silently discarded anyway. Offering a checkbox that looks
  * reversible and is not would be worse than a one-way one.
  */
+/** A reading task's value: saved with the grade and checked at once. */
+const answers = ref<Record<string, string>>({});
+function submitAnswer(taskId: string, value: string) {
+  answers.value = { ...answers.value, [taskId]: value };
+  grade0();
+}
+
 function selfMark(taskId: string) {
   if (!selfMarked.value.includes(taskId)) {
     selfMarked.value = [...selfMarked.value, taskId];

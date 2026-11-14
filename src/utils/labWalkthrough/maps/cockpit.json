@@ -1,0 +1,100 @@
+{
+ "skin": "cockpit",
+ "product": "Cockpit",
+ "brand": "#0066cc",
+ "top": "Cockpit",
+ "nav": ["Overview", "Metrics", "Logs", "Storage", "Networking", "Services", "Terminal"],
+ "recipes": [
+  {
+   "id": "restart",
+   "title": "Restart, start or stop a service",
+   "match": "systemctl\\s+(restart|start|stop)\\s+([\\w.-]+)",
+   "steps": [
+    {"say": "On Hosts select the server the step names (the one you would ssh into) - Cockpit manages one machine at a time.", "screen": "Hosts", "zone": "main", "action": "click", "target": "host"},
+    {"say": "Open Services - the systemd units on that server and their state.", "screen": "Services", "nav": "Services", "zone": "nav", "action": "click", "target": "Services"},
+    {"say": "Select the unit {2}.", "screen": "Services", "nav": "Services", "zone": "main", "action": "click", "target": "{2}"},
+    {"say": "Press the {1} button - Cockpit runs the same systemctl command for you, as root.", "screen": "Services", "nav": "Services", "zone": "toolbar", "action": "click", "target": "{1}"}
+   ],
+   "verify": "The unit's State changes; the action is recorded like the console command."
+  },
+  {
+   "id": "status",
+   "title": "Check a service's status",
+   "match": "systemctl\\s+(?:status|is-active)\\s+([\\w.-]+)",
+   "steps": [
+    {"say": "Select the server on Hosts.", "screen": "Hosts", "zone": "main", "action": "click", "target": "host"},
+    {"say": "Open Services and select {1}: its state, since when, and its recent log lines show why it fails.", "screen": "Services", "nav": "Services", "zone": "main", "action": "click", "target": "{1}"}
+   ]
+  },
+  {
+   "id": "daemon-reload",
+   "title": "Reload systemd unit files",
+   "match": "systemctl\\s+daemon-reload",
+   "steps": [
+    {"say": "Select the server, open Services and press Reload units - systemd re-reads the unit file you edited.", "screen": "Services", "nav": "Services", "zone": "toolbar", "action": "click", "target": "Reload units"}
+   ]
+  },
+  {
+   "id": "unit-logs",
+   "title": "Read a service's logs",
+   "match": "journalctl\\s+-u\\s*([\\w.-]+)",
+   "steps": [
+    {"say": "Select the server on Hosts.", "screen": "Hosts", "zone": "main", "action": "click", "target": "host"},
+    {"say": "Open Logs - the systemd journal of that machine.", "screen": "Logs", "nav": "Logs", "zone": "nav", "action": "click", "target": "Logs"},
+    {"say": "Filter to the service {1} and press Show; the error lines name what broke.", "screen": "Logs", "nav": "Logs", "zone": "toolbar", "action": "select", "target": "All services", "value": "{1}"}
+   ]
+  },
+  {
+   "id": "kernel-logs",
+   "title": "Read the kernel log",
+   "match": "journalctl\\s+-k|dmesg",
+   "steps": [
+    {"say": "Select the server, open Logs and choose Everything - kernel messages such as the OOM killer are listed with the rest.", "screen": "Logs", "nav": "Logs", "zone": "toolbar", "action": "select", "target": "Everything", "value": "Everything"}
+   ]
+  },
+  {
+   "id": "storage",
+   "title": "See what fills the disk",
+   "match": "\\b(?:df\\s+-h|du\\s+-sh|lsof\\s+\\+L1)",
+   "steps": [
+    {"say": "Select the server on Hosts.", "screen": "Hosts", "zone": "main", "action": "click", "target": "host"},
+    {"say": "Open Storage - filesystems with how full they are, the largest directories, and deleted files still held open (space df counts but du cannot see).", "screen": "Storage", "nav": "Storage", "zone": "main", "action": "see", "target": "Deleted files still open"}
+   ]
+  },
+  {
+   "id": "ports",
+   "title": "See the listening ports",
+   "match": "\\bss\\s+-t\\w*",
+   "steps": [
+    {"say": "Select the server, open Networking and read Listening ports - which process owns which port.", "screen": "Networking", "nav": "Networking", "zone": "main", "action": "see", "target": "Listening ports"}
+   ]
+  },
+  {
+   "id": "firewall",
+   "title": "See the firewall rules",
+   "match": "ufw\\s+status",
+   "steps": [
+    {"say": "Select the server, open Networking and read Firewall - the rules that decide who may connect.", "screen": "Networking", "nav": "Networking", "zone": "main", "action": "see", "target": "Firewall"}
+   ]
+  },
+  {
+   "id": "load",
+   "title": "See CPU and memory",
+   "match": "\\b(?:uptime|free\\s+-m|top\\s+-b|ps\\s+aux)",
+   "steps": [
+    {"say": "Select the server: Overview shows CPU, memory and load, and Metrics shows how they changed - a quick way to spot the busy machine.", "screen": "Overview", "nav": "Overview", "zone": "main", "action": "see", "target": "Usage"}
+   ]
+  },
+  {
+   "id": "terminal",
+   "title": "Run the command in Cockpit's terminal",
+   "match": "((?:sudo\\s+)?(?:sed|kill|certbot|nginx|ufw\\s+allow|tcpdump|openssl|truncate|grep|cat|dig|nc|redis-cli|curl|ls)\\s[^`]*)",
+   "steps": [
+    {"say": "Select the server the step names on Hosts.", "screen": "Hosts", "zone": "main", "action": "click", "target": "host"},
+    {"say": "Open Terminal - a shell on that server, exactly like ssh from the console.", "screen": "Terminal", "nav": "Terminal", "zone": "nav", "action": "click", "target": "Terminal"},
+    {"say": "Type the command and press Enter.", "screen": "Terminal", "nav": "Terminal", "zone": "editor", "action": "type", "target": "Terminal", "value": "{1}"}
+   ],
+   "verify": "The output appears below; the command is recorded like one typed after ssh."
+  }
+ ]
+}

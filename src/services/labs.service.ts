@@ -357,7 +357,7 @@ class LabsService {
     }
 
     async gradeLab(username: string, labId: string,
-                   options: { userId?: string; selfMarked?: string[] } = {},
+                   options: { userId?: string; selfMarked?: string[]; answers?: Record<string, string> } = {},
     ): Promise<{ grade: LabGrade; progress: LabProgress | null;
                  views: Record<string, unknown> } | null> {
         const replica = await this.replicaFor(username);
@@ -366,7 +366,8 @@ class LabsService {
             return await apiService.post(
                 replica,
                 `/api/labs/${encodeURIComponent(labId)}/grade/${encodeURIComponent(username)}/`,
-                { user_id: options.userId || '', self_marked: options.selfMarked || [] });
+                { user_id: options.userId || '', self_marked: options.selfMarked || [],
+                  answers: options.answers || {} });
         } catch (error) {
             // Never fatal: the tools still work and the ticks are simply stale.
             console.warn('Could not grade the lab', error);

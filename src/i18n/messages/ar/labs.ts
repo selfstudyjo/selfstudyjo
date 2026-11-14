@@ -210,6 +210,8 @@ const labs: Catalogue = {
     'AI Tutor': 'المدرّب الذكي',
     'Ask': 'اسأل',
     'Ask the tutor': 'اسأل المدرّب',
+    'Copy the command: {v0}': 'انسخ الأمر: {v0}',
+    'Submit answer': 'أرسل الإجابة',
     'Ask a question about this lab': 'اطرح سؤالاً عن هذا المعمل',
     'Ask about this lab. Try: why does the container name not resolve?':
         'اسأل عن هذا المعمل. جرّب: لماذا لا يُترجَم اسم الحاوية إلى عنوان؟',
