@@ -63,4 +63,5 @@ export default {
     '✨ Improve my answer': '✨ حسّن إجابتي',
     '🎙 Replace selection': '🎙 استبدل النص المحدد',
     '(skipped)': '(تم التخطي)',
+    'The voice is unavailable right now — the question is shown on screen.': 'الصوت غير متاح الآن — السؤال معروض على الشاشة.',
 };

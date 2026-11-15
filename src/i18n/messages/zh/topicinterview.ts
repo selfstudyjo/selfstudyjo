@@ -57,4 +57,5 @@ export default {
     '✨ Improve my answer': '✨ 改进我的回答',
     '🎙 Replace selection': '🎙 替换所选内容',
     '(skipped)': '（已跳过）',
+    'The voice is unavailable right now — the question is shown on screen.': '语音暂时不可用 — 问题已显示在屏幕上。',
 };

@@ -104,6 +104,7 @@
             </span>
           </div>
 
+          <p v-if="voiceNote" class="ti-note">{{ voiceNote }}</p>
           <ol ref="thread" class="ti-thread" :dir="langDir" :lang="langTag">
             <li v-for="(m, i) in messages" :key="i" class="ti-msg" :class="'ti-msg--' + m.who">
               <span class="ti-msg__who">{{ m.who === 'bot' ? $t('Interviewer') : $t('You') }}</span>
@@ -256,7 +257,10 @@ import {
 import {
   caretHint, emptyAnswer, replaceSelection, resumeAtEnd, setTypedText, type AnswerState,
 } from '@/utils/answerEditing';
-import { OrderedResults, SpeechSegmenter, rmsDb, transcriptContext } from '@/utils/speechSegmenter';
+import { OrderedResults, transcriptContext } from '@/utils/speechSegmenter';
+import { MicCapture } from '@/utils/micCapture';
+import { createSpeechAudio } from '@/utils/speechAudio';
+import { newsService, type SpeechClip } from '@/services/news.service';
 
 const props = defineProps<{
   scope: TopicScope;
@@ -342,7 +346,7 @@ function requestClose() {
 function close() {
   if (fs.active.value) void fs.exit();
   stopSpeaking();
-  stopRecording(true);
+  void stopRecording(true);
   if (phase.value === 'running' || phase.value === 'finishing') {
     runToken++;          // abandons anything still in flight
     phase.value = 'setup';
@@ -354,7 +358,7 @@ function close() {
 function reset() {
   runToken++;
   stopSpeaking();
-  stopRecording(true);
+  void stopRecording(true);
   phase.value = 'setup';
   messages.value = [];
   qaPairs.value = [];
@@ -402,6 +406,7 @@ function say(text: string) {
 
 async function start() {
   const token = ++runToken;
+  speechAudio.prime();
   phase.value = 'running';
   messages.value = [];
   qaPairs.value = [];
@@ -458,7 +463,7 @@ function submitAnswer() {
 async function record(text: string) {
   const token = runToken;
   stopSpeaking();
-  stopRecording(true);
+  void stopRecording(true);
   const qa: QAPair = {
     question: currentQuestion.value,
     answer: text,
@@ -567,25 +572,62 @@ function scrollThread() {
   nextTick(() => { if (thread.value) thread.value.scrollTop = thread.value.scrollHeight; });
 }
 
-/* ---------------- speech out ---------------- */
+/* ---------------- speech out: the Self Study voice ---------------- */
+
+/*
+  QUESTIONS ARE READ BY THE SELF STUDY VOICE (app 36's speech service), the
+  same engine the Job Interview room and the Newscast use. `speechSynthesis`
+  alone was silent in Arabic on most machines -- a stock Windows install has no
+  Arabic voice -- so the server voice comes first in every language, levelled
+  through `createSpeechAudio` (the raw clip is far too quiet). The device voice
+  is only the fallback, with `lang` set and no voice assigned.
+*/
+const speechAudio = createSpeechAudio();
+let speakToken = 0;
+let lastClipUrl = '';
+const voiceNote = ref('');
+
+async function speak(text: string) {
+  if (!speakAloud.value || !text) return;
+  const mine = ++speakToken;
+  stopSpeaking(false);
+  let clip: SpeechClip | null = null;
+  try {
+    clip = await newsService.speech(text, lang.value as any, 'female', 1, '', true);
+  } catch {
+    clip = null;
+  }
+  if (mine !== speakToken) { if (clip) URL.revokeObjectURL(clip.url); return; }
+  if (clip) {
+    voiceNote.value = '';
+    lastClipUrl = clip.url;
+    try { await speechAudio.play(clip.url, 1); } catch { /* the text is on screen */ }
+    if (lastClipUrl === clip.url) { URL.revokeObjectURL(clip.url); lastClipUrl = ''; }
+    return;
+  }
+  speakOnDevice(text);
+}
 
 let keepAlive: ReturnType<typeof setInterval> | null = null;
-function speak(text: string) {
-  if (!speakAloud.value || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  stopSpeaking();
+function speakOnDevice(text: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    voiceNote.value = t('The voice is unavailable right now — the question is shown on screen.');
+    return;
+  }
   const u = new SpeechSynthesisUtterance(text);
   // `lang` only, never an assigned voice: an explicit voice overrides `lang`,
-  // and a wrong-language voice reads Arabic as noise. The platform matches the
-  // language itself, or stays silent -- and the text is on screen either way.
+  // and a wrong-language voice reads Arabic as noise.
   u.lang = speechTag(lang.value);
   u.onend = () => stopKeepAlive();
   window.speechSynthesis.speak(u);
-  // Chrome stops speaking after ~15 s without this.
   keepAlive = setInterval(() => { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }, 9000);
 }
 function stopKeepAlive() { if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } }
-function stopSpeaking() {
+function stopSpeaking(bump = true) {
+  if (bump) speakToken++;
   stopKeepAlive();
+  speechAudio.stop();
+  if (lastClipUrl) { URL.revokeObjectURL(lastClipUrl); lastClipUrl = ''; }
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
@@ -625,6 +667,18 @@ function replaceWithSpeech() {
 
 /* ---------------- speech in: the live transcript ---------------- */
 
+/*
+  The microphone goes through `MicCapture` -- the Job Interview room's own,
+  proven pipeline (filtered, levelled, cut at each pause by SpeechSegmenter,
+  ONE complete recording per phrase). Each phrase is transcribed while the
+  student keeps talking and applied in the order it was spoken.
+
+  The first version of this window ran its own recorder loop and restarted the
+  recorder at each pause before the old one had flushed: the last chunk of every
+  phrase landed in the NEXT phrase's buffer and the "had speech" flag was reset
+  before it was read, so every phrase was thrown away and the transcript stayed
+  empty until Stop. That is why there was no live transcript.
+*/
 const micSupported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
   && typeof window !== 'undefined' && 'MediaRecorder' in window;
 const recording = ref(false);
@@ -634,98 +688,48 @@ const pending = ref(0);
 const micError = ref('');
 
 let stream: MediaStream | null = null;
-let audioCtx: AudioContext | null = null;
-let analyser: AnalyserNode | null = null;
-let recorder: MediaRecorder | null = null;
-let chunks: Blob[] = [];
-let frameTimer: ReturnType<typeof setInterval> | null = null;
-let segmenter: SpeechSegmenter | null = null;
-let voicedInSegment = false;
+let capture: MicCapture | null = null;
 let ordered: OrderedResults | null = null;
-let discardNext = false;
+let discardTail = false;
 const terms = computed(() => extractTerms(props.scope.material || '').join(', '));
 
-/**
- * One recorder per spoken phrase. A webm blob is only decodable from its first
- * chunk, so a recorder is stopped at each pause the segmenter finds and a fresh
- * one started at once on the same stream -- each phrase is a whole file, sent
- * while the student goes on speaking.
- */
-function startRecorder() {
-  if (!stream) return;
-  chunks = [];
-  voicedInSegment = false;
-  const r = new MediaRecorder(stream);
-  r.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  r.onstop = () => {
-    const keep = voicedInSegment && !discardNext;
-    const blob = new Blob(chunks, { type: r.mimeType || 'audio/webm' });
-    discardNext = false;
-    if (keep) void transcribeSegment(blob);
-  };
-  r.start();
-  recorder = r;
-}
-
-function cutSegment(keep: boolean) {
-  if (!recorder || recorder.state === 'inactive') return;
-  if (!keep) voicedInSegment = false;
-  recorder.stop();
-  recorder = null;
-  if (recording.value) startRecorder();
-}
-
 async function toggleRecording() {
-  if (recording.value) { stopRecording(false); return; }
+  if (recording.value) { await stopRecording(false); return; }
   micError.value = '';
+  stopSpeaking();
+  speechAudio.prime();
   try {
-    stopSpeaking();
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-    audioCtx = new Ctx();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
-    audioCtx.createMediaStreamSource(stream).connect(analyser);
-    segmenter = new SpeechSegmenter();
+    if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     ordered = ordered || new OrderedResults(text => {
       answerState.value = applyTopicChunk(answerState.value, text, voiceEditing.value);
       nextTick(() => { const box = answerBox.value; if (box) box.scrollTop = box.scrollHeight; });
     });
+    discardTail = false;
+    capture = new MicCapture(stream, {
+      onSegment: segment => { if (!discardTail) void transcribeSegment(segment.blob); },
+      onLevel: (value, isSpeaking) => { level.value = value; speaking.value = isSpeaking; },
+    });
+    await capture.start();
     recording.value = true;
-    startRecorder();
-    const buf = new Float32Array(analyser.fftSize);
-    frameTimer = setInterval(() => {
-      if (!analyser || !segmenter) return;
-      analyser.getFloatTimeDomainData(buf);
-      const db = rmsDb(buf);
-      level.value = Math.max(0, Math.min(1, (db + 70) / 50));
-      const frame = segmenter.push(db);
-      speaking.value = frame.speaking;
-      if (frame.speaking) voicedInSegment = true;
-      if (frame.cut) cutSegment(frame.cut.keep);
-    }, segmenter.opts.frameMs);
   } catch {
     micError.value = t('The microphone could not be opened. You can type your answer instead.');
-    stopRecording(true);
+    await stopRecording(true);
   }
 }
 
-function stopRecording(discard: boolean) {
+async function stopRecording(discard: boolean) {
   recording.value = false;
   speaking.value = false;
   level.value = 0;
-  if (frameTimer) { clearInterval(frameTimer); frameTimer = null; }
-  if (recorder && recorder.state !== 'inactive') {
-    discardNext = discard;
-    recorder.stop();
+  discardTail = discard;
+  const c = capture;
+  capture = null;
+  if (c) {
+    try { await c.pause(); } catch { /* already stopped */ }
+    c.dispose();
   }
-  recorder = null;
   stream?.getTracks().forEach(track => track.stop());
   stream = null;
-  void audioCtx?.close().catch(() => undefined);
-  audioCtx = null;
-  analyser = null;
-  segmenter = null;
 }
 
 async function transcribeSegment(blob: Blob) {
@@ -797,10 +801,11 @@ if (typeof document !== 'undefined') document.addEventListener('selectionchange'
 
 watch(open, value => { document.documentElement.classList.toggle('ti-lock', value); });
 onBeforeUnmount(() => {
+  speechAudio.dispose();
   if (typeof document !== 'undefined') document.removeEventListener('selectionchange', trackSelection);
   runToken++;
   stopSpeaking();
-  stopRecording(true);
+  void stopRecording(true);
   document.documentElement.classList.remove('ti-lock');
 });
 </script>
