@@ -1,0 +1,1 @@
+import{Kr as e}from"./index-edrjLtUk.js";export{e as serviceRegistry};
