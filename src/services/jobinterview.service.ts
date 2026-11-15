@@ -68,6 +68,29 @@ export interface QACoaching {
     generic?: boolean;
 }
 
+/**
+ * "Interview on this topic": the lesson, lab, quiz or exam an interview was
+ * opened from. App 27 builds every prompt from it and asks about nothing else.
+ * `material` is sent and never stored -- the saved session keeps the rest.
+ */
+export interface TopicScope {
+    kind: 'lesson' | 'lab' | 'quiz' | 'exam';
+    title: string;
+    course?: string;
+    ref_id?: string;
+    url?: string;
+    /** Questions in the quiz/exam, or tasks in the lab. Sizes the interview. */
+    size?: number;
+    material?: string;
+}
+
+/** What the scope-aware calls add: the scope, and the language chosen in the window. */
+export interface ScopedCall {
+    scope?: TopicScope;
+    /** Overrides the interface language for this call (body beats header in app 27). */
+    language?: string;
+}
+
 export interface QAPair {
     question: string;
     answer: string;
@@ -140,6 +163,10 @@ export interface JobInterviewSession {
      * scored zero.
      */
     status?: 'in_progress' | 'complete';
+    /** Set when opened from a lesson, lab, quiz or exam. No material on the record. */
+    scope?: Omit<TopicScope, 'material'> | null;
+    /** The language the interview was conducted in. */
+    language?: string;
     duration_seconds: number;
     qa_pairs: QAPair[];
     transcript: string;
@@ -181,7 +208,7 @@ export interface ScoreBreakdown {
     impact?: number;
 }
 
-export interface InterviewerCallBody {
+export interface InterviewerCallBody extends ScopedCall {
     stage?: string;                  // 'intro' | 'question' | 'closing'
     interview_type?: string;
     topic?: string;
@@ -247,13 +274,13 @@ export interface InterviewerCallBody {
 }
 
 /** What the interview will cover, decided once at the start. */
-export interface QuestionPlanBody {
+export interface QuestionPlanBody extends ScopedCall {
     interview_type?: string;
     topic?: string;
     qualifications?: string;
     cv_summary?: string;
-    /** How many areas to plan. One per question. */
-    count: number;
+    /** How many areas to plan. One per question. `auto` lets a scoped plan choose (2-5). */
+    count: number | 'auto';
     avoid_questions?: string[];
     attempt?: number;
     session_seed?: number;
@@ -264,7 +291,7 @@ export interface QuestionPlanBody {
     prepared_questions?: number;
 }
 
-export interface EvaluateBody {
+export interface EvaluateBody extends ScopedCall {
     interview_type?: string;
     topic?: string;
     qualifications?: string;
@@ -286,7 +313,7 @@ export interface EvaluateBody {
     interruption_count?: number;
 }
 
-export interface ModelAnswersBody {
+export interface ModelAnswersBody extends ScopedCall {
     interview_type?: string;
     topic?: string;
     qualifications?: string;
@@ -490,7 +517,7 @@ class JobInterviewService {
         }
     }
 
-    async saveSession(data: Partial<JobInterviewSession>): Promise<{ success: boolean; id: string }> {
+    async saveSession(data: Partial<JobInterviewSession> & ScopedCall): Promise<{ success: boolean; id: string }> {
         const baseUrl = await this.getBaseUrl();
         return await apiService.post(baseUrl, '/api/jobinterview/sessions', data, aiLanguageHeaders());
     }

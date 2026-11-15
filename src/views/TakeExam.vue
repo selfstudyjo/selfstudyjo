@@ -97,6 +97,9 @@
           <button type="button" class="exam-gate__go" @click="acceptRules">
             {{ $t('I understand — start the exam') }}
           </button>
+          <!-- Practice (free) exams only, and only outside the sitting: before it
+               starts (no answer key is sent) and after it is submitted. -->
+          <TopicInterview v-if="isPractice" :scope="interviewScope" />
           <button type="button" class="exam-gate__out" @click="goToExams">
             {{ $t('Not now') }}
           </button>
@@ -433,6 +436,7 @@
           <button @click="goToExams" class="btn-finish">
             {{ $t('Back to Exams') }}
           </button>
+          <TopicInterview v-if="resultIsPractice" :scope="interviewScope" />
         </div>
       </div>
     </div>
@@ -449,6 +453,8 @@ import { proctorService } from '@/services/proctor.service';
 import { attemptSeed, shuffleAnswers } from '@/utils/examShuffle';
 import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import IntegrityRules from '@/components/practice/IntegrityRules.vue';
+import TopicInterview from '@/components/topicinterview/TopicInterview.vue';
+import { buildScope } from '@/utils/topicInterview';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import { FAIL_BODY, FAIL_HEADLINE } from '@/utils/practiceIntegrity';
 
@@ -530,6 +536,31 @@ const sitting = usePracticeSitting({
 });
 
 const passMark = computed(() => exam.value ? passMarkOf(exam.value) : 70);
+
+/**
+ * What "Interview on this topic" may ask about: this paper's questions, and
+ * their correct answers only once it is submitted -- before, a report built
+ * from the key would hand over the paper.
+ */
+const interviewScope = computed(() => {
+  const e = exam.value;
+  const withKey = examSubmitted.value;
+  const rows = validQuestions.value.map((question, i) => {
+    const right = withKey
+      ? (question.answers || []).filter(a => a.is_correct).map(a => a.text).join(' / ') : '';
+    return `Q${i + 1}. ${question.text}` + (right ? ` (correct: ${right})` : '');
+  });
+  return buildScope({
+    kind: 'exam',
+    title: e?.title || '',
+    course: e?.course_name || '',
+    refId: (e as any)?.external_id || '',
+    url: route.path,
+    size: rows.length,
+    parts: [rows.join('
+')],
+  });
+});
 
 /** What app 20 actually stored the paper as - the answer, not the request. */
 const resultIsPractice = computed(() =>

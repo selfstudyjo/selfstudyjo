@@ -95,6 +95,10 @@
               most to explain. Both reach the same overlay through `useTour`.
             -->
             <TourButton />
+            <!-- A short AI interview on THIS lab only. The window teleports to the
+                 full-screen element when there is one, so it works inside a
+                 full-screen workbench too. -->
+            <TopicInterview :scope="interviewScope" compact />
             <!-- The one page the top bar is hidden on, so her button has to be
                  here or she is missing from the screen with the most to ask
                  about. One window either way - see `useAssistant`. -->
@@ -641,6 +645,8 @@ import LabWeb from '@/components/labs/LabWeb.vue';
 import IntegrityMeter from '@/components/practice/IntegrityMeter.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import TourButton from '@/components/TourButton.vue';
+import TopicInterview from '@/components/topicinterview/TopicInterview.vue';
+import { buildScope } from '@/utils/topicInterview';
 import LessonTrail from '@/components/LessonTrail.vue';
 import {
   browserStore, lessonPath, originFromQuery, recallOrigin, rememberOrigins, type LessonRef,
@@ -708,6 +714,32 @@ const grade = ref<LabGrade>({
  * re-renders them without a refetch -- the lab already carries all three.
  */
 const objectives = computed<string[]>(() => tdl(lab.value, 'objectives'));
+
+/**
+ * What "Interview on this topic" may ask about: this lab's brief, objectives and
+ * tasks -- the English originals, which every language's interview is built from.
+ * `size` is the task count, which sizes the interview (2-5 questions).
+ */
+const interviewScope = computed(() => {
+  const l = lab.value;
+  const tasks = (l?.tasks || []) as Array<Record<string, unknown>>;
+  return buildScope({
+    kind: 'lab',
+    title: l?.title || '',
+    course: l?.track || '',
+    refId: l?.id || '',
+    url: route.path,
+    size: tasks.length,
+    parts: [
+      l?.summary, l?.brief,
+      (l?.objectives || []).length ? 'Objectives:
+' + (l?.objectives || []).map(o => '- ' + o).join('
+') : '',
+      tasks.map(task => `Task: ${String(task.title || '')}${task.detail ? ' - ' + String(task.detail) : ''}`).join('
+'),
+    ],
+  });
+});
 
 /**
  * `grade`, with every task's own text in the reader's language.

@@ -900,3 +900,11 @@
     .lesson-table th,
     .lesson-table td { padding: 0.5rem 0.6rem; }
 }
+
+/* "Interview on this topic" sits under the title, on its own line. */
+.lesson-head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}

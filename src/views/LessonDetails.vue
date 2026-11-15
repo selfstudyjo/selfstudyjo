@@ -44,6 +44,10 @@
           </span>
         </div>
         <h1 class="lesson-title">{{ $td(lesson) }}</h1>
+        <!-- A short AI interview on THIS lesson only (app 27 enforces the scope). -->
+        <div class="lesson-head-actions">
+          <TopicInterview :scope="interviewScope" />
+        </div>
       </header>
 
       <!--
@@ -467,6 +471,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { FlaskConical } from 'lucide-vue-next';
 
 import ReadAloud from '@/components/ReadAloud.vue';
+import TopicInterview from '@/components/topicinterview/TopicInterview.vue';
+import { buildScope } from '@/utils/topicInterview';
 import RichText from '@/components/RichText.vue';
 import { rel, td } from '@/i18n/runtime';
 import { courseService, type Comment, type Course, type Homework, type Lesson } from '@/services/course.service';
@@ -492,6 +498,16 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const lesson = ref<Lesson | null>(null);
 const course = ref<Course | null>(null);
+
+/** What "Interview on this topic" may ask about: this lesson's own write-up. */
+const interviewScope = computed(() => buildScope({
+    kind: 'lesson',
+    title: lesson.value?.title || '',
+    course: course.value?.title || '',
+    refId: lessonId.value,
+    url: route.fullPath,
+    parts: [lesson.value?.title, lesson.value?.content],
+}));
 const siblings = ref<Lesson[]>([]);
 const homeworks = ref<Homework[]>([]);
 const runbook = ref<Runbook | null>(null);

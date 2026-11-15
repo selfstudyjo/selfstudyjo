@@ -27,6 +27,13 @@
 
         <div class="quiz-info">
           <h1 class="quiz-title">{{ $td(quiz) }}</h1>
+          <!-- A short AI interview on THIS quiz's topic. Not while the quiz is being
+               sat: its report shows correct answers, which would answer the paper. -->
+          <div class="quiz-topic-interview">
+            <TopicInterview :scope="interviewScope" compact
+              :disabled="quizStarted && !showResult && !showVoid"
+              :disabled-reason="$t('Available before you start the quiz and after you submit it.')" />
+          </div>
           <div class="quiz-meta">
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -445,6 +452,8 @@ import IntegrityRules from '@/components/practice/IntegrityRules.vue';
 import { usePracticeSitting } from '@/composables/usePracticeSitting';
 import { FAIL_BODY, FAIL_HEADLINE } from '@/utils/practiceIntegrity';
 import LessonTrail from '@/components/LessonTrail.vue';
+import TopicInterview from '@/components/topicinterview/TopicInterview.vue';
+import { buildScope } from '@/utils/topicInterview';
 import { coursePath, lessonPath } from '@/utils/learningTrail';
 
 const route = useRoute();
@@ -477,6 +486,32 @@ const quizReplicaBaseUrl = ref<string | null>(null);
  * ------------------------------------------------------------------ */
 
 const showVoid = ref(false);
+
+/**
+ * What "Interview on this topic" may ask about: the quiz's own questions and
+ * their correct answers (so the report's model answers are right). Sent to app
+ * 27 only, and only when the quiz is not being sat - see the template.
+ */
+const interviewScope = computed(() => {
+  const q = quiz.value;
+  const rows = (q?.questions || []).map((question, i) => {
+    // The key only once the quiz is submitted: before it, an interview whose
+    // report is built from the key would hand over the paper.
+    const right = showResult.value
+      ? (question.answers || []).filter(a => a.is_correct).map(a => a.text).join(" / ") : "";
+    return `Q${i + 1}. ${question.text}${right ? `
+Correct: ${right}` : ''}`;
+  });
+  return buildScope({
+    kind: 'quiz',
+    title: q?.title || '',
+    refId: q?.external_id || '',
+    url: route.fullPath,
+    size: rows.length,
+    parts: [q?.description, rows.join('
+')],
+  });
+});
 
 /**
  * This sitting.
