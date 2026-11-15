@@ -1,0 +1,237 @@
+{
+ "skin": "m365",
+ "product": "Microsoft 365 admin",
+ "brand": "#0078d4",
+ "top": "Microsoft 365 admin",
+ "nav": [
+  "Inventory",
+  "Actions",
+  "Guided tasks",
+  "Console"
+ ],
+ "recipes": [
+  {
+   "id": "user",
+   "title": "Unlock, reset, disable a user",
+   "match": "(Unlock-ADAccount|Set-ADAccountPassword|ChangePasswordAtLogon|Disable-ADAccount|Enable-ADAccount)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Ad to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Active Directory user\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Action to the action the step names.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Action"
+    },
+    {
+     "say": "Set User (sAMAccountName) to the user.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "User (sAMAccountName)"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Active Directory user"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "group",
+   "title": "Add or remove group membership",
+   "match": "(Add|Remove)-ADGroupMember",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Ad to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Group membership\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Action to {1}.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Action"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Group membership"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "sync",
+   "title": "Run an Entra Connect delta sync",
+   "match": "Start-ADSyncSyncCycle",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Cloud to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Entra Connect sync\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Entra Connect sync"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "batch",
+   "title": "Mailbox migration batch",
+   "match": "(Get|Start|Complete)-MigrationBatch|Get-MigrationUser\\b",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Exo to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Mailbox migration batch\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Batch to Wave1.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Batch"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Mailbox migration batch"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "shared",
+   "title": "Convert a mailbox to shared",
+   "match": "Set-Mailbox\\s.*-Type Shared",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Exo to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Shared mailbox conversion\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Shared mailbox conversion"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "guided",
+   "title": "Do this step from Guided tasks",
+   "match": "AD|Mg|Mailbox|Migration|Dns|WinEvent|ADSync|Exchange",
+   "steps": [
+    {
+     "say": "Open Guided tasks - this lab's tasks, every command a Run button.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "tab",
+     "action": "click",
+     "target": "Guided tasks"
+    },
+    {
+     "say": "Expand the task, check the command in the box (edit it if you need to) and press Run.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the output under the step before moving to the next one.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "see",
+     "target": "output"
+    }
+   ]
+  }
+ ]
+}

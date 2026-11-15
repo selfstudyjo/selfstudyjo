@@ -1,0 +1,197 @@
+{
+ "skin": "observe",
+ "product": "Observability",
+ "brand": "#ff9900",
+ "top": "Observability",
+ "nav": [
+  "Inventory",
+  "Actions",
+  "Guided tasks",
+  "Console"
+ ],
+ "recipes": [
+  {
+   "id": "alarm",
+   "title": "Create a CloudWatch alarm",
+   "match": "put-metric-alarm",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Cloudwatch to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"CloudWatch alarm\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Alarm name to shop-alb-5xx.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Alarm name"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "CloudWatch alarm"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "insights",
+   "title": "Query logs with Logs Insights",
+   "match": "aws\\s+logs\\s+(start-query|get-query-results)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Cloudwatch to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Logs Insights\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Query to the query string.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Query"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Logs Insights"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "kql",
+   "title": "Query Log Analytics with KQL",
+   "match": "log-analytics\\s+query",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Azure to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Log Analytics (KQL)\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set KQL to the query.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "KQL"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Log Analytics (KQL)"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "dog",
+   "title": "Datadog monitors",
+   "match": "dog\\s+monitor",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Datadog to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Datadog monitors\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Datadog monitors"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "guided",
+   "title": "Do this step from Guided tasks",
+   "match": "cloudwatch|aws logs|elk-1|dog |az monitor|sns",
+   "steps": [
+    {
+     "say": "Open Guided tasks - this lab's tasks, every command a Run button.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "tab",
+     "action": "click",
+     "target": "Guided tasks"
+    },
+    {
+     "say": "Expand the task, check the command in the box (edit it if you need to) and press Run.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the output under the step before moving to the next one.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "see",
+     "target": "output"
+    }
+   ]
+  }
+ ]
+}

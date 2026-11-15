@@ -1,0 +1,165 @@
+{
+ "skin": "updatemgr",
+ "product": "Update Manager",
+ "brand": "#0f7b6c",
+ "top": "Update Manager",
+ "nav": [
+  "Inventory",
+  "Actions",
+  "Guided tasks",
+  "Console"
+ ],
+ "recipes": [
+  {
+   "id": "elb",
+   "title": "Drain or return a server in the load balancer",
+   "match": "aws\\s+elbv2\\s+(describe-target-health|deregister-targets|register-targets)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Pools to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Load balancer target\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Action to {1}.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Action"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Load balancer target"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "linux",
+   "title": "Patch or harden a RHEL server",
+   "match": "(dnf\\s+updateinfo|dnf\\s+upgrade|needs-restarting|reboot|uname -r|setenforce|firewall)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Hosts to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Linux (RHEL) host\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Host to the server the step names.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Host"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Linux (RHEL) host"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "win",
+   "title": "Patch or harden a Windows Server",
+   "match": "(WindowsUpdate|Restart-Computer|Get-HotFix|MpPreference|MpSignature|NetFirewallProfile)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Hosts to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Windows Server host\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Host to the server the step names.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Host"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Windows Server host"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "guided",
+   "title": "Do this step from Guided tasks",
+   "match": "dnf|elbv2|WindowsUpdate|HotFix|Mp|setenforce|firewall|reboot|sed -i",
+   "steps": [
+    {
+     "say": "Open Guided tasks - this lab's tasks, every command a Run button.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "tab",
+     "action": "click",
+     "target": "Guided tasks"
+    },
+    {
+     "say": "Expand the task, check the command in the box (edit it if you need to) and press Run.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the output under the step before moving to the next one.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "see",
+     "target": "output"
+    }
+   ]
+  }
+ ]
+}

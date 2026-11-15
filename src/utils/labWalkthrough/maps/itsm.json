@@ -1,0 +1,213 @@
+{
+ "skin": "itsm",
+ "product": "Service Operations",
+ "brand": "#293e40",
+ "top": "Service Operations",
+ "nav": [
+  "Inventory",
+  "Actions",
+  "Guided tasks",
+  "Console"
+ ],
+ "recipes": [
+  {
+   "id": "queue",
+   "title": "Read the queue",
+   "match": "itsm\\s+queue",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Incidents to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Queue\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Assignment group to the group.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Assignment group"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Queue"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "work",
+   "title": "Assign, update or escalate an incident",
+   "match": "itsm\\s+(assign|update|escalate|show)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Incidents to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Work an incident\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Action to {1}.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Action"
+    },
+    {
+     "say": "Set Number to the incident.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Number"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Work an incident"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "evidence",
+   "title": "Collect RCA evidence",
+   "match": "itsm\\s+evidence\\s+(\\w+)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Evidence to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Evidence for the RCA\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Source to {1}.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Source"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Evidence for the RCA"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "change",
+   "title": "Move a change through its states",
+   "match": "itsm\\s+change\\s+(submit|implement|close)",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Changes to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Change request\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Transition to {1}.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Transition"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Change request"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "guided",
+   "title": "Do this step from Guided tasks",
+   "match": "itsm ",
+   "steps": [
+    {
+     "say": "Open Guided tasks - this lab's tasks, every command a Run button.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "tab",
+     "action": "click",
+     "target": "Guided tasks"
+    },
+    {
+     "say": "Expand the task, check the command in the box (edit it if you need to) and press Run.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the output under the step before moving to the next one.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "see",
+     "target": "output"
+    }
+   ]
+  }
+ ]
+}

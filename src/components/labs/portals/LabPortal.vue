@@ -180,6 +180,19 @@ const SKINS: Record<string, Component> = {
   grafanaslo: lazy(() => import('./sre/GrafanaSlo.vue')),
   pagerduty: lazy(() => import('./sre/PagerDutyApp.vue')),
   cockpit: lazy(() => import('./sre/CockpitApp.vue')),
+  // The twelve enterprise consoles of SRE labs 19-30: one data-driven component.
+  cloudctl: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  updatemgr: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  vsphere: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  devops: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  awx: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  dbconsole: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  fortigate: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  observe: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  itsm: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  grc: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  m365: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
+  delivery: lazy(() => import('./enterprise/EnterpriseConsole.vue')),
 };
 
 const skin = computed<Component | null>(() => SKINS[String(props.tool.skin || '')] || null);
@@ -222,6 +235,18 @@ const DEFAULT_LOCATIONS: Record<string, string> = {
   grafanaslo: 'http://grafana.shopfront.internal:3000/a/grafana-slo-app/manage-slos',
   pagerduty: 'https://shopfront.pagerduty.com/incidents',
   cockpit: 'https://mon-1.shopfront.internal:9090/dashboard',
+  cloudctl: 'https://cloudctl.shopfront.internal/workspaces/hybrid',
+  updatemgr: 'https://updates.shopfront.internal/patching/ring-prod',
+  vsphere: 'https://vcenter.shopfront.local/ui/app/cluster/summary',
+  devops: 'https://github.com/shopfront/shopapi/actions',
+  awx: 'https://awx.shopfront.internal/#/templates',
+  dbconsole: 'https://dbconsole.shopfront.internal/query',
+  fortigate: 'https://fw-1.shopfront.local/ng/firewall/policy/policy/standard',
+  observe: 'https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#alarmsV2:',
+  itsm: 'https://shopfront.service-now.com/now/sow/list/params/list-id/incident',
+  grc: 'https://grc.shopfront.internal/frameworks/iso27001',
+  m365: 'https://admin.microsoft.com/#/users',
+  delivery: 'https://delivery.shopfront.internal/projects/WMS-2026',
 };
 
 const location = ref(DEFAULT_LOCATIONS[String(props.tool.skin || '')] || 'about:blank');

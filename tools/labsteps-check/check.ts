@@ -99,7 +99,9 @@ if (!existsSync(dir)) {
     const sreFile = join(dir, 'sre.json');
     if (existsSync(sreFile)) {
         const maps: Record<string, WalkthroughMap> = {};
-        for (const skin of ['grafana', 'prometheus', 'grafanaslo', 'pagerduty', 'cockpit']) {
+        for (const skin of ['grafana', 'prometheus', 'grafanaslo', 'pagerduty', 'cockpit',
+                            'cloudctl', 'updatemgr', 'vsphere', 'devops', 'awx', 'dbconsole', 'fortigate',
+                            'observe', 'itsm', 'grc', 'm365', 'delivery']) {
             maps[skin] = JSON.parse(readFileSync(join(process.cwd(), 'src/utils/labWalkthrough/maps', skin + '.json'), 'utf-8'));
         }
         const tools = [
@@ -108,6 +110,18 @@ if (!existsSync(dir)) {
             { id: 'sre_slo', label: 'SLOs', kind: 'portal', skin: 'grafanaslo' },
             { id: 'sre_incidents', label: 'Incidents', kind: 'portal', skin: 'pagerduty' },
             { id: 'sre_fleet', label: 'Fleet & Hosts', kind: 'portal', skin: 'cockpit' },
+            { id: 'ent_cloud', label: 'Cloud Control', kind: 'portal', skin: 'cloudctl' },
+            { id: 'ent_patch', label: 'Update Manager', kind: 'portal', skin: 'updatemgr' },
+            { id: 'ent_virt', label: 'vSphere & Hyper-V', kind: 'portal', skin: 'vsphere' },
+            { id: 'ent_cicd', label: 'Pipelines', kind: 'portal', skin: 'devops' },
+            { id: 'ent_awx', label: 'Ansible Automation Platform', kind: 'portal', skin: 'awx' },
+            { id: 'ent_db', label: 'Database Console', kind: 'portal', skin: 'dbconsole' },
+            { id: 'ent_forti', label: 'FortiGate', kind: 'portal', skin: 'fortigate' },
+            { id: 'ent_observe', label: 'Observability', kind: 'portal', skin: 'observe' },
+            { id: 'ent_itsm', label: 'Service Operations', kind: 'portal', skin: 'itsm' },
+            { id: 'ent_grc', label: 'Security & Compliance', kind: 'portal', skin: 'grc' },
+            { id: 'ent_m365', label: 'Microsoft 365 admin', kind: 'portal', skin: 'm365' },
+            { id: 'ent_delivery', label: 'Project Delivery', kind: 'portal', skin: 'delivery' },
         ];
         const data = JSON.parse(readFileSync(sreFile, 'utf-8'));
         let portalLabTasks = 0, withGui = 0;
@@ -127,6 +141,9 @@ if (!existsSync(dir)) {
         check('sre-17 t2 (declare) has a PagerDuty walkthrough', one('sre-17-incident', 't2', 'pagerduty'));
         check('sre-05 t4 (redis on cache-1) has a Cockpit walkthrough', one('sre-05-network', 't4', 'cockpit'));
         check('sre-16 t1 (slo apply) has an SLO walkthrough', one('sre-16-slo', 't1', 'grafanaslo'));
+        check('sre-25 t3 (policy) has a FortiGate walkthrough', one('sre-25-fortigate', 't3', 'fortigate'));
+        check('sre-24 t1 (slow query) has a Database Console walkthrough', one('sre-24-databases', 't1', 'dbconsole'));
+        check('sre-29 t1 (lockout) has a Microsoft 365 walkthrough', one('sre-29-m365', 't1', 'm365'));
         console.log(`  SRE estate labs: ${withGui} of ${portalLabTasks} tasks have a GUI walkthrough`);
         check('most SRE estate tasks have a GUI walkthrough', withGui / Math.max(1, portalLabTasks) >= 0.8, `${withGui}/${portalLabTasks}`);
     }

@@ -1,0 +1,229 @@
+{
+ "skin": "dbconsole",
+ "product": "Database Console",
+ "brand": "#00618a",
+ "top": "Database Console",
+ "nav": [
+  "Inventory",
+  "Actions",
+  "Guided tasks",
+  "Console"
+ ],
+ "recipes": [
+  {
+   "id": "mysql",
+   "title": "Run SQL on MySQL",
+   "match": "mysql\\s+-h\\s+db-mysql1",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Mysql to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Query editor\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Connection to MySQL db-mysql1/orders.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Connection"
+    },
+    {
+     "say": "Set SQL to the statement in quotes.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "SQL"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Query editor"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "pg",
+   "title": "Run SQL on PostgreSQL",
+   "match": "psql\\s+-h\\s+db-1",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Postgres to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Query editor\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Connection to PostgreSQL db-1/shop.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Connection"
+    },
+    {
+     "say": "Set SQL to the statement in quotes.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "SQL"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Query editor"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "backup",
+   "title": "Back up a database",
+   "match": "(mysqldump|pg_dump)\\s",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Backups to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Backup\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Database to the engine.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Database"
+    },
+    {
+     "say": "Set File to the file name.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "File"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Backup"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "restore",
+   "title": "Restore one table from a dump",
+   "match": "pg_restore\\s",
+   "steps": [
+    {
+     "say": "Inventory shows the live state first: open Backups to see what you are about to change.",
+     "screen": "Inventory",
+     "nav": "Inventory",
+     "zone": "tab",
+     "action": "click",
+     "target": "Inventory"
+    },
+    {
+     "say": "Open Actions and find the \"Restore (PostgreSQL)\" form.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "tab",
+     "action": "click",
+     "target": "Actions"
+    },
+    {
+     "say": "Set Dump to the dump file.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "type",
+     "target": "Dump"
+    },
+    {
+     "say": "Read the command preview under the form - it is exactly what the step says - then press the form's button. The output appears under it and in Equivalent CLI commands.",
+     "screen": "Actions",
+     "nav": "Actions",
+     "zone": "panel",
+     "action": "click",
+     "target": "Restore (PostgreSQL)"
+    }
+   ],
+   "verify": "Back on Inventory the change is visible; Check my work grades it like the console command."
+  },
+  {
+   "id": "guided",
+   "title": "Do this step from Guided tasks",
+   "match": "mysql|psql|pg_|mysqldump",
+   "steps": [
+    {
+     "say": "Open Guided tasks - this lab's tasks, every command a Run button.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "tab",
+     "action": "click",
+     "target": "Guided tasks"
+    },
+    {
+     "say": "Expand the task, check the command in the box (edit it if you need to) and press Run.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "click",
+     "target": "Run"
+    },
+    {
+     "say": "Read the output under the step before moving to the next one.",
+     "screen": "Guided tasks",
+     "nav": "Guided tasks",
+     "zone": "main",
+     "action": "see",
+     "target": "output"
+    }
+   ]
+  }
+ ]
+}
