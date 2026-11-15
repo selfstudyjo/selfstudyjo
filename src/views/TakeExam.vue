@@ -557,8 +557,7 @@ const interviewScope = computed(() => {
     refId: (e as any)?.external_id || '',
     url: route.path,
     size: rows.length,
-    parts: [rows.join('
-')],
+    parts: [rows.join('\n')],
   });
 });
 

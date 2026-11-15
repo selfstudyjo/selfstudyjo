@@ -243,7 +243,7 @@ const coachJobs: Promise<void>[] = [];
 let saveChain: Promise<unknown> = Promise.resolve();
 
 const KIND_KEYS = { lesson: 'Lesson', lab: 'Lab', quiz: 'Quiz', exam: 'Exam' } as const;
-const kindLabel = computed(() => t(KIND_KEYS[props.scope.kind] || 'Lesson'));
+const kindLabel = computed(() => t(KIND_KEYS[props.scope.kind as keyof typeof KIND_KEYS] || "Lesson"));
 const langTag = computed(() => getLocale(lang.value).tag);
 const langDir = computed(() => getLocale(lang.value).direction);
 const isLast = computed(() => plan.value.length > 0 && qIndex.value >= plan.value.length - 1);
@@ -304,7 +304,8 @@ function trapTab(event: KeyboardEvent) {
     'button:not([disabled]), a[href], textarea:not([disabled]), input:not([disabled])'));
   if (!items.length) return;
   const first = items[0];
-  const last = items[items.length - 1];
+  if (!first) return;
+  const last = items[items.length - 1] || first;
   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 }

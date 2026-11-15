@@ -499,8 +499,7 @@ const interviewScope = computed(() => {
     // report is built from the key would hand over the paper.
     const right = showResult.value
       ? (question.answers || []).filter(a => a.is_correct).map(a => a.text).join(" / ") : "";
-    return `Q${i + 1}. ${question.text}${right ? `
-Correct: ${right}` : ''}`;
+    return `Q${i + 1}. ${question.text}${right ? `\nCorrect: ${right}` : ''}`;
   });
   return buildScope({
     kind: 'quiz',
@@ -508,8 +507,7 @@ Correct: ${right}` : ''}`;
     refId: q?.external_id || '',
     url: route.fullPath,
     size: rows.length,
-    parts: [q?.description, rows.join('
-')],
+    parts: [q?.description, rows.join('\n')],
   });
 });
 

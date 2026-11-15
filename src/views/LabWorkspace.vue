@@ -732,11 +732,8 @@ const interviewScope = computed(() => {
     size: tasks.length,
     parts: [
       l?.summary, l?.brief,
-      (l?.objectives || []).length ? 'Objectives:
-' + (l?.objectives || []).map(o => '- ' + o).join('
-') : '',
-      tasks.map(task => `Task: ${String(task.title || '')}${task.detail ? ' - ' + String(task.detail) : ''}`).join('
-'),
+      (l?.objectives || []).length ? 'Objectives:\n' + (l?.objectives || []).map(o => '- ' + o).join('\n') : '',
+      tasks.map(task => `Task: ${String(task.title || '')}${task.detail ? ' - ' + String(task.detail) : ''}`).join('\n'),
     ],
   });
 });
