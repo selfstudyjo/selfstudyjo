@@ -1,0 +1,1 @@
+import{Kr as e}from"./index-CI2lwHAW.js";export{e as serviceRegistry};
