@@ -211,3 +211,6 @@ tools/roadmap-preview/shots/
 # Output of tools/search-preview/shoot.mjs (screenshots and its throwaway
 # Chrome profile). Regenerated on demand.
 tools/search-preview/shots/
+
+# tools/topicinterview-check/smoke.mjs output
+tools/topicinterview-check/shots/

@@ -19,8 +19,6 @@ export default {
     'Leave the interview? Your answers so far are saved in My Interviews as unfinished.':
         'هل تريد مغادرة المقابلة؟ إجاباتك حتى الآن محفوظة في «مقابلاتي» كمقابلة غير مكتملة.',
     'My Interviews': 'مقابلاتي',
-    'Nothing was heard. Try again a little closer to the microphone, or type.':
-        'لم يُسمع شيء. حاول مجددًا بالقرب من الميكروفون، أو اكتب إجابتك.',
     'Open in My Interviews': 'افتح في «مقابلاتي»',
     'Questions, your answers and the correct answers': 'الأسئلة وإجاباتك والإجابات الصحيحة',
     'Read the questions aloud': 'اقرأ الأسئلة بصوت عالٍ',
@@ -47,4 +45,22 @@ export default {
     '💪 Strengths': '💪 نقاط القوة',
     'Available before you start the quiz and after you submit it.':
         'متاحة قبل بدء الاختبار وبعد تسليمه.',
+    'Back to the end': 'العودة إلى النهاية',
+    'Corrected (grammar and wording)': 'مصحَّحة (القواعد والصياغة)',
+    'Improving…': 'جارٍ التحسين…',
+    'Keep my answer': 'احتفظ بإجابتي',
+    'Listening — pause and your words appear': 'جارٍ الاستماع — توقّف قليلًا وستظهر كلماتك',
+    'Listening — speaking…': 'جارٍ الاستماع — أنت تتحدث…',
+    'Live transcript': 'النص المباشر',
+    'Say “sorry” to delete the last word (each “sorry” deletes one more)': 'قل «sorry» أو «آسف» لحذف آخر كلمة (كل مرة تحذف كلمة أخرى)',
+    'Select words in your answer, then press this and speak the replacement': 'حدّد كلمات في إجابتك، ثم اضغط هنا وانطق البديل',
+    'Stronger version': 'نسخة أقوى',
+    'The improvement tool is not available right now. Your answer is unchanged.': 'أداة التحسين غير متاحة الآن. إجابتك لم تتغير.',
+    'Use the corrected answer': 'استخدم الإجابة المصحَّحة',
+    'Use the stronger version': 'استخدم النسخة الأقوى',
+    'Your next words go here:': 'كلماتك التالية ستُكتب هنا:',
+    '{v0} pending': '{v0} قيد المعالجة',
+    '✨ Improve my answer': '✨ حسّن إجابتي',
+    '🎙 Replace selection': '🎙 استبدل النص المحدد',
+    '(skipped)': '(تم التخطي)',
 };

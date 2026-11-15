@@ -414,6 +414,25 @@ class JobInterviewService {
         }
     }
 
+    /**
+     * "Improve my answer": a grammar-corrected copy (same content, English
+     * technical terms kept in English) and a stronger version, with short notes.
+     * A TOOL the student asks for -- nothing is applied until they choose -- so
+     * unlike `enhanceAnswer` it may change wording. Null when app 27 could not
+     * help; the answer is then left exactly as it was.
+     */
+    async improveAnswer(body: ScopedCall & { question: string; answer: string }): Promise<{
+        corrected: string; improved: string; notes: { from: string; to: string; why: string }[];
+    } | null> {
+        try {
+            const baseUrl = await this.getBaseUrl();
+            return await apiService.post(baseUrl, `/api/jobinterview/bot/improve-answer`, body, aiLanguageHeaders());
+        } catch (e) {
+            console.error('Improve answer failed:', e);
+            return null;
+        }
+    }
+
     async evaluate(body: EvaluateBody): Promise<EvaluationResult | null> {
         try {
             const baseUrl = await this.getBaseUrl();

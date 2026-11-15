@@ -31,11 +31,12 @@
     <span>{{ $t('Interview on this topic') }}</span>
   </button>
 
-  <Teleport :to="teleportTo">
+  <Teleport :to="teleportTarget">
     <div v-if="open" class="ti-layer" @mousedown.self="onScrimDown" @mouseup.self="onScrimUp">
       <div
         ref="dialog"
         class="ti-dialog"
+        :class="{ 'is-full': fs.active.value }"
         role="dialog"
         aria-modal="true"
         :aria-label="$t('Interview on this topic')"
@@ -48,6 +49,10 @@
             <span class="ti-kind">{{ kindLabel }}</span>
             <h2 class="ti-title" :title="scope.title">{{ scope.title }}</h2>
           </div>
+          <button type="button" class="ti-icon-btn" :aria-pressed="fs.active.value"
+                  :title="fs.active.value ? $t('Exit full screen') : $t('Full screen')"
+                  :aria-label="fs.active.value ? $t('Exit full screen') : $t('Full screen')"
+                  @click="fs.toggle()">{{ fs.active.value ? '🗗' : '⛶' }}</button>
           <button type="button" class="ti-close" :aria-label="$t('Close')" @click="requestClose">✕</button>
         </header>
 
@@ -111,38 +116,87 @@
           </ol>
 
           <div v-if="phase === 'running'" class="ti-answer">
+            <!-- THE LIVE TRANSCRIPT. Each pause in speech is sent to Whisper and
+                 lands here as it comes back, in order, so the student watches
+                 their answer appear while they speak -- and it is an ordinary
+                 field: type to correct it, select a phrase and speak to replace
+                 it, or say "sorry" to take back the last word (once per word). -->
+            <div class="ti-live" :class="{ 'is-on': recording }" aria-live="polite">
+              <span class="ti-live__dot" aria-hidden="true"></span>
+              <span v-if="recording">{{ speaking ? $t('Listening — speaking…') : $t('Listening — pause and your words appear') }}</span>
+              <span v-else-if="pending">{{ $t('Transcribing…') }}</span>
+              <span v-else>{{ $t('Live transcript') }}</span>
+              <span v-if="recording" class="ti-level" aria-hidden="true"><span :style="{ width: Math.round(level * 100) + '%' }"></span></span>
+              <span v-if="pending" class="ti-pending">{{ $t('{v0} pending', { v0: pending }) }}</span>
+            </div>
             <label class="ti-sr" for="ti-answer-box">{{ $t('Your answer') }}</label>
             <textarea
               id="ti-answer-box"
               ref="answerBox"
-              v-model="answer"
+              :value="answerState.text"
               class="ti-answer__box"
-              :dir="langDir"
+              :class="{ 'is-live': recording }"
+              :dir="answerDir"
               :lang="langTag"
-              rows="4"
+              rows="5"
               :placeholder="$t('Type your answer, or record it with the microphone…')"
               :disabled="thinking || !currentQuestion"
+              @input="onTyped"
               @keydown.ctrl.enter.prevent="submitAnswer"
               @keydown.meta.enter.prevent="submitAnswer"
             ></textarea>
+            <p v-if="caretNote" class="ti-note">{{ $t('Your next words go here:') }} <bdi>{{ caretNote }}</bdi>
+              <button type="button" class="ti-link" @click="answerState = resumeAtEnd(answerState)">{{ $t('Back to the end') }}</button></p>
             <div class="ti-answer__bar">
               <button
                 v-if="micSupported"
                 type="button"
                 class="ti-btn ti-btn--ghost"
                 :class="{ 'is-recording': recording }"
-                :disabled="thinking || transcribing || !currentQuestion"
+                :disabled="thinking || !currentQuestion"
                 @click="toggleRecording"
               >
-                {{ recording ? $t('⏹ Stop recording') : transcribing ? $t('Transcribing…') : $t('🎤 Record answer') }}
+                {{ recording ? $t('⏹ Stop recording') : $t('🎤 Record answer') }}
               </button>
+              <button type="button" class="ti-btn ti-btn--ghost" :disabled="!canReplaceSelection"
+                      :title="$t('Select words in your answer, then press this and speak the replacement')"
+                      @mousedown.prevent @click="replaceWithSpeech">{{ $t('🎙 Replace selection') }}</button>
+              <button type="button" class="ti-btn ti-btn--ghost" :disabled="improving || !answerState.text.trim() || recording || pending > 0"
+                      @click="improve">{{ improving ? $t('Improving…') : $t('✨ Improve my answer') }}</button>
               <span class="ti-spacer"></span>
               <button type="button" class="ti-btn ti-btn--ghost" :disabled="thinking || !currentQuestion" @click="skip">{{ $t('Skip') }}</button>
-              <button type="button" class="ti-btn ti-btn--primary" :disabled="thinking || recording || transcribing || !answer.trim()" @click="submitAnswer">
+              <button type="button" class="ti-btn ti-btn--primary" :disabled="thinking || recording || pending > 0 || !answerState.text.trim()" @click="submitAnswer">
                 {{ isLast ? $t('Answer and finish') : $t('Answer') }}
               </button>
             </div>
+            <label class="ti-check ti-check--small">
+              <input v-model="voiceEditing" type="checkbox">
+              <span>{{ $t('Say “sorry” to delete the last word (each “sorry” deletes one more)') }}</span>
+            </label>
             <p v-if="micError" class="ti-note ti-note--warn">{{ micError }}</p>
+
+            <!-- The improvement tool: grammar corrected, and a stronger version.
+                 Nothing is applied until the student chooses. -->
+            <div v-if="improvement" class="ti-improve" :dir="langDir" :lang="langTag">
+              <div class="ti-improve__block">
+                <h4>{{ $t('Corrected (grammar and wording)') }}</h4>
+                <p :dir="dirOf(improvement.corrected)">{{ improvement.corrected }}</p>
+                <button type="button" class="ti-btn ti-btn--ghost" @click="useImproved(improvement.corrected)">{{ $t('Use the corrected answer') }}</button>
+              </div>
+              <div v-if="improvement.improved" class="ti-improve__block">
+                <h4>{{ $t('Stronger version') }}</h4>
+                <p :dir="dirOf(improvement.improved)">{{ improvement.improved }}</p>
+                <button type="button" class="ti-btn ti-btn--ghost" @click="useImproved(improvement.improved)">{{ $t('Use the stronger version') }}</button>
+              </div>
+              <ul v-if="improvement.notes.length" class="ti-improve__notes">
+                <li v-for="(n, i) in improvement.notes" :key="i">
+                  <s v-if="n.from"><bdi>{{ n.from }}</bdi></s> <span v-if="n.from && n.to">→</span> <strong><bdi>{{ n.to }}</bdi></strong>
+                  <span v-if="n.why"> — {{ n.why }}</span>
+                </li>
+              </ul>
+              <button type="button" class="ti-link" @click="improvement = null">{{ $t('Keep my answer') }}</button>
+            </div>
+            <p v-if="improveError" class="ti-note ti-note--warn">{{ improveError }}</p>
           </div>
           <p v-else class="ti-note">{{ $t('Writing your report…') }}</p>
         </section>
@@ -194,11 +248,15 @@ import { jobInterviewService, type QAPair, type EvaluationResult } from '@/servi
 import { useAuthStore } from '@/store/auth';
 import { useI18n } from '@/i18n/runtime';
 import { LOCALES, getLocale } from '@/i18n/locales';
-import { useTeleportTarget } from '@/composables/useFullscreen';
+import { fullscreenHost, useFullscreen } from '@/composables/useFullscreen';
 import {
-  clampPlan, fallbackQuestion, sessionTopic, speechTag,
+  applyTopicChunk, clampPlan, extractTerms, fallbackQuestion, sessionTopic, speechTag,
   type TopicScope,
 } from '@/utils/topicInterview';
+import {
+  caretHint, emptyAnswer, replaceSelection, resumeAtEnd, setTypedText, type AnswerState,
+} from '@/utils/answerEditing';
+import { OrderedResults, SpeechSegmenter, rmsDb, transcriptContext } from '@/utils/speechSegmenter';
 
 const props = defineProps<{
   scope: TopicScope;
@@ -209,7 +267,12 @@ const props = defineProps<{
 
 const { t, localeId } = useI18n();
 const authStore = useAuthStore();
-const teleportTo = useTeleportTarget();
+/**
+ * Where the window is drawn. Frozen at the moment it opens, NOT the live
+ * full-screen host: once the window itself goes full screen it IS the host, and
+ * a live target would teleport the window into itself.
+ */
+const teleportTarget = ref<HTMLElement | string>('body');
 
 type Phase = 'setup' | 'running' | 'finishing' | 'report' | 'error';
 interface Message { who: 'bot' | 'me'; text: string }
@@ -223,13 +286,15 @@ const qIndex = ref(0);
 const currentQuestion = ref('');
 const messages = ref<Message[]>([]);
 const qaPairs = ref<QAPair[]>([]);
-const answer = ref('');
+const answerState = ref<AnswerState>(emptyAnswer());
+const voiceEditing = ref(true);
 const thinking = ref(false);
 const evaluation = ref<EvaluationResult | null>(null);
 const errorText = ref('');
 const saveNote = ref('');
 
 const dialog = ref<HTMLElement | null>(null);
+const fs = useFullscreen(dialog);
 const thread = ref<HTMLElement | null>(null);
 const answerBox = ref<HTMLTextAreaElement | null>(null);
 let opener: HTMLElement | null = null;
@@ -256,6 +321,7 @@ function openWindow(event: MouseEvent) {
   if (props.disabled) return;
   opener = event.currentTarget as HTMLElement;
   if (phase.value !== 'running' && phase.value !== 'finishing') lang.value = localeId.value;
+  teleportTarget.value = fullscreenHost.value || 'body';
   open.value = true;
   nextTick(() => dialog.value?.focus());
 }
@@ -274,6 +340,7 @@ function requestClose() {
 }
 
 function close() {
+  if (fs.active.value) void fs.exit();
   stopSpeaking();
   stopRecording(true);
   if (phase.value === 'running' || phase.value === 'finishing') {
@@ -293,7 +360,8 @@ function reset() {
   qaPairs.value = [];
   plan.value = [];
   evaluation.value = null;
-  answer.value = '';
+  answerState.value = emptyAnswer();
+  improvement.value = null;
   currentQuestion.value = '';
 }
 
@@ -382,13 +450,15 @@ async function ask(token: number) {
 
 function skip() { void record(''); }
 function submitAnswer() {
-  if (!answer.value.trim() || thinking.value) return;
-  void record(answer.value.trim());
+  const text = answerState.value.text.trim();
+  if (!text || thinking.value || recording.value || pending.value) return;
+  void record(text);
 }
 
 async function record(text: string) {
   const token = runToken;
   stopSpeaking();
+  stopRecording(true);
   const qa: QAPair = {
     question: currentQuestion.value,
     answer: text,
@@ -398,7 +468,9 @@ async function record(text: string) {
   messages.value.push({ who: 'me', text: text || t('(skipped)') });
   qaPairs.value.push(qa);
   const index = qaPairs.value.length - 1;
-  answer.value = '';
+  answerState.value = emptyAnswer();
+  improvement.value = null;
+  improveError.value = '';
   currentQuestion.value = '';
   scrollThread();
 
@@ -517,48 +589,151 @@ function stopSpeaking() {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
-/* ---------------- speech in ---------------- */
+/* ---------------- the answer field ---------------- */
+
+const answerDir = computed(() => dirOf(answerState.value.text) || langDir.value);
+const caretNote = computed(() => caretHint(answerState.value));
+const selection = ref<[number, number] | null>(null);
+const canReplaceSelection = computed(() =>
+  !!selection.value && selection.value[1] > selection.value[0] && !thinking.value && !!currentQuestion.value);
+
+/** The direction a piece of text reads in, from its first strong letter. */
+function dirOf(text: string): 'rtl' | 'ltr' | '' {
+  const m = String(text || '').match(/[A-Za-z\u0590-\u08FF]/);
+  if (!m) return '';
+  return /[\u0590-\u08FF]/.test(m[0]) ? 'rtl' : 'ltr';
+}
+
+function onTyped(event: Event) {
+  answerState.value = setTypedText(answerState.value, (event.target as HTMLTextAreaElement).value);
+}
+
+function trackSelection() {
+  const box = answerBox.value;
+  if (!box || document.activeElement !== box) return;
+  selection.value = box.selectionEnd > box.selectionStart ? [box.selectionStart, box.selectionEnd] : null;
+}
+
+/** Select a phrase, press, speak: the phrase is removed and the words land in its place. */
+function replaceWithSpeech() {
+  if (!selection.value) return;
+  const [start, end] = selection.value;
+  answerState.value = replaceSelection(answerState.value, start, end);
+  selection.value = null;
+  if (!recording.value) void toggleRecording();
+}
+
+/* ---------------- speech in: the live transcript ---------------- */
 
 const micSupported = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
   && typeof window !== 'undefined' && 'MediaRecorder' in window;
 const recording = ref(false);
-const transcribing = ref(false);
+const speaking = ref(false);
+const level = ref(0);
+const pending = ref(0);
 const micError = ref('');
+
+let stream: MediaStream | null = null;
+let audioCtx: AudioContext | null = null;
+let analyser: AnalyserNode | null = null;
 let recorder: MediaRecorder | null = null;
 let chunks: Blob[] = [];
-let stream: MediaStream | null = null;
+let frameTimer: ReturnType<typeof setInterval> | null = null;
+let segmenter: SpeechSegmenter | null = null;
+let voicedInSegment = false;
+let ordered: OrderedResults | null = null;
+let discardNext = false;
+const terms = computed(() => extractTerms(props.scope.material || '').join(', '));
+
+/**
+ * One recorder per spoken phrase. A webm blob is only decodable from its first
+ * chunk, so a recorder is stopped at each pause the segmenter finds and a fresh
+ * one started at once on the same stream -- each phrase is a whole file, sent
+ * while the student goes on speaking.
+ */
+function startRecorder() {
+  if (!stream) return;
+  chunks = [];
+  voicedInSegment = false;
+  const r = new MediaRecorder(stream);
+  r.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  r.onstop = () => {
+    const keep = voicedInSegment && !discardNext;
+    const blob = new Blob(chunks, { type: r.mimeType || 'audio/webm' });
+    discardNext = false;
+    if (keep) void transcribeSegment(blob);
+  };
+  r.start();
+  recorder = r;
+}
+
+function cutSegment(keep: boolean) {
+  if (!recorder || recorder.state === 'inactive') return;
+  if (!keep) voicedInSegment = false;
+  recorder.stop();
+  recorder = null;
+  if (recording.value) startRecorder();
+}
 
 async function toggleRecording() {
   if (recording.value) { stopRecording(false); return; }
   micError.value = '';
   try {
     stopSpeaking();
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    chunks = [];
-    recorder = new MediaRecorder(stream);
-    recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-    recorder.onstop = () => void transcribe(new Blob(chunks, { type: recorder?.mimeType || 'audio/webm' }));
-    recorder.start();
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    audioCtx = new Ctx();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+    segmenter = new SpeechSegmenter();
+    ordered = ordered || new OrderedResults(text => {
+      answerState.value = applyTopicChunk(answerState.value, text, voiceEditing.value);
+      nextTick(() => { const box = answerBox.value; if (box) box.scrollTop = box.scrollHeight; });
+    });
     recording.value = true;
+    startRecorder();
+    const buf = new Float32Array(analyser.fftSize);
+    frameTimer = setInterval(() => {
+      if (!analyser || !segmenter) return;
+      analyser.getFloatTimeDomainData(buf);
+      const db = rmsDb(buf);
+      level.value = Math.max(0, Math.min(1, (db + 70) / 50));
+      const frame = segmenter.push(db);
+      speaking.value = frame.speaking;
+      if (frame.speaking) voicedInSegment = true;
+      if (frame.cut) cutSegment(frame.cut.keep);
+    }, segmenter.opts.frameMs);
   } catch {
     micError.value = t('The microphone could not be opened. You can type your answer instead.');
     stopRecording(true);
   }
 }
 
-let discardRecording = false;
 function stopRecording(discard: boolean) {
-  discardRecording = discard;
-  if (recorder && recorder.state !== 'inactive') recorder.stop();
+  recording.value = false;
+  speaking.value = false;
+  level.value = 0;
+  if (frameTimer) { clearInterval(frameTimer); frameTimer = null; }
+  if (recorder && recorder.state !== 'inactive') {
+    discardNext = discard;
+    recorder.stop();
+  }
+  recorder = null;
   stream?.getTracks().forEach(track => track.stop());
   stream = null;
-  recording.value = false;
+  void audioCtx?.close().catch(() => undefined);
+  audioCtx = null;
+  analyser = null;
+  segmenter = null;
 }
 
-async function transcribe(blob: Blob) {
-  recorder = null;
-  if (discardRecording || blob.size < 1000) return;
-  transcribing.value = true;
+async function transcribeSegment(blob: Blob) {
+  if (blob.size < 1000 || !ordered) return;
+  const results = ordered;
+  const seq = results.issue();
+  pending.value = results.pending;
+  let text = '';
   try {
     const baseUrl = await jobInterviewService.resolveBaseUrl();
     if (!baseUrl) throw new Error('unreachable');
@@ -566,25 +741,63 @@ async function transcribe(blob: Blob) {
     form.append('audio', blob, 'audio.webm');
     form.append('language', lang.value);
     form.append('question', currentQuestion.value || '');
+    form.append('context', transcriptContext(answerState.value.text));
+    // English terms of the topic, so Whisper keeps "Terraform" in Latin inside
+    // an Arabic sentence; and, for Arabic and Chinese, a guarded pass on app 27
+    // that turns any transliterated term back into its English spelling.
+    form.append('terms', terms.value);
+    form.append('normalise_terms', lang.value === 'ar' || lang.value === 'zh' ? '1' : '0');
     const response = await fetch(`${baseUrl}/api/jobinterview/transcribe`, {
       method: 'POST',
       headers: { Authorization: `Token ${import.meta.env.VITE_AUTH_TOKEN}`, 'X-SFS-Language': lang.value },
       body: form,
     });
     if (!response.ok) throw new Error(String(response.status));
-    const text = String((await response.json()).text || '').trim();
-    if (text) answer.value = answer.value.trim() ? `${answer.value.trim()} ${text}` : text;
-    else micError.value = t('Nothing was heard. Try again a little closer to the microphone, or type.');
+    text = String((await response.json()).text || '').trim();
+    micError.value = '';
   } catch {
     micError.value = t('Your recording could not be transcribed. You can type your answer instead.');
   } finally {
-    transcribing.value = false;
-    nextTick(() => answerBox.value?.focus());
+    // Resolved even when empty, or one failed phrase would hold every later one.
+    results.resolve(seq, text);
+    pending.value = results.pending;
   }
 }
 
+/* ---------------- improve my answer ---------------- */
+
+interface Improvement { corrected: string; improved: string; notes: { from: string; to: string; why: string }[] }
+const improvement = ref<Improvement | null>(null);
+const improving = ref(false);
+const improveError = ref('');
+
+async function improve() {
+  const text = answerState.value.text.trim();
+  if (!text) return;
+  improving.value = true;
+  improveError.value = '';
+  const result = await jobInterviewService.improveAnswer({
+    question: currentQuestion.value, answer: text, scope: props.scope, language: lang.value,
+  });
+  improving.value = false;
+  if (!result || !result.corrected) {
+    improveError.value = t('The improvement tool is not available right now. Your answer is unchanged.');
+    return;
+  }
+  improvement.value = { corrected: result.corrected, improved: result.improved || '', notes: result.notes || [] };
+}
+
+function useImproved(text: string) {
+  answerState.value = setTypedText(emptyAnswer(), text);
+  improvement.value = null;
+  nextTick(() => answerBox.value?.focus());
+}
+
+if (typeof document !== 'undefined') document.addEventListener('selectionchange', trackSelection);
+
 watch(open, value => { document.documentElement.classList.toggle('ti-lock', value); });
 onBeforeUnmount(() => {
+  if (typeof document !== 'undefined') document.removeEventListener('selectionchange', trackSelection);
   runToken++;
   stopSpeaking();
   stopRecording(true);
@@ -633,6 +846,17 @@ html.ti-lock { overflow: hidden; }
 .ti-head__text { flex: 1; min-width: 0; }
 .ti-kind { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sfs-text-muted, #9ca3af); }
 .ti-title { margin: 0.15rem 0 0; font-size: 1.15rem; line-height: 1.3; overflow-wrap: anywhere; unicode-bidi: plaintext; }
+.ti-icon-btn {
+  flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16); background: transparent;
+  color: var(--sfs-text, #e5e7eb); font: inherit; cursor: pointer;
+}
+.ti-icon-btn:focus-visible, .ti-close:focus-visible { outline: 2px solid var(--sfs-focus, #a5b4fc); outline-offset: 2px; }
+.ti-dialog.is-full, .ti-dialog:fullscreen {
+  width: 100vw; max-width: none; height: 100dvh; max-height: none; border-radius: 0;
+}
+.ti-dialog.is-full { position: fixed; inset: 0; z-index: 2147483000; }
+.ti-dialog.is-full .ti-thread, .ti-dialog:fullscreen .ti-thread { max-height: 45dvh; }
 .ti-close {
   flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%;
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16); background: transparent;
@@ -693,6 +917,20 @@ html.ti-lock { overflow: hidden; }
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.18);
   unicode-bidi: plaintext;
 }
+.ti-answer__box.is-live { border-color: var(--sfs-accent, #667eea); }
+.ti-live { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--sfs-text-muted, #9ca3af); }
+.ti-live__dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.25); flex: none; }
+.ti-live.is-on .ti-live__dot { background: var(--sfs-danger, #f87171); }
+.ti-level { flex: 0 1 6rem; height: 0.35rem; border-radius: 999px; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1); overflow: hidden; }
+.ti-level span { display: block; height: 100%; background: var(--sfs-accent, #667eea); }
+.ti-pending { margin-inline-start: auto; }
+.ti-check--small { font-size: 0.85rem; margin: 0; color: var(--sfs-text-muted, #9ca3af); }
+.ti-link { background: none; border: 0; padding: 0 0.25rem; color: var(--sfs-accent-text, #c7d2fe); font: inherit; text-decoration: underline; cursor: pointer; }
+.ti-improve { display: grid; gap: 0.6rem; padding: 0.75rem; border-radius: 0.7rem; background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.05); border: 1px solid rgb(var(--sfs-accent-rgb, 102 126 234) / 0.3); }
+.ti-improve__block h4 { margin: 0 0 0.25rem; font-size: 0.9rem; }
+.ti-improve__block p { margin: 0 0 0.4rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ti-improve__notes { margin: 0; padding-inline-start: 1.1rem; font-size: 0.88rem; line-height: 1.5; }
+@media (prefers-reduced-motion: no-preference) { .ti-live.is-on .ti-live__dot { animation: ti-blink 1.2s infinite; } }
 .ti-answer__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .ti-spacer { flex: 1; }
 .ti-note { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--sfs-text-muted, #9ca3af); }

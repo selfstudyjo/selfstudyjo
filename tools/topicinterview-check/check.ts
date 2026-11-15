@@ -1,5 +1,6 @@
 // npm run check:topicinterview — the plain half of "Interview on this topic".
 import {
+  applyTopicChunk, extractTerms, normaliseCommands, removeLastWords,
   buildScope, clampPlan, fallbackQuestion, joinMaterial, scopeQuestionCount,
   MAX_TOPIC_QUESTIONS, MATERIAL_CHARS,
 } from '../../src/utils/topicInterview';
@@ -27,6 +28,23 @@ check('an empty plan is filled from the material headings', thin[0] === 'chmod' 
 const ar = fallbackQuestion(lab, 'chmod', 0, 'ar');
 check('the fallback question is in the chosen language and names the area', ar.includes('chmod') && /[؀-ۿ]/.test(ar), ar);
 check('an unknown language falls back to English', fallbackQuestion(lab, 'x', 1, 'xx').startsWith('Walk me'));
+
+// The live transcript: one word per "sorry", in three languages.
+const empty = { text: '', caret: null, anchor: null };
+let st = applyTopicChunk(empty, 'I use Terraform to deploy cloud');
+check('a chunk is appended', st.text === 'I use Terraform to deploy cloud', st.text);
+st = applyTopicChunk(st, 'sorry');
+check('one "sorry" removes one word', st.text === 'I use Terraform to deploy', st.text);
+st = applyTopicChunk(st, 'sorry sorry servers');
+check('each further "sorry" removes one more, and the words after it are kept', st.text === 'I use Terraform servers', st.text);
+st = applyTopicChunk({ text: 'استخدمت Terraform مع AWS', caret: null, anchor: null }, 'آسف');
+check('Arabic "sorry" removes one word', st.text === 'استخدمت Terraform مع', st.text);
+check('Chinese "sorry" is a command', normaliseCommands('我用对不起').includes('sorry'));
+check('a Chinese word is one character', removeLastWords('我用云', 1) === '我用');
+check('a sorry is literal when voice editing is off', applyTopicChunk(empty, 'I am sorry', false).text === 'I am sorry');
+const terms = extractTerms('Use `terraform plan` with AWS and S3. The Cloud is AWS.');
+check('terms are extracted, most frequent first', terms[0] === 'AWS' && terms.includes('terraform plan') && terms.includes('S3'), terms);
+check('ordinary capitalised words are not terms', !terms.includes('The') && !terms.includes('Use'), terms);
 
 if (failures) { console.log(`\n${failures} check(s) failed`); process.exit(1); }
 console.log('\nAll topic interview checks passed.');

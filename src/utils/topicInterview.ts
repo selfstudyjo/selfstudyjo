@@ -165,3 +165,93 @@ export function sessionTopic(kindLabel: string, title: string): string {
 export function speechTag(lang: string): string {
     return lang === 'ar' ? 'ar-SA' : lang === 'zh' ? 'zh-CN' : 'en-US';
 }
+
+/* ------------------------------------------------------------------ *
+ * The live transcript: spoken corrections, word by word
+ *
+ * The Job Interview room's `answerEditing.ts` takes back a comma-delimited
+ * PART per "sorry". Here a "sorry" takes back one WORD, and each further
+ * "sorry" one more -- what was asked for, and the better unit for a short
+ * topic answer. The parsing (which words are commands, where a run of them
+ * starts and ends) is reused from that module unchanged; only the undo and the
+ * multilingual command words are this file's.
+ * ------------------------------------------------------------------ */
+
+import {
+    insertSpeech, parseSpokenChunk, MAX_VOICE_UNDO_SEGMENTS, type AnswerState,
+} from './answerEditing';
+
+/** "Sorry" as an Arabic or Chinese speaker says it, mapped to the English command. */
+const ARABIC_SORRY = /(^|[^\p{L}])(آسف|آسفة|اسف|عذرا|عذرًا|عفوا|عفوًا)(?=$|[^\p{L}])/gu;
+const CHINESE_SORRY = /(对不起|抱歉|不好意思)/g;
+
+export function normaliseCommands(chunk: string): string {
+    return String(chunk ?? '')
+        .replace(ARABIC_SORRY, '$1 sorry ')
+        .replace(CHINESE_SORRY, ' sorry ');
+}
+
+const HAN = /[㐀-䶿一-鿿]/;
+
+/**
+ * The text with its last `count` words removed.
+ *
+ * A Chinese "word" is one character: Chinese has no spaces, so taking the last
+ * whitespace-delimited run would delete a whole clause per "sorry". Trailing
+ * punctuation goes with the word it followed.
+ */
+export function removeLastWords(text: string, count: number): string {
+    let out = String(text ?? '');
+    const n = Math.min(Math.max(0, Math.round(Number(count) || 0)), MAX_VOICE_UNDO_SEGMENTS);
+    for (let i = 0; i < n && out; i++) {
+        out = out.replace(/[\s,.;:!?،؛؟。，、！？]+$/u, '');
+        if (!out) break;
+        const last = out[out.length - 1];
+        out = HAN.test(last) ? out.slice(0, -1) : out.replace(/\S+$/u, '');
+    }
+    return out.replace(/[\s,;:،؛，、]+$/u, '');
+}
+
+function undoWords(state: AnswerState, count: number): AnswerState {
+    if (state.caret === null) return { text: removeLastWords(state.text, count), caret: null, anchor: null };
+    // Never back past where the student started dictating into a selection.
+    const caret = Math.max(0, Math.min(state.caret, state.text.length));
+    const floor = Math.max(0, Math.min(state.anchor ?? 0, caret));
+    const head = state.text.slice(0, floor) + removeLastWords(state.text.slice(floor, caret), count);
+    return { text: head + state.text.slice(caret), caret: head.length, anchor: Math.min(floor, head.length) };
+}
+
+/** One transcribed chunk, applied: words inserted, spoken "sorry"s taking words back. */
+export function applyTopicChunk(state: AnswerState, chunk: string, voiceEditing = true): AnswerState {
+    const parsed = parseSpokenChunk(voiceEditing ? normaliseCommands(chunk) : chunk, voiceEditing);
+    let next = insertSpeech(state, parsed.before);
+    if (parsed.commands > 0) next = undoWords(next, parsed.commands);
+    return insertSpeech(next, parsed.after);
+}
+
+/**
+ * The English technical terms of the material, for Whisper to be primed with.
+ *
+ * Whisper continues the script it was primed with, so "Terraform" in Latin in
+ * the prompt is what keeps it Latin inside an Arabic sentence. Taken from code
+ * spans and from words that look like names: capitalised, acronyms, or with a
+ * digit or dot in them. Most frequent first.
+ */
+export function extractTerms(material: string, max = 25): string[] {
+    const counts = new Map<string, number>();
+    const add = (raw: string) => {
+        const term = raw.trim().replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9+#]+$/g, '');
+        if (term.length < 2 || term.length > 30 || !/[A-Za-z]/.test(term)) return;
+        counts.set(term, (counts.get(term) || 0) + 1);
+    };
+    const text = String(material || '');
+    for (const m of text.matchAll(/`([^`\n]{2,30})`/g)) add(m[1]);
+    for (const m of text.matchAll(/\b([A-Z][A-Za-z0-9+#.-]*[A-Za-z0-9+#]|[A-Za-z]+[0-9][A-Za-z0-9]*)\b/g)) add(m[1]);
+    const stop = new Set(['The', 'This', 'That', 'These', 'Those', 'You', 'Your', 'When', 'What', 'How',
+        'Why', 'Task', 'Objectives', 'Correct', 'And', 'For', 'With', 'Use', 'If', 'In', 'On', 'It', 'A', 'An']);
+    return [...counts.entries()]
+        .filter(([term]) => !stop.has(term))
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, max)
+        .map(([term]) => term);
+}
