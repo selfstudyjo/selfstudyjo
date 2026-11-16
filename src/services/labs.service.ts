@@ -375,15 +375,20 @@ class LabsService {
         }
     }
 
+    /**
+     * Reset environment: a new environment AND every task in the lab back to
+     * not done (app 11 starts a new progress epoch). `userId` finds the
+     * progress record; without it app 11 falls back to the username.
+     */
     async resetLab(username: string, labId: string,
-                   resetDatasets = false): Promise<boolean> {
+                   resetDatasets = false, userId = ''): Promise<boolean> {
         const replica = await this.replicaFor(username);
         if (!replica) return false;
         try {
             await apiService.post(
                 replica,
                 `/api/labs/${encodeURIComponent(labId)}/reset/${encodeURIComponent(username)}/`,
-                { reset_datasets: resetDatasets });
+                { reset_datasets: resetDatasets, user_id: userId });
             return true;
         } catch {
             return false;

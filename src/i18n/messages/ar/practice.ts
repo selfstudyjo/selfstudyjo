@@ -367,4 +367,15 @@ export default {
         'نسخ الإجابة كاملة',
     'code':
         'كود',
+    'A playground keeps no tasks, so only the environment is reset.': 'مساحة التدريب لا تحتوي على مهام، لذلك تُعاد تهيئة البيئة فقط.',
+    'All {v0} completed task(s) will be marked as not done, and the points you earned in this lab are cleared.': 'ستُعلَّم جميع المهام المكتملة ({v0}) على أنها غير منجزة، وتُحذف النقاط التي حصلت عليها في هذا المختبر.',
+    'Are you sure? Resetting restarts the lab environment from the beginning, so everything you created in it is removed.': 'هل أنت متأكد؟ إعادة التعيين تبدأ بيئة المختبر من جديد، فيُحذف كل ما أنشأته فيها.',
+    'Every task in this lab will be marked as not done.': 'ستُعلَّم كل مهام هذا المختبر على أنها غير منجزة.',
+    'Reset this lab?': 'إعادة تعيين هذا المختبر؟',
+    'Resetting…': 'جارٍ إعادة التعيين…',
+    'This cannot be undone.': 'لا يمكن التراجع عن ذلك.',
+    'Yes, reset the lab': 'نعم، أعد تعيين المختبر',
+    'The environment was reset.': 'أُعيدت تهيئة البيئة.',
+    'The lab could not be reset. Nothing was changed - please try again.': 'تعذّرت إعادة تعيين المختبر. لم يتغير شيء - حاول مرة أخرى.',
+    'The lab was reset: the environment is new and every task is marked as not done.': 'أُعيد تعيين المختبر: البيئة جديدة وكل المهام مُعلَّمة على أنها غير منجزة.',
 };

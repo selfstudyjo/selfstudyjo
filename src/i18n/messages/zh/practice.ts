@@ -357,4 +357,15 @@ export default {
         '复制完整回答',
     'code':
         '代码',
+    'A playground keeps no tasks, so only the environment is reset.': '练习场没有任务，因此只重置环境。',
+    'All {v0} completed task(s) will be marked as not done, and the points you earned in this lab are cleared.': '全部 {v0} 个已完成的任务将被标记为未完成，你在本实验中获得的积分也会被清除。',
+    'Are you sure? Resetting restarts the lab environment from the beginning, so everything you created in it is removed.': '确定吗？重置会让实验环境从头开始，你在其中创建的所有内容都将被删除。',
+    'Every task in this lab will be marked as not done.': '本实验的所有任务都将被标记为未完成。',
+    'Reset this lab?': '重置此实验？',
+    'Resetting…': '正在重置…',
+    'This cannot be undone.': '此操作无法撤销。',
+    'Yes, reset the lab': '是的，重置实验',
+    'The environment was reset.': '环境已重置。',
+    'The lab could not be reset. Nothing was changed - please try again.': '无法重置实验，未做任何更改 - 请重试。',
+    'The lab was reset: the environment is new and every task is marked as not done.': '实验已重置：环境已更新，所有任务都已标记为未完成。',
 };

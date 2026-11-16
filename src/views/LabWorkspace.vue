@@ -53,7 +53,7 @@
             <TourButton />
             <AssistantButton />
             <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
-                    :disabled="busy" @click="reset">
+                    :disabled="busy" @click="resetAsk = true">
               <RotateCcw class="sl-i" /> {{ $t('Reset environment') }}
             </button>
           </div>
@@ -104,7 +104,7 @@
                  about. One window either way - see `useAssistant`. -->
             <AssistantButton />
             <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
-                    :disabled="busy" @click="reset">
+                    :disabled="busy" @click="resetAsk = true">
               <RotateCcw class="sl-i" /> {{ $t('Reset environment') }}
             </button>
           </div>
@@ -572,6 +572,10 @@
       <LabDefinitions v-if="defsMounted && lab && !playground" :open="defsOpen" :lab="lab" :tasks="definitionTasks"
                       :tools="lab.tool_detail || []" :start="defsStart"
                       @close="defsOpen = false" @open-tool="openTool" />
+      <!-- "Are you sure?" before a reset: it restarts the environment AND marks
+           every task in this lab as not done, in the browser and on app 11. -->
+      <LabResetConfirm :open="resetAsk" :done="grade.done || 0" :busy="busy" :graded="!playground"
+                       @cancel="resetAsk = false" @confirm="confirmReset" />
       <LabLessonModal v-if="!playground" :open="lessonOpen" :lab-id="labId" :origin="lessonOrigin"
                       :lessons="lessonsForLab || []" @close="lessonOpen = false" />
     </template>
@@ -627,6 +631,7 @@ import {
 } from '@/utils/labCatalogue';
 import LabBrief from '@/components/labs/LabBrief.vue';
 import LabLessonModal from '@/components/labs/LabLessonModal.vue';
+import LabResetConfirm from '@/components/labs/LabResetConfirm.vue';
 // The Definitions window is the largest lab component most visits never open:
 // its own chunk, mounted on the first press (working rule 47).
 const LabDefinitions = defineAsyncComponent(() => import('@/components/labs/docs/LabDefinitions.vue'));
@@ -1442,15 +1447,42 @@ async function stopProcess() {
   return labService.killProcess(username.value);
 }
 
+/** The "Are you sure?" dialog in front of a reset. */
+const resetAsk = ref(false);
+
+async function confirmReset() {
+  await reset();
+  resetAsk.value = false;
+}
+
+/**
+ * Reset environment: a fresh start for this lab.
+ *
+ * App 11 throws the environment away AND starts a new progress epoch, so every
+ * task is to-do again there; this clears the browser's half -- the self-marked
+ * ids this tab was carrying, the grade on screen, the last Check my work
+ * report -- before re-opening, or the next grade would post the old ticks back.
+ * A failed reset says so and leaves the screen as it was.
+ */
 async function reset() {
   if (!lab.value) return;
   busy.value = true;
   try {
-    await labsService.resetLab(username.value, lab.value.id);
+    const ok = await labsService.resetLab(username.value, lab.value.id, false, userId.value);
+    if (!ok) {
+      note.value = t('The lab could not be reset. Nothing was changed - please try again.');
+      return;
+    }
+    selfMarked.value = [];
+    report.value = null;
+    grade.value = emptyGrade();
     // Recorded as neutral: starting again costs nothing, and a student who
     // believed otherwise would keep working in a broken environment.
     if (!playground.value) sitting.note('lab.reset');
     await open();
+    if (!error.value) note.value = playground.value
+      ? t('The environment was reset.')
+      : t('The lab was reset: the environment is new and every task is marked as not done.');
   } finally {
     busy.value = false;
   }
