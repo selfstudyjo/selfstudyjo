@@ -228,6 +228,24 @@ Done. The total now rounds to 2 decimals.</pre>
         </div>
       </div>
 
+      <!-- HOW TO INSTALL: SelfStudy VPN. Commands and file names are never translated. -->
+      <div v-if="p.id === 'vpn'" class="prod-section">
+        <h3>{{ $t('How to install it') }}</h3>
+        <div class="prod-grid prod-cli">
+          <article v-for="s in vpnSteps" :key="s.os" class="prod-card" :class="{ 'prod-card--mine': s.os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(s.os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ s.format }}</span>
+              <span v-if="s.os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <ol class="prod-req">
+              <li v-for="line in s.steps" :key="line">{{ line }}</li>
+            </ol>
+            <pre v-if="s.commands.length" class="prod-cmd" dir="ltr">{{ s.commands.join('\n') }}</pre>
+          </article>
+        </div>
+      </div>
+
       <!-- REQUIREMENTS -->
       <div class="prod-section">
         <h3>{{ $t('System requirements') }}</h3>
@@ -489,6 +507,26 @@ const catalogue = computed<Array<{
     ],
     privacy: t('Pages, pictures and videos are checked on your own computer and never uploaded. Signed in, only the sites and areas you or the browser blocked are synced. VPN tabs keep nothing after you quit.'),
   },
+  {
+    id: 'vpn' as ProductId,
+    name: 'SelfStudy VPN',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('An encrypted VPN for networking and security students. No account and no sign-in: press Connect, choose a country or let it choose one for you, and websites see a new IP address while your traffic stays encrypted.'),
+    features: [
+      { title: t('Choose a country'), text: t('Pick from 41 countries, or Automatic, which chooses a fast country each time it starts and moves on if one does not answer. Switching takes a few seconds.') },
+      { title: t('A new IP address'), text: t('Change your address with one click, or automatically every 10 minutes to 2 hours, with a new country each time if you like.') },
+      { title: t('Encrypted three times'), text: t('Traffic goes through three Tor relays, each with its own layer of encryption: your network sees one encrypted connection, and no single relay knows both who you are and where you go.') },
+      { title: t('No leaks, kill switch'), text: t('Site names are looked up inside the tunnel, so there is no DNS leak, and if the tunnel drops your traffic is blocked instead of leaving unprotected. A built-in leak test checks it.') },
+      { title: t('Whole system or one terminal'), text: t('Route every program that uses the system proxy, or copy ready-made commands for curl, git, pip, npm and proxychains.') },
+      { title: t('See how it works'), text: t('A live view of your route - entry guard, middle relay and exit relay with their countries - for learning how onion routing works.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 300 MB of free disk space.'),
+      t('No account is needed to use it. Programs that ignore the system proxy, and UDP traffic such as games and some calls, are not routed.'),
+    ],
+    privacy: t('No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -535,6 +573,30 @@ const browserSteps = computed(() => [
     './SelfStudy-Browser-*-linux-x86_64.AppImage',
     '# or, on Debian / Ubuntu:',
     'sudo apt install ./SelfStudy-Browser-*-linux-amd64.deb',
+  ], steps: [
+    t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
+    t('Make the AppImage executable and run it, or install the .deb:'),
+  ] },
+]);
+
+// How to install SelfStudy VPN, per OS (artifactName in its package.json; not translated).
+const vpnSteps = computed(() => [
+  { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
+    t('Download the .exe installer (or the .msi) and run it.'),
+    t('If Windows says "Windows protected your PC", choose More info, then Run anyway.'),
+    t('Choose the install folder and finish. Open the app from the Start menu or the desktop icon.'),
+  ] },
+  { os: 'macos', format: '.dmg', commands: [] as string[], steps: [
+    t('Download the .dmg for your Mac: arm64 for Apple Silicon, x64 for Intel.'),
+    t('Open the .dmg file and drag the app into Applications.'),
+    t('The first time, right-click the app, choose Open, then Open again.'),
+    t('The first time you connect, macOS asks for your password so the app can set the system proxy.'),
+  ] },
+  { os: 'linux', format: 'AppImage / .deb', commands: [
+    'chmod +x SelfStudy-VPN-*-linux-x86_64.AppImage',
+    './SelfStudy-VPN-*-linux-x86_64.AppImage',
+    '# or, on Debian / Ubuntu:',
+    'sudo apt install ./SelfStudy-VPN-*-linux-amd64.deb',
   ], steps: [
     t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
     t('Make the AppImage executable and run it, or install the .deb:'),

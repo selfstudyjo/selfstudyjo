@@ -555,6 +555,24 @@ const tools: Catalogue = {
     "needs {v0} memory": "需要 {v0} 内存",
     "Download the desktop app": "下载桌面应用",
     "All SelfStudy apps": "所有 SelfStudy 应用",
+    // SelfStudy VPN (Products page)
+    "An encrypted VPN for networking and security students. No account and no sign-in: press Connect, choose a country or let it choose one for you, and websites see a new IP address while your traffic stays encrypted.": "为网络与安全专业学生打造的加密 VPN。无需账号，无需登录：点击连接，选择一个国家或让它替你选择，网站看到的是新的 IP 地址，而你的流量始终加密。",
+    "Choose a country": "选择国家",
+    "Pick from 41 countries, or Automatic, which chooses a fast country each time it starts and moves on if one does not answer. Switching takes a few seconds.": "从 41 个国家中选择，或使用自动模式：每次启动时选择一个快速的国家，若无响应则换到下一个。切换只需几秒钟。",
+    "A new IP address": "新的 IP 地址",
+    "Change your address with one click, or automatically every 10 minutes to 2 hours, with a new country each time if you like.": "一键更换地址，或每 10 分钟到 2 小时自动更换，也可以每次同时更换国家。",
+    "Encrypted three times": "三重加密",
+    "Traffic goes through three Tor relays, each with its own layer of encryption: your network sees one encrypted connection, and no single relay knows both who you are and where you go.": "流量经过三个 Tor 中继，每个都有自己的一层加密：你的网络只看到一条加密连接，没有任何一个中继同时知道你是谁和你去哪里。",
+    "No leaks, kill switch": "无泄漏，断网保护",
+    "Site names are looked up inside the tunnel, so there is no DNS leak, and if the tunnel drops your traffic is blocked instead of leaving unprotected. A built-in leak test checks it.": "网站域名在隧道内解析，因此没有 DNS 泄漏；隧道断开时流量会被阻止，而不是在无保护状态下发出。内置的泄漏测试可以检查这一点。",
+    "Whole system or one terminal": "整个系统或单个终端",
+    "Route every program that uses the system proxy, or copy ready-made commands for curl, git, pip, npm and proxychains.": "让所有使用系统代理的程序走隧道，或复制现成的 curl、git、pip、npm 和 proxychains 命令。",
+    "See how it works": "看看它如何工作",
+    "A live view of your route - entry guard, middle relay and exit relay with their countries - for learning how onion routing works.": "实时显示你的线路：入口守卫、中间中继和出口中继及其所在国家，帮助你学习洋葱路由的原理。",
+    "4 GB of memory and about 300 MB of free disk space.": "4 GB 内存和约 300 MB 可用磁盘空间。",
+    "No account is needed to use it. Programs that ignore the system proxy, and UDP traffic such as games and some calls, are not routed.": "使用时无需账号。忽略系统代理的程序，以及游戏和部分通话等 UDP 流量，不会经过隧道。",
+    "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "无账号、无日志、无遥测：设置只保存在你的电脑上。它使用 Tor 网络，与 Tor 项目无关联。请只在你被允许使用的网络上使用。",
+    "The first time you connect, macOS asks for your password so the app can set the system proxy.": "第一次连接时，macOS 会要求输入密码，以便应用设置系统代理。",
 };
 
 export default tools;

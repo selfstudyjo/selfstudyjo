@@ -582,6 +582,24 @@ const tools: Catalogue = {
     "needs {v0} memory": "يحتاج ذاكرة {v0}",
     "Download the desktop app": "نزّل تطبيق سطح المكتب",
     "All SelfStudy apps": "كل تطبيقات SelfStudy",
+    // SelfStudy VPN (Products page)
+    "An encrypted VPN for networking and security students. No account and no sign-in: press Connect, choose a country or let it choose one for you, and websites see a new IP address while your traffic stays encrypted.": "شبكة VPN مشفّرة لطلاب الشبكات والأمن. بلا حساب ولا تسجيل دخول: اضغط اتصال، واختر دولة أو دعه يختار لك، فترى المواقع عنوان IP جديداً بينما تبقى بياناتك مشفّرة.",
+    "Choose a country": "اختر دولة",
+    "Pick from 41 countries, or Automatic, which chooses a fast country each time it starts and moves on if one does not answer. Switching takes a few seconds.": "اختر من 41 دولة، أو الوضع التلقائي الذي يختار دولة سريعة عند كل تشغيل وينتقل إلى غيرها إن لم تستجب. التبديل يستغرق ثوانيَ معدودة.",
+    "A new IP address": "عنوان IP جديد",
+    "Change your address with one click, or automatically every 10 minutes to 2 hours, with a new country each time if you like.": "غيّر عنوانك بنقرة واحدة، أو تلقائياً كل 10 دقائق إلى ساعتين، مع دولة جديدة في كل مرة إن أردت.",
+    "Encrypted three times": "تشفير ثلاثي",
+    "Traffic goes through three Tor relays, each with its own layer of encryption: your network sees one encrypted connection, and no single relay knows both who you are and where you go.": "تمرّ بياناتك عبر ثلاث محطات من شبكة Tor، لكل منها طبقة تشفير خاصة: لا ترى شبكتك إلا اتصالاً مشفّراً واحداً، ولا تعرف أي محطة وحدها من أنت وإلى أين تذهب معاً.",
+    "No leaks, kill switch": "بلا تسريب، ومفتاح إيقاف",
+    "Site names are looked up inside the tunnel, so there is no DNS leak, and if the tunnel drops your traffic is blocked instead of leaving unprotected. A built-in leak test checks it.": "تُحلّ أسماء المواقع داخل النفق فلا يحدث تسريب DNS، وإذا انقطع النفق تُحجب بياناتك بدل أن تخرج بلا حماية. واختبار التسريب المدمج يتحقق من ذلك.",
+    "Whole system or one terminal": "النظام كله أو طرفية واحدة",
+    "Route every program that uses the system proxy, or copy ready-made commands for curl, git, pip, npm and proxychains.": "وجّه كل برنامج يستخدم وكيل النظام، أو انسخ أوامر جاهزة لـ curl وgit وpip وnpm وproxychains.",
+    "See how it works": "شاهد كيف يعمل",
+    "A live view of your route - entry guard, middle relay and exit relay with their countries - for learning how onion routing works.": "عرض حيّ لمسارك - محطة الدخول والمحطة الوسطى ومحطة الخروج مع دولها - لتتعلم كيف يعمل التوجيه البصلي.",
+    "4 GB of memory and about 300 MB of free disk space.": "ذاكرة 4 غيغابايت ونحو 300 ميغابايت من المساحة الحرة.",
+    "No account is needed to use it. Programs that ignore the system proxy, and UDP traffic such as games and some calls, are not routed.": "لا حاجة إلى حساب لاستخدامه. البرامج التي تتجاهل وكيل النظام، وحركة UDP مثل الألعاب وبعض المكالمات، لا تمرّ عبره.",
+    "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "بلا حساب ولا سجلات ولا قياس عن بُعد: تُحفظ الإعدادات على حاسوبك فقط. يستخدم شبكة Tor ولا يتبع مشروع Tor. استخدمه فقط على الشبكات المسموح لك باستخدامها.",
+    "The first time you connect, macOS asks for your password so the app can set the system proxy.": "عند الاتصال أول مرة، يطلب macOS كلمة المرور ليتمكن التطبيق من ضبط وكيل النظام.",
 };
 
 export default tools;
