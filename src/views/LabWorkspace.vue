@@ -1468,18 +1468,30 @@ async function reset() {
   if (!lab.value) return;
   busy.value = true;
   try {
-    const ok = await labsService.resetLab(username.value, lab.value.id, false, userId.value);
-    if (!ok) {
+    const result = await labsService.resetLab(username.value, lab.value.id, false, userId.value);
+    if (!result) {
       note.value = t('The lab could not be reset. Nothing was changed - please try again.');
       return;
     }
+    // Applied from the reset answer itself -- never merged with what was on
+    // screen, which is exactly the old ticks this button exists to clear.
     selfMarked.value = [];
     report.value = null;
-    grade.value = emptyGrade();
+    grade.value = result.grade && Array.isArray(result.grade.tasks) ? result.grade : emptyGrade();
+    if (result.views && Object.keys(result.views).length) views.value = result.views as any;
     // Recorded as neutral: starting again costs nothing, and a student who
     // believed otherwise would keep working in a broken environment.
     if (!playground.value) sitting.note('lab.reset');
+    // Re-open for the tools and the fresh files. If that request fails the
+    // reset still happened and the screen already says so - keep the lab up
+    // rather than swapping it for an error page.
+    const kept = lab.value;
     await open();
+    if (error.value && kept) {
+      error.value = '';
+      lab.value = kept;
+      sourceEpoch.value += 1;
+    }
     if (!error.value) note.value = playground.value
       ? t('The environment was reset.')
       : t('The lab was reset: the environment is new and every task is marked as not done.');

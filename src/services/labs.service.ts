@@ -378,21 +378,35 @@ class LabsService {
     /**
      * Reset environment: a new environment AND every task in the lab back to
      * not done (app 11 starts a new progress epoch). `userId` finds the
-     * progress record; without it app 11 falls back to the username.
+     * progress record. Answers with the FRESH grade, progress and views, so the
+     * page shows every task to-do without depending on a second request.
+     *
+     * Tried on every replica in turn, like `openLab`: the home replica goes
+     * first and a peer forwards to it, so a cold home does not leave the student
+     * with a button that silently did nothing. Repeating a reset is harmless -
+     * a second reset is the same fresh start. Null when no replica answered.
      */
-    async resetLab(username: string, labId: string,
-                   resetDatasets = false, userId = ''): Promise<boolean> {
-        const replica = await this.replicaFor(username);
-        if (!replica) return false;
-        try {
-            await apiService.post(
-                replica,
-                `/api/labs/${encodeURIComponent(labId)}/reset/${encodeURIComponent(username)}/`,
-                { reset_datasets: resetDatasets, user_id: userId });
-            return true;
-        } catch {
-            return false;
+    async resetLab(username: string, labId: string, resetDatasets = false, userId = ''): Promise<{
+        ok: boolean; progress_reset?: boolean; grade?: LabGrade | null;
+        progress?: { tasks_done?: string[] } | null; views?: Record<string, unknown>;
+    } | null> {
+        const replicas = await serviceRegistry.getLabReplicas();
+        const pinned = this.homes.get(username);
+        const ordered = pinned
+            ? [pinned, ...replicas.map(r => this.ensureHttps(r)).filter(r => r !== pinned)]
+            : replicas.map(r => this.ensureHttps(r));
+        for (const replica of ordered) {
+            try {
+                const result = await apiService.post<any>(
+                    replica,
+                    `/api/labs/${encodeURIComponent(labId)}/reset/${encodeURIComponent(username)}/`,
+                    { reset_datasets: resetDatasets, user_id: userId });
+                if (result?.ok) return result;
+            } catch (error: any) {
+                if (error?.status && error.status >= 400 && error.status < 500) break;
+            }
         }
+        return null;
     }
 
     /** What the AI tutor is told. Text, not a state document — see the backend. */
