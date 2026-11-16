@@ -1,0 +1,1 @@
+import{Nr as e}from"./index-DRTS1lAr.js";export{e as serviceRegistry};
