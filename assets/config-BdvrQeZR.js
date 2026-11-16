@@ -1,0 +1,1 @@
+import{Nr as e}from"./index-Myop119H.js";export{e as serviceRegistry};
