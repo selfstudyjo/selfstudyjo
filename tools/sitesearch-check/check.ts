@@ -38,9 +38,9 @@ const read = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
 const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/[^\n]*/g, '$1')
     .replace(/<!--[\s\S]*?-->/g, '');
 
-const NONE: Access = { auth: false, ai: false, lab: false, runbook: false, research: false, toastmasters: false, exam: false, proctor: false };
+const NONE: Access = { auth: false, ai: false, lab: false, runbook: false, research: false, toastmasters: false, exam: false, proctor: false, paidAi: false };
 const SIGNED: Access = { ...NONE, auth: true };
-const ALL: Access = { auth: true, ai: true, lab: true, runbook: true, research: true, toastmasters: true, exam: true, proctor: true };
+const ALL: Access = { auth: true, ai: true, lab: true, runbook: true, research: true, toastmasters: true, exam: true, proctor: true, paidAi: true };
 const id = (s: string) => s;
 
 /* ------------------------------------------------------------------ */

@@ -82,6 +82,8 @@ export interface Access {
     toastmasters: boolean;
     exam: boolean;
     proctor: boolean;
+    /** A PAID plan with ai_feature. The free 7-day trial has ai_feature and is not this. */
+    paidAi: boolean;
 }
 
 /**
@@ -413,7 +415,7 @@ const JOB_INTERVIEW: NavEntry = { to: '/job-interview', text: 'Job Interview', i
   assets of PRIVATE repos and app 27 signs a download link only for an AI
   subscriber. Replaces the public /interview-helper page, which redirects here.
 */
-const PRODUCTS: NavEntry = { to: '/products', text: 'SelfStudy Products', icon: 'layers', keywords: 'desktop apps download install windows mac macos linux selfstudycode coding agent cli interview helper video editor installer local ai offline selfstudy lm highlights', requires: 'ai' };
+const PRODUCTS: NavEntry = { to: '/products', text: 'SelfStudy Products', icon: 'layers', keywords: 'desktop apps download install windows mac macos linux selfstudycode coding agent cli interview helper video editor installer local ai offline selfstudy lm highlights vpn', requires: 'paidAi' };
 const CV_BUILDER: NavEntry = { to: '/cv-builder', text: 'CV Builder', icon: 'cvBuilder', keywords: 'resume curriculum vitae pdf docx export photo voice', requires: 'ai' };
 const ROBLOX: NavEntry = { to: '/roblox-tool', text: 'Roblox Studio', icon: 'roblox', keywords: 'game lua scripting studio animation', requires: 'ai' };
 

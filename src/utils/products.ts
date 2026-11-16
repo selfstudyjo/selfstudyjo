@@ -31,6 +31,33 @@
  *     against selfstudy-lm/suite.json rather than typed in and left to drift.
  */
 
+/**
+ * The desktop products are for PAID plans only. The free 7-day trial carries
+ * ai_feature (so AI Chat works on the website) but not the desktop apps: a free
+ * account may neither see the Products page nor download an installer. App 27
+ * enforces the same rule server-side (interviewhelper.check_paid_access); this is
+ * what hides the page and the links.
+ *
+ * Paid = the PLAN's price is above zero. App 22 renders money as a string, and
+ * "0.00" is truthy, so the value is parsed. The trial's id is a second signal, and
+ * a plan whose price cannot be read is not paid (fail closed).
+ */
+export const FREE_PLAN_PREFIX = 'sfs-free-trial';
+
+export function isPaidSubscription(sub: unknown): boolean {
+    const plan = (sub && typeof sub === 'object' ? (sub as any).subscription_type : null) || {};
+    const ext = String(plan.external_id ?? '').trim().toLowerCase();
+    if (ext.startsWith(FREE_PLAN_PREFIX)) return false;
+    const price = Number.parseFloat(String(plan.price ?? '').trim());
+    return Number.isFinite(price) && price > 0;
+}
+
+/** True when any usable subscription is paid AND includes ai_feature. */
+export function hasPaidAiPlan(subs: unknown[]): boolean {
+    return (subs || []).some((s: any) => isPaidSubscription(s)
+        && ((s?.subscription_type?.features || []) as any[]).some((f) => (f?.name ?? f) === 'ai_feature'));
+}
+
 export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser', 'vpn'] as const;
 export type ProductId = typeof PRODUCT_IDS[number];
 

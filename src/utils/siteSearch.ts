@@ -551,7 +551,7 @@ export type Translate = (text: string) => string;
 
 const FULL_ACCESS: Access = {
     auth: true, ai: true, lab: true, runbook: true, research: true,
-    toastmasters: true, exam: true, proctor: true,
+    toastmasters: true, exam: true, proctor: true, paidAi: true,
 };
 
 /**

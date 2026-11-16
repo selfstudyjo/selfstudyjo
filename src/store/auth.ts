@@ -1,3 +1,4 @@
+import { hasPaidAiPlan } from '@/utils/products';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '@/services/auth.service';
@@ -677,6 +678,8 @@ export const useAuthStore = defineStore('auth', () => {
     const hasLabFeature = computed(() => userFeatures.value.includes('lab_feature'));
 
     const hasAiAccess = computed(() => userFeatures.value.includes('ai_feature'));
+    /** A PAID plan with ai_feature: the desktop products (the free trial is not enough). */
+    const hasPaidAiAccess = computed(() => hasPaidAiPlan(activeSubscriptions.value));
     const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
     const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
     const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
@@ -720,6 +723,7 @@ export const useAuthStore = defineStore('auth', () => {
         hasLabAccess,
         hasLabFeature,
         hasAiAccess,
+        hasPaidAiAccess,
         hasRunbookAccess,
         hasExamFeature,
         hasResearchFlowAccess,

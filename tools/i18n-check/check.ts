@@ -559,7 +559,7 @@ section('7. The sidebar is never half-translated');
  */
 const ALL_ACCESS: Access = {
     auth: true, ai: true, lab: true, runbook: true,
-    research: true, toastmasters: true, exam: true, proctor: true,
+    research: true, toastmasters: true, exam: true, proctor: true, paidAi: true,
 };
 
 const navStrings = new Set<string>();

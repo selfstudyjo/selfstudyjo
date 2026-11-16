@@ -573,6 +573,7 @@ const tools: Catalogue = {
     "No account is needed to use it. Programs that ignore the system proxy, and UDP traffic such as games and some calls, are not routed.": "使用时无需账号。忽略系统代理的程序，以及游戏和部分通话等 UDP 流量，不会经过隧道。",
     "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "无账号、无日志、无遥测：设置只保存在你的电脑上。它使用 Tor 网络，与 Tor 项目无关联。请只在你被允许使用的网络上使用。",
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "第一次连接时，macOS 会要求输入密码，以便应用设置系统代理。",
+    "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "SelfStudy 桌面应用随包含 AI 功能的付费方案提供，不包含在免费试用中。",
 };
 
 export default tools;

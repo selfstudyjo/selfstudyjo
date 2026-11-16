@@ -553,6 +553,7 @@ const access = computed<Access>(() => ({
   toastmasters: authStore.hasToastmastersAccess,
   exam: authStore.hasExamFeature,
   proctor: authStore.isProctor,
+  paidAi: authStore.hasPaidAiAccess,
 }));
 
 const currentPath = computed(() => route.path);

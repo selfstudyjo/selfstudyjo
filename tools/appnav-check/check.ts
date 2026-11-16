@@ -37,11 +37,11 @@ function check(label: string, ok: boolean, detail: any = '') {
 
 const FULL: Access = {
     auth: true, ai: true, lab: true, runbook: true,
-    research: true, toastmasters: true, exam: true, proctor: true,
+    research: true, toastmasters: true, exam: true, proctor: true, paidAi: true,
 };
 const SIGNED_OUT: Access = {
     auth: false, ai: false, lab: false, runbook: false,
-    research: false, toastmasters: false, exam: false, proctor: false,
+    research: false, toastmasters: false, exam: false, proctor: false, paidAi: false,
 };
 const BASIC: Access = { ...SIGNED_OUT, auth: true };
 
@@ -335,7 +335,10 @@ console.log('\n6b. SelfStudy Products is for AI subscribers, and replaces /inter
           !!products && resolveSection('/products', FULL)?.id === 'products');
     const entry = flatten(globalGroups(FULL)).find(i => i.to === '/products');
     check('products is in the platform menu for an AI subscriber', !!entry);
-    check('and requires the ai feature', entry?.requires === 'ai', entry?.requires);
+    check('and requires a PAID AI plan', entry?.requires === 'paidAi', entry?.requires);
+    const TRIAL: Access = { ...BASIC, ai: true, paidAi: false };
+    check('a free-trial account (ai_feature, unpaid) does not see Products',
+          !flatten(globalGroups(TRIAL)).some(i => i.to === '/products'));
     check('a signed-out visitor does not see it',
           !flatten(globalGroups(SIGNED_OUT)).some(i => i.to === '/products'));
     check('a user without AI does not see it',

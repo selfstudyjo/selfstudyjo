@@ -11,7 +11,7 @@ import path from 'node:path';
 import {
     CLI_INSTALL_MENU, CLI_ROUTES, CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, assetDetail, cliInstallCommands, cliRouteOf,
     cliRoutesFor, detectOs, formatSize, gbFigures, groupByOs, isProductId, pickAssets, releaseDate,
-    tabFromQuery,
+    tabFromQuery, isPaidSubscription, hasPaidAiPlan,
 } from '@/utils/products';
 import type { DownloadAsset, OsId } from '@/utils/products';
 
@@ -367,6 +367,29 @@ console.log('9. Every product shows its own app icon');
     check('no two products share an icon', new Set(bytes).size === bytes.length);
     check('the tabs and the hero draw the icon file, not an emoji',
         (vue9.match(/:src="iconSrc\(p\.id\)"/g) || []).length === 2 && !/^\s+icon: '/m.test(vue9));
+}
+
+console.log('10. The desktop products are for PAID plans, never the free trial');
+{
+    const plan = (external_id: string, price: unknown, feats = ['ai_feature']) =>
+        ({ subscription_type: { external_id, price, features: feats.map((name) => ({ name })) } });
+    const trial = plan('sfs-free-trial-7', '0.00');
+    check('the free trial is not paid', !isPaidSubscription(trial));
+    check('"0.00" (a truthy string) is not paid', !isPaidSubscription(plan('x', '0.00')));
+    check('a trial id is never paid, whatever its price', !isPaidSubscription(plan('sfs-free-trial-7', '9')));
+    check('an unreadable price is not paid (fail closed)', !isPaidSubscription(plan('x', undefined)) && !isPaidSubscription(null));
+    check('a priced plan is paid', isPaidSubscription(plan('p', '19.90')));
+    check('trial only -> no products', !hasPaidAiPlan([trial]));
+    check('paid AI plan beside a trial -> products', hasPaidAiPlan([trial, plan('p', '19.90')]));
+    check('paid plan without ai_feature -> no products', !hasPaidAiPlan([plan('p', '19.90', ['lab_feature'])]));
+    const router = fs.readFileSync(path.resolve(process.cwd(), 'src', 'router', 'index.ts'), 'utf8');
+    check('the /products route is paidPlanOnly', /path: 'products',[\s\S]{0,300}paidPlanOnly: true/.test(router));
+    const guard = fs.readFileSync(path.resolve(process.cwd(), 'src', 'router', 'subscription-guard.ts'), 'utf8');
+    check('the guard enforces paidPlanOnly with hasPaidAiPlan', /paidPlanOnly === true[\s\S]{0,200}hasPaidAiPlan\(/.test(guard));
+    const nav = fs.readFileSync(path.resolve(process.cwd(), 'src', 'navigation', 'appNav.ts'), 'utf8');
+    check("the sidebar entry needs 'paidAi'", /to: '\/products'[^\n]*requires: 'paidAi'/.test(nav));
+    const chat = fs.readFileSync(path.resolve(process.cwd(), 'src', 'views', 'AiChat.vue'), 'utf8');
+    check('AI Chat offers the download links only on a paid plan', /v-if="auth\.hasPaidAiAccess" class="local-ai-actions"/.test(chat));
 }
 
 console.log(`${passed} passed, ${failed} failed`);

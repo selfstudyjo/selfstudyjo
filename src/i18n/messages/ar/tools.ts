@@ -600,6 +600,7 @@ const tools: Catalogue = {
     "No account is needed to use it. Programs that ignore the system proxy, and UDP traffic such as games and some calls, are not routed.": "لا حاجة إلى حساب لاستخدامه. البرامج التي تتجاهل وكيل النظام، وحركة UDP مثل الألعاب وبعض المكالمات، لا تمرّ عبره.",
     "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "بلا حساب ولا سجلات ولا قياس عن بُعد: تُحفظ الإعدادات على حاسوبك فقط. يستخدم شبكة Tor ولا يتبع مشروع Tor. استخدمه فقط على الشبكات المسموح لك باستخدامها.",
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "عند الاتصال أول مرة، يطلب macOS كلمة المرور ليتمكن التطبيق من ضبط وكيل النظام.",
+    "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "تأتي تطبيقات SelfStudy لسطح المكتب مع خطة مدفوعة تشمل ميزات الذكاء الاصطناعي، وليست ضمن التجربة المجانية.",
 };
 
 export default tools;

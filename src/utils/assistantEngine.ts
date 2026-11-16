@@ -154,7 +154,7 @@ export function destinations(): Destination[] {
     // The platform menu, which carries entries no section lists as its own.
     const everything: Access = {
         auth: true, ai: true, lab: true, runbook: true,
-        research: true, toastmasters: true, exam: true, proctor: true,
+        research: true, toastmasters: true, exam: true, proctor: true, paidAi: true,
     };
     for (const group of globalGroups(everything)) {
         for (const entry of group.items) {
@@ -227,7 +227,7 @@ export interface ActionContext {
 
 export const NO_ACCESS: Access = {
     auth: false, ai: false, lab: false, runbook: false,
-    research: false, toastmasters: false, exam: false, proctor: false,
+    research: false, toastmasters: false, exam: false, proctor: false, paidAi: false,
 };
 
 export const EMPTY_CONTEXT: ActionContext = {

@@ -1,6 +1,7 @@
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { subscriptionService } from '@/services/subscription.service';
+import { hasPaidAiPlan } from '@/utils/products';
 
 export async function subscriptionGuard(
     to: RouteLocationNormalized,
@@ -61,6 +62,21 @@ export async function subscriptionGuard(
         sessionStorage.setItem('subscriptionRedirect', JSON.stringify(redirectData));
         next('/plans');
         return;
+    }
+
+    // A PAID plan only (the desktop products): the free 7-day trial carries
+    // ai_feature but must not reach this page.
+    if (to.meta.paidPlanOnly === true) {
+        const subs = await authStore.loadActiveSubscriptions();
+        if (!hasPaidAiPlan(subs)) {
+            sessionStorage.setItem('subscriptionRedirect', JSON.stringify({
+                requiredFeatures: requiredFeatures,
+                paidPlanOnly: true,
+                from: to.path,
+            }));
+            next('/plans');
+            return;
+        }
     }
 
     next();

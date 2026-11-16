@@ -129,10 +129,11 @@
             <em v-if="m.recommended">{{ $t('Recommended') }}</em>
           </li>
         </ul>
-        <p class="local-ai-actions">
+        <p v-if="auth.hasPaidAiAccess" class="local-ai-actions">
           <router-link class="context-btn on" to="/products?tab=selfstudycode">{{ $t('Download the desktop app') }}</router-link>
           <router-link class="context-btn" to="/products">{{ $t('All SelfStudy apps') }}</router-link>
         </p>
+        <p v-else class="context-line">{{ $t('The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.') }} <router-link to="/plans">{{ $t('See plans') }}</router-link></p>
       </div>
 
       <div v-if="contextOpen && activeRoom" class="context-panel">

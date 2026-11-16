@@ -550,6 +550,7 @@ async function ensureContext() {
             toastmasters: authStore.hasToastmastersAccess,
             exam: authStore.hasExamFeature,
             proctor: authStore.isProctor,
+  paidAi: authStore.hasPaidAiAccess,
         },
         courses, labs, runbooks,
         // Lessons are not preloaded: 270 of them is a catalogue nobody is

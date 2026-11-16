@@ -324,7 +324,7 @@ const routes = [
                 path: 'products',
                 name: 'Products',
                 component: () => import('../views/Products.vue'),
-                meta: { title: 'SelfStudy Products', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'] }
+                meta: { title: 'SelfStudy Products', requiresAuth: true, requiresSubscription: true, requiredFeatures: ['ai_feature'], paidPlanOnly: true }
             },
             // The old standalone Interview Helper page, kept as a redirect so
             // every link already sent on still lands on the right tab.

@@ -100,7 +100,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 
 const ALL: Access = {
     auth: true, ai: true, lab: true, runbook: true,
-    research: true, toastmasters: true, exam: true, proctor: true,
+    research: true, toastmasters: true, exam: true, proctor: true, paidAi: true,
 };
 
 /**
