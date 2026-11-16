@@ -211,6 +211,7 @@ const labs: Catalogue = {
     'Ask': 'اسأل',
     'Ask the tutor': 'اسأل المدرّب',
     'Copy the command: {v0}': 'انسخ الأمر: {v0}',
+    'Copy the code block': 'انسخ كتلة الشيفرة',
     'Submit answer': 'أرسل الإجابة',
     'Ask a question about this lab': 'اطرح سؤالاً عن هذا المعمل',
     'Ask about this lab. Try: why does the container name not resolve?':

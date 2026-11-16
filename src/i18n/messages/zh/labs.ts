@@ -203,6 +203,7 @@ const labs: Catalogue = {
     'Ask': '提问',
     'Ask the tutor': '向导师提问',
     'Copy the command: {v0}': '复制命令：{v0}',
+    'Copy the code block': '复制代码块',
     'Submit answer': '提交答案',
     'Ask a question about this lab': '就本实验提一个问题',
     'Ask about this lab. Try: why does the container name not resolve?':

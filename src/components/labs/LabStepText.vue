@@ -1,14 +1,28 @@
 <template>
   <!--
-    ONE WRITTEN STEP of a lab task: the prose, every command in it as code with
-    its own Copy button, and WHY it is run (the step's own explanation, or one
-    derived from the command / the tool by labSteps.ts). Nothing reaches
-    v-html: a step is text that arrived over the network.
+    ONE WRITTEN STEP of a lab task: the prose, every command in it in its own
+    code block with its own Copy button (nothing but the command is copied),
+    a fenced multi-line block (file content) copied whole, and WHY it is run
+    (the step's own explanation, or one derived from the command / the tool by
+    labSteps.ts). Nothing reaches v-html: a step is text that arrived over the
+    network.
   -->
   <span class="sl-step">
     <span class="sl-step__line">
       <template v-for="(part, at) in parsed.parts" :key="at">
         <span v-if="part.kind === 'text'">{{ part.text }}</span>
+        <span v-else-if="part.kind === 'block'" class="sl-step__block" dir="ltr">
+          <span class="sl-step__blockhead">
+            <span class="sl-step__lang">{{ part.lang || $t('Code') }}</span>
+            <button type="button" class="sl-step__copy" :title="$t('Copy')"
+                    :aria-label="$t('Copy the code block')"
+                    @click.stop="copy(part.text)">
+              <Check v-if="copied === part.text" class="sl-i" aria-hidden="true" />
+              <Copy v-else class="sl-i" aria-hidden="true" />
+            </button>
+          </span>
+          <code>{{ part.text }}</code>
+        </span>
         <span v-else class="sl-step__cmd" dir="ltr">
           <code>{{ part.text }}</code>
           <button type="button" class="sl-step__copy" :title="$t('Copy')"

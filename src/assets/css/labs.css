@@ -3955,13 +3955,18 @@ html.sfs-fs-lock body { overflow: hidden; }
    --------------------------------------------------------------------------- */
 .sl-step { display: inline; }
 .sl-step__line { overflow-wrap: anywhere; }
+/* Each command is its own code block on its own line, so what the Copy
+   button copies is visibly the whole box and nothing of the sentence. */
 .sl-step__cmd {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.35rem;
+    width: fit-content;
+    min-width: min(100%, 12rem);
     max-width: 100%;
-    margin: 0.1rem 0.15rem;
-    padding: 0.1rem 0.15rem 0.1rem 0.45rem;
+    margin: 0.3rem 0;
+    padding: 0.3rem 0.25rem 0.3rem 0.6rem;
     border-radius: 6px;
     vertical-align: middle;
     background: var(--sl-code-bg, #0f172a);
@@ -3978,6 +3983,39 @@ html.sfs-fs-lock body { overflow: hidden; }
     font: inherit;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+/* A fenced multi-line block: file content to type or paste into a file. */
+.sl-step__block {
+    display: block;
+    max-width: 100%;
+    margin: 0.35rem 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--sl-code-bg, #0f172a);
+    color: var(--sl-code-ink, #e2e8f0);
+    font-family: var(--sfs-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.8rem;
+    unicode-bidi: isolate;
+}
+.sl-step__blockhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.15rem 0.25rem 0.15rem 0.6rem;
+    background: rgb(255 255 255 / 0.06);
+    font-size: 0.72rem;
+    opacity: 0.85;
+}
+.sl-step__lang { text-transform: uppercase; letter-spacing: 0.04em; }
+.sl-step__block code {
+    display: block;
+    padding: 0.45rem 0.6rem 0.55rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    white-space: pre;
+    overflow-x: auto;
 }
 .sl-step__copy {
     display: inline-flex;

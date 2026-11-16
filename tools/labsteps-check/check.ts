@@ -76,7 +76,7 @@ if (!existsSync(dir)) {
                         }
                         for (const c of got.commands) {
                             check(`command is not empty (${name})`, c.trim().length > 0);
-                            check(`command does not end mid-word with a dash (${name}: ${c.slice(-30)})`, !/\s-$/.test(c));
+                            check(`command does not end mid-word with a dash (${name}: ${c.slice(-30)})`, !/\s-$/.test(c) || /\bs3 cp\s/.test(c)); // `aws s3 cp src -` prints to stdout
                         }
                     } else if (got.why) gui += 1;
                 }

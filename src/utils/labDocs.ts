@@ -399,7 +399,11 @@ export function fillCaptures(text: string, groups: Array<string | undefined>): s
 /** The texts a task's commands are read from, in reading order. */
 export function taskTexts(task: TaskLike): string[] {
     const texts: string[] = [];
-    for (const step of task.instructions?.steps || []) texts.push(step);
+    // Steps mark commands with backticks (and file content with ``` fences);
+    // the recipes match the bare command, so the marks are removed here.
+    for (const step of task.instructions?.steps || []) {
+        texts.push(step.replace(/```[\w+-]*[ \t]*\n[\s\S]*?```/g, ' ').replace(/`/g, ''));
+    }
     for (const code of task.guide?.commands || []) texts.push(code);
     if (task.detail) texts.push(task.detail);
     for (const code of task.guide?.hint_commands || []) texts.push(code);

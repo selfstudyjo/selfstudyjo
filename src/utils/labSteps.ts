@@ -13,7 +13,12 @@
  * written.
  */
 
-export interface StepPart { kind: 'text' | 'code'; text: string }
+/**
+ * `code` is one command (its own Copy button); `block` is a fenced multi-line
+ * block - file content such as an HCL resource or a Puppet manifest - that the
+ * step tells the student to type into a file, copied whole.
+ */
+export interface StepPart { kind: 'text' | 'code' | 'block'; text: string; lang?: string }
 export interface ParsedStep {
     parts: StepPart[];
     /** The commands in the step, in order - each one gets a Copy button. */
@@ -63,7 +68,38 @@ function looksLikeCommand(text: string): boolean {
 }
 
 /** Split one written step into prose and commands, and find (or make) its why. */
+// A fenced block inside a step: ```hcl\n...\n```
+const FENCE = /```([\w+-]*)[ \t]*\n([\s\S]*?)\n?```/g;
+
 export function parseStep(step: string): ParsedStep {
+    const whole = String(step || '');
+    FENCE.lastIndex = 0;
+    if (!FENCE.test(whole)) return parseLine(whole);
+    // Prose and commands around the fenced blocks are parsed as usual; each
+    // block is one part with one Copy button.
+    FENCE.lastIndex = 0;
+    const parts: StepPart[] = [];
+    const commands: string[] = [];
+    let why = '';
+    let last = 0;
+    let m: RegExpExecArray | null;
+    const addLine = (piece: string) => {
+        if (!piece.trim()) return;
+        const sub = parseLine(piece.trim());
+        parts.push(...sub.parts);
+        commands.push(...sub.commands);
+        if (!why && sub.commands.length) why = sub.why;
+    };
+    while ((m = FENCE.exec(whole))) {
+        addLine(whole.slice(last, m.index));
+        parts.push({ kind: 'block', text: m[2].replace(/\s+$/, ''), lang: m[1] || '' });
+        last = m.index + m[0].length;
+    }
+    addLine(whole.slice(last));
+    return { parts, commands, why };
+}
+
+function parseLine(step: string): ParsedStep {
     const text = String(step || '');
     const parts: StepPart[] = [];
     const commands: string[] = [];
@@ -76,7 +112,11 @@ export function parseStep(step: string): ParsedStep {
         while ((m = TICK.exec(text))) {
             if (m.index > last) parts.push({ kind: 'text', text: text.slice(last, m.index) });
             const inner = m[1].trim();
-            if (looksLikeCommand(inner) && !/^[\w./-]+\.\w{1,5}$/.test(inner)) {
+            // Backticks are an explicit mark: a multi-word line that starts like a
+            // program is a command even without a flag (`ops wait 25m`).
+            const marked = COMMAND_START.test(inner) && /\s/.test(inner)
+                && !STOP.has(inner.split(/\s+/)[0].toLowerCase());
+            if ((looksLikeCommand(inner) || marked) && !/^[\w./-]+\.\w{1,5}$/.test(inner)) {
                 parts.push({ kind: 'code', text: inner });
                 commands.push(inner);
             } else {
