@@ -4151,3 +4151,98 @@ html.sfs-fs-lock body { overflow: hidden; }
 /* The code, query and web tools draw the same CodeMirror editor as Files. */
 .sl-code__cm, .sl-query__cm { height: clamp(12rem, 34vh, 26rem); }
 .sl-web__cm { height: clamp(14rem, 40vh, 30rem); }
+
+/* ── progress: chips, track cards and the resume card ─────────────────────
+   --sl-pct is the percent, --sl-pc the solid hue (red -> orange -> yellow ->
+   green), --sl-pcs a translucent fill and --sl-pcw a faint wash. The fill sits
+   UNDER the label as a background layer, so the text keeps its own contrast. */
+.sl-chip.sl-chip--progress {
+    background-image: linear-gradient(90deg, var(--sl-pcs, transparent) 0 var(--sl-pct, 0%),
+                                      transparent var(--sl-pct, 0%));
+    border-color: var(--sl-pc, transparent);
+}
+.sl-chip.sl-chip--progress.is-active {
+    background-image: linear-gradient(90deg, var(--sl-pcs, transparent) 0 var(--sl-pct, 0%),
+                                      transparent var(--sl-pct, 0%)),
+                      linear-gradient(var(--sfs-accent, #667eea), var(--sfs-accent, #667eea));
+}
+.sl-track.sl-track--progress {
+    position: relative;
+    padding: clamp(0.9rem, 2vw, 1.4rem);
+    border-radius: var(--sl-radius, 14px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    box-shadow: 0 6px 24px rgb(var(--sfs-shade-rgb, 0 0 0) / 0.18);
+    background-image: linear-gradient(135deg, var(--sl-pcw, transparent), transparent 60%),
+                      linear-gradient(rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03), rgb(var(--sfs-tint-rgb, 255 255 255) / 0.03));
+    border-inline-start: 4px solid var(--sl-pc, transparent);
+}
+.sl-track__pct {
+    font-weight: 700;
+    color: var(--sl-pc, inherit);
+    filter: brightness(1.15);
+}
+.sl-track__bar, .sl-resume__bar {
+    height: 6px;
+    margin: 0.35rem 0 0.9rem;
+    border-radius: 999px;
+    background: rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+    overflow: hidden;
+}
+.sl-track__fill, .sl-resume__fill {
+    display: block;
+    height: 100%;
+    width: var(--sl-pct, 0%);
+    min-width: 4px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, hsl(0 82% 48%), var(--sl-pc, hsl(0 82% 48%)));
+    transition: width 0.6s ease;
+}
+
+.sl-resume {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin: 0 0 1.25rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: var(--sl-radius, 12px);
+    border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+    border-inline-start: 5px solid var(--sl-pc, var(--sfs-accent, #667eea));
+    background: linear-gradient(120deg, var(--sl-pcs, transparent), transparent 55%),
+                rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+}
+.sl-resume__body { flex: 1 1 18rem; min-width: 0; }
+.sl-resume__kicker {
+    display: flex; align-items: center; gap: 0.4rem; margin: 0;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--sfs-text-muted, #b7bdcc);
+}
+.sl-resume__title { margin: 0.25rem 0 0.15rem; font-size: 1.25rem; color: var(--sfs-text, #fff); }
+.sl-resume__track { margin: 0; color: var(--sfs-text-muted, #b7bdcc); font-size: 0.9rem; }
+.sl-resume__bar { margin-bottom: 0; }
+.sl-resume__side { display: flex; align-items: center; gap: 1rem; flex: none; }
+.sl-resume__ring {
+    --sl-ring: 0%;
+    position: relative;
+    width: 4.2rem; height: 4.2rem; border-radius: 50%;
+    display: grid; place-content: center; text-align: center; line-height: 1.05;
+    direction: ltr;
+}
+.sl-resume__ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(var(--sl-ringc, hsl(0 82% 48%)) var(--sl-ring), rgb(var(--sfs-line-rgb, 255 255 255) / 0.16) 0);
+    -webkit-mask: radial-gradient(closest-side, transparent 76%, black 78%);
+    mask: radial-gradient(closest-side, transparent 76%, black 78%);
+}
+.sl-resume__ring span { font-weight: 800; font-size: 1rem; color: var(--sfs-text, #fff); }
+.sl-resume__ring small { font-size: 0.65rem; color: var(--sfs-text-muted, #b7bdcc); }
+.sl-resume__go { white-space: nowrap; }
+
+/* Previous / next lab in the workspace header. */
+.sl-labnav { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.sl-labnav__pos { font-size: 0.8rem; color: var(--sfs-text-muted, #b7bdcc); padding: 0 0.3rem; }
+.sl-labnav .sl-btn { max-width: 22rem; }
+.sl-labnav__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

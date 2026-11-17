@@ -1459,6 +1459,19 @@ const labs: Catalogue = {
     'Your actions on the hosts': '你在主机上的操作',
     'p99 (ms)': 'p99（毫秒）',
     'systemd units': 'systemd 单元',
+    'Your next lab': '你的下一个实验',
+    'Every lab completed': '所有实验均已完成',
+    'Continue where you left off': '从上次离开的地方继续',
+    'Start here': '从这里开始',
+    '{v0} of {v1} labs completed': '已完成 {v0}/{v1} 个实验',
+    'Track progress': '方向进度',
+    'Great work - every track is finished.': '干得好——所有方向都已完成。',
+    'overall': '总体',
+    'Resume lab': '继续实验',
+    'Start lab': '开始实验',
+    'Browse labs': '浏览实验',
+    'Labs in this track': '本方向的实验',
+    'Lab {v0} of {v1}': '第 {v0} 个，共 {v1} 个',
 };
 
 export default labs;

@@ -80,6 +80,25 @@
           <div>
             <h1 class="sl-wshead__title">{{ $td(lab, 'title') }}</h1>
             <p class="sl-wshead__sub">{{ $td(lab, 'summary') }}</p>
+            <!-- The labs either side of this one, in the track's own order. -->
+            <nav v-if="neighbours.total > 1" class="sl-labnav" :aria-label="$t('Labs in this track')">
+              <router-link v-if="neighbours.previous" :to="`/lab/${neighbours.previous.id}`"
+                           class="sl-btn sl-btn--ghost sl-btn--sm"
+                           :title="$td(neighbours.previous, 'title')">
+                <ChevronLeft class="sl-i sl-flip" />
+                <span class="sl-labnav__name">{{ $t('Previous') }}: {{ $td(neighbours.previous, 'title') }}</span>
+              </router-link>
+              <span class="sl-labnav__pos">
+                {{ $t('Lab {v0} of {v1}', { v0: neighbours.index + 1, v1: neighbours.total }) }}
+              </span>
+              <router-link v-if="neighbours.next" :to="`/lab/${neighbours.next.id}`"
+                           class="sl-btn sl-btn--sm"
+                           :class="labDone ? 'sl-btn--primary' : 'sl-btn--ghost'"
+                           :title="$td(neighbours.next, 'title')">
+                <span class="sl-labnav__name">{{ $t('Next') }}: {{ $td(neighbours.next, 'title') }}</span>
+                <ChevronRight class="sl-i sl-flip" />
+              </router-link>
+            </nav>
           </div>
           <div class="sl-wshead__actions">
             <span class="sl-badge" :class="`sl-badge--${statusBadge}`">
@@ -617,6 +636,7 @@ import { useRoute } from 'vue-router';
 import {
   AlertTriangle, BookMarked, BookOpen, Crown, ExternalLink, FlaskConical, Gamepad2, ListChecks,
   Maximize2, Minimize2, MonitorSmartphone, PanelRightOpen, RotateCcw, RotateCw, X,
+  ChevronLeft, ChevronRight,
 } from 'lucide-vue-next';
 import { t, tdl, tdn } from '@/i18n/runtime';
 import { useAuthStore } from '@/store/auth';
@@ -627,7 +647,7 @@ import {
   STATUS_LABELS, canEmbed, defaultPane, gradeReport, keepVerified, portalTools,
   toolPanes, taskQuestion,
   type GradeReport, type Lab, type LabGrade, type LabTask, type LabTool,
-  type ToolPane,
+  type ToolPane, type LabSummary, labNeighbours,
 } from '@/utils/labCatalogue';
 import LabBrief from '@/components/labs/LabBrief.vue';
 import LabLessonModal from '@/components/labs/LabLessonModal.vue';
@@ -1505,8 +1525,16 @@ async function reset() {
   }
 }
 
+/* The track around this lab, for Previous / Next. A failed read just hides them. */
+const catalogueLabs = ref<LabSummary[]>([]);
+const neighbours = computed(() => labNeighbours(catalogueLabs.value, labId.value));
+const labDone = computed(() => statusBadge.value === 'good');
+async function loadNeighbours() {
+  try { catalogueLabs.value = (await labsService.getCatalogue()).labs; } catch { /* hidden */ }
+}
+
 onMounted(() => {
-  if (hasLabAccess.value) open();
+  if (hasLabAccess.value) { open(); if (!props.playground) loadNeighbours(); }
   else loading.value = false;
 });
 

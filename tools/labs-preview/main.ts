@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import { createPinia } from 'pinia';
 import LabWorkspace from '@/views/LabWorkspace.vue';
 import SelfDrivingStudio from '@/views/SelfDrivingStudio.vue';
+import LabsIndex from '@/views/Labs.vue';
 import AnimatedBackground from '@/components/AnimatedBackground.vue';
 import '@/assets/css/theme.css';
 import '@/assets/css/responsive.css';
@@ -80,6 +81,8 @@ const app = createApp({
                 // (`/simulator`) instead of a lab workspace.
                 params.get('view') === 'studio'
                     ? h(SelfDrivingStudio)
+                    // `?view=index` is the Labs catalogue page (`&progress=demo`).
+                    : params.get('view') === 'index' ? h(LabsIndex)
                     // `?play=1` mounts it in PLAYGROUND mode (no brief, no
                     // tasks, nothing graded) - the per-tool playgrounds' view.
                     : h(LabWorkspace, {

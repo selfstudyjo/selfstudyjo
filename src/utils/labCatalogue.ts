@@ -391,6 +391,109 @@ export function groupByTrack(
     return groups;
 }
 
+/* ─────────────────── progress, as a colour and a next step ─────────────────── */
+
+/**
+ * How far through a track the reader is, 0-100. A completed lab counts whole and
+ * a lab in progress counts by its score, so starting a track moves the bar - a
+ * bar that stays empty until a whole lab is finished reads as "nothing saved".
+ */
+export function trackPercent(labs: LabSummary[], progress: LabProgress[] = []): number {
+    if (!labs.length) return 0;
+    const byLab = new Map((progress || []).map(row => [row.lab_id, row]));
+    let done = 0;
+    for (const lab of labs) {
+        const row = byLab.get(lab.id);
+        if (!row) continue;
+        if (row.status === 'completed') done += 1;
+        else done += Math.max(0, Math.min(0.95, Number(row.score || 0) / 100));
+    }
+    return Math.round((100 * done) / labs.length);
+}
+
+/**
+ * The progress colour: red at 0, through orange and yellow, to green at 100.
+ * A hue, so callers choose the alpha - a translucent fill behind a label must
+ * never take the label's contrast away.
+ */
+export function progressHue(percent: number): number {
+    const p = Math.max(0, Math.min(100, Number(percent) || 0));
+    return Math.round((p / 100) * 135);
+}
+
+export function progressColor(percent: number, alpha = 1): string {
+    return `hsl(${progressHue(percent)} 82% 48% / ${alpha})`;
+}
+
+/** The labs either side of one, in the track's own order. */
+export function labNeighbours(labs: LabSummary[], labId: string):
+    { previous: LabSummary | null; next: LabSummary | null; index: number; total: number } {
+    const here = (labs || []).find(lab => lab.id === labId);
+    if (!here) return { previous: null, next: null, index: -1, total: 0 };
+    const inTrack = sortLabs(labs.filter(lab => lab.track === here.track));
+    const index = inTrack.findIndex(lab => lab.id === labId);
+    return { previous: inTrack[index - 1] || null, next: inTrack[index + 1] || null,
+             index, total: inTrack.length };
+}
+
+export interface ResumePoint {
+    lab: LabSummary;
+    track: LabTrack | null;
+    /** 'continue' a lab in progress, 'next' lab in the track just worked in, 'start' a first one. */
+    reason: 'continue' | 'next' | 'start';
+    percent: number;
+    done: number;
+    total: number;
+}
+
+/**
+ * Where the reader should go next. The lab they touched most recently if it is
+ * not finished; else the first unfinished lab of that track; else the first
+ * unfinished lab of the next track they have started; else the very first lab.
+ * Null only when every lab is completed (or there are none).
+ */
+export function resumePoint(tracks: LabTrack[], labs: LabSummary[],
+                            progress: LabProgress[] = []): ResumePoint | null {
+    const groups = groupByTrack(tracks, labs, progress);
+    if (!groups.length) return null;
+    const byLab = new Map((progress || []).map(row => [row.lab_id, row]));
+    const point = (lab: LabSummary, reason: ResumePoint['reason']): ResumePoint => {
+        const group = groups.find(g => g.track.id === lab.track) || null;
+        return { lab, reason, track: group?.track || null,
+                 percent: group ? trackPercent(group.labs, progress) : 0,
+                 done: group?.completed || 0, total: group?.labs.length || 0 };
+    };
+    const recent = [...(progress || [])]
+        .filter(row => labs.some(lab => lab.id === row.lab_id))
+        .sort((a, b) => String(b.last_active || '').localeCompare(String(a.last_active || '')));
+    const latest = recent[0];
+    if (latest && latest.status !== 'completed') {
+        return point(labs.find(lab => lab.id === latest.lab_id) as LabSummary, 'continue');
+    }
+    const unfinished = (group: TrackGroup) =>
+        group.labs.find(lab => byLab.get(lab.id)?.status !== 'completed');
+    const order: TrackGroup[] = [];
+    if (latest) {
+        const own = groups.find(g => g.track.id === latest.track
+            || g.labs.some(lab => lab.id === latest.lab_id));
+        if (own) order.push(own);
+    }
+    for (const row of recent) {
+        const g = groups.find(x => x.labs.some(lab => lab.id === row.lab_id));
+        if (g && !order.includes(g)) order.push(g);
+    }
+    for (const group of order) {
+        const lab = unfinished(group);
+        if (lab) return point(lab, 'next');
+    }
+    if (!latest) return point(groups[0].labs[0], 'start');
+    for (const group of groups) {
+        const lab = unfinished(group);
+        if (lab) return point(lab, 'next');
+    }
+    return null;
+}
+
 /**
  * Filter the catalogue by a free-text query.
  *

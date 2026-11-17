@@ -1471,6 +1471,19 @@ const labs: Catalogue = {
     'Your actions on the hosts': 'إجراءاتك على الخوادم',
     'p99 (ms)': 'p99 (مللي ث)',
     'systemd units': 'وحدات systemd',
+    'Your next lab': 'مختبرك التالي',
+    'Every lab completed': 'اكتملت جميع المختبرات',
+    'Continue where you left off': 'تابع من حيث توقفت',
+    'Start here': 'ابدأ من هنا',
+    '{v0} of {v1} labs completed': 'اكتمل {v0} من {v1} مختبرات',
+    'Track progress': 'تقدّم المسار',
+    'Great work - every track is finished.': 'عمل رائع - أنهيت جميع المسارات.',
+    'overall': 'الإجمالي',
+    'Resume lab': 'استئناف المختبر',
+    'Start lab': 'ابدأ المختبر',
+    'Browse labs': 'تصفح المختبرات',
+    'Labs in this track': 'مختبرات هذا المسار',
+    'Lab {v0} of {v1}': 'المختبر {v0} من {v1}',
 };
 
 export default labs;

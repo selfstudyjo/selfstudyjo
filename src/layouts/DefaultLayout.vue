@@ -22,7 +22,10 @@
         they are typing into.
       -->
       <TopBar v-if="!hideTopBar" />
-      <router-view />
+      <router-view v-slot="{ Component, route: current }">
+        <component :is="Component"
+                   :key="current.name === 'LabWorkspace' ? String(current.params.labId) : undefined" />
+      </router-view>
     </SideNav>
 
     <!--

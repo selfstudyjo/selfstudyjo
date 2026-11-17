@@ -91,6 +91,9 @@
          complete": this platform records none of the three, and a tile that
          invents one is a tile a learner will eventually catch out.
          ===================================================================== -->
+    <!-- The lab to open next, for a reader with the labs. Draws nothing otherwise. -->
+    <LabResume class="home-resume" />
+
     <section class="stats-row" :aria-label="$t('Your learning at a glance')">
       <div v-for="tile in tiles" :key="tile.id" class="stat-tile glass-effect">
         <span class="stat-tile__icon" :class="`is-${tile.id}`" aria-hidden="true">
@@ -730,6 +733,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, type Directive } from 'vue';
 import { useAuthStore } from '@/store/auth';
+import LabResume from '@/components/labs/LabResume.vue';
 import { courseService, type CourseRegistration, type Homework, type Course } from '@/services/course.service';
 import { certificateService, type ExamCertificate, type CourseCertificate } from '@/services/certificate.service';
 import { quizService, type UserQuizResult } from '@/services/quiz.service';

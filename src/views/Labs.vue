@@ -38,6 +38,8 @@
     <template v-else>
       <!-- Their own totals. `percent` is null, never 0, before anything has
            been started - see `summariseProgress`. -->
+      <LabResume v-if="!loading && !error" :tracks="tracks" :labs="labs" :progress="progress" />
+
       <section v-if="mine.started > 0" class="sl-mine">
         <div class="sl-mine__stat">
           <span class="sl-mine__value">{{ mine.completed }}</span>
@@ -85,14 +87,19 @@
             :class="{ 'is-active': !track }"
             @click="track = ''"
           >{{ $t('All tracks') }}</button>
+          <!-- Each chip is a progress bar: a translucent fill, red when the
+               track is untouched, through orange and yellow to green when every
+               lab in it is done. Translucent, so the title stays readable. -->
           <button
             v-for="group in groups"
             :key="group.track.id"
             type="button"
-            class="sl-chip"
+            class="sl-chip sl-chip--progress"
             :class="{ 'is-active': track === group.track.id }"
+            :style="progressStyle(group)"
+            :title="$t('{v0} of {v1} labs completed', { v0: group.completed, v1: group.labs.length })"
             @click="track = group.track.id"
-          >{{ $td(group.track, 'title') }}<span class="sl-chip__count">{{ group.labs.length }}</span></button>
+          >{{ $td(group.track, 'title') }}<span class="sl-chip__count">{{ group.completed }}/{{ group.labs.length }}</span></button>
         </div>
       </div>
 
@@ -111,7 +118,8 @@
       </div>
 
       <template v-else>
-        <section v-for="group in visible" :key="group.track.id" class="sl-track">
+        <section v-for="group in visible" :key="group.track.id" class="sl-track sl-track--progress"
+                 :style="progressStyle(group)">
           <header class="sl-track__head">
             <div>
               <h2 class="sl-track__title">{{ $td(group.track, 'title') }}</h2>
@@ -122,8 +130,13 @@
               <span v-if="group.completed">
                 {{ $t('{v0} completed', { v0: group.completed }) }}
               </span>
+              <span class="sl-track__pct">{{ percentOf(group) }}%</span>
             </div>
           </header>
+          <div class="sl-track__bar" role="progressbar" :aria-valuenow="percentOf(group)"
+               aria-valuemin="0" aria-valuemax="100" :aria-label="$t('Track progress')">
+            <span class="sl-track__fill" />
+          </div>
           <p v-if="group.track.blurb" class="sl-track__blurb">
             {{ $td(group.track, 'blurb') }}
           </p>
@@ -205,9 +218,12 @@ import {
 import { useAuthStore } from '@/store/auth';
 import { labsService } from '@/services/labs.service';
 import LabScoring from '@/components/practice/LabScoring.vue';
+import LabResume from '@/components/labs/LabResume.vue';
+import { useRoute } from 'vue-router';
 import {
   DIFFICULTY_LABELS, STATUS_LABELS, filterLabs, groupByTrack,
-  summariseProgress, type LabProgress, type LabSummary, type LabTrack,
+  summariseProgress, progressColor, trackPercent,
+  type LabProgress, type LabSummary, type LabTrack, type TrackGroup,
 } from '@/utils/labCatalogue';
 
 const authStore = useAuthStore();
@@ -218,7 +234,21 @@ const progress = ref<LabProgress[]>([]);
 const loading = ref(true);
 const error = ref('');
 const query = ref('');
-const track = ref('');
+const route = useRoute();
+// `/labs?track=docker` - the lab workspace's breadcrumb links here.
+const track = ref(String(route.query.track || ''));
+
+function percentOf(group: TrackGroup): number {
+  // Against the WHOLE track, not the filtered cards.
+  const whole = groups.value.find(g => g.track.id === group.track.id) || group;
+  return trackPercent(whole.labs, progress.value);
+}
+
+function progressStyle(group: TrackGroup) {
+  const pct = percentOf(group);
+  return { '--sl-pct': `${pct}%`, '--sl-pc': progressColor(pct),
+           '--sl-pcs': progressColor(pct, 0.28), '--sl-pcw': progressColor(pct, 0.07) };
+}
 
 const hasLabAccess = computed(() => authStore.hasLabAccess);
 const username = computed(() => authStore.user?.username || '');

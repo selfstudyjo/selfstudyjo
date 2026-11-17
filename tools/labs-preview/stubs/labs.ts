@@ -605,6 +605,44 @@ footer{background:#047857;color:#fff;padding:22px 24px;font-weight:700}</style><
 
     getViews: () => delay(views(current)),
     getHistory: () => delay(env.log),
-    getProgress: () => delay([]),
+    /*
+      A small catalogue for the Labs page and Previous / Next: five tracks built
+      around the real fixtures, with `?progress=demo` giving a spread from an
+      untouched track to a finished one, so every colour of the bar is visible.
+    */
+    getCatalogue: () => {
+      const TRACK_NAMES: AnyRec = { docker: 'Docker', networking: 'Networking', web: 'HTML, CSS & JavaScript',
+        django: 'Django', fabric: 'Microsoft Fabric Data Engineering' };
+      const labs: AnyRec[] = [];
+      for (const fixture of Object.values(fixtures) as AnyRec[]) {
+        const track = fixture.track;
+        for (let i = 1; i <= 6; i += 1) {
+          labs.push({ ...fixture, topics: fixture.topics || [], datasets: fixture.datasets || [], tool_labels: (fixture.tools || []).map((t: AnyRec) => t.label || t.id || String(t)).slice(0, 6), tools: (fixture.tools || []).map((t: AnyRec) => t.id || String(t)), id: i === 1 ? fixture.id : `${fixture.id}-${i}`, order: i,
+                      title: i === 1 ? fixture.title : `${fixture.title} (part ${i})` });
+        }
+        void track;
+      }
+      const tracks = [...new Set(labs.map(l => l.track))].map((id, i) => ({
+        id, title: TRACK_NAMES[id] || id, subtitle: '', order: i + 1,
+        labs: labs.filter(l => l.track === id).length }));
+      return delay({ tracks, labs });
+    },
+    getProgress: () => {
+      if (new URLSearchParams(location.search).get('progress') !== 'demo') return delay([]);
+      const ids = Object.keys(fixtures);
+      const rows: AnyRec[] = [];
+      const done = [0, 2, 4, 6, 1];
+      ids.forEach((id, t) => {
+        for (let i = 1; i <= done[t]; i += 1) {
+          rows.push({ lab_id: i === 1 ? id : `${id}-${i}`, track: (fixtures as AnyRec)[id].track,
+            status: 'completed', score: 100, tasks_done: [], earned: 10, possible: 10, attempts: 1,
+            completed_at: '', last_active: `2026-11-0${t + 1}T10:0${i}:00Z` });
+        }
+      });
+      rows.push({ lab_id: `${ids[4]}-2`, track: (fixtures as AnyRec)[ids[4]].track, status: 'in_progress',
+        score: 40, tasks_done: ['t1'], earned: 4, possible: 10, attempts: 1, completed_at: '',
+        last_active: '2026-11-09T10:00:00Z' });
+      return delay(rows);
+    },
     getLeaderboard: () => delay([]),
 };
