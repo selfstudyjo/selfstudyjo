@@ -574,6 +574,25 @@ const tools: Catalogue = {
     "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "无账号、无日志、无遥测：设置只保存在你的电脑上。它使用 Tor 网络，与 Tor 项目无关联。请只在你被允许使用的网络上使用。",
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "第一次连接时，macOS 会要求输入密码，以便应用设置系统代理。",
     "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "SelfStudy 桌面应用随包含 AI 功能的付费方案提供，不包含在免费试用中。",
+    // SelfStudy WiFi Connect (Products page)
+    "Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.": "通过 Wi-Fi 在附近的电脑之间聊天、建立学习房间和共享文件，无需路由器、交换机或互联网。一台电脑开启热点，其他电脑加入，所有人都能互相发消息和传文件。",
+    "Hotspot in one click": "一键开启热点",
+    "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "在 Windows 上创建无需联网即可使用的 Wi-Fi Direct 群组；在 Linux 上创建接入点。其他设备会把它看作普通的 Wi-Fi 网络，并可在应用中加入。",
+    "Direct and group rooms": "直连房间和群组房间",
+    "Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.": "两台设备组成直连房间。三台或更多设备加入同一个热点组成群组房间，每台设备都能与其他所有设备交流——两台设备无法直接互通时，由主机转发。",
+    "Files and pictures": "文件和图片",
+    "Send many files at once, or drag and drop them into a chat. Every file is checked with SHA-256 before it is saved, and pictures show right in the chat.": "一次发送多个文件，或直接拖放到聊天中。每个文件在保存前都会用 SHA-256 校验，图片直接显示在聊天中。",
+    "Knows who is who": "清楚知道谁是谁",
+    "Each device has its own signed key with a fingerprint you can compare, plus its MAC address, IP address and user name. A device pretending to be another is refused.": "每台设备都有自己的签名密钥和可供比对的指纹，另有 MAC 地址、IP 地址和用户名。冒充其他设备的设备会被拒绝。",
+    "Private and encrypted": "私密且加密",
+    "Every link is encrypted and every message is signed by its author. Messages and files are stored only on the computers in the room - no server and no account.": "每条连接都经过加密，每条消息都由作者签名。消息和文件只保存在房间内的电脑上——没有服务器，也不需要账户。",
+    "See your network live": "实时查看你的网络",
+    "A 3D map shows every device nearby and the messages and files moving between them, with tables of devices and transfers.": "3D 地图显示附近的每台设备以及它们之间传递的消息和文件，并附有设备和传输表格。",
+    "A Wi-Fi adapter on every computer, and the app on every device in the room. macOS can join a hotspot but cannot start one from an app.": "每台电脑都需要 Wi-Fi 网卡，房间内每台设备都需安装本应用。macOS 可以加入热点，但不允许应用创建热点。",
+    "Nothing leaves your Wi-Fi network: no account, no server and no telemetry. Messages and files are kept only on the devices that send and receive them. Allow the app through the firewall on private networks when your computer asks.": "任何数据都不会离开你的 Wi-Fi 网络：没有账户、没有服务器、没有遥测。消息和文件只保存在发送和接收它们的设备上。电脑询问时，请允许本应用通过专用网络的防火墙。",
+    "When Windows Firewall asks, allow it on private networks so other devices can find this one.": "Windows 防火墙询问时，请允许其在专用网络上运行，以便其他设备找到本机。",
+    "When macOS asks, allow it to find devices on your local network.": "macOS 询问时，请允许它查找本地网络上的设备。",
+    "Starting a hotspot needs NetworkManager, which Ubuntu, Fedora and most desktops include.": "开启热点需要 NetworkManager，Ubuntu、Fedora 及大多数桌面环境都已自带。",
 };
 
 export default tools;

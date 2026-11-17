@@ -601,6 +601,25 @@ const tools: Catalogue = {
     "No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.": "بلا حساب ولا سجلات ولا قياس عن بُعد: تُحفظ الإعدادات على حاسوبك فقط. يستخدم شبكة Tor ولا يتبع مشروع Tor. استخدمه فقط على الشبكات المسموح لك باستخدامها.",
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "عند الاتصال أول مرة، يطلب macOS كلمة المرور ليتمكن التطبيق من ضبط وكيل النظام.",
     "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "تأتي تطبيقات SelfStudy لسطح المكتب مع خطة مدفوعة تشمل ميزات الذكاء الاصطناعي، وليست ضمن التجربة المجانية.",
+    // SelfStudy WiFi Connect (Products page)
+    "Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.": "محادثة وغرف دراسة ومشاركة ملفات بين الحواسيب القريبة عبر Wi-Fi، بلا راوتر ولا سويتش ولا إنترنت. يشغّل حاسوب واحد نقطة اتصال وينضم إليها الآخرون، فيراسل الجميعُ الجميعَ ويتبادلون الملفات.",
+    "Hotspot in one click": "نقطة اتصال بنقرة واحدة",
+    "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "على Windows ينشئ مجموعة Wi-Fi Direct تعمل دون اتصال بالإنترنت، وعلى Linux نقطة وصول. يراها الآخرون شبكة Wi-Fi عادية وينضمون إليها من التطبيق.",
+    "Direct and group rooms": "غرف مباشرة وغرف جماعية",
+    "Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.": "جهازان يكوّنان غرفة مباشرة. ثلاثة أجهزة أو أكثر تنضم إلى نقطة اتصال واحدة وتكوّن غرفة جماعية يتحدث فيها كل جهاز مع الآخرين - ويمرّر المضيف الرسائل حين لا يصل جهازان أحدهما إلى الآخر.",
+    "Files and pictures": "ملفات وصور",
+    "Send many files at once, or drag and drop them into a chat. Every file is checked with SHA-256 before it is saved, and pictures show right in the chat.": "أرسل عدة ملفات دفعة واحدة، أو اسحبها وأفلتها في المحادثة. يُفحص كل ملف بـ SHA-256 قبل حفظه، وتظهر الصور داخل المحادثة مباشرة.",
+    "Knows who is who": "يعرف من هو من",
+    "Each device has its own signed key with a fingerprint you can compare, plus its MAC address, IP address and user name. A device pretending to be another is refused.": "لكل جهاز مفتاح موقَّع خاص به مع بصمة يمكنك مقارنتها، إضافة إلى عنوان MAC وعنوان IP واسم المستخدم. ويُرفض أي جهاز ينتحل صفة جهاز آخر.",
+    "Private and encrypted": "خاص ومشفّر",
+    "Every link is encrypted and every message is signed by its author. Messages and files are stored only on the computers in the room - no server and no account.": "كل اتصال مشفّر وكل رسالة موقَّعة من كاتبها. تُحفظ الرسائل والملفات على حواسيب الغرفة فقط - بلا خادم ولا حساب.",
+    "See your network live": "شاهد شبكتك حيّة",
+    "A 3D map shows every device nearby and the messages and files moving between them, with tables of devices and transfers.": "خريطة ثلاثية الأبعاد تعرض كل جهاز قريب والرسائل والملفات المتنقلة بينها، مع جداول للأجهزة والتحويلات.",
+    "A Wi-Fi adapter on every computer, and the app on every device in the room. macOS can join a hotspot but cannot start one from an app.": "محوّل Wi-Fi في كل حاسوب، والتطبيق على كل جهاز في الغرفة. يستطيع macOS الانضمام إلى نقطة اتصال لكنه لا يسمح للتطبيقات بإنشائها.",
+    "Nothing leaves your Wi-Fi network: no account, no server and no telemetry. Messages and files are kept only on the devices that send and receive them. Allow the app through the firewall on private networks when your computer asks.": "لا شيء يغادر شبكة Wi-Fi الخاصة بك: بلا حساب ولا خادم ولا قياس عن بُعد. تُحفظ الرسائل والملفات على الأجهزة التي ترسلها وتستقبلها فقط. اسمح للتطبيق عبر جدار الحماية على الشبكات الخاصة حين يطلب حاسوبك ذلك.",
+    "When Windows Firewall asks, allow it on private networks so other devices can find this one.": "حين يسأل جدار حماية Windows، اسمح للتطبيق على الشبكات الخاصة لتتمكن الأجهزة الأخرى من العثور على هذا الجهاز.",
+    "When macOS asks, allow it to find devices on your local network.": "حين يسأل macOS، اسمح للتطبيق بالعثور على الأجهزة في شبكتك المحلية.",
+    "Starting a hotspot needs NetworkManager, which Ubuntu, Fedora and most desktops include.": "يحتاج تشغيل نقطة الاتصال إلى NetworkManager، الموجود في Ubuntu وFedora ومعظم بيئات سطح المكتب.",
 };
 
 export default tools;

@@ -246,6 +246,24 @@ Done. The total now rounds to 2 decimals.</pre>
         </div>
       </div>
 
+      <!-- HOW TO INSTALL: SelfStudy WiFi Connect. Commands and file names are never translated. -->
+      <div v-if="p.id === 'wifi'" class="prod-section">
+        <h3>{{ $t('How to install it') }}</h3>
+        <div class="prod-grid prod-cli">
+          <article v-for="s in wifiSteps" :key="s.os" class="prod-card" :class="{ 'prod-card--mine': s.os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(s.os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ s.format }}</span>
+              <span v-if="s.os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <ol class="prod-req">
+              <li v-for="line in s.steps" :key="line">{{ line }}</li>
+            </ol>
+            <pre v-if="s.commands.length" class="prod-cmd" dir="ltr">{{ s.commands.join('\n') }}</pre>
+          </article>
+        </div>
+      </div>
+
       <!-- REQUIREMENTS -->
       <div class="prod-section">
         <h3>{{ $t('System requirements') }}</h3>
@@ -527,6 +545,26 @@ const catalogue = computed<Array<{
     ],
     privacy: t('No account, no logs and no telemetry: settings are kept only on your computer. It uses the Tor network and is not affiliated with The Tor Project. Use it only on networks you are allowed to use.'),
   },
+  {
+    id: 'wifi' as ProductId,
+    name: 'SelfStudy WiFi Connect',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.'),
+    features: [
+      { title: t('Hotspot in one click'), text: t('On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.') },
+      { title: t('Direct and group rooms'), text: t('Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.') },
+      { title: t('Files and pictures'), text: t('Send many files at once, or drag and drop them into a chat. Every file is checked with SHA-256 before it is saved, and pictures show right in the chat.') },
+      { title: t('Knows who is who'), text: t('Each device has its own signed key with a fingerprint you can compare, plus its MAC address, IP address and user name. A device pretending to be another is refused.') },
+      { title: t('Private and encrypted'), text: t('Every link is encrypted and every message is signed by its author. Messages and files are stored only on the computers in the room - no server and no account.') },
+      { title: t('See your network live'), text: t('A 3D map shows every device nearby and the messages and files moving between them, with tables of devices and transfers.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 300 MB of free disk space.'),
+      t('A Wi-Fi adapter on every computer, and the app on every device in the room. macOS can join a hotspot but cannot start one from an app.'),
+    ],
+    privacy: t('Nothing leaves your Wi-Fi network: no account, no server and no telemetry. Messages and files are kept only on the devices that send and receive them. Allow the app through the firewall on private networks when your computer asks.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -600,6 +638,33 @@ const vpnSteps = computed(() => [
   ], steps: [
     t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
     t('Make the AppImage executable and run it, or install the .deb:'),
+  ] },
+]);
+
+// How to install SelfStudy WiFi Connect, per OS. File names are the release's
+// artifactName and are not translated.
+const wifiSteps = computed(() => [
+  { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
+    t('Download the .exe installer (or the .msi) and run it.'),
+    t('If Windows says "Windows protected your PC", choose More info, then Run anyway.'),
+    t('Choose the install folder and finish. Open the app from the Start menu or the desktop icon.'),
+    t('When Windows Firewall asks, allow it on private networks so other devices can find this one.'),
+  ] },
+  { os: 'macos', format: '.dmg', commands: [] as string[], steps: [
+    t('Download the .dmg for your Mac: arm64 for Apple Silicon, x64 for Intel.'),
+    t('Open the .dmg file and drag the app into Applications.'),
+    t('The first time, right-click the app, choose Open, then Open again.'),
+    t('When macOS asks, allow it to find devices on your local network.'),
+  ] },
+  { os: 'linux', format: 'AppImage / .deb', commands: [
+    'chmod +x SelfStudy-WiFi-Connect-*-linux-x86_64.AppImage',
+    './SelfStudy-WiFi-Connect-*-linux-x86_64.AppImage',
+    '# or, on Debian / Ubuntu:',
+    'sudo apt install ./SelfStudy-WiFi-Connect-*-linux-amd64.deb',
+  ], steps: [
+    t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
+    t('Make the AppImage executable and run it, or install the .deb:'),
+    t('Starting a hotspot needs NetworkManager, which Ubuntu, Fedora and most desktops include.'),
   ] },
 ]);
 
