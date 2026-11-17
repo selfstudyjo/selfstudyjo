@@ -1206,12 +1206,17 @@ async function runTool(toolId: string, payload: Record<string, unknown>) {
  * must find the VPC in the view it is about to read, and a form that closes
  * onto a list without the new row reads as the create having failed.
  */
-async function runPortal(toolId: string, payload: { command: string; surface?: string }) {
+async function runPortal(toolId: string,
+                         payload: { command: string; surface?: string; lazy?: boolean }) {
   if (!lab.value) return { ok: false, error: 'The lab is not open' };
+  const { lazy, ...sent } = payload;
   const result = await labsService.runTool(username.value, lab.value.id,
-                                          toolId, payload);
+                                          toolId, sent);
   if (result?.note) note.value = result.note;
-  await refreshViews();
+  // A portal's TERMINAL answers at once: waiting for every dashboard to be
+  // re-read first was the "noticeable delay" after each command.
+  if (lazy) void refreshViews();
+  else await refreshViews();
   return result;
 }
 

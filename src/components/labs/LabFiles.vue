@@ -124,7 +124,8 @@
                             class="sl-i sl-i--tiny" />
               <ChevronDown v-else-if="row.hasChildren" class="sl-i sl-i--tiny" />
             </span>
-            <component :is="glyph(row)" class="sl-i sl-i--tiny sl-tree__glyph"
+            <FileIcon v-if="row.kind !== 'folder'" :path="row.path" class="sl-tree__glyph" />
+            <component v-else :is="glyph(row)" class="sl-i sl-i--tiny sl-tree__glyph"
                        aria-hidden="true" />
             <!--
               The rename box replaces the LABEL, not the row, so the row keeps
@@ -177,13 +178,25 @@
 
       <!-- ── the editor ────────────────────────────────────────────────── -->
       <div class="sl-files__editor">
+        <!-- Open files, one tab each, as in any IDE. Middle-click or x closes. -->
+        <div v-if="tabs.length" class="sl-files__tabs" role="tablist" dir="ltr">
+          <div v-for="tab in tabs" :key="tab.path" class="sl-files__tab"
+               :class="{ 'is-active': tab.path === path }" role="tab"
+               :aria-selected="tab.path === path" :title="tab.path"
+               @click="open(tab.path)" @auxclick.prevent="$event.button === 1 && closeTab(tab.path)">
+            <FileIcon :path="tab.path" />
+            <span class="sl-files__tabname">{{ baseName(tab.path) }}</span>
+            <span v-if="tabDirty(tab)" class="sl-files__dot" :title="$t('Unsaved changes')">●</span>
+            <button type="button" class="sl-files__tabclose" :aria-label="$t('Close')"
+                    @click.stop="closeTab(tab.path)">×</button>
+          </div>
+        </div>
         <div v-if="path" class="sl-files__tabrow">
-          <span class="sl-files__tab" dir="ltr">
-            <component :is="glyph({ path, kind: 'file' })" class="sl-i sl-i--tiny"
-                       aria-hidden="true" />
-            <span class="sl-files__tabname">{{ path }}</span>
-            <span v-if="dirty" class="sl-files__dot" :title="$t('Unsaved changes')">•</span>
-          </span>
+          <span class="sl-files__crumb" dir="ltr" :title="path">{{ path }}</span>
+          <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm" :disabled="formatting"
+                  :title="$t('Format document') + ' (Shift+Alt+F)'" @click="formatDoc">
+            <WandSparkles class="sl-i" /> {{ $t('Format') }}
+          </button>
           <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm"
                   @click="startRename({ path, name: baseName(path), kind: 'file' })">
             <PenLine class="sl-i" /> {{ $t('Rename') }}
@@ -205,18 +218,15 @@
 
         <!-- LTR: these are Dockerfiles, YAML manifests and HCL. Mirrored, the
              indentation reads from the wrong side and YAML stops being valid. -->
-        <textarea
+        <CodeEditor
+          v-if="path"
+          ref="codeEditor"
           v-model="content"
-          class="sl-files__text"
-          dir="ltr"
-          spellcheck="false"
-          rows="18"
+          class="sl-files__code"
+          :path="path"
           :disabled="!path"
-          :aria-label="$t('File contents')"
-          @keydown.tab.prevent="indent"
-          @keydown.ctrl.s.prevent="save"
-          @keydown.meta.s.prevent="save"
-        ></textarea>
+          @save="save"
+        />
         <p v-if="message" class="sl-files__msg" :class="{ 'is-error': failed }">
           {{ message }}
         </p>
@@ -358,7 +368,7 @@
  *    time (every console is a shell), so `refresh` re-reads the LIST and leaves
  *    the open buffer alone unless the file has gone.
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   Braces,
   ChevronDown,
@@ -422,6 +432,12 @@ import {
   type FileExport,
 } from '@/utils/zipArchive';
 import { useI18n } from '@/i18n/runtime';
+import FileIcon from './FileIcon.vue';
+
+import { WandSparkles } from 'lucide-vue-next';
+
+// CodeMirror and every grammar load with the editor, not with the page.
+const CodeEditor = defineAsyncComponent(() => import('./CodeEditor.vue'));
 
 interface Listing { files: FileEntry[]; dirs: string[] }
 type Result = { ok: boolean; error?: string };
@@ -480,6 +496,61 @@ const downloading = ref(false);
 const menuBox = ref<HTMLElement | null>(null);
 
 const dirty = computed(() => Boolean(path.value) && content.value !== saved.value);
+
+/** Every open file. The ACTIVE one's live text is in `content`/`saved`. */
+interface Buffer { path: string; content: string; saved: string }
+const tabs = ref<Buffer[]>([]);
+const codeEditor = ref<any>(null);
+const formatting = ref(false);
+
+function tabDirty(tab: Buffer) {
+  return tab.path === path.value ? dirty.value : tab.content !== tab.saved;
+}
+
+/** Copy the active buffer into its tab before another file takes the editor. */
+function stash() {
+  if (!path.value) return;
+  const tab = tabs.value.find(entry => entry.path === path.value);
+  if (tab) { tab.content = content.value; tab.saved = saved.value; }
+  else tabs.value.push({ path: path.value, content: content.value, saved: saved.value });
+}
+
+function show(tab: Buffer | null) {
+  path.value = tab ? tab.path : '';
+  content.value = tab ? tab.content : '';
+  saved.value = tab ? tab.saved : '';
+}
+
+function closeTab(target: string) {
+  stash();
+  const index = tabs.value.findIndex(entry => entry.path === target);
+  if (index < 0) return;
+  const tab = tabs.value[index];
+  if (tab.content !== tab.saved && !window.confirm(
+    `${basename(target)} has unsaved changes. Close it anyway?`)) return;
+  tabs.value.splice(index, 1);
+  if (target === path.value) show(tabs.value[index] || tabs.value[index - 1] || null);
+}
+
+/** Drop the tabs a delete or a vanished file took away. */
+function dropTabs(prefix: string) {
+  const gone = (entry: Buffer) => entry.path === prefix || entry.path.startsWith(`${prefix}/`);
+  const active = gone({ path: path.value } as Buffer);
+  tabs.value = tabs.value.filter(entry => !gone(entry));
+  if (active) show(tabs.value[0] || null);
+}
+
+async function formatDoc() {
+  if (!codeEditor.value?.format) return;
+  formatting.value = true;
+  try {
+    const result = await codeEditor.value.format();
+    if (!result.ok) say(result.error || 'This file could not be formatted', true);
+    else say(`Formatted as ${codeEditor.value.language?.name || 'text'}`);
+  } finally {
+    formatting.value = false;
+  }
+}
 
 const rows = computed<Row[]>(() => {
   const tree = matchTree(buildTree(files.value, dirs.value), query.value);
@@ -575,9 +646,7 @@ async function reload(seq: number, manual: boolean, sizeBefore?: number) {
   }
   const entry = files.value.find(row => row.path === path.value);
   if (!entry) {
-    path.value = '';
-    content.value = '';
-    saved.value = '';
+    dropTabs(path.value);
     if (manual) refreshNote.value = t('The open file was deleted, so it has been closed.');
     return;
   }
@@ -605,14 +674,19 @@ async function reload(seq: number, manual: boolean, sizeBefore?: number) {
 }
 
 async function open(target: string) {
-  if (dirty.value && !window.confirm(
-    `${basename(path.value)} has unsaved changes. Discard them?`)) return;
-  path.value = target;
+  if (target === path.value) return;
+  stash();
   message.value = '';
   failed.value = false;
+  const existing = tabs.value.find(entry => entry.path === target);
+  // A tab with unsaved typing comes back exactly as it was left.
+  if (existing && existing.content !== existing.saved) { show(existing); return; }
   const text = await props.read(target);
-  content.value = text;
-  saved.value = text;
+  const tab = existing || { path: target, content: text, saved: text };
+  tab.content = text;
+  tab.saved = text;
+  if (!existing) tabs.value.push(tab);
+  show(tab);
 }
 
 function activate(row: Pick<Row, 'path' | 'kind'>) {
@@ -658,6 +732,7 @@ async function save() {
     if (result?.ok) {
       message.value = 'Saved';
       saved.value = content.value;
+      stash();
       await refresh();
       emit('changed');
     } else {
@@ -667,16 +742,6 @@ async function save() {
   } finally {
     saving.value = false;
   }
-}
-
-function indent(event: KeyboardEvent) {
-  const field = event.target as HTMLTextAreaElement;
-  const start = field.selectionStart;
-  const end = field.selectionEnd;
-  content.value = content.value.slice(0, start) + '  ' + content.value.slice(end);
-  requestAnimationFrame(() => {
-    field.selectionStart = field.selectionEnd = start + 2;
-  });
 }
 
 /* ── creating ──────────────────────────────────────────────────────────── */
@@ -730,9 +795,10 @@ async function commitCreate() {
   await refresh();
   emit('changed');
   if (kind === 'file') {
-    path.value = target;
-    content.value = '';
-    saved.value = '';
+    stash();
+    const tab = { path: target, content: '', saved: '' };
+    tabs.value.push(tab);
+    show(tab);
   }
   say(kind === 'folder' ? `Created ${target}` : `Created ${target}`);
 }
@@ -785,10 +851,10 @@ async function applyMove(from: string, to: string) {
   }
   expanded.value = remapExpanded(expanded.value, from, to);
   // The open buffer follows its own file, or a rename reads as having closed it.
-  if (path.value === from) path.value = to;
-  else if (path.value.startsWith(`${from}/`)) {
-    path.value = to + path.value.slice(from.length);
-  }
+  const moved = (name: string) => (name === from ? to
+    : name.startsWith(`${from}/`) ? to + name.slice(from.length) : name);
+  for (const tab of tabs.value) tab.path = moved(tab.path);
+  path.value = moved(path.value);
   if (moving.value === from) moving.value = '';
   await refresh();
   emit('changed');
@@ -895,11 +961,7 @@ async function confirmDelete(row: Pick<Row, 'path' | 'name' | 'kind'>) {
     say(result?.error || 'That could not be deleted', true);
     return;
   }
-  if (path.value === row.path || path.value.startsWith(`${row.path}/`)) {
-    path.value = '';
-    content.value = '';
-    saved.value = '';
-  }
+  dropTabs(row.path);
   if (moving.value === row.path) moving.value = '';
   await refresh();
   emit('changed');

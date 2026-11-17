@@ -52,24 +52,24 @@
           >{{ pane.label }}</button>
         </div>
         <!-- LTR always: this is source. -->
-        <textarea
+        <CodeEditor
           v-show="active === 'html'"
-          v-model="html" class="sl-web__editor" dir="ltr" spellcheck="false"
+          v-model="html" class="sl-web__cm" path="index.html" compact
           :placeholder="'<h1>Hello</h1>'"
-          @keydown.tab.prevent="indent($event, 'html')"
-        ></textarea>
-        <textarea
+          @run="run"
+        />
+        <CodeEditor
           v-show="active === 'css'"
-          v-model="css" class="sl-web__editor" dir="ltr" spellcheck="false"
+          v-model="css" class="sl-web__cm" path="style.css" compact
           :placeholder="'body { font-family: system-ui; }'"
-          @keydown.tab.prevent="indent($event, 'css')"
-        ></textarea>
-        <textarea
+          @run="run"
+        />
+        <CodeEditor
           v-show="active === 'js'"
-          v-model="js" class="sl-web__editor" dir="ltr" spellcheck="false"
+          v-model="js" class="sl-web__cm" path="script.js" compact
           :placeholder="'console.log(\'hello\');'"
-          @keydown.tab.prevent="indent($event, 'js')"
-        ></textarea>
+          @run="run"
+        />
       </div>
 
       <div ref="result" class="sl-web__result" :class="{ 'is-full': fullscreen }">
@@ -137,6 +137,8 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent as __async } from 'vue';
+const CodeEditor = __async(() => import('./CodeEditor.vue'));
 /**
  * The HTML/CSS/JS playground: three editors and a live result pane.
  *

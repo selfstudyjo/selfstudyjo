@@ -1282,7 +1282,6 @@ const RTL_ALLOWED_ORPHANS: Record<string, string> = {
     'bubble__text': 'as above',
     // Rendered outside src/.
     'hljs': 'highlight.js emits this — code must never render right-to-left',
-    'cm-editor': 'CodeMirror',
     'monaco-editor': 'Monaco',
     'lab-output': 'sandbox output, inserted as text at runtime',
 };

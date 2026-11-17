@@ -40,6 +40,8 @@ export interface PortalResult {
 export interface PortalPayload {
     command: string;
     surface?: string;
+    /** Answer as soon as the line has run; refresh the views behind it. */
+    lazy?: boolean;
 }
 
 export type PortalRun = (payload: PortalPayload) => Promise<PortalResult>;

@@ -57,6 +57,8 @@ export interface ExecOptions {
     quiet?: boolean;
     /** Not worth a line in the history (a read the portal does on its own). */
     unlogged?: boolean;
+    /** A terminal line: do not wait for the dashboards to refresh first. */
+    lazy?: boolean;
 }
 
 const MAX_FLASHES = 4;
@@ -88,6 +90,7 @@ export function usePortal(run: PortalRun) {
     async function exec(command: string, options: ExecOptions = {}): Promise<PortalResult> {
         const payload: PortalPayload = { command };
         if (options.surface) payload.surface = options.surface;
+        if (options.lazy) payload.lazy = true;
         pending.value += 1;
         let result: PortalResult;
         try {

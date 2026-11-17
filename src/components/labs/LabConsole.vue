@@ -88,6 +88,13 @@
       <div v-if="busy" class="sl-console__line sl-console__line--note">
         {{ $t('Running...') }}
       </div>
+      <!-- Type-ahead, as a real terminal has it: lines entered while a command
+           runs are kept, shown dimmed, and run in order. The input is never
+           disabled, so no keystroke or shortcut is lost to a busy console. -->
+      <div v-for="(waiting, index) in queued" :key="'q' + index"
+           class="sl-console__line sl-console__line--queued">
+        <span class="sl-console__prompt">{{ prompt }}</span><span>{{ waiting.line }}</span>
+      </div>
 
       <!--
         THE LINE BEING TYPED IS THE LAST LINE OF THE TRANSCRIPT.
@@ -123,7 +130,7 @@
         <span v-if="search" class="sl-console__prompt sl-console__prompt--search">
           {{ searchLabel }}
         </span>
-        <span v-else class="sl-console__prompt">{{ prompt }}</span>
+        <span v-else class="sl-console__prompt">{{ pending ? '> ' : prompt }}</span>
         <input
           ref="field"
           v-model="entry"
@@ -133,8 +140,7 @@
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
-          :disabled="busy"
-          :placeholder="search || lines.length ? '' : placeholder"
+          :placeholder="search || lines.length || pending ? '' : placeholder"
           @keydown="onKey"
           @paste="onNativePaste"
         >
@@ -148,7 +154,7 @@
         -->
         <button type="submit" class="sl-console__go"
                 :title="$t('Run')" :aria-label="$t('Run')"
-                :disabled="busy || !entry.trim()">
+                :disabled="!entry.trim()">
           <CornerDownLeft class="sl-i" />
         </button>
       </form>
@@ -282,6 +288,39 @@ type Line = { kind: 'cmd' | 'out' | 'err' | 'note'; text: string; at?: string };
 const lines = ref<Line[]>([]);
 const entry = ref('');
 const busy = ref(false);
+/** Lines typed while a command runs, run in order afterwards. */
+const queued = ref<{ line: string; echo: boolean }[]>([]);
+/**
+ * A command still being typed over several lines: an open heredoc
+ * (`cat > f <<'EOF'`) or a trailing backslash. The prompt is `> ` meanwhile,
+ * as bash's PS2, and the whole thing goes to the shell once it is complete.
+ */
+const pending = ref<string[] | null>(null);
+let queuedRun = false;
+
+/** Heredoc delimiters a script has opened and not yet closed. */
+function openHeredocs(script: string): string[] {
+  const open: { word: string; dash: boolean }[] = [];
+  for (const raw of script.split('\n')) {
+    if (open.length) {
+      const text = open[0].dash ? raw.replace(/^\t+/, '') : raw;
+      if (text === open[0].word || text.trim() === open[0].word) open.shift();
+      continue;
+    }
+    // Quoted text is not a heredoc: strip '...' and "..." before looking.
+    const bare = raw.replace(/'[^']*'(?!\w)/g, (m) => /^'[A-Za-z_]\w*'$/.test(m) ? m : "''")
+      .replace(/"[^"]*"/g, (m) => /^"[A-Za-z_]\w*"$/.test(m) ? m : '""');
+    const found = bare.matchAll(/<<(-?)\s*(['"]?)([A-Za-z_][\w.-]*)\2/g);
+    for (const match of found) open.push({ word: match[3], dash: match[1] === '-' });
+  }
+  return open.map(entry => entry.word);
+}
+
+function needsMore(script: string): boolean {
+  if (openHeredocs(script).length) return true;
+  const last = script.split('\n').pop() || '';
+  return /(^|[^\\])\\$/.test(last);
+}
 const history = ref<string[]>([]);
 const cursor = ref(-1);
 const scroller = ref<HTMLElement | null>(null);
@@ -397,6 +436,9 @@ async function pasteText() {
 
 async function runPasted(text: string) {
   if (!text) return;
+  // Copied from a web page: non-breaking spaces and CR line ends break a shell
+  // the way they never break the page they came from.
+  text = text.replace(/\u00a0/g, ' ').replace(/\r\n?/g, '\n');
   if (editor.value || screen.value) {
     program.value?.paste?.(text);
     return;
@@ -410,7 +452,21 @@ async function runPasted(text: string) {
     // A heredoc's body belongs to the command above it, so a paste holding
     // `<<` goes to the shell as ONE script (the shell runs it line by line).
     if (/<<-?\s*['"]?[A-Za-z_]/.test(pasted)) {
-      await submit(entry.value.slice(0, caret) + pasted + entry.value.slice(caret));
+      const script = (entry.value.slice(0, caret) + pasted + entry.value.slice(caret))
+        .replace(/\r\n?/g, '\n');
+      // A paste that opens a heredoc and does not close it (the copy stopped
+      // short of EOF) waits for the rest at a `> ` prompt, as bash does,
+      // instead of being run as a broken script.
+      if (needsMore(script)) {
+        const rows = script.split('\n');
+        entry.value = '';
+        push('cmd', rows[0], prompt.value);
+        for (const row of rows.slice(1)) push('cmd', row, '> ');
+        pending.value = rows;
+        await scrollDown();
+        return;
+      }
+      await submit(script);
       return;
     }
     const parts = pasted.split(/\r?\n/);
@@ -488,16 +544,54 @@ function push(kind: Line['kind'], text: string, at?: string) {
 
 async function submit(script?: string) {
   if (search.value) { search.value = null; return; }
-  const typed = typeof script === 'string' ? script : entry.value;
-  const line = typeof script === 'string' ? script.trim()
-    : expandHistory(typed, history.value).trim();
-  if (!line || busy.value) return;
+  if (typeof script === 'string') {
+    entry.value = '';
+    cursor.value = -1;
+    await execute(script.replace(/\s+$/, '').replace(/^\s*\n/, ''), true);
+    return;
+  }
+  const typed = entry.value;
   entry.value = '';
   cursor.value = -1;
-  history.value.push(line);
+  if (pending.value) {
+    // A continuation line is echoed after `> ` and kept verbatim - a heredoc
+    // body's leading spaces are part of the file being written.
+    push('cmd', typed, '> ');
+    pending.value.push(typed);
+    const whole = pending.value.join('\n');
+    if (needsMore(whole)) { await scrollDown(); return; }
+    pending.value = null;
+    // A backslash-newline joins lines - but never inside a heredoc's body.
+    await execute(/<</.test(whole) ? whole : whole.replace(/\\\n/g, ''), false);
+    return;
+  }
+  const line = expandHistory(typed, history.value).trim();
+  if (!line) {
+    if (!busy.value) { push('cmd', '', prompt.value); await scrollDown(); }
+    return;
+  }
+  if (needsMore(line)) {
+    push('cmd', line, prompt.value);
+    pending.value = [line];
+    await scrollDown();
+    return;
+  }
+  await execute(line, true);
+}
+
+async function execute(line: string, echo: boolean) {
+  if (!line) return;
+  if (busy.value) {
+    history.value.push(line);
+    queued.value.push({ line, echo });
+    await scrollDown();
+    return;
+  }
   // The prompt the command was typed AT, kept with it. Re-rendering every past
   // line at the current directory would misreport where each one ran.
-  push('cmd', line, prompt.value);
+  if (echo) push('cmd', line, prompt.value);
+  if (!queuedRun) history.value.push(line);
+  queuedRun = false;
   busy.value = true;
   await scrollDown();
   try {
@@ -540,6 +634,8 @@ async function submit(script?: string) {
     await scrollDown();
     focusField();
   }
+  const next = queued.value.shift();
+  if (next) { queuedRun = true; await execute(next.line, next.echo); }
 }
 
 function recall(step: number) {
@@ -700,7 +796,11 @@ function onKey(event: KeyboardEvent) {
       event.preventDefault();
       // A shell echoes the abandoned line with a `^C` rather than silently
       // emptying the box, so the student can see what they threw away.
-      if (entry.value) push('cmd', `${entry.value}^C`, prompt.value);
+      if (entry.value || pending.value) {
+        push('cmd', `${entry.value}^C`, pending.value ? '> ' : prompt.value);
+      }
+      pending.value = null;
+      queued.value = [];
       entry.value = '';
       cursor.value = -1;
       scrollDown();

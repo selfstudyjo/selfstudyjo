@@ -9012,11 +9012,20 @@ section('14. The file explorer: the tree, the names and the moves');
     check('the workspace binds the Files pane with a function ref',
           /:ref="bindFilesPane"/.test(source('src/views/LabWorkspace.vue'))
           && !/\sref="filesPane"/.test(source('src/views/LabWorkspace.vue')));
+    // Files are TABS now: switching keeps every buffer, and only closing a
+    // tab with unsaved typing can lose it - which asks first.
     check('a dirty buffer is never discarded silently',
-          /if \(dirty\.value && !window\.confirm\(/.test(files));
+          /if \(tab\.content !== tab\.saved && !window\.confirm\(/.test(files)
+          && /if \(existing && existing\.content !== existing\.saved\) \{ show\(existing\)/.test(files));
+    const codeEditor = source('src/components/labs/CodeEditor.vue');
     check('Ctrl+S saves, because this is an editor',
-          /@keydown\.ctrl\.s\.prevent="save"/.test(files)
-          && /@keydown\.meta\.s\.prevent="save"/.test(files));
+          /key: 'Mod-s', preventDefault: true, run: \(\) => \{ emit\('save'\)/.test(codeEditor)
+          && /@save="save"/.test(files));
+    check('the editor shows line numbers and pastes verbatim (no re-indent on paste)',
+          /lineNumbers\(\)/.test(codeEditor) && !/transformPasted|clipboardInputFilter/.test(codeEditor));
+    check('Format is one undoable transaction, never a silent rewrite of a bad file',
+          /userEvent: 'input\.format'/.test(codeEditor)
+          && /if \(result\.ok && result\.text !== before/.test(codeEditor));
     check('F2 renames and Delete deletes, from the row',
           /@keydown\.f2\.prevent="startRename\(row\)"/.test(files)
           && /@keydown\.delete\.prevent="confirmDelete\(row\)"/.test(files));
@@ -9031,7 +9040,9 @@ section('14. The file explorer: the tree, the names and the moves');
           /const recursive = row\.kind === 'folder';[\s\S]{0,120}props\.remove\(row\.path, recursive\)/
           .test(files));
     check('the open buffer follows its own file through a move',
-          /if \(path\.value === from\) path\.value = to;/.test(files));
+          /const moved = \(name: string\) => \(name === from \? to/.test(files)
+          && /for \(const tab of tabs\.value\) tab\.path = moved\(tab\.path\);/.test(files)
+          && /path\.value = moved\(path\.value\);/.test(files));
 
     /* The menu is positioned in the PANE, not the document: `position: fixed`
        would put it above the sidebar in every galaxy and leave it behind when
@@ -9369,8 +9380,9 @@ section('17. Portals: the product consoles, and the command line they write');
           /sl-portal__sim/.test(host) && /tool\.fidelity/.test(host));
     check('the workspace renders a portal tool with LabPortal',
           /<LabPortal[\s\S]{0,200}tool\.kind === 'portal'/.test(workspace));
+    // ...except a portal TERMINAL line (`lazy`), which answers at once.
     check('a portal action AWAITS the fresh view before resolving',
-          /async function runPortal[\s\S]{0,400}await refreshViews\(\)[\s\S]{0,40}return result/.test(workspace));
+          /async function runPortal[\s\S]{0,900}else await refreshViews\(\);[\s\S]{0,40}return result/.test(workspace));
 
     const dir = resolve(process.cwd(), 'src/components/labs/portals');
     const files: string[] = [];

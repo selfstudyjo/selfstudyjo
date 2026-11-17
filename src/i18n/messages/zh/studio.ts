@@ -162,6 +162,10 @@ const studio: Catalogue = {
      * The studio's own furniture
      * ---------------------------------------------------------------- */
     'Back to projects': '返回项目列表',
+    'Ln': '行',
+    'Col': '列',
+    'selected': '已选择',
+    'Format document': '格式化文档',
     'Unsaved changes': '有未保存的更改',
     'Undo (Ctrl+Z)': '撤销（Ctrl+Z）',
     'Redo (Ctrl+Shift+Z)': '重做（Ctrl+Shift+Z）',

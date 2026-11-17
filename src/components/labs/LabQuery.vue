@@ -24,16 +24,14 @@
     <!-- LTR always. SQL is a machine language: mirrored, the bidi algorithm
          moves the parentheses and the commas and a copied statement no longer
          parses. -->
-    <textarea
+    <CodeEditor
       v-model="statement"
-      class="sl-query__editor"
-      dir="ltr"
-      spellcheck="false"
-      rows="7"
+      class="sl-query__cm"
+      :path="queryPath"
+      compact
       :placeholder="$t('Write a statement and press Run, or Ctrl+Enter')"
-      @keydown.ctrl.enter.prevent="submit"
-      @keydown.meta.enter.prevent="submit"
-    ></textarea>
+      @run="submit"
+    />
 
     <div v-if="busy" class="sl-query__status">{{ $t('Running...') }}</div>
 
@@ -75,6 +73,8 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent as __async } from 'vue';
+const CodeEditor = __async(() => import('./CodeEditor.vue'));
 /**
  * The SQL-shaped tools: the SQL editor, and Hive.
  *
@@ -88,6 +88,7 @@
  * column: `Object.keys` on that row would drop the column from every row.
  */
 import { computed, ref } from 'vue';
+const queryPath = 'query.sql';
 import { AlertTriangle, Database, Eraser, Play } from 'lucide-vue-next';
 import type { LabTool } from '@/utils/labCatalogue';
 

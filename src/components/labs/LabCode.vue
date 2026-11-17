@@ -23,17 +23,14 @@
     <!-- LTR, and Tab inserts four spaces rather than leaving the field.
          Python is indentation-sensitive, so a Tab that moves focus makes the
          editor unusable for the one language that needs it most. -->
-    <textarea
+    <CodeEditor
       v-model="code"
-      class="sl-code__editor"
-      dir="ltr"
-      spellcheck="false"
-      rows="14"
+      class="sl-code__cm"
+      :path="editorPath"
+      compact
       :placeholder="$t('Write a program and press Run, or Ctrl+Enter')"
-      @keydown.tab.prevent="indent"
-      @keydown.ctrl.enter.prevent="submit"
-      @keydown.meta.enter.prevent="submit"
-    ></textarea>
+      @run="submit"
+    />
 
     <div class="sl-code__out" dir="ltr">
       <div class="sl-code__outhead">{{ $t('Output') }}</div>
@@ -46,6 +43,8 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent as __async } from 'vue';
+const CodeEditor = __async(() => import('./CodeEditor.vue'));
 /**
  * The Python tool: a real CPython process.
  *
@@ -59,6 +58,8 @@
  * tool has always had a Stop.
  */
 import { ref } from 'vue';
+/** The editor highlights and formats by file name; this tool runs Python. */
+const editorPath = 'main.py';
 import { FileCode, Play, Square } from 'lucide-vue-next';
 import type { LabTool } from '@/utils/labCatalogue';
 
@@ -73,18 +74,6 @@ const code = ref(props.initial || '');
 const output = ref('');
 const error = ref('');
 const busy = ref(false);
-
-function indent(event: KeyboardEvent) {
-  const field = event.target as HTMLTextAreaElement;
-  const start = field.selectionStart;
-  const end = field.selectionEnd;
-  code.value = code.value.slice(0, start) + '    ' + code.value.slice(end);
-  // The caret has to be moved after Vue has written the new value back, or it
-  // lands at the start and the next keystroke is inserted in the wrong place.
-  requestAnimationFrame(() => {
-    field.selectionStart = field.selectionEnd = start + 4;
-  });
-}
 
 async function submit() {
   const text = code.value;

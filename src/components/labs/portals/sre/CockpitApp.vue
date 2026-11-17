@@ -187,9 +187,11 @@
         <!-- ===== Terminal ===== -->
         <section v-else-if="page === 'terminal'" class="ck-term-page">
           <h1 class="ck-h1">Terminal</h1>
-          <div class="ck-term" @click="termInput?.focus()">
-            <div v-for="(e, i) in termLog" :key="i"><div class="ck-term__cmd">sre@{{ host }}:~$ {{ e.cmd }}</div><div class="ck-term__out" :class="{ 'is-err': !e.ok }">{{ e.out }}</div></div>
-            <div class="ck-term__line"><span>sre@{{ host }}:~$&nbsp;</span><input ref="termInput" v-model="termLine" spellcheck="false" aria-label="Command" @keydown.enter="runTerm" /></div>
+          <!-- The lab's own console: history, Tab, Ctrl+R, the readline keys,
+               multi-line paste, heredocs and type-ahead - one implementation
+               rather than a second, weaker terminal inside this portal. -->
+          <div class="ck-term">
+            <LabConsole :key="host" :tool="termTool" :run="runTerm" />
           </div>
           <p class="ck-muted ck-small">Each line runs on {{ host }} as <b>sre</b> (prefix <code>sudo</code> for root), exactly like <code>ssh {{ host }} '…'</code> in the SRE Console.</p>
         </section>
@@ -212,9 +214,10 @@
  * ufw - run by the same host model the SRE Console's ssh sessions use, so a
  * restart that fails here fails there for the same reason.
  */
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { cli, pick, rows } from '@/utils/portalKit';
 import TimeSeries from './TimeSeries.vue';
+import LabConsole from '@/components/labs/LabConsole.vue';
 import { asSeries, str, toPlot } from './sreKit';
 
 const props = defineProps<{ view: Record<string, any>; api: any; tool: any; busy?: boolean }>();
@@ -248,9 +251,14 @@ const logGrep = ref('');
 const logLines = ref<string[]>([]);
 const logsLoaded = ref(false);
 const cmdOut = ref('');
-const termLine = ref('');
-const termLog = ref<{ cmd: string; out: string; ok: boolean }[]>([]);
-const termInput = ref<HTMLInputElement | null>(null);
+/** The directory `cd` moved to: each line is a one-shot ssh, so it is replayed. */
+const termDir = ref('');
+const termTool = computed(() => ({
+    id: 'sre_fleet_terminal', kind: 'console', label: 'Terminal', icon: 'terminal',
+    simulated: true, summary: `Commands run on ${host.value} as sre`,
+    prompt: `sre@${host.value}:${termDir.value || '~'}$ `,
+    fidelity: '',
+} as any));
 
 const hosts = computed(() => rows<any>(props.view, 'hosts').map(h => ({
     ...h, failed_units: Array.isArray(h.failed_units) ? h.failed_units : [], issues: Array.isArray(h.issues) ? h.issues : [],
@@ -274,8 +282,8 @@ watch([host, page, unit], () => {
     emit('location', host.value ? `${base}/system${page.value === 'overview' ? '' : '/' + page.value}${unit.value ? '#/' + unit.value + '.service' : ''}` : `${base}/dashboard`);
 }, { immediate: true });
 
-function pickHost(h: string) { host.value = h; switcher.value = false; page.value = 'overview'; unit.value = ''; cmdOut.value = ''; logLines.value = []; logsLoaded.value = false; termLog.value = []; }
-function go(p: string) { page.value = p; unit.value = ''; cmdOut.value = ''; if (p === 'terminal') nextTick(() => termInput.value?.focus()); }
+function pickHost(h: string) { host.value = h; switcher.value = false; page.value = 'overview'; unit.value = ''; cmdOut.value = ''; logLines.value = []; logsLoaded.value = false; termDir.value = ''; }
+function go(p: string) { page.value = p; unit.value = ''; cmdOut.value = ''; }
 function barColor(v: number) { return v >= 90 ? '#c9190b' : v >= 75 ? '#f0ab00' : '#0066cc'; }
 function stateLabel(s: string) { return s === 'active' ? 'Running' : s === 'failed' ? 'Failed to start' : s === 'inactive' ? 'Not running' : s; }
 function levelOf(line: string) { return /error|fail|fatal|denied|refused|exited|emerg|crit|panic|no space/i.test(line) ? 'is-error' : /warn/i.test(line) ? 'is-warn' : ''; }
@@ -318,15 +326,24 @@ async function runCmd(line: string) {
     const result = await api.exec(cli(['ssh', host.value, line]), { quiet: true });
     cmdOut.value = '$ ' + line + '\n' + (outOf(result) || '(no output)');
 }
-async function runTerm() {
-    const line = termLine.value.trim();
-    if (!line) return;
-    termLine.value = '';
-    if (line === 'clear') { termLog.value = []; return; }
-    const result = await api.exec(cli(['ssh', host.value, line]), { quiet: true, unlogged: false });
-    termLog.value = [...termLog.value, { cmd: line, out: outOf(result), ok: !!result.ok }].slice(-60);
-    await nextTick();
-    termInput.value?.scrollIntoView({ block: 'nearest' });
+async function runTerm(line: string) {
+    const text = line.trim();
+    if (text === 'clear' || text === 'reset') return { ok: true, clear: true };
+    const cd = /^cd(?:\s+(\S+))?$/.exec(text);
+    if (cd) {
+        const target = cd[1] && cd[1] !== '~' ? cd[1] : '';
+        if (!target) { termDir.value = ''; return { ok: true }; }
+        const where = termDir.value ? `cd ${termDir.value} && ` : '';
+        const probe = await api.exec(cli(['ssh', host.value, `${where}cd ${target} && pwd`]),
+            { quiet: true, lazy: true });
+        if (!probe.ok) return { ok: false, error: outOf(probe) || `cd: ${target}: No such file or directory` };
+        termDir.value = String(probe.output || '').trim().split(/\r?\n/).pop() || target;
+        return { ok: true };
+    }
+    const prefix = termDir.value ? `cd ${termDir.value} && ` : '';
+    const result = await api.exec(cli(['ssh', host.value, prefix + text]), { quiet: true, lazy: true });
+    return { ok: !!result.ok, output: result.ok ? result.output : result.output || '',
+             error: result.ok ? '' : result.error || '' };
 }
 </script>
 
@@ -403,7 +420,8 @@ async function runTerm() {
 .ck-jl { padding: 3px 6px; border-bottom: 1px solid #f0f0f0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ck-jl.is-error { color: #a30000; background: #faeae8; }
 .ck-jl.is-warn { color: #795600; }
-.ck-term { background: #151515; color: #f0f0f0; font-family: 'Red Hat Mono', 'Liberation Mono', Menlo, monospace; font-size: 13px; padding: 10px 12px; min-height: 22rem; max-height: 32rem; overflow: auto; border-radius: 3px; cursor: text; }
+.ck-term { height: 30rem; min-height: 22rem; display: flex; flex-direction: column; border-radius: 3px; overflow: hidden; }
+.ck-term > :deep(.sl-console) { flex: 1 1 auto; min-height: 0; }
 .ck-term__cmd { color: #8bc1f7; white-space: pre-wrap; }
 .ck-term__out { white-space: pre-wrap; margin-bottom: 6px; overflow-wrap: anywhere; }
 .ck-term__out.is-err { color: #f9a8a8; }

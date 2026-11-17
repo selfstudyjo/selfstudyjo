@@ -169,6 +169,10 @@ const studio: Catalogue = {
      * The studio's own furniture
      * ---------------------------------------------------------------- */
     'Back to projects': 'رجوع إلى المشاريع',
+    'Ln': 'سطر',
+    'Col': 'عمود',
+    'selected': 'محدد',
+    'Format document': 'تنسيق المستند',
     'Unsaved changes': 'تغييرات غير محفوظة',
     'Undo (Ctrl+Z)': 'تراجع (Ctrl+Z)',
     'Redo (Ctrl+Shift+Z)': 'إعادة (Ctrl+Shift+Z)',
