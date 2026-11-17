@@ -1,0 +1,1 @@
+import{Ir as e}from"./index-BJRla4AC.js";export{e as serviceRegistry};
