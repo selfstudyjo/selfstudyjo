@@ -575,7 +575,11 @@ const tools: Catalogue = {
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "第一次连接时，macOS 会要求输入密码，以便应用设置系统代理。",
     "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "SelfStudy 桌面应用随包含 AI 功能的付费方案提供，不包含在免费试用中。",
     // SelfStudy WiFi Connect (Products page)
-    "Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.": "通过 Wi-Fi 在附近的电脑之间聊天、建立学习房间和共享文件，无需路由器、交换机或互联网。一台电脑开启热点，其他电脑加入，所有人都能互相发消息和传文件。",
+    "Chat, voice messages, audio calls and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can reach everyone.": "通过 Wi-Fi 在附近的电脑之间聊天、发送语音消息、语音通话和共享文件，无需路由器、交换机或互联网。一台电脑开启热点，其他电脑加入，所有人都能互相联系。",
+    "Voice messages and calls": "语音消息和通话",
+    "Record a voice message in any chat, or call another device directly. Calls go device to device over the Wi-Fi with echo cancellation and encryption, with no internet needed.": "在任何聊天中录制语音消息，或直接呼叫另一台设备。通话通过 Wi-Fi 在设备之间直接进行，带回声消除和加密，无需互联网。",
+    "You control the ports": "端口由你掌控",
+    "Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.": "在设置中选择端口，只为本应用在防火墙中开放端口，一键关闭，或在退出时自动关闭。",
     "Hotspot in one click": "一键开启热点",
     "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "在 Windows 上创建无需联网即可使用的 Wi-Fi Direct 群组；在 Linux 上创建接入点。其他设备会把它看作普通的 Wi-Fi 网络，并可在应用中加入。",
     "Direct and group rooms": "直连房间和群组房间",

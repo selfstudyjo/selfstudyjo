@@ -602,7 +602,11 @@ const tools: Catalogue = {
     "The first time you connect, macOS asks for your password so the app can set the system proxy.": "عند الاتصال أول مرة، يطلب macOS كلمة المرور ليتمكن التطبيق من ضبط وكيل النظام.",
     "The SelfStudy desktop apps come with a paid plan that includes AI Features; they are not part of the free trial.": "تأتي تطبيقات SelfStudy لسطح المكتب مع خطة مدفوعة تشمل ميزات الذكاء الاصطناعي، وليست ضمن التجربة المجانية.",
     // SelfStudy WiFi Connect (Products page)
-    "Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.": "محادثة وغرف دراسة ومشاركة ملفات بين الحواسيب القريبة عبر Wi-Fi، بلا راوتر ولا سويتش ولا إنترنت. يشغّل حاسوب واحد نقطة اتصال وينضم إليها الآخرون، فيراسل الجميعُ الجميعَ ويتبادلون الملفات.",
+    "Chat, voice messages, audio calls and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can reach everyone.": "محادثة ورسائل صوتية ومكالمات صوتية ومشاركة ملفات بين الحواسيب القريبة عبر Wi-Fi، بلا راوتر ولا سويتش ولا إنترنت. يشغّل حاسوب واحد نقطة اتصال وينضم إليها الآخرون، فيتواصل الجميع مع الجميع.",
+    "Voice messages and calls": "رسائل صوتية ومكالمات",
+    "Record a voice message in any chat, or call another device directly. Calls go device to device over the Wi-Fi with echo cancellation and encryption, with no internet needed.": "سجّل رسالة صوتية في أي محادثة، أو اتصل بجهاز آخر مباشرة. تنتقل المكالمات من جهاز إلى جهاز عبر Wi-Fi مع إلغاء الصدى والتشفير، دون الحاجة إلى إنترنت.",
+    "You control the ports": "أنت تتحكم في المنافذ",
+    "Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.": "اختر المنافذ من الإعدادات، وافتحها في جدار الحماية لهذا التطبيق وحده، وأغلقها بنقرة واحدة، أو دعها تُغلق تلقائياً عند الخروج.",
     "Hotspot in one click": "نقطة اتصال بنقرة واحدة",
     "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "على Windows ينشئ مجموعة Wi-Fi Direct تعمل دون اتصال بالإنترنت، وعلى Linux نقطة وصول. يراها الآخرون شبكة Wi-Fi عادية وينضمون إليها من التطبيق.",
     "Direct and group rooms": "غرف مباشرة وغرف جماعية",

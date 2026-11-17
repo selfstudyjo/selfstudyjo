@@ -549,10 +549,12 @@ const catalogue = computed<Array<{
     id: 'wifi' as ProductId,
     name: 'SelfStudy WiFi Connect',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
-    lead: t('Chat, study rooms and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can message and send files to everyone.'),
+    lead: t('Chat, voice messages, audio calls and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can reach everyone.'),
     features: [
       { title: t('Hotspot in one click'), text: t('On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.') },
       { title: t('Direct and group rooms'), text: t('Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.') },
+      { title: t('Voice messages and calls'), text: t('Record a voice message in any chat, or call another device directly. Calls go device to device over the Wi-Fi with echo cancellation and encryption, with no internet needed.') },
+      { title: t('You control the ports'), text: t('Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.') },
       { title: t('Files and pictures'), text: t('Send many files at once, or drag and drop them into a chat. Every file is checked with SHA-256 before it is saved, and pictures show right in the chat.') },
       { title: t('Knows who is who'), text: t('Each device has its own signed key with a fingerprint you can compare, plus its MAC address, IP address and user name. A device pretending to be another is refused.') },
       { title: t('Private and encrypted'), text: t('Every link is encrypted and every message is signed by its author. Messages and files are stored only on the computers in the room - no server and no account.') },
