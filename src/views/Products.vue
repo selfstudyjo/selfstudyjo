@@ -600,7 +600,7 @@ const catalogue = computed<Array<{
     requirements: [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
       t('8 GB of memory recommended to run the AI on your own computer.'),
-      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+      t('The download comes with a paid AI plan. The app needs no account: signing in only adds the Self-Study online AI.'),
     ],
     privacy: t('Your files stay on your computer. With the AI on your computer nothing is sent anywhere; with the online AI only the part of the file the request needs is sent.'),
   },
@@ -619,7 +619,7 @@ const catalogue = computed<Array<{
     requirements: [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
       t('8 GB of memory recommended to run the AI on your own computer.'),
-      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+      t('The download comes with a paid AI plan. The app needs no account: signing in only adds the Self-Study online AI.'),
     ],
     privacy: t('Your code stays on your computer. With the AI on your computer nothing is sent anywhere; with the online AI only the code you ask about is sent.'),
   },
@@ -638,7 +638,7 @@ const catalogue = computed<Array<{
     requirements: [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
       t('8 GB of memory recommended to run the AI on your own computer.'),
-      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+      t('The download comes with a paid AI plan. The app needs no account: signing in only adds the Self-Study online AI.'),
     ],
     privacy: t('Connections and data stay on your computer. The AI is sent table and column names, never your rows, unless you paste them into a question.'),
   },
@@ -656,7 +656,7 @@ const catalogue = computed<Array<{
     requirements: [
       t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
       t('4 GB of memory and about 300 MB of free disk space.'),
-      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+      t('The download comes with a paid AI plan. Browsing the store needs no account; installing apps needs a sign-in with a paid AI plan.'),
     ],
     privacy: t('The store only talks to SelfStudy to list and download apps. It sends nothing about your computer except which system it is.'),
   },
