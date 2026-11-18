@@ -264,6 +264,24 @@ Done. The total now rounds to 2 decimals.</pre>
         </div>
       </div>
 
+      <!-- HOW TO INSTALL: Office, Text Editor, Studio DB, App Store. File names are never translated. -->
+      <div v-if="KIT_APPS[p.id]" class="prod-section">
+        <h3>{{ $t('How to install it') }}</h3>
+        <div class="prod-grid prod-cli">
+          <article v-for="s in kitSteps(p.id)" :key="s.os" class="prod-card" :class="{ 'prod-card--mine': s.os === detected.os }">
+            <h4 class="prod-cli__title">
+              <span>{{ osName(s.os) }}</span>
+              <span class="prod-cli__fmt" dir="ltr">{{ s.format }}</span>
+              <span v-if="s.os === detected.os" class="prod-cli__here">{{ $t('Your computer') }}</span>
+            </h4>
+            <ol class="prod-req">
+              <li v-for="line in s.steps" :key="line">{{ line }}</li>
+            </ol>
+            <pre v-if="s.commands.length" class="prod-cmd" dir="ltr">{{ s.commands.join('\n') }}</pre>
+          </article>
+        </div>
+      </div>
+
       <!-- REQUIREMENTS -->
       <div class="prod-section">
         <h3>{{ $t('System requirements') }}</h3>
@@ -567,6 +585,81 @@ const catalogue = computed<Array<{
     ],
     privacy: t('Nothing leaves your Wi-Fi network: no account, no server and no telemetry. Messages and files are kept only on the devices that send and receive them. Allow the app through the firewall on private networks when your computer asks.'),
   },
+  {
+    id: 'office' as ProductId,
+    name: 'Self-Study Office',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('Sheets, Docs and Slides in one app, with a Copilot that edits your file: it formats, writes formulas, builds tables and charts, inserts pictures and creates whole presentations.'),
+    features: [
+      { title: t('Sheets like Excel'), text: t('Cells, more than 100 formulas, number formats, merge, freeze panes, filters, sorting, conditional formatting, charts and pictures. Opens and saves .xlsx and .csv.') },
+      { title: t('Docs like Word'), text: t('A page view with fonts, sizes, styles, lists, tables, pictures, links, page setup and find and replace. Opens and saves .docx and exports PDF.') },
+      { title: t('Slides like PowerPoint'), text: t('Themes, layouts, text boxes, shapes, tables, charts, transitions, animations, speaker notes and a full-screen slide show. Opens and saves .pptx.') },
+      { title: t('Every tool you expect'), text: t('Format painter, fonts on your computer, bold, italic, underline, colours, alignment, undo and redo, copy and paste, printing and automatic recovery.') },
+      { title: t('AI on your computer or online'), text: t('A small model runs on your own computer by default. In Settings you can choose a bigger model, the Self-Study online AI, or your own AI service key.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('8 GB of memory recommended to run the AI on your own computer.'),
+      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+    ],
+    privacy: t('Your files stay on your computer. With the AI on your computer nothing is sent anywhere; with the online AI only the part of the file the request needs is sent.'),
+  },
+  {
+    id: 'editor' as ProductId,
+    name: 'Self-Study Text Editor',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('A code editor like VS Code with AI built in. It detects the language, formats your code, reviews it, explains it and helps you organise the whole project.'),
+    features: [
+      { title: t('A real code editor'), text: t('Tabs, split view, compare files, a command palette, quick open, Markdown preview and syntax colours for more than 80 languages.') },
+      { title: t('Knows every language'), text: t('The language of each file is detected from its name and content, and Format document tidies the code in that language.') },
+      { title: t('Project tools'), text: t('File explorer, search and replace in all files, Git changes and commits, a terminal, and Run for the current file.') },
+      { title: t('AI code review'), text: t('Ask the AI to review a file or the project structure, fix errors, refactor, add comments and tests, or explain code line by line.') },
+      { title: t('The right model for your computer'), text: t('A small model runs on your computer; a bigger one is suggested when your memory allows it, or use the online AI.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('8 GB of memory recommended to run the AI on your own computer.'),
+      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+    ],
+    privacy: t('Your code stays on your computer. With the AI on your computer nothing is sent anywhere; with the online AI only the code you ask about is sent.'),
+  },
+  {
+    id: 'studio-db' as ProductId,
+    name: 'Self Studio DB',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('A database tool for every engine: browse tables, run SQL, import and export data, draw ER diagrams and ask the AI to write or explain queries.'),
+    features: [
+      { title: t('Every database'), text: t('SQLite, PostgreSQL, MySQL and MariaDB, SQL Server, Oracle, MongoDB and Redis, with passwords kept encrypted on your computer.') },
+      { title: t('SQL editor'), text: t('Completion for tables and columns, formatting, several query tabs and results you can sort, filter and edit.') },
+      { title: t('ER diagrams'), text: t('See the tables and their relations as a diagram, and export it as a picture, Mermaid, DBML or PlantUML.') },
+      { title: t('Import and export'), text: t('Import CSV, JSON and Excel files; export to CSV, JSON, Excel, SQL and Markdown; back up SQLite databases.') },
+      { title: t('Smart menus and AI'), text: t('Right-click any table for the right actions, and ask the AI to write a query in plain words, explain it or make it faster.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('8 GB of memory recommended to run the AI on your own computer.'),
+      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+    ],
+    privacy: t('Connections and data stay on your computer. The AI is sent table and column names, never your rows, unless you paste them into a question.'),
+  },
+  {
+    id: 'app-store' as ProductId,
+    name: 'SelfStudy App Store',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('One app to install and update every SelfStudy desktop app. It picks the right installer for your computer by itself.'),
+    features: [
+      { title: t('Every app in one place'), text: t('Office, the Text Editor, Studio DB, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN and WiFi Connect.') },
+      { title: t('The right file for your computer'), text: t('Windows, macOS for Intel or Apple Silicon, or Linux: the store downloads the build made for your system.') },
+      { title: t('Install with one click'), text: t('See the download progress, install, open and remove apps without searching for files.') },
+      { title: t('Always up to date'), text: t('The store checks for new versions and updates your apps, and itself, when you allow it.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 300 MB of free disk space.'),
+      t('Needs a paid AI plan. After signing in it also works offline for up to 21 days.'),
+    ],
+    privacy: t('The store only talks to SelfStudy to list and download apps. It sends nothing about your computer except which system it is.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -669,6 +762,31 @@ const wifiSteps = computed(() => [
     t('Starting a hotspot needs NetworkManager, which Ubuntu, Fedora and most desktops include.'),
   ] },
 ]);
+
+// The four apps built on the shared desktop kit install the same way; only the file
+// name (artifactName in each package.json) differs.
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'app-store': 'SelfStudy-App-Store' };
+const kitSteps = (id: string) => [
+  { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
+    t('Download the .exe installer (or the .msi) and run it.'),
+    t('If Windows says "Windows protected your PC", choose More info, then Run anyway.'),
+    t('Choose the install folder and finish. Open the app from the Start menu or the desktop icon.'),
+  ] },
+  { os: 'macos', format: '.dmg', commands: [] as string[], steps: [
+    t('Download the .dmg for your Mac: arm64 for Apple Silicon, x64 for Intel.'),
+    t('Open the .dmg file and drag the app into Applications.'),
+    t('The first time, right-click the app, choose Open, then Open again.'),
+  ] },
+  { os: 'linux', format: 'AppImage / .deb', commands: [
+    `chmod +x ${KIT_APPS[id]}-*-linux-x86_64.AppImage`,
+    `./${KIT_APPS[id]}-*-linux-x86_64.AppImage`,
+    '# or, on Debian / Ubuntu:',
+    `sudo apt install ./${KIT_APPS[id]}-*-linux-amd64.deb`,
+  ], steps: [
+    t('Download the AppImage (any distribution) or the .deb (Debian, Ubuntu).'),
+    t('Make the AppImage executable and run it, or install the .deb:'),
+  ] },
+];
 
 // Each app's own icon (public/products/<id>.png, made from its build/icon.png), the
 // same picture its installer and its desktop shortcut show.
