@@ -453,16 +453,21 @@
                 <div v-else-if="tool.kind === 'external' && canEmbed(tool)" class="sl-embed">
                   <div class="sl-embed__bar">
                     <span class="sl-embed__note">{{ tool.fidelity }}</span>
-                    <a v-if="tool.href" :href="`#${tool.href}`" target="_blank"
+                    <a v-if="tool.href" :href="tool.href" target="_blank"
                        rel="noopener" class="sl-btn sl-btn--ghost sl-btn--sm">
                       <ExternalLink class="sl-i" /> {{ $t('Open full screen') }}
                     </a>
                   </div>
-                  <NetworkStudio v-if="tool.id === 'netsim'" embedded />
+                  <!-- LAB MODE: no AI, no lessons; the design is restored from and
+                       saved to the lab workspace and graded by app 11. -->
+                  <NetworkStudio v-if="tool.id === 'netsim' && netsimReady" embedded
+                                 :lab-mode="!playground" :initial-topology="netsimInitial"
+                                 :ref="(el: any) => { netsimStudio = el; }"
+                                 @design-change="saveNetsim" />
                 </div>
                 <div v-else-if="tool.kind === 'external'" class="sl-external">
                   <p>{{ tool.summary }}</p>
-                  <a v-if="tool.href" :href="`#${tool.href}`"
+                  <a v-if="tool.href" :href="tool.href"
                      class="sl-btn sl-btn--primary">
                     {{ $t('Open') }} {{ $t(tool.label) }}
                   </a>
@@ -1084,6 +1089,55 @@ function consoleHint(tool: LabTool): string {
   return match ? `Try: ${match[1]}` : '';
 }
 
+/* ── The Network Simulator in a graded lab (2026-11-21) ──
+   The design lives in the lab workspace: netsim/topology.json restores it,
+   netsim/state.json (utils/netsimSnapshot.ts) is what app 11 grades. */
+const netsimReady = ref(false);
+const netsimInitial = ref('');
+let netsimStudio: any = null;
+let netsimSaving: Promise<void> = Promise.resolve();
+let netsimLast = '';
+// Same names as utils/netsimSnapshot.ts - spelled here so this view does not
+// import the simulator engine statically (it is loaded on first save).
+const NETSIM_TOPOLOGY_FILE = 'netsim/topology.json';
+const NETSIM_STATE_FILE = 'netsim/state.json';
+
+async function loadNetsimDesign() {
+  netsimReady.value = false;
+  netsimInitial.value = '';
+  const hasNetsim = (lab.value?.tools || []).some((t: any) => (typeof t === 'string' ? t : t?.id) === 'netsim');
+  if (hasNetsim && !playground.value) {
+    try {
+      netsimInitial.value = await labsService.readFile(username.value, lab.value!.id, NETSIM_TOPOLOGY_FILE) || '';
+    } catch { netsimInitial.value = ''; }
+    netsimLast = netsimInitial.value;
+  }
+  netsimReady.value = true;
+}
+
+function saveNetsim(topologyJson: string) {
+  if (!lab.value || playground.value || !topologyJson || topologyJson === netsimLast) return netsimSaving;
+  netsimLast = topologyJson;
+  const labIdNow = lab.value.id;
+  netsimSaving = netsimSaving.then(async () => {
+    try {
+      const { buildGradedState } = await import('@/utils/netsimSnapshot');
+      const state = buildGradedState(JSON.parse(topologyJson));
+      await labsService.writeFile(username.value, labIdNow, NETSIM_TOPOLOGY_FILE, topologyJson);
+      await labsService.writeFile(username.value, labIdNow, NETSIM_STATE_FILE, JSON.stringify(state));
+    } catch (e) {
+      console.warn('[lab] could not save the network design', e);
+    }
+  });
+  return netsimSaving;
+}
+
+async function flushNetsim() {
+  const latest = netsimStudio?.currentDesign?.();
+  if (latest) saveNetsim(latest);
+  await netsimSaving;
+}
+
 async function open() {
   if (!username.value || !labId.value) return;
   loading.value = true;
@@ -1101,6 +1155,7 @@ async function open() {
     }
     lab.value = payload.lab;
     if (!playground.value) void loadLessonsForLab();
+    await loadNetsimDesign();
     /*
       A VERIFIED TASK STAYS VERIFIED, on arrival too: the progress record's
       `tasks_done` is what the platform has already credited, so a replica a
@@ -1269,6 +1324,8 @@ async function grade0() {
   grading.value = true;
   const before = grade.value;
   try {
+    // The latest Network Simulator design must be saved before it is graded.
+    await flushNetsim();
     const result = await labsService.gradeLab(username.value, lab.value.id, {
       userId: userId.value,
       selfMarked: selfMarked.value,

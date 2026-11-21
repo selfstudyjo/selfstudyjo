@@ -819,10 +819,10 @@ export const useNetSimStore = defineStore('netsim', () => {
         return exportTopology(topology.value);
     }
 
-    function importJson(json: string): boolean {
+    function importJson(json: string, opts: { quiet?: boolean } = {}): boolean {
         const res = importTopology(json);
         if (!res.ok || !res.topology) {
-            toast('error', 'Import failed', res.reason);
+            if (!opts.quiet) toast('error', 'Import failed', res.reason);
             return false;
         }
         snapshot();
@@ -830,7 +830,8 @@ export const useNetSimStore = defineStore('netsim', () => {
         if (project.value) project.value.topology = res.topology;
         rebuildSimulator();
         markDirty();
-        toast('success', 'Topology imported', `${res.topology.devices.length} devices, ${res.topology.links.length} links.`);
+        // Quiet when a lab restores the student's own saved design.
+        if (!opts.quiet) toast('success', 'Topology imported', `${res.topology.devices.length} devices, ${res.topology.links.length} links.`);
         return true;
     }
 

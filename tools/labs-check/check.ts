@@ -31,7 +31,9 @@
 // Plus working rule 13 over every lab component: nothing a model or an operator
 // wrote may reach `v-html`.
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { buildTemplate } from '../../src/netsim/topology';
+import { buildGradedState } from '../../src/utils/netsimSnapshot';
 import { inflateRawSync } from 'node:zlib';
 import { resolve } from 'node:path';
 
@@ -8158,7 +8160,20 @@ for (const path of COMPONENTS) {
 {
     const studio = stripComments(source('src/views/NetworkSimulatorStudio.vue'));
     check('the studio knows it can be one pane of a lab',
-          /defineProps<\{ embedded\?: boolean \}>/.test(studio));
+          /defineProps<\{ embedded\?: boolean[;\s]/.test(studio));
+    // A GRADED lab (2026-11-21): no AI tutor and no lessons inside the studio,
+    // and the design is handed to the lab to save and grade.
+    check('lab mode hides the AI tutor button',
+          /v-if="!labMode" class="ns-tb-btn"[^>]*AI tutor/.test(studio));
+    check('lab mode hides the AI and Lesson tabs',
+          /v-if="!labMode"[^>]*rightTab === 'ai'/.test(studio)
+          && /v-if="!labMode"[^>]*rightTab === 'lesson'/.test(studio));
+    check('lab mode emits every design change',
+          /emit\('design-change', store\.exportJson\(\)\)/.test(studio));
+    check('the lab saves the graded snapshot before Check my work',
+          /await flushNetsim\(\)/.test(stripComments(source('src/views/LabWorkspace.vue'))));
+    check('the lab imports the simulator engine lazily, never statically',
+          !/^import[^\n]*netsimSnapshot/m.test(source('src/views/LabWorkspace.vue')));
     check('embedded, it does not claim beforeunload — the lab owns the tab',
           /if \(!props\.embedded\) window\.addEventListener\('beforeunload'/.test(studio));
     check('embedded, it does not draw a link that navigates out of the lab',
@@ -9779,6 +9794,36 @@ section('18. Which tasks the GUI can do, and Review the lesson');
     const view = source('src/views/Playground.vue');
     check('a playground is the lab workspace in playground mode, keyed on the id',
           /<LabWorkspace[^>]*:key="id"[^>]*:lab-id="id"[^>]*playground/.test(view));
+}
+
+/* ─────────── the graded Network Simulator snapshot (2026-11-21) ───────────
+   Real designs from the studio's own templates, through the real engine. The
+   snapshots are also written to dist/netsim-snapshots.json, which app 11's
+   _netsimgrade.py grades - the two halves of one contract, checked together. */
+section('Network Simulator: the graded snapshot');
+{
+    const shots: Record<string, unknown> = {};
+    for (const id of ['two-pcs', 'vlans-trunk', 'inter-vlan-l3', 'two-routers-static', 'wan-ospf']) {
+        const topo = buildTemplate(id);
+        check(`template ${id} builds`, !!topo);
+        if (!topo) continue;
+        const state = buildGradedState(topo) as any;
+        shots[id] = state;
+        check(`${id}: every device is in the snapshot`, state.devices.length === topo.devices.length);
+        check(`${id}: links are listed`, state.links.length === topo.links.length);
+        check(`${id}: version is stamped`, state.version === 1);
+    }
+    const two = shots['two-pcs'] as any;
+    check('two-pcs: the engine reports the PCs reach each other',
+          two && two.reach.length >= 2 && two.reach.every((r: any) => r.ok), two?.reach);
+    const vt = shots['vlans-trunk'] as any;
+    check('vlans-trunk: a trunk link is marked', vt && vt.links.some((l: any) => l.trunk));
+    check('vlans-trunk: hosts in different VLANs do NOT all reach each other',
+          vt && vt.reach.some((r: any) => !r.ok), vt?.reach?.length);
+    const l3 = shots['inter-vlan-l3'] as any;
+    check('inter-vlan-l3: SVIs carry addresses',
+          l3 && l3.devices.some((d: any) => d.interfaces.some((i: any) => i.sviVlan && i.ipv4)));
+    writeFileSync(resolve(process.cwd(), "tools/labs-check/dist/netsim-snapshots.json"), JSON.stringify(shots));
 }
 
 /* ─────────────────── report ─────────────────── */

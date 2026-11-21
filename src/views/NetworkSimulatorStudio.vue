@@ -75,7 +75,7 @@
         <button class="ns-tb-btn" :title="$t('Import / export JSON')" @click="modal = 'io'">
           <DeviceIcon name="download" :size="15" />
         </button>
-        <button class="ns-tb-btn" :class="{ active: rightTab === 'ai' }" :title="$t('AI tutor')" @click="rightTab = 'ai'">
+        <button v-if="!labMode" class="ns-tb-btn" :class="{ active: rightTab === 'ai' }" :title="$t('AI tutor')" @click="rightTab = 'ai'">
           <DeviceIcon name="sparkles" :size="15" />
         </button>
       </div>
@@ -95,7 +95,7 @@
           ref="canvasRef"
           @open-device="openTerminalFor"
           @request-template="modal = 'templates'"
-          @request-ai="rightTab = 'ai'"
+          @request-ai="!labMode && (rightTab = 'ai')"
         />
 
         <!-- bottom dock -->
@@ -128,14 +128,16 @@
         <nav class="ns-right-tabs">
           <button :class="['ns-right-tab', { active: rightTab === 'props' }]" @click="rightTab = 'props'">{{ $t('Configure') }}</button>
           <button :class="['ns-right-tab', { active: rightTab === 'inspect' }]" @click="rightTab = 'inspect'">{{ $t('Inspect') }}</button>
-          <button :class="['ns-right-tab', { active: rightTab === 'ai' }]" @click="rightTab = 'ai'">AI</button>
-          <button :class="['ns-right-tab', { active: rightTab === 'lesson' }]" @click="rightTab = 'lesson'">{{ $t('Lesson') }}</button>
+          <!-- A graded lab is a standard lab: no AI tools and no lessons inside
+               the simulator. The playground (its own route) keeps both. -->
+          <button v-if="!labMode" :class="['ns-right-tab', { active: rightTab === 'ai' }]" @click="rightTab = 'ai'">AI</button>
+          <button v-if="!labMode" :class="['ns-right-tab', { active: rightTab === 'lesson' }]" @click="rightTab = 'lesson'">{{ $t('Lesson') }}</button>
         </nav>
         <div class="ns-right-body">
           <PropertiesPanel v-if="rightTab === 'props'" @open-terminal="openTerminalFor" />
           <PacketInspector v-else-if="rightTab === 'inspect'" />
-          <AiAssistant v-else-if="rightTab === 'ai'" />
-          <LessonPanel v-else />
+          <AiAssistant v-else-if="rightTab === 'ai' && !labMode" />
+          <LessonPanel v-else-if="!labMode" />
         </div>
       </div>
     </div>
@@ -303,7 +305,15 @@ import { getLesson } from '@/netsim/lessons';
  * code on both routes, deliberately: a second implementation of the studio for
  * the lab would be the thing that drifts.
  */
-const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
+/*
+  `labMode` (2026-11-21) - a GRADED lab. No AI tutor and no lessons in the
+  studio; the design is restored from `initialTopology` (the lab workspace's
+  netsim/topology.json) and every change is emitted as `design-change` so the
+  lab can save it and grade it (utils/netsimSnapshot.ts, app 11 netsimgrade.py).
+*/
+const props = withDefaults(defineProps<{ embedded?: boolean; labMode?: boolean; initialTopology?: string }>(),
+    { embedded: false, labMode: false, initialTopology: '' });
+const emit = defineEmits<{ (e: 'design-change', topologyJson: string): void }>();
 
 const store = useNetSimStore();
 const route = useRoute();
@@ -346,7 +356,10 @@ onMounted(async () => {
     const templateId = props.embedded ? undefined : route.query.template as string | undefined;
     const lessonId = props.embedded ? undefined : route.query.lesson as string | undefined;
 
-    if (projectId && projectId !== 'new') {
+    if (props.labMode) {
+        await store.newProject('Lab network');
+        if (props.initialTopology) store.importJson(props.initialTopology, { quiet: true });
+    } else if (projectId && projectId !== 'new') {
         await store.openProject(projectId);
     } else if (templateId) {
         await store.newProject(
@@ -390,6 +403,19 @@ function onGlobalKey(ev: KeyboardEvent) {
 }
 
 watch(() => store.project?.name, n => { if (n) projectName.value = n; });
+
+// Lab mode: hand every change to the lab (debounced) so it is saved and graded.
+let designTimer: ReturnType<typeof setTimeout> | null = null;
+watch(() => store.topology, () => {
+    if (!props.labMode) return;
+    if (designTimer) clearTimeout(designTimer);
+    designTimer = setTimeout(() => emit('design-change', store.exportJson()), 1200);
+}, { deep: true });
+onBeforeUnmount(() => {
+    if (designTimer && props.labMode) { clearTimeout(designTimer); emit('design-change', store.exportJson()); }
+});
+/** Called by the lab right before Check my work: the latest design, now. */
+defineExpose({ currentDesign: () => store.exportJson() });
 watch(() => store.selectedDeviceId, id => {
     if (id) {
         if (rightTab.value === 'inspect') rightTab.value = 'props';
