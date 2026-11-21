@@ -133,6 +133,8 @@ const account: Catalogue = {
      * Plans
      * ---------------------------------------------------------------- */
     'Choose Your Plan': '选择你的套餐',
+    'Every plan is free right now': '现在所有套餐都免费',
+    'All features of every plan are open to every account at no cost until {v0}. No payment is needed. After that date the normal plans apply again.': '在 {v0} 之前，所有套餐的全部功能对每个账户免费开放，无需付款。此日期之后将恢复正常套餐。',
     'Unlock your learning potential with the perfect plan tailored for your journey':
         '选择最适合你的套餐，释放学习潜力',
     'Loading plans...': '正在加载套餐……',

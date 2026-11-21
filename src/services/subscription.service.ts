@@ -5,6 +5,26 @@ import { notificationService } from './notification.service';
 import { decodeNotificationMessage } from '@/utils/notificationMeta';
 import type { TranslationMap } from '@/i18n/records';
 
+/**
+ * Free mode (2026-11-21): the operator made the whole platform free until
+ * `ends_at`. While `active`, every signed-in account has every feature of every
+ * plan. Nothing is written to any subscription - when `ends_at` passes, app 22
+ * reports `active: false` and access reverts to the real plans on its own.
+ * `active` is computed on app 22's clock, never this browser's.
+ */
+export interface FreeMode {
+    active: boolean;
+    enabled: boolean;
+    starts_at: string;
+    ends_at: string;
+    note: string;
+    remaining_seconds: number;
+}
+
+export const FREE_MODE_OFF: FreeMode = {
+    active: false, enabled: false, starts_at: '', ends_at: '', note: '', remaining_seconds: 0,
+};
+
 export interface Feature {
     /**
      * The Arabic and Chinese copies of this record's own text, keyed by language
@@ -132,6 +152,32 @@ class SubscriptionService {
     // call, so two overlapping activations are two subscriptions, not one.
     private _trialRuns = new Map<string, Promise<Subscription | null>>();
     private _freePlanRun: Promise<SubscriptionType> | null = null;
+    private _freeMode: { at: number; value: Promise<FreeMode> } | null = null;
+
+    /**
+     * Is the whole platform free right now? Cached for a minute (the promise, so
+     * concurrent callers share one request). A failure answers OFF - free mode
+     * is a gift, never something a cold replica should hand out by accident -
+     * and is cached only 15 s so it is asked again soon.
+     */
+    async getFreeMode(force = false): Promise<FreeMode> {
+        const now = Date.now();
+        if (!force && this._freeMode && now - this._freeMode.at < 60_000) return this._freeMode.value;
+        const value = (async (): Promise<FreeMode> => {
+            try {
+                const baseUrl = await serviceRegistry.getRandomSubscriptionReplica();
+                if (!baseUrl) return FREE_MODE_OFF;
+                const data = await apiService.get<Partial<FreeMode>>(baseUrl, '/free-mode/');
+                return { ...FREE_MODE_OFF, ...(data || {}), active: !!data?.active };
+            } catch {
+                // An older app 22 answers 404 here: that is "off", not an error.
+                this._freeMode = { at: Date.now() - 45_000, value: Promise.resolve(FREE_MODE_OFF) };
+                return FREE_MODE_OFF;
+            }
+        })();
+        this._freeMode = { at: now, value };
+        return value;
+    }
 
     // ---------------------- Selected subscription persistence ----------------------
     /** Get user-selected subscription external_id (from localStorage). */
@@ -443,10 +489,22 @@ class SubscriptionService {
      */
     async getAllUserFeatures(userId: string): Promise<string[]> {
         try {
-            const usable = await this.getUsableSubscriptions(userId);
+            const [usable, free] = await Promise.all([
+                this.getUsableSubscriptions(userId), this.getFreeMode()]);
             const featureSet = new Set<string>();
             for (const sub of usable) {
                 sub.subscription_type?.features?.forEach(f => featureSet.add(f.name));
+            }
+            // Free mode: every feature of every plan, for as long as it lasts.
+            if (free.active) {
+                try {
+                    (await this.getFeatures()).forEach(f => featureSet.add(f.name));
+                } catch { /* the plans' own features below still apply */ }
+                try {
+                    for (const plan of await this.getSubscriptionTypes()) {
+                        plan.features?.forEach(f => featureSet.add(f.name));
+                    }
+                } catch { /* best effort */ }
             }
             return Array.from(featureSet);
         } catch (error) {

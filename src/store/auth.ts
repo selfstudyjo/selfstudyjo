@@ -7,7 +7,7 @@ import { proctorService } from '@/services/proctor.service';
 import { mediaService } from '@/services/media.service';
 import { otpService } from '@/services/otp.service';
 import { labService } from '@/services/lab.service';
-import { subscriptionService } from '@/services/subscription.service';
+import { subscriptionService, FREE_MODE_OFF, type FreeMode } from '@/services/subscription.service';
 import type { LoginRequest, LoginResponse } from '@/services/auth.service';
 import type {
     UserProfile,
@@ -45,6 +45,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     // NEW: All non-expired active subscriptions for the user
     const activeSubscriptions = ref<any[]>([]);
+
+    // Free mode (2026-11-21): the whole platform free until a date the operator
+    // set in selfstudyadmin. Refreshed by both loaders below, so every route
+    // guard sees it; never written into any subscription.
+    const freeMode = ref<FreeMode>({ ...FREE_MODE_OFF });
+    const freeModeActive = computed(() => freeMode.value.active);
+    const refreshFreeMode = async (force = false): Promise<FreeMode> => {
+        freeMode.value = await subscriptionService.getFreeMode(force);
+        return freeMode.value;
+    };
 
     // Backward-compatible "primary" subscription record
     // (the user's selected one, or the newest non-expired one)
@@ -112,6 +122,7 @@ export const useAuthStore = defineStore('auth', () => {
             return [];
         }
         try {
+            refreshFreeMode().catch(() => { /* off */ });
             const features = await subscriptionService.getAllUserFeatures(user.value.id);
             userFeatures.value = features;
             return features;
@@ -135,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
             return [];
         }
         try {
+            await refreshFreeMode();
             const subs = await subscriptionService.getUsableSubscriptions(user.value.id);
             activeSubscriptions.value = subs;
 
@@ -679,7 +691,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const hasAiAccess = computed(() => userFeatures.value.includes('ai_feature'));
     /** A PAID plan with ai_feature: the desktop products (the free trial is not enough). */
-    const hasPaidAiAccess = computed(() => hasPaidAiPlan(activeSubscriptions.value));
+    const hasPaidAiAccess = computed(() => freeModeActive.value || hasPaidAiPlan(activeSubscriptions.value));
     const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
     const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
     const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
@@ -692,6 +704,7 @@ export const useAuthStore = defineStore('auth', () => {
      * True when the user has ANY active subscription.
      */
     const hasActiveSubscription = computed(() => {
+        if (freeModeActive.value && user.value?.id) return true;
         if (activeSubscriptions.value.length > 0) return true;
         if (activeSubscription.value) return true;
         if (userFeatures.value.length > 0) return true;
@@ -719,6 +732,9 @@ export const useAuthStore = defineStore('auth', () => {
         activeSubscription,
         activeSubscriptions,
         subscriptionLoaded,
+        freeMode,
+        freeModeActive,
+        refreshFreeMode,
 
         hasLabAccess,
         hasLabFeature,

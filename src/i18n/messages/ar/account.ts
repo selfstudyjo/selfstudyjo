@@ -142,6 +142,8 @@ const account: Catalogue = {
      * Plans
      * ---------------------------------------------------------------- */
     'Choose Your Plan': 'اختر خطتك',
+    'Every plan is free right now': 'جميع الخطط مجانية الآن',
+    'All features of every plan are open to every account at no cost until {v0}. No payment is needed. After that date the normal plans apply again.': 'جميع ميزات كل الخطط متاحة لكل الحسابات مجاناً حتى {v0}. لا حاجة لأي دفع. بعد هذا التاريخ تعود الخطط المعتادة.',
     'Unlock your learning potential with the perfect plan tailored for your journey':
         'أطلق قدرتك على التعلّم مع الخطة الأنسب لمسارك',
     'Loading plans...': 'جارٍ تحميل الخطط...',

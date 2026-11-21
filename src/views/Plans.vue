@@ -6,6 +6,16 @@
       <p class="subtitle">{{ $t('Unlock your learning potential with the perfect plan tailored for your journey') }}</p>
     </header>
 
+    <!-- Free mode: the whole platform is free until a date (app 22 /free-mode/) -->
+    <div v-if="authStore.freeModeActive" class="free-mode-banner" role="status">
+      <div class="free-mode-banner__icon" aria-hidden="true">🎁</div>
+      <div class="free-mode-banner__text">
+        <h3>{{ $t('Every plan is free right now') }}</h3>
+        <p>{{ $t('All features of every plan are open to every account at no cost until {v0}. No payment is needed. After that date the normal plans apply again.', { v0: formatDate(authStore.freeMode.ends_at) }) }}</p>
+        <p v-if="authStore.freeMode.note" class="free-mode-banner__note">{{ authStore.freeMode.note }}</p>
+      </div>
+    </div>
+
     <!-- Pending Payment Banner -->
     <div v-if="hasPendingPayment" class="pending-payment-banner" role="alert">
       <div class="banner-content">
@@ -599,6 +609,7 @@ const handleCardMove = (e: MouseEvent) => {
 
 onMounted(() => {
   fetchPlans();
+  authStore.refreshFreeMode(true).catch(() => { /* off */ });
 });
 </script>
 

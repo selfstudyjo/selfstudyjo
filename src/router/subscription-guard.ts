@@ -68,7 +68,7 @@ export async function subscriptionGuard(
     // ai_feature but must not reach this page.
     if (to.meta.paidPlanOnly === true) {
         const subs = await authStore.loadActiveSubscriptions();
-        if (!hasPaidAiPlan(subs)) {
+        if (!hasPaidAiPlan(subs) && !authStore.freeModeActive) {
             sessionStorage.setItem('subscriptionRedirect', JSON.stringify({
                 requiredFeatures: requiredFeatures,
                 paidPlanOnly: true,
